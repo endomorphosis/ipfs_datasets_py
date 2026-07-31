@@ -1,0 +1,20 @@
+{
+  "e02": {
+    "cid": "bafkreidtjipq7j524glx6qjv7bcg7idj4dwqggj6a7hbar2hrnttbekw6m",
+    "name": "Bob",
+    "properties": {
+      "idx": 2,
+      "role": "dev"
+    },
+    "type": "Person"
+  },
+  "e07": {
+    "cid": "bafkreiavyj4dvfngpouqmdd65ey44zsebjvdzif2j6r2lb3sfyveqlukey",
+    "name": "Spec",
+    "properties": {
+      "idx": 7,
+      "version": "1"
+    },
+    "type": "Document"
+  }
+}

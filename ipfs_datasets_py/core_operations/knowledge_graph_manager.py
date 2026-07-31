@@ -8,7 +8,12 @@ It is used by:
 - Direct Python API imports
 """
 
+import hashlib
 import logging
+import tempfile
+import threading
+import uuid
+from pathlib import Path
 from typing import Dict, Any, Optional, List, Union
 
 logger = logging.getLogger(__name__)
@@ -27,6 +32,9 @@ class KnowledgeGraphManager:
     - Index and constraint management
     """
     
+    _compat_lock = threading.RLock()
+    _compat_services: Dict[str, Any] = {}
+
     def __init__(self, driver_url: str = "ipfs://localhost:5001"):
         """
         Initialize the knowledge graph manager.
@@ -39,6 +47,88 @@ class KnowledgeGraphManager:
         self.driver = None
         self._session = None
         self._transaction = None
+
+    @property
+    def _compat_key(self) -> str:
+        return hashlib.sha256(self.driver_url.encode("utf-8")).hexdigest()[:16]
+
+    def _compat_target(self):
+        """Return the stable GraphTarget used by the deprecated manager API."""
+        from ipfs_datasets_py.knowledge_graphs import GraphTarget
+
+        return GraphTarget(
+            tenant="legacy",
+            graph_id=f"driver-{self._compat_key}",
+            branch="main",
+        )
+
+    def _compat_service(self):
+        """Resolve a process-shared canonical service for this legacy URL.
+
+        ``driver_url`` was the old API's graph identity.  Mapping it to a
+        deterministic catalog keeps independent manager instances compatible
+        without introducing an ambient target into the canonical API.
+        """
+        from ipfs_datasets_py.knowledge_graphs import GraphService
+
+        key = self._compat_key
+        with self._compat_lock:
+            service = self._compat_services.get(key)
+            if service is None:
+                root = Path(tempfile.gettempdir()) / "ipfs-datasets-py-legacy-kg"
+                root.mkdir(parents=True, exist_ok=True)
+                graph_root = root / key
+                graph_root.mkdir(parents=True, exist_ok=True)
+                service = GraphService.open(
+                    graph_root / "catalog.sqlite",
+                    storage_path=graph_root / "payloads",
+                    holder_id=f"legacy-manager-{key}",
+                )
+                self._compat_services[key] = service
+            return service
+
+    def _ensure_compat_graph(self) -> Dict[str, Any]:
+        service = self._compat_service()
+        target = self._compat_target()
+        result = service.create(
+            target,
+            idempotency_key=f"legacy-create-{self._compat_key}",
+        ).to_json_dict()
+        if result.get("status") == "success":
+            return result
+        error = result.get("error") or {}
+        if error.get("code") == "ALREADY_EXISTS":
+            opened = service.open_graph(target).to_json_dict()
+            if opened.get("status") == "success":
+                return opened
+        return result
+
+    @staticmethod
+    def _legacy_error(result: Dict[str, Any]) -> Dict[str, Any]:
+        error = result.get("error") or {}
+        return {
+            "status": "error",
+            "message": error.get("message") or "knowledge graph operation failed",
+            "error": error,
+        }
+
+    async def create_graph(self) -> Dict[str, Any]:
+        """Create or reopen the stable graph represented by ``driver_url``."""
+        result = self._ensure_compat_graph()
+        if result.get("status") != "success":
+            return self._legacy_error(result)
+        target = self._compat_target()
+        payload = result.get("result") or {}
+        return {
+            "status": "success",
+            "message": "Knowledge graph ready",
+            "driver_url": self.driver_url,
+            "tenant": target.tenant,
+            "graph_id": target.graph_id,
+            "graph_uri": target.uri,
+            "branch": target.branch,
+            "revision": payload.get("revision"),
+        }
     
     async def initialize(self) -> Dict[str, Any]:
         """
@@ -47,29 +137,10 @@ class KnowledgeGraphManager:
         Returns:
             Dict with initialization status
         """
-        try:
-            from ipfs_datasets_py.knowledge_graphs import GraphDatabase
-            
-            self.driver = GraphDatabase.driver(self.driver_url)
-            self.logger.info(f"Initialized graph database at {self.driver_url}")
-            
-            return {
-                "status": "success",
-                "message": "Graph database initialized",
-                "driver_url": self.driver_url
-            }
-        except ImportError as e:
-            self.logger.error(f"Failed to import GraphDatabase: {e}")
-            return {
-                "status": "error",
-                "message": f"GraphDatabase not available: {e}"
-            }
-        except Exception as e:
-            self.logger.error(f"Failed to initialize graph database: {e}")
-            return {
-                "status": "error",
-                "message": str(e)
-            }
+        result = await self.create_graph()
+        if result.get("status") == "success":
+            result["message"] = "Graph database initialized"
+        return result
     
     async def add_entity(
         self,
@@ -93,12 +164,24 @@ class KnowledgeGraphManager:
                 properties = {}
             
             from ipfs_datasets_py.knowledge_graphs import Entity
-            
+
             entity = Entity(
-                id=entity_id,
-                type=entity_type,
-                properties=properties
+                entity_id=entity_id,
+                entity_type=entity_type,
+                name=str(properties.get("name", "")),
+                properties=properties,
             )
+
+            ready = self._ensure_compat_graph()
+            if ready.get("status") != "success":
+                return self._legacy_error(ready)
+            written = self._compat_service().write(
+                self._compat_target(),
+                idempotency_key=f"legacy-entity-{uuid.uuid4().hex}",
+                params={"entities": [entity.to_dict()]},
+            ).to_json_dict()
+            if written.get("status") != "success":
+                return self._legacy_error(written)
             
             self.logger.info(f"Added entity {entity_id} of type {entity_type}")
             
@@ -139,13 +222,24 @@ class KnowledgeGraphManager:
                 properties = {}
             
             from ipfs_datasets_py.knowledge_graphs import Relationship
-            
+
             relationship = Relationship(
+                relationship_type=relationship_type,
                 source=source_id,
                 target=target_id,
-                type=relationship_type,
-                properties=properties
+                properties=properties,
             )
+
+            ready = self._ensure_compat_graph()
+            if ready.get("status") != "success":
+                return self._legacy_error(ready)
+            written = self._compat_service().write(
+                self._compat_target(),
+                idempotency_key=f"legacy-relationship-{uuid.uuid4().hex}",
+                params={"relationships": [relationship.to_dict()]},
+            ).to_json_dict()
+            if written.get("status") != "success":
+                return self._legacy_error(written)
             
             self.logger.info(f"Added relationship {source_id} -> {target_id} ({relationship_type})")
             
@@ -182,17 +276,31 @@ class KnowledgeGraphManager:
             if parameters is None:
                 parameters = {}
             
-            from ipfs_datasets_py.knowledge_graphs import QueryExecutor
-            
-            executor = QueryExecutor()
-            results = executor.execute(query, parameters)
-            
+            ready = self._ensure_compat_graph()
+            if ready.get("status") != "success":
+                return self._legacy_error(ready)
+            result = self._compat_service().query(
+                self._compat_target(),
+                params={
+                    "language": "cypher",
+                    "query": query,
+                    "text": query,
+                    "params": parameters,
+                },
+            ).to_json_dict()
+            if result.get("status") != "success":
+                return self._legacy_error(result)
+            query_result = result.get("result") or {}
+            results = query_result.get("rows", [])
+
             self.logger.info(f"Executed Cypher query: {query[:100]}...")
-            
+
             return {
                 "status": "success",
                 "query": query,
-                "results": results
+                "results": results,
+                "graph_id": self._compat_target().graph_id,
+                "revision": query_result.get("revision"),
             }
         except Exception as e:
             self.logger.error(f"Failed to execute query: {e}")
@@ -247,6 +355,21 @@ class KnowledgeGraphManager:
                 "message": str(e),
                 "query": query
             }
+
+    async def search_hybrid(
+        self,
+        query: str,
+        search_type: str = "semantic",
+        limit: int = 10,
+    ) -> Dict[str, Any]:
+        """Deprecated CLI alias using the JSON-safe canonical query path."""
+        result = await self.query_cypher(
+            f"MATCH (n) WHERE n.name CONTAINS $query RETURN n LIMIT {int(limit)}",
+            {"query": query},
+        )
+        result.setdefault("search_type", search_type)
+        result.setdefault("count", len(result.get("results") or []))
+        return result
     
     async def close(self) -> Dict[str, Any]:
         """
@@ -281,10 +404,17 @@ class KnowledgeGraphManager:
             Dict with transaction ID and status
         """
         try:
-            from ipfs_datasets_py.knowledge_graphs.transactions import TransactionManager
-            
-            tx_manager = TransactionManager()
-            tx_id = tx_manager.begin()
+            ready = self._ensure_compat_graph()
+            if ready.get("status") != "success":
+                return self._legacy_error(ready)
+            result = self._compat_service().begin_tx(
+                self._compat_target()
+            ).to_json_dict()
+            if result.get("status") != "success":
+                return self._legacy_error(result)
+            tx_id = str((result.get("result") or {}).get("transaction_id") or "")
+            if not tx_id:
+                return {"status": "error", "message": "transaction ID missing"}
             self._transaction = tx_id
             
             self.logger.info(f"Started transaction {tx_id}")
@@ -293,17 +423,6 @@ class KnowledgeGraphManager:
                 "status": "success",
                 "transaction_id": tx_id,
                 "message": "Transaction started"
-            }
-        except ImportError:
-            # Fallback if transaction module not available
-            import uuid
-            tx_id = str(uuid.uuid4())
-            self._transaction = tx_id
-            self.logger.warning("Transaction module not available, using mock transaction")
-            return {
-                "status": "success",
-                "transaction_id": tx_id,
-                "message": "Transaction started (mock)"
             }
         except Exception as e:
             self.logger.error(f"Failed to begin transaction: {e}")
@@ -330,10 +449,13 @@ class KnowledgeGraphManager:
                     "message": "No active transaction"
                 }
             
-            from ipfs_datasets_py.knowledge_graphs.transactions import TransactionManager
-            
-            tx_manager = TransactionManager()
-            tx_manager.commit(tx_id)
+            result = self._compat_service().commit_tx(
+                self._compat_target(),
+                idempotency_key=f"legacy-commit-{tx_id}",
+                params={"transaction_id": tx_id},
+            ).to_json_dict()
+            if result.get("status") != "success":
+                return self._legacy_error(result)
             self._transaction = None
             
             self.logger.info(f"Committed transaction {tx_id}")
@@ -342,15 +464,6 @@ class KnowledgeGraphManager:
                 "status": "success",
                 "transaction_id": tx_id,
                 "message": "Transaction committed"
-            }
-        except ImportError:
-            # Fallback
-            self.logger.warning("Transaction module not available, using mock commit")
-            self._transaction = None
-            return {
-                "status": "success",
-                "transaction_id": tx_id,
-                "message": "Transaction committed (mock)"
             }
         except Exception as e:
             self.logger.error(f"Failed to commit transaction: {e}")
@@ -378,10 +491,12 @@ class KnowledgeGraphManager:
                     "message": "No active transaction"
                 }
             
-            from ipfs_datasets_py.knowledge_graphs.transactions import TransactionManager
-            
-            tx_manager = TransactionManager()
-            tx_manager.rollback(tx_id)
+            result = self._compat_service().rollback_tx(
+                self._compat_target(),
+                params={"transaction_id": tx_id},
+            ).to_json_dict()
+            if result.get("status") != "success":
+                return self._legacy_error(result)
             self._transaction = None
             
             self.logger.info(f"Rolled back transaction {tx_id}")
@@ -390,15 +505,6 @@ class KnowledgeGraphManager:
                 "status": "success",
                 "transaction_id": tx_id,
                 "message": "Transaction rolled back"
-            }
-        except ImportError:
-            # Fallback
-            self.logger.warning("Transaction module not available, using mock rollback")
-            self._transaction = None
-            return {
-                "status": "success",
-                "transaction_id": tx_id,
-                "message": "Transaction rolled back (mock)"
             }
         except Exception as e:
             self.logger.error(f"Failed to rollback transaction: {e}")
@@ -459,6 +565,26 @@ class KnowledgeGraphManager:
                 "message": str(e),
                 "index_name": index_name
             }
+
+    async def create_index(
+        self,
+        label: str,
+        property_key: str,
+    ) -> Dict[str, Any]:
+        """Deprecated root-CLI alias for a property index."""
+        try:
+            from ipfs_datasets_py.knowledge_graphs.indexing import IndexManager
+
+            index_name = IndexManager().create_property_index(property_key, label)
+            return {
+                "status": "success",
+                "index_name": index_name,
+                "entity_type": label,
+                "properties": [property_key],
+                "message": "Index created successfully",
+            }
+        except Exception as exc:
+            return {"status": "error", "message": str(exc)}
     
     # Constraint Management
     
@@ -519,6 +645,32 @@ class KnowledgeGraphManager:
                 "message": str(e),
                 "constraint_name": constraint_name
             }
+
+    async def add_constraint(
+        self,
+        label: str,
+        property_key: str,
+        constraint_type: str = "unique",
+    ) -> Dict[str, Any]:
+        """Deprecated root-CLI alias using the current constraint API."""
+        try:
+            from ipfs_datasets_py.knowledge_graphs.constraints import ConstraintManager
+
+            manager = ConstraintManager()
+            if constraint_type == "exists":
+                name = manager.add_existence_constraint(property_key, label)
+            else:
+                name = manager.add_unique_constraint(property_key, label)
+            return {
+                "status": "success",
+                "constraint_name": name,
+                "constraint_type": constraint_type,
+                "entity_type": label,
+                "properties": [property_key],
+                "message": "Constraint added successfully",
+            }
+        except Exception as exc:
+            return {"status": "error", "message": str(exc)}
 
     # -------------------------------------------------------------------------
     # SRL, Ontology Reasoning, and Distributed Query (new features)

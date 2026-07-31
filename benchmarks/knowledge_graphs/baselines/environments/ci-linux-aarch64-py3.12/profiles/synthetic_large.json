@@ -1,0 +1,306 @@
+{
+  "baseline_id": "kg-bl-synthetic_large-ci-linux-aarch64-py3.12-v1",
+  "digest": "90e5ada5541f99170895a9ea47810bed47479fc109ce984c11b138f4e5200960",
+  "environment": {
+    "cpu_count": 20,
+    "cwd": "/home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/worktrees/lane-00/workspace-0f6623baf341-694b9ac01563",
+    "env_labels": {
+      "CI": "true",
+      "GITHUB_ACTIONS": null,
+      "HOSTNAME": null,
+      "IPFS_ACCELERATE_AGENT_TASK_CHECKPOINT_DIR": "/home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/state/implementation_checkpoints/kgp-030-b491a72fd9e4"
+    },
+    "environment_label": "ci-linux-aarch64-py3.12",
+    "hostname": "spark-b271",
+    "machine": "aarch64",
+    "pid": 2622819,
+    "platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.39",
+    "processor": "aarch64",
+    "python_executable": "/home/barberb/.local/bin/python",
+    "python_implementation": "CPython",
+    "python_version": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+    "release": "6.17.0-1014-nvidia",
+    "revision": {
+      "branch": "implementation/kgp-030-b491a72fd9e4-attempt-1-1785373224",
+      "commit": "517d86afdb52cf55bc50856d7c23ec3ca0c499ce",
+      "describe": "517d86afd",
+      "dirty": true,
+      "short": "517d86afdb52",
+      "source": "git"
+    },
+    "source_measurement_label": "ci-linux-aarch64-py3.12",
+    "system": "Linux"
+  },
+  "environment_label": "ci-linux-aarch64-py3.12",
+  "gates": {
+    "block_unexplained_p95_regression": true,
+    "block_unexplained_throughput_regression": true,
+    "correctness_errors_max": 0,
+    "p95_regression_max_ratio": 0.1,
+    "require_zero_correctness_errors": true,
+    "require_zero_security_errors": true,
+    "security_errors_max": 0,
+    "throughput_regression_max_ratio": 0.1
+  },
+  "methodology": {
+    "concurrent_workers": 1,
+    "discard_warmup": true,
+    "full_materialization": false,
+    "graph_count": 1,
+    "k_stdev": 3.0,
+    "margin_ratio": 0.25,
+    "matrix_mode": "storage",
+    "proxy_profile": "smoke",
+    "proxy_scale": {
+      "edge_factor": 2000,
+      "node_factor": 1000,
+      "p95_scale": 12.0,
+      "p99_scale": 15.0,
+      "recovery_scale": 10.0,
+      "rss_scale": 80.0,
+      "throughput_scale": 0.05
+    },
+    "re_ratify_on_lab_hardware": true,
+    "repetitions": 3,
+    "storage_profiles": [
+      "parquet"
+    ],
+    "surfaces": [
+      "python"
+    ],
+    "variance_model": "sample_std",
+    "warmup_operations": 8,
+    "warmup_runs": 1
+  },
+  "metrics": {
+    "elapsed_s": {
+      "bound": 216.55411465326324,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.01804722442766222,
+      "direction": "lower_is_better",
+      "max": 176.32398416288197,
+      "mean": 173.21314830953875,
+      "median": 173.2432917226106,
+      "min": 170.07216904312372,
+      "n": 3,
+      "samples": [
+        170.07216904312372,
+        173.2432917226106,
+        176.32398416288197
+      ],
+      "stdev": 3.1260165613641866
+    },
+    "heap_bytes_end": {
+      "bound": 1048576.0,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0,
+      "direction": "lower_is_better",
+      "max": 0.0,
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "n": 3,
+      "samples": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "stdev": 0.0
+    },
+    "max_rss_bytes": {
+      "bound": 4284825600.0,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0,
+      "direction": "lower_is_better",
+      "max": 3427860480.0,
+      "mean": 3427860480.0,
+      "median": 3427860480.0,
+      "min": 3427860480.0,
+      "n": 3,
+      "samples": [
+        3427860480.0,
+        3427860480.0,
+        3427860480.0
+      ],
+      "stdev": 0.0
+    },
+    "open_fds_end": {
+      "bound": 6.25,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0,
+      "direction": "lower_is_better",
+      "max": 5.0,
+      "mean": 5.0,
+      "median": 5.0,
+      "min": 5.0,
+      "n": 3,
+      "samples": [
+        5.0,
+        5.0,
+        5.0
+      ],
+      "stdev": 0.0
+    },
+    "ops_per_s": {
+      "bound": 1.8182522213002272,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.018054873936227855,
+      "direction": "higher_is_better",
+      "max": 2.4695398568916014,
+      "mean": 2.425284998717556,
+      "median": 2.42433629506697,
+      "min": 2.381978844194098,
+      "n": 3,
+      "samples": [
+        2.4695398568916014,
+        2.42433629506697,
+        2.381978844194098
+      ],
+      "stdev": 0.04378821491127001
+    },
+    "p50_ms": {
+      "bound": 131.08426006510854,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.03527663141184685,
+      "direction": "lower_is_better",
+      "max": 110.46648025512695,
+      "mean": 106.2287117044131,
+      "median": 104.86740805208683,
+      "min": 103.3522468060255,
+      "n": 3,
+      "samples": [
+        103.3522468060255,
+        104.86740805208683,
+        110.46648025512695
+      ],
+      "stdev": 3.7473911081519224
+    },
+    "p95_ms": {
+      "bound": 727.1233946084976,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.019750376111909287,
+      "direction": "lower_is_better",
+      "max": 586.2265219911933,
+      "mean": 577.50837597996,
+      "median": 581.6987156867981,
+      "min": 564.5998902618885,
+      "n": 3,
+      "samples": [
+        564.5998902618885,
+        581.6987156867981,
+        586.2265219911933
+      ],
+      "stdev": 11.406007633382128
+    },
+    "p99_ms": {
+      "bound": 972.3552197101526,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.006530663710849917,
+      "direction": "lower_is_better",
+      "max": 780.4071006830782,
+      "mean": 776.3106294441968,
+      "median": 777.8841757681221,
+      "min": 770.6406118813902,
+      "n": 3,
+      "samples": [
+        780.4071006830782,
+        770.6406118813902,
+        777.8841757681221
+      ],
+      "stdev": 5.069823656058273
+    },
+    "recovery_ms_mean": {
+      "bound": 258.2898419569557,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.1424041508949112,
+      "direction": "lower_is_better",
+      "max": 196.83280028402805,
+      "mean": 176.03957016641894,
+      "median": 183.08354541659355,
+      "min": 148.20236479863524,
+      "n": 3,
+      "samples": [
+        196.83280028402805,
+        183.08354541659355,
+        148.20236479863524
+      ],
+      "stdev": 25.068765513454032
+    },
+    "rss_bytes_end": {
+      "bound": 4090265600.0,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0015906320507402347,
+      "direction": "lower_is_better",
+      "max": 3274178560.0,
+      "mean": 3270246400.0,
+      "median": 3272212480.0,
+      "min": 3264348160.0,
+      "n": 3,
+      "samples": [
+        3264348160.0,
+        3272212480.0,
+        3274178560.0
+      ],
+      "stdev": 5201758.73765787
+    }
+  },
+  "notes": "1M-node / 10M-edge synthetic profile. Full materialization is environment-gated; this labelled baseline is scaled from multi-sample smoke measurements on the same host and must be re-ratified with repeated full runs before absolute SLOs bind on new hardware. Relative 10% p95/throughput regression gates and zero correctness/security error gates still apply to candidate receipts.",
+  "profile": "synthetic_large",
+  "profile_config": {
+    "concurrent_workers": 1,
+    "corpus_id": null,
+    "description": "Synthetic large: 1,000,000 nodes / 10,000,000 edges (opt-in).",
+    "graph_count": 1,
+    "measure_recovery": true,
+    "mix": {
+      "operations": 256,
+      "query_language": "scan",
+      "query_max_rows": 1000,
+      "query_weight": 0.35000000000000003,
+      "read_weight": 0.30000000000000004,
+      "write_batch_size": 4096,
+      "write_weight": 0.35000000000000003
+    },
+    "name": "synthetic_large",
+    "opt_in": true,
+    "repetitions": 1,
+    "seed": 1000000,
+    "shape": {
+      "edge_count": 10000000,
+      "graph_id": "shape",
+      "id_prefix": "n",
+      "node_count": 1000000,
+      "seed": 1000000,
+      "shape": "power_law",
+      "shard_count": 64,
+      "tenant": "load"
+    },
+    "storage_profiles": [
+      "parquet"
+    ],
+    "surfaces": [
+      "python"
+    ],
+    "tags": [
+      "synthetic",
+      "large",
+      "opt-in"
+    ],
+    "warmup_operations": 8
+  },
+  "ratification_method": "scaled_from_measured_proxy",
+  "ratified_at": 1785373722.5779984,
+  "schema": "ipfs-datasets.knowledge-graphs.load-baseline.v1",
+  "schema_version": 1,
+  "seed": 1000000,
+  "shape": {
+    "edge_count": 10000000,
+    "node_count": 1000000,
+    "seed": 1000000,
+    "shape": "power_law",
+    "shard_count": 64
+  },
+  "shape_fingerprint": null,
+  "status": "environment_gated",
+  "task_id": "KGP-030"
+}

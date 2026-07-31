@@ -1,51 +1,64 @@
-"""
-MCP tool for Semantic Role Labeling (SRL) extraction from text.
+"""MCP tool: SRL extraction bound to an explicit GraphTarget."""
 
-Thin wrapper around KnowledgeGraphManager.extract_srl().
-Core implementation: ipfs_datasets_py.core_operations.knowledge_graph_manager
-"""
+from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Mapping, Optional, Union
+
+from ._bridge import (
+    ABILITY_WRITE,
+    DEFAULT_BRANCH,
+    EFFECT_WRITE,
+    declare_mcp_plus,
+    error_envelope,
+    resolve_target,
+    wrap_specialized_result,
+)
 
 logger = logging.getLogger(__name__)
 
-from ipfs_datasets_py.core_operations import KnowledgeGraphManager
 
-
+@declare_mcp_plus(
+    ability=ABILITY_WRITE,
+    effects=[EFFECT_WRITE],
+    resource_template="kg://{tenant}/{graph_id}",
+    mutates=True,
+)
 async def graph_srl_extract(
-    text: str,
+    text: Optional[str] = None,
+    target: Optional[Union[str, Mapping[str, Any]]] = None,
+    *,
+    tenant: Optional[str] = None,
+    graph_id: Optional[str] = None,
+    graph: Optional[str] = None,
+    branch: Optional[str] = None,
     backend: str = "heuristic",
     return_triples: bool = False,
     return_temporal_graph: bool = False,
+    request_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """
-    Extract Semantic Role Labeling (SRL) frames from text.
+    """Extract SRL frames; requires an explicit graph target for attribution."""
+    op = "write"
+    t, err = resolve_target(
+        target=target,
+        tenant=tenant,
+        graph_id=graph_id,
+        graph=graph,
+        branch=branch,
+        require_graph=True,
+        default_branch=DEFAULT_BRANCH,
+        operation=op,
+    )
+    if err is not None:
+        return err
+    if not text:
+        return error_envelope(
+            op, "text is required", code="INVALID_REQUEST", target=t
+        )
 
-    Identifies predicate–argument structure (who did what to whom, where, when)
-    and returns a list of SRL frames, optionally as (subject, predicate, object)
-    triples or an event-centric temporal graph.
-
-    Args:
-        text: The input text to analyze.
-        backend: ``"heuristic"`` (default, no dependencies) or ``"spacy"``
-            (requires a loaded spaCy model).
-        return_triples: If ``True``, also return the frames as flat
-            ``(subject, predicate, object)`` triple tuples.
-        return_temporal_graph: If ``True``, also return an event-centric
-            temporal ordering graph (PRECEDES/OVERLAPS relationships).
-
-    Returns:
-        Dict containing:
-        - ``status``: ``"success"`` or ``"error"``
-        - ``frame_count``: number of SRL frames extracted
-        - ``frames``: list of frame dicts (predicate, roles, confidence)
-        - ``triples``: (if *return_triples* is True) list of
-          ``[subject, predicate, object]`` lists
-        - ``temporal_graph_nodes``: (if *return_temporal_graph* is True)
-          count of event nodes in the temporal graph
-    """
     try:
+        from ipfs_datasets_py.core_operations import KnowledgeGraphManager
+
         manager = KnowledgeGraphManager()
         result = await manager.extract_srl(
             text=text,
@@ -53,7 +66,9 @@ async def graph_srl_extract(
             return_triples=return_triples,
             return_temporal_graph=return_temporal_graph,
         )
-        return result
-    except Exception as e:
-        logger.error("Error in graph_srl_extract MCP tool: %s", e)
-        return {"status": "error", "message": str(e), "text_length": len(text)}
+        if not isinstance(result, dict):
+            result = {"status": "success", "result": result}
+        return wrap_specialized_result(op, target=t, payload=result, request_id=request_id)
+    except Exception as exc:
+        logger.exception("graph_srl_extract failed")
+        return error_envelope(op, str(exc), code="INTERNAL", target=t, request_id=request_id)

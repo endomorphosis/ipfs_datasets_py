@@ -1,0 +1,205 @@
+{
+  "catalog_version": "kg-conformance-vectors/v1",
+  "contract_version": "kg-service-contract/v1",
+  "query_envelope_version": "kg-query-envelope/v1",
+  "surfaces": ["python", "cli", "mcp", "mcp_plus"],
+  "description": "Exact cross-surface conformance vectors (KGP-020). Transport-neutral steps; surfaces compare canonical decoded envelopes after metadata normalization.",
+  "normalization": {
+    "strip_keys": [
+      "request_id",
+      "authorization_receipt_ref",
+      "created_at",
+      "lease_id",
+      "lease_epoch",
+      "snapshot_id",
+      "cursor",
+      "transaction_id",
+      "_cached",
+      "query",
+      "search_type",
+      "results",
+      "count"
+    ],
+    "strip_result_keys": [
+      "created_at",
+      "lease_id",
+      "lease_epoch",
+      "snapshot_id",
+      "transaction_id",
+      "base_revision"
+    ],
+    "strip_statistics_keys": ["elapsed_ms"],
+    "strip_error_detail_keys": ["error_type"],
+    "sort_rows_by": null
+  },
+  "vectors": [
+    {
+      "id": "lifecycle.create_list_describe_open",
+      "category": "lifecycle",
+      "title": "Create, list, describe, and open share exact revision metadata",
+      "mode": "shared_catalog",
+      "requires_seed": false,
+      "assertions": {
+        "status": "success",
+        "operations": ["create", "list", "describe", "open"],
+        "exact_fields": ["result.revision", "result.head_revision", "result.graph_id"]
+      }
+    },
+    {
+      "id": "mutation.write_entities_relationships",
+      "category": "mutation",
+      "title": "Write entities and relationships; scan returns exact rows and revision",
+      "mode": "shared_catalog",
+      "requires_seed": true,
+      "assertions": {
+        "status": "success",
+        "operation": "query",
+        "row_count": 5,
+        "exact_names": ["Ada", "C", "Grace", "Linus", "Python"],
+        "exact_ids": ["ada", "c", "grace", "linus", "python"]
+      }
+    },
+    {
+      "id": "cypher.match_person_return",
+      "category": "cypher",
+      "title": "Cypher-lite MATCH (n:Person) RETURN n row count is exact",
+      "mode": "shared_catalog",
+      "requires_seed": true,
+      "assertions": {
+        "status": "success",
+        "operation": "query",
+        "language": "cypher",
+        "row_count": 3,
+        "schema": "cypher-table/v1",
+        "truncated": false
+      }
+    },
+    {
+      "id": "traversal.count_entities_relationships",
+      "category": "traversal",
+      "title": "Count/stats traversal over seeded adjacency is exact",
+      "mode": "shared_catalog",
+      "requires_seed": true,
+      "assertions": {
+        "status": "success",
+        "operation": "query",
+        "language": "count",
+        "rows": [[5, 4]],
+        "row_count": 1,
+        "schema": "stats/v1"
+      }
+    },
+    {
+      "id": "hybrid.scan_search",
+      "category": "hybrid",
+      "title": "Hybrid/scan search returns the same envelope and rows",
+      "mode": "shared_catalog",
+      "requires_seed": true,
+      "assertions": {
+        "status": "success",
+        "operation": "query",
+        "row_count": 5,
+        "envelope_version": "kg-query-envelope/v1"
+      }
+    },
+    {
+      "id": "pagination.stream_pages",
+      "category": "pagination",
+      "title": "Pagination/streaming yields exact total rows and page exhaustion",
+      "mode": "shared_catalog",
+      "requires_seed": true,
+      "assertions": {
+        "status": "success",
+        "total_rows": 5,
+        "page_size": 2,
+        "page_count": 3,
+        "last_exhausted": true
+      }
+    },
+    {
+      "id": "transaction.begin_stage_commit",
+      "category": "transaction",
+      "title": "Transaction begin/stage/commit becomes visible with exact rows",
+      "mode": "per_surface",
+      "requires_seed": false,
+      "assertions": {
+        "status": "success",
+        "post_commit_row_count": 1,
+        "post_commit_name": "tx-node"
+      }
+    },
+    {
+      "id": "conflict.commit_after_head_move",
+      "category": "conflict",
+      "title": "Commit after concurrent head move returns CONFLICT",
+      "mode": "per_surface",
+      "requires_seed": false,
+      "assertions": {
+        "status": "error",
+        "error_code": "CONFLICT",
+        "retryable": true
+      }
+    },
+    {
+      "id": "restart.reopen_committed",
+      "category": "restart",
+      "title": "Independent reopen after write sees exact revision and rows",
+      "mode": "shared_catalog",
+      "requires_seed": true,
+      "assertions": {
+        "status": "success",
+        "row_count": 5
+      }
+    },
+    {
+      "id": "invalid_input.missing_target",
+      "category": "invalid-input",
+      "title": "Missing/invalid target yields INVALID_TARGET or INVALID_REQUEST",
+      "mode": "per_surface",
+      "requires_seed": false,
+      "assertions": {
+        "status": "error",
+        "error_codes": ["INVALID_TARGET", "INVALID_REQUEST"]
+      }
+    },
+    {
+      "id": "invalid_input.bad_cypher",
+      "category": "invalid-input",
+      "title": "Malformed Cypher without RETURN yields INTERNAL on all surfaces (QUERY_PARSE maps via catalog vocabulary)",
+      "mode": "shared_catalog",
+      "requires_seed": true,
+      "assertions": {
+        "status": "error",
+        "error_code": "INTERNAL",
+        "retryable": false
+      }
+    },
+    {
+      "id": "unavailable_backend.corrupt_payload",
+      "category": "unavailable-backend",
+      "title": "Corrupt payload backend returns INTERNAL (typed) on all surfaces",
+      "mode": "shared_catalog",
+      "requires_seed": true,
+      "corrupt_payloads": true,
+      "assertions": {
+        "status": "error",
+        "error_code": "INTERNAL",
+        "retryable": false
+      }
+    },
+    {
+      "id": "limit.max_rows_truncation",
+      "category": "limit",
+      "title": "max_rows budget truncates with exact row_count and truncated flag",
+      "mode": "shared_catalog",
+      "requires_seed": true,
+      "assertions": {
+        "status": "success",
+        "operation": "query",
+        "max_rows": 2,
+        "row_count": 2,
+        "truncated": true
+      }
+    }
+  ]
+}

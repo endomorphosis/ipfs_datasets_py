@@ -1,0 +1,241 @@
+{
+  "car_cids": {
+    "S0": "bafkreiasykm5q6djtjj736gkvwxmb7toqm2gom6wfw32bl6njmaujttmnq",
+    "S1": "bafkreibmt6zllvdxldu7yp7ekzkf3u5wk26s5quqwory7ixzxcdvwx6xv4",
+    "S2": "bafkreidipcrce36xd2ipsseiqddhovlddajm2titi3iyn4a2t5fugxcmqm"
+  },
+  "car_roots": {
+    "S0": "bafkreiex5s4es6pswqlm3hmconyatvhvbnkmhdwxjt5g6sfi33ye236pze",
+    "S1": "bafkreihmbd4uvujuborc2gl4j2snnm4yqt7vkg2tjni3h5zvmqvuifs5gy",
+    "S2": "bafkreib4yift5abwjslyaiysh5z7bvjtt27yyoi2r4kfki46do5k3za26q"
+  },
+  "car_sha256": {
+    "S0": "12c299d878699a53fdf8caadaec0fe6e83346733d62db7a0afcd4b0144ce6c6c",
+    "S1": "2c9fb2b5d47758e9fc3fe456545dd3b656bd2ec290b3a38fa2f9b8875b5fd7af",
+    "S2": "6878a2226fd71e90f9488880c67755631812cd4d1346d186f01a9f4b435c4c83"
+  },
+  "edge_count": 9,
+  "edges_by_shard": {
+    "S0": [
+      {
+        "properties": {
+          "rev": 1
+        },
+        "relationship_id": "87341b64-0fcf-4bc9-aadb-753493abd35d",
+        "source_id": "e02",
+        "target_id": "e07",
+        "type": "AUTHORED"
+      }
+    ],
+    "S1": [
+      {
+        "properties": {
+          "since": 2020
+        },
+        "relationship_id": "37ef35fc-ebb6-4dcb-bb59-d2669639850f",
+        "source_id": "e01",
+        "target_id": "e09",
+        "type": "WORKS_AT"
+      },
+      {
+        "properties": {
+          "strength": 0.8
+        },
+        "relationship_id": "78b005df-d875-4846-b8b3-3947169993cb",
+        "source_id": "e01",
+        "target_id": "e04",
+        "type": "KNOWS"
+      },
+      {
+        "properties": {
+          "title": "CISO"
+        },
+        "relationship_id": "bc9400a2-abe5-4d05-a0d4-88945d7277e0",
+        "source_id": "e08",
+        "target_id": "e09",
+        "type": "MEMBER_OF"
+      },
+      {
+        "properties": {
+          "since": 2019
+        },
+        "relationship_id": "bf55225b-1a92-4ec2-a04c-88ed42865c9c",
+        "source_id": "e04",
+        "target_id": "e09",
+        "type": "WORKS_AT"
+      },
+      {
+        "properties": {
+          "strength": 0.4
+        },
+        "relationship_id": "f5575c17-a822-4956-8550-dcebcc4192db",
+        "source_id": "e01",
+        "target_id": "e08",
+        "type": "KNOWS"
+      }
+    ],
+    "S2": [
+      {
+        "properties": {
+          "since": 2021
+        },
+        "relationship_id": "42f963f2-da04-4331-aba5-5a7a0e520c4d",
+        "source_id": "e06",
+        "target_id": "e03",
+        "type": "WORKS_AT"
+      },
+      {
+        "properties": {
+          "since": 2023
+        },
+        "relationship_id": "b03b6550-be9a-42f7-9d48-27c2046abe48",
+        "source_id": "e06",
+        "target_id": "e05",
+        "type": "WORKS_AT"
+      },
+      {
+        "properties": {
+          "year": 2022
+        },
+        "relationship_id": "e974e704-f853-4072-9da9-96eea45df4b8",
+        "source_id": "e03",
+        "target_id": "e05",
+        "type": "PARTNER_OF"
+      }
+    ]
+  },
+  "entities": {
+    "e01": {
+      "cid": "bafkreickmhj43tij62oig2z444ydyhkcqiwj23qwogmgtfcgqhhjbad3ee",
+      "name": "Alice",
+      "properties": {
+        "idx": 1,
+        "role": "lead"
+      },
+      "shard_id": "S1",
+      "type": "Person"
+    },
+    "e02": {
+      "cid": "bafkreidtjipq7j524glx6qjv7bcg7idj4dwqggj6a7hbar2hrnttbekw6m",
+      "name": "Bob",
+      "properties": {
+        "idx": 2,
+        "role": "dev"
+      },
+      "shard_id": "S0",
+      "type": "Person"
+    },
+    "e03": {
+      "cid": "bafkreih663feh7uvrmaibcmzzayo35q7l6ev7kdjivewdm75ptt5v5ci5i",
+      "name": "Acme",
+      "properties": {
+        "idx": 3,
+        "sector": "tech"
+      },
+      "shard_id": "S2",
+      "type": "Org"
+    },
+    "e04": {
+      "cid": "bafkreifjz4z6spuryyojzpfltmtot7vho6w5e7ka73vfvi5sv3vzv3wtpu",
+      "name": "Carol",
+      "properties": {
+        "idx": 4,
+        "role": "ops"
+      },
+      "shard_id": "S1",
+      "type": "Person"
+    },
+    "e05": {
+      "cid": "bafkreie7ieepc7lgher3ltuhcpfdz6jkxliggtso7yby35rus72cfn7x6m",
+      "name": "BetaCo",
+      "properties": {
+        "idx": 5,
+        "sector": "bio"
+      },
+      "shard_id": "S2",
+      "type": "Org"
+    },
+    "e06": {
+      "cid": "bafkreidskl5tdi7nexqzgmwo3vbp5r46wrdzkmay7sa2cstyomr3x26lfe",
+      "name": "Dave",
+      "properties": {
+        "idx": 6,
+        "role": "qa"
+      },
+      "shard_id": "S2",
+      "type": "Person"
+    },
+    "e07": {
+      "cid": "bafkreiavyj4dvfngpouqmdd65ey44zsebjvdzif2j6r2lb3sfyveqlukey",
+      "name": "Spec",
+      "properties": {
+        "idx": 7,
+        "version": "1"
+      },
+      "shard_id": "S0",
+      "type": "Document"
+    },
+    "e08": {
+      "cid": "bafkreie6qygtie6othibrowysychvuhkzhxiarkpi4533t7xet4cucqity",
+      "name": "Eve",
+      "properties": {
+        "idx": 8,
+        "role": "sec"
+      },
+      "shard_id": "S1",
+      "type": "Person"
+    },
+    "e09": {
+      "cid": "bafkreia476663a7s3au6svi6imns7dxlpm47l6ugnkxc44sxtlitm2n3me",
+      "name": "Gamma",
+      "properties": {
+        "idx": 9,
+        "sector": "fin"
+      },
+      "shard_id": "S1",
+      "type": "Org"
+    }
+  },
+  "entity_count": 9,
+  "fixture_id": "kgp-047-frozen-v1",
+  "graph_name": "kgp-047-frozen-v1",
+  "index_cids": {
+    "S0": {
+      "headers_cid": "bafkreihkt42wkxtlsjjjusovk37b62cdsyxjywgzgzu3nm43c6luhecnsq",
+      "type_index_cid": "bafkreihxf4g6tcq4oi4g733pvbmd7sz2eocw5mtnxgajk3luh3e72fwuju"
+    },
+    "S1": {
+      "headers_cid": "bafkreibqgxbwjwsjvhzyhm3ykukd2mbz4ca5rhhfko54g5semyddxkwviy",
+      "type_index_cid": "bafkreiboyhdu3xe3pxzwzmbnsgiex53aw5w6ai2y7h5igzn7pnoz4i4khq"
+    },
+    "S2": {
+      "headers_cid": "bafkreihc7h6ov3vagw4bhwwqoucn6jvly37qeemmgzojae42wt2mbx5o4i",
+      "type_index_cid": "bafkreihotpncspxqavtsjdor7rs356ys7i45fljbmkuptvq3w4rnx42aby"
+    }
+  },
+  "membership": {
+    "e01": "S1",
+    "e02": "S0",
+    "e03": "S2",
+    "e04": "S1",
+    "e05": "S2",
+    "e06": "S2",
+    "e07": "S0",
+    "e08": "S1",
+    "e09": "S1"
+  },
+  "num_shards": 3,
+  "packaging": {
+    "allow_binary": true,
+    "car_encoding": "binary",
+    "envelope_schema": "ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@2",
+    "task_id": "KGP-047"
+  },
+  "shard_ids_sorted": [
+    "S0",
+    "S1",
+    "S2"
+  ],
+  "shard_size_limit_bytes": 104857600,
+  "target_shard_bytes": 89128960
+}

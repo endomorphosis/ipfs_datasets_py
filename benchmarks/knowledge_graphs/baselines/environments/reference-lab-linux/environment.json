@@ -1,0 +1,13 @@
+{
+  "captured_from": "ci-linux-aarch64-py3.12",
+  "cpu_count": 20,
+  "environment_label": "reference-lab-linux",
+  "hostname": "spark-b271",
+  "machine": "aarch64",
+  "notes": "Absolute p95/p99/throughput bounds are environment-labelled and must not be treated as portable across hosts without re-ratification.",
+  "platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.39",
+  "portable_absolute_slos": false,
+  "python_version": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+  "source_measurement_label": "ci-linux-aarch64-py3.12",
+  "system": "Linux"
+}

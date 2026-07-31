@@ -24,6 +24,7 @@ from .types import (
     Operation,
     OperationType,
     WALEntry,
+    WALPhase,
     ConflictError,
     TransactionAbortedError,
 )
@@ -210,15 +211,40 @@ class TransactionManager:
                 f"Cannot commit {transaction.state.value} transaction"
             )
         
-        # Move to PREPARING state
+        # Multi-phase durable commit: PREPARING → PREPARE → COMPLETE (legacy
+        # single-engine path records PREPARE ops then COMPLETE/COMMITTED).
         transaction.state = TransactionState.PREPARING
+        transaction.phase = WALPhase.PREPARE
         
         try:
             # 1. Detect conflicts
             self._detect_conflicts(transaction)
             
-            # 2. Write WAL entry (durability)
-            wal_entry = WALEntry(
+            # 2. Durable PREPARE boundary (ops + staged intent)
+            prepare_entry = WALEntry(
+                txn_id=transaction.txn_id,
+                timestamp=time.time(),
+                operations=transaction.operations,
+                prev_wal_cid=self.wal.wal_head_cid,
+                txn_state=TransactionState.PREPARED,
+                isolation_level=transaction.isolation_level,
+                read_set=transaction.read_set,
+                write_set=transaction.write_set,
+                phase=WALPhase.PREPARE,
+                record_seq=1,
+            )
+            prepare_cid = self.wal.append(prepare_entry)
+            transaction.wal_entries.append(prepare_cid)
+            transaction.state = TransactionState.PREPARED
+            
+            # 3. Apply operations to graph (in-process publish)
+            self._apply_operations(transaction)
+            transaction.state = TransactionState.PUBLISHED
+            transaction.phase = WALPhase.PUBLISH
+            
+            # 4. Durable COMPLETE / COMMITTED boundary (legacy recover()
+            #    replays COMMITTED; COMPLETE is treated equivalently)
+            complete_entry = WALEntry(
                 txn_id=transaction.txn_id,
                 timestamp=time.time(),
                 operations=transaction.operations,
@@ -226,17 +252,16 @@ class TransactionManager:
                 txn_state=TransactionState.COMMITTED,
                 isolation_level=transaction.isolation_level,
                 read_set=transaction.read_set,
-                write_set=transaction.write_set
+                write_set=transaction.write_set,
+                phase=WALPhase.COMPLETE,
+                record_seq=2,
             )
+            complete_cid = self.wal.append(complete_entry)
+            transaction.wal_entries.append(complete_cid)
             
-            wal_cid = self.wal.append(wal_entry)
-            transaction.wal_entries.append(wal_cid)
-            
-            # 3. Apply operations to graph
-            self._apply_operations(transaction)
-            
-            # 4. Mark as committed
+            # 5. Mark as committed
             transaction.state = TransactionState.COMMITTED
+            transaction.phase = WALPhase.COMPLETE
             
             # Track committed writes
             for entity_id in transaction.write_set:
@@ -293,6 +318,7 @@ class TransactionManager:
             del self._active_transactions[transaction.txn_id]
         
         transaction.state = TransactionState.ABORTED
+        transaction.phase = WALPhase.ABORT
         transaction.operations.clear()
         
         logger.info(f"Transaction {transaction.txn_id} rolled back")
