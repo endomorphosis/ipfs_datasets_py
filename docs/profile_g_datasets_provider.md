@@ -36,6 +36,10 @@ A PlanBranch is always advisory. A TaskSpec is accepted only when its
 authority and policy material remains valid. Neighborhood support is placement
 confidence only and is never converted into execution authority.
 
+`TaskSpec.max_attempts` accepts `0` as the explicit unlimited-attempt sentinel
+used by the agent-supervisor runtimes; positive values remain bounded to
+`1..100`.
+
 The persistent store path used by the default server can be set with
 `IPFS_DATASETS_PROFILE_G_DB`. The default is in-memory; production deployments
 should set a durable path and configure the service before advertising it.

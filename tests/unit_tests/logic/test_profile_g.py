@@ -141,6 +141,13 @@ def test_tot_branch_is_not_actionable_without_matching_selection():
     task["selection_cid"] = selection_cid
     assert validator.validate_selection(selection) == selection_cid
     assert validator.validate_task(task) == profile_g_cid(task)
+    task["max_attempts"] = 0
+    assert validator.validate_task(task) == profile_g_cid(task)
+    task["max_attempts"] = 100
+    assert validator.validate_task(task) == profile_g_cid(task)
+    task["max_attempts"] = 101
+    with pytest.raises(ProfileGError, match=r"\[0, 100\]"):
+        validator.validate_task(task)
 
 
 def test_evidence_store_is_durable_bounded_and_redacts(tmp_path):
