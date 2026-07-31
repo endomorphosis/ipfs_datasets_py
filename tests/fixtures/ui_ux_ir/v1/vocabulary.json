@@ -496,7 +496,7 @@
   "extension_policy": {
     "core_validation": "closed_fail_closed",
     "extensions": "versioned_namespaced_extension_records_only",
-    "identity_effect": "admitted_versioned_namespaced_extension_records_are_declaration_content_and_affect_canonical_bytes_and_ui_ir_cid;observations_telemetry_projections_proof_policy_and_other_derived_runtime_artifacts_are_not_extensions_and_remain_outside_declaration_identity",
+    "identity_effect": "admitted_versioned_namespaced_extension_records_are_declaration_content_and_affect_canonical_bytes_and_ui_ir_cid; observations_telemetry_projections_proof_policy_and_other_derived_runtime_artifacts_are_not_extensions_and_remain_outside_declaration_identity",
     "subset_expansion": "requires_reviewed_admission_no_speculation",
     "migrations": "deterministic_cycle_free_with_loss_receipts",
     "declaration_content": "every_admitted_versioned_namespaced_extension_record_is_declaration_content",
