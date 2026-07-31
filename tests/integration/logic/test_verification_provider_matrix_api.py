@@ -166,6 +166,39 @@ def test_default_registry_registers_lazy_matrix_without_probes() -> None:
         assert item["availability"] == "declared"
 
 
+@pytest.mark.parametrize(
+    ("alias", "canonical_id", "logic_family"),
+    (
+        ("coq", "rocq", "software_verification"),
+        ("coqc", "rocq", "software_verification"),
+        ("e", "eprover", "first_order"),
+    ),
+)
+def test_default_registry_dispatches_declared_provider_aliases(
+    alias: str,
+    canonical_id: str,
+    logic_family: str,
+) -> None:
+    registry = default_backend_registry()
+    request = BackendRequest(
+        request_id=f"req:{alias}",
+        claim_id=f"claim:{alias}",
+        declaration_id=f"decl:{alias}",
+        claim_digest=stable_digest({"claim": alias}),
+        obligation_id=f"obl:{alias}",
+        obligation_digest=stable_digest({"obligation": alias}),
+        assumption_ids=(),
+        logic_family=logic_family,
+        query_kind=QueryKind.THEOREM_PROOF,
+        bounds=ExecutionBounds(timeout_ms=1_000),
+        payload=FrozenMap({"statement": "True"}),
+        requested_backend_id=alias,
+    )
+
+    assert registry[alias] is registry[canonical_id]
+    assert registry.supporting(request) == (canonical_id,)
+
+
 def test_list_providers_exposes_full_matrix_declaratively() -> None:
     api = get_verification_api(reset=True)
     response = api.list_providers()

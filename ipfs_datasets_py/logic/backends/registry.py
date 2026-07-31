@@ -725,12 +725,14 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
 
     def __init__(self, backends: Iterable[ProofBackend] = ()) -> None:
         self._backends: dict[str, ProofBackend] = {}
+        self._aliases: dict[str, str] = {}
         for backend in backends:
             self.register(backend)
 
     def __getitem__(self, backend_id: str) -> ProofBackend:
+        canonical_id = self._aliases.get(backend_id, backend_id)
         try:
-            return self._backends[backend_id]
+            return self._backends[canonical_id]
         except KeyError as error:
             raise UnknownBackendError(
                 f"backend {backend_id!r} is not registered"
@@ -763,24 +765,43 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
         _text(backend.backend_version, "backend_version")
         if not isinstance(backend.capabilities, BackendCapabilities):
             raise TypeError("backend capabilities must be BackendCapabilities")
-        if backend_id in self._backends:
+        if backend_id in self._backends or backend_id in self._aliases:
             raise DuplicateBackendError(
                 f"backend {backend_id!r} is already registered"
             )
+        matrix_entry = getattr(backend, "matrix_entry", None)
+        aliases = tuple(getattr(matrix_entry, "aliases", ()) or ())
+        canonical_aliases: list[str] = []
+        for raw_alias in aliases:
+            alias = _text(raw_alias, "backend alias")
+            if alias == backend_id:
+                continue
+            if alias in self._backends or alias in self._aliases:
+                raise DuplicateBackendError(
+                    f"backend alias {alias!r} is already registered"
+                )
+            canonical_aliases.append(alias)
         self._backends[backend_id] = backend
+        self._aliases.update(
+            {alias: backend_id for alias in canonical_aliases}
+        )
 
     def supporting(self, request: BackendRequest) -> tuple[str, ...]:
         """Return capable IDs without invoking backend ``supports`` methods."""
 
         if not isinstance(request, BackendRequest):
             raise TypeError("request must be a BackendRequest")
+        requested_backend_id = self._aliases.get(
+            request.requested_backend_id,
+            request.requested_backend_id,
+        )
         return tuple(
             backend_id
             for backend_id in self
             if (
                 (
-                    not request.requested_backend_id
-                    or request.requested_backend_id == backend_id
+                    not requested_backend_id
+                    or requested_backend_id == backend_id
                 )
                 and self._backends[backend_id].capabilities.supports(
                     request.logic_family, request.query_kind
@@ -810,11 +831,18 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
 
         if not isinstance(request, BackendRequest):
             raise TypeError("request must be a BackendRequest")
-        selected_id = backend_id or request.requested_backend_id
+        selected_id = self._aliases.get(
+            backend_id or request.requested_backend_id,
+            backend_id or request.requested_backend_id,
+        )
         if (
             backend_id
             and request.requested_backend_id
-            and backend_id != request.requested_backend_id
+            and self._aliases.get(backend_id, backend_id)
+            != self._aliases.get(
+                request.requested_backend_id,
+                request.requested_backend_id,
+            )
         ):
             raise BackendRegistryError(
                 "backend_id conflicts with request.requested_backend_id"
@@ -1224,6 +1252,7 @@ EXECUTABLE_PROVIDER_MATRIX: Final[tuple[ProviderMatrixEntry, ...]] = (
             "software_verification",
         ),
         query_kinds=("theorem_proof",),
+        aliases=("coq", "coqc"),
         factory_key="rocq",
     ),
     _matrix_entry(

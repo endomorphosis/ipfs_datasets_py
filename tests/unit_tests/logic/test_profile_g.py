@@ -60,11 +60,35 @@ def risk_model():
 
 def test_normative_artifact_vectors_have_cid_and_error_parity():
     root = Path(__file__).resolve().parents[3]
-    vector_root = root.parent.parent / "Mcp-Plus-Plus" / "conformance" / "vectors"
-    valid = json.loads((vector_root / "profile_g_artifacts_valid.json").read_text())
+    candidates = (
+        root.parent / "ipfs_accelerate_py" / "mcplusplus" / "conformance" / "vectors",
+        root.parent.parent / "Mcp-Plus-Plus" / "conformance" / "vectors",
+    )
+    required = (
+        "profile_g_artifacts_valid.json",
+        "profile_g_artifacts_invalid.json",
+    )
+    vector_root = next(
+        (
+            candidate
+            for candidate in candidates
+            if all((candidate / name).is_file() for name in required)
+        ),
+        None,
+    )
+    if vector_root is None:
+        pytest.fail(
+            "normative Profile-G vectors are missing; searched: "
+            + ", ".join(str(candidate) for candidate in candidates)
+        )
+    valid = json.loads(
+        (vector_root / "profile_g_artifacts_valid.json").read_text(encoding="utf-8")
+    )
     for case in valid["cases"]:
         assert validate_profile_g_artifact(case["kind"], case["payload"]) == case["expected_cid"]
-    invalid = json.loads((vector_root / "profile_g_artifacts_invalid.json").read_text())
+    invalid = json.loads(
+        (vector_root / "profile_g_artifacts_invalid.json").read_text(encoding="utf-8")
+    )
     for case in invalid["cases"]:
         with pytest.raises(ProfileGError) as caught:
             validate_profile_g_artifact(case["kind"], case["payload"])

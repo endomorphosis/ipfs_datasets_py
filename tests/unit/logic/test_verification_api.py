@@ -255,7 +255,7 @@ def test_monitor_receipt_advisor_and_opt_in_ops() -> None:
     assert monitored.authority is VerificationAuthority.MONITOR
     assert monitored.result["verdict"] in {"true", "false", "unknown", ""}
 
-    receipt = api.verify_receipt(
+    legacy_untyped_receipt = api.verify_receipt(
         {
             "receipt_id": "rcpt:1",
             "authority": "bounded",
@@ -263,8 +263,10 @@ def test_monitor_receipt_advisor_and_opt_in_ops() -> None:
             "kind": "proof_receipt",
         }
     )
-    assert receipt.status is VerificationStatus.SUCCEEDED
-    assert receipt.authority is VerificationAuthority.BOUNDED
+    # Closed dispatch requires the canonical typed receipt schema; a legacy
+    # mapping must never acquire authority from self-declared string fields.
+    assert legacy_untyped_receipt.status is VerificationStatus.INVALID
+    assert legacy_untyped_receipt.authority is VerificationAuthority.NONE
 
     missing_receipt = api.verify_receipt(None)
     assert missing_receipt.status is VerificationStatus.INVALID
