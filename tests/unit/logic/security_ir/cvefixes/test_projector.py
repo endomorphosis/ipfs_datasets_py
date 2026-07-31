@@ -143,6 +143,18 @@ def test_python_projection_is_deterministic_paired_and_provenance_bound() -> Non
         first.pairs[0].path = "changed.py"  # type: ignore[misc]
 
 
+def test_nul_body_identity_is_preserved_but_public_excerpt_is_escaped() -> None:
+    body = "value = '" + "\x00" + "'"
+    result = project_cvefixes_row(
+        _row(vulnerable_code=body, fixed_code=body, diff_with_context="")
+    )
+
+    assert result.code_units
+    assert all("\x00" not in unit.payload["excerpt"] for unit in result.code_units)
+    assert all(unit.payload["excerpt_sanitized_nul"] for unit in result.code_units)
+    assert DiagnosticCode.SYNTAX_UNPARSEABLE in _codes(result)
+
+
 def test_grounded_facts_cover_semantic_kinds_without_granting_authority() -> None:
     result = project_cvefixes_row(_row())
 

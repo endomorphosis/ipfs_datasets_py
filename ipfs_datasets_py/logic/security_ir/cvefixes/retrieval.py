@@ -18,6 +18,7 @@ from collections import deque
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
+import hashlib
 import json
 import math
 import re
@@ -33,6 +34,8 @@ RETRIEVAL_SCHEMA_VERSION: Final = "cvefixes-graphrag-retrieval/v1"
 RETRIEVAL_CONFIG_SCHEMA_VERSION: Final = "cvefixes-graphrag-retrieval-config/v1"
 RETRIEVAL_IDENTITY_DOMAIN: Final = "cvefixes-security-ir/graphrag-retrieval"
 NO_EMBEDDING_MODEL: Final = "none"
+RETRIEVAL_MAX_LIST_ITEMS: Final = 128
+RETRIEVAL_MAX_LIST_ITEM_LENGTH: Final = 512
 _TOKEN_RE = re.compile(r"[A-Za-z0-9]+(?:[-_./:][A-Za-z0-9]+)*")
 _GRANT_KEYS = frozenset(
     {
@@ -119,8 +122,8 @@ def _strings(
     value: Any,
     label: str,
     *,
-    maximum_items: int = 128,
-    maximum_length: int = 512,
+    maximum_items: int = RETRIEVAL_MAX_LIST_ITEMS,
+    maximum_length: int = RETRIEVAL_MAX_LIST_ITEM_LENGTH,
 ) -> tuple[str, ...]:
     if isinstance(value, (str, bytes, bytearray)) or not isinstance(
         value, Sequence
@@ -803,22 +806,35 @@ def _payload_values(payload: Mapping[str, Any]) -> tuple[str, ...]:
     return tuple(values)
 
 
+def _bounded_filter_value(value: Any) -> str:
+    text = str(value).strip()
+    if len(text) <= RETRIEVAL_MAX_LIST_ITEM_LENGTH:
+        return text
+    suffix = f"[sha256:{hashlib.sha256(text.encode('utf-8')).hexdigest()}]"
+    prefix_length = RETRIEVAL_MAX_LIST_ITEM_LENGTH - len(suffix)
+    return f"{text[:prefix_length]}{suffix}"
+
+
 def _categorize_node(node: GraphNode) -> dict[str, tuple[str, ...]]:
     payload = node.payload
     node_type = node.node_type
-    cwes = (str(payload["cwe_id"]),) if node_type == "cwe" and payload.get("cwe_id") else ()
+    cwes = (
+        (_bounded_filter_value(payload["cwe_id"]),)
+        if node_type == "cwe" and payload.get("cwe_id")
+        else ()
+    )
     languages = (
-        (str(payload["language"]),)
+        (_bounded_filter_value(payload["language"]),)
         if node_type == "language" and payload.get("language")
         else ()
     )
-    predicate = str(payload.get("predicate", "")).strip()
+    predicate = _bounded_filter_value(payload.get("predicate", ""))
     code_facts = (predicate,) if predicate else ()
     actions = code_facts if node_type == "action" else ()
     effects = code_facts if node_type in {"effect", "mitigation"} else ()
     policies = (
         tuple(
-            str(value)
+            _bounded_filter_value(value)
             for key, value in sorted(payload.items())
             if key in {"policy", "policy_id", "effect"} and isinstance(value, str)
         )
@@ -862,6 +878,17 @@ def graph_entries(
         shard_key = f"{partition}:{bucket:04d}"
         values = _payload_values(node.payload)
         categories = _categorize_node(node)
+        source_cids = node.source_cids
+        if len(source_cids) > RETRIEVAL_MAX_LIST_ITEMS:
+            source_cids = (graph.graph_root,)
+            categories["policies"] = tuple(
+                sorted(
+                    {
+                        *categories["policies"],
+                        "aggregate_provenance_via_graph_root",
+                    }
+                )
+            )
         entries.append(
             RetrievalEntry(
                 node_cid=node.cid,
@@ -869,7 +896,7 @@ def graph_entries(
                 shard_key=shard_key,
                 kind=node.node_type,
                 text=" ".join((node.node_type, *values))[:4096],
-                source_cids=node.source_cids,
+                source_cids=source_cids,
                 authority=RetrievalAuthority(node.authority.value),
                 **categories,
             )
@@ -1253,6 +1280,8 @@ def retrieve_cvefixes(
 __all__ = [
     "NO_EMBEDDING_MODEL",
     "RETRIEVAL_CONFIG_SCHEMA_VERSION",
+    "RETRIEVAL_MAX_LIST_ITEMS",
+    "RETRIEVAL_MAX_LIST_ITEM_LENGTH",
     "RETRIEVAL_SCHEMA_VERSION",
     "BoundedHybridRetriever",
     "EmbeddingAcceleratorPort",

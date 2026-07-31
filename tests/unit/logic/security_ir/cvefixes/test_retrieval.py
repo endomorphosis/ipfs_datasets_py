@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
 
 import pytest
 
@@ -26,6 +27,7 @@ from ipfs_datasets_py.logic.security_ir.cvefixes.retrieval import (
     RetrievalScopeError,
     RetrievalValidationError,
     build_retrieval_index,
+    graph_entries,
     retrieve_cvefixes,
 )
 from ipfs_datasets_py.logic.security_ir.cvefixes.schemas import GraphEdge, GraphNode
@@ -127,6 +129,44 @@ def _policy_entry(
         effects=("deny",),
         policies=("path-confinement",),
         graph_node=False,
+    )
+
+
+def test_graph_entries_compact_aggregate_provenance_and_long_filters() -> None:
+    sources = tuple(_cid(f"aggregate-source-{index}") for index in range(129))
+    projection_cid = _cid("aggregate-projection")
+    config_cid = GraphConfig().cid
+    predicate = f"call:{'x' * 600}"
+    node = GraphNode(
+        source_cids=sources,
+        parent_cids=(projection_cid,),
+        config_cid=config_cid,
+        node_type=GraphNodeType.ACTION.value,
+        payload={
+            "grants_execution_authority": False,
+            "predicate": predicate,
+            "retrieval_only": True,
+        },
+    )
+    graph = CVEfixesGraph(
+        nodes=(node,),
+        edges=(),
+        source_cids=sources,
+        projection_cids=(projection_cid,),
+        config_cid=config_cid,
+    )
+
+    entry = graph_entries(
+        graph,
+        partition_by_node={node.cid: "train"},
+    )[0]
+
+    assert entry.source_cids == (graph.graph_root,)
+    assert "aggregate_provenance_via_graph_root" in entry.policies
+    assert len(entry.code_facts) == 1
+    assert len(entry.code_facts[0]) == 512
+    assert hashlib.sha256(predicate.encode("utf-8")).hexdigest() in (
+        entry.code_facts[0]
     )
 
 
