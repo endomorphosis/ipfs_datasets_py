@@ -255,6 +255,57 @@ def test_row_adapter_accepts_json_description_and_nullable_source_values() -> No
     assert record.fixed_code is None
 
 
+def test_row_adapter_preserves_nul_bytes_only_in_inert_body_evidence() -> None:
+    row = _row()
+    nul_body = "assert value == '" + "\x00" + "'"
+    row["fixed_code"] = nul_body
+
+    record = adapt_cvefixes_row(row, row_index=0)
+
+    assert record.fixed_code == nul_body
+
+    row["commit_message"] = "metadata" + "\x00" + "must-fail"
+    with pytest.raises(CVEfixesRowError, match="must not contain NUL"):
+        adapt_cvefixes_row(row, row_index=0)
+
+
+@pytest.mark.parametrize(
+    "repo_url",
+    (
+        "https://github.com/example/project",
+        "https://gitlab.com/example/project",
+        "https://bitbucket.org/example/project",
+    ),
+)
+def test_row_adapter_accepts_every_reviewed_source_host(repo_url: str) -> None:
+    row = _row()
+    row["repo_url"] = repo_url
+
+    assert adapt_cvefixes_row(row, row_index=0).repo_url == repo_url
+
+
+@pytest.mark.parametrize(
+    "repo_url",
+    (
+        "http://github.com/example/project",
+        "https://example.com/example/project",
+        "https://user:password@github.com/example/project",
+        "https://github.com/example/project?token=unsafe",
+    ),
+)
+def test_row_adapter_rejects_unreviewed_or_credentialed_repository_urls(
+    repo_url: str,
+) -> None:
+    row = _row()
+    row["repo_url"] = repo_url
+
+    with pytest.raises(
+        CVEfixesRowError,
+        match="reviewed HTTPS source repository",
+    ):
+        adapt_cvefixes_row(row, row_index=0)
+
+
 @pytest.mark.parametrize(
     ("change", "match"),
     [

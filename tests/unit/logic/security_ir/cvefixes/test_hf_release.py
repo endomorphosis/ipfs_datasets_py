@@ -180,15 +180,64 @@ def test_parquet_configs_are_bounded_strict_and_round_trip_records() -> None:
 
     infos = json.loads(release.artifact("dataset_infos.json").content)
     assert set(infos["configs"]) == {
+        "corpus_chunk_index",
         "evaluation",
         "graph_node",
+        "graph_node_chunk_index",
         "policy_candidate",
         "source_record",
     }
     assert sum(
         config["splits"]["train"]["num_examples"]
         for config in infos["configs"].values()
-    ) == 4
+    ) == 8
+
+
+def test_skillcenter_compatible_meta_indexes_bind_every_data_shard() -> None:
+    release = _release(
+        parquet_config=ParquetReleaseConfig(
+            max_records=10,
+            max_rows_per_shard=1,
+            max_shards_per_config=4,
+            max_shard_bytes=1_000_000,
+            row_group_size=1,
+        )
+    )
+
+    assert {item.path for item in release.index_artifacts} == {
+        "indexes/corpus_chunks.parquet",
+        "indexes/graph_node_chunks.parquet",
+    }
+    covered: set[str] = set()
+    for artifact in release.index_artifacts:
+        table = pq.read_table(io.BytesIO(artifact.content))
+        assert table.schema.names == [
+            "cid",
+            "end_document_index",
+            "first_key",
+            "kind",
+            "last_key",
+            "relative_path",
+            "row_count",
+            "schema_version",
+            "sha256",
+            "shard_id",
+            "size_bytes",
+            "start_document_index",
+        ]
+        for row in table.to_pylist():
+            target = release.artifact(row["relative_path"])
+            assert row["cid"] == target.content_id
+            assert row["sha256"] == target.sha256
+            assert row["size_bytes"] == len(target.content)
+            assert row["row_count"] == target.row_count
+            covered.add(row["relative_path"])
+    assert covered == {item.path for item in release.parquet_artifacts}
+    manifest = json.loads(release.artifact("manifest.json").content)
+    assert set(manifest["indexes"]) == {"corpus_chunks", "graph_node_chunks"}
+    card = release.artifact("README.md").content.decode()
+    assert "config_name: \"corpus_chunk_index\"" in card
+    assert "path: \"indexes/corpus_chunks.parquet\"" in card
 
 
 def test_dataset_card_documents_source_license_profile_and_limitations() -> None:
@@ -270,6 +319,24 @@ def test_secrets_caches_and_internal_bodies_never_enter_staging(
             _dataset(extra_payload=payload),
             license_provenance=_license(),
         )
+
+
+def test_public_body_digest_receipt_is_not_mistaken_for_full_body() -> None:
+    release = build_huggingface_release(
+        _dataset(
+            extra_payload={
+                "body_digests": {
+                    "vulnerable_code": {
+                        "sha256": "a" * 64,
+                        "utf8_bytes": 42,
+                    }
+                }
+            }
+        ),
+        license_provenance=_license(),
+    )
+
+    assert release.release_root.startswith("b")
 
 
 def test_unreviewed_or_nonredistributable_license_fails_closed() -> None:

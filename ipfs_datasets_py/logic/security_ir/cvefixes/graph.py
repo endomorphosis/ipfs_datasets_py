@@ -1066,14 +1066,20 @@ class CVEfixesGraphBuilder:
                 "retrieval_only": True,
             }
         )
+        source_evidence = (
+            set(source.source_cids) & set(target.source_cids)
+        ) | set(extra_source_cids)
+        if not source_evidence:
+            raise GraphBuildError(
+                "graph edge has no shared or explicit source evidence"
+            )
         return GraphEdge(
-            source_cids=tuple(
-                sorted(
-                    set(source.source_cids)
-                    | set(target.source_cids)
-                    | set(extra_source_cids)
-                )
-            ),
+            # An edge is supported by evidence shared by both endpoints, plus
+            # any explicit observation receipt.  Copying the union of
+            # aggregate endpoint provenance into every edge is both
+            # semantically too broad and quadratic for common CVE/language/
+            # repository nodes.
+            source_cids=tuple(sorted(source_evidence)),
             parent_cids=(source.cid, target.cid),
             config_cid=self.config_cid,
             edge_type=edge_type.value,

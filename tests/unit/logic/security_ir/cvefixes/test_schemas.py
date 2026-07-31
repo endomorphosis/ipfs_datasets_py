@@ -94,7 +94,7 @@ def _records() -> tuple[object, ...]:
     )
     manifest = ReleaseManifest(
         **_bindings(evaluation.cid),
-        dataset_id="sofiyapervane/cvefixes-security-ir-graphrag",
+        dataset_id="Publicus/cvefixes-security-ir-graphrag",
         profile="public",
         record_cids=tuple(
             item.cid

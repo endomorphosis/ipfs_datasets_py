@@ -971,8 +971,14 @@ class _ProjectionBuilder:
                     if polarity == "vulnerable"
                     else EvidencePolarity.FIXED_NEGATIVE.value
                 ),
-                "excerpt": body[: self.config.max_excerpt_chars],
-                "excerpt_truncated": len(body) > self.config.max_excerpt_chars,
+                "excerpt": body.replace("\x00", "\\x00")[
+                    : self.config.max_excerpt_chars
+                ],
+                "excerpt_sanitized_nul": "\x00" in body,
+                "excerpt_truncated": (
+                    len(body.replace("\x00", "\\x00"))
+                    > self.config.max_excerpt_chars
+                ),
                 "extraction_method": ExtractionMethod.DETERMINISTIC_SYNTAX.value,
                 "grants_execution_authority": False,
                 "pair_key": pair_key,

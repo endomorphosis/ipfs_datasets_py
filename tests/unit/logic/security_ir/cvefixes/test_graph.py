@@ -213,6 +213,21 @@ def test_all_edges_bind_sources_existing_endpoints_and_non_authority() -> None:
     )
 
 
+def test_edges_bind_shared_evidence_instead_of_endpoint_union() -> None:
+    graph = CVEfixesGraphBuilder().build(
+        (_projection("a"), _projection("b"))
+    )
+    nodes = {item.cid: item for item in graph.nodes}
+
+    assert any(len(item.source_cids) > 1 for item in graph.nodes)
+    for edge in graph.edges:
+        source = nodes[edge.source_node_cid]
+        target = nodes[edge.target_node_cid]
+        assert set(edge.source_cids) == (
+            set(source.source_cids) & set(target.source_cids)
+        )
+
+
 def test_similarity_is_separate_explicitly_non_authoritative_evidence() -> None:
     projection = _projection()
     vulnerable, fixed = projection.code_units

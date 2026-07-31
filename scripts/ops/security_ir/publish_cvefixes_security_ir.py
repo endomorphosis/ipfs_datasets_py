@@ -15,6 +15,7 @@ remote artifact, and the Dataset Viewer shards/features have been verified.
 from __future__ import annotations
 
 import argparse
+import base64
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -31,12 +32,59 @@ from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 
-DEFAULT_TARGET_REPO: Final = "sofiyapervane/cvefixes-security-ir-graphrag"
+DEFAULT_TARGET_REPO: Final = "Publicus/cvefixes-security-ir-graphrag"
 PUBLICATION_RECEIPT_VERSION: Final = (
     "cvefixes-security-ir-publication-receipt/v1"
 )
 RELEASE_SCHEMA_VERSION: Final = "cvefixes-huggingface-release/v1"
 PARQUET_SCHEMA_VERSION: Final = "cvefixes-huggingface-parquet/v1"
+# Complete releases use README config declarations, like SkillCenter.  The
+# legacy name remains readable only for old, non-complete release layouts.
+COMPLETE_RELEASE_METADATA_PATH: Final = "release-metadata.json"
+LEGACY_RELEASE_METADATA_PATH: Final = "dataset_infos.json"
+ORIGINAL_MIRROR_PROFILE: Final = "cvefixes-byte-preserving-mirror/v1"
+ORIGINAL_ROW_INDEX_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-original-row-index/v1"
+)
+PINNED_SOURCE_DATASET_ID: Final = "hitoshura25/cvefixes"
+PINNED_SOURCE_REVISION: Final = "d4f5c4ea65329d9ccbb8a3b3149e5d06eda5edb2"
+PINNED_SOURCE_PROFILE_SHA256: Final = (
+    "163e267f9ffd9b5d0193dc26014b775c8ebb7dc804772473ef8a6aa8bd3eb3d1"
+)
+
+
+@dataclass(frozen=True, slots=True)
+class OriginalShardContract:
+    release_path: str
+    source_path: str
+    sha256: str
+    size_bytes: int
+    row_count: int
+
+
+PINNED_ORIGINAL_SHARDS: Final[tuple[OriginalShardContract, ...]] = (
+    OriginalShardContract(
+        release_path="data/original/part-000000.parquet",
+        source_path="data/train-00000-of-00003.parquet",
+        sha256="2e25e84e85e1560d41acacbfc7eb359349f5417bc9bf31318cdf0c4aafccb7d1",
+        size_bytes=211_599_861,
+        row_count=4_329,
+    ),
+    OriginalShardContract(
+        release_path="data/original/part-000001.parquet",
+        source_path="data/train-00001-of-00003.parquet",
+        sha256="3a4251f39955f95c232b4aea98daa59bbe0c7b5e27c9189c1b09f64b960a35d7",
+        size_bytes=428_366_432,
+        row_count=4_329,
+    ),
+    OriginalShardContract(
+        release_path="data/original/part-000002.parquet",
+        source_path="data/train-00002-of-00003.parquet",
+        sha256="55488d569ac978ea077be643233355f43458d636d04ad3ae1cb973895b02a3ac",
+        size_bytes=580_353_186,
+        row_count=4_329,
+    ),
+)
 EXPECTED_COLUMNS: Final[tuple[str, ...]] = (
     "record_id",
     "record_type",
@@ -46,11 +94,312 @@ EXPECTED_COLUMNS: Final[tuple[str, ...]] = (
     "config_cid",
     "record_json",
 )
+CORPUS_COLUMNS: Final[tuple[str, ...]] = (
+    "document_index",
+    "entry_cid",
+    "node_cid",
+    "title",
+    "text",
+    "partition",
+    "shard_key",
+    "kind",
+    "authority",
+    "source_cids",
+    "cwes",
+    "languages",
+    "code_facts",
+    "actions",
+    "effects",
+    "policies",
+    "graph_node",
+    "grants_execution_authority",
+    "text_sha256",
+    "schema_version",
+)
+BM25_DOCUMENT_COLUMNS: Final[tuple[str, ...]] = (
+    "authority",
+    "body_length",
+    "body_sha256",
+    "document_index",
+    "document_length",
+    "entry_cid",
+    "record_type",
+    "schema_version",
+    "title",
+    "title_length",
+    "token_input_sha256",
+)
+BM25_POSTING_COLUMNS: Final[tuple[str, ...]] = (
+    "body_frequencies",
+    "corpus_frequency",
+    "document_frequency",
+    "document_indices",
+    "document_lengths",
+    "idf",
+    "posting_chunk_count",
+    "posting_chunk_index",
+    "schema_version",
+    "term",
+    "title_frequencies",
+)
+GRAPH_NODE_COLUMNS: Final[tuple[str, ...]] = (
+    "node_cid",
+    "node_type",
+    "entry_cid",
+    "label",
+    "properties_json",
+    "schema_version",
+)
+GRAPH_EDGE_COLUMNS: Final[tuple[str, ...]] = (
+    "edge_cid",
+    "edge_type",
+    "source_cid",
+    "target_cid",
+    "retrieval_method",
+    "score",
+    "query_terms_json",
+    "properties_json",
+    "schema_version",
+)
+GRAPH_ADJACENCY_COLUMNS: Final[tuple[str, ...]] = (
+    "direction",
+    "edge_cids",
+    "edge_types",
+    "neighbor_cids",
+    "neighbor_count",
+    "neighbor_node_types",
+    "node_cid",
+    "page_count",
+    "page_index",
+    "retrieval_methods",
+    "schema_version",
+    "scores",
+    "total_neighbor_count",
+)
+VECTOR_COLUMNS: Final[tuple[str, ...]] = (
+    "chunk_id",
+    "cluster_id",
+    "entry_cid",
+    "faiss_id",
+    "document_index",
+    "corpus_chunk_id",
+    "corpus_row_offset",
+    "node_cid",
+    "retrieval_shard_id",
+    "partition",
+    "kind",
+    "authority",
+    "source_cids",
+    "has_embedding",
+    "embedding",
+    "model_id",
+    "model_revision",
+    "model_config_cid",
+    "retrieval_index_root",
+    "schema_version",
+)
+META_INDEX_COLUMNS: Final[tuple[str, ...]] = (
+    "cid",
+    "end_document_index",
+    "first_key",
+    "kind",
+    "last_key",
+    "relative_path",
+    "row_count",
+    "schema_version",
+    "sha256",
+    "shard_id",
+    "size_bytes",
+    "start_document_index",
+)
+BM25_KEYWORD_META_COLUMNS: Final[tuple[str, ...]] = (
+    *META_INDEX_COLUMNS,
+    "posting_count",
+    "term_count",
+    "token_instance_count",
+)
+VECTOR_META_COLUMNS: Final[tuple[str, ...]] = (
+    *META_INDEX_COLUMNS,
+    "centroid",
+    "centroid_min_score",
+    "centroid_shard_count",
+    "chunk_in_cluster",
+    "cluster_id",
+    "dimension",
+    "model_name",
+    "shard_centroid",
+)
+GRAPH_ADJACENCY_META_COLUMNS: Final[tuple[str, ...]] = (
+    *META_INDEX_COLUMNS,
+    "adjacency_count",
+    "direction",
+    "first_page_index",
+    "last_page_index",
+    "node_count",
+)
+ORIGINAL_DATA_COLUMNS: Final[tuple[str, ...]] = (
+    "cve_id",
+    "hash",
+    "repo_url",
+    "cve_description",
+    "cvss2_base_score",
+    "cvss3_base_score",
+    "published_date",
+    "severity",
+    "cwe_id",
+    "cwe_name",
+    "cwe_description",
+    "commit_message",
+    "commit_date",
+    "version_tag",
+    "repo_total_files",
+    "repo_total_commits",
+    "file_paths",
+    "language",
+    "diff_stats",
+    "diff_with_context",
+    "vulnerable_code",
+    "fixed_code",
+    "security_keywords",
+)
+ORIGINAL_ROW_INDEX_COLUMNS: Final[tuple[str, ...]] = (
+    "security_ir_source_cid",
+    "source_row_index",
+    "source_status",
+    "source_identity_domain",
+    "source_identity_schema_version",
+    "source_shard_cid",
+    "source_shard_path",
+    "source_shard_row_index",
+    "relative_path",
+    "source_dataset_id",
+    "source_revision",
+    "schema_version",
+)
+META_INDEX_CONFIGS: Final[Mapping[str, str]] = {
+    "bm25_document_chunks": "bm25_document_chunk_index",
+    "bm25_keyword_shards": "bm25_keyword_index",
+    "corpus_chunks": "corpus_chunk_index",
+    "graph_edge_chunks": "graph_edge_chunk_index",
+    "graph_incoming_adjacency": "graph_incoming_adjacency_index",
+    "graph_node_chunks": "graph_node_chunk_index",
+    "graph_outgoing_adjacency": "graph_outgoing_adjacency_index",
+    "original_rows": "original_row_index",
+    "vector_chunks": "vector_meta_index",
+}
+COMPLETE_DATA_CONFIG_PATHS: Final[Mapping[str, str]] = {
+    "corpus": "data/corpus/",
+    "bm25_documents": "data/bm25/documents/",
+    "bm25_postings": "data/bm25/postings/",
+    "graph_nodes": "data/graph/nodes/",
+    "graph_edges": "data/graph/edges/",
+    "graph_outgoing_adjacency": "data/graph/adjacency/outgoing/",
+    "graph_incoming_adjacency": "data/graph/adjacency/incoming/",
+    "original_data": "data/original/",
+    "vectors": "data/vectors/",
+}
+COMPLETE_INDEX_PATHS: Final[Mapping[str, str]] = {
+    f"indexes/{name}.parquet": config
+    for name, config in META_INDEX_CONFIGS.items()
+}
+COMPLETE_VIEWER_CONFIGS: Final[frozenset[str]] = frozenset(
+    {
+        *COMPLETE_DATA_CONFIG_PATHS,
+        "corpus_chunk_index",
+        "bm25_keyword_index",
+        "vector_meta_index",
+        "graph_outgoing_adjacency_index",
+        "graph_incoming_adjacency_index",
+        "original_row_index",
+    }
+)
+_HIDDEN_INDEX_CONFIGS: Final[frozenset[str]] = frozenset(
+    {
+        "bm25_document_chunk_index",
+        "graph_edge_chunk_index",
+        "graph_node_chunk_index",
+    }
+)
+_COMPLETE_INDEX_FAMILY: Final[Mapping[str, str]] = {
+    "indexes/corpus_chunks.parquet": "corpus",
+    "indexes/bm25_document_chunks.parquet": "bm25_documents",
+    "indexes/bm25_keyword_shards.parquet": "bm25_postings",
+    "indexes/graph_node_chunks.parquet": "graph_nodes",
+    "indexes/graph_edge_chunks.parquet": "graph_edges",
+    "indexes/graph_outgoing_adjacency.parquet": (
+        "graph_outgoing_adjacency"
+    ),
+    "indexes/graph_incoming_adjacency.parquet": (
+        "graph_incoming_adjacency"
+    ),
+    "indexes/original_rows.parquet": "original_data",
+    "indexes/vector_chunks.parquet": "vectors",
+}
+_CONFIG_COLUMNS: Final[Mapping[str, tuple[str, ...]]] = {
+    "corpus": CORPUS_COLUMNS,
+    "bm25_documents": BM25_DOCUMENT_COLUMNS,
+    "bm25_postings": BM25_POSTING_COLUMNS,
+    "graph_nodes": GRAPH_NODE_COLUMNS,
+    "graph_edges": GRAPH_EDGE_COLUMNS,
+    "graph_outgoing_adjacency": GRAPH_ADJACENCY_COLUMNS,
+    "graph_incoming_adjacency": GRAPH_ADJACENCY_COLUMNS,
+    "original_data": ORIGINAL_DATA_COLUMNS,
+    "vectors": VECTOR_COLUMNS,
+    "corpus_chunk_index": META_INDEX_COLUMNS,
+    "bm25_document_chunk_index": META_INDEX_COLUMNS,
+    "bm25_keyword_index": BM25_KEYWORD_META_COLUMNS,
+    "graph_node_chunk_index": META_INDEX_COLUMNS,
+    "graph_edge_chunk_index": META_INDEX_COLUMNS,
+    "graph_outgoing_adjacency_index": GRAPH_ADJACENCY_META_COLUMNS,
+    "graph_incoming_adjacency_index": GRAPH_ADJACENCY_META_COLUMNS,
+    "original_row_index": ORIGINAL_ROW_INDEX_COLUMNS,
+    "vector_meta_index": VECTOR_META_COLUMNS,
+}
+_CONFIG_SCHEMA_VERSIONS: Final[Mapping[str, str]] = {
+    "corpus": "cvefixes-hf-corpus/v1",
+    "bm25_documents": "cvefixes-hf-bm25-document/v1",
+    "bm25_postings": "cvefixes-hf-bm25-posting/v1",
+    "graph_nodes": "cvefixes-hf-graph-node/v1",
+    "graph_edges": "cvefixes-hf-graph-edge/v1",
+    "graph_outgoing_adjacency": "cvefixes-hf-graph-adjacency/v1",
+    "graph_incoming_adjacency": "cvefixes-hf-graph-adjacency/v1",
+    "vectors": "cvefixes-hf-vector-chunk/v1",
+    **{
+        config: "cvefixes-hf-shard-meta/v1"
+        for config in META_INDEX_CONFIGS.values()
+        if config != "original_row_index"
+    },
+    "original_row_index": ORIGINAL_ROW_INDEX_SCHEMA_VERSION,
+}
+_DATA_KEY_COLUMNS: Final[Mapping[str, str]] = {
+    "corpus": "entry_cid",
+    "bm25_documents": "entry_cid",
+    "bm25_postings": "term",
+    "graph_nodes": "node_cid",
+    "graph_edges": "edge_cid",
+    "graph_outgoing_adjacency": "node_cid",
+    "graph_incoming_adjacency": "node_cid",
+    "original_data": "cve_id",
+    "vectors": "entry_cid",
+}
 MAX_MANIFEST_BYTES: Final = 8 * 1024 * 1024
 MAX_VIEWER_RESPONSE_BYTES: Final = 16 * 1024 * 1024
 MAX_ARTIFACT_BYTES: Final = 128 * 1024 * 1024
 MAX_ARTIFACTS: Final = 2_048
 MAX_HISTORY_COMMITS: Final = 100
+_MANIFEST_OPTIONAL_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "indexes",
+        "counts",
+        "bm25",
+        "vector",
+        "graph",
+        "parquet",
+        "configs",
+        "build_runtime",
+        "primary_key",
+    }
+)
 
 _DATASET_ID_RE = re.compile(
     r"[A-Za-z0-9][A-Za-z0-9._-]{0,95}/"
@@ -58,6 +407,8 @@ _DATASET_ID_RE = re.compile(
 )
 _CID_RE = re.compile(r"b[a-z2-7]{58}")
 _SHA256_RE = re.compile(r"[0-9a-f]{64}")
+_CVE_ID_RE = re.compile(r"CVE-[0-9]{4}-[0-9]{4,}")
+_GIT_HASH_RE = re.compile(r"[0-9a-f]{40}")
 _COMMIT_RE = re.compile(r"[0-9a-f]{40,64}")
 _CONFIG_RE = re.compile(r"[a-z][a-z0-9_]{0,63}")
 _ENV_RE = re.compile(r"[A-Z][A-Z0-9_]{0,127}")
@@ -142,6 +493,92 @@ def _json_bytes(content: bytes, label: str) -> Mapping[str, Any]:
     return _object(value, label)
 
 
+def _raw_sha256_cid(digest: bytes) -> str:
+    """Return CIDv1(raw, sha2-256) for an already-computed SHA-256 digest."""
+
+    if not isinstance(digest, bytes) or len(digest) != 32:
+        raise LocalReleaseError("raw CID digest must be SHA-256")
+    payload = bytes((0x01, 0x55, 0x12, 0x20)) + digest
+    encoded = base64.b32encode(payload).decode("ascii").lower().rstrip("=")
+    return f"b{encoded}"
+
+
+def _original_contract(path: str) -> OriginalShardContract | None:
+    return next(
+        (
+            contract
+            for contract in PINNED_ORIGINAL_SHARDS
+            if contract.release_path == path
+        ),
+        None,
+    )
+
+
+def _artifact_byte_limit(path: str) -> int:
+    contract = _original_contract(path)
+    return contract.size_bytes if contract is not None else MAX_ARTIFACT_BYTES
+
+
+def _stream_file_sha256(
+    path: Path,
+    *,
+    maximum: int,
+    label: str,
+) -> tuple[int, bytes]:
+    try:
+        stat = path.stat()
+    except OSError as exc:
+        raise LocalReleaseError(f"cannot inspect {label}") from exc
+    if not path.is_file() or path.is_symlink():
+        raise LocalReleaseError(f"{label} must be a regular file")
+    if stat.st_size > maximum:
+        raise LocalReleaseError(f"{label} exceeds its byte limit")
+    digest = hashlib.sha256()
+    observed = 0
+    try:
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
+                observed += len(chunk)
+                if observed > maximum:
+                    raise LocalReleaseError(f"{label} exceeds its byte limit")
+                digest.update(chunk)
+    except LocalReleaseError:
+        raise
+    except OSError as exc:
+        raise LocalReleaseError(f"cannot read {label}") from exc
+    if observed != stat.st_size:
+        raise LocalReleaseError(f"{label} changed while being read")
+    return observed, digest.digest()
+
+
+def _complete_data_config(path: str) -> str | None:
+    for config_name, prefix in COMPLETE_DATA_CONFIG_PATHS.items():
+        if path.startswith(prefix) and re.fullmatch(
+            r"part-\d{6}\.parquet", path[len(prefix) :]
+        ):
+            return config_name
+    return None
+
+
+def _expected_artifact_config(path: str) -> str | None:
+    complete = _complete_data_config(path)
+    if complete is not None:
+        return complete
+    if path in COMPLETE_INDEX_PATHS:
+        return COMPLETE_INDEX_PATHS[path]
+    parsed = PurePosixPath(path)
+    if (
+        len(parsed.parts) == 3
+        and parsed.parts[0] == "data"
+        and _CONFIG_RE.fullmatch(parsed.parts[1])
+        and re.fullmatch(
+            r"train-\d{5}-of-\d{5}\.parquet", parsed.parts[2]
+        )
+    ):
+        return parsed.parts[1]
+    return None
+
+
 def _safe_artifact_path(value: Any) -> str:
     if not isinstance(value, str) or not value or len(value) > 512:
         raise LocalReleaseError("artifact path must be bounded text")
@@ -156,18 +593,12 @@ def _safe_artifact_path(value: Any) -> str:
     if len(parsed.parts) == 1:
         if value not in {
             "README.md",
-            "dataset_infos.json",
+            COMPLETE_RELEASE_METADATA_PATH,
+            LEGACY_RELEASE_METADATA_PATH,
             "evaluation-report.json",
         }:
             raise LocalReleaseError("unexpected top-level release artifact")
-    elif (
-        len(parsed.parts) != 3
-        or parsed.parts[0] != "data"
-        or not _CONFIG_RE.fullmatch(parsed.parts[1])
-        or not re.fullmatch(
-            r"train-\d{5}-of-\d{5}\.parquet", parsed.parts[2]
-        )
-    ):
+    elif _expected_artifact_config(value) is None:
         raise LocalReleaseError("unexpected release artifact path")
     return value
 
@@ -225,10 +656,11 @@ class ArtifactDescriptor:
         sha256 = item["sha256"]
         content_id = item["content_id"]
         config_name = item.get("config_name", "")
+        original_contract = _original_contract(path)
         if (
             type(byte_length) is not int
             or byte_length < 0
-            or byte_length > MAX_ARTIFACT_BYTES
+            or byte_length > _artifact_byte_limit(path)
         ):
             raise LocalReleaseError("artifact byte_length is invalid")
         if not isinstance(media_type, str) or not media_type or len(media_type) > 128:
@@ -238,15 +670,27 @@ class ArtifactDescriptor:
         if not isinstance(content_id, str) or not _CID_RE.fullmatch(content_id):
             raise LocalReleaseError("artifact content ID is invalid")
         if parquet:
+            expected_config = _expected_artifact_config(path)
             if (
                 media_type != "application/vnd.apache.parquet"
                 or not isinstance(config_name, str)
                 or not _CONFIG_RE.fullmatch(config_name)
-                or PurePosixPath(path).parts[1] != config_name
+                or expected_config != config_name
                 or type(row_count) is not int
                 or row_count <= 0
             ):
                 raise LocalReleaseError("Parquet descriptor metadata is invalid")
+            if original_contract is not None and (
+                config_name != "original_data"
+                or byte_length != original_contract.size_bytes
+                or row_count != original_contract.row_count
+                or sha256 != original_contract.sha256
+                or content_id
+                != _raw_sha256_cid(bytes.fromhex(original_contract.sha256))
+            ):
+                raise LocalReleaseError(
+                    "pinned original-data descriptor is invalid"
+                )
         elif media_type not in _JSON_MEDIA_TYPES:
             raise LocalReleaseError("release artifact media type is unexpected")
         return cls(
@@ -282,10 +726,28 @@ class LocalRelease:
     artifacts: tuple[ArtifactDescriptor, ...]
     config_names: tuple[str, ...]
     config_shard_counts: tuple[tuple[str, int], ...]
+    complete_layout: bool = False
+    original_data_acknowledgement_required: bool = False
 
     @property
     def parquet_artifacts(self) -> tuple[ArtifactDescriptor, ...]:
         return tuple(item for item in self.artifacts if item.config_name)
+
+    def columns_for_config(self, config_name: str) -> tuple[str, ...]:
+        paths = {
+            item.path
+            for item in self.parquet_artifacts
+            if item.config_name == config_name
+        }
+        if not paths:
+            raise LocalReleaseError("dataset config has no Parquet artifacts")
+        is_meta = {path.startswith("indexes/") for path in paths}
+        if len(is_meta) != 1:
+            raise LocalReleaseError("dataset config mixes data and meta-index shards")
+        expected = _CONFIG_COLUMNS.get(config_name)
+        if expected is not None:
+            return expected
+        return META_INDEX_COLUMNS if is_meta == {True} else EXPECTED_COLUMNS
 
     @property
     def idempotency_key(self) -> str:
@@ -301,8 +763,153 @@ class LocalRelease:
         return f"cvefixes-publication:{digest}"
 
 
+def _field_kind(config_name: str, name: str) -> str:
+    list_strings = {
+        "source_cids",
+        "cwes",
+        "languages",
+        "code_facts",
+        "actions",
+        "effects",
+        "policies",
+        "edge_cids",
+        "edge_types",
+        "neighbor_cids",
+        "neighbor_node_types",
+        "retrieval_methods",
+        "file_paths",
+        "security_keywords",
+    }
+    list_int32 = {
+        "body_frequencies",
+        "document_indices",
+        "document_lengths",
+        "title_frequencies",
+    }
+    int32 = {
+        "body_length",
+        "document_index",
+        "title_length",
+        "document_length",
+        "posting_chunk_count",
+        "posting_chunk_index",
+        "document_frequency",
+        "neighbor_count",
+        "page_count",
+        "page_index",
+        "cluster_id",
+        "corpus_chunk_id",
+        "corpus_row_offset",
+        "centroid_shard_count",
+        "chunk_in_cluster",
+        "dimension",
+        "shard_id",
+        "term_count",
+        "first_page_index",
+        "last_page_index",
+        "node_count",
+        "source_row_index",
+        "source_shard_row_index",
+    }
+    int64 = {
+        "corpus_frequency",
+        "faiss_id",
+        "total_neighbor_count",
+        "end_document_index",
+        "row_count",
+        "size_bytes",
+        "start_document_index",
+        "posting_count",
+        "token_instance_count",
+        "adjacency_count",
+        "repo_total_files",
+        "repo_total_commits",
+    }
+    bools = {
+        "graph_node",
+        "grants_execution_authority",
+        "has_embedding",
+    }
+    large_strings = {"text", "properties_json", "query_terms_json"}
+    float64 = {"cvss2_base_score", "cvss3_base_score", "idf", "score"}
+    float32 = {"centroid_min_score"}
+    list_float64 = {"scores"}
+    list_float32 = {"centroid", "shard_centroid"}
+    if config_name == "vectors" and name == "embedding":
+        return "fixed_or_list_float32"
+    if name in list_strings:
+        return "list_string"
+    if name in list_int32:
+        return "list_int32"
+    if name in int32:
+        # Corpus and BM25 document indices are intentionally compact int32;
+        # vector document indices are int64 to match their persisted index.
+        if name == "document_index" and config_name == "vectors":
+            return "int64"
+        return "int32"
+    if name in int64:
+        return "int64"
+    if name in bools:
+        return "bool"
+    if name in large_strings:
+        return "large_string"
+    if name in float64:
+        return "float64"
+    if name in float32:
+        return "float32"
+    if name in list_float64:
+        return "list_float64"
+    if name in list_float32:
+        return "list_float32"
+    return "string"
+
+
+def _validate_field_types(schema: Any, config_name: str, pa: Any) -> None:
+    for field in schema:
+        kind = _field_kind(config_name, field.name)
+        valid = {
+            "string": pa.types.is_string(field.type),
+            "large_string": pa.types.is_large_string(field.type),
+            "int32": pa.types.is_int32(field.type),
+            "int64": pa.types.is_int64(field.type),
+            "float32": pa.types.is_float32(field.type),
+            "float64": pa.types.is_float64(field.type),
+            "bool": pa.types.is_boolean(field.type),
+            "list_string": (
+                pa.types.is_list(field.type)
+                and pa.types.is_string(field.type.value_type)
+            ),
+            "list_int32": (
+                pa.types.is_list(field.type)
+                and pa.types.is_int32(field.type.value_type)
+            ),
+            "list_float32": (
+                pa.types.is_list(field.type)
+                and pa.types.is_float32(field.type.value_type)
+            ),
+            "list_float64": (
+                pa.types.is_list(field.type)
+                and pa.types.is_float64(field.type.value_type)
+            ),
+            "fixed_or_list_float32": (
+                (
+                    pa.types.is_list(field.type)
+                    or pa.types.is_fixed_size_list(field.type)
+                )
+                and pa.types.is_float32(field.type.value_type)
+            ),
+        }[kind]
+        if not valid:
+            raise LocalReleaseError(
+                f"Parquet field type mismatch: {config_name}.{field.name}"
+            )
+
+
 def _validate_parquet(
-    path: Path, descriptor: ArtifactDescriptor
+    path: Path,
+    descriptor: ArtifactDescriptor,
+    *,
+    complete_layout: bool = False,
 ) -> None:
     try:
         import pyarrow as pa
@@ -318,10 +925,76 @@ def _validate_parquet(
         raise LocalReleaseError(
             f"Parquet shard is unreadable: {descriptor.path}"
         ) from exc
-    if tuple(schema.names) != EXPECTED_COLUMNS:
+    expected_columns = _CONFIG_COLUMNS.get(descriptor.config_name)
+    if expected_columns is None:
+        expected_columns = (
+            META_INDEX_COLUMNS
+            if descriptor.path.startswith("indexes/")
+            else EXPECTED_COLUMNS
+        )
+    if tuple(schema.names) != expected_columns:
         raise LocalReleaseError(
             f"Parquet schema mismatch: {descriptor.path}"
         )
+    if descriptor.config_name in _CONFIG_COLUMNS:
+        _validate_field_types(schema, descriptor.config_name, pa)
+    if complete_layout:
+        compressions = {
+            parquet.metadata.row_group(group).column(column).compression
+            for group in range(parquet.num_row_groups)
+            for column in range(
+                parquet.metadata.row_group(group).num_columns
+            )
+        }
+        original_data = descriptor.config_name == "original_data"
+        expected_compression = {"SNAPPY"} if original_data else {"ZSTD"}
+        if compressions != expected_compression:
+            raise LocalReleaseError(
+                "complete-layout Parquet compression mismatch: "
+                f"{descriptor.path}"
+            )
+        if original_data:
+            if b"schema_version" in (schema.metadata or {}):
+                raise LocalReleaseError(
+                    "original-data Parquet must retain its unversioned schema"
+                )
+        else:
+            expected_version = _CONFIG_SCHEMA_VERSIONS[descriptor.config_name]
+            metadata = schema.metadata or {}
+            if metadata.get(b"schema_version") != expected_version.encode("ascii"):
+                raise LocalReleaseError(
+                    f"Parquet schema version mismatch: {descriptor.path}"
+                )
+            if (
+                descriptor.config_name == "original_row_index"
+                and metadata.get(b"primary_key")
+                != b"security_ir_source_cid"
+            ):
+                raise LocalReleaseError(
+                    "original-row index primary key is invalid"
+                )
+            try:
+                versions = set(
+                    parquet.read(columns=["schema_version"])[
+                        "schema_version"
+                    ].to_pylist()
+                )
+            except Exception as exc:
+                raise LocalReleaseError(
+                    f"cannot validate schema-version rows: {descriptor.path}"
+                ) from exc
+            if versions != {expected_version}:
+                raise LocalReleaseError(
+                    f"Parquet row schema version mismatch: {descriptor.path}"
+                )
+    if descriptor.path.startswith("indexes/"):
+        if parquet.metadata.num_rows != descriptor.row_count:
+            raise LocalReleaseError("Parquet row count does not match manifest")
+        return
+    if _complete_data_config(descriptor.path) is not None:
+        if parquet.metadata.num_rows != descriptor.row_count:
+            raise LocalReleaseError("Parquet row count does not match manifest")
+        return
     scalar_columns = {
         "record_id",
         "record_type",
@@ -380,6 +1053,693 @@ def _validate_parquet(
         raise LocalReleaseError("Parquet scanned row count is inconsistent")
 
 
+def _expected_original_runtime_shards() -> list[dict[str, Any]]:
+    return [
+        {
+            "content_id": _raw_sha256_cid(bytes.fromhex(contract.sha256)),
+            "release_path": contract.release_path,
+            "row_count": contract.row_count,
+            "sha256": contract.sha256,
+            "size_bytes": contract.size_bytes,
+            "source_path": contract.source_path,
+        }
+        for contract in PINNED_ORIGINAL_SHARDS
+    ]
+
+
+def _exact_integer(value: Any, expected: int) -> bool:
+    return type(value) is int and value == expected
+
+
+def _validate_original_data_manifest(
+    manifest: Mapping[str, Any],
+    artifacts: Sequence[ArtifactDescriptor],
+    *,
+    source_dataset_id: str,
+    source_revision: str,
+) -> bool:
+    original_artifacts = tuple(
+        item for item in artifacts if item.config_name == "original_data"
+    )
+    if tuple(item.path for item in original_artifacts) != tuple(
+        contract.release_path for contract in PINNED_ORIGINAL_SHARDS
+    ):
+        raise LocalReleaseError(
+            "complete original-data shard inventory is invalid"
+        )
+    row_indexes = tuple(
+        item for item in artifacts if item.config_name == "original_row_index"
+    )
+    if (
+        len(row_indexes) != 1
+        or row_indexes[0].path != "indexes/original_rows.parquet"
+        or row_indexes[0].row_count
+        != sum(contract.row_count for contract in PINNED_ORIGINAL_SHARDS)
+    ):
+        raise LocalReleaseError("original-row index inventory is invalid")
+
+    release_manifest = _object(
+        manifest.get("release_manifest"), "canonical release manifest"
+    )
+    release_payload = _object(
+        release_manifest.get("payload"), "release manifest payload"
+    )
+    if (
+        release_manifest.get("profile") != ORIGINAL_MIRROR_PROFILE
+        or release_payload.get("derived_security_ir_profile")
+        != "public-metadata-and-body-digests"
+    ):
+        raise LocalReleaseError("original-data release profile is invalid")
+
+    build_runtime = _object(
+        manifest.get("build_runtime"), "manifest build_runtime"
+    )
+    original = _object(
+        build_runtime.get("original_data"),
+        "manifest original-data runtime",
+    )
+    if (
+        original.get("byte_exact_upstream_copy") is not True
+        or original.get("config_name") != "original_data"
+        or original.get("mirror_profile") != ORIGINAL_MIRROR_PROFILE
+        or original.get("operator_acknowledgement_required") is not True
+        or original.get("row_index_config_name") != "original_row_index"
+        or original.get("source_dataset_id") != PINNED_SOURCE_DATASET_ID
+        or original.get("source_profile_sha256")
+        != PINNED_SOURCE_PROFILE_SHA256
+        or original.get("source_revision") != PINNED_SOURCE_REVISION
+        or _canonical_json(original.get("shards"))
+        != _canonical_json(_expected_original_runtime_shards())
+        or source_dataset_id != PINNED_SOURCE_DATASET_ID
+        or source_revision != PINNED_SOURCE_REVISION
+    ):
+        raise LocalReleaseError("original-data runtime binding is invalid")
+
+    configs = _object(manifest.get("configs"), "manifest configs")
+    if (
+        configs.get("original_data") != "data/original/*.parquet"
+        or configs.get("original_row_index")
+        != "indexes/original_rows.parquet"
+    ):
+        raise LocalReleaseError("original-data config routing is invalid")
+    counts = _object(manifest.get("counts"), "manifest counts")
+    if (
+        not _exact_integer(
+            counts.get("original_data_bytes"),
+            sum(contract.size_bytes for contract in PINNED_ORIGINAL_SHARDS),
+        )
+        or not _exact_integer(
+            counts.get("original_data_rows"),
+            sum(contract.row_count for contract in PINNED_ORIGINAL_SHARDS),
+        )
+        or not _exact_integer(
+            counts.get("original_data_shards"),
+            len(PINNED_ORIGINAL_SHARDS),
+        )
+        or not _exact_integer(
+            counts.get("original_row_index_rows"),
+            row_indexes[0].row_count,
+        )
+    ):
+        raise LocalReleaseError("original-data manifest counts are invalid")
+    parquet = _object(manifest.get("parquet"), "manifest parquet")
+    compression = _object(
+        parquet.get("compression"), "manifest parquet compression"
+    )
+    if (
+        compression.get("derived_and_indexes") != "zstd"
+        or compression.get("original_data") != "upstream_byte_exact"
+        or not _exact_integer(
+            parquet.get("physical_index_count"),
+            len(COMPLETE_INDEX_PATHS),
+        )
+    ):
+        raise LocalReleaseError("original-data compression binding is invalid")
+    return True
+
+
+def _validate_original_row_index(
+    root: Path,
+    descriptor: ArtifactDescriptor,
+    shards: Sequence[ArtifactDescriptor],
+    manifest: Mapping[str, Any],
+    pq: Any,
+) -> None:
+    if tuple(item.path for item in shards) != tuple(
+        contract.release_path for contract in PINNED_ORIGINAL_SHARDS
+    ):
+        raise LocalReleaseError("original-row index targets are invalid")
+    expected_positions = [
+        (contract, shard_offset)
+        for contract in PINNED_ORIGINAL_SHARDS
+        for shard_offset in range(contract.row_count)
+    ]
+    if descriptor.row_count != len(expected_positions):
+        raise LocalReleaseError("original-row index row count is invalid")
+    try:
+        parquet = pq.ParquetFile(root / descriptor.path)
+    except Exception as exc:
+        raise LocalReleaseError("cannot open original-row index") from exc
+
+    positions_seen = bytearray(len(expected_positions))
+    source_cids: set[str] = set()
+    statuses = {
+        "adaptation_rejected": 0,
+        "publication_rejected": 0,
+        "admitted": 0,
+    }
+    previous_cid = ""
+    rows_seen = 0
+    try:
+        batches = parquet.iter_batches(
+            batch_size=1_024,
+            columns=ORIGINAL_ROW_INDEX_COLUMNS,
+        )
+        for batch in batches:
+            for row in batch.to_pylist():
+                source_cid = row.get("security_ir_source_cid")
+                source_row_index = row.get("source_row_index")
+                source_status = row.get("source_status")
+                if (
+                    not isinstance(source_cid, str)
+                    or not _CID_RE.fullmatch(source_cid)
+                    or source_cid <= previous_cid
+                    or source_cid in source_cids
+                    or type(source_row_index) is not int
+                    or not 0 <= source_row_index < len(expected_positions)
+                    or positions_seen[source_row_index]
+                    or source_status not in statuses
+                ):
+                    raise LocalReleaseError(
+                        "original-row index identity coverage is invalid"
+                    )
+                contract, shard_offset = expected_positions[source_row_index]
+                expected_domain = (
+                    "cvefixes-security-ir/pinned-source-row"
+                    if source_status == "admitted"
+                    else "cvefixes-security-ir/rejected-source-row"
+                )
+                expected_identity_schema_version = (
+                    "cvefixes-pinned-source-row/v1"
+                    if source_status == "admitted"
+                    else "cvefixes-rejected-source-row/v1"
+                )
+                if (
+                    row.get("source_identity_domain") != expected_domain
+                    or row.get("source_identity_schema_version")
+                    != expected_identity_schema_version
+                    or row.get("source_shard_cid")
+                    != _raw_sha256_cid(bytes.fromhex(contract.sha256))
+                    or row.get("source_shard_path") != contract.source_path
+                    or row.get("source_shard_row_index") != shard_offset
+                    or row.get("relative_path") != contract.release_path
+                    or row.get("source_dataset_id")
+                    != PINNED_SOURCE_DATASET_ID
+                    or row.get("source_revision") != PINNED_SOURCE_REVISION
+                    or row.get("schema_version")
+                    != ORIGINAL_ROW_INDEX_SCHEMA_VERSION
+                ):
+                    raise LocalReleaseError(
+                        "original-row index shard binding is invalid"
+                    )
+                positions_seen[source_row_index] = 1
+                source_cids.add(source_cid)
+                statuses[source_status] += 1
+                previous_cid = source_cid
+                rows_seen += 1
+    except LocalReleaseError:
+        raise
+    except Exception as exc:
+        raise LocalReleaseError("cannot scan original-row index") from exc
+    if (
+        rows_seen != len(expected_positions)
+        or not all(positions_seen)
+        or len(source_cids) != len(expected_positions)
+    ):
+        raise LocalReleaseError("original-row index coverage is incomplete")
+
+    report = _json_bytes(
+        _bounded_bytes(
+            root / "evaluation-report.json",
+            maximum=MAX_MANIFEST_BYTES,
+            label="evaluation-report.json",
+        ),
+        "evaluation-report.json",
+    )
+    evaluation = _object(
+        report.get("evaluation"), "evaluation report record"
+    )
+    evaluated_source_cids = evaluation.get("source_cids")
+    if (
+        not isinstance(evaluated_source_cids, list)
+        or len(evaluated_source_cids) != len(source_cids)
+        or set(evaluated_source_cids) != source_cids
+    ):
+        raise LocalReleaseError(
+            "original-row index differs from evaluation provenance"
+        )
+    counts = _object(manifest.get("counts"), "manifest counts")
+    if (
+        not _exact_integer(
+            counts.get("admitted_rows"),
+            statuses["admitted"],
+        )
+        or not _exact_integer(
+            counts.get("rejected_rows"),
+            statuses["adaptation_rejected"]
+            + statuses["publication_rejected"],
+        )
+    ):
+        raise LocalReleaseError("original-row status counts are invalid")
+
+
+def _validate_meta_index_bindings(
+    root: Path,
+    artifacts: Sequence[ArtifactDescriptor],
+    *,
+    complete_layout: bool,
+    manifest: Mapping[str, Any] | None = None,
+) -> None:
+    try:
+        import pyarrow.parquet as pq
+    except ImportError as exc:  # pragma: no cover - release dependency in CI
+        raise LocalReleaseError(
+            "pyarrow is required to validate release indexes"
+        ) from exc
+
+    data = {
+        item.path: item
+        for item in artifacts
+        if item.path.startswith("data/") and item.config_name
+    }
+    indexes = {
+        item.path: item
+        for item in artifacts
+        if item.path.startswith("indexes/")
+    }
+    if not indexes:
+        return
+
+    if complete_layout:
+        if set(indexes) != set(COMPLETE_INDEX_PATHS):
+            raise LocalReleaseError(
+                "complete layout must contain every physical index"
+            )
+        if manifest is None:
+            raise LocalReleaseError("complete manifest binding is unavailable")
+        grouped: dict[str, tuple[ArtifactDescriptor, ...]] = {
+            config: tuple(
+                sorted(
+                    (
+                        item
+                        for item in data.values()
+                        if item.config_name == config
+                    ),
+                    key=lambda item: item.path,
+                )
+            )
+            for config in COMPLETE_DATA_CONFIG_PATHS
+        }
+        if any(not shards for shards in grouped.values()):
+            raise LocalReleaseError(
+                "complete layout must contain every indexed data family"
+            )
+        expected_families = {
+            index_path: grouped[family]
+            for index_path, family in _COMPLETE_INDEX_FAMILY.items()
+        }
+    else:
+        unsupported = set(indexes) - {
+            "indexes/corpus_chunks.parquet",
+            "indexes/graph_node_chunks.parquet",
+            "indexes/graph_edge_chunks.parquet",
+        }
+        if unsupported:
+            raise LocalReleaseError(
+                "legacy release contains complete-layout-only indexes"
+            )
+        expected_families = {}
+        for path in indexes:
+            stem = PurePosixPath(path).stem
+            if stem == "graph_node_chunks":
+                selected = (
+                    item for item in data.values()
+                    if item.config_name == "graph_node"
+                )
+            elif stem == "graph_edge_chunks":
+                selected = (
+                    item for item in data.values()
+                    if item.config_name == "graph_edge"
+                )
+            else:
+                selected = (
+                    item for item in data.values()
+                    if item.config_name not in {"graph_node", "graph_edge"}
+                )
+            expected_families[path] = tuple(
+                sorted(selected, key=lambda item: item.path)
+            )
+
+    covered: set[str] = set()
+    for index_path, shards in sorted(expected_families.items()):
+        descriptor = indexes[index_path]
+        family = (
+            _COMPLETE_INDEX_FAMILY[index_path]
+            if complete_layout
+            else ""
+        )
+        if family == "original_data":
+            if manifest is None:
+                raise LocalReleaseError(
+                    "complete manifest binding is unavailable"
+                )
+            _validate_original_row_index(
+                root,
+                descriptor,
+                shards,
+                manifest,
+                pq,
+            )
+            covered.update(item.path for item in shards)
+            continue
+        try:
+            rows = pq.read_table(root / descriptor.path).to_pylist()
+        except Exception as exc:
+            raise LocalReleaseError("cannot read release meta-index") from exc
+        if len(rows) != len(shards):
+            raise LocalReleaseError(
+                "meta-index row inventory differs from its data family"
+            )
+        next_document_index = 0
+        for shard_id, (row, target) in enumerate(
+            zip(rows, shards, strict=True)
+        ):
+            if not isinstance(row, Mapping):
+                raise LocalReleaseError("meta-index row must be an object")
+            relative_path = row.get("relative_path")
+            if relative_path != target.path or relative_path in covered:
+                raise LocalReleaseError(
+                    "meta-index pointers must cover unique data shards"
+                )
+            try:
+                table = pq.read_table(root / target.path)
+            except Exception as exc:
+                raise LocalReleaseError(
+                    "cannot read indexed release data shard"
+                ) from exc
+            table_rows = table.to_pylist()
+            key_column = (
+                _DATA_KEY_COLUMNS[family]
+                if complete_layout
+                else "record_id"
+            )
+            keys = [str(item[key_column]) for item in table_rows]
+            if not keys or any(not key for key in keys):
+                raise LocalReleaseError("indexed shard keys are invalid")
+            expected_start: int
+            expected_end: int
+            if family in {"corpus", "bm25_documents"}:
+                documents = [
+                    int(item["document_index"]) for item in table_rows
+                ]
+                if documents != list(
+                    range(
+                        next_document_index,
+                        next_document_index + len(documents),
+                    )
+                ):
+                    raise LocalReleaseError(
+                        "document-indexed shard is not dense and contiguous"
+                    )
+                expected_start = documents[0]
+                expected_end = documents[-1]
+                next_document_index = expected_end + 1
+            elif family == "vectors":
+                documents = [
+                    int(item["document_index"]) for item in table_rows
+                ]
+                expected_start = min(documents)
+                expected_end = max(documents)
+            elif complete_layout:
+                expected_start = -1
+                expected_end = -1
+            else:
+                expected_start = next_document_index
+                expected_end = expected_start + target.row_count - 1
+                next_document_index = expected_end + 1
+            expected_first = (
+                keys[0] if complete_layout else min(keys)
+            )
+            expected_last = (
+                keys[-1] if complete_layout else max(keys)
+            )
+            if (
+                row.get("cid") != target.content_id
+                or row.get("sha256") != target.sha256
+                or row.get("size_bytes") != target.byte_length
+                or row.get("row_count") != target.row_count
+                or row.get("kind") != target.config_name
+                or row.get("schema_version") != "cvefixes-hf-shard-meta/v1"
+                or row.get("shard_id") != shard_id
+                or row.get("start_document_index") != expected_start
+                or row.get("end_document_index") != expected_end
+                or row.get("first_key") != expected_first
+                or row.get("last_key") != expected_last
+            ):
+                raise LocalReleaseError("meta-index shard binding is invalid")
+            if complete_layout:
+                _validate_complete_meta_stats(row, table_rows, family)
+            covered.add(relative_path)
+    if covered != set(data):
+        raise LocalReleaseError(
+            "meta-index pointers do not cover data shards exactly"
+        )
+    if complete_layout:
+        _validate_complete_document_coverage(root, data.values(), pq)
+
+
+def _validate_complete_meta_stats(
+    row: Mapping[str, Any],
+    table_rows: Sequence[Mapping[str, Any]],
+    family: str,
+) -> None:
+    if family == "bm25_postings":
+        terms = {str(item["term"]) for item in table_rows}
+        posting_count = sum(
+            len(item["document_indices"]) for item in table_rows
+        )
+        token_instances = sum(
+            sum(int(value) for value in item["title_frequencies"])
+            + sum(int(value) for value in item["body_frequencies"])
+            for item in table_rows
+        )
+        if (
+            row.get("posting_count") != posting_count
+            or row.get("term_count") != len(terms)
+            or row.get("token_instance_count") != token_instances
+        ):
+            raise LocalReleaseError("BM25 keyword meta statistics differ")
+    elif family in {
+        "graph_outgoing_adjacency",
+        "graph_incoming_adjacency",
+    }:
+        direction = (
+            "outgoing"
+            if family == "graph_outgoing_adjacency"
+            else "incoming"
+        )
+        pages = [int(item["page_index"]) for item in table_rows]
+        if (
+            row.get("adjacency_count")
+            != sum(int(item["neighbor_count"]) for item in table_rows)
+            or row.get("direction") != direction
+            or row.get("first_page_index") != pages[0]
+            or row.get("last_page_index") != pages[-1]
+            or row.get("node_count")
+            != len({str(item["node_cid"]) for item in table_rows})
+        ):
+            raise LocalReleaseError("graph adjacency meta statistics differ")
+    elif family == "vectors":
+        cluster_ids = {int(item["cluster_id"]) for item in table_rows}
+        embeddings = table_rows[0]["embedding"]
+        if (
+            len(cluster_ids) != 1
+            or row.get("cluster_id") != next(iter(cluster_ids))
+            or not isinstance(row.get("chunk_in_cluster"), int)
+            or not isinstance(row.get("centroid_shard_count"), int)
+            or not 1 <= row["centroid_shard_count"] <= 2
+            or not isinstance(row.get("dimension"), int)
+            or row["dimension"] != len(embeddings)
+            or not isinstance(row.get("model_name"), str)
+            or not row["model_name"]
+            or len(row.get("centroid") or ()) != row["dimension"]
+            or len(row.get("shard_centroid") or ()) != row["dimension"]
+        ):
+            raise LocalReleaseError("vector routing meta statistics differ")
+
+
+def _validate_complete_document_coverage(
+    root: Path,
+    artifacts: Sequence[ArtifactDescriptor],
+    pq: Any,
+) -> None:
+    coverage: dict[str, dict[int, str]] = {}
+    for config_name in ("corpus", "bm25_documents", "vectors"):
+        observed: dict[int, str] = {}
+        for descriptor in sorted(
+            (
+                item
+                for item in artifacts
+                if item.config_name == config_name
+            ),
+            key=lambda item: item.path,
+        ):
+            rows = pq.read_table(
+                root / descriptor.path,
+                columns=["document_index", "entry_cid"],
+            ).to_pylist()
+            for row in rows:
+                document_index = int(row["document_index"])
+                entry_cid = str(row["entry_cid"])
+                if document_index in observed:
+                    raise LocalReleaseError(
+                        f"{config_name} repeats a document index"
+                    )
+                observed[document_index] = entry_cid
+        coverage[config_name] = observed
+    corpus = coverage["corpus"]
+    if (
+        sorted(corpus) != list(range(len(corpus)))
+        or coverage["bm25_documents"] != corpus
+        or coverage["vectors"] != corpus
+    ):
+        raise LocalReleaseError(
+            "corpus, BM25, and vector document coverage differs"
+        )
+
+
+def _card_config_names(content: bytes) -> tuple[str, ...]:
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise LocalReleaseError("README.md must be valid UTF-8") from exc
+    if not text.startswith("---\n") or "\n---\n" not in text[4:]:
+        return ()
+    front_matter = text[4:].split("\n---\n", 1)[0]
+    names = tuple(
+        match.group(1)
+        for line in front_matter.splitlines()
+        if (
+            match := re.fullmatch(
+                r"- config_name: ([a-z][a-z0-9_]{0,63})", line
+            )
+        )
+    )
+    if len(names) != len(set(names)):
+        raise LocalReleaseError("dataset card repeats a config name")
+    return names
+
+
+def _parquet_feature_metadata(
+    root: Path,
+    artifacts: Sequence[ArtifactDescriptor],
+    config_name: str,
+) -> dict[str, dict[str, str]]:
+    descriptors = tuple(
+        item for item in artifacts if item.config_name == config_name
+    )
+    if not descriptors:
+        raise LocalReleaseError("dataset config has no Parquet artifact")
+    expected: dict[str, dict[str, str]] | None = None
+    try:
+        import pyarrow.parquet as pq
+
+        for descriptor in descriptors:
+            schema = pq.ParquetFile(root / descriptor.path).schema_arrow
+            observed = {
+                field.name: {"dtype": str(field.type)}
+                for field in schema
+            }
+            if expected is None:
+                expected = observed
+            elif observed != expected:
+                raise LocalReleaseError(
+                    f"dataset config shard schemas differ: {config_name}"
+                )
+    except LocalReleaseError:
+        raise
+    except Exception as exc:
+        raise LocalReleaseError(
+            f"cannot inspect dataset config schema: {config_name}"
+        ) from exc
+    if expected is None:
+        raise LocalReleaseError("dataset config has no Parquet schema")
+    return expected
+
+
+def _validate_manifest_index_inventory(
+    value: Any,
+    artifacts: Sequence[ArtifactDescriptor],
+    *,
+    complete_layout: bool,
+) -> None:
+    indexes = _object(value, "manifest indexes")
+    indexed_artifacts = {
+        PurePosixPath(item.path).stem: item
+        for item in artifacts
+        if item.path.startswith("indexes/")
+    }
+    if set(indexes) != set(indexed_artifacts):
+        raise LocalReleaseError("manifest meta-index inventory is invalid")
+    if complete_layout and set(indexes) != set(META_INDEX_CONFIGS):
+        raise LocalReleaseError(
+            "complete manifest must bind every physical index"
+        )
+    allowed = {
+        "byte_length",
+        "cid",
+        "config_name",
+        "content_id",
+        "media_type",
+        "path",
+        "relative_path",
+        "row_count",
+        "sha256",
+        "size_bytes",
+    }
+    for name, raw in indexes.items():
+        item = _object(raw, f"manifest index {name}")
+        if not set(item) <= allowed:
+            raise LocalReleaseError(
+                "manifest index descriptor has unexpected fields"
+            )
+        artifact = indexed_artifacts[name]
+        path = item.get("path", item.get("relative_path"))
+        cid = item.get("content_id", item.get("cid"))
+        size = item.get("byte_length", item.get("size_bytes"))
+        if (
+            path != artifact.path
+            or cid != artifact.content_id
+            or item.get("sha256") != artifact.sha256
+            or size != artifact.byte_length
+            or (
+                "row_count" in item
+                and item["row_count"] != artifact.row_count
+            )
+            or (
+                "config_name" in item
+                and item["config_name"] != artifact.config_name
+            )
+            or (
+                "media_type" in item
+                and item["media_type"] != artifact.media_type
+            )
+        ):
+            raise LocalReleaseError(
+                f"manifest index descriptor differs: {name}"
+            )
+
+
 def load_local_release(
     release_directory: str | os.PathLike[str],
     *,
@@ -400,7 +1760,7 @@ def load_local_release(
         manifest_path, maximum=MAX_MANIFEST_BYTES, label="manifest.json"
     )
     manifest = _json_bytes(manifest_bytes, "manifest.json")
-    if set(manifest) != {
+    required_manifest_fields = {
         "artifacts",
         "dataset_id",
         "derived_dataset_root",
@@ -408,7 +1768,13 @@ def load_local_release(
         "release_root",
         "schema_version",
         "source",
-    }:
+    }
+    manifest_fields = frozenset(manifest)
+    if (
+        not required_manifest_fields <= manifest_fields
+        or not manifest_fields
+        <= required_manifest_fields | _MANIFEST_OPTIONAL_FIELDS
+    ):
         raise LocalReleaseError("manifest fields are not canonical")
     _safe_public_value(manifest)
     dataset_id = manifest.get("dataset_id")
@@ -462,9 +1828,96 @@ def load_local_release(
     paths = tuple(item.path for item in artifacts)
     if paths != tuple(sorted(paths)) or len(set(paths)) != len(paths):
         raise LocalReleaseError("artifact inventory must be sorted and unique")
-    required = {"README.md", "dataset_infos.json", "evaluation-report.json"}
+    complete_data = tuple(
+        item
+        for item in artifacts
+        if _complete_data_config(item.path) is not None
+    )
+    legacy_data = tuple(
+        item
+        for item in artifacts
+        if item.path.startswith("data/")
+        and _complete_data_config(item.path) is None
+    )
+    complete_layout = bool(complete_data)
+    if complete_layout and legacy_data:
+        raise LocalReleaseError(
+            "complete and legacy data layouts cannot be mixed"
+        )
+    if complete_layout and LEGACY_RELEASE_METADATA_PATH in paths:
+        raise LocalReleaseError(
+            "complete release cannot contain reserved dataset_infos.json"
+        )
+    metadata_path = (
+        COMPLETE_RELEASE_METADATA_PATH
+        if complete_layout
+        else LEGACY_RELEASE_METADATA_PATH
+    )
+    required = {"README.md", metadata_path, "evaluation-report.json"}
     if not required <= set(paths) or not any(item.config_name for item in artifacts):
         raise LocalReleaseError("release artifact inventory is incomplete")
+    if complete_layout:
+        observed_data_configs = {
+            item.config_name for item in complete_data
+        }
+        if observed_data_configs != set(COMPLETE_DATA_CONFIG_PATHS):
+            raise LocalReleaseError(
+                "complete data-family inventory is incomplete"
+            )
+        observed_indexes = {
+            item.path
+            for item in artifacts
+            if item.path.startswith("indexes/")
+        }
+        if observed_indexes != set(COMPLETE_INDEX_PATHS):
+            raise LocalReleaseError(
+                "complete physical index inventory is incomplete"
+            )
+    _validate_manifest_index_inventory(
+        manifest.get("indexes", {}),
+        artifacts,
+        complete_layout=complete_layout,
+    )
+    for field in (
+        "counts",
+        "bm25",
+        "vector",
+        "graph",
+        "parquet",
+        "configs",
+        "build_runtime",
+    ):
+        if field in manifest:
+            _object(manifest[field], f"manifest {field}")
+    if complete_layout and not {
+        "counts",
+        "bm25",
+        "vector",
+        "graph",
+        "parquet",
+        "configs",
+        "build_runtime",
+    } <= set(manifest):
+        raise LocalReleaseError(
+            "complete manifest metadata inventory is incomplete"
+        )
+    original_data_acknowledgement_required = False
+    if complete_layout:
+        original_data_acknowledgement_required = (
+            _validate_original_data_manifest(
+                manifest,
+                artifacts,
+                source_dataset_id=source_dataset_id,
+                source_revision=source_revision,
+            )
+        )
+    if (
+        "primary_key" in manifest
+        and manifest["primary_key"] != "entry_cid"
+    ):
+        raise LocalReleaseError(
+            "release primary_key must be entry_cid"
+        )
 
     actual_files: set[str] = set()
     for candidate in root.rglob("*"):
@@ -479,26 +1932,52 @@ def load_local_release(
 
     for descriptor in artifacts:
         path = root.joinpath(*PurePosixPath(descriptor.path).parts)
-        content = _bounded_bytes(
-            path,
-            maximum=MAX_ARTIFACT_BYTES,
-            label=f"artifact {descriptor.path}",
-        )
+        content: bytes | None
+        if _original_contract(descriptor.path) is not None:
+            observed_size, digest = _stream_file_sha256(
+                path,
+                maximum=_artifact_byte_limit(descriptor.path),
+                label=f"artifact {descriptor.path}",
+            )
+            content = None
+        else:
+            content = _bounded_bytes(
+                path,
+                maximum=_artifact_byte_limit(descriptor.path),
+                label=f"artifact {descriptor.path}",
+            )
+            observed_size = len(content)
+            digest = hashlib.sha256(content).digest()
         if (
-            len(content) != descriptor.byte_length
-            or hashlib.sha256(content).hexdigest() != descriptor.sha256
+            observed_size != descriptor.byte_length
+            or digest.hex() != descriptor.sha256
         ):
             raise LocalReleaseError(
                 f"artifact content mismatch: {descriptor.path}"
             )
+        if (
+            complete_layout
+            and descriptor.path.endswith(".parquet")
+            and descriptor.content_id
+            != _raw_sha256_cid(digest)
+        ):
+            raise LocalReleaseError(
+                f"artifact raw SHA-256 CID mismatch: {descriptor.path}"
+            )
         if descriptor.config_name:
-            _validate_parquet(path, descriptor)
+            _validate_parquet(
+                path, descriptor, complete_layout=complete_layout
+            )
         elif descriptor.path.endswith(".json"):
+            if content is None:
+                raise LocalReleaseError("JSON artifact content is unavailable")
             _safe_public_value(
                 _json_bytes(content, descriptor.path),
                 location=f"$.{descriptor.path}",
             )
         else:
+            if content is None:
+                raise LocalReleaseError("README.md content is unavailable")
             try:
                 text = content.decode("utf-8")
             except UnicodeDecodeError as exc:
@@ -507,41 +1986,95 @@ def load_local_release(
                 raise LocalReleaseError(
                     "secret-like value is forbidden in README.md"
                 )
-
-    infos = _json_bytes(
-        _bounded_bytes(
-            root / "dataset_infos.json",
-            maximum=MAX_MANIFEST_BYTES,
-            label="dataset_infos.json",
-        ),
-        "dataset_infos.json",
+    _validate_meta_index_bindings(
+        root,
+        artifacts,
+        complete_layout=complete_layout,
+        manifest=manifest,
     )
-    configs = _object(infos.get("configs"), "dataset configs")
+
+    release_metadata = _json_bytes(
+        _bounded_bytes(
+            root / metadata_path,
+            maximum=MAX_MANIFEST_BYTES,
+            label=metadata_path,
+        ),
+        metadata_path,
+    )
+    configs = _object(release_metadata.get("configs"), "dataset configs")
     if (
-        infos.get("dataset_id") != dataset_id
-        or infos.get("derived_dataset_root") != manifest.get("derived_dataset_root")
-        or infos.get("schema_version") != PARQUET_SCHEMA_VERSION
+        release_metadata.get("dataset_id") != dataset_id
+        or release_metadata.get("derived_dataset_root")
+        != manifest.get("derived_dataset_root")
+        or release_metadata.get("schema_version") != PARQUET_SCHEMA_VERSION
         or not configs
     ):
-        raise LocalReleaseError("dataset_infos release binding is invalid")
-    config_names = tuple(sorted(configs))
-    if any(not _CONFIG_RE.fullmatch(name) for name in config_names):
+        raise LocalReleaseError(f"{metadata_path} release binding is invalid")
+    info_config_names = tuple(sorted(configs))
+    if any(not _CONFIG_RE.fullmatch(name) for name in info_config_names):
         raise LocalReleaseError("dataset config name is invalid")
-    shard_counts: dict[str, int] = {}
+    all_shard_counts: dict[str, int] = {}
     for descriptor in artifacts:
         if descriptor.config_name:
-            shard_counts[descriptor.config_name] = (
-                shard_counts.get(descriptor.config_name, 0) + 1
+            all_shard_counts[descriptor.config_name] = (
+                all_shard_counts.get(descriptor.config_name, 0) + 1
             )
-    if tuple(sorted(shard_counts)) != config_names:
-        raise LocalReleaseError("dataset configs do not match Parquet shards")
-    for name in config_names:
+    if complete_layout:
+        all_complete_configs = frozenset(all_shard_counts)
+        if (
+            frozenset(info_config_names)
+            not in {COMPLETE_VIEWER_CONFIGS, all_complete_configs}
+            or not COMPLETE_VIEWER_CONFIGS <= all_complete_configs
+            or all_complete_configs
+            != COMPLETE_VIEWER_CONFIGS | _HIDDEN_INDEX_CONFIGS
+        ):
+            raise LocalReleaseError(
+                "complete dataset config inventory is invalid"
+            )
+        config_names = tuple(sorted(COMPLETE_VIEWER_CONFIGS))
+        card_configs = _card_config_names(
+            _bounded_bytes(
+                root / "README.md",
+                maximum=MAX_MANIFEST_BYTES,
+                label="README.md",
+            )
+        )
+        if set(card_configs) != COMPLETE_VIEWER_CONFIGS:
+            raise LocalReleaseError(
+                "dataset card must expose the complete Viewer config inventory"
+            )
+    else:
+        config_names = info_config_names
+        if tuple(sorted(all_shard_counts)) != config_names:
+            raise LocalReleaseError(
+                "dataset configs do not match Parquet shards"
+            )
+    for name in info_config_names:
         config = _object(configs[name], f"dataset config {name}")
         features = _object(config.get("features"), f"dataset config {name} features")
         splits = _object(config.get("splits"), f"dataset config {name} splits")
         train = _object(splits.get("train"), f"dataset config {name} train split")
-        if set(features) != set(EXPECTED_COLUMNS):
+        expected_columns = _CONFIG_COLUMNS.get(name)
+        if expected_columns is None:
+            expected_columns = (
+                META_INDEX_COLUMNS
+                if any(
+                    item.path.startswith("indexes/")
+                    for item in artifacts
+                    if item.config_name == name
+                )
+                else EXPECTED_COLUMNS
+            )
+        if set(features) != set(expected_columns):
             raise LocalReleaseError("dataset config feature schema is invalid")
+        if (
+            complete_layout
+            and dict(features)
+            != _parquet_feature_metadata(root, artifacts, name)
+        ):
+            raise LocalReleaseError(
+                "dataset config feature types differ from Parquet"
+            )
         expected_rows = sum(
             item.row_count for item in artifacts if item.config_name == name
         )
@@ -553,13 +2086,18 @@ def load_local_release(
             or train.get("num_bytes") != expected_bytes
         ):
             raise LocalReleaseError("dataset config row inventory is invalid")
+    shard_counts = {
+        name: all_shard_counts[name] for name in config_names
+    }
 
     declared_shards = release_manifest.get("shard_cids")
     if (
         not isinstance(declared_shards, list)
         or set(declared_shards)
         != {
-            item.content_id for item in artifacts if item.config_name
+            item.content_id
+            for item in artifacts
+            if item.config_name and item.path.startswith("data/")
         }
     ):
         raise LocalReleaseError("release manifest shard inventory is invalid")
@@ -575,6 +2113,10 @@ def load_local_release(
         artifacts=artifacts,
         config_names=config_names,
         config_shard_counts=tuple(sorted(shard_counts.items())),
+        complete_layout=complete_layout,
+        original_data_acknowledgement_required=(
+            original_data_acknowledgement_required
+        ),
     )
 
 
@@ -708,7 +2250,9 @@ class HuggingFaceHubGateway:
             f"{quote(revision, safe='')}/{quote(safe_path, safe='/')}"
         )
         maximum = (
-            MAX_MANIFEST_BYTES if path.endswith((".json", ".md")) else MAX_ARTIFACT_BYTES
+            MAX_MANIFEST_BYTES
+            if path.endswith((".json", ".md"))
+            else _artifact_byte_limit(path)
         )
         return self._read_url(url, token, maximum=maximum)
 
@@ -735,10 +2279,12 @@ class HuggingFaceHubGateway:
                 allow_patterns=patterns,
                 delete_patterns=[
                     "README.md",
-                    "dataset_infos.json",
+                    COMPLETE_RELEASE_METADATA_PATH,
+                    LEGACY_RELEASE_METADATA_PATH,
                     "evaluation-report.json",
                     "manifest.json",
                     "data/**",
+                    "indexes/**",
                 ],
             )
             commit = getattr(result, "oid", "") or getattr(result, "commit_id", "")
@@ -896,6 +2442,7 @@ def verify_dataset_viewer(
             raise ViewerNotReadyError("Dataset Viewer shard count mismatch")
 
     for config in release.config_names:
+        expected_columns = release.columns_for_config(config)
         first_rows = gateway.viewer(
             "first-rows",
             {
@@ -909,7 +2456,7 @@ def verify_dataset_viewer(
             first_rows.get("dataset") not in {None, release.dataset_id}
             or first_rows.get("config") not in {None, config}
             or first_rows.get("split") not in {None, "train"}
-            or _feature_names(first_rows) != EXPECTED_COLUMNS
+            or _feature_names(first_rows) != expected_columns
         ):
             raise ViewerNotReadyError("Dataset Viewer feature binding mismatch")
         rows = first_rows.get("rows")
@@ -917,8 +2464,55 @@ def verify_dataset_viewer(
             raise ViewerNotReadyError("Dataset Viewer returned no verification row")
         first = rows[0]
         row = first.get("row") if isinstance(first, Mapping) else None
-        if not isinstance(row, Mapping) or tuple(row) != EXPECTED_COLUMNS:
+        if not isinstance(row, Mapping) or tuple(row) != expected_columns:
             raise ViewerNotReadyError("Dataset Viewer row schema mismatch")
+        if config == "original_data":
+            if (
+                not isinstance(row.get("cve_id"), str)
+                or not _CVE_ID_RE.fullmatch(row["cve_id"])
+                or not isinstance(row.get("hash"), str)
+                or not _GIT_HASH_RE.fullmatch(row["hash"])
+            ):
+                raise ViewerNotReadyError(
+                    "Dataset Viewer original-data identity mismatch"
+                )
+            continue
+        if config == "original_row_index":
+            if (
+                not isinstance(row.get("security_ir_source_cid"), str)
+                or not _CID_RE.fullmatch(row["security_ir_source_cid"])
+                or row.get("schema_version")
+                != ORIGINAL_ROW_INDEX_SCHEMA_VERSION
+            ):
+                raise ViewerNotReadyError(
+                    "Dataset Viewer original-row index binding mismatch"
+                )
+            continue
+        if expected_columns[: len(META_INDEX_COLUMNS)] == META_INDEX_COLUMNS:
+            if (
+                row.get("schema_version") != "cvefixes-hf-shard-meta/v1"
+                or not isinstance(row.get("relative_path"), str)
+                or not row["relative_path"].startswith("data/")
+                or not isinstance(row.get("cid"), str)
+                or not _CID_RE.fullmatch(row["cid"])
+            ):
+                raise ViewerNotReadyError(
+                    "Dataset Viewer meta-index row binding mismatch"
+                )
+            continue
+        if config in COMPLETE_DATA_CONFIG_PATHS:
+            key_column = _DATA_KEY_COLUMNS[config]
+            key = row.get(key_column)
+            if (
+                not isinstance(key, str)
+                or not key
+                or not isinstance(row.get("schema_version"), str)
+                or not row["schema_version"]
+            ):
+                raise ViewerNotReadyError(
+                    "Dataset Viewer indexed data row is malformed"
+                )
+            continue
         if row.get("record_type") != config:
             raise ViewerNotReadyError("Dataset Viewer row crossed configurations")
         try:
@@ -935,7 +2529,11 @@ def verify_dataset_viewer(
             raise ViewerNotReadyError("Dataset Viewer row identity mismatch")
 
     return {
-        "columns": list(EXPECTED_COLUMNS),
+        "columns": {
+            name: list(release.columns_for_config(name))
+            for name in release.config_names
+        },
+        "index_columns": list(META_INDEX_COLUMNS),
         "configs": list(release.config_names),
         "shards": {
             key: sorted(value, key=lambda item: item["filename"])
@@ -1063,6 +2661,7 @@ def publish_release(
     *,
     target_repo: str = DEFAULT_TARGET_REPO,
     execute: bool = False,
+    acknowledge_original_data_mirror: bool = False,
     token_env: str = "HF_TOKEN",
     gateway: HubGateway | None = None,
     viewer_attempts: int = 1,
@@ -1073,6 +2672,14 @@ def publish_release(
 
     if type(execute) is not bool:
         raise PublicationError("execute must be boolean")
+    if type(acknowledge_original_data_mirror) is not bool:
+        raise PublicationError(
+            "original-data mirror acknowledgement must be boolean"
+        )
+    if acknowledge_original_data_mirror and not execute:
+        raise PublicationError(
+            "original-data mirror acknowledgement requires execute"
+        )
     if not _DATASET_ID_RE.fullmatch(target_repo):
         raise PublicationError("target repo must be owner/name")
     if not _ENV_RE.fullmatch(token_env):
@@ -1091,9 +2698,19 @@ def publish_release(
         "source_revision": release.source_revision,
         "status": "planned",
         "target_repo": release.dataset_id,
+        "original_data_mirror_acknowledgement_required": (
+            release.original_data_acknowledgement_required
+        ),
     }
     if not execute:
         return plan
+    if (
+        release.original_data_acknowledgement_required
+        and not acknowledge_original_data_mirror
+    ):
+        raise PublicationError(
+            "execute requires --acknowledge-original-data-mirror"
+        )
 
     token = os.environ.get(token_env)
     if not isinstance(token, str) or not token:
@@ -1239,9 +2856,44 @@ def _receipt_release(receipt: Mapping[str, Any]) -> LocalRelease:
             not isinstance(config, str) or not _CONFIG_RE.fullmatch(config)
             for config in configs
         )
-        or viewer.get("columns") != list(EXPECTED_COLUMNS)
     ):
         raise LocalReleaseError("receipt Dataset Viewer proof is invalid")
+    receipt_columns = viewer.get("columns")
+    if isinstance(receipt_columns, list):
+        if receipt_columns != list(EXPECTED_COLUMNS):
+            raise LocalReleaseError(
+                "receipt Dataset Viewer columns are invalid"
+            )
+    elif isinstance(receipt_columns, Mapping):
+        if set(receipt_columns) != set(configs):
+            raise LocalReleaseError(
+                "receipt Dataset Viewer columns are incomplete"
+            )
+        for config in configs:
+            paths = {
+                item.path
+                for item in artifacts
+                if item.config_name == config
+            }
+            if not paths:
+                raise LocalReleaseError(
+                    "receipt Viewer config has no artifact"
+                )
+            expected_columns = _CONFIG_COLUMNS.get(config)
+            if expected_columns is None:
+                expected_columns = (
+                    META_INDEX_COLUMNS
+                    if all(path.startswith("indexes/") for path in paths)
+                    else EXPECTED_COLUMNS
+                )
+            if receipt_columns.get(config) != list(expected_columns):
+                raise LocalReleaseError(
+                    "receipt Dataset Viewer columns differ"
+                )
+    else:
+        raise LocalReleaseError(
+            "receipt Dataset Viewer columns are invalid"
+        )
     shard_counts = tuple(
         sorted(
             (
@@ -1291,6 +2943,10 @@ def _receipt_release(receipt: Mapping[str, Any]) -> LocalRelease:
         artifacts=tuple(artifacts),
         config_names=tuple(configs),
         config_shard_counts=shard_counts,
+        complete_layout=any(
+            _complete_data_config(item.path) is not None
+            for item in artifacts
+        ),
     )
 
 
@@ -1397,6 +3053,14 @@ def _parser() -> argparse.ArgumentParser:
         help="Authenticate and publish; omission is always a credential-free dry run.",
     )
     parser.add_argument(
+        "--acknowledge-original-data-mirror",
+        action="store_true",
+        help=(
+            "Explicitly acknowledge publication of the byte-exact upstream "
+            "CVEfixes mirror; required with --execute for complete releases."
+        ),
+    )
+    parser.add_argument(
         "--token-env",
         default="HF_TOKEN",
         help="Name of the environment variable holding the token (never the token itself).",
@@ -1420,7 +3084,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.verify_receipt is not None:
-            if args.release_directory or args.execute or args.receipt_out:
+            if (
+                args.release_directory
+                or args.execute
+                or args.acknowledge_original_data_mirror
+                or args.receipt_out
+            ):
                 raise PublicationError(
                     "--verify-receipt cannot be combined with publication arguments"
                 )
@@ -1434,6 +3103,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.release_directory,
                 target_repo=args.target_repo,
                 execute=args.execute,
+                acknowledge_original_data_mirror=(
+                    args.acknowledge_original_data_mirror
+                ),
                 token_env=args.token_env,
                 viewer_attempts=args.viewer_attempts,
                 viewer_delay_seconds=args.viewer_delay_seconds,
