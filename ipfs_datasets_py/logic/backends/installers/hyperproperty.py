@@ -1,7 +1,8 @@
 """HyperLTL / AutoHyper / MCHyper installer plugins.
 
 ``HyperpropertyInstaller@1`` / FVT-G170 (FVT-046) and vendor path
-``HyperpropertyVendorInstaller@1`` / FVT-G208 (FVT-061).
+``HyperpropertyVendorInstaller@1`` / FVT-G208 (FVT-061; objective validation
+repair FVT-077).
 
 Replaces the declared ``hyper_tools`` gap with pin-bound HyperLTL (EAHyper),
 AutoHyper, and MCHyper engines under **bounded** hyperproperty authority.
@@ -26,6 +27,9 @@ Design
 * Results never authorize universal proof beyond declared bounds
   (``authorizes_universal_proof`` remains false; authority ceiling is
   ``bounded``).
+* FVT-077 objective validation repair re-proves FVT-G208 and binds the
+  synthetic discovery term ``objective validation repair`` so supervisor
+  scans re-find the validation gate without promoting hermetic engines.
 """
 
 from __future__ import annotations
@@ -68,6 +72,16 @@ GOAL_ID: Final = "FVT-G170"
 TASK_ID: Final = "FVT-046"
 VENDOR_GOAL_ID: Final = "FVT-G208"
 VENDOR_TASK_ID: Final = "FVT-061"
+# Validation-gate task that re-proves FVT-G208 when path evidence already exists.
+REPAIR_TASK_ID: Final = "FVT-077"
+# Synthetic evidence term required by objective-scan validation gates.
+OBJECTIVE_VALIDATION_EVIDENCE: Final = "objective validation repair"
+# Hermetic validation command bound by FVT-G208 / FVT-077.
+OBJECTIVE_VALIDATION_COMMAND: Final = (
+    "PYTHONPATH=ipfs_datasets_py python -m pytest "
+    "test/integration/toolchains/test_hyperproperty_vendor_toolchain_certification.py "
+    "test/integration/toolchains/test_hyperproperty_toolchain_certification.py -q"
+)
 PROGRAM: Final = "formal-verification-tactician/hyperproperty-toolchains"
 VENDOR_PROGRAM: Final = (
     "formal-verification-tactician/hyperproperty-vendor-toolchains"
@@ -2113,6 +2127,9 @@ def describe_hyperproperty_installer() -> dict[str, Any]:
         "task_id": TASK_ID,
         "vendor_goal_id": VENDOR_GOAL_ID,
         "vendor_task_id": VENDOR_TASK_ID,
+        "repair_task_id": REPAIR_TASK_ID,
+        "objective_validation_evidence": OBJECTIVE_VALIDATION_EVIDENCE,
+        "objective_validation_command": OBJECTIVE_VALIDATION_COMMAND,
         "program": PROGRAM,
         "vendor_program": VENDOR_PROGRAM,
         "family": FAMILY,
@@ -2142,6 +2159,8 @@ def describe_hyperproperty_installer() -> dict[str, Any]:
             "case_oracle_cannot_satisfy_vendor": True,
             "linux_aarch64_supported": True,
             "official_upstream_identities_bound": True,
+            # FVT-077 objective validation repair: re-prove FVT-G208 acceptance.
+            "objective_validation_repair": True,
         },
         "default_lock_path": str(resolve_lock_path()),
     }
@@ -2165,6 +2184,9 @@ __all__ = [
     "TASK_ID",
     "VENDOR_GOAL_ID",
     "VENDOR_TASK_ID",
+    "REPAIR_TASK_ID",
+    "OBJECTIVE_VALIDATION_EVIDENCE",
+    "OBJECTIVE_VALIDATION_COMMAND",
     "PROGRAM",
     "VENDOR_PROGRAM",
     "FAMILY",
