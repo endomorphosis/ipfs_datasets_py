@@ -105,6 +105,48 @@ ENV_IDENTITY_FILE: Final = "RUNTIME_MTL_EXTERNAL_IDENTITY_FILE"
 ENV_AUTHORIZE_GLOBAL_PROOF: Final = "RUNTIME_MTL_EXTERNAL_AUTHORIZE_GLOBAL_PROOF"
 ENV_VERSION: Final = "RUNTIME_MTL_EXTERNAL_VERSION"
 
+# Match executable dispatch/import syntax, not arbitrary path components.  A
+# valid user-local install root may itself contain ``ipfs_datasets_py``.
+_PYTHON_REFERENCE_DISPATCH_PATTERNS: Final = (
+    (
+        "ipfs_datasets_py import",
+        re.compile(
+            r"\b(?:from|import)\s+ipfs_datasets(?:_py)?(?:\.|\b)",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "software-verification reference",
+        re.compile(
+            r"\bipfs_datasets_py\.logic\.software_verification(?:\.|\b)",
+            re.IGNORECASE,
+        ),
+    ),
+    ("Python module path mutation", re.compile(r"\bsys\.path\b")),
+    ("PYTHONPATH dispatch", re.compile(r"\bPYTHONPATH\s*=", re.IGNORECASE)),
+    (
+        "Python shebang",
+        re.compile(r"(?m)^#![^\n]*\bpython(?:3(?:\.\d+)*)?\b", re.IGNORECASE),
+    ),
+    (
+        "Python command dispatch",
+        re.compile(
+            r"(?m)^\s*(?:exec\s+)?(?:[^\s=]+/)?python"
+            r"(?:3(?:\.\d+)*)?\s+",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "Node child-process Python dispatch",
+        re.compile(
+            r"\b(?:spawn|spawnSync|exec|execFile|execFileSync)\s*\("
+            r"[^)\n]{0,160}[\"'](?:[^\"']*/)?python"
+            r"(?:3(?:\.\d+)*)?[\"']",
+            re.IGNORECASE,
+        ),
+    ),
+)
+
 ProgressCallback = Callable[[str], None]
 
 
@@ -1113,6 +1155,21 @@ exec "$NODE" "$CLI" "$@"
 """
 
 
+def _python_reference_dispatch_marker(*artifacts: str) -> str | None:
+    """Return the first Python-reference dispatch marker in built artifacts.
+
+    This deliberately audits executable syntax rather than raw substrings so a
+    harmless install path such as ``.../ipfs_datasets_py/theorem-provers`` does
+    not make an independent Node build fail certification.
+    """
+
+    for artifact in artifacts:
+        for marker, pattern in _PYTHON_REFERENCE_DISPATCH_PATTERNS:
+            if pattern.search(artifact):
+                return marker
+    return None
+
+
 def materialize_vendor_typescript_engine(
     tool_id: str = TOOL_RUNTIME_MTL_EXTERNAL,
     *,
@@ -1228,18 +1285,12 @@ def materialize_vendor_typescript_engine(
     # Independence check: wrapper and CLI must not mention Python package imports.
     wrapper_text = exe.read_text(encoding="utf-8")
     cli_text = cli_path.read_text(encoding="utf-8")
-    forbidden = (
-        "ipfs_datasets_py",
-        "from ipfs_datasets",
-        "import ipfs_datasets",
-        "sys.path",
-        "python3 -c",
-    )
-    for token in forbidden:
-        if token in wrapper_text or token in cli_text:
-            raise RuntimeMTLInstallerError(
-                f"vendor engine must not dispatch to Python reference; found {token!r}"
-            )
+    dispatch_marker = _python_reference_dispatch_marker(wrapper_text, cli_text)
+    if dispatch_marker is not None:
+        raise RuntimeMTLInstallerError(
+            "vendor engine must not dispatch to Python reference; "
+            f"found {dispatch_marker!r}"
+        )
 
     return ExternalMonitorIdentity(
         tool_id=tool_id,
