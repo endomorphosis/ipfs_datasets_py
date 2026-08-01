@@ -24,12 +24,23 @@ from typing import Any, Callable, Final
 
 FORMAL_VERIFICATION_TOOL_ROLE_INTERFACE: Final = "FormalVerificationToolRole@1"
 ROLE_AWARE_PROMOTION_POLICY_INTERFACE: Final = "RoleAwarePromotionPolicy@1"
+FORMAL_VERIFICATION_SPECIALIZED_RECEIPT_AGGREGATION_INTERFACE: Final = (
+    "FormalVerificationSpecializedReceiptAggregation@1"
+)
 TOOL_ROLE_SCHEMA: Final = "formal-verification-tool-role/v1"
 PROMOTION_POLICY_SCHEMA: Final = "role-aware-promotion-policy/v1"
 SEMANTIC_LANE_SCHEMA: Final = "formal-verification-semantic-lane/v1"
+SPECIALIZED_RECEIPT_AGGREGATION_SCHEMA: Final = (
+    "formal-verification-specialized-receipt-aggregation/v1"
+)
 GOAL_ID: Final = "FVT-G100"
 TASK_ID: Final = "FVT-037"
+SPECIALIZED_RECEIPT_AGGREGATION_GOAL_ID: Final = "FVT-G203"
+SPECIALIZED_RECEIPT_AGGREGATION_TASK_ID: Final = "FVT-065"
 PROGRAM: Final = "formal-verification-tactician/toolchain-governance"
+
+# Composite-slot key when a handler covers an entire multi-tool lane.
+_COMPOSITE_HANDLER_TOOL_KEY: Final = ""
 
 
 class ToolchainRoleError(ValueError):
@@ -381,9 +392,135 @@ class PromotionDecision:
 LaneHandler = Callable[..., Any]
 
 
+def handler_registry_key(lane_id: str, tool_id: str | None = None) -> str:
+    """Canonical registry key for a lane or ``(lane_id, tool_id)`` handler slot.
+
+    Tool-specific handlers use ``"{lane_id}::{tool_id}"``. Composite handlers
+    that own an entire multi-tool lane use the bare ``lane_id``.
+    """
+
+    lane_key = _text(lane_id, "lane_id")
+    if tool_id is None or str(tool_id).strip() == "":
+        return lane_key
+    return f"{lane_key}::{_text(tool_id, 'tool_id').lower()}"
+
+
+def parse_handler_registry_key(key: str) -> tuple[str, str | None]:
+    """Inverse of :func:`handler_registry_key`."""
+
+    text = _text(key, "handler_key")
+    if "::" not in text:
+        return text, None
+    lane_id, tool_id = text.split("::", 1)
+    return lane_id, tool_id.lower()
+
+
+def infer_handler_tool_id(handler: LaneHandler) -> str | None:
+    """Best-effort tool ownership for a callable certifier handler.
+
+    Single-tool certifiers publish ``TOOL_ID`` on the callable or its module
+    globals. Multi-tool composite certifiers (ATP, state-model, hyperproperty)
+    leave ownership unset so they bind as a composite lane handler.
+    """
+
+    for attr in ("tool_id", "TOOL_ID"):
+        value = getattr(handler, attr, None)
+        if isinstance(value, str) and value.strip():
+            return value.strip().lower()
+
+    # LaneHandlerPlaceholder and similar declare lane ownership only.
+    if getattr(handler, "status", None) == "registered_pending_implementation":
+        return None
+
+    globals_map = getattr(handler, "__globals__", None)
+    if isinstance(globals_map, Mapping):
+        # Multi-tool modules intentionally omit a single TOOL_ID or declare
+        # TOOL_IDS / ENGINE_IDS; keep them as composite handlers.
+        multi = globals_map.get("TOOL_IDS") or globals_map.get("ENGINE_IDS")
+        if multi:
+            return None
+        value = globals_map.get("TOOL_ID")
+        if isinstance(value, str) and value.strip():
+            return value.strip().lower()
+    return None
+
+
+@dataclass(frozen=True, slots=True)
+class CompositeLaneHandler:
+    """Fan-out handler that retains distinct per-tool specialized receipts.
+
+    Sibling tools on the same property lane (kernel: lean/rocq/isabelle,
+    protocol: tamarin/proverif) must not overwrite each other. Invoking the
+    composite returns every specialized receipt under ``per_tool_receipts``.
+    """
+
+    lane_id: str
+    tool_handlers: Mapping[str, LaneHandler]
+    composite_handler: LaneHandler | None = None
+    interface: str = FORMAL_VERIFICATION_SPECIALIZED_RECEIPT_AGGREGATION_INTERFACE
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "tool_handlers",
+            MappingProxyType(dict(self.tool_handlers)),
+        )
+        if not self.tool_handlers and self.composite_handler is None:
+            raise ToolchainRoleError(
+                f"composite lane handler for {self.lane_id!r} has no children"
+            )
+
+    def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        per_tool: dict[str, Any] = {}
+        for tool_id in sorted(self.tool_handlers):
+            receipt = self.tool_handlers[tool_id](*args, **kwargs)
+            per_tool[tool_id] = receipt
+        composite_receipt: Any | None = None
+        if self.composite_handler is not None:
+            composite_receipt = self.composite_handler(*args, **kwargs)
+            if isinstance(composite_receipt, Mapping):
+                nested = composite_receipt.get("per_tool_receipts")
+                if isinstance(nested, Mapping):
+                    for tool_id, receipt in nested.items():
+                        # Tool-specific handlers win; never overwrite a sibling.
+                        per_tool.setdefault(str(tool_id), receipt)
+        certified_flags: list[bool] = []
+        for receipt in per_tool.values():
+            if isinstance(receipt, Mapping):
+                certified_flags.append(
+                    bool(
+                        receipt.get("certified")
+                        or receipt.get("production_certified")
+                    )
+                )
+            else:
+                certified_flags.append(False)
+        return {
+            "interface": self.interface,
+            "lane_id": self.lane_id,
+            "composite": True,
+            "handler_keys": [
+                handler_registry_key(self.lane_id, tool_id)
+                for tool_id in sorted(per_tool)
+            ],
+            "tool_ids": sorted(per_tool),
+            "per_tool_receipts": per_tool,
+            "composite_receipt": composite_receipt,
+            "certified": bool(certified_flags) and all(certified_flags),
+            "lossless": True,
+            "collapse_by_check_kind": False,
+            "sibling_overwrite_forbidden": True,
+        }
+
+
 @dataclass
 class RoleAwarePromotionPolicy:
-    """``RoleAwarePromotionPolicy@1`` evaluator and lane-handler registry."""
+    """``RoleAwarePromotionPolicy@1`` evaluator and lane-handler registry.
+
+    Handlers are keyed by ``(lane_id, tool_id)`` when a certifier owns a single
+    tool, or by ``lane_id`` alone for composite multi-tool certifiers. Sibling
+    tools on the same property lane never overwrite each other (FVT-G203).
+    """
 
     interface: str = ROLE_AWARE_PROMOTION_POLICY_INTERFACE
     schema_version: str = PROMOTION_POLICY_SCHEMA
@@ -391,6 +528,7 @@ class RoleAwarePromotionPolicy:
     task_id: str = TASK_ID
     roles: Mapping[str, FormalVerificationToolRole] = field(default_factory=dict)
     lanes: Mapping[str, SemanticLane] = field(default_factory=dict)
+    # Registry key is handler_registry_key(lane_id, tool_id|None).
     _handlers: dict[str, LaneHandler] = field(default_factory=dict, repr=False)
 
     def __post_init__(self) -> None:
@@ -424,29 +562,122 @@ class RoleAwarePromotionPolicy:
         lane_id: str,
         handler: LaneHandler,
         *,
+        tool_id: str | None = None,
         replace: bool = False,
     ) -> None:
-        """Bind an independently owned certification handler to a pre-registered lane."""
+        """Bind an independently owned certification handler.
 
-        key = _text(lane_id, "lane_id")
-        if key not in self.lanes:
+        When ``tool_id`` is omitted, ownership is inferred from the handler
+        (module ``TOOL_ID``). Inferred tool-specific handlers register under
+        ``(lane_id, tool_id)`` so siblings such as Lean/Rocq/Isabelle or
+        Tamarin/ProVerif never overwrite each other. Explicit composite
+        multi-tool handlers (no single TOOL_ID) still bind to the bare lane.
+        """
+
+        key_lane = _text(lane_id, "lane_id")
+        if key_lane not in self.lanes:
             raise ToolchainRoleError(
                 f"cannot register handler for unknown lane {lane_id!r}; "
                 "lanes are pre-registered in the role model"
             )
         if not callable(handler):
             raise ToolchainRoleError("lane handler must be callable")
-        if key in self._handlers and not replace:
+
+        resolved_tool = (
+            _text(tool_id, "tool_id").lower()
+            if tool_id is not None and str(tool_id).strip()
+            else infer_handler_tool_id(handler)
+        )
+        registry_key = handler_registry_key(key_lane, resolved_tool)
+        if registry_key in self._handlers and not replace:
             raise ToolchainRoleError(
-                f"lane handler for {lane_id!r} is already registered; "
+                f"lane handler for {registry_key!r} is already registered; "
                 "pass replace=True to override deliberately"
             )
-        self._handlers[key] = handler
 
-    def get_lane_handler(self, lane_id: str) -> LaneHandler | None:
-        return self._handlers.get(_text(lane_id, "lane_id"))
+        # Drop pending composite placeholders once a real tool-specific handler
+        # arrives so first-check / one-handler-per-lane fan-in cannot conceal
+        # sibling specialized evidence.
+        if resolved_tool:
+            composite_key = handler_registry_key(key_lane, None)
+            existing_composite = self._handlers.get(composite_key)
+            if existing_composite is not None and (
+                getattr(existing_composite, "status", None)
+                == "registered_pending_implementation"
+            ):
+                del self._handlers[composite_key]
+
+        self._handlers[registry_key] = handler
+
+    def get_tool_handler(
+        self,
+        lane_id: str,
+        tool_id: str,
+    ) -> LaneHandler | None:
+        """Return the specialized handler for exactly one ``(lane_id, tool_id)``."""
+
+        return self._handlers.get(
+            handler_registry_key(lane_id, tool_id)
+        )
+
+    def list_lane_tool_handlers(
+        self,
+        lane_id: str,
+    ) -> dict[str, LaneHandler]:
+        """Return every tool-specific handler registered under ``lane_id``."""
+
+        key_lane = _text(lane_id, "lane_id")
+        found: dict[str, LaneHandler] = {}
+        prefix = f"{key_lane}::"
+        for registry_key, handler in self._handlers.items():
+            if registry_key.startswith(prefix):
+                _, tool = parse_handler_registry_key(registry_key)
+                if tool:
+                    found[tool] = handler
+        return found
+
+    def get_lane_handler(
+        self,
+        lane_id: str,
+        tool_id: str | None = None,
+    ) -> LaneHandler | None:
+        """Return a lane or tool-scoped handler without sibling overwrite.
+
+        * With ``tool_id``, return that specialized handler only.
+        * Without ``tool_id``, prefer a single specialized handler when the
+          lane has exactly one tool registration; otherwise return a
+          :class:`CompositeLaneHandler` that yields distinct per-tool receipts.
+        """
+
+        key_lane = _text(lane_id, "lane_id")
+        if tool_id is not None and str(tool_id).strip():
+            return self.get_tool_handler(key_lane, tool_id)
+
+        composite = self._handlers.get(handler_registry_key(key_lane, None))
+        tool_handlers = self.list_lane_tool_handlers(key_lane)
+
+        if not tool_handlers:
+            return composite
+        if len(tool_handlers) == 1 and composite is None:
+            return next(iter(tool_handlers.values()))
+        return CompositeLaneHandler(
+            lane_id=key_lane,
+            tool_handlers=tool_handlers,
+            composite_handler=composite,
+        )
 
     def registered_handler_ids(self) -> tuple[str, ...]:
+        """Lane ids that have at least one registered handler (compat surface)."""
+
+        lanes: set[str] = set()
+        for registry_key in self._handlers:
+            lane_id, _ = parse_handler_registry_key(registry_key)
+            lanes.add(lane_id)
+        return tuple(sorted(lanes))
+
+    def registered_handler_keys(self) -> tuple[str, ...]:
+        """Exact registry keys, including ``lane_id::tool_id`` specialized slots."""
+
         return tuple(sorted(self._handlers))
 
     def evaluate_promotion(
@@ -568,6 +799,7 @@ class RoleAwarePromotionPolicy:
             "roles": [self.roles[key].to_dict() for key in sorted(self.roles)],
             "lanes": [self.lanes[key].to_dict() for key in sorted(self.lanes)],
             "registered_handlers": list(self.registered_handler_ids()),
+            "registered_handler_keys": list(self.registered_handler_keys()),
             "non_certifying_roles": sorted(role.value for role in _NON_CERTIFYING_ROLES),
             "non_certifying_ceilings": sorted(
                 ceiling.value for ceiling in _NON_CERTIFYING_CEILINGS
@@ -577,6 +809,9 @@ class RoleAwarePromotionPolicy:
                 "availability_is_not_authority": True,
                 "exactly_one_role_and_ceiling_per_tool": True,
                 "lanes_independently_owned": True,
+                "handlers_keyed_by_lane_and_tool": True,
+                "sibling_handlers_never_overwrite": True,
+                "lossless_specialized_receipt_aggregation": True,
             },
         }
 
@@ -1122,11 +1357,15 @@ def role_matrix_side_effect_free_on_import() -> bool:
 __all__ = [
     "FORMAL_VERIFICATION_TOOL_ROLE_INTERFACE",
     "ROLE_AWARE_PROMOTION_POLICY_INTERFACE",
+    "FORMAL_VERIFICATION_SPECIALIZED_RECEIPT_AGGREGATION_INTERFACE",
     "TOOL_ROLE_SCHEMA",
     "PROMOTION_POLICY_SCHEMA",
     "SEMANTIC_LANE_SCHEMA",
+    "SPECIALIZED_RECEIPT_AGGREGATION_SCHEMA",
     "GOAL_ID",
     "TASK_ID",
+    "SPECIALIZED_RECEIPT_AGGREGATION_GOAL_ID",
+    "SPECIALIZED_RECEIPT_AGGREGATION_TASK_ID",
     "PROGRAM",
     "ToolchainRoleError",
     "ToolRole",
@@ -1134,7 +1373,11 @@ __all__ = [
     "FormalVerificationToolRole",
     "SemanticLane",
     "PromotionDecision",
+    "CompositeLaneHandler",
     "RoleAwarePromotionPolicy",
+    "handler_registry_key",
+    "parse_handler_registry_key",
+    "infer_handler_tool_id",
     "role_can_satisfy_certified_authority",
     "build_default_role_matrix",
     "build_default_lanes",
