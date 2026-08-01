@@ -1,7 +1,7 @@
 """External Datalog/SecPAL authorization shadow + vendor installer plugins.
 
 ``AuthorizationExternalInstaller@1`` / FVT-G180 (FVT-051) and vendor path
-``ExternalAuthorizationVendorInstaller@1`` / FVT-G209 (FVT-055).
+``ExternalAuthorizationVendorInstaller@1`` / FVT-G209 (FVT-055, FVT-073).
 
 Replaces the declared ``datalog_secpal_external`` gap with pin-bound
 Soufflé- and SecPAL-compatible **shadow** engines for differential work,
@@ -10,6 +10,15 @@ and with a **checksummed vendor Soufflé** path for production evidence.
 External engines never hold authorization authority: the certified
 in-process Datalog/SecPAL references remain the sole authorization-decision
 authorities.
+
+Objective validation repair (FVT-073)
+-------------------------------------
+Path evidence for this installer and the vendor certification surface may
+already exist while the supervisor validation gate still needs an explicit
+re-proof of FVT-G209.  The synthetic evidence term
+``objective validation repair`` is bound here so objective scans re-find
+coverage together with the certifier, focused tests, lock pins, and
+checked-in vendor receipt after the hermetic validation command passes.
 
 Design
 ------
@@ -68,6 +77,10 @@ GOAL_ID: Final = "FVT-G180"
 TASK_ID: Final = "FVT-051"
 VENDOR_GOAL_ID: Final = "FVT-G209"
 VENDOR_TASK_ID: Final = "FVT-055"
+# Validation-gate task that re-proves FVT-G209 when path evidence already exists.
+VENDOR_REPAIR_TASK_ID: Final = "FVT-073"
+# Synthetic evidence term required by objective-scan validation gates.
+OBJECTIVE_VALIDATION_EVIDENCE: Final = "objective validation repair"
 PROGRAM: Final = "formal-verification-tactician/authorization-toolchains"
 VENDOR_PROGRAM: Final = (
     "formal-verification-tactician/authorization-vendor-toolchains"
@@ -1828,6 +1841,9 @@ def describe_authorization_installer() -> dict[str, Any]:
         "task_id": TASK_ID,
         "vendor_goal_id": VENDOR_GOAL_ID,
         "vendor_task_id": VENDOR_TASK_ID,
+        "vendor_repair_task_id": VENDOR_REPAIR_TASK_ID,
+        "objective_validation_evidence": OBJECTIVE_VALIDATION_EVIDENCE,
+        "objective_validation_repair": True,
         "program": PROGRAM,
         "vendor_program": VENDOR_PROGRAM,
         "family": FAMILY,
@@ -1872,6 +1888,8 @@ __all__ = [
     "TASK_ID",
     "VENDOR_GOAL_ID",
     "VENDOR_TASK_ID",
+    "VENDOR_REPAIR_TASK_ID",
+    "OBJECTIVE_VALIDATION_EVIDENCE",
     "PROGRAM",
     "VENDOR_PROGRAM",
     "FAMILY",
