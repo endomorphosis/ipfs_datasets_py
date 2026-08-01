@@ -1,0 +1,456 @@
+{
+  "schema": "ui-ux-ir/mcp-idl-identity-vectors@1",
+  "interface": "MCPIDLIdentityInterop@1",
+  "program": "UIR",
+  "board_namespace": "ipfs-datasets-ui-ux-ir-v1",
+  "task_id": "UIR-002",
+  "goal_id": "UIR-G010",
+  "status": "frozen",
+  "date": "2026-08-01",
+  "contract_path": "external/ipfs_datasets/docs/architecture/UI_UX_IR_MCP_IDL_IDENTITY.md",
+  "parent_contract_path": "external/ipfs_datasets/docs/architecture/UI_UX_IR_CONTRACT.md",
+  "profile": {
+    "name": "mcp-idl-interface-identity-v1",
+    "cid_version": 1,
+    "multicodec": "raw",
+    "multicodec_code": 85,
+    "multihash": "sha2-256",
+    "multihash_code": 18,
+    "digest_size": 32,
+    "multibase": "base32",
+    "multibase_prefix": "b",
+    "wire_prefix_hint": "bafkrei",
+    "canonicalization": {
+      "format": "json",
+      "sort_keys": true,
+      "separators": [",", ":"],
+      "ensure_ascii": true,
+      "encoding": "utf-8",
+      "authority_symbol": "ipfs_accelerate_py.mcp_server.mcplusplus.idl_registry.canonicalize_descriptor"
+    },
+    "cid_constructor_symbol": "ipfs_accelerate_py.mcp_server.mcplusplus.kubo_cid.cid_for_bytes",
+    "package_authority_path": "external/ipfs_accelerate/ipfs_accelerate_py/mcp_server/mcplusplus/idl_registry.py"
+  },
+  "identity_domains": [
+    {
+      "name": "interface_cid",
+      "domain": "mcp_interface_descriptor",
+      "verification": "cidv1_raw_sha2_256_base32_preimage",
+      "equatable_to": []
+    },
+    {
+      "name": "ui_ir_cid",
+      "domain": "ui_ux_ir_declaration",
+      "verification": "independent_ir_canonical_identity",
+      "equatable_to": []
+    },
+    {
+      "name": "legacy_alias",
+      "domain": "historical_descriptor_id",
+      "verification": "typed_alias_only",
+      "equatable_to": []
+    }
+  ],
+  "identity_affecting_fields": [
+    "name",
+    "namespace",
+    "version",
+    "methods",
+    "errors",
+    "requires",
+    "compatibility",
+    "semantic_tags",
+    "observability",
+    "interaction_patterns",
+    "resource_cost_hints"
+  ],
+  "method_identity_affecting_fields": [
+    "name",
+    "input_schema",
+    "output_schema",
+    "input_schema_cid",
+    "output_schema_cid",
+    "errors",
+    "error_schema_cids",
+    "event_schema",
+    "event_schema_cid",
+    "streaming",
+    "description"
+  ],
+  "non_identity_fields": [
+    "interface_cid",
+    "registry_timestamps",
+    "peer_addresses",
+    "cache_metadata",
+    "compatibility_verdicts",
+    "ui_ir_documents",
+    "projections",
+    "proofs",
+    "observations",
+    "runtime_receipts"
+  ],
+  "golden": {
+    "id": "golden.demo_catalog_v1",
+    "descriptor": {
+      "name": "uir.demo.catalog.v1",
+      "namespace": "uir.demo",
+      "version": "1.0.0",
+      "methods": [
+        {
+          "name": "list_items",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              }
+            },
+            "required": ["items"],
+            "additionalProperties": false
+          },
+          "errors": ["NotAuthorized", "InvalidInput"],
+          "streaming": false
+        }
+      ],
+      "errors": [
+        {
+          "name": "NotAuthorized",
+          "code": 403,
+          "description": "caller lacks authority"
+        },
+        {
+          "name": "InvalidInput",
+          "code": 400,
+          "description": "request failed validation"
+        }
+      ],
+      "requires": ["mcp++/ucan", "ai.catalog/read"],
+      "compatibility": {
+        "compatible_with": [],
+        "supersedes": []
+      },
+      "semantic_tags": ["catalog", "read-only"],
+      "observability": {
+        "trace": true,
+        "provenance": true
+      },
+      "interaction_patterns": {
+        "request_response": true,
+        "event_streams": false
+      },
+      "resource_cost_hints": {
+        "tokens_per_call": 32,
+        "latency_ms": 50
+      }
+    },
+    "canonical_preimage_utf8": "{\"compatibility\":{\"compatible_with\":[],\"supersedes\":[]},\"errors\":[{\"code\":403,\"description\":\"caller lacks authority\",\"name\":\"NotAuthorized\"},{\"code\":400,\"description\":\"request failed validation\",\"name\":\"InvalidInput\"}],\"interaction_patterns\":{\"event_streams\":false,\"request_response\":true},\"methods\":[{\"errors\":[\"NotAuthorized\",\"InvalidInput\"],\"input_schema\":{\"additionalProperties\":false,\"properties\":{\"limit\":{\"maximum\":100,\"minimum\":1,\"type\":\"integer\"}},\"required\":[],\"type\":\"object\"},\"name\":\"list_items\",\"output_schema\":{\"additionalProperties\":false,\"properties\":{\"items\":{\"items\":{\"type\":\"string\"},\"maxItems\":100,\"type\":\"array\"}},\"required\":[\"items\"],\"type\":\"object\"},\"streaming\":false}],\"name\":\"uir.demo.catalog.v1\",\"namespace\":\"uir.demo\",\"observability\":{\"provenance\":true,\"trace\":true},\"requires\":[\"mcp++/ucan\",\"ai.catalog/read\"],\"resource_cost_hints\":{\"latency_ms\":50,\"tokens_per_call\":32},\"semantic_tags\":[\"catalog\",\"read-only\"],\"version\":\"1.0.0\"}",
+    "sha256_hex": "4e9de0317a07cecfb620869eff0da33a961313a7f9e30e91ea481a37d0df73ea",
+    "interface_cid": "bafkreicotxqdc6qhz3h3miegt37q3iz2syjrhj7z4mhjd2sidi35bx3t5i",
+    "notes": [
+      "interface_cid is CIDv1/raw/sha2-256/base32 of the canonical preimage",
+      "interface_cid must not appear inside the preimage object"
+    ]
+  },
+  "domain_separation": {
+    "id": "domain.ui_ir_vs_interface",
+    "ui_ir_preimage_utf8": "{\"canonicalization\":\"ir-canonical-json-v1\",\"domain\":\"ui-ux-ir\",\"identity_profile\":\"ir-canonical-identity-v1\",\"payload\":{\"document_id\":\"demo\",\"schema_version\":\"ui-ux-ir/v1\"},\"schema_version\":\"ui-ux-ir/v1\"}",
+    "ui_ir_cid": "bafkreiduvh3bmqwdxnhyxomluf7sxr5yrxk3xgka5g4yi5ycyvqihlfxfa",
+    "must_not_equal_interface_cid": true,
+    "must_not_equal_legacy_aliases": true
+  },
+  "field_sensitivity": [
+    {
+      "id": "field.name",
+      "field": "name",
+      "mutated_value": "uir.demo.catalog.v2",
+      "expected_interface_cid": "bafkreifk5pqwqrwhmerpikoffjs6i3jlb2jlrjv7u24ur3rec7dhq3cyxi"
+    },
+    {
+      "id": "field.namespace",
+      "field": "namespace",
+      "mutated_value": "uir.other",
+      "expected_interface_cid": "bafkreid2oj5oxvp3vmjkrwsalfkwn5cqfgaa7pnjcqmh3ygh2ink5l26e4"
+    },
+    {
+      "id": "field.version",
+      "field": "version",
+      "mutated_value": "1.0.1",
+      "expected_interface_cid": "bafkreib7tr2uetd7kfiwzr4ykxgypksubawdfy3tyzwdcysax2ykpgayz4"
+    },
+    {
+      "id": "field.methods",
+      "field": "methods",
+      "mutated_value": [
+        {
+          "name": "get_item",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": ["id"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "item": {
+                "type": "string"
+              }
+            },
+            "required": ["item"],
+            "additionalProperties": false
+          },
+          "errors": ["NotFound"],
+          "streaming": false
+        }
+      ],
+      "expected_interface_cid": "bafkreicqatsvloddoiotg7ohz7efuyiltxl5wqgvjl5scmbceekofwt6ye"
+    },
+    {
+      "id": "field.errors",
+      "field": "errors",
+      "mutated_value": [
+        {
+          "name": "NotFound",
+          "code": 404,
+          "description": "missing"
+        }
+      ],
+      "expected_interface_cid": "bafkreieg2rbhvhxly3n2zt3q4bazfc74ecsb2hqpvjo7snww6qwbtyhsxm"
+    },
+    {
+      "id": "field.requires",
+      "field": "requires",
+      "mutated_value": ["mcp++/ucan"],
+      "expected_interface_cid": "bafkreigaosdpjkrqygb6mw66kkhl7s6uqwuzeiyvh7t4o5cwkgiaq7llby"
+    },
+    {
+      "id": "field.compatibility",
+      "field": "compatibility",
+      "mutated_value": {
+        "compatible_with": ["other"],
+        "supersedes": []
+      },
+      "expected_interface_cid": "bafkreifclskssuwau6lofwa4dalbcrk75dq5oeguqimunkcw6uaiuwbgey"
+    },
+    {
+      "id": "field.semantic_tags",
+      "field": "semantic_tags",
+      "mutated_value": ["catalog"],
+      "expected_interface_cid": "bafkreih4oc36qhh7vkmy6k6oox5v3w5o5avm5sadks4nbiwfbzabsv434e"
+    },
+    {
+      "id": "field.observability",
+      "field": "observability",
+      "mutated_value": {
+        "trace": false,
+        "provenance": true
+      },
+      "expected_interface_cid": "bafkreib4zwjscg3fdjgvcvaf2lsvyxoik6fvxxjuqyrpo7qi42gjuli7ru"
+    },
+    {
+      "id": "field.interaction_patterns",
+      "field": "interaction_patterns",
+      "mutated_value": {
+        "request_response": true,
+        "event_streams": true
+      },
+      "expected_interface_cid": "bafkreig3zwj6fsc2rz47bz4n4xbf7n44epauofeeblxm6pdbfpvy557j3q"
+    },
+    {
+      "id": "field.resource_cost_hints",
+      "field": "resource_cost_hints",
+      "mutated_value": {
+        "tokens_per_call": 64,
+        "latency_ms": 50
+      },
+      "expected_interface_cid": "bafkreic657s3liohzmygaqftlhqvqisbrcvupc7myjfs462zqjm5flthle",
+      "notes": [
+        "resource_cost_hints are identity-affecting under mcp-idl-interface-identity-v1"
+      ]
+    }
+  ],
+  "key_order_independence": {
+    "id": "canon.key_order",
+    "reordered_descriptor_keys": [
+      "version",
+      "name",
+      "resource_cost_hints",
+      "namespace",
+      "methods",
+      "errors",
+      "requires",
+      "compatibility",
+      "semantic_tags",
+      "observability",
+      "interaction_patterns"
+    ],
+    "expected_interface_cid": "bafkreicotxqdc6qhz3h3miegt37q3iz2syjrhj7z4mhjd2sidi35bx3t5i"
+  },
+  "legacy_alias_samples": [
+    {
+      "id": "legacy.sha256_prefix",
+      "value": "sha256:4e9de0317a07cecfb620869eff0da33a961313a7f9e30e91ea481a37d0df73ea",
+      "kind": "sha256_hex_prefix",
+      "source": "swissknife/src/services/mcp/mcp-idl.ts#computeInterfaceCID",
+      "disposition": "legacy_alias",
+      "verified_interface_cid": false,
+      "shares_digest_with_golden": true
+    },
+    {
+      "id": "legacy.accelerator_placeholder",
+      "value": "cidv1-sha256-4e9de0317a07cecfb620869eff0da33a961313a7f9e30e91ea481a37d0df73ea",
+      "kind": "cidv1_sha256_placeholder",
+      "source": "ipfs_accelerate_py.mcp_server.mcplusplus.idl_registry.compute_interface_cid",
+      "disposition": "legacy_alias",
+      "verified_interface_cid": false,
+      "shares_digest_with_golden": true
+    },
+    {
+      "id": "legacy.mock_bafy",
+      "value": "bafy-mock-uir-demo-catalog-v1",
+      "kind": "mock_label",
+      "source": "fixture_inventory",
+      "disposition": "legacy_alias",
+      "verified_interface_cid": false,
+      "shares_digest_with_golden": false
+    }
+  ],
+  "rejection_cases": [
+    {
+      "id": "reject.dag_pb_twin",
+      "kind": "mislabeled_dag_pb",
+      "value": "bafybeicotxqdc6qhz3h3miegt37q3iz2syjrhj7z4mhjd2sidi35bx3t5i",
+      "reason": "Same multihash over the golden preimage encoded with multicodec dag-pb (0x70) instead of raw (0x55). Not a verified interface_cid.",
+      "must_not_equal_verified_interface_cid": true
+    },
+    {
+      "id": "reject.placeholder_as_verified",
+      "kind": "pseudo_cid",
+      "value": "cidv1-sha256-4e9de0317a07cecfb620869eff0da33a961313a7f9e30e91ea481a37d0df73ea",
+      "reason": "Migration placeholder is not a multiformats CIDv1 string."
+    },
+    {
+      "id": "reject.sha256_prefix_as_verified",
+      "kind": "pseudo_cid",
+      "value": "sha256:4e9de0317a07cecfb620869eff0da33a961313a7f9e30e91ea481a37d0df73ea",
+      "reason": "Hex digest label is a typed legacy alias, not a verified interface_cid."
+    },
+    {
+      "id": "reject.mock_bafy",
+      "kind": "pseudo_cid",
+      "value": "bafy-mock-uir-demo-catalog-v1",
+      "reason": "Mock label has no preimage verification path."
+    },
+    {
+      "id": "reject.uppercase_cid",
+      "kind": "non_canonical_casing",
+      "value": "BAFKREICOTXQDC6QHZ3H3MIEGT37Q3IZ2SYJRHJ7Z4MHJD2SIDI35BX3T5I",
+      "reason": "Verified interface_cid must be lowercase base32."
+    },
+    {
+      "id": "reject.mismatched_preimage",
+      "kind": "preimage_mismatch",
+      "claimed_interface_cid": "bafkreicotxqdc6qhz3h3miegt37q3iz2syjrhj7z4mhjd2sidi35bx3t5i",
+      "descriptor_override": {
+        "name": "uir.demo.catalog.v1-tampered"
+      },
+      "reason": "Claimed CID does not match recomputed preimage."
+    },
+    {
+      "id": "reject.domain_conflation_ui_ir",
+      "kind": "domain_conflation",
+      "left": "ui_ir_cid",
+      "right": "interface_cid",
+      "reason": "ui_ir_cid and interface_cid identify different domains and must never be equated."
+    },
+    {
+      "id": "reject.domain_conflation_legacy",
+      "kind": "domain_conflation",
+      "left": "legacy_alias",
+      "right": "interface_cid",
+      "reason": "legacy_alias values are never promoted to verified interface_cid by string equality."
+    },
+    {
+      "id": "reject.mutable_cache_authority",
+      "kind": "stale_mutable_cache",
+      "source": "ipfs_datasets_py.mcp_server.interface_descriptor.InterfaceDescriptor._interface_cid",
+      "reason": "Cached interface identity on a mutable descriptor is non-authoritative after field mutation."
+    }
+  ],
+  "incompatible_inventory": [
+    {
+      "id": "inv.accelerator_placeholder",
+      "path": "external/ipfs_accelerate/ipfs_accelerate_py/mcp_server/mcplusplus/idl_registry.py",
+      "symbol": "compute_interface_cid",
+      "observed_form": "cidv1-sha256-<hex>",
+      "issue": "placeholder_not_real_cidv1",
+      "disposition": "record_as_legacy_alias_do_not_rewrite_in_place",
+      "rewrite_in_uir_002": false
+    },
+    {
+      "id": "inv.ts_sha256_prefix",
+      "path": "swissknife/src/services/mcp/mcp-idl.ts",
+      "symbol": "computeInterfaceCID",
+      "observed_form": "sha256:<hex>",
+      "issue": "non_cid_wire_form",
+      "disposition": "record_as_legacy_alias_do_not_rewrite_in_place",
+      "rewrite_in_uir_002": false
+    },
+    {
+      "id": "inv.datasets_dagpb",
+      "path": "external/ipfs_datasets/ipfs_datasets_py/mcp_server/interface_descriptor.py",
+      "symbol": "compute_cid",
+      "observed_form": "cidv1_dag_pb_sha2_256_base32",
+      "issue": "mislabeled_dag_pb_codec",
+      "disposition": "reject_as_interface_authority",
+      "rewrite_in_uir_002": false
+    },
+    {
+      "id": "inv.datasets_mutable_cache",
+      "path": "external/ipfs_datasets/ipfs_datasets_py/mcp_server/interface_descriptor.py",
+      "symbol": "InterfaceDescriptor.interface_cid",
+      "observed_form": "mutable_instance_cache",
+      "issue": "stale_mutable_cache_identity",
+      "disposition": "reject_as_authority",
+      "rewrite_in_uir_002": false
+    },
+    {
+      "id": "inv.datasets_hints_excluded",
+      "path": "external/ipfs_datasets/ipfs_datasets_py/mcp_server/interface_descriptor.py",
+      "symbol": "InterfaceDescriptor.canonical_bytes",
+      "observed_form": "resource_cost_hints_omitted_from_preimage",
+      "issue": "incomplete_identity_field_binding",
+      "disposition": "incompatible_with_profile_section_4",
+      "rewrite_in_uir_002": false
+    }
+  ],
+  "explicit_rejections": [
+    "ui_ir_cid_equals_interface_cid",
+    "interface_cid_equals_legacy_alias",
+    "mutable_cache_identity_as_authority",
+    "mislabeled_dag_pb_as_interface_authority",
+    "silent_rewrite_of_incompatible_fixtures",
+    "pseudo_cid_as_verified_interface_cid",
+    "mismatched_preimage_as_identity"
+  ]
+}
