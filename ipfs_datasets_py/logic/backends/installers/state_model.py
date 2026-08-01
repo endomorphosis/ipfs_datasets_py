@@ -66,6 +66,9 @@ PROGRAM: Final = "formal-verification-tactician/state-model-toolchains"
 
 # Locked managed-pin versions (must match deployment lock).
 TLC_VERSION: Final = "1.8.0"
+TLC_RELEASE_TAG: Final = "v1.8.0"
+# Reviewed Clarke / v1.8.0 git short revision bound to the immutable jar pin.
+TLC_REVISION: Final = "30cc360"
 APALACHE_VERSION: Final = "0.58.3"
 TLC_SHA256: Final = (
     "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
@@ -1558,6 +1561,8 @@ def _manifest_payload(
     java_executable: str | Path,
     launcher_identities: Mapping[str, Mapping[str, Any]],
     distribution_tree_sha256: str | None = None,
+    release_tag: str | None = None,
+    revision: str | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "schema_version": _MANIFEST_SCHEMA,
@@ -1578,6 +1583,10 @@ def _manifest_payload(
     }
     if distribution_tree_sha256 is not None:
         payload["distribution_tree_sha256"] = distribution_tree_sha256
+    if release_tag is not None:
+        payload["release_tag"] = release_tag
+    if revision is not None:
+        payload["revision"] = revision
     return payload
 
 
@@ -1632,12 +1641,16 @@ def managed_tlc_identity(
         payload_sha256=TLC_SHA256,
         java_executable=java_executable,
         launcher_identities=identities,
+        release_tag=TLC_RELEASE_TAG,
+        revision=TLC_REVISION,
     )
     manifest_path = root / "manifests" / "tlc.json"
     manifest_ok = _read_exact_manifest(manifest_path, expected_manifest)
     return {
         "tool_id": "tlc",
         "version": TLC_VERSION,
+        "release_tag": TLC_RELEASE_TAG,
+        "revision": TLC_REVISION,
         "artifact_path": str(jar),
         "artifact_sha256": TLC_SHA256,
         "artifact_digest_verified": artifact_ok,
@@ -1874,6 +1887,8 @@ def _stage_tlc_manifest(
         payload_sha256=TLC_SHA256,
         java_executable=java_executable,
         launcher_identities=identities,
+        release_tag=TLC_RELEASE_TAG,
+        revision=TLC_REVISION,
     )
     staged = staging_root / "tlc.json"
     _write_json_file(staged, payload)
@@ -2296,7 +2311,8 @@ def ensure_tlc(
         receipt.checksum_verified = True
         receipt.observed_sha256 = observed
         receipt.bindings["observed_sha256"] = observed
-        receipt.bindings["release_tag"] = f"v{pin.version}"
+        receipt.bindings["release_tag"] = TLC_RELEASE_TAG
+        receipt.bindings["revision"] = TLC_REVISION
 
         runtime_probe = probe_tlc_runtime(
             jar_path=staged_jar,
@@ -3025,6 +3041,8 @@ __all__ = [
     "TASK_ID",
     "PROGRAM",
     "TLC_VERSION",
+    "TLC_RELEASE_TAG",
+    "TLC_REVISION",
     "APALACHE_VERSION",
     "TLC_SHA256",
     "APALACHE_SHA256",
