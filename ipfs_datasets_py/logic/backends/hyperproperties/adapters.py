@@ -16,12 +16,14 @@ Absent tools and unsupported quantifier alternation return non-success.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
+from pathlib import Path
 from typing import Any, Final
 
 from ...families.models import EvidenceAuthority
@@ -91,6 +93,7 @@ _SUCCESS_MARKERS: Final = (
     "true",
     "no violation",
     "property holds",
+    "property proved",
 )
 _VIOLATION_MARKERS: Final = (
     "violated",
@@ -108,6 +111,7 @@ _UNSUPPORTED_MARKERS: Final = (
     "quantifier alternation not supported",
     "fragment not supported",
 )
+_NATIVE_SYMBOL = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 
 
 class HyperpropertyAdapterError(ValueError):
@@ -226,6 +230,113 @@ def _content_digest(payload: Mapping[str, Any] | str) -> str:
     if isinstance(payload, str):
         return stable_digest({"content": payload})
     return stable_digest(dict(payload))
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _runtime_environment(value: object) -> dict[str, str]:
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        raise HyperpropertyAdapterError(
+            "runtime_environment must be a mapping"
+        )
+    environment: dict[str, str] = {}
+    for raw_name, raw_value in value.items():
+        if (
+            not isinstance(raw_name, str)
+            or not raw_name
+            or "=" in raw_name
+            or "\x00" in raw_name
+            or not isinstance(raw_value, str)
+            or "\x00" in raw_value
+        ):
+            raise HyperpropertyAdapterError(
+                "runtime_environment entries must be valid NUL-free strings"
+            )
+        environment[raw_name] = raw_value
+    return environment
+
+
+def _native_identity_payload(value: object) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    to_dict = getattr(value, "to_dict", None)
+    if callable(to_dict):
+        payload = to_dict()
+        if isinstance(payload, Mapping):
+            return dict(payload)
+    raise HyperpropertyAdapterError(
+        "engine_identity must be a mapping or expose to_dict()"
+    )
+
+
+def _validated_native_identity(
+    value: object,
+    *,
+    engine: HyperEngine,
+) -> tuple[str, dict[str, str], str]:
+    """Consume a hash-bound vendor identity without importing its installer."""
+
+    payload = _native_identity_payload(value)
+    if payload.get("tool_id") != engine.value:
+        raise HyperpropertyAdapterError(
+            f"engine_identity tool_id must be {engine.value!r}"
+        )
+    if (
+        payload.get("is_vendor_build") is not True
+        or payload.get("is_upstream_build") is not True
+        or payload.get("is_hermetic_engine") is not False
+        or payload.get("authorizes_universal_proof") is not False
+        or payload.get("authority_ceiling") != "bounded"
+        or payload.get("executable_kind")
+        not in {"upstream_compiled_binary", "upstream_python_entrypoint"}
+    ):
+        raise HyperpropertyAdapterError(
+            "engine_identity must be an audited bounded upstream vendor build"
+        )
+    executable_text = _text(payload.get("executable", ""), "engine executable")
+    try:
+        executable = Path(executable_text).resolve(strict=True)
+    except OSError as exc:
+        raise HyperpropertyAdapterError(
+            "engine_identity executable is unavailable"
+        ) from exc
+    if not executable.is_file():
+        raise HyperpropertyAdapterError(
+            "engine_identity executable must be a file"
+        )
+    artifact_sha = _digest(
+        payload.get("artifact_sha256", ""), "engine artifact_sha256"
+    )
+    if _sha256_file(executable) != artifact_sha:
+        raise HyperpropertyAdapterError(
+            "engine_identity executable digest does not match the artifact"
+        )
+    environment = _runtime_environment(payload.get("runtime_environment") or {})
+    version = _text(payload.get("version", ""), "engine version")
+    return str(executable), environment, version
+
+
+def _native_symbol(value: str, *, field_name: str) -> str:
+    """Restrict generated formulas to symbols accepted by all native parsers.
+
+    MCHyper's Python 2 wrapper interpolates its formula into an internal shell
+    command.  The strict shared alphabet therefore also prevents quotes,
+    separators, substitutions, and control characters from reaching it.
+    """
+
+    if not _NATIVE_SYMBOL.fullmatch(value):
+        raise HyperpropertyAdapterError(
+            f"{field_name} {value!r} is not a portable native prover symbol"
+        )
+    return value
 
 
 def quantifier_alternation_count(prefix: Sequence[QuantifierBinding]) -> int:
@@ -358,6 +469,8 @@ AUTOHYPER_CAPABILITY: Final = HyperEngineCapability(
     limitations=(
         "AutoHyper targets automata-based HyperLTL fragments with limited alternation.",
         "exists-forall prefixes beyond the declared alternation ceiling are unsupported.",
+        "The .NET runtime is incompatible with finite RLIMIT_FSIZE; AutoHyper "
+        "uses the post-run workspace bound while retaining other lifecycle bounds.",
         "A successful AutoHyper run never grants theorem authority.",
         "Bounded self-composition fallback is non-authoritative and is not engine proof.",
     ),
@@ -1018,12 +1131,7 @@ def render_hyperltl_formula(
     *,
     engine: HyperEngine,
 ) -> str:
-    """Render HyperLTL-style text without reordering quantifiers or observations.
-
-    The rendered formula is intentionally engine-neutral textual HyperLTL.  Any
-    engine-specific packaging (for example AutoHyper explicit systems) is added
-    as auxiliary files by :meth:`HyperpropertyBackend.translate`.
-    """
+    """Render the exact reviewed syntax accepted by one native engine."""
 
     if not isinstance(document, HyperpropertyIR):
         raise HyperpropertyAdapterError("document must be a HyperpropertyIR")
@@ -1031,44 +1139,99 @@ def render_hyperltl_formula(
     policy = document.information_flow_policy
     names_by_id = {item.variable_id: item.name for item in formula.variables}
     ordered_names = [
-        names_by_id[item.variable_id] for item in formula.quantifier_prefix
+        _native_symbol(
+            names_by_id[item.variable_id], field_name="trace variable"
+        )
+        for item in formula.quantifier_prefix
     ]
+    fields = tuple(
+        _native_symbol(item, field_name="information-flow field")
+        for item in (
+            *policy.low_input_fields,
+            *policy.observation_fields,
+        )
+    )
+    low_fields = fields[: len(policy.low_input_fields)]
+    observation_fields = fields[len(policy.low_input_fields) :]
+    if len(ordered_names) < 2:
+        raise HyperpropertyAdapterError(
+            "native information-flow translation requires at least two traces"
+        )
+    left, right = ordered_names[0], ordered_names[1]
+
+    if engine is HyperEngine.MCHYPER:
+        def atom(field: str) -> str:
+            return f'Eq (AP "{field}" 0) (AP "{field}" 1)'
+
+        def conjunction(items: Sequence[str]) -> str:
+            if not items:
+                return "Const True"
+            result = items[-1]
+            for item in reversed(items[:-1]):
+                result = f"And ({item}) ({result})"
+            return result
+
+        body = (
+            "G (Implies "
+            f"({conjunction(tuple(atom(item) for item in low_fields))}) "
+            f"({conjunction(tuple(atom(item) for item in observation_fields))}))"
+        )
+        rendered = body
+        for binding in reversed(formula.quantifier_prefix):
+            constructor = (
+                "Forall"
+                if binding.quantifier is TraceQuantifier.FORALL
+                else "Exists"
+            )
+            rendered = f"{constructor} ({rendered})"
+        return rendered
+
     quantifiers = " ".join(
         f"{binding.quantifier.value} {names_by_id[binding.variable_id]}."
         for binding in formula.quantifier_prefix
     )
-    low = ", ".join(policy.low_input_fields) or "true"
-    obs = ", ".join(policy.observation_fields) or "true"
-    if len(ordered_names) >= 2:
-        left, right = ordered_names[0], ordered_names[1]
-        body = (
-            f"G (({{{low}}}_{{{left}}} = {{{low}}}_{{{right}}}) -> "
-            f"({{{obs}}}_{{{left}}} = {{{obs}}}_{{{right}}}))"
-        )
+
+    if engine is HyperEngine.AUTOHYPER:
+        def atom(field: str) -> str:
+            return f'{{"{field}"_{left} = "{field}"_{right}}}'
+
+        true = "1"
     else:
-        body = formula.matrix_statement
-    header = (
-        f"; engine={engine.value}\n"
-        f"; formula_id={formula.formula_id}\n"
-        f"; quantifier_signature={','.join(formula.quantifier_signature)}\n"
-        f"; observation_fields={','.join(policy.observation_fields)}\n"
+        def atom(field: str) -> str:
+            return f"({field}_{left} <-> {field}_{right})"
+
+        true = "True"
+
+    low = " & ".join(atom(item) for item in low_fields) or true
+    observations = (
+        " & ".join(atom(item) for item in observation_fields) or true
     )
-    return header + f"{quantifiers} {body}\n"
+    return f"{quantifiers} G (({low}) -> ({observations}))\n"
 
 
 def _autohyper_explicit_system(document: HyperpropertyIR) -> str:
     """Minimal explicit system package for AutoHyper-style tooling."""
 
     policy = document.information_flow_policy
-    low = policy.low_input_fields[0] if policy.low_input_fields else "low"
-    obs = policy.observation_fields[0] if policy.observation_fields else "obs"
+    variables = tuple(
+        dict.fromkeys(
+            _native_symbol(item, field_name="AutoHyper system variable")
+            for item in (
+                *policy.low_input_fields,
+                *policy.observation_fields,
+            )
+        )
+    ) or ("observable",)
+    declarations = " ".join(f'("{name}" Bool)' for name in variables)
+    false_values = " ".join(f'("{name}" false)' for name in variables)
+    true_values = " ".join(f'("{name}" true)' for name in variables)
     return (
-        f'Variables: ("{low}" Bool) ("{obs}" Bool)\n'
+        f"Variables: {declarations}\n"
         "Init: 0 1\n"
         "--BODY--\n"
-        f'State: 0 {{("{low}" false) ("{obs}" false)}}\n'
+        f"State: 0 {{{false_values}}}\n"
         "0\n"
-        f'State: 1 {{("{low}" true) ("{obs}" true)}}\n'
+        f"State: 1 {{{true_values}}}\n"
         "1\n"
         "--END--\n"
     )
@@ -1318,10 +1481,33 @@ class HyperpropertyBackend:
         runner: BoundedToolRunner | None = None,
         which: ExecutableFinder = shutil.which,
         executable: str | None = None,
+        engine_identity: object | None = None,
+        runtime_environment: Mapping[str, str] | None = None,
     ) -> None:
         self._runner = runner or BoundedToolRunner()
         self._which = which
-        self._executable = executable
+        if engine_identity is not None and (
+            executable is not None or runtime_environment is not None
+        ):
+            raise HyperpropertyAdapterError(
+                "engine_identity cannot be combined with executable or "
+                "runtime_environment overrides"
+            )
+        self._identity_version = ""
+        if engine_identity is not None:
+            (
+                self._executable,
+                self._runtime_environment,
+                self._identity_version,
+            ) = _validated_native_identity(
+                engine_identity,
+                engine=self.engine,
+            )
+        else:
+            self._executable = executable
+            self._runtime_environment = _runtime_environment(
+                runtime_environment or {}
+            )
 
     def capabilities(self) -> BackendCapabilities:
         return BackendCapabilities(
@@ -1431,6 +1617,14 @@ class HyperpropertyBackend:
         }
         if self.engine is HyperEngine.AUTOHYPER:
             auxiliary["system.explicit"] = _autohyper_explicit_system(document)
+            losses.append(
+                "The bundled two-state explicit system is a smoke-test "
+                "abstraction; pass system_model for software-specific evidence."
+            )
+        elif self.engine is HyperEngine.MCHYPER:
+            losses.append(
+                "MCHyper execution requires a caller-supplied AIGER system model."
+            )
         return HyperpropertyTranslation(
             engine=self.engine,
             translator_id=f"datasets-{self.engine.value}@1",
@@ -1450,6 +1644,7 @@ class HyperpropertyBackend:
         *,
         request: BackendRequest | None = None,
         traces: Sequence[ExecutionTrace] | None = None,
+        system_model: bytes | str | None = None,
         allow_fallback: bool = False,
         cancellation: CancellationSignal | None = None,
     ) -> HyperCheckOutcome:
@@ -1518,14 +1713,46 @@ class HyperpropertyBackend:
                 interface_version=self.backend_version,
             )
 
+        if self.engine is HyperEngine.MCHYPER and system_model is None:
+            receipt = self._terminal_receipt(
+                document=document,
+                translation=translation,
+                status=HyperCheckOutcomeStatus.UNSUPPORTED,
+                evidence_path=HyperEvidencePath.NONE,
+                reason=(
+                    "mchyper requires an explicit AIGER .aag/.aig system "
+                    "model; no model check ran"
+                ),
+                bounds=bounds,
+            )
+            return HyperCheckOutcome(
+                request_digest=request_digest,
+                result=self._result_from_receipt(
+                    receipt, request=request, bounds=bounds
+                ),
+                receipt=receipt,
+                translation=translation,
+                interface_version=self.backend_version,
+            )
+
         executable = probe.executable_path
         timeout_seconds = max(0.001, bounds.timeout_ms / 1000.0)
         formula_name = "property.hltl"
-        input_files: dict[str, str] = {formula_name: translation.formula_text}
+        input_files: dict[str, bytes | str] = {
+            formula_name: translation.formula_text
+        }
         input_files.update(
             {name: text for name, text in translation.auxiliary_files.items()}
         )
-        if self.engine is HyperEngine.AUTOHYPER:
+        if self.engine is HyperEngine.HYPERLTL:
+            argv = (executable, "-f", formula_name)
+        elif self.engine is HyperEngine.AUTOHYPER:
+            if system_model is not None:
+                if not isinstance(system_model, (bytes, str)):
+                    raise HyperpropertyAdapterError(
+                        "AutoHyper system_model must be bytes or text"
+                    )
+                input_files["system.explicit"] = system_model
             argv = (
                 executable,
                 "--explicit",
@@ -1533,14 +1760,41 @@ class HyperpropertyBackend:
                 formula_name,
             )
         else:
-            argv = (executable, formula_name)
+            if not isinstance(system_model, (bytes, str)):
+                raise HyperpropertyAdapterError(
+                    "MCHyper system_model must be bytes or text"
+                )
+            input_files.pop(formula_name, None)
+            input_files["system.aag"] = system_model
+            argv = (
+                executable,
+                "-f",
+                translation.formula_text,
+                "system.aag",
+                "-pdr",
+                "-cex",
+                "--cex_file",
+                "counterexample.txt",
+                "-v",
+                "1",
+            )
 
+        input_size = sum(
+            len(
+                content
+                if isinstance(content, bytes)
+                else content.encode("utf-8")
+            )
+            for content in input_files.values()
+        )
+        max_input_bytes = max(input_size, 4096)
         limits = ToolRunLimits(
             timeout_seconds=timeout_seconds,
             max_output_bytes=min(bounds.max_output_bytes, DEFAULT_MAX_OUTPUT_BYTES),
-            max_input_bytes=max(
-                len(translation.formula_text.encode("utf-8")),
-                4096,
+            max_input_bytes=max_input_bytes,
+            max_workspace_bytes=max(16_777_216, max_input_bytes * 2),
+            enforce_file_size_limit=(
+                self.engine is not HyperEngine.AUTOHYPER
             ),
         )
         process = self._runner.run(
@@ -1550,10 +1804,13 @@ class HyperpropertyBackend:
                 limits=limits,
                 input_files=input_files,
                 output_paths=("counterexample.txt", "witness.txt"),
+                environment=self._runtime_environment,
             ),
             cancellation=cancellation,
         )
-        version = self._tool_version(executable)
+        version = self._identity_version or self._tool_version(
+            executable, environment=self._runtime_environment
+        )
         combined = "\n".join(
             part for part in (process.stdout, process.stderr) if part
         )
@@ -1652,10 +1909,19 @@ class HyperpropertyBackend:
                     "traces must be ExecutionTrace values or mappings"
                 )
         allow_fallback = bool(payload.get("allow_fallback", False))
+        system_model = payload.get("system_model")
+        if system_model is None and self.engine is HyperEngine.AUTOHYPER:
+            system_model = payload.get("autohyper_explicit_system")
+        if system_model is None and self.engine is HyperEngine.MCHYPER:
+            system_model = (
+                payload.get("mchyper_aiger")
+                or payload.get("aiger_model")
+            )
         return self.check(
             document,
             request=request,
             traces=tuple(traces),
+            system_model=system_model,
             allow_fallback=allow_fallback,
             cancellation=cancellation,
         )
@@ -1869,7 +2135,12 @@ class HyperpropertyBackend:
             f"{self.engine.value} completed without a recognized verdict",
         )
 
-    def _tool_version(self, executable: str) -> str:
+    def _tool_version(
+        self,
+        executable: str,
+        *,
+        environment: Mapping[str, str] | None = None,
+    ) -> str:
         try:
             result = self._runner.run(
                 ToolRunRequest(
@@ -1879,6 +2150,7 @@ class HyperpropertyBackend:
                         timeout_seconds=DEFAULT_VERSION_TIMEOUT_SECONDS,
                         max_output_bytes=16_384,
                     ),
+                    environment=environment or {},
                 )
             )
         except Exception:  # pragma: no cover - defensive

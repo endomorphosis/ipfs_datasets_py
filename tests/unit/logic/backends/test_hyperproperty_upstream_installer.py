@@ -83,6 +83,12 @@ def _install_synthetic_upstream(
         hp.TOOL_AUTOHYPER: {
             "app/paths.json": b"{}\n",
             "src/AutoHyper/AutoHyper.fsproj": b"<Project />\n",
+            "src/AutoHyper/Configuration.fs": (
+                b"module Configuration\n\n"
+                b"let getSolverConfiguration () =\n"
+                b"    let solverConfig = "
+                b"parseSolverConfigurationContent configContent\n"
+            ),
         },
         hp.TOOL_MCHYPER: {
             "mchyper.py": (
@@ -160,7 +166,8 @@ def _install_synthetic_upstream(
         shutil.copy2(source, destination)
         return destination
 
-    dependencies = _dependency_identities(tmp_path, tool_id)
+    install_root = tmp_path / "install"
+    dependencies = _dependency_identities(install_root, tool_id)
     monkeypatch.setattr(hp, "_download_verified_archive", fake_download)
     monkeypatch.setattr(
         hp,
@@ -185,12 +192,44 @@ def _install_synthetic_upstream(
             _executable(cwd / "Main", b"\x7fELF-mchyper-kernel")
 
     monkeypatch.setattr(hp, "_run_build_command", fake_build)
-    install_root = tmp_path / "install"
+    dependency_roots: dict[str, Path] = {}
+    if tool_id == hp.TOOL_MCHYPER:
+        provenance_root = install_root / "build-dependencies" / "mchyper"
+        package_db = provenance_root / "ghc-package-db"
+        package_db.mkdir(parents=True)
+        (package_db / "package.cache").write_bytes(b"synthetic package db\n")
+        dependency_roots["ghc-package-db"] = package_db
+        for name, content in (
+            ("aiger", b"aiger reviewed source\n"),
+            ("abc", b"abc reviewed source\n"),
+            ("python", b"python reviewed source\n"),
+        ):
+            source_root = provenance_root / f"{name}-source"
+            source_root.mkdir(parents=True)
+            (source_root / "SOURCE").write_bytes(content)
+            if name == "aiger":
+                (source_root / "VERSION").write_text(
+                    hp.MCHYPER_AIGER_VERSION, encoding="utf-8"
+                )
+            archive = provenance_root / f"{name}-source.tar.gz"
+            archive.write_bytes(content + b"archive\n")
+            dependency_roots[f"{name}-source"] = source_root
+            dependency_roots[f"{name}-archive"] = archive
+            monkeypatch.setattr(
+                hp,
+                {
+                    "aiger": "MCHYPER_AIGER_SOURCE_ARCHIVE_SHA256",
+                    "abc": "MCHYPER_ABC_SOURCE_ARCHIVE_SHA256",
+                    "python": "MCHYPER_PYTHON_SOURCE_ARCHIVE_SHA256",
+                }[name],
+                _sha256(archive),
+            )
     identity = hp.materialize_vendor_engine(
         tool_id,
         install_root=install_root,
         repo_root=tmp_path / "no-lock",
         platform_id=hp.LINUX_X86_64,
+        dependency_roots=dependency_roots,
     )
     return identity, install_root, pin
 
@@ -263,6 +302,88 @@ def test_synthetic_upstream_builds_are_identity_bound_without_adapter_shims(
         solver_dir = Path(dict(identity.runtime_environment)["EAHYPER_SOLVER_DIR"])
         assert solver_dir.is_dir()
         assert solver_dir.name == "LTL_SAT_solver"
+    if tool_id == hp.TOOL_AUTOHYPER:
+        paths = json.loads(
+            (
+                Path(identity.executable).parent / "paths.json"
+            ).read_text(encoding="utf-8")
+        )
+        assert paths == {
+            "autfilt": "../../spot/autfilt",
+            "ltl2tgba": "../../spot/ltl2tgba",
+        }
+        assert {
+            "upstream/app/paths.json",
+            "upstream/src/AutoHyper/Configuration.fs",
+        }.issubset(dict(identity.build_lockfiles))
+    if tool_id == hp.TOOL_MCHYPER:
+        assert {
+            "ghc-package-db",
+            "aiger-source",
+            "abc-source",
+            "python-source",
+        } == {item.name for item in identity.dependency_artifacts}
+        runtime_path = dict(identity.runtime_environment)["PATH"].split(":")
+        python_identity = next(
+            item
+            for item in identity.dependency_identities
+            if item.name == "python2.7"
+        )
+        assert Path(runtime_path[0]) == Path(python_identity.executable).parent
+        assert all("lift_coding" not in item for item in runtime_path)
+
+
+@pytest.mark.parametrize("tool_id", hp.EXTERNAL_TOOLS)
+def test_vendor_identity_rebinds_and_rehashes_after_common_tree_relocation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    tool_id: str,
+) -> None:
+    identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = (
+        tmp_path
+        / "opt"
+        / "ipfs-accelerate"
+        / "formal-toolchains"
+        / "deployment-test"
+        / "provers"
+    )
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+
+    relocated = hp._identity_from_disk(
+        tool_id, relocated_root, pin, vendor=True
+    )
+
+    assert relocated is not None
+    assert relocated.artifact_sha256 == identity.artifact_sha256
+    assert relocated.distribution_tree_sha256 == identity.distribution_tree_sha256
+    assert relocated.executable.startswith(str(relocated_root))
+    assert relocated.source_archive_path.startswith(str(relocated_root))
+    assert str(install_root) not in relocated.executable
+    assert str(install_root) not in relocated.source_archive_path
+    for dependency in relocated.dependency_identities:
+        assert str(install_root) not in dependency.executable
+        assert Path(dependency.executable).is_file()
+    for artifact in relocated.dependency_artifacts:
+        assert str(install_root) not in artifact.path
+        assert Path(artifact.path).exists()
+        if artifact.source_archive_path:
+            assert str(install_root) not in artifact.source_archive_path
+            assert Path(artifact.source_archive_path).is_file()
+    for value in dict(relocated.runtime_environment).values():
+        assert str(install_root) not in value
+
+
+def test_relocated_loader_does_not_require_original_repo_lock_path(
+    tmp_path: Path,
+) -> None:
+    for tool_id in hp.EXTERNAL_TOOLS:
+        assert hp.pin_for_tool(
+            tool_id, repo_root=tmp_path / "supervisor-worktree-without-lock"
+        ) == dict(hp.DEFAULT_PINS[tool_id])
 
 
 def test_explicit_dotnet_and_spot_roots_are_resolved_and_hash_bound(
@@ -299,6 +420,158 @@ def test_explicit_dotnet_and_spot_roots_are_resolved_and_hash_bound(
     assert by_name["ltl2tgba"].executable == str(ltl2tgba)
     for item in identities:
         assert item.executable_sha256 == _sha256(Path(item.executable))
+
+
+def test_mchyper_ghc_packages_use_one_explicit_package_db_record(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    ghc_pkg = _executable(tmp_path / "ghcup" / "ghc-pkg")
+    package_db = tmp_path / "cabal" / "package.db"
+    package_db.mkdir(parents=True)
+    observed: list[tuple[tuple[str, ...], dict[str, str]]] = []
+
+    monkeypatch.setattr(
+        hp,
+        "_dependency_specs",
+        lambda _tool: (
+            {
+                "name": "ghc-pkg",
+                "candidates": ("ghc-pkg",),
+                "args": ("--version",),
+                "constraint": "",
+            },
+        ),
+    )
+
+    def capture(_executable, args, *, environment=None, **_kwargs):
+        observed.append((tuple(args), dict(environment or {})))
+        if tuple(args) == ("--version",):
+            return "GHC package manager version 9.4.7"
+        package = args[1]
+        return f"id: {package}-1.2.3-reviewed\nversion: 1.2.3"
+
+    monkeypatch.setattr(hp, "_capture_dependency_version", capture)
+    identities = hp._resolve_vendor_dependencies(
+        hp.TOOL_MCHYPER,
+        dependency_roots={
+            "ghc-pkg": ghc_pkg,
+            "ghc-package-db": package_db,
+        },
+    )
+
+    assert {item.name for item in identities} == {
+        "ghc-pkg",
+        "haskell-package:parsec",
+        "haskell-package:hashable",
+        "haskell-package:MissingH",
+    }
+    package_calls = observed[1:]
+    assert [args for args, _environment in package_calls] == [
+        ("field", "parsec", "id,version"),
+        ("field", "hashable", "id,version"),
+        ("field", "MissingH", "id,version"),
+    ]
+    assert all(
+        environment["GHC_PACKAGE_PATH"] == f"{package_db}:"
+        for _args, environment in package_calls
+    )
+
+
+def test_mchyper_rejects_ambiguous_ghc_package_record(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    ghc_pkg = _executable(tmp_path / "ghcup" / "ghc-pkg")
+    package_db = tmp_path / "cabal" / "package.db"
+    package_db.mkdir(parents=True)
+    monkeypatch.setattr(
+        hp,
+        "_dependency_specs",
+        lambda _tool: (
+            {
+                "name": "ghc-pkg",
+                "candidates": ("ghc-pkg",),
+                "args": ("--version",),
+                "constraint": "",
+            },
+        ),
+    )
+
+    def capture(_executable, args, **_kwargs):
+        if tuple(args) == ("--version",):
+            return "GHC package manager version 9.4.7"
+        package = args[1]
+        return (
+            f"id: {package}-1.0\nversion: 1.0\n"
+            f"id: {package}-2.0\nversion: 2.0"
+        )
+
+    monkeypatch.setattr(hp, "_capture_dependency_version", capture)
+    with pytest.raises(
+        hp.HyperpropertyInstallBlocked,
+        match="GHC package parsec is not installed",
+    ) as blocked:
+        hp._resolve_vendor_dependencies(
+            hp.TOOL_MCHYPER,
+            dependency_roots={
+                "ghc-pkg": ghc_pkg,
+                "ghc-package-db": package_db,
+            },
+        )
+    assert "missing_dependency:haskell-package:parsec" in blocked.value.block_reasons
+
+
+def test_aiger_version_uses_verified_source_evidence_without_banner(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "aiger-source"
+    source.mkdir()
+    (source / "VERSION").write_text(
+        hp.MCHYPER_AIGER_VERSION, encoding="utf-8"
+    )
+    archive = tmp_path / "aiger.tar.gz"
+    archive.write_bytes(b"reviewed aiger archive")
+    monkeypatch.setattr(
+        hp, "MCHYPER_AIGER_SOURCE_ARCHIVE_SHA256", _sha256(archive)
+    )
+
+    evidence = hp._verified_aiger_version_evidence(
+        {"aiger-source": source, "aiger-archive": archive}
+    )
+
+    assert evidence.startswith("1.9.4 (verified VERSION")
+    archive.write_bytes(b"tampered")
+    with pytest.raises(
+        hp.HyperpropertyInstallBlocked,
+        match="archive digest",
+    ):
+        hp._verified_aiger_version_evidence(
+            {"aiger-source": source, "aiger-archive": archive}
+        )
+
+
+def test_mchyper_build_environment_extends_explicit_ghc_package_db(
+    tmp_path: Path,
+) -> None:
+    ghc = _executable(tmp_path / "ghcup" / "ghc")
+    dependency = hp.DependencyIdentity(
+        name="ghc",
+        constraint=">=8.4",
+        executable=str(ghc),
+        version_output="9.4.7",
+        executable_sha256=_sha256(ghc),
+    )
+    package_db = tmp_path / "cabal" / "package.db"
+    package_db.mkdir(parents=True)
+
+    environment = hp._dependency_build_environment(
+        (dependency,), {"ghc-package-db": package_db}
+    )
+
+    assert environment["GHC_PACKAGE_PATH"] == f"{package_db}:"
+    assert str(ghc.parent) in environment["PATH"].split(":")
 
 
 def test_eahyper_build_uses_reviewed_gcc13_compatibility_recipe(
@@ -348,6 +621,28 @@ def test_tampered_upstream_executable_is_not_reused(
     assert (
         hp._identity_from_disk(
             hp.TOOL_HYPERLTL, install_root, pin, vendor=True
+        )
+        is None
+    )
+
+
+def test_tampered_mchyper_dependency_artifact_is_not_reused(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, hp.TOOL_MCHYPER
+    )
+    package_db = next(
+        item
+        for item in identity.dependency_artifacts
+        if item.name == "ghc-package-db"
+    )
+    (Path(package_db.path) / "package.cache").write_bytes(b"tampered")
+
+    assert (
+        hp._identity_from_disk(
+            hp.TOOL_MCHYPER, install_root, pin, vendor=True
         )
         is None
     )

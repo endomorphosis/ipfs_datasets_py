@@ -11,7 +11,9 @@ Covers:
 
 from __future__ import annotations
 
+import hashlib
 import json
+from pathlib import Path
 
 import pytest
 
@@ -249,6 +251,34 @@ def _process_runner(
     return BoundedToolRunner(executor=execute)
 
 
+def _vendor_identity(
+    tmp_path: Path,
+    engine: HyperEngine,
+    *,
+    environment: dict[str, str] | None = None,
+) -> dict:
+    executable = tmp_path / engine.value
+    executable.write_bytes(f"{engine.value} reviewed executable\n".encode())
+    executable.chmod(0o755)
+    return {
+        "artifact_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
+        "authority_ceiling": "bounded",
+        "authorizes_universal_proof": False,
+        "executable": str(executable),
+        "executable_kind": (
+            "upstream_python_entrypoint"
+            if engine is HyperEngine.MCHYPER
+            else "upstream_compiled_binary"
+        ),
+        "is_hermetic_engine": False,
+        "is_upstream_build": True,
+        "is_vendor_build": True,
+        "runtime_environment": environment or {},
+        "tool_id": engine.value,
+        "version": "reviewed-native-test",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Separate discovery / capabilities
 # ---------------------------------------------------------------------------
@@ -336,10 +366,17 @@ def test_quantifier_order_and_observation_maps_survive_translation():
         assert restored_obs.to_dict() == translation.observation_map.to_dict()
 
         formula_text = translation.formula_text
-        assert "forall pi1." in formula_text
-        assert "forall pi2." in formula_text
-        # Order must not be swapped.
-        assert formula_text.index("forall pi1.") < formula_text.index("forall pi2.")
+        if backend.engine is HyperEngine.MCHYPER:
+            assert formula_text.startswith("Forall (Forall (")
+            assert 'AP "user_id" 0' in formula_text
+            assert 'AP "user_id" 1' in formula_text
+        else:
+            assert "forall pi1." in formula_text
+            assert "forall pi2." in formula_text
+            # Order must not be swapped.
+            assert formula_text.index("forall pi1.") < formula_text.index(
+                "forall pi2."
+            )
         assert "status" in formula_text
         assert "public_token" in formula_text
         assert "secret" not in formula_text  # high fields stay out of the formula text map
@@ -475,6 +512,157 @@ def test_autohyper_uses_explicit_system_auxiliary_and_argv():
     assert translation is not None
     assert "system.explicit" in translation.auxiliary_files
     assert "Variables:" in translation.auxiliary_files["system.explicit"]
+    explicit = translation.auxiliary_files["system.explicit"]
+    assert '("user_id" Bool)' in explicit
+    assert '("status" Bool)' in explicit
+    assert '("public_token" Bool)' in explicit
+
+
+@pytest.mark.parametrize(
+    ("backend_type", "engine", "environment", "expected_tail"),
+    [
+        (
+            HyperLTLBackend,
+            HyperEngine.HYPERLTL,
+            {"EAHYPER_SOLVER_DIR": "/opt/reviewed/eahyper-solvers"},
+            ("-f", "property.hltl"),
+        ),
+        (
+            AutoHyperBackend,
+            HyperEngine.AUTOHYPER,
+            {"DOTNET_ROOT": "/opt/reviewed/dotnet"},
+            ("--explicit", "system.explicit", "property.hltl"),
+        ),
+    ],
+)
+def test_vendor_identity_runtime_environment_and_native_cli_are_consumed(
+    tmp_path: Path,
+    backend_type,
+    engine: HyperEngine,
+    environment: dict[str, str],
+    expected_tail: tuple[str, ...],
+) -> None:
+    invocations: list[object] = []
+
+    def execute(invocation, _cancellation):
+        invocations.append(invocation)
+        assert dict(invocation.environment) | environment == dict(
+            invocation.environment
+        )
+        assert invocation.limits.enforce_file_size_limit is (
+            engine is not HyperEngine.AUTOHYPER
+        )
+        assert (invocation.cwd / "property.hltl").is_file()
+        return RawProcessResult(
+            returncode=0,
+            stdout="SAT\n",
+            elapsed_seconds=0.01,
+        )
+
+    identity = _vendor_identity(
+        tmp_path, engine, environment=environment
+    )
+    backend = backend_type(
+        runner=BoundedToolRunner(executor=execute),
+        engine_identity=identity,
+    )
+
+    outcome = backend.check(_document())
+
+    assert outcome.result.status is ResultStatus.SATISFIED
+    assert len(invocations) == 1  # Identity version avoids an invalid CLI probe.
+    assert invocations[0].argv[1:] == expected_tail
+    assert outcome.receipt.tool_version == "reviewed-native-test"
+    if engine is HyperEngine.AUTOHYPER:
+        assert any(
+            "RLIMIT_FSIZE" in item
+            for item in outcome.receipt.capability.limitations
+        )
+
+
+def test_vendor_identity_is_rehashed_before_adapter_consumption(
+    tmp_path: Path,
+) -> None:
+    identity = _vendor_identity(tmp_path, HyperEngine.HYPERLTL)
+    Path(identity["executable"]).write_bytes(b"tampered")
+
+    with pytest.raises(
+        HyperpropertyAdapterError,
+        match="digest does not match",
+    ):
+        HyperLTLBackend(engine_identity=identity)
+
+
+def test_native_formula_renderers_emit_upstream_parser_syntax():
+    document = _document()
+
+    eahyper = render_hyperltl_formula(
+        document, engine=HyperEngine.HYPERLTL
+    )
+    assert not eahyper.startswith(";")
+    assert "(user_id_pi1 <-> user_id_pi2)" in eahyper
+    assert "(status_pi1 <-> status_pi2)" in eahyper
+
+    autohyper = render_hyperltl_formula(
+        document, engine=HyperEngine.AUTOHYPER
+    )
+    assert '{"user_id"_pi1 = "user_id"_pi2}' in autohyper
+    assert '{"public_token"_pi1 = "public_token"_pi2}' in autohyper
+
+    mchyper = render_hyperltl_formula(
+        document, engine=HyperEngine.MCHYPER
+    )
+    assert mchyper.startswith("Forall (Forall (G (Implies ")
+    assert 'Eq (AP "status" 0) (AP "status" 1)' in mchyper
+    assert all(
+        token not in mchyper
+        for token in (";", "`", "$(", "\n", "\\")
+    )
+
+
+def test_mchyper_requires_aiger_and_uses_native_cli_contract():
+    document = _document()
+    invocations: list[object] = []
+
+    def execute(invocation, _cancellation):
+        invocations.append(invocation)
+        assert invocation.limits.enforce_file_size_limit is True
+        assert (invocation.cwd / "system.aag").read_text(
+            encoding="utf-8"
+        ) == "aag 0 0 0 0 0\n"
+        return RawProcessResult(
+            returncode=0,
+            stdout="Property proved. Time = 0.01 sec\n",
+            elapsed_seconds=0.01,
+        )
+
+    backend = MCHyperBackend(
+        runner=BoundedToolRunner(executor=execute),
+        executable="/bin/mchyper",
+    )
+    missing = backend.check(document)
+    assert missing.result.status is ResultStatus.UNSUPPORTED
+    assert "requires an explicit AIGER" in missing.receipt.reason
+    assert not invocations
+
+    outcome = backend.check(
+        document, system_model="aag 0 0 0 0 0\n"
+    )
+
+    assert outcome.result.status is ResultStatus.SATISFIED
+    check_invocation = invocations[0]
+    assert check_invocation.argv[0] == "/bin/mchyper"
+    assert check_invocation.argv[1] == "-f"
+    assert check_invocation.argv[2] == outcome.translation.formula_text
+    assert check_invocation.argv[3:] == (
+        "system.aag",
+        "-pdr",
+        "-cex",
+        "--cex_file",
+        "counterexample.txt",
+        "-v",
+        "1",
+    )
 
 
 # ---------------------------------------------------------------------------

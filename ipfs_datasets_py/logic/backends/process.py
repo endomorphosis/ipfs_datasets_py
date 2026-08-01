@@ -110,6 +110,7 @@ class ToolRunLimits:
     max_arguments: int = 256
     max_argument_bytes: int = 65_536
     max_environment_bytes: int = 131_072
+    enforce_file_size_limit: bool = True
 
     def __post_init__(self) -> None:
         for name in ("timeout_seconds", "termination_grace_seconds"):
@@ -149,6 +150,10 @@ class ToolRunLimits:
         if self.max_workspace_bytes < self.max_input_bytes:
             raise ToolProcessError(
                 "max_workspace_bytes must be at least max_input_bytes"
+            )
+        if not isinstance(self.enforce_file_size_limit, bool):
+            raise ToolProcessError(
+                "enforce_file_size_limit must be a boolean"
             )
 
 
@@ -407,8 +412,9 @@ def _resource_preexec(limits: ToolRunLimits) -> Callable[[], None] | None:
         import resource
 
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-        file_limit = limits.max_workspace_bytes
-        resource.setrlimit(resource.RLIMIT_FSIZE, (file_limit, file_limit))
+        if limits.enforce_file_size_limit:
+            file_limit = limits.max_workspace_bytes
+            resource.setrlimit(resource.RLIMIT_FSIZE, (file_limit, file_limit))
         if limits.cpu_seconds is not None:
             cpu_limit = max(1, int(math.ceil(limits.cpu_seconds)))
             resource.setrlimit(resource.RLIMIT_CPU, (cpu_limit, cpu_limit))

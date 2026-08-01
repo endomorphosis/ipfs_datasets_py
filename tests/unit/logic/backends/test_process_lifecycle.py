@@ -503,6 +503,39 @@ def test_limits_validate_memory_time_and_workspace_relationship() -> None:
         ToolRunLimits(memory_bytes=0)
     with pytest.raises(ToolProcessError, match="at least"):
         ToolRunLimits(max_input_bytes=10, max_workspace_bytes=9)
+    with pytest.raises(ToolProcessError, match="must be a boolean"):
+        ToolRunLimits(enforce_file_size_limit=1)  # type: ignore[arg-type]
+
+
+def test_file_size_rlimit_is_default_and_requires_explicit_opt_out(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    if os.name != "posix":
+        pytest.skip("POSIX resource limits are unavailable")
+    import resource
+    from ipfs_datasets_py.logic.backends import process as process_module
+
+    observed: list[tuple[int, tuple[int, int]]] = []
+    monkeypatch.setattr(
+        resource,
+        "setrlimit",
+        lambda kind, limits: observed.append((kind, limits)),
+    )
+
+    default_preexec = process_module._resource_preexec(ToolRunLimits())
+    assert default_preexec is not None
+    default_preexec()
+    assert any(kind == resource.RLIMIT_FSIZE for kind, _limits in observed)
+
+    observed.clear()
+    dotnet_preexec = process_module._resource_preexec(
+        ToolRunLimits(enforce_file_size_limit=False)
+    )
+    assert dotnet_preexec is not None
+    dotnet_preexec()
+    assert not any(kind == resource.RLIMIT_FSIZE for kind, _limits in observed)
+    # Core suppression and every independently configured bound remain active.
+    assert any(kind == resource.RLIMIT_CORE for kind, _limits in observed)
 
 
 def test_callable_fake_and_sequence_convenience_are_supported(tmp_path: Path) -> None:

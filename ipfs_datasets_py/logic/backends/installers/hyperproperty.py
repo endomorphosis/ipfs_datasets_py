@@ -202,6 +202,27 @@ MCHYPER_SUPPORTED_FRAGMENT: Final = (
 )
 MCHYPER_ABC_VERSION: Final = "1.01"
 MCHYPER_AIGER_VERSION: Final = "1.9.4"
+MCHYPER_AIGER_SOURCE_ARCHIVE_URL: Final = (
+    "https://fmv.jku.at/aiger/aiger-1.9.4.tar.gz"
+)
+MCHYPER_AIGER_SOURCE_ARCHIVE_SHA256: Final = (
+    "bd7bb89f51deef8c5681753c861bf0ab7f85f166fb30da0caf83c2d31f6df2d1"
+)
+MCHYPER_ABC_GIT_COMMIT: Final = "e76768b9d34f9dc67cb6608efecd55db271ff849"
+MCHYPER_ABC_SOURCE_ARCHIVE_URL: Final = (
+    "https://github.com/berkeley-abc/abc/archive/"
+    f"{MCHYPER_ABC_GIT_COMMIT}.tar.gz"
+)
+MCHYPER_ABC_SOURCE_ARCHIVE_SHA256: Final = (
+    "158a4bf861be010cf899c5cb20c159d1b2e68ae1b461bce7d2c10be348a8e159"
+)
+MCHYPER_PYTHON_VERSION: Final = "2.7.18"
+MCHYPER_PYTHON_SOURCE_ARCHIVE_URL: Final = (
+    "https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tar.xz"
+)
+MCHYPER_PYTHON_SOURCE_ARCHIVE_SHA256: Final = (
+    "b62c0e7937551d0cc02b8fd5cb0f544f9405bafc9a54d3808ed4594812edef43"
+)
 MCHYPER_BUILD_DEPENDENCIES: Final[Mapping[str, str]] = MappingProxyType(
     {
         "ghc": ">=8.4",
@@ -332,6 +353,64 @@ class DependencyIdentity:
 
 
 @dataclass(frozen=True, slots=True)
+class DependencyArtifactIdentity:
+    """Hash-bound non-executable dependency provenance."""
+
+    name: str
+    path: str
+    artifact_kind: str
+    artifact_sha256: str
+    version: str
+    phase: str = "build"
+    source_archive_url: str = ""
+    source_archive_path: str = ""
+    source_archive_sha256: str = ""
+
+    def __post_init__(self) -> None:
+        if self.artifact_kind not in {"file", "directory"}:
+            raise HyperpropertyInstallerError(
+                f"invalid artifact kind for {self.name!r}"
+            )
+        if self.phase not in {"build", "runtime"}:
+            raise HyperpropertyInstallerError(
+                f"invalid artifact phase for {self.name!r}"
+            )
+        if not self.name or not self.path or not self.version:
+            raise HyperpropertyInstallerError(
+                f"incomplete dependency artifact identity for {self.name!r}"
+            )
+        if not re.fullmatch(r"[0-9a-f]{64}", self.artifact_sha256):
+            raise HyperpropertyInstallerError(
+                f"invalid dependency artifact digest for {self.name!r}"
+            )
+        archive_fields = (
+            self.source_archive_url,
+            self.source_archive_path,
+            self.source_archive_sha256,
+        )
+        if any(archive_fields) and (
+            not all(archive_fields)
+            or not re.fullmatch(r"[0-9a-f]{64}", self.source_archive_sha256)
+        ):
+            raise HyperpropertyInstallerError(
+                f"incomplete source archive identity for dependency {self.name!r}"
+            )
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "artifact_kind": self.artifact_kind,
+            "artifact_sha256": self.artifact_sha256,
+            "name": self.name,
+            "path": self.path,
+            "phase": self.phase,
+            "source_archive_path": self.source_archive_path,
+            "source_archive_sha256": self.source_archive_sha256,
+            "source_archive_url": self.source_archive_url,
+            "version": self.version,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class SourceComponentIdentity:
     """Pinned source component required to reproduce an upstream build."""
 
@@ -407,6 +486,7 @@ class EngineIdentity:
     source_components: tuple[SourceComponentIdentity, ...] = ()
     build_lockfiles: tuple[tuple[str, str], ...] = ()
     runtime_environment: tuple[tuple[str, str], ...] = ()
+    dependency_artifacts: tuple[DependencyArtifactIdentity, ...] = ()
 
     def __post_init__(self) -> None:
         if self.tool_id not in EXTERNAL_TOOLS:
@@ -458,6 +538,16 @@ class EngineIdentity:
                     f"vendor {self.tool_id} identity requires exact upstream "
                     "source, dependency, distribution, and artifact identities"
                 )
+            if self.tool_id == TOOL_MCHYPER and not {
+                "ghc-package-db",
+                "aiger-source",
+                "abc-source",
+                "python-source",
+            }.issubset({item.name for item in self.dependency_artifacts}):
+                raise HyperpropertyInstallerError(
+                    "MCHyper vendor identity requires GHC package DB and "
+                    "AIGER source/archive provenance"
+                )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -476,6 +566,9 @@ class EngineIdentity:
             "dotnet_runtime": self.dotnet_runtime,
             "dependency_identities": [
                 item.to_dict() for item in self.dependency_identities
+            ],
+            "dependency_artifacts": [
+                item.to_dict() for item in self.dependency_artifacts
             ],
             "distribution_tree_sha256": self.distribution_tree_sha256,
             "executable": self.executable,
@@ -1416,11 +1509,19 @@ def _dependency_specs(tool_id: str) -> tuple[dict[str, Any], ...]:
 
 
 def _capture_dependency_version(
-    executable: str, args: Sequence[str], *, allow_nonzero: bool = False
+    executable: str,
+    args: Sequence[str],
+    *,
+    allow_nonzero: bool = False,
+    environment: Mapping[str, str] | None = None,
 ) -> str:
+    env = os.environ.copy()
+    if environment:
+        env.update(environment)
     try:
         completed = subprocess.run(
             [executable, *args],
+            env=env,
             capture_output=True,
             text=True,
             timeout=15,
@@ -1434,18 +1535,103 @@ def _capture_dependency_version(
     return output[:4096]
 
 
+def _single_ghc_package_identity(package: str, output: str) -> str:
+    """Validate one exact ``ghc-pkg field ... id,version`` record.
+
+    ``ghc-pkg`` may otherwise return more than one installed package version.
+    Compiling against an ambiguous record would make the build environment
+    depend on package-database ordering, so the vendor lane rejects anything
+    other than one ``id`` and one ``version`` field.
+    """
+
+    fields: dict[str, str] = {}
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        match = re.fullmatch(r"(id|version):\s*(\S+)", line)
+        if match is None or match.group(1) in fields:
+            return ""
+        fields[match.group(1)] = match.group(2)
+    package_id = fields.get("id", "")
+    version = fields.get("version", "")
+    if (
+        set(fields) != {"id", "version"}
+        or not package_id.casefold().startswith(f"{package.casefold()}-")
+        or not re.fullmatch(r"\d+(?:\.\d+)+(?:[-+._A-Za-z0-9]*)?", version)
+    ):
+        return ""
+    return f"id: {package_id}\nversion: {version}"
+
+
 _DEPENDENCY_ROOT_GROUPS: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType(
     {
         "autfilt": ("spot",),
+        "abc": ("abc-root",),
+        "aigtoaig": ("aiger", "aiger-root"),
+        "cabal": ("ghcup", "ghcup-bin"),
         "dotnet": ("dotnet-sdk",),
         "dune": ("opam", "opam-switch", "ocaml"),
         "ltl2tgba": ("spot",),
+        "ghc": ("ghcup", "ghcup-bin"),
+        "ghc-pkg": ("ghcup", "ghcup-bin"),
         "menhir": ("opam", "opam-switch", "ocaml"),
         "ocamlbuild": ("opam", "opam-switch", "ocaml"),
         "ocamlc": ("opam", "opam-switch", "ocaml"),
         "ocamlfind": ("opam", "opam-switch", "ocaml"),
+        "python2.7": ("python", "python-root"),
     }
 )
+
+
+def _dependency_root_path(
+    dependency_roots: Mapping[str, Path | str],
+    *names: str,
+) -> Path | None:
+    for name in names:
+        raw = dependency_roots.get(name)
+        if raw is not None:
+            return Path(os.path.expanduser(str(raw))).resolve()
+    return None
+
+
+def _verified_aiger_version_evidence(
+    dependency_roots: Mapping[str, Path | str],
+) -> str:
+    source_root = _dependency_root_path(
+        dependency_roots, "aiger-source", "aiger-source-root"
+    )
+    archive = _dependency_root_path(
+        dependency_roots, "aiger-archive", "aiger-source-archive"
+    )
+    if source_root is None or archive is None:
+        raise HyperpropertyInstallBlocked(
+            "AIGER has no executable version banner; explicit pinned source "
+            "and archive roots are required",
+            "missing_dependency_evidence:aigtoaig",
+        )
+    version_file = source_root / "VERSION"
+    if (
+        not version_file.is_file()
+        or version_file.read_text(encoding="utf-8").strip()
+        != MCHYPER_AIGER_VERSION
+    ):
+        raise HyperpropertyInstallBlocked(
+            "AIGER VERSION does not match the reviewed 1.9.4 source",
+            "dependency_version_mismatch:aigtoaig",
+        )
+    if (
+        not archive.is_file()
+        or _sha256_file(archive) != MCHYPER_AIGER_SOURCE_ARCHIVE_SHA256
+    ):
+        raise HyperpropertyInstallBlocked(
+            "AIGER source archive digest does not match the reviewed pin",
+            "dependency_source_digest_mismatch:aigtoaig",
+        )
+    return (
+        f"{MCHYPER_AIGER_VERSION} (verified VERSION and source archive "
+        f"sha256:{MCHYPER_AIGER_SOURCE_ARCHIVE_SHA256})"
+    )
 
 
 def _executable_from_dependency_roots(
@@ -1504,11 +1690,19 @@ def _resolve_vendor_dependencies(
             details.append(f"{spec['name']} not found")
             continue
         resolved = Path(executable).resolve()
-        output = _capture_dependency_version(
-            str(resolved),
-            spec["args"],
-            allow_nonzero=bool(spec.get("allow_nonzero")),
-        )
+        try:
+            if spec["name"] == "aigtoaig":
+                output = _verified_aiger_version_evidence(roots)
+            else:
+                output = _capture_dependency_version(
+                    str(resolved),
+                    spec["args"],
+                    allow_nonzero=bool(spec.get("allow_nonzero")),
+                )
+        except HyperpropertyInstallBlocked as exc:
+            blockers.extend(exc.block_reasons)
+            details.append(str(exc))
+            continue
         if not _version_satisfies(output, str(spec["constraint"])):
             blockers.append(f"dependency_version_mismatch:{spec['name']}")
             details.append(
@@ -1528,14 +1722,30 @@ def _resolve_vendor_dependencies(
         )
 
     if tool_id == TOOL_MCHYPER:
+        package_db = _dependency_root_path(
+            roots, "ghc-package-db", "haskell-package-db"
+        )
+        if package_db is None or not package_db.is_dir():
+            blockers.append("missing_dependency:ghc-package-db")
+            details.append("explicit GHC package DB not found")
         ghc_pkg = next(
             (item for item in identities if item.name == "ghc-pkg"), None
         )
-        if ghc_pkg is not None:
+        if ghc_pkg is not None and package_db is not None and package_db.is_dir():
+            package_environment = {
+                # A trailing separator extends, rather than replaces, GHC's
+                # global package DB so the global parsec package and Cabal
+                # store packages resolve together.
+                "GHC_PACKAGE_PATH": f"{package_db}{os.pathsep}",
+            }
             for package in ("parsec", "hashable", "MissingH"):
-                output = _capture_dependency_version(
-                    ghc_pkg.executable,
-                    ("field", package, "id", "version"),
+                output = _single_ghc_package_identity(
+                    package,
+                    _capture_dependency_version(
+                        ghc_pkg.executable,
+                        ("field", package, "id,version"),
+                        environment=package_environment,
+                    ),
                 )
                 if not output:
                     blockers.append(
@@ -1562,6 +1772,103 @@ def _resolve_vendor_dependencies(
     return tuple(identities)
 
 
+def _dependency_artifacts_for_tool(
+    tool_id: str,
+    dependencies: Sequence[DependencyIdentity],
+    dependency_roots: Mapping[str, Path | str] | None = None,
+) -> tuple[DependencyArtifactIdentity, ...]:
+    if tool_id != TOOL_MCHYPER:
+        return ()
+    roots = dependency_roots or {}
+    artifacts: list[DependencyArtifactIdentity] = []
+    package_db = _dependency_root_path(
+        roots, "ghc-package-db", "haskell-package-db"
+    )
+    if package_db is None or not package_db.is_dir():
+        raise HyperpropertyInstallBlocked(
+            "MCHyper requires an explicit GHC package DB identity",
+            "missing_dependency:ghc-package-db",
+        )
+    ghc_version = _dependency(dependencies, "ghc").version_output.splitlines()[0]
+    artifacts.append(
+        DependencyArtifactIdentity(
+            name="ghc-package-db",
+            path=str(package_db),
+            artifact_kind="directory",
+            artifact_sha256=_tree_sha256(package_db),
+            version=ghc_version,
+            phase="build",
+        )
+    )
+
+    source_specs = (
+        (
+            "aiger-source",
+            ("aiger-source", "aiger-source-root"),
+            ("aiger-archive", "aiger-source-archive"),
+            MCHYPER_AIGER_VERSION,
+            MCHYPER_AIGER_SOURCE_ARCHIVE_URL,
+            MCHYPER_AIGER_SOURCE_ARCHIVE_SHA256,
+            "runtime",
+        ),
+        (
+            "abc-source",
+            ("abc-source", "abc-source-root"),
+            ("abc-archive", "abc-source-archive"),
+            f"{MCHYPER_ABC_VERSION}@{MCHYPER_ABC_GIT_COMMIT}",
+            MCHYPER_ABC_SOURCE_ARCHIVE_URL,
+            MCHYPER_ABC_SOURCE_ARCHIVE_SHA256,
+            "runtime",
+        ),
+        (
+            "python-source",
+            ("python-source", "python-source-root"),
+            ("python-archive", "python-source-archive"),
+            MCHYPER_PYTHON_VERSION,
+            MCHYPER_PYTHON_SOURCE_ARCHIVE_URL,
+            MCHYPER_PYTHON_SOURCE_ARCHIVE_SHA256,
+            "runtime",
+        ),
+    )
+    blockers: list[str] = []
+    details: list[str] = []
+    for name, source_keys, archive_keys, version, url, expected_sha, phase in source_specs:
+        source_root = _dependency_root_path(roots, *source_keys)
+        archive = _dependency_root_path(roots, *archive_keys)
+        if source_root is None or not source_root.is_dir():
+            blockers.append(f"missing_dependency_evidence:{name}")
+            details.append(f"{name} source root missing")
+            continue
+        if (
+            archive is None
+            or not archive.is_file()
+            or _sha256_file(archive) != expected_sha
+        ):
+            blockers.append(f"dependency_source_digest_mismatch:{name}")
+            details.append(f"{name} source archive is missing or mismatched")
+            continue
+        artifacts.append(
+            DependencyArtifactIdentity(
+                name=name,
+                path=str(source_root),
+                artifact_kind="directory",
+                artifact_sha256=_tree_sha256(source_root),
+                version=version,
+                phase=phase,
+                source_archive_url=url,
+                source_archive_path=str(archive),
+                source_archive_sha256=expected_sha,
+            )
+        )
+    if blockers:
+        raise HyperpropertyInstallBlocked(
+            "MCHyper dependency provenance is incomplete: "
+            + "; ".join(details),
+            *blockers,
+        )
+    return tuple(artifacts)
+
+
 def _dependency(
     dependencies: Sequence[DependencyIdentity], name: str
 ) -> DependencyIdentity:
@@ -1573,6 +1880,7 @@ def _dependency(
 
 def _dependency_build_environment(
     dependencies: Sequence[DependencyIdentity],
+    dependency_roots: Mapping[str, Path | str] | None = None,
 ) -> dict[str, str]:
     directories = [
         str(Path(item.executable).resolve().parent) for item in dependencies
@@ -1588,6 +1896,11 @@ def _dependency_build_environment(
     )
     if dotnet is not None:
         environment["DOTNET_ROOT"] = str(Path(dotnet.executable).parent)
+    package_db = _dependency_root_path(
+        dependency_roots or {}, "ghc-package-db", "haskell-package-db"
+    )
+    if package_db is not None:
+        environment["GHC_PACKAGE_PATH"] = f"{package_db}{os.pathsep}"
     return environment
 
 
@@ -1640,6 +1953,73 @@ def _probe_version(executable: Path) -> str:
     return match.group(1) if match else text.strip().splitlines()[0] if text.strip() else ""
 
 
+def _rebind_common_tree_path(
+    value: str,
+    *,
+    recorded_install_root: Path | None,
+    active_install_root: Path,
+) -> Path:
+    """Rebind a recorded in-tree path after an immutable common-tree move.
+
+    Only the relative suffix of a path already confined to the install root
+    recorded by the original manifest may be rebound.  External paths are
+    deliberately left untouched.  Callers must still validate existence and
+    the recorded digest after rebinding.
+    """
+
+    path = Path(os.path.expanduser(value))
+    if recorded_install_root is None or not path.is_absolute():
+        return path
+    try:
+        relative = path.relative_to(recorded_install_root)
+    except ValueError:
+        return path
+    active_root = active_install_root.resolve()
+    rebound = (active_root / relative).resolve()
+    if rebound != active_root and active_root not in rebound.parents:
+        raise HyperpropertyInstallerError(
+            f"relocated dependency path escapes install root: {value!r}"
+        )
+    return rebound
+
+
+def _rebind_runtime_environment(
+    environment: Mapping[str, str],
+    *,
+    recorded_install_root: Path | None,
+    active_install_root: Path,
+) -> tuple[tuple[str, str], ...]:
+    """Rebind only reviewed path-valued runtime environment fields."""
+
+    rebound: dict[str, str] = {
+        str(name): str(value) for name, value in environment.items()
+    }
+    for name in ("EAHYPER_SOLVER_DIR", "DOTNET_ROOT"):
+        value = rebound.get(name)
+        if value:
+            rebound[name] = str(
+                _rebind_common_tree_path(
+                    value,
+                    recorded_install_root=recorded_install_root,
+                    active_install_root=active_install_root,
+                )
+            )
+    if rebound.get("PATH"):
+        rebound["PATH"] = os.pathsep.join(
+            str(
+                _rebind_common_tree_path(
+                    item,
+                    recorded_install_root=recorded_install_root,
+                    active_install_root=active_install_root,
+                )
+            )
+            if item
+            else item
+            for item in rebound["PATH"].split(os.pathsep)
+        )
+    return tuple(sorted(rebound.items()))
+
+
 def _identity_from_disk(
     tool_id: str,
     install_root: Path,
@@ -1663,12 +2043,28 @@ def _identity_from_disk(
     version = str(payload.get("version") or version)
     if version != pin["version"] or payload.get("tool_id") != tool_id:
         return None
-    declared_executable = str(payload.get("executable") or "")
-    exe = (
-        Path(declared_executable)
-        if declared_executable
-        else executable_path(install_root, tool_id, version, vendor=vendor)
+    active_install_root = install_root.resolve()
+    recorded_install_root_raw = str(payload.get("install_root") or "")
+    recorded_install_root = (
+        Path(os.path.expanduser(recorded_install_root_raw)).resolve()
+        if recorded_install_root_raw
+        else None
     )
+    declared_executable = str(payload.get("executable") or "")
+    executable_origin = str(payload.get("executable_origin") or "")
+    if vendor and executable_origin:
+        exe = manifest.parent / executable_origin
+    elif declared_executable:
+        try:
+            exe = _rebind_common_tree_path(
+                declared_executable,
+                recorded_install_root=recorded_install_root,
+                active_install_root=active_install_root,
+            )
+        except HyperpropertyInstallerError:
+            return None
+    else:
+        exe = executable_path(install_root, tool_id, version, vendor=vendor)
     if not exe.is_absolute():
         exe = manifest.parent / exe
     try:
@@ -1701,6 +2097,7 @@ def _identity_from_disk(
                 runtime_deps = parsed
 
     dependency_identities: list[DependencyIdentity] = []
+    dependency_artifacts: list[DependencyArtifactIdentity] = []
     source_components: list[SourceComponentIdentity] = []
     build_lockfiles: tuple[tuple[str, str], ...] = ()
     runtime_environment: tuple[tuple[str, str], ...] = ()
@@ -1714,7 +2111,6 @@ def _identity_from_disk(
         version_root = manifest.parent.resolve()
         if version_root not in resolved_exe.parents:
             return None
-        executable_origin = str(payload.get("executable_origin") or "")
         if (
             not executable_origin
             or (version_root / executable_origin).resolve() != resolved_exe
@@ -1725,9 +2121,14 @@ def _identity_from_disk(
             _assert_reviewed_upstream_pin(tool_id, pin, meta)
         except HyperpropertyInstallerError:
             return None
-        source_archive_path = Path(
-            str(payload.get("source_archive_path") or "")
-        )
+        try:
+            source_archive_path = _rebind_common_tree_path(
+                str(payload.get("source_archive_path") or ""),
+                recorded_install_root=recorded_install_root,
+                active_install_root=active_install_root,
+            )
+        except HyperpropertyInstallerError:
+            return None
         source_sha = str(payload.get("source_archive_sha256") or "")
         if (
             source_sha != str(meta["source_archive_sha256"])
@@ -1752,15 +2153,19 @@ def _identity_from_disk(
             for item in raw_dependency_identities:
                 if not isinstance(item, Mapping):
                     return None
+                dependency_path = _rebind_common_tree_path(
+                    str(item.get("executable") or ""),
+                    recorded_install_root=recorded_install_root,
+                    active_install_root=active_install_root,
+                )
                 dependency = DependencyIdentity(
                     name=str(item.get("name") or ""),
                     constraint=str(item.get("constraint") or ""),
-                    executable=str(item.get("executable") or ""),
+                    executable=str(dependency_path),
                     version_output=str(item.get("version_output") or ""),
                     executable_sha256=str(item.get("executable_sha256") or ""),
                     phase=str(item.get("phase") or "build"),
                 )
-                dependency_path = Path(dependency.executable)
                 if (
                     not dependency_path.is_file()
                     or _sha256_file(dependency_path)
@@ -1771,6 +2176,94 @@ def _identity_from_disk(
         except HyperpropertyInstallerError:
             return None
 
+        raw_dependency_artifacts = payload.get("dependency_artifacts") or []
+        if not isinstance(raw_dependency_artifacts, list):
+            return None
+        try:
+            for item in raw_dependency_artifacts:
+                if not isinstance(item, Mapping):
+                    return None
+                artifact_path = _rebind_common_tree_path(
+                    str(item.get("path") or ""),
+                    recorded_install_root=recorded_install_root,
+                    active_install_root=active_install_root,
+                )
+                archive_path_raw = str(item.get("source_archive_path") or "")
+                archive_path = (
+                    _rebind_common_tree_path(
+                        archive_path_raw,
+                        recorded_install_root=recorded_install_root,
+                        active_install_root=active_install_root,
+                    )
+                    if archive_path_raw
+                    else None
+                )
+                artifact = DependencyArtifactIdentity(
+                    name=str(item.get("name") or ""),
+                    path=str(artifact_path),
+                    artifact_kind=str(item.get("artifact_kind") or ""),
+                    artifact_sha256=str(item.get("artifact_sha256") or ""),
+                    version=str(item.get("version") or ""),
+                    phase=str(item.get("phase") or "build"),
+                    source_archive_url=str(
+                        item.get("source_archive_url") or ""
+                    ),
+                    source_archive_path=(
+                        str(archive_path) if archive_path is not None else ""
+                    ),
+                    source_archive_sha256=str(
+                        item.get("source_archive_sha256") or ""
+                    ),
+                )
+                if artifact.artifact_kind == "directory":
+                    observed_artifact_sha = (
+                        _tree_sha256(artifact_path)
+                        if artifact_path.is_dir()
+                        else ""
+                    )
+                else:
+                    observed_artifact_sha = (
+                        _sha256_file(artifact_path)
+                        if artifact_path.is_file()
+                        else ""
+                    )
+                if observed_artifact_sha != artifact.artifact_sha256:
+                    return None
+                if artifact.source_archive_path:
+                    assert archive_path is not None
+                    if (
+                        not archive_path.is_file()
+                        or _sha256_file(archive_path)
+                        != artifact.source_archive_sha256
+                    ):
+                        return None
+                dependency_artifacts.append(artifact)
+        except HyperpropertyInstallerError:
+            return None
+        if tool_id == TOOL_MCHYPER:
+            expected_provenance = {
+                "aiger-source": (
+                    MCHYPER_AIGER_SOURCE_ARCHIVE_URL,
+                    MCHYPER_AIGER_SOURCE_ARCHIVE_SHA256,
+                ),
+                "abc-source": (
+                    MCHYPER_ABC_SOURCE_ARCHIVE_URL,
+                    MCHYPER_ABC_SOURCE_ARCHIVE_SHA256,
+                ),
+                "python-source": (
+                    MCHYPER_PYTHON_SOURCE_ARCHIVE_URL,
+                    MCHYPER_PYTHON_SOURCE_ARCHIVE_SHA256,
+                ),
+            }
+            by_name = {item.name: item for item in dependency_artifacts}
+            if "ghc-package-db" not in by_name or any(
+                name not in by_name
+                or by_name[name].source_archive_url != expected_url
+                or by_name[name].source_archive_sha256 != expected_sha
+                for name, (expected_url, expected_sha) in expected_provenance.items()
+            ):
+                return None
+
         raw_components = payload.get("source_components") or []
         if not isinstance(raw_components, list):
             return None
@@ -1778,6 +2271,11 @@ def _identity_from_disk(
             for item in raw_components:
                 if not isinstance(item, Mapping):
                     return None
+                component_path = _rebind_common_tree_path(
+                    str(item.get("source_archive_path") or ""),
+                    recorded_install_root=recorded_install_root,
+                    active_install_root=active_install_root,
+                )
                 component = SourceComponentIdentity(
                     name=str(item.get("name") or ""),
                     git_commit=str(item.get("git_commit") or ""),
@@ -1785,7 +2283,7 @@ def _identity_from_disk(
                     source_archive_sha256=str(
                         item.get("source_archive_sha256") or ""
                     ),
-                    source_archive_path=str(item.get("source_archive_path") or ""),
+                    source_archive_path=str(component_path),
                 )
                 expected_component = AUTOHYPER_SOURCE_COMPONENTS.get(
                     component.name
@@ -1802,7 +2300,6 @@ def _identity_from_disk(
                     )
                 ):
                     return None
-                component_path = Path(component.source_archive_path)
                 if (
                     not component_path.is_file()
                     or _sha256_file(component_path)
@@ -1843,12 +2340,17 @@ def _identity_from_disk(
         raw_runtime_environment = payload.get("runtime_environment") or {}
         if not isinstance(raw_runtime_environment, Mapping):
             return None
-        runtime_environment = tuple(
-            sorted(
-                (str(name), str(value))
-                for name, value in raw_runtime_environment.items()
+        try:
+            runtime_environment = _rebind_runtime_environment(
+                {
+                    str(name): str(value)
+                    for name, value in raw_runtime_environment.items()
+                },
+                recorded_install_root=recorded_install_root,
+                active_install_root=active_install_root,
             )
-        )
+        except HyperpropertyInstallerError:
+            return None
         if tool_id == TOOL_HYPERLTL:
             environment = dict(runtime_environment)
             solver_dir = Path(environment.get("EAHYPER_SOLVER_DIR") or "")
@@ -1875,6 +2377,24 @@ def _identity_from_disk(
                 != dotnet_root.resolve()
             ):
                 return None
+        if tool_id == TOOL_MCHYPER:
+            environment = dict(runtime_environment)
+            python_identity = next(
+                (
+                    item
+                    for item in dependency_identities
+                    if item.name == "python2.7"
+                ),
+                None,
+            )
+            runtime_path = environment.get("PATH", "").split(os.pathsep)
+            if (
+                python_identity is None
+                or not runtime_path
+                or Path(python_identity.executable).parent.resolve()
+                != Path(runtime_path[0]).resolve()
+            ):
+                return None
 
     try:
         return EngineIdentity(
@@ -1889,7 +2409,11 @@ def _identity_from_disk(
                 payload.get("source_archive_sha256") or ""
             ),
             source_archive_url=str(payload.get("source_archive_url") or ""),
-            source_archive_path=str(payload.get("source_archive_path") or ""),
+            source_archive_path=(
+                str(source_archive_path)
+                if is_vendor
+                else str(payload.get("source_archive_path") or "")
+            ),
             source_tree_sha256=str(payload.get("source_tree_sha256") or ""),
             distribution_tree_sha256=str(
                 payload.get("distribution_tree_sha256") or ""
@@ -1917,6 +2441,7 @@ def _identity_from_disk(
             source_components=tuple(source_components),
             build_lockfiles=build_lockfiles,
             runtime_environment=runtime_environment,
+            dependency_artifacts=tuple(dependency_artifacts),
         )
     except HyperpropertyInstallerError:
         return None
@@ -2172,15 +2697,66 @@ def _materialize_autohyper_components(
     return tuple(identities)
 
 
+_AUTOHYPER_RELOCATABLE_CONFIG_ANCHOR: Final = """\
+    let solverConfig = parseSolverConfigurationContent configContent
+"""
+
+_AUTOHYPER_RELOCATABLE_CONFIG_REPLACEMENT: Final = """\
+    let parsedSolverConfig = parseSolverConfigurationContent configContent
+    // ipfs-datasets-py reviewed relocation patch: relative solver paths are
+    // resolved against the immutable AutoHyper application directory.
+    let executableDirectory =
+        System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+    let resolveConfiguredPath (path : string) =
+        if System.IO.Path.IsPathRooted(path) then path
+        else System.IO.Path.GetFullPath(System.IO.Path.Join [| executableDirectory; path |])
+    let solverConfig = {
+        parsedSolverConfig with
+            AutfiltPath = resolveConfiguredPath parsedSolverConfig.AutfiltPath
+            Ltl2tgbaPath = resolveConfiguredPath parsedSolverConfig.Ltl2tgbaPath
+    }
+"""
+
+
+def _patch_autohyper_relocatable_solver_paths(source_root: Path) -> str:
+    """Apply and hash the reviewed executable-relative Spot path patch."""
+
+    configuration = source_root / "src" / "AutoHyper" / "Configuration.fs"
+    try:
+        text = configuration.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise HyperpropertyInstallBlocked(
+            f"AutoHyper relocation patch input is unavailable: {exc}",
+            "upstream_relocation_patch_failed",
+        ) from exc
+    if text.count(_AUTOHYPER_RELOCATABLE_CONFIG_ANCHOR) != 1:
+        raise HyperpropertyInstallBlocked(
+            "AutoHyper Configuration.fs does not match the reviewed "
+            "relocation patch anchor",
+            "upstream_relocation_patch_mismatch",
+        )
+    configuration.write_text(
+        text.replace(
+            _AUTOHYPER_RELOCATABLE_CONFIG_ANCHOR,
+            _AUTOHYPER_RELOCATABLE_CONFIG_REPLACEMENT,
+        ),
+        encoding="utf-8",
+    )
+    return _sha256_file(configuration)
+
+
 def _build_upstream_source(
     tool_id: str,
     source_root: Path,
     dependencies: Sequence[DependencyIdentity],
+    dependency_roots: Mapping[str, Path | str] | None = None,
 ) -> tuple[Path, str, dict[str, str]]:
     """Build a pinned source tree and return its real upstream entry point."""
 
     lockfiles: dict[str, str] = {}
-    build_environment = _dependency_build_environment(dependencies)
+    build_environment = _dependency_build_environment(
+        dependencies, dependency_roots
+    )
     if tool_id == TOOL_HYPERLTL:
         _run_build_command(
             (
@@ -2206,6 +2782,9 @@ def _build_upstream_source(
     elif tool_id == TOOL_AUTOHYPER:
         dotnet = _dependency(dependencies, "dotnet").executable
         project_root = source_root / "src" / "AutoHyper"
+        lockfiles[
+            "upstream/src/AutoHyper/Configuration.fs"
+        ] = _patch_autohyper_relocatable_solver_paths(source_root)
         _run_build_command(
             (dotnet, "restore", "AutoHyper.fsproj", "--use-lock-file"),
             cwd=project_root,
@@ -2404,6 +2983,11 @@ def materialize_vendor_engine(
     dependency_identities = _resolve_vendor_dependencies(
         tool_id, dependency_roots=dependency_roots
     )
+    dependency_artifacts = _dependency_artifacts_for_tool(
+        tool_id,
+        dependency_identities,
+        dependency_roots=dependency_roots,
+    )
     download_root = root / "hyperproperty-sources" / tool_id
     archive = _download_verified_archive(
         str(meta["source_archive_url"]),
@@ -2432,7 +3016,10 @@ def materialize_vendor_engine(
                 scratch_root=scratch,
             )
         built_executable, executable_kind, lockfiles = _build_upstream_source(
-            tool_id, source_root, dependency_identities
+            tool_id,
+            source_root,
+            dependency_identities,
+            dependency_roots=dependency_roots,
         )
         executable_relative_in_source = built_executable.relative_to(source_root)
 
@@ -2446,36 +3033,56 @@ def materialize_vendor_engine(
         staged_executable = payload / executable_origin
 
         effective_dependencies = list(dependency_identities)
-        if tool_id == TOOL_MCHYPER:
-            for name, relative in (
+        staged_runtime_dependencies: tuple[tuple[str, Path], ...] = ()
+        if tool_id == TOOL_AUTOHYPER:
+            staged_runtime_dependencies = (
+                ("autfilt", Path("spot") / "autfilt"),
+                ("ltl2tgba", Path("spot") / "ltl2tgba"),
+            )
+        elif tool_id == TOOL_MCHYPER:
+            staged_runtime_dependencies = (
                 ("abc", Path("abc") / "abc"),
                 ("aigtoaig", Path("aiger") / "aigtoaig"),
-            ):
-                original = _dependency(effective_dependencies, name)
-                staged = payload / relative
-                staged.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(original.executable, staged)
-                staged.chmod(
-                    staged.stat().st_mode
-                    | stat.S_IXUSR
-                    | stat.S_IXGRP
-                    | stat.S_IXOTH
+            )
+        for name, relative in staged_runtime_dependencies:
+            original = _dependency(effective_dependencies, name)
+            staged = payload / relative
+            staged.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(original.executable, staged)
+            staged.chmod(
+                staged.stat().st_mode
+                | stat.S_IXUSR
+                | stat.S_IXGRP
+                | stat.S_IXOTH
+            )
+            effective_dependencies = [
+                item for item in effective_dependencies if item.name != name
+            ]
+            effective_dependencies.append(
+                DependencyIdentity(
+                    name=name,
+                    constraint=original.constraint,
+                    executable=str((version_root / relative).resolve()),
+                    version_output=original.version_output,
+                    executable_sha256=_sha256_file(staged),
+                    phase="runtime",
                 )
-                effective_dependencies = [
-                    item
-                    for item in effective_dependencies
-                    if item.name != name
-                ]
-                effective_dependencies.append(
-                    DependencyIdentity(
-                        name=name,
-                        constraint=original.constraint,
-                        executable=str((version_root / relative).resolve()),
-                        version_output=original.version_output,
-                        executable_sha256=_sha256_file(staged),
-                        phase="runtime",
-                    )
+            )
+        if tool_id == TOOL_AUTOHYPER:
+            paths_file = payload / "upstream" / "app" / "paths.json"
+            paths_file.write_text(
+                json.dumps(
+                    {
+                        "autfilt": "../../spot/autfilt",
+                        "ltl2tgba": "../../spot/ltl2tgba",
+                    },
+                    indent=2,
+                    sort_keys=True,
                 )
+                + "\n",
+                encoding="utf-8",
+            )
+            lockfiles["upstream/app/paths.json"] = _sha256_file(paths_file)
 
         artifact_sha = _sha256_file(staged_executable)
         distribution_sha = _tree_sha256(payload)
@@ -2493,6 +3100,13 @@ def materialize_vendor_engine(
                 Path(
                     _dependency(dependency_identities, "dotnet").executable
                 ).parent.resolve()
+            )
+        elif tool_id == TOOL_MCHYPER:
+            python_dir = Path(
+                _dependency(dependency_identities, "python2.7").executable
+            ).parent.resolve()
+            runtime_environment["PATH"] = os.pathsep.join(
+                [str(python_dir), os.defpath]
             )
         identity_payload = {
             "schema_version": VENDOR_INSTALL_RECEIPT_SCHEMA,
@@ -2525,6 +3139,9 @@ def materialize_vendor_engine(
                 for item in sorted(
                     effective_dependencies, key=lambda item: item.name
                 )
+            ],
+            "dependency_artifacts": [
+                item.to_dict() for item in dependency_artifacts
             ],
             "build_lockfiles": lockfiles,
             "build_dependencies": dict(build_deps),
@@ -3326,7 +3943,15 @@ __all__ = [
     "MCHYPER_GIT_COMMIT",
     "MCHYPER_SUPPORTED_FRAGMENT",
     "MCHYPER_ABC_VERSION",
+    "MCHYPER_ABC_GIT_COMMIT",
+    "MCHYPER_ABC_SOURCE_ARCHIVE_SHA256",
+    "MCHYPER_ABC_SOURCE_ARCHIVE_URL",
     "MCHYPER_AIGER_VERSION",
+    "MCHYPER_AIGER_SOURCE_ARCHIVE_SHA256",
+    "MCHYPER_AIGER_SOURCE_ARCHIVE_URL",
+    "MCHYPER_PYTHON_SOURCE_ARCHIVE_SHA256",
+    "MCHYPER_PYTHON_SOURCE_ARCHIVE_URL",
+    "MCHYPER_PYTHON_VERSION",
     "ENV_FORCE_VERDICT",
     "ENV_DISAGREE",
     "ENV_MALFORMED",
@@ -3337,6 +3962,7 @@ __all__ = [
     "HyperpropertyInstallBundle",
     "InstallReceipt",
     "EngineIdentity",
+    "DependencyArtifactIdentity",
     "DependencyIdentity",
     "SourceComponentIdentity",
     "build_dependencies_for_tool",
