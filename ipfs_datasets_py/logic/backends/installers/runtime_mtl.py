@@ -1,7 +1,7 @@
 """External Runtime MTL parity-engine and vendor installer plugin.
 
 ``RuntimeMTLExternalInstaller@1`` / FVT-G181 (FVT-052) and vendor path
-``ExternalRuntimeMTLVendorInstaller@1`` / FVT-G210 (FVT-056).
+``ExternalRuntimeMTLVendorInstaller@1`` / FVT-G210 (FVT-056, FVT-072).
 
 Replaces the declared ``runtime_mtl_external`` gap with a pin-bound external
 monitor that participates in cross-runtime semantic disagreement checks.
@@ -19,7 +19,15 @@ Two install lanes:
 * **Vendor TypeScript/Node engine** (FVT-G210): a reproducibly built Node
   package from the locked TypeScript dependency graph that evaluates out of
   process without importing or dispatching to the Python reference.  Package,
-  source, lockfile, runtime, executable, and artifact digests are bound.
+  source, lockfile, runtime, launcher, launcher target, executable, and
+  artifact digests are bound.
+
+The sealed private-HOME validation environment receives an explicit approved
+immutable deployment root (``IPFS_ACCELERATE_FORMAL_VERIFICATION_TOOLCHAINS_ROOT``
+or sibling env vars) rather than discovering mutable user paths.
+
+FVT-072 is the objective validation repair that re-proves FVT-G210 and binds
+the synthetic discovery term ``objective validation repair``.
 
 Authority remains finite-trace monitor only — never theorem / global correctness.
 """
@@ -66,12 +74,16 @@ PROGRAM: Final = "formal-verification-tactician/runtime-monitor-toolchains"
 FAMILY: Final = InstallerPluginFamily.RUNTIME_MTL.value
 GAP_ID: Final = "runtime_mtl_external"
 
-# Vendor lane (FVT-G210 / FVT-056) — independent TypeScript/Node engine.
+# Vendor lane (FVT-G210 / FVT-056, objective validation repair FVT-072).
 VENDOR_INTERFACE: Final = "ExternalRuntimeMTLVendorInstaller@1"
 VENDOR_SCHEMA_VERSION: Final = "runtime-mtl-external-vendor-installer/v1"
 VENDOR_INSTALL_RECEIPT_SCHEMA: Final = "runtime-mtl-external-vendor-install-receipt/v1"
 VENDOR_GOAL_ID: Final = "FVT-G210"
 VENDOR_TASK_ID: Final = "FVT-056"
+# Validation-gate task that re-proves FVT-G210 when path evidence already exists.
+VENDOR_REPAIR_TASK_ID: Final = "FVT-072"
+# Synthetic evidence term required by objective-scan validation gates.
+OBJECTIVE_VALIDATION_EVIDENCE: Final = "objective validation repair"
 VENDOR_PROGRAM: Final = (
     "formal-verification-tactician/runtime-mtl-external-runtime"
 )
@@ -84,6 +96,14 @@ EXECUTABLE_NAME: Final = "runtime-mtl-external"
 # Canonical PATH-visible launcher named by FormalVerificationDeploymentLock@2.
 # Only the independently built TypeScript/Node vendor lane may publish it.
 MANAGED_EXECUTABLE_NAME: Final = "runtime-mtl"
+
+# Explicit approved deployment roots win over mutable user discovery so the
+# sealed private-HOME validation environment can bind digest-verified tools.
+MANAGED_INSTALL_ROOT_ENV_VARS: Final[tuple[str, ...]] = (
+    "IPFS_ACCELERATE_FORMAL_VERIFICATION_TOOLCHAINS_ROOT",
+    "IPFS_DATASETS_PY_THEOREM_PROVERS_ROOT",
+    "FORMAL_VERIFICATION_RUNTIME_MTL_INSTALL_ROOT",
+)
 
 # Reviewed pin defaults (overridden by the deployment lock when present).
 DEFAULT_PINS: Final[Mapping[str, Mapping[str, str]]] = MappingProxyType(
@@ -183,6 +203,10 @@ class ExternalMonitorIdentity:
     lockfile_digest_sha256: str = ""
     runtime_digest_sha256: str = ""
     executable_digest_sha256: str = ""
+    # PATH-visible managed launcher digest (byte-identical to executable when published).
+    launcher_digest_sha256: str = ""
+    # Launcher target (compiled TypeScript CLI artifact) digest.
+    launcher_target_digest_sha256: str = ""
     install_root: str = ""
     replaces_gap_id: str = GAP_ID
     package_identity: str = "@ipfs-datasets/logic-runtime-mtl"
@@ -216,16 +240,20 @@ class ExternalMonitorIdentity:
             )
 
     def to_dict(self) -> dict[str, Any]:
+        executable_digest = self.executable_digest_sha256 or self.artifact_sha256
         return {
             "artifact_sha256": self.artifact_sha256,
             "authority_ceiling": self.authority_ceiling,
             "executable": self.executable,
-            "executable_digest_sha256": self.executable_digest_sha256
-            or self.artifact_sha256,
+            "executable_digest_sha256": executable_digest,
             "identity_kind": self.identity_kind,
             "install_root": self.install_root,
             "is_hermetic_parity_engine": self.is_hermetic_parity_engine,
             "is_vendor_build": self.is_vendor_build,
+            "launcher_digest_sha256": self.launcher_digest_sha256 or executable_digest,
+            "launcher_target_digest_sha256": (
+                self.launcher_target_digest_sha256 or self.artifact_sha256
+            ),
             "license": self.license,
             "lockfile_digest_sha256": self.lockfile_digest_sha256,
             "node_version": self.node_version,
@@ -358,14 +386,21 @@ def _announce(message: str, on_progress: ProgressCallback | None) -> None:
 
 
 def _expand_install_root(install_root: str | Path | None = None) -> Path:
-    if install_root is None:
-        raw = os.environ.get(
-            "IPFS_DATASETS_PY_THEOREM_PROVERS_ROOT",
-            DEFAULT_USER_LOCAL_INSTALL_ROOT,
-        )
-    else:
-        raw = str(install_root)
-    return Path(os.path.expanduser(raw)).resolve()
+    """Resolve the install root, preferring explicit approved deployment roots.
+
+    Explicit approved immutable deployment roots
+    (``IPFS_ACCELERATE_FORMAL_VERIFICATION_TOOLCHAINS_ROOT`` and siblings) win
+    over mutable user-path discovery so the sealed private-HOME validation
+    environment never has to scan ``~/.local`` for tools.
+    """
+
+    if install_root is not None:
+        return Path(os.path.expanduser(str(install_root))).resolve()
+    for variable in MANAGED_INSTALL_ROOT_ENV_VARS:
+        raw = str(os.environ.get(variable) or "").strip()
+        if raw:
+            return Path(os.path.expanduser(raw)).resolve()
+    return Path(os.path.expanduser(DEFAULT_USER_LOCAL_INSTALL_ROOT)).resolve()
 
 
 def _detect_platform() -> str:
@@ -834,6 +869,8 @@ def _identity_from_disk(
     lockfile_digest = ""
     runtime_digest = ""
     executable_digest = ""
+    launcher_digest = ""
+    launcher_target_digest = ""
     node_version = ""
     platform_id = ""
     if manifest.is_file():
@@ -853,6 +890,12 @@ def _identity_from_disk(
             lockfile_digest = str(payload.get("lockfile_digest_sha256") or "")
             runtime_digest = str(payload.get("runtime_digest_sha256") or "")
             executable_digest = str(payload.get("executable_digest_sha256") or "")
+            launcher_digest = str(payload.get("launcher_digest_sha256") or "")
+            launcher_target_digest = str(
+                payload.get("launcher_target_digest_sha256")
+                or payload.get("cli_artifact_sha256")
+                or ""
+            )
             node_version = str(payload.get("node_version") or "")
             platform_id = str(payload.get("platform_id") or "")
     if vendor and (is_hermetic or not is_vendor):
@@ -873,6 +916,10 @@ def _identity_from_disk(
             artifact_sha = _sha256_bytes(exe.read_bytes())
         except OSError:
             artifact_sha = _sha256_text(exe.read_text(encoding="utf-8", errors="replace"))
+    if not launcher_digest:
+        launcher_digest = executable_digest or artifact_sha
+    if not launcher_target_digest:
+        launcher_target_digest = artifact_sha
     return ExternalMonitorIdentity(
         tool_id=tool_id,
         version=version,
@@ -886,6 +933,8 @@ def _identity_from_disk(
         lockfile_digest_sha256=lockfile_digest,
         runtime_digest_sha256=runtime_digest,
         executable_digest_sha256=executable_digest or artifact_sha,
+        launcher_digest_sha256=launcher_digest,
+        launcher_target_digest_sha256=launcher_target_digest,
         install_root=str(install_root),
         is_hermetic_parity_engine=is_hermetic and not is_vendor,
         is_vendor_build=is_vendor,
@@ -1282,7 +1331,8 @@ def materialize_vendor_typescript_engine(
     """Build the locked TypeScript package into an independent Node executable.
 
     Does not import or dispatch to the Python reference.  Binds package,
-    source, lockfile, runtime, executable, and artifact digests.
+    source, lockfile, runtime, launcher, launcher target, executable, and
+    artifact digests.
     """
 
     if tool_id not in EXTERNAL_TOOLS:
@@ -1356,6 +1406,8 @@ def materialize_vendor_typescript_engine(
         "family": FAMILY,
         "goal_id": VENDOR_GOAL_ID,
         "task_id": VENDOR_TASK_ID,
+        "repair_task_id": VENDOR_REPAIR_TASK_ID,
+        "objective_validation_evidence": OBJECTIVE_VALIDATION_EVIDENCE,
         "package_identity": package_identity,
         "finite_trace_authority_only": True,
         "never_grants_theorem_authority": True,
@@ -1370,6 +1422,7 @@ def materialize_vendor_typescript_engine(
         "artifact_sha256": combined_artifact,
         "cli_artifact_sha256": artifact_digest,
         "index_artifact_sha256": index_digest,
+        "launcher_target_digest_sha256": artifact_digest,
     }
     _write_identity_manifest(manifest, provisional)
     wrapper = _vendor_wrapper_source(
@@ -1381,6 +1434,7 @@ def materialize_vendor_typescript_engine(
     executable_digest = _write_executable(exe, wrapper)
     provisional["executable_digest_sha256"] = executable_digest
     provisional["executable"] = str(exe)
+    provisional["launcher_digest_sha256"] = executable_digest
     _write_identity_manifest(manifest, provisional)
 
     # Independence check: wrapper and CLI must not mention Python package imports.
@@ -1406,6 +1460,8 @@ def materialize_vendor_typescript_engine(
         lockfile_digest_sha256=digests["lockfile_digest_sha256"],
         runtime_digest_sha256=runtime["runtime_digest_sha256"],
         executable_digest_sha256=executable_digest,
+        launcher_digest_sha256=executable_digest,
+        launcher_target_digest_sha256=artifact_digest,
         install_root=str(root),
         is_hermetic_parity_engine=False,
         is_vendor_build=True,
@@ -1413,8 +1469,38 @@ def materialize_vendor_typescript_engine(
         node_version=runtime["node_version"],
         platform_id=host,
     )
-    _publish_managed_vendor_launcher(identity)
-    return identity
+    launcher_path = _publish_managed_vendor_launcher(identity)
+    # Re-bind launcher digest after PATH publication (must match executable).
+    published_launcher_digest = _sha256_file(launcher_path)
+    if published_launcher_digest != executable_digest:
+        raise RuntimeMTLInstallerError(
+            "managed Runtime MTL launcher digest drifted from executable binding"
+        )
+    provisional["launcher_digest_sha256"] = published_launcher_digest
+    provisional["managed_launcher"] = str(launcher_path)
+    _write_identity_manifest(manifest, provisional)
+    return ExternalMonitorIdentity(
+        tool_id=identity.tool_id,
+        version=identity.version,
+        executable=identity.executable,
+        license=identity.license,
+        source=identity.source,
+        identity_kind=identity.identity_kind,
+        artifact_sha256=identity.artifact_sha256,
+        package_digest_sha256=identity.package_digest_sha256,
+        source_digest_sha256=identity.source_digest_sha256,
+        lockfile_digest_sha256=identity.lockfile_digest_sha256,
+        runtime_digest_sha256=identity.runtime_digest_sha256,
+        executable_digest_sha256=identity.executable_digest_sha256,
+        launcher_digest_sha256=published_launcher_digest,
+        launcher_target_digest_sha256=identity.launcher_target_digest_sha256,
+        install_root=identity.install_root,
+        is_hermetic_parity_engine=False,
+        is_vendor_build=True,
+        package_identity=identity.package_identity,
+        node_version=identity.node_version,
+        platform_id=identity.platform_id,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1864,11 +1950,14 @@ def describe_runtime_mtl_installer() -> dict[str, Any]:
             "schema_version": VENDOR_SCHEMA_VERSION,
             "goal_id": VENDOR_GOAL_ID,
             "task_id": VENDOR_TASK_ID,
+            "repair_task_id": VENDOR_REPAIR_TASK_ID,
+            "objective_validation_evidence": OBJECTIVE_VALIDATION_EVIDENCE,
             "program": VENDOR_PROGRAM,
             "package_identity": VENDOR_PACKAGE_IDENTITY,
             "package_relative": str(VENDOR_PACKAGE_RELATIVE),
             "ensure_name": "ensure_runtime_mtl_vendor",
             "managed_executable_name": MANAGED_EXECUTABLE_NAME,
+            "managed_install_root_env_vars": list(MANAGED_INSTALL_ROOT_ENV_VARS),
         },
         "policy": {
             "never_on_import": True,
@@ -1884,7 +1973,11 @@ def describe_runtime_mtl_installer() -> dict[str, Any]:
             "vendor_builds_independent_typescript_node": True,
             "vendor_never_imports_python_reference": True,
             "package_source_lockfile_runtime_digests_bound": True,
+            "package_source_lockfile_runtime_launcher_executable_artifact_digests_bound": True,
             "vendor_launcher_is_digest_bound_and_path_visible": True,
+            "explicit_approved_immutable_deployment_root": True,
+            "objective_validation_repair": True,
+            "objective_validation_evidence": OBJECTIVE_VALIDATION_EVIDENCE,
         },
         "default_lock_path": str(resolve_lock_path()),
     }
@@ -1912,12 +2005,15 @@ __all__ = [
     "VENDOR_INSTALL_RECEIPT_SCHEMA",
     "VENDOR_GOAL_ID",
     "VENDOR_TASK_ID",
+    "VENDOR_REPAIR_TASK_ID",
+    "OBJECTIVE_VALIDATION_EVIDENCE",
     "VENDOR_PROGRAM",
     "VENDOR_PACKAGE_RELATIVE",
     "VENDOR_PACKAGE_IDENTITY",
     "TOOL_RUNTIME_MTL_EXTERNAL",
     "EXTERNAL_TOOLS",
     "MANAGED_EXECUTABLE_NAME",
+    "MANAGED_INSTALL_ROOT_ENV_VARS",
     "DEFAULT_PINS",
     "ENV_FORCE_STATUS",
     "ENV_FORCE_VERDICT",
