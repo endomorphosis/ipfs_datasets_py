@@ -1,0 +1,1136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.local/schemas/ui-ux-ir/v1",
+  "title": "UI/UX IR v1",
+  "description": "Closed, immutable UI/UX intermediate-representation envelope. Cross-reference closure, collection uniqueness, and executable-callback rejection are additionally enforced by the Python validator and versioned decoder.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-extension-policy": "versioned-namespaced-extension-records-only",
+  "x-interface": "UIUXIR@1",
+  "x-schema-version": "ui-ux-ir/v1",
+  "required": [
+    "schema_version",
+    "document_id",
+    "title",
+    "sources",
+    "components",
+    "entry_components",
+    "terminal_outcomes"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ui-ux-ir/v1"
+    },
+    "document_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "title": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "locale_defaults": {
+      "$ref": "#/$defs/localeDefaults"
+    },
+    "tags": {
+      "$ref": "#/$defs/stringSet"
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/sourceRef"
+      }
+    },
+    "producer": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/producer" }
+      ]
+    },
+    "configuration": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/configuration" }
+      ]
+    },
+    "review": {
+      "$ref": "#/$defs/reviewBinding"
+    },
+    "trust_bindings": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/trustBinding"
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/component"
+      }
+    },
+    "composition_edges": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/compositionEdge"
+      }
+    },
+    "layout_regions": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/layoutRegion"
+      }
+    },
+    "layout_constraints": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/layoutConstraint"
+      }
+    },
+    "design_token_refs": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/designTokenRef"
+      }
+    },
+    "state_variables": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/stateVariable"
+      }
+    },
+    "states": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/state"
+      }
+    },
+    "events": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/transition"
+      }
+    },
+    "guards": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/guard"
+      }
+    },
+    "effects": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/effect"
+      }
+    },
+    "ux_tasks": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/uxTask"
+      }
+    },
+    "journeys": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/journey"
+      }
+    },
+    "success_failure_recovery": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/recoveryPath"
+      }
+    },
+    "feedback_contracts": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/feedbackContract"
+      }
+    },
+    "accessibility": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/accessibilityBinding"
+      }
+    },
+    "localization": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/localizationBinding"
+      }
+    },
+    "input_modality_requirements": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/modalityRequirement"
+      }
+    },
+    "output_modality_requirements": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/modalityRequirement"
+      }
+    },
+    "modality_alternatives": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/modalityAlternative"
+      }
+    },
+    "device_capability_requirements": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/deviceCapabilityRequirement"
+      }
+    },
+    "adaptive_variants": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/adaptiveVariant"
+      }
+    },
+    "data_bindings": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/dataBinding"
+      }
+    },
+    "content_references": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/contentReference"
+      }
+    },
+    "program_bindings": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/programBinding"
+      }
+    },
+    "intent_ir_bindings": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/intentIrBinding"
+      }
+    },
+    "invocation_bindings": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/invocationBinding"
+      }
+    },
+    "mcp_idl_bindings": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/mcpIdlBinding"
+      }
+    },
+    "formal_constraint_refs": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/formalConstraintRef"
+      }
+    },
+    "proof_obligation_refs": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/proofObligationRef"
+      }
+    },
+    "entry_components": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "initial_states": {
+      "$ref": "#/$defs/identifierSet"
+    },
+    "terminal_outcomes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/terminalOutcome"
+      }
+    },
+    "extensions": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/namespacedExtension"
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "reviewStatus": {
+      "enum": [
+        "unreviewed",
+        "machine_extracted",
+        "human_reviewed",
+        "trusted_fixture",
+        "quarantined"
+      ]
+    },
+    "authorityKind": {
+      "enum": [
+        "declaration",
+        "interface",
+        "legacy_alias",
+        "projection",
+        "observation",
+        "mediation",
+        "invocation",
+        "satisfiability",
+        "monitor",
+        "proof",
+        "accessibility",
+        "policy",
+        "synthesis_candidate",
+        "conformance"
+      ]
+    },
+    "adaptationPolicy": {
+      "enum": [
+        "preserve",
+        "adapt",
+        "summarize",
+        "fallback",
+        "omit"
+      ]
+    },
+    "terminalOutcomeKind": {
+      "enum": [
+        "success",
+        "failure",
+        "partial",
+        "unavailable",
+        "degraded"
+      ]
+    },
+    "stringSet": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "identifierSet": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "x-collection-semantics": "set-like",
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "identifierListOrdered": {
+      "type": "array",
+      "default": [],
+      "x-collection-semantics": "ordered",
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "jsonObject": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "not": {
+          "pattern": "^(callback|callbacks|handler|handlers|on_click|onclick|on_change|onchange|on_submit|onsubmit|function|fn|eval|script|scripts|executable|exec|code|lambda|listener|listeners|javascript|jsx|tsx)$"
+        }
+      },
+      "additionalProperties": {
+        "type": [
+          "null",
+          "boolean",
+          "number",
+          "string",
+          "array",
+          "object"
+        ]
+      }
+    },
+    "sourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_char", "end_char"],
+      "properties": {
+        "start_char": { "type": "integer", "minimum": 0 },
+        "end_char": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref_id",
+        "source_uri",
+        "source_id",
+        "source_revision",
+        "content_sha256"
+      ],
+      "properties": {
+        "ref_id": { "$ref": "#/$defs/identifier" },
+        "source_uri": { "$ref": "#/$defs/nonEmptyString" },
+        "source_id": { "$ref": "#/$defs/nonEmptyString" },
+        "source_revision": { "$ref": "#/$defs/nonEmptyString" },
+        "content_sha256": { "$ref": "#/$defs/sha256" },
+        "container_uri": { "type": "string", "default": "" },
+        "container_sha256": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/sha256" }
+          ],
+          "default": ""
+        },
+        "content_cid": { "type": "string", "default": "" },
+        "license_expression": { "type": "string", "default": "" },
+        "review_status": {
+          "$ref": "#/$defs/reviewStatus",
+          "default": "unreviewed"
+        },
+        "span": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sourceSpan" }
+          ],
+          "default": null
+        }
+      }
+    },
+    "localeDefaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default_locale": {
+          "$ref": "#/$defs/nonEmptyString",
+          "default": "en"
+        },
+        "fallback_locales": {
+          "type": "array",
+          "default": [],
+          "x-collection-semantics": "ordered",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "text_direction": {
+          "enum": ["ltr", "rtl", "auto"],
+          "default": "ltr"
+        }
+      }
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["producer_id", "name"],
+      "properties": {
+        "producer_id": { "$ref": "#/$defs/identifier" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "version": { "type": "string", "default": "" }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configuration_id"],
+      "properties": {
+        "configuration_id": { "$ref": "#/$defs/identifier" },
+        "profile": {
+          "$ref": "#/$defs/nonEmptyString",
+          "default": "default"
+        },
+        "settings": {
+          "$ref": "#/$defs/jsonObject",
+          "default": {}
+        }
+      }
+    },
+    "reviewBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "review_status": {
+          "$ref": "#/$defs/reviewStatus",
+          "default": "unreviewed"
+        },
+        "reviewer": { "type": "string", "default": "" },
+        "notes": { "type": "string", "default": "" }
+      }
+    },
+    "trustBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trust_id", "authority_kind", "subject_ref"],
+      "properties": {
+        "trust_id": { "$ref": "#/$defs/identifier" },
+        "authority_kind": { "$ref": "#/$defs/authorityKind" },
+        "subject_ref": { "$ref": "#/$defs/nonEmptyString" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_id", "role"],
+      "properties": {
+        "component_id": { "$ref": "#/$defs/identifier" },
+        "role": { "$ref": "#/$defs/nonEmptyString" },
+        "purpose": { "type": "string", "default": "" },
+        "accessible_name_ref": { "type": "string", "default": "" },
+        "accessible_description_ref": { "type": "string", "default": "" },
+        "parent_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "child_ids": { "$ref": "#/$defs/identifierListOrdered" },
+        "modality_binding_ids": { "$ref": "#/$defs/identifierSet" },
+        "data_binding_ids": { "$ref": "#/$defs/identifierSet" },
+        "program_binding_ids": { "$ref": "#/$defs/identifierSet" },
+        "feedback_ids": { "$ref": "#/$defs/identifierSet" },
+        "privacy_sensitivity": {
+          "type": "string",
+          "default": "none"
+        },
+        "presentation_classification": {
+          "type": "string",
+          "default": "interactive"
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "compositionEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edge_id",
+        "kind",
+        "source_component_id",
+        "target_component_id"
+      ],
+      "properties": {
+        "edge_id": { "$ref": "#/$defs/identifier" },
+        "kind": {
+          "enum": [
+            "parent",
+            "child",
+            "slot",
+            "label",
+            "described_by",
+            "owns",
+            "flow"
+          ]
+        },
+        "source_component_id": { "$ref": "#/$defs/identifier" },
+        "target_component_id": { "$ref": "#/$defs/identifier" },
+        "slot_name": { "type": "string", "default": "" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "layoutRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["region_id", "kind"],
+      "properties": {
+        "region_id": { "$ref": "#/$defs/identifier" },
+        "kind": {
+          "enum": [
+            "flow",
+            "grid",
+            "stack",
+            "overlay",
+            "spatial_anchor",
+            "audio_sequence"
+          ]
+        },
+        "component_ids": { "$ref": "#/$defs/identifierListOrdered" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "layoutConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["constraint_id", "kind"],
+      "properties": {
+        "constraint_id": { "$ref": "#/$defs/identifier" },
+        "kind": { "$ref": "#/$defs/nonEmptyString" },
+        "region_ids": { "$ref": "#/$defs/identifierSet" },
+        "component_ids": { "$ref": "#/$defs/identifierSet" },
+        "adaptation_policy": {
+          "$ref": "#/$defs/adaptationPolicy",
+          "default": "preserve"
+        },
+        "expression_ref": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "designTokenRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["token_id", "category", "token_name"],
+      "properties": {
+        "token_id": { "$ref": "#/$defs/identifier" },
+        "category": { "$ref": "#/$defs/nonEmptyString" },
+        "token_name": { "$ref": "#/$defs/nonEmptyString" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "stateVariable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["variable_id", "value_type"],
+      "properties": {
+        "variable_id": { "$ref": "#/$defs/identifier" },
+        "value_type": { "$ref": "#/$defs/nonEmptyString" },
+        "derived": { "type": "boolean", "default": false },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_id"],
+      "properties": {
+        "state_id": { "$ref": "#/$defs/identifier" },
+        "region_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "kind"],
+      "properties": {
+        "event_id": { "$ref": "#/$defs/identifier" },
+        "kind": {
+          "enum": [
+            "input",
+            "domain",
+            "lifecycle",
+            "timer",
+            "program_result"
+          ]
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["guard_id"],
+      "properties": {
+        "guard_id": { "$ref": "#/$defs/identifier" },
+        "constraint_ref": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "formal_constraint_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect_id"],
+      "properties": {
+        "effect_id": { "$ref": "#/$defs/identifier" },
+        "program_binding_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "local_state_transition": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transition_id",
+        "source_state_id",
+        "target_state_id"
+      ],
+      "properties": {
+        "transition_id": { "$ref": "#/$defs/identifier" },
+        "source_state_id": { "$ref": "#/$defs/identifier" },
+        "target_state_id": { "$ref": "#/$defs/identifier" },
+        "event_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "guard_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "effect_ids": { "$ref": "#/$defs/identifierListOrdered" },
+        "priority": { "type": "integer", "default": 0 },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "uxTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "name"],
+      "properties": {
+        "task_id": { "$ref": "#/$defs/identifier" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "step_component_ids": { "$ref": "#/$defs/identifierListOrdered" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "journey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["journey_id", "name"],
+      "properties": {
+        "journey_id": { "$ref": "#/$defs/identifier" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "task_ids": { "$ref": "#/$defs/identifierListOrdered" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "recoveryPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_id", "kind"],
+      "properties": {
+        "path_id": { "$ref": "#/$defs/identifier" },
+        "kind": { "$ref": "#/$defs/terminalOutcomeKind" },
+        "target_outcome_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "recovery_component_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "feedbackContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feedback_id", "channel"],
+      "properties": {
+        "feedback_id": { "$ref": "#/$defs/identifier" },
+        "channel": { "$ref": "#/$defs/nonEmptyString" },
+        "component_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "accessibilityBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accessibility_id", "component_id"],
+      "properties": {
+        "accessibility_id": { "$ref": "#/$defs/identifier" },
+        "component_id": { "$ref": "#/$defs/identifier" },
+        "role": { "type": "string", "default": "" },
+        "name_ref": { "type": "string", "default": "" },
+        "description_ref": { "type": "string", "default": "" },
+        "relationship_ids": { "$ref": "#/$defs/identifierSet" },
+        "live_region": { "type": "boolean", "default": false },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "localizationBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["localization_id", "message_id"],
+      "properties": {
+        "localization_id": { "$ref": "#/$defs/identifier" },
+        "message_id": { "$ref": "#/$defs/nonEmptyString" },
+        "default_text": { "type": "string", "default": "" },
+        "variable_ids": { "$ref": "#/$defs/identifierSet" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "modalityRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement_id", "direction", "capability_ids"],
+      "properties": {
+        "requirement_id": { "$ref": "#/$defs/identifier" },
+        "direction": { "enum": ["input", "output"] },
+        "capability_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "x-collection-semantics": "set-like",
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "essential": { "type": "boolean", "default": true },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "modalityAlternative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alternative_id",
+        "primary_requirement_id",
+        "alternative_requirement_id"
+      ],
+      "properties": {
+        "alternative_id": { "$ref": "#/$defs/identifier" },
+        "primary_requirement_id": { "$ref": "#/$defs/identifier" },
+        "alternative_requirement_id": { "$ref": "#/$defs/identifier" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "deviceCapabilityRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement_id", "capability_ids"],
+      "properties": {
+        "requirement_id": { "$ref": "#/$defs/identifier" },
+        "capability_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "x-collection-semantics": "set-like",
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "adaptiveVariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["variant_id", "adaptation_policy"],
+      "properties": {
+        "variant_id": { "$ref": "#/$defs/identifier" },
+        "adaptation_policy": { "$ref": "#/$defs/adaptationPolicy" },
+        "capability_predicate_ids": { "$ref": "#/$defs/identifierSet" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "dataBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_id", "kind", "resource_ref"],
+      "properties": {
+        "binding_id": { "$ref": "#/$defs/identifier" },
+        "kind": { "$ref": "#/$defs/nonEmptyString" },
+        "resource_ref": { "$ref": "#/$defs/nonEmptyString" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "contentReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["content_id", "kind", "resource_ref"],
+      "properties": {
+        "content_id": { "$ref": "#/$defs/identifier" },
+        "kind": { "$ref": "#/$defs/nonEmptyString" },
+        "resource_ref": { "$ref": "#/$defs/nonEmptyString" },
+        "localization_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "programBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_id", "target_kind", "target_ref"],
+      "properties": {
+        "binding_id": { "$ref": "#/$defs/identifier" },
+        "target_kind": {
+          "enum": [
+            "mcp_idl_interface_method_schema",
+            "intent_ir_document_action",
+            "invocation_intent_template",
+            "local_state_only_transition",
+            "versioned_composite_workflow"
+          ]
+        },
+        "target_ref": { "$ref": "#/$defs/nonEmptyString" },
+        "risk_class": {
+          "$ref": "#/$defs/nonEmptyString",
+          "default": "low"
+        },
+        "confirmation_class": {
+          "$ref": "#/$defs/nonEmptyString",
+          "default": "none"
+        },
+        "precondition_ids": { "$ref": "#/$defs/identifierSet" },
+        "effect_ids": { "$ref": "#/$defs/identifierSet" },
+        "verification_ids": { "$ref": "#/$defs/identifierSet" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "intentIrBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_id", "intent_document_id"],
+      "properties": {
+        "binding_id": { "$ref": "#/$defs/identifier" },
+        "intent_document_id": { "$ref": "#/$defs/identifier" },
+        "intent_action_id": {
+          "oneOf": [
+            { "const": "" },
+            { "$ref": "#/$defs/identifier" }
+          ],
+          "default": ""
+        },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "invocationBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_id", "template_cid"],
+      "properties": {
+        "binding_id": { "$ref": "#/$defs/identifier" },
+        "template_cid": { "$ref": "#/$defs/nonEmptyString" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "mcpIdlBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_id", "interface_cid", "method_name"],
+      "properties": {
+        "binding_id": { "$ref": "#/$defs/identifier" },
+        "interface_cid": { "$ref": "#/$defs/nonEmptyString" },
+        "method_name": { "$ref": "#/$defs/nonEmptyString" },
+        "argument_schema_ref": { "type": "string", "default": "" },
+        "result_schema_ref": { "type": "string", "default": "" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "formalConstraintRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["constraint_id", "view", "formula_ref"],
+      "properties": {
+        "constraint_id": { "$ref": "#/$defs/identifier" },
+        "view": { "$ref": "#/$defs/nonEmptyString" },
+        "formula_ref": { "$ref": "#/$defs/nonEmptyString" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "proofObligationRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["obligation_id", "constraint_id"],
+      "properties": {
+        "obligation_id": { "$ref": "#/$defs/identifier" },
+        "constraint_id": { "$ref": "#/$defs/identifier" },
+        "prover": { "type": "string", "default": "" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "terminalOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome_id", "kind"],
+      "properties": {
+        "outcome_id": { "$ref": "#/$defs/identifier" },
+        "kind": { "$ref": "#/$defs/terminalOutcomeKind" },
+        "description": { "type": "string", "default": "" },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    },
+    "namespacedExtension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["extension_id", "namespace", "version"],
+      "properties": {
+        "extension_id": { "$ref": "#/$defs/identifier" },
+        "namespace": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}(\\.[A-Za-z][A-Za-z0-9_-]{0,63}){0,7}$",
+          "not": {
+            "pattern": "^(observation|telemetry|projection|proof|policy_result|runtime)(\\..*)?$"
+          }
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"
+        },
+        "payload": {
+          "$ref": "#/$defs/jsonObject",
+          "default": {}
+        },
+        "required": { "type": "boolean", "default": false },
+        "source_ref_ids": { "$ref": "#/$defs/identifierSet" }
+      }
+    }
+  }
+}
