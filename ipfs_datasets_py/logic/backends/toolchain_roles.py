@@ -37,6 +37,12 @@ GOAL_ID: Final = "FVT-G100"
 TASK_ID: Final = "FVT-037"
 SPECIALIZED_RECEIPT_AGGREGATION_GOAL_ID: Final = "FVT-G203"
 SPECIALIZED_RECEIPT_AGGREGATION_TASK_ID: Final = "FVT-065"
+# Validation-gate task that re-proves FVT-G203 when path evidence already exists.
+SPECIALIZED_RECEIPT_AGGREGATION_REPAIR_TASK_ID: Final = "FVT-079"
+# Exact-text discovery key required by objective-scan validation gates.
+SPECIALIZED_RECEIPT_AGGREGATION_OBJECTIVE_VALIDATION_EVIDENCE: Final = (
+    "objective validation repair"
+)
 PROGRAM: Final = "formal-verification-tactician/toolchain-governance"
 
 # Composite-slot key when a handler covers an entire multi-tool lane.
@@ -510,6 +516,14 @@ class CompositeLaneHandler:
             "lossless": True,
             "collapse_by_check_kind": False,
             "sibling_overwrite_forbidden": True,
+            # FVT-079 objective validation repair: re-prove FVT-G203 acceptance.
+            "goal_id": SPECIALIZED_RECEIPT_AGGREGATION_GOAL_ID,
+            "task_id": SPECIALIZED_RECEIPT_AGGREGATION_TASK_ID,
+            "repair_task_id": SPECIALIZED_RECEIPT_AGGREGATION_REPAIR_TASK_ID,
+            "objective_validation_evidence": (
+                SPECIALIZED_RECEIPT_AGGREGATION_OBJECTIVE_VALIDATION_EVIDENCE
+            ),
+            "objective_validation_repair": True,
         }
 
 
@@ -812,6 +826,21 @@ class RoleAwarePromotionPolicy:
                 "handlers_keyed_by_lane_and_tool": True,
                 "sibling_handlers_never_overwrite": True,
                 "lossless_specialized_receipt_aggregation": True,
+            },
+            # FVT-079 objective validation repair surface for FVT-G203.
+            "specialized_receipt_aggregation": {
+                "interface": (
+                    FORMAL_VERIFICATION_SPECIALIZED_RECEIPT_AGGREGATION_INTERFACE
+                ),
+                "schema_version": SPECIALIZED_RECEIPT_AGGREGATION_SCHEMA,
+                "goal_id": SPECIALIZED_RECEIPT_AGGREGATION_GOAL_ID,
+                "task_id": SPECIALIZED_RECEIPT_AGGREGATION_TASK_ID,
+                "repair_task_id": SPECIALIZED_RECEIPT_AGGREGATION_REPAIR_TASK_ID,
+                "objective_validation_evidence": (
+                    SPECIALIZED_RECEIPT_AGGREGATION_OBJECTIVE_VALIDATION_EVIDENCE
+                ),
+                "objective_validation_repair": True,
+                "lossless": True,
             },
         }
 
@@ -1366,6 +1395,8 @@ __all__ = [
     "TASK_ID",
     "SPECIALIZED_RECEIPT_AGGREGATION_GOAL_ID",
     "SPECIALIZED_RECEIPT_AGGREGATION_TASK_ID",
+    "SPECIALIZED_RECEIPT_AGGREGATION_REPAIR_TASK_ID",
+    "SPECIALIZED_RECEIPT_AGGREGATION_OBJECTIVE_VALIDATION_EVIDENCE",
     "PROGRAM",
     "ToolchainRoleError",
     "ToolRole",
