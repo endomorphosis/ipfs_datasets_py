@@ -325,6 +325,23 @@ def test_proxy_resolves_only_on_first_attribute_access(monkeypatch):
     assert calls == ["proxy_demo"]
 
 
+def test_solver_bindings_are_registered_in_default_lazy_proxy():
+    import tomllib
+
+    from ipfs_datasets_py.dependency_catalog import dependencies_for_component
+    from ipfs_datasets_py.lazy_dependencies import DEFAULT_DEPENDENCY_MODULES
+
+    assert {"z3", "cvc5"} <= set(DEFAULT_DEPENDENCY_MODULES)
+    assert {"z3-solver", "cvc5"} <= {
+        dependency.distribution
+        for dependency in dependencies_for_component("lazy")
+    }
+    root = Path(__file__).resolve().parents[2]
+    metadata = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    lazy_extra = set(metadata["project"]["optional-dependencies"]["lazy"])
+    assert {"z3-solver>=4.12.0,<5.0.0", "cvc5==1.3.3"} <= lazy_extra
+
+
 def test_previously_installer_only_packages_are_declared():
     root = Path(__file__).resolve().parents[2]
     declarations = "\n".join(

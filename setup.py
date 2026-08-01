@@ -339,7 +339,7 @@ setup(
         # side effect of pip installation.
         'theorem-provers': [
             'z3-solver>=4.12.0,<5.0.0',
-            'cvc5>=1.0.0,<2.0.0',
+            'cvc5==1.3.3',
             'pysmt>=0.9.5,<1.0.0',
             'beartype>=0.15.0,<1.0.0',
             'symbolicai>=1.14.0,<2.0.0',
@@ -560,6 +560,8 @@ setup(
         # Dependencies exposed by the shared on-demand dependency proxy. This
         # extra is the eager equivalent of first-use lazy installation.
         'lazy': [
+            'z3-solver>=4.12.0,<5.0.0',
+            'cvc5==1.3.3',
             'chardet>=5.0.0,<6.0.0',
             'llama-cpp-python',
             'playsound3',
