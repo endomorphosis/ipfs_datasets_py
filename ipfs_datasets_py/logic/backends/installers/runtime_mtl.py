@@ -35,6 +35,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
@@ -80,6 +81,9 @@ VENDOR_PACKAGE_IDENTITY: Final = "@ipfs-datasets/logic-runtime-mtl"
 TOOL_RUNTIME_MTL_EXTERNAL: Final = "runtime-mtl-external"
 EXTERNAL_TOOLS: Final = (TOOL_RUNTIME_MTL_EXTERNAL,)
 EXECUTABLE_NAME: Final = "runtime-mtl-external"
+# Canonical PATH-visible launcher named by FormalVerificationDeploymentLock@2.
+# Only the independently built TypeScript/Node vendor lane may publish it.
+MANAGED_EXECUTABLE_NAME: Final = "runtime-mtl"
 
 # Reviewed pin defaults (overridden by the deployment lock when present).
 DEFAULT_PINS: Final[Mapping[str, Mapping[str, str]]] = MappingProxyType(
@@ -480,6 +484,12 @@ def executable_path(
     return tool_bin_dir(install_root, tool_id, version, vendor=vendor) / EXECUTABLE_NAME
 
 
+def managed_executable_path(install_root: Path | str) -> Path:
+    """Return the canonical PATH-visible vendor launcher location."""
+
+    return _expand_install_root(install_root) / "bin" / MANAGED_EXECUTABLE_NAME
+
+
 # ---------------------------------------------------------------------------
 # Hermetic parity-engine shim source
 # ---------------------------------------------------------------------------
@@ -701,6 +711,90 @@ def _write_identity_manifest(path: Path, identity: Mapping[str, Any]) -> None:
     )
 
 
+def _managed_vendor_launcher_is_current(
+    identity: ExternalMonitorIdentity,
+) -> bool:
+    """Verify that the PATH-visible launcher is the exact vendor executable."""
+
+    if identity.is_hermetic_parity_engine or not identity.is_vendor_build:
+        return False
+    expected = identity.executable_digest_sha256
+    if not re.fullmatch(r"[0-9a-f]{64}", expected):
+        return False
+    source = Path(identity.executable)
+    launcher = managed_executable_path(identity.install_root)
+    try:
+        return (
+            source.is_file()
+            and launcher.is_file()
+            and os.access(launcher, os.X_OK)
+            and _sha256_file(source) == expected
+            and _sha256_file(launcher) == expected
+        )
+    except OSError:
+        return False
+
+
+def _publish_managed_vendor_launcher(
+    identity: ExternalMonitorIdentity,
+) -> Path:
+    """Atomically expose an exact vendor wrapper on the managed toolchain PATH.
+
+    The published launcher is byte-for-byte identical to the digest-bound
+    TypeScript/Node wrapper. Hermetic Python parity engines are rejected so a
+    shadow implementation can never satisfy managed vendor discovery.
+    """
+
+    if identity.is_hermetic_parity_engine or not identity.is_vendor_build:
+        raise RuntimeMTLInstallerError(
+            "only an independent vendor Runtime MTL identity may be PATH-visible"
+        )
+    expected = identity.executable_digest_sha256
+    if not re.fullmatch(r"[0-9a-f]{64}", expected):
+        raise RuntimeMTLInstallerError(
+            "vendor Runtime MTL launcher requires a bound executable sha256"
+        )
+    source = Path(identity.executable)
+    try:
+        content = source.read_bytes()
+    except OSError as exc:
+        raise RuntimeMTLInstallerError(
+            f"vendor Runtime MTL executable is unreadable: {source}"
+        ) from exc
+    observed = _sha256_bytes(content)
+    if observed != expected:
+        raise RuntimeMTLInstallerError(
+            "vendor Runtime MTL executable digest mismatch before PATH publication"
+        )
+
+    launcher = managed_executable_path(identity.install_root)
+    launcher.parent.mkdir(parents=True, exist_ok=True)
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=launcher.parent,
+            prefix=f".{MANAGED_EXECUTABLE_NAME}.",
+            suffix=".partial",
+            delete=False,
+        ) as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+            temporary = Path(handle.name)
+        temporary.chmod(0o755)
+        temporary.replace(launcher)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+    if not _managed_vendor_launcher_is_current(identity):
+        raise RuntimeMTLInstallerError(
+            "managed Runtime MTL launcher failed post-publication identity check"
+        )
+    return launcher
+
+
 def _probe_version(executable: Path) -> str:
     import subprocess
 
@@ -763,6 +857,12 @@ def _identity_from_disk(
             platform_id = str(payload.get("platform_id") or "")
     if vendor and (is_hermetic or not is_vendor):
         return None
+    if executable_digest:
+        try:
+            if _sha256_file(exe) != executable_digest:
+                return None
+        except OSError:
+            return None
     observed = _probe_version(exe)
     if observed and pin["version"] not in observed and version not in observed:
         markers = ("runtime-mtl", "parity", "typescript-vendor")
@@ -1205,6 +1305,7 @@ def materialize_vendor_typescript_engine(
             and existing.lockfile_digest_sha256
             and existing.source_digest_sha256
         ):
+            _publish_managed_vendor_launcher(existing)
             return existing
 
     package_root = resolve_vendor_package_root(repo_root)
@@ -1292,7 +1393,7 @@ def materialize_vendor_typescript_engine(
             f"found {dispatch_marker!r}"
         )
 
-    return ExternalMonitorIdentity(
+    identity = ExternalMonitorIdentity(
         tool_id=tool_id,
         version=version,
         executable=str(exe),
@@ -1312,6 +1413,8 @@ def materialize_vendor_typescript_engine(
         node_version=runtime["node_version"],
         platform_id=host,
     )
+    _publish_managed_vendor_launcher(identity)
+    return identity
 
 
 # ---------------------------------------------------------------------------
@@ -1421,7 +1524,11 @@ def ensure_runtime_mtl_external(
         and not force
         and (
             not use_vendor
-            or (existing.is_vendor_build and not existing.is_hermetic_parity_engine)
+            or (
+                existing.is_vendor_build
+                and not existing.is_hermetic_parity_engine
+                and _managed_vendor_launcher_is_current(existing)
+            )
         )
     ):
         _announce(
@@ -1761,6 +1868,7 @@ def describe_runtime_mtl_installer() -> dict[str, Any]:
             "package_identity": VENDOR_PACKAGE_IDENTITY,
             "package_relative": str(VENDOR_PACKAGE_RELATIVE),
             "ensure_name": "ensure_runtime_mtl_vendor",
+            "managed_executable_name": MANAGED_EXECUTABLE_NAME,
         },
         "policy": {
             "never_on_import": True,
@@ -1776,6 +1884,7 @@ def describe_runtime_mtl_installer() -> dict[str, Any]:
             "vendor_builds_independent_typescript_node": True,
             "vendor_never_imports_python_reference": True,
             "package_source_lockfile_runtime_digests_bound": True,
+            "vendor_launcher_is_digest_bound_and_path_visible": True,
         },
         "default_lock_path": str(resolve_lock_path()),
     }
@@ -1808,6 +1917,7 @@ __all__ = [
     "VENDOR_PACKAGE_IDENTITY",
     "TOOL_RUNTIME_MTL_EXTERNAL",
     "EXTERNAL_TOOLS",
+    "MANAGED_EXECUTABLE_NAME",
     "DEFAULT_PINS",
     "ENV_FORCE_STATUS",
     "ENV_FORCE_VERDICT",
@@ -1830,6 +1940,7 @@ __all__ = [
     "executable_path",
     "materialize_hermetic_parity_engine",
     "materialize_vendor_typescript_engine",
+    "managed_executable_path",
     "pin_for_tool",
     "resolve_vendor_package_root",
 ]
