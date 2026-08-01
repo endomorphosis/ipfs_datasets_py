@@ -124,6 +124,9 @@ _FORBIDDEN_GLOBAL_OPAM_MARKERS: Final[tuple[str, ...]] = (
 ProgressCallback = Callable[[str, str], None]
 
 _VERSION_RE = re.compile(r"(\d+(?:\.\d+)+)")
+_PROVERIF_HELP_VERSION_RE = re.compile(
+    r"\AProverif (?P<version>\d+(?:\.\d+)+)\.(?:[ \t]|$)"
+)
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -195,6 +198,21 @@ class InstallReceipt:
     reason_codes: list[str] = field(default_factory=list)
     messages: list[str] = field(default_factory=list)
     bindings: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True, slots=True)
+class ProVerifRuntimeProbe:
+    """Canonical ``proverif -help`` identity evidence."""
+
+    command: tuple[str, ...]
+    returncode: int | None
+    output: str
+    observed_version: str | None
+    usable: bool
+    reason_code: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -535,6 +553,86 @@ def read_version_banner(
         part for part in (completed.stdout, completed.stderr) if part
     ).strip()
     return text or None
+
+
+def proverif_version_from_help(banner: str | None) -> str | None:
+    """Parse the version only from ProVerif's canonical first help line."""
+
+    match = _PROVERIF_HELP_VERSION_RE.match(banner or "")
+    return match.group("version") if match is not None else None
+
+
+def probe_proverif_runtime(
+    executable: str,
+    *,
+    expected_version: str = PROVERIF_VERSION,
+    timeout: float = 10.0,
+) -> ProVerifRuntimeProbe:
+    """Validate ProVerif through its canonical, successful ``-help`` probe.
+
+    ProVerif 2.05 rejects ``--version`` with exit status 2 while also printing
+    its help text.  Accepting arbitrary digits from that failure output (or
+    from an executable path such as ``proverif-2.05``) is not identity
+    evidence, so both the command and the first output line are exact here.
+    """
+
+    command = (str(executable), "-help")
+    try:
+        completed = subprocess.run(
+            list(command),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            shell=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return ProVerifRuntimeProbe(
+            command=command,
+            returncode=None,
+            output="",
+            observed_version=None,
+            usable=False,
+            reason_code="runtime_probe_failed",
+        )
+    output = "\n".join(
+        part for part in (completed.stdout, completed.stderr) if part
+    ).strip()
+    observed = proverif_version_from_help(output)
+    if completed.returncode != 0:
+        return ProVerifRuntimeProbe(
+            command=command,
+            returncode=completed.returncode,
+            output=output,
+            observed_version=observed,
+            usable=False,
+            reason_code="runtime_probe_nonzero_exit",
+        )
+    if observed is None:
+        return ProVerifRuntimeProbe(
+            command=command,
+            returncode=completed.returncode,
+            output=output,
+            observed_version=None,
+            usable=False,
+            reason_code="runtime_version_unreadable",
+        )
+    if observed != expected_version:
+        return ProVerifRuntimeProbe(
+            command=command,
+            returncode=completed.returncode,
+            output=output,
+            observed_version=observed,
+            usable=False,
+            reason_code="runtime_version_mismatch",
+        )
+    return ProVerifRuntimeProbe(
+        command=command,
+        returncode=completed.returncode,
+        output=output,
+        observed_version=observed,
+        usable=True,
+    )
 
 
 def observed_version_matches_lock(banner: str | None, expected: str) -> bool:
@@ -968,9 +1066,12 @@ def ensure_proverif(
     )
     existing = which_executable(PROVERIF_EXECUTABLE, path_env=path_env)
     if existing and not force and not dry_run:
-        banner = read_version_banner(existing) or ""
-        version_ok = observed_version_matches_lock(banner, PROVERIF_VERSION)
-        if version_ok:
+        runtime_probe = probe_proverif_runtime(
+            existing,
+            expected_version=PROVERIF_VERSION,
+        )
+        receipt.bindings["existing_runtime_probe"] = runtime_probe.to_dict()
+        if runtime_probe.usable:
             receipt.executable_path = existing
             receipt.already_present = True
             receipt.installed = True
@@ -1074,6 +1175,24 @@ def ensure_proverif(
         if path.is_file() and os.access(path, os.X_OK)
     ]
     if len(matches) == 1:
+        runtime_probe = probe_proverif_runtime(
+            str(matches[0]),
+            expected_version=PROVERIF_VERSION,
+        )
+        receipt.bindings["post_install_runtime_probe"] = runtime_probe.to_dict()
+        if not runtime_probe.usable:
+            receipt.status = "failed"
+            receipt.phase = "runtime_validation"
+            receipt.reason_codes.append(
+                runtime_probe.reason_code or "runtime_validation_failed"
+            )
+            receipt.messages.append(
+                "ProVerif archive payload failed the canonical -help identity "
+                "probe; no public launcher was written."
+            )
+            if strict:
+                raise ProVerifInstallerError(receipt.messages[-1])
+            return receipt
         launcher = write_launcher(
             PROVERIF_EXECUTABLE,
             matches[0],
@@ -1221,6 +1340,25 @@ def ensure_proverif(
             raise ProVerifInstallerError(receipt.messages[-1])
         return receipt
 
+    runtime_probe = probe_proverif_runtime(
+        str(binary),
+        expected_version=PROVERIF_VERSION,
+    )
+    receipt.bindings["post_install_runtime_probe"] = runtime_probe.to_dict()
+    if not runtime_probe.usable:
+        receipt.status = "failed"
+        receipt.phase = "runtime_validation"
+        receipt.reason_codes.append(
+            runtime_probe.reason_code or "runtime_validation_failed"
+        )
+        receipt.messages.append(
+            "ProVerif OPAM payload failed the canonical -help identity probe; "
+            "no public launcher was written."
+        )
+        if strict:
+            raise ProVerifInstallerError(receipt.messages[-1])
+        return receipt
+
     launcher = write_launcher(
         PROVERIF_EXECUTABLE,
         binary,
@@ -1310,6 +1448,7 @@ __all__ = [
     "ProVerifInstallerError",
     "ToolPin",
     "InstallReceipt",
+    "ProVerifRuntimeProbe",
     "expand_user_local_root",
     "detect_platform_key",
     "which_executable",
@@ -1324,6 +1463,8 @@ __all__ = [
     "locked_version_for",
     "select_strict_pin",
     "read_version_banner",
+    "proverif_version_from_help",
+    "probe_proverif_runtime",
     "observed_version_matches_lock",
     "verify_sha256",
     "download_artifact",

@@ -438,6 +438,8 @@ def _read_version(executable: str | None) -> str:
 
     if executable is None:
         return ""
+    if Path(executable).name == "proverif":
+        return _read_proverif_version(executable)
     version_pattern = re.compile(
         r"(?:^|\b(?:version|proverif|tamarin-prover|lean|rocq|coq|maude|cvc5|vampire|e(?:prover)?|apalache(?:-mc)?|isabelle)\s*(?:is|,)?\s*)v?\d+\.\d+",
         flags=re.IGNORECASE,
@@ -454,10 +456,10 @@ def _read_version(executable: str | None) -> str:
         except (OSError, subprocess.SubprocessError):
             continue
         # Several otherwise usable solvers disagree on their version flag.
-        # ProVerif, for example, reports an unsupported ``--version`` option
-        # before printing its version, while cvc5 can print a usage line before
-        # succeeding with ``-version``.  Keep searching for an informative
-        # line instead of rejecting the whole probe output.
+        # Keep trying only after failed invocations; output from a non-zero
+        # command is never version identity evidence.
+        if completed.returncode != 0:
+            continue
         output = "\n".join(
             value.strip() for value in (completed.stdout, completed.stderr) if value.strip()
         )
@@ -471,12 +473,32 @@ def _read_version(executable: str | None) -> str:
                 continue
             if re.search(r"\bIsabelle\d{4}(?:-\d+)?\b", compact):
                 return compact
-            # A few tools (notably ProVerif) return a non-zero status for an
-            # unsupported flag but still print an authoritative version line.
-            # Do not accept arbitrary output from those failed invocations.
             if version_pattern.search(compact):
                 return compact
     return ""
+
+
+def _read_proverif_version(executable: str | None) -> str:
+    """Return ProVerif's exact version from its canonical successful probe."""
+
+    if executable is None:
+        return ""
+    from ipfs_datasets_py.logic.backends.installers import proverif
+
+    probe = proverif.probe_proverif_runtime(
+        executable,
+        expected_version=PROVERIF_VERSION,
+    )
+    return probe.observed_version if probe.usable and probe.observed_version else ""
+
+
+def _proverif_version_matches(
+    executable: str | None,
+    expected: str = PROVERIF_VERSION,
+) -> bool:
+    """Return whether the canonical ProVerif probe reports the exact pin."""
+
+    return _read_proverif_version(executable) == str(expected)
 
 
 def _version_matches(executable: str | None, expected: str) -> bool:
@@ -545,24 +567,23 @@ def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
             _managed_tlc_release(executable)
             if name == "tlc"
             else (
-                _distribution_version(distribution)
-                if distribution
-                else _read_version(executable)
+                _read_proverif_version(executable)
+                if name == "proverif"
+                else (
+                    _distribution_version(distribution)
+                    if distribution
+                    else _read_version(executable)
+                )
             )
         )
-        if name == "proverif" and executable and not observed:
-            try:
-                launcher_contents = Path(executable).read_text(encoding="utf-8", errors="ignore")
-            except OSError:
-                launcher_contents = ""
-            if f"proverif{target}" in launcher_contents:
-                observed = str(target)
         present = bool(observed or executable)
         # Version strings vary by solver; containment catches the reviewed
         # fixed releases while package ranges are reported for human review.
         normalized_target = str(target).lstrip("v")
         normalized_observed = observed.lstrip("v")
         matches = bool(observed and normalized_target in normalized_observed)
+        if name == "proverif":
+            matches = observed == PROVERIF_VERSION
         if name in {"z3", "symbolicai"}:
             matches = bool(observed)
         statuses.append(
@@ -2623,13 +2644,28 @@ def ensure_proverif(
 
     existing = _which("proverif")
     if existing and not force:
-        _announce(f"ProVerif is already available at {existing}", on_progress, phase="available")
-        return True
+        if _proverif_version_matches(existing):
+            _announce(
+                f"ProVerif is already available at {existing}",
+                on_progress,
+                phase="available",
+            )
+            return True
+        _announce(
+            f"ProVerif at {existing} failed the canonical -help identity probe.",
+            on_progress,
+            phase="mismatched",
+        )
     if not yes:
-        _announce("ProVerif is missing; rerun with --yes to build it user-locally.", on_progress, phase="blocked")
+        _announce(
+            "ProVerif is missing or mismatched; rerun with --yes to build it "
+            "user-locally.",
+            on_progress,
+            phase="blocked",
+        )
         return False
     if _run_custom_solver_installer("proverif", strict=strict, on_progress=on_progress):
-        return _which("proverif") is not None
+        return _proverif_version_matches(_which("proverif"))
 
     build_env = _proverif_build_environment(
         allow_sudo=allow_sudo,
@@ -2676,7 +2712,7 @@ def ensure_proverif(
             } if "OPAMROOT" in build_env and "OPAMSWITCH" in build_env else None,
         )
         _announce(f"Installed headless ProVerif {PROVERIF_VERSION} user-locally.", on_progress, phase="installed")
-        if not _version_matches(_which("proverif"), PROVERIF_VERSION):
+        if not _proverif_version_matches(_which("proverif")):
             raise RuntimeError(f"ProVerif launcher does not report {PROVERIF_VERSION}")
         return True
     except Exception as exc:

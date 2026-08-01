@@ -133,6 +133,10 @@ ProgressCallback = Callable[[str, str], None]
 
 _VERSION_RE = re.compile(r"(\d+(?:\.\d+)+)")
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
+_TLC_RELEASE_TAG_RE = re.compile(r"^v\d+(?:\.\d+)+$")
+_TLC_FULL_REVISION_RE = re.compile(r"^[0-9a-f]{40}$")
+_TLC_SHORT_REVISION_RE = re.compile(r"^[0-9a-f]{7,12}$")
+_APALACHE_VERSION_RE = re.compile(r"^(?P<version>\d+(?:\.\d+)+)$")
 _JAVA_VERSION_RE = re.compile(
     r'(?im)^\s*(?:openjdk|java)\s+version\s+"'
     r'(?P<version>\d+(?:[._+\-][^"]*)?)"'
@@ -268,6 +272,21 @@ class RuntimeCommandProbe:
     returncode: int | None
     output: str
     usable: bool
+    reason_code: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True, slots=True)
+class TLCJarManifestIdentity:
+    """Release identity parsed from the reviewed ``tla2tools.jar`` manifest."""
+
+    jar_path: str
+    release_tag: str | None = None
+    short_revision: str | None = None
+    full_revision: str | None = None
+    valid: bool = False
     reason_code: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -483,6 +502,131 @@ def numeric_version(text: str) -> tuple[int, ...]:
     if match is None:
         return ()
     return tuple(int(part) for part in match.group(1).split("."))
+
+
+def _jar_manifest_attributes(payload: bytes) -> dict[str, str] | None:
+    """Parse the main JAR manifest section with continuation-line support."""
+
+    try:
+        text = payload.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    logical_lines: list[str] = []
+    for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        if not line:
+            break
+        if line.startswith(" "):
+            if not logical_lines:
+                return None
+            logical_lines[-1] += line[1:]
+        else:
+            logical_lines.append(line)
+    attributes: dict[str, str] = {}
+    for line in logical_lines:
+        key, separator, value = line.partition(": ")
+        normalized = key.lower()
+        if not separator or not key or normalized in attributes:
+            return None
+        attributes[normalized] = value
+    return attributes
+
+
+def read_tlc_jar_manifest_identity(
+    jar_path: str | Path,
+) -> TLCJarManifestIdentity:
+    """Read and validate TLC's release tag and revisions from its JAR.
+
+    The immutable artifact digest remains the primary byte identity.  This
+    independent semantic check prevents a receipt from merely stamping the
+    reviewed constants without showing that the reviewed JAR itself carries
+    those release bindings.
+    """
+
+    jar = Path(jar_path)
+
+    def invalid(
+        reason_code: str,
+        *,
+        release_tag: str | None = None,
+        short_revision: str | None = None,
+        full_revision: str | None = None,
+    ) -> TLCJarManifestIdentity:
+        return TLCJarManifestIdentity(
+            jar_path=str(_absolute_lexical_path(jar)),
+            release_tag=release_tag,
+            short_revision=short_revision,
+            full_revision=full_revision,
+            reason_code=reason_code,
+        )
+
+    if not jar.is_file() or jar.is_symlink():
+        return invalid("tlc_jar_missing_or_symlinked")
+    try:
+        with zipfile.ZipFile(jar) as archive:
+            payload = archive.read("META-INF/MANIFEST.MF")
+    except (KeyError, OSError, zipfile.BadZipFile):
+        return invalid("tlc_jar_manifest_unreadable")
+    attributes = _jar_manifest_attributes(payload)
+    if attributes is None:
+        return invalid("tlc_jar_manifest_malformed")
+
+    raw_tags = attributes.get("x-git-tag", "")
+    release_tags = [
+        token
+        for token in (part.strip() for part in raw_tags.split(";"))
+        if _TLC_RELEASE_TAG_RE.fullmatch(token)
+    ]
+    release_tag = release_tags[0] if len(release_tags) == 1 else None
+    short_revision = attributes.get("x-git-shortrevision")
+    full_revision = attributes.get("x-git-revision")
+    if release_tag is None:
+        return invalid(
+            "tlc_jar_release_tag_missing_or_ambiguous",
+            short_revision=short_revision,
+            full_revision=full_revision,
+        )
+    if release_tag != TLC_RELEASE_TAG:
+        return invalid(
+            "tlc_jar_release_tag_mismatch",
+            release_tag=release_tag,
+            short_revision=short_revision,
+            full_revision=full_revision,
+        )
+    if (
+        short_revision is None
+        or _TLC_SHORT_REVISION_RE.fullmatch(short_revision) is None
+    ):
+        return invalid(
+            "tlc_jar_short_revision_invalid",
+            release_tag=release_tag,
+            short_revision=short_revision,
+            full_revision=full_revision,
+        )
+    if short_revision != TLC_REVISION:
+        return invalid(
+            "tlc_jar_short_revision_mismatch",
+            release_tag=release_tag,
+            short_revision=short_revision,
+            full_revision=full_revision,
+        )
+    if (
+        full_revision is None
+        or _TLC_FULL_REVISION_RE.fullmatch(full_revision) is None
+        or not full_revision.startswith(short_revision)
+    ):
+        return invalid(
+            "tlc_jar_full_revision_invalid",
+            release_tag=release_tag,
+            short_revision=short_revision,
+            full_revision=full_revision,
+        )
+    return TLCJarManifestIdentity(
+        jar_path=str(_absolute_lexical_path(jar)),
+        release_tag=release_tag,
+        short_revision=short_revision,
+        full_revision=full_revision,
+        valid=True,
+    )
 
 
 def content_sha256(path: Path) -> str:
@@ -882,15 +1026,15 @@ def read_apalache_version_banner(
         binary = which_executable("apalache")
     if not binary:
         return None
-    for args in (("version",), ("--version",), ("-V",)):
-        probe = _run_runtime_command(
-            [binary, *args],
-            timeout=timeout,
-            java_executable=java_executable,
-        )
-        if probe.usable:
-            return probe.output
-    return None
+    probe = _run_runtime_command(
+        [binary, "version"],
+        timeout=timeout,
+        java_executable=java_executable,
+    )
+    if not probe.usable:
+        return None
+    output = _ANSI_ESCAPE_RE.sub("", probe.output).strip()
+    return output if _APALACHE_VERSION_RE.fullmatch(output) else None
 
 
 def observed_version_matches_lock(banner: str | None, expected: str) -> bool:
@@ -981,36 +1125,36 @@ def probe_apalache_runtime(
 ) -> RuntimeCommandProbe:
     """Prove Apalache starts, exits cleanly, and reports the locked version."""
 
-    last_probe: RuntimeCommandProbe | None = None
-    for args in (("version",), ("--version",), ("-V",)):
-        probe = _run_runtime_command(
-            [executable, *args],
-            timeout=timeout,
-            java_executable=java_executable,
-        )
-        last_probe = probe
-        if not probe.usable:
-            continue
-        if expected_version is None or observed_version_matches_lock(
-            probe.output,
-            expected_version,
-        ):
-            return probe
-        last_probe = RuntimeCommandProbe(
+    probe = _run_runtime_command(
+        [executable, "version"],
+        timeout=timeout,
+        java_executable=java_executable,
+    )
+    if not probe.usable:
+        return probe
+    output = _ANSI_ESCAPE_RE.sub("", probe.output).strip()
+    match = _APALACHE_VERSION_RE.fullmatch(output)
+    if match is None:
+        return RuntimeCommandProbe(
             command=probe.command,
             returncode=probe.returncode,
-            output=probe.output,
+            output=output,
+            usable=False,
+            reason_code="runtime_version_unreadable",
+        )
+    if expected_version is not None and match.group("version") != expected_version:
+        return RuntimeCommandProbe(
+            command=probe.command,
+            returncode=probe.returncode,
+            output=output,
             usable=False,
             reason_code="runtime_version_mismatch",
         )
-    if last_probe is not None:
-        return last_probe
     return RuntimeCommandProbe(
-        command=(),
-        returncode=None,
-        output="",
-        usable=False,
-        reason_code="runtime_executable_missing",
+        command=probe.command,
+        returncode=probe.returncode,
+        output=output,
+        usable=True,
     )
 
 
@@ -1616,6 +1760,8 @@ def managed_tlc_identity(
         and not jar.is_symlink()
         and verify_sha256(jar, TLC_SHA256)
     )
+    jar_manifest_identity = read_tlc_jar_manifest_identity(jar)
+    jar_manifest_ok = bool(artifact_ok and jar_manifest_identity.valid)
     identities: dict[str, dict[str, Any]] = {}
     for name in (TLC_EXECUTABLE, "tlc2", "tla2tools"):
         body = _launcher_body(
@@ -1632,25 +1778,34 @@ def managed_tlc_identity(
     launchers_ok = all(
         bool(identity["structural_match"]) for identity in identities.values()
     )
-    expected_manifest = _manifest_payload(
-        tool_id="tlc",
-        version=TLC_VERSION,
-        artifact_path=jar,
-        artifact_sha256=TLC_SHA256,
-        payload_path=jar,
-        payload_sha256=TLC_SHA256,
-        java_executable=java_executable,
-        launcher_identities=identities,
-        release_tag=TLC_RELEASE_TAG,
-        revision=TLC_REVISION,
-    )
     manifest_path = root / "manifests" / "tlc.json"
-    manifest_ok = _read_exact_manifest(manifest_path, expected_manifest)
+    manifest_ok = False
+    if (
+        jar_manifest_ok
+        and jar_manifest_identity.release_tag is not None
+        and jar_manifest_identity.short_revision is not None
+    ):
+        expected_manifest = _manifest_payload(
+            tool_id="tlc",
+            version=TLC_VERSION,
+            artifact_path=jar,
+            artifact_sha256=TLC_SHA256,
+            payload_path=jar,
+            payload_sha256=TLC_SHA256,
+            java_executable=java_executable,
+            launcher_identities=identities,
+            release_tag=jar_manifest_identity.release_tag,
+            revision=jar_manifest_identity.short_revision,
+        )
+        manifest_ok = _read_exact_manifest(manifest_path, expected_manifest)
     return {
         "tool_id": "tlc",
         "version": TLC_VERSION,
-        "release_tag": TLC_RELEASE_TAG,
-        "revision": TLC_REVISION,
+        "release_tag": jar_manifest_identity.release_tag,
+        "revision": jar_manifest_identity.short_revision,
+        "full_revision": jar_manifest_identity.full_revision,
+        "jar_manifest_identity": jar_manifest_identity.to_dict(),
+        "jar_manifest_valid": jar_manifest_ok,
         "artifact_path": str(jar),
         "artifact_sha256": TLC_SHA256,
         "artifact_digest_verified": artifact_ok,
@@ -1665,6 +1820,7 @@ def managed_tlc_identity(
         "manifest_valid": manifest_ok,
         "usable": bool(
             artifact_ok
+            and jar_manifest_ok
             and java_present
             and launchers_ok
             and manifest_ok
@@ -1864,7 +2020,20 @@ def _stage_tlc_manifest(
     install_root: Path,
     jar_path: Path,
     java_executable: str | Path,
+    identity_jar_path: Path | None = None,
 ) -> tuple[Path, Path]:
+    jar_manifest_identity = read_tlc_jar_manifest_identity(
+        identity_jar_path if identity_jar_path is not None else jar_path
+    )
+    if (
+        not jar_manifest_identity.valid
+        or jar_manifest_identity.release_tag is None
+        or jar_manifest_identity.short_revision is None
+    ):
+        raise StateModelInstallerError(
+            "TLC JAR manifest does not bind the reviewed release tag and "
+            f"revision: {jar_manifest_identity.reason_code}"
+        )
     identities: dict[str, dict[str, Any]] = {}
     for name in (TLC_EXECUTABLE, "tlc2", "tla2tools"):
         body = _launcher_body(
@@ -1887,8 +2056,8 @@ def _stage_tlc_manifest(
         payload_sha256=TLC_SHA256,
         java_executable=java_executable,
         launcher_identities=identities,
-        release_tag=TLC_RELEASE_TAG,
-        revision=TLC_REVISION,
+        release_tag=jar_manifest_identity.release_tag,
+        revision=jar_manifest_identity.short_revision,
     )
     staged = staging_root / "tlc.json"
     _write_json_file(staged, payload)
@@ -2311,8 +2480,30 @@ def ensure_tlc(
         receipt.checksum_verified = True
         receipt.observed_sha256 = observed
         receipt.bindings["observed_sha256"] = observed
-        receipt.bindings["release_tag"] = TLC_RELEASE_TAG
-        receipt.bindings["revision"] = TLC_REVISION
+        jar_manifest_identity = read_tlc_jar_manifest_identity(staged_jar)
+        receipt.bindings[
+            "jar_manifest_identity"
+        ] = jar_manifest_identity.to_dict()
+        if (
+            not jar_manifest_identity.valid
+            or jar_manifest_identity.release_tag is None
+            or jar_manifest_identity.short_revision is None
+        ):
+            receipt.status = "failed"
+            receipt.phase = "artifact_identity"
+            receipt.reason_codes.append("jar_manifest_identity_failed")
+            if jar_manifest_identity.reason_code:
+                receipt.reason_codes.append(jar_manifest_identity.reason_code)
+            receipt.messages.append(
+                "TLC artifact digest matched, but its JAR manifest did not "
+                "reproduce the reviewed release tag and revision."
+            )
+            if strict:
+                raise StateModelInstallerError(receipt.messages[-1])
+            return receipt
+        receipt.bindings["release_tag"] = jar_manifest_identity.release_tag
+        receipt.bindings["revision"] = jar_manifest_identity.short_revision
+        receipt.bindings["full_revision"] = jar_manifest_identity.full_revision
 
         runtime_probe = probe_tlc_runtime(
             jar_path=staged_jar,
@@ -2367,6 +2558,7 @@ def ensure_tlc(
             install_root=root,
             jar_path=jar_path,
             java_executable=java_runtime.executable,
+            identity_jar_path=staged_jar,
         )
         def validate_publication() -> bool:
             identity = managed_tlc_identity(
@@ -3024,6 +3216,8 @@ def plugin_manifest() -> dict[str, Any]:
             "per_root_interprocess_publication_lock": True,
             "complete_launcher_bytes_validated": True,
             "payload_and_distribution_digests_validated": True,
+            "tlc_jar_manifest_release_identity_validated": True,
+            "apalache_canonical_version_subcommand_only": True,
             "require_java_false_live_mode_forbidden": True,
         },
     }
@@ -3056,6 +3250,7 @@ __all__ = [
     "InstallReceipt",
     "JavaRuntimeProbe",
     "RuntimeCommandProbe",
+    "TLCJarManifestIdentity",
     "expand_user_local_root",
     "detect_platform_key",
     "which_executable",
@@ -3065,6 +3260,7 @@ __all__ = [
     "probe_java_runtime",
     "java_is_available",
     "numeric_version",
+    "read_tlc_jar_manifest_identity",
     "resolve_lock_path",
     "load_lock_document",
     "pins_for_tool",
