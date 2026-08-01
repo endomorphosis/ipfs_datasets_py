@@ -118,8 +118,12 @@ SOUFFLE_BUILD_DEPENDENCIES: Final[Mapping[str, str]] = MappingProxyType(
     }
 )
 SOUFFLE_NATIVE_BUILD_SCHEMA: Final = "souffle-native-build-contract/v1"
+SOUFFLE_RELOCATION_BINDING_SCHEMA: Final = "souffle-relocation-binding/v1"
 SOUFFLE_BUILD_DEPENDENCY_IDENTITY_SCHEMA: Final = (
     "souffle-build-dependency-identity/v1"
+)
+SOUFFLE_LINUX_AARCH64_DEPENDENCY_PREFIX_SUFFIX: Final = Path(
+    "build-dependencies/souffle/ubuntu-noble-arm64/root"
 )
 SOUFFLE_SOURCE_ARCHIVE_MAX_BYTES: Final = 256 * 1024 * 1024
 SOUFFLE_SOURCE_TREE_MAX_BYTES: Final = 1024 * 1024 * 1024
@@ -327,6 +331,9 @@ class ShadowEngineIdentity:
     dependency_prefix: str = ""
     dependency_package_set_sha256: str = ""
     dependency_packages: tuple[tuple[str, str, str, str], ...] = ()
+    identity_manifest_sha256: str = ""
+    is_relocated_install: bool = False
+    relocation_binding_sha256: str = ""
 
     def __post_init__(self) -> None:
         if self.tool_id not in EXTERNAL_TOOLS:
@@ -356,6 +363,7 @@ class ShadowEngineIdentity:
                 self.deployment_lock_sha256,
                 self.pin_contract_sha256,
                 self.build_contract_sha256,
+                self.identity_manifest_sha256,
             )
             if not all(re.fullmatch(r"[0-9a-f]{64}", item) for item in required_digests):
                 raise AuthorizationInstallerError(
@@ -382,6 +390,12 @@ class ShadowEngineIdentity:
                 raise AuthorizationInstallerError(
                     "explicit Soufflé dependency prefix requires retained package "
                     "version and digest bindings"
+                )
+            if self.is_relocated_install and not re.fullmatch(
+                r"[0-9a-f]{64}", self.relocation_binding_sha256
+            ):
+                raise AuthorizationInstallerError(
+                    "relocated native Soufflé requires an exact relocation binding"
                 )
 
     def to_dict(self) -> dict[str, Any]:
@@ -410,15 +424,18 @@ class ShadowEngineIdentity:
             "dependency_prefix": self.dependency_prefix,
             "executable": self.executable,
             "identity_kind": self.identity_kind,
+            "identity_manifest_sha256": self.identity_manifest_sha256,
             "install_root": self.install_root,
             "is_hermetic_shadow": self.is_hermetic_shadow,
             "is_vendor_build": self.is_vendor_build,
+            "is_relocated_install": self.is_relocated_install,
             "license": self.license,
             "native_binary_format": self.native_binary_format,
             "native_machine": self.native_machine,
             "pin_contract_sha256": self.pin_contract_sha256,
             "platform_id": self.platform_id,
             "replaces_gap_id": self.replaces_gap_id,
+            "relocation_binding_sha256": self.relocation_binding_sha256,
             "role": self.role,
             "source": self.source,
             "source_archive_path": self.source_archive_path,
@@ -1767,7 +1784,11 @@ def _publish_staged_vendor_install(staging: Path, destination: Path) -> None:
             shutil.rmtree(backup, ignore_errors=True)
 
 
-def _probe_version(executable: Path) -> str:
+def _probe_version(
+    executable: Path,
+    *,
+    dependency_prefix: Path | None = None,
+) -> str:
     try:
         completed = subprocess.run(
             [str(executable), "--version"],
@@ -1775,12 +1796,336 @@ def _probe_version(executable: Path) -> str:
             text=True,
             timeout=5,
             check=False,
+            env=_dependency_prefix_environment(dependency_prefix),
         )
     except (OSError, subprocess.TimeoutExpired):
         return ""
     text = (completed.stdout or "") + "\n" + (completed.stderr or "")
     match = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?)", text)
     return match.group(1) if match else text.strip().splitlines()[0] if text.strip() else ""
+
+
+def _absolute_manifest_path(value: object) -> Path:
+    path = Path(str(value or ""))
+    if not path.is_absolute() or ".." in path.parts:
+        raise AuthorizationInstallerError(
+            "native Soufflé manifest path is not a normalized absolute path"
+        )
+    return path
+
+
+def _portable_prefix_entries(
+    entries: Mapping[str, object],
+    *,
+    path_key: str,
+) -> dict[str, dict[str, object]]:
+    portable: dict[str, dict[str, object]] = {}
+    for name, raw in entries.items():
+        if not isinstance(raw, Mapping):
+            raise AuthorizationInstallerError(
+                "native Soufflé dependency-prefix evidence is malformed"
+            )
+        portable[str(name)] = {
+            str(key): value for key, value in raw.items() if key != path_key
+        }
+    return portable
+
+
+def _relocated_vendor_souffle_identity(
+    *,
+    payload: Mapping[str, Any],
+    manifest_digest: str,
+    install_root: Path,
+    executable: Path,
+    version: str,
+    platform_id: str,
+    contract: Mapping[str, Any],
+    dependency_prefix: Path | str | None,
+) -> dict[str, Any]:
+    """Validate one explicit common-tree relocation without mutating provenance.
+
+    The original self-digested manifest remains byte-for-byte unchanged.  Only
+    the installer-owned relative layout may move:
+
+    ``provers/souffle-vendor`` and the deterministic sibling
+    ``provers/build-dependencies/souffle/ubuntu-noble-arm64`` tree.
+    """
+
+    if platform_id != "linux-aarch64" or dependency_prefix is None:
+        raise AuthorizationInstallerError(
+            "native Soufflé relocation requires an explicit linux-aarch64 "
+            "dependency prefix"
+        )
+    current_root = install_root.expanduser().resolve()
+    current_prefix = Path(dependency_prefix).expanduser().resolve()
+    expected_prefix = (
+        current_root.parent / SOUFFLE_LINUX_AARCH64_DEPENDENCY_PREFIX_SUFFIX
+    ).resolve()
+    if (
+        current_root.name != "souffle-vendor"
+        or current_prefix != expected_prefix
+    ):
+        raise AuthorizationInstallerError(
+            "native Soufflé relocation is outside the reviewed common-tree layout"
+        )
+
+    original_root = _absolute_manifest_path(payload.get("install_root"))
+    original_prefix = _absolute_manifest_path(payload.get("dependency_prefix"))
+    expected_original_prefix = (
+        original_root.parent
+        / SOUFFLE_LINUX_AARCH64_DEPENDENCY_PREFIX_SUFFIX
+    )
+    if (
+        original_root.name != "souffle-vendor"
+        or original_prefix != expected_original_prefix
+        or original_root == current_root
+    ):
+        raise AuthorizationInstallerError(
+            "native Soufflé provenance does not describe a relocatable common tree"
+        )
+
+    original_executable = executable_path(
+        original_root,
+        TOOL_SOUFFLE,
+        version,
+        vendor=True,
+    )
+    original_version_root = original_executable.parent.parent
+    original_archive = _source_archive_install_path(original_version_root, version)
+    current_archive = _source_archive_install_path(executable.parent.parent, version)
+    if (
+        _absolute_manifest_path(payload.get("executable"))
+        != original_executable
+        or _absolute_manifest_path(payload.get("source_archive_path"))
+        != original_archive
+        or executable
+        != executable_path(current_root, TOOL_SOUFFLE, version, vendor=True)
+        or not current_archive.is_file()
+        or current_archive.is_symlink()
+        or current_archive.resolve() != current_archive
+        or _sha256_file(current_archive)
+        != str(payload.get("source_archive_sha256") or "")
+    ):
+        raise AuthorizationInstallerError(
+            "native Soufflé relocated executable/source layout is invalid"
+        )
+
+    build_contract = payload.get("build_contract")
+    build_contract_sha256 = str(payload.get("build_contract_sha256") or "")
+    original_dependency_map = payload.get("build_dependency_identities")
+    if (
+        not isinstance(build_contract, Mapping)
+        or build_contract.get("schema_version") != SOUFFLE_NATIVE_BUILD_SCHEMA
+        or _canonical_json_sha256(build_contract) != build_contract_sha256
+        or not isinstance(original_dependency_map, Mapping)
+        or build_contract.get("build_dependency_identities")
+        != original_dependency_map
+        or build_contract.get("artifact_kind")
+        != "native_compiled_executable"
+        or build_contract.get("source_archive_sha256")
+        != payload.get("source_archive_sha256")
+        or build_contract.get("pin_contract_sha256")
+        != payload.get("pin_contract_sha256")
+    ):
+        raise AuthorizationInstallerError(
+            "native Soufflé provenance build contract is invalid"
+        )
+
+    original_identities = _dependency_identity_from_manifest(
+        original_dependency_map
+    )
+    required_dependency_names = set(SOUFFLE_BUILD_DEPENDENCIES) | {
+        "cxx_compiler",
+        "cmake_build_executor",
+    }
+    if {item.name for item in original_identities} != required_dependency_names:
+        raise AuthorizationInstallerError(
+            "native Soufflé provenance dependency set is incomplete"
+        )
+
+    rebound_identities: list[BuildDependencyIdentity] = []
+    for item in original_identities:
+        original_dependency_executable = _absolute_manifest_path(item.executable)
+        try:
+            relative = original_dependency_executable.relative_to(original_prefix)
+        except ValueError:
+            relative = None
+        if relative is not None:
+            if item.name != "mcpp" or relative != Path("usr/bin/mcpp"):
+                raise AuthorizationInstallerError(
+                    "native Soufflé relocation attempted an unreviewed dependency map"
+                )
+            rebound_executable = current_prefix / relative
+            probe_argv = list(item.probe_argv)
+            if (
+                not probe_argv
+                or _absolute_manifest_path(probe_argv[0])
+                != original_dependency_executable
+            ):
+                raise AuthorizationInstallerError(
+                    "native Soufflé relocated dependency probe is malformed"
+                )
+            probe_argv[0] = str(rebound_executable)
+            rebound = BuildDependencyIdentity(
+                name=item.name,
+                constraint=item.constraint,
+                version=item.version,
+                resolver_kind=item.resolver_kind,
+                executable=str(rebound_executable),
+                executable_sha256=item.executable_sha256,
+                probe_argv=tuple(probe_argv),
+                schema_version=item.schema_version,
+            )
+        else:
+            try:
+                original_dependency_executable.relative_to(original_root.parent)
+            except ValueError:
+                pass
+            else:
+                raise AuthorizationInstallerError(
+                    "native Soufflé relocation attempted an unreviewed common-tree path"
+                )
+            rebound = item
+        rebound_path = Path(rebound.executable)
+        if (
+            not rebound_path.is_file()
+            or _sha256_file(rebound_path) != rebound.executable_sha256
+        ):
+            raise AuthorizationInstallerError(
+                f"native Soufflé relocated build dependency changed: {item.name}"
+            )
+        rebound_identities.append(rebound)
+    rebound_identities_tuple = tuple(
+        sorted(rebound_identities, key=lambda item: item.name)
+    )
+
+    original_packages = payload.get("dependency_packages")
+    original_artifacts = build_contract.get("dependency_prefix_artifacts")
+    if (
+        not isinstance(original_packages, Mapping)
+        or not isinstance(original_artifacts, Mapping)
+        or _canonical_json_sha256(original_packages)
+        != str(payload.get("dependency_package_set_sha256") or "")
+        or build_contract.get("dependency_prefix") != str(original_prefix)
+        or build_contract.get("dependency_packages") != original_packages
+        or build_contract.get("dependency_package_set_sha256")
+        != payload.get("dependency_package_set_sha256")
+        or build_contract.get("package_metadata_tool")
+        != payload.get("package_metadata_tool")
+    ):
+        raise AuthorizationInstallerError(
+            "native Soufflé provenance package contract is invalid"
+        )
+
+    for raw in original_packages.values():
+        if not isinstance(raw, Mapping):
+            raise AuthorizationInstallerError(
+                "native Soufflé provenance package entry is malformed"
+            )
+        package_path = _absolute_manifest_path(raw.get("path"))
+        if package_path.parent != original_prefix.parent / "packages":
+            raise AuthorizationInstallerError(
+                "native Soufflé provenance package escaped the reviewed layout"
+            )
+    for raw in original_artifacts.values():
+        if not isinstance(raw, Mapping):
+            raise AuthorizationInstallerError(
+                "native Soufflé provenance prefix artifact is malformed"
+            )
+        artifact_path = _absolute_manifest_path(raw.get("resolved_path"))
+        try:
+            artifact_path.relative_to(original_prefix)
+        except ValueError as exc:
+            raise AuthorizationInstallerError(
+                "native Soufflé provenance prefix artifact escaped its prefix"
+            ) from exc
+
+    current_prefix_contract = _dependency_prefix_contract(
+        current_prefix,
+        platform_id=platform_id,
+    )
+    if (
+        _portable_prefix_entries(
+            original_packages,
+            path_key="path",
+        )
+        != _portable_prefix_entries(
+            current_prefix_contract["dependency_packages"],
+            path_key="path",
+        )
+        or _portable_prefix_entries(
+            original_artifacts,
+            path_key="resolved_path",
+        )
+        != _portable_prefix_entries(
+            current_prefix_contract["artifacts"],
+            path_key="resolved_path",
+        )
+        or payload.get("package_metadata_tool")
+        != current_prefix_contract["package_metadata_tool"]
+    ):
+        raise AuthorizationInstallerError(
+            "native Soufflé relocated package or prefix content changed"
+        )
+
+    current_packages = current_prefix_contract["dependency_packages"]
+    dependency_packages = tuple(
+        sorted(
+            (
+                str(name),
+                str(item.get("version") or ""),
+                str(item.get("architecture") or ""),
+                str(item.get("sha256") or ""),
+            )
+            for name, item in current_packages.items()
+            if isinstance(item, Mapping)
+        )
+    )
+    current_archive_sha256 = _sha256_file(current_archive)
+    native_binary_format, native_machine = _assert_native_binary_for_platform(
+        executable,
+        platform_id,
+    )
+    relocation_binding = {
+        "artifact_sha256": _sha256_file(executable),
+        "artifact_size_bytes": executable.stat().st_size,
+        "build_contract_sha256": build_contract_sha256,
+        "build_dependency_identities": _build_dependency_identity_map(
+            rebound_identities_tuple
+        ),
+        "dependency_package_set_sha256": current_prefix_contract[
+            "dependency_package_set_sha256"
+        ],
+        "dependency_prefix": str(current_prefix),
+        "deployment_lock_path": str(contract["deployment_lock_path"]),
+        "deployment_lock_sha256": str(contract["deployment_lock_sha256"]),
+        "executable": str(executable),
+        "identity_manifest_sha256": manifest_digest,
+        "install_root": str(current_root),
+        "native_binary_format": native_binary_format,
+        "native_machine": native_machine,
+        "pin_contract_sha256": str(contract["pin_contract_sha256"]),
+        "schema_version": SOUFFLE_RELOCATION_BINDING_SCHEMA,
+        "source_archive_path": str(current_archive),
+        "source_archive_sha256": current_archive_sha256,
+    }
+    return {
+        "build_contract_sha256": build_contract_sha256,
+        "build_dependency_identities": rebound_identities_tuple,
+        "dependency_package_set_sha256": current_prefix_contract[
+            "dependency_package_set_sha256"
+        ],
+        "dependency_packages": dependency_packages,
+        "dependency_prefix": str(current_prefix),
+        "deployment_lock_path": str(contract["deployment_lock_path"]),
+        "deployment_lock_sha256": str(contract["deployment_lock_sha256"]),
+        "is_relocated_install": True,
+        "native_binary_format": native_binary_format,
+        "native_machine": native_machine,
+        "pin_contract_sha256": str(contract["pin_contract_sha256"]),
+        "relocation_binding_sha256": _canonical_json_sha256(relocation_binding),
+        "source_archive_path": str(current_archive),
+    }
 
 
 def _identity_from_disk(
@@ -1791,15 +2136,20 @@ def _identity_from_disk(
     vendor: bool = False,
     repo_root: Path | str | None = None,
     lock_path: Path | str | None = None,
+    dependency_prefix: Path | str | None = None,
 ) -> ShadowEngineIdentity | None:
+    install_root = install_root.expanduser().resolve()
+    requested_dependency_prefix = dependency_prefix
     version = pin["version"]
     exe = executable_path(install_root, tool_id, version, vendor=vendor)
     manifest = identity_manifest_path(install_root, tool_id, version, vendor=vendor)
     if (
         not exe.is_file()
         or exe.is_symlink()
+        or exe.resolve() != exe
         or not manifest.is_file()
         or manifest.is_symlink()
+        or manifest.resolve() != manifest
     ):
         return None
     try:
@@ -1849,6 +2199,8 @@ def _identity_from_disk(
     dependency_prefix = ""
     dependency_package_set_sha256 = ""
     dependency_packages: tuple[tuple[str, str, str, str], ...] = ()
+    is_relocated_install = False
+    relocation_binding_sha256 = ""
 
     if vendor and tool_id == TOOL_SOUFFLE:
         try:
@@ -1856,6 +2208,10 @@ def _identity_from_disk(
                 repo_root=repo_root,
                 lock_path=lock_path,
             )
+            manifest_install_root = _absolute_manifest_path(
+                payload.get("install_root")
+            )
+            is_relocated_install = manifest_install_root != install_root
             if (
                 payload.get("schema_version") != VENDOR_INSTALL_RECEIPT_SCHEMA
                 or payload.get("interface") != VENDOR_INTERFACE
@@ -1867,13 +2223,90 @@ def _identity_from_disk(
                 or source_archive_sha256
                 != contract["source_archive_sha256"]
                 or source_archive_url != contract["source_archive_url"]
-                or payload.get("deployment_lock_sha256")
-                != contract["deployment_lock_sha256"]
+                or not re.fullmatch(
+                    r"[0-9a-f]{64}",
+                    str(payload.get("deployment_lock_sha256") or ""),
+                )
+                or (
+                    not is_relocated_install
+                    and payload.get("deployment_lock_sha256")
+                    != contract["deployment_lock_sha256"]
+                )
                 or payload.get("pin_contract_sha256")
                 != contract["pin_contract_sha256"]
                 or dict(build_deps) != contract["build_dependencies"]
             ):
                 return None
+
+            if is_relocated_install:
+                relocated = _relocated_vendor_souffle_identity(
+                    payload=payload,
+                    manifest_digest=manifest_digest,
+                    install_root=install_root,
+                    executable=exe,
+                    version=version,
+                    platform_id=platform_id,
+                    contract=contract,
+                    dependency_prefix=requested_dependency_prefix,
+                )
+                if (
+                    payload.get("artifact_size_bytes") != artifact_size_bytes
+                    or payload.get("native_binary_format")
+                    != relocated["native_binary_format"]
+                    or payload.get("native_machine")
+                    != relocated["native_machine"]
+                    or version
+                    not in _probe_version(
+                        exe,
+                        dependency_prefix=Path(
+                            relocated["dependency_prefix"]
+                        ),
+                    )
+                ):
+                    return None
+                return ShadowEngineIdentity(
+                    tool_id=tool_id,
+                    version=version,
+                    executable=str(exe),
+                    license=pin["license"],
+                    source=pin["source"],
+                    identity_kind=pin["identity_kind"],
+                    artifact_sha256=artifact_sha,
+                    install_root=str(install_root),
+                    is_hermetic_shadow=False,
+                    is_vendor_build=True,
+                    source_archive_sha256=source_archive_sha256,
+                    source_archive_url=source_archive_url,
+                    source_archive_path=relocated["source_archive_path"],
+                    platform_id=platform_id,
+                    build_dependencies=build_deps,
+                    build_dependency_identities=relocated[
+                        "build_dependency_identities"
+                    ],
+                    deployment_lock_path=relocated["deployment_lock_path"],
+                    deployment_lock_sha256=relocated[
+                        "deployment_lock_sha256"
+                    ],
+                    pin_contract_sha256=relocated["pin_contract_sha256"],
+                    build_contract_sha256=relocated[
+                        "build_contract_sha256"
+                    ],
+                    native_binary_format=relocated[
+                        "native_binary_format"
+                    ],
+                    native_machine=relocated["native_machine"],
+                    artifact_size_bytes=artifact_size_bytes,
+                    dependency_prefix=relocated["dependency_prefix"],
+                    dependency_package_set_sha256=relocated[
+                        "dependency_package_set_sha256"
+                    ],
+                    dependency_packages=relocated["dependency_packages"],
+                    identity_manifest_sha256=manifest_digest,
+                    is_relocated_install=True,
+                    relocation_binding_sha256=relocated[
+                        "relocation_binding_sha256"
+                    ],
+                )
 
             version_root = exe.parent.parent
             expected_archive = _source_archive_install_path(version_root, version)
@@ -1882,6 +2315,7 @@ def _identity_from_disk(
                 Path(source_archive_path) != expected_archive
                 or not expected_archive.is_file()
                 or expected_archive.is_symlink()
+                or expected_archive.resolve() != expected_archive
                 or _sha256_file(expected_archive) != source_archive_sha256
                 or Path(str(payload.get("executable") or "")) != exe
                 or Path(str(payload.get("install_root") or "")) != install_root
@@ -1922,10 +2356,22 @@ def _identity_from_disk(
                 != build_contract_sha256
                 or build_contract.get("build_dependency_identities")
                 != _build_dependency_identity_map(build_dependency_identities)
+                or build_contract.get("artifact_kind")
+                != "native_compiled_executable"
+                or build_contract.get("source_archive_sha256")
+                != source_archive_sha256
+                or build_contract.get("pin_contract_sha256")
+                != payload.get("pin_contract_sha256")
             ):
                 return None
 
             dependency_prefix = str(payload.get("dependency_prefix") or "")
+            if (
+                requested_dependency_prefix is not None
+                and Path(dependency_prefix).expanduser().resolve()
+                != Path(requested_dependency_prefix).expanduser().resolve()
+            ):
+                return None
             prefix_contract = _dependency_prefix_contract(
                 dependency_prefix or None,
                 platform_id=platform_id,
@@ -1973,7 +2419,15 @@ def _identity_from_disk(
                 payload.get("native_binary_format") != native_binary_format
                 or payload.get("native_machine") != native_machine
                 or payload.get("artifact_size_bytes") != artifact_size_bytes
-                or version not in _probe_version(exe)
+                or version
+                not in _probe_version(
+                    exe,
+                    dependency_prefix=(
+                        Path(dependency_prefix)
+                        if dependency_prefix
+                        else None
+                    ),
+                )
             ):
                 return None
 
@@ -2016,6 +2470,9 @@ def _identity_from_disk(
         dependency_prefix=dependency_prefix,
         dependency_package_set_sha256=dependency_package_set_sha256,
         dependency_packages=dependency_packages,
+        identity_manifest_sha256=manifest_digest,
+        is_relocated_install=is_relocated_install,
+        relocation_binding_sha256=relocation_binding_sha256,
     )
 
 
@@ -2226,6 +2683,7 @@ def materialize_vendor_souffle(
             vendor=True,
             repo_root=repo_root,
             lock_path=contract["deployment_lock_path"],
+            dependency_prefix=dependency_prefix,
         )
         if existing is not None:
             return existing
@@ -2597,6 +3055,7 @@ def materialize_vendor_souffle(
         vendor=True,
         repo_root=repo_root,
         lock_path=contract["deployment_lock_path"],
+        dependency_prefix=dependency_prefix,
     )
     if installed is None:
         raise AuthorizationInstallerError(
@@ -2919,6 +3378,7 @@ def _ensure_tool(
         vendor=is_vendor,
         repo_root=repo_root,
         lock_path=lock_path,
+        dependency_prefix=dependency_prefix,
     )
     if existing is not None and not force:
         if is_vendor and existing.is_hermetic_shadow:
@@ -3377,6 +3837,8 @@ def describe_authorization_installer() -> dict[str, Any]:
             "souffle_vendor_requires_native_compilation": True,
             "souffle_vendor_rejects_script_shims": True,
             "souffle_native_build_is_transactional": True,
+            "souffle_relocation_requires_explicit_known_layout": True,
+            "souffle_relocation_preserves_provenance_manifest": True,
             "never_mutate_system_package_manager": True,
             "secpal_linux_aarch64_is_narrow_platform_exception": True,
             "souffle_linux_aarch64_supported": True,
@@ -3418,6 +3880,8 @@ __all__ = [
     "SOUFFLE_SOURCE_ARCHIVE_URL",
     "SOUFFLE_BUILD_DEPENDENCIES",
     "SOUFFLE_NATIVE_BUILD_SCHEMA",
+    "SOUFFLE_RELOCATION_BINDING_SCHEMA",
+    "SOUFFLE_LINUX_AARCH64_DEPENDENCY_PREFIX_SUFFIX",
     "SOUFFLE_BUILD_DEPENDENCY_IDENTITY_SCHEMA",
     "ENV_FORCE_OUTCOME",
     "ENV_DISAGREE",

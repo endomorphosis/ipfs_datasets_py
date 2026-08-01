@@ -353,9 +353,12 @@ def _build_debian_package(
     return output
 
 
-def test_explicit_dependency_prefix_binds_retained_package_versions_and_hashes(
+def _dependency_prefix_fixture(
     tmp_path: Path,
-) -> None:
+    *,
+    mcpp_source: Path | None = None,
+    prefix: Path | None = None,
+) -> tuple[Path, dict[str, Path], dict[str, str]]:
     platform_id = installer._detect_platform()
     architecture = {
         "linux-aarch64": "arm64",
@@ -364,7 +367,7 @@ def test_explicit_dependency_prefix_binds_retained_package_versions_and_hashes(
     if architecture is None:
         pytest.skip("retained Debian dependency-prefix test requires Linux")
 
-    prefix = tmp_path / "ubuntu-platform" / "root"
+    prefix = prefix or (tmp_path / "ubuntu-platform" / "root")
     library_dir = prefix / "usr/lib/test-linux-gnu"
     pkg_config = library_dir / "pkgconfig"
     pkg_config.mkdir(parents=True)
@@ -383,7 +386,11 @@ def test_explicit_dependency_prefix_binds_retained_package_versions_and_hashes(
     (library_dir / "libsqlite3.so").write_bytes(b"sqlite-library")
     mcpp = prefix / "usr/bin/mcpp"
     mcpp.parent.mkdir(parents=True)
-    mcpp.write_bytes(b"native-mcpp-fixture")
+    if mcpp_source is None:
+        mcpp.write_bytes(b"native-mcpp-fixture")
+    else:
+        shutil.copy2(mcpp_source, mcpp)
+    mcpp.chmod(0o755)
 
     package_dir = prefix.parent / "packages"
     package_dir.mkdir()
@@ -405,6 +412,224 @@ def test_explicit_dependency_prefix_binds_retained_package_versions_and_hashes(
         )
         for package, version in versions.items()
     }
+    return prefix, package_paths, versions
+
+
+def _replace_path_prefix(value: Any, old: Path, new: Path) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _replace_path_prefix(item, old, new)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_replace_path_prefix(item, old, new) for item in value]
+    if isinstance(value, str):
+        return value.replace(str(old), str(new))
+    return value
+
+
+def _relocated_native_install_fixture(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[Path, Path, Path, Path, dict[str, str], bytes]:
+    if installer._detect_platform() != "linux-aarch64":
+        pytest.skip("reviewed relocation fixture currently targets linux-aarch64")
+
+    seed_root, _, seed_manifest, pin = _native_install_fixture(
+        tmp_path / "seed",
+        monkeypatch,
+    )
+    original_provers = (tmp_path / "original" / "provers").resolve()
+    original_root = original_provers / "souffle-vendor"
+    original_root.parent.mkdir(parents=True)
+    shutil.move(str(seed_root), str(original_root))
+    original_manifest = (
+        original_root
+        / "authorization-vendor"
+        / installer.TOOL_SOUFFLE
+        / pin["version"]
+        / "identity.json"
+    )
+    payload = json.loads(original_manifest.read_text(encoding="utf-8"))
+    payload = _replace_path_prefix(payload, seed_root, original_root)
+    executable = Path(payload["executable"])
+
+    original_prefix = (
+        original_provers
+        / installer.SOUFFLE_LINUX_AARCH64_DEPENDENCY_PREFIX_SUFFIX
+    )
+    _dependency_prefix_fixture(
+        tmp_path / "unused",
+        mcpp_source=executable,
+        prefix=original_prefix,
+    )
+    prefix_contract = installer._dependency_prefix_contract(
+        original_prefix,
+        platform_id="linux-aarch64",
+    )
+
+    dependencies = list(
+        installer._dependency_identity_from_manifest(
+            payload["build_dependency_identities"]
+        )
+    )
+    mcpp_path = original_prefix / "usr/bin/mcpp"
+    dependencies = [
+        (
+            installer.BuildDependencyIdentity(
+                name=item.name,
+                constraint=item.constraint,
+                version=item.version,
+                resolver_kind=item.resolver_kind,
+                executable=str(mcpp_path),
+                executable_sha256=_sha256(mcpp_path),
+                probe_argv=(str(mcpp_path), "--version"),
+                schema_version=item.schema_version,
+            )
+            if item.name == "mcpp"
+            else item
+        )
+        for item in dependencies
+    ]
+    dependency_map = installer._build_dependency_identity_map(dependencies)
+    payload["build_dependency_identities"] = dependency_map
+    payload["dependency_prefix"] = str(original_prefix)
+    payload["dependency_packages"] = prefix_contract["dependency_packages"]
+    payload["dependency_package_set_sha256"] = prefix_contract[
+        "dependency_package_set_sha256"
+    ]
+    payload["package_metadata_tool"] = prefix_contract[
+        "package_metadata_tool"
+    ]
+    build_contract = payload["build_contract"]
+    build_contract["build_dependency_identities"] = dependency_map
+    build_contract["dependency_prefix"] = str(original_prefix)
+    build_contract["dependency_prefix_artifacts"] = prefix_contract["artifacts"]
+    build_contract["dependency_packages"] = prefix_contract[
+        "dependency_packages"
+    ]
+    build_contract["dependency_package_set_sha256"] = prefix_contract[
+        "dependency_package_set_sha256"
+    ]
+    build_contract["package_metadata_tool"] = prefix_contract[
+        "package_metadata_tool"
+    ]
+    payload["build_contract_sha256"] = installer._canonical_json_sha256(
+        build_contract
+    )
+    _rewrite_manifest(original_manifest, payload)
+    original_manifest_bytes = original_manifest.read_bytes()
+
+    relocated_provers = (
+        tmp_path / "immutable" / "deployment-test" / "provers"
+    ).resolve()
+    shutil.copytree(original_provers, relocated_provers, symlinks=True)
+    relocated_root = relocated_provers / "souffle-vendor"
+    relocated_prefix = (
+        relocated_provers
+        / installer.SOUFFLE_LINUX_AARCH64_DEPENDENCY_PREFIX_SUFFIX
+    )
+    relocated_manifest = (
+        relocated_root
+        / "authorization-vendor"
+        / installer.TOOL_SOUFFLE
+        / pin["version"]
+        / "identity.json"
+    )
+    assert relocated_manifest.read_bytes() == original_manifest_bytes
+    assert seed_manifest != relocated_manifest
+    return (
+        relocated_root,
+        relocated_prefix,
+        relocated_manifest,
+        original_prefix,
+        pin,
+        original_manifest_bytes,
+    )
+
+
+def test_native_vendor_identity_rebinds_reviewed_common_tree_relocation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (
+        relocated_root,
+        relocated_prefix,
+        relocated_manifest,
+        original_prefix,
+        pin,
+        original_manifest_bytes,
+    ) = _relocated_native_install_fixture(tmp_path, monkeypatch)
+
+    assert (
+        installer._identity_from_disk(
+            installer.TOOL_SOUFFLE,
+            relocated_root,
+            pin,
+            vendor=True,
+        )
+        is None
+    )
+    identity = installer._identity_from_disk(
+        installer.TOOL_SOUFFLE,
+        relocated_root,
+        pin,
+        vendor=True,
+        dependency_prefix=relocated_prefix,
+    )
+
+    assert identity is not None
+    assert identity.is_relocated_install is True
+    assert identity.identity_manifest_sha256
+    assert identity.relocation_binding_sha256
+    assert identity.install_root == str(relocated_root)
+    assert identity.dependency_prefix == str(relocated_prefix)
+    assert identity.source_archive_path.startswith(str(relocated_root))
+    assert identity.dependency_package_set_sha256
+    assert Path(identity.executable).is_file()
+    mcpp = next(
+        item
+        for item in identity.build_dependency_identities
+        if item.name == "mcpp"
+    )
+    assert mcpp.executable == str(relocated_prefix / "usr/bin/mcpp")
+    assert str(original_prefix) not in mcpp.executable
+    assert relocated_manifest.read_bytes() == original_manifest_bytes
+
+    repeated = installer._identity_from_disk(
+        installer.TOOL_SOUFFLE,
+        relocated_root,
+        pin,
+        vendor=True,
+        dependency_prefix=relocated_prefix,
+    )
+    assert repeated is not None
+    assert repeated.relocation_binding_sha256 == identity.relocation_binding_sha256
+
+    package = next((relocated_prefix.parent / "packages").glob("mcpp_*.deb"))
+    package.write_bytes(package.read_bytes() + b"tampered")
+    assert (
+        installer._identity_from_disk(
+            installer.TOOL_SOUFFLE,
+            relocated_root,
+            pin,
+            vendor=True,
+            dependency_prefix=relocated_prefix,
+        )
+        is None
+    )
+    assert relocated_manifest.read_bytes() == original_manifest_bytes
+
+
+def test_explicit_dependency_prefix_binds_retained_package_versions_and_hashes(
+    tmp_path: Path,
+) -> None:
+    platform_id = installer._detect_platform()
+    prefix, package_paths, versions = _dependency_prefix_fixture(tmp_path)
+    package_dir = prefix.parent / "packages"
+    architecture = (
+        "arm64" if platform_id == "linux-aarch64" else "amd64"
+    )
 
     first = installer._dependency_prefix_contract(
         prefix,
