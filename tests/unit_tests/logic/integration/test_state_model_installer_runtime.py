@@ -7,6 +7,7 @@ import subprocess
 import sys
 import threading
 import time
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -49,6 +50,33 @@ def _fake_java(
             f"exit {runtime_exit}"
         ),
     )
+
+
+def _write_tlc_jar(
+    path: Path,
+    *,
+    release_tag: str = state_model.TLC_RELEASE_TAG,
+    short_revision: str = state_model.TLC_REVISION,
+    full_revision: str | None = None,
+) -> Path:
+    """Write the reviewed TLC manifest fields into a compact JAR fixture."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    resolved_full_revision = full_revision or (
+        short_revision + "0" * (40 - len(short_revision))
+    )
+    manifest = (
+        "Manifest-Version: 1.0\r\n"
+        "Implementation-Title: TLA+ Tools\r\n"
+        "Main-class: tlc2.TLC\r\n"
+        f"X-Git-Tag: build-fixture;{release_tag}\r\n"
+        f"X-Git-Revision: {resolved_full_revision}\r\n"
+        f"X-Git-ShortRevision: {short_revision}\r\n"
+        "\r\n"
+    )
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("META-INF/MANIFEST.MF", manifest)
+    return path
 
 
 def test_java_major_version_handles_legacy_and_modern_banners() -> None:
@@ -166,6 +194,57 @@ def test_apalache_probe_rejects_nonzero_version_banner(
     assert probe.usable is False
     assert probe.returncode == 1
     assert probe.reason_code == "runtime_probe_nonzero_exit"
+    assert probe.command == (str(apalache), "version")
+
+
+def test_apalache_probe_does_not_fall_back_to_noncanonical_flags(
+    tmp_path: Path,
+) -> None:
+    java17 = _fake_java(tmp_path / "java17" / "java", "17.0.12")
+    apalache = _write_executable(
+        tmp_path / "apalache-mc",
+        (
+            'if [ "${1:-}" = "version" ]; then exit 1; fi\n'
+            'echo "0.58.3"'
+        ),
+    )
+
+    probe = state_model.probe_apalache_runtime(
+        str(apalache),
+        java_executable=java17,
+    )
+
+    assert probe.command == (str(apalache), "version")
+    assert probe.usable is False
+    assert probe.reason_code == "runtime_probe_nonzero_exit"
+
+
+def test_apalache_probe_requires_exact_canonical_version_output(
+    tmp_path: Path,
+) -> None:
+    java17 = _fake_java(tmp_path / "java17" / "java", "17.0.12")
+    prefixed = _write_executable(
+        tmp_path / "prefixed" / "apalache-mc",
+        'echo "Apalache 0.58.3"',
+    )
+    canonical = _write_executable(
+        tmp_path / "canonical" / "apalache-mc",
+        'echo "0.58.3"',
+    )
+
+    rejected = state_model.probe_apalache_runtime(
+        str(prefixed),
+        java_executable=java17,
+    )
+    accepted = state_model.probe_apalache_runtime(
+        str(canonical),
+        java_executable=java17,
+    )
+
+    assert rejected.usable is False
+    assert rejected.reason_code == "runtime_version_unreadable"
+    assert accepted.usable is True
+    assert accepted.output == state_model.APALACHE_VERSION
 
 
 def test_tlc_version_probe_rejects_nonzero_banner(
@@ -206,6 +285,56 @@ def test_tlc_probe_accepts_real_help_semantics_with_exit_one(
     assert probe.usable is True
     assert probe.returncode == 1
     assert "TLC - provides model checking" in probe.output
+
+
+def test_tlc_jar_manifest_identity_reads_reviewed_release_bindings(
+    tmp_path: Path,
+) -> None:
+    jar = _write_tlc_jar(tmp_path / state_model.TLC_JAR_NAME)
+
+    identity = state_model.read_tlc_jar_manifest_identity(jar)
+
+    assert identity.valid is True
+    assert identity.release_tag == state_model.TLC_RELEASE_TAG
+    assert identity.short_revision == state_model.TLC_REVISION
+    assert identity.full_revision is not None
+    assert identity.full_revision.startswith(state_model.TLC_REVISION)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "reason_code"),
+    [
+        (
+            {"release_tag": "v9.9.9"},
+            "tlc_jar_release_tag_mismatch",
+        ),
+        (
+            {"short_revision": "deadbee"},
+            "tlc_jar_short_revision_mismatch",
+        ),
+        (
+            {
+                "short_revision": state_model.TLC_REVISION,
+                "full_revision": "f" * 40,
+            },
+            "tlc_jar_full_revision_invalid",
+        ),
+    ],
+)
+def test_tlc_jar_manifest_identity_rejects_unreviewed_bindings(
+    overrides: dict[str, str],
+    reason_code: str,
+    tmp_path: Path,
+) -> None:
+    jar = _write_tlc_jar(
+        tmp_path / state_model.TLC_JAR_NAME,
+        **overrides,
+    )
+
+    identity = state_model.read_tlc_jar_manifest_identity(jar)
+
+    assert identity.valid is False
+    assert identity.reason_code == reason_code
 
 
 def test_blank_tlc_lock_digest_fails_closed() -> None:
@@ -310,6 +439,51 @@ def test_tlc_rejects_downloader_that_lies_about_observed_digest(
         / state_model.TLC_JAR_NAME
     ).exists()
     assert not (install_root / "bin" / state_model.TLC_EXECUTABLE).exists()
+
+
+def test_tlc_rejects_digest_accepted_jar_with_wrong_manifest_identity(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    java17 = _fake_java(
+        tmp_path / "java17" / "java",
+        "17.0.12",
+        runtime_exit=1,
+        runtime_output=TLC_HELP_OUTPUT,
+    )
+    install_root = tmp_path / "install"
+
+    def fake_download(url: str, destination: Path, **kwargs: object):
+        _write_tlc_jar(destination, release_tag="v9.9.9")
+        return True, state_model.TLC_SHA256
+
+    monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
+    monkeypatch.setattr(
+        state_model,
+        "authorize_plugin_install",
+        lambda *args, **kwargs: None,
+    )
+
+    receipt = state_model.ensure_tlc(
+        yes=True,
+        strict=False,
+        force=True,
+        install_root=install_root,
+        java_executable=java17,
+        test_mode=True,
+    )
+
+    assert receipt.status == "failed"
+    assert receipt.phase == "artifact_identity"
+    assert "jar_manifest_identity_failed" in receipt.reason_codes
+    assert "tlc_jar_release_tag_mismatch" in receipt.reason_codes
+    assert not (
+        install_root
+        / "tlc"
+        / state_model.TLC_VERSION
+        / state_model.TLC_JAR_NAME
+    ).exists()
 
 
 def test_download_artifact_uses_unique_partial_paths_and_cleans_them(
@@ -515,8 +689,7 @@ def test_tlc_post_install_probe_fails_before_launcher_publication(
     previous_launcher = old_launcher.read_bytes()
 
     def fake_download(url: str, destination: Path, **kwargs: object):
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(b"not-a-real-jar")
+        _write_tlc_jar(destination)
         return True, state_model.TLC_SHA256
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
@@ -705,8 +878,7 @@ def test_successful_tlc_install_accepts_real_help_exit_and_binds_java(
     install_root = tmp_path / "install"
 
     def fake_download(url: str, destination: Path, **kwargs: object):
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(b"reviewed-tlc-fixture")
+        _write_tlc_jar(destination)
         return True, state_model.TLC_SHA256
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
@@ -779,8 +951,7 @@ def test_symlinked_managed_tlc_jar_is_replaced_before_success(
 
     def fake_download(url: str, destination: Path, **kwargs: object):
         downloads.append(destination)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(b"new-reviewed-fixture")
+        _write_tlc_jar(destination)
         return True, state_model.TLC_SHA256
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
@@ -810,7 +981,7 @@ def test_symlinked_managed_tlc_jar_is_replaced_before_success(
     assert receipt.status == "installed"
     assert receipt.installed is True
     assert not managed_jar.is_symlink()
-    assert managed_jar.read_bytes() == b"new-reviewed-fixture"
+    assert managed_jar.read_bytes().startswith(b"PK")
     identity = state_model.managed_tlc_identity(
         install_root,
         java_executable=java17,
@@ -849,8 +1020,7 @@ def test_tlc_post_publication_identity_failure_rolls_back_complete_bundle(
         path.write_bytes(payload)
 
     def fake_download(url: str, destination: Path, **kwargs: object):
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(b"new-jar")
+        _write_tlc_jar(destination)
         return True, state_model.TLC_SHA256
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
@@ -902,7 +1072,7 @@ def test_legacy_tlc_launcher_requires_and_performs_atomic_rebind(
         / state_model.TLC_JAR_NAME
     )
     jar.parent.mkdir(parents=True)
-    jar.write_bytes(b"reviewed-fixture")
+    _write_tlc_jar(jar)
     launcher = _write_executable(
         install_root / "bin" / state_model.TLC_EXECUTABLE,
         f'exec java -cp "{jar}" tlc2.TLC "$@"',
@@ -953,7 +1123,7 @@ def test_strict_false_preserves_runnable_nonlocked_existing_tools(
     )
     _write_executable(
         external / state_model.APALACHE_EXECUTABLE,
-        'echo "Apalache 9.9.9"',
+        'echo "9.9.9"',
     )
     monkeypatch.setenv("PATH", f"{external}:/usr/bin:/bin")
 
@@ -1000,7 +1170,7 @@ def test_apalache_post_install_probe_fails_before_launcher_publication(
     def fake_extract(archive: Path, destination: Path) -> None:
         _write_executable(
             destination / "apalache-0.58.3" / "bin" / "apalache-mc",
-            'echo "Apalache 0.58.3" >&2\nexit 1',
+            'echo "0.58.3" >&2\nexit 1',
         )
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
@@ -1048,7 +1218,7 @@ def test_apalache_publication_failure_restores_previous_install(
     def fake_extract(archive: Path, destination: Path) -> None:
         _write_executable(
             destination / "apalache-0.58.3" / "bin" / "apalache-mc",
-            'echo "Apalache 0.58.3"',
+            'echo "0.58.3"',
         )
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
@@ -1095,7 +1265,7 @@ def test_successful_apalache_install_binds_selected_java(
     def fake_extract(archive: Path, destination: Path) -> None:
         _write_executable(
             destination / "apalache-0.58.3" / "bin" / "apalache-mc",
-            'echo "Apalache 0.58.3"',
+            'echo "0.58.3"',
         )
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
@@ -1179,12 +1349,12 @@ def test_symlinked_apalache_archive_or_payload_is_replaced_before_success(
         external_archive.parent.mkdir(parents=True)
         external_archive.write_bytes(b"external-archive")
         archive.symlink_to(external_archive)
-        _write_executable(payload, 'echo "Apalache 0.58.3"')
+        _write_executable(payload, 'echo "0.58.3"')
     else:
         archive.write_bytes(b"reviewed-archive")
         external_payload = _write_executable(
             tmp_path / "external" / state_model.APALACHE_EXECUTABLE,
-            'echo "Apalache 0.58.3"',
+            'echo "0.58.3"',
         )
         payload.symlink_to(external_payload)
     downloads: list[Path] = []
@@ -1201,7 +1371,7 @@ def test_symlinked_apalache_archive_or_payload_is_replaced_before_success(
             / f"apalache-{state_model.APALACHE_VERSION}"
             / "bin"
             / state_model.APALACHE_EXECUTABLE,
-            'echo "Apalache 0.58.3"',
+            'echo "0.58.3"',
         )
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
@@ -1257,7 +1427,7 @@ def test_apalache_publication_failure_restores_broken_distribution_symlink(
             / f"apalache-{state_model.APALACHE_VERSION}"
             / "bin"
             / state_model.APALACHE_EXECUTABLE,
-            'echo "Apalache 0.58.3"',
+            'echo "0.58.3"',
         )
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
