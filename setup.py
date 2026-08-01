@@ -254,8 +254,16 @@ setup(
         "datasets>=4.0.0,<5.0.0",
         "huggingface-hub>=0.34.0,<1.0.0",
         "jsonpatch>=1.33",
-        "jsonschema>=4.0.0",
+        "jsonschema>=4.0.0,<5.0.0",
         "cffi>=1.16.0",
+
+        # Formal logic and theorem-prover Python bindings. ProveKit itself is
+        # an operator-provided, content-addressed CLI binary rather than a
+        # Python distribution.
+        "z3-solver>=4.12.0,<5.0.0",
+        "cvc5==1.3.3",
+        "pysmt>=0.9.5,<1.0.0",
+        "beartype>=0.15.0,<1.0.0",
 
         # IPLD components (always available)
         "libipld>=3.3.2",
@@ -342,6 +350,7 @@ setup(
             'cvc5==1.3.3',
             'pysmt>=0.9.5,<1.0.0',
             'beartype>=0.15.0,<1.0.0',
+            'jsonschema>=4.0.0,<5.0.0',
             'symbolicai>=1.14.0,<2.0.0',
         ],
         # API server extras for the logic module (FastAPI + uvicorn for api_server.py)

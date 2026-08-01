@@ -15,8 +15,9 @@ pip install -e '.[theorem-provers]'
 pip install -r requirements-theorem-provers.txt
 ```
 
-This extra installs `z3-solver`, `cvc5`, and `symbolicai` (imported as
-`symai`). It does not install native solver executables during `pip install`.
+This extra installs `z3-solver`, `cvc5`, PySMT, beartype, JSON Schema, and
+`symbolicai` (imported as `symai`). It does not install native solver
+executables during `pip install`.
 
 ## Native Solver Behavior
 

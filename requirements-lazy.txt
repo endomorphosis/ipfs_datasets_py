@@ -4,10 +4,14 @@
 # file for hermetic images or offline environments that pre-provision every
 # dependency exposed by the shared dependency proxy.
 
-# Solver bindings exposed through both the shared dependency proxy and the
-# theorem-prover bridge lazy loader.
+# Formal-logic bindings exposed through both the shared dependency proxy and
+# the theorem-prover bridge lazy loader. ProveKit remains an
+# operator-provided, content-addressed CLI binary.
 z3-solver>=4.12.0,<5.0.0
 cvc5==1.3.3
+pysmt>=0.9.5,<1.0.0
+beartype>=0.15.0,<1.0.0
+jsonschema>=4.0.0,<5.0.0
 
 chardet>=5.0.0,<6.0.0
 llama-cpp-python
