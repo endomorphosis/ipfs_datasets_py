@@ -1250,7 +1250,7 @@ Program invariants:
 
 ## PATLAW-094 Produce reproducible prior-art plans and claim charts
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
