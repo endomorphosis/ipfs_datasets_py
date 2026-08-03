@@ -1484,7 +1484,7 @@ Program invariants:
 
 ## PATLAW-121 Bridge USPTO documents to the specialized PDF/OCR stack
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
