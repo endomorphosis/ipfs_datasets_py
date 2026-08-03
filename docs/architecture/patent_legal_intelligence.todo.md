@@ -875,7 +875,7 @@ Program invariants:
 
 ## PATLAW-060 Register processors and expose one Python/CLI API
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
