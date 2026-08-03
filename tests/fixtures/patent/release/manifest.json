@@ -1,0 +1,41 @@
+{
+  "dataset_id": "JusticeDAO/patent-legal-public",
+  "files": [
+    {
+      "byte_length": 75,
+      "path": "manifests/release-summary.json",
+      "sha256": "6cbb318be637257ccec7adbcbd89c2113935284ea283b8f5d002b2ea88990e8d"
+    },
+    {
+      "byte_length": 56,
+      "path": "data/usc/part-000000.parquet",
+      "sha256": "81deaffdddff9f1db6369b37cce11920b8571fa1c199378a1255799f93cb40d0"
+    },
+    {
+      "byte_length": 48,
+      "path": "data/claims/part-000000.parquet",
+      "sha256": "c58058a9b67460bc8d6dfe204c498474a01a34915c1be96bbe171647c79e8b26"
+    },
+    {
+      "byte_length": 68,
+      "path": "policy-admission.json",
+      "sha256": "0ae87e25e3b338475345f22f81538446bb079c799426d2e605bba59e92ad77ec"
+    }
+  ],
+  "goal_id": "PATLAW-G100",
+  "payload_recipe": {
+    "data/claims/part-000000.parquet": "parquet_claims_v1",
+    "data/usc/part-000000.parquet": "parquet_usc_v1",
+    "manifests/release-summary.json": "summary_v1",
+    "policy-admission.json": "policy_v1"
+  },
+  "profile_id": "patent-legal",
+  "program_id": "patent-legal-intelligence",
+  "publication_status": "local_only",
+  "release_id": "patent-public-fixture-v1",
+  "release_sha256": "85505c1dce6c28b808250b6d754720658046bba02ff19faa8b3966f3e913aea4",
+  "remote_writes": false,
+  "schema_version": "generic-local-release-manifest/v1",
+  "upload_path": null,
+  "uses_hf_api_upload_file": false
+}
