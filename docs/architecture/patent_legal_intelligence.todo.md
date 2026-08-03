@@ -699,7 +699,7 @@ Program invariants:
 
 ## PATLAW-042 Implement fail-closed submission compliance analysis
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
