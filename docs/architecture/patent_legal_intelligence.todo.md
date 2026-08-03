@@ -1275,7 +1275,7 @@ Program invariants:
 
 ## PATLAW-095 Bind prior-art and current-rule review to filing preflight
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
