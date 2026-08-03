@@ -174,7 +174,7 @@ Program invariants:
 
 ## PATLAW-008 Prove the Phase 0 processor foundation end to end
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
