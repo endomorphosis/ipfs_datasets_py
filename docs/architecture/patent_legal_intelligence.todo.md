@@ -1200,7 +1200,7 @@ Program invariants:
 
 ## PATLAW-092 Build fielded BM25, pinned vector, and graph-fusion indexes
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
