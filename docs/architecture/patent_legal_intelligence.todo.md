@@ -750,7 +750,7 @@ Program invariants:
 
 ## PATLAW-044 Calculate review-only response-date candidates
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
