@@ -1025,7 +1025,7 @@ Program invariants:
 
 ## PATLAW-073 Add operator observability, stall detection, and recovery runbook
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
