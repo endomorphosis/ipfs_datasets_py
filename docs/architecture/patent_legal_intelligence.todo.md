@@ -1100,7 +1100,7 @@ Program invariants:
 
 ## PATLAW-019 Repair canonical public-patent imports and legacy compatibility
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
