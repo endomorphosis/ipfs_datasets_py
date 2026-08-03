@@ -1,0 +1,9 @@
+{
+  "discovery": [],
+  "edges": [],
+  "fixture_id": "fr-missing-discovery",
+  "govinfo_packages": [],
+  "notes": "Discovery deliberately omitted for unknown-status tests.",
+  "records": [],
+  "schema_version": "federal-register-change-fixture-v1"
+}
