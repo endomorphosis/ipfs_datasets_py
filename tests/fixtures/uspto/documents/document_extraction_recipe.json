@@ -1,0 +1,88 @@
+{
+  "schema_version": "uspto.document-extraction-recipe.v1",
+  "notes": "Compact recipes for PATLAW-031. Prefer generators over bulk golden dumps.",
+  "cases": [
+    {
+      "id": "native_pdf_metadata",
+      "media_family": "pdf",
+      "generator": "build_native_pdf_with_metadata",
+      "classification": "public_user",
+      "expect": {
+        "disposition_in": ["extracted", "review"],
+        "has_spans": true,
+        "has_page_coverage": true,
+        "has_render_digest": true,
+        "min_pages": 1
+      }
+    },
+    {
+      "id": "scanned_ocr_injection",
+      "media_family": "pdf",
+      "generator": "build_scanned_image_only_pdf",
+      "classification": "public_user",
+      "ocr_required": true,
+      "expect": {
+        "disposition": "review",
+        "has_ocr_origin_when_injected": true
+      }
+    },
+    {
+      "id": "docx_structure",
+      "media_family": "docx",
+      "generator": "build_docx_application",
+      "classification": "public_user",
+      "expect": {
+        "has_paragraph_layout": true,
+        "has_table_layout": true,
+        "has_filing_metadata": true
+      }
+    },
+    {
+      "id": "docx_pdf_compare",
+      "media_family": "docx",
+      "generator": "build_docx_application",
+      "compare_generator": "build_native_pdf_with_metadata",
+      "classification": "public_user",
+      "expect": {
+        "has_differences": true,
+        "review_required": true
+      }
+    },
+    {
+      "id": "password_pdf",
+      "media_family": "pdf",
+      "generator": "build_password_pdf",
+      "expect": {
+        "disposition": "rejected",
+        "reason_code": "password_protected"
+      }
+    },
+    {
+      "id": "corrupt_pdf",
+      "media_family": "pdf",
+      "generator": "build_corrupt_pdf",
+      "expect": {
+        "disposition": "rejected",
+        "reason_code": "corrupt_document"
+      }
+    },
+    {
+      "id": "oversize",
+      "media_family": "unknown",
+      "generator": "build_oversize_bytes",
+      "expect": {
+        "disposition": "rejected",
+        "reason_code": "oversize_document"
+      }
+    },
+    {
+      "id": "archive_inventory",
+      "media_family": "archive",
+      "generator": "build_plain_archive",
+      "expect": {
+        "disposition": "review",
+        "reason_code": "archive_bounded"
+      }
+    }
+  ]
+}
