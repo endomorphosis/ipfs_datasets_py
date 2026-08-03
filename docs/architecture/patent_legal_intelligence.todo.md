@@ -1050,7 +1050,7 @@ Program invariants:
 
 ## PATLAW-074 Run the fresh current-tree completion and release gate
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
