@@ -1534,7 +1534,7 @@ Program invariants:
 
 ## PATLAW-123 Make gold-corpus metrics executable and receipt-bound
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
