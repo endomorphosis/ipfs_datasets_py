@@ -1,0 +1,87 @@
+{
+  "schema_version": "uspto.office-action-recipe.v1",
+  "notes": "Compact recipes for PATLAW-032. Prefer generators over bulk golden dumps.",
+  "cases": [
+    {
+      "id": "non_final_112a",
+      "generator": "build_non_final_office_action_text",
+      "classification": "public_user",
+      "expect": {
+        "action_kind": "non_final_rejection",
+        "has_sections": true,
+        "has_rejections": true,
+        "has_claim_ranges": true,
+        "has_citations": true,
+        "has_form_paragraphs": true,
+        "has_response_instructions": true,
+        "every_candidate_has_span": true,
+        "requirements_from_verified_only": true
+      }
+    },
+    {
+      "id": "final_103",
+      "generator": "build_final_office_action_text",
+      "classification": "public_user",
+      "expect": {
+        "action_kind": "final_rejection",
+        "has_rejections": true,
+        "multi_segment_claim_range": true
+      }
+    },
+    {
+      "id": "rescinded_reissued",
+      "generator": "build_rescinded_reissued_pair",
+      "classification": "public_user",
+      "expect": {
+        "lifecycle_statuses": ["rescinded", "active"],
+        "rescinded_requirements_marked_inactive": true
+      }
+    },
+    {
+      "id": "malformed",
+      "generator": "build_malformed_office_action_text",
+      "classification": "public_user",
+      "expect": {
+        "disposition_in": ["malformed", "review"],
+        "represented": true
+      }
+    },
+    {
+      "id": "empty",
+      "generator": "build_empty_office_action_text",
+      "classification": "public_user",
+      "expect": {
+        "disposition": "malformed",
+        "reason_code": "empty_text"
+      }
+    },
+    {
+      "id": "ambiguous_claims",
+      "generator": "build_ambiguous_claim_range_text",
+      "classification": "public_user",
+      "expect": {
+        "claim_range_ambiguity_retained": true,
+        "open_ended_present": true,
+        "multi_segment_present": true
+      }
+    },
+    {
+      "id": "model_candidate_gate",
+      "generator": "build_non_final_office_action_text",
+      "classification": "public_user",
+      "model_candidate": true,
+      "expect": {
+        "model_never_verified_without_receipt": true
+      }
+    },
+    {
+      "id": "notice",
+      "generator": "build_notice_text",
+      "classification": "public_user",
+      "expect": {
+        "has_response_instructions": true,
+        "has_citations": true
+      }
+    }
+  ]
+}
