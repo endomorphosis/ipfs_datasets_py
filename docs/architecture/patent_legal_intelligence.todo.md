@@ -674,7 +674,7 @@ Program invariants:
 
 ## PATLAW-041 Build submission facts and exact support/counter-evidence maps
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
