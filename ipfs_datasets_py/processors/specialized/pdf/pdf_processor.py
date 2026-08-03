@@ -15,9 +15,9 @@ import hashlib
 import logging
 import os
 from pathlib import Path
-from pprint import pprint
 import time
 import traceback
+import inspect
 
 
 # Import with automated dependency installation
@@ -127,7 +127,53 @@ except ImportError:
             pass
         async def process_page(self, *args, **kwargs):
             return "Mock OCR text"
+        def extract_with_ocr(self, *args, **kwargs):
+            return {
+                "text": "",
+                "confidence": None,
+                "engine": "none",
+                "status": "ocr_unavailable",
+                "error": "OCR engines unavailable",
+                "available_engines": [],
+                "engines_attempted": [],
+                "word_boxes": [],
+            }
+        async def extract_with_ocr_async(self, *args, **kwargs):
+            return self.extract_with_ocr(*args, **kwargs)
+        def get_available_engines(self):
+            return []
     MultiEngineOCR = MockOCR
+
+try:
+    from .text_layer_merge import (
+        ORIGIN_EMBEDDED_IMAGE_OCR,
+        ORIGIN_NATIVE,
+        ORIGIN_RENDERED_OCR,
+        STATUS_OCR_NOT_NEEDED,
+        STATUS_OCR_UNAVAILABLE,
+        estimate_native_char_coverage,
+        merge_document_layers,
+        quality_scores_from_merge,
+        should_run_page_ocr,
+    )
+except ImportError:  # pragma: no cover
+    ORIGIN_EMBEDDED_IMAGE_OCR = "embedded_image_ocr"
+    ORIGIN_NATIVE = "native"
+    ORIGIN_RENDERED_OCR = "rendered_ocr"
+    STATUS_OCR_NOT_NEEDED = "ocr_not_needed"
+    STATUS_OCR_UNAVAILABLE = "ocr_unavailable"
+
+    def estimate_native_char_coverage(text, **kwargs):
+        return 1.0 if (text or "").strip() else 0.0
+
+    def should_run_page_ocr(native_text, **kwargs):
+        return not (native_text or "").strip()
+
+    def merge_document_layers(page_inputs, **kwargs):
+        raise ImportError("text_layer_merge unavailable")
+
+    def quality_scores_from_merge(merge_result, **kwargs):
+        return {"ocr_confidence": None, "ocr_status": STATUS_OCR_UNAVAILABLE}
 
 try:
     from ipfs_datasets_py.processors.llm_optimizer import LLMOptimizer, LLMDocument, LLMChunk
@@ -708,6 +754,12 @@ class PDFProcessor:
 
         stages_completed: list[str] = []
         optimized_content = None
+        text_merge_result = None
+        result: dict[str, Any] = {
+            "status": "error",
+            "error": "processing_not_started",
+            "stages_completed": stages_completed,
+        }
 
         # Audit logging
         if self.audit_logger:
@@ -759,14 +811,18 @@ class PDFProcessor:
                 ipld_structure: dict[str, Any] = await self._create_ipld_structure(decomposed_content)
                 stages_completed.append('IPLD structure created with decomposed PDF content')
 
-                # Stage 4: OCR Processing
+                # Stage 4: OCR Processing (page render + embedded images) + text merge
                 self.logger.info("Stage 4: Processing OCR")
                 ocr_results: dict[str, Any] = await self._process_ocr(decomposed_content)
                 stages_completed.append('Decomposed PDF content processed with OCR')
 
+                # Merge native / rendered OCR / embedded-image OCR with provenance
+                text_merge_result = self._merge_text_layers(decomposed_content, ocr_results)
+                stages_completed.append('Native and OCR text layers merged with provenance')
+
                 # Stage 5: LLM Optimization
+                # Privacy: never print/log document body, OCR text, or full content dumps.
                 self.logger.info("Stage 5: Optimizing for LLM")
-                pprint(f"decomposed_content: {decomposed_content}\nocr_results: {ocr_results}")
                 optimized_content: dict[str, Any] = await self._optimize_for_llm(
                     decomposed_content, ocr_results
                 )
@@ -806,7 +862,20 @@ class PDFProcessor:
                 await self._setup_query_interface(graph_nodes, cross_doc_relations)
                 stages_completed.append('Query Engine initialized with graph nodes and cross document relations.')
 
-                # Compile results
+                # Compile results (identifiers / counts only in ordinary logs)
+                page_coverage = []
+                text_merge_dict = None
+                if text_merge_result is not None:
+                    if hasattr(text_merge_result, "to_dict"):
+                        text_merge_dict = text_merge_result.to_dict()
+                    elif isinstance(text_merge_result, dict):
+                        text_merge_dict = text_merge_result
+                    page_coverage = (
+                        text_merge_dict.get("page_coverage")
+                        if text_merge_dict
+                        else []
+                    )
+
                 result = {
                     'status': 'success',
                     'document_id': graph_nodes['document']['id'],
@@ -824,38 +893,47 @@ class PDFProcessor:
                         'stages_completed': stages_completed,
                     },
                     'pdf_info': pdf_info,
+                    'ocr_results': ocr_results,
+                    'page_coverage': page_coverage,
+                    'text_merge': text_merge_dict,
                 }
                 if metadata:
                     result['processing_metadata'].update(metadata)
 
-                quality_scores: dict[str, float] = self._get_quality_scores(result, ocr_results)
+                quality_scores = self._get_quality_scores(
+                    result, ocr_results, text_merge_result=text_merge_result
+                )
                 result['processing_metadata']['quality_scores'] = quality_scores
 
-                # Audit logging
+                # Audit logging — identifiers only, never document body
                 if self.audit_logger:
                     self.audit_logger.data_access(
                         "pdf_processing_complete",
                         resource_id=str(pdf_path),
                         resource_type="pdf_document",
-                        details={"document_id": result['document_id']}
+                        details={
+                            "document_id": result['document_id'],
+                            "page_count": pdf_info.get("page_count"),
+                        },
                     )
-                    self.audit_logger
 
                 return result
 
         except Exception as e:
-            self.logger.exception(f"PDF processing failed for {pdf_path}: {e}")
-
-            # if self.logger.level == logging.DEBUG:
-            #     # Enable exception tracing if in debug.
-            #     self.logger.exception(f"PDF processing failed for {pdf_path}: {e}")
-            # else:
-            #     self.logger.error(f"PDF processing failed for {pdf_path}: {e}")
+            # Log failure with path/error type only — do not embed document text
+            self.logger.exception(
+                "PDF processing failed for %s: %s",
+                pdf_path,
+                type(e).__name__,
+            )
 
             if self.audit_logger:
                 self.audit_logger.security(
-                    "pdf_processing_error", 
-                    details={"error": str(e), "pdf_path": str(pdf_path)}
+                    "pdf_processing_error",
+                    details={
+                        "error_type": type(e).__name__,
+                        "pdf_path": str(pdf_path),
+                    },
                 )
 
             result = {
@@ -867,24 +945,8 @@ class PDFProcessor:
             }
 
         finally:
-            if self.logger.level == logging.DEBUG:
-                # Dump the results dict to the CWD
-                debug_filename = f"pdf_processing_results_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-                
-                # Add the text to the result when debugging.
-                result_with_text = result.copy()
-                if optimized_content is not None:
-                    result_with_text['llm_document'] = optimized_content['llm_document'].model_dump()
-                else:
-                    self.logger.warning("Optimized content is None, skipping LLM document inclusion.")
-
-                try:
-                    with open(debug_filename, 'w', encoding='utf-8') as debug_file:
-                        json.dump(result_with_text, debug_file, indent=2, default=str)
-                    self.logger.debug(f"Debug results saved to {debug_filename}")
-                except Exception as debug_error:
-                    self.logger.warning(f"Failed to save debug results: {debug_error}")
-
+            # Privacy (PATLAW-004): never write full document content to CWD
+            # debug files, stdout, ordinary logs, or telemetry sinks.
             return result
 
     async def _validate_and_analyze_pdf(self, pdf_path: Path) -> dict[str, Any]:
@@ -1129,13 +1191,22 @@ class PDFProcessor:
 
             if errored:
                 pdf_info['errored'] = errored
-                print("Error during PDF validation:", pdf_info)
+                # Privacy: identifiers only — never dump full content to stdout
+                self.logger.error(
+                    "PDF validation failed for %s (%d issue(s))",
+                    pdf_path.name,
+                    len(errored),
+                )
                 if len(errored) == 1:
                     raise ValueError(f"PDF validation failed: {errored[0]}")
                 else:
                     raise ValueError(f"PDF validation failed with multiple errors: {errored}")
             else:
-                print("PDF validation successful:", pdf_info)
+                self.logger.info(
+                    "PDF validation successful: pages=%s size=%s",
+                    pdf_info.get("page_count"),
+                    pdf_info.get("file_size"),
+                )
 
             return pdf_info
 
@@ -1192,7 +1263,9 @@ class PDFProcessor:
             # Use PyMuPDF for comprehensive extraction
             doc = pymupdf.open(str(pdf_path))
 
-            # Extract document metadata
+            # Extract document metadata (identifiers only; path for re-render OCR)
+            decomposed_content['source_path'] = str(pdf_path)
+            decomposed_content['file_path'] = str(pdf_path)
             decomposed_content['metadata'] = {
                 'title': doc.metadata.get('title', ''),
                 'author': doc.metadata.get('author', ''),
@@ -1203,7 +1276,8 @@ class PDFProcessor:
                 'modification_date': doc.metadata.get('modDate', ''),
                 'page_count': doc.page_count,
                 'is_encrypted': doc.is_encrypted,
-                'document_id': hashlib.md5(str(pdf_path).encode()).hexdigest()
+                'document_id': hashlib.md5(str(pdf_path).encode()).hexdigest(),
+                'source_path': str(pdf_path),
             }
             
             # Process each page
@@ -1314,13 +1388,31 @@ class PDFProcessor:
         # Convert to one-based page numbering for output
         display_page_num = page_num + 1
 
+        # Page geometry / rotation for coverage and render OCR
+        try:
+            page_rect = page.rect
+            page_width = float(page_rect.width)
+            page_height = float(page_rect.height)
+        except Exception:
+            page_width = 0.0
+            page_height = 0.0
+        try:
+            rotation = int(getattr(page, "rotation", 0) or 0)
+        except Exception:
+            rotation = 0
+
         page_content = {
             'page_number': display_page_num,
             'elements': [],
             'images': [],
             'annotations': [],
             'text_blocks': [],
-            'drawings': []
+            'drawings': [],
+            'page_width': page_width,
+            'page_height': page_height,
+            'rotation': rotation,
+            'native_coverage': 0.0,
+            'render_digest': None,
         }
 
         # Extract text blocks
@@ -1389,15 +1481,22 @@ class PDFProcessor:
                         'height': pix.height,
                         'colorspace': pix.colorspace.name if pix.colorspace else 'unknown',
                         'ext': 'png',  # Default format
-                        'bbox': bbox
+                        'bbox': bbox,
+                        # Binary payload required for embedded-image OCR (PATLAW-004)
+                        'data': img_data,
                     })
                     
-                    # Add as structured element
+                    # Add as structured element (no binary in elements — identifiers only)
                     page_content['elements'].append({
                         'type': 'image',
                         'subtype': 'embedded_image',
                         'content': f"Image {img_index} ({pix.width}x{pix.height})",
-                        'position': {},  # Would need additional analysis for position
+                        'position': {
+                            'x0': bbox[0],
+                            'y0': bbox[1],
+                            'x1': bbox[2],
+                            'y1': bbox[3],
+                        },
                         'confidence': 1.0,
                         'metadata': {
                             'width': pix.width,
@@ -1463,13 +1562,24 @@ class PDFProcessor:
                 'items': len(drawing.get('items', []))
             })
 
+        # Native coverage estimate for OCR fallback decisions
+        native_text = "\n".join(
+            (b.get("content") or "") for b in page_content["text_blocks"] if b.get("content")
+        )
+        page_content["native_text"] = native_text
+        page_content["native_coverage"] = estimate_native_char_coverage(
+            native_text,
+            page_width=page_width,
+            page_height=page_height,
+        )
+
         # Check if we actually extracted any content
         page_num_value = page_content['page_number']
         content_lists = [page_content['elements'], page_content['images'], 
                         page_content['annotations'], page_content['text_blocks'], 
                         page_content['drawings']]
         if not any(content_list for content_list in content_lists):
-            self.logger.warning(f"No content extracted from page {page_num_value}")
+            self.logger.warning("No content extracted from page %s", page_num_value)
         
         return page_content
 
@@ -1612,97 +1722,446 @@ class PDFProcessor:
 
         return ipld_structure
     
+    async def _invoke_ocr(
+        self,
+        image_data: bytes,
+        *,
+        strategy: str = "quality_first",
+        confidence_threshold: float = 0.7,
+    ) -> dict[str, Any]:
+        """
+        Invoke the OCR engine using async or sync API without double-await issues.
+
+        Only available engines are attempted (enforced by MultiEngineOCR). Missing
+        OCR is returned as an explicit status with confidence=None.
+        """
+        engine = self.ocr_engine
+        if engine is None:
+            return {
+                "text": "",
+                "confidence": None,
+                "engine": "none",
+                "status": "ocr_unavailable",
+                "error": "No OCR engine configured",
+                "available_engines": [],
+                "engines_attempted": [],
+                "word_boxes": [],
+            }
+
+        # Prefer async API when present
+        async_fn = getattr(engine, "extract_with_ocr_async", None)
+        sync_fn = getattr(engine, "extract_with_ocr", None)
+
+        try:
+            if async_fn is not None and inspect.iscoroutinefunction(async_fn):
+                result = await async_fn(
+                    image_data,
+                    strategy=strategy,
+                    confidence_threshold=confidence_threshold,
+                )
+            elif sync_fn is not None:
+                if inspect.iscoroutinefunction(sync_fn):
+                    result = await sync_fn(
+                        image_data,
+                        strategy=strategy,
+                        confidence_threshold=confidence_threshold,
+                    )
+                else:
+                    result = await anyio.to_thread.run_sync(
+                        lambda: sync_fn(
+                            image_data,
+                            strategy=strategy,
+                            confidence_threshold=confidence_threshold,
+                        )
+                    )
+            else:
+                result = {
+                    "text": "",
+                    "confidence": None,
+                    "engine": "none",
+                    "status": "ocr_unavailable",
+                    "error": "OCR engine has no extract_with_ocr interface",
+                    "available_engines": [],
+                    "engines_attempted": [],
+                    "word_boxes": [],
+                }
+        except RuntimeError as e:
+            # Explicit unavailable rather than high-confidence fiction
+            msg = str(e)
+            if "No OCR engines available" in msg or "not available" in msg.lower():
+                return {
+                    "text": "",
+                    "confidence": None,
+                    "engine": "none",
+                    "status": "ocr_unavailable",
+                    "error": msg,
+                    "available_engines": list(
+                        getattr(engine, "get_available_engines", lambda: [])()
+                    ),
+                    "engines_attempted": [],
+                    "word_boxes": [],
+                }
+            raise
+
+        if not isinstance(result, dict):
+            return {
+                "text": "",
+                "confidence": None,
+                "engine": "none",
+                "status": "ocr_failed",
+                "error": "OCR engine returned non-dict result",
+                "available_engines": [],
+                "engines_attempted": [],
+                "word_boxes": [],
+            }
+
+        # Normalize confidence: never invent a high default for missing values
+        if "confidence" not in result:
+            result["confidence"] = None
+        if result.get("status") is None:
+            conf = result.get("confidence")
+            if conf is None and not (result.get("text") or "").strip():
+                result["status"] = "ocr_failed"
+            elif conf is None:
+                result["status"] = "low_confidence"
+            elif conf < confidence_threshold:
+                result["status"] = "low_confidence"
+            else:
+                result["status"] = "ok"
+        return result
+
+    def _render_page_image(
+        self,
+        pdf_path: Path,
+        page_index: int,
+        *,
+        rotation: int = 0,
+        dpi: int = 150,
+    ) -> tuple[bytes, str, int]:
+        """
+        Deterministically render a PDF page to PNG bytes.
+
+        PyMuPDF applies the page's /Rotate attribute when rasterizing, so rotated
+        scanned pages are rendered upright for OCR. Returns
+        (png_bytes, sha256_hex, effective_rotation).
+        """
+        if not HAVE_PYMUPDF or pymupdf is None:
+            raise RuntimeError("PyMuPDF is required for page rendering")
+
+        doc = pymupdf.open(str(pdf_path))
+        try:
+            if page_index < 0 or page_index >= doc.page_count:
+                raise ValueError(
+                    f"page_index {page_index} out of range for {doc.page_count} pages"
+                )
+            page = doc[page_index]
+            page_rotation = int(getattr(page, "rotation", 0) or 0)
+            effective_rotation = int(rotation if rotation is not None else page_rotation) % 360
+            # Ensure page rotation metadata is honored for upright OCR of rotated scans
+            if effective_rotation and page_rotation != effective_rotation:
+                try:
+                    page.set_rotation(effective_rotation)
+                except Exception:
+                    pass
+            zoom = dpi / 72.0
+            matrix = pymupdf.Matrix(zoom, zoom)
+            pix = page.get_pixmap(matrix=matrix, alpha=False)
+            png_bytes = pix.tobytes("png")
+            digest = hashlib.sha256(png_bytes).hexdigest()
+            return png_bytes, digest, effective_rotation
+        finally:
+            doc.close()
+
     async def _process_ocr(self, decomposed_content: dict[str, Any]) -> dict[str, Any]:
         """
-        Stage 4: Process embedded images with multi-engine OCR for text extraction.
+        Stage 4: Page-level and embedded-image OCR with explicit availability status.
 
-        Applies optical character recognition to all embedded images within the PDF
-        using multiple OCR engines for accuracy comparison and confidence scoring.
-        Extracts text content, word-level positioning, and confidence metrics for
-        each recognized text element enabling comprehensive image-based content recovery.
+        For each page:
+          1. Measure native text coverage.
+          2. When coverage is low (scanned / image-only / sparse), render the page
+             (honoring rotation) and OCR the rendered pixmap — not merely embedded images.
+          3. OCR embedded images when binary payloads are present.
+          4. Attempt only available engines; unavailable/low confidence are explicit.
 
-        Args:
-            decomposed_content (dict[str, Any]): Decomposed PDF content containing image data.
-                Must include page-level image information with extraction metadata.
-
-        Returns:
-            dict[str, Any]: OCR processing results organized by page containing:
-                - Page-keyed dictionary with OCR results for each image
-                - For each image: text content, confidence score, engine used, word boxes
-                - Aggregate confidence scores and text quality metrics
-
-        Raises:
-            ImportError: If required OCR engine dependencies are not available
-            RuntimeError: If OCR processing fails due to image format or corruption issues
-            MemoryError: If images are too large for OCR processing memory limits
-            TimeoutError: If OCR processing exceeds configured timeout limits
-
-        Examples:
-            >>> ocr_results = await processor._process_ocr(decomposed_content)
-            >>> for page_num, page_ocr in ocr_results.items():
-            ...     for img_result in page_ocr:
-            ...         print(f"Image {img_result['image_index']}: {img_result['text']}")
-            ...         print(f"Confidence: {img_result['confidence']}")
-
-        Note:
-            Production implementation integrates Tesseract, PaddleOCR, or cloud services.
-            Multiple engines enable confidence comparison and accuracy validation.
-            Word-level positioning supports precise content localization and extraction.
+        Returns a page-keyed structure:
+          {
+            page_num: {
+              'images': [...],
+              'rendered': {...} | None,
+              'available_engines': [...],
+              'native_coverage': float,
+              'rotation': int,
+              'render_digest': str | None,
+            },
+            ...
+            '_meta': {...}
+          }
         """
-        ocr_results = {}
+        ocr_results: dict[str, Any] = {}
+        available_engines: list[str] = []
+        if self.ocr_engine is not None and hasattr(self.ocr_engine, "get_available_engines"):
+            try:
+                available_engines = list(self.ocr_engine.get_available_engines())
+            except Exception:
+                available_engines = []
 
-        for page_data in decomposed_content['pages']:
-            page_num = page_data['page_number']
-            page_ocr_results = []
-            
-            # Process images on this page
-            for img_data in page_data.get('images', []):
+        pdf_path_str = (
+            decomposed_content.get("source_path")
+            or decomposed_content.get("metadata", {}).get("source_path")
+            or decomposed_content.get("file_path")
+        )
+        pdf_path = Path(pdf_path_str) if pdf_path_str else None
 
-                # Convert image data for OCR processing
-                if 'data' in img_data:
-                    image_data = img_data['data']
-                else:
-                    # Skip if no image data available
-                    self.logger.warning(f"No image data available for image {img_data.get('image_index', 0)} on page {page_num}")
+        pages_with_rendered_ocr = 0
+        pages_ocr_unavailable = 0
+
+        for page_idx, page_data in enumerate(decomposed_content.get("pages") or []):
+            page_num = page_data.get("page_number", page_idx + 1)
+            native_text = page_data.get("native_text")
+            if native_text is None:
+                native_text = "\n".join(
+                    (b.get("content") or "")
+                    for b in page_data.get("text_blocks") or []
+                    if b.get("content")
+                )
+            native_coverage = float(
+                page_data.get("native_coverage")
+                if page_data.get("native_coverage") is not None
+                else estimate_native_char_coverage(
+                    native_text,
+                    page_width=float(page_data.get("page_width") or 0.0),
+                    page_height=float(page_data.get("page_height") or 0.0),
+                )
+            )
+            rotation = int(page_data.get("rotation") or 0)
+            page_entry: dict[str, Any] = {
+                "images": [],
+                "rendered": None,
+                "available_engines": list(available_engines),
+                "native_coverage": native_coverage,
+                "rotation": rotation,
+                "render_digest": page_data.get("render_digest"),
+            }
+
+            # --- Embedded-image OCR ---
+            for img_data in page_data.get("images") or []:
+                image_data = img_data.get("data")
+                img_index = img_data.get("image_index", 0)
+                if not image_data:
+                    self.logger.warning(
+                        "No image data for image %s on page %s",
+                        img_index,
+                        page_num,
+                    )
                     continue
-
-                if image_data is None or not image_data:
-                    self.logger.warning(f"Empty image data for image {img_data.get('image_index', 0)} on page {page_num}")
-                    continue
-
                 try:
-                    # Process image with OCR engine
-                    ocr_result = await self.ocr_engine.extract_with_ocr(
-                        image_data=image_data,
-                        strategy='quality_first', # TODO need to allow setting of strategy.
-                        confidence_threshold=0.7 # TODO need to allow setting of threshold.
+                    ocr_result = await self._invoke_ocr(image_data)
+                    page_entry["images"].append(
+                        {
+                            "image_index": img_index,
+                            "text": ocr_result.get("text", ""),
+                            "confidence": ocr_result.get("confidence"),
+                            "engine": ocr_result.get("engine", "unknown"),
+                            "engine_used": ocr_result.get("engine", "unknown"),
+                            "status": ocr_result.get("status", "ok"),
+                            "word_boxes": ocr_result.get("word_boxes")
+                            or ocr_result.get("text_blocks")
+                            or [],
+                            "available_engines": ocr_result.get(
+                                "available_engines", available_engines
+                            ),
+                            "engines_attempted": ocr_result.get(
+                                "engines_attempted", []
+                            ),
+                            "error": ocr_result.get("error"),
+                            "bbox": img_data.get("bbox"),
+                            "origin": ORIGIN_EMBEDDED_IMAGE_OCR,
+                        }
+                    )
+                    if ocr_result.get("status") == "ocr_unavailable":
+                        pages_ocr_unavailable += 1
+                except Exception as e:
+                    self.logger.warning(
+                        "OCR failed for image %s on page %s: %s",
+                        img_index,
+                        page_num,
+                        type(e).__name__,
+                    )
+                    page_entry["images"].append(
+                        {
+                            "image_index": img_index,
+                            "text": "",
+                            "confidence": None,
+                            "engine": "failed",
+                            "engine_used": "failed",
+                            "status": "ocr_failed",
+                            "word_boxes": [],
+                            "available_engines": list(available_engines),
+                            "engines_attempted": [],
+                            "error": type(e).__name__,
+                            "bbox": img_data.get("bbox"),
+                            "origin": ORIGIN_EMBEDDED_IMAGE_OCR,
+                        }
                     )
 
-                    page_ocr_results.append({
-                        'image_index': img_data.get('image_index', 0),
-                        'text': ocr_result.get('text', ''),
-                        'confidence': ocr_result.get('confidence', 0.0),
-                        'engine_used': ocr_result.get('engine', 'unknown'),
-                        'word_boxes': ocr_result.get('word_boxes', [])
-                    })
-                except ImportError as e:
-                    # Fail fast if OCR engine is not available
-                    raise ImportError(f"Required OCR engine not available: {e}") from e
+            # --- Page-level rendered OCR when native coverage is low ---
+            needs_page_ocr = should_run_page_ocr(
+                native_text, coverage=native_coverage
+            )
+            # Also OCR when page is image-heavy with little text
+            if not needs_page_ocr and page_data.get("images") and native_coverage < 0.25:
+                needs_page_ocr = True
 
-                except Exception as e:
-                    self.logger.warning(f"OCR failed for image {img_data.get('image_index', 0)} on page {page_num}: {e}")
-                    # Add empty result for failed OCR
-                    page_ocr_results.append({
-                        'image_index': img_data.get('image_index', 0),
-                        'text': '',
-                        'confidence': 0.0,
-                        'engine_used': 'failed',
-                        'word_boxes': []
-                    })
+            if needs_page_ocr:
+                rendered_payload: dict[str, Any]
+                if pdf_path is None or not pdf_path.exists():
+                    # Decomposed content without a path — cannot re-render
+                    if not available_engines:
+                        rendered_payload = {
+                            "text": "",
+                            "confidence": None,
+                            "engine": "none",
+                            "status": "ocr_unavailable",
+                            "error": "No OCR engines available and page path missing for render",
+                            "available_engines": [],
+                            "engines_attempted": [],
+                            "word_boxes": [],
+                            "origin": ORIGIN_RENDERED_OCR,
+                            "render_digest": None,
+                            "rotation": rotation,
+                        }
+                        pages_ocr_unavailable += 1
+                    else:
+                        rendered_payload = {
+                            "text": "",
+                            "confidence": None,
+                            "engine": "none",
+                            "status": "ocr_failed",
+                            "error": "source_path_unavailable_for_render",
+                            "available_engines": list(available_engines),
+                            "engines_attempted": [],
+                            "word_boxes": [],
+                            "origin": ORIGIN_RENDERED_OCR,
+                            "render_digest": None,
+                            "rotation": rotation,
+                        }
+                else:
+                    try:
+                        png_bytes, render_digest, effective_rotation = await anyio.to_thread.run_sync(
+                            lambda: self._render_page_image(
+                                pdf_path,
+                                page_idx,
+                                rotation=rotation,
+                            )
+                        )
+                        page_data["render_digest"] = render_digest
+                        page_entry["render_digest"] = render_digest
+                        page_entry["rotation"] = effective_rotation
+                        ocr_result = await self._invoke_ocr(png_bytes)
+                        rendered_payload = {
+                            "text": ocr_result.get("text", ""),
+                            "confidence": ocr_result.get("confidence"),
+                            "engine": ocr_result.get("engine", "unknown"),
+                            "engine_used": ocr_result.get("engine", "unknown"),
+                            "status": ocr_result.get("status", "ok"),
+                            "word_boxes": ocr_result.get("word_boxes")
+                            or ocr_result.get("text_blocks")
+                            or [],
+                            "available_engines": ocr_result.get(
+                                "available_engines", available_engines
+                            ),
+                            "engines_attempted": ocr_result.get(
+                                "engines_attempted", []
+                            ),
+                            "error": ocr_result.get("error"),
+                            "origin": ORIGIN_RENDERED_OCR,
+                            "render_digest": render_digest,
+                            "rotation": effective_rotation,
+                        }
+                        pages_with_rendered_ocr += 1
+                        if ocr_result.get("status") == "ocr_unavailable":
+                            pages_ocr_unavailable += 1
+                    except Exception as e:
+                        self.logger.warning(
+                            "Rendered page OCR failed for page %s: %s",
+                            page_num,
+                            type(e).__name__,
+                        )
+                        rendered_payload = {
+                            "text": "",
+                            "confidence": None,
+                            "engine": "failed",
+                            "status": "ocr_failed",
+                            "error": type(e).__name__,
+                            "available_engines": list(available_engines),
+                            "engines_attempted": [],
+                            "word_boxes": [],
+                            "origin": ORIGIN_RENDERED_OCR,
+                            "render_digest": page_entry.get("render_digest"),
+                            "rotation": rotation,
+                        }
+                page_entry["rendered"] = rendered_payload
 
-            ocr_results[page_num] = page_ocr_results
+            ocr_results[page_num] = page_entry
 
+            # Backward-compatible list view for older callers expecting list of image results
+            ocr_results[page_num]["_legacy_list"] = list(page_entry["images"])
+
+        ocr_results["_meta"] = {
+            "available_engines": list(available_engines),
+            "pages_with_rendered_ocr": pages_with_rendered_ocr,
+            "pages_ocr_unavailable": pages_ocr_unavailable,
+            # Explicit: if no engines, confidence must not default high later
+            "ocr_available": bool(available_engines),
+        }
         return ocr_results
+
+    def _merge_text_layers(
+        self,
+        decomposed_content: dict[str, Any],
+        ocr_results: dict[str, Any],
+    ):
+        """Merge native + rendered OCR + embedded-image OCR with page provenance."""
+        available = []
+        meta = ocr_results.get("_meta") if isinstance(ocr_results, dict) else None
+        if isinstance(meta, dict):
+            available = list(meta.get("available_engines") or [])
+
+        page_inputs = []
+        for page_data in decomposed_content.get("pages") or []:
+            page_num = page_data.get("page_number")
+            page_ocr = ocr_results.get(page_num) if isinstance(ocr_results, dict) else None
+            rendered = None
+            embedded = []
+            if isinstance(page_ocr, dict):
+                rendered = page_ocr.get("rendered")
+                embedded = page_ocr.get("images") or []
+            elif isinstance(page_ocr, list):
+                embedded = page_ocr
+
+            page_inputs.append(
+                {
+                    "page": page_num,
+                    "native_blocks": page_data.get("text_blocks") or [],
+                    "native_text": page_data.get("native_text"),
+                    "rendered_ocr": rendered,
+                    "embedded_image_ocr": embedded,
+                    "page_width": float(page_data.get("page_width") or 0.0),
+                    "page_height": float(page_data.get("page_height") or 0.0),
+                    "rotation": int(page_data.get("rotation") or 0),
+                    "render_digest": (
+                        (rendered or {}).get("render_digest")
+                        if isinstance(rendered, dict)
+                        else page_data.get("render_digest")
+                    ),
+                    "available_engines": available,
+                }
+            )
+
+        return merge_document_layers(
+            page_inputs,
+            available_engines=available,
+        )
 
     async def _optimize_for_llm(self, 
                                decomposed_content: dict[str, Any], 
@@ -2151,7 +2610,10 @@ class PDFProcessor:
             assert isinstance(entity_a, Entity), f"Entity at index {i} is not an Entity, but a {type(entity_a).__name__}"
             assert hasattr(entity_a, 'id'), f"Entity at index {i} has no attribute 'id'.\nactual attributes: {dir(entity_a)}"
             assert hasattr(entity_a, 'name'), f"Entity at index {i} has no attribute 'name'.\nactual attributes: {dir(entity_a)}"
-            print(f"entity_a: {entity_a.name} (id: {entity_a.id})")
+            self.logger.debug(
+                "cross-doc entity pair candidate id=%s",
+                getattr(entity_a, "id", None),
+            )
             for j, entity_b in enumerate(entities):
                 if i >= j:
                     continue  # Avoid duplicate or self comparison
@@ -2332,118 +2794,146 @@ class PDFProcessor:
 
         return "\n".join(text_parts)
 
-    def _get_quality_scores(self, 
-                            entity_results: dict[str, Any], 
-                            ocr_results: dict[str, Any]
-                            ) -> dict[str, float]:
+    def _get_quality_scores(
+        self,
+        entity_results: dict[str, Any],
+        ocr_results: dict[str, Any],
+        text_merge_result: Any = None,
+    ) -> dict[str, Any]:
         """
-        Generate quality assessment scores for processing stages and overall document quality.
+        Generate quality assessment scores for processing stages.
 
-        Calculates comprehensive quality metrics for text extraction accuracy,
-        OCR confidence levels, entity extraction precision, and overall processing
-        quality. Provides quantitative assessment enabling quality control,
-        processing validation, and continuous improvement of pipeline performance.
-
-        Args:
-            result (dict[str, Any]): Processing result containing statistics and metadata.
-                Contains the following keys:
-                result = {
-                    'status': 'success',
-                    'document_id': graph_nodes['document']['id'],
-                    'ipld_cid': ipld_structure['root_cid'],
-                    'entities_count': len(entities_and_relations['entities']),
-                    'relationships_count': len(entities_and_relations['relationships']),
-                    'cross_doc_relations': len(cross_doc_relations),
-                    'processing_metadata': {
-                        'pipeline_version': self.pipeline_version,
-                        'processing_time': self._get_processing_time(start_time, mono_start_time),
-                        'quality_scores': None,
-                        'stages_completed': 10,
-                    },
-                    'pdf_info': pdf_info,
-                }
-
-        Returns:
-            dict[str, float]: Quality assessment scores containing:
-                - text_extraction_quality (float): Native text extraction accuracy (0.0-1.0)
-                - ocr_confidence (float): Average OCR confidence score (0.0-1.0)
-                - entity_extraction_confidence (float): Entity extraction precision (0.0-1.0)
-                - overall_quality (float): Weighted average of all quality metrics (0.0-1.0)
-
-        Raises:
-            ValueError: If quality calculations result in invalid score ranges
-            AttributeError: If required processing statistics are not available
-            ZeroDivisionError: If quality calculations involve division by zero
-
-        Examples:
-            >>> quality_scores = processor._get_quality_scores()
-            >>> print(f"Overall quality: {quality_scores['overall_quality']:.2f}")
-            >>> print(f"OCR confidence: {quality_scores['ocr_confidence']:.2f}")
-            >>> # Quality-based filtering
-            >>> if quality_scores['overall_quality'] < 0.8:
-            ...     print("Warning: Low quality processing detected")
-
-        Note:
-            Quality scores are calculated from actual processing statistics.
-            Text extraction quality is based on successful content extraction rates.
-            OCR confidence reflects average confidence from optical character recognition.
-            Entity confidence measures precision of named entity recognition results.
+        Missing OCR is never scored as high confidence. Unavailable engines and
+        low-confidence OCR are explicit via ocr_status / None confidence.
         """
         try:
+            # Prefer merge-derived scores (provenance-aware)
+            if text_merge_result is not None:
+                entity_conf = None
+                entities = []
+                if isinstance(entity_results, dict):
+                    entities = entity_results.get("extracted_entities") or []
+                    if not entities and isinstance(
+                        entity_results.get("entities"), list
+                    ):
+                        entities = entity_results["entities"]
+                confs = [
+                    float(e["confidence"])
+                    for e in entities
+                    if isinstance(e, dict) and e.get("confidence") is not None
+                ]
+                if confs:
+                    entity_conf = sum(confs) / len(confs)
+                return quality_scores_from_merge(
+                    text_merge_result, entity_confidence=entity_conf
+                )
+
             # Text extraction quality based on content extraction success
             text_quality = 1.0
             if self.processing_stats:
-                pages_processed = self.processing_stats.get('pages_processed', 0)
-                pages_with_text = self.processing_stats.get('pages_with_text', 0)
+                pages_processed = self.processing_stats.get("pages_processed", 0)
+                pages_with_text = self.processing_stats.get("pages_with_text", 0)
                 if pages_processed > 0:
                     text_quality = min(pages_with_text / pages_processed, 1.0)
-            
-            # OCR confidence from processing results
-            ocr_confidence = 0.95  # Default confidence
+
+            # OCR confidence — never default to a high value when missing
+            ocr_confidence: float | None = None
+            ocr_status = STATUS_OCR_NOT_NEEDED
+            confidence_scores: list[float] = []
+            saw_unavailable = False
+            saw_any_ocr = False
+
             if ocr_results:
-                confidence_scores = []
-                for page_results in ocr_results.values():
-                    for result in page_results:
-                        assert isinstance(result, dict), \
-                            f"expected results in page results to be a dict, got {type(result).__name__}"
-                        if isinstance(result, dict) and 'confidence' in result:
-                            confidence_scores.append(result['confidence'])
+                meta = ocr_results.get("_meta") if isinstance(ocr_results, dict) else None
+                if isinstance(meta, dict) and meta.get("ocr_available") is False:
+                    saw_unavailable = True
+                    ocr_status = STATUS_OCR_UNAVAILABLE
+
+                for key, page_results in (ocr_results or {}).items():
+                    if key == "_meta":
+                        continue
+                    payloads: list[Any]
+                    if isinstance(page_results, dict):
+                        payloads = list(page_results.get("images") or [])
+                        if page_results.get("rendered"):
+                            payloads.append(page_results["rendered"])
+                    elif isinstance(page_results, list):
+                        payloads = page_results
+                    else:
+                        continue
+                    for item in payloads:
+                        if not isinstance(item, dict):
+                            continue
+                        saw_any_ocr = True
+                        status = item.get("status")
+                        if status in ("ocr_unavailable", STATUS_OCR_UNAVAILABLE):
+                            saw_unavailable = True
+                        conf = item.get("confidence")
+                        if conf is None:
+                            continue
+                        try:
+                            conf_f = float(conf)
+                            if conf_f > 1.0:
+                                conf_f = conf_f / 100.0
+                            confidence_scores.append(conf_f)
+                        except (TypeError, ValueError):
+                            continue
+
                 if confidence_scores:
                     ocr_confidence = sum(confidence_scores) / len(confidence_scores)
-            
-            # Entity extraction confidence from NER results
-            entity_confidence = 0.95
-            if entity_results:
-                confidence_scores = []
-                for entity in entity_results:
-                    if isinstance(entity, dict) and 'confidence' in entity:
-                        confidence_scores.append(entity['confidence'])
-                if confidence_scores:
-                    entity_confidence = sum(confidence_scores) / len(confidence_scores)
-            
-            # Calculate weighted overall quality
-            weights = { # TODO These need to be arguments or class parameters.
-                'text': 0.4,
-                'ocr': 0.3,
-                'entities': 0.3
-            }
-            
-            overall_quality = (
-                text_quality * weights['text'] +
-                ocr_confidence * weights['ocr'] +
-                entity_confidence * weights['entities']
-            )
-            
+                    ocr_status = (
+                        "low_confidence" if ocr_confidence < 0.7 else "ok"
+                    )
+                elif saw_unavailable:
+                    ocr_confidence = None
+                    ocr_status = STATUS_OCR_UNAVAILABLE
+                elif saw_any_ocr:
+                    ocr_confidence = None
+                    ocr_status = "ocr_failed"
+
+            # Entity extraction confidence — no invented high default
+            entity_confidence: float | None = None
+            entities = []
+            if isinstance(entity_results, dict):
+                entities = entity_results.get("extracted_entities") or []
+                if not entities and isinstance(entity_results.get("entities"), list):
+                    entities = entity_results["entities"]
+            if entities:
+                econfs = [
+                    float(e["confidence"])
+                    for e in entities
+                    if isinstance(e, dict) and e.get("confidence") is not None
+                ]
+                if econfs:
+                    entity_confidence = sum(econfs) / len(econfs)
+
+            components: list[tuple[float, float]] = [(text_quality, 0.5)]
+            if ocr_confidence is not None:
+                components.append((ocr_confidence, 0.3))
+            elif ocr_status == STATUS_OCR_UNAVAILABLE:
+                components.append((0.0, 0.3))
+            if entity_confidence is not None:
+                components.append((entity_confidence, 0.2))
+            weight_sum = sum(w for _, w in components) or 1.0
+            overall_quality = sum(v * w for v, w in components) / weight_sum
+
             return {
-                'text_extraction_quality': round(text_quality, 3),
-                'ocr_confidence': round(ocr_confidence, 3),
-                'entity_extraction_confidence': round(entity_confidence, 3),
-                'overall_quality': round(overall_quality, 3)
+                "text_extraction_quality": round(text_quality, 3),
+                "ocr_confidence": None
+                if ocr_confidence is None
+                else round(ocr_confidence, 3),
+                "ocr_status": ocr_status,
+                "entity_extraction_confidence": None
+                if entity_confidence is None
+                else round(entity_confidence, 3),
+                "overall_quality": round(overall_quality, 3),
             }
         except AttributeError as e:
-            self.logger.exception(f"Quality score calculation failed: {e}")
-            raise ValueError("Quality score calculation failed due to missing processing statistics") from e
+            self.logger.exception("Quality score calculation failed: %s", type(e).__name__)
+            raise ValueError(
+                "Quality score calculation failed due to missing processing statistics"
+            ) from e
         except Exception as e:
-            self.logger.exception(f"Quality score calculation failed: {e}")
+            self.logger.exception("Quality score calculation failed: %s", type(e).__name__)
             raise RuntimeError("Quality score calculation failed") from e
 
