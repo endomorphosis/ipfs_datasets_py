@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -921,6 +922,136 @@ def test_successful_tlc_install_accepts_real_help_exit_and_binds_java(
             java_executable=java17,
         )["usable"]
         is False
+    )
+
+
+def test_relocated_legacy_tlc_manifest_derives_release_only_from_locked_jar(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    deployment_root = tmp_path / "immutable"
+    install_root = deployment_root / "release-1" / "provers"
+    java17 = _fake_java(
+        install_root / "jdk-17" / "bin" / "java",
+        "17.0.12",
+    )
+    jar = _write_tlc_jar(
+        install_root
+        / "tlc"
+        / state_model.TLC_VERSION
+        / state_model.TLC_JAR_NAME
+    )
+    fixture_digest = state_model.content_sha256(jar)
+    monkeypatch.setattr(state_model, "TLC_SHA256", fixture_digest)
+    for name in (
+        state_model.TLC_EXECUTABLE,
+        "tlc2",
+        "tla2tools",
+    ):
+        state_model.write_launcher(
+            name,
+            jar,
+            install_root=install_root,
+            environment={"TLA2TOOLS_JAR": str(jar)},
+            java_jar=jar,
+            java_main="tlc2.TLC",
+            java_executable=java17,
+        )
+
+    previous_root = Path("/srv/reviewed/state-model-runtime")
+    manifest = {
+        "schema_version": "state-model-managed-runtime/v1",
+        "tool_id": "tlc",
+        "version": state_model.TLC_VERSION,
+        "artifact_path": str(previous_root / jar.relative_to(install_root)),
+        "artifact_sha256": fixture_digest,
+        "payload_path": str(previous_root / jar.relative_to(install_root)),
+        "payload_sha256": fixture_digest,
+        "java_executable": str(
+            previous_root / java17.relative_to(install_root)
+        ),
+        "launchers": {
+            name: {
+                "path": str(previous_root / "bin" / name),
+                "sha256": "a" * 64,
+            }
+            for name in (
+                state_model.TLC_EXECUTABLE,
+                "tlc2",
+                "tla2tools",
+            )
+        },
+    }
+    manifest_path = install_root / "manifests" / "tlc.json"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    managed = state_model.managed_tlc_identity(
+        install_root,
+        java_executable=java17,
+    )
+    assert managed["manifest_valid"] is False
+    assert managed["jar_manifest_valid"] is True
+
+    relocated = state_model.validate_relocated_managed_manifest(
+        install_root,
+        managed_identity=managed,
+        approved_root_prefixes=(deployment_root,),
+    )
+
+    assert relocated["valid"] is True
+    assert relocated["legacy_tlc_manifest"] is True
+    assert relocated["previous_root"] == str(previous_root)
+    assert (
+        relocated["release_identity_source"]
+        == "checksum_bound_tlc_jar_manifest"
+    )
+
+    partially_populated = dict(manifest)
+    partially_populated["release_tag"] = state_model.TLC_RELEASE_TAG
+    manifest_path.write_text(
+        json.dumps(partially_populated),
+        encoding="utf-8",
+    )
+    rejected_partial = state_model.validate_relocated_managed_manifest(
+        install_root,
+        managed_identity=managed,
+        approved_root_prefixes=(deployment_root,),
+    )
+    assert rejected_partial["valid"] is False
+    assert (
+        "relocated_state_manifest_field_population_invalid"
+        in rejected_partial["failures"]
+    )
+
+    wrong_suffix = dict(manifest)
+    wrong_suffix["payload_path"] = str(previous_root / "other" / jar.name)
+    manifest_path.write_text(json.dumps(wrong_suffix), encoding="utf-8")
+    rejected_suffix = state_model.validate_relocated_managed_manifest(
+        install_root,
+        managed_identity=managed,
+        approved_root_prefixes=(deployment_root,),
+    )
+    assert rejected_suffix["valid"] is False
+    assert (
+        "relocated_state_payload_suffix_mismatch"
+        in rejected_suffix["failures"]
+    )
+
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    jar.write_bytes(jar.read_bytes() + b"tampered")
+    rejected_jar = state_model.validate_relocated_managed_manifest(
+        install_root,
+        managed_identity=managed,
+        approved_root_prefixes=(deployment_root,),
+    )
+    assert rejected_jar["valid"] is False
+    assert (
+        "relocated_state_artifact_digest_mismatch"
+        in rejected_jar["failures"]
+    )
+    assert (
+        "relocated_state_tlc_release_identity_mismatch"
+        in rejected_jar["failures"]
     )
 
 

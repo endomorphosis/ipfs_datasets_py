@@ -1744,6 +1744,328 @@ def _read_exact_manifest(path: Path, expected: Mapping[str, Any]) -> bool:
     return observed == dict(expected)
 
 
+def validate_relocated_managed_manifest(
+    install_root: str | Path,
+    *,
+    managed_identity: Mapping[str, Any],
+    approved_root_prefixes: Sequence[str | Path],
+) -> dict[str, Any]:
+    """Validate a managed state-model manifest after whole-tree relocation.
+
+    Managed manifests bind absolute publication paths, so copying an immutable
+    installation tree invalidates exact manifest equality even when every byte
+    and relative path is unchanged.  This compatibility path is deliberately
+    narrow:
+
+    * callers must provide an approved immutable current-root prefix;
+    * every manifest path must move from one prior root to the exact same
+      relative suffix beneath the current root;
+    * artifacts, payloads, launchers, and the selected JVM are revalidated
+      against their current bytes and structural identities;
+    * the legacy TLC manifest shape may omit ``release_tag`` and ``revision``
+      only when the exact checksum-bound 1.8.0 JAR independently carries the
+      reviewed ``v1.8.0`` / ``30cc360`` release identity.
+
+    The function never rewrites a manifest and never accepts a partially
+    populated modern TLC identity.
+    """
+
+    failures: list[str] = []
+
+    def binding_digest(path: Path | None) -> str | None:
+        if path is None or not path.is_file() or path.is_symlink():
+            return None
+        try:
+            return f"sha256:{content_sha256(path)}"
+        except OSError:
+            return None
+
+    try:
+        current_root = expand_user_local_root(install_root).resolve(strict=True)
+    except (OSError, RuntimeError):
+        current_root = expand_user_local_root(install_root)
+        failures.append("relocated_state_current_root_invalid")
+
+    approved = False
+    for raw_prefix in approved_root_prefixes:
+        try:
+            current_root.relative_to(Path(raw_prefix).resolve(strict=True))
+        except (OSError, RuntimeError, ValueError):
+            continue
+        approved = True
+        break
+    if not approved:
+        failures.append("relocated_state_root_not_approved")
+
+    tool_id = str(managed_identity.get("tool_id") or "")
+    version = str(managed_identity.get("version") or "")
+    manifest_path = current_root / "manifests" / f"{tool_id}.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        manifest = None
+    if manifest_path.is_symlink() or not isinstance(manifest, Mapping):
+        failures.append("relocated_state_manifest_unreadable")
+        manifest = {}
+
+    common_keys = {
+        "schema_version",
+        "tool_id",
+        "version",
+        "artifact_path",
+        "artifact_sha256",
+        "payload_path",
+        "payload_sha256",
+        "java_executable",
+        "launchers",
+    }
+    manifest_keys = set(manifest)
+    legacy_tlc_manifest = bool(
+        tool_id == "tlc" and manifest_keys == common_keys
+    )
+    if tool_id == "tlc":
+        valid_field_population = legacy_tlc_manifest or manifest_keys == (
+            common_keys | {"release_tag", "revision"}
+        )
+    elif tool_id == "apalache":
+        valid_field_population = manifest_keys == (
+            common_keys | {"distribution_tree_sha256"}
+        )
+    else:
+        valid_field_population = False
+    if not valid_field_population:
+        failures.append("relocated_state_manifest_field_population_invalid")
+
+    locked_version = {
+        "tlc": TLC_VERSION,
+        "apalache": APALACHE_VERSION,
+    }.get(tool_id)
+    if (
+        manifest.get("schema_version") != _MANIFEST_SCHEMA
+        or manifest.get("tool_id") != tool_id
+        or manifest.get("version") != version
+        or version != locked_version
+    ):
+        failures.append("relocated_state_manifest_identity_mismatch")
+
+    previous_roots: set[str] = set()
+    bound_paths: list[dict[str, Any]] = []
+
+    def bind_suffix(
+        *,
+        label: str,
+        old_path_value: Any,
+        current_path_value: Any,
+    ) -> Path | None:
+        try:
+            old_path = Path(str(old_path_value))
+            current_path = Path(str(current_path_value)).resolve(strict=True)
+            relative = current_path.relative_to(current_root)
+        except (OSError, RuntimeError, ValueError):
+            failures.append(f"relocated_state_{label}_current_path_invalid")
+            return None
+        if not old_path.is_absolute() or any(
+            part in {"", ".", ".."} for part in old_path.parts[1:]
+        ):
+            failures.append(f"relocated_state_{label}_old_path_invalid")
+            return None
+        relative_parts = relative.parts
+        if (
+            not relative_parts
+            or len(old_path.parts) <= len(relative_parts)
+            or old_path.parts[-len(relative_parts):] != relative_parts
+        ):
+            failures.append(f"relocated_state_{label}_suffix_mismatch")
+            return None
+        previous_root = Path(*old_path.parts[:-len(relative_parts)])
+        previous_roots.add(str(previous_root))
+        bound_paths.append(
+            {
+                "kind": label,
+                "previous_relative_suffix": relative.as_posix(),
+                "current_path": str(current_path),
+                "current_sha256": binding_digest(current_path),
+            }
+        )
+        return current_path
+
+    artifact_path = bind_suffix(
+        label="artifact",
+        old_path_value=manifest.get("artifact_path"),
+        current_path_value=managed_identity.get("artifact_path"),
+    )
+    payload_path = bind_suffix(
+        label="payload",
+        old_path_value=manifest.get("payload_path"),
+        current_path_value=managed_identity.get("payload_path"),
+    )
+    artifact_digest = str(binding_digest(artifact_path) or "").removeprefix(
+        "sha256:"
+    )
+    payload_digest = str(binding_digest(payload_path) or "").removeprefix(
+        "sha256:"
+    )
+    expected_artifact_digest = str(
+        managed_identity.get("artifact_sha256") or ""
+    ).lower()
+    expected_payload_digest = str(
+        managed_identity.get("payload_sha256") or ""
+    ).lower()
+    locked_artifact_digest = {
+        "tlc": TLC_SHA256,
+        "apalache": APALACHE_SHA256,
+    }.get(tool_id, "")
+    if (
+        not artifact_digest
+        or artifact_digest != locked_artifact_digest
+        or artifact_digest != expected_artifact_digest
+        or str(manifest.get("artifact_sha256") or "").lower()
+        != expected_artifact_digest
+        or managed_identity.get("artifact_digest_verified") is not True
+    ):
+        failures.append("relocated_state_artifact_digest_mismatch")
+    if (
+        not payload_digest
+        or payload_digest != expected_payload_digest
+        or str(manifest.get("payload_sha256") or "").lower()
+        != expected_payload_digest
+        or managed_identity.get("payload_digest_verified") is not True
+    ):
+        failures.append("relocated_state_payload_digest_mismatch")
+
+    release_identity_source: str | None = None
+    if tool_id == "tlc":
+        jar_identity = read_tlc_jar_manifest_identity(
+            artifact_path or Path("__missing_tlc_jar__")
+        )
+        independently_locked = bool(
+            artifact_path is not None
+            and payload_path is not None
+            and artifact_path == payload_path
+            and artifact_digest == TLC_SHA256
+            and payload_digest == TLC_SHA256
+            and jar_identity.valid
+            and jar_identity.release_tag == TLC_RELEASE_TAG
+            and jar_identity.short_revision == TLC_REVISION
+            and managed_identity.get("jar_manifest_valid") is True
+            and managed_identity.get("release_tag") == TLC_RELEASE_TAG
+            and managed_identity.get("revision") == TLC_REVISION
+            and managed_identity.get("full_revision")
+            == jar_identity.full_revision
+        )
+        if not independently_locked:
+            failures.append("relocated_state_tlc_release_identity_mismatch")
+        elif legacy_tlc_manifest:
+            release_identity_source = "checksum_bound_tlc_jar_manifest"
+        elif (
+            manifest.get("release_tag") == TLC_RELEASE_TAG
+            and manifest.get("revision") == TLC_REVISION
+        ):
+            release_identity_source = "managed_manifest_and_tlc_jar_manifest"
+        else:
+            failures.append("relocated_state_tlc_release_identity_mismatch")
+    elif (
+        manifest.get("distribution_tree_sha256")
+        != managed_identity.get("expected_distribution_tree_sha256")
+        or managed_identity.get("expected_distribution_tree_sha256")
+        != managed_identity.get("observed_distribution_tree_sha256")
+        or managed_identity.get("distribution_tree_verified") is not True
+        or managed_identity.get("payload_executable") is not True
+    ):
+        failures.append("relocated_state_apalache_tree_identity_mismatch")
+
+    manifest_launchers = manifest.get("launchers")
+    managed_launchers = managed_identity.get("launchers")
+    manifest_launchers = (
+        manifest_launchers if isinstance(manifest_launchers, Mapping) else {}
+    )
+    managed_launchers = (
+        managed_launchers if isinstance(managed_launchers, Mapping) else {}
+    )
+    expected_launcher_names = {
+        "tlc": {TLC_EXECUTABLE, "tlc2", "tla2tools"},
+        "apalache": {APALACHE_EXECUTABLE, "apalache"},
+    }.get(tool_id, set())
+    if (
+        set(manifest_launchers) != expected_launcher_names
+        or set(managed_launchers) != expected_launcher_names
+    ):
+        failures.append("relocated_state_launcher_population_mismatch")
+    launcher_digests: dict[str, str | None] = {}
+    for launcher_name, raw_current in sorted(managed_launchers.items()):
+        current = raw_current if isinstance(raw_current, Mapping) else {}
+        prior = manifest_launchers.get(launcher_name)
+        prior = prior if isinstance(prior, Mapping) else {}
+        if (
+            set(prior) != {"path", "sha256"}
+            or _HEX64.fullmatch(str(prior.get("sha256") or "")) is None
+        ):
+            failures.append(
+                f"relocated_state_launcher_manifest_invalid:{launcher_name}"
+            )
+        current_path = bind_suffix(
+            label=f"launcher:{launcher_name}",
+            old_path_value=prior.get("path"),
+            current_path_value=current.get("path"),
+        )
+        current_digest = binding_digest(current_path)
+        launcher_digests[launcher_name] = current_digest
+        observed_digest = str(
+            current.get("observed_sha256") or ""
+        ).removeprefix("sha256:")
+        expected_digest = str(
+            current.get("expected_sha256") or ""
+        ).removeprefix("sha256:")
+        if (
+            current.get("structural_match") is not True
+            or current.get("present") is not True
+            or current.get("executable") is not True
+            or current_digest is None
+            or current_digest.removeprefix("sha256:") != observed_digest
+            or current_digest.removeprefix("sha256:") != expected_digest
+        ):
+            failures.append(
+                f"relocated_state_launcher_identity_invalid:{launcher_name}"
+            )
+    if managed_identity.get("launchers_structurally_valid") is not True:
+        failures.append("relocated_state_launcher_set_invalid")
+
+    java_path = bind_suffix(
+        label="java",
+        old_path_value=manifest.get("java_executable"),
+        current_path_value=managed_identity.get("java_executable"),
+    )
+    java_digest = binding_digest(java_path)
+    if (
+        java_path is None
+        or java_path.is_symlink()
+        or managed_identity.get("java_executable_present") is not True
+        or not os.access(java_path, os.X_OK)
+        or java_digest is None
+    ):
+        failures.append("relocated_state_java_identity_invalid")
+
+    if len(previous_roots) != 1 or str(current_root) in previous_roots:
+        failures.append("relocated_state_previous_root_population_invalid")
+
+    return {
+        "valid": not failures,
+        "manifest_path": str(manifest_path),
+        "manifest_sha256": binding_digest(manifest_path),
+        "previous_root": (
+            next(iter(previous_roots)) if len(previous_roots) == 1 else None
+        ),
+        "current_root": str(current_root),
+        "bound_paths": bound_paths,
+        "java_executable": str(java_path) if java_path is not None else None,
+        "java_sha256": java_digest,
+        "launcher_sha256": launcher_digests,
+        "legacy_tlc_manifest": legacy_tlc_manifest,
+        "release_identity_source": release_identity_source,
+        "failures": sorted(set(failures)),
+    }
+
+
 def managed_tlc_identity(
     install_root: str | Path,
     *,
@@ -3280,6 +3602,7 @@ __all__ = [
     "ensure_apalache",
     "ensure_state_model_portfolio",
     "installation_lock",
+    "validate_relocated_managed_manifest",
     "managed_tlc_identity",
     "managed_apalache_identity",
     "plugin_manifest",
