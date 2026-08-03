@@ -1584,7 +1584,7 @@ Program invariants:
 
 ## PATLAW-125 Add a checkpointed USPTO document processing job
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
