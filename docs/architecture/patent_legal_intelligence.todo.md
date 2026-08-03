@@ -424,7 +424,7 @@ Program invariants:
 
 ## PATLAW-022 Process public application status and transactions
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
