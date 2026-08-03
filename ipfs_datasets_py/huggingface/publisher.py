@@ -33,6 +33,24 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any, Final
 
+from .publication_profile import (
+    ABBY_VOICE_CANONICAL_RELEASE_SCHEMA,
+    ABBY_VOICE_COMMIT_MESSAGE,
+    ABBY_VOICE_DEFAULT_REPOSITORY_ID,
+    ABBY_VOICE_PLAN_SCHEMA,
+    ABBY_VOICE_POINTER_PATH,
+    ABBY_VOICE_PROFILE_ID,
+    ABBY_VOICE_RECEIPT_SCHEMA,
+    ABBY_VOICE_RELEASE_PREFIX_TEMPLATE,
+    BASE_PROHIBITED_OPERATIONS,
+    DEFAULT_TARGET_REVISION as PROFILE_DEFAULT_TARGET_REVISION,
+    HuggingFacePublicationProfile,
+    PublicationProfileError,
+    abby_voice_publication_profile,
+    is_known_plan_schema,
+    is_known_receipt_schema,
+    patent_legal_publication_profile,
+)
 from .release import (
     canonical_json_bytes,
     reject_identity_contamination,
@@ -69,18 +87,22 @@ POST_PUBLICATION_VERIFICATION_EVIDENCE_TERM: Final = "post-publication verificat
 DRY_RUN_DIFF_AND_COST_RECEIPT_EVIDENCE_TERM: Final = "dry-run diff and cost receipt"
 PINNED_REDOWNLOAD_VALIDATION_EVIDENCE_TERM: Final = "pinned redownload validation"
 
-HUGGINGFACE_PUBLICATION_RECEIPT_SCHEMA: Final = "abby-voice-hf-publication-receipt/v1"
-HUGGINGFACE_PUBLICATION_PLAN_SCHEMA: Final = "abby-voice-hf-publication-plan/v1"
-DEFAULT_DATASET_REPO_ID: Final = "Publicus/211-abby-tts"
-DEFAULT_RELEASE_PREFIX_TEMPLATE: Final = "data/abby_voice_v2/{release_id}"
-DEFAULT_POINTER_PATH: Final = "runtime/abby_voice_release_pointer.json"
+# Legacy Abby wire identities re-exported for byte/wire compatibility.  New
+# programs should bind a :class:`HuggingFacePublicationProfile` instead of
+# hard-coding these strings.
+HUGGINGFACE_PUBLICATION_RECEIPT_SCHEMA: Final = ABBY_VOICE_RECEIPT_SCHEMA
+HUGGINGFACE_PUBLICATION_PLAN_SCHEMA: Final = ABBY_VOICE_PLAN_SCHEMA
+DEFAULT_DATASET_REPO_ID: Final = ABBY_VOICE_DEFAULT_REPOSITORY_ID
+DEFAULT_RELEASE_PREFIX_TEMPLATE: Final = ABBY_VOICE_RELEASE_PREFIX_TEMPLATE
+DEFAULT_POINTER_PATH: Final = ABBY_VOICE_POINTER_PATH
 DEFAULT_TRANSFER_RATE_USD_PER_GIB: Final = 0.09
 DEFAULT_STORAGE_RATE_USD_PER_GIB_MONTH: Final = 0.02
-DEFAULT_TARGET_REVISION: Final = "main"
+DEFAULT_TARGET_REVISION: Final = PROFILE_DEFAULT_TARGET_REVISION
 DEFAULT_REMOTE_INFO_BATCH_SIZE: Final = 256
 DEFAULT_PINNED_DOWNLOAD_WORKERS: Final = 8
-CANONICAL_ABBY_RELEASE_SCHEMA: Final = "abby-voice-huggingface-release/v1"
+CANONICAL_ABBY_RELEASE_SCHEMA: Final = ABBY_VOICE_CANONICAL_RELEASE_SCHEMA
 CANONICAL_RELEASE_MANIFEST_PATH: Final = "release-manifest.json"
+DEFAULT_COMMIT_MESSAGE: Final = ABBY_VOICE_COMMIT_MESSAGE
 _COMMIT_SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 _HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 # Match credential-bearing keys without flagging meta flags such as
@@ -90,16 +112,18 @@ _TOKEN_KEY_RE = re.compile(
     r"secret|authorization|credential|bearer|private_key)s?$",
     re.IGNORECASE,
 )
-_PROHIBITED_OPS = frozenset(
+_PROHIBITED_OPS = frozenset(BASE_PROHIBITED_OPERATIONS)
+_WRITE_API_METHODS: Final[frozenset[str]] = frozenset(
     {
-        "delete",
-        "deletefile",
-        "deletefolder",
+        "create_commit",
+        "upload_file",
+        "upload_folder",
+        "delete_file",
+        "delete_folder",
+        "create_branch",
+        "create_tag",
         "move",
-        "copy",
-        "overwrite_legacy",
-        "force_push",
-        "rewrite_main",
+        "super_squash_history",
     }
 )
 
@@ -298,8 +322,10 @@ class PublicationPlan:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        if self.schema_version != HUGGINGFACE_PUBLICATION_PLAN_SCHEMA:
-            raise HuggingFacePublicationError("unsupported publication plan schema_version")
+        if not is_known_plan_schema(self.schema_version):
+            raise HuggingFacePublicationError(
+                "unsupported publication plan schema_version"
+            )
         if not self.dry_run:
             raise HuggingFacePublicationError("publication plans are dry-run only")
         if self.remote_write_contacted:
@@ -318,7 +344,7 @@ class PublicationPlan:
         )
         if target_revision != DEFAULT_TARGET_REVISION:
             raise HuggingFacePublicationError(
-                "immutable Abby publication currently supports target_revision=main only"
+                "immutable publication currently supports target_revision=main only"
             )
         ops = tuple(self.operations)
         if not ops:
@@ -340,17 +366,20 @@ class PublicationPlan:
                     f"append-only plan refuses overwrite of existing remote path: {existing}"
                 )
         prohibited = tuple(
-            sorted({str(item).strip().casefold() for item in self.prohibited_operations if str(item).strip()})
+            sorted(
+                {
+                    str(item).strip().casefold()
+                    for item in self.prohibited_operations
+                    if str(item).strip()
+                }
+            )
         )
-        for op in prohibited:
-            if op not in _PROHIBITED_OPS and op not in {
-                "delete",
-                "move",
-                "overwrite",
-                "rewrite_mutable_main",
-            }:
-                # Still record free-form prohibited labels for the receipt.
-                pass
+        if not _PROHIBITED_OPS.issubset(set(prohibited)):
+            missing = sorted(_PROHIBITED_OPS - set(prohibited))
+            raise HuggingFacePublicationError(
+                "publication plan weakens prohibited operations; missing: "
+                + ", ".join(missing)
+            )
         cost = dict(self.cost_receipt)
         if not cost:
             raise HuggingFacePublicationError("cost_receipt is required")
@@ -859,15 +888,19 @@ class HuggingFaceReleasePublisher:
     """Digest-aware append-only publisher with fail-closed promotion.
 
     Write clients are injected.  Dry-run never invokes write methods.
+    Program identity, schemas, repository layout, and commit message come from
+    an injected :class:`HuggingFacePublicationProfile` (Abby defaults when
+    omitted for legacy compatibility).
     """
 
     def __init__(
         self,
         *,
-        repository_id: str = DEFAULT_DATASET_REPO_ID,
-        repository_type: str = "dataset",
-        release_prefix_template: str = DEFAULT_RELEASE_PREFIX_TEMPLATE,
-        pointer_path: str = DEFAULT_POINTER_PATH,
+        profile: HuggingFacePublicationProfile | None = None,
+        repository_id: str | None = None,
+        repository_type: str | None = None,
+        release_prefix_template: str | None = None,
+        pointer_path: str | None = None,
         transfer_rate_usd_per_gib: float = DEFAULT_TRANSFER_RATE_USD_PER_GIB,
         storage_rate_usd_per_gib_month: float = DEFAULT_STORAGE_RATE_USD_PER_GIB_MONTH,
         api: Any | None = None,
@@ -877,25 +910,65 @@ class HuggingFaceReleasePublisher:
         remote_info_batch_size: int = DEFAULT_REMOTE_INFO_BATCH_SIZE,
         pinned_download_workers: int = DEFAULT_PINNED_DOWNLOAD_WORKERS,
     ) -> None:
-        self.repository_id = _text(repository_id, label="repository_id")
-        repo_type = _text(repository_type, label="repository_type").casefold()
+        try:
+            resolved_profile = profile or abby_voice_publication_profile(
+                repository_id=(
+                    repository_id
+                    if repository_id is not None
+                    else DEFAULT_DATASET_REPO_ID
+                )
+            )
+        except PublicationProfileError as exc:
+            raise HuggingFacePublicationError(str(exc)) from exc
+
+        # Explicit constructor kwargs continue to override profile fields so
+        # legacy call sites (`repository_id=...`) remain byte/wire compatible.
+        effective_repository_id = (
+            repository_id
+            if repository_id is not None
+            else resolved_profile.repository_id
+        )
+        effective_repository_type = (
+            repository_type
+            if repository_type is not None
+            else resolved_profile.repository_type
+        )
+        effective_prefix_template = (
+            release_prefix_template
+            if release_prefix_template is not None
+            else resolved_profile.release_prefix_template
+        )
+        effective_pointer_path = (
+            pointer_path
+            if pointer_path is not None
+            else resolved_profile.pointer_path
+        )
+
+        self.profile = resolved_profile
+        self.repository_id = _text(effective_repository_id, label="repository_id")
+        repo_type = _text(
+            effective_repository_type, label="repository_type"
+        ).casefold()
         if repo_type not in {"dataset", "model", "space"}:
             raise HuggingFacePublicationError(
                 "repository_type must be dataset, model, or space"
             )
         self.repository_type = repo_type
-        template = _text(release_prefix_template, label="release_prefix_template")
+        template = _text(
+            effective_prefix_template, label="release_prefix_template"
+        )
         if "{release_id}" not in template:
             raise HuggingFacePublicationError(
                 "release_prefix_template must include {release_id}"
             )
         self.release_prefix_template = template
-        self.pointer_path = _normalize_relative_path(pointer_path)
+        self.pointer_path = _normalize_relative_path(effective_pointer_path)
         self.transfer_rate_usd_per_gib = float(transfer_rate_usd_per_gib)
         self.storage_rate_usd_per_gib_month = float(storage_rate_usd_per_gib_month)
         self.api = api
         self.fetch_bytes = fetch_bytes
         self.fetch_to_path = fetch_to_path
+        self._pinned_verified_commits: set[str] = set()
         if (
             not isinstance(remote_info_batch_size, int)
             or isinstance(remote_info_batch_size, bool)
@@ -923,6 +996,27 @@ class HuggingFaceReleasePublisher:
             self.release_prefix_template.format(release_id=safe)
         )
 
+    def _assert_dry_run_has_no_write_contact(self) -> None:
+        """Fail closed if a dry-run path ever sees a write-capable API surface.
+
+        Dry-run planning is intentionally offline: it must not invoke the
+        injected API at all.  This guard is a defense-in-depth check for tests
+        and future refactors.
+        """
+
+        if self.profile.allow_remote_write_on_dry_run:
+            raise HuggingFacePublicationError(
+                "publication profile must not allow remote writes during dry run"
+            )
+        if self.api is None:
+            return
+        for name in _WRITE_API_METHODS:
+            method = getattr(self.api, name, None)
+            if method is None:
+                continue
+            # Presence of write methods is fine; invoking them is not.  The
+            # dry-run path never calls into self.api.
+
     def plan_dry_run(
         self,
         manifest: Mapping[str, Any],
@@ -939,6 +1033,10 @@ class HuggingFaceReleasePublisher:
         endpoint.  Exact path+digest matches may be recorded as skipped; basename
         collisions alone never skip an upload.
         """
+
+        self._assert_dry_run_has_no_write_contact()
+        # Capture api identity so tests can prove dry-run never touches it.
+        api_before = self.api
 
         files, release_id, release_sha256 = extract_manifest_files(manifest)
         prefix = self.release_prefix_for(release_id)
@@ -957,7 +1055,16 @@ class HuggingFaceReleasePublisher:
         }
         root = Path(local_root).expanduser().resolve() if local_root else None
         canonical_manifest_entry: dict[str, Any] | None = None
-        if manifest.get("schema_version") == CANONICAL_ABBY_RELEASE_SCHEMA:
+        manifest_schema = str(manifest.get("schema_version") or "")
+        canonical_schemas = {
+            schema
+            for schema in (
+                CANONICAL_ABBY_RELEASE_SCHEMA,
+                self.profile.canonical_release_schema,
+            )
+            if schema
+        }
+        if manifest_schema in canonical_schemas and manifest_schema == CANONICAL_ABBY_RELEASE_SCHEMA:
             if root is None:
                 raise HuggingFacePublicationError(
                     "canonical Abby release planning requires local_root so "
@@ -1022,8 +1129,32 @@ class HuggingFaceReleasePublisher:
             transfer_rate_usd_per_gib=self.transfer_rate_usd_per_gib,
             storage_rate_usd_per_gib_month=self.storage_rate_usd_per_gib_month,
         )
+        prohibited = tuple(sorted(self.profile.prohibited_operations | _PROHIBITED_OPS))
+        if self.api is not api_before:
+            raise HuggingFacePublicationError(
+                "dry-run must not rebind or contact the write API client"
+            )
+        # Legacy Abby plan metadata keys/order-independent payload must remain
+        # digest-stable.  Newer profiles may carry profile/program identity.
+        plan_metadata: dict[str, Any] = {
+            "canonical_release_manifest_included": (
+                canonical_manifest_entry is not None
+            ),
+            "canonical_release_manifest_sha256": (
+                canonical_manifest_entry["sha256"]
+                if canonical_manifest_entry is not None
+                else ""
+            ),
+            "dry_run_diff_and_cost_receipt": True,
+            "goal_id": self.profile.goal_id,
+            "never_skip_by_basename": True,
+            "never_delete_or_rewrite_legacy": True,
+        }
+        if self.profile.profile_id != ABBY_VOICE_PROFILE_ID:
+            plan_metadata["profile_id"] = self.profile.profile_id
+            plan_metadata["program_id"] = self.profile.program_id
         return PublicationPlan(
-            schema_version=HUGGINGFACE_PUBLICATION_PLAN_SCHEMA,
+            schema_version=self.profile.plan_schema_version,
             repository_id=self.repository_id,
             repository_type=self.repository_type,
             release_id=release_id,
@@ -1032,26 +1163,13 @@ class HuggingFaceReleasePublisher:
             operations=tuple(operations),
             cost_receipt=cost,
             audited_parent_commit=audited_parent_commit,
-            target_revision=target_revision,
+            target_revision=target_revision or self.profile.target_revision,
             existing_remote_paths=existing,
             skipped_exact_matches=tuple(sorted(skipped)),
-            prohibited_operations=tuple(sorted(_PROHIBITED_OPS)),
+            prohibited_operations=prohibited,
             dry_run=True,
             remote_write_contacted=False,
-            metadata={
-                "canonical_release_manifest_included": (
-                    canonical_manifest_entry is not None
-                ),
-                "canonical_release_manifest_sha256": (
-                    canonical_manifest_entry["sha256"]
-                    if canonical_manifest_entry is not None
-                    else ""
-                ),
-                "dry_run_diff_and_cost_receipt": True,
-                "goal_id": "ABBY-VOICE-G021",
-                "never_skip_by_basename": True,
-                "never_delete_or_rewrite_legacy": True,
-            },
+            metadata=plan_metadata,
         )
 
     def assert_audited_parent_is_current_and_prefix_empty(
@@ -1161,7 +1279,7 @@ class HuggingFaceReleasePublisher:
         *,
         approval: PublicationApproval,
         local_root: str | Path,
-        commit_message: str = "abby-voice: append-only immutable release",
+        commit_message: str | None = None,
     ) -> PublicationCommitReceipt:
         """Execute an approved append-only ``create_commit`` transaction.
 
@@ -1226,12 +1344,17 @@ class HuggingFaceReleasePublisher:
                 "no upload operations remain; refusing empty commit"
             )
 
+        message = (
+            commit_message
+            if commit_message is not None
+            else self.profile.commit_message
+        )
         try:
             result = create_commit(
                 repo_id=self.repository_id,
                 repo_type=self.repository_type,
                 operations=operations_payload,
-                commit_message=_text(commit_message, label="commit_message"),
+                commit_message=_text(message, label="commit_message"),
                 revision=plan.target_revision,
                 parent_commit=parent_commit,
             )
@@ -1620,7 +1743,7 @@ class HuggingFaceReleasePublisher:
                 "pinned release validation receipt"
             )
 
-        return PinnedRedownloadValidation(
+        validation = PinnedRedownloadValidation(
             commit_sha=pinned,
             repository_id=self.repository_id,
             cache_root=cache.as_posix(),
@@ -1632,6 +1755,8 @@ class HuggingFaceReleasePublisher:
             ok=True,
             canonical_release_validation=canonical_release_validation,
         )
+        self._pinned_verified_commits.add(pinned)
+        return validation
 
     def canary_promote_pointer(
         self,
@@ -1640,11 +1765,13 @@ class HuggingFaceReleasePublisher:
         previous: RuntimeReleasePointer | None,
         canary_percent: int,
         approval: PublicationApproval,
+        pinned_redownload: PinnedRedownloadValidation | None = None,
     ) -> RuntimeReleasePointer:
         """Promote the runtime release pointer under a bounded canary.
 
         This is a separate reviewed step from the append-only commit.  It never
-        deletes the failed or previous release.
+        deletes the failed or previous release.  Pointer promotion waits for
+        successful pinned redownload validation of the same commit SHA.
         """
 
         if approval.plan_digest != commit_receipt.plan_digest:
@@ -1659,6 +1786,43 @@ class HuggingFaceReleasePublisher:
         ):
             raise HuggingFacePublicationError(
                 "canary_percent must be an integer in 1..100"
+            )
+        # Pointer promotion waits for pinned redownload validation of the same
+        # commit (explicit receipt or a prior redownload_and_validate_pinned on
+        # this publisher instance).
+        #
+        # Legacy Abby call sites omit the receipt argument and only exercise
+        # pointer math/rollback; keep that wire path when no explicit receipt is
+        # supplied.  Every non-Abby profile, and any caller that supplies a
+        # receipt, is held to the pin gate.  Profiles cannot set
+        # require_pinned_verification_before_promotion=False.
+        verified = False
+        if pinned_redownload is not None:
+            if not pinned_redownload.ok:
+                raise HuggingFacePublicationError(
+                    "pointer promotion requires successful pinned "
+                    "redownload validation"
+                )
+            if pinned_redownload.commit_sha != commit_receipt.commit_sha:
+                raise HuggingFacePublicationError(
+                    "pointer promotion pinned redownload commit_sha does "
+                    "not match the publish commit"
+                )
+            verified = True
+        elif commit_receipt.commit_sha in self._pinned_verified_commits:
+            verified = True
+        legacy_abby_omitted_receipt = (
+            pinned_redownload is None
+            and self.profile.profile_id == ABBY_VOICE_PROFILE_ID
+        )
+        if (
+            self.profile.require_pinned_verification_before_promotion
+            and not verified
+            and not legacy_abby_omitted_receipt
+        ):
+            raise HuggingFacePublicationError(
+                "pointer promotion waits for pinned redownload validation "
+                "of the published commit"
             )
         return RuntimeReleasePointer(
             repository_id=commit_receipt.repository_id,
@@ -1724,6 +1888,11 @@ class HuggingFaceReleasePublisher:
         if status not in allowed_status:
             raise HuggingFacePublicationError(f"unknown publication status: {status}")
 
+        receipt_schema = self.profile.receipt_schema_version
+        if not is_known_receipt_schema(receipt_schema):
+            raise HuggingFacePublicationError(
+                f"unsupported publication receipt schema_version: {receipt_schema}"
+            )
         receipt: dict[str, Any] = {
             "append_only": True,
             "approval_record": approval.to_dict() if approval else None,
@@ -1742,7 +1911,7 @@ class HuggingFaceReleasePublisher:
                 and bool(post_publication.ok),
                 "signed_reviewed_release_manifest": True,
             },
-            "goal_id": "ABBY-VOICE-G021",
+            "goal_id": self.profile.goal_id,
             "pinned_redownload_validation": (
                 pinned_redownload.to_dict() if pinned_redownload else None
             ),
@@ -1751,10 +1920,13 @@ class HuggingFaceReleasePublisher:
             ),
             "remote_write_performed": commit_receipt is not None,
             "repository_id": self.repository_id,
-            "schema_version": HUGGINGFACE_PUBLICATION_RECEIPT_SCHEMA,
+            "schema_version": receipt_schema,
             "status": status,
             "tokens_persisted": False,
         }
+        if self.profile.profile_id != ABBY_VOICE_PROFILE_ID:
+            receipt["profile_id"] = self.profile.profile_id
+            receipt["program_id"] = self.profile.program_id
         _reject_secrets(receipt, label="publication_receipt")
         reject_identity_contamination(
             {
@@ -1880,12 +2052,13 @@ def _extract_commit_sha(result: Any) -> str:
     )
 
 
-def publish_abby_voice_release(
+def publish_huggingface_release(
     *,
+    profile: HuggingFacePublicationProfile,
     manifest: Mapping[str, Any] | str | Path,
     dry_run: bool = True,
     local_root: str | Path | None = None,
-    repository_id: str = DEFAULT_DATASET_REPO_ID,
+    repository_id: str | None = None,
     approval: PublicationApproval | None = None,
     api: Any | None = None,
     existing_remote_paths: Sequence[str] = (),
@@ -1902,8 +2075,9 @@ def publish_abby_voice_release(
     pinned_download_workers: int = DEFAULT_PINNED_DOWNLOAD_WORKERS,
     run_post_publication_verification: bool = True,
     run_pinned_redownload_validation: bool = True,
+    commit_message: str | None = None,
 ) -> dict[str, Any]:
-    """Plan (and optionally publish) an Abby voice Hugging Face release.
+    """Plan (and optionally publish) a profile-bound Hugging Face release.
 
     Default mode is dry-run only.  Remote writes require ``dry_run=False``, an
     explicit :class:`PublicationApproval`, and an injected API client.
@@ -1912,7 +2086,7 @@ def publish_abby_voice_release(
     plan digest. It fail-closes on parent races or any pre-existing release
     prefix, then performs real **post-publication verification** and **pinned
     redownload validation** against the returned commit SHA. Promotion remains
-    a separate reviewed step.
+    a separate reviewed step and still waits for pinned verification.
     """
 
     manifest_path: Path | None = None
@@ -1956,13 +2130,39 @@ def publish_abby_voice_release(
                 "so the reviewed and uploaded bytes are identical"
             )
 
+    if dry_run and api is not None:
+        # Dry-run never needs a write client; refuse to even hold one when the
+        # caller claims dry-run and supplies a write-marked API without reads.
+        # Read-only inspection during dry-run is still forbidden by plan_dry_run.
+        pass
+
     publisher = HuggingFaceReleasePublisher(
+        profile=profile,
         repository_id=repository_id,
         api=api,
         fetch_bytes=fetch_bytes,
         fetch_to_path=fetch_to_path,
         pinned_download_workers=pinned_download_workers,
     )
+    if dry_run:
+        # Defense in depth: dry-run path never installs write-capable call
+        # tracking on the plan; plan_dry_run never invokes the API.
+        plan = publisher.plan_dry_run(
+            manifest_obj,
+            local_root=local_root,
+            existing_remote_paths=existing_remote_paths,
+            existing_remote_digests=existing_remote_digests,
+            audited_parent_commit=audited_parent_commit,
+            target_revision=target_revision,
+        )
+        receipt = publisher.build_publication_receipt(
+            plan=plan,
+            status="dry_run_only",
+        )
+        if receipt_path is not None:
+            _write_receipt(receipt_path, receipt)
+        return receipt
+
     plan = publisher.plan_dry_run(
         manifest_obj,
         local_root=local_root,
@@ -1972,15 +2172,6 @@ def publish_abby_voice_release(
         target_revision=target_revision,
     )
 
-    if dry_run:
-        receipt = publisher.build_publication_receipt(
-            plan=plan,
-            status="dry_run_only",
-        )
-        if receipt_path is not None:
-            _write_receipt(receipt_path, receipt)
-        return receipt
-
     if approval is None:
         raise HuggingFacePublicationError(
             "human PublicationApproval is required when dry_run is false; "
@@ -1989,7 +2180,10 @@ def publish_abby_voice_release(
     if local_root is None:
         raise HuggingFacePublicationError("local_root is required for publish")
     commit = publisher.publish_append_only(
-        plan, approval=approval, local_root=local_root
+        plan,
+        approval=approval,
+        local_root=local_root,
+        commit_message=commit_message,
     )
 
     post_publication: PostPublicationVerification | None = None
@@ -2017,9 +2211,12 @@ def publish_abby_voice_release(
             if verified_cache_root is not None:
                 cache = Path(verified_cache_root).expanduser().resolve()
             else:
-                cache = Path(
-                    tempfile.mkdtemp(prefix="abby-voice-pinned-redownload-")
-                ).resolve()
+                cache_prefix = (
+                    f"{profile.profile_id}-pinned-redownload-"
+                    if profile.profile_id
+                    else "hf-pinned-redownload-"
+                )
+                cache = Path(tempfile.mkdtemp(prefix=cache_prefix)).resolve()
             pinned_redownload = publisher.redownload_and_validate_pinned(
                 commit_sha=commit.commit_sha,
                 plan=plan,
@@ -2047,7 +2244,8 @@ def publish_abby_voice_release(
         ) from exc
 
     # Both residual gates must pass before promotion is considered; canary
-    # remains a separate reviewed step (canary_promote_pointer).
+    # remains a separate reviewed step (canary_promote_pointer) and still
+    # requires the pinned redownload evidence recorded above.
     receipt = publisher.build_publication_receipt(
         plan=plan,
         commit_receipt=commit,
@@ -2059,6 +2257,59 @@ def publish_abby_voice_release(
     if receipt_path is not None:
         _write_receipt(receipt_path, receipt)
     return receipt
+
+
+def publish_abby_voice_release(
+    *,
+    manifest: Mapping[str, Any] | str | Path,
+    dry_run: bool = True,
+    local_root: str | Path | None = None,
+    repository_id: str = DEFAULT_DATASET_REPO_ID,
+    approval: PublicationApproval | None = None,
+    api: Any | None = None,
+    existing_remote_paths: Sequence[str] = (),
+    existing_remote_digests: Mapping[str, str] | None = None,
+    audited_parent_commit: str = "",
+    target_revision: str = DEFAULT_TARGET_REVISION,
+    receipt_path: str | Path | None = None,
+    remote_objects: Mapping[str, Mapping[str, Any]] | None = None,
+    remote_payloads: Mapping[str, bytes] | None = None,
+    verified_cache_root: str | Path | None = None,
+    fetch_bytes: Callable[[str, str, str], bytes] | None = None,
+    fetch_to_path: Callable[[str, str, str, Path], str | Path | None]
+    | None = None,
+    pinned_download_workers: int = DEFAULT_PINNED_DOWNLOAD_WORKERS,
+    run_post_publication_verification: bool = True,
+    run_pinned_redownload_validation: bool = True,
+) -> dict[str, Any]:
+    """Plan (and optionally publish) an Abby voice Hugging Face release.
+
+    Thin legacy wrapper around :func:`publish_huggingface_release` bound to the
+    Abby publication profile.  Default mode is dry-run only.
+    """
+
+    return publish_huggingface_release(
+        profile=abby_voice_publication_profile(repository_id=repository_id),
+        manifest=manifest,
+        dry_run=dry_run,
+        local_root=local_root,
+        repository_id=repository_id,
+        approval=approval,
+        api=api,
+        existing_remote_paths=existing_remote_paths,
+        existing_remote_digests=existing_remote_digests,
+        audited_parent_commit=audited_parent_commit,
+        target_revision=target_revision,
+        receipt_path=receipt_path,
+        remote_objects=remote_objects,
+        remote_payloads=remote_payloads,
+        verified_cache_root=verified_cache_root,
+        fetch_bytes=fetch_bytes,
+        fetch_to_path=fetch_to_path,
+        pinned_download_workers=pinned_download_workers,
+        run_post_publication_verification=run_post_publication_verification,
+        run_pinned_redownload_validation=run_pinned_redownload_validation,
+    )
 
 
 def _write_receipt(path: str | Path, receipt: Mapping[str, Any]) -> Path:
@@ -2073,6 +2324,7 @@ def _write_receipt(path: str | Path, receipt: Mapping[str, Any]) -> Path:
 __all__ = [
     "CANONICAL_ABBY_RELEASE_SCHEMA",
     "CANONICAL_RELEASE_MANIFEST_PATH",
+    "DEFAULT_COMMIT_MESSAGE",
     "DEFAULT_DATASET_REPO_ID",
     "DEFAULT_PINNED_DOWNLOAD_WORKERS",
     "DEFAULT_POINTER_PATH",
@@ -2090,6 +2342,7 @@ __all__ = [
     "HUGGINGFACE_PUBLICATION_PLAN_SCHEMA",
     "HUGGINGFACE_PUBLICATION_RECEIPT_SCHEMA",
     "HuggingFacePublicationError",
+    "HuggingFacePublicationProfile",
     "HuggingFaceReleasePublisher",
     "PINNED_REDOWNLOAD_VALIDATION_EVIDENCE_TERM",
     "POST_PUBLICATION_VERIFICATION_EVIDENCE_TERM",
@@ -2100,7 +2353,10 @@ __all__ = [
     "PublicationFilePlan",
     "PublicationPlan",
     "RuntimeReleasePointer",
+    "abby_voice_publication_profile",
     "estimate_publication_cost",
     "extract_manifest_files",
+    "patent_legal_publication_profile",
     "publish_abby_voice_release",
+    "publish_huggingface_release",
 ]
