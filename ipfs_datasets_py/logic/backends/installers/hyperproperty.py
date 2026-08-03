@@ -468,6 +468,7 @@ class EngineIdentity:
     source_archive_path: str = ""
     source_tree_sha256: str = ""
     distribution_tree_sha256: str = ""
+    distribution_content_tree_sha256: str = ""
     git_commit: str = ""
     install_root: str = ""
     replaces_gap_id: str = GAP_ID
@@ -582,6 +583,9 @@ class EngineIdentity:
             "dependency_artifacts": [
                 item.to_dict() for item in self.dependency_artifacts
             ],
+            "distribution_content_tree_sha256": (
+                self.distribution_content_tree_sha256
+            ),
             "distribution_tree_sha256": self.distribution_tree_sha256,
             "executable": self.executable,
             "executable_kind": self.executable_kind,
@@ -1341,6 +1345,146 @@ def _tree_sha256(root: Path, *, exclude: Sequence[str] = ()) -> str:
             f"{kind}\0{relative}\0{mode:o}\0".encode() + body + b"\0"
         )
     return digest.hexdigest()
+
+
+def _tree_content_sha256(root: Path, *, exclude: Sequence[str] = ()) -> str:
+    """Hash exact tree names, object kinds, link targets, and file contents.
+
+    Unlike :func:`_tree_sha256`, this deployment digest deliberately excludes
+    permission modes.  A trusted deployment step may remove every write bit
+    after copying a vendor tree, which changes the primary distribution digest
+    without changing the installed product.  This second digest is emitted
+    while the primary mode-inclusive tree still validates and is only accepted
+    by the sealed-relocation fallback below.
+    """
+
+    excluded = frozenset(exclude)
+    digest = hashlib.sha256()
+    digest.update(b"hyperproperty-distribution-content-tree/v1\0")
+    for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
+        relative = path.relative_to(root).as_posix()
+        if relative in excluded:
+            continue
+        if path.is_symlink():
+            kind = "link"
+            body = os.readlink(path).encode("utf-8")
+        elif path.is_dir():
+            kind = "dir"
+            body = b""
+        elif path.is_file():
+            kind = "file"
+            body = bytes.fromhex(_sha256_file(path))
+        else:
+            raise HyperpropertyInstallerError(
+                f"unsupported installed filesystem object {relative!r}"
+            )
+        digest.update(f"{kind}\0{relative}\0".encode() + body + b"\0")
+    return digest.hexdigest()
+
+
+_SEALED_DEPLOYMENT_OWNER_UID: Final = 0
+_SEALED_DEPLOYMENT_ANCESTOR_BOUNDARY: Final = Path("/")
+_WRITE_MODE_BITS: Final = stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
+
+
+def _sealed_vendor_tree_is_immutable(
+    version_root: Path,
+    *,
+    install_root: Path,
+) -> bool:
+    """Return whether a relocated vendor tree is root-owned and read-only.
+
+    The complete version tree is checked without following links.  Symlinks
+    must be relative, resolve strictly, and stay inside that version tree.
+    Every path component from the active install root to the version root is
+    also root-owned and non-writable, preventing a writable ancestor from
+    replacing an otherwise read-only tree.
+    """
+
+    try:
+        lexical_install_root = Path(os.path.abspath(str(install_root)))
+        resolved_install_root = lexical_install_root.resolve(strict=True)
+        lexical_version_root = Path(os.path.abspath(str(version_root)))
+        resolved_version_root = lexical_version_root.resolve(strict=True)
+    except OSError:
+        return False
+    if (
+        resolved_install_root != lexical_install_root
+        or resolved_version_root != lexical_version_root
+        or not resolved_install_root.is_dir()
+        or not resolved_version_root.is_dir()
+    ):
+        return False
+    try:
+        resolved_version_root.relative_to(resolved_install_root)
+    except ValueError:
+        return False
+
+    component = resolved_version_root
+    while True:
+        try:
+            details = component.lstat()
+        except OSError:
+            return False
+        if (
+            details.st_uid != _SEALED_DEPLOYMENT_OWNER_UID
+            or details.st_mode & _WRITE_MODE_BITS
+            or component.is_symlink()
+            or not component.is_dir()
+        ):
+            return False
+        if component == resolved_install_root:
+            break
+        component = component.parent
+
+    try:
+        ancestor_boundary = _SEALED_DEPLOYMENT_ANCESTOR_BOUNDARY.resolve(
+            strict=True
+        )
+        resolved_install_root.relative_to(ancestor_boundary)
+    except (OSError, ValueError):
+        return False
+    component = resolved_install_root.parent
+    while True:
+        try:
+            details = component.lstat()
+        except OSError:
+            return False
+        if (
+            details.st_uid != _SEALED_DEPLOYMENT_OWNER_UID
+            or details.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+            or component.is_symlink()
+            or not component.is_dir()
+        ):
+            return False
+        if component == ancestor_boundary:
+            break
+        if component == component.parent:
+            return False
+        component = component.parent
+
+    for path in (resolved_version_root, *resolved_version_root.rglob("*")):
+        try:
+            details = path.lstat()
+        except OSError:
+            return False
+        if details.st_uid != _SEALED_DEPLOYMENT_OWNER_UID:
+            return False
+        if path.is_symlink():
+            target = Path(os.readlink(path))
+            if target.is_absolute():
+                return False
+            try:
+                resolved_target = path.resolve(strict=True)
+                resolved_target.relative_to(resolved_version_root)
+            except (OSError, RuntimeError, ValueError):
+                return False
+            continue
+        if details.st_mode & _WRITE_MODE_BITS:
+            return False
+        if not (stat.S_ISREG(details.st_mode) or stat.S_ISDIR(details.st_mode)):
+            return False
+    return True
 
 
 def _is_internal_python_adapter(path: Path) -> bool:
@@ -2369,12 +2513,49 @@ def _identity_from_disk(
             return None
 
         distribution_sha = str(payload.get("distribution_tree_sha256") or "")
-        if (
-            not re.fullmatch(r"[0-9a-f]{64}", distribution_sha)
-            or _tree_sha256(version_root, exclude=("identity.json",))
-            != distribution_sha
-        ):
+        distribution_content_sha = str(
+            payload.get("distribution_content_tree_sha256") or ""
+        )
+        observed_distribution_sha = _tree_sha256(
+            version_root, exclude=("identity.json",)
+        )
+        if not re.fullmatch(r"[0-9a-f]{64}", distribution_sha):
             return None
+        if observed_distribution_sha == distribution_sha:
+            # New manifests bind both representations even on the ordinary
+            # mode-preserving path.  Legacy manifests remain valid here, but
+            # can never enter the mode-relaxed relocation fallback.
+            if distribution_content_sha and (
+                not re.fullmatch(
+                    r"[0-9a-f]{64}", distribution_content_sha
+                )
+                or _tree_content_sha256(
+                    version_root, exclude=("identity.json",)
+                )
+                != distribution_content_sha
+            ):
+                return None
+        else:
+            # Permission normalization is accepted only for a genuine move
+            # into a sealed tree.  The content digest was recorded while the
+            # original mode-inclusive distribution still validated; it binds
+            # every name, kind, link target, and file byte without weakening
+            # the primary path.
+            if (
+                recorded_install_root is None
+                or recorded_install_root == active_install_root
+                or not re.fullmatch(
+                    r"[0-9a-f]{64}", distribution_content_sha
+                )
+                or not _sealed_vendor_tree_is_immutable(
+                    version_root, install_root=active_install_root
+                )
+                or _tree_content_sha256(
+                    version_root, exclude=("identity.json",)
+                )
+                != distribution_content_sha
+            ):
+                return None
         raw_lockfiles = payload.get("build_lockfiles") or {}
         if not isinstance(raw_lockfiles, Mapping):
             return None
@@ -2472,6 +2653,9 @@ def _identity_from_disk(
             distribution_tree_sha256=str(
                 payload.get("distribution_tree_sha256") or ""
             ),
+            distribution_content_tree_sha256=str(
+                payload.get("distribution_content_tree_sha256") or ""
+            ),
             git_commit=str(payload.get("git_commit") or ""),
             install_root=str(install_root),
             is_hermetic_engine=is_hermetic and not is_vendor,
@@ -2499,6 +2683,193 @@ def _identity_from_disk(
         )
     except HyperpropertyInstallerError:
         return None
+
+
+def write_sealed_vendor_relocation_identity(
+    tool_id: str,
+    *,
+    original_install_root: Path | str,
+    relocated_install_root: Path | str,
+    output_path: Path | str,
+    repo_root: Path | str | None = None,
+    lock_path: Path | str | None = None,
+) -> Path:
+    """Emit an identity manifest for one exact sealed vendor-tree relocation.
+
+    This is a deployment-time bridge for manifests created before
+    ``distribution_content_tree_sha256`` existed.  It never edits either
+    install tree.  The original identity must pass the ordinary, full,
+    mode-inclusive vendor audit at its recorded root.  The relocated manifest
+    must otherwise be byte-for-byte equivalent, its mode-neutral tree digest
+    must equal the validated original, and its complete version tree must
+    already be root-owned/read-only with safe in-tree symlinks.  Only then is a
+    caller-supplied manifest written with the additional content-tree digest.
+
+    Runtime loading of the emitted manifest does not consult the original
+    mutable tree; the digest is subsequently enforced against the sealed tree.
+    """
+
+    if tool_id not in EXTERNAL_TOOLS:
+        raise HyperpropertyInstallerError(f"unknown tool_id {tool_id!r}")
+    original_root = _expand_install_root(original_install_root)
+    relocated_root = _expand_install_root(relocated_install_root)
+    if original_root == relocated_root:
+        raise HyperpropertyInstallerError(
+            "sealed relocation identity requires two distinct install roots"
+        )
+    pin = pin_for_tool(tool_id, repo_root=repo_root, lock_path=lock_path)
+    identity = _identity_from_disk(
+        tool_id, original_root, pin, vendor=True
+    )
+    if (
+        identity is None
+        or not identity.is_vendor_build
+        or not identity.is_upstream_build
+        or identity.is_hermetic_engine
+    ):
+        raise HyperpropertyInstallerError(
+            f"{tool_id} original vendor identity failed full validation"
+        )
+
+    original_manifest = identity_manifest_path(
+        original_root, tool_id, pin["version"], vendor=True
+    )
+    relocated_manifest = identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    try:
+        if (
+            original_manifest.is_symlink()
+            or original_manifest.resolve(strict=True) != original_manifest
+            or relocated_manifest.is_symlink()
+            or relocated_manifest.resolve(strict=True) != relocated_manifest
+        ):
+            raise HyperpropertyInstallerError(
+                "sealed relocation manifests must be canonical regular files"
+            )
+        original_payload = json.loads(
+            original_manifest.read_text(encoding="utf-8")
+        )
+        relocated_payload = json.loads(
+            relocated_manifest.read_text(encoding="utf-8")
+        )
+    except (json.JSONDecodeError, OSError) as exc:
+        raise HyperpropertyInstallerError(
+            "sealed relocation identity manifest is unavailable or malformed"
+        ) from exc
+    if not isinstance(original_payload, dict) or not isinstance(
+        relocated_payload, dict
+    ):
+        raise HyperpropertyInstallerError(
+            "sealed relocation identity manifest must be a JSON object"
+        )
+
+    content_field = "distribution_content_tree_sha256"
+    original_without_content = dict(original_payload)
+    relocated_without_content = dict(relocated_payload)
+    original_without_content.pop(content_field, None)
+    relocated_without_content.pop(content_field, None)
+    if original_without_content != relocated_without_content:
+        raise HyperpropertyInstallerError(
+            "relocated vendor identity differs from the validated original"
+        )
+    recorded_root_raw = str(original_payload.get("install_root") or "")
+    if (
+        not recorded_root_raw
+        or Path(os.path.expanduser(recorded_root_raw)).resolve()
+        != original_root
+    ):
+        raise HyperpropertyInstallerError(
+            "original vendor manifest is not bound to the supplied original root"
+        )
+
+    original_version_root = original_manifest.parent
+    relocated_version_root = relocated_manifest.parent
+    distribution_sha = str(
+        original_payload.get("distribution_tree_sha256") or ""
+    )
+    if (
+        not re.fullmatch(r"[0-9a-f]{64}", distribution_sha)
+        or _tree_sha256(
+            original_version_root, exclude=("identity.json",)
+        )
+        != distribution_sha
+    ):
+        raise HyperpropertyInstallerError(
+            "original mode-inclusive vendor distribution no longer validates"
+        )
+    original_content_sha = _tree_content_sha256(
+        original_version_root, exclude=("identity.json",)
+    )
+    relocated_content_sha = _tree_content_sha256(
+        relocated_version_root, exclude=("identity.json",)
+    )
+    if original_content_sha != relocated_content_sha:
+        raise HyperpropertyInstallerError(
+            "relocated vendor distribution changed names, kinds, links, or bytes"
+        )
+    for payload in (original_payload, relocated_payload):
+        existing = str(payload.get(content_field) or "")
+        if existing and existing != original_content_sha:
+            raise HyperpropertyInstallerError(
+                "existing vendor content-tree digest does not validate"
+            )
+    if not _sealed_vendor_tree_is_immutable(
+        relocated_version_root, install_root=relocated_root
+    ):
+        raise HyperpropertyInstallerError(
+            "relocated vendor version tree is not root-owned, read-only, "
+            "and symlink-safe"
+        )
+
+    output = Path(os.path.abspath(os.path.expanduser(str(output_path))))
+    try:
+        output_parent = output.parent.resolve(strict=True)
+    except OSError as exc:
+        raise HyperpropertyInstallerError(
+            "sealed relocation identity output parent is unavailable"
+        ) from exc
+    if output.parent != output_parent or output.is_symlink():
+        raise HyperpropertyInstallerError(
+            "sealed relocation identity output path must be canonical"
+        )
+    for protected_root in (original_version_root, relocated_version_root):
+        try:
+            output.relative_to(protected_root)
+        except ValueError:
+            continue
+        raise HyperpropertyInstallerError(
+            "sealed relocation identity output must be outside install trees"
+        )
+
+    enriched_payload = dict(relocated_payload)
+    enriched_payload[content_field] = original_content_sha
+    temporary: Path | None = None
+    try:
+        descriptor, raw_temporary = tempfile.mkstemp(
+            prefix=f".{output.name}.",
+            suffix=".tmp",
+            dir=output_parent,
+        )
+        temporary = Path(raw_temporary)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(enriched_payload, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+            stream.flush()
+            os.fchmod(stream.fileno(), 0o644)
+            os.fsync(stream.fileno())
+        os.replace(temporary, output)
+    except OSError as exc:
+        raise HyperpropertyInstallerError(
+            "could not write sealed relocation identity output"
+        ) from exc
+    finally:
+        if temporary is not None:
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
+    return output
 
 
 # ---------------------------------------------------------------------------
@@ -3140,6 +3511,7 @@ def materialize_vendor_engine(
 
         artifact_sha = _sha256_file(staged_executable)
         distribution_sha = _tree_sha256(payload)
+        distribution_content_sha = _tree_content_sha256(payload)
         runtime_environment = {}
         if tool_id == TOOL_HYPERLTL:
             runtime_environment["EAHYPER_SOLVER_DIR"] = str(
@@ -3184,6 +3556,7 @@ def materialize_vendor_engine(
             "source_archive_path": str(archive.resolve()),
             "source_tree_sha256": source_tree_sha,
             "distribution_tree_sha256": distribution_sha,
+            "distribution_content_tree_sha256": distribution_content_sha,
             "git_commit": meta["git_commit"],
             "source_components": [
                 item.to_dict() for item in source_components
@@ -4036,4 +4409,5 @@ __all__ = [
     "supported_platforms_for_tool",
     "tool_bin_dir",
     "tool_supported_on_platform",
+    "write_sealed_vendor_relocation_identity",
 ]

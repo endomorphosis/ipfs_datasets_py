@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import tarfile
 from pathlib import Path
@@ -20,6 +21,62 @@ def _executable(path: Path, content: bytes = b"synthetic dependency\n") -> Path:
     path.write_bytes(content)
     path.chmod(0o755)
     return path.resolve()
+
+
+def _make_sealed_test_tree(version_root: Path, install_root: Path) -> None:
+    """Remove writes from a synthetic deployment; tests substitute its UID."""
+
+    for path in sorted(
+        (version_root, *version_root.rglob("*")),
+        key=lambda item: len(item.parts),
+        reverse=True,
+    ):
+        if not path.is_symlink():
+            path.chmod(path.stat().st_mode & ~0o222)
+    component = version_root.parent
+    while True:
+        component.chmod(component.stat().st_mode & ~0o222)
+        if component == install_root:
+            break
+        component = component.parent
+
+
+def _seal_relocated_test_tree(
+    monkeypatch: pytest.MonkeyPatch,
+    version_root: Path,
+    install_root: Path,
+) -> Path:
+    """Seal a test tree through a substitute ancestor trust boundary."""
+
+    boundary = install_root.parent
+    monkeypatch.setattr(hp, "_SEALED_DEPLOYMENT_OWNER_UID", os.getuid())
+    monkeypatch.setattr(
+        hp, "_SEALED_DEPLOYMENT_ANCESTOR_BOUNDARY", boundary
+    )
+    _make_sealed_test_tree(version_root, install_root)
+    boundary.chmod(boundary.stat().st_mode & ~0o222)
+    return boundary
+
+
+def _make_test_tree_writable(install_root: Path) -> None:
+    """Restore owner writes so pytest can clean a synthetic sealed tree."""
+
+    if not install_root.exists():
+        return
+    install_root.chmod(install_root.stat().st_mode | 0o700)
+    for path in sorted(
+        install_root.rglob("*"), key=lambda item: len(item.parts)
+    ):
+        if not path.is_symlink():
+            path.chmod(path.stat().st_mode | 0o700)
+
+
+def _unseal_relocated_test_tree(
+    install_root: Path,
+    boundary: Path,
+) -> None:
+    boundary.chmod(boundary.stat().st_mode | 0o700)
+    _make_test_tree_writable(install_root)
 
 
 def _archive(
@@ -290,6 +347,7 @@ def test_synthetic_upstream_builds_are_identity_bound_without_adapter_shims(
     assert identity.dependency_identities
     assert identity.source_tree_sha256
     assert identity.distribution_tree_sha256
+    assert identity.distribution_content_tree_sha256
     assert not hp._is_internal_python_adapter(Path(identity.executable))
     if tool_id == hp.TOOL_MCHYPER:
         assert identity.executable_kind == "upstream_python_entrypoint"
@@ -375,6 +433,387 @@ def test_vendor_identity_rebinds_and_rehashes_after_common_tree_relocation(
             assert Path(artifact.source_archive_path).is_file()
     for value in dict(relocated.runtime_environment).values():
         assert str(install_root) not in value
+
+
+def test_legacy_manifest_remains_valid_after_mode_preserving_relocation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    original_manifest = hp.identity_manifest_path(
+        install_root, tool_id, pin["version"], vendor=True
+    )
+    payload = json.loads(original_manifest.read_text(encoding="utf-8"))
+    payload.pop("distribution_content_tree_sha256")
+    original_manifest.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    relocated_root = tmp_path / "mode-preserving" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+
+    relocated = hp._identity_from_disk(
+        tool_id, relocated_root, pin, vendor=True
+    )
+
+    assert relocated is not None
+    assert relocated.distribution_content_tree_sha256 == ""
+
+
+@pytest.mark.parametrize("tool_id", hp.EXTERNAL_TOOLS)
+def test_vendor_identity_accepts_only_content_exact_sealed_mode_normalization(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    tool_id: str,
+) -> None:
+    identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+    version_root = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    ).parent
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, version_root, relocated_root
+    )
+    try:
+        relocated = hp._identity_from_disk(
+            tool_id, relocated_root, pin, vendor=True
+        )
+        assert relocated is not None
+        assert (
+            relocated.distribution_content_tree_sha256
+            == identity.distribution_content_tree_sha256
+        )
+        assert relocated.executable.startswith(str(relocated_root))
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+def test_sealed_mode_normalization_rejects_legacy_manifest_without_content_digest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+    manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    payload.pop("distribution_content_tree_sha256")
+    manifest.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, manifest.parent, relocated_root
+    )
+    try:
+        assert (
+            hp._identity_from_disk(
+                tool_id, relocated_root, pin, vendor=True
+            )
+            is None
+        )
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+@pytest.mark.parametrize("tamper", ("changed_byte", "added_name"))
+def test_sealed_mode_normalization_rejects_content_or_name_drift(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    tamper: str,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+    manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    if tamper == "added_name":
+        (manifest.parent / "unexpected-file").write_bytes(b"not installed\n")
+    else:
+        makefile = manifest.parent / "upstream" / "Makefile"
+        makefile.write_bytes(makefile.read_bytes() + b"# changed after copy\n")
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, manifest.parent, relocated_root
+    )
+    try:
+        assert (
+            hp._identity_from_disk(
+                tool_id, relocated_root, pin, vendor=True
+            )
+            is None
+        )
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+@pytest.mark.parametrize("writable_kind", ("file", "directory"))
+def test_sealed_mode_normalization_rejects_one_writable_tree_object(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    writable_kind: str,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+    manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, manifest.parent, relocated_root
+    )
+    target = (
+        manifest.parent / "upstream"
+        if writable_kind == "directory"
+        else manifest.parent / "upstream" / "Makefile"
+    )
+    target.chmod(target.stat().st_mode | 0o200)
+    try:
+        assert (
+            hp._identity_from_disk(
+                tool_id, relocated_root, pin, vendor=True
+            )
+            is None
+        )
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+def test_sealed_mode_normalization_rejects_writable_ancestor(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+    manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, manifest.parent, relocated_root
+    )
+    boundary.chmod(boundary.stat().st_mode | 0o020)
+    try:
+        assert (
+            hp._identity_from_disk(
+                tool_id, relocated_root, pin, vendor=True
+            )
+            is None
+        )
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+def test_sealed_mode_normalization_rejects_unsealed_or_wrong_owner_tree(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = tmp_path / "relocated" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+    manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    # One mode change selects the fallback, but the writable tree must fail.
+    executable = manifest.parent / "upstream" / "eahyper_src" / "eahyper.native"
+    executable.chmod(executable.stat().st_mode & ~0o222)
+    monkeypatch.setattr(hp, "_SEALED_DEPLOYMENT_OWNER_UID", os.getuid())
+    assert (
+        hp._identity_from_disk(tool_id, relocated_root, pin, vendor=True)
+        is None
+    )
+
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, manifest.parent, relocated_root
+    )
+    try:
+        monkeypatch.setattr(
+            hp, "_SEALED_DEPLOYMENT_OWNER_UID", os.getuid() + 1
+        )
+        assert (
+            hp._identity_from_disk(
+                tool_id, relocated_root, pin, vendor=True
+            )
+            is None
+        )
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+def test_sealed_mode_normalization_rejects_unsafe_link_even_if_digest_is_replaced(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+    manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    (manifest.parent / "unsafe-link").symlink_to("/etc/passwd")
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    payload["distribution_content_tree_sha256"] = hp._tree_content_sha256(
+        manifest.parent, exclude=("identity.json",)
+    )
+    manifest.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, manifest.parent, relocated_root
+    )
+    try:
+        assert (
+            hp._identity_from_disk(
+                tool_id, relocated_root, pin, vendor=True
+            )
+            is None
+        )
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+def test_mode_drift_at_recorded_root_never_uses_sealed_relocation_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    manifest = hp.identity_manifest_path(
+        install_root, tool_id, pin["version"], vendor=True
+    )
+    executable = manifest.parent / "upstream" / "eahyper_src" / "eahyper.native"
+    executable.chmod(executable.stat().st_mode & ~0o222)
+    assert (
+        hp._identity_from_disk(tool_id, install_root, pin, vendor=True)
+        is None
+    )
+
+
+def test_relocation_identity_writer_validates_original_and_sealed_copy(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    original_manifest = hp.identity_manifest_path(
+        install_root, tool_id, pin["version"], vendor=True
+    )
+    original_payload = json.loads(
+        original_manifest.read_text(encoding="utf-8")
+    )
+    original_payload.pop("distribution_content_tree_sha256")
+    original_manifest.write_text(
+        json.dumps(original_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    relocated_manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, relocated_manifest.parent, relocated_root
+    )
+    output = tmp_path / "enriched-identity.json"
+    try:
+        written = hp.write_sealed_vendor_relocation_identity(
+            tool_id,
+            original_install_root=install_root,
+            relocated_install_root=relocated_root,
+            output_path=output,
+            repo_root=tmp_path / "no-lock",
+        )
+        payload = json.loads(written.read_text(encoding="utf-8"))
+        assert payload["distribution_tree_sha256"] == (
+            identity.distribution_tree_sha256
+        )
+        assert payload["distribution_content_tree_sha256"] == (
+            identity.distribution_content_tree_sha256
+        )
+        assert "distribution_content_tree_sha256" not in original_payload
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+def test_relocation_identity_writer_refuses_changed_original_distribution(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_HYPERLTL
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    relocated_manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    original_manifest = hp.identity_manifest_path(
+        install_root, tool_id, pin["version"], vendor=True
+    )
+    original_executable = (
+        original_manifest.parent
+        / "upstream"
+        / "eahyper_src"
+        / "eahyper.native"
+    )
+    original_executable.chmod(original_executable.stat().st_mode & ~0o222)
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, relocated_manifest.parent, relocated_root
+    )
+    try:
+        with pytest.raises(
+            hp.HyperpropertyInstallerError,
+            match="original vendor identity failed full validation",
+        ):
+            hp.write_sealed_vendor_relocation_identity(
+                tool_id,
+                original_install_root=install_root,
+                relocated_install_root=relocated_root,
+                output_path=tmp_path / "must-not-exist.json",
+                repo_root=tmp_path / "no-lock",
+            )
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
 
 
 def test_relocated_loader_does_not_require_original_repo_lock_path(
