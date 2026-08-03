@@ -855,7 +855,7 @@ Program invariants:
 - Review only: false
 - Priority: P0
 - Track: workflow
-- Depends on: PATLAW-051
+- Depends on: PATLAW-051, PATLAW-095
 - Goal id: PATLAW-G060
 - Outputs: ipfs_datasets_py/processors/domains/uspto/workflow_processor.py, tests/unit/processors/domains/uspto/test_workflow_processor.py, tests/integration/processors/domains/uspto/test_submission_preflight.py
 - Validation: python -m pytest tests/unit/processors/domains/uspto/test_workflow_processor.py tests/integration/processors/domains/uspto/test_submission_preflight.py -q
@@ -880,7 +880,7 @@ Program invariants:
 - Review only: false
 - Priority: P1
 - Track: product-integration
-- Depends on: PATLAW-008, PATLAW-025, PATLAW-050, PATLAW-052
+- Depends on: PATLAW-008, PATLAW-025, PATLAW-050, PATLAW-052, PATLAW-094, PATLAW-102
 - Goal id: PATLAW-G070
 - Outputs: ipfs_datasets_py/processors/domains/uspto/__init__.py, ipfs_datasets_py/processors/domains/uspto/providers/__init__.py, ipfs_datasets_py/processors/domains/uspto/analysis/__init__.py, ipfs_datasets_py/processors/domains/uspto/api.py, ipfs_datasets_py/processors/adapters/uspto_adapter.py, ipfs_datasets_py/cli/uspto.py, tests/unit/processors/domains/uspto/test_api.py, tests/cli/test_uspto_commands.py
 - Validation: python -m pytest tests/unit/processors/domains/uspto/test_api.py tests/cli/test_uspto_commands.py -q
@@ -1005,7 +1005,7 @@ Program invariants:
 - Review only: false
 - Priority: P0
 - Track: release-assurance
-- Depends on: PATLAW-052, PATLAW-061, PATLAW-062, PATLAW-070, PATLAW-071
+- Depends on: PATLAW-052, PATLAW-061, PATLAW-062, PATLAW-070, PATLAW-071, PATLAW-102
 - Goal id: PATLAW-G080
 - Outputs: tests/e2e/test_uspto_application_analysis.py, tests/e2e/test_uspto_application_analysis_cli_mcp.py, tests/fixtures/uspto/replay
 - Validation: python -m pytest tests/e2e/test_uspto_application_analysis.py tests/e2e/test_uspto_application_analysis_cli_mcp.py -q
@@ -1055,7 +1055,7 @@ Program invariants:
 - Review only: false
 - Priority: P0
 - Track: release-assurance
-- Depends on: PATLAW-061, PATLAW-062, PATLAW-072, PATLAW-073
+- Depends on: PATLAW-061, PATLAW-062, PATLAW-072, PATLAW-073, PATLAW-080, PATLAW-102
 - Goal id: PATLAW-G080
 - Outputs: scripts/ops/uspto/validate_release.py, tests/release/test_uspto_submission_assurance_release.py, data/release/uspto_submission_assurance/.gitkeep
 - Validation: python -m pytest tests/release/test_uspto_submission_assurance_release.py -q && python scripts/ops/uspto/validate_release.py --offline
