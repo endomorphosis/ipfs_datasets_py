@@ -20,7 +20,6 @@ ONCE=0
 FOREGROUND=0
 
 usage() {
-  sed -n '2,29p' "$0"
   cat <<'EOF'
 Usage: launch_multi_lane.sh [--dry-run] [--once] [--foreground] [--help]
 
