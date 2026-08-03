@@ -599,7 +599,7 @@ Program invariants:
 
 ## PATLAW-033 Parse submissions, amendments, metadata, and receipts
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
