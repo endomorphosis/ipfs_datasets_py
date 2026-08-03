@@ -1125,7 +1125,7 @@ Program invariants:
 
 ## PATLAW-080 Add serialized datasets/accelerator upstream synchronization
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
