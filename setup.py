@@ -393,7 +393,9 @@ setup(
         # Maude, Lean, Rocq, and ProVerif are installed lazily and user-locally
         # only when their execution path is requested. Native installers are
         # available through `ipfs-datasets-install-provers` and never run as a
-        # side effect of pip installation.
+        # side effect of pip installation. The optional ErgoAI Java API Eclipse
+        # Temurin JDK is a reviewed external lazy dependency (temurin-jdk) and
+        # is never a mandatory pip package.
         'theorem-provers': [
             'z3-solver>=4.12.0,<5.0.0',
             'cvc5==1.3.3',

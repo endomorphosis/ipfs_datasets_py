@@ -114,6 +114,14 @@ _ALIASES = {
     "runergo": "ergoai",
     "runergo.sh": "ergoai",
     "runergo_sh": "ergoai",
+    "temurin_jdk": "temurin-jdk",
+    "temurin": "temurin-jdk",
+    "jdk": "temurin-jdk",
+    "openjdk": "temurin-jdk",
+    "eclipse_temurin": "temurin-jdk",
+    "ergoai_java_api": "temurin-jdk",
+    "ergoai_java": "temurin-jdk",
+    "java_api": "temurin-jdk",
     "hyperltl": "hyperltl",
     "hyper_ltl": "hyperltl",
     "autohyper": "autohyper",
@@ -144,6 +152,7 @@ _ENV_NAMES = {
     "proverif": "PROVERIF",
     "symbolicai": "SYMBOLICAI",
     "ergoai": "ERGOAI",
+    "temurin-jdk": "TEMURIN_JDK",
     "hyperltl": "HYPERLTL",
     "autohyper": "AUTOHYPER",
     "mchyper": "MCHYPER",
@@ -165,6 +174,7 @@ _PROVER_EXECUTABLES: dict[str, tuple[str, ...]] = {
     "vampire": ("vampire",),
     "eprover": ("eprover",),
     "ergoai": ("ergoai", "ergo", "runErgo.sh", "runergo"),
+    "temurin-jdk": ("java", "javac", "jar"),
     "hyperltl": ("hyperltl", "hyperltl-sat"),
     "autohyper": ("autohyper", "AutoHyper"),
     "mchyper": ("mchyper", "MCHyper"),
@@ -187,6 +197,7 @@ _REVIEWED_EXTERNAL_INSTALLERS = frozenset(
         "secpal",
         "runtime-mtl-external",
         "ergoai",
+        "temurin-jdk",
     }
 )
 
@@ -462,8 +473,42 @@ def plan_reviewed_install(
 
     _require_exact_bool(force, "force")
     provider = normalize_prover_name(provider_id)
-    entry = get_installer_entry(provider)
     _, public_options = _normalize_installer_options(provider, installer_options)
+    if provider == "temurin-jdk":
+        plan = {
+            "interface": LOGIC_VERIFICATION_LAZY_INSTALLER_INTERFACE,
+            "provider_id": provider,
+            "family": "advisors",
+            "installer_module": (
+                "ipfs_datasets_py.logic.backends.installers.advisors"
+            ),
+            "installer_callable": "ensure_temurin_jdk",
+            "platform": _platform_key(),
+            "license": "GPL-2.0-with-classpath-exception",
+            "source": "https://adoptium.net/",
+            "identity_kind": "immutable_release_archive",
+            "requires_explicit_yes": True,
+            "user_local_only": True,
+            "requires_checksum_for_managed_artifacts": True,
+            "force": force,
+            "installer_options": public_options,
+            "phases": [
+                "authorize",
+                "resolve_reviewed_plugin",
+                "stage_or_validate",
+                "publish",
+                "semantic_probe",
+            ],
+            "mutation_boundary": "after_authorize_and_plugin_resolution",
+            "discovery_imports_plugin": False,
+            "support_only": True,
+            "optional_capability": "ergoai-java-api",
+            "never_trust_ambient_java_home": True,
+            "core_ergoai_independent": True,
+        }
+        plan["plan_digest"] = _canonical_digest(plan)
+        return plan
+    entry = get_installer_entry(provider)
     plan: dict[str, Any] = {
         "interface": LOGIC_VERIFICATION_LAZY_INSTALLER_INTERFACE,
         "provider_id": provider,
@@ -663,23 +708,48 @@ def execute_reviewed_install(
     mutation_observed = False
     process_lock_evidence: dict[str, Any] = {}
     try:
-        entry = authorize_installer_entry_install(
-            provider,
-            yes=True,
-            explicit_call=True,
-            import_context=False,
-            capability_discovery=False,
-            platform=plan["platform"],
-            system_package_mutation=False,
-        )
-        authorized = True
-        module = importlib.import_module(entry.module_path)
-        ensure = getattr(module, entry.ensure_name, None)
-        if not callable(ensure):
-            raise RuntimeError(
-                f"reviewed installer {entry.module_path}:{entry.ensure_name} is not callable"
+        if provider == "temurin-jdk":
+            module = importlib.import_module(plan["installer_module"])
+            ensure = getattr(module, plan["installer_callable"], None)
+            if not callable(ensure):
+                raise RuntimeError(
+                    "reviewed installer "
+                    f"{plan['installer_module']}:{plan['installer_callable']} "
+                    "is not callable"
+                )
+            # Support-lifecycle gate (explicit allow already checked above).
+            authorize = getattr(module, "authorize_temurin_jdk_install", None)
+            if callable(authorize):
+                authorize(
+                    yes=True,
+                    strict=strict,
+                    import_context=False,
+                    capability_discovery=False,
+                    dry_run=False,
+                    offline=False,
+                    platform_key=plan["platform"],
+                )
+            authorized = True
+            plugin_resolved = True
+            entry = None
+        else:
+            entry = authorize_installer_entry_install(
+                provider,
+                yes=True,
+                explicit_call=True,
+                import_context=False,
+                capability_discovery=False,
+                platform=plan["platform"],
+                system_package_mutation=False,
             )
-        plugin_resolved = True
+            authorized = True
+            module = importlib.import_module(entry.module_path)
+            ensure = getattr(module, entry.ensure_name, None)
+            if not callable(ensure):
+                raise RuntimeError(
+                    f"reviewed installer {entry.module_path}:{entry.ensure_name} is not callable"
+                )
+            plugin_resolved = True
         plugin_progress: Any = None
         if progress is not None:
 
@@ -720,7 +790,8 @@ def execute_reviewed_install(
             parameter.kind is inspect.Parameter.VAR_KEYWORD
             for parameter in signature.parameters.values()
         )
-        if entry.user_local_only and (
+        user_local_only = True if entry is None else entry.user_local_only
+        if user_local_only and (
             accepts_kwargs or "install_root" in signature.parameters
         ):
             # Bind the reviewed plugin to the same validated user-local root
@@ -1056,6 +1127,18 @@ def _resolve_reviewed_installer(prover: str) -> Callable[..., Any] | None:
 
     if prover not in _REVIEWED_EXTERNAL_INSTALLERS:
         return None
+    # Optional ErgoAI Java API JDK is owned by the advisors plugin as a support
+    # lifecycle and is intentionally outside FormalVerificationInstallerRegistry@1.
+    if prover == "temurin-jdk":
+        try:
+            module = importlib.import_module(
+                "ipfs_datasets_py.logic.backends.installers.advisors"
+            )
+            ensure = getattr(module, "ensure_temurin_jdk", None)
+        except Exception:
+            logger.exception("Could not resolve managed Temurin JDK installer")
+            return None
+        return ensure if callable(ensure) else None
     try:
         from ipfs_datasets_py.logic.backends.installers.registry import (
             get_installer_entry,

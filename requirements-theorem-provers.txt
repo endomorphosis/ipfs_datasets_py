@@ -6,6 +6,9 @@
 # requests them. Native solver binaries are intentionally not pip packages;
 # install pinned user-local Tamarin, ProVerif, Rocq, and other native tools with
 # `python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes`.
+# The optional ErgoAI Java API Eclipse Temurin JDK is a reviewed external lazy
+# dependency (tool_id=temurin-jdk), never a mandatory pip package, and never
+# resolved from ambient JAVA_HOME.
 # See docs/security_verification/lazy_theorem_prover_installation.md.
 z3-solver>=4.12.0,<5.0.0
 cvc5==1.3.3

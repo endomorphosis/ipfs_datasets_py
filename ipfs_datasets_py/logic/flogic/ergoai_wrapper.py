@@ -57,6 +57,8 @@ _ERGO_BINARY_NAMES = ("runErgo.sh", "runergo")
 # Live adapter contract identity (must match lock + certification surface).
 LIVE_TOOLCHAIN_INTERFACE = "ErgoAILiveToolchainContract@1"
 LIVE_ADAPTER_SCHEMA_VERSION = "ergoai-live-semantic-adapter/v1"
+JAVA_API_TOOLCHAIN_INTERFACE = "ErgoAIJavaAPIToolchainContract@1"
+JAVA_API_ADAPTER_SCHEMA_VERSION = "ergoai-java-api-adapter/v1"
 AUTHORITY_CEILING = "advisory"
 EVIDENCE_CLASS = "proposal_or_candidate_until_independent_reconstruction"
 LIVE_CASE_KINDS = (
@@ -327,6 +329,8 @@ class ErgoAIWrapper:
         self.platform_key = platform_key
         self._managed_vendor_probe: dict[str, Any] = {}
         self._last_execution_evidence: dict[str, Any] = {}
+        self._managed_jdk_probe: dict[str, Any] = {}
+        self._managed_java_home: Path | None = None
         resolved_binary: Path | None = None
 
         # Automatic resolution prefers a provenance-valid launcher beneath the
@@ -984,6 +988,119 @@ class ErgoAIWrapper:
             "evidence_class": EVIDENCE_CLASS,
         }
 
+
+
+    # ------------------------------------------------------------------
+    # Optional ErgoAI Java API (managed Temurin JDK / FVT-G222)
+    # ------------------------------------------------------------------
+
+    def refresh_managed_jdk_identity(self) -> dict[str, Any]:
+        """Probe the managed Temurin JDK without trusting ambient JAVA_HOME."""
+
+        try:
+            from ipfs_datasets_py.logic.backends.installers.advisors import (
+                probe_temurin_jdk_identity,
+            )
+        except Exception as exc:  # pragma: no cover - packaging variance
+            self._managed_jdk_probe = {
+                "satisfied": False,
+                "probe_error": f"jdk_probe_unavailable:{exc}",
+                "ambient_java_home_trusted": False,
+            }
+            self._managed_java_home = None
+            return dict(self._managed_jdk_probe)
+
+        root = self.install_root or _configured_managed_install_root()
+        probe = probe_temurin_jdk_identity(
+            install_root=root,
+            require_managed=True,
+        )
+        self._managed_jdk_probe = dict(probe)
+        if probe.get("satisfied"):
+            self._managed_java_home = Path(str(probe["java_home"]))
+        else:
+            self._managed_java_home = None
+        return dict(self._managed_jdk_probe)
+
+    def java_api_available(self) -> bool:
+        """Return True when the optional managed Java API JDK is satisfied."""
+
+        if self._managed_jdk_probe.get("satisfied") is True:
+            return True
+        probe = self.refresh_managed_jdk_identity()
+        return bool(probe.get("satisfied"))
+
+    def managed_java_home(self) -> Path | None:
+        """Return the exact managed JDK home bound for Java consumers."""
+
+        if self._managed_java_home is not None:
+            return self._managed_java_home
+        self.refresh_managed_jdk_identity()
+        return self._managed_java_home
+
+    def java_api_runtime_env(
+        self,
+        base: Mapping[str, str] | None = None,
+    ) -> dict[str, str]:
+        """Environment for ErgoAI Java consumers bound to the managed JDK."""
+
+        try:
+            from ipfs_datasets_py.logic.backends.installers.advisors import (
+                managed_temurin_runtime_env,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"managed Java API runtime environment unavailable: {exc}"
+            ) from exc
+        root = self.install_root or _configured_managed_install_root()
+        return managed_temurin_runtime_env(install_root=root, base=base)
+
+    def java_api_capability(self) -> dict[str, Any]:
+        """Describe the optional Java API capability without installing."""
+
+        probe = self.refresh_managed_jdk_identity()
+        return {
+            "interface": JAVA_API_TOOLCHAIN_INTERFACE,
+            "schema_version": JAVA_API_ADAPTER_SCHEMA_VERSION,
+            "available": bool(probe.get("satisfied")),
+            "core_ergoai_available": ergoai_available(
+                require_managed_vendor=False
+            ),
+            "core_ergoai_independent": True,
+            "ambient_java_home_trusted": False,
+            "managed_java_home": (
+                str(self._managed_java_home)
+                if self._managed_java_home is not None
+                else None
+            ),
+            "authority_ceiling": AUTHORITY_CEILING,
+            "probe": {
+                key: probe.get(key)
+                for key in (
+                    "satisfied",
+                    "managed",
+                    "expected_version",
+                    "reason_codes",
+                    "tools",
+                )
+            },
+        }
+
+    def run_java_api_semantic_cases(self) -> dict[str, Any]:
+        """Execute the reviewed Java API semantic case matrix when available."""
+
+        try:
+            from ipfs_datasets_py.logic.backends.installers.advisors import (
+                run_ergoai_java_api_semantic_cases,
+            )
+        except Exception as exc:
+            return {
+                "interface": JAVA_API_TOOLCHAIN_INTERFACE,
+                "all_passed": False,
+                "error": f"java_api_semantics_unavailable:{exc}",
+            }
+        root = self.install_root or _configured_managed_install_root()
+        return run_ergoai_java_api_semantic_cases(install_root=root)
 
 def _parse_ergo_output(output: str) -> list[dict[str, Any]]:
     """

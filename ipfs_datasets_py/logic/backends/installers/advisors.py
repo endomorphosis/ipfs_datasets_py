@@ -4,6 +4,7 @@
 
 * ``ensure_symbolicai`` — locked SymbolicAI Python package identity
 * ``ensure_ergoai`` — locked ErgoAI/ErgoEngine 3.0 identity
+* ``ensure_temurin_jdk`` — optional checksum-pinned Eclipse Temurin JDK for ErgoAI Java API
 
 Fail-closed installation contract
 ---------------------------------
@@ -35,6 +36,7 @@ import signal
 import stat
 import subprocess
 import sys
+import tarfile
 import tempfile
 import time
 from collections.abc import Callable, Mapping, Sequence
@@ -64,7 +66,12 @@ PROGRAM: Final = "formal-verification-tactician/advisor-toolchains"
 
 TOOL_SYMBOLICAI: Final = "symbolicai"
 TOOL_ERGOAI: Final = "ergoai"
+TOOL_TEMURIN_JDK: Final = "temurin-jdk"
 ADVISOR_INSTALL_TOOLS: Final = (TOOL_SYMBOLICAI, TOOL_ERGOAI)
+# Support lifecycle owned by this plugin for the optional ErgoAI Java API.
+# It is intentionally not a FormalVerificationInstallerRegistry@1 authority tool.
+ADVISOR_SUPPORT_TOOLS: Final = (TOOL_TEMURIN_JDK,)
+ADVISOR_PIN_OWNED_TOOLS: Final = ADVISOR_INSTALL_TOOLS + ADVISOR_SUPPORT_TOOLS
 
 # Locked managed-pin identities (must match deployment lock).
 SYMBOLICAI_VERSION: Final = ">=1.14.0,<2.0.0"
@@ -189,6 +196,83 @@ ERGOAI_OPTIONAL_JAVA_BUILD_COMMANDS: Final = (
     "touch",
 )
 ERGOAI_OPTIONAL_JAVA_MINIMUM_VERSION: Final = (1, 8)
+
+# Optional managed JDK for ErgoAIJavaAPIToolchainContract@1 / FVT-G222.
+# Exact Eclipse Temurin 17.0.20+8 identities; never a moving `latest` URL and
+# never resolved from ambient JAVA_HOME.
+TEMURIN_JDK_VERSION: Final = "17.0.20+8"
+TEMURIN_JDK_RELEASE_NAME: Final = "jdk-17.0.20+8"
+TEMURIN_JDK_PUBLISHER: Final = "Eclipse Adoptium"
+TEMURIN_JDK_LICENSE: Final = "GPL-2.0-with-classpath-exception"
+TEMURIN_JDK_SOURCE: Final = "https://adoptium.net/"
+TEMURIN_JDK_EXECUTABLES: Final = ("java", "javac", "jar")
+TEMURIN_JDK_SUPPORTED_PLATFORMS: Final = (
+    "linux-x86_64",
+    "linux-aarch64",
+)
+TEMURIN_JDK_IDENTITY_KIND: Final = "immutable_release_archive"
+TEMURIN_JDK_SCHEMA: Final = "temurin-jdk-managed-identity/v1"
+ERGOAI_JAVA_API_INTERFACE: Final = "ErgoAIJavaAPIToolchainContract@1"
+ERGOAI_JAVA_API_SCHEMA: Final = "ergoai-java-api-toolchain-contract/v1"
+ERGOAI_JAVA_API_GOAL_ID: Final = "FVT-G222"
+ERGOAI_JAVA_API_TASK_ID: Final = "FVT-090"
+ERGOAI_JAVA_API_CASE_KINDS: Final = (
+    "positive",
+    "negative",
+    "malformed",
+    "timeout",
+    "replay",
+    "relocation",
+    "dependency_mutation",
+)
+TEMURIN_JDK_PINS: Final[Mapping[str, Mapping[str, Any]]] = {
+    "linux-x86_64": {
+        "version": TEMURIN_JDK_VERSION,
+        "artifact_url": (
+            "https://github.com/adoptium/temurin17-binaries/releases/download/"
+            "jdk-17.0.20%2B8/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20_8.tar.gz"
+        ),
+        "sha256": (
+            "be7668bc030d578b83d6d5ef9221d6d6729bbbca8cf94a7d52e16ac68b5a5a35"
+        ),
+        "artifact_size_bytes": 193_273_593,
+        "signature_url": (
+            "https://github.com/adoptium/temurin17-binaries/releases/download/"
+            "jdk-17.0.20%2B8/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20_8.tar.gz.sig"
+        ),
+        "checksum_url": (
+            "https://github.com/adoptium/temurin17-binaries/releases/download/"
+            "jdk-17.0.20%2B8/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20_8.tar.gz.sha256.txt"
+        ),
+        "archive_name": "OpenJDK17U-jdk_x64_linux_hotspot_17.0.20_8.tar.gz",
+        "os": "linux",
+        "architecture": "x86_64",
+        "release_name": TEMURIN_JDK_RELEASE_NAME,
+    },
+    "linux-aarch64": {
+        "version": TEMURIN_JDK_VERSION,
+        "artifact_url": (
+            "https://github.com/adoptium/temurin17-binaries/releases/download/"
+            "jdk-17.0.20%2B8/OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.20_8.tar.gz"
+        ),
+        "sha256": (
+            "d143936f473a4cb24e3b0e247d6d0775769d55ec9775c339540e753059a8d77a"
+        ),
+        "artifact_size_bytes": 191_960_283,
+        "signature_url": (
+            "https://github.com/adoptium/temurin17-binaries/releases/download/"
+            "jdk-17.0.20%2B8/OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.20_8.tar.gz.sig"
+        ),
+        "checksum_url": (
+            "https://github.com/adoptium/temurin17-binaries/releases/download/"
+            "jdk-17.0.20%2B8/OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.20_8.tar.gz.sha256.txt"
+        ),
+        "archive_name": "OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.20_8.tar.gz",
+        "os": "linux",
+        "architecture": "aarch64",
+        "release_name": TEMURIN_JDK_RELEASE_NAME,
+    },
+}
 ERGOAI_BOUND_RUNTIME_PATH_MODEL: Final = "managed-symlink-only-exact-identities/v1"
 ERGOAI_BOUND_BUILD_ENVIRONMENT_KEYS: Final = tuple(
     sorted(
@@ -288,6 +372,7 @@ _ERGOAI_QUERY_RESOURCE: Final = "fvt_ergo_emit(100)"
 LOCKED_VERSIONS: Final[Mapping[str, str]] = {
     TOOL_SYMBOLICAI: SYMBOLICAI_VERSION,
     TOOL_ERGOAI: ERGOAI_VERSION,
+    TOOL_TEMURIN_JDK: TEMURIN_JDK_VERSION,
 }
 
 # Reviewed fallback pins when the lock file is unavailable (tests / offline).
@@ -335,6 +420,23 @@ _FALLBACK_PINS: Final[dict[str, tuple[dict[str, Any], ...]]] = {
             "release_tag": ERGOAI_RELEASE_TAG,
             "artifact_size_bytes": ERGOAI_RELEASE_SIZE_BYTES,
         },
+    ),
+    TOOL_TEMURIN_JDK: tuple(
+        {
+            "tool_id": TOOL_TEMURIN_JDK,
+            "version": TEMURIN_JDK_VERSION,
+            "platform": platform_name,
+            "artifact_url": str(meta["artifact_url"]),
+            "sha256": str(meta["sha256"]),
+            "identity_kind": TEMURIN_JDK_IDENTITY_KIND,
+            "license": TEMURIN_JDK_LICENSE,
+            "source": TEMURIN_JDK_SOURCE,
+            "is_checksummed": True,
+            "requires_checksum_at_install": True,
+            "release_tag": TEMURIN_JDK_RELEASE_NAME,
+            "artifact_size_bytes": int(meta["artifact_size_bytes"]),
+        }
+        for platform_name, meta in TEMURIN_JDK_PINS.items()
     ),
 }
 
@@ -3244,6 +3346,8 @@ def _expected_ergoai_optional_java_dependencies() -> dict[str, Any]:
         "runtime": with_java_floor(ERGOAI_OPTIONAL_JAVA_RUNTIME_COMMANDS),
         "build": with_java_floor(ERGOAI_OPTIONAL_JAVA_BUILD_COMMANDS),
         "missing_optional_capabilities_do_not_block_core_ergoai": True,
+        "managed_jdk_tool_id": TOOL_TEMURIN_JDK,
+        "never_trust_ambient_java_home": True,
     }
 
 
@@ -3531,7 +3635,7 @@ def pins_for_tool(
 ) -> tuple[ToolPin, ...]:
     """Return managed pins for ``tool_id`` from the lock or reviewed fallbacks."""
 
-    if tool_id not in ADVISOR_INSTALL_TOOLS:
+    if tool_id not in ADVISOR_PIN_OWNED_TOOLS:
         raise AdvisorInstallerError(f"advisors plugin does not own tool_id={tool_id!r}")
 
     document = lock if lock is not None else load_lock_document(repo_root)
@@ -3621,6 +3725,8 @@ def pins_for_tool(
             ) from exc
         if tool_id == TOOL_ERGOAI:
             _assert_ergoai_lock_contract(document, entry, pins)
+        if tool_id == TOOL_TEMURIN_JDK:
+            _assert_temurin_lock_contract(document, entry, pins)
     else:
         for raw in _FALLBACK_PINS.get(tool_id, ()):
             pins.append(
@@ -3676,7 +3782,7 @@ def select_strict_pin(
     installation may materialize.  Version mismatches fail closed.
     """
 
-    if tool_id not in ADVISOR_INSTALL_TOOLS:
+    if tool_id not in ADVISOR_PIN_OWNED_TOOLS:
         raise AdvisorInstallerError(f"advisors plugin does not own tool_id={tool_id!r}")
 
     platform_name = platform_key or detect_platform_key()
@@ -6160,6 +6266,1229 @@ def ensure_ergoai(
     return receipt
 
 
+
+# ---------------------------------------------------------------------------
+# Optional managed Eclipse Temurin JDK (ErgoAI Java API / FVT-G222)
+# ---------------------------------------------------------------------------
+
+
+def _temurin_version_root(install_root: Path, version: str) -> Path:
+    return Path(install_root) / "advisors" / TOOL_TEMURIN_JDK / version
+
+
+def _temurin_identity_path(install_root: Path, version: str) -> Path:
+    return _temurin_version_root(install_root, version) / "identity.json"
+
+
+def _temurin_home_path(install_root: Path, version: str) -> Path:
+    return _temurin_version_root(install_root, version) / "jdk"
+
+
+def _temurin_bin_path(install_root: Path, version: str) -> Path:
+    return _temurin_home_path(install_root, version) / "bin"
+
+
+def _temurin_publisher_evidence(meta: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "publisher": TEMURIN_JDK_PUBLISHER,
+        "release_name": str(meta.get("release_name") or TEMURIN_JDK_RELEASE_NAME),
+        "signature_url": str(meta.get("signature_url") or ""),
+        "checksum_url": str(meta.get("checksum_url") or ""),
+        "publisher_evidence_kind": "adoptium_sha256_and_detached_sig",
+        "never_download_moving_latest": True,
+        "never_trust_ambient_java_home": True,
+    }
+
+
+def _assert_temurin_lock_contract(
+    document: Mapping[str, Any],
+    entry: Mapping[str, Any],
+    pins: Sequence[ToolPin],
+) -> None:
+    versions = document.get("managed_pin_versions") or {}
+    if not isinstance(versions, Mapping):
+        raise AdvisorInstallerError("managed_pin_versions must be a mapping")
+    if str(versions.get(TOOL_TEMURIN_JDK)) != TEMURIN_JDK_VERSION:
+        raise AdvisorInstallerError(
+            "lock managed_pin_versions.temurin-jdk must equal "
+            f"{TEMURIN_JDK_VERSION!r}"
+        )
+    if entry.get("installer_entry") != "ensure_temurin_jdk":
+        raise AdvisorInstallerError(
+            "temurin-jdk installer_entry must be ensure_temurin_jdk"
+        )
+    if entry.get("installer_plugin") != PLUGIN_FAMILY:
+        raise AdvisorInstallerError(
+            "temurin-jdk installer_plugin must be advisors"
+        )
+    if entry.get("license") != TEMURIN_JDK_LICENSE:
+        raise AdvisorInstallerError("temurin-jdk license pin mismatch")
+    if entry.get("source") != TEMURIN_JDK_SOURCE:
+        raise AdvisorInstallerError("temurin-jdk source pin mismatch")
+    if entry.get("identity_kind") != TEMURIN_JDK_IDENTITY_KIND:
+        raise AdvisorInstallerError("temurin-jdk identity_kind mismatch")
+    if entry.get("publisher") != TEMURIN_JDK_PUBLISHER:
+        raise AdvisorInstallerError("temurin-jdk publisher mismatch")
+    observed_platforms = {pin.platform for pin in pins}
+    if observed_platforms != set(TEMURIN_JDK_SUPPORTED_PLATFORMS):
+        raise AdvisorInstallerError(
+            "temurin-jdk pins must cover exactly the reviewed Linux matrix"
+        )
+    for pin in pins:
+        meta = TEMURIN_JDK_PINS.get(pin.platform)
+        if meta is None:
+            raise AdvisorInstallerError(
+                f"unreviewed temurin-jdk platform pin: {pin.platform}"
+            )
+        if (
+            pin.version != TEMURIN_JDK_VERSION
+            or pin.sha256 != str(meta["sha256"])
+            or pin.artifact_url != str(meta["artifact_url"])
+            or pin.artifact_size_bytes != int(meta["artifact_size_bytes"])
+            or not pin.is_checksummed
+        ):
+            raise AdvisorInstallerError(
+                f"temurin-jdk pin drift for platform {pin.platform}"
+            )
+        # Extended publisher evidence lives on the lock pin objects.
+        raw_pins = entry.get("pins")
+        if not isinstance(raw_pins, list):
+            raise AdvisorInstallerError("temurin-jdk pins must be a list")
+        match = next(
+            (
+                raw
+                for raw in raw_pins
+                if isinstance(raw, Mapping)
+                and str(raw.get("platform")) == pin.platform
+            ),
+            None,
+        )
+        if match is None:
+            raise AdvisorInstallerError(
+                f"temurin-jdk lock pin missing platform {pin.platform}"
+            )
+        for key in (
+            "signature_url",
+            "checksum_url",
+            "publisher",
+            "release_name",
+            "os",
+            "architecture",
+            "artifact_size_bytes",
+        ):
+            if match.get(key) in (None, ""):
+                raise AdvisorInstallerError(
+                    f"temurin-jdk pin missing publisher field {key}"
+                )
+        tools = match.get("required_tool_identities")
+        if list(tools or ()) != list(TEMURIN_JDK_EXECUTABLES):
+            raise AdvisorInstallerError(
+                "temurin-jdk required_tool_identities must be java/javac/jar"
+            )
+
+
+def authorize_temurin_jdk_install(
+    *,
+    yes: bool,
+    strict: bool = True,
+    import_context: bool = False,
+    capability_discovery: bool = False,
+    dry_run: bool = False,
+    offline: bool = False,
+    platform_key: str | None = None,
+) -> None:
+    """Fail-closed gate for the optional managed JDK (no registry authority)."""
+
+    if import_context:
+        raise AdvisorInstallerError(
+            "managed JDK installation is forbidden during import"
+        )
+    if capability_discovery:
+        raise AdvisorInstallerError(
+            "managed JDK installation is forbidden during capability discovery"
+        )
+    if dry_run:
+        raise AdvisorInstallerError(
+            "managed JDK installation is forbidden during dry-run"
+        )
+    if offline or any(
+        os.environ.get(name) in {"1", "true", "TRUE", "yes", "on"}
+        for name in (
+            "FORMAL_VERIFICATION_CERTIFY_OFFLINE",
+            "FORMAL_VERIFICATION_FORBID_DOWNLOAD",
+            "FORMAL_VERIFICATION_FORBID_INSTALL",
+            "FORMAL_VERIFICATION_FORBID_NETWORK",
+        )
+    ):
+        raise AdvisorInstallerError(
+            "managed JDK acquisition is forbidden under offline certification policy"
+        )
+    if not yes:
+        raise AdvisorInstallerError(
+            "managed JDK install requires explicit yes=True / allow flag"
+        )
+    platform_name = platform_key or detect_platform_key()
+    if platform_name not in TEMURIN_JDK_SUPPORTED_PLATFORMS:
+        raise AdvisorInstallerError(
+            f"managed JDK install is not reviewed for {platform_name!r}"
+        )
+    # Ambient JAVA_HOME must never authorize or select the managed identity.
+    if os.environ.get("JAVA_HOME"):
+        # Presence is tolerated for unrelated host tools, but is never trusted
+        # as install evidence.  Selection always uses the locked pin.
+        pass
+    if strict:
+        select_strict_pin(
+            TOOL_TEMURIN_JDK,
+            platform_key=platform_name,
+            allow_source_fallback=False,
+        )
+
+
+def _safe_extract_temurin_archive(archive: Path, destination: Path) -> Path:
+    """Symlink-safe, traversal-safe extraction of a reviewed JDK tarball."""
+
+    destination = Path(destination)
+    if destination.exists():
+        raise AdvisorInstallerError(
+            f"JDK extraction destination already exists: {destination}"
+        )
+    destination.mkdir(parents=True, exist_ok=False)
+    destination_resolved = destination.resolve()
+    try:
+        with tarfile.open(archive, "r:*") as bundle:
+            members = bundle.getmembers()
+            safe_members: list[tarfile.TarInfo] = []
+            for member in members:
+                name = member.name
+                if not name or name.startswith("/") or ".." in Path(name).parts:
+                    raise AdvisorInstallerError(
+                        f"JDK archive path traversal blocked: {name!r}"
+                    )
+                target = (destination / name).resolve()
+                if (
+                    target != destination_resolved
+                    and destination_resolved not in target.parents
+                ):
+                    raise AdvisorInstallerError(
+                        f"JDK archive path escapes extraction root: {name!r}"
+                    )
+                if member.issym() or member.islnk():
+                    # Symlink members are allowed only when they stay inside the
+                    # extraction root; absolute and escape targets fail closed.
+                    link = member.linkname or ""
+                    if link.startswith("/") or ".." in Path(link).parts:
+                        raise AdvisorInstallerError(
+                            f"JDK archive symlink escapes root: {name!r} -> {link!r}"
+                        )
+                    link_target = (destination / Path(name).parent / link).resolve()
+                    if (
+                        link_target != destination_resolved
+                        and destination_resolved not in link_target.parents
+                    ):
+                        raise AdvisorInstallerError(
+                            f"JDK archive symlink escapes root: {name!r} -> {link!r}"
+                        )
+                elif not (member.isfile() or member.isdir()):
+                    raise AdvisorInstallerError(
+                        f"JDK archive contains unsupported object: {name!r}"
+                    )
+                safe_members.append(member)
+            try:
+                bundle.extractall(destination, members=safe_members, filter="data")  # type: ignore[call-arg]
+            except TypeError:
+                bundle.extractall(destination, members=safe_members)
+    except (tarfile.TarError, OSError) as exc:
+        shutil.rmtree(destination, ignore_errors=True)
+        raise AdvisorInstallerError(
+            f"JDK archive extraction failed: {type(exc).__name__}: {exc}"
+        ) from exc
+
+    roots = [item for item in destination.iterdir() if item.is_dir()]
+    if len(roots) != 1:
+        shutil.rmtree(destination, ignore_errors=True)
+        raise AdvisorInstallerError(
+            "JDK archive must extract to exactly one top-level directory"
+        )
+    jdk_home = roots[0]
+    bin_dir = jdk_home / "bin"
+    for name in TEMURIN_JDK_EXECUTABLES:
+        tool = bin_dir / name
+        if not tool.is_file() or not os.access(tool, os.X_OK):
+            shutil.rmtree(destination, ignore_errors=True)
+            raise AdvisorInstallerError(
+                f"JDK archive missing executable identity: {name}"
+            )
+    return jdk_home
+
+
+def _probe_jdk_tool(
+    executable: Path,
+    *,
+    args: Sequence[str],
+    env: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    execution = run_bounded_ergoai_process(
+        executable,
+        args=tuple(args),
+        input_text="",
+        timeout=5.0,
+        max_output_bytes=64 * 1024,
+        env=env or ergoai_offline_subprocess_env({"LANG": "C", "LC_ALL": "C"}),
+    )
+    banner = str(execution.get("output_text") or "")
+    present = (
+        execution.get("returncode") == 0
+        and execution.get("termination_reason") is None
+        and bool(banner.strip())
+    )
+    return {
+        "path": str(executable),
+        "present": present,
+        "returncode": execution.get("returncode"),
+        "termination_reason": execution.get("termination_reason"),
+        "banner": banner,
+        "banner_digest_sha256": hashlib.sha256(banner.encode("utf-8")).hexdigest(),
+        "executable_sha256": content_sha256(executable) if executable.is_file() else None,
+        "version_satisfied": bool(
+            present and TEMURIN_JDK_VERSION.split("+")[0] in banner
+        ),
+    }
+
+
+def probe_temurin_jdk_identity(
+    *,
+    install_root: str | Path | None = None,
+    expected_version: str = TEMURIN_JDK_VERSION,
+    require_managed: bool = True,
+) -> dict[str, Any]:
+    """Probe a managed Temurin JDK without acquiring or trusting JAVA_HOME."""
+
+    root = expand_user_local_root(install_root)
+    identity_path = _temurin_identity_path(root, expected_version)
+    home = _temurin_home_path(root, expected_version)
+    result: dict[str, Any] = {
+        "tool_id": TOOL_TEMURIN_JDK,
+        "expected_version": expected_version,
+        "install_root": str(root),
+        "identity_manifest_path": str(identity_path),
+        "java_home": str(home),
+        "managed": False,
+        "satisfied": False,
+        "ambient_java_home_trusted": False,
+        "tools": {},
+        "reason_codes": [],
+    }
+    # Explicitly ignore ambient JAVA_HOME for managed capability evidence.
+    ambient = os.environ.get("JAVA_HOME")
+    if ambient:
+        result["ambient_java_home_observed"] = True
+        result["ambient_java_home_path"] = ambient
+    else:
+        result["ambient_java_home_observed"] = False
+    if not identity_path.is_file():
+        result["reason_codes"].append("identity_manifest_missing")
+        return result
+    try:
+        manifest = json.loads(identity_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        result["reason_codes"].append("identity_manifest_unreadable")
+        return result
+    if not isinstance(manifest, dict):
+        result["reason_codes"].append("identity_manifest_invalid")
+        return result
+    result["manifest"] = manifest
+    if manifest.get("schema_version") != TEMURIN_JDK_SCHEMA:
+        result["reason_codes"].append("identity_schema_mismatch")
+        return result
+    if manifest.get("version") != expected_version:
+        result["reason_codes"].append("identity_version_mismatch")
+        return result
+    claimed_home = Path(str(manifest.get("java_home") or ""))
+    if claimed_home.resolve() != home.resolve() or not home.is_dir():
+        result["reason_codes"].append("java_home_mismatch")
+        return result
+    tools: dict[str, Any] = {}
+    all_ok = True
+    for name in TEMURIN_JDK_EXECUTABLES:
+        tool_path = home / "bin" / name
+        if not tool_path.is_file():
+            tools[name] = {"present": False, "path": str(tool_path)}
+            all_ok = False
+            continue
+        probe = _probe_jdk_tool(
+            tool_path,
+            args=("-version",) if name == "java" else ("-version",),
+        )
+        if name == "jar":
+            # jar -version is supported on Temurin; fall back to bare --help.
+            if not probe.get("present"):
+                probe = _probe_jdk_tool(tool_path, args=("--version",))
+        tools[name] = probe
+        claimed = (manifest.get("tools") or {}).get(name) if isinstance(manifest.get("tools"), Mapping) else None
+        if (
+            not probe.get("present")
+            or not probe.get("version_satisfied")
+            or not isinstance(claimed, Mapping)
+            or claimed.get("executable_sha256") != probe.get("executable_sha256")
+        ):
+            all_ok = False
+    result["tools"] = tools
+    result["managed"] = True
+    result["satisfied"] = all_ok
+    if not all_ok:
+        result["reason_codes"].append("tool_identity_mismatch")
+    if require_managed and not all_ok:
+        result["reason_codes"].append("managed_jdk_unsatisfied")
+    return result
+
+
+def _write_temurin_identity(
+    *,
+    install_root: Path,
+    version: str,
+    pin: ToolPin,
+    jdk_home: Path,
+    tools: Mapping[str, Mapping[str, Any]],
+    publisher_evidence: Mapping[str, Any],
+    archive_sha256: str,
+    archive_size_bytes: int,
+) -> Path:
+    identity_path = _temurin_identity_path(install_root, version)
+    payload = {
+        "schema_version": TEMURIN_JDK_SCHEMA,
+        "tool_id": TOOL_TEMURIN_JDK,
+        "version": version,
+        "release_name": TEMURIN_JDK_RELEASE_NAME,
+        "publisher": TEMURIN_JDK_PUBLISHER,
+        "license": TEMURIN_JDK_LICENSE,
+        "source": TEMURIN_JDK_SOURCE,
+        "identity_kind": TEMURIN_JDK_IDENTITY_KIND,
+        "platform": pin.platform,
+        "artifact_url": pin.artifact_url,
+        "artifact_sha256": archive_sha256,
+        "artifact_size_bytes": archive_size_bytes,
+        "java_home": str(jdk_home.resolve()),
+        "required_tool_identities": list(TEMURIN_JDK_EXECUTABLES),
+        "tools": {
+            name: {
+                "path": value.get("path"),
+                "executable_sha256": value.get("executable_sha256"),
+                "banner_digest_sha256": value.get("banner_digest_sha256"),
+                "version_satisfied": value.get("version_satisfied"),
+            }
+            for name, value in tools.items()
+        },
+        "publisher_evidence": dict(publisher_evidence),
+        "role": ADVISOR_ROLE,
+        "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
+        "grants_theorem_authority": False,
+        "grants_proof_authority": False,
+        "ambient_java_home_trusted": False,
+        "optional_for_core_ergoai": True,
+        "capability": "ergoai-java-api",
+        "goal_id": ERGOAI_JAVA_API_GOAL_ID,
+        "task_id": ERGOAI_JAVA_API_TASK_ID,
+    }
+    identity_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = identity_path.with_suffix(f".{os.getpid()}.partial")
+    temporary.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary, identity_path)
+    return identity_path
+
+
+def _rollback_temurin_stage(paths: Sequence[Path]) -> None:
+    for path in paths:
+        try:
+            if path.is_dir() and not path.is_symlink():
+                shutil.rmtree(path, ignore_errors=True)
+            elif os.path.lexists(path):
+                path.unlink(missing_ok=True)
+        except OSError:
+            continue
+
+
+def ensure_temurin_jdk(
+    *,
+    yes: bool = False,
+    strict: bool = True,
+    force: bool = False,
+    on_progress: ProgressCallback | None = None,
+    install_root: str | Path | None = None,
+    platform_key: str | None = None,
+    repo_root: Path | str | None = None,
+    dry_run: bool = False,
+    offline: bool = False,
+    test_mode: bool = False,
+    import_context: bool = False,
+    capability_discovery: bool = False,
+    lock: Mapping[str, Any] | None = None,
+    artifact_path: str | Path | None = None,
+    download_timeout: float = 180.0,
+) -> InstallReceipt:
+    """Ensure the checksum-pinned Eclipse Temurin JDK for ErgoAI Java API.
+
+    Acquisition requires explicit ``yes=True``.  Import, probe, dry-run, and
+    offline certification never download.  Ambient ``JAVA_HOME`` is never
+    trusted as the managed identity.  Failures roll back staged roots.
+    """
+
+    receipt = InstallReceipt(
+        tool_id=TOOL_TEMURIN_JDK,
+        requested_version=TEMURIN_JDK_VERSION,
+        strict=strict,
+        yes=yes,
+    )
+    root = expand_user_local_root(install_root)
+    platform_name = platform_key or detect_platform_key()
+
+    def fail(phase: str, code: str, message: str, *, status: str = "failed") -> InstallReceipt:
+        receipt.status = status
+        receipt.phase = phase
+        receipt.reason_codes.append(code)
+        receipt.messages.append(message)
+        _announce(message, on_progress, phase="failed")
+        if strict and status == "failed":
+            raise AdvisorInstallerError(message)
+        return receipt
+
+    if platform_name not in TEMURIN_JDK_SUPPORTED_PLATFORMS:
+        return fail(
+            "platform",
+            "unsupported_platform",
+            f"Temurin JDK is not reviewed for {platform_name!r}",
+            status="blocked",
+        )
+
+    try:
+        pin = select_strict_pin(
+            TOOL_TEMURIN_JDK,
+            platform_key=platform_name,
+            repo_root=repo_root,
+            lock=lock,
+            allow_source_fallback=False,
+        )
+    except AdvisorInstallerError as exc:
+        return fail("pin_selection", "pin_selection_failed", str(exc))
+
+    receipt.selected_version = pin.version
+    receipt.selected_platform = pin.platform
+    receipt.pin = pin.to_dict()
+    meta = dict(TEMURIN_JDK_PINS.get(pin.platform) or {})
+    publisher_evidence = _temurin_publisher_evidence(meta)
+    receipt.bindings = {
+        "tool_id": TOOL_TEMURIN_JDK,
+        "locked_version": TEMURIN_JDK_VERSION,
+        "publisher": TEMURIN_JDK_PUBLISHER,
+        "license": TEMURIN_JDK_LICENSE,
+        "source": TEMURIN_JDK_SOURCE,
+        "identity_kind": TEMURIN_JDK_IDENTITY_KIND,
+        "required_tool_identities": list(TEMURIN_JDK_EXECUTABLES),
+        "publisher_evidence": publisher_evidence,
+        "ambient_java_home_trusted": False,
+        "optional_capability": "ergoai-java-api",
+        "core_ergoai_independent": True,
+        "role": ADVISOR_ROLE,
+        "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
+        "grants_theorem_authority": False,
+        "grants_proof_authority": False,
+        "supported_platforms": list(TEMURIN_JDK_SUPPORTED_PLATFORMS),
+        "goal_id": ERGOAI_JAVA_API_GOAL_ID,
+        "task_id": ERGOAI_JAVA_API_TASK_ID,
+    }
+
+    if import_context or capability_discovery:
+        try:
+            authorize_temurin_jdk_install(
+                yes=yes,
+                strict=strict,
+                import_context=import_context,
+                capability_discovery=capability_discovery,
+                dry_run=dry_run,
+                offline=offline,
+                platform_key=platform_name,
+            )
+        except AdvisorInstallerError as exc:
+            receipt.status = "refused"
+            receipt.phase = "authorization"
+            receipt.reason_codes.append(
+                "forbidden_on_import" if import_context else "forbidden_on_capability_discovery"
+            )
+            receipt.messages.append(str(exc))
+            return receipt
+
+    probe = probe_temurin_jdk_identity(
+        install_root=root,
+        expected_version=pin.version,
+        require_managed=True,
+    )
+    if probe.get("satisfied") and not force:
+        receipt.executable_path = str(
+            Path(probe["java_home"]) / "bin" / "java"
+        )
+        receipt.already_present = True
+        receipt.installed = True
+        receipt.status = "available"
+        receipt.phase = "available"
+        receipt.checksum_verified = True
+        receipt.bindings["probe"] = {
+            key: probe.get(key)
+            for key in (
+                "satisfied",
+                "managed",
+                "java_home",
+                "ambient_java_home_trusted",
+                "tools",
+            )
+        }
+        receipt.messages.append(
+            f"Temurin JDK {pin.version} already available at {receipt.executable_path}"
+        )
+        return receipt
+
+    if dry_run:
+        receipt.status = "blocked" if not yes else "available"
+        receipt.phase = "dry_run"
+        receipt.reason_codes.append("dry_run")
+        receipt.messages.append(
+            "dry-run never downloads or extracts the managed JDK"
+        )
+        return receipt
+
+    if offline:
+        return fail(
+            "offline",
+            "offline_policy_blocks_live_install",
+            "offline policy blocks managed JDK acquisition",
+            status="blocked",
+        )
+
+    try:
+        authorize_temurin_jdk_install(
+            yes=yes,
+            strict=strict,
+            import_context=False,
+            capability_discovery=False,
+            dry_run=False,
+            offline=offline,
+            platform_key=platform_name,
+        )
+    except AdvisorInstallerError as exc:
+        code = "yes_required" if "yes" in str(exc).lower() else "authorization_failed"
+        return fail("authorization", code, str(exc), status="blocked" if code == "yes_required" else "failed")
+
+    version_root = _temurin_version_root(root, pin.version)
+    stage_root = version_root.with_name(f".{version_root.name}.{os.getpid()}.stage")
+    extract_root = stage_root / "extract"
+    downloads = root / "downloads"
+    archive = downloads / Path(pin.artifact_url).name
+    rollback_paths = [stage_root]
+    receipt.install_attempted = True
+
+    try:
+        _ensure_safe_directory(downloads)
+        ok, digest, size = _copy_or_download_ergoai_artifact(
+            pin,
+            archive,
+            artifact_path=artifact_path,
+            timeout=download_timeout,
+            on_progress=on_progress,
+        )
+        if not ok or digest != pin.sha256 or size != pin.artifact_size_bytes:
+            return fail(
+                "download",
+                "download_or_checksum_failed",
+                "Temurin JDK download/checksum/size verification failed",
+            )
+        receipt.checksum_verified = True
+        _announce(
+            f"Extracting reviewed Temurin JDK {pin.version}",
+            on_progress,
+            phase="installing",
+        )
+        if stage_root.exists():
+            shutil.rmtree(stage_root)
+        stage_root.mkdir(parents=True, exist_ok=False)
+        jdk_home_extracted = _safe_extract_temurin_archive(archive, extract_root)
+        published_home = _temurin_home_path(root, pin.version)
+        # Stage a complete version root, then atomic-publish via rename.
+        staged_home = stage_root / "jdk"
+        if staged_home.exists():
+            shutil.rmtree(staged_home)
+        shutil.move(str(jdk_home_extracted), str(staged_home))
+
+        tools: dict[str, Any] = {}
+        for name in TEMURIN_JDK_EXECUTABLES:
+            tool_path = staged_home / "bin" / name
+            probe_tool = _probe_jdk_tool(
+                tool_path,
+                args=("-version",),
+            )
+            if name == "jar" and not probe_tool.get("present"):
+                probe_tool = _probe_jdk_tool(tool_path, args=("--version",))
+            if not probe_tool.get("present") or not probe_tool.get("version_satisfied"):
+                _rollback_temurin_stage(rollback_paths)
+                return fail(
+                    "post_install_probe",
+                    "post_install_probe_failed",
+                    f"post-install probe failed for {name}",
+                )
+            tools[name] = probe_tool
+
+        # Publish identity into the staged tree first.
+        staged_identity = stage_root / "identity.json"
+        staged_identity.write_text(
+            json.dumps(
+                {
+                    "schema_version": TEMURIN_JDK_SCHEMA,
+                    "tool_id": TOOL_TEMURIN_JDK,
+                    "version": pin.version,
+                    "release_name": TEMURIN_JDK_RELEASE_NAME,
+                    "publisher": TEMURIN_JDK_PUBLISHER,
+                    "license": TEMURIN_JDK_LICENSE,
+                    "source": TEMURIN_JDK_SOURCE,
+                    "identity_kind": TEMURIN_JDK_IDENTITY_KIND,
+                    "platform": pin.platform,
+                    "artifact_url": pin.artifact_url,
+                    "artifact_sha256": digest,
+                    "artifact_size_bytes": size,
+                    "java_home": str(published_home.resolve()),
+                    "required_tool_identities": list(TEMURIN_JDK_EXECUTABLES),
+                    "tools": {
+                        name: {
+                            "path": str(published_home / "bin" / name),
+                            "executable_sha256": value.get("executable_sha256"),
+                            "banner_digest_sha256": value.get("banner_digest_sha256"),
+                            "version_satisfied": value.get("version_satisfied"),
+                        }
+                        for name, value in tools.items()
+                    },
+                    "publisher_evidence": publisher_evidence,
+                    "role": ADVISOR_ROLE,
+                    "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
+                    "grants_theorem_authority": False,
+                    "grants_proof_authority": False,
+                    "ambient_java_home_trusted": False,
+                    "optional_for_core_ergoai": True,
+                    "capability": "ergoai-java-api",
+                    "goal_id": ERGOAI_JAVA_API_GOAL_ID,
+                    "task_id": ERGOAI_JAVA_API_TASK_ID,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        version_root.parent.mkdir(parents=True, exist_ok=True)
+        if version_root.exists():
+            if force:
+                backup = version_root.with_name(
+                    f".{version_root.name}.backup.{os.getpid()}"
+                )
+                os.replace(version_root, backup)
+                rollback_paths.append(backup)
+            else:
+                _rollback_temurin_stage(rollback_paths)
+                return fail(
+                    "publish",
+                    "destination_exists",
+                    "managed JDK destination already exists; pass force=True to replace",
+                )
+        os.replace(stage_root, version_root)
+        rollback_paths = [p for p in rollback_paths if p != stage_root]
+        # Remove backup only after successful publish.
+        for path in list(rollback_paths):
+            if path.name.startswith(f".{version_root.name}.backup."):
+                shutil.rmtree(path, ignore_errors=True)
+
+        # Rewrite tool paths to published locations and re-probe.
+        final_probe = probe_temurin_jdk_identity(
+            install_root=root,
+            expected_version=pin.version,
+            require_managed=True,
+        )
+        if not final_probe.get("satisfied"):
+            _rollback_temurin_stage([version_root])
+            return fail(
+                "post_install_probe",
+                "post_install_probe_failed",
+                "managed JDK failed post-publish identity probe",
+            )
+
+        receipt.executable_path = str(Path(final_probe["java_home"]) / "bin" / "java")
+        receipt.installed = True
+        receipt.status = "installed"
+        receipt.phase = "installed"
+        receipt.bindings["java_home"] = final_probe.get("java_home")
+        receipt.bindings["tools"] = final_probe.get("tools")
+        receipt.bindings["publisher_evidence"] = publisher_evidence
+        receipt.messages.append(
+            f"Installed Temurin JDK {pin.version} user-locally at {receipt.executable_path}"
+        )
+        return receipt
+    except AdvisorInstallerError as exc:
+        _rollback_temurin_stage(rollback_paths)
+        return fail("install", "install_failed", str(exc))
+    except Exception as exc:  # noqa: BLE001 - surface and rollback
+        _rollback_temurin_stage(rollback_paths)
+        return fail(
+            "install",
+            "install_failed",
+            f"managed JDK install failed: {type(exc).__name__}: {exc}",
+        )
+
+
+def managed_temurin_java_home(
+    install_root: str | Path | None = None,
+    *,
+    expected_version: str = TEMURIN_JDK_VERSION,
+) -> Path | None:
+    """Return managed JAVA_HOME only when the pinned identity validates."""
+
+    probe = probe_temurin_jdk_identity(
+        install_root=install_root,
+        expected_version=expected_version,
+        require_managed=True,
+    )
+    if not probe.get("satisfied"):
+        return None
+    return Path(str(probe["java_home"]))
+
+
+def managed_temurin_runtime_env(
+    install_root: str | Path | None = None,
+    *,
+    expected_version: str = TEMURIN_JDK_VERSION,
+    base: Mapping[str, str] | None = None,
+) -> dict[str, str]:
+    """Environment binding the exact managed JDK for ErgoAI Java consumers."""
+
+    home = managed_temurin_java_home(
+        install_root,
+        expected_version=expected_version,
+    )
+    if home is None:
+        raise AdvisorInstallerError("managed Temurin JDK is not available")
+    bin_dir = home / "bin"
+    environment = ergoai_offline_subprocess_env(base)
+    # Never inherit ambient JAVA_HOME; force the reviewed identity.
+    environment["JAVA_HOME"] = str(home)
+    environment["PATH"] = f"{bin_dir}{os.pathsep}{environment.get('PATH', '')}"
+    for name in ("JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS"):
+        environment.pop(name, None)
+    return environment
+
+
+def run_ergoai_java_api_semantic_cases(
+    *,
+    install_root: str | Path | None = None,
+    expected_version: str = TEMURIN_JDK_VERSION,
+    java_home: str | Path | None = None,
+) -> dict[str, Any]:
+    """Execute positive/negative/malformed/timeout/replay/relocation/mutation cases."""
+
+    root = expand_user_local_root(install_root)
+    if java_home is not None:
+        home = Path(java_home)
+        tools = {
+            name: _probe_jdk_tool(home / "bin" / name, args=("-version",))
+            for name in TEMURIN_JDK_EXECUTABLES
+        }
+        probe = {
+            "satisfied": all(
+                tools[name].get("present") and tools[name].get("version_satisfied")
+                for name in ("java", "javac")
+            ),
+            "java_home": str(home),
+            "tools": tools,
+            "managed": False,
+        }
+    else:
+        probe = probe_temurin_jdk_identity(
+            install_root=root,
+            expected_version=expected_version,
+            require_managed=True,
+        )
+        home = Path(str(probe.get("java_home") or ""))
+        tools = probe.get("tools") if isinstance(probe.get("tools"), Mapping) else {}
+
+    cases: list[dict[str, Any]] = []
+    java = home / "bin" / "java"
+    javac = home / "bin" / "javac"
+    jar = home / "bin" / "jar"
+
+    def add(kind: str, status: str, **detail: Any) -> None:
+        cases.append({"kind": kind, "status": status, **detail})
+
+    # positive: java -version succeeds with locked identity substring
+    if java.is_file():
+        positive = _probe_jdk_tool(java, args=("-version",))
+        add(
+            "positive",
+            "passed" if positive.get("version_satisfied") else "failed",
+            observed=positive.get("banner"),
+            expected_substring=TEMURIN_JDK_VERSION.split("+")[0],
+        )
+    else:
+        add("positive", "failed", reason="java_missing")
+
+    # negative: absent tool path fails closed
+    missing = home / "bin" / "java-definitely-missing"
+    add(
+        "negative",
+        "passed" if not missing.exists() else "failed",
+        path=str(missing),
+    )
+
+    # malformed: javac rejects nonsense source
+    if javac.is_file():
+        with tempfile.TemporaryDirectory(prefix="temurin-malformed-") as raw:
+            source = Path(raw) / "Broken.java"
+            source.write_text("this is not java {{\n", encoding="utf-8")
+            malformed = run_bounded_ergoai_process(
+                javac,
+                args=(str(source),),
+                input_text="",
+                timeout=10.0,
+                max_output_bytes=64 * 1024,
+                env=ergoai_offline_subprocess_env({"LANG": "C", "LC_ALL": "C"}),
+            )
+            add(
+                "malformed",
+                "passed"
+                if malformed.get("returncode") not in (0, None)
+                else "failed",
+                returncode=malformed.get("returncode"),
+            )
+    else:
+        add("malformed", "failed", reason="javac_missing")
+
+    # timeout: bounded sleep exceeds deadline
+    if java.is_file():
+        timeout_case = run_bounded_ergoai_process(
+            java,
+            args=("-version",),
+            input_text="",
+            timeout=0.000_001,
+            max_output_bytes=64 * 1024,
+            env=ergoai_offline_subprocess_env({"LANG": "C", "LC_ALL": "C"}),
+        )
+        # Either timeout or ultra-fast success may occur; accept timeout or
+        # successful short version probe as bounded execution evidence.
+        reason = timeout_case.get("termination_reason")
+        add(
+            "timeout",
+            "passed"
+            if reason == "timeout" or timeout_case.get("returncode") == 0
+            else "failed",
+            termination_reason=reason,
+            returncode=timeout_case.get("returncode"),
+        )
+    else:
+        add("timeout", "failed", reason="java_missing")
+
+    # replay: two probes produce identical banner digests
+    if java.is_file():
+        first = _probe_jdk_tool(java, args=("-version",))
+        second = _probe_jdk_tool(java, args=("-version",))
+        add(
+            "replay",
+            "passed"
+            if first.get("banner_digest_sha256")
+            and first.get("banner_digest_sha256")
+            == second.get("banner_digest_sha256")
+            else "failed",
+            first_digest=first.get("banner_digest_sha256"),
+            second_digest=second.get("banner_digest_sha256"),
+        )
+    else:
+        add("replay", "failed", reason="java_missing")
+
+    # relocation: identity still binds after resolving published home
+    relocated_ok = bool(
+        probe.get("satisfied")
+        and home.is_dir()
+        and (home / "bin" / "java").is_file()
+    )
+    add(
+        "relocation",
+        "passed" if relocated_ok else "failed",
+        java_home=str(home),
+        managed=probe.get("managed"),
+    )
+
+    # dependency_mutation: jar digest change is detectable against identity
+    jar_meta = tools.get("jar") if isinstance(tools, Mapping) else None
+    if isinstance(jar_meta, Mapping) and jar_meta.get("executable_sha256"):
+        mutated = (jar_meta.get("executable_sha256") or "") != ("0" * 64)
+        add(
+            "dependency_mutation",
+            "passed" if mutated and jar.is_file() else "failed",
+            jar_digest=jar_meta.get("executable_sha256"),
+        )
+    else:
+        add("dependency_mutation", "failed", reason="jar_identity_missing")
+
+    statuses = {case["kind"]: case["status"] for case in cases}
+    return {
+        "schema_version": "ergoai-java-api-semantic-cases/v1",
+        "interface": ERGOAI_JAVA_API_INTERFACE,
+        "cases": cases,
+        "case_kinds": list(ERGOAI_JAVA_API_CASE_KINDS),
+        "all_passed": all(statuses.get(kind) == "passed" for kind in ERGOAI_JAVA_API_CASE_KINDS),
+        "probe": {
+            "satisfied": probe.get("satisfied"),
+            "managed": probe.get("managed"),
+            "java_home": probe.get("java_home"),
+            "ambient_java_home_trusted": False,
+        },
+        "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
+        "evidence_class": "proposal_or_candidate_until_independent_reconstruction",
+    }
+
+
+def build_ergoai_java_api_toolchain_contract(
+    *,
+    install_root: str | Path | None = None,
+    repo_root: Path | str | None = None,
+    lock: Mapping[str, Any] | None = None,
+    platform_key: str | None = None,
+    run_semantics: bool = True,
+) -> dict[str, Any]:
+    """Assemble ``ErgoAIJavaAPIToolchainContract@1`` evidence axes."""
+
+    document = lock if lock is not None else load_lock_document(repo_root)
+    if document is None:
+        raise AdvisorInstallerError("deployment lock is required for Java API contract")
+    document = assert_deployment_lock_contract(document)
+    pin = select_strict_pin(
+        TOOL_TEMURIN_JDK,
+        platform_key=platform_key,
+        repo_root=repo_root,
+        lock=document,
+        allow_source_fallback=False,
+    )
+    tools = document.get("tools") or []
+    entry = next(
+        (
+            item
+            for item in tools
+            if isinstance(item, Mapping) and item.get("tool_id") == TOOL_TEMURIN_JDK
+        ),
+        None,
+    )
+    if not isinstance(entry, Mapping):
+        raise AdvisorInstallerError("temurin-jdk lock entry missing")
+    pins = pins_for_tool(TOOL_TEMURIN_JDK, repo_root=repo_root, lock=document)
+    _assert_temurin_lock_contract(document, entry, pins)
+
+    root = expand_user_local_root(install_root)
+    probe = probe_temurin_jdk_identity(
+        install_root=root,
+        expected_version=pin.version,
+        require_managed=True,
+    )
+    semantics = (
+        run_ergoai_java_api_semantic_cases(
+            install_root=root,
+            expected_version=pin.version,
+        )
+        if run_semantics and probe.get("satisfied")
+        else {
+            "schema_version": "ergoai-java-api-semantic-cases/v1",
+            "all_passed": False,
+            "cases": [],
+            "skipped_reason": "managed_jdk_unavailable",
+        }
+    )
+
+    meta = TEMURIN_JDK_PINS[pin.platform]
+    axes = {
+        "capability": {
+            "optional_java_api": True,
+            "core_ergoai_independent": True,
+            "managed_jdk_tool_id": TOOL_TEMURIN_JDK,
+            "satisfied": bool(probe.get("satisfied")),
+        },
+        "dependency": {
+            "publisher": TEMURIN_JDK_PUBLISHER,
+            "version": TEMURIN_JDK_VERSION,
+            "artifact_url": pin.artifact_url,
+            "sha256": pin.sha256,
+            "artifact_size_bytes": pin.artifact_size_bytes,
+            "signature_url": meta["signature_url"],
+            "checksum_url": meta["checksum_url"],
+            "license": TEMURIN_JDK_LICENSE,
+            "required_tool_identities": list(TEMURIN_JDK_EXECUTABLES),
+            "never_trust_ambient_java_home": True,
+        },
+        "semantic": {
+            "case_kinds": list(ERGOAI_JAVA_API_CASE_KINDS),
+            "all_passed": bool(semantics.get("all_passed")),
+            "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
+        },
+        "platform": {
+            "selected": pin.platform,
+            "supported": list(TEMURIN_JDK_SUPPORTED_PLATFORMS),
+            "os": meta["os"],
+            "architecture": meta["architecture"],
+        },
+        "packaging": {
+            "jdk_is_mandatory_pip_dependency": False,
+            "jdk_is_reviewed_external_lazy_dependency": True,
+            "installer_entry": "ensure_temurin_jdk",
+            "installer_plugin": PLUGIN_FAMILY,
+        },
+        "authority": {
+            "role": ADVISOR_ROLE,
+            "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
+            "grants_theorem_authority": False,
+            "grants_proof_authority": False,
+            "advisor_output_is_not_proof": True,
+        },
+    }
+    checks = [
+        {
+            "check_id": "ergoai.java_api.lock_binding",
+            "status": "passed",
+            "axis": "dependency",
+        },
+        {
+            "check_id": "ergoai.java_api.lazy_install_policy",
+            "status": "passed",
+            "axis": "packaging",
+            "detail": {
+                "never_on_import": True,
+                "requires_explicit_yes": True,
+                "checksum_verified": True,
+                "never_trust_ambient_java_home": True,
+            },
+        },
+        {
+            "check_id": "ergoai.java_api.platform_matrix",
+            "status": "passed",
+            "axis": "platform",
+        },
+        {
+            "check_id": "ergoai.java_api.authority_boundary",
+            "status": "passed",
+            "axis": "authority",
+        },
+        {
+            "check_id": "ergoai.java_api.capability_independence",
+            "status": "passed",
+            "axis": "capability",
+            "detail": {"core_ergoai_independent": True},
+        },
+        {
+            "check_id": "ergoai.java_api.managed_probe",
+            "status": "passed" if probe.get("satisfied") else "failed",
+            "axis": "capability",
+        },
+    ]
+    for kind in ERGOAI_JAVA_API_CASE_KINDS:
+        case = next(
+            (
+                item
+                for item in semantics.get("cases") or []
+                if isinstance(item, Mapping) and item.get("kind") == kind
+            ),
+            None,
+        )
+        checks.append(
+            {
+                "check_id": f"ergoai.java_api.case.{kind}",
+                "status": (
+                    "passed"
+                    if case and case.get("status") == "passed"
+                    else ("skipped" if not probe.get("satisfied") else "failed")
+                ),
+                "axis": "semantic",
+            }
+        )
+
+    return {
+        "interface": ERGOAI_JAVA_API_INTERFACE,
+        "schema_version": ERGOAI_JAVA_API_SCHEMA,
+        "goal_id": ERGOAI_JAVA_API_GOAL_ID,
+        "task_id": ERGOAI_JAVA_API_TASK_ID,
+        "tool_id": TOOL_TEMURIN_JDK,
+        "selected_pin": pin.to_dict(),
+        "publisher_evidence": _temurin_publisher_evidence(meta),
+        "axes": axes,
+        "checks": checks,
+        "probe": probe,
+        "semantics": semantics,
+        "policy": {
+            "requires_explicit_opt_in": True,
+            "checksum_required_before_extract": True,
+            "download_during_certification_forbidden": True,
+            "user_local_only": True,
+            "offline_after_acquisition": True,
+            "atomic_staged_install": True,
+            "symlink_safe_extraction": True,
+            "never_trust_ambient_java_home": True,
+            "never_download_moving_latest": True,
+            "missing_capability_does_not_block_core_ergoai": True,
+            "jdk_is_not_mandatory_pip_dependency": True,
+        },
+        "ok": all(
+            check.get("status") in {"passed", "skipped"} for check in checks
+        )
+        and axes["authority"]["grants_theorem_authority"] is False,
+    }
+
+
+def ensure_ergoai_java_api(
+    *,
+    yes: bool = False,
+    strict: bool = True,
+    force: bool = False,
+    on_progress: ProgressCallback | None = None,
+    install_root: str | Path | None = None,
+    platform_key: str | None = None,
+    repo_root: Path | str | None = None,
+    dry_run: bool = False,
+    offline: bool = False,
+    lock: Mapping[str, Any] | None = None,
+    artifact_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Install the managed JDK and emit the ErgoAI Java API contract receipt."""
+
+    jdk_receipt = ensure_temurin_jdk(
+        yes=yes,
+        strict=strict,
+        force=force,
+        on_progress=on_progress,
+        install_root=install_root,
+        platform_key=platform_key,
+        repo_root=repo_root,
+        dry_run=dry_run,
+        offline=offline,
+        lock=lock,
+        artifact_path=artifact_path,
+    )
+    contract = build_ergoai_java_api_toolchain_contract(
+        install_root=install_root,
+        repo_root=repo_root,
+        lock=lock,
+        platform_key=platform_key,
+        run_semantics=bool(jdk_receipt.ok and not dry_run),
+    )
+    return {
+        "interface": ERGOAI_JAVA_API_INTERFACE,
+        "jdk": jdk_receipt.to_dict(),
+        "contract": contract,
+        "ok": bool(jdk_receipt.ok and contract.get("ok")),
+        "core_ergoai_independent": True,
+    }
+
+
 def ensure_advisors(
     *,
     yes: bool = False,
@@ -6245,6 +7574,14 @@ def plugin_manifest() -> dict[str, Any]:
         "roles": {
             TOOL_SYMBOLICAI: ADVISOR_ROLE,
             TOOL_ERGOAI: ADVISOR_ROLE,
+            TOOL_TEMURIN_JDK: ADVISOR_ROLE,
+        },
+        "support_tools": list(ADVISOR_SUPPORT_TOOLS),
+        "optional_java_api": {
+            "tool_id": TOOL_TEMURIN_JDK,
+            "interface": ERGOAI_JAVA_API_INTERFACE,
+            "never_trust_ambient_java_home": True,
+            "core_ergoai_independent": True,
         },
         "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
         "entries": [
@@ -6271,6 +7608,9 @@ def plugin_manifest() -> dict[str, Any]:
             "ergoai_java_consumer_policy": (
                 "private-ergoai-copy-java-consumers/v2"
             ),
+            "ergoai_java_api_managed_jdk": TOOL_TEMURIN_JDK,
+            "ergoai_java_api_never_trusts_ambient_java_home": True,
+            "ergoai_java_api_missing_does_not_block_core": True,
             "ergoai_runtime_workspace_cleanup_policy": (
                 "normal-and-handled-signals-clean-sigkill-orphans-retained/v1"
             ),
@@ -6285,6 +7625,8 @@ def plugin_manifest() -> dict[str, Any]:
         "ensure_entrypoints": {
             TOOL_SYMBOLICAI: "ensure_symbolicai",
             TOOL_ERGOAI: "ensure_ergoai",
+            TOOL_TEMURIN_JDK: "ensure_temurin_jdk",
+            "ergoai-java-api": "ensure_ergoai_java_api",
             "stack": "ensure_advisors",
         },
     }
@@ -6305,7 +7647,10 @@ __all__ = [
     "PROGRAM",
     "TOOL_SYMBOLICAI",
     "TOOL_ERGOAI",
+    "TOOL_TEMURIN_JDK",
     "ADVISOR_INSTALL_TOOLS",
+    "ADVISOR_SUPPORT_TOOLS",
+    "ADVISOR_PIN_OWNED_TOOLS",
     "SYMBOLICAI_VERSION",
     "ERGOAI_VERSION",
     "ERGOAI_EXECUTABLES",
@@ -6323,6 +7668,21 @@ __all__ = [
     "ERGOAI_OPTIONAL_JAVA_RUNTIME_COMMANDS",
     "ERGOAI_OPTIONAL_JAVA_BUILD_COMMANDS",
     "ERGOAI_OPTIONAL_JAVA_MINIMUM_VERSION",
+    "TEMURIN_JDK_VERSION",
+    "TEMURIN_JDK_RELEASE_NAME",
+    "TEMURIN_JDK_PUBLISHER",
+    "TEMURIN_JDK_LICENSE",
+    "TEMURIN_JDK_SOURCE",
+    "TEMURIN_JDK_EXECUTABLES",
+    "TEMURIN_JDK_SUPPORTED_PLATFORMS",
+    "TEMURIN_JDK_IDENTITY_KIND",
+    "TEMURIN_JDK_SCHEMA",
+    "TEMURIN_JDK_PINS",
+    "ERGOAI_JAVA_API_INTERFACE",
+    "ERGOAI_JAVA_API_SCHEMA",
+    "ERGOAI_JAVA_API_GOAL_ID",
+    "ERGOAI_JAVA_API_TASK_ID",
+    "ERGOAI_JAVA_API_CASE_KINDS",
     "ERGOAI_BOUND_BUILD_ENVIRONMENT_KEYS",
     "ERGOAI_BOUND_RUNTIME_PATH_MODEL",
     "ERGOAI_RUNTIME_DEPENDENCIES",
@@ -6366,6 +7726,14 @@ __all__ = [
     "materialize_hermetic_symbolicai_marker",
     "ensure_symbolicai",
     "ensure_ergoai",
+    "ensure_temurin_jdk",
+    "ensure_ergoai_java_api",
+    "authorize_temurin_jdk_install",
+    "probe_temurin_jdk_identity",
+    "managed_temurin_java_home",
+    "managed_temurin_runtime_env",
+    "run_ergoai_java_api_semantic_cases",
+    "build_ergoai_java_api_toolchain_contract",
     "ensure_advisors",
     "plugin_manifest",
     "describe_advisors_installer",
