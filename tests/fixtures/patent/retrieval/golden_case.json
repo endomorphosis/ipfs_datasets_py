@@ -1,0 +1,146 @@
+{
+  "schema_version": "patent.retrieval.golden.v1",
+  "case_id": "golden-hybrid-us11222333",
+  "corpus_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+  "config_cid": "bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+  "model_cid": "bafybeimodelidentity000000000000000000000000000000000000001",
+  "tenant_id": "tenant-public",
+  "as_of_utc": "2024-06-01T00:00:00Z",
+  "allowed_disclosures": ["public_official", "public_user"],
+  "documents": [
+    {
+      "document_id": "doc:patent-encode",
+      "disclosure": "public_official",
+      "tenant_id": "tenant-public",
+      "effective_from_utc": "2020-01-01T00:00:00Z",
+      "effective_to_utc": "2030-01-01T00:00:00Z",
+      "field_values": {
+        "title": "Method of encoding patent claims",
+        "abstract": "A method comprising encoding claim text for retrieval.",
+        "claims": "1. A method comprising applying 35 U.S.C. § 102 prior art analysis to claim 1.",
+        "description": "The system indexes CPC G06F16/00 documents and US11222333.",
+        "cpc": "G06F16/00",
+        "ipc": "G06F16/00",
+        "citations": "US10123456B2; 37 C.F.R. § 1.56",
+        "numbers": "US11222333",
+        "legal_bases": "35 U.S.C. § 102(a)(1); MPEP § 2106"
+      },
+      "claim_units": [
+        "1. A method comprising applying 35 U.S.C. § 102 prior art analysis to claim 1."
+      ],
+      "section_units": [
+        "35 U.S.C. § 102(a)(1) novelty under public disclosure."
+      ],
+      "source_links": [
+        {
+          "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+          "artifact_id": "artifact:patent-11222333",
+          "span": {"start": 0, "end": 80, "unit": "char"},
+          "authority_tier": "official-base"
+        }
+      ]
+    },
+    {
+      "document_id": "doc:patent-network",
+      "disclosure": "public_official",
+      "tenant_id": "tenant-public",
+      "effective_from_utc": "2019-01-01T00:00:00Z",
+      "field_values": {
+        "title": "Network security apparatus",
+        "abstract": "Encrypting packets with key rotation.",
+        "claims": "1. An apparatus comprising a cipher module.",
+        "description": "Relates to H04L 9/32 cryptography.",
+        "cpc": "H04L9/32",
+        "ipc": "H04L9/32",
+        "citations": "US9988776B2",
+        "numbers": "US10123456B2",
+        "legal_bases": "35 U.S.C. § 103"
+      },
+      "source_links": [
+        {
+          "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+          "artifact_id": "artifact:patent-10123456",
+          "span": {"start": 0, "end": 40, "unit": "char"},
+          "authority_tier": "official-base"
+        }
+      ]
+    },
+    {
+      "document_id": "doc:private-draft",
+      "disclosure": "confidential_application",
+      "tenant_id": "tenant-public",
+      "effective_from_utc": "2021-01-01T00:00:00Z",
+      "field_values": {
+        "title": "Confidential application draft",
+        "abstract": "Private claim language must not leave the tenant.",
+        "claims": "1. A secret method.",
+        "legal_bases": "35 U.S.C. § 112"
+      },
+      "source_links": [
+        {
+          "source_cid": "bafybeiprivate000000000000000000000000000000000000000000001",
+          "artifact_id": "artifact:private-draft-1",
+          "span": {"start": 0, "end": 20, "unit": "char"}
+        }
+      ]
+    },
+    {
+      "document_id": "doc:future-rule",
+      "disclosure": "public_official",
+      "tenant_id": "tenant-public",
+      "effective_from_utc": "2025-01-01T00:00:00Z",
+      "field_values": {
+        "title": "Future effective rule note",
+        "abstract": "Not yet effective as of query as-of.",
+        "claims": "1. A prospective method.",
+        "legal_bases": "35 U.S.C. § 101"
+      },
+      "source_links": [
+        {
+          "source_cid": "bafybeifuture0000000000000000000000000000000000000000000001",
+          "artifact_id": "artifact:future-1",
+          "span": {"start": 0, "end": 10, "unit": "char"}
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "schema_version": "patent.retrieval.contracts.v1",
+      "edge_id": "edge:cites-encode-network",
+      "subject_id": "node:doc:patent-encode",
+      "object_id": "node:doc:patent-network",
+      "kind": "cites",
+      "provenance": "source_derived",
+      "authority_claim": "source_bound",
+      "source_links": [
+        {
+          "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+          "artifact_id": "artifact:patent-11222333",
+          "span": {"start": 40, "end": 60, "unit": "char"}
+        }
+      ],
+      "disclosure": "public_official",
+      "tenant_id": "tenant-public",
+      "weight": 1.0
+    }
+  ],
+  "queries": [
+    {
+      "query_id": "q-prior-art-102",
+      "query": "35 U.S.C. § 102 prior art encoding G06F16/00",
+      "expected_top_document_id": "doc:patent-encode",
+      "expected_protected_tokens": [
+        "35_u.s.c._§_102",
+        "g06f16/00"
+      ]
+    }
+  ],
+  "embedding": {
+    "provider": "local_hash",
+    "model_id": "hashed-term-patent-v1",
+    "model_version": "1.0.0",
+    "dimension": 256,
+    "backend": "pinned"
+  }
+}
