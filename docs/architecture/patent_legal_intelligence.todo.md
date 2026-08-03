@@ -2359,7 +2359,7 @@ Program invariants:
 
 ## PATLAW-156 Define Viewer-compatible JusticeDAO layouts and migration metadata
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
