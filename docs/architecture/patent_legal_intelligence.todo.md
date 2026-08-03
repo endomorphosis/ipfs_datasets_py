@@ -774,7 +774,7 @@ Program invariants:
 
 ## PATLAW-045 Compare government instructions to applicable authority
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
