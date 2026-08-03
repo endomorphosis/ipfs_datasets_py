@@ -117,14 +117,59 @@ SECPAL_HISTORICAL_RELEASE_VERSION: Final = "1.1"
 SECPAL_UPSTREAM_AUDIT_AS_OF: Final = "2026-08-03"
 SECPAL_UPSTREAM_DISTRIBUTION_STATUS: Final = "retired"
 SECPAL_VENDOR_INSTALLER_IMPLEMENTED: Final = False
+SECPAL_OPERATOR_ARTIFACT_INSTALLER_AVAILABLE: Final = True
+SECPAL_OPERATOR_ARTIFACT_SCHEMA: Final = "secpal-reviewed-operator-artifact/v1"
+SECPAL_OPERATOR_ARTIFACT_EVIDENCE_CLASS: Final = "reviewed_official_artifact"
+SECPAL_TEST_FIXTURE_EVIDENCE_CLASS: Final = "test_fixture"
+SECPAL_OPERATOR_ARTIFACT_RECEIPT_SCHEMA: Final = (
+    "secpal-operator-artifact-intake-receipt/v1"
+)
+SECPAL_OPERATOR_COMPATIBILITY_SCHEMA: Final = (
+    "secpal-operator-compatibility-probe/v1"
+)
+SECPAL_OPERATOR_COMPATIBILITY_EVIDENCE_CLASS: Final = (
+    "operator_compatibility_probe"
+)
+SECPAL_OFFICIAL_ARTIFACT_FILENAME: Final = "SecPal_Research_Release.msi"
+SECPAL_OFFICIAL_ARTIFACT_SHA256: Final = (
+    "c1988b9f1f6a2fb602bac4fc777a1765e59e74126285a095684a4743ea683159"
+)
+SECPAL_OFFICIAL_ARTIFACT_SIZE_BYTES: Final = 2_458_624
+SECPAL_OFFICIAL_MSI_PRODUCT_VERSION: Final = "1.0.0"
+SECPAL_OFFICIAL_MSI_PRODUCT_CODE: Final = (
+    "{957BD905-629C-45B0-AA93-EC1AAD218115}"
+)
+SECPAL_OFFICIAL_MSI_UPGRADE_CODE: Final = (
+    "{7CCC29E2-7A1E-4222-B286-1469B0810D19}"
+)
+SECPAL_OFFICIAL_MSI_REVISION: Final = (
+    "{50E0C48B-84D3-4256-B6A7-5CDF0FC2EE7B}"
+)
+SECPAL_OFFICIAL_ORIGINAL_ARTIFACT_URL: Final = (
+    "http://ftp.research.microsoft.com/downloads/"
+    "81e28b29-10be-4551-9ede-1690f32e1581/SecPal_Research_Release.msi"
+)
+SECPAL_ARCHIVED_PROJECT_METADATA_URL: Final = (
+    "https://web.archive.org/web/20090803173817id_/"
+    "http://research.microsoft.com/en-us/downloads/"
+    "81e28b29-10be-4551-9ede-1690f32e1581/default.aspx"
+)
+SECPAL_ARCHIVED_BINARY_EVIDENCE_URL: Final = (
+    "https://web.archive.org/web/20151206102411id_/"
+    "ftp://ftp.research.microsoft.com/downloads/"
+    "81e28b29-10be-4551-9ede-1690f32e1581/SecPal_Research_Release.msi"
+)
+SECPAL_EULA_SHA256: Final = (
+    "de075e7848fb737b9da3cfec5ce7c906742f4767fa04ed2bc38e69e2dd5e4fad"
+)
+SECPAL_AUTHENTICODE_SHA1: Final = "4e09b091fb6d770867fdbf3cb2fa7a8c2c53b002"
+SECPAL_OPERATOR_ARTIFACT_MAX_BYTES: Final = 256 * 1024 * 1024
 SECPAL_VENDOR_PREREQUISITE_SCHEMA: Final = (
     "secpal-vendor-prerequisite-report/v1"
 )
 SECPAL_VENDOR_PREREQUISITE_REASONS: Final = (
     SECPAL_VENDOR_UNAVAILABLE_REASON,
     "official_vendor_distribution_retired",
-    "vendor_release_version_unverified",
-    "vendor_artifact_url_missing",
     "vendor_artifact_checksum_missing",
     "vendor_artifact_provenance_missing",
     "vendor_license_evidence_missing",
@@ -487,6 +532,110 @@ class ShadowEngineIdentity:
 
 
 @dataclass(frozen=True, slots=True)
+class SecPALOperatorArtifactReceipt:
+    """Non-promotable receipt for locally staging the restricted SecPAL MSI.
+
+    This receipt proves only artifact intake.  It is deliberately not an
+    engine identity: the recovered Microsoft package exposes libraries,
+    samples, and an audit viewer, but no reviewed arbitrary-policy CLI.
+    """
+
+    status: str
+    artifact_path: str
+    manifest_path: str
+    artifact_sha256: str
+    artifact_size_bytes: int
+    product_version: str
+    evidence_class: str
+    platform_id: str
+    deployment_lock_path: str
+    deployment_lock_sha256: str
+    manifest_sha256: str
+    fixture: bool = False
+    license_accepted: bool = True
+    redistribution_permitted: bool = False
+    execution_eligible: bool = False
+    live_certification_eligible: bool = False
+    production_certified: bool = False
+    transactional: bool = True
+    rollback_preserved: bool = True
+    schema_version: str = SECPAL_OPERATOR_ARTIFACT_RECEIPT_SCHEMA
+
+    def __post_init__(self) -> None:
+        if self.status not in {"staged_only", "already_staged"}:
+            raise AuthorizationInstallerError(
+                f"invalid SecPAL artifact-intake status {self.status!r}"
+            )
+        if self.schema_version != SECPAL_OPERATOR_ARTIFACT_RECEIPT_SCHEMA:
+            raise AuthorizationInstallerError(
+                "invalid SecPAL operator-artifact receipt schema"
+            )
+        if not self.license_accepted:
+            raise AuthorizationInstallerError(
+                "SecPAL artifact intake requires explicit EULA acceptance"
+            )
+        if self.redistribution_permitted:
+            raise AuthorizationInstallerError(
+                "the SecPAL EULA forbids redistribution of the staged artifact"
+            )
+        if (
+            self.execution_eligible
+            or self.live_certification_eligible
+            or self.production_certified
+        ):
+            raise AuthorizationInstallerError(
+                "artifact intake cannot claim SecPAL execution or certification"
+            )
+        if not self.transactional or not self.rollback_preserved:
+            raise AuthorizationInstallerError(
+                "SecPAL artifact intake must remain transactional with rollback"
+            )
+        for digest in (
+            self.artifact_sha256,
+            self.deployment_lock_sha256,
+            self.manifest_sha256,
+        ):
+            if not re.fullmatch(r"[0-9a-f]{64}", digest):
+                raise AuthorizationInstallerError(
+                    "SecPAL artifact intake requires exact lowercase sha256 bindings"
+                )
+        if self.artifact_size_bytes <= 0:
+            raise AuthorizationInstallerError(
+                "SecPAL artifact intake requires a positive bounded size"
+            )
+        if self.fixture != (
+            self.evidence_class == SECPAL_TEST_FIXTURE_EVIDENCE_CLASS
+        ):
+            raise AuthorizationInstallerError(
+                "SecPAL artifact fixture classification is inconsistent"
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "artifact_path": self.artifact_path,
+            "artifact_sha256": self.artifact_sha256,
+            "artifact_size_bytes": self.artifact_size_bytes,
+            "deployment_lock_path": self.deployment_lock_path,
+            "deployment_lock_sha256": self.deployment_lock_sha256,
+            "evidence_class": self.evidence_class,
+            "execution_eligible": False,
+            "fixture": self.fixture,
+            "manifest_sha256": self.manifest_sha256,
+            "license_accepted": self.license_accepted,
+            "live_certification_eligible": False,
+            "manifest_path": self.manifest_path,
+            "platform_id": self.platform_id,
+            "product_version": self.product_version,
+            "production_certified": False,
+            "redistribution_permitted": False,
+            "rollback_preserved": self.rollback_preserved,
+            "schema_version": self.schema_version,
+            "status": self.status,
+            "transactional": self.transactional,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class InstallReceipt:
     """Receipt for one explicit external-engine installation attempt."""
 
@@ -511,6 +660,7 @@ class InstallReceipt:
     installed: bool = False
     authoritative: bool = False
     is_vendor_path: bool = False
+    operator_artifact: SecPALOperatorArtifactReceipt | None = None
 
     def __post_init__(self) -> None:
         if self.status not in {
@@ -577,6 +727,11 @@ class InstallReceipt:
             "is_vendor_path": self.is_vendor_path,
             "never_grants_authorization_authority": True,
             "never_grants_theorem_authority": True,
+            "operator_artifact": (
+                None
+                if self.operator_artifact is None
+                else self.operator_artifact.to_dict()
+            ),
             "platform_exception": self.platform_exception,
             "platform_id": self.platform_id,
             "production_certified": (
@@ -787,83 +942,91 @@ def build_dependencies_for_tool(
     return {}
 
 
-def secpal_vendor_prerequisite_report(
+def _secpal_lock_entry(
     *,
     repo_root: Path | str | None = None,
     lock_path: Path | str | None = None,
-) -> dict[str, Any]:
-    """Return the fail-closed prerequisites for a genuine SecPAL release.
+) -> tuple[Mapping[str, Any], Mapping[str, Any], str]:
+    """Return the reviewed SecPAL lock entry and loaded lock, fail closed."""
 
-    Microsoft historically shipped SecPAL as the ``SecPAL Research Release
-    for Microsoft .NET`` version 1.1.  Its official Download Center entry is
-    now retired, and the current deployment lock intentionally has no vendor
-    artifact URL or checksum.  A Python SecPAL-compatible implementation is
-    not a substitute for that binary.
-
-    This function is deliberately offline and side-effect free.  It consumes
-    only the reviewed deployment lock; a separate, explicitly invoked live
-    provenance audit is required to refresh the upstream-distribution status.
-    A future operator-supplied archive may become eligible only after *all*
-    artifact, checksum, provenance, license, runtime, executable, and platform
-    contracts below are reviewed and the genuine installer is implemented.
-    """
-
-    lock_error = ""
     try:
         lock = load_deployment_lock(repo_root, lock_path=lock_path)
+        assert_deployment_lock_contract(lock)
     except Exception as exc:
-        lock = {}
-        # Keep discovery/receipt metadata free of host-private paths.
-        lock_error = type(exc).__name__
-
-    tool_entry: Mapping[str, Any] = {}
+        return {}, {}, type(exc).__name__
     tools = lock.get("tools") if isinstance(lock, Mapping) else None
-    if isinstance(tools, list):
-        for candidate in tools:
-            if (
-                isinstance(candidate, Mapping)
-                and candidate.get("tool_id") == TOOL_SECPAL
-            ):
-                tool_entry = candidate
-                break
+    if not isinstance(tools, list):
+        return lock, {}, "missing_tools"
+    entry = next(
+        (
+            item
+            for item in tools
+            if isinstance(item, Mapping) and item.get("tool_id") == TOOL_SECPAL
+        ),
+        None,
+    )
+    if not isinstance(entry, Mapping):
+        return lock, {}, "missing_secpal_entry"
+    return lock, entry, ""
 
+
+def _safe_operator_relative_path(value: object) -> str:
+    """Normalize one archive-relative operator-artifact path."""
+
+    text = str(value or "").strip().replace("\\", "/")
+    relative = PurePosixPath(text)
+    if (
+        not text
+        or relative.is_absolute()
+        or ".." in relative.parts
+        or "." in relative.parts
+        or not relative.parts
+    ):
+        return ""
+    return relative.as_posix()
+
+
+def _secpal_operator_contract_report(
+    *,
+    repo_root: Path | str | None = None,
+    lock_path: Path | str | None = None,
+    allow_test_fixture: bool = False,
+) -> dict[str, Any]:
+    """Validate reviewed SecPAL artifact-intake and live-readiness metadata.
+
+    The official MSI is known exactly but cannot be redistributed and exposes
+    no reviewed arbitrary-policy CLI.  Consequently ``artifact_intake_ready``
+    may be true while ``ready`` and ``live_certification_eligible`` remain
+    false.  This routine is offline and never reads or downloads artifact
+    bytes.  Test-fixture contracts are accepted only by private test calls and
+    are permanently non-promotable.
+    """
+
+    lock, tool_entry, lock_error = _secpal_lock_entry(
+        repo_root=repo_root,
+        lock_path=lock_path,
+    )
     pins = tool_entry.get("pins") if isinstance(tool_entry, Mapping) else None
     pin0: Mapping[str, Any] = (
         pins[0]
         if isinstance(pins, list) and pins and isinstance(pins[0], Mapping)
         else DEFAULT_PINS[TOOL_SECPAL]
     )
-    deployment = (
-        tool_entry.get("deployment_contract")
-        if isinstance(tool_entry, Mapping)
-        else None
-    )
+    deployment = tool_entry.get("deployment_contract")
     deployment = deployment if isinstance(deployment, Mapping) else {}
     vendor = deployment.get("vendor_install")
     vendor = vendor if isinstance(vendor, Mapping) else {}
-
-    version = str(pin0.get("version") or "")
-    artifact_url = str(pin0.get("artifact_url") or "")
-    artifact_sha256 = str(pin0.get("sha256") or "").lower()
-    distribution_status = str(
-        vendor.get("upstream_distribution_status")
-        or SECPAL_UPSTREAM_DISTRIBUTION_STATUS
-    )
-    provenance = vendor.get("artifact_provenance")
-    provenance = provenance if isinstance(provenance, Mapping) else {}
-    license_evidence = vendor.get("license_evidence")
+    operator = vendor.get("operator_artifact")
+    operator = operator if isinstance(operator, Mapping) else {}
+    license_evidence = operator.get("license_evidence")
     license_evidence = (
         license_evidence if isinstance(license_evidence, Mapping) else {}
     )
-    runtime_contract = vendor.get("runtime_contract")
-    runtime_contract = (
-        runtime_contract if isinstance(runtime_contract, Mapping) else {}
-    )
-    executable_contract = vendor.get("executable_contract")
-    executable_contract = (
-        executable_contract if isinstance(executable_contract, Mapping) else {}
-    )
-    platform_evidence = vendor.get("platform_matrix_evidence")
+    runtime = operator.get("runtime_contract")
+    runtime = runtime if isinstance(runtime, Mapping) else {}
+    executable = operator.get("executable_contract")
+    executable = executable if isinstance(executable, Mapping) else {}
+    platform_evidence = operator.get("platform_matrix_evidence")
     platform_evidence = (
         platform_evidence if isinstance(platform_evidence, Mapping) else {}
     )
@@ -872,75 +1035,224 @@ def secpal_vendor_prerequisite_report(
         for item in (deployment.get("supported_platforms") or ())
         if isinstance(item, str) and item
     )
+    compatibility = operator.get("operator_compatibility_probe")
+    compatibility = compatibility if isinstance(compatibility, Mapping) else {}
+    authenticode = operator.get("authenticode_evidence")
+    authenticode = authenticode if isinstance(authenticode, Mapping) else {}
 
-    reasons: list[str] = [SECPAL_VENDOR_UNAVAILABLE_REASON]
-    if distribution_status not in {"available", "verified_official_archive"}:
-        reasons.append("official_vendor_distribution_retired")
-    if version != SECPAL_HISTORICAL_RELEASE_VERSION:
-        reasons.append("vendor_release_version_unverified")
-    parsed_url = urllib.parse.urlparse(artifact_url)
-    if parsed_url.scheme != "https" or not parsed_url.netloc:
-        reasons.append("vendor_artifact_url_missing")
-    if not re.fullmatch(r"[0-9a-f]{64}", artifact_sha256):
-        reasons.append("vendor_artifact_checksum_missing")
-    if not (
-        str(provenance.get("publisher") or "").casefold()
-        == "microsoft research"
-        and str(provenance.get("original_download_url") or "")
-        == SECPAL_OFFICIAL_DOWNLOAD_URL
-        and re.fullmatch(
-            r"[0-9a-f]{64}",
-            str(provenance.get("evidence_sha256") or "").lower(),
-        )
-    ):
-        reasons.append("vendor_artifact_provenance_missing")
-    if not (
-        str(license_evidence.get("identifier") or "")
-        and str(license_evidence.get("source_path") or "")
-        and re.fullmatch(
-            r"[0-9a-f]{64}",
-            str(license_evidence.get("sha256") or "").lower(),
-        )
+    evidence_class = str(operator.get("evidence_class") or "")
+    fixture = evidence_class == SECPAL_TEST_FIXTURE_EVIDENCE_CLASS
+    artifact_sha256 = str(operator.get("artifact_sha256") or "").lower()
+    artifact_size_bytes = operator.get("artifact_size_bytes")
+    artifact_filename = str(operator.get("artifact_filename") or "")
+    release_version = str(operator.get("release_version") or "")
+    pin_version = str(pin0.get("version") or "")
+    license_path = _safe_operator_relative_path(license_evidence.get("embedded_path"))
+
+    structural_intake_ok = bool(
+        not lock_error
+        and operator.get("schema_version") == SECPAL_OPERATOR_ARTIFACT_SCHEMA
+        and operator.get("artifact_provisioning") == "explicit_local_path_only"
+        and operator.get("artifact_format") == "msi"
+        and artifact_filename
+        and _safe_operator_relative_path(artifact_filename) == artifact_filename
+        and len(PurePosixPath(artifact_filename).parts) == 1
+        and re.fullmatch(r"[0-9a-f]{64}", artifact_sha256)
+        and isinstance(artifact_size_bytes, int)
+        and 0 < artifact_size_bytes <= SECPAL_OPERATOR_ARTIFACT_MAX_BYTES
+        and vendor.get("artifact_intake_implemented") is True
+        and operator.get("transactional_install") is True
+        and operator.get("rollback_required") is True
+        and operator.get("fixtures_can_promote") is False
+        and operator.get("downloads_permitted") is False
+        and operator.get("redistribution_permitted") is False
+        and operator.get("artifact_intake_only") is True
+        and operator.get("live_certification_eligible") is False
+    )
+    reviewed_official = bool(
+        str(operator.get("status") or "") == "reviewed_restricted_artifact"
+        and evidence_class == SECPAL_OPERATOR_ARTIFACT_EVIDENCE_CLASS
+        and artifact_filename == SECPAL_OFFICIAL_ARTIFACT_FILENAME
+        and artifact_sha256 == SECPAL_OFFICIAL_ARTIFACT_SHA256
+        and artifact_size_bytes == SECPAL_OFFICIAL_ARTIFACT_SIZE_BYTES
+        and release_version == SECPAL_OFFICIAL_MSI_PRODUCT_VERSION
+        and operator.get("product_name") == "Microsoft SecPAL Research Release"
+        and operator.get("product_code") == SECPAL_OFFICIAL_MSI_PRODUCT_CODE
+        and operator.get("upgrade_code") == SECPAL_OFFICIAL_MSI_UPGRADE_CODE
+        and operator.get("package_revision") == SECPAL_OFFICIAL_MSI_REVISION
+        and operator.get("publisher") == "Microsoft Research"
+        and operator.get("original_download_url")
+        == SECPAL_OFFICIAL_ORIGINAL_ARTIFACT_URL
+        and operator.get("archived_project_metadata_url")
+        == SECPAL_ARCHIVED_PROJECT_METADATA_URL
+        and operator.get("archived_binary_evidence_url")
+        == SECPAL_ARCHIVED_BINARY_EVIDENCE_URL
+        and operator.get("archive_is_acquisition_authority") is False
+        and authenticode.get("verified") is True
+        and authenticode.get("signer") == "Microsoft Corporation"
+        and str(authenticode.get("sha1") or "").lower()
+        == SECPAL_AUTHENTICODE_SHA1
+        and license_evidence.get("identifier")
+        == "Microsoft SecPAL Research Release EULA"
+        and license_path == "EULA.rtf"
+        and str(license_evidence.get("sha256") or "").lower()
+        == SECPAL_EULA_SHA256
         and license_evidence.get("reviewed") is True
-    ):
-        reasons.append("vendor_license_evidence_missing")
-    if not (
-        str(runtime_contract.get("kind") or "")
-        and str(runtime_contract.get("version_constraint") or "")
-        and isinstance(runtime_contract.get("launcher_candidates"), list)
-        and runtime_contract.get("launcher_candidates")
-    ):
-        reasons.append("vendor_runtime_contract_missing")
-    if not (
-        str(executable_contract.get("interface") or "")
-        and str(executable_contract.get("entrypoint") or "")
-        and isinstance(executable_contract.get("version_probe_argv"), list)
-        and executable_contract.get("version_probe_argv")
-        and str(executable_contract.get("semantic_probe") or "")
-    ):
-        reasons.append("vendor_executable_contract_missing")
-    if not (
-        supported_platforms
+        and license_evidence.get("acceptance_required") is True
+        and license_evidence.get("redistribution_terms")
+        == "prohibited_third_parties_must_obtain_from_microsoft"
+        and license_evidence.get("execution_terms")
+        == "design_develop_test_or_research_only_not_intended_for_live_environment"
+    )
+    fixture_contract = bool(
+        fixture
+        and allow_test_fixture
+        and str(operator.get("status") or "") == "test_fixture"
+    )
+    artifact_intake_ready = bool(
+        structural_intake_ok and (reviewed_official or fixture_contract)
+    )
+
+    compatibility_classified = bool(
+        compatibility.get("schema_version")
+        == SECPAL_OPERATOR_COMPATIBILITY_SCHEMA
+        and compatibility.get("evidence_class")
+        == SECPAL_OPERATOR_COMPATIBILITY_EVIDENCE_CLASS
+        and compatibility.get("vendor_supported_platform") is False
+        and compatibility.get("production_use_permitted") is False
+        and compatibility.get("live_certification_eligible") is False
+    )
+    compatibility_bound = bool(
+        compatibility_classified
+        and compatibility.get("status") == "reviewed_bound"
+        and compatibility.get("runtime_package_identity_bound") is True
         and re.fullmatch(
             r"[0-9a-f]{64}",
-            str(platform_evidence.get("sha256") or "").lower(),
+            str(compatibility.get("evidence_sha256") or "").lower(),
         )
-        and platform_evidence.get("reviewed") is True
-    ):
-        reasons.append("vendor_platform_matrix_unverified")
-    if (
-        not SECPAL_VENDOR_INSTALLER_IMPLEMENTED
-        or vendor.get("installer_implemented") is not True
-    ):
-        reasons.append("vendor_installer_not_implemented")
+    )
+
+    reasons: list[str] = []
     if lock_error or not tool_entry:
         reasons.append("deployment_lock_unavailable")
+    if not artifact_intake_ready:
+        reasons.append("operator_artifact_contract_unreviewed")
+    if fixture and not allow_test_fixture:
+        reasons.append("test_fixture_cannot_promote")
+    # ProductVersion and the compatibility managed-pin label are distinct by
+    # design; only an unexpected value is a release-identity blocker.
+    if (
+        release_version != SECPAL_OFFICIAL_MSI_PRODUCT_VERSION
+        or pin_version != "1.0.0-reviewed"
+    ):
+        reasons.append("vendor_release_version_unverified")
+    if operator.get("downloads_permitted") is not False:
+        reasons.append("vendor_artifact_url_missing")
+    # The lock knows the expected checksum, but this side-effect-free report
+    # has not verified operator-supplied bytes for a runnable installation.
+    reasons.append("vendor_artifact_checksum_missing")
+    # Expected publisher provenance is reviewed, but no operator acquisition
+    # chain/intake receipt is present in this metadata-only report.  Retain the
+    # established reason code for that missing deployment provenance.
+    reasons.append("vendor_artifact_provenance_missing")
+    # Terms are reviewed, but acceptance is necessarily operator-specific and
+    # cannot exist in this offline metadata-only report.
+    reasons.append("vendor_license_evidence_missing")
+    if runtime.get("runtime_validated") is not True:
+        reasons.append("vendor_runtime_contract_missing")
+    if executable.get("cli_available") is not True:
+        reasons.append("vendor_executable_contract_missing")
+    # No live execution platform is reviewed.  Any future non-empty list must
+    # carry a separate replayable runtime/platform receipt.
+    reasons.append("vendor_platform_matrix_unverified")
+    installer_implemented = bool(vendor.get("installer_implemented") is True)
+    if not installer_implemented:
+        reasons.append("vendor_installer_not_implemented")
+    if compatibility_classified and not compatibility_bound:
+        reasons.append("operator_compatibility_evidence_unbound")
 
-    # ``authentic_vendor_artifact_unavailable`` is a summary reason and is
-    # removed only when every concrete prerequisite is complete.
-    concrete_reasons = tuple(dict.fromkeys(reasons[1:]))
+    return {
+        "ready": not reasons,
+        "fixture": fixture,
+        "artifact_intake_ready": artifact_intake_ready,
+        "artifact_intake_implemented": bool(
+            SECPAL_OPERATOR_ARTIFACT_INSTALLER_AVAILABLE
+            and vendor.get("artifact_intake_implemented") is True
+        ),
+        "reviewed_official_artifact": reviewed_official,
+        "live_certification_eligible": False,
+        "installer_implemented": installer_implemented,
+        "artifact_sha256": artifact_sha256,
+        "artifact_size_bytes": int(artifact_size_bytes or 0),
+        "artifact_filename": artifact_filename,
+        "release_version": release_version,
+        "pin_version": pin_version,
+        "license_path": license_path,
+        "license_evidence_sha256": str(
+            license_evidence.get("sha256") or ""
+        ).lower(),
+        "supported_platforms": sorted(supported_platforms),
+        "evidence_class": evidence_class,
+        "operator_artifact": dict(operator),
+        "operator_compatibility_probe": dict(compatibility),
+        "operator_compatibility_classified": compatibility_classified,
+        "operator_compatibility_bound": compatibility_bound,
+        "operator_compatibility_can_promote": False,
+        "deployment_lock": lock,
+        "tool_entry": dict(tool_entry),
+        "block_reasons": list(dict.fromkeys(reasons)),
+        "lock_error": lock_error,
+    }
+
+
+def secpal_vendor_prerequisite_report(
+    *,
+    repo_root: Path | str | None = None,
+    lock_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Return the fail-closed prerequisites for a genuine SecPAL release.
+
+    Microsoft historically shipped SecPAL as a restricted research MSI.  The
+    recovered official bytes, MSI ProductVersion 1.0.0 metadata, Authenticode
+    identity, and embedded EULA digest are now pinned.  The distribution is
+    retired, redistribution is prohibited, and the package contains no
+    reviewed arbitrary-policy CLI.  A Python SecPAL-compatible implementation
+    is not a substitute for that binary.
+
+    This function is deliberately offline and side-effect free.  It consumes
+    only the reviewed deployment lock; a separate, explicitly invoked live
+    provenance audit is required to refresh the upstream-distribution status.
+    Explicit local artifact intake is separate from engine installation: it
+    can bind operator-supplied MSI bytes and EULA acceptance transactionally,
+    but can never imply execution, live semantics, or production readiness.
+    """
+
+    contract = _secpal_operator_contract_report(
+        repo_root=repo_root,
+        lock_path=lock_path,
+    )
+    operator = contract.get("operator_artifact") or {}
+    distribution_status = str(
+        operator.get("upstream_distribution_status")
+        or SECPAL_UPSTREAM_DISTRIBUTION_STATUS
+    )
+    concrete_reasons = list(contract.get("block_reasons") or ())
+    # A retired publisher URL is an explicit blocker while no reviewed
+    # operator artifact exists.  Once an operator contract is fully reviewed,
+    # retirement remains provenance metadata rather than a false claim that
+    # Microsoft still distributes the bytes.
+    if not contract.get("ready") and distribution_status not in {
+        "available",
+        "verified_official_archive",
+    }:
+        concrete_reasons.insert(0, "official_vendor_distribution_retired")
+    concrete_reasons = list(dict.fromkeys(concrete_reasons))
     ready = not concrete_reasons
-    block_reasons = () if ready else tuple(dict.fromkeys(reasons))
+    block_reasons = (
+        ()
+        if ready
+        else tuple(dict.fromkeys((SECPAL_VENDOR_UNAVAILABLE_REASON, *concrete_reasons)))
+    )
     return {
         "schema_version": SECPAL_VENDOR_PREREQUISITE_SCHEMA,
         "tool_id": TOOL_SECPAL,
@@ -948,7 +1260,7 @@ def secpal_vendor_prerequisite_report(
         "installable": ready,
         "authoritative_live_evidence_available": ready,
         "historical_release_version": SECPAL_HISTORICAL_RELEASE_VERSION,
-        "configured_version": version,
+        "configured_version": str(contract.get("pin_version") or ""),
         "official_project_url": SECPAL_OFFICIAL_PROJECT_URL,
         "official_download_url": SECPAL_OFFICIAL_DOWNLOAD_URL,
         "official_binary_release_evidence_url": (
@@ -962,14 +1274,69 @@ def secpal_vendor_prerequisite_report(
         ),
         "upstream_audit_as_of": SECPAL_UPSTREAM_AUDIT_AS_OF,
         "upstream_distribution_status": distribution_status,
-        "vendor_installer_implemented": SECPAL_VENDOR_INSTALLER_IMPLEMENTED,
-        "artifact_url": artifact_url,
-        "artifact_sha256": artifact_sha256,
-        "configured_license": str(tool_entry.get("license") or ""),
-        "supported_platforms": sorted(supported_platforms),
+        "vendor_installer_implemented": bool(
+            contract.get("installer_implemented")
+        ),
+        "artifact_intake_implemented": bool(
+            contract.get("artifact_intake_implemented")
+        ),
+        "artifact_intake_ready": bool(contract.get("artifact_intake_ready")),
+        "reviewed_official_artifact": bool(
+            contract.get("reviewed_official_artifact")
+        ),
+        "operator_artifact_installer_available": (
+            SECPAL_OPERATOR_ARTIFACT_INSTALLER_AVAILABLE
+        ),
+        "operator_artifact_schema": SECPAL_OPERATOR_ARTIFACT_SCHEMA,
+        "operator_artifact_evidence_class": str(
+            contract.get("evidence_class") or ""
+        ),
+        "artifact_url": "",
+        "expected_artifact_filename": str(
+            contract.get("artifact_filename") or ""
+        ),
+        "artifact_sha256": str(contract.get("artifact_sha256") or ""),
+        "artifact_size_bytes": int(contract.get("artifact_size_bytes") or 0),
+        "official_original_artifact_url": (
+            SECPAL_OFFICIAL_ORIGINAL_ARTIFACT_URL
+        ),
+        "archived_project_metadata_url": (
+            SECPAL_ARCHIVED_PROJECT_METADATA_URL
+        ),
+        "archived_binary_evidence_url": (
+            SECPAL_ARCHIVED_BINARY_EVIDENCE_URL
+        ),
+        "archive_is_acquisition_authority": False,
+        "msi_product_version": SECPAL_OFFICIAL_MSI_PRODUCT_VERSION,
+        "eula_sha256": SECPAL_EULA_SHA256,
+        "license_evidence_sha256": str(
+            contract.get("license_evidence_sha256") or ""
+        ),
+        "eula_reviewed": True,
+        "operator_license_acceptance_present": False,
+        "redistribution_permitted": False,
+        "production_use_permitted": False,
+        "arbitrary_policy_cli_available": False,
+        "configured_license": str(
+            (contract.get("tool_entry") or {}).get("license") or ""
+        ),
+        "supported_platforms": list(contract.get("supported_platforms") or ()),
         "block_reasons": list(block_reasons),
-        "lock_error": lock_error,
+        "lock_error": str(contract.get("lock_error") or ""),
         "python_compatible_engine_is_shadow_only": True,
+        "operator_compatibility_probe": dict(
+            contract.get("operator_compatibility_probe") or {}
+        ),
+        "operator_compatibility_classified": bool(
+            contract.get("operator_compatibility_classified")
+        ),
+        "operator_compatibility_bound": bool(
+            contract.get("operator_compatibility_bound")
+        ),
+        "operator_compatibility_can_promote": False,
+        "test_fixture_can_promote": False,
+        "operator_artifact_requires_explicit_local_path": True,
+        "downloads_permitted": False,
         "platform_exception_satisfies_live_readiness": False,
     }
 
@@ -982,6 +1349,30 @@ def supported_platforms_for_tool(
 ) -> frozenset[str]:
     """Return lock-derived supported platforms for an external tool."""
 
+    # An explicitly empty deployment matrix is meaningful and must not fall
+    # through to a historical default.  SecPAL uses this after recovery of the
+    # restricted MSI because no general executable/live platform has been
+    # reviewed, even though platform-neutral artifact intake is available.
+    try:
+        _lock, entry, lock_error = _secpal_lock_entry(
+            repo_root=repo_root,
+            lock_path=lock_path,
+        ) if tool_id == TOOL_SECPAL else ({}, {}, "not_secpal")
+        deployment = entry.get("deployment_contract") if entry else None
+        if (
+            tool_id == TOOL_SECPAL
+            and not lock_error
+            and isinstance(deployment, Mapping)
+            and isinstance(deployment.get("supported_platforms"), list)
+        ):
+            return frozenset(
+                str(item)
+                for item in deployment["supported_platforms"]
+                if isinstance(item, str) and item
+            )
+    except Exception:
+        pass
+
     pin = pin_for_tool(tool_id, repo_root=repo_root, lock_path=lock_path)
     raw = pin.get("supported_platforms") or ""
     if raw:
@@ -992,7 +1383,8 @@ def supported_platforms_for_tool(
             {"linux-x86_64", "linux-aarch64", "darwin-x86_64", "darwin-arm64"}
         )
     if tool_id == TOOL_SECPAL:
-        return frozenset({"linux-x86_64"})
+        # Missing/older lock metadata cannot silently create live support.
+        return frozenset()
     return frozenset()
 
 
@@ -1629,11 +2021,16 @@ def _validated_vendor_souffle_contract(
 ) -> dict[str, Any]:
     """Load and bind the reviewed lock entry used for the native build."""
 
-    resolved_lock = (
-        Path(lock_path).expanduser().resolve()
+    raw_lock = (
+        Path(lock_path).expanduser()
         if lock_path is not None
-        else resolve_lock_path(repo_root).expanduser().resolve()
+        else resolve_lock_path(repo_root).expanduser()
     )
+    if raw_lock.is_symlink():
+        raise AuthorizationInstallerError(
+            "SecPAL artifact intake refuses a symlink deployment lock"
+        )
+    resolved_lock = raw_lock.resolve()
     if not resolved_lock.is_file() or resolved_lock.is_symlink():
         raise AuthorizationInstallerError(
             f"native Soufflé vendor build requires a regular deployment lock: "
@@ -1985,11 +2382,23 @@ def _dependency_identity_from_manifest(
     return tuple(sorted(identities, key=lambda item: item.name))
 
 
-def _publish_staged_vendor_install(staging: Path, destination: Path) -> None:
-    """Publish a complete staged tree while preserving a prior tree on failure."""
+def _publish_staged_vendor_install(
+    staging: Path,
+    destination: Path,
+    *,
+    post_publish_validator: Callable[[Path], bool] | None = None,
+) -> None:
+    """Publish and validate a staged tree before retiring its predecessor.
+
+    Validation is part of the transaction: the previous tree remains in a
+    sibling backup until the newly published destination has passed the
+    caller's exact on-disk identity check.  A failed check removes the new
+    tree and restores the prior one before the exception escapes.
+    """
 
     destination.parent.mkdir(parents=True, exist_ok=True)
     backup: Path | None = None
+    failed_publication: Path | None = None
     try:
         if destination.exists():
             backup = Path(
@@ -2001,13 +2410,333 @@ def _publish_staged_vendor_install(staging: Path, destination: Path) -> None:
             backup.rmdir()
             destination.rename(backup)
         staging.rename(destination)
+        if post_publish_validator is not None and not post_publish_validator(
+            destination
+        ):
+            raise AuthorizationInstallerError(
+                "published vendor installation failed exact identity revalidation"
+            )
     except Exception:
-        if backup is not None and backup.exists() and not destination.exists():
+        if destination.exists():
+            failed_publication = Path(
+                tempfile.mkdtemp(
+                    prefix=f".{destination.name}.failed-",
+                    dir=str(destination.parent),
+                )
+            )
+            failed_publication.rmdir()
+            destination.rename(failed_publication)
+        if backup is not None and backup.exists():
             backup.rename(destination)
+        if failed_publication is not None and failed_publication.exists():
+            shutil.rmtree(failed_publication, ignore_errors=True)
         raise
     else:
         if backup is not None:
             shutil.rmtree(backup, ignore_errors=True)
+
+
+def _secpal_operator_artifact_destination(
+    install_root: Path,
+    product_version: str,
+) -> Path:
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", product_version):
+        raise AuthorizationInstallerError(
+            "SecPAL MSI ProductVersion is unsafe for a managed path"
+        )
+    return (
+        install_root
+        / "authorization-vendor"
+        / TOOL_SECPAL
+        / "operator-artifacts"
+        / product_version
+    )
+
+
+def _secpal_operator_artifact_receipt_from_disk(
+    destination: Path,
+    *,
+    contract: Mapping[str, Any],
+    resolved_lock: Path,
+    platform_id: str,
+    status: str,
+) -> SecPALOperatorArtifactReceipt | None:
+    """Rehash one staged, non-executable SecPAL artifact-intake receipt."""
+
+    artifact = destination / "artifact" / str(contract.get("artifact_filename") or "")
+    manifest = destination / "artifact-intake.json"
+    if (
+        not artifact.is_file()
+        or artifact.is_symlink()
+        or artifact.resolve() != artifact
+        or not manifest.is_file()
+        or manifest.is_symlink()
+        or manifest.resolve() != manifest
+    ):
+        return None
+    try:
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, Mapping):
+        return None
+    manifest_sha256 = str(payload.get("manifest_sha256") or "")
+    unsigned = {
+        key: value for key, value in payload.items() if key != "manifest_sha256"
+    }
+    expected_sha256 = str(contract.get("artifact_sha256") or "")
+    expected_size = int(contract.get("artifact_size_bytes") or 0)
+    evidence_class = str(contract.get("evidence_class") or "")
+    fixture = bool(contract.get("fixture"))
+    if (
+        payload.get("schema_version") != SECPAL_OPERATOR_ARTIFACT_RECEIPT_SCHEMA
+        or payload.get("tool_id") != TOOL_SECPAL
+        or payload.get("status") != "staged_only"
+        or payload.get("artifact_intake_only") is not True
+        or payload.get("operator_supplied") is not True
+        or payload.get("license_accepted") is not True
+        or payload.get("license_evidence_sha256")
+        != contract.get("license_evidence_sha256")
+        or payload.get("redistribution_permitted") is not False
+        or payload.get("execution_eligible") is not False
+        or payload.get("live_certification_eligible") is not False
+        or payload.get("production_certified") is not False
+        or payload.get("fixtures_can_promote") is not False
+        or payload.get("transactional") is not True
+        or payload.get("rollback_preserved") is not True
+        or payload.get("evidence_class") != evidence_class
+        or payload.get("fixture") is not fixture
+        or payload.get("artifact_sha256") != expected_sha256
+        or payload.get("artifact_size_bytes") != expected_size
+        or payload.get("product_version") != contract.get("release_version")
+        or Path(str(payload.get("artifact_path") or "")) != artifact
+        or Path(str(payload.get("deployment_lock_path") or "")) != resolved_lock
+        or payload.get("deployment_lock_sha256") != _sha256_file(resolved_lock)
+        or manifest_sha256 != _canonical_json_sha256(unsigned)
+        or artifact.stat().st_size != expected_size
+        or _sha256_file(artifact) != expected_sha256
+        or artifact.stat().st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    ):
+        return None
+    try:
+        return SecPALOperatorArtifactReceipt(
+            status=status,
+            artifact_path=str(artifact),
+            manifest_path=str(manifest),
+            artifact_sha256=expected_sha256,
+            artifact_size_bytes=expected_size,
+            product_version=str(contract.get("release_version") or ""),
+            evidence_class=evidence_class,
+            platform_id=platform_id,
+            deployment_lock_path=str(resolved_lock),
+            deployment_lock_sha256=_sha256_file(resolved_lock),
+            manifest_sha256=manifest_sha256,
+            fixture=fixture,
+        )
+    except AuthorizationInstallerError:
+        return None
+
+
+def _stage_secpal_operator_artifact(
+    artifact_path: Path | str,
+    *,
+    license_accepted: bool,
+    install_root: Path | str | None = None,
+    repo_root: Path | str | None = None,
+    lock_path: Path | str | None = None,
+    force: bool = False,
+    platform_id: str | None = None,
+    allow_test_fixture: bool = False,
+) -> SecPALOperatorArtifactReceipt:
+    """Validate and atomically retain operator-supplied SecPAL MSI bytes.
+
+    This function never executes or extracts the package.  The official EULA
+    forbids redistribution, so there is intentionally no downloader or cache
+    fallback.  Private tests may exercise the transaction with a fixture lock;
+    fixture receipts remain structurally unable to promote.
+    """
+
+    if license_accepted is not True:
+        raise AuthorizationInstallerError(
+            "SecPAL artifact intake requires explicit license_accepted=True"
+        )
+    resolved_lock = (
+        Path(lock_path).expanduser().resolve()
+        if lock_path is not None
+        else resolve_lock_path(repo_root).expanduser().resolve()
+    )
+    if (
+        not resolved_lock.is_file()
+        or resolved_lock.is_symlink()
+        or resolved_lock.resolve() != resolved_lock
+    ):
+        raise AuthorizationInstallerError(
+            "SecPAL artifact intake requires a regular reviewed deployment lock"
+        )
+    report = _secpal_operator_contract_report(
+        repo_root=repo_root,
+        lock_path=resolved_lock,
+        allow_test_fixture=allow_test_fixture,
+    )
+    if not report.get("artifact_intake_ready"):
+        raise AuthorizationInstallerError(
+            "SecPAL operator-artifact intake contract is not ready: "
+            + ",".join(report.get("block_reasons") or ())
+        )
+    if report.get("fixture") and not allow_test_fixture:
+        raise AuthorizationInstallerError("test_fixture_cannot_promote")
+
+    raw_source = Path(artifact_path).expanduser()
+    if raw_source.is_symlink():
+        raise AuthorizationInstallerError(
+            "SecPAL operator artifact must not be a symlink"
+        )
+    source = raw_source.resolve()
+    if (
+        not source.is_file()
+        or source.is_symlink()
+        or source.resolve() != source
+        or source.name != report.get("artifact_filename")
+    ):
+        raise AuthorizationInstallerError(
+            "SecPAL operator artifact must be the explicitly named regular local file"
+        )
+    expected_size = int(report.get("artifact_size_bytes") or 0)
+    expected_sha256 = str(report.get("artifact_sha256") or "")
+    if (
+        source.stat().st_size != expected_size
+        or source.stat().st_size > SECPAL_OPERATOR_ARTIFACT_MAX_BYTES
+        or _sha256_file(source) != expected_sha256
+    ):
+        raise AuthorizationInstallerError(
+            "SecPAL operator artifact size or sha256 differs from the reviewed lock"
+        )
+
+    root = _expand_install_root(install_root)
+    host = platform_id or _detect_platform()
+    destination = _secpal_operator_artifact_destination(
+        root,
+        str(report.get("release_version") or ""),
+    )
+    if destination.exists() and not force:
+        existing = _secpal_operator_artifact_receipt_from_disk(
+            destination,
+            contract=report,
+            resolved_lock=resolved_lock,
+            platform_id=host,
+            status="already_staged",
+        )
+        if existing is not None:
+            return existing
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(
+        tempfile.mkdtemp(
+            prefix=f".{destination.name}.staging-",
+            dir=str(destination.parent),
+        )
+    )
+    staged_artifact = staging / "artifact" / str(report["artifact_filename"])
+    final_artifact = destination / "artifact" / str(report["artifact_filename"])
+    try:
+        staged_artifact.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, staged_artifact)
+        staged_artifact.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        if (
+            staged_artifact.stat().st_size != expected_size
+            or _sha256_file(staged_artifact) != expected_sha256
+        ):
+            raise AuthorizationInstallerError(
+                "staged SecPAL operator artifact failed post-copy verification"
+            )
+        payload: dict[str, Any] = {
+            "artifact_intake_only": True,
+            "artifact_path": str(final_artifact),
+            "artifact_sha256": expected_sha256,
+            "artifact_size_bytes": expected_size,
+            "deployment_lock_path": str(resolved_lock),
+            "deployment_lock_sha256": _sha256_file(resolved_lock),
+            "evidence_class": str(report.get("evidence_class") or ""),
+            "execution_eligible": False,
+            "fixture": bool(report.get("fixture")),
+            "fixtures_can_promote": False,
+            "license_accepted": True,
+            "license_evidence_sha256": str(
+                report.get("license_evidence_sha256") or ""
+            ),
+            "live_certification_eligible": False,
+            "operator_supplied": True,
+            "platform_id": host,
+            "product_version": str(report.get("release_version") or ""),
+            "production_certified": False,
+            "redistribution_permitted": False,
+            "rollback_preserved": True,
+            "schema_version": SECPAL_OPERATOR_ARTIFACT_RECEIPT_SCHEMA,
+            "status": "staged_only",
+            "tool_id": TOOL_SECPAL,
+            "transactional": True,
+        }
+        payload["manifest_sha256"] = _canonical_json_sha256(payload)
+        _write_identity_manifest(staging / "artifact-intake.json", payload)
+
+        def _published_identity_is_exact(published: Path) -> bool:
+            return (
+                _secpal_operator_artifact_receipt_from_disk(
+                    published,
+                    contract=report,
+                    resolved_lock=resolved_lock,
+                    platform_id=host,
+                    status="staged_only",
+                )
+                is not None
+            )
+
+        _publish_staged_vendor_install(
+            staging,
+            destination,
+            post_publish_validator=_published_identity_is_exact,
+        )
+    except Exception:
+        if staging.exists():
+            shutil.rmtree(staging, ignore_errors=True)
+        raise
+
+    receipt = _secpal_operator_artifact_receipt_from_disk(
+        destination,
+        contract=report,
+        resolved_lock=resolved_lock,
+        platform_id=host,
+        status="staged_only",
+    )
+    if receipt is None:
+        raise AuthorizationInstallerError(
+            "published SecPAL artifact intake failed exact revalidation"
+        )
+    return receipt
+
+
+def stage_secpal_operator_artifact(
+    artifact_path: Path | str,
+    *,
+    license_accepted: bool,
+    install_root: Path | str | None = None,
+    repo_root: Path | str | None = None,
+    lock_path: Path | str | None = None,
+    force: bool = False,
+    platform_id: str | None = None,
+) -> SecPALOperatorArtifactReceipt:
+    """Public artifact-intake boundary; test fixtures are never accepted."""
+
+    return _stage_secpal_operator_artifact(
+        artifact_path,
+        license_accepted=license_accepted,
+        install_root=install_root,
+        repo_root=repo_root,
+        lock_path=lock_path,
+        force=force,
+        platform_id=platform_id,
+        allow_test_fixture=False,
+    )
 
 
 def _probe_version(
@@ -3306,14 +4035,17 @@ def materialize_vendor_secpal(
     lock_path: Path | str | None = None,
     force: bool = False,
     platform_id: str | None = None,
+    operator_artifact_path: Path | str | None = None,
+    license_accepted: bool = False,
 ) -> ShadowEngineIdentity:
     """Fail closed until an authentic SecPAL vendor installer is available.
 
     Unsupported platforms (notably linux-aarch64) retain their narrow
     platform-exception semantics.  A lock-supported platform such as
     linux-x86_64 is still unavailable: the reviewed pin does not provide an
-    immutable checksummed artifact or a genuine build path.  This function
-    deliberately performs no filesystem writes.  Call
+    general executable contract or genuine live runner.  Operator-supplied
+    MSI bytes must be handled by :func:`stage_secpal_operator_artifact`; this
+    function never turns an intake receipt into an engine identity.  Call
     :func:`materialize_hermetic_shadow` for the differential-only Python
     SecPAL-compatible shadow.
     """
@@ -3326,6 +4058,21 @@ def materialize_vendor_secpal(
     )
     prerequisite_reasons = tuple(prerequisite_report["block_reasons"])
     host = platform_id or _detect_platform()
+    staged_detail = ""
+    if operator_artifact_path is not None:
+        staged = stage_secpal_operator_artifact(
+            operator_artifact_path,
+            license_accepted=license_accepted,
+            install_root=install_root,
+            repo_root=repo_root,
+            lock_path=lock_path,
+            force=force,
+            platform_id=host,
+        )
+        staged_detail = (
+            f"; reviewed operator artifact staged at {staged.artifact_path} "
+            "for intake only"
+        )
     if not tool_supported_on_platform(
         tool_id, host, repo_root=repo_root, lock_path=lock_path
     ):
@@ -3334,6 +4081,7 @@ def materialize_vendor_secpal(
             "deployment contract (narrow platform exception); independent "
             "vendor prerequisites are also incomplete: "
             + ",".join(prerequisite_reasons)
+            + staged_detail
         )
 
     raise AuthorizationInstallerError(
@@ -3341,6 +4089,7 @@ def materialize_vendor_secpal(
         f"is unavailable on {host!r}; prerequisite failures="
         f"{','.join(prerequisite_reasons)}; the Python SecPAL-compatible "
         "engine is shadow-only"
+        + staged_detail
     )
 
 
@@ -3412,13 +4161,14 @@ def ensure_secpal(
     test_mode: bool | None = None,
     on_progress: ProgressCallback | None = None,
     vendor: bool = False,
+    operator_artifact_path: Path | str | None = None,
+    license_accepted: bool = False,
 ) -> InstallReceipt:
     """Explicit strict installation of the pinned SecPAL engine.
 
     Shadow installs materialize only under ``authorization-shadows``.  Vendor
-    requests are lock-platform-gated: linux-aarch64 is a narrow unsupported
-    exception, while supported platforms report ``unavailable`` until an
-    authentic artifact installer exists.
+    requests are lock-platform-gated.  The current reviewed live execution
+    matrix is empty; artifact intake is a separate non-executable operation.
     """
 
     return _ensure_tool(
@@ -3439,6 +4189,8 @@ def ensure_secpal(
         vendor=vendor,
         source_archive_path=None,
         dependency_prefix=None,
+        operator_artifact_path=operator_artifact_path,
+        secpal_license_accepted=license_accepted,
     )
 
 
@@ -3461,6 +4213,8 @@ def _ensure_tool(
     vendor: bool = False,
     source_archive_path: Path | str | None = None,
     dependency_prefix: Path | str | None = None,
+    operator_artifact_path: Path | str | None = None,
+    secpal_license_accepted: bool = False,
 ) -> InstallReceipt:
     pin = pin_for_tool(tool_id, repo_root=repo_root, lock_path=lock_path)
     selected_version = pin["version"]
@@ -3473,6 +4227,7 @@ def _ensure_tool(
     receipt_interface = VENDOR_INTERFACE if is_vendor else INTERFACE
     receipt_goal = VENDOR_GOAL_ID if is_vendor else GOAL_ID
     receipt_task = VENDOR_TASK_ID if is_vendor else TASK_ID
+    secpal_artifact_receipt: SecPALOperatorArtifactReceipt | None = None
 
     # Registry entry must name this ensure_* function.
     try:
@@ -3534,10 +4289,77 @@ def _ensure_tool(
             is_vendor_path=is_vendor,
         )
 
+    # Artifact intake is a separate, explicitly authorized operation.  It may
+    # run on a host with no live SecPAL execution support, but its receipt is
+    # permanently non-executable and non-promotable.  No path means no write.
+    if is_vendor and tool_id == TOOL_SECPAL and operator_artifact_path is not None:
+        intake_gate = _gate_install(
+            tool_id,
+            yes=yes,
+            strict=strict,
+            platform_id=None,
+            checksum_verified=checksum_verified,
+            test_mode=test_mode,
+            import_context=import_context,
+            capability_discovery=capability_discovery,
+        )
+        if intake_gate:
+            status = "refused" if "requires_yes_true" in intake_gate else "blocked"
+            detail = "; ".join(intake_gate)
+            if strict and status != "refused":
+                raise AuthorizationInstallerError(detail)
+            return InstallReceipt(
+                tool_id=tool_id,
+                status=status,
+                identity=None,
+                selected_version=selected_version,
+                detail=detail,
+                strict=strict,
+                yes=yes,
+                schema_version=receipt_schema,
+                interface=receipt_interface,
+                goal_id=receipt_goal,
+                task_id=receipt_task,
+                block_reasons=tuple(intake_gate),
+                platform_id=host_platform,
+                is_vendor_path=True,
+            )
+        try:
+            secpal_artifact_receipt = stage_secpal_operator_artifact(
+                operator_artifact_path,
+                license_accepted=secpal_license_accepted,
+                install_root=root,
+                repo_root=repo_root,
+                lock_path=lock_path,
+                force=force,
+                platform_id=host_platform,
+            )
+        except Exception as exc:
+            detail = f"artifact_intake_failed:{type(exc).__name__}:{exc}"
+            if strict:
+                raise AuthorizationInstallerError(detail) from exc
+            return InstallReceipt(
+                tool_id=tool_id,
+                status="failed",
+                identity=None,
+                selected_version=selected_version,
+                detail=detail,
+                strict=strict,
+                yes=yes,
+                schema_version=receipt_schema,
+                interface=receipt_interface,
+                goal_id=receipt_goal,
+                task_id=receipt_task,
+                block_reasons=("artifact_intake_failed",),
+                platform_id=host_platform,
+                is_vendor_path=True,
+            )
+
     # Lock-derived platform support (vendor path enforces narrow exceptions).
-    if is_vendor and not tool_supported_on_platform(
+    platform_supported = tool_supported_on_platform(
         tool_id, host_platform, repo_root=repo_root, lock_path=lock_path
-    ):
+    )
+    if is_vendor and not platform_supported:
         secpal_prerequisites = (
             secpal_vendor_prerequisite_report(
                 repo_root=repo_root,
@@ -3583,6 +4405,7 @@ def _ensure_tool(
             installed=False,
             authoritative=False,
             is_vendor_path=True,
+            operator_artifact=secpal_artifact_receipt,
         )
 
     if is_vendor and tool_id == TOOL_SECPAL:
@@ -3617,6 +4440,7 @@ def _ensure_tool(
             installed=False,
             authoritative=False,
             is_vendor_path=True,
+            operator_artifact=secpal_artifact_receipt,
         )
 
     existing = _identity_from_disk(
@@ -3722,6 +4546,8 @@ def _ensure_tool(
                     lock_path=lock_path,
                     force=force,
                     platform_id=host_platform,
+                    operator_artifact_path=operator_artifact_path,
+                    license_accepted=secpal_license_accepted,
                 )
             else:
                 raise AuthorizationInstallerError(f"no vendor path for {tool_id!r}")
@@ -3960,14 +4786,15 @@ def ensure_authorization_vendor(
     on_progress: ProgressCallback | None = None,
     source_archive_path: Path | str | None = None,
     dependency_prefix: Path | str | None = None,
+    secpal_artifact_path: Path | str | None = None,
+    secpal_license_accepted: bool = False,
 ) -> AuthorizationInstallBundle:
     """Install checksummed vendor engines for FVT-G209 (strict selection).
 
     Soufflé is installed on every lock-supported host (including linux-aarch64).
-    SecPAL is a narrow unsupported-platform exception on linux-aarch64.  On a
-    nominally supported platform it remains explicitly unavailable until an
-    authentic immutable artifact and genuine installer are reviewed.  The
-    differential Python shadow is never used by this vendor entrypoint.
+    SecPAL has no reviewed live execution platform.  Explicit local MSI intake
+    is supported as non-executable evidence only.  The differential Python
+    shadow is never used by this vendor entrypoint.
     """
 
     selected = tuple(tools or EXTERNAL_TOOLS)
@@ -4013,6 +4840,8 @@ def ensure_authorization_vendor(
                     capability_discovery=capability_discovery,
                     test_mode=test_mode,
                     on_progress=on_progress,
+                    operator_artifact_path=secpal_artifact_path,
+                    license_accepted=secpal_license_accepted,
                 )
             )
         else:
@@ -4098,6 +4927,11 @@ def describe_authorization_installer() -> dict[str, Any]:
             "secpal_python_engine_is_shadow_only": True,
             "secpal_vendor_requires_authentic_immutable_artifact": True,
             "secpal_vendor_supported_platform_is_explicitly_unavailable": True,
+            "secpal_official_artifact_intake_is_transactional": True,
+            "secpal_artifact_intake_is_not_engine_installation": True,
+            "secpal_redistribution_is_prohibited": True,
+            "secpal_no_reviewed_live_execution_platform": True,
+            "secpal_operator_compatibility_is_nonpromotable": True,
             "secpal_platform_exception_does_not_satisfy_live_readiness": True,
             "secpal_requires_live_authoritative_vendor_evidence": True,
             "secpal_vendor_license_claim_requires_artifact_evidence": True,
@@ -4151,6 +4985,18 @@ __all__ = [
     "SECPAL_UPSTREAM_AUDIT_AS_OF",
     "SECPAL_UPSTREAM_DISTRIBUTION_STATUS",
     "SECPAL_VENDOR_INSTALLER_IMPLEMENTED",
+    "SECPAL_OPERATOR_ARTIFACT_INSTALLER_AVAILABLE",
+    "SECPAL_OPERATOR_ARTIFACT_SCHEMA",
+    "SECPAL_OPERATOR_ARTIFACT_EVIDENCE_CLASS",
+    "SECPAL_TEST_FIXTURE_EVIDENCE_CLASS",
+    "SECPAL_OPERATOR_ARTIFACT_RECEIPT_SCHEMA",
+    "SECPAL_OPERATOR_COMPATIBILITY_SCHEMA",
+    "SECPAL_OPERATOR_COMPATIBILITY_EVIDENCE_CLASS",
+    "SECPAL_OFFICIAL_ARTIFACT_FILENAME",
+    "SECPAL_OFFICIAL_ARTIFACT_SHA256",
+    "SECPAL_OFFICIAL_ARTIFACT_SIZE_BYTES",
+    "SECPAL_OFFICIAL_MSI_PRODUCT_VERSION",
+    "SECPAL_EULA_SHA256",
     "SECPAL_VENDOR_PREREQUISITE_SCHEMA",
     "SECPAL_VENDOR_PREREQUISITE_REASONS",
     "DEFAULT_PINS",
@@ -4169,6 +5015,7 @@ __all__ = [
     "AuthorizationInstallBundle",
     "BuildDependencyIdentity",
     "InstallReceipt",
+    "SecPALOperatorArtifactReceipt",
     "ShadowEngineIdentity",
     "build_dependencies_for_tool",
     "build_shadow_shim_source",
@@ -4183,6 +5030,7 @@ __all__ = [
     "materialize_vendor_souffle",
     "pin_for_tool",
     "secpal_vendor_prerequisite_report",
+    "stage_secpal_operator_artifact",
     "supported_platforms_for_tool",
     "tool_supported_on_platform",
 ]
