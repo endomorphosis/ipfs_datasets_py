@@ -487,7 +487,7 @@ def test_reject_datasets_dagpb_as_interface_authority(vectors: dict[str, Any]) -
     assert inv["disposition"] == "reject_as_interface_authority"
 
 
-def test_reject_resource_cost_hints_omission_from_verified_identity(
+def test_reject_datasets_resource_cost_hints_exclusion(
     vectors: dict[str, Any],
 ) -> None:
     """Bind resource_cost_hints in verified identity; reject omission as authority.
