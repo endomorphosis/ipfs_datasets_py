@@ -124,7 +124,7 @@ Program invariants:
 
 ## PATLAW-006 Define USPTO contracts, artifact manifests, and privacy policy
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
