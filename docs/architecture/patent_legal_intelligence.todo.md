@@ -949,7 +949,7 @@ Program invariants:
 
 ## PATLAW-070 Build the reviewed synthetic/public gold corpus and metrics
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
