@@ -1,0 +1,23 @@
+{
+  "edition": {
+    "cutoff": null,
+    "edition": null,
+    "provider": "uspto",
+    "revision": null
+  },
+  "fixture_id": "mpep-unavailable-edition",
+  "freshness_gaps": [
+    {
+      "detected_at": "2024-06-01T09:00:00Z",
+      "gap_id": "gap-unavailable-mpep-index",
+      "kind": "unavailable",
+      "reason": "MPEP index page unavailable during retrieval window.",
+      "source_id": "mpep-index",
+      "source_url": "https://www.uspto.gov/web/offices/pac/mpep/index.html"
+    }
+  ],
+  "notes": "Edition identity omitted; resolves as unknown with freshness gaps.",
+  "records": [],
+  "schema_version": "mpep-guidance-fixture-v1",
+  "supersessions": []
+}
