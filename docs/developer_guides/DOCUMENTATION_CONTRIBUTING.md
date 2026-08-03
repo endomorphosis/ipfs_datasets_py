@@ -58,7 +58,9 @@ For general code contribution (branching, tests, PRs), see root
 6. If the change is architectural *why*, plan an **ADR** rather than only
    expanding a component list.
 
-### Do not edit (without explicit task ownership)
+### Restricted paths (without explicit task ownership)
+
+Treat the following as read-only unless the active task explicitly owns them:
 
 - Protected program inputs (examples):
   - `docs/implementation/plans/IPFS_DATASETS_DOCUMENTATION_REFRESH_PLAN_2026_08_03.md`
@@ -260,7 +262,7 @@ known-stale **Last verified** dates on pages they substantially edit.
 - Shared hubs (`docs/index.md`, architecture `README.md`, etc.) should have a
   single clear owner for merge conflicts; leaf pages own their domain content.
 - Documentation tasks in the supervised program declare exclusive output paths;
-  do not edit another task's exclusive outputs.
+  leave other tasks' exclusive outputs untouched.
 
 ---
 
