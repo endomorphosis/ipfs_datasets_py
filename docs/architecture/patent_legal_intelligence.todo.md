@@ -1074,7 +1074,7 @@ Program invariants:
 
 ## PATLAW-018 Verify GovInfo printed bases, Public Laws, and daily issue completeness
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
