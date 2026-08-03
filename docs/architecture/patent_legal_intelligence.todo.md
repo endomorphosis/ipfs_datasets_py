@@ -1759,7 +1759,7 @@ Program invariants:
 
 ## PATLAW-132 Acquire live MPEP, forms, fees, and examination guidance
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
