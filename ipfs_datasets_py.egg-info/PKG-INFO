@@ -1,190 +1,62 @@
-Metadata-Version: 2.4
-Name: ipfs_datasets_py
+Metadata-Version: 2.1
+Name: ipfs-datasets-py
 Version: 0.2.0
 Summary: IPFS-native decentralized AI data platform
 Author: IPFS Datasets Contributors
 License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: System :: Distributed Computing
 Requires-Python: >=3.12
 Description-Content-Type: text/markdown
-License-File: LICENSE
-Requires-Dist: orbitdb_kit_py
-Requires-Dist: ipfs_kit_py[ai_ml,api,ipld] @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main
-Requires-Dist: ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
-Requires-Dist: libp2p @ git+https://github.com/libp2p/py-libp2p.git@main
-Requires-Dist: ipfs_model_manager_py
-Requires-Dist: ipfs_faiss_py
-Requires-Dist: transformers
-Requires-Dist: numpy<=2.1.3,>=1.26.4; python_version < "3.14"
-Requires-Dist: numpy>=2.0.0; python_version >= "3.14"
-Requires-Dist: urllib3
-Requires-Dist: requests
-Requires-Dist: boto3
-Requires-Dist: ipfsspec<0.6.0
-Requires-Dist: duckdb
-Requires-Dist: aiosqlite>=0.17.0
-Requires-Dist: pyarrow>=10.0.0; python_version < "3.14"
-Requires-Dist: fsspec<=2024.6.1,>=2023.1.0
-Requires-Dist: datasets<5.0.0,>=4.0.0
-Requires-Dist: huggingface-hub<1.0.0,>=0.34.0
-Requires-Dist: jsonpatch>=1.33
-Requires-Dist: jsonschema>=4.0.0
-Requires-Dist: cffi>=1.16.0
-Requires-Dist: libipld>=3.3.2
-Requires-Dist: ipld-car>=0.0.1
-Requires-Dist: ipld-dag-pb>=0.0.1
-Requires-Dist: dag-cbor>=0.3.3
-Requires-Dist: cachetools>=5.3.0
-Requires-Dist: ipfshttpclient>=0.7.0
-Requires-Dist: pymultihash>=0.8.2
-Requires-Dist: protobuf>=3.20.0
-Requires-Dist: eth-hash>=0.3.2
-Requires-Dist: eth-keys>=0.5.0
-Requires-Dist: multiformats>=0.3.0
-Requires-Dist: networkx>=2.8.0
-Requires-Dist: matplotlib>=3.5.0
-Requires-Dist: seaborn>=0.12.0
-Requires-Dist: anyio>=4.0.0
-Requires-Dist: trio>=0.27.0
-Requires-Dist: pydantic-settings>=2.0.0
-Requires-Dist: PyJWT<3.0.0,>=2.8.0
-Requires-Dist: beautifulsoup4<5.0.0,>=4.12.0
-Requires-Dist: newspaper3k<1.0.0,>=0.2.8
-Requires-Dist: readability-lxml<1.0.0,>=0.8.0
-Requires-Dist: lxml_html_clean>=0.4.0
-Requires-Dist: ddgs>=9.11.2
-Requires-Dist: google-api-python-client>=2.192.0
-Requires-Dist: cloudscraper>=1.2.71
-Requires-Dist: cfscrape>=2.1.1; python_version < "3.12"
-Requires-Dist: click>=8.0.0
-Requires-Dist: Flask>=3.1.1
-Requires-Dist: surya-ocr>=0.14.6; platform_system != "Windows" and python_version < "3.14"
-Requires-Dist: nltk>=3.8.1
-Requires-Dist: pdfplumber>=0.11.7
-Requires-Dist: pymupdf>=1.26.3
-Requires-Dist: pillow<11.0.0,>=10.2.0
-Requires-Dist: PyPDF2>=3.0.0
-Requires-Dist: pypdf>=5.0.0
-Requires-Dist: pytesseract>=0.3.13
-Requires-Dist: striprtf>=0.0.29
-Requires-Dist: tiktoken>=0.6.0
-Requires-Dist: pysbd
-Requires-Dist: markitdown>=0.1.0
-Requires-Dist: python-docx>=1.1.2
-Requires-Dist: yt-dlp>=2025.6.30
-Requires-Dist: ffmpeg-python>=0.2.0
-Requires-Dist: opencv-python<4.12.0,>=4.8.1.78
-Requires-Dist: symbolicai<2.0.0,>=1.14.0
-Provides-Extra: ipld
-Requires-Dist: libipld>=3.3.2; extra == "ipld"
-Requires-Dist: ipld-car>=0.0.1; extra == "ipld"
-Requires-Dist: ipld-dag-pb>=0.0.1; extra == "ipld"
-Requires-Dist: dag-cbor>=0.3.3; extra == "ipld"
-Requires-Dist: multiformats>=0.3.0; extra == "ipld"
-Provides-Extra: knowledge-graphs
-Requires-Dist: spacy>=3.0.0; extra == "knowledge-graphs"
-Requires-Dist: networkx>=2.8.0; extra == "knowledge-graphs"
-Requires-Dist: transformers>=4.30.0; extra == "knowledge-graphs"
-Requires-Dist: scipy>=1.7.0; extra == "knowledge-graphs"
-Requires-Dist: matplotlib>=3.5.0; extra == "knowledge-graphs"
-Requires-Dist: seaborn>=0.12.0; extra == "knowledge-graphs"
-Requires-Dist: plotly>=5.9.0; extra == "knowledge-graphs"
-Requires-Dist: rdflib>=6.0.0; extra == "knowledge-graphs"
-Requires-Dist: neo4j>=5.20.0; extra == "knowledge-graphs"
-Provides-Extra: logic
-Requires-Dist: nltk>=3.8.1; extra == "logic"
-Requires-Dist: symbolicai<2.0.0,>=1.14.0; extra == "logic"
-Provides-Extra: file-conversion
-Requires-Dist: markitdown>=0.1.0; extra == "file-conversion"
-Requires-Dist: aiohttp>=3.8.0; extra == "file-conversion"
-Requires-Dist: playwright>=1.40.0; extra == "file-conversion"
-Requires-Dist: striprtf>=0.0.29; extra == "file-conversion"
-Requires-Dist: python-docx>=1.1.2; extra == "file-conversion"
-Requires-Dist: yt-dlp>=2025.6.30; extra == "file-conversion"
-Requires-Dist: ffmpeg-python>=0.2.0; extra == "file-conversion"
-Provides-Extra: vectors
-Requires-Dist: sentence-transformers<6.0.0,>=3.0.0; extra == "vectors"
-Requires-Dist: faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "vectors"
-Requires-Dist: faiss-cpu>=1.8.0; platform_system != "Windows" and extra == "vectors"
-Requires-Dist: scikit-learn<2.0.0,>=1.3.0; extra == "vectors"
-Requires-Dist: qdrant-client>=1.0.0; extra == "vectors"
-Requires-Dist: elasticsearch>=8.0.0; extra == "vectors"
-Provides-Extra: groth16
-Requires-Dist: jsonschema>=4.0.0; extra == "groth16"
-Provides-Extra: provekit
-Requires-Dist: jsonschema>=4.0.0; extra == "provekit"
-Provides-Extra: api
-Requires-Dist: fastapi>=0.100.0; extra == "api"
-Requires-Dist: uvicorn>=0.23.0; extra == "api"
-Requires-Dist: python-multipart>=0.0.6; extra == "api"
-Requires-Dist: jinja2>=3.1.0; extra == "api"
-Provides-Extra: legal-netherlands
-Requires-Dist: pyarrow>=10.0.0; extra == "legal-netherlands"
-Requires-Dist: huggingface-hub>=0.34.0; extra == "legal-netherlands"
-Requires-Dist: datasets>=2.10.0; extra == "legal-netherlands"
-Requires-Dist: faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "legal-netherlands"
-Requires-Dist: faiss-cpu>=1.8.0; platform_system != "Windows" and extra == "legal-netherlands"
-Requires-Dist: scikit-learn<2.0.0,>=1.3.0; extra == "legal-netherlands"
-Provides-Extra: scraping
-Requires-Dist: beautifulsoup4<5.0.0,>=4.12.0; extra == "scraping"
-Requires-Dist: newspaper3k<1.0.0,>=0.2.8; extra == "scraping"
-Requires-Dist: readability-lxml<1.0.0,>=0.8.0; extra == "scraping"
-Requires-Dist: lxml_html_clean>=0.4.0; extra == "scraping"
-Requires-Dist: selenium<4.16.0,>=4.15.0; extra == "scraping"
-Requires-Dist: scrapy>=2.11.0; extra == "scraping"
-Requires-Dist: autoscraper>=1.1.14; extra == "scraping"
-Requires-Dist: cdx-toolkit>=0.9.37; extra == "scraping"
-Requires-Dist: wayback>=0.4.5; extra == "scraping"
-Requires-Dist: internetarchive>=5.5.0; extra == "scraping"
-Requires-Dist: aiohttp>=3.8.0; extra == "scraping"
-Provides-Extra: test
-Requires-Dist: pytest>=7.3.1; extra == "test"
-Requires-Dist: pytest-cov>=4.1.0; extra == "test"
-Requires-Dist: pytest-asyncio>=0.21.0; extra == "test"
-Requires-Dist: pytest-timeout>=2.0.2; extra == "test"
-Requires-Dist: pytest-xdist>=3.8.0; extra == "test"
-Requires-Dist: pytest-parallel>=0.1.1; extra == "test"
-Requires-Dist: pytest-benchmark>=4.0.0; extra == "test"
-Requires-Dist: pytest-mock>=3.12.0; extra == "test"
-Requires-Dist: hypothesis>=6.0.0; extra == "test"
+Provides-Extra: accelerate
+Provides-Extra: alerts
 Provides-Extra: all
-Requires-Dist: spacy>=3.0.0; extra == "all"
-Requires-Dist: networkx>=2.8.0; extra == "all"
-Requires-Dist: transformers>=4.30.0; extra == "all"
-Requires-Dist: scipy>=1.7.0; extra == "all"
-Requires-Dist: matplotlib>=3.5.0; extra == "all"
-Requires-Dist: seaborn>=0.12.0; extra == "all"
-Requires-Dist: plotly>=5.9.0; extra == "all"
-Requires-Dist: rdflib>=6.0.0; extra == "all"
-Requires-Dist: neo4j>=5.20.0; extra == "all"
-Requires-Dist: aiohttp>=3.8.0; extra == "all"
-Requires-Dist: python-docx>=1.1.2; extra == "all"
-Requires-Dist: yt-dlp>=2025.6.30; extra == "all"
-Requires-Dist: ffmpeg-python>=0.2.0; extra == "all"
-Requires-Dist: jsonschema>=4.0.0; extra == "all"
-Requires-Dist: fastapi>=0.100.0; extra == "all"
-Requires-Dist: uvicorn>=0.23.0; extra == "all"
-Requires-Dist: python-multipart>=0.0.6; extra == "all"
-Requires-Dist: jinja2>=3.1.0; extra == "all"
-Requires-Dist: sentence-transformers<6.0.0,>=3.0.0; extra == "all"
-Requires-Dist: faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "all"
-Requires-Dist: faiss-cpu>=1.8.0; platform_system != "Windows" and extra == "all"
-Requires-Dist: scikit-learn<2.0.0,>=1.3.0; extra == "all"
-Requires-Dist: qdrant-client>=1.0.0; extra == "all"
-Requires-Dist: elasticsearch>=8.0.0; extra == "all"
-Requires-Dist: selenium<4.16.0,>=4.15.0; extra == "all"
-Requires-Dist: newspaper3k<1.0.0,>=0.2.8; extra == "all"
-Requires-Dist: readability-lxml<1.0.0,>=0.8.0; extra == "all"
-Requires-Dist: lxml_html_clean>=0.4.0; extra == "all"
-Requires-Dist: scrapy>=2.11.0; extra == "all"
-Requires-Dist: autoscraper>=1.1.14; extra == "all"
-Requires-Dist: cdx-toolkit>=0.9.37; extra == "all"
-Requires-Dist: wayback>=0.4.5; extra == "all"
-Requires-Dist: internetarchive>=5.5.0; extra == "all"
-Requires-Dist: symbolicai<2.0.0,>=1.14.0; extra == "all"
-Dynamic: author
-Dynamic: license-file
-Dynamic: requires-dist
-Dynamic: requires-python
+Provides-Extra: api
+Provides-Extra: audit
+Provides-Extra: dev
+Provides-Extra: email
+Provides-Extra: file_conversion
+Provides-Extra: file_conversion_full
+Provides-Extra: groth16
+Provides-Extra: ipld
+Provides-Extra: knowledge_graphs
+Provides-Extra: lazy
+Provides-Extra: legal
+Provides-Extra: legal_netherlands
+Provides-Extra: linux
+Provides-Extra: logic
+Provides-Extra: logic-api
+Provides-Extra: macos
+Provides-Extra: ml
+Provides-Extra: multimedia
+Provides-Extra: ocr
+Provides-Extra: p2p
+Provides-Extra: pdf
+Provides-Extra: profile-f-zk
+Provides-Extra: provekit
+Provides-Extra: provenance
+Provides-Extra: scraping
+Provides-Extra: security
+Provides-Extra: symai_router
+Provides-Extra: test
+Provides-Extra: theorem-provers
+Provides-Extra: vectors
+Provides-Extra: wallets
+Provides-Extra: wallets-all
+Provides-Extra: wallets-bitcoin
+Provides-Extra: wallets-ethereum
+Provides-Extra: wallets-solana
+Provides-Extra: wallets-worldcoin
+Provides-Extra: wallets-xaman
+Provides-Extra: wallets-xrpl
+Provides-Extra: web_archive
+Provides-Extra: windows
+License-File: LICENSE
 
 # 🌐 IPFS Datasets Python
 
@@ -204,6 +76,7 @@ Dynamic: requires-python
 
 - [Key Features](#-key-features)
 - [Quick Start](#-quick-start)
+- [Wallet Processors](#-wallet-processors)
 - [CLI Tools](#-cli-tools)
 - [Hybrid Legal V2 Ops](#-hybrid-legal-v2-ops)
 - [MCP Server](#-mcp-server)
@@ -234,6 +107,7 @@ Dynamic: requires-python
 - 📊 **Production Monitoring** - Dashboards, analytics, and observability
 - 🔄 **Distributed Compute** - P2P networking and distributed workflows
 - 🛡️ **Enterprise Ready** - Security, audit logging, and provenance tracking
+- 💳 **Multi-Chain Wallet Processors** - Read-only ledger ingest/export for Bitcoin, Ethereum, Solana, XRPL, Xaman, World ID / World Chain (no signing or broadcast)
 
 ## 🚀 Quick Start
 
@@ -261,6 +135,24 @@ Its currently installable release depends on an older `httpx` range that
 conflicts with the MCP/FastMCP stack used by this workspace. If you need Brave
 Search specifically, install it in a separate optional environment.
 
+### Wallet processor extras (optional)
+
+Multi-chain wallet processors are optional and never auto-installed:
+
+```bash
+pip install "ipfs_datasets_py[wallets]"
+pip install "ipfs_datasets_py[wallets-worldcoin]"   # World ID + World Chain
+pip install "ipfs_datasets_py[wallets-ethereum]"
+pip install "ipfs_datasets_py[wallets-xrpl]"
+pip install "ipfs_datasets_py[wallets-xaman]"       # Xaman payloads over XRPL
+pip install "ipfs_datasets_py[wallets-bitcoin]"
+pip install "ipfs_datasets_py[wallets-solana]"
+pip install "ipfs_datasets_py[wallets-all]"
+```
+
+See [docs/wallet_processors/README.md](docs/wallet_processors/README.md) and
+[docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md](docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md).
+
 ### Basic Usage
 
 ```python
@@ -271,6 +163,39 @@ manager = DatasetManager()
 dataset = manager.load_dataset("squad", split="train[:1000]")
 manager.save_dataset(dataset, "output/processed_data.parquet")
 ```
+
+## 💳 Wallet Processors
+
+Read-only multi-chain wallet and public-ledger processors live under
+`ipfs_datasets_py.processors.wallets`. They normalize, checkpoint, and export
+ledger evidence — they **do not** custody keys, sign, submit, or broadcast.
+
+| Concept | Meaning |
+| --- | --- |
+| **World ID** | Proof-of-personhood protocol (IDKit / proofs) — family `worldcoin` |
+| **World Chain** | OP-Stack EVM L2 ledger (chain ids 480 / 4801) — family `world-chain` |
+| **WLD** | ERC-20 asset on World Chain mainnet — not a protocol or chain |
+| **XRPL** | XRP Ledger classic accounts — family `xrpl` |
+| **Xaman** | Payload application surface composed over XRPL — family `xaman` |
+
+```python
+from ipfs_datasets_py.processors.wallets import default_registry, get_wallet_processor
+
+reg = default_registry()
+print(reg.list_families())
+# Construct only after installing the matching optional extra:
+# processor = get_wallet_processor("ethereum", network="ethereum-mainnet")
+```
+
+- **Docs:** [docs/wallet_processors/README.md](docs/wallet_processors/README.md)
+- **Offline examples:** [examples/wallet_processors/](examples/wallet_processors/)
+- **Schemas:** [docs/schemas/wallet-ledger-record-v1.schema.json](docs/schemas/wallet-ledger-record-v1.schema.json)
+- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
+- **Import / schema migration windows and rollback** (package version + outer
+  gitlink/wrapper): see the wallet processors README.
+
+Examples are offline by default. Live network requires both
+`WALLET_PROCESSORS_ALLOW_NETWORK=1` and `--allow-network`.
 
 ## 🔧 CLI Tools
 
@@ -1281,20 +1206,25 @@ car_cid = create_car_file("data/", "output.car")
 - **[Architecture Overview](docs/architecture/)** - Package structure and design
 
 ### Architecture & Migration (NEW) 🆕
-- **[Three-Tier Architecture](docs/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md)** - Complete architecture documentation
+- **[Three-Tier Architecture](docs/DATA_TRANSFORMATION_MIGRATION_SUMMARY.md)** - Processors and data-transformation architecture and migration details
 - **[Migration Guide v2.0](docs/MIGRATION_GUIDE_V2.md)** - Comprehensive v1.x → v2.0 migration guide
 - **[Deprecation Timeline](docs/DEPRECATION_TIMELINE.md)** - 6-month deprecation schedule (Feb-Aug 2026)
 - **[GraphRAG Consolidation](docs/GRAPHRAG_CONSOLIDATION_GUIDE.md)** - Unified GraphRAG processor guide
 - **[Multimedia Migration](docs/MULTIMEDIA_MIGRATION_GUIDE.md)** - Multimedia processor migration
+- **[Wallet Processors](docs/wallet_processors/README.md)** - Multi-chain wallet ingest/export docs, extras, migration windows, rollback
 
 ### Features & Integration
 - **[Complete Features List](docs/FEATURES.md)** - All capabilities explained
 - **[Hardware Acceleration](docs/guides/IPFS_ACCELERATE_INTEGRATION.md)** - ipfs_accelerate_py (2-20x speedup)
 - **[IPFS Operations](docs/guides/IPFS_KIT_INTEGRATION.md)** - ipfs_kit_py integration
 - **[Best Practices](docs/guides/BEST_PRACTICES.md)** - Performance, security, patterns
+- **[Wallet Processor Threat Model](docs/security/WALLET_PROCESSOR_THREAT_MODEL.md)** - Privacy and denied custody/signing capabilities
+- **[Wallet Processor Dependencies](docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md)** - Optional extras and SBOM notes
 
 ### Migration & CLI
 - **[CLI Tools](docs/guides/CLI_TOOL_MERGE.md)** - Command-line interface guide
+- **[Wallet Processor Examples](examples/wallet_processors/)** - Offline normalize/export and identity distinction examples
+- **[Changelog](CHANGELOG.md)** - Package release notes
 
 ## 📄 License
 
