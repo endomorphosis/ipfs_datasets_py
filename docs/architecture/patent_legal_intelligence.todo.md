@@ -349,7 +349,7 @@ Program invariants:
 
 ## PATLAW-017 Resolve and validate patent-law citations and quotations
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
