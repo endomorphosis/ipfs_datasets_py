@@ -900,7 +900,7 @@ Program invariants:
 
 ## PATLAW-061 Add read-only USPTO MCP tools
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
