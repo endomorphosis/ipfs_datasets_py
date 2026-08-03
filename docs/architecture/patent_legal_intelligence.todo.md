@@ -1934,7 +1934,7 @@ Program invariants:
 
 ## PATLAW-139 Add an approved-public-official USPTO evaluation corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
