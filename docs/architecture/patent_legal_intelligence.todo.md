@@ -399,7 +399,7 @@ Program invariants:
 
 ## PATLAW-021 Implement the ODP Patent File Wrapper client
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
