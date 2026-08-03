@@ -111,13 +111,18 @@ wallet, pin, or delete tools from a copy-paste session.
 ### 3.4 Cleanup
 
 ```python
-# Prefer ServerContext so registered cleanup handlers run on exit:
+# Prefer ServerContext so registered cleanup handlers run on exit.
+# Discovery/dispatch APIs on HierarchicalToolManager are async — use them
+# (or meta-tools), not the sync ctx.list_tools() helper which currently
+# iterates async coroutines without awaiting and is not a reliable tutorial path.
 from ipfs_datasets_py.mcp_server.server_context import ServerContext, ServerConfig
+from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
 
 config = ServerConfig(tool_timeout_seconds=10.0, lazy_load_tools=True)
 with ServerContext(config) as ctx:
-    tools = ctx.list_tools()
-    # ... work ...
+    manager = ctx.tool_manager or HierarchicalToolManager()
+    # categories = await manager.list_categories(include_count=True)
+    # ... work via await manager.dispatch / get_tool_schema ...
 # __exit__ runs _cleanup and FIFO cleanup handlers
 ```
 
@@ -128,6 +133,8 @@ Also:
 - Do not leave a bound HTTP port from `start_server` when experimenting —
   stop the process cleanly.
 - Drop temporary datasets/indices created by dataset tools.
+- Prefer constructing `HierarchicalToolManager()` directly when you only need
+  the bounded local route and do not need ServerContext lifecycle hooks.
 
 ### 3.5 Redaction
 
@@ -232,19 +239,35 @@ async def probe_schema(
     category: str,
     tool: str,
 ) -> dict[str, Any]:
-    schema = await manager.get_tool_schema(category, tool)
-    # Shape varies: parameters, description, return hints, errors for missing tools.
+    envelope = await manager.get_tool_schema(category, tool)
+    # Canonical hierarchical envelope:
+    #   success → {"status": "success", "schema": {name, category, description, ...}}
+    #   miss    → {"status": "error", "error": "Tool '…' not found in category '…'"}
+    if not isinstance(envelope, dict):
+        return {
+            "category": category,
+            "tool": tool,
+            "probe": "degraded",
+            "schema_type": type(envelope).__name__,
+        }
+
+    status = envelope.get("status")
+    body = envelope.get("schema") if status == "success" else None
     return {
         "category": category,
         "tool": tool,
-        "schema_type": type(schema).__name__,
-        "schema_preview": str(schema)[:400],
+        "status": status,
+        "error": envelope.get("error"),
+        "has_schema_body": isinstance(body, dict),
+        "schema_name": (body or {}).get("name") if isinstance(body, dict) else None,
+        "schema_preview": str(body or envelope)[:400],
     }
 
 
 async def main_probe() -> None:
     manager = HierarchicalToolManager()
     print(await probe_schema(manager, "bespoke_tools", "system_status"))
+    print(await probe_schema(manager, "bespoke_tools", "no_such_tool"))
 
 
 # asyncio.run(main_probe())
@@ -254,9 +277,10 @@ Interpretation:
 
 | Probe result | Meaning |
 | --- | --- |
-| Schema dict/object returned | Tool module importable enough to describe |
-| Error / empty | Treat capability as degraded before invoke |
-| Category missing tools | Empty category or discovery failure |
+| `status=success` + nested `schema` | Tool module importable enough to describe |
+| `status=error` / not found | Treat capability as missing before invoke |
+| Empty category tool list | Discovery gap; do not invent tools |
+| Schema present | Still not policy allow or domain success |
 
 Capability probe ≠ policy allow ≠ successful domain execution.
 
@@ -306,14 +330,16 @@ async def main_invoke() -> None:
 
 | Pattern | Typical fields |
 | --- | --- |
-| Success (dict tool) | Tool keys; `request_id` often injected if missing |
+| Success (dict tool, e.g. `system_status`) | Domain keys + `success=True` + `request_id` (may **omit** top-level `status`) |
 | Success (non-dict tool) | `status=success`, `result=<str>`, `request_id` |
-| Not found | `status=error`, `error`, `available_tools`, `request_id` |
-| Execution error | `status=error`, `error`, `category`, `tool`, `request_id` |
+| Not found | `status=error`, `error` containing `not found`, `available_tools`, `request_id` |
+| Execution error | `status=error`, `error`, optional `category`/`tool`, `request_id` |
 | Cache hit | Prior payload + `_cached=true` |
 | Traced | Plus `trace` / `_trace` metadata (not proof authority) |
 
-Always persist **`request_id` + status** for support correlation.
+Always persist **`request_id` + derived status** for support correlation. Use
+`summarize_receipt` so dict-success tools that only set `success=True` still
+normalize to a status label agents can switch on.
 
 ## 8. Step 4 — Unavailable outcomes
 
@@ -492,14 +518,22 @@ async def journey() -> dict[str, Any]:
         tools = await manager.list_tools("bespoke_tools")
         schema = await manager.get_tool_schema("bespoke_tools", "system_status")
 
-        # Capability-ish probe: schema obtained
-        probed = schema is not None
+        # Capability probe: hierarchical envelope with nested schema body
+        probed = (
+            isinstance(schema, dict)
+            and schema.get("status") == "success"
+            and isinstance(schema.get("schema"), dict)
+        )
 
-        # Invocation (safe tool)
+        # Invocation (safe tool — success may set success=True without status)
         invoked = await manager.dispatch("bespoke_tools", "system_status", {})
         invoke_receipt = {
             "status": invoked.get("status")
-            or ("success" if invoked.get("success") else "error"),
+            or (
+                "success"
+                if invoked.get("success") is True
+                else ("error" if invoked.get("success") is False else "unknown")
+            ),
             "request_id": invoked.get("request_id"),
             "success": invoked.get("success"),
         }

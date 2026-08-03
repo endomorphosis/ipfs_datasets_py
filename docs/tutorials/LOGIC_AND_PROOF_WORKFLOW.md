@@ -81,12 +81,13 @@ from ipfs_datasets_py.logic.external_provers import (
     check_prover_availability,
 )
 
-print(get_available_provers())          # registry of known provers
-print(check_prover_availability("z3"))  # True/False for this host
+print(get_available_provers())          # e.g. ['Z3', 'CVC5', 'Lean', 'Coq', …]
+print(check_prover_availability("z3"))  # True/False; case-tolerant host probe
 ```
 
-Listing a prover name is **not** the same as a successful kernel-checked
-proof.
+Listing a prover name in the registry is **not** the same as a successful
+kernel-checked proof, and a host-available binary is still not a theorem
+receipt until a typed prove path returns under the correct `AuthorityKind`.
 
 ### 3.2 Timeouts (recommended bounds)
 
@@ -265,10 +266,11 @@ if __name__ == "__main__":
 | --- | --- |
 | Valid formula | `success=True`, `valid=True`, `errors=[]` |
 | Empty / bad | `success=False` or `valid=False`, non-empty `errors` |
-| Analysis | Structural metrics (`depth`, `size`, `operators`, `parsed_ok`) |
+| Analysis | Structural metrics (`depth`, `size`, `operators`, `parsed_ok`, `success`) |
 
 `parsed_ok` / `valid` are **evidence_readiness-adjacent diagnostics**, not
-`theorem_proof`.
+`theorem_proof`. Even when `parsed_ok=True`, the analysis envelope is a
+structural report only — never promote it with `AuthorityKind.THEOREM_PROOF`.
 
 ## 7. Step 3 — Formalization without proof claims
 
@@ -284,13 +286,16 @@ from ipfs_datasets_py.logic.formalization.constraint_contracts import (
 from ipfs_datasets_py.logic.ir_core.protocols import AuthorityKind
 
 # 1) Refuse silent multi-family formula concatenation on one statement body.
+# Known families include: deontic, smt, temporal, first_order, modal, datalog,
+# hoare, policy, threat_model, propositional, … (not the façade alias "fol").
 try:
     forbid_silent_logic_concatenation(
-        ["fol", "deontic", "smt"],
+        ["deontic", "smt", "temporal"],
         context="tutorial-statement",
     )
 except Exception as exc:
     print("concatenation_guard:", type(exc).__name__, exc)
+    # Expected: ConstraintValidationError listing the mixed sensitive families
 
 # 2) Refuse using SAT-shaped authority as theorem authority after formalization.
 try:
@@ -336,6 +341,7 @@ from ipfs_datasets_py.logic.external_provers import (
 
 def probe_and_build_router(timeout_s: int = 5) -> ProverRouter | None:
     print("registry:", get_available_provers())
+    # Registry labels are often capitalized; availability accepts common aliases.
     if not check_prover_availability("z3"):
         print("z3 unavailable on this host — skip SMT prove path")
         return None
@@ -345,7 +351,7 @@ def probe_and_build_router(timeout_s: int = 5) -> ProverRouter | None:
         enable_cvc5=check_prover_availability("cvc5"),
         enable_lean=False,   # ITP paths are heavier; enable when kernel is installed
         enable_coq=False,
-        default_timeout=timeout_s,
+        default_timeout=float(timeout_s),
         enable_cache=False,  # avoid leftover cache artifacts in tutorials
     )
 
