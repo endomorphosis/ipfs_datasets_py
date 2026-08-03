@@ -46,7 +46,11 @@ the current process `PATH`.
 | Isabelle | Official checksum-verified Isabelle bundle for Linux x86_64 or arm64. |
 | Vampire | Pinned checksum-verified native release for Linux x86_64 or arm64. |
 | E | Pinned checksum-verified source release built user-locally. |
-| ErgoAI | Reviewed ErgoAI distribution used as the native F-logic authority. |
+| HyperLTL / AutoHyper / MCHyper | Reviewed source identities built through their family installer with every native dependency digest bound. |
+| Souffle | Reviewed `2.4.1` source identity built as a native external Datalog checker. |
+| Runtime MTL external | Independent TypeScript/Node monitor built from the package-lock-bound source shipped in source distributions and wheels. |
+| SecPAL | Operator-bound external engine. It fails closed until an authentic, licensed, checksummed vendor artifact is supplied; the Python SecPAL-style engine remains shadow-only. |
+| ErgoAI | Checksummed ErgoAI `3.0` vendor route with managed provenance and semantic checks; an advisor shim never counts as live evidence. |
 | Z3 | The optional `z3-solver` Python binding used by the exchange runner. |
 
 For unsupported platforms or organization-managed packages, provide a
@@ -116,12 +120,19 @@ The unified installer can bootstrap reviewed solver groups before a run:
 ```bash
 ipfs-datasets-install-provers --portfolio legal_ir_generation --yes --strict
 ipfs-datasets-install-provers --portfolio legal_ir_full --yes --strict
+ipfs-datasets-install-provers --portfolio software_verification_external --yes --strict
 ```
 
 `legal_ir_generation` installs Z3, cvc5, Lean, Vampire, E, and ErgoAI for the
 normal Leanstral/Hammer candidate path. `legal_ir_specialists` adds Apalache,
 Maude, Tamarin, and ProVerif. `reconstruction` adds Rocq and Isabelle.
 `legal_ir_full` is their complete union plus SymbolicAI.
+`software_verification_external` selects HyperLTL, AutoHyper, MCHyper,
+Souffle, external SecPAL, the independent Runtime MTL engine, and ErgoAI. It
+always invokes real vendor paths: hermetic shadows, parity engines, and advisor
+shims cannot make this portfolio succeed. Consequently, strict installation
+reports external SecPAL as blocked until a reviewed authentic artifact,
+checksum, license, provenance, and runtime contract become available.
 
 Setup can select the same behavior non-interactively:
 

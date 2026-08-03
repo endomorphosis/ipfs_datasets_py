@@ -1,11 +1,14 @@
-from setuptools import setup, find_packages
-from setuptools.command.develop import develop as _develop
-from setuptools.command.install import install as _install
 import os
-import sys
 import platform
 import shutil
 import subprocess
+import sys
+from pathlib import Path
+
+from setuptools import find_namespace_packages, setup
+from setuptools.command.build_py import build_py as _build_py
+from setuptools.command.develop import develop as _develop
+from setuptools.command.install import install as _install
 
 try:
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
@@ -169,6 +172,41 @@ class _PostDevelop(_develop):
         _maybe_build_groth16_backend()
 
 
+class _BuildPyWithFormalVerificationAssets(_build_py):
+    """Include the independent Runtime MTL source in wheels.
+
+    The managed Runtime MTL installer builds the reviewed TypeScript package
+    on first explicit use.  That source lives outside the Python package in a
+    source checkout, so ordinary ``build_py`` would silently omit it from a
+    wheel.  Copy only the locked build inputs into a package-owned vendor
+    directory; ``node_modules`` and generated ``dist`` output are never
+    shipped.
+    """
+
+    def run(self):  # type: ignore[override]
+        super().run()
+        project_root = Path(__file__).resolve().parent
+        source_root = project_root / "typescript" / "logic-runtime-mtl"
+        if not source_root.is_dir():
+            raise RuntimeError(
+                "missing reviewed Runtime MTL package source: "
+                f"{source_root}; cannot build a complete verification wheel"
+            )
+        destination = (
+            Path(self.build_lib)
+            / "ipfs_datasets_py"
+            / "_vendor"
+            / "logic-runtime-mtl"
+        )
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.copytree(
+            source_root,
+            destination,
+            ignore=shutil.ignore_patterns("node_modules", "dist", ".git"),
+        )
+
+
 if _bdist_wheel is not None:
     class _PlatformWheel(_bdist_wheel):
         def finalize_options(self):  # type: ignore[override]
@@ -181,6 +219,7 @@ else:
 _cmdclass = {
     "install": _PostInstall,
     "develop": _PostDevelop,
+    "build_py": _BuildPyWithFormalVerificationAssets,
 }
 if _PlatformWheel is not None:
     _cmdclass["bdist_wheel"] = _PlatformWheel
@@ -203,7 +242,10 @@ if _include_vcs_dependencies():
 setup(
     name="ipfs_datasets_py",
     version='0.2.0',
-    packages=find_packages(
+    # Formal-verification backends intentionally use PEP 420 namespace
+    # directories.  Classical find_packages() omits them from wheels.
+    packages=find_namespace_packages(
+        include=["ipfs_datasets_py", "ipfs_datasets_py.*"],
         exclude=[
             "ipfs_kit_py*",
             "ipfs_accelerate_py*",
@@ -571,6 +613,9 @@ setup(
         'lazy': [
             'z3-solver>=4.12.0,<5.0.0',
             'cvc5==1.3.3',
+            'pysmt>=0.9.5,<1.0.0',
+            'beartype>=0.15.0,<1.0.0',
+            'jsonschema>=4.0.0,<5.0.0',
             'chardet>=5.0.0,<6.0.0',
             'llama-cpp-python',
             'playsound3',

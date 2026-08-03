@@ -72,3 +72,33 @@ def test_unknown_setup_portfolio_fails_before_starting_installer(
 
     with pytest.raises(ValueError, match="not_a_portfolio"):
         _logic_prover_install_args()
+
+
+def test_all_provers_adds_software_verification_external_portfolio(
+    monkeypatch,
+) -> None:
+    _clear_prover_setup_env(monkeypatch)
+    monkeypatch.setenv("IPFS_DATASETS_PY_AUTO_INSTALL_ALL_PROVERS", "1")
+
+    args, portfolios = _logic_prover_install_args()
+
+    assert portfolios == ("legal_ir_full", "software_verification_external")
+    selected = [args[index + 1] for index, value in enumerate(args) if value == "--portfolio"]
+    assert selected == ["legal_ir_full", "software_verification_external"]
+
+
+def test_external_provider_setup_flags_are_forwarded(monkeypatch) -> None:
+    _clear_prover_setup_env(monkeypatch)
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_AUTO_INSTALL_PROVER_PORTFOLIOS",
+        "software_verification_external",
+    )
+    monkeypatch.setenv("IPFS_DATASETS_PY_AUTO_INSTALL_SECPAL", "1")
+    monkeypatch.setenv("IPFS_DATASETS_PY_AUTO_INSTALL_MCHYPER", "0")
+
+    args, portfolios = _logic_prover_install_args()
+
+    assert portfolios == ("software_verification_external",)
+    assert "--secpal" in args
+    exclude = args.index("--exclude")
+    assert args[exclude + 1] == "mchyper"

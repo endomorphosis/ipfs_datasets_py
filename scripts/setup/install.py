@@ -434,6 +434,7 @@ _LOGIC_PROVER_PORTFOLIOS = frozenset(
         "legal_ir_specialists",
         "legal_ir_training",
         "reconstruction",
+        "software_verification_external",
     }
 )
 _LOGIC_PROVER_ENV_FLAGS = (
@@ -454,6 +455,16 @@ _LOGIC_PROVER_ENV_FLAGS = (
     ("IPFS_DATASETS_PY_AUTO_INSTALL_VAMPIRE", "vampire", "--vampire"),
     ("IPFS_DATASETS_PY_AUTO_INSTALL_EPROVER", "eprover", "--eprover"),
     ("IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI", "ergoai", "--ergoai"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_HYPERLTL", "hyperltl", "--hyperltl"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_AUTOHYPER", "autohyper", "--autohyper"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_MCHYPER", "mchyper", "--mchyper"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_SOUFFLE", "souffle", "--souffle"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_SECPAL", "secpal", "--secpal"),
+    (
+        "IPFS_DATASETS_PY_AUTO_INSTALL_RUNTIME_MTL_EXTERNAL",
+        "runtime-mtl-external",
+        "--runtime-mtl-external",
+    ),
     (
         "IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI",
         "symbolicai",
@@ -484,7 +495,7 @@ def _logic_prover_install_args() -> tuple[list[str], tuple[str, ...]]:
     )
     portfolio_is_explicit = any(name in os.environ for name in portfolio_env_names)
     if _setup_env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_ALL_PROVERS", "0"):
-        configured_portfolio = "legal_ir_full"
+        configured_portfolio = "legal_ir_full software_verification_external"
         portfolio_is_explicit = True
     if not portfolio_is_explicit:
         # AUTO_INSTALL_PROVERS is itself explicit. Preserve its historical
@@ -558,6 +569,12 @@ def ensure_logic_provers() -> None:
     - IPFS_DATASETS_PY_AUTO_INSTALL_VAMPIRE
     - IPFS_DATASETS_PY_AUTO_INSTALL_EPROVER
     - IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI
+    - IPFS_DATASETS_PY_AUTO_INSTALL_HYPERLTL
+    - IPFS_DATASETS_PY_AUTO_INSTALL_AUTOHYPER
+    - IPFS_DATASETS_PY_AUTO_INSTALL_MCHYPER
+    - IPFS_DATASETS_PY_AUTO_INSTALL_SOUFFLE
+    - IPFS_DATASETS_PY_AUTO_INSTALL_SECPAL
+    - IPFS_DATASETS_PY_AUTO_INSTALL_RUNTIME_MTL_EXTERNAL
     - IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI
     """
 

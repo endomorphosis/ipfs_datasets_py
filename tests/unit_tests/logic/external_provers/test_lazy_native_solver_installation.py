@@ -83,6 +83,81 @@ def test_parallel_first_use_installs_each_prover_once(monkeypatch) -> None:
     assert calls == ["vampire"]
 
 
+def test_reviewed_gap_installer_uses_real_vendor_path(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[dict[str, object]] = []
+
+    def ensure_runtime_mtl(**kwargs):
+        calls.append(dict(kwargs))
+        return SimpleNamespace(status="installed", installed=True)
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_resolve_reviewed_installer",
+        lambda prover: ensure_runtime_mtl
+        if prover == "runtime-mtl-external"
+        else None,
+    )
+
+    assert lazy_installer.lazy_install_prover(
+        "runtime_mtl",
+        allow_automatic=True,
+        reason="live trace verification",
+    )
+    assert calls == [
+        {
+            "yes": True,
+            "strict": False,
+            "vendor": True,
+            "hermetic_parity_engine": False,
+        }
+    ]
+
+
+def test_reviewed_installer_receipt_does_not_leak_object_truthiness(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[dict[str, object]] = []
+
+    def unavailable_secpal(**kwargs):
+        calls.append(dict(kwargs))
+        return SimpleNamespace(status="unavailable", installed=False)
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_resolve_reviewed_installer",
+        lambda prover: unavailable_secpal if prover == "secpal" else None,
+    )
+
+    assert not lazy_installer.lazy_install_prover(
+        "secpal",
+        allow_automatic=True,
+        reason="authorization verification",
+    )
+    assert calls[0]["vendor"] is True
+    assert calls[0]["hermetic_shadow"] is False
+
+
+def test_disabled_reviewed_installer_does_not_import_plugin(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", "0")
+
+    def forbidden(_prover):
+        raise AssertionError("disabled lazy install must not resolve a plugin")
+
+    monkeypatch.setattr(lazy_installer, "_resolve_reviewed_installer", forbidden)
+    assert not lazy_installer.lazy_install_prover("hyperltl")
+
+
 def test_tlc_lazy_install_binds_attempt_cache_to_selected_java(
     monkeypatch,
     tmp_path: Path,
@@ -512,6 +587,46 @@ def test_generation_portfolio_includes_flogic_authority() -> None:
     assert managed_install_keys.issubset(
         prover_installer.PROVER_PORTFOLIOS["legal_ir_full"]
     )
+    assert set(prover_installer.REVIEWED_EXTERNAL_PROVIDER_IDS) == {
+        "hyperltl",
+        "autohyper",
+        "mchyper",
+        "souffle",
+        "secpal",
+        "runtime-mtl-external",
+        "ergoai",
+    }
+
+
+def test_external_provider_cli_delegates_to_reviewed_vendor_installer(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    def reviewed(provider_id: str, **kwargs) -> bool:
+        calls.append((provider_id, dict(kwargs)))
+        return True
+
+    monkeypatch.setattr(
+        prover_installer,
+        "ensure_reviewed_external_provider",
+        reviewed,
+    )
+
+    assert (
+        prover_installer.main(
+            ["--secpal", "--yes", "--strict", "--update"]
+        )
+        == 0
+    )
+    assert calls == [
+        (
+            "secpal",
+            {"yes": True, "strict": True, "force": True},
+        )
+    ]
 
 
 def test_portfolio_exclusion_omits_inherited_solver(monkeypatch) -> None:

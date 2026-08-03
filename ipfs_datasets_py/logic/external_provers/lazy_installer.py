@@ -31,9 +31,10 @@ import os
 import shutil
 import subprocess
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Any, Literal
 
 from ipfs_datasets_py.logic.common.feature_detection import (
     clear_feature_detection_cache,
@@ -94,6 +95,17 @@ _ALIASES = {
     "runergo": "ergoai",
     "runergo.sh": "ergoai",
     "runergo_sh": "ergoai",
+    "hyperltl": "hyperltl",
+    "hyper_ltl": "hyperltl",
+    "autohyper": "autohyper",
+    "auto_hyper": "autohyper",
+    "mchyper": "mchyper",
+    "mc_hyper": "mchyper",
+    "souffle": "souffle",
+    "secpal": "secpal",
+    "runtime_mtl_external": "runtime-mtl-external",
+    "runtime_mtl": "runtime-mtl-external",
+    "mtl_monitor": "runtime-mtl-external",
 }
 
 _ENV_NAMES = {
@@ -111,6 +123,12 @@ _ENV_NAMES = {
     "proverif": "PROVERIF",
     "symbolicai": "SYMBOLICAI",
     "ergoai": "ERGOAI",
+    "hyperltl": "HYPERLTL",
+    "autohyper": "AUTOHYPER",
+    "mchyper": "MCHYPER",
+    "souffle": "SOUFFLE",
+    "secpal": "SECPAL",
+    "runtime-mtl-external": "RUNTIME_MTL_EXTERNAL",
 }
 
 _PROVER_EXECUTABLES: dict[str, tuple[str, ...]] = {
@@ -126,7 +144,30 @@ _PROVER_EXECUTABLES: dict[str, tuple[str, ...]] = {
     "vampire": ("vampire",),
     "eprover": ("eprover",),
     "ergoai": ("ergoai", "ergo", "runErgo.sh", "runergo"),
+    "hyperltl": ("hyperltl", "hyperltl-sat"),
+    "autohyper": ("autohyper", "AutoHyper"),
+    "mchyper": ("mchyper", "MCHyper"),
+    "souffle": ("souffle",),
+    "secpal": ("secpal",),
+    "runtime-mtl-external": ("runtime-mtl", "runtime-mtl-external", "mtl-monitor"),
 }
+
+# These providers have reviewed family installers in
+# FormalVerificationInstallerRegistry@1.  Their older toolchain descriptors
+# still expose the historical DECLARED_GAP classification for compatibility;
+# an explicit lazy-install request may cross that boundary only through the
+# reviewed registry callable and always requests the real vendor path.
+_REVIEWED_EXTERNAL_INSTALLERS = frozenset(
+    {
+        "hyperltl",
+        "autohyper",
+        "mchyper",
+        "souffle",
+        "secpal",
+        "runtime-mtl-external",
+        "ergoai",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -198,7 +239,11 @@ def find_executable(command: str) -> str | None:
     if not command:
         return None
     path = Path(command).expanduser()
-    env_name = normalize_prover_name(path.name).upper()
+    normalized_name = normalize_prover_name(path.name)
+    env_name = _ENV_NAMES.get(
+        normalized_name,
+        normalized_name.upper().replace("-", "_"),
+    )
     explicit = os.environ.get(f"IPFS_DATASETS_PY_{env_name}_EXECUTABLE")
     candidates: list[Path] = []
     if explicit:
@@ -284,6 +329,44 @@ def declared_install_gap_providers() -> frozenset[str]:
             gaps.add(descriptor.provider_id)
             gaps.add(descriptor.provider_id.replace("-", "_"))
     return frozenset(gaps)
+
+
+def _resolve_reviewed_installer(prover: str) -> Callable[..., Any] | None:
+    """Resolve a reviewed family installer without importing it on discovery.
+
+    This function is called only after an explicit lazy-install execution
+    request.  Registry metadata remains side-effect free and the selected
+    plugin is imported narrowly rather than importing the complete matrix.
+    """
+
+    if prover not in _REVIEWED_EXTERNAL_INSTALLERS:
+        return None
+    try:
+        from ipfs_datasets_py.logic.backends.installers.registry import (
+            get_installer_entry,
+        )
+
+        entry = get_installer_entry(prover)
+        module = importlib.import_module(entry.module_path)
+        ensure = getattr(module, entry.ensure_name, None)
+    except Exception:
+        logger.exception("Could not resolve reviewed installer for %s", prover)
+        return None
+    return ensure if callable(ensure) else None
+
+
+def _reviewed_installer_succeeds(result: object) -> bool:
+    """Interpret bool and typed installer receipts without truthiness leaks."""
+
+    if isinstance(result, bool):
+        return result
+    status = str(getattr(result, "status", "") or "").strip().lower()
+    if status in {"available", "already_present", "installed"}:
+        return True
+    if isinstance(result, dict):
+        status = str(result.get("status") or "").strip().lower()
+        return status in {"available", "already_present", "installed"}
+    return False
 
 
 def lazy_installs_enabled() -> bool:
@@ -384,9 +467,8 @@ def _lazy_install_prover_once(
         )
         return False
 
-    if prover in declared_install_gap_providers() or normalize_prover_name(
-        prover
-    ) in declared_install_gap_providers():
+    is_declared_gap = prover in declared_install_gap_providers()
+    if is_declared_gap and prover not in _REVIEWED_EXTERNAL_INSTALLERS:
         _emit(
             ProverInstallEvent(
                 prover,
@@ -417,10 +499,28 @@ def _lazy_install_prover_once(
     )
 
     try:
-        from ipfs_datasets_py.logic.integration.bridges import prover_installer
+        reviewed_ensure = _resolve_reviewed_installer(prover)
+        if prover in _REVIEWED_EXTERNAL_INSTALLERS and reviewed_ensure is None:
+            _emit(
+                ProverInstallEvent(
+                    prover,
+                    "failed",
+                    "reviewed installer registry entry is not callable",
+                ),
+                progress,
+            )
+            return False
+        if reviewed_ensure is not None:
+            ensure = reviewed_ensure
+        else:
+            from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
-        ensure_name = "ensure_cvc5_cli" if prover == "cvc5" and allow_automatic else f"ensure_{prover}"
-        ensure = getattr(prover_installer, ensure_name, None)
+            ensure_name = (
+                "ensure_cvc5_cli"
+                if prover == "cvc5" and allow_automatic
+                else f"ensure_{prover}"
+            )
+            ensure = getattr(prover_installer, ensure_name, None)
         if ensure is None:
             logger.debug("No lazy installer is registered for prover %s", prover)
             _emit(
@@ -438,10 +538,20 @@ def _lazy_install_prover_once(
             kwargs["allow_sudo"] = _truthy(
                 os.environ.get("IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS")
             )
+        # A lazy execution request must never silently substitute a hermetic
+        # shadow/shim for the external prover it names.  Such shadows remain
+        # available through their explicit certification entrypoints.
+        if reviewed_ensure is not None:
+            if prover in {"hyperltl", "autohyper", "mchyper"}:
+                kwargs.update({"vendor": True, "hermetic_engine": False})
+            elif prover in {"souffle", "secpal"}:
+                kwargs.update({"vendor": True, "hermetic_shadow": False})
+            elif prover == "runtime-mtl-external":
+                kwargs.update({"vendor": True, "hermetic_parity_engine": False})
+            elif prover == "ergoai":
+                kwargs["hermetic_shim"] = False
 
-        if progress is not None and prover in {
-            "z3", "cvc5", "vampire", "eprover", "lean", "coq", "isabelle", "apalache", "tlc", "tamarin", "maude", "proverif", "symbolicai", "ergoai"
-        }:
+        if progress is not None:
             def forward_progress(phase: str, message: str) -> None:
                 normalized_phase = phase if phase in {
                     "checking", "available", "installing", "installed", "blocked", "failed"
@@ -461,7 +571,8 @@ def _lazy_install_prover_once(
             ),
             progress,
         )
-        ok = bool(ensure(**kwargs))
+        result = ensure(**kwargs)
+        ok = _reviewed_installer_succeeds(result)
         importlib.invalidate_caches()
         clear_feature_detection_cache()
         _emit(

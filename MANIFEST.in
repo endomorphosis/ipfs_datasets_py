@@ -1,4 +1,7 @@
 include requirements*.txt
+recursive-include typescript/logic-runtime-mtl *.json *.ts
+prune typescript/logic-runtime-mtl/node_modules
+prune typescript/logic-runtime-mtl/dist
 recursive-include ipfs_datasets_py/processors/groth16_backend/bin *groth16*
 recursive-include ipfs_datasets_py/processors/groth16_backend/artifacts *.bin
 recursive-include ipfs_datasets_py/processors/groth16_backend/src *.rs
