@@ -1175,7 +1175,7 @@ Program invariants:
 
 ## PATLAW-091 Project the patent-law and prosecution knowledge graph
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
