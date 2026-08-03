@@ -474,7 +474,7 @@ Program invariants:
 
 ## PATLAW-024 Import authorized Patent Center exports into encrypted storage
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
