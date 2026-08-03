@@ -77,12 +77,20 @@ PATH_APPLICATION = "/api/v1/patent/applications/{applicationNumberText}"
 PATH_META_DATA = "/api/v1/patent/applications/{applicationNumberText}/meta-data"
 PATH_TRANSACTIONS = "/api/v1/patent/applications/{applicationNumberText}/transactions"
 PATH_DOCUMENTS = "/api/v1/patent/applications/{applicationNumberText}/documents"
+PATH_CONTINUITY = "/api/v1/patent/applications/{applicationNumberText}/continuity"
+PATH_FOREIGN_PRIORITY = (
+    "/api/v1/patent/applications/{applicationNumberText}/foreign-priority"
+)
 PATH_SEARCH = "/api/v1/patent/applications/search"
 
 # Required structural keys for response families (minimal schema gate).
 _REQUIRED_APPLICATION_KEYS = frozenset({"count", "patentFileWrapperDataBag"})
 _REQUIRED_DOCUMENTS_KEYS = frozenset({"documentBag"})
 _REQUIRED_SEARCH_KEYS = frozenset({"count"})
+# Continuity / foreign-priority bags may appear under the application bag or as
+# dedicated top-level arrays; both shapes are accepted after envelope checks.
+_REQUIRED_CONTINUITY_KEYS = frozenset({"count", "patentFileWrapperDataBag"})
+_REQUIRED_FOREIGN_PRIORITY_KEYS = frozenset({"count", "patentFileWrapperDataBag"})
 
 # Known top-level keys; unknown keys trigger schema-drift (additive extras are
 # allowed only under patentFileWrapperDataBag bag items, not at the envelope).
@@ -91,6 +99,9 @@ _KNOWN_ENVELOPE_KEYS = frozenset(
         "count",
         "patentFileWrapperDataBag",
         "documentBag",
+        "parentContinuityBag",
+        "childContinuityBag",
+        "foreignPriorityBag",
         "facets",
         "requestIdentifier",
         "error",
@@ -175,6 +186,90 @@ class OdpDocumentRecord:
             "download_options": [dict(x) for x in self.download_options],
             "official_date": self.official_date,
             "raw": dict(self.raw),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class OdpContinuityFact:
+    """One immutable, source-bound parent/child continuity relation."""
+
+    application_number: str
+    relation_role: str  # parent | child | unknown
+    related_application_number: str | None
+    continuity_type: str | None
+    filing_date: str | None
+    raw: Mapping[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "application_number": self.application_number,
+            "continuity_type": self.continuity_type,
+            "filing_date": self.filing_date,
+            "raw": dict(self.raw),
+            "related_application_number": self.related_application_number,
+            "relation_role": self.relation_role,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class OdpContinuitySnapshot:
+    """Immutable continuity bag bound to a source receipt."""
+
+    schema_version: str
+    application_number: str
+    parents: tuple[OdpContinuityFact, ...]
+    children: tuple[OdpContinuityFact, ...]
+    raw_bag: Mapping[str, Any]
+    receipt: SourceReceipt
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "application_number": self.application_number,
+            "children": [c.to_dict() for c in self.children],
+            "parents": [p.to_dict() for p in self.parents],
+            "raw_bag": dict(self.raw_bag),
+            "receipt": self.receipt.to_dict(),
+            "schema_version": self.schema_version,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class OdpForeignPriorityFact:
+    """One immutable foreign-priority claim bound to source fields."""
+
+    application_number: str
+    priority_country: str | None
+    priority_application_number: str | None
+    priority_date: str | None
+    raw: Mapping[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "application_number": self.application_number,
+            "priority_application_number": self.priority_application_number,
+            "priority_country": self.priority_country,
+            "priority_date": self.priority_date,
+            "raw": dict(self.raw),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class OdpForeignPrioritySnapshot:
+    """Immutable foreign-priority bag bound to a source receipt."""
+
+    schema_version: str
+    application_number: str
+    claims: tuple[OdpForeignPriorityFact, ...]
+    raw_bag: Mapping[str, Any]
+    receipt: SourceReceipt
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "application_number": self.application_number,
+            "claims": [c.to_dict() for c in self.claims],
+            "raw_bag": dict(self.raw_bag),
+            "receipt": self.receipt.to_dict(),
+            "schema_version": self.schema_version,
         }
 
 
@@ -414,6 +509,145 @@ def parse_documents(
     return tuple(out)
 
 
+def _continuity_fact(
+    item: Mapping[str, Any],
+    *,
+    application_number: str,
+    relation_role: str,
+) -> OdpContinuityFact:
+    related = (
+        item.get("parentApplicationNumberText")
+        or item.get("childApplicationNumberText")
+        or item.get("applicationNumberText")
+        or item.get("relatedApplicationNumberText")
+    )
+    return OdpContinuityFact(
+        application_number=application_number,
+        relation_role=relation_role,
+        related_application_number=_optional_str(related),
+        continuity_type=_optional_str(
+            item.get("claimParentageTypeCode")
+            or item.get("continuityTypeCode")
+            or item.get("parentageTypeCode")
+            or item.get("continuityType")
+        ),
+        filing_date=_optional_str(
+            item.get("filingDate")
+            or item.get("parentApplicationFilingDate")
+            or item.get("childApplicationFilingDate")
+        ),
+        raw=MappingProxyType(dict(item)),
+    )
+
+
+def parse_continuity(
+    payload: Any,
+    *,
+    receipt: SourceReceipt,
+    requested_application_number: str,
+) -> OdpContinuitySnapshot:
+    """Parse continuity response into immutable source-bound facts."""
+
+    data = validate_odp_envelope(payload, required_keys=_REQUIRED_CONTINUITY_KEYS)
+    bag = _first_bag_item(data)
+    if bag is None:
+        return OdpContinuitySnapshot(
+            schema_version=PATENT_FILE_WRAPPER_SCHEMA_VERSION,
+            application_number=requested_application_number,
+            parents=(),
+            children=(),
+            raw_bag=MappingProxyType({}),
+            receipt=receipt,
+        )
+    app_no = str(
+        bag.get("applicationNumberText") or requested_application_number
+    ).strip()
+    parents_raw = bag.get("parentContinuityBag") or bag.get("parentContinuity") or ()
+    children_raw = bag.get("childContinuityBag") or bag.get("childContinuity") or ()
+    # Some ODP shapes expose continuity arrays at the envelope root.
+    if not parents_raw and data.get("parentContinuityBag"):
+        parents_raw = data.get("parentContinuityBag")
+    if not children_raw and data.get("childContinuityBag"):
+        children_raw = data.get("childContinuityBag")
+    parents = tuple(
+        _continuity_fact(item, application_number=app_no, relation_role="parent")
+        for item in _as_tuple_of_maps(parents_raw, "parentContinuityBag")
+    )
+    children = tuple(
+        _continuity_fact(item, application_number=app_no, relation_role="child")
+        for item in _as_tuple_of_maps(children_raw, "childContinuityBag")
+    )
+    return OdpContinuitySnapshot(
+        schema_version=PATENT_FILE_WRAPPER_SCHEMA_VERSION,
+        application_number=app_no,
+        parents=parents,
+        children=children,
+        raw_bag=MappingProxyType(dict(bag)),
+        receipt=receipt,
+    )
+
+
+def parse_foreign_priority(
+    payload: Any,
+    *,
+    receipt: SourceReceipt,
+    requested_application_number: str,
+) -> OdpForeignPrioritySnapshot:
+    """Parse foreign-priority response into immutable source-bound facts."""
+
+    data = validate_odp_envelope(
+        payload, required_keys=_REQUIRED_FOREIGN_PRIORITY_KEYS
+    )
+    bag = _first_bag_item(data)
+    if bag is None:
+        return OdpForeignPrioritySnapshot(
+            schema_version=PATENT_FILE_WRAPPER_SCHEMA_VERSION,
+            application_number=requested_application_number,
+            claims=(),
+            raw_bag=MappingProxyType({}),
+            receipt=receipt,
+        )
+    app_no = str(
+        bag.get("applicationNumberText") or requested_application_number
+    ).strip()
+    claims_raw = (
+        bag.get("foreignPriorityBag")
+        or bag.get("foreignPriority")
+        or data.get("foreignPriorityBag")
+        or ()
+    )
+    claims: list[OdpForeignPriorityFact] = []
+    for item in _as_tuple_of_maps(claims_raw, "foreignPriorityBag"):
+        claims.append(
+            OdpForeignPriorityFact(
+                application_number=app_no,
+                priority_country=_optional_str(
+                    item.get("ipOfficeName")
+                    or item.get("countryCode")
+                    or item.get("priorityCountryCode")
+                ),
+                priority_application_number=_optional_str(
+                    item.get("applicationNumberText")
+                    or item.get("priorityApplicationNumberText")
+                    or item.get("foreignApplicationNumberText")
+                ),
+                priority_date=_optional_str(
+                    item.get("filingDate")
+                    or item.get("priorityDate")
+                    or item.get("foreignFilingDate")
+                ),
+                raw=MappingProxyType(dict(item)),
+            )
+        )
+    return OdpForeignPrioritySnapshot(
+        schema_version=PATENT_FILE_WRAPPER_SCHEMA_VERSION,
+        application_number=app_no,
+        claims=tuple(claims),
+        raw_bag=MappingProxyType(dict(bag)),
+        receipt=receipt,
+    )
+
+
 def _optional_str(value: Any) -> str | None:
     if value is None or value == "":
         return None
@@ -620,6 +854,46 @@ class PatentFileWrapperClient:
             result,
             parser=lambda payload, receipt: parse_documents(
                 payload, requested_application_number=app_no
+            ),
+        )
+
+    def get_continuity(self, application_number: str) -> ProviderResult:
+        """Fetch parent/child continuity facts (immutable, source-bound)."""
+
+        app_no = normalize_application_number_text(application_number)
+        path = PATH_CONTINUITY.format(
+            applicationNumberText=_encode_application_number(app_no)
+        )
+        result = self._http.request(
+            "GET",
+            path,
+            upstream_id=app_no,
+            metadata={"resource": "continuity", "application_number": app_no},
+        )
+        return self._annotate_success_payload(
+            result,
+            parser=lambda payload, receipt: parse_continuity(
+                payload, receipt=receipt, requested_application_number=app_no
+            ),
+        )
+
+    def get_foreign_priority(self, application_number: str) -> ProviderResult:
+        """Fetch foreign-priority claims (immutable, source-bound)."""
+
+        app_no = normalize_application_number_text(application_number)
+        path = PATH_FOREIGN_PRIORITY.format(
+            applicationNumberText=_encode_application_number(app_no)
+        )
+        result = self._http.request(
+            "GET",
+            path,
+            upstream_id=app_no,
+            metadata={"resource": "foreign_priority", "application_number": app_no},
+        )
+        return self._annotate_success_payload(
+            result,
+            parser=lambda payload, receipt: parse_foreign_priority(
+                payload, receipt=receipt, requested_application_number=app_no
             ),
         )
 
@@ -961,12 +1235,18 @@ OdpPatentFileWrapperClient = PatentFileWrapperClient
 __all__ = [
     "FIXTURE_SCHEMA_VERSION",
     "OdpApplicationSnapshot",
+    "OdpContinuityFact",
+    "OdpContinuitySnapshot",
     "OdpDocumentRecord",
+    "OdpForeignPriorityFact",
+    "OdpForeignPrioritySnapshot",
     "OdpPage",
     "OdpPatentFileWrapperClient",
     "OdpTransactionRecord",
     "PATH_APPLICATION",
+    "PATH_CONTINUITY",
     "PATH_DOCUMENTS",
+    "PATH_FOREIGN_PRIORITY",
     "PATH_META_DATA",
     "PATH_SEARCH",
     "PATH_TRANSACTIONS",
@@ -977,6 +1257,9 @@ __all__ = [
     "build_fixture_recipe",
     "default_fixture_dir",
     "normalize_application_number_text",
+    "parse_continuity",
+    "parse_foreign_priority",
+
     "parse_application_snapshot",
     "parse_documents",
     "parse_transactions",

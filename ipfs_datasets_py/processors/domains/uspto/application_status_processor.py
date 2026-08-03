@@ -56,6 +56,12 @@ from ipfs_datasets_py.processors.domains.uspto.providers.patent_file_wrapper imp
     PatentFileWrapperClient,
     normalize_application_number_text,
 )
+from ipfs_datasets_py.processors.domains.uspto.status_vocabulary import (
+    STATUS_VOCABULARY_SCHEMA_VERSION,
+    StatusCodeRecognition,
+    classify_status_code,
+    is_status_code_known,
+)
 
 APPLICATION_STATUS_PROCESSOR_SCHEMA_VERSION: Final = (
     "uspto.application-status-processor.v1"
@@ -1288,11 +1294,25 @@ class ApplicationStatusProcessor:
                 "Incomplete public data is not proof of nonreceipt."
             )
         # Flag unknown status/event codes in notes without dropping them.
+        # Unknown numeric codes quarantine rather than being treated as known.
         if status is not None and status.status_code:
-            if not _status_code_known(status.status_code):
+            classification = classify_status_code(status.status_code)
+            if classification.recognition is StatusCodeRecognition.QUARANTINE:
                 notes.append(
                     f"Unknown application status code preserved: {status.status_code!r}"
                 )
+                notes.append(
+                    f"QUARANTINE: unknown numeric application status code "
+                    f"{status.status_code!r} (vocabulary "
+                    f"{STATUS_VOCABULARY_SCHEMA_VERSION})"
+                )
+            elif classification.recognition is StatusCodeRecognition.UNKNOWN:
+                notes.append(
+                    f"Unknown application status code preserved: {status.status_code!r}"
+                )
+            for note in classification.notes:
+                if note not in notes:
+                    notes.append(note)
         for tx in transactions:
             if tx.event_code and not tx.code_recognized:
                 notes.append(
@@ -1329,6 +1349,30 @@ class ApplicationStatusProcessor:
             return ()
         app_no, _ = resolved
         return self.store.list_versions(app_no)
+
+    def fetch_continuity(self, application_number: str) -> ProviderResult:
+        """Retrieve immutable, source-bound continuity facts from ODP."""
+
+        resolved = self.resolve_identity(application_number)
+        if resolved is None:
+            raise ApplicationStatusProcessorError(
+                "application number failed identity validation",
+                code="identity_rejected",
+            )
+        app_no, _ = resolved
+        return self.client.get_continuity(app_no)
+
+    def fetch_foreign_priority(self, application_number: str) -> ProviderResult:
+        """Retrieve immutable, source-bound foreign-priority facts from ODP."""
+
+        resolved = self.resolve_identity(application_number)
+        if resolved is None:
+            raise ApplicationStatusProcessorError(
+                "application number failed identity validation",
+                code="identity_rejected",
+            )
+        app_no, _ = resolved
+        return self.client.get_foreign_priority(app_no)
 
     # ------------------------------------------------------------------
     # Failure / gap helpers
@@ -1508,6 +1552,32 @@ def normalize_status_from_meta(
         or meta.get("filingDate")
     )
 
+    classification = classify_status_code(status_code)
+    notes: list[str] = list(classification.notes)
+    # Known vocabulary entries supply structured axes without discarding raw codes.
+    if classification.entry is not None:
+        entry = classification.entry
+        return normalize_application_status(
+            status_code=status_code,
+            status_text=status_text or entry.description,
+            lifecycle_phase=entry.lifecycle_phase,
+            rejection_disposition=entry.rejection_disposition,
+            is_pending=entry.is_pending,
+            is_abandoned=entry.is_abandoned,
+            is_allowed=entry.is_allowed,
+            is_patented=entry.is_patented,
+            is_appealed=entry.is_appealed,
+            entity_status=entity_status,
+            as_of_source_utc=as_of,
+            retrieval_utc=retrieval_utc,
+            raw_fields=raw_fields,
+            notes=tuple(notes),
+            infer=False,
+        )
+
+    # Unknown / quarantine: retain raw fields; do not invent "known" status.
+    if classification.quarantine:
+        notes.append("status_code_quarantined")
     return normalize_application_status(
         status_code=status_code,
         status_text=status_text,
@@ -1515,7 +1585,7 @@ def normalize_status_from_meta(
         as_of_source_utc=as_of,
         retrieval_utc=retrieval_utc,
         raw_fields=raw_fields,
-        notes=(),
+        notes=tuple(notes),
         infer=True,
     )
 
@@ -1722,22 +1792,13 @@ def _default_evidentiary_restrictions(
 
 
 def _status_code_known(code: str) -> bool:
-    """Heuristic: numeric USPTO status codes in a common range are 'known'."""
+    """Return True only for codes in the protected ODP status vocabulary.
 
-    text = str(code).strip()
-    if text.isdigit():
-        # USPTO application status codes are small integers; treat common
-        # documented-ish range as known without claiming exhaustiveness.
-        value = int(text)
-        return 0 < value < 1000
-    # Non-numeric codes require vocabulary membership.
-    return text.upper() in {
-        "DOCKETED",
-        "PENDING",
-        "ABANDONED",
-        "ALLOWED",
-        "PATENTED",
-    }
+    Unknown numeric codes are **not** treated as known (they classify as
+    quarantine via :func:`classify_status_code`).
+    """
+
+    return is_status_code_known(code)
 
 
 def _infer_kind_from_text(
