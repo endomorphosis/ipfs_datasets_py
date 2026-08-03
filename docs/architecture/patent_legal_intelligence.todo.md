@@ -574,7 +574,7 @@ Program invariants:
 
 ## PATLAW-032 Parse office actions and government instructions
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
