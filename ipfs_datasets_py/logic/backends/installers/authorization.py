@@ -236,7 +236,7 @@ DEFAULT_PINS: Final[Mapping[str, Mapping[str, str]]] = MappingProxyType(
         },
         TOOL_SECPAL: {
             "version": "1.0.0-reviewed",
-            "license": "MS-PL",
+            "license": "Microsoft SecPAL Research Release EULA",
             "source": "https://www.microsoft.com/en-us/research/project/secpal/",
             "identity_kind": "operator_bound_artifact",
             "release_tag": "1.0.0-reviewed",
