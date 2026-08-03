@@ -2084,7 +2084,7 @@ Program invariants:
 
 ## PATLAW-145 Add a pinned local production embedding runtime
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
