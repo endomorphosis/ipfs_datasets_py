@@ -5,6 +5,12 @@ declared installation gap and incomplete managed pin into a reviewed, licensed,
 per-platform, explicitly invoked deployment contract.  This module is the sole
 metadata registry that binds those contracts to **family installer plugins**.
 
+``LogicVerificationLazyInstaller@1`` (FVT-G216 / FVT-087) resolves install plans
+exclusively through this registry: SMT (solver), ATP, state models, protocols
+(tamarin/proverif), kernels (rocq/isabelle/lean), hyperproperties, authorization,
+Runtime MTL, advisors, and ZKP.  Authorization never infers permission from a
+probe; capability discovery and import remain non-mutating.
+
 Importing this module is pure data.  It never:
 
 * downloads or installs tools;

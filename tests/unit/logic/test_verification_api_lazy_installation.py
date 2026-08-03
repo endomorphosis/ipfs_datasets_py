@@ -430,3 +430,192 @@ def test_zkp_binding_requires_canonical_sha256_identities(tmp_path: Path) -> Non
     )
     assert receipt.status == "failed"
     assert "deployment_lock_invalid" in receipt.reason_codes
+
+
+# One reviewed representative per InstallerPluginFamily for FVT-G216 acceptance.
+_FAMILY_REPRESENTATIVES: dict[str, str] = {
+    "solver": "z3",
+    "atp": "vampire",
+    "state_model": "apalache",
+    "tamarin": "tamarin",
+    "proverif": "proverif",
+    "rocq": "coq",
+    "isabelle": "isabelle",
+    "hyperproperty": "hyperltl",
+    "authorization": "secpal",
+    "runtime_mtl": "runtime-mtl-external",
+    "advisors": "ergoai",
+    "kernel": "lean",
+    "zkp": "zkp-circuit",
+}
+
+
+def test_api_install_provider_plans_every_reviewed_family_without_plugin_import(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """install_provider dry-run resolves SMT/kernel/state/auth/protocol/ATP/.../ZKP."""
+
+    from ipfs_datasets_py.logic.backends.installers.registry import (
+        InstallerPluginFamily,
+    )
+    from ipfs_datasets_py.logic.verification_api import VerificationAuthority
+
+    calls = _forbid_plugin_import(monkeypatch)
+    api = LogicVerificationAPI()
+    expected_families = {family.value for family in InstallerPluginFamily}
+    assert set(_FAMILY_REPRESENTATIVES) == expected_families
+
+    observed_families: set[str] = set()
+    for family, provider_id in _FAMILY_REPRESENTATIVES.items():
+        response = api.install_provider(
+            provider_id, dry_run=True, request_id=f"req:{provider_id}"
+        )
+        assert response.status is VerificationStatus.DECLARATIVE, provider_id
+        assert response.authority is VerificationAuthority.NONE
+        plan = response.result["plan"]
+        assert plan["family"] == family
+        assert plan["provider_id"] == provider_id
+        assert plan["installer_callable"].startswith("ensure_")
+        assert plan["discovery_imports_plugin"] is False
+        assert plan["plan_digest"]
+        assert plan["platform"]
+        assert plan["license"]
+        assert response.result["install_attempted"] is False
+        assert response.result["mutation_authorized"] is False
+        observed_families.add(plan["family"])
+
+    assert observed_families == expected_families
+    assert calls == []
+
+
+def test_live_receipt_returns_structured_platform_dependency_license_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Successful mutation receipts expose the FVT-G216 structured evidence axes."""
+
+    def ensure_z3(**_kwargs):
+        return {
+            "status": "installed",
+            "installed": True,
+            "checksum_verified": True,
+            "executable_path": "/managed/z3",
+            "pin": {"artifact_id": "z3-4.12.2", "sha256": "a" * 64},
+            "bindings": {
+                "transactional_publication": True,
+                "previous_good_preserved": True,
+                "semantic_probe": {"sat": "unsat", "version": "4.12.2"},
+            },
+        }
+
+    original = importlib.import_module
+
+    def selected(name: str, *args, **kwargs):
+        if name.endswith(".installers.solver"):
+            return SimpleNamespace(ensure_z3=ensure_z3)
+        return original(name, *args, **kwargs)
+
+    monkeypatch.setattr(lazy_installer.importlib, "import_module", selected)
+    monkeypatch.setattr(
+        lazy_installer, "_cross_process_install_lock", _test_process_lock
+    )
+    response = LogicVerificationAPI().install_provider("z3", allow_install=True)
+    assert response.status is VerificationStatus.SUCCEEDED
+    receipt = response.result
+    assert receipt["certified"] is True
+    assert receipt["authority"] == "none"
+    evidence = receipt["evidence"]
+    for axis in (
+        "platform_binding",
+        "dependency",
+        "license",
+        "checksum",
+        "artifact",
+        "executable",
+        "rollback",
+        "semantic_probe",
+    ):
+        assert axis in evidence, axis
+    assert evidence["platform_binding"]["platform"]
+    assert evidence["dependency"]["callable"] == "ensure_z3"
+    assert evidence["license"]["spdx"]
+    assert evidence["checksum"]["verified"] is True
+    assert evidence["artifact"]["artifact_id"] == "z3-4.12.2"
+    assert evidence["executable"]["path"] == "/managed/z3"
+    assert evidence["rollback"]["verified"] is True
+    assert evidence["semantic_probe"]["version"] == "4.12.2"
+
+
+def test_failed_publication_and_missing_rollback_never_promote_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Interrupted/failed installs preserve fail-closed authority ceilings."""
+
+    from ipfs_datasets_py.logic.verification_api import VerificationAuthority
+
+    original = importlib.import_module
+
+    def failing_module(name: str, *args, **kwargs):
+        if name.endswith(".installers.solver"):
+            def ensure_z3(**_kwargs):
+                raise RuntimeError("stage crashed before publish")
+
+            return SimpleNamespace(ensure_z3=ensure_z3)
+        return original(name, *args, **kwargs)
+
+    monkeypatch.setattr(lazy_installer.importlib, "import_module", failing_module)
+    monkeypatch.setattr(
+        lazy_installer, "_cross_process_install_lock", _test_process_lock
+    )
+    failed = LogicVerificationAPI().install_provider("z3", allow_install=True)
+    assert failed.status is VerificationStatus.ERROR
+    assert failed.authority is VerificationAuthority.NONE
+    assert failed.result["certified"] is False
+    assert failed.result["authority"] == "none"
+    assert failed.result["install_attempted"] is True
+    assert failed.result["evidence"]["plugin_invoked"] is True
+    assert failed.result["evidence"]["mutation_observed"] == "unknown_after_invocation"
+    assert failed.result["evidence"]["rollback"]["verified"] is False
+
+    def incomplete_module(name: str, *args, **kwargs):
+        if name.endswith(".installers.solver"):
+            return SimpleNamespace(
+                ensure_z3=lambda **_kwargs: {
+                    "status": "installed",
+                    "installed": True,
+                    "checksum_verified": True,
+                    "executable_path": "/managed/z3",
+                    "bindings": {
+                        # Missing transactional_publication / previous_good_preserved.
+                        "semantic_probe": {"version": "4.12.2"},
+                    },
+                }
+            )
+        return original(name, *args, **kwargs)
+
+    monkeypatch.setattr(lazy_installer.importlib, "import_module", incomplete_module)
+    partial = LogicVerificationAPI().install_provider("z3", allow_install=True)
+    assert partial.status is VerificationStatus.PARTIAL
+    assert partial.authority is VerificationAuthority.NONE
+    assert partial.result["certified"] is False
+    assert partial.result["status"] == "installed_unverified"
+    assert partial.result["evidence"]["rollback"]["verified"] is False
+
+
+def test_inventory_covers_every_plugin_family_and_plan_phases() -> None:
+    from ipfs_datasets_py.logic.backends.installers.registry import (
+        InstallerPluginFamily,
+    )
+
+    inventory = lazy_installer.reviewed_installer_inventory()
+    families = {item["family"] for item in inventory}
+    assert families == {family.value for family in InstallerPluginFamily}
+    for provider_id in _FAMILY_REPRESENTATIVES.values():
+        plan = lazy_installer.plan_reviewed_install(provider_id)
+        assert plan["phases"] == [
+            "authorize",
+            "resolve_reviewed_plugin",
+            "stage_or_validate",
+            "publish",
+            "semantic_probe",
+        ]
+        assert plan["mutation_boundary"] == "after_authorize_and_plugin_resolution"

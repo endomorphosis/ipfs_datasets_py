@@ -4,6 +4,15 @@
 discovery, compilation, checking, monitoring, portfolio planning, counterexample
 explanation, receipt validation, advisor proposals, and receipt attestation.
 
+``install_provider`` (FVT-G216 / FVT-087) is the sole public mutation boundary
+for reviewed prover installation.  It binds to ``LogicVerificationLazyInstaller@1``
+and resolves registry-selected family plugins for SMT, ATP, state models,
+protocols, kernels, hyperproperties, authorization, Runtime MTL, advisors, and
+ZKP.  Probe, inventory, dry-run, and offline paths never import a plugin or open
+the network; live mutation requires ``allow_install=True`` and returns bounded
+platform/dependency/license/checksum/artifact/executable/rollback/semantic
+evidence without promoting capability or semantic authority.
+
 Design invariants
 -----------------
 * Importing this module never probes the environment, installs packages,

@@ -6,6 +6,17 @@ a single best-effort install attempt. Normal bridge imports remain opt-in;
 native execution paths can request automatic installation and always emit
 progress events so a first-use download or build is not silent.
 
+Public transactional facade (FVT-G216 / ``LogicVerificationLazyInstaller@1``)
+---------------------------------------------------------------------------
+``reviewed_installer_inventory``, ``plan_reviewed_install``, and
+``execute_reviewed_install`` form the explicit, platform-aware lifecycle used by
+``LogicVerificationAPI.install_provider``.  Inventory/plan/deny/dry-run/offline
+paths never import a family plugin.  Live installs authorize one registry entry,
+import exactly one reviewed callable, and return structured evidence
+(platform, dependency, license, checksum, artifact, executable, rollback,
+semantic probe).  Incomplete rollback or identity evidence cannot certify or
+promote capability/semantic authority; failed publication keeps prior installs.
+
 Environment variables:
 - IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1 enables requested-prover installs.
 - IPFS_DATASETS_PY_LAZY_INSTALL_<PROVER>=0/1 overrides a prover.
