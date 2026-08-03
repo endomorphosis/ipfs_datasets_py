@@ -1,0 +1,12 @@
+{
+  "authorization_id": "authz-fixture-001",
+  "authorizing_user": "practitioner:synthetic",
+  "granted_utc": "2026-08-01T12:00:00Z",
+  "import_root": "/placeholder/import-root",
+  "notes": [
+    "synthetic fixture authorization; no live USPTO credentials"
+  ],
+  "schema_version": "uspto.patent-center-export.v1",
+  "scope": "import_authorized_local_export",
+  "tenant_id": "tenant-placeholder"
+}

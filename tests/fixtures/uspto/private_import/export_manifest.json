@@ -1,0 +1,55 @@
+{
+  "application_number": "16000001",
+  "entries": [
+    {
+      "authority_relation": "authoritative_original",
+      "classification": "confidential_application",
+      "expected_sha256": "d936dc23ad432d97e81e403b885d5f77ea1a27d92ca6f89b70b086aa5b6729fa",
+      "labels": {
+        "role": "original_submission"
+      },
+      "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "parent_relative_paths": [],
+      "relative_path": "package/original_specification.docx"
+    },
+    {
+      "authority_relation": "derivative",
+      "classification": "confidential_application",
+      "expected_sha256": "e9fb11765893e7336d854ee6a8ef7fd438bf4bf10b1eeb9944ac230062e9c6bc",
+      "labels": {
+        "role": "uspto_converted_pdf"
+      },
+      "media_type": "application/pdf",
+      "parent_relative_paths": [
+        "package/original_specification.docx"
+      ],
+      "relative_path": "package/converted_specification.pdf"
+    },
+    {
+      "authority_relation": "authoritative_original",
+      "classification": "confidential_application",
+      "expected_sha256": "61efbefefa7d87e04fb9943e22456ec26ba9c7a44c5b66b0f068c199c9e17a23",
+      "labels": {
+        "role": "acknowledgement"
+      },
+      "media_type": "text/plain",
+      "parent_relative_paths": [],
+      "relative_path": "package/acknowledgement_receipt.txt"
+    },
+    {
+      "authority_relation": "authoritative_original",
+      "classification": "confidential_application",
+      "expected_sha256": "9b83dc0142804913e28c794cac37cf43f046636e67424698f70923eaf4b1361c",
+      "labels": {
+        "role": "payment_receipt"
+      },
+      "media_type": "text/plain",
+      "parent_relative_paths": [],
+      "relative_path": "package/payment_receipt.txt"
+    }
+  ],
+  "export_id": "syn-export-fixture-001",
+  "matter_id": "matter:syn:16-000001",
+  "schema_version": "uspto.patent-center-export.v1",
+  "source": "user_authorized_patent_center_export"
+}
