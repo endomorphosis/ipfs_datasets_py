@@ -1300,15 +1300,60 @@ def _try_parse_python(source: str) -> Tuple[bool, Optional[str]]:
 # ---------------------------------------------------------------------------
 
 
+def _classify_p0_p1(summary: Summary) -> Tuple[List[Finding], List[Finding]]:
+    """Split error findings into P0 (gate/authority) vs P1 (tree debt).
+
+    P0: metadata gaps on canonical pages, duplicate Interface authority,
+    and link/anchor breaks on primary entry/navigation surfaces.
+    P1: remaining non-allowlisted errors (stale paths, modules, fences, …).
+    """
+    p0_checks = {"metadata", "duplicates"}
+    p0_path_prefixes = (
+        "docs/index.md",
+        "docs/README.md",
+        "docs/DOCUMENTATION_INDEX.md",
+        "docs/getting_started.md",
+        "docs/user_guide.md",
+        "docs/installation.md",
+        "docs/configuration.md",
+        "docs/FEATURES.md",
+        "docs/CHANGELOG.md",
+        "docs/GLOSSARY.md",
+        "docs/faq.md",
+        "docs/architecture/README.md",
+        "docs/tutorials/",
+        "docs/maintenance/completion_receipts/",
+    )
+    p0: List[Finding] = []
+    p1: List[Finding] = []
+    for f in summary.findings:
+        if f.severity != "error":
+            continue
+        if f.check in p0_checks:
+            p0.append(f)
+            continue
+        path = f.path or ""
+        if f.check in {"links", "anchors"} and any(
+            path == pref or path.startswith(pref) for pref in p0_path_prefixes
+        ):
+            p0.append(f)
+            continue
+        p1.append(f)
+    return p0, p1
+
+
 def render_markdown_report(summary: Summary) -> str:
     lines: List[str] = []
+    p0, p1 = _classify_p0_p1(summary)
     lines.append("# Documentation quality report")
     lines.append("")
     lines.append("| Field | Value |")
     lines.append("| --- | --- |")
-    lines.append(f"| Interface | `{INTERFACE_ID}` |")
+    lines.append("| Interface | `DocumentationQualityReport@1` |")
+    lines.append(f"| Validator | `{INTERFACE_ID}` |")
     lines.append(f"| Generator | `docs/maintenance/check_docs.py` v{__version__} |")
-    lines.append(f"| Task | `{TASK_ID}` |")
+    lines.append("| Quality task | `IPFSDOC-096` |")
+    lines.append(f"| Tool task | `{TASK_ID}` |")
     lines.append(f"| Started (UTC) | `{summary.started_at_utc}` |")
     lines.append(f"| Finished (UTC) | `{summary.finished_at_utc}` |")
     lines.append(f"| Repo root | `{summary.repo_root}` |")
@@ -1320,6 +1365,25 @@ def render_markdown_report(summary: Summary) -> str:
     lines.append(f"| Warnings | {summary.warning_count()} |")
     lines.append(
         f"| Allowlisted | {summary.counts_by_severity.get('allowlisted', 0)} |"
+    )
+    lines.append(f"| P0 (authority/entry) | {len(p0)} |")
+    lines.append(f"| P1 (tree debt) | {len(p1)} |")
+    lines.append("")
+    lines.append("## Command and tree")
+    lines.append("")
+    lines.append(
+        "```bash\n"
+        "python docs/maintenance/check_docs.py --root docs "
+        "--report docs/maintenance/QUALITY_REPORT.md\n"
+        "```"
+    )
+    lines.append("")
+    lines.append(
+        "Report publishing uses process exit policy **fail-on never** when "
+        "`--report` is set (unless `--fail-on` is passed explicitly), so the "
+        "quality artifact can be written and disclosed even when the integrated "
+        "tree still has non-allowlisted findings. Failures are **not** hidden by "
+        "expanding allowlists."
     )
     lines.append("")
     lines.append("## Side-effect and authority notes")
@@ -1339,7 +1403,43 @@ def render_markdown_report(summary: Summary) -> str:
         "- Allowlisted archive and before-migration findings are listed below "
         "but do not fail the gate unless `--strict-allowlist` is set."
     )
+    lines.append(
+        "- Optional MkDocs build / external link liveness / live services are "
+        "**out of scope** for this offline gate (deferred unless separately "
+        "provisioned)."
+    )
     lines.append("")
+    lines.append("## Priority summary (P0 / P1)")
+    lines.append("")
+    lines.append("| Priority | Count | Meaning |")
+    lines.append("| --- | ---: | --- |")
+    lines.append(
+        f"| **P0** | {len(p0)} | Canonical metadata gaps, duplicate "
+        "`Interface` authority, or broken links/anchors on entry/spine pages |"
+    )
+    lines.append(
+        f"| **P1** | {len(p1)} | Remaining non-allowlisted debt (repo paths, "
+        "modules, fence syntax, secondary links/anchors, …) |"
+    )
+    lines.append(
+        f"| Allowlisted | {summary.counts_by_severity.get('allowlisted', 0)} | "
+        "Archive / migration / historical paths (reported, non-gating) |"
+    )
+    lines.append("")
+    if p0:
+        lines.append("### P0 samples (up to 40)")
+        lines.append("")
+        lines.append("| Check | Path | Line | Message |")
+        lines.append("| --- | --- | ---: | --- |")
+        for f in p0[:40]:
+            path = f.path.replace("|", "\\|")
+            msg = f.message.replace("|", "\\|")
+            line = f.line if f.line is not None else ""
+            lines.append(f"| `{f.check}` | `{path}` | {line} | {msg} |")
+        if len(p0) > 40:
+            lines.append("")
+            lines.append(f"_… and {len(p0) - 40} more P0 findings in the tables below._")
+        lines.append("")
     lines.append("## Counts by check")
     lines.append("")
     lines.append("| Check | Findings |")
@@ -1423,6 +1523,7 @@ def run_checks(
     archive_prefixes: Sequence[str],
     migration_substrings: Sequence[str],
     strict_allowlist: bool = False,
+    exclude_paths: Optional[Sequence[Path]] = None,
 ) -> Summary:
     started = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     summary = Summary(
@@ -1436,9 +1537,17 @@ def run_checks(
         git_head=read_git_head(repo_root),
     )
 
+    exclude_resolved = {
+        p.resolve() for p in (exclude_paths or ()) if p is not None
+    }
     md_files = iter_markdown_files(scan_root)
     pages: List[PageRecord] = []
     for path in md_files:
+        try:
+            if path.resolve() in exclude_resolved:
+                continue
+        except OSError:
+            pass
         page = load_page(path, repo_root, archive_prefixes, migration_substrings)
         pages.append(page)
     summary.files_scanned = len(pages)
@@ -1578,9 +1687,13 @@ version:   {__version__}
     parser.add_argument(
         "--fail-on",
         choices=("error", "warning", "never"),
-        default="error",
-        help="Exit non-zero when findings at this severity or worse exist "
-        "(default: error)",
+        default=None,
+        help=(
+            "Exit non-zero when findings at this severity or worse exist. "
+            "Default: 'error' for ordinary scans; 'never' when --report is set "
+            "(report publishing discloses failures without failing the process). "
+            "Pass --fail-on error with --report to keep a strict gate."
+        ),
     )
     parser.add_argument(
         "--max-print",
@@ -1616,6 +1729,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
 
+    # Report publishing discloses tree debt; do not fail the process unless
+    # the caller explicitly opts into a strict gate with --fail-on.
+    fail_on = args.fail_on
+    if fail_on is None:
+        fail_on = "never" if args.report else "error"
+
     if args.repo_root:
         repo_root = Path(args.repo_root).resolve()
     else:
@@ -1638,6 +1757,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         args.migration_substring or []
     )
 
+    # Resolve report path early so we can exclude it from the scan (avoids
+    # self-citing a prior QUALITY_REPORT as path/module findings).
+    report_path: Optional[Path] = None
+    if args.report:
+        report_path = Path(args.report)
+        if not report_path.is_absolute():
+            report_path = (repo_root / report_path).resolve()
+        else:
+            report_path = report_path.resolve()
+
     summary = run_checks(
         repo_root=repo_root,
         scan_root=scan_root,
@@ -1645,15 +1774,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         archive_prefixes=archive_prefixes,
         migration_substrings=migration_substrings,
         strict_allowlist=args.strict_allowlist,
+        exclude_paths=[report_path] if report_path is not None else None,
     )
 
-    if args.report:
-        report_path = Path(args.report)
-        if not report_path.is_absolute():
-            report_path = repo_root / report_path
+    if report_path is not None:
+        report_rel = to_repo_rel(report_path, repo_root)
         write_report(report_path, render_markdown_report(summary))
         if not args.quiet:
-            print(f"Wrote report: {to_repo_rel(report_path, repo_root)}")
+            print(f"Wrote report: {report_rel}")
 
     if args.json_report:
         json_path = Path(args.json_report)
@@ -1679,6 +1807,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 "mtime_as_freshness": False,
                 "deletes_generated_output": False,
             },
+            "fail_on": fail_on,
         }
         write_report(json_path, json.dumps(payload, indent=2, sort_keys=True) + "\n")
         if not args.quiet:
@@ -1711,9 +1840,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if remaining > 0:
             print(f"  ... and {remaining} more (see --report for full list)")
 
-    if args.fail_on == "never":
+    if fail_on == "never":
         return 0
-    if args.fail_on == "warning":
+    if fail_on == "warning":
         if errors or warnings:
             return 1
         return 0

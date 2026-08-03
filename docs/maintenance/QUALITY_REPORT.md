@@ -2,19 +2,31 @@
 
 | Field | Value |
 | --- | --- |
-| Interface | `DocumentationValidator@1` |
+| Interface | `DocumentationQualityReport@1` |
+| Validator | `DocumentationValidator@1` |
 | Generator | `docs/maintenance/check_docs.py` v1.0.0 |
-| Task | `IPFSDOC-006` |
-| Started (UTC) | `2026-08-03T18:42:52Z` |
-| Finished (UTC) | `2026-08-03T18:42:55Z` |
+| Quality task | `IPFSDOC-096` |
+| Tool task | `IPFSDOC-006` |
+| Started (UTC) | `2026-08-03T19:01:51Z` |
+| Finished (UTC) | `2026-08-03T19:01:53Z` |
 | Repo root | `/home/barberb/lift_coding/data/agent_supervisor/ipfs_datasets_documentation_refresh_20260803/artifact_completion_run_unblocked_bd0825fcd/shards/0/worktrees/workspace-93140c022231-51d21eaac652` |
 | Scan root | `docs` |
-| Git HEAD | `ref: refs/heads/implementation/ipfsdoc-096-ffb2fe6ce31e-attempt-1-1785782313` |
-| Files scanned | 1571 |
+| Git HEAD | `ref: refs/heads/implementation/ipfsdoc-096-ffb2fe6ce31e-attempt-2-1785782889` |
+| Files scanned | 1570 |
 | Checks run | markdown_paths, links, anchors, repo_paths, python_modules, metadata, duplicates, python_syntax |
-| Errors | 2993 |
+| Errors | 2768 |
 | Warnings | 7 |
 | Allowlisted | 1926 |
+| P0 (authority/entry) | 17 |
+| P1 (tree debt) | 2751 |
+
+## Command and tree
+
+```bash
+python docs/maintenance/check_docs.py --root docs --report docs/maintenance/QUALITY_REPORT.md
+```
+
+Report publishing uses process exit policy **fail-on never** when `--report` is set (unless `--fail-on` is passed explicitly), so the quality artifact can be written and disclosed even when the integrated tree still has non-allowlisted findings. Failures are **not** hidden by expanding allowlists.
 
 ## Side-effect and authority notes
 
@@ -22,6 +34,37 @@
 - **Filesystem mtimes were not used** as freshness proof; only in-document `Last verified` metadata is considered for metadata checks.
 - The checker **does not delete** generated output (`site/`, build artifacts). It only writes this report path when requested.
 - Allowlisted archive and before-migration findings are listed below but do not fail the gate unless `--strict-allowlist` is set.
+- Optional MkDocs build / external link liveness / live services are **out of scope** for this offline gate (deferred unless separately provisioned).
+
+## Priority summary (P0 / P1)
+
+| Priority | Count | Meaning |
+| --- | ---: | --- |
+| **P0** | 17 | Canonical metadata gaps, duplicate `Interface` authority, or broken links/anchors on entry/spine pages |
+| **P1** | 2751 | Remaining non-allowlisted debt (repo paths, modules, fence syntax, secondary links/anchors, …) |
+| Allowlisted | 1926 | Archive / migration / historical paths (reported, non-gating) |
+
+### P0 samples (up to 40)
+
+| Check | Path | Line | Message |
+| --- | --- | ---: | --- |
+| `anchors` | `docs/faq.md` | 178 | Anchor #troubleshooting not found in docs/user_guide.md |
+| `metadata` | `docs/CHANGELOG.md` |  | Status=canonical page missing required metadata: Owner, Source / Source of truth, Audience |
+| `metadata` | `docs/FEATURES.md` |  | Status=canonical page missing required metadata: Owner, Source / Source of truth, Audience |
+| `metadata` | `docs/developer_guides/REPOSITORY_MAP.md` |  | Status=canonical page missing required metadata: Last verified |
+| `metadata` | `docs/getting_started.md` |  | Status=canonical page missing required metadata: Source / Source of truth |
+| `metadata` | `docs/maintenance/completion_receipts/IPFSDOC-074.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |
+| `metadata` | `docs/maintenance/completion_receipts/IPFSDOC-090.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |
+| `metadata` | `docs/maintenance/completion_receipts/IPFSDOC-091.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |
+| `metadata` | `docs/maintenance/completion_receipts/IPFSDOC-092.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |
+| `metadata` | `docs/maintenance/completion_receipts/IPFSDOC-093.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |
+| `metadata` | `docs/maintenance/completion_receipts/IPFSDOC-095.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |
+| `metadata` | `docs/tutorials/FIRST_DATASET_WORKFLOW.md` |  | Status=canonical page missing required metadata: Source / Source of truth |
+| `metadata` | `docs/tutorials/LOGIC_AND_PROOF_WORKFLOW.md` |  | Status=canonical page missing required metadata: Source / Source of truth |
+| `metadata` | `docs/tutorials/MCP_CLIENT_WORKFLOW.md` |  | Status=canonical page missing required metadata: Source / Source of truth |
+| `metadata` | `docs/tutorials/RETRIEVAL_AND_KNOWLEDGE_WORKFLOW.md` |  | Status=canonical page missing required metadata: Source / Source of truth |
+| `metadata` | `docs/user_guide.md` |  | Status=canonical page missing required metadata: Source / Source of truth |
+| `duplicates` | `docs/architecture/retrieval/EMBEDDINGS_AND_INDEXING.md` |  | Duplicate canonical Interface declaration: 'RetrievalArchitecture@1' used by 3 pages |
 
 ## Counts by check
 
@@ -31,8 +74,8 @@
 | `links` | 556 |
 | `anchors` | 84 |
 | `repo_paths` | 3056 |
-| `python_modules` | 782 |
-| `metadata` | 20 |
+| `python_modules` | 558 |
+| `metadata` | 19 |
 | `duplicates` | 1 |
 | `python_syntax` | 699 |
 
@@ -47,7 +90,7 @@
 
 ## Findings
 
-### error (2993)
+### error (2768)
 
 | Check | Path | Line | Message | Detail |
 | --- | --- | ---: | --- | --- |
@@ -2131,32 +2174,32 @@
 | `repo_paths` | `docs/tutorials/security_tutorial.md` | 562 | Referenced repository path not found: examples/rag_audit_integration_example.py |  |
 | `python_modules` | `docs/ARCHITECTURE_VALIDATION_QUICK_START.md` | 425 | Python module not found on tree: ipfs_datasets_py.module.class | origin=prose |
 | `python_modules` | `docs/ARCHITECTURE_VALIDATION_REPORT.md` | 152 | Python module not found on tree: ipfs_datasets_py.graph | origin=import |
-| `python_modules` | `docs/CHANGELOG.md` | 8 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=backtick |
+| `python_modules` | `docs/CHANGELOG.md` | 8 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=prose |
 | `python_modules` | `docs/CLI_MCP_ALIGNMENT_ANALYSIS.md` | 476 | Python module not found on tree: ipfs_datasets_py.auth | origin=import |
-| `python_modules` | `docs/DOCS_DRIFT_AUDIT_REPORT.md` | 92 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.admin_tools.system_health | origin=prose |
+| `python_modules` | `docs/DOCS_DRIFT_AUDIT_REPORT.md` | 92 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.admin_tools.system_health | origin=import |
 | `python_modules` | `docs/GRAPHRAG_CONSOLIDATION_GUIDE.md` | 66 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag | origin=prose |
 | `python_modules` | `docs/GRAPHRAG_CONSOLIDATION_GUIDE.md` | 455 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
 | `python_modules` | `docs/GRAPHRAG_CONSOLIDATION_GUIDE.md` | 468 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=prose |
-| `python_modules` | `docs/LEGAL_SCRAPERS_COMMON_CRAWL_GUIDE.md` | 438 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=prose |
+| `python_modules` | `docs/LEGAL_SCRAPERS_COMMON_CRAWL_GUIDE.md` | 438 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=import |
 | `python_modules` | `docs/MCP_ARCHITECTURE_DIAGRAM.md` | 216 | Python module not found on tree: ipfs_datasets_py.datasets.loader.DatasetLoader | origin=prose |
-| `python_modules` | `docs/MCP_ARCHITECTURE_DIAGRAM.md` | 230 | Python module not found on tree: ipfs_datasets_py.datasets.loader | origin=prose |
-| `python_modules` | `docs/MCP_ARCHITECTURE_DIAGRAM.md` | 323 | Python module not found on tree: ipfs_datasets_py.datasets | origin=prose |
+| `python_modules` | `docs/MCP_ARCHITECTURE_DIAGRAM.md` | 230 | Python module not found on tree: ipfs_datasets_py.datasets.loader | origin=import |
+| `python_modules` | `docs/MCP_ARCHITECTURE_DIAGRAM.md` | 323 | Python module not found on tree: ipfs_datasets_py.datasets | origin=import |
 | `python_modules` | `docs/MCP_QUICKSTART.md` | 74 | Python module not found on tree: ipfs_datasets_py.your_module.your_logic.YourFeature | origin=prose |
 | `python_modules` | `docs/MCP_QUICKSTART.md` | 87 | Python module not found on tree: ipfs_datasets_py.your_module.your_logic | origin=prose |
 | `python_modules` | `docs/MCP_QUICKSTART.md` | 183 | Python module not found on tree: ipfs_datasets_py.module | origin=prose |
 | `python_modules` | `docs/MCP_REFACTORING_PLAN.md` | 146 | Python module not found on tree: ipfs_datasets_py.datasets.loader.DatasetLoader | origin=prose |
-| `python_modules` | `docs/MCP_REFACTORING_PLAN.md` | 148 | Python module not found on tree: ipfs_datasets_py.datasets.loader | origin=import |
-| `python_modules` | `docs/MCP_REFACTORING_SUMMARY.md` | 167 | Python module not found on tree: ipfs_datasets_py.datasets | origin=import |
+| `python_modules` | `docs/MCP_REFACTORING_PLAN.md` | 148 | Python module not found on tree: ipfs_datasets_py.datasets.loader | origin=prose |
+| `python_modules` | `docs/MCP_REFACTORING_SUMMARY.md` | 167 | Python module not found on tree: ipfs_datasets_py.datasets | origin=prose |
 | `python_modules` | `docs/MCP_TOOLS_GUIDE.md` | 514 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.category.your_tool | origin=prose |
 | `python_modules` | `docs/MCP_TOOLS_GUIDE.md` | 541 | Python module not found on tree: ipfs_datasets_py.processors.module_name | origin=prose |
 | `python_modules` | `docs/PERFORMANCE_TUNING_GUIDE.md` | 531 | Python module not found on tree: ipfs_datasets_py.optimizers.tests.performance.benchmarks.benchmark_datasets | origin=prose |
-| `python_modules` | `docs/PERFORMANCE_TUNING_GUIDE.md` | 534 | Python module not found on tree: ipfs_datasets_py.optimizers.tests.performance.benchmarks.benchmark_harness | origin=prose |
+| `python_modules` | `docs/PERFORMANCE_TUNING_GUIDE.md` | 534 | Python module not found on tree: ipfs_datasets_py.optimizers.tests.performance.benchmarks.benchmark_harness | origin=import |
 | `python_modules` | `docs/QUICK_START_NEW_ARCHITECTURE.md` | 24 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/QUICK_START_NEW_ARCHITECTURE.md` | 79 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization | origin=import |
 | `python_modules` | `docs/QUICK_START_NEW_ARCHITECTURE.md` | 97 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
 | `python_modules` | `docs/QUICK_START_NEW_ARCHITECTURE.md` | 119 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
-| `python_modules` | `docs/QUICK_START_NEW_ARCHITECTURE.md` | 129 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
-| `python_modules` | `docs/QUICK_START_NEW_ARCHITECTURE.md` | 132 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=prose |
+| `python_modules` | `docs/QUICK_START_NEW_ARCHITECTURE.md` | 129 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
+| `python_modules` | `docs/QUICK_START_NEW_ARCHITECTURE.md` | 132 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=import |
 | `python_modules` | `docs/THIRD_PARTY_INTEGRATION.md` | 16 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/analysis/complete_individual_scan_evidence.md` | 138 | Python module not found on tree: ipfs_datasets_py.mcp_dashboard | origin=prose |
 | `python_modules` | `docs/analysis/complete_individual_scan_evidence.md` | 139 | Python module not found on tree: ipfs_datasets_py.cache | origin=prose |
@@ -2166,76 +2209,76 @@
 | `python_modules` | `docs/analysis/complete_individual_scan_evidence.md` | 143 | Python module not found on tree: ipfs_datasets_py.graphrag_integration | origin=prose |
 | `python_modules` | `docs/analysis/complete_individual_scan_evidence.md` | 144 | Python module not found on tree: ipfs_datasets_py.p2p_peer_registry | origin=prose |
 | `python_modules` | `docs/analysis/complete_native_implementation.md` | 355 | Python module not found on tree: ipfs_datasets_py.file_converter.cli | origin=prose |
-| `python_modules` | `docs/analysis/logic_tools_verification.md` | 25 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.dataset_tools.__init__.py | origin=backtick |
+| `python_modules` | `docs/analysis/logic_tools_verification.md` | 25 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.dataset_tools.__init__.py | origin=prose |
 | `python_modules` | `docs/api/domains/CORE_AND_DATA.md` | 434 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.dataset_serialization | origin=backtick |
 | `python_modules` | `docs/api/domains/MCP_AND_RUNTIME.md` | 561 | Python module not found on tree: ipfs_datasets_py.config.py | origin=backtick |
 | `python_modules` | `docs/architecture/DEPENDENCY_AND_INITIALIZATION.md` | 141 | Python module not found on tree: ipfs_datasets_py.initialize | origin=prose |
-| `python_modules` | `docs/architecture/END_TO_END_DATA_FLOW.md` | 110 | Python module not found on tree: ipfs_datasets_py.core_operations.dataset_loader.DatasetLoader.load | origin=backtick |
+| `python_modules` | `docs/architecture/END_TO_END_DATA_FLOW.md` | 110 | Python module not found on tree: ipfs_datasets_py.core_operations.dataset_loader.DatasetLoader.load | origin=prose |
 | `python_modules` | `docs/architecture/MCP_TOOLS_ARCHITECTURE.md` | 142 | Python module not found on tree: ipfs_datasets_py.vector_tools | origin=import |
 | `python_modules` | `docs/architecture/MCP_TOOLS_ARCHITECTURE.md` | 213 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=prose |
 | `python_modules` | `docs/architecture/MCP_TOOLS_ARCHITECTURE.md` | 225 | Python module not found on tree: ipfs_datasets_py.module | origin=prose |
-| `python_modules` | `docs/architecture/MCP_TOOLS_ARCHITECTURE.md` | 245 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
+| `python_modules` | `docs/architecture/MCP_TOOLS_ARCHITECTURE.md` | 245 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=import |
 | `python_modules` | `docs/architecture/MCP_TOOLS_ARCHITECTURE.md` | 246 | Python module not found on tree: ipfs_datasets_py.graphrag | origin=import |
 | `python_modules` | `docs/architecture/RUNTIME_ENTRYPOINTS.md` | 63 | Python module not found on tree: ipfs_datasets_py.initialize | origin=backtick |
 | `python_modules` | `docs/architecture/RUNTIME_ENTRYPOINTS.md` | 64 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=backtick |
 | `python_modules` | `docs/architecture/SYSTEM_CONTEXT.md` | 63 | Python module not found on tree: ipfs_datasets_py.initialize | origin=prose |
 | `python_modules` | `docs/architecture/SYSTEM_CONTEXT.md` | 206 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=backtick |
-| `python_modules` | `docs/architecture/github_actions_infrastructure.md` | 118 | Python module not found on tree: ipfs_datasets_py.codeql_cache | origin=import |
+| `python_modules` | `docs/architecture/github_actions_infrastructure.md` | 118 | Python module not found on tree: ipfs_datasets_py.codeql_cache | origin=prose |
 | `python_modules` | `docs/architecture/github_actions_infrastructure.md` | 154 | Python module not found on tree: ipfs_datasets_py.credential_manager | origin=import |
 | `python_modules` | `docs/architecture/submodule_fix.md` | 47 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/deployment/DOCKER_DEPLOYMENT_GUIDE.md` | 22 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/developer_guide.md` | 108 | Python module not found on tree: ipfs_datasets_py.ipfs_kit | origin=prose |
 | `python_modules` | `docs/developer_guides/TROUBLESHOOTING.md` | 119 | Python module not found on tree: ipfs_datasets_py.__file__ | origin=prose |
-| `python_modules` | `docs/examples/README.md` | 41 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
-| `python_modules` | `docs/examples/README.md` | 42 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
+| `python_modules` | `docs/examples/README.md` | 41 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=import |
+| `python_modules` | `docs/examples/README.md` | 42 | Python module not found on tree: ipfs_datasets_py.rag | origin=import |
 | `python_modules` | `docs/examples/README.md` | 55 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
-| `python_modules` | `docs/examples/advanced_examples.md` | 33 | Python module not found on tree: ipfs_datasets_py.data_integration | origin=prose |
+| `python_modules` | `docs/examples/advanced_examples.md` | 33 | Python module not found on tree: ipfs_datasets_py.data_integration | origin=import |
 | `python_modules` | `docs/examples/advanced_examples.md` | 34 | Python module not found on tree: ipfs_datasets_py.duckdb_connector | origin=import |
-| `python_modules` | `docs/examples/advanced_examples.md` | 91 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
+| `python_modules` | `docs/examples/advanced_examples.md` | 91 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=import |
 | `python_modules` | `docs/examples/advanced_examples.md` | 98 | Python module not found on tree: ipfs_datasets_py.ipld | origin=prose |
 | `python_modules` | `docs/examples/advanced_examples.md` | 271 | Python module not found on tree: ipfs_datasets_py.ipld_storage | origin=prose |
-| `python_modules` | `docs/examples/advanced_examples.md` | 272 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=prose |
-| `python_modules` | `docs/examples/advanced_examples.md` | 273 | Python module not found on tree: ipfs_datasets_py.knowledge_graph | origin=prose |
-| `python_modules` | `docs/examples/advanced_examples.md` | 411 | Python module not found on tree: ipfs_datasets_py.llm.llm_graphrag | origin=prose |
-| `python_modules` | `docs/examples/advanced_examples.md` | 414 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
-| `python_modules` | `docs/examples/advanced_examples.md` | 517 | Python module not found on tree: ipfs_datasets_py.federated_search | origin=prose |
+| `python_modules` | `docs/examples/advanced_examples.md` | 272 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=import |
+| `python_modules` | `docs/examples/advanced_examples.md` | 273 | Python module not found on tree: ipfs_datasets_py.knowledge_graph | origin=import |
+| `python_modules` | `docs/examples/advanced_examples.md` | 411 | Python module not found on tree: ipfs_datasets_py.llm.llm_graphrag | origin=import |
+| `python_modules` | `docs/examples/advanced_examples.md` | 414 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
+| `python_modules` | `docs/examples/advanced_examples.md` | 517 | Python module not found on tree: ipfs_datasets_py.federated_search | origin=import |
 | `python_modules` | `docs/examples/advanced_examples.md` | 519 | Python module not found on tree: ipfs_datasets_py.resilient_operations | origin=import |
 | `python_modules` | `docs/examples/advanced_examples.md` | 600 | Python module not found on tree: ipfs_datasets_py.llm.llm_reasoning_tracer | origin=import |
-| `python_modules` | `docs/examples/advanced_examples.md` | 676 | Python module not found on tree: ipfs_datasets_py.arrow_ipld | origin=prose |
-| `python_modules` | `docs/examples/advanced_examples.md` | 677 | Python module not found on tree: ipfs_datasets_py.streaming | origin=prose |
+| `python_modules` | `docs/examples/advanced_examples.md` | 676 | Python module not found on tree: ipfs_datasets_py.arrow_ipld | origin=import |
+| `python_modules` | `docs/examples/advanced_examples.md` | 677 | Python module not found on tree: ipfs_datasets_py.streaming | origin=import |
 | `python_modules` | `docs/examples/advanced_examples.md` | 788 | Python module not found on tree: ipfs_datasets_py.distributed | origin=import |
-| `python_modules` | `docs/examples/advanced_examples.md` | 910 | Python module not found on tree: ipfs_datasets_py.data_provenance | origin=prose |
+| `python_modules` | `docs/examples/advanced_examples.md` | 910 | Python module not found on tree: ipfs_datasets_py.data_provenance | origin=import |
 | `python_modules` | `docs/examples/discord_usage_examples.md` | 18 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia.discord_wrapper | origin=backtick |
-| `python_modules` | `docs/examples/discord_usage_examples.md` | 21 | Python module not found on tree: ipfs_datasets_py.discord_dashboard | origin=backtick |
-| `python_modules` | `docs/examples/discord_usage_examples.md` | 53 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
+| `python_modules` | `docs/examples/discord_usage_examples.md` | 21 | Python module not found on tree: ipfs_datasets_py.discord_dashboard | origin=prose |
+| `python_modules` | `docs/examples/discord_usage_examples.md` | 53 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
 | `python_modules` | `docs/examples/discord_usage_examples.md` | 93 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=prose |
 | `python_modules` | `docs/examples/email_usage_examples.md` | 246 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
-| `python_modules` | `docs/examples/finance_usage_examples.md` | 18 | Python module not found on tree: ipfs_datasets_py.finance | origin=backtick |
-| `python_modules` | `docs/examples/integration_examples.md` | 10 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=prose |
-| `python_modules` | `docs/examples/integration_examples.md` | 11 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=prose |
-| `python_modules` | `docs/examples/workflow_examples.md` | 13 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
+| `python_modules` | `docs/examples/finance_usage_examples.md` | 18 | Python module not found on tree: ipfs_datasets_py.finance | origin=prose |
+| `python_modules` | `docs/examples/integration_examples.md` | 10 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=import |
+| `python_modules` | `docs/examples/integration_examples.md` | 11 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=import |
+| `python_modules` | `docs/examples/workflow_examples.md` | 13 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
 | `python_modules` | `docs/examples/workflow_examples.md` | 16 | Python module not found on tree: ipfs_datasets_py.optimizer_alert_system | origin=prose |
 | `python_modules` | `docs/examples/workflow_examples.md` | 17 | Python module not found on tree: ipfs_datasets_py.unified_monitoring_dashboard | origin=prose |
-| `python_modules` | `docs/examples/workflow_examples.md` | 171 | Python module not found on tree: ipfs_datasets_py.alert_handlers | origin=prose |
+| `python_modules` | `docs/examples/workflow_examples.md` | 171 | Python module not found on tree: ipfs_datasets_py.alert_handlers | origin=import |
 | `python_modules` | `docs/getting_started.md` | 61 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=prose |
 | `python_modules` | `docs/guides/BEST_PRACTICES.md` | 50 | Python module not found on tree: ipfs_datasets_py.streaming_data_loader | origin=prose |
-| `python_modules` | `docs/guides/BEST_PRACTICES.md` | 199 | Python module not found on tree: ipfs_datasets_py.database | origin=import |
+| `python_modules` | `docs/guides/BEST_PRACTICES.md` | 199 | Python module not found on tree: ipfs_datasets_py.database | origin=prose |
 | `python_modules` | `docs/guides/COMPREHENSIVE_MCP_DASHBOARD.md` | 218 | Python module not found on tree: ipfs_datasets_py.mcp_dashboard | origin=prose |
 | `python_modules` | `docs/guides/DEPLOYMENT_GUIDE.md` | 409 | Python module not found on tree: ipfs_datasets_py.fastapi_service | origin=prose |
 | `python_modules` | `docs/guides/DEPLOYMENT_GUIDE_NEW.md` | 125 | Python module not found on tree: ipfs_datasets_py.server | origin=prose |
 | `python_modules` | `docs/guides/DEPLOYMENT_GUIDE_NEW.md` | 512 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/guides/ERROR_REPORTING.md` | 184 | Python module not found on tree: ipfs_datasets_py.docker_error_wrapper | origin=prose |
-| `python_modules` | `docs/guides/FAQ.md` | 199 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.base | origin=prose |
+| `python_modules` | `docs/guides/FAQ.md` | 199 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.base | origin=import |
 | `python_modules` | `docs/guides/FINANCE_INTEGRATION_GUIDE.md` | 155 | Python module not found on tree: ipfs_datasets_py.finance_cli | origin=prose |
-| `python_modules` | `docs/guides/IPFS_ACCELERATE_INTEGRATION.md` | 184 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
+| `python_modules` | `docs/guides/IPFS_ACCELERATE_INTEGRATION.md` | 184 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=import |
 | `python_modules` | `docs/guides/IPFS_ACCELERATE_INTEGRATION.md` | 238 | Python module not found on tree: ipfs_datasets_py.rag | origin=import |
 | `python_modules` | `docs/guides/IPFS_KIT_INTEGRATION.md` | 93 | Python module not found on tree: ipfs_datasets_py.ipfs_kit_integration | origin=import |
-| `python_modules` | `docs/guides/IPFS_KIT_INTEGRATION.md` | 208 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
+| `python_modules` | `docs/guides/IPFS_KIT_INTEGRATION.md` | 208 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=import |
 | `python_modules` | `docs/guides/IPFS_KIT_PY_SUBMODULE_INTEGRATION.md` | 89 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
-| `python_modules` | `docs/guides/JSONNET_IMPLEMENTATION.md` | 111 | Python module not found on tree: ipfs_datasets_py.jsonnet_utils | origin=prose |
+| `python_modules` | `docs/guides/JSONNET_IMPLEMENTATION.md` | 111 | Python module not found on tree: ipfs_datasets_py.jsonnet_utils | origin=import |
 | `python_modules` | `docs/guides/JSONNET_IMPLEMENTATION.md` | 133 | Python module not found on tree: ipfs_datasets_py.dataset_serialization | origin=import |
 | `python_modules` | `docs/guides/JSONNET_IMPLEMENTATION.md` | 148 | Python module not found on tree: ipfs_datasets_py.car_conversion | origin=import |
-| `python_modules` | `docs/guides/LEGAL_DEONTIC_LOGIC_USER_GUIDE.md` | 12 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=prose |
+| `python_modules` | `docs/guides/LEGAL_DEONTIC_LOGIC_USER_GUIDE.md` | 12 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=import |
 | `python_modules` | `docs/guides/MCP_REFACTORING_QUICK_START.md` | 65 | Python module not found on tree: ipfs_datasets_py.module_name.core | origin=prose |
 | `python_modules` | `docs/guides/MCP_REFACTORING_QUICK_START.md` | 67 | Python module not found on tree: ipfs_datasets_py.module_name | origin=import |
 | `python_modules` | `docs/guides/MCP_REFACTORING_QUICK_START.md` | 93 | Python module not found on tree: ipfs_datasets_py.data_processing | origin=prose |
@@ -2246,126 +2289,126 @@
 | `python_modules` | `docs/guides/PATENT_FEATURE_SUMMARY.md` | 56 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=prose |
 | `python_modules` | `docs/guides/QUICK_START_GUIDE.md` | 18 | Python module not found on tree: ipfs_datasets_py.mcp_dashboard | origin=prose |
 | `python_modules` | `docs/guides/RECAP_IMPLEMENTATION_SUMMARY.md` | 369 | Python module not found on tree: ipfs_datasets_py.mcp_dashboard | origin=prose |
-| `python_modules` | `docs/guides/REFACTORING_SUMMARY.md` | 80 | Python module not found on tree: ipfs_datasets_py.knowledge_graph_extraction | origin=prose |
-| `python_modules` | `docs/guides/REFACTORING_SUMMARY.md` | 101 | Python module not found on tree: ipfs_datasets_py.vector_tools | origin=prose |
+| `python_modules` | `docs/guides/REFACTORING_SUMMARY.md` | 80 | Python module not found on tree: ipfs_datasets_py.knowledge_graph_extraction | origin=import |
+| `python_modules` | `docs/guides/REFACTORING_SUMMARY.md` | 101 | Python module not found on tree: ipfs_datasets_py.vector_tools | origin=import |
 | `python_modules` | `docs/guides/REFACTORING_SUMMARY.md` | 237 | Python module not found on tree: ipfs_datasets_py.ipfs_kit_integration | origin=prose |
 | `python_modules` | `docs/guides/RELEASE_CHECKLIST.md` | 66 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=prose |
 | `python_modules` | `docs/guides/RELEASE_NOTES.md` | 79 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
-| `python_modules` | `docs/guides/THEOREM_PROVER_INTEGRATION_GUIDE.md` | 62 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=prose |
-| `python_modules` | `docs/guides/WEB_SCRAPING_GUIDE.md` | 233 | Python module not found on tree: ipfs_datasets_py.advanced_web_archiving | origin=prose |
-| `python_modules` | `docs/guides/comprehensive_workflow_guide.md` | 43 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
-| `python_modules` | `docs/guides/comprehensive_workflow_guide.md` | 83 | Python module not found on tree: ipfs_datasets_py.optimizer_alert_system | origin=prose |
+| `python_modules` | `docs/guides/THEOREM_PROVER_INTEGRATION_GUIDE.md` | 62 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=import |
+| `python_modules` | `docs/guides/WEB_SCRAPING_GUIDE.md` | 233 | Python module not found on tree: ipfs_datasets_py.advanced_web_archiving | origin=import |
+| `python_modules` | `docs/guides/comprehensive_workflow_guide.md` | 43 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
+| `python_modules` | `docs/guides/comprehensive_workflow_guide.md` | 83 | Python module not found on tree: ipfs_datasets_py.optimizer_alert_system | origin=import |
 | `python_modules` | `docs/guides/comprehensive_workflow_guide.md` | 116 | Python module not found on tree: ipfs_datasets_py.unified_monitoring_dashboard | origin=prose |
 | `python_modules` | `docs/guides/comprehensive_workflow_guide.md` | 329 | Python module not found on tree: ipfs_datasets_py.monitoring.exporters | origin=import |
 | `python_modules` | `docs/guides/comprehensive_workflow_guide.md` | 359 | Python module not found on tree: ipfs_datasets_py.alert_handlers | origin=import |
-| `python_modules` | `docs/guides/data_provenance.md` | 9 | Python module not found on tree: ipfs_datasets_py.data_provenance | origin=prose |
-| `python_modules` | `docs/guides/data_provenance.md` | 55 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=prose |
+| `python_modules` | `docs/guides/data_provenance.md` | 9 | Python module not found on tree: ipfs_datasets_py.data_provenance | origin=import |
+| `python_modules` | `docs/guides/data_provenance.md` | 55 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=import |
 | `python_modules` | `docs/guides/data_provenance.md` | 322 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=import |
 | `python_modules` | `docs/guides/data_provenance.md` | 562 | Python module not found on tree: ipfs_datasets_py.ipld.storage | origin=import |
-| `python_modules` | `docs/guides/data_provenance.md` | 878 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage_enhanced | origin=prose |
+| `python_modules` | `docs/guides/data_provenance.md` | 878 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage_enhanced | origin=import |
 | `python_modules` | `docs/guides/deployment/docker_deployment.md` | 61 | Python module not found on tree: ipfs_datasets_py.mcp_dashboard | origin=prose |
 | `python_modules` | `docs/guides/deployment/graphrag_production_deployment_guide.md` | 27 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/guides/deployment/graphrag_production_deployment_guide.md` | 40 | Python module not found on tree: ipfs_datasets_py.scripts.init_database | origin=prose |
-| `python_modules` | `docs/guides/distributed_features.md` | 242 | Python module not found on tree: ipfs_datasets_py.resilient_operations | origin=prose |
+| `python_modules` | `docs/guides/distributed_features.md` | 242 | Python module not found on tree: ipfs_datasets_py.resilient_operations | origin=import |
 | `python_modules` | `docs/guides/installation/CAPABILITY_INSTALLATION.md` | 48 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/guides/installation/CAPABILITY_INSTALLATION.md` | 400 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=prose |
-| `python_modules` | `docs/guides/ipld_optimization.md` | 30 | Python module not found on tree: ipfs_datasets_py.ipld.optimized_codec | origin=prose |
-| `python_modules` | `docs/guides/ipld_optimization.md` | 95 | Python module not found on tree: ipfs_datasets_py.ipld.storage | origin=prose |
+| `python_modules` | `docs/guides/ipld_optimization.md` | 30 | Python module not found on tree: ipfs_datasets_py.ipld.optimized_codec | origin=import |
+| `python_modules` | `docs/guides/ipld_optimization.md` | 95 | Python module not found on tree: ipfs_datasets_py.ipld.storage | origin=import |
 | `python_modules` | `docs/guides/ipld_optimization.md` | 121 | Python module not found on tree: ipfs_datasets_py.ipld | origin=import |
 | `python_modules` | `docs/guides/ipld_optimization.md` | 224 | Python module not found on tree: ipfs_datasets_py.ipld.dag_processor | origin=prose |
 | `python_modules` | `docs/guides/ipld_optimization.md` | 314 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=import |
-| `python_modules` | `docs/guides/ipld_optimization.md` | 404 | Python module not found on tree: ipfs_datasets_py.car_conversion | origin=prose |
-| `python_modules` | `docs/guides/ipld_optimization.md` | 496 | Python module not found on tree: ipfs_datasets_py.ipld.schema | origin=prose |
+| `python_modules` | `docs/guides/ipld_optimization.md` | 404 | Python module not found on tree: ipfs_datasets_py.car_conversion | origin=import |
+| `python_modules` | `docs/guides/ipld_optimization.md` | 496 | Python module not found on tree: ipfs_datasets_py.ipld.schema | origin=import |
 | `python_modules` | `docs/guides/ipld_optimization.md` | 516 | Python module not found on tree: ipfs_datasets_py.ipld.monitoring | origin=prose |
 | `python_modules` | `docs/guides/ipld_optimization.md` | 538 | Python module not found on tree: ipfs_datasets_py.ipld.benchmarks | origin=import |
-| `python_modules` | `docs/guides/javascript_error_auto_healing.md` | 310 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=prose |
-| `python_modules` | `docs/guides/knowledge_graph_large_block_fix.md` | 107 | Python module not found on tree: ipfs_datasets_py.ipld | origin=import |
+| `python_modules` | `docs/guides/javascript_error_auto_healing.md` | 310 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=import |
+| `python_modules` | `docs/guides/knowledge_graph_large_block_fix.md` | 107 | Python module not found on tree: ipfs_datasets_py.ipld | origin=prose |
 | `python_modules` | `docs/guides/knowledge_graphs/KNOWLEDGE_GRAPHS_LINEAGE_FAQ.md` | 351 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=prose |
 | `python_modules` | `docs/guides/knowledge_graphs/KNOWLEDGE_GRAPHS_LINEAGE_TROUBLESHOOTING.md` | 541 | Python module not found on tree: ipfs_datasets_py.__file__ | origin=prose |
 | `python_modules` | `docs/guides/knowledge_graphs/KNOWLEDGE_GRAPHS_REFACTOR_BACKLOG.md` | 3 | Python module not found on tree: ipfs_datasets_py.ipfs_datasets_py.knowledge_graphs | origin=prose |
-| `python_modules` | `docs/guides/pdf_processing.md` | 102 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
+| `python_modules` | `docs/guides/pdf_processing.md` | 102 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=import |
 | `python_modules` | `docs/guides/performance_optimization.md` | 32 | Python module not found on tree: ipfs_datasets_py.streaming_data_loader | origin=import |
-| `python_modules` | `docs/guides/performance_optimization.md` | 72 | Python module not found on tree: ipfs_datasets_py.arrow_utils | origin=prose |
-| `python_modules` | `docs/guides/performance_optimization.md` | 131 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=prose |
-| `python_modules` | `docs/guides/performance_optimization.md` | 186 | Python module not found on tree: ipfs_datasets_py.ipld.optimized_codec | origin=prose |
-| `python_modules` | `docs/guides/performance_optimization.md` | 204 | Python module not found on tree: ipfs_datasets_py.ipld.storage | origin=prose |
+| `python_modules` | `docs/guides/performance_optimization.md` | 72 | Python module not found on tree: ipfs_datasets_py.arrow_utils | origin=import |
+| `python_modules` | `docs/guides/performance_optimization.md` | 131 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=import |
+| `python_modules` | `docs/guides/performance_optimization.md` | 186 | Python module not found on tree: ipfs_datasets_py.ipld.optimized_codec | origin=import |
+| `python_modules` | `docs/guides/performance_optimization.md` | 204 | Python module not found on tree: ipfs_datasets_py.ipld.storage | origin=import |
 | `python_modules` | `docs/guides/performance_optimization.md` | 222 | Python module not found on tree: ipfs_datasets_py.query_optimizer | origin=import |
-| `python_modules` | `docs/guides/performance_optimization.md` | 242 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
+| `python_modules` | `docs/guides/performance_optimization.md` | 242 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
 | `python_modules` | `docs/guides/performance_optimization.md` | 363 | Python module not found on tree: ipfs_datasets_py.batch_processor | origin=import |
 | `python_modules` | `docs/guides/performance_optimization.md` | 382 | Python module not found on tree: ipfs_datasets_py.vector_ops | origin=import |
-| `python_modules` | `docs/guides/performance_optimization.md` | 398 | Python module not found on tree: ipfs_datasets_py.parallel | origin=prose |
+| `python_modules` | `docs/guides/performance_optimization.md` | 398 | Python module not found on tree: ipfs_datasets_py.parallel | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md` | 155 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md` | 196 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md` | 199 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md` | 554 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md` | 568 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md` | 573 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN.md` | 541 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN.md` | 542 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md` | 573 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN.md` | 541 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN.md` | 542 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md` | 197 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md` | 298 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md` | 359 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md` | 400 | Python module not found on tree: ipfs_datasets_py.data_transformation.ucan | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md` | 790 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md` | 790 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md` | 791 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=import |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md` | 804 | Python module not found on tree: ipfs_datasets_py.data_transformation.unixfs | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md` | 804 | Python module not found on tree: ipfs_datasets_py.data_transformation.unixfs | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_IMPLEMENTATION_SUMMARY.md` | 293 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 75 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
-| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 91 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
-| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 92 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 93 | Python module not found on tree: ipfs_datasets_py.data_transformation.dataset_serialization | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 98 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 91 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 92 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 93 | Python module not found on tree: ipfs_datasets_py.data_transformation.dataset_serialization | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 98 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 99 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet | origin=import |
-| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 100 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.dataset_serialization | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 109 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 100 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.dataset_serialization | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 109 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_QUICK_REFERENCE.md` | 125 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_TASKS.md` | 315 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_TASKS.md` | 316 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_TASKS.md` | 409 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_TASKS.md` | 409 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_VISUAL_SUMMARY.md` | 215 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_VISUAL_SUMMARY.md` | 230 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_VISUAL_SUMMARY.md` | 230 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_VISUAL_SUMMARY.md` | 236 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_VISUAL_SUMMARY.md` | 245 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_VISUAL_SUMMARY.md` | 245 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_VISUAL_SUMMARY.md` | 260 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_INTEGRATION_VISUAL_SUMMARY.md` | 263 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=import |
-| `python_modules` | `docs/guides/processors/PROCESSORS_REFACTORING_QUICK_REFERENCE_2026.md` | 189 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_REFACTORING_QUICK_REFERENCE_2026.md` | 212 | Python module not found on tree: ipfs_datasets_py.processors.specialized.multimedia | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_REFACTORING_QUICK_REFERENCE_2026.md` | 189 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_REFACTORING_QUICK_REFERENCE_2026.md` | 212 | Python module not found on tree: ipfs_datasets_py.processors.specialized.multimedia | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_REFACTORING_SUMMARY_2026.md` | 187 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=prose |
 | `python_modules` | `docs/guides/processors/PROCESSORS_REFACTORING_SUMMARY_2026.md` | 196 | Python module not found on tree: ipfs_datasets_py.processors.specialized.multimedia | origin=prose |
 | `python_modules` | `docs/guides/provenance_reporting.md` | 201 | Python module not found on tree: ipfs_datasets_py.provenance_report_example | origin=prose |
-| `python_modules` | `docs/guides/query_optimization.md` | 32 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=prose |
+| `python_modules` | `docs/guides/query_optimization.md` | 32 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=import |
 | `python_modules` | `docs/guides/query_optimization.md` | 127 | Python module not found on tree: ipfs_datasets_py.knowledge_graph | origin=import |
-| `python_modules` | `docs/guides/query_optimization.md` | 200 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
-| `python_modules` | `docs/guides/query_optimization.md` | 490 | Python module not found on tree: ipfs_datasets_py.federated_search | origin=prose |
-| `python_modules` | `docs/guides/query_optimization.md` | 569 | Python module not found on tree: ipfs_datasets_py.query_optimizer | origin=prose |
+| `python_modules` | `docs/guides/query_optimization.md` | 200 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
+| `python_modules` | `docs/guides/query_optimization.md` | 490 | Python module not found on tree: ipfs_datasets_py.federated_search | origin=import |
+| `python_modules` | `docs/guides/query_optimization.md` | 569 | Python module not found on tree: ipfs_datasets_py.query_optimizer | origin=import |
 | `python_modules` | `docs/guides/reference/api_reference.md` | 410 | Python module not found on tree: ipfs_datasets_py.exceptions | origin=import |
 | `python_modules` | `docs/guides/security/AUDIT_PROVENANCE_AND_INCIDENTS.md` | 141 | Python module not found on tree: ipfs_datasets_py.wallet.audit.append_audit_event | origin=backtick |
-| `python_modules` | `docs/guides/security/README.md` | 48 | Python module not found on tree: ipfs_datasets_py.auth | origin=prose |
-| `python_modules` | `docs/guides/security/audit_logging.md` | 202 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_visualization | origin=prose |
+| `python_modules` | `docs/guides/security/README.md` | 48 | Python module not found on tree: ipfs_datasets_py.auth | origin=import |
+| `python_modules` | `docs/guides/security/audit_logging.md` | 202 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_visualization | origin=import |
 | `python_modules` | `docs/guides/security/audit_logging.md` | 310 | Python module not found on tree: ipfs_datasets_py.data_provenance | origin=import |
-| `python_modules` | `docs/guides/security/audit_logging.md` | 407 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
-| `python_modules` | `docs/guides/security/audit_reporting.md` | 294 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=prose |
-| `python_modules` | `docs/guides/security/security_governance.md` | 306 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=prose |
-| `python_modules` | `docs/guides/security/security_governance.md` | 307 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=prose |
-| `python_modules` | `docs/guides/security/security_governance.md` | 1147 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage_enhanced | origin=prose |
+| `python_modules` | `docs/guides/security/audit_logging.md` | 407 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
+| `python_modules` | `docs/guides/security/audit_reporting.md` | 294 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=import |
+| `python_modules` | `docs/guides/security/security_governance.md` | 306 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=import |
+| `python_modules` | `docs/guides/security/security_governance.md` | 307 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=import |
+| `python_modules` | `docs/guides/security/security_governance.md` | 1147 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage_enhanced | origin=import |
 | `python_modules` | `docs/guides/tools/caselaw_dashboard_guide.md` | 52 | Python module not found on tree: ipfs_datasets_py.mcp_dashboard | origin=prose |
 | `python_modules` | `docs/guides/tools/cli_install_guide.md` | 19 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/guides/tools/patent_scraper_guide.md` | 141 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=prose |
-| `python_modules` | `docs/implementation/accelerate/ACCELERATE_INTEGRATION_COMPLETE.md` | 44 | Python module not found on tree: ipfs_datasets_py.ipfs_embeddings_py | origin=prose |
-| `python_modules` | `docs/implementation/accelerate/ACCELERATE_INTEGRATION_COMPLETE.md` | 64 | Python module not found on tree: ipfs_datasets_py.llm.llm_interface | origin=import |
+| `python_modules` | `docs/implementation/accelerate/ACCELERATE_INTEGRATION_COMPLETE.md` | 44 | Python module not found on tree: ipfs_datasets_py.ipfs_embeddings_py | origin=import |
+| `python_modules` | `docs/implementation/accelerate/ACCELERATE_INTEGRATION_COMPLETE.md` | 64 | Python module not found on tree: ipfs_datasets_py.llm.llm_interface | origin=prose |
 | `python_modules` | `docs/implementation/plans/file_conversion_integration_plan.md` | 35 | Python module not found on tree: ipfs_datasets_py.file_converter | origin=prose |
 | `python_modules` | `docs/implementation/plans/file_conversion_integration_plan.md` | 579 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
 | `python_modules` | `docs/implementation/plans/file_conversion_pros_cons.md` | 223 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type | origin=import |
 | `python_modules` | `docs/implementation/plans/file_conversion_pros_cons.md` | 224 | Python module not found on tree: ipfs_datasets_py.rag | origin=import |
 | `python_modules` | `docs/implementation/plans/file_conversion_systems_analysis.md` | 322 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type | origin=import |
 | `python_modules` | `docs/implementation/plans/file_conversion_systems_analysis.md` | 326 | Python module not found on tree: ipfs_datasets_py.rag | origin=import |
-| `python_modules` | `docs/implementation/plans/graphrag_website_implementation_plan.md` | 555 | Python module not found on tree: ipfs_datasets_py.website_graphrag_processor | origin=prose |
-| `python_modules` | `docs/implementation/plans/graphrag_website_implementation_plan.md` | 557 | Python module not found on tree: ipfs_datasets_py.multimodal_processor | origin=prose |
+| `python_modules` | `docs/implementation/plans/graphrag_website_implementation_plan.md` | 555 | Python module not found on tree: ipfs_datasets_py.website_graphrag_processor | origin=import |
+| `python_modules` | `docs/implementation/plans/graphrag_website_implementation_plan.md` | 557 | Python module not found on tree: ipfs_datasets_py.multimodal_processor | origin=import |
 | `python_modules` | `docs/implementation/plans/graphrag_website_implementation_plan.md` | 1245 | Python module not found on tree: ipfs_datasets_py.maintenance.cleanup_jobs | origin=prose |
-| `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 44 | Python module not found on tree: ipfs_datasets_py.file_converter | origin=backtick |
-| `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 45 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats | origin=prose |
-| `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 46 | Python module not found on tree: ipfs_datasets_py.ipfs_formats | origin=backtick |
-| `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 47 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=backtick |
+| `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 44 | Python module not found on tree: ipfs_datasets_py.file_converter | origin=prose |
+| `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 45 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats | origin=backtick |
+| `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 46 | Python module not found on tree: ipfs_datasets_py.ipfs_formats | origin=prose |
+| `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 47 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
 | `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 66 | Python module not found on tree: ipfs_datasets_py.graphrag | origin=prose |
 | `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 66 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
 | `python_modules` | `docs/implementation/plans/module_consolidation_plan.md` | 127 | Python module not found on tree: ipfs_datasets_py.graphrag.integrations | origin=prose |
@@ -2386,22 +2429,22 @@
 | `python_modules` | `docs/logic/CEC/QUICKSTART.md` | 167 | Python module not found on tree: ipfs_datasets_py.logic.CEC.native.dcec_knowledge_base | origin=import |
 | `python_modules` | `docs/logic/CONTRIBUTING.md` | 63 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/logic/CONTRIBUTING.md` | 294 | Python module not found on tree: ipfs_datasets_py.logic.converters.my_converter | origin=prose |
-| `python_modules` | `docs/logic/CONTRIBUTING.md` | 454 | Python module not found on tree: ipfs_datasets_py.logic.external_provers.my_prover_bridge | origin=prose |
-| `python_modules` | `docs/logic/CONTRIBUTING.md` | 591 | Python module not found on tree: ipfs_datasets_py.logic.TDFOL.inference_rules.my_rule | origin=prose |
+| `python_modules` | `docs/logic/CONTRIBUTING.md` | 454 | Python module not found on tree: ipfs_datasets_py.logic.external_provers.my_prover_bridge | origin=import |
+| `python_modules` | `docs/logic/CONTRIBUTING.md` | 591 | Python module not found on tree: ipfs_datasets_py.logic.TDFOL.inference_rules.my_rule | origin=import |
 | `python_modules` | `docs/logic/DEPLOYMENT_GUIDE.md` | 118 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
 | `python_modules` | `docs/logic/FEATURES.md` | 118 | Python module not found on tree: ipfs_datasets_py.logic.integration.ipfs_proof_cache | origin=import |
-| `python_modules` | `docs/logic/FEATURES.md` | 466 | Python module not found on tree: ipfs_datasets_py.logic.integration.ipld_logic_storage | origin=prose |
-| `python_modules` | `docs/logic/INTEGRATION_GUIDE.md` | 93 | Python module not found on tree: ipfs_datasets_py.logic.integration.proof_execution_engine | origin=import |
+| `python_modules` | `docs/logic/FEATURES.md` | 466 | Python module not found on tree: ipfs_datasets_py.logic.integration.ipld_logic_storage | origin=import |
+| `python_modules` | `docs/logic/INTEGRATION_GUIDE.md` | 93 | Python module not found on tree: ipfs_datasets_py.logic.integration.proof_execution_engine | origin=prose |
 | `python_modules` | `docs/logic/LOGIC_PORT_DAEMON.md` | 17 | Python module not found on tree: ipfs_datasets_py.llm_router.generate_text | origin=prose |
-| `python_modules` | `docs/logic/TDFOL/README_security_validator.md` | 521 | Python module not found on tree: ipfs_datasets_py.logic.TDFOL.prover | origin=import |
+| `python_modules` | `docs/logic/TDFOL/README_security_validator.md` | 521 | Python module not found on tree: ipfs_datasets_py.logic.TDFOL.prover | origin=prose |
 | `python_modules` | `docs/logic/TROUBLESHOOTING.md` | 242 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.phase7_complete_integration | origin=prose |
-| `python_modules` | `docs/logic/USAGE_EXAMPLES.md` | 259 | Python module not found on tree: ipfs_datasets_py.logic.integration.proof_execution_engine | origin=prose |
-| `python_modules` | `docs/logic/USAGE_EXAMPLES.md` | 260 | Python module not found on tree: ipfs_datasets_py.tools.deontic_logic_core | origin=prose |
-| `python_modules` | `docs/logic/integration/CHANGELOG.md` | 238 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=prose |
+| `python_modules` | `docs/logic/USAGE_EXAMPLES.md` | 259 | Python module not found on tree: ipfs_datasets_py.logic.integration.proof_execution_engine | origin=import |
+| `python_modules` | `docs/logic/USAGE_EXAMPLES.md` | 260 | Python module not found on tree: ipfs_datasets_py.tools.deontic_logic_core | origin=import |
+| `python_modules` | `docs/logic/integration/CHANGELOG.md` | 238 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=import |
 | `python_modules` | `docs/logic/itp_hammer_receipts.md` | 161 | Python module not found on tree: ipfs_datasets_py.ipfs_backend_router.get_ipfs_backend | origin=prose |
 | `python_modules` | `docs/logic/itp_hammer_security_model.md` | 116 | Python module not found on tree: ipfs_datasets_py.logic.hammers.models.HammerResult.__post_init__ | origin=prose |
 | `python_modules` | `docs/logic/itp_hammer_user_guide.md` | 65 | Python module not found on tree: ipfs_datasets_py.logic.hammers.policy.known_solver_names | origin=prose |
-| `python_modules` | `docs/logic/zkp/INTEGRATION_GUIDE.md` | 153 | Python module not found on tree: ipfs_datasets_py.logic.temporal | origin=prose |
+| `python_modules` | `docs/logic/zkp/INTEGRATION_GUIDE.md` | 153 | Python module not found on tree: ipfs_datasets_py.logic.temporal | origin=import |
 | `python_modules` | `docs/logic/zkp/INTEGRATION_GUIDE.md` | 258 | Python module not found on tree: ipfs_datasets_py.logic.datalog | origin=import |
 | `python_modules` | `docs/maintenance/DRIFT_AND_CLAIM_MATRIX.md` | 119 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=prose |
 | `python_modules` | `docs/maintenance/DRIFT_AND_CLAIM_MATRIX.md` | 121 | Python module not found on tree: ipfs_datasets_py.knowledge_graph | origin=prose |
@@ -2413,256 +2456,32 @@
 | `python_modules` | `docs/maintenance/DRIFT_AND_CLAIM_MATRIX.md` | 128 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=prose |
 | `python_modules` | `docs/maintenance/DRIFT_AND_CLAIM_MATRIX.md` | 129 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
 | `python_modules` | `docs/maintenance/DRIFT_AND_CLAIM_MATRIX.md` | 131 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
-| `python_modules` | `docs/maintenance/DRIFT_AND_CLAIM_MATRIX.md` | 132 | Python module not found on tree: ipfs_datasets_py.ipfs_kit | origin=backtick |
-| `python_modules` | `docs/maintenance/EXAMPLE_VERIFICATION.md` | 230 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=backtick |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 230 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 231 | Python module not found on tree: ipfs_datasets_py.knowledge_graph_extraction | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 232 | Python module not found on tree: ipfs_datasets_py.llm.llm_graphrag | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 233 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 234 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 235 | Python module not found on tree: ipfs_datasets_py.website_graphrag_processor | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 236 | Python module not found on tree: ipfs_datasets_py.multimodal_processor | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 238 | Python module not found on tree: ipfs_datasets_py.website_graphrag_system | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 239 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 240 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 241 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 243 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_visualization | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 244 | Python module not found on tree: ipfs_datasets_py.examples.rag_audit_integration_example | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2422 | Python module not found on tree: ipfs_datasets_py.module.class | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2423 | Python module not found on tree: ipfs_datasets_py.graph | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2424 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2425 | Python module not found on tree: ipfs_datasets_py.auth | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2426 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.admin_tools.system_health | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2427 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2428 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2429 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2430 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2431 | Python module not found on tree: ipfs_datasets_py.datasets.loader.DatasetLoader | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2432 | Python module not found on tree: ipfs_datasets_py.datasets.loader | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2433 | Python module not found on tree: ipfs_datasets_py.datasets | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2434 | Python module not found on tree: ipfs_datasets_py.your_module.your_logic.YourFeature | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2435 | Python module not found on tree: ipfs_datasets_py.your_module.your_logic | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2436 | Python module not found on tree: ipfs_datasets_py.module | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2440 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.category.your_tool | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2441 | Python module not found on tree: ipfs_datasets_py.processors.module_name | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2442 | Python module not found on tree: ipfs_datasets_py.optimizers.tests.performance.benchmarks.benchmark_datasets | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2443 | Python module not found on tree: ipfs_datasets_py.optimizers.tests.performance.benchmarks.benchmark_harness | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2444 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2445 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2448 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2449 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2451 | Python module not found on tree: ipfs_datasets_py.mcp_dashboard | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2452 | Python module not found on tree: ipfs_datasets_py.cache | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2453 | Python module not found on tree: ipfs_datasets_py.web_archive | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2454 | Python module not found on tree: ipfs_datasets_py.libp2p_kit | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2455 | Python module not found on tree: ipfs_datasets_py.discord_cli | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2456 | Python module not found on tree: ipfs_datasets_py.graphrag_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2457 | Python module not found on tree: ipfs_datasets_py.p2p_peer_registry | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2458 | Python module not found on tree: ipfs_datasets_py.file_converter.cli | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2459 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.dataset_tools.__init__.py | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2460 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.dataset_serialization | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2461 | Python module not found on tree: ipfs_datasets_py.config.py | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2462 | Python module not found on tree: ipfs_datasets_py.initialize | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2463 | Python module not found on tree: ipfs_datasets_py.core_operations.dataset_loader.DatasetLoader.load | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2464 | Python module not found on tree: ipfs_datasets_py.vector_tools | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2468 | Python module not found on tree: ipfs_datasets_py.graphrag | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2473 | Python module not found on tree: ipfs_datasets_py.codeql_cache | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2474 | Python module not found on tree: ipfs_datasets_py.credential_manager | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2477 | Python module not found on tree: ipfs_datasets_py.ipfs_kit | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2478 | Python module not found on tree: ipfs_datasets_py.__file__ | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2480 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2482 | Python module not found on tree: ipfs_datasets_py.data_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2483 | Python module not found on tree: ipfs_datasets_py.duckdb_connector | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2485 | Python module not found on tree: ipfs_datasets_py.ipld | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2486 | Python module not found on tree: ipfs_datasets_py.ipld_storage | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2488 | Python module not found on tree: ipfs_datasets_py.knowledge_graph | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2491 | Python module not found on tree: ipfs_datasets_py.federated_search | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2492 | Python module not found on tree: ipfs_datasets_py.resilient_operations | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2493 | Python module not found on tree: ipfs_datasets_py.llm.llm_reasoning_tracer | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2494 | Python module not found on tree: ipfs_datasets_py.arrow_ipld | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2495 | Python module not found on tree: ipfs_datasets_py.streaming | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2496 | Python module not found on tree: ipfs_datasets_py.distributed | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2497 | Python module not found on tree: ipfs_datasets_py.data_provenance | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2498 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia.discord_wrapper | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2499 | Python module not found on tree: ipfs_datasets_py.discord_dashboard | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2501 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2503 | Python module not found on tree: ipfs_datasets_py.finance | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2507 | Python module not found on tree: ipfs_datasets_py.optimizer_alert_system | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2508 | Python module not found on tree: ipfs_datasets_py.unified_monitoring_dashboard | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2509 | Python module not found on tree: ipfs_datasets_py.alert_handlers | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2511 | Python module not found on tree: ipfs_datasets_py.streaming_data_loader | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2512 | Python module not found on tree: ipfs_datasets_py.database | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2514 | Python module not found on tree: ipfs_datasets_py.fastapi_service | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2515 | Python module not found on tree: ipfs_datasets_py.server | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2517 | Python module not found on tree: ipfs_datasets_py.docker_error_wrapper | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2518 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.base | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2519 | Python module not found on tree: ipfs_datasets_py.finance_cli | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2522 | Python module not found on tree: ipfs_datasets_py.ipfs_kit_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2525 | Python module not found on tree: ipfs_datasets_py.jsonnet_utils | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2526 | Python module not found on tree: ipfs_datasets_py.dataset_serialization | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2527 | Python module not found on tree: ipfs_datasets_py.car_conversion | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2529 | Python module not found on tree: ipfs_datasets_py.module_name.core | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2530 | Python module not found on tree: ipfs_datasets_py.module_name | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2531 | Python module not found on tree: ipfs_datasets_py.data_processing | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2532 | Python module not found on tree: ipfs_datasets_py.workflow_engine | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2533 | Python module not found on tree: ipfs_datasets_py.new_module | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2534 | Python module not found on tree: ipfs_datasets_py.core | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2545 | Python module not found on tree: ipfs_datasets_py.advanced_web_archiving | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2549 | Python module not found on tree: ipfs_datasets_py.monitoring.exporters | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2554 | Python module not found on tree: ipfs_datasets_py.ipld.storage | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2555 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage_enhanced | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2558 | Python module not found on tree: ipfs_datasets_py.scripts.init_database | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2562 | Python module not found on tree: ipfs_datasets_py.ipld.optimized_codec | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2565 | Python module not found on tree: ipfs_datasets_py.ipld.dag_processor | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2568 | Python module not found on tree: ipfs_datasets_py.ipld.schema | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2569 | Python module not found on tree: ipfs_datasets_py.ipld.monitoring | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2570 | Python module not found on tree: ipfs_datasets_py.ipld.benchmarks | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2575 | Python module not found on tree: ipfs_datasets_py.ipfs_datasets_py.knowledge_graphs | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2578 | Python module not found on tree: ipfs_datasets_py.arrow_utils | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2582 | Python module not found on tree: ipfs_datasets_py.query_optimizer | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2584 | Python module not found on tree: ipfs_datasets_py.batch_processor | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2585 | Python module not found on tree: ipfs_datasets_py.vector_ops | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2586 | Python module not found on tree: ipfs_datasets_py.parallel | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2597 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2598 | Python module not found on tree: ipfs_datasets_py.data_transformation.ucan | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2600 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2601 | Python module not found on tree: ipfs_datasets_py.data_transformation.unixfs | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2606 | Python module not found on tree: ipfs_datasets_py.data_transformation.dataset_serialization | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2608 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2619 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2622 | Python module not found on tree: ipfs_datasets_py.processors.specialized.multimedia | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2625 | Python module not found on tree: ipfs_datasets_py.provenance_report_example | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2631 | Python module not found on tree: ipfs_datasets_py.exceptions | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2632 | Python module not found on tree: ipfs_datasets_py.wallet.audit.append_audit_event | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2644 | Python module not found on tree: ipfs_datasets_py.ipfs_embeddings_py | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2645 | Python module not found on tree: ipfs_datasets_py.llm.llm_interface | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2646 | Python module not found on tree: ipfs_datasets_py.file_converter | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2648 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2654 | Python module not found on tree: ipfs_datasets_py.maintenance.cleanup_jobs | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2657 | Python module not found on tree: ipfs_datasets_py.ipfs_formats | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2661 | Python module not found on tree: ipfs_datasets_py.graphrag.integrations | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2662 | Python module not found on tree: ipfs_datasets_py.p2p_workflow_scheduler | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2663 | Python module not found on tree: ipfs_datasets_py.scraper_cli | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2664 | Python module not found on tree: ipfs_datasets_py.unified_web_scraper | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2669 | Python module not found on tree: ipfs_datasets_py.search.graphrag | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2671 | Python module not found on tree: ipfs_datasets_py.ml.llm.llm_router | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2672 | Python module not found on tree: ipfs_datasets_py.logic.common._internal | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2673 | Python module not found on tree: ipfs_datasets_py.logic.native | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2676 | Python module not found on tree: ipfs_datasets_py.logic.CEC.native.dcec_knowledge_base | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2678 | Python module not found on tree: ipfs_datasets_py.logic.converters.my_converter | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2679 | Python module not found on tree: ipfs_datasets_py.logic.external_provers.my_prover_bridge | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2680 | Python module not found on tree: ipfs_datasets_py.logic.TDFOL.inference_rules.my_rule | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2682 | Python module not found on tree: ipfs_datasets_py.logic.integration.ipfs_proof_cache | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2683 | Python module not found on tree: ipfs_datasets_py.logic.integration.ipld_logic_storage | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2684 | Python module not found on tree: ipfs_datasets_py.logic.integration.proof_execution_engine | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2685 | Python module not found on tree: ipfs_datasets_py.llm_router.generate_text | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2686 | Python module not found on tree: ipfs_datasets_py.logic.TDFOL.prover | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2687 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.phase7_complete_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2689 | Python module not found on tree: ipfs_datasets_py.tools.deontic_logic_core | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2691 | Python module not found on tree: ipfs_datasets_py.ipfs_backend_router.get_ipfs_backend | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2692 | Python module not found on tree: ipfs_datasets_py.logic.hammers.models.HammerResult.__post_init__ | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2693 | Python module not found on tree: ipfs_datasets_py.logic.hammers.policy.known_solver_names | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2694 | Python module not found on tree: ipfs_datasets_py.logic.temporal | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2695 | Python module not found on tree: ipfs_datasets_py.logic.datalog | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2709 | Python module not found on tree: ipfs_datasets_py.optimizers.graphrag.cli | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2712 | Python module not found on tree: ipfs_datasets_py.optimizers.agentic.feature_flags | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2714 | Python module not found on tree: ipfs_datasets_py.rag.logic_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2717 | Python module not found on tree: ipfs_datasets_py.jsonl_to_parquet | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2724 | Python module not found on tree: ipfs_datasets_py.cross_document_reasoning | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2726 | Python module not found on tree: ipfs_datasets_py.simple_crawler | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2734 | Python module not found on tree: ipfs_datasets_py.data_transformation | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2735 | Python module not found on tree: ipfs_datasets_py.reasoning | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2737 | Python module not found on tree: ipfs_datasets_py.integrations | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2741 | Python module not found on tree: ipfs_datasets_py.email_cli | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2743 | Python module not found on tree: ipfs_datasets_py.distributed_cache | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2745 | Python module not found on tree: ipfs_datasets_py.integrations.graphrag_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2747 | Python module not found on tree: ipfs_datasets_py.graphrag_processor | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2750 | Python module not found on tree: ipfs_datasets_py.core_module | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2752 | Python module not found on tree: ipfs_datasets_py.mcp_investigation_dashboard | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2753 | Python module not found on tree: ipfs_datasets_py.news_analysis_dashboard | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2754 | Python module not found on tree: ipfs_datasets_py.provenance_dashboard | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2758 | Python module not found on tree: ipfs_datasets_py.embeddings.ipfs_knn_index | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2761 | Python module not found on tree: ipfs_datasets_py.optimizer_visualization_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2765 | Python module not found on tree: ipfs_datasets_py.investigation_mcp_client | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2769 | Python module not found on tree: ipfs_datasets_py.legal_scrapers | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2770 | Python module not found on tree: ipfs_datasets_py.embeddings.core | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2774 | Python module not found on tree: ipfs_datasets_py.logic_integration.medical_theorem_framework | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2795 | Python module not found on tree: ipfs_datasets_py.logic.security_models.crypto_exchange.evidence_promotion.evaluate_evidence_promotion_workflow | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2796 | Python module not found on tree: ipfs_datasets_py.logic.security_models.crypto_exchange.release_policy.build_security_decision_policy | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 2797 | Python module not found on tree: ipfs_datasets_py.utils.cid_utils.cid_for_bytes | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4493 | Python module not found on tree: ipfs_datasets_py.tools.migration_checker | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4494 | Python module not found on tree: ipfs_datasets_py.tools.migration_generator | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4495 | Python module not found on tree: ipfs_datasets_py.tools.compatibility_tester | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4501 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_parquet_to_car | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4505 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4517 | Python module not found on tree: ipfs_datasets_py.utils.old_module | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4518 | Python module not found on tree: ipfs_datasets_py.utils.new_module | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4522 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4523 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag.GraphRAGConfiguration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4525 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.website_system | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4526 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.adapter | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4530 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld.storage | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4548 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.enhanced_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4558 | Python module not found on tree: ipfs_datasets_py.integrations.phase7_complete_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4568 | Python module not found on tree: ipfs_datasets_py.integrations.accelerate_integration | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4569 | Python module not found on tree: ipfs_datasets_py.web_archive_tools | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4570 | Python module not found on tree: ipfs_datasets_py.logic.external_provers.get_available_provers | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4571 | Python module not found on tree: ipfs_datasets_py.rag.logic_aware_entity_extractor | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4572 | Python module not found on tree: ipfs_datasets_py.rag.logic_knowledge_graph | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4573 | Python module not found on tree: ipfs_datasets_py.rag.logic_enhanced_rag | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4576 | Python module not found on tree: ipfs_datasets_py.logic.neurosymbolic | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4577 | Python module not found on tree: ipfs_datasets_py.optimizers.common.logging_config | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4580 | Python module not found on tree: ipfs_datasets_py.processors.specialized.example | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4583 | Python module not found on tree: ipfs_datasets_py.file_converter.deprecation | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4584 | Python module not found on tree: ipfs_datasets_py.knowledge_graphs.migration.verify | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4591 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats.ipfs_multiformats | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4593 | Python module not found on tree: ipfs_datasets_py.processors.ipfs.formats.multiformats | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4596 | Python module not found on tree: ipfs_datasets_py.logic.CEC.api.server | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4597 | Python module not found on tree: ipfs_datasets_py.logic.CEC.dcec_wrapper.importlib | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4599 | Python module not found on tree: ipfs_datasets_py.logic.native.dcec_core | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4600 | Python module not found on tree: ipfs_datasets_py.logic.native.prover_core | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4601 | Python module not found on tree: ipfs_datasets_py.logic.tools.text_to_fol | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4602 | Python module not found on tree: ipfs_datasets_py.logic.tools.deontic_logic_core | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4603 | Python module not found on tree: ipfs_datasets_py.logic.tools.symbolic_fol_bridge | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4604 | Python module not found on tree: ipfs_datasets_py.logic.tools.symbolic_logic_primitives | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4605 | Python module not found on tree: ipfs_datasets_py.logic.tools.modal_logic_extension | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4606 | Python module not found on tree: ipfs_datasets_py.logic.tools.logic_translation_core | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4607 | Python module not found on tree: ipfs_datasets_py.logic.tools.legal_text_to_deontic | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4608 | Python module not found on tree: ipfs_datasets_py.logic.tools.logic_utils | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4609 | Python module not found on tree: ipfs_datasets_py.logic.TDFOL.api.main | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4614 | Python module not found on tree: ipfs_datasets_py.logic.integration.api | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4615 | Python module not found on tree: ipfs_datasets_py.logic.features | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4626 | Python module not found on tree: ipfs_datasets_py.vector_store | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4627 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.base_tool | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4628 | Python module not found on tree: ipfs_datasets_py.audit_log | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4629 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset.datasets | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4630 | Python module not found on tree: ipfs_datasets_py.web_archive_utils.WebArchiveProcessor | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4633 | Python module not found on tree: ipfs_datasets_py.optimizer_log | origin=prose |
-| `python_modules` | `docs/maintenance/QUALITY_REPORT.md` | 4634 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper | origin=prose |
+| `python_modules` | `docs/maintenance/DRIFT_AND_CLAIM_MATRIX.md` | 132 | Python module not found on tree: ipfs_datasets_py.ipfs_kit | origin=prose |
+| `python_modules` | `docs/maintenance/EXAMPLE_VERIFICATION.md` | 230 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=prose |
 | `python_modules` | `docs/modules/file_converter/README.md` | 86 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
 | `python_modules` | `docs/optimizers/GRAPHRAG_QUICK_START.md` | 230 | Python module not found on tree: ipfs_datasets_py.optimizers.graphrag.cli | origin=prose |
-| `python_modules` | `docs/optimizers/PHASES_3_6_8_IMPLEMENTATION_SUMMARY.md` | 67 | Python module not found on tree: ipfs_datasets_py.llm_router.generate_text | origin=backtick |
+| `python_modules` | `docs/optimizers/PHASES_3_6_8_IMPLEMENTATION_SUMMARY.md` | 67 | Python module not found on tree: ipfs_datasets_py.llm_router.generate_text | origin=prose |
 | `python_modules` | `docs/optimizers/agentic/DEPLOYMENT_GUIDE.md` | 79 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
-| `python_modules` | `docs/optimizers/docs/SEMANTIC_DEDUPLICATION_GUIDE.md` | 289 | Python module not found on tree: ipfs_datasets_py.optimizers.agentic.feature_flags | origin=import |
-| `python_modules` | `docs/optimizers/graphrag/IMPLEMENTATION_PLAN.md` | 667 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=prose |
+| `python_modules` | `docs/optimizers/docs/SEMANTIC_DEDUPLICATION_GUIDE.md` | 289 | Python module not found on tree: ipfs_datasets_py.optimizers.agentic.feature_flags | origin=prose |
+| `python_modules` | `docs/optimizers/graphrag/IMPLEMENTATION_PLAN.md` | 667 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=import |
 | `python_modules` | `docs/optimizers/logic_theorem_optimizer/PHASE2_COMPLETE.md` | 1197 | Python module not found on tree: ipfs_datasets_py.rag.logic_integration | origin=prose |
-| `python_modules` | `docs/rag_optimizer/README.md` | 48 | Python module not found on tree: ipfs_datasets_py.rag | origin=import |
+| `python_modules` | `docs/rag_optimizer/README.md` | 48 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 268 | Python module not found on tree: ipfs_datasets_py.car_conversion | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 269 | Python module not found on tree: ipfs_datasets_py.jsonl_to_parquet | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 270 | Python module not found on tree: ipfs_datasets_py.dataset_serialization | origin=import |
-| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 273 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
-| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 274 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=prose |
+| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 273 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
+| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 274 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 275 | Python module not found on tree: ipfs_datasets_py.data_transformation.dataset_serialization | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 282 | Python module not found on tree: ipfs_datasets_py.knowledge_graph_extraction | origin=import |
-| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 283 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=prose |
-| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 284 | Python module not found on tree: ipfs_datasets_py.cross_document_reasoning | origin=prose |
+| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 283 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=import |
+| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 284 | Python module not found on tree: ipfs_datasets_py.cross_document_reasoning | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 296 | Python module not found on tree: ipfs_datasets_py.web_archive | origin=prose |
-| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 297 | Python module not found on tree: ipfs_datasets_py.simple_crawler | origin=prose |
-| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 298 | Python module not found on tree: ipfs_datasets_py.unified_web_scraper | origin=prose |
-| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 310 | Python module not found on tree: ipfs_datasets_py.p2p_workflow_scheduler | origin=prose |
+| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 297 | Python module not found on tree: ipfs_datasets_py.simple_crawler | origin=import |
+| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 298 | Python module not found on tree: ipfs_datasets_py.unified_web_scraper | origin=import |
+| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 310 | Python module not found on tree: ipfs_datasets_py.p2p_workflow_scheduler | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 311 | Python module not found on tree: ipfs_datasets_py.p2p_peer_registry | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 312 | Python module not found on tree: ipfs_datasets_py.libp2p_kit | origin=prose |
-| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 324 | Python module not found on tree: ipfs_datasets_py.query_optimizer | origin=prose |
+| `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 324 | Python module not found on tree: ipfs_datasets_py.query_optimizer | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 325 | Python module not found on tree: ipfs_datasets_py.vector_tools | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 336 | Python module not found on tree: ipfs_datasets_py.data_provenance | origin=import |
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 400 | Python module not found on tree: ipfs_datasets_py.data_transformation | origin=prose |
@@ -2670,17 +2489,17 @@
 | `python_modules` | `docs/reorganization/DEEP_REORGANIZATION.md` | 405 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats | origin=prose |
 | `python_modules` | `docs/reorganization/FINAL_CLEANUP.md` | 102 | Python module not found on tree: ipfs_datasets_py.integrations | origin=import |
 | `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 60 | Python module not found on tree: ipfs_datasets_py.mcp_dashboard | origin=import |
-| `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 61 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=prose |
+| `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 61 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=import |
 | `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 74 | Python module not found on tree: ipfs_datasets_py.discord_cli | origin=prose |
 | `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 75 | Python module not found on tree: ipfs_datasets_py.email_cli | origin=import |
 | `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 88 | Python module not found on tree: ipfs_datasets_py.cache | origin=import |
-| `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 89 | Python module not found on tree: ipfs_datasets_py.distributed_cache | origin=prose |
+| `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 89 | Python module not found on tree: ipfs_datasets_py.distributed_cache | origin=import |
 | `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 102 | Python module not found on tree: ipfs_datasets_py.graphrag_integration | origin=import |
-| `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 105 | Python module not found on tree: ipfs_datasets_py.integrations.graphrag_integration | origin=import |
+| `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 105 | Python module not found on tree: ipfs_datasets_py.integrations.graphrag_integration | origin=prose |
 | `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 108 | Python module not found on tree: ipfs_datasets_py.integrations | origin=import |
 | `python_modules` | `docs/reorganization/PACKAGE_REORGANIZATION.md` | 114 | Python module not found on tree: ipfs_datasets_py.graphrag_processor | origin=prose |
 | `python_modules` | `docs/reports/COMPLETION_REPORT.md` | 72 | Python module not found on tree: ipfs_datasets_py.data_processing | origin=prose |
-| `python_modules` | `docs/reports/COMPLETION_REPORT.md` | 165 | Python module not found on tree: ipfs_datasets_py.workflow_engine | origin=import |
+| `python_modules` | `docs/reports/COMPLETION_REPORT.md` | 165 | Python module not found on tree: ipfs_datasets_py.workflow_engine | origin=prose |
 | `python_modules` | `docs/reports/COMPLETION_REPORT.md` | 227 | Python module not found on tree: ipfs_datasets_py.core_module | origin=import |
 | `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 40 | Python module not found on tree: ipfs_datasets_py.mcp_dashboard | origin=prose |
 | `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 43 | Python module not found on tree: ipfs_datasets_py.mcp_investigation_dashboard | origin=prose |
@@ -2696,21 +2515,21 @@
 | `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 98 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=prose |
 | `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 118 | Python module not found on tree: ipfs_datasets_py.data_provenance | origin=prose |
 | `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 121 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=prose |
-| `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 167 | Python module not found on tree: ipfs_datasets_py.investigation_mcp_client | origin=prose |
+| `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 167 | Python module not found on tree: ipfs_datasets_py.investigation_mcp_client | origin=backtick |
 | `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 207 | Python module not found on tree: ipfs_datasets_py.llm.llm_graphrag | origin=import |
-| `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 208 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
+| `python_modules` | `docs/reports/EXAMPLES_UPDATE_REPORT.md` | 208 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
 | `python_modules` | `docs/reports/FINAL_COMPLETE_SUMMARY.md` | 230 | Python module not found on tree: ipfs_datasets_py.core | origin=import |
 | `python_modules` | `docs/reports/MCP_REFACTORING_FINAL_SUMMARY.md` | 42 | Python module not found on tree: ipfs_datasets_py.legal_scrapers | origin=backtick |
 | `python_modules` | `docs/reports/MCP_REFACTORING_FINAL_SUMMARY.md` | 43 | Python module not found on tree: ipfs_datasets_py.embeddings.core | origin=prose |
-| `python_modules` | `docs/reports/MCP_REFACTORING_FINAL_SUMMARY.md` | 48 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
+| `python_modules` | `docs/reports/MCP_REFACTORING_FINAL_SUMMARY.md` | 48 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=backtick |
 | `python_modules` | `docs/reports/MCP_REFACTORING_FINAL_SUMMARY.md` | 185 | Python module not found on tree: ipfs_datasets_py.core_module | origin=import |
 | `python_modules` | `docs/reports/MCP_TOOLS_FIXES_COMPLETE.md` | 157 | Python module not found on tree: ipfs_datasets_py.vector_tools | origin=prose |
-| `python_modules` | `docs/reports/MCP_TOOLS_FIXES_COMPLETE.md` | 224 | Python module not found on tree: ipfs_datasets_py.logic_integration.medical_theorem_framework | origin=prose |
-| `python_modules` | `docs/reports/MCP_TOOLS_REFACTORING_STATUS.md` | 11 | Python module not found on tree: ipfs_datasets_py.core_module | origin=prose |
-| `python_modules` | `docs/reports/MCP_TOOLS_REFACTORING_STATUS.md` | 65 | Python module not found on tree: ipfs_datasets_py.legal_scrapers | origin=backtick |
-| `python_modules` | `docs/reports/MCP_TOOLS_REFACTORING_STATUS.md` | 66 | Python module not found on tree: ipfs_datasets_py.embeddings.core | origin=backtick |
-| `python_modules` | `docs/reports/MCP_TOOLS_REFACTORING_STATUS.md` | 71 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=backtick |
-| `python_modules` | `docs/reports/TEST_IMPORT_VERIFICATION_COMPLETE.md` | 69 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.admin_tools.system_health | origin=import |
+| `python_modules` | `docs/reports/MCP_TOOLS_FIXES_COMPLETE.md` | 224 | Python module not found on tree: ipfs_datasets_py.logic_integration.medical_theorem_framework | origin=import |
+| `python_modules` | `docs/reports/MCP_TOOLS_REFACTORING_STATUS.md` | 11 | Python module not found on tree: ipfs_datasets_py.core_module | origin=import |
+| `python_modules` | `docs/reports/MCP_TOOLS_REFACTORING_STATUS.md` | 65 | Python module not found on tree: ipfs_datasets_py.legal_scrapers | origin=prose |
+| `python_modules` | `docs/reports/MCP_TOOLS_REFACTORING_STATUS.md` | 66 | Python module not found on tree: ipfs_datasets_py.embeddings.core | origin=prose |
+| `python_modules` | `docs/reports/MCP_TOOLS_REFACTORING_STATUS.md` | 71 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
+| `python_modules` | `docs/reports/TEST_IMPORT_VERIFICATION_COMPLETE.md` | 69 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.admin_tools.system_health | origin=prose |
 | `python_modules` | `docs/reports/TEST_IMPORT_VERIFICATION_COMPLETE.md` | 93 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
 | `python_modules` | `docs/reports/WEB_SCRAPING_REFACTORING_SUMMARY.md` | 64 | Python module not found on tree: ipfs_datasets_py.unified_web_scraper | origin=prose |
 | `python_modules` | `docs/reports/WEB_SCRAPING_REFACTORING_SUMMARY.md` | 205 | Python module not found on tree: ipfs_datasets_py.scraper_cli | origin=prose |
@@ -2724,29 +2543,29 @@
 | `python_modules` | `docs/reports/final_individual_scan_summary.md` | 68 | Python module not found on tree: ipfs_datasets_py.graphrag_integration | origin=prose |
 | `python_modules` | `docs/reports/final_individual_scan_summary.md` | 68 | Python module not found on tree: ipfs_datasets_py.integrations.graphrag_integration | origin=prose |
 | `python_modules` | `docs/reports/final_individual_scan_summary.md` | 69 | Python module not found on tree: ipfs_datasets_py.p2p_peer_registry | origin=prose |
-| `python_modules` | `docs/reports/phase_2_completion_summary.md` | 293 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
+| `python_modules` | `docs/reports/phase_2_completion_summary.md` | 293 | Python module not found on tree: ipfs_datasets_py.rag | origin=import |
 | `python_modules` | `docs/reports/v0_4_0_final_summary.md` | 386 | Python module not found on tree: ipfs_datasets_py.file_converter | origin=import |
-| `python_modules` | `docs/security_verification/evidence_promotion_workflow.md` | 22 | Python module not found on tree: ipfs_datasets_py.logic.security_models.crypto_exchange.evidence_promotion.evaluate_evidence_promotion_workflow | origin=prose |
-| `python_modules` | `docs/security_verification/production_release_decision_policy.md` | 6 | Python module not found on tree: ipfs_datasets_py.logic.security_models.crypto_exchange.release_policy.build_security_decision_policy | origin=backtick |
-| `python_modules` | `docs/security_verification/security_ir_v1_compatibility.md` | 109 | Python module not found on tree: ipfs_datasets_py.utils.cid_utils.cid_for_bytes | origin=backtick |
+| `python_modules` | `docs/security_verification/evidence_promotion_workflow.md` | 22 | Python module not found on tree: ipfs_datasets_py.logic.security_models.crypto_exchange.evidence_promotion.evaluate_evidence_promotion_workflow | origin=backtick |
+| `python_modules` | `docs/security_verification/production_release_decision_policy.md` | 6 | Python module not found on tree: ipfs_datasets_py.logic.security_models.crypto_exchange.release_policy.build_security_decision_policy | origin=prose |
+| `python_modules` | `docs/security_verification/security_ir_v1_compatibility.md` | 109 | Python module not found on tree: ipfs_datasets_py.utils.cid_utils.cid_for_bytes | origin=prose |
 | `python_modules` | `docs/tutorials/graphrag_tutorial.md` | 49 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=import |
 | `python_modules` | `docs/tutorials/graphrag_tutorial.md` | 51 | Python module not found on tree: ipfs_datasets_py.knowledge_graph_extraction | origin=prose |
 | `python_modules` | `docs/tutorials/graphrag_tutorial.md` | 52 | Python module not found on tree: ipfs_datasets_py.llm.llm_graphrag | origin=prose |
 | `python_modules` | `docs/tutorials/graphrag_tutorial.md` | 124 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
-| `python_modules` | `docs/tutorials/graphrag_tutorial.md` | 382 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
+| `python_modules` | `docs/tutorials/graphrag_tutorial.md` | 382 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
 | `python_modules` | `docs/tutorials/graphrag_website_processing_tutorial.md` | 21 | Python module not found on tree: ipfs_datasets_py.website_graphrag_processor | origin=import |
 | `python_modules` | `docs/tutorials/graphrag_website_processing_tutorial.md` | 90 | Python module not found on tree: ipfs_datasets_py.multimodal_processor | origin=prose |
-| `python_modules` | `docs/tutorials/graphrag_website_processing_tutorial.md` | 136 | Python module not found on tree: ipfs_datasets_py.knowledge_graph_extraction | origin=prose |
+| `python_modules` | `docs/tutorials/graphrag_website_processing_tutorial.md` | 136 | Python module not found on tree: ipfs_datasets_py.knowledge_graph_extraction | origin=import |
 | `python_modules` | `docs/tutorials/graphrag_website_processing_tutorial.md` | 174 | Python module not found on tree: ipfs_datasets_py.website_graphrag_system | origin=prose |
-| `python_modules` | `docs/tutorials/media_scraping_tutorial.md` | 47 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
+| `python_modules` | `docs/tutorials/media_scraping_tutorial.md` | 47 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
 | `python_modules` | `docs/tutorials/security_compliance_tutorial.md` | 213 | Python module not found on tree: ipfs_datasets_py.data_provenance_enhanced | origin=prose |
-| `python_modules` | `docs/tutorials/security_compliance_tutorial.md` | 214 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=prose |
+| `python_modules` | `docs/tutorials/security_compliance_tutorial.md` | 214 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage | origin=import |
 | `python_modules` | `docs/tutorials/security_tutorial.md` | 56 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
 | `python_modules` | `docs/tutorials/security_tutorial.md` | 139 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_visualization | origin=import |
 | `python_modules` | `docs/tutorials/security_tutorial.md` | 578 | Python module not found on tree: ipfs_datasets_py.examples.rag_audit_integration_example | origin=prose |
-| `python_modules` | `docs/unified_dashboard.md` | 64 | Python module not found on tree: ipfs_datasets_py.unified_monitoring_dashboard | origin=prose |
-| `python_modules` | `docs/unified_dashboard.md` | 66 | Python module not found on tree: ipfs_datasets_py.optimizer_alert_system | origin=import |
-| `python_modules` | `docs/unified_dashboard.md` | 210 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=import |
+| `python_modules` | `docs/unified_dashboard.md` | 64 | Python module not found on tree: ipfs_datasets_py.unified_monitoring_dashboard | origin=import |
+| `python_modules` | `docs/unified_dashboard.md` | 66 | Python module not found on tree: ipfs_datasets_py.optimizer_alert_system | origin=prose |
+| `python_modules` | `docs/unified_dashboard.md` | 210 | Python module not found on tree: ipfs_datasets_py.rag.rag_query_optimizer | origin=prose |
 | `python_modules` | `docs/user_guide.md` | 154 | Python module not found on tree: ipfs_datasets_py.__version__ | origin=prose |
 | `python_modules` | `docs/user_guide.md` | 257 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=prose |
 | `python_modules` | `docs/user_guide.md` | 259 | Python module not found on tree: ipfs_datasets_py.knowledge_graph | origin=prose |
@@ -2754,7 +2573,6 @@
 | `metadata` | `docs/FEATURES.md` |  | Status=canonical page missing required metadata: Owner, Source / Source of truth, Audience |  |
 | `metadata` | `docs/developer_guides/REPOSITORY_MAP.md` |  | Status=canonical page missing required metadata: Last verified |  |
 | `metadata` | `docs/getting_started.md` |  | Status=canonical page missing required metadata: Source / Source of truth |  |
-| `metadata` | `docs/maintenance/QUALITY_REPORT.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |  |
 | `metadata` | `docs/maintenance/completion_receipts/IPFSDOC-074.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |  |
 | `metadata` | `docs/maintenance/completion_receipts/IPFSDOC-090.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |  |
 | `metadata` | `docs/maintenance/completion_receipts/IPFSDOC-091.md` |  | Status=evidence page missing required metadata: Source / Source of truth, Last verified |  |
@@ -4411,14 +4229,14 @@
 | `python_modules` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 68 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
 | `python_modules` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 96 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization | origin=prose |
 | `python_modules` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 100 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
-| `python_modules` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 101 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=prose |
+| `python_modules` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 101 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=import |
 | `python_modules` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 121 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats | origin=import |
-| `python_modules` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 122 | Python module not found on tree: ipfs_datasets_py.data_transformation.unixfs | origin=prose |
+| `python_modules` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 122 | Python module not found on tree: ipfs_datasets_py.data_transformation.unixfs | origin=import |
 | `python_modules` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 139 | Python module not found on tree: ipfs_datasets_py.data_transformation.ucan | origin=import |
 | `python_modules` | `docs/DATA_TRANSFORMATION_MIGRATION_SUMMARY.md` | 136 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
 | `python_modules` | `docs/DATA_TRANSFORMATION_MIGRATION_SUMMARY.md` | 137 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization | origin=prose |
 | `python_modules` | `docs/DATA_TRANSFORMATION_MIGRATION_SUMMARY.md` | 138 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats | origin=prose |
-| `python_modules` | `docs/DATA_TRANSFORMATION_MIGRATION_SUMMARY.md` | 139 | Python module not found on tree: ipfs_datasets_py.data_transformation.ucan | origin=import |
+| `python_modules` | `docs/DATA_TRANSFORMATION_MIGRATION_SUMMARY.md` | 139 | Python module not found on tree: ipfs_datasets_py.data_transformation.ucan | origin=prose |
 | `python_modules` | `docs/DEPRECATION_TIMELINE.md` | 62 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
 | `python_modules` | `docs/DEPRECATION_TIMELINE.md` | 91 | Python module not found on tree: ipfs_datasets_py.data_transformation | origin=import |
 | `python_modules` | `docs/DEPRECATION_TIMELINE.md` | 97 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
@@ -4428,27 +4246,27 @@
 | `python_modules` | `docs/DEPRECATION_TIMELINE.md` | 168 | Python module not found on tree: ipfs_datasets_py.tools.migration_checker | origin=prose |
 | `python_modules` | `docs/DEPRECATION_TIMELINE.md` | 180 | Python module not found on tree: ipfs_datasets_py.tools.migration_generator | origin=prose |
 | `python_modules` | `docs/DEPRECATION_TIMELINE.md` | 185 | Python module not found on tree: ipfs_datasets_py.tools.compatibility_tester | origin=prose |
-| `python_modules` | `docs/MIGRATION_CHANGELOG.md` | 50 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
-| `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 70 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
+| `python_modules` | `docs/MIGRATION_CHANGELOG.md` | 50 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
+| `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 70 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
 | `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 161 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
 | `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 162 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=import |
 | `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 163 | Python module not found on tree: ipfs_datasets_py.data_transformation.dataset_serialization | origin=prose |
-| `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 164 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_parquet_to_car | origin=import |
-| `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 167 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=prose |
+| `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 164 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_parquet_to_car | origin=prose |
+| `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 167 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=import |
 | `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 168 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet | origin=import |
-| `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 169 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.dataset_serialization | origin=import |
+| `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 169 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.dataset_serialization | origin=prose |
 | `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 170 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car | origin=prose |
 | `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 262 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag | origin=import |
 | `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 605 | Python module not found on tree: ipfs_datasets_py.tools.migration_checker | origin=prose |
 | `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 635 | Python module not found on tree: ipfs_datasets_py.tools.migration_generator | origin=prose |
 | `python_modules` | `docs/MIGRATION_GUIDE_V2.md` | 648 | Python module not found on tree: ipfs_datasets_py.tools.compatibility_tester | origin=prose |
-| `python_modules` | `docs/MULTIMEDIA_MIGRATION_GUIDE.md` | 26 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
+| `python_modules` | `docs/MULTIMEDIA_MIGRATION_GUIDE.md` | 26 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
 | `python_modules` | `docs/archive/completion_reports/IMPLEMENTATION_ROADMAP_COMPLETE.md` | 209 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
-| `python_modules` | `docs/archive/completion_reports/IMPLEMENTATION_ROADMAP_COMPLETE.md` | 219 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
+| `python_modules` | `docs/archive/completion_reports/IMPLEMENTATION_ROADMAP_COMPLETE.md` | 219 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
 | `python_modules` | `docs/archive/completion_reports/IMPLEMENTATION_ROADMAP_COMPLETE.md` | 222 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=import |
-| `python_modules` | `docs/archive/completion_reports/PHASE_11_COMMON_CRAWL_INTEGRATION_PLAN.md` | 108 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=prose |
-| `python_modules` | `docs/archive/completion_reports/PHASE_2_TASK_2_2_USAGE_ANALYSIS.md` | 53 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage_enhanced | origin=prose |
-| `python_modules` | `docs/archive/completion_reports/PHASE_3_4_GRAPHRAG_CONSOLIDATION_PLAN.md` | 172 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag | origin=prose |
+| `python_modules` | `docs/archive/completion_reports/PHASE_11_COMMON_CRAWL_INTEGRATION_PLAN.md` | 108 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=backtick |
+| `python_modules` | `docs/archive/completion_reports/PHASE_2_TASK_2_2_USAGE_ANALYSIS.md` | 53 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage_enhanced | origin=import |
+| `python_modules` | `docs/archive/completion_reports/PHASE_3_4_GRAPHRAG_CONSOLIDATION_PLAN.md` | 172 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag | origin=import |
 | `python_modules` | `docs/archive/completion_reports/UTILS_REFACTORING_COMPLETE.md` | 193 | Python module not found on tree: ipfs_datasets_py.utils.old_module | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/UTILS_REFACTORING_COMPLETE.md` | 194 | Python module not found on tree: ipfs_datasets_py.utils.new_module | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/phases/PHASE_2_SERIALIZATION_COMPLETE.md` | 52 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
@@ -4456,45 +4274,45 @@
 | `python_modules` | `docs/archive/completion_reports/phases/PHASE_2_SESSIONS_7_8_COMPLETE.md` | 96 | Python module not found on tree: ipfs_datasets_py.cross_document_lineage_enhanced | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/phases/PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md` | 51 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/phases/PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md` | 92 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag.GraphRAGConfiguration | origin=prose |
-| `python_modules` | `docs/archive/completion_reports/phases/PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md` | 110 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag | origin=prose |
+| `python_modules` | `docs/archive/completion_reports/phases/PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md` | 110 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.unified_graphrag | origin=import |
 | `python_modules` | `docs/archive/completion_reports/phases/PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md` | 130 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.website_system | origin=import |
 | `python_modules` | `docs/archive/completion_reports/sessions/PATH_B_SESSION_2_COMPLETE.md` | 115 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.adapter | origin=import |
-| `python_modules` | `docs/archive/completion_reports/sessions/PATH_B_SESSION_2_PROGRESS.md` | 281 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.adapter | origin=import |
+| `python_modules` | `docs/archive/completion_reports/sessions/PATH_B_SESSION_2_PROGRESS.md` | 281 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.adapter | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_1_1_MULTIMEDIA_AUDIT_REPORT.md` | 87 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_1_2_CLEANUP_COMPLETE_REPORT.md` | 102 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
-| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 50 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld.storage | origin=backtick |
+| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 50 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld.storage | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 51 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.dataset_serialization | origin=backtick |
-| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 95 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization | origin=prose |
+| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 95 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization | origin=import |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 96 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=import |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 101 | Python module not found on tree: ipfs_datasets_py.data_transformation | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 102 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 121 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 122 | Python module not found on tree: ipfs_datasets_py.data_transformation.dataset_serialization | origin=prose |
-| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 123 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_parquet_to_car | origin=prose |
-| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 129 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet | origin=prose |
+| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 123 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_parquet_to_car | origin=import |
+| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 129 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet | origin=import |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md` | 131 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_2_IMPORTS_UPDATE_COMPLETE.md` | 49 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_2_IMPORTS_UPDATE_COMPLETE.md` | 50 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.car_conversion | origin=prose |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_2_IMPORTS_UPDATE_COMPLETE.md` | 60 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.dataset_serialization | origin=import |
 | `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_2_IMPORTS_UPDATE_COMPLETE.md` | 61 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet | origin=import |
-| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_2_IMPORTS_UPDATE_COMPLETE.md` | 62 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car | origin=prose |
+| `python_modules` | `docs/archive/completion_reports/tasks/TASK_2_2_IMPORTS_UPDATE_COMPLETE.md` | 62 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car | origin=import |
 | `python_modules` | `docs/archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md` | 570 | Python module not found on tree: ipfs_datasets_py.git | origin=prose |
-| `python_modules` | `docs/archive/processors/ARCHIVE_INDEX.md` | 43 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag | origin=prose |
+| `python_modules` | `docs/archive/processors/ARCHIVE_INDEX.md` | 43 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag | origin=import |
 | `python_modules` | `docs/archive/processors/ARCHIVE_INDEX.md` | 75 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.enhanced_integration | origin=import |
-| `python_modules` | `docs/archive/processors/ARCHIVE_INDEX.md` | 106 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.phase7_complete_integration | origin=prose |
+| `python_modules` | `docs/archive/processors/ARCHIVE_INDEX.md` | 106 | Python module not found on tree: ipfs_datasets_py.processors.graphrag.phase7_complete_integration | origin=import |
 | `python_modules` | `docs/archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md` | 981 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=prose |
 | `python_modules` | `docs/archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md` | 1008 | Python module not found on tree: ipfs_datasets_py.processors.specialized.multimedia | origin=import |
-| `python_modules` | `docs/archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_PLAN.md` | 421 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
+| `python_modules` | `docs/archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_PLAN.md` | 421 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
 | `python_modules` | `docs/archive/processors/planning/PROCESSORS_REFACTORING_PLAN.md` | 544 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
 | `python_modules` | `docs/archive/processors/planning/PROCESSORS_REFACTORING_PLAN.md` | 987 | Python module not found on tree: ipfs_datasets_py.processors.graphrag | origin=prose |
-| `python_modules` | `docs/archive/reorganization/MASTER_IMPROVEMENT_PLAN_2026_v37.md` | 244 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=prose |
-| `python_modules` | `docs/archive/reorganization/MASTER_REFACTORING_PLAN_2026_v4.md` | 957 | Python module not found on tree: ipfs_datasets_py.core | origin=prose |
-| `python_modules` | `docs/archive/reorganization/comprehensive_documentation_update.md` | 100 | Python module not found on tree: ipfs_datasets_py.integrations.graphrag_integration | origin=prose |
-| `python_modules` | `docs/archive/reorganization/comprehensive_documentation_update.md` | 101 | Python module not found on tree: ipfs_datasets_py.integrations.phase7_complete_integration | origin=prose |
+| `python_modules` | `docs/archive/reorganization/MASTER_IMPROVEMENT_PLAN_2026_v37.md` | 244 | Python module not found on tree: ipfs_datasets_py.admin_dashboard | origin=backtick |
+| `python_modules` | `docs/archive/reorganization/MASTER_REFACTORING_PLAN_2026_v4.md` | 957 | Python module not found on tree: ipfs_datasets_py.core | origin=import |
+| `python_modules` | `docs/archive/reorganization/comprehensive_documentation_update.md` | 100 | Python module not found on tree: ipfs_datasets_py.integrations.graphrag_integration | origin=import |
+| `python_modules` | `docs/archive/reorganization/comprehensive_documentation_update.md` | 101 | Python module not found on tree: ipfs_datasets_py.integrations.phase7_complete_integration | origin=import |
 | `python_modules` | `docs/archive/reorganization/comprehensive_documentation_update.md` | 108 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
 | `python_modules` | `docs/archive/reorganization/comprehensive_documentation_update.md` | 109 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=import |
-| `python_modules` | `docs/archive/reorganization/comprehensive_documentation_update.md` | 192 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=prose |
-| `python_modules` | `docs/archive/reorganization/older_readme_sections_review.md` | 265 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=import |
+| `python_modules` | `docs/archive/reorganization/comprehensive_documentation_update.md` | 192 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=import |
+| `python_modules` | `docs/archive/reorganization/older_readme_sections_review.md` | 265 | Python module not found on tree: ipfs_datasets_py.logic_integration | origin=prose |
 | `python_modules` | `docs/archive/reorganization/older_readme_sections_review.md` | 267 | Python module not found on tree: ipfs_datasets_py.pdf_processing | origin=import |
 | `python_modules` | `docs/archive/reorganization/older_readme_sections_review.md` | 270 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
 | `python_modules` | `docs/archive/reorganization/older_readme_sections_review.md` | 273 | Python module not found on tree: ipfs_datasets_py.rag | origin=import |
@@ -4503,62 +4321,62 @@
 | `python_modules` | `docs/archive/reorganization/readme_update_summary.md` | 117 | Python module not found on tree: ipfs_datasets_py.integrations.accelerate_integration | origin=prose |
 | `python_modules` | `docs/archive/reorganization/readme_update_summary.md` | 120 | Python module not found on tree: ipfs_datasets_py.web_archive_tools | origin=prose |
 | `python_modules` | `docs/archive/root_status_reports/EXTERNAL_PROVER_INTEGRATION.md` | 341 | Python module not found on tree: ipfs_datasets_py.logic.external_provers.get_available_provers | origin=prose |
-| `python_modules` | `docs/archive/root_status_reports/GRAPHRAG_INTEGRATION_DETAILED.md` | 364 | Python module not found on tree: ipfs_datasets_py.rag.logic_aware_entity_extractor | origin=prose |
+| `python_modules` | `docs/archive/root_status_reports/GRAPHRAG_INTEGRATION_DETAILED.md` | 364 | Python module not found on tree: ipfs_datasets_py.rag.logic_aware_entity_extractor | origin=import |
 | `python_modules` | `docs/archive/root_status_reports/GRAPHRAG_INTEGRATION_DETAILED.md` | 621 | Python module not found on tree: ipfs_datasets_py.rag.logic_knowledge_graph | origin=import |
 | `python_modules` | `docs/archive/root_status_reports/GRAPHRAG_INTEGRATION_DETAILED.md` | 720 | Python module not found on tree: ipfs_datasets_py.rag.logic_enhanced_rag | origin=import |
 | `python_modules` | `docs/archive/root_status_reports/GRAPHRAG_INTEGRATION_DETAILED.md` | 861 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
-| `python_modules` | `docs/archive/root_status_reports/NEUROSYMBOLIC_ARCHITECTURE_PLAN.md` | 816 | Python module not found on tree: ipfs_datasets_py.graphrag.integrations | origin=import |
+| `python_modules` | `docs/archive/root_status_reports/NEUROSYMBOLIC_ARCHITECTURE_PLAN.md` | 816 | Python module not found on tree: ipfs_datasets_py.graphrag.integrations | origin=prose |
 | `python_modules` | `docs/archive/root_status_reports/NEUROSYMBOLIC_ARCHITECTURE_PLAN.md` | 1103 | Python module not found on tree: ipfs_datasets_py.logic.neurosymbolic | origin=prose |
 | `python_modules` | `docs/archive/root_status_reports/OPTIMIZER_FRAMEWORK_IMPROVEMENTS.md` | 597 | Python module not found on tree: ipfs_datasets_py.optimizers.common.logging_config | origin=import |
-| `python_modules` | `docs/archive/root_status_reports/PHASE5_FINAL_REPORT.md` | 345 | Python module not found on tree: ipfs_datasets_py.logic.integration.proof_execution_engine | origin=prose |
+| `python_modules` | `docs/archive/root_status_reports/PHASE5_FINAL_REPORT.md` | 345 | Python module not found on tree: ipfs_datasets_py.logic.integration.proof_execution_engine | origin=import |
 | `python_modules` | `docs/archive/root_status_reports/PHASE5_FINAL_REPORT.md` | 379 | Python module not found on tree: ipfs_datasets_py.logic.integration.ipfs_proof_cache | origin=import |
-| `python_modules` | `docs/archive/root_status_reports/PROCESSORS_REFACTORING_PLAN_2026_02_16.md` | 950 | Python module not found on tree: ipfs_datasets_py.processors.specialized.example | origin=prose |
-| `python_modules` | `docs/archive/root_status_reports/SYMBOLICAI_INTEGRATION_ANALYSIS.md` | 584 | Python module not found on tree: ipfs_datasets_py.logic.neurosymbolic | origin=import |
-| `python_modules` | `docs/archive/root_status_reports/TESTING_STRATEGY.md` | 463 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
-| `python_modules` | `docs/guides/infrastructure/anyio_migration_guide.md` | 166 | Python module not found on tree: ipfs_datasets_py.file_converter.deprecation | origin=prose |
+| `python_modules` | `docs/archive/root_status_reports/PROCESSORS_REFACTORING_PLAN_2026_02_16.md` | 950 | Python module not found on tree: ipfs_datasets_py.processors.specialized.example | origin=import |
+| `python_modules` | `docs/archive/root_status_reports/SYMBOLICAI_INTEGRATION_ANALYSIS.md` | 584 | Python module not found on tree: ipfs_datasets_py.logic.neurosymbolic | origin=prose |
+| `python_modules` | `docs/archive/root_status_reports/TESTING_STRATEGY.md` | 463 | Python module not found on tree: ipfs_datasets_py.rag | origin=import |
+| `python_modules` | `docs/guides/infrastructure/anyio_migration_guide.md` | 166 | Python module not found on tree: ipfs_datasets_py.file_converter.deprecation | origin=import |
 | `python_modules` | `docs/guides/knowledge_graphs/KNOWLEDGE_GRAPHS_NEO4J_API_MIGRATION.md` | 376 | Python module not found on tree: ipfs_datasets_py.knowledge_graphs.migration.verify | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 19 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 19 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipld | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 35 | Python module not found on tree: ipfs_datasets_py.data_transformation.serialization | origin=import |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 37 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 38 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 37 | Python module not found on tree: ipfs_datasets_py.data_transformation.car_conversion | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 38 | Python module not found on tree: ipfs_datasets_py.data_transformation.jsonl_to_parquet | origin=import |
 | `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 39 | Python module not found on tree: ipfs_datasets_py.data_transformation.dataset_serialization | origin=import |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 53 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 54 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats.ipfs_multiformats | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 55 | Python module not found on tree: ipfs_datasets_py.data_transformation.unixfs | origin=import |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 59 | Python module not found on tree: ipfs_datasets_py.processors.ipfs.formats.multiformats | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 67 | Python module not found on tree: ipfs_datasets_py.data_transformation.ucan | origin=prose |
-| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 77 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 53 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 54 | Python module not found on tree: ipfs_datasets_py.data_transformation.ipfs_formats.ipfs_multiformats | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 55 | Python module not found on tree: ipfs_datasets_py.data_transformation.unixfs | origin=prose |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 59 | Python module not found on tree: ipfs_datasets_py.processors.ipfs.formats.multiformats | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 67 | Python module not found on tree: ipfs_datasets_py.data_transformation.ucan | origin=import |
+| `python_modules` | `docs/guides/processors/PROCESSORS_DATA_TRANSFORMATION_QUICK_MIGRATION.md` | 77 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
 | `python_modules` | `docs/logic/CEC/ARCHIVE/CEC_PHASES_4_8_EXECUTION_GUIDE.md` | 362 | Python module not found on tree: ipfs_datasets_py.logic.CEC.api.server | origin=prose |
 | `python_modules` | `docs/logic/CEC/ARCHIVE/NATIVE_INTEGRATION.md` | 350 | Python module not found on tree: ipfs_datasets_py.logic.CEC.dcec_wrapper.importlib | origin=prose |
 | `python_modules` | `docs/logic/CEC/ARCHIVE/NATIVE_MIGRATION_SUMMARY.md` | 54 | Python module not found on tree: ipfs_datasets_py.logic.native | origin=prose |
-| `python_modules` | `docs/logic/CEC/ARCHIVE/NATIVE_MIGRATION_SUMMARY.md` | 55 | Python module not found on tree: ipfs_datasets_py.logic.native.dcec_core | origin=prose |
+| `python_modules` | `docs/logic/CEC/ARCHIVE/NATIVE_MIGRATION_SUMMARY.md` | 55 | Python module not found on tree: ipfs_datasets_py.logic.native.dcec_core | origin=import |
 | `python_modules` | `docs/logic/CEC/ARCHIVE/NATIVE_MIGRATION_SUMMARY.md` | 56 | Python module not found on tree: ipfs_datasets_py.logic.native.prover_core | origin=import |
-| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 353 | Python module not found on tree: ipfs_datasets_py.logic.tools.text_to_fol | origin=import |
-| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 365 | Python module not found on tree: ipfs_datasets_py.logic.tools.deontic_logic_core | origin=prose |
-| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 386 | Python module not found on tree: ipfs_datasets_py.logic.tools.symbolic_fol_bridge | origin=prose |
-| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 397 | Python module not found on tree: ipfs_datasets_py.logic.tools.symbolic_logic_primitives | origin=prose |
-| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 418 | Python module not found on tree: ipfs_datasets_py.logic.tools.modal_logic_extension | origin=prose |
+| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 353 | Python module not found on tree: ipfs_datasets_py.logic.tools.text_to_fol | origin=prose |
+| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 365 | Python module not found on tree: ipfs_datasets_py.logic.tools.deontic_logic_core | origin=import |
+| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 386 | Python module not found on tree: ipfs_datasets_py.logic.tools.symbolic_fol_bridge | origin=import |
+| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 397 | Python module not found on tree: ipfs_datasets_py.logic.tools.symbolic_logic_primitives | origin=import |
+| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 418 | Python module not found on tree: ipfs_datasets_py.logic.tools.modal_logic_extension | origin=import |
 | `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 429 | Python module not found on tree: ipfs_datasets_py.logic.tools.logic_translation_core | origin=import |
-| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 440 | Python module not found on tree: ipfs_datasets_py.logic.tools.legal_text_to_deontic | origin=prose |
+| `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 440 | Python module not found on tree: ipfs_datasets_py.logic.tools.legal_text_to_deontic | origin=import |
 | `python_modules` | `docs/logic/MIGRATION_GUIDE.md` | 454 | Python module not found on tree: ipfs_datasets_py.logic.tools.logic_utils | origin=import |
 | `python_modules` | `docs/logic/TDFOL/ARCHIVE/IMPLEMENTATION_QUICK_START_2026.md` | 555 | Python module not found on tree: ipfs_datasets_py.logic.TDFOL.api.main | origin=prose |
 | `python_modules` | `docs/logic/archive/ENHANCED_REFACTORING_PLAN.md` | 290 | Python module not found on tree: ipfs_datasets_py.logic.integration.ipfs_proof_cache | origin=import |
 | `python_modules` | `docs/logic/archive/PHASE4_COMPLETE.md` | 39 | Python module not found on tree: ipfs_datasets_py.rag.logic_integration | origin=prose |
-| `python_modules` | `docs/logic/archive/PHASE4_COMPLETE.md` | 108 | Python module not found on tree: ipfs_datasets_py.rag | origin=prose |
+| `python_modules` | `docs/logic/archive/PHASE4_COMPLETE.md` | 108 | Python module not found on tree: ipfs_datasets_py.rag | origin=import |
 | `python_modules` | `docs/logic/archive/REFACTORING_PLAN.md` | 479 | Python module not found on tree: ipfs_datasets_py.logic.integration.ipfs_proof_cache | origin=import |
-| `python_modules` | `docs/logic/archive/REFACTORING_PLAN.md` | 1069 | Python module not found on tree: ipfs_datasets_py.logic.integration.api | origin=prose |
+| `python_modules` | `docs/logic/archive/REFACTORING_PLAN.md` | 1069 | Python module not found on tree: ipfs_datasets_py.logic.integration.api | origin=import |
 | `python_modules` | `docs/logic/docs/archive/planning/ARCHIVED_REFACTORING_IMPROVEMENT_PLAN.md` | 557 | Python module not found on tree: ipfs_datasets_py.logic.features | origin=prose |
 | `python_modules` | `docs/migration_docs/CLAUDE.md` | 7 | Python module not found on tree: ipfs_datasets_py.ipfs_kit | origin=prose |
 | `python_modules` | `docs/migration_docs/CLAUDE.md` | 8 | Python module not found on tree: ipfs_datasets_py.libp2p_kit | origin=prose |
-| `python_modules` | `docs/migration_docs/CLAUDE.md` | 142 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=prose |
+| `python_modules` | `docs/migration_docs/CLAUDE.md` | 142 | Python module not found on tree: ipfs_datasets_py.ipfs_knn_index | origin=import |
 | `python_modules` | `docs/migration_docs/CLAUDE.md` | 781 | Python module not found on tree: ipfs_datasets_py.duckdb_connector | origin=prose |
-| `python_modules` | `docs/migration_docs/CLAUDE.md` | 2116 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=prose |
-| `python_modules` | `docs/migration_docs/CLAUDE.md` | 2327 | Python module not found on tree: ipfs_datasets_py.data_integration | origin=import |
-| `python_modules` | `docs/migration_docs/CLAUDE.md` | 2386 | Python module not found on tree: ipfs_datasets_py.ipld_storage | origin=import |
-| `python_modules` | `docs/migration_docs/CLAUDE.md` | 2388 | Python module not found on tree: ipfs_datasets_py.knowledge_graph | origin=prose |
+| `python_modules` | `docs/migration_docs/CLAUDE.md` | 2116 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia | origin=import |
+| `python_modules` | `docs/migration_docs/CLAUDE.md` | 2327 | Python module not found on tree: ipfs_datasets_py.data_integration | origin=prose |
+| `python_modules` | `docs/migration_docs/CLAUDE.md` | 2386 | Python module not found on tree: ipfs_datasets_py.ipld_storage | origin=prose |
+| `python_modules` | `docs/migration_docs/CLAUDE.md` | 2388 | Python module not found on tree: ipfs_datasets_py.knowledge_graph | origin=import |
 | `python_modules` | `docs/migration_docs/CLAUDE.md` | 3003 | Python module not found on tree: ipfs_datasets_py.arrow_ipld | origin=prose |
 | `python_modules` | `docs/migration_docs/CLAUDE.md` | 3493 | Python module not found on tree: ipfs_datasets_py.graphrag | origin=prose |
-| `python_modules` | `docs/migration_docs/CLAUDE.md` | 3533 | Python module not found on tree: ipfs_datasets_py.vector_store | origin=prose |
+| `python_modules` | `docs/migration_docs/CLAUDE.md` | 3533 | Python module not found on tree: ipfs_datasets_py.vector_store | origin=import |
 | `python_modules` | `docs/migration_docs/CLAUDES_TOOLBOX_MIGRATION_ROADMAP.md` | 208 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.base_tool | origin=import |
 | `python_modules` | `docs/migration_docs/CLAUDES_TOOLBOX_MIGRATION_ROADMAP.md` | 210 | Python module not found on tree: ipfs_datasets_py.audit_log | origin=import |
 | `python_modules` | `docs/migration_docs/MCP_TOOLS_TESTING_GUIDE.md` | 99 | Python module not found on tree: ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset.datasets | origin=prose |
@@ -4566,8 +4384,8 @@
 | `python_modules` | `docs/migration_docs/MODULE_CREATION_SUMMARY.md` | 60 | Python module not found on tree: ipfs_datasets_py.vector_tools | origin=prose |
 | `python_modules` | `docs/migration_docs/MODULE_CREATION_SUMMARY.md` | 61 | Python module not found on tree: ipfs_datasets_py.graphrag_processor | origin=prose |
 | `python_modules` | `docs/optimizers/common/JSON_LOG_MIGRATION_GUIDE.md` | 35 | Python module not found on tree: ipfs_datasets_py.optimizer_log | origin=prose |
-| `python_modules` | `docs/reports/ANYIO_MIGRATION_TEST_RESULTS.md` | 45 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper | origin=backtick |
-| `python_modules` | `docs/reports/ANYIO_MIGRATION_TEST_RESULTS.md` | 46 | Python module not found on tree: ipfs_datasets_py.unified_web_scraper | origin=prose |
+| `python_modules` | `docs/reports/ANYIO_MIGRATION_TEST_RESULTS.md` | 45 | Python module not found on tree: ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper | origin=prose |
+| `python_modules` | `docs/reports/ANYIO_MIGRATION_TEST_RESULTS.md` | 46 | Python module not found on tree: ipfs_datasets_py.unified_web_scraper | origin=backtick |
 | `python_syntax` | `docs/COMPLETE_MIGRATION_GUIDE.md` | 260 | Fenced Python block has syntax error | invalid syntax (line 1) |
 | `python_syntax` | `docs/DEPRECATION_TIMELINE.md` | 157 | Fenced Python block has syntax error | invalid syntax (line 1) |
 | `python_syntax` | `docs/DEPRECATION_TIMELINE.md` | 199 | Fenced Python block has syntax error | invalid character '╔' (U+2554) (line 1) |
@@ -4992,7 +4810,7 @@
 
 | Check | Path | Line | Message | Detail |
 | --- | --- | ---: | --- | --- |
-| `markdown_paths` | `docs` |  | Scanned 1571 Markdown file(s) under scan root |  |
+| `markdown_paths` | `docs` |  | Scanned 1570 Markdown file(s) under scan root |  |
 | `links` | `docs/DEPRECATION_TIMELINE.md` | 337 | External link skipped (no network fetch) | https://github.com/endomorphosis/ipfs_datasets_py/issues |
 | `links` | `docs/GRAPH_STORAGE_INTEGRATION.md` | 227 | External link skipped (no network fetch) | https://github.com/your-repo/issues |
 | `links` | `docs/IPLD_VECTOR_STORE_IMPROVEMENT_PLAN.md` | 484 | External link skipped (no network fetch) | https://ipld.io/ |
