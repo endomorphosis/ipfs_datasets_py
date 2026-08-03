@@ -1225,7 +1225,7 @@ Program invariants:
 
 ## PATLAW-093 Evaluate retrieval quality, time, citations, and isolation
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
