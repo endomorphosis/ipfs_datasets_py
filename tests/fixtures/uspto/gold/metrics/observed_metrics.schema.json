@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/uspto.gold-observed-metrics.v1.schema.json",
+  "title": "USPTO gold observed metrics v1",
+  "description": "Versioned observations produced by the executable gold-corpus metric evaluator (PATLAW-123). Thresholds are compared to observed values; missing labels yield unknown/not_applicable counts rather than passes. Receipts bind corpus/parser/ruleset/model/config identities separately.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "thresholds_version",
+    "thresholds_digest",
+    "case_ids",
+    "metrics",
+    "summary"
+  ],
+  "properties": {
+    "schema": {
+      "const": "uspto.gold-observed-metrics.v1"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "thresholds_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Pinned gates identity, e.g. uspto.gold-metric-gates.v1@1"
+    },
+    "thresholds_digest": {
+      "$ref": "#/$defs/digestUri",
+      "description": "Content address of the metric_gates document used for comparison"
+    },
+    "case_ids": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" },
+      "uniqueItems": true
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/observedMetric" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pass_count",
+        "fail_count",
+        "unknown_count",
+        "not_applicable_count"
+      ],
+      "properties": {
+        "pass_count": { "type": "integer", "minimum": 0 },
+        "fail_count": { "type": "integer", "minimum": 0 },
+        "unknown_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Explicit unmeasurable/unknown item counts (never treated as pass)"
+        },
+        "not_applicable_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Explicit not-applicable counts when no gold labels or zero denominator"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/=+\\-]{0,255}$"
+    },
+    "digestUri": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "metricStatus": {
+      "type": "string",
+      "enum": ["pass", "fail", "unknown", "not_applicable"]
+    },
+    "metricFamily": {
+      "type": "string",
+      "enum": [
+        "recall",
+        "precision",
+        "provenance",
+        "false_negative",
+        "document_classification",
+        "span",
+        "semantic_field",
+        "citation",
+        "obligation",
+        "contradiction",
+        "deadline",
+        "privacy",
+        "determinism",
+        "end_to_end_completeness"
+      ]
+    },
+    "thresholdOperator": {
+      "type": "string",
+      "enum": [">=", "<=", ">", "<", "=="]
+    },
+    "observedMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "family",
+        "status",
+        "value",
+        "operator",
+        "threshold",
+        "threshold_version",
+        "true_positives",
+        "false_positives",
+        "false_negatives",
+        "unknown_count",
+        "not_applicable_count",
+        "numerator",
+        "denominator",
+        "details"
+      ],
+      "properties": {
+        "metric_id": { "$ref": "#/$defs/identifier" },
+        "family": { "$ref": "#/$defs/metricFamily" },
+        "status": { "$ref": "#/$defs/metricStatus" },
+        "value": {
+          "description": "Observed ratio or score; null when status is unknown or not_applicable",
+          "oneOf": [
+            { "type": "number", "minimum": 0, "maximum": 1 },
+            { "type": "null" }
+          ]
+        },
+        "operator": {
+          "oneOf": [
+            { "$ref": "#/$defs/thresholdOperator" },
+            { "type": "null" }
+          ]
+        },
+        "threshold": {
+          "oneOf": [
+            { "type": "number", "minimum": 0, "maximum": 1 },
+            { "type": "null" }
+          ]
+        },
+        "threshold_version": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 128 },
+            { "type": "null" }
+          ]
+        },
+        "true_positives": { "type": "integer", "minimum": 0 },
+        "false_positives": { "type": "integer", "minimum": 0 },
+        "false_negatives": { "type": "integer", "minimum": 0 },
+        "unknown_count": { "type": "integer", "minimum": 0 },
+        "not_applicable_count": { "type": "integer", "minimum": 0 },
+        "numerator": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "denominator": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "maxLength": 2048 },
+          "propertyNames": { "type": "string", "maxLength": 128 }
+        }
+      }
+    }
+  }
+}
