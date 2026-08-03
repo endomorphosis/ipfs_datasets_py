@@ -1,315 +1,227 @@
-# IPFS Datasets Python - Installation Guide
+# Installation Guide
 
-This guide provides detailed instructions for installing and configuring IPFS Datasets Python in various environments.
+| Field | Value |
+| --- | --- |
+| Interface | `InstallationGuide@1` |
+| Task | `IPFSDOC-091` |
+| Status | `canonical` |
+| Owner | user-docs |
+| Source of truth | `pyproject.toml`; `setup.py`; `requirements.txt`; `scripts/setup/install.py`; `docker/Dockerfile`; [CAPABILITY_INSTALLATION.md](guides/installation/CAPABILITY_INSTALLATION.md) |
+| Last verified | 2026-08-03 |
+| Audience | end-user, developer, operator |
+| Related | [CAPABILITY_INSTALLATION.md](guides/installation/CAPABILITY_INSTALLATION.md), [CONFIGURATION_REFERENCE.md](guides/installation/CONFIGURATION_REFERENCE.md), [configuration.md](configuration.md), [PLATFORM_INSTALL.md](quickstart/PLATFORM_INSTALL.md) |
 
-## Table of Contents
+This page is the **short install route** for `ipfs_datasets_py`. Full extra tables, console scripts, native tools, lazy install policy, and capability probes live in [CAPABILITY_INSTALLATION.md](guides/installation/CAPABILITY_INSTALLATION.md). Configuration precedence and security consequences live in [configuration.md](configuration.md) and [CONFIGURATION_REFERENCE.md](guides/installation/CONFIGURATION_REFERENCE.md).
 
-1. [System Requirements](#system-requirements)
-2. [Basic Installation](#basic-installation)
-3. [Development Installation](#development-installation)
-4. [Installing with Optional Dependencies](#installing-with-optional-dependencies)
-5. [Docker Installation](#docker-installation)
-6. [IPFS Setup](#ipfs-setup)
-7. [Configuration](#configuration)
-8. [Troubleshooting](#troubleshooting)
+## 1. Requirements
 
-## System Requirements
+| Requirement | Current packaging |
+| --- | --- |
+| **Python** | **Python 3.12+** (`requires-python = ">=3.12"` in `pyproject.toml`; `python_requires='>=3.12'` in `setup.py`) |
+| Package manager | `pip` inside a virtual environment (recommended) |
+| OS | Linux, macOS, Windows (platform markers differ for FAISS, magic, lazy ML helpers) |
+| Disk / network | Base install needs network or a prepared wheelhouse; optional theorem provers, OCR models, and Playwright browsers need extra disk when provisioned |
 
-### Minimum Requirements
+**Not supported as the package baseline:** Python 3.7–3.11. Older docs that claim Python 3.7+ or 3.9+ are obsolete.
 
-- Python 3.7 or higher
-- pip (Python package manager)
-- 4GB RAM
-- 2GB free disk space
+Base install is **not** every capability. Optional extras, system binaries, and native provers are separate layers; missing ones surface as **optional** / **unavailable**, not as silent success.
 
-### Recommended Requirements
+## 2. Base installation
 
-- Python 3.9 or higher
-- 8GB RAM
-- 20GB free disk space
-- IPFS daemon (version 0.12.0 or higher)
-- CUDA-compatible GPU for faster vector operations (optional)
-
-### Operating System Support
-
-- Linux (Ubuntu 18.04+, Debian 10+, CentOS 7+)
-- macOS (10.15 Catalina or newer)
-- Windows 10 (with Windows Subsystem for Linux recommended)
-
-## Basic Installation
-
-The simplest way to install IPFS Datasets Python is via pip:
+### 2.1 Recommended: source checkout + project installer
 
 ```bash
-pip install ipfs-datasets-py
-```
-
-To verify the installation:
-
-```bash
-python -c "import ipfs_datasets_py; print(ipfs_datasets_py.__version__)"
-```
-
-## Development Installation
-
-For development or to use the latest features:
-
-```bash
-# Clone the repository
-git clone https://github.com/your-organization/ipfs_datasets_py.git
+git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 cd ipfs_datasets_py
+python3.12 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python scripts/setup/install.py --quick
+# After install, keep using the activated .venv
+```
 
-# Install in development mode
+`scripts/setup/install.py --quick` syncs `requirements.txt` into the target venv and installs the package editable. See the repository [README](../README.md) for installer options (`--venv-dir`, etc.).
+
+### 2.2 Editable pip install only
+
+```bash
+git clone https://github.com/endomorphosis/ipfs_datasets_py.git
+cd ipfs_datasets_py
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -U pip setuptools wheel
 pip install -e .
-
-# Install development dependencies
-pip install -r requirements-dev.txt
 ```
 
-## Installing with Optional Dependencies
-
-IPFS Datasets Python offers several optional dependency groups for specific functionality:
-
-### Vector Search Dependencies
+Editable install resolves `ipfs_kit_py` / `ipfs_accelerate_py` from vendored checkouts when present, otherwise from GitHub `main` (see `setup.py`). Constrained builds can skip VCS optional deps:
 
 ```bash
-pip install ipfs-datasets-py[vector]
+export IPFS_DATASETS_PY_INCLUDE_VCS_DEPENDENCIES=0
+pip install -e .
 ```
 
-This includes:
-- faiss-cpu (or faiss-gpu for CUDA support)
-- sentence-transformers
-- numpy
-- scipy
+### 2.3 Distribution name
 
-### Knowledge Graph and RAG Dependencies
+Packaging metadata uses the distribution name **`ipfs_datasets_py`**:
 
 ```bash
-pip install ipfs-datasets-py[graphrag]
+pip install ipfs_datasets_py
+# when published to the index you use; source install (§2.1–2.2) is the verified workspace path
 ```
 
-This includes:
-- spacy
-- networkx
-- huggingface-hub
-- transformers
-- torch
-
-### Web Archive Integration Dependencies
+### 2.4 Verify base install
 
 ```bash
-pip install ipfs-datasets-py[webarchive]
+python -c "import sys; assert sys.version_info >= (3, 12)"
+python -c "import ipfs_datasets_py; print(ipfs_datasets_py.__version__)"
+# console scripts appear after install into the active env (setup.py entry points):
+ipfs-datasets --help            # when setup.py scripts are installed
+ipfs-datasets-install-provers --help
 ```
 
-This includes:
-- archivenow
-- warcio
-- requests
-- beautifulsoup4
+If a script is missing from `PATH`, reinstall with `pip install -e .` and confirm the venv is active.
 
-### Full Installation (All Dependencies)
+## 3. Optional capabilities (real extras)
+
+Install only the extras you need. Prefer the **declared** names below. Full matrix, platform markers, and recipes: [CAPABILITY_INSTALLATION.md](guides/installation/CAPABILITY_INSTALLATION.md).
 
 ```bash
-pip install ipfs-datasets-py[all]
+# Examples (editable source tree)
+pip install -e '.[vectors]'
+pip install -e '.[file_conversion,ocr]'
+pip install -e '.[theorem-provers,logic]'
+pip install -e '.[knowledge_graphs,web_archive,scraping]'
+pip install -e '.[all,linux]'    # or windows / macos; still excludes full ml torch stack by design
 ```
 
-### GPU Support
+| Extra (use these) | Role (summary) |
+| --- | --- |
+| `vectors` | FAISS / Qdrant / embeddings stack |
+| `file_conversion` | MarkItDown / conversion path (Playwright browsers separate) |
+| `theorem-provers` | Python bindings (`z3-solver`, `cvc5`, …)—**not** native CLIs |
+| `knowledge_graphs` | spaCy, networkx, transformers, graph export |
+| `web_archive` | WARC / archive tooling |
+| `multimedia` / `ocr` / `scraping` / `api` / `lazy` / `test` | Media, OCR, scrape, HTTP/MCP, eager lazy-catalog, tests |
+| `ml` | Heavy torch / LLM stack (**not** in `all`) |
+| `all` | Large non-ML union |
 
-For GPU-accelerated vector operations:
+### 3.1 Invalid or deprecated singular names (do not use)
+
+| Invalid | Use instead |
+| --- | --- |
+| `vector` | `vectors` |
+| `graphrag` | `knowledge_graphs` (+ app GraphRAG config) |
+| `webarchive` / `web-archive` | `web_archive` |
+| `theorem_prover` / `theorem-prover` | `theorem-provers` |
+| Placeholder orgs (`your-organization`, `yourorga/…`) | `endomorphosis/ipfs_datasets_py` (or your real fork) |
+
+### 3.2 System tools (not pip extras)
+
+Python wheels do not replace host tools. Missing tools leave related features **unavailable**.
+
+| Tool | Typical need |
+| --- | --- |
+| Kubo / `ipfs` | Local daemon workflows (CLI name overridable via `IPFS_DATASETS_PY_KUBO_CMD`) |
+| FFmpeg | Multimedia conversion |
+| Tesseract | `pytesseract` OCR |
+| libmagic | `python-magic` on Linux/macOS |
+| Playwright browsers | `python -m playwright install` after `file_conversion` |
+| Cargo / Java / OPAM / elan | Groth16 builds and native theorem-prover portfolios |
+
+Native provers install under a user-local root (default `~/.local/share/ipfs_datasets_py/theorem-provers`), not via `pip install` alone:
 
 ```bash
-# For CUDA 11.x
-pip install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
-pip install faiss-gpu
-
-# For CUDA 10.x
-pip install torch==1.10.0+cu102 -f https://download.pytorch.org/whl/cu102/torch_stable.html
-pip install faiss-gpu
+ipfs-datasets-install-provers --portfolio legal_ir_generation --yes --strict
 ```
 
-## Docker Installation
+Details: [lazy_theorem_prover_installation.md](security_verification/lazy_theorem_prover_installation.md).
 
-For a containerized setup, you can use the provided Docker image:
+### 3.3 GPU / CUDA note
+
+Do **not** follow obsolete pin recipes (for example `torch==1.10.*+cu113` or blanket `faiss-gpu` one-liners from old docs). Current packaging:
+
+- Prefer **`faiss-cpu`** via the `vectors` extra (platform-gated versions in packaging).
+- Heavy GPU stacks come from the **`ml`** / accelerate paths and vendor wheel indexes for your OS/CUDA/driver set—select wheels that match **your** platform, then re-probe.
+- Platform notes: [PLATFORM_INSTALL.md](quickstart/PLATFORM_INSTALL.md) and [CAPABILITY_INSTALLATION.md](guides/installation/CAPABILITY_INSTALLATION.md).
+
+## 4. Auto / lazy install, offline, and security
+
+On import, if unset, `IPFS_DATASETS_AUTO_INSTALL` defaults toward allowing runtime `pip` for missing optional modules. That favors developer machines and is **unsafe** for immutable images without an explicit policy.
+
+| Goal | Action |
+| --- | --- |
+| Production / CI (no surprise pip) | `export IPFS_DATASETS_AUTO_INSTALL=false` before import |
+| Hermetic import | `IPFS_DATASETS_PY_MINIMAL_IMPORTS=1` or `IPFS_DATASETS_PY_BENCHMARK=1` |
+| Offline / wheelhouse | `IPFS_DATASETS_AUTO_INSTALL_OFFLINE=1` and `IPFS_DATASETS_AUTO_INSTALL_WHEELHOUSE=/path/to/wheels` |
+| Block native prover downloads | `IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=0` |
+| Never grant sudo to prover install | Leave `IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS` unset (default deny) |
 
 ```bash
-# Pull the Docker image
-docker pull yourorga/ipfs-datasets-py:latest
-
-# Run a container
-docker run -it --name ipfs-datasets-py \
-  -v $(pwd)/data:/data \
-  -p 8080:8080 \
-  yourorga/ipfs-datasets-py:latest
+# Offline capability pre-provision example
+export IPFS_DATASETS_AUTO_INSTALL=0
+export IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=0
+pip install --no-index --find-links=/path/to/wheels -e '.[vectors,file_conversion,theorem-provers,lazy]'
 ```
 
-### Building from Dockerfile
+Without a wheelhouse and without preinstalled binaries, optional features report **unavailable**—not proven, authorized, or healthy.
 
-To build your own Docker image:
-
-```bash
-git clone https://github.com/your-organization/ipfs_datasets_py.git
-cd ipfs_datasets_py
-
-docker build -t ipfs-datasets-py:custom .
-docker run -it --name ipfs-datasets-py-custom \
-  -v $(pwd)/data:/data \
-  -p 8080:8080 \
-  ipfs-datasets-py:custom
-```
-
-## IPFS Setup
-
-While IPFS Datasets Python can work without a local IPFS daemon, having one enables full functionality.
-
-### Installing IPFS
-
-#### Linux and macOS
-
-```bash
-# Download the latest release
-wget https://dist.ipfs.io/go-ipfs/v0.12.0/go-ipfs_v0.12.0_linux-amd64.tar.gz
-tar -xvzf go-ipfs_v0.12.0_linux-amd64.tar.gz
-
-# Install
-cd go-ipfs
-sudo bash install.sh
-
-# Initialize IPFS repository
-ipfs init
-```
-
-#### Windows
-
-1. Download the Windows binary from [IPFS Downloads](https://dist.ipfs.io/go-ipfs/v0.12.0/go-ipfs_v0.12.0_windows-amd64.zip)
-2. Extract the archive
-3. Add the extracted directory to your PATH
-4. Open Command Prompt or PowerShell and run:
-   ```
-   ipfs init
-   ```
-
-### Running IPFS Daemon
-
-To start the IPFS daemon:
-
-```bash
-ipfs daemon
-```
-
-For background running (Linux/macOS):
-
-```bash
-nohup ipfs daemon > ipfs.log 2>&1 &
-```
-
-### Configuring IPFS for IPFS Datasets Python
-
-To enable API access:
-
-```bash
-ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
-ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
-ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "GET", "POST"]'
-```
-
-## Configuration
-
-IPFS Datasets Python uses a configuration file for customization.
-
-### Default Configuration Location
-
-- Linux/macOS: `~/.ipfs_datasets/config.toml`
-- Windows: `%USERPROFILE%\.ipfs_datasets\config.toml`
-
-### Creating a Configuration File
-
-Create a configuration file with your preferred settings:
-
-```bash
-mkdir -p ~/.ipfs_datasets
-cat > ~/.ipfs_datasets/config.toml << EOF
-[ipfs]
-api_endpoint = "/ip4/127.0.0.1/tcp/5001"
-gateway_url = "http://localhost:8080/ipfs/"
-pin = true
-
-[storage]
-cache_dir = "~/.ipfs_datasets/cache"
-temp_dir = "/tmp/ipfs_datasets"
-max_cache_size_gb = 10
-
-[vector_index]
-default_dimension = 768
-default_metric = "cosine"
-index_location = "~/.ipfs_datasets/indexes"
-use_memory_mapping = true
-
-[embedding_models]
-default = "sentence-transformers/all-MiniLM-L6-v2"
-
-[security]
-encryption_enabled = true
-require_authentication = false
-EOF
-```
-
-### Configuration in Python
-
-You can also configure settings programmatically:
+**Probe ≠ install ≠ capability ≠ authorization ≠ proof** (see [ADR-002](architecture/decisions/ADR-002-LAZY-OPTIONAL-CAPABILITIES.md)).
 
 ```python
-from ipfs_datasets_py.config import set_config_value, save_config
+from ipfs_datasets_py.logic.common.feature_detection import is_module_available
 
-# Set individual values
-set_config_value("vector_index.default_dimension", 1024)
-set_config_value("embedding_models.default", "sentence-transformers/all-mpnet-base-v2")
-
-# Save configuration
-save_config()
+if not is_module_available("faiss"):
+    # degrade or skip vector path; do not claim production vector search
+    ...
 ```
 
-## Troubleshooting
+## 5. Docker (local build)
 
-### Common Installation Issues
+There is no verified public `yourorga/…` image in this tree. Build from the repository Dockerfile (`Dockerfile` → `docker/Dockerfile`, Python 3.12 base):
 
-#### Missing Dependencies
-
-**Issue**: `ImportError: No module named 'xxx'`
-
-**Solution**:
 ```bash
-pip install ipfs-datasets-py[all]
-# Or for specific dependency
-pip install xxx
+git clone https://github.com/endomorphosis/ipfs_datasets_py.git
+cd ipfs_datasets_py
+docker build -t ipfs_datasets_py:local -f docker/Dockerfile .
+# compose samples under docker-compose.yml and deployments/ are environment-specific
 ```
 
-#### IPFS Connection Issues
+Container images still need the same optional extras and system tools for full capabilities. Prefer `IPFS_DATASETS_AUTO_INSTALL=false` in production images and bake dependencies at build time.
 
-**Issue**: `ConnectionRefusedError: [Errno 111] Connection refused`
+Further deploy material: [deployment/](deployment/), [DOCKER_DEPLOYMENT_GUIDE.md](deployment/DOCKER_DEPLOYMENT_GUIDE.md) (verify against current manifests before production use).
 
-**Solutions**:
-1. Ensure IPFS daemon is running: `ipfs daemon`
-2. Check API endpoint configuration
-3. Verify firewall settings
+## 6. Platform caveats (summary)
 
-#### GPU Issues
+- **Windows:** FAISS pin and `python-magic-bin` differ; use `pip install -e '.[windows,…]'` when needed.
+- **Linux / macOS:** `python-magic` needs system `libmagic`; Darwin skips some lazy `xformers` pins.
+- **Architecture:** x86_64 and aarch64/arm64 are first-class for many tools; some ML/FAISS wheels are platform-gated.
+- Full platform extras: [PLATFORM_INSTALL.md](quickstart/PLATFORM_INSTALL.md).
 
-**Issue**: `ImportError: libcudart.so.xx.x: cannot open shared object file`
+## 7. Uninstall / rollback (summary)
 
-**Solution**:
-```bash
-# Install CUDA toolkit
-# Then reinstall with correct CUDA version
-pip uninstall torch faiss-gpu
-pip install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
-pip install faiss-gpu
-```
+| Layer | Action |
+| --- | --- |
+| Python env | Recreate the venv, or `pip uninstall ipfs_datasets_py` |
+| Optional extras | Reinstall without extras; shared base deps may remain |
+| Native provers | Delete `IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT` intentionally (not removed by pip) |
+| Playwright / NLTK data | Separate caches; clean with their own tools |
 
-### Getting Help
+Keep capability installs in disposable virtualenvs when experimenting.
 
-If you encounter issues not covered here:
+## 8. Troubleshooting (short)
 
-1. Check the [GitHub Issues](https://github.com/your-organization/ipfs_datasets_py/issues) for similar problems
-2. Read the [FAQ](faq.md) for common questions
-3. Join the [Community Discussion](https://github.com/your-organization/ipfs_datasets_py/discussions)
-4. File a new issue with detailed information about your problem
+| Symptom | Check |
+| --- | --- |
+| `ImportError` for optional stack | Install the matching **extra** (§3); probe with `is_module_available` |
+| IPFS connection refused | Daemon/API not required for all paths; start Kubo or configure HTTP/kit backends (see [configuration.md](configuration.md)) |
+| Prover / OCR / media fails | Missing **native** tool, not just a Python package |
+| Surprise `pip` in CI | Set `IPFS_DATASETS_AUTO_INSTALL=false` before import |
+| Wrong Python | Enforce 3.12+; recreate venv |
+
+## 9. Next steps
+
+| Need | Go to |
+| --- | --- |
+| Full extras, scripts, probes, offline matrix | [CAPABILITY_INSTALLATION.md](guides/installation/CAPABILITY_INSTALLATION.md) |
+| Env vars, precedence, secrets | [configuration.md](configuration.md), [CONFIGURATION_REFERENCE.md](guides/installation/CONFIGURATION_REFERENCE.md) |
+| First workflows | [getting_started.md](getting_started.md), [user_guide.md](user_guide.md) |
+| Dependency / init architecture | [DEPENDENCY_AND_INITIALIZATION.md](architecture/DEPENDENCY_AND_INITIALIZATION.md) |
+| Issues | [github.com/endomorphosis/ipfs_datasets_py/issues](https://github.com/endomorphosis/ipfs_datasets_py/issues) |
