@@ -1459,7 +1459,7 @@ Program invariants:
 
 ## PATLAW-120 Add bounded production HTTP transport and credential references
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
