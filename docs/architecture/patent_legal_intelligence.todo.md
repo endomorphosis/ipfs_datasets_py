@@ -1709,7 +1709,7 @@ Program invariants:
 
 ## PATLAW-130 Bind obligations to specific submission evidence and proofs
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
