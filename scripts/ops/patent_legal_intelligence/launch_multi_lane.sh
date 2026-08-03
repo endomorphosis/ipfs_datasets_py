@@ -37,7 +37,8 @@ Environment:
   PATLAW_SHARD               required with --foreground.
 
 Provider mode is `auto`: authenticated Grok/grok-4.5 is primary and
-Codex/gpt-5.6-terra is backup only in a distinct clean attempt at the same
+Codex/gpt-5.6-terra with medium reasoning is backup only after positively
+classified Grok quota exhaustion, in a distinct clean attempt at the same
 base. Runtime state belongs outside git. Stop only this program by sending TERM
 to the PIDs listed under PATLAW_STATE_ROOT/shards/*/supervisor.pid.
 EOF
@@ -71,15 +72,24 @@ if ! git rev-parse --verify --quiet "$MERGE_TARGET_BRANCH" >/dev/null; then
   echo "Merge target branch does not exist: $MERGE_TARGET_BRANCH" >&2
   exit 1
 fi
+if [[ -n "${PATLAW_IMPLEMENTATION_PROVIDER:-}" && "${PATLAW_IMPLEMENTATION_PROVIDER}" != "auto" ]]; then
+  echo "PATLAW_IMPLEMENTATION_PROVIDER must be auto; direct provider overrides are forbidden." >&2
+  exit 1
+fi
+if [[ -n "${IMPLEMENTATION_DAEMON_COMMAND:-}" ]]; then
+  echo "IMPLEMENTATION_DAEMON_COMMAND is forbidden for the reviewed PATLAW run." >&2
+  exit 1
+fi
 
 export PYTHONPATH="$ACCELERATE_ROOT:$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}"
-export IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER="${PATLAW_IMPLEMENTATION_PROVIDER:-auto}"
-export IPFS_ACCELERATE_AGENT_GROK_MODEL="${IPFS_ACCELERATE_AGENT_GROK_MODEL:-grok-4.5}"
+export IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER="auto"
+export IPFS_ACCELERATE_AGENT_GROK_MODEL="grok-4.5"
 export IPFS_ACCELERATE_AGENT_GROK_PERMISSION_MODE="${IPFS_ACCELERATE_AGENT_GROK_PERMISSION_MODE:-bypassPermissions}"
 export IPFS_ACCELERATE_AGENT_GROK_BIN="${IPFS_ACCELERATE_AGENT_GROK_BIN:-${HOME}/.local/bin/grok}"
 export IPFS_ACCELERATE_AGENT_CODEX_MODEL="gpt-5.6-terra"
-export IPFS_ACCELERATE_AGENT_CODEX_REASONING_EFFORT="high"
+export IPFS_ACCELERATE_AGENT_CODEX_REASONING_EFFORT="medium"
 export IPFS_ACCELERATE_AGENT_AUTO_PROVIDER_CLEAN_FALLBACK="1"
+export IPFS_ACCELERATE_AGENT_LLM_MERGE_RESOLVER_COMMAND="disabled"
 
 python3 "$REPO_ROOT/scripts/validate_patent_legal_intelligence_board.py" \
   --repo-root "$REPO_ROOT" --config "$CONFIG_PATH"
@@ -224,7 +234,7 @@ run_shard() {
 echo "[patlaw] repo=$REPO_ROOT"
 echo "[patlaw] accelerator=$ACCELERATE_ROOT"
 echo "[patlaw] board=$TODO_PATH target=$MERGE_TARGET_BRANCH state=$STATE_ROOT"
-echo "[patlaw] provider=auto primary=grok/grok-4.5 backup=codex/gpt-5.6-terra shards=$SHARD_COUNT"
+echo "[patlaw] provider=auto primary=grok/grok-4.5 quota-backup=codex/gpt-5.6-terra/medium shards=$SHARD_COUNT"
 
 if [[ "$FOREGROUND" == "1" ]]; then
   if [[ ! "${PATLAW_SHARD:-}" =~ ^[0-3]$ ]]; then

@@ -418,8 +418,11 @@ Four isolated `implementation_supervisor` shards run with:
 - reviewed-board execution only: objective/codebase refill, goal mutation,
   janitor, and generated repair guardrails disabled;
 - authenticated Grok (`grok-4.5`) as primary and Codex
-  (`gpt-5.6-terra`, high reasoning) only as a separately receipted fresh
-  attempt at the same clean base when the reviewed fallback proof permits it;
+  (`gpt-5.6-terra`, medium reasoning) only as a separately receipted fresh
+  attempt at the same clean base after positively classified Grok quota
+  exhaustion; authentication, timeout, validation, and generic failures do
+  not authorize cross-provider fallback, and the independent LLM merge
+  resolver is disabled for this program so it cannot invoke Codex or Copilot;
 - bounded attempts/timeouts and restartable artifact/page checkpoints; and
 - health checks over outer and managed PIDs, heartbeat freshness, active worker
   and log progress, dependency readiness, protected-path incidents, merge

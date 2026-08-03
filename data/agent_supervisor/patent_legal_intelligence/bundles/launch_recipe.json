@@ -2,14 +2,16 @@
   "schema": "patent-legal-supervisor-launch-v1",
   "datasets_branch": "feature/patent-legal-intelligence",
   "accelerator_branch": "feature/patent-legal-supervisor",
-  "accelerator_required_commit": "fcae2ecc29794da8515f60c015a1111253162aea",
+  "accelerator_required_commit": "bfe45f429992ed55deb3c42eb8d1d49b39900329",
   "provider_policy": {
     "mode": "auto",
     "primary": "grok",
     "primary_model": "grok-4.5",
     "backup": "codex",
     "backup_model": "gpt-5.6-terra",
-    "backup_reasoning_effort": "high",
+    "backup_reasoning_effort": "medium",
+    "fallback_condition": "grok_quota_exhausted_only",
+    "semantic_merge_resolver": "disabled",
     "authentication_preflight": "grok auth file and codex login status",
     "backup_requires_fresh_attempt": true,
     "same_workspace_fallback_forbidden": true

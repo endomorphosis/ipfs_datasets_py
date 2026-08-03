@@ -187,9 +187,12 @@ def check(repo_root: Path, accelerator_root: Path | None, *, allow_dirty: bool) 
             "primary_authenticated": grok_auth.is_file(),
             "backup": "codex",
             "backup_model": "gpt-5.6-terra",
+            "backup_reasoning_effort": "medium",
             "backup_version": codex_version.stdout.strip(),
             "backup_authenticated": codex_login.returncode == 0,
             "fresh_attempt_fallback": True,
+            "fallback_condition": "grok_quota_exhausted_only",
+            "semantic_merge_resolver": "disabled",
         },
     }
 

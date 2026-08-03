@@ -222,6 +222,7 @@ def validate(repo_root: Path, config_path: Path) -> dict[str, object]:
     task_dependencies: dict[str, list[str]] = {}
     protected = {str(item) for item in config.get("protected_paths", [])}
     board_namespace = str(config.get("program") or "")
+    schedulable_ids: set[str] = set()
     executable_ids: set[str] = set()
     initial_ready_by_lane: defaultdict[int, list[str]] = defaultdict(list)
     for task in tasks:
@@ -263,8 +264,10 @@ def validate(repo_root: Path, config_path: Path) -> dict[str, object]:
             errors.append(f"{task.identifier} estimated tokens must be a positive integer")
         status = task.fields.get("status", "").strip().lower()
         schedulable = task.fields.get("is schedulable", "").strip().lower() == "true"
-        if schedulable and status not in NON_EXECUTABLE_STATUSES:
-            executable_ids.add(task.identifier)
+        if schedulable:
+            schedulable_ids.add(task.identifier)
+            if status not in NON_EXECUTABLE_STATUSES:
+                executable_ids.add(task.identifier)
 
     task_cycle = _cycle(tasks_by_id, task_dependencies)
     if task_cycle:
@@ -301,14 +304,20 @@ def validate(repo_root: Path, config_path: Path) -> dict[str, object]:
     unknown_sliced = set(sliced) - set(tasks_by_id)
     if unknown_sliced:
         errors.append(f"lane slices contain unknown tasks: {sorted(unknown_sliced)}")
-    missing_sliced = executable_ids - set(sliced)
-    extra_sliced = set(sliced) - executable_ids
+    # Lane slices are a stable identity assignment for the lifetime of the
+    # reviewed board. Completed tasks remain in their original slice so a
+    # restart cannot silently reshuffle canonical work across lanes.
+    missing_sliced = schedulable_ids - set(sliced)
+    extra_sliced = set(sliced) - schedulable_ids
     if missing_sliced:
-        errors.append(f"executable tasks missing from lane slices: {sorted(missing_sliced)}")
+        errors.append(f"schedulable tasks missing from lane slices: {sorted(missing_sliced)}")
     if extra_sliced:
-        errors.append(f"non-executable tasks present in lane slices: {sorted(extra_sliced)}")
+        errors.append(f"non-schedulable tasks present in lane slices: {sorted(extra_sliced)}")
 
-    for task_id in executable_ids:
+    # The launch matrix records the board's reviewed initial frontier, not
+    # the current post-execution frontier. Derive it from all schedulable
+    # cards, including those completed since the plan was sealed.
+    for task_id in schedulable_ids:
         if not task_dependencies.get(task_id):
             lane = lane_for_task.get(task_id)
             if lane is not None:
@@ -408,11 +417,17 @@ def validate(repo_root: Path, config_path: Path) -> dict[str, object]:
     elif (
         provider.get("primary") != "grok"
         or provider.get("backup") != "codex"
+        or provider.get("primary_model") != "grok-4.5"
+        or provider.get("backup_model") != "gpt-5.6-terra"
+        or provider.get("backup_reasoning_effort") != "medium"
+        or provider.get("fallback_condition") != "grok_quota_exhausted_only"
+        or provider.get("semantic_merge_resolver") != "disabled"
         or provider.get("fresh_attempt_fallback") is not True
         or provider.get("same_workspace_fallback_forbidden") is not True
     ):
         errors.append(
-            "provider must require Grok primary and Codex backup in a distinct fresh attempt"
+            "provider must require Grok 4.5 primary and gpt-5.6-terra/medium "
+            "backup only after quota exhaustion in a distinct fresh attempt"
         )
     accelerator = config.get("accelerator")
     if not isinstance(accelerator, dict) or not str(
@@ -424,6 +439,29 @@ def validate(repo_root: Path, config_path: Path) -> dict[str, object]:
         or not str(provider.get("backup_model") or "").strip()
     ):
         errors.append("provider primary_model and backup_model must be pinned")
+    launcher_path = repo_root / str(paths.get("launcher") or "")
+    launcher_text = (
+        launcher_path.read_text(encoding="utf-8")
+        if launcher_path.is_file()
+        else ""
+    )
+    required_launcher_provider_fences = (
+        'export IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER="auto"',
+        'export IPFS_ACCELERATE_AGENT_GROK_MODEL="grok-4.5"',
+        'export IPFS_ACCELERATE_AGENT_CODEX_MODEL="gpt-5.6-terra"',
+        'export IPFS_ACCELERATE_AGENT_CODEX_REASONING_EFFORT="medium"',
+        'export IPFS_ACCELERATE_AGENT_AUTO_PROVIDER_CLEAN_FALLBACK="1"',
+    )
+    missing_provider_fences = [
+        snippet
+        for snippet in required_launcher_provider_fences
+        if snippet not in launcher_text
+    ]
+    if missing_provider_fences:
+        errors.append(
+            "launcher does not hard-pin the reviewed Grok/quota-fallback "
+            f"provider fences: {missing_provider_fences}"
+        )
     if not isinstance(accelerator, dict) or not str(
         accelerator.get("required_capability") or ""
     ).strip():

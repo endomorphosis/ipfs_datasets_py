@@ -23,15 +23,17 @@
     "primary_model": "grok-4.5",
     "backup": "codex",
     "backup_model": "gpt-5.6-terra",
-    "backup_reasoning_effort": "high",
+    "backup_reasoning_effort": "medium",
+    "fallback_condition": "grok_quota_exhausted_only",
+    "semantic_merge_resolver": "disabled",
     "fresh_attempt_fallback": true,
     "same_workspace_fallback_forbidden": true,
     "authentication_preflight": "grok auth file and codex login status"
   },
   "accelerator": {
     "branch": "feature/patent-legal-supervisor",
-    "required_feature_commit": "fcae2ecc29794da8515f60c015a1111253162aea",
-    "required_capability": "strict slices plus clean Grok-primary to Codex-backup failover"
+    "required_feature_commit": "bfe45f429992ed55deb3c42eb8d1d49b39900329",
+    "required_capability": "strict slices, quota-only isolated Codex fallback, quiescent heartbeat, exact synthetic artifact authority, and bounded failure diagnostics"
   },
   "supervisor": {
     "daemon_interval_seconds": 45,

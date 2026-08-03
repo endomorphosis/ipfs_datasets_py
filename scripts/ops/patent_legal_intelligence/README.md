@@ -32,9 +32,13 @@ nested legacy accelerator package from shadowing the selected supervisor.
 ## Provider and board policy
 
 Implementation uses `auto`: authenticated Grok (`grok-4.5`) is primary and
-Codex (`gpt-5.6-terra`, high reasoning effort) is available only through the
-reviewed fresh-attempt fallback. A failed provider's worktree is discarded;
-the backup begins from the same clean base with a separate receipt. The task
+Codex (`gpt-5.6-terra`, medium reasoning effort) is available only through the
+reviewed fresh-attempt fallback after positively classified Grok quota
+exhaustion. Authentication, timeout, validation, and generic failures do not
+authorize fallback. The failed Grok worktree is discarded; the backup begins
+from the same clean base with a separate receipt. The independent LLM merge
+resolver is disabled, so merge conflicts fail closed for deterministic
+reconciliation instead of invoking another model. The task
 graph is execution-only: automatic objective/codebase refill, goal mutation,
 task janitor, and generated repair guardrails are disabled. Implementation
 agents cannot edit protected plan, heap, board, configuration, policies, or
