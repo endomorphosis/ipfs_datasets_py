@@ -1634,7 +1634,7 @@ Program invariants:
 
 ## PATLAW-127 Add a common live legal-source fetch and receipt layer
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
