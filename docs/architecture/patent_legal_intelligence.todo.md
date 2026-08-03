@@ -149,7 +149,7 @@ Program invariants:
 
 ## PATLAW-007 Connect the generic adapter to the real PDF pipeline
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
