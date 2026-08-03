@@ -2056,3 +2056,528 @@ Program invariants:
 - Preconditions: The true full-processor E2E suite and all functional tasks are merged; v1 persisted-state fixtures and versioned schemas are available for migration tests.
 - Effects: Exercise malicious PDFs/XML/archives, XXE/schema attacks, prompt injection, spoofed citations, hostile metadata, tenant crossover, credential leakage, oversized inputs, retry storms, contradictory law, corrupt checkpoints, schema migrations, key rotation, retention/deletion, backup/restore, deterministic rebuilds, and rollback; aggregate evidence into a content-free release receipt and a separately signed independent legal-review receipt.
 - Acceptance: Security/property/privacy-lifecycle/migration/release gates pass on the exact tree; no-disclosure and provider-call evidence is explicit; v1 state either migrates transactionally or fails without mutation; receipt binds code/config/corpus/rules/parser/compiler/prover/model/test/metric digests and supervisor merge receipts, includes independent human legal-review scope and exceptions, and leaves every unknown mandatory gate blocking; task completion alone cannot reconcile goal status.
+
+## PATLAW-144 Define persistent content-addressed index snapshot contracts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-indexes
+- Depends on: PATLAW-090, PATLAW-091, PATLAW-092, PATLAW-124, PATLAW-135
+- Goal id: PATLAW-G161
+- Outputs: ipfs_datasets_py/processors/domains/patent/index_store.py, ipfs_datasets_py/processors/domains/patent/index_snapshot_contracts.py, tests/unit/processors/patent/test_index_store.py
+- Validation: python -m pytest tests/unit/processors/patent/test_index_store.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-index-contracts
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 15000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/index_store.py, ipfs_datasets_py/processors/domains/patent/index_snapshot_contracts.py, tests/unit/processors/patent/test_index_store.py
+- Allow concurrent with: PATLAW-145, PATLAW-161
+- Conflict policy: Own new persistent snapshot/store contracts and tests only; do not edit v1 indexing implementations, package exports, release builders, or authority materializers.
+- Preconditions: Canonical retrieval, graph, and index contracts plus durable matter and temporal-authority snapshots are merged and treated as immutable inputs.
+- Effects: Define append-only corpus/index manifests, CID joins, schema/model/config/code identities, checkpoints, tombstones, compaction roots, rollback pointers, disclosure and tenant partitions, and crash-safe local persistence interfaces.
+- Acceptance: Round trips are deterministic; corrupt or cross-tenant manifests fail closed; every record joins to a source CID and version; resume, tombstone, compaction and rollback retain immutable prior roots; unknown model or schema versions cannot open a snapshot.
+
+## PATLAW-145 Add a pinned local production embedding runtime
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-indexes
+- Depends on: PATLAW-092, PATLAW-120
+- Goal id: PATLAW-G161
+- Outputs: ipfs_datasets_py/processors/domains/patent/embedding_runtime.py, tests/unit/processors/patent/test_embedding_runtime.py, tests/security/test_private_embedding_runtime.py
+- Validation: python -m pytest tests/unit/processors/patent/test_embedding_runtime.py tests/security/test_private_embedding_runtime.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-embedding-runtime
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: accelerator-optional
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/embedding_runtime.py, tests/unit/processors/patent/test_embedding_runtime.py, tests/security/test_private_embedding_runtime.py
+- Allow concurrent with: PATLAW-144, PATLAW-161
+- Conflict policy: Own the new embedding runtime and focused tests only; do not choose a model at runtime without a pinned revision, call an external provider for denied content, or edit shared accelerator/provider policy.
+- Preconditions: V1 embedding metadata contracts and production bounded transport/privacy policy are available; approved local model artifacts are referenced by immutable identity.
+- Effects: Implement deterministic batching, normalized input hashing, pinned model/tokenizer revision, device selection, bounded resource use, cache identity, cancellation, and an audited policy decision before any nonlocal route.
+- Acceptance: Same inputs and pinned runtime produce stable vectors within declared tolerance; receipts bind model/tokenizer/code/config; unavailable hardware falls back explicitly or blocks; confidential tests make zero external calls and disclose no text, vectors, or CIDs.
+
+## PATLAW-146 Build persistent incremental BM25, vector, and graph snapshots
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-indexes
+- Depends on: PATLAW-144, PATLAW-145
+- Goal id: PATLAW-G161
+- Outputs: ipfs_datasets_py/processors/domains/patent/persistent_index_builder.py, tests/integration/processors/patent/test_persistent_index_builder.py, tests/fixtures/patent/index_snapshots/golden_manifest.json
+- Validation: python -m pytest tests/integration/processors/patent/test_persistent_index_builder.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-persistent-index-build
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/persistent_index_builder.py, tests/integration/processors/patent/test_persistent_index_builder.py, tests/fixtures/patent/index_snapshots/golden_manifest.json
+- Allow concurrent with: PATLAW-148, PATLAW-152, PATLAW-156, PATLAW-161
+- Conflict policy: Own the new persistent builder and golden snapshot fixture only; consume v1 BM25/vector/graph projectors through public contracts and do not edit them or shared exports.
+- Preconditions: Snapshot/store contracts and local embedding runtime are merged; canonical legal, public-patent, prosecution, and authorized private partitions are available by immutable manifests.
+- Effects: Build fielded BM25 documents/postings, vector mappings/indexes, and provenance graph nodes/edges incrementally; checkpoint per shard; verify count parity and CID referential integrity; support compaction, tombstones and rollback.
+- Acceptance: Full and incremental builds converge on the same logical root; interrupted builds resume; every vector/BM25/graph record has one allowed source join; private partitions remain encrypted and unpublishable; zero-orphan and deterministic-manifest tests pass.
+
+## PATLAW-147 Implement explainable hybrid retrieval and real-corpus evaluation
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-indexes
+- Depends on: PATLAW-123, PATLAW-139, PATLAW-146
+- Goal id: PATLAW-G161
+- Outputs: ipfs_datasets_py/processors/domains/patent/hybrid_retrieval_v2.py, ipfs_datasets_py/processors/domains/patent/retrieval_evaluation_v2.py, tests/integration/processors/patent/test_persistent_hybrid_retrieval.py, tests/fixtures/patent/retrieval/qrels_v2.json
+- Validation: python -m pytest tests/integration/processors/patent/test_persistent_hybrid_retrieval.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-hybrid-evaluation
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/hybrid_retrieval_v2.py, ipfs_datasets_py/processors/domains/patent/retrieval_evaluation_v2.py, tests/integration/processors/patent/test_persistent_hybrid_retrieval.py, tests/fixtures/patent/retrieval/qrels_v2.json
+- Allow concurrent with: PATLAW-152, PATLAW-156, PATLAW-161
+- Conflict policy: Own v2 fusion/evaluation modules, qrels, and focused tests only; do not tune on held-out labels, bypass pre-retrieval access/time filters, or elevate generated text or candidate graph edges to authority.
+- Preconditions: Persistent snapshots and executable gold-metric infrastructure are merged; public-official held-out cases have reviewed qrels and coverage labels.
+- Effects: Apply tenant/disclosure/as-of filters first, fuse fielded BM25, dense similarity, CPC/IPC, citations, families and graph paths, expose per-component contributions, and compute recall, ranking, citation, temporal, provenance, coverage and isolation metrics.
+- Acceptance: Versioned thresholds fail on intentionally degraded retrieval; each result exposes source spans and score contributions; receipts bind snapshot/model/config/qrels; isolation tests count zero denied calls/results; missing source coverage is reported rather than scored as searched.
+
+## PATLAW-148 Add a live public-patent prior-art search adapter and journal
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: prior-art-operations
+- Depends on: PATLAW-124, PATLAW-144
+- Goal id: PATLAW-G162
+- Outputs: ipfs_datasets_py/processors/domains/patent/prior_art_runtime.py, ipfs_datasets_py/processors/domains/patent/search_journal.py, tests/integration/processors/patent/test_public_prior_art_runtime.py
+- Validation: python -m pytest tests/integration/processors/patent/test_public_prior_art_runtime.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-prior-art-runtime
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: io-large
+- Token class: xlarge
+- Estimated tokens: 21000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/prior_art_runtime.py, ipfs_datasets_py/processors/domains/patent/search_journal.py, tests/integration/processors/patent/test_public_prior_art_runtime.py
+- Allow concurrent with: PATLAW-146, PATLAW-152, PATLAW-156, PATLAW-161
+- Conflict policy: Own new public search runtime/journal modules and tests only; do not scrape authenticated USPTO interfaces, claim Patent Public Search is an API, query private matters, or edit hybrid retrieval implementation.
+- Preconditions: Production ODP/public patent access and persistent index contracts are available; official interactive verification remains a documented human step.
+- Effects: Execute bounded local/ODP public searches from explicit query plans, record keywords/classifications/filters/cutoffs/results/scores/retries and source snapshots, and emit replayable content-addressed search journals.
+- Acceptance: Recorded transports and local snapshots replay identically; every query identifies database, time and cutoff; failures and rate limits remain explicit; journal cannot represent foreign or NPL sources as searched unless a named adapter actually ran.
+
+## PATLAW-149 Decompose claims into reviewed limitations and search plans
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: prior-art-operations
+- Depends on: PATLAW-122, PATLAW-134, PATLAW-147
+- Goal id: PATLAW-G162
+- Outputs: ipfs_datasets_py/processors/domains/patent/claim_search_planner_v2.py, tests/unit/processors/patent/test_claim_search_planner_v2.py
+- Validation: python -m pytest tests/unit/processors/patent/test_claim_search_planner_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-claim-search-plan
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 15000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/claim_search_planner_v2.py, tests/unit/processors/patent/test_claim_search_planner_v2.py
+- Allow concurrent with: PATLAW-150, PATLAW-152, PATLAW-156, PATLAW-161
+- Conflict policy: Own the v2 claim/search-plan module and tests only; do not overwrite claims, infer an invention date, produce a patentability conclusion, or admit model candidates without deterministic and human review.
+- Preconditions: Exact claim/source contracts, instruction assurance, and evaluated hybrid retrieval are merged; the user supplies or confirms relevant dates and jurisdictions.
+- Effects: Version claim text, propose atomic limitations, synonyms, concepts, CPC/IPC candidates, date/jurisdiction filters and query families, retain candidate origin/confidence, and require explicit reviewer acceptance before execution.
+- Acceptance: Every limitation and query maps to exact claim spans and version; amendments invalidate stale plans; ambiguous constructions remain alternatives; negative tests prevent omitted limitations, invented dates and unreviewed candidate promotion.
+
+## PATLAW-150 Expand citations, families, foreign patents, and NPL coverage
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: prior-art-operations
+- Depends on: PATLAW-124, PATLAW-148
+- Goal id: PATLAW-G162
+- Outputs: ipfs_datasets_py/processors/domains/patent/prior_art_coverage.py, ipfs_datasets_py/processors/domains/patent/prior_art_adapters.py, tests/integration/processors/patent/test_prior_art_coverage.py
+- Validation: python -m pytest tests/integration/processors/patent/test_prior_art_coverage.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-prior-art-coverage
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: io-large
+- Token class: xlarge
+- Estimated tokens: 21000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/prior_art_coverage.py, ipfs_datasets_py/processors/domains/patent/prior_art_adapters.py, tests/integration/processors/patent/test_prior_art_coverage.py
+- Allow concurrent with: PATLAW-149, PATLAW-152, PATLAW-156, PATLAW-161
+- Conflict policy: Own coverage/adapters and tests only; require approved public or licensed sources, preserve terms and access receipts, and never redistribute restricted NPL or misstate a source as searched after adapter failure.
+- Preconditions: Reproducible public search journals and family/continuity facts are available; each additional source has an explicit rights, authentication and retention policy.
+- Effects: Traverse backward/forward citations, priority and continuation families, add approved foreign-patent and NPL metadata/search adapters, normalize identifiers, deduplicate families, and emit searched/unsearched/failed coverage declarations.
+- Acceptance: Coverage records every adapter, query, timestamp, cutoff, rights status and result count; inaccessible or unlicensed sources remain named gaps; citation/family traversal is cycle-safe; NPL content cannot enter a public release without separate rights approval.
+
+## PATLAW-151 Produce source-quoted claim charts and an IDS review queue
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: prior-art-operations
+- Depends on: PATLAW-147, PATLAW-149, PATLAW-150
+- Goal id: PATLAW-G162
+- Outputs: ipfs_datasets_py/processors/domains/patent/claim_chart_v2.py, ipfs_datasets_py/processors/domains/patent/ids_review_queue.py, tests/integration/processors/patent/test_prior_art_review_v2.py
+- Validation: python -m pytest tests/integration/processors/patent/test_prior_art_review_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-claim-chart-review
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/claim_chart_v2.py, ipfs_datasets_py/processors/domains/patent/ids_review_queue.py, tests/integration/processors/patent/test_prior_art_review_v2.py
+- Allow concurrent with: PATLAW-152, PATLAW-156, PATLAW-161
+- Conflict policy: Own v2 claim-chart and IDS-review modules/tests only; do not file an IDS, make a legal materiality or patentability determination, omit negative evidence, or copy unlicensed NPL text.
+- Preconditions: Reviewed claim-search plans, evaluated hybrid retrieval, and explicit source-coverage declarations are merged.
+- Effects: Align accepted claim limitations with exact patent/NPL source spans, record supporting and contradictory passages, rankings and reviewer dispositions, route possible references to a human IDS queue, and require a signed searched/gap acknowledgement.
+- Acceptance: Every chart cell links claim and evidence spans or says not found/unknown; coverage gaps remain prominent; reviewer changes are versioned; no reference enters an IDS-ready state without natural-person relevance/materiality review and no output claims an exhaustive search.
+
+## PATLAW-152 Build an authorized tenant-isolated portfolio review service
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: portfolio-review
+- Depends on: PATLAW-124, PATLAW-125, PATLAW-136
+- Goal id: PATLAW-G171
+- Outputs: ipfs_datasets_py/processors/domains/uspto/portfolio_service.py, tests/integration/processors/domains/uspto/test_portfolio_review.py, tests/security/test_private_portfolio_isolation.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_portfolio_review.py tests/security/test_private_portfolio_isolation.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-portfolio-review
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: io-medium
+- Token class: xlarge
+- Estimated tokens: 21000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/portfolio_service.py, tests/integration/processors/domains/uspto/test_portfolio_review.py, tests/security/test_private_portfolio_isolation.py
+- Allow concurrent with: PATLAW-146, PATLAW-149, PATLAW-150, PATLAW-151, PATLAW-156, PATLAW-161
+- Conflict policy: Own the new portfolio service and focused tests only; do not edit shared API/CLI/MCP registries, enumerate an authenticated Patent Center account, store credentials/cookies, or expose private matter existence across tenants.
+- Preconditions: Durable matter runtime, document jobs, and resumable analysis are merged; access is limited to known public identifiers and explicit user-authorized local imports.
+- Effects: Reconcile public ODP facts and encrypted imported exports into tenant-scoped matter summaries, lifecycle, Office Action, claim-rejection, submission, receipt, gap and reviewer-action views while preserving source and observed-time identity.
+- Acceptance: Public/private versions reconcile without disclosure downgrade; rejected is not treated as terminal; delayed or absent upstream records remain unknown; authorization and tenant isolation tests expose no record, count, timing or search oracle to an unauthorized caller.
+
+## PATLAW-153 Compile a rule- and prior-art-aware filing package
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: filing-handoff
+- Depends on: PATLAW-133, PATLAW-137, PATLAW-138, PATLAW-151, PATLAW-152
+- Goal id: PATLAW-G172
+- Outputs: ipfs_datasets_py/processors/domains/uspto/filing_package.py, tests/unit/processors/domains/uspto/test_filing_package.py, tests/fixtures/uspto/filing_package/golden_manifest.json
+- Validation: python -m pytest tests/unit/processors/domains/uspto/test_filing_package.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-filing-package
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 24000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/filing_package.py, tests/unit/processors/domains/uspto/test_filing_package.py, tests/fixtures/uspto/filing_package/golden_manifest.json
+- Allow concurrent with: PATLAW-156, PATLAW-161
+- Conflict policy: Own the package compiler, manifest fixture and tests only; do not edit source documents in place, select legal strategy, sign, pay, file, or claim unsupported Patent Center validation.
+- Preconditions: Submission semantics, approved filing-obligation packs, authoritative candidate dates, prior-art coverage signoff, and authorized portfolio facts are available as immutable reviewed inputs.
+- Effects: Assemble original DOCX/PDF, drawings inventory, proposed ADS fields, forms/fees checklist, priority/inventorship/new-matter/nonpublication/export/IDS review items, warnings, source roots and exact content digests without asserting human certifications.
+- Acceptance: Any material input change invalidates approval; missing or stale mandatory rules, unresolved prior-art coverage, digest mismatch or required human confirmation blocks validated state; output distinguishes proposed metadata, original files, rendered derivatives and operator checklist.
+
+## PATLAW-154 Implement the human Patent Center handoff state machine
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: filing-handoff
+- Depends on: PATLAW-153
+- Goal id: PATLAW-G172
+- Outputs: ipfs_datasets_py/processors/domains/uspto/patent_center_handoff.py, tests/integration/processors/domains/uspto/test_patent_center_handoff.py, docs/operations/PATENT_CENTER_HUMAN_HANDOFF.md
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_patent_center_handoff.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-patent-center-handoff
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/patent_center_handoff.py, tests/integration/processors/domains/uspto/test_patent_center_handoff.py, docs/operations/PATENT_CENTER_HUMAN_HANDOFF.md
+- Allow concurrent with: PATLAW-156, PATLAW-161
+- Conflict policy: Own the handoff state machine, test and runbook only; no browser control, login, MFA, credential, signature, payment, filing, or fabricated training/live receipt capability may be introduced.
+- Preconditions: A validated, exact-digest filing package exists and named inventor/practitioner review responsibilities are explicit.
+- Effects: Record draft, validated, human-approved, exported, user-submitted and receipt-verified transitions; generate content-free instructions for training and live Patent Center review; require the user to record the submitted digest and download official artifacts.
+- Acceptance: Invalid transitions fail; system cannot advance past exported without an external human assertion and cannot advance to receipt-verified without verified official artifacts; tests prove no network/browser/session/payment interface exists.
+
+## PATLAW-155 Reconcile official filing receipts and converted artifacts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: filing-handoff
+- Depends on: PATLAW-124, PATLAW-154
+- Goal id: PATLAW-G172
+- Outputs: ipfs_datasets_py/processors/domains/uspto/filing_receipt_reconciler.py, tests/integration/processors/domains/uspto/test_filing_receipt_reconciler.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_filing_receipt_reconciler.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-filing-receipts
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 17000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/filing_receipt_reconciler.py, tests/integration/processors/domains/uspto/test_filing_receipt_reconciler.py
+- Allow concurrent with: PATLAW-156, PATLAW-161
+- Conflict policy: Own the new receipt reconciler and tests only; do not edit the durable store implementation, treat a payment receipt alone as filing acknowledgement, or log private content.
+- Preconditions: Human handoff recorded an approved/submitted package digest; acknowledgement, payment and USPTO-converted artifacts arrive only through explicit authorized import.
+- Effects: Parse and cross-check application/customer/confirmation identifiers, submitted filenames/digests, timestamps, document counts, conversion differences, acknowledgement and payment evidence, then append immutable reconciliation events to the matter ledger.
+- Acceptance: Exact and expected conversion cases verify with disclosed differences; wrong matter, missing acknowledgement, mismatched files, partial submission or payment-only cases remain conflicting/incomplete; filed status requires the authoritative acknowledgement rule defined by the reviewed policy.
+
+## PATLAW-156 Define Viewer-compatible JusticeDAO layouts and migration metadata
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-build
+- Depends on: PATLAW-100, PATLAW-101, PATLAW-102, PATLAW-135, PATLAW-139
+- Goal id: PATLAW-G181
+- Outputs: ipfs_datasets_py/processors/domains/patent/hf_layout_v2.py, docs/architecture/JUSTICEDAO_PATENT_LEGAL_LAYOUT.md, tests/unit/processors/patent/test_hf_layout_v2.py
+- Validation: python -m pytest tests/unit/processors/patent/test_hf_layout_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-hub-layout
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/hf_layout_v2.py, docs/architecture/JUSTICEDAO_PATENT_LEGAL_LAYOUT.md, tests/unit/processors/patent/test_hf_layout_v2.py
+- Allow concurrent with: PATLAW-146, PATLAW-149, PATLAW-150, PATLAW-151, PATLAW-152, PATLAW-161
+- Conflict policy: Own the new layout contract, architecture note and tests only; do not rename/delete existing Hub repositories, upload, edit the generic publisher, or embed a token.
+- Preconditions: V1 local release profiles, temporal authority snapshots and approved public corpus manifests are available; current JusticeDAO repository inventory and Viewer failures are captured as immutable operator inputs.
+- Effects: Define lowercase organization/repository identities, corpus and separate vector/BM25/knowledge-graph configs, root Parquet patterns, JSON-LD/manifests, dataset cards, version tags, migration pointers, coverage/current-through fields and CID joins compatible with Dataset Viewer.
+- Acceptance: Generated cards/configs enumerate sources, licenses, official-edition cutoffs, freshness, gaps, parser/model versions and responsible use; Viewer file patterns resolve; old repositories can point forward without data deletion; private configs cannot be declared.
+
+## PATLAW-157 Build deterministic public corpus, index, and graph release artifacts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-build
+- Depends on: PATLAW-146, PATLAW-147, PATLAW-151, PATLAW-156
+- Goal id: PATLAW-G181
+- Outputs: ipfs_datasets_py/processors/domains/patent/hf_release_v2.py, scripts/ops/legal_data/build_patent_hf_release_v2.py, tests/unit/processors/patent/test_hf_release_v2.py
+- Validation: python -m pytest tests/unit/processors/patent/test_hf_release_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-hub-release-build
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 24000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/hf_release_v2.py, scripts/ops/legal_data/build_patent_hf_release_v2.py, tests/unit/processors/patent/test_hf_release_v2.py
+- Allow concurrent with: PATLAW-161
+- Conflict policy: Own the v2 builder, build script and tests only; retain dry-run default, do not authenticate/upload, and do not reuse private, mixed, unreviewed or unlicensed inputs.
+- Preconditions: Viewer layout, persistent public indexes, evaluated retrieval and reviewed prior-art/public corpus manifests are merged.
+- Effects: Build deterministic Parquet corpus/config shards, vector mappings/artifacts, BM25 documents/terms/postings, graph nodes/edges/JSON-LD, cards, coverage/quality reports and a release manifest binding source/index/evaluation roots.
+- Acceptance: Repeat builds are byte-stable; counts and CIDs agree across projections; no orphan joins; authoritative and AI-derived fields remain separate; every artifact carries rights/privacy/source review; private or mixed input fails before any filesystem staging.
+
+## PATLAW-158 Enforce public-release DLP, rights, and Dataset Viewer gates
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-build
+- Depends on: PATLAW-157
+- Goal id: PATLAW-G181
+- Outputs: ipfs_datasets_py/processors/domains/patent/hf_release_policy_v2.py, scripts/ops/legal_data/verify_patent_hf_viewer.py, tests/security/test_patent_hf_release_v2.py
+- Validation: python -m pytest tests/security/test_patent_hf_release_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-hub-release-gates
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 17000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/hf_release_policy_v2.py, scripts/ops/legal_data/verify_patent_hf_viewer.py, tests/security/test_patent_hf_release_v2.py
+- Allow concurrent with: PATLAW-161
+- Conflict policy: Own v2 release policy, Viewer verifier and security tests only; do not authenticate, upload, approve rights, weaken v1 policy, or treat a successful HTTP response as a valid dataset.
+- Preconditions: Deterministic v2 release artifacts and their classification/rights/source manifests are available in a local staging directory.
+- Effects: Scan artifact bytes, metadata, cards, embeddings, graph and manifests for forbidden classifications/identifiers/content; verify rights receipts, source/current-through disclosure, count parity and Hub Dataset Viewer is-valid/splits/rows/parquet/size/statistics response contracts against a fake service.
+- Acceptance: Private/mixed/unknown rights, orphan rows, missing cards/configs, invalid Parquet, stale mandatory sources, inconsistent counts or failed Viewer features block admission before credentials are resolved; adversarial encoded/private leakage fixtures fail.
+
+## PATLAW-159 Stage an authenticated Hub PR with exact human approval
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-publication
+- Depends on: PATLAW-158
+- Goal id: PATLAW-G182
+- Outputs: ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py, scripts/ops/legal_data/stage_patent_hf_release.py, tests/integration/processors/patent/test_hf_publication_v2.py
+- Validation: python -m pytest tests/integration/processors/patent/test_hf_publication_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-hub-stage-publish
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: io-large
+- Token class: xlarge
+- Estimated tokens: 23000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py, scripts/ops/legal_data/stage_patent_hf_release.py, tests/integration/processors/patent/test_hf_publication_v2.py
+- Allow concurrent with: PATLAW-161
+- Conflict policy: Own the v2 publisher, staging command and fake-service integration tests only; no direct-main upload, embedded token, unattended approval, supervisor self-approval, repository deletion, or pointer promotion is allowed.
+- Preconditions: Release candidate passed local DLP/rights/Viewer gates; a scoped Hub token is resolved only by the operator command; target owner/repositories and expected base revisions are explicit.
+- Effects: Create an add-only branch or pull request against exact base revisions, upload only manifest-enumerated artifacts, return a staged diff and commit identity, require a separate operator-signed approval binding the release root and diff, and then perform the approved promotion transaction.
+- Acceptance: Missing/wrong approval, changed base, changed artifact, conflict, partial upload, auth error or race cannot publish main/pointers; fake service proves credentials stay out of receipts; the implementation agent cannot generate the operator approval it consumes.
+
+## PATLAW-160 Verify pinned Hub downloads and exercise rollback
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-publication
+- Depends on: PATLAW-159
+- Goal id: PATLAW-G182
+- Outputs: scripts/ops/legal_data/verify_patent_hf_release_v2.py, docs/operations/PATENT_HF_RELEASE_V2.md, tests/release/test_patent_hf_release_v2.py
+- Validation: python -m pytest tests/release/test_patent_hf_release_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-hub-verify-rollback
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: io-large
+- Token class: large
+- Estimated tokens: 19000
+- Predicted files: scripts/ops/legal_data/verify_patent_hf_release_v2.py, docs/operations/PATENT_HF_RELEASE_V2.md, tests/release/test_patent_hf_release_v2.py
+- Allow concurrent with: PATLAW-162
+- Conflict policy: Own pinned verifier, release/rollback runbook and tests only; do not alter released bytes, delete commits, silently select latest, or promote/roll back without an exact operator receipt.
+- Preconditions: A staged or promoted Hub commit and local canonical release manifest are available; fake-service tests cover all network paths and live verification remains explicit/operator-invoked.
+- Effects: Redownload every manifest file at the exact Hub commit SHA, verify SHA/CID/size/schema/counts, query Viewer endpoints, record canary outcome, and exercise an approval-bound pointer rollback that preserves both releases and audit evidence.
+- Acceptance: Any missing/changed artifact, unpinned request, Viewer failure or manifest mismatch blocks promotion; successful receipt binds repository IDs, Hub SHA, release CID, all artifact hashes and Viewer results; rollback changes only the reviewed pointer and is itself pinned and verifiable.
+
+## PATLAW-161 Implement safe paired-repository integration worktrees
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: cross-repo-integration
+- Depends on: PATLAW-080
+- Goal id: PATLAW-G191
+- Outputs: scripts/ops/uspto/integrate_upstreams.py, scripts/ops/uspto/sync_upstreams.sh, tests/integration/processors/domains/uspto/test_cross_repo_integration_v2.py, data/release/uspto_submission_assurance/paired_revision_receipt.schema.json
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_cross_repo_integration_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-cross-repo-integration
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: io-medium
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: scripts/ops/uspto/integrate_upstreams.py, scripts/ops/uspto/sync_upstreams.sh, tests/integration/processors/domains/uspto/test_cross_repo_integration_v2.py, data/release/uspto_submission_assurance/paired_revision_receipt.schema.json
+- Allow concurrent with: PATLAW-144, PATLAW-145, PATLAW-146, PATLAW-147, PATLAW-148, PATLAW-149, PATLAW-150, PATLAW-151, PATLAW-152, PATLAW-153, PATLAW-154, PATLAW-155, PATLAW-156, PATLAW-157, PATLAW-158, PATLAW-159
+- Conflict policy: This task is the sole v2 owner of cross-repository integration logic and the existing sync wrapper; it may not edit the accelerator repository, run pull in active worktrees, recurse mutual submodules, auto-resolve conflicts with an LLM, or push.
+- Preconditions: Completed PATLAW-080 behavior and paired-repository test contracts are present; remote default branches, clean/active indicators, merge queue state and accelerator capability pin are explicit.
+- Effects: Fetch exact remote tips, create isolated maintenance worktrees, merge and test the accelerator tip first through its reviewed workflow, merge/test the datasets tip against that accelerator SHA, quarantine conflicts, and emit a paired revision/test/merge disposition receipt.
+- Acceptance: Dirty/active/locked/conflicting/missing-branch states abort without mutation; tests prove exact merge ordering, no active-worktree pull and no push; accepted receipt binds before/remote/integrated SHAs for both repositories, capability pin, test results, trigger and lock identity.
+
+## PATLAW-162 Install recurring fetch, integration, and release triggers
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: cross-repo-integration
+- Depends on: PATLAW-161
+- Goal id: PATLAW-G191
+- Outputs: scripts/ops/uspto/sync_upstreams.sh, scripts/ops/uspto/install_sync_schedule.py, tests/integration/processors/domains/uspto/test_cross_repo_sync_schedule.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_cross_repo_sync_schedule.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-cross-repo-schedule
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: io-small
+- Token class: large
+- Estimated tokens: 15000
+- Predicted files: scripts/ops/uspto/sync_upstreams.sh, scripts/ops/uspto/install_sync_schedule.py, tests/integration/processors/domains/uspto/test_cross_repo_sync_schedule.py
+- Allow concurrent with: PATLAW-160
+- Conflict policy: Own schedule-template installation and the serialized sync wrapper after PATLAW-161; do not install without operator opt-in, overlap integration locks, edit user crontabs directly in tests, push, or weaken fail-closed active/dirty checks.
+- Preconditions: Paired integration workflow is merged and its triggers/lock/receipt schema are stable.
+- Effects: Provide idempotent systemd/cron template generation for eight-hour fetch, twice-daily integration, wave-boundary, pre-release and security-fix triggers; serialize all through one program-family lock and expose dry-run/uninstall/status commands.
+- Acceptance: Fake-clock tests prove cadence, mutual exclusion, missed-run recovery and pre-release blocking; repeated install is idempotent; operator must explicitly activate generated templates; every run produces or references a paired-revision receipt and never pushes.
+
+## PATLAW-163 Add content-free production freshness and release observability
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-assurance
+- Depends on: PATLAW-135, PATLAW-147, PATLAW-155, PATLAW-160, PATLAW-162
+- Goal id: PATLAW-G192
+- Outputs: scripts/ops/patent_legal_intelligence/production_status.py, tests/integration/processors/domains/uspto/test_production_status.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_production_status.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-production-status
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-small
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/patent_legal_intelligence/production_status.py, tests/integration/processors/domains/uspto/test_production_status.py
+- Allow concurrent with:
+- Conflict policy: Own the new production status surface and tests only; do not edit the protected supervisor status tool, expose document/query content, infer legal readiness from task counts, or mutate sources, indexes, matters, Hub or sync state.
+- Preconditions: Authority snapshots, evaluated indexes, filing receipts, Hub verification and paired-repository schedules emit stable content-free receipts.
+- Effects: Aggregate freshness/current-through watermarks, source gaps/conflicts, matter polling lag, index roots/age, isolation incidents, filing-handoff states, Hub commit/Viewer health, sync pair age, merge queue and supervisor drained/completed state into machine-readable health.
+- Acceptance: Healthy, stale, degraded, blocked, active, drained and completed are distinguished; stopped drained shards are not falsely unhealthy; missing mandatory receipt blocks readiness; output contains safe IDs/digests/counts/timestamps only and remains tenant/nonexistence-safe.
+
+## PATLAW-164 Run the exact-tree patent legal production completion gate
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-assurance
+- Depends on: PATLAW-143, PATLAW-151, PATLAW-155, PATLAW-160, PATLAW-163
+- Goal id: PATLAW-G192
+- Outputs: scripts/ops/uspto/validate_production_release.py, tests/release/test_patent_legal_production_release.py, data/release/patent_legal_intelligence/production_receipt.schema.json, docs/operations/PATENT_LEGAL_PRODUCTION_RELEASE.md
+- Validation: python -m pytest tests/release/test_patent_legal_production_release.py -q && python scripts/ops/uspto/validate_production_release.py --offline
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-production-gate
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 26000
+- Predicted files: scripts/ops/uspto/validate_production_release.py, tests/release/test_patent_legal_production_release.py, data/release/patent_legal_intelligence/production_receipt.schema.json, docs/operations/PATENT_LEGAL_PRODUCTION_RELEASE.md
+- Allow concurrent with:
+- Conflict policy: Own the final production gate, test, receipt schema and runbook only; do not modify implementation modules, accept task status as evidence, skip declared suites, fabricate live receipts, or relax a mandatory unknown/failed gate.
+- Preconditions: V2 functional release evidence, reviewed prior-art coverage, filing receipt workflow, verified Hub release and production status are merged on the exact target tree; independent human legal/publication approvals are supplied separately where required.
+- Effects: Execute the declared offline suites, validate optional live canary receipts when claimed, bind official source roots/current-through values, corpus/index/model/qrels roots, retrieval metrics, private isolation/provider-call counts, filing handoff/receipt results, Hub commit/Viewer verification, paired repository SHAs, supervisor merge receipts, config and git tree.
+- Acceptance: One content-free immutable receipt proves every mandatory gate on the current tree; mismatched/stale/missing/unknown evidence blocks; no legal opinion, patentability guarantee, filing claim or publication claim appears without the corresponding reviewed evidence; root goal remains active until this receipt and every child receipt validate.

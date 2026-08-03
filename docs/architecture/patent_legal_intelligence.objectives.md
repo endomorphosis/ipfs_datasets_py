@@ -26,7 +26,7 @@ Program invariants:
 - Priority: P0
 - Bundle: patlaw/root
 - Goal: Deliver a safe, replayable processor system that verifies official patent authorities, retrieves public and authorized private USPTO matter records, parses correspondence and submissions, indexes public law/patent/prosecution evidence with BM25/vector/knowledge-graph retrieval, produces reproducible prior-art and filing-review artifacts, publishes approved public shards to JusticeDAO, and preserves mandatory human legal and filing control.
-- Evidence: PATLAW-G010, PATLAW-G020, PATLAW-G030, PATLAW-G040, PATLAW-G050, PATLAW-G060, PATLAW-G070, PATLAW-G080, PATLAW-G090, PATLAW-G100, PATLAW-G110, PATLAW-G120, PATLAW-G130, PATLAW-G140, PATLAW-G150
+- Evidence: PATLAW-G010, PATLAW-G020, PATLAW-G030, PATLAW-G040, PATLAW-G050, PATLAW-G060, PATLAW-G070, PATLAW-G080, PATLAW-G090, PATLAW-G100, PATLAW-G110, PATLAW-G120, PATLAW-G130, PATLAW-G140, PATLAW-G150, PATLAW-G160, PATLAW-G170, PATLAW-G180, PATLAW-G190
 - Outputs: ipfs_datasets_py/processors, ipfs_datasets_py/processors/legal_scrapers/federal_scrapers, ipfs_datasets_py/processors/legal_data, ipfs_datasets_py/knowledge_graphs, ipfs_datasets_py/huggingface, ipfs_datasets_py/mcp_server, ipfs_datasets_py/cli, tests
 - Validation: python -m pytest tests/integration/processors tests/e2e/test_uspto_application_analysis.py -q
 - Acceptance: Every child goal is complete with fresh evidence on the target tree; reviewed public and synthetic private fixtures replay to provenance-complete authority, status, requirement, evidence, retrieval, prior-art, candidate-date, and human-review reports; approved public release re-downloads verify; private isolation and no-sign/no-file/no-pay boundaries pass.
@@ -682,3 +682,219 @@ Program invariants:
 - Refinement: Live canaries are isolated, read-only, bounded, redacted, opt-in, and never required for deterministic CI.
 - Embedding query: true end to end USPTO pipeline adversarial recovery migration rollback live canary release gate
 - AST query: EndToEndReplay ReleaseGateV2 MigrationReceipt RollbackReceipt
+
+## PATLAW-G160 Operate production hybrid retrieval and reproducible prior-art review
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 13
+- Track: production-retrieval
+- Priority: P0
+- Bundle: patlaw/v2-retrieval
+- Goal: Replace fixture-scale retrieval with persistent content-addressed BM25, semantic-vector, and temporal knowledge-graph snapshots, then execute reproducible prior-art searches whose coverage, query history, evidence, and human decisions are explicit.
+- Evidence: PATLAW-G161, PATLAW-G162
+- Outputs: ipfs_datasets_py/processors/domains/patent/index_store.py, ipfs_datasets_py/processors/domains/patent/embedding_runtime.py, ipfs_datasets_py/processors/domains/patent/prior_art_runtime.py, tests/integration/processors/patent
+- Validation: python -m pytest tests/unit/processors/patent tests/integration/processors/patent -q
+- Acceptance: Public corpus snapshots rebuild deterministically and incrementally; private routes remain local and tenant-isolated; hybrid results expose component scores and exact source spans; prior-art reports preserve searched sources and gaps and never claim a conclusive patentability opinion.
+- Gap task: Implement the highest-priority incomplete persistent-index, retrieval-evaluation, search-adapter, claim-chart, or coverage-signoff child.
+- Refinement: Freeze storage and embedding contracts before large builds; evaluate retrieval before it can influence filing preflight.
+- Embedding query: persistent BM25 vector knowledge graph hybrid fusion prior art claim chart reproducible search journal
+- AST query: PatentIndexSnapshot EmbeddingRuntime HybridRetrievalEngine PriorArtSearchRuntime
+
+## PATLAW-G161 Persist, update, and evaluate source-linked hybrid indexes
+
+- Status: active
+- Parent: PATLAW-G160
+- Fib priority: 1
+- Track: production-indexes
+- Priority: P0
+- Bundle: patlaw/v2-indexes
+- Goal: Define scalable snapshot contracts, run a pinned local embedding provider, persist fielded BM25/vector/graph materializations, and evaluate explainable fusion under mandatory temporal, disclosure, and tenant filters.
+- Evidence: PATLAW-144, PATLAW-145, PATLAW-146, PATLAW-147
+- Outputs: ipfs_datasets_py/processors/domains/patent/index_store.py, ipfs_datasets_py/processors/domains/patent/embedding_runtime.py, ipfs_datasets_py/processors/domains/patent/persistent_index_builder.py, ipfs_datasets_py/processors/domains/patent/hybrid_retrieval_v2.py
+- Validation: python -m pytest tests/unit/processors/patent/test_index_store.py tests/integration/processors/patent/test_persistent_hybrid_retrieval.py -q
+- Acceptance: Snapshots bind corpus/model/config/code identities, resume safely, retain tombstones and rollback roots, contain no orphan CID joins, and pass frozen qrels without remote calls on denied private routes.
+- Gap task: Close the next persistence, embedding, incremental-build, fusion, rollback, or retrieval-evaluation gap.
+- Refinement: Use deterministic manifests and locally pinned model revisions; generated summaries and edges remain non-authoritative candidates.
+- Embedding query: persistent legal patent index snapshot local embedding BM25 vector graph qrels rollback
+- AST query: PatentIndexStore LocalEmbeddingRuntime PersistentIndexBuilder HybridRetrievalV2
+
+## PATLAW-G162 Execute documented prior-art searches and human-reviewed claim charts
+
+- Status: active
+- Parent: PATLAW-G160
+- Fib priority: 2
+- Track: prior-art-operations
+- Priority: P0
+- Bundle: patlaw/v2-prior-art
+- Goal: Convert claim limitations into reproducible search plans, execute public-patent and licensed source adapters, traverse citations and families, disclose foreign and non-patent-literature gaps, and produce source-quoted claim charts and a human IDS-candidate queue.
+- Evidence: PATLAW-148, PATLAW-149, PATLAW-150, PATLAW-151
+- Outputs: ipfs_datasets_py/processors/domains/patent/prior_art_runtime.py, ipfs_datasets_py/processors/domains/patent/search_journal.py, ipfs_datasets_py/processors/domains/patent/prior_art_coverage.py, ipfs_datasets_py/processors/domains/patent/claim_chart_v2.py
+- Validation: python -m pytest tests/unit/processors/patent/test_prior_art_runtime.py tests/integration/processors/patent/test_prior_art_review_v2.py -q
+- Acceptance: Every search records query, database, timestamp, corpus cutoff, identifiers, rankings, source spans, reviewer dispositions, and unsearched coverage; possible IDS references require natural-person review and are never auto-filed.
+- Gap task: Add the next approved search backend, query strategy, citation/family expansion, coverage declaration, or claim-chart validation.
+- Refinement: Patent Public Search verification and foreign/NPL expansion supplement local retrieval; none guarantees completeness or legal patentability.
+- Embedding query: claim limitation CPC IPC patent search journal citations family foreign NPL IDS human review
+- AST query: PriorArtSearchRuntime SearchJournal CoverageDeclaration ClaimChartV2
+
+## PATLAW-G170 Review authorized portfolios and prepare human-controlled filing handoffs
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 21
+- Track: applicant-operations
+- Priority: P0
+- Bundle: patlaw/v2-applicant
+- Goal: Let an authorized user review public and imported private matters, build rule- and prior-art-aware filing packages, complete a human Patent Center handoff, and verify acknowledgement and payment receipts without account scraping, credential automation, signing, payment, or filing by the processor.
+- Evidence: PATLAW-G171, PATLAW-G172
+- Outputs: ipfs_datasets_py/processors/domains/uspto/portfolio_service.py, ipfs_datasets_py/processors/domains/uspto/filing_package.py, ipfs_datasets_py/processors/domains/uspto/patent_center_handoff.py, ipfs_datasets_py/processors/domains/uspto/filing_receipt_reconciler.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_portfolio_review.py tests/integration/processors/domains/uspto/test_filing_handoff.py -q
+- Acceptance: Imported authorized account records remain encrypted and tenant-isolated; package readiness binds current authority and prior-art coverage; only a human uses Patent Center; a matter becomes receipt-verified only after official receipts and converted artifacts match the approved digest.
+- Gap task: Implement the highest-priority incomplete portfolio, package, handoff, human-confirmation, or receipt-reconciliation child.
+- Refinement: Keep portfolio review independent of public publication; no unpublished record, embedding, graph node, prompt, or CID enters a public sink.
+- Embedding query: private patent portfolio review filing package Patent Center human handoff acknowledgement receipt digest
+- AST query: PatentPortfolioService FilingPackageCompiler PatentCenterHandoff FilingReceiptReconciler
+
+## PATLAW-G171 Expose an authorized tenant-isolated portfolio review service
+
+- Status: active
+- Parent: PATLAW-G170
+- Fib priority: 1
+- Track: portfolio-review
+- Priority: P0
+- Bundle: patlaw/v2-portfolio
+- Goal: Reconcile known application numbers, public ODP state, and user-authorized Patent Center exports into a private review model that distinguishes application lifecycle from Office Action and claim-level rejection events.
+- Evidence: PATLAW-152
+- Outputs: ipfs_datasets_py/processors/domains/uspto/portfolio_service.py, tests/integration/processors/domains/uspto/test_portfolio_review.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_portfolio_review.py -q
+- Acceptance: The service cannot enumerate or scrape an account; unknown and unpublished matters require authorized import; status and rejection facts retain their official source, observed time, confidentiality, and review disposition.
+- Gap task: Close the next portfolio reconciliation, lifecycle, access-control, status, or review-projection gap.
+- Refinement: Public and private namespaces remain physically and logically separate, with no existence oracle across tenants.
+- Embedding query: authorized private portfolio pending rejected application status claim event tenant review
+- AST query: PatentPortfolioService MatterLedger ApplicationLifecycle RejectionEvent
+
+## PATLAW-G172 Prepare, hand off, and receipt-verify a filing package
+
+- Status: active
+- Parent: PATLAW-G170
+- Fib priority: 2
+- Track: filing-handoff
+- Priority: P0
+- Bundle: patlaw/v2-filing-handoff
+- Goal: Compile a content-addressed filing package and checklist, require exact human approval, support Patent Center training and interactive submission as an external step, and reconcile returned official receipts and converted documents.
+- Evidence: PATLAW-153, PATLAW-154, PATLAW-155
+- Outputs: ipfs_datasets_py/processors/domains/uspto/filing_package.py, ipfs_datasets_py/processors/domains/uspto/patent_center_handoff.py, ipfs_datasets_py/processors/domains/uspto/filing_receipt_reconciler.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/test_filing_package.py tests/integration/processors/domains/uspto/test_filing_handoff.py -q
+- Acceptance: State advances only through draft, validated, human-approved, exported, user-submitted, and receipt-verified; signatures, Rule 11.18 certification, fees, and Submit remain natural-person actions; mismatched or absent receipts block filed status.
+- Gap task: Add the next package validation, explicit approval, training-mode, state-transition, or receipt-difference behavior.
+- Refinement: The handoff emits files and a digest, never reusable credentials, browser automation, payment instructions, or a claim that filing occurred.
+- Embedding query: DOCX PDF ADS drawings fee checklist exact digest human approval training mode receipt verified
+- AST query: FilingPackageCompiler PatentCenterHandoff FilingStateMachine FilingReceiptReconciler
+
+## PATLAW-G180 Publish verified public patent-law artifacts to JusticeDAO
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 34
+- Track: public-publication-v2
+- Priority: P0
+- Bundle: patlaw/v2-hub
+- Goal: Build Viewer-compatible public legal and patent corpus, vector, BM25, and knowledge-graph artifacts and publish them through an authenticated staged JusticeDAO workflow with exact approval, pinned verification, and rollback.
+- Evidence: PATLAW-G181, PATLAW-G182
+- Outputs: ipfs_datasets_py/processors/domains/patent/hf_layout_v2.py, ipfs_datasets_py/processors/domains/patent/hf_release_v2.py, ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py, scripts/ops/legal_data
+- Validation: python -m pytest tests/unit/processors/patent/test_hf_release_v2.py tests/integration/processors/patent/test_hf_publication_v2.py -q
+- Acceptance: Only rights-reviewed public records are admitted; Viewer configs expose complete Parquet projections; release manifests bind all source and index roots; operator-approved Hub commits redownload and hash-verify before promotion; rollback preserves audit evidence.
+- Gap task: Implement the highest-priority incomplete layout, release build, privacy gate, staged publication, Viewer verification, or rollback child.
+- Refinement: Preserve the dry-run default and separate release construction from authenticated publication; no supervisor task independently approves its own release.
+- Embedding query: JusticeDAO Hugging Face viewer parquet public law patent BM25 vector knowledge graph staged approval
+- AST query: PatentHubLayoutV2 PatentHFReleaseV2 PatentHFPublisherV2 DatasetViewerGate
+
+## PATLAW-G181 Build deterministic Viewer-compatible public release artifacts
+
+- Status: active
+- Parent: PATLAW-G180
+- Fib priority: 1
+- Track: hub-build
+- Priority: P0
+- Bundle: patlaw/v2-hub-build
+- Goal: Inventory existing JusticeDAO repositories, define canonical configs and migration metadata, build deterministic corpus/index/graph artifacts, and enforce rights, provenance, privacy, count-parity, and Dataset Viewer gates.
+- Evidence: PATLAW-156, PATLAW-157, PATLAW-158
+- Outputs: ipfs_datasets_py/processors/domains/patent/hf_layout_v2.py, ipfs_datasets_py/processors/domains/patent/hf_release_v2.py, ipfs_datasets_py/processors/domains/patent/hf_release_policy_v2.py, scripts/ops/legal_data/verify_patent_hf_viewer.py
+- Validation: python -m pytest tests/unit/processors/patent/test_hf_layout_v2.py tests/unit/processors/patent/test_hf_release_v2.py tests/security/test_patent_hf_release_v2.py -q
+- Acceptance: Configs cover official authority, public patents and prosecution events; every index and graph record joins to a public source CID; cards disclose cutoffs/gaps/models; private and mixed batches fail before staging; Viewer endpoints pass on the staged representation.
+- Gap task: Close the next repository-layout, migration, deterministic-build, DLP, rights, referential-integrity, or Viewer gap.
+- Refinement: Use the established JusticeDAO multi-config/index pattern while preserving immutable manifests and commit-pinned snapshots.
+- Embedding query: Hugging Face configs parquet dataset card manifest CID privacy rights Dataset Viewer
+- AST query: PatentHubLayoutV2 PatentHFReleaseV2 PatentHFReleasePolicyV2 DatasetViewerGate
+
+## PATLAW-G182 Stage, approve, publish, verify, and roll back Hub releases
+
+- Status: active
+- Parent: PATLAW-G180
+- Fib priority: 2
+- Track: hub-publication
+- Priority: P0
+- Bundle: patlaw/v2-hub-publish
+- Goal: Stage an authenticated Hub branch or pull request, require operator approval of the exact digest and diff, publish the approved commit, verify pinned downloads and Viewer results, and preserve a tested rollback pointer.
+- Evidence: PATLAW-159, PATLAW-160
+- Outputs: ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py, scripts/ops/legal_data/stage_patent_hf_release.py, scripts/ops/legal_data/verify_patent_hf_release_v2.py, docs/operations/PATENT_HF_RELEASE_V2.md
+- Validation: python -m pytest tests/integration/processors/patent/test_hf_publication_v2.py tests/release/test_patent_hf_release_v2.py -q
+- Acceptance: No direct-main or unapproved upload path exists; credentials are scoped references; race/conflict failures do not publish; the Hub commit SHA and every artifact digest verify after redownload; rollback moves only an approved pointer and never deletes evidence.
+- Gap task: Add the next stage, approval, conflict, pinned-verification, canary, promotion, or rollback behavior.
+- Refinement: Live publication is an explicit operator action after deterministic tests, not an unattended implementation-agent side effect.
+- Embedding query: staged Hub PR exact digest human approval pinned redownload viewer canary rollback
+- AST query: PatentHFPublisherV2 PublicationApprovalReceipt PinnedHubVerifier RollbackPointer
+
+## PATLAW-G190 Operate paired repositories and seal production readiness
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 55
+- Track: production-operations
+- Priority: P0
+- Bundle: patlaw/v2-operations
+- Goal: Replace fetch-only maintenance with safe paired-repository integration, schedule and observe source/index/Hub operations, and bind every functional, privacy, retrieval, filing, publication, and merge result into a final current-tree receipt.
+- Evidence: PATLAW-G191, PATLAW-G192
+- Outputs: scripts/ops/uspto/sync_upstreams.sh, scripts/ops/uspto/integrate_upstreams.py, scripts/ops/patent_legal_intelligence/production_status.py, scripts/ops/uspto/validate_production_release.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_cross_repo_integration_v2.py tests/release/test_patent_legal_production_release.py -q
+- Acceptance: Maintenance uses clean isolated worktrees, integrates exact fetched tips, tests an accelerator/datasets SHA pair, never pulls active worktrees or auto-pushes, quarantines conflicts, reports freshness and publication health, and closes only on a fresh exact-tree evidence bundle.
+- Gap task: Implement the highest-priority incomplete paired-integration, scheduling, observability, or final-production-gate child.
+- Refinement: Accelerator changes occur in its own reviewed repository workflow; this program pins and verifies them and never claims unsafe parent-directory outputs.
+- Embedding query: paired repository integration isolated worktree exact SHA receipt source freshness observability production gate
+- AST query: CrossRepositoryIntegrator PairedRevisionReceipt ProductionStatus ProductionReleaseGate
+
+## PATLAW-G191 Integrate ipfs_datasets_py and ipfs_accelerate_py safely
+
+- Status: active
+- Parent: PATLAW-G190
+- Fib priority: 1
+- Track: cross-repo-integration
+- Priority: P0
+- Bundle: patlaw/v2-sync
+- Goal: Fetch both origins on reviewed triggers, integrate exact tips in isolated maintenance worktrees, run paired compatibility tests, and enqueue a receipt-bound datasets merge without mutating active lanes or pushing automatically.
+- Evidence: PATLAW-161, PATLAW-162
+- Outputs: scripts/ops/uspto/integrate_upstreams.py, scripts/ops/uspto/sync_upstreams.sh, tests/integration/processors/domains/uspto/test_cross_repo_integration_v2.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_cross_repo_integration_v2.py -q
+- Acceptance: Dirty, active, conflicting, stale, or unpinned states fail without mutation; accelerator integration is tested before datasets integration; receipt binds fetched and merged SHAs, test results, trigger, lock, and disposition; no recursive chase or push occurs.
+- Gap task: Close the next worktree, merge-order, lock, compatibility, receipt, schedule, or conflict-quarantine gap.
+- Refinement: Use fetch plus reviewed merge instead of pull in active worktrees; security and release triggers serialize through the same lock.
+- Embedding query: git fetch merge isolated worktree accelerator datasets paired SHA compatibility receipt no push
+- AST query: CrossRepositoryIntegrator PairedRevisionReceipt SyncTrigger
+
+## PATLAW-G192 Observe operations and issue the final production receipt
+
+- Status: active
+- Parent: PATLAW-G190
+- Fib priority: 2
+- Track: production-assurance
+- Priority: P0
+- Bundle: patlaw/v2-production-gate
+- Goal: Monitor source freshness, matter polling, index snapshots, private-boundary incidents, Hub verification, sync receipts and supervisor terminal state, then execute a real exact-tree gate over the complete production workflow.
+- Evidence: PATLAW-163, PATLAW-164
+- Outputs: scripts/ops/patent_legal_intelligence/production_status.py, scripts/ops/uspto/validate_production_release.py, tests/release/test_patent_legal_production_release.py, data/release/patent_legal_intelligence/production_receipt.schema.json
+- Validation: python -m pytest tests/release/test_patent_legal_production_release.py -q && python scripts/ops/uspto/validate_production_release.py --offline
+- Acceptance: Status distinguishes healthy, stale, degraded, blocked, drained, and completed states without content disclosure; the final gate executes declared suites and binds sources, indexes, retrieval metrics, private isolation, filing handoff, Hub commit, paired repository SHAs, merge receipts, config and exact git tree.
+- Gap task: Add the next content-free health signal, real test execution, evidence binding, completion-state, or rollback check.
+- Refinement: A drained board or task status never substitutes for current-tree evidence; unresolved mandatory gaps remain blocking.
+- Embedding query: production health source freshness retrieval metric private isolation Hub commit paired SHA exact tree receipt
+- AST query: ProductionStatus ProductionReleaseGate EvidenceBundle CompletionReceipt
