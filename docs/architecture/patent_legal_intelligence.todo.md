@@ -1809,7 +1809,7 @@ Program invariants:
 
 ## PATLAW-134 Verify government instructions against authority and logic
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
