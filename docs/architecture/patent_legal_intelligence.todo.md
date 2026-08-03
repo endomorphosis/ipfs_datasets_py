@@ -2134,7 +2134,7 @@ Program invariants:
 
 ## PATLAW-147 Implement explainable hybrid retrieval and real-corpus evaluation
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
