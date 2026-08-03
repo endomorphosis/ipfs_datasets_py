@@ -1,0 +1,1101 @@
+{
+  "schema_version": "uspto.filing-rule-packs.v1",
+  "fixture_id": "patlaw-137-baseline-filing-obligations",
+  "notes": "Compact reviewed baseline filing-obligation pack for PATLAW-137. Not exhaustive. Form instructions are not controlling law. Pack is active only with source digests and human approval recorded below.",
+  "pack": {
+    "pack_id": "uspto.baseline-filing-obligations",
+    "version": "1.0.0",
+    "status": "active",
+    "jurisdiction": "us_uspto",
+    "title": "USPTO baseline filing obligations (utility, design, plant)",
+    "schema_version": "uspto.filing-rule-packs.v1",
+    "disclaimer": "This filing-obligation pack is a reviewed, versioned decision-support input. It is not legal advice, not a completeness certification, and does not authorize filing, payment, signature, or docket mutation. Form instructions are not controlling law. Named human review is required before any export or assurance disposition.",
+    "created_at": "2026-03-01T00:00:00Z",
+    "notes": "Baseline v1.0.0: utility/design/plant new-application and office-action-response components. Special application types have explicit out_of_scope or unknown profiles.",
+    "effective_interval": {
+      "effective_from": "2013-03-16",
+      "effective_to": null,
+      "notes": "AIA-era open-ended baseline; pre-AIA matters need a separate reviewed pack version."
+    },
+    "source_digests": [
+      {
+        "source_id": "src:35-usc-111",
+        "source_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+        "authority_citation": "35 U.S.C. 111",
+        "source_url": "https://www.govinfo.gov/app/details/USCODE-2023-title35/USCODE-2023-title35-partII-chap11-sec111",
+        "provider": "govinfo",
+        "retrieved_at": "2026-01-15T00:00:00Z",
+        "as_of": "2026-01-15",
+        "notes": "Application for patent — fixture digest placeholder bound for activation."
+      },
+      {
+        "source_id": "src:37-cfr-1-51",
+        "source_digest": "5151515151515151515151515151515151515151515151515151515151515151",
+        "authority_citation": "37 C.F.R. 1.51",
+        "source_url": "https://www.ecfr.gov/current/title-37/chapter-I/subchapter-A/part-1/subpart-B/section-1.51",
+        "provider": "ecfr",
+        "retrieved_at": "2026-01-15T00:00:00Z",
+        "as_of": "2026-01-15"
+      },
+      {
+        "source_id": "src:37-cfr-1-151-155",
+        "source_digest": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+        "authority_citation": "37 C.F.R. 1.151-1.155",
+        "provider": "ecfr",
+        "retrieved_at": "2026-01-15T00:00:00Z",
+        "as_of": "2026-01-15",
+        "notes": "Design application rules."
+      },
+      {
+        "source_id": "src:37-cfr-1-161-167",
+        "source_digest": "b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6",
+        "authority_citation": "37 C.F.R. 1.161-1.167",
+        "provider": "ecfr",
+        "retrieved_at": "2026-01-15T00:00:00Z",
+        "as_of": "2026-01-15",
+        "notes": "Plant application rules."
+      },
+      {
+        "source_id": "src:37-cfr-1-121",
+        "source_digest": "c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1",
+        "authority_citation": "37 C.F.R. 1.121",
+        "provider": "ecfr",
+        "retrieved_at": "2026-01-15T00:00:00Z",
+        "as_of": "2026-01-15",
+        "notes": "Manner of making amendments."
+      },
+      {
+        "source_id": "src:37-cfr-1-821",
+        "source_digest": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2",
+        "authority_citation": "37 C.F.R. 1.821-1.825",
+        "provider": "ecfr",
+        "retrieved_at": "2026-01-15T00:00:00Z",
+        "as_of": "2026-01-15",
+        "notes": "Sequence listing rules (conditional)."
+      }
+    ],
+    "human_approval": {
+      "reviewer_id": "reviewer:patlaw-137-baseline",
+      "approved_at": "2026-03-01T12:00:00Z",
+      "pack_version": "1.0.0",
+      "approval_digest": "e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3",
+      "review_state": "complete",
+      "notes": "Human review of baseline utility/design/plant profiles and special-type out-of-scope/unknown dispositions for PATLAW-137."
+    },
+    "profiles": [
+      {
+        "application_type": "utility",
+        "coverage": "supported",
+        "pack_version": "1.0.0",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "scenarios_in_scope": [
+          "new_application",
+          "office_action_response",
+          "amendment",
+          "information_disclosure"
+        ],
+        "authority_citations": [
+          "35 U.S.C. 111",
+          "37 C.F.R. 1.51",
+          "37 C.F.R. 1.52",
+          "37 C.F.R. 1.63",
+          "37 C.F.R. 1.76",
+          "37 C.F.R. 1.121"
+        ],
+        "notes": "Baseline utility nonprovisional profile."
+      },
+      {
+        "application_type": "design",
+        "coverage": "supported",
+        "pack_version": "1.0.0",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "scenarios_in_scope": [
+          "new_application",
+          "office_action_response"
+        ],
+        "authority_citations": [
+          "35 U.S.C. 171",
+          "37 C.F.R. 1.151",
+          "37 C.F.R. 1.152",
+          "37 C.F.R. 1.153",
+          "37 C.F.R. 1.154",
+          "37 C.F.R. 1.155"
+        ],
+        "notes": "Design under 37 C.F.R. 1.151-1.155."
+      },
+      {
+        "application_type": "plant",
+        "coverage": "supported",
+        "pack_version": "1.0.0",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "scenarios_in_scope": [
+          "new_application",
+          "office_action_response"
+        ],
+        "authority_citations": [
+          "35 U.S.C. 161",
+          "37 C.F.R. 1.161",
+          "37 C.F.R. 1.162",
+          "37 C.F.R. 1.163",
+          "37 C.F.R. 1.164",
+          "37 C.F.R. 1.165",
+          "37 C.F.R. 1.166",
+          "37 C.F.R. 1.167"
+        ],
+        "notes": "Plant under 37 C.F.R. 1.161-1.167."
+      },
+      {
+        "application_type": "provisional",
+        "coverage": "out_of_scope",
+        "pack_version": "1.0.0",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "scenarios_in_scope": [],
+        "authority_citations": ["35 U.S.C. 111(b)", "37 C.F.R. 1.53(c)"],
+        "notes": "Provisional applications are explicitly out of scope for baseline v1; do not reuse utility nonprovisional rules."
+      },
+      {
+        "application_type": "pct_national_stage",
+        "coverage": "out_of_scope",
+        "pack_version": "1.0.0",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "scenarios_in_scope": [],
+        "authority_citations": ["35 U.S.C. 371", "37 C.F.R. 1.491-1.499"],
+        "notes": "PCT national-stage entry is explicitly out of scope for baseline v1."
+      },
+      {
+        "application_type": "reissue",
+        "coverage": "out_of_scope",
+        "pack_version": "1.0.0",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "scenarios_in_scope": [],
+        "authority_citations": ["35 U.S.C. 251", "37 C.F.R. 1.171-1.179"],
+        "notes": "Reissue is explicitly out of scope for baseline v1."
+      },
+      {
+        "application_type": "continuation",
+        "coverage": "unknown",
+        "pack_version": "1.0.0",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "scenarios_in_scope": [],
+        "authority_citations": ["35 U.S.C. 120", "37 C.F.R. 1.78"],
+        "notes": "Continuation profile not yet fully reviewed; return unknown rather than reusing utility new-application rules."
+      },
+      {
+        "application_type": "divisional",
+        "coverage": "unknown",
+        "pack_version": "1.0.0",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "scenarios_in_scope": [],
+        "authority_citations": ["35 U.S.C. 121", "37 C.F.R. 1.78"],
+        "notes": "Divisional profile not yet fully reviewed; return unknown."
+      },
+      {
+        "application_type": "cip",
+        "coverage": "unknown",
+        "pack_version": "1.0.0",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "scenarios_in_scope": [],
+        "authority_citations": ["35 U.S.C. 120", "37 C.F.R. 1.78"],
+        "notes": "CIP profile not yet fully reviewed; return unknown."
+      }
+    ],
+    "rules": [
+      {
+        "rule_id": "rule:utility:new:specification",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "new_application",
+        "title": "Utility specification present",
+        "description": "A nonprovisional utility application must include a written specification describing the invention.",
+        "component": "specification",
+        "legal_regime": "aia",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "specification",
+            "description": "Specification document with written description of the invention",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "35 U.S.C. 111(a)",
+            "citation_kind": "statute",
+            "source_id": "src:35-usc-111",
+            "source_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.51(b)",
+            "citation_kind": "regulation",
+            "source_id": "src:37-cfr-1-51",
+            "source_digest": "5151515151515151515151515151515151515151515151515151515151515151",
+            "is_controlling": true
+          }
+        ],
+        "guidance_citations": [
+          {
+            "citation": "MPEP 601",
+            "citation_kind": "guidance",
+            "is_controlling": false
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:new:specification:applicable",
+            "description": "Utility new_application matches specification rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:new:claims",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "new_application",
+        "title": "Utility claims present",
+        "description": "A nonprovisional utility application must include one or more claims particularly pointing out and distinctly claiming the subject matter.",
+        "component": "claims",
+        "legal_regime": "aia",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "claims",
+            "description": "Claim set identifying the invention",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "35 U.S.C. 112(b)",
+            "citation_kind": "statute",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.51(b)",
+            "citation_kind": "regulation",
+            "source_id": "src:37-cfr-1-51",
+            "source_digest": "5151515151515151515151515151515151515151515151515151515151515151",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:new:claims:applicable",
+            "description": "Utility new_application matches claims rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:new:drawings",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "new_application",
+        "title": "Utility drawings when necessary",
+        "description": "Drawings are required where necessary for understanding of the subject matter sought to be patented.",
+        "component": "drawings",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "drawings",
+            "description": "Drawing sheets when necessary for understanding",
+            "mandatory": true,
+            "conditional_on": "drawings_necessary_for_understanding"
+          }
+        ],
+        "exceptions": [
+          {
+            "exception_id": "exc:utility:drawings:not-necessary",
+            "description": "Drawings may be omitted when not necessary for understanding of the subject matter.",
+            "condition": "drawings_not_necessary_for_understanding",
+            "authority_citation": "35 U.S.C. 113"
+          }
+        ],
+        "citations": [
+          {
+            "citation": "35 U.S.C. 113",
+            "citation_kind": "statute",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.81",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:new:drawings:applicable",
+            "description": "Utility new_application matches drawings rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:new:ads",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "new_application",
+        "title": "Application Data Sheet",
+        "description": "Application data sheet identifying bibliographic and benefit information when used under 37 C.F.R. 1.76.",
+        "component": "ads",
+        "legal_regime": "aia",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "ads",
+            "description": "Application Data Sheet with inventor and correspondence data",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "benefit_claim",
+            "description": "Benefit/priority claims when asserted",
+            "mandatory": false,
+            "conditional_on": "benefit_or_priority_asserted"
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.76",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:new:ads:applicable",
+            "description": "Utility new_application matches ADS rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:new:oath-declaration",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "new_application",
+        "title": "Inventor oath or declaration",
+        "description": "Inventor oath or declaration under 37 C.F.R. 1.63 (or substitute statement) as applicable.",
+        "component": "oath_declaration",
+        "legal_regime": "aia",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "oath_declaration",
+            "description": "Inventor oath/declaration or substitute statement presence",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "signature_presence",
+            "description": "Signature presence on oath/declaration (never reusable signature material)",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [
+          {
+            "exception_id": "exc:utility:oath:deferred",
+            "description": "Filing date may be granted without oath/declaration when other requirements met; oath still required for completion.",
+            "condition": "oath_deferred_under_1_53",
+            "authority_citation": "37 C.F.R. 1.53(f)"
+          }
+        ],
+        "citations": [
+          {
+            "citation": "35 U.S.C. 115",
+            "citation_kind": "statute",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.63",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:new:oath:applicable",
+            "description": "Utility new_application matches oath/declaration rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:new:fees",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "new_application",
+        "title": "Basic filing, search, and examination fees",
+        "description": "Applicable basic filing, search, and examination fees by entity status.",
+        "component": "fees",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "fee",
+            "description": "Fee payment assertion or payment receipt for filing/search/examination",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [
+          {
+            "exception_id": "exc:utility:fees:deferred",
+            "description": "Fees may be deferred subject to surcharge and missing-parts practice.",
+            "condition": "fees_deferred_with_surcharge",
+            "authority_citation": "37 C.F.R. 1.53(f)"
+          }
+        ],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.16",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "35 U.S.C. 41",
+            "citation_kind": "statute",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:new:fees:applicable",
+            "description": "Utility new_application matches fees rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:new:sequence-listing",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "new_application",
+        "title": "Sequence listing when nucleotide/amino acid sequences disclosed",
+        "description": "ST.26 sequence listing required when the application discloses nucleotide and/or amino acid sequences as defined by 37 C.F.R. 1.821 et seq.",
+        "component": "sequence_listing",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2022-07-01",
+          "effective_to": null,
+          "notes": "ST.26 transition effective for applications filed on or after 2022-07-01."
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "sequence_listing",
+            "description": "ST.26 sequence listing XML when sequences are disclosed",
+            "mandatory": true,
+            "conditional_on": "nucleotide_or_amino_acid_sequences_disclosed"
+          }
+        ],
+        "exceptions": [
+          {
+            "exception_id": "exc:utility:seq:not-disclosed",
+            "description": "Sequence listing not required when no qualifying sequences are disclosed.",
+            "condition": "no_qualifying_sequences_disclosed",
+            "authority_citation": "37 C.F.R. 1.821"
+          }
+        ],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.821",
+            "citation_kind": "regulation",
+            "source_id": "src:37-cfr-1-821",
+            "source_digest": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.822",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:new:seq:applicable",
+            "description": "Utility new_application after ST.26 date matches sequence rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched",
+            "fixture_hints": ["filing_date>=2022-07-01"]
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:new:identifiers",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "new_application",
+        "title": "Application identifiers and correspondence data",
+        "description": "Consistent application identifiers and correspondence address data across package components.",
+        "component": "identifiers",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "identifier",
+            "description": "Application number / customer number / correspondence data consistency",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.33",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:new:identifiers:applicable",
+            "description": "Utility new_application matches identifier rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:oa-response:claim-amendment",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "office_action_response",
+        "title": "Claim amendments in office-action response",
+        "description": "When claims are amended in response to an office action, amendments must comply with 37 C.F.R. 1.121 manner-of-making-amendments requirements.",
+        "component": "claim_amendment",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "examination",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "claim_amendment",
+            "description": "Marked-up claim listing and amendment instructions when claims are amended",
+            "mandatory": true,
+            "conditional_on": "claims_amended"
+          },
+          {
+            "evidence_kind": "remarks",
+            "description": "Remarks addressing rejections/objections",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [
+          {
+            "exception_id": "exc:utility:oa:no-claim-amendment",
+            "description": "Claim amendment evidence not required when no claims are amended.",
+            "condition": "claims_not_amended",
+            "authority_citation": "37 C.F.R. 1.121"
+          }
+        ],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.121",
+            "citation_kind": "regulation",
+            "source_id": "src:37-cfr-1-121",
+            "source_digest": "c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.111",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:oa:claim-amendment:applicable",
+            "description": "Utility office_action_response matches claim amendment rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:oa-response:signature",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "office_action_response",
+        "title": "Signature presence on response papers",
+        "description": "Response papers require signature presence under 37 C.F.R. 1.33 / 1.4 (presence only; never authenticate signer or store reusable signature material).",
+        "component": "signature",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "examination",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "signature_presence",
+            "description": "Signature presence on correspondence / response",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "certification",
+            "description": "Certifications as presented (not 37 C.F.R. 11.18 authenticity verification)",
+            "mandatory": false
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.33",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.4",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:oa:signature:applicable",
+            "description": "Utility office_action_response matches signature rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:design:new:claim-and-drawing",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "design",
+        "scenario": "new_application",
+        "title": "Design claim, specification, and drawings",
+        "description": "Design application requirements under 37 C.F.R. 1.151-1.155 including specification, single claim, and drawings/photographs.",
+        "component": "design_package",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "specification",
+            "description": "Design specification preamble and description as applicable",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "claims",
+            "description": "Single design claim",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "drawings",
+            "description": "Design drawings or photographs",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.151",
+            "citation_kind": "regulation",
+            "source_id": "src:37-cfr-1-151-155",
+            "source_digest": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.152",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.153",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.154",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.155",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "35 U.S.C. 171",
+            "citation_kind": "statute",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:design:new:package:applicable",
+            "description": "Design new_application matches design package rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:design:oa-response:amendment",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "design",
+        "scenario": "office_action_response",
+        "title": "Design office-action response components",
+        "description": "Design office-action response must include remarks and any drawing/claim amendments consistent with design practice.",
+        "component": "design_oa_response",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "examination",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "remarks",
+            "description": "Remarks addressing design rejections/objections",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "signature_presence",
+            "description": "Signature presence on response",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.111",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.151",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:design:oa:applicable",
+            "description": "Design office_action_response matches design OA rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:plant:new:package",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "plant",
+        "scenario": "new_application",
+        "title": "Plant application package under 1.161-1.167",
+        "description": "Plant patent application requirements under 37 C.F.R. 1.161-1.167 including specification, claim, and drawings.",
+        "component": "plant_package",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "specification",
+            "description": "Plant specification",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "claims",
+            "description": "Plant claim",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "drawings",
+            "description": "Plant drawings",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "oath_declaration",
+            "description": "Inventor oath/declaration as applicable",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.161",
+            "citation_kind": "regulation",
+            "source_id": "src:37-cfr-1-161-167",
+            "source_digest": "b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.162",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.163",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.164",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.165",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.166",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.167",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "35 U.S.C. 161",
+            "citation_kind": "statute",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:plant:new:package:applicable",
+            "description": "Plant new_application matches plant package rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:plant:oa-response:remarks",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "plant",
+        "scenario": "office_action_response",
+        "title": "Plant office-action response remarks and signature",
+        "description": "Plant office-action response requires remarks and signature presence.",
+        "component": "plant_oa_response",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "examination",
+        "mandatory": true,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "remarks",
+            "description": "Remarks addressing plant rejections/objections",
+            "mandatory": true
+          },
+          {
+            "evidence_kind": "signature_presence",
+            "description": "Signature presence on response",
+            "mandatory": true
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.111",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          },
+          {
+            "citation": "37 C.F.R. 1.161",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:plant:oa:applicable",
+            "description": "Plant office_action_response matches plant OA rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      },
+      {
+        "rule_id": "rule:utility:new:attachments",
+        "version": "1.0.0",
+        "jurisdiction": "us_uspto",
+        "application_type": "utility",
+        "scenario": "new_application",
+        "title": "Attachments and forms as presented",
+        "description": "Supporting attachments and forms (e.g., fee transmittal, IDS if concurrent) when present in the package inventory.",
+        "component": "attachments_forms",
+        "legal_regime": "any",
+        "entity_status": "any",
+        "prosecution_stage": "filing",
+        "mandatory": false,
+        "effective_interval": {
+          "effective_from": "2013-03-16",
+          "effective_to": null
+        },
+        "required_evidence": [
+          {
+            "evidence_kind": "attachment",
+            "description": "Attachment inventory entries when attachments are asserted",
+            "mandatory": false,
+            "conditional_on": "attachments_asserted"
+          },
+          {
+            "evidence_kind": "form",
+            "description": "Form presence when a form is asserted (form instructions not controlling law)",
+            "mandatory": false,
+            "conditional_on": "form_asserted"
+          }
+        ],
+        "exceptions": [],
+        "citations": [
+          {
+            "citation": "37 C.F.R. 1.51",
+            "citation_kind": "regulation",
+            "is_controlling": true
+          }
+        ],
+        "guidance_citations": [
+          {
+            "citation": "USPTO form instructions (non-controlling)",
+            "citation_kind": "guidance",
+            "is_controlling": false
+          }
+        ],
+        "notes": "Form instructions are not controlling law.",
+        "reviewer_id": "reviewer:patlaw-137-baseline",
+        "reviewed_at": "2026-03-01T12:00:00Z",
+        "tests": [
+          {
+            "test_id": "test:utility:new:attachments:applicable",
+            "description": "Utility new_application matches attachments/forms rule",
+            "expect_applicable": true,
+            "expect_coverage": "matched"
+          }
+        ]
+      }
+    ]
+  }
+}
