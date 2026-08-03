@@ -800,7 +800,7 @@ Program invariants:
 
 ## PATLAW-050 Orchestrate a versioned application dossier
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
