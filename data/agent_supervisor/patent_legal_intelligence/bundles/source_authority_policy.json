@@ -1,0 +1,54 @@
+{
+  "schema": "patent-legal-source-authority-policy-v1",
+  "policy_id": "patlaw-source-authority-v1",
+  "discovery": {
+    "latest_is_runtime_discovered": true,
+    "permitted_https_hosts": [
+      "api.uspto.gov",
+      "data.uspto.gov",
+      "www.uspto.gov",
+      "www.ecfr.gov",
+      "www.federalregister.gov",
+      "api.govinfo.gov",
+      "www.govinfo.gov",
+      "www.gpo.gov",
+      "uscode.house.gov"
+    ],
+    "primary_collections": ["CFR", "USCODE", "PLAW", "FR"],
+    "initial_titles": {"cfr": [37], "uscode": [35]}
+  },
+  "authority_views": {
+    "enacted_statute": "An exact House OLRC or GovInfo U.S. Code release point plus applicable uncodified law.",
+    "promulgated_regulation": "An official annual CFR base plus applicable official Federal Register changes.",
+    "unofficial_current_presentation": "A temporally useful eCFR/FederalRegister.gov representation that must be labelled unofficial.",
+    "guidance_crosscheck": "Non-controlling MPEP, form, fee, notice, or examination guidance used only with its version and cutoff.",
+    "extracted_candidate": "A parser or model candidate that is never authoritative without source-span admission."
+  },
+  "required_identity_fields": [
+    "provider",
+    "source_id",
+    "artifact_sha256",
+    "source_url",
+    "retrieved_at"
+  ],
+  "distinct_time_roles": [
+    "edition",
+    "date_issued",
+    "publication",
+    "effective",
+    "termination",
+    "upstream_last_modified",
+    "retrieval"
+  ],
+  "verification_states": ["verified", "conflict", "inconclusive", "unverified", "human_review_required"],
+  "invariants": [
+    "Official source artifacts are immutable.",
+    "Derived text never replaces or impersonates an official record.",
+    "HTTP success alone is not artifact or record verification.",
+    "Digital fixity/authentication and human printed-edition attestation are separate evidence.",
+    "Proposed, future-effective, stayed, corrected, withdrawn, and repealed events remain distinct.",
+    "FederalRegister.gov discovery and guidance sources cannot enter the verified GovInfo authority path.",
+    "Mailing-date and proposed-response-date authority views are resolved separately.",
+    "The MPEP is guidance and never outranks enacted statute or promulgated regulation."
+  ]
+}

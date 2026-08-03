@@ -1,0 +1,27 @@
+{
+  "schema": "patent-legal-lane-matrix-v1",
+  "board_namespace": "patent-legal-intelligence-v1",
+  "task_prefix": "PATLAW-",
+  "shard_count": 4,
+  "routing": "numeric task suffix modulo shard_count",
+  "strict_task_sharding": true,
+  "initial_ready": {
+    "0": ["PATLAW-004", "PATLAW-100"],
+    "1": ["PATLAW-005"],
+    "2": ["PATLAW-002", "PATLAW-006", "PATLAW-090"],
+    "3": ["PATLAW-011"]
+  },
+  "execution_slice_source": "config/agent_supervisor_patent_legal_intelligence.json",
+  "shared_merge_queue": true,
+  "merge_target_branch": "feature/patent-legal-intelligence",
+  "reserved_integration_surfaces": [
+    "ipfs_datasets_py/processors/domains/uspto/__init__.py",
+    "ipfs_datasets_py/processors/domains/uspto/providers/__init__.py",
+    "ipfs_datasets_py/processors/domains/uspto/analysis/__init__.py",
+    "ipfs_datasets_py/processors/adapters/uspto_adapter.py",
+    "ipfs_datasets_py/cli/uspto.py",
+    "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/uspto_tools.py",
+    "ipfs_datasets_py/processors/domains/patent/__init__.py",
+    "ipfs_datasets_py/processors/legal_data/canonical_legal_corpora.py"
+  ]
+}

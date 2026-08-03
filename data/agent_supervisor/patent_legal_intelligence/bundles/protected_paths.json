@@ -1,0 +1,20 @@
+{
+  "schema": "patent-legal-protected-paths-v1",
+  "paths": [
+    "docs/architecture/PATENT_LEGAL_INTELLIGENCE_PLAN.md",
+    "docs/architecture/patent_legal_intelligence.objectives.md",
+    "docs/architecture/patent_legal_intelligence.todo.md",
+    "config/agent_supervisor_patent_legal_intelligence.json",
+    "scripts/ops/patent_legal_intelligence/launch_multi_lane.sh",
+    "scripts/ops/patent_legal_intelligence/preflight.py",
+    "scripts/ops/patent_legal_intelligence/status.py",
+    "scripts/ops/patent_legal_intelligence/status.sh",
+    "scripts/ops/patent_legal_intelligence/README.md",
+    "scripts/validate_patent_legal_intelligence_board.py",
+    "data/agent_supervisor/patent_legal_intelligence/bundles/source_authority_policy.json",
+    "data/agent_supervisor/patent_legal_intelligence/bundles/private_boundary_policy.json",
+    "data/agent_supervisor/patent_legal_intelligence/bundles/lane_matrix.json",
+    "data/agent_supervisor/patent_legal_intelligence/bundles/launch_recipe.json",
+    "data/agent_supervisor/patent_legal_intelligence/bundles/protected_paths.json"
+  ]
+}

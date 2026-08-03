@@ -1,0 +1,63 @@
+{
+  "schema": "patent-private-boundary-policy-v1",
+  "policy_id": "patlaw-private-boundary-v1",
+  "default_disclosure": "unknown",
+  "disclosure_order": [
+    "public_official_record",
+    "public_published_application",
+    "public_patent_grant",
+    "private_unpublished",
+    "privileged_work_product",
+    "restricted_export_review",
+    "private_account",
+    "credential_secret",
+    "unknown"
+  ],
+  "public_sinks": [
+    "public_ipfs",
+    "public_dataset",
+    "justice_dao_hugging_face",
+    "public_cache",
+    "telemetry",
+    "remote_llm"
+  ],
+  "never_artifacts": [
+    "password",
+    "mfa_secret",
+    "session_cookie",
+    "reusable_signature_credential",
+    "payment_card_data",
+    "api_key"
+  ],
+  "account_boundary": {
+    "public_provider": "supported_odp_patent_file_wrapper_api",
+    "private_provider": "authorized_user_export_import_only",
+    "allowed": [
+      "parse_user_downloaded_export",
+      "import_user_supplied_acknowledgement",
+      "import_user_supplied_payment_receipt",
+      "compare_original_docx_to_converted_pdf",
+      "prepare_local_review_package",
+      "produce_human_review_checklist"
+    ],
+    "forbidden": [
+      "scrape_authenticated_patent_center",
+      "store_credentials_or_cookies",
+      "bypass_mfa",
+      "apply_signature",
+      "pay_fee",
+      "perform_final_submission",
+      "automatically_file_ids",
+      "read_browser_profile_or_session_storage"
+    ]
+  },
+  "invariants": [
+    "Unknown and mixed-class bundles fail closed.",
+    "Every derivative inherits the most restrictive source classification.",
+    "Private bytes, text, embeddings, graph content, identifiers, prompts, caches, and logs remain tenant-isolated.",
+    "Private content identifiers are never announced to a public DHT, gateway, or pin service.",
+    "External LLM use over private material is denied by default.",
+    "Audit decisions contain digests and reason codes, not matched private content.",
+    "Only an authorized human or practitioner may make legal judgments, sign, pay, or submit."
+  ]
+}

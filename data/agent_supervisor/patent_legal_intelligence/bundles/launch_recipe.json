@@ -1,0 +1,32 @@
+{
+  "schema": "patent-legal-supervisor-launch-v1",
+  "datasets_branch": "feature/patent-legal-intelligence",
+  "accelerator_branch": "feature/patent-legal-supervisor",
+  "accelerator_required_commit": "fcae2ecc29794da8515f60c015a1111253162aea",
+  "provider_policy": {
+    "mode": "auto",
+    "primary": "grok",
+    "primary_model": "grok-4.5",
+    "backup": "codex",
+    "backup_model": "gpt-5.6-terra",
+    "backup_reasoning_effort": "high",
+    "authentication_preflight": "grok auth file and codex login status",
+    "backup_requires_fresh_attempt": true,
+    "same_workspace_fallback_forbidden": true
+  },
+  "state_policy": {
+    "outside_repository": true,
+    "isolated_per_shard": true,
+    "one_shared_merge_queue": true,
+    "reviewed_execution_slices": true,
+    "protected_operator_inputs": true
+  },
+  "sync_policy": {
+    "fetch_at_start": true,
+    "fetch_interval_hours": 8,
+    "integration_interval_hours": 12,
+    "merge_only_when_claims_checkpointed": true,
+    "push": false,
+    "note": "Fetch is read-only; integration is a serialized operator maintenance event and never an implementation-lane pull."
+  }
+}
