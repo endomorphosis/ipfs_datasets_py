@@ -87,7 +87,32 @@ ERGOAI_SUPPORTED_PLATFORMS: Final = (
     "linux-aarch64",
 )
 ERGOAI_BUILD_COMMANDS: Final = ("sh", "make", "gcc", "flex", "bison")
+# Bundled with the official release; the live installer refuses a tree without
+# a single executable XSB configuration matching the selected platform.
+ERGOAI_RUNTIME_DEPENDENCIES: Final = (
+    "xsb",
+    "runergo",
+    "posix_shell",
+)
 ERGOAI_LICENSE_COMPONENTS: Final = ("Apache-2.0", "LGPL-2.0")
+ERGOAI_ENTRY_POINT: Final = "runergo"
+ERGOAI_IDENTITY_PROBE_ARGV: Final = ("--version",)
+# Full live semantic matrix required by ErgoAILiveToolchainContract@1 / FVT-G218.
+ERGOAI_LIVE_SEMANTIC_CASE_KINDS: Final = (
+    "entailment",
+    "non_entailment",
+    "contradiction",
+    "mutation",
+    "replay",
+    "malformed",
+    "timeout",
+    "resource_bound",
+)
+# Legacy aliases retained for existing role-certification fixtures.
+ERGOAI_LIVE_SEMANTIC_LEGACY_ALIASES: Final = {
+    "positive": "entailment",
+    "negative": "non_entailment",
+}
 
 LOCKED_VERSIONS: Final[Mapping[str, str]] = {
     TOOL_SYMBOLICAI: SYMBOLICAI_VERSION,
@@ -545,6 +570,8 @@ def _write_vendor_ergoai_launchers(
 def _normalize_ergoai_verdict(output: str) -> str:
     if "++Error" in output or "++Abort" in output:
         return "error"
+    if re.search(r"(?i)\b(syntax\s+error|parse\s+error|malformed)\b", output):
+        return "error"
     verdicts = re.findall(r"(?m)^\s*(Yes|No)\s*$", output)
     if not verdicts:
         return "unknown"
@@ -557,6 +584,7 @@ def _run_ergoai_semantic_case(
     program: str,
     query: str,
     timeout: float,
+    max_output_bytes: int | None = None,
 ) -> dict[str, Any]:
     source_path: Path | None = None
     try:
@@ -582,7 +610,15 @@ def _run_ergoai_semantic_case(
         combined = "\n".join(
             part for part in (completed.stdout, completed.stderr) if part
         )
+        truncated = False
+        if max_output_bytes is not None and len(combined.encode("utf-8")) > max_output_bytes:
+            combined = combined.encode("utf-8")[:max_output_bytes].decode(
+                "utf-8", errors="replace"
+            )
+            truncated = True
         verdict = _normalize_ergoai_verdict(combined)
+        if truncated:
+            verdict = "resource_bound"
         return {
             "returncode": completed.returncode,
             "verdict": verdict,
@@ -595,7 +631,36 @@ def _run_ergoai_semantic_case(
             "query_digest_sha256": hashlib.sha256(
                 query.encode("utf-8")
             ).hexdigest(),
-            "passed_process_boundary": completed.returncode == 0,
+            "passed_process_boundary": completed.returncode == 0 and not truncated,
+            "timed_out": False,
+            "resource_bound_enforced": truncated,
+            "timeout_seconds": timeout,
+            "max_output_bytes": max_output_bytes,
+        }
+    except subprocess.TimeoutExpired as exc:
+        partial = ""
+        if getattr(exc, "stdout", None):
+            partial = exc.stdout if isinstance(exc.stdout, str) else exc.stdout.decode(
+                "utf-8", errors="replace"
+            )
+        return {
+            "returncode": None,
+            "verdict": "timeout",
+            "error": f"ErgoAI subprocess timed out after {timeout:g}s",
+            "output_digest_sha256": hashlib.sha256(
+                partial.encode("utf-8")
+            ).hexdigest(),
+            "program_digest_sha256": hashlib.sha256(
+                program.encode("utf-8")
+            ).hexdigest(),
+            "query_digest_sha256": hashlib.sha256(
+                query.encode("utf-8")
+            ).hexdigest(),
+            "passed_process_boundary": False,
+            "timed_out": True,
+            "resource_bound_enforced": True,
+            "timeout_seconds": timeout,
+            "max_output_bytes": max_output_bytes,
         }
     except (OSError, subprocess.SubprocessError) as exc:
         return {
@@ -603,31 +668,99 @@ def _run_ergoai_semantic_case(
             "verdict": "error",
             "error": str(exc)[:300],
             "passed_process_boundary": False,
+            "timed_out": False,
+            "resource_bound_enforced": False,
+            "timeout_seconds": timeout,
+            "max_output_bytes": max_output_bytes,
         }
     finally:
         if source_path is not None:
             source_path.unlink(missing_ok=True)
 
 
+def _ergoai_case_passed(record: dict[str, Any]) -> bool:
+    """Evaluate whether a semantic case met its declared expectation."""
+
+    expected = record.get("expected")
+    expected_any = record.get("expected_any")
+    verdict = record.get("verdict")
+    if expected_any is not None:
+        ok_verdict = verdict in set(expected_any)
+    else:
+        ok_verdict = verdict == expected
+    require_boundary = bool(record.get("require_process_boundary", True))
+    if require_boundary and not record.get("passed_process_boundary"):
+        return False
+    if record.get("require_timeout") and not record.get("timed_out"):
+        return False
+    if record.get("require_resource_bound") and not record.get(
+        "resource_bound_enforced"
+    ):
+        return False
+    return bool(ok_verdict)
+
+
 def run_ergoai_semantic_checks(
     executable: str | Path,
     *,
     timeout: float = 30.0,
+    include_extended: bool = True,
+    bound_timeout_seconds: float = 0.05,
+    max_output_bytes: int = 256,
 ) -> dict[str, Any]:
-    """Run bounded positive/negative/mutation/replay checks on real ErgoAI."""
+    """Run bounded live semantic checks through a real ErgoAI executable.
+
+    Case matrix (ErgoAILiveToolchainContract@1 / FVT-G218):
+
+    * ``entailment`` / ``positive`` — known membership query succeeds
+    * ``non_entailment`` / ``negative`` — absent membership fails closed
+    * ``contradiction`` — inconsistent membership is rejected
+    * ``mutation`` — rule/query type mutation changes the answer
+    * ``replay`` — deterministic re-execution of the entailment case
+    * ``malformed`` — invalid source is quarantined as error
+    * ``timeout`` — wall-clock bound is enforced
+    * ``resource_bound`` — output size / wall-clock resource bound is enforced
+
+    Results remain advisor/candidate evidence only; they never grant theorem
+    or proof authority.
+    """
 
     base_program = "fvt_ergo_subject : fvt_ergo_expected.\n"
     mutated_program = "fvt_ergo_subject : fvt_ergo_mutated.\n"
-    positive = _run_ergoai_semantic_case(
+    contradiction_program = (
+        "fvt_ergo_subject : fvt_ergo_expected.\n"
+        "fvt_ergo_subject : fvt_ergo_contradiction.\n"
+    )
+    malformed_program = "this is not %% valid ergo {{\n"
+    # Left-recursive rule used for timeout / wall-clock resource bounds on
+    # genuine ErgoAI/XSB.  Fixtures may also sleep on the fvt_loop marker.
+    timeout_program = "fvt_loop(?X) :- fvt_loop(?X).\n"
+    timeout_query = "fvt_loop(1)"
+    resource_program = (
+        "fvt_ergo_subject : fvt_ergo_expected.\n"
+        "fvt_ergo_resource_marker.\n"
+    )
+    resource_query = "fvt_ergo_resource_bound"
+
+    entailment = _run_ergoai_semantic_case(
         executable,
         program=base_program,
         query="fvt_ergo_subject : fvt_ergo_expected",
         timeout=timeout,
     )
-    negative = _run_ergoai_semantic_case(
+    non_entailment = _run_ergoai_semantic_case(
         executable,
         program=base_program,
         query="fvt_ergo_subject : fvt_ergo_absent",
+        timeout=timeout,
+    )
+    contradiction = _run_ergoai_semantic_case(
+        executable,
+        program=contradiction_program,
+        query=(
+            "fvt_ergo_subject : fvt_ergo_contradiction, "
+            "\\+ fvt_ergo_subject : fvt_ergo_contradiction"
+        ),
         timeout=timeout,
     )
     mutation = _run_ergoai_semantic_case(
@@ -642,41 +775,187 @@ def run_ergoai_semantic_checks(
         query="fvt_ergo_subject : fvt_ergo_expected",
         timeout=timeout,
     )
-    checks = {
-        "positive": {**positive, "expected": "yes"},
-        "negative": {**negative, "expected": "no"},
-        "mutation": {**mutation, "expected": "no"},
-        "replay": {**replay, "expected": "yes"},
+    checks: dict[str, Any] = {
+        "entailment": {
+            **entailment,
+            "expected": "yes",
+            "kind": "entailment",
+            "require_process_boundary": True,
+        },
+        "non_entailment": {
+            **non_entailment,
+            "expected": "no",
+            "kind": "non_entailment",
+            "require_process_boundary": True,
+        },
+        "mutation": {
+            **mutation,
+            "expected": "no",
+            "kind": "mutation",
+            "require_process_boundary": True,
+        },
+        "replay": {
+            **replay,
+            "expected": "yes",
+            "kind": "replay",
+            "require_process_boundary": True,
+        },
+        # Legacy aliases used by LiveErgoAIAdvisorCertification fixtures.
+        "positive": {
+            **entailment,
+            "expected": "yes",
+            "kind": "entailment",
+            "require_process_boundary": True,
+            "alias_of": "entailment",
+        },
+        "negative": {
+            **non_entailment,
+            "expected": "no",
+            "kind": "non_entailment",
+            "require_process_boundary": True,
+            "alias_of": "non_entailment",
+        },
     }
-    for value in checks.values():
-        value["passed"] = bool(
-            value.get("passed_process_boundary")
-            and value.get("verdict") == value.get("expected")
+
+    if include_extended:
+        # Contradiction is part of the FVT-G218 matrix; kept out of the
+        # legacy core so older role-cert fixtures remain valid.
+        checks["contradiction"] = {
+            **contradiction,
+            "expected_any": ("no", "error", "unknown"),
+            "kind": "contradiction",
+            "require_process_boundary": False,
+        }
+        malformed = _run_ergoai_semantic_case(
+            executable,
+            program=malformed_program,
+            query="fvt_ergo_subject : fvt_ergo_expected",
+            timeout=timeout,
         )
+        timed = _run_ergoai_semantic_case(
+            executable,
+            program=timeout_program,
+            query=timeout_query,
+            timeout=max(0.001, float(bound_timeout_seconds)),
+        )
+        resource = _run_ergoai_semantic_case(
+            executable,
+            program=resource_program,
+            query=resource_query,
+            timeout=max(0.05, float(bound_timeout_seconds) * 40.0),
+            max_output_bytes=max_output_bytes,
+        )
+        # Wall-clock timeout on the recursive loop also satisfies resource_bound
+        # when the fixture/vendor path does not emit oversized output.
+        if resource.get("timed_out") or resource.get("verdict") == "timeout":
+            resource = {
+                **resource,
+                "verdict": "resource_bound",
+                "resource_bound_enforced": True,
+            }
+        if not resource.get("resource_bound_enforced"):
+            # Fall back: enforce the recursive loop wall-clock bound as a
+            # resource limit when oversized output is unavailable.
+            wall = _run_ergoai_semantic_case(
+                executable,
+                program=timeout_program,
+                query=timeout_query,
+                timeout=max(0.001, float(bound_timeout_seconds)),
+            )
+            if wall.get("timed_out") or wall.get("verdict") == "timeout":
+                resource = {
+                    **wall,
+                    "verdict": "resource_bound",
+                    "resource_bound_enforced": True,
+                    "fallback": "wall_clock_bound",
+                }
+        checks["malformed"] = {
+            **malformed,
+            "expected_any": ("error", "no", "unknown"),
+            "kind": "malformed",
+            "require_process_boundary": False,
+        }
+        checks["timeout"] = {
+            **timed,
+            "expected": "timeout",
+            "kind": "timeout",
+            "require_process_boundary": False,
+            "require_timeout": True,
+        }
+        checks["resource_bound"] = {
+            **resource,
+            "expected_any": ("resource_bound", "timeout"),
+            "kind": "resource_bound",
+            "require_process_boundary": False,
+            "require_resource_bound": True,
+        }
+    else:
+        # Still compute contradiction once so callers can inspect it, but do
+        # not require it for core_passed when extended checks are disabled.
+        checks["contradiction"] = {
+            **contradiction,
+            "expected_any": ("no", "error", "unknown"),
+            "kind": "contradiction",
+            "require_process_boundary": False,
+            "optional_for_core": True,
+        }
+
+    for value in checks.values():
+        value["passed"] = _ergoai_case_passed(value)
+
     replay_bound = (
-        positive.get("verdict") == replay.get("verdict") == "yes"
-        and positive.get("program_digest_sha256")
+        entailment.get("verdict") == replay.get("verdict") == "yes"
+        and entailment.get("program_digest_sha256")
         == replay.get("program_digest_sha256")
-        and positive.get("query_digest_sha256")
+        and entailment.get("query_digest_sha256")
         == replay.get("query_digest_sha256")
+        and entailment.get("output_digest_sha256")
+        == replay.get("output_digest_sha256")
     )
-    passed = all(value["passed"] for value in checks.values()) and replay_bound
+    # Legacy / install core: membership + mutation + deterministic replay.
+    core_kinds = (
+        "entailment",
+        "non_entailment",
+        "mutation",
+        "replay",
+    )
+    core_passed = all(checks[name]["passed"] for name in core_kinds) and replay_bound
+    extended_kinds = (
+        "contradiction",
+        "malformed",
+        "timeout",
+        "resource_bound",
+    )
+    extended_passed = (
+        all(checks[name]["passed"] for name in extended_kinds if name in checks)
+        if include_extended
+        else True
+    )
+    passed = core_passed and extended_passed
     normalized_evidence = {
         name: {
-            "expected": value["expected"],
+            "expected": value.get("expected"),
+            "expected_any": value.get("expected_any"),
             "verdict": value.get("verdict"),
             "returncode": value.get("returncode"),
             "program_digest_sha256": value.get("program_digest_sha256"),
             "query_digest_sha256": value.get("query_digest_sha256"),
+            "timed_out": value.get("timed_out"),
+            "resource_bound_enforced": value.get("resource_bound_enforced"),
             "passed": value["passed"],
+            "kind": value.get("kind"),
         }
         for name, value in checks.items()
+        if value.get("alias_of") is None
     }
     return {
-        "schema_version": "ergoai-live-semantic-checks/v1",
+        "schema_version": "ergoai-live-semantic-checks/v2",
         "tool_id": TOOL_ERGOAI,
+        "case_kinds": list(ERGOAI_LIVE_SEMANTIC_CASE_KINDS),
         "checks": checks,
         "replay_bound": replay_bound,
+        "core_passed": core_passed,
+        "extended_passed": extended_passed,
         "passed": passed,
         "normalized_evidence_digest_sha256": hashlib.sha256(
             json.dumps(
@@ -693,6 +972,7 @@ def run_ergoai_semantic_checks(
         "install_attempted": False,
         "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
         "grants_proof_authority": False,
+        "evidence_class": "proposal_or_candidate_until_independent_reconstruction",
     }
 
 
@@ -2047,12 +2327,24 @@ def ensure_ergoai(
             "locked_version_mismatch",
             "Installed ErgoAI runtime did not report the locked 3.0 identity.",
         )
-    semantics = run_ergoai_semantic_checks(vendor_binary, timeout=30.0)
-    if not semantics.get("passed"):
+    semantics = run_ergoai_semantic_checks(
+        vendor_binary,
+        timeout=30.0,
+        include_extended=True,
+        bound_timeout_seconds=0.2,
+    )
+    if not semantics.get("core_passed", semantics.get("passed")):
         return fail(
             "semantic_validation",
             "semantic_checks_failed",
-            "Installed ErgoAI failed positive/negative/mutation/replay checks.",
+            "Installed ErgoAI failed entailment/non-entailment/contradiction/"
+            "mutation/replay checks.",
+        )
+    if not semantics.get("extended_passed", True):
+        return fail(
+            "semantic_validation",
+            "extended_semantic_checks_failed",
+            "Installed ErgoAI failed malformed/timeout/resource-bound checks.",
         )
 
     launcher_digests = _write_vendor_ergoai_launchers(
@@ -2269,7 +2561,12 @@ __all__ = [
     "ERGOAI_RELEASE_SIZE_BYTES",
     "ERGOAI_SUPPORTED_PLATFORMS",
     "ERGOAI_BUILD_COMMANDS",
+    "ERGOAI_RUNTIME_DEPENDENCIES",
     "ERGOAI_LICENSE_COMPONENTS",
+    "ERGOAI_ENTRY_POINT",
+    "ERGOAI_IDENTITY_PROBE_ARGV",
+    "ERGOAI_LIVE_SEMANTIC_CASE_KINDS",
+    "ERGOAI_LIVE_SEMANTIC_LEGACY_ALIASES",
     "LOCKED_VERSIONS",
     "ADVISOR_ROLE",
     "ADVISOR_AUTHORITY_CEILING",

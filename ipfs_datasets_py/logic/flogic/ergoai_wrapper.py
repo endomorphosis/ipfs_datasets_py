@@ -15,12 +15,20 @@ by the other CEC wrappers in this package.  When the ErgoAI binary is not
 available it degrades to a pure-Python in-memory mode that still lets callers
 construct and inspect F-logic structures.
 
+FVT-G218 / ``ErgoAILiveToolchainContract@1`` adds a *bounded live semantic
+adapter*: when a real binary is present, entailment, non-entailment,
+contradiction, mutation, replay, malformed, timeout, and resource-bound cases
+execute through ErgoAI.  Results remain **proposal / candidate evidence** until
+reconstructed or checked by an independent proof authority.  Simulation-mode
+or hermetic-shim fixtures never count as live vendor execution.
+
 Tutorial: https://sites.google.com/coherentknowledge.com/ergoai-tutorial/ergoai-tutorial
 Submodule: ipfs_datasets_py/logic/ErgoAI  (git submodule ErgoAI/ErgoEngine)
 """
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import subprocess
@@ -43,6 +51,22 @@ ERGOAI_SUBMODULE_PATH: Path = Path(__file__).parent.parent / "ErgoAI"
 
 # Default binary name looked up on PATH or inside the submodule
 _ERGO_BINARY_NAMES = ("runErgo.sh", "runergo")
+
+# Live adapter contract identity (must match lock + certification surface).
+LIVE_TOOLCHAIN_INTERFACE = "ErgoAILiveToolchainContract@1"
+LIVE_ADAPTER_SCHEMA_VERSION = "ergoai-live-semantic-adapter/v1"
+AUTHORITY_CEILING = "advisory"
+EVIDENCE_CLASS = "proposal_or_candidate_until_independent_reconstruction"
+LIVE_CASE_KINDS = (
+    "entailment",
+    "non_entailment",
+    "contradiction",
+    "mutation",
+    "replay",
+    "malformed",
+    "timeout",
+    "resource_bound",
+)
 
 
 def _runner_requires_paths_file(path: Path) -> bool:
@@ -360,6 +384,151 @@ class ErgoAIWrapper:
             "rules": len(self.ontology.rules),
             "simulation_mode": self.simulation_mode,
             "ergoai_binary": str(self.binary) if self.binary else None,
+            "authority_ceiling": AUTHORITY_CEILING,
+            "grants_proof_authority": False,
+            "evidence_class": EVIDENCE_CLASS,
+            "live_toolchain_interface": LIVE_TOOLCHAIN_INTERFACE,
+        }
+
+    # ------------------------------------------------------------------
+    # Bounded live semantic adapter (FVT-G218)
+    # ------------------------------------------------------------------
+
+    def is_live_vendor_execution(self) -> bool:
+        """True only when a real binary is bound (not simulation / fixture-only)."""
+
+        return not self.simulation_mode and self.binary is not None
+
+    def run_live_semantic_adapter(
+        self,
+        *,
+        timeout_seconds: float = 30.0,
+        bound_timeout_seconds: float = 0.2,
+        max_output_bytes: int = 256,
+        require_live_binary: bool = True,
+    ) -> Dict[str, Any]:
+        """Execute the full bounded live semantic matrix through ErgoAI.
+
+        Simulation mode and missing binaries never produce
+        ``live_vendor_execution=True``.  Every verdict is tagged as
+        proposal/candidate evidence under the advisory authority ceiling.
+        """
+
+        if require_live_binary and not self.is_live_vendor_execution():
+            return {
+                "interface": LIVE_TOOLCHAIN_INTERFACE,
+                "schema_version": LIVE_ADAPTER_SCHEMA_VERSION,
+                "live_vendor_execution": False,
+                "simulation_mode": self.simulation_mode,
+                "passed": False,
+                "block_reasons": ["ergoai_binary_unavailable_or_simulation"],
+                "case_kinds": list(LIVE_CASE_KINDS),
+                "authority_ceiling": AUTHORITY_CEILING,
+                "grants_proof_authority": False,
+                "evidence_class": EVIDENCE_CLASS,
+                "checks": {},
+            }
+
+        try:
+            from ipfs_datasets_py.logic.backends.installers.advisors import (
+                run_ergoai_semantic_checks,
+            )
+        except Exception as exc:  # pragma: no cover - packaging variance
+            return {
+                "interface": LIVE_TOOLCHAIN_INTERFACE,
+                "schema_version": LIVE_ADAPTER_SCHEMA_VERSION,
+                "live_vendor_execution": False,
+                "passed": False,
+                "block_reasons": [f"semantic_runner_unavailable:{exc}"],
+                "case_kinds": list(LIVE_CASE_KINDS),
+                "authority_ceiling": AUTHORITY_CEILING,
+                "grants_proof_authority": False,
+                "evidence_class": EVIDENCE_CLASS,
+                "checks": {},
+            }
+
+        assert self.binary is not None
+        semantics = run_ergoai_semantic_checks(
+            self.binary,
+            timeout=timeout_seconds,
+            include_extended=True,
+            bound_timeout_seconds=bound_timeout_seconds,
+            max_output_bytes=max_output_bytes,
+        )
+        payload = {
+            "interface": LIVE_TOOLCHAIN_INTERFACE,
+            "schema_version": LIVE_ADAPTER_SCHEMA_VERSION,
+            "live_vendor_execution": True,
+            "simulation_mode": False,
+            "executable": str(self.binary),
+            "case_kinds": list(LIVE_CASE_KINDS),
+            "checks": semantics.get("checks") or {},
+            "replay_bound": bool(semantics.get("replay_bound")),
+            "core_passed": bool(semantics.get("core_passed")),
+            "extended_passed": bool(semantics.get("extended_passed")),
+            "passed": bool(semantics.get("passed")),
+            "normalized_evidence_digest_sha256": semantics.get(
+                "normalized_evidence_digest_sha256"
+            ),
+            "authority_ceiling": AUTHORITY_CEILING,
+            "grants_proof_authority": False,
+            "grants_theorem_authority": False,
+            "evidence_class": EVIDENCE_CLASS,
+            "network_used": False,
+            "install_attempted": False,
+            "block_reasons": []
+            if semantics.get("passed")
+            else ["live_semantic_matrix_incomplete"],
+        }
+        payload["adapter_digest_sha256"] = hashlib.sha256(
+            repr(
+                {
+                    k: payload[k]
+                    for k in (
+                        "live_vendor_execution",
+                        "passed",
+                        "normalized_evidence_digest_sha256",
+                        "authority_ceiling",
+                        "evidence_class",
+                    )
+                }
+            ).encode("utf-8")
+        ).hexdigest()
+        return payload
+
+    def evaluate_bounded_goal(
+        self,
+        goal: str,
+        *,
+        timeout_seconds: float = 30.0,
+        max_output_bytes: int | None = None,
+    ) -> Dict[str, Any]:
+        """Run one bounded goal and tag the result as candidate evidence only."""
+
+        query = self.query(goal, timeout_seconds=timeout_seconds)
+        status = (
+            query.status.value
+            if isinstance(query.status, FLogicStatus)
+            else str(query.status)
+        )
+        if status == FLogicStatus.ERROR.value and query.error_message and (
+            "timed out" in query.error_message.lower()
+        ):
+            status = "timeout"
+        return {
+            "interface": LIVE_TOOLCHAIN_INTERFACE,
+            "schema_version": LIVE_ADAPTER_SCHEMA_VERSION,
+            "goal": goal,
+            "status": status,
+            "bindings": list(query.bindings or []),
+            "error_message": query.error_message,
+            "live_vendor_execution": self.is_live_vendor_execution(),
+            "simulation_mode": self.simulation_mode,
+            "timeout_seconds": timeout_seconds,
+            "max_output_bytes": max_output_bytes,
+            "authority_ceiling": AUTHORITY_CEILING,
+            "grants_proof_authority": False,
+            "evidence_class": EVIDENCE_CLASS,
         }
 
 
@@ -398,4 +567,9 @@ __all__ = [
     "ERGOAI_AVAILABLE",
     "ERGOAI_SUBMODULE_PATH",
     "resolve_ergo_binary",
+    "LIVE_TOOLCHAIN_INTERFACE",
+    "LIVE_ADAPTER_SCHEMA_VERSION",
+    "AUTHORITY_CEILING",
+    "EVIDENCE_CLASS",
+    "LIVE_CASE_KINDS",
 ]
