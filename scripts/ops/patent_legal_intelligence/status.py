@@ -191,12 +191,25 @@ def _shard_health(
     task = _load_json(task_path) or {}
     payloads = (task, status)
 
-    active_task = _string_first(payloads, ("active_task_id", "last_implementation_task_id"))
+    implementation_in_progress = any(
+        payload.get("implementation_in_progress") is True for payload in payloads
+    )
+    # ``last_implementation_task_id`` and its log are historical receipt fields.
+    # Treating them as live work makes a completed lane look permanently stalled.
+    active_task = _string_first(payloads, ("active_task_id",))
     active_phase = _string_first(payloads, ("active_phase", "phase"))
-    active_log_text = _string_first(payloads, ("active_log_path", "implementation_log_path"))
+    active_log_text = (
+        _string_first(payloads, ("active_log_path", "implementation_log_path"))
+        if active_task or implementation_in_progress
+        else ""
+    )
     active_log = Path(active_log_text) if active_log_text else None
     if active_log is not None and not active_log.is_absolute():
         active_log = state_dir / active_log
+    managed_log_text = _string_first((status,), ("log_path",))
+    managed_log = Path(managed_log_text) if managed_log_text else None
+    if managed_log is not None and not managed_log.is_absolute():
+        managed_log = state_dir / managed_log
     worker_pids: list[int] = []
     for value in _list_first(payloads, ("active_worker_pids", "worker_pids")):
         try:
@@ -222,18 +235,42 @@ def _shard_health(
     restart_count = _int_first((status,), ("restart_count", "restarts"))
     last_recycle_reason = _string_first((status,), ("last_recycle_reason",))
 
-    heartbeat_value = _string_first(
-        payloads,
-        ("updated_at", "heartbeat_at", "last_progress_at", "observed_at"),
+    # The task projection is intentionally byte-stable while idle.  The outer
+    # supervisor status is the liveness heartbeat and must take precedence.
+    heartbeat_value = (
+        _string_first(
+            (status,),
+            ("updated_at", "heartbeat_at", "observed_at"),
+        )
+        if status
+        else _string_first(
+            (task,),
+            ("heartbeat_at", "last_progress_at", "observed_at"),
+        )
     )
-    heartbeat_age = _age_seconds(heartbeat_value, fallback_path=status_path if status else task_path)
+    heartbeat_age = _age_seconds(
+        heartbeat_value,
+        fallback_path=None if status else task_path,
+    )
+    task_projection_age = _age_seconds(
+        _string_first((task,), ("heartbeat_at", "last_progress_at", "observed_at")),
+        fallback_path=task_path if task else None,
+    )
     pid_age = _age_seconds("", fallback_path=outer_pid_path)
     progress_age = _age_seconds(
         _string_first(payloads, ("last_progress_at", "heartbeat_at", "updated_at")),
         fallback_path=task_path if task else status_path,
     )
-    selected_log = active_log if active_log and active_log.exists() else outer_log
-    log_age = _age_seconds("", fallback_path=selected_log)
+    active_log_age = _age_seconds("", fallback_path=active_log) if active_log else None
+    managed_log_age = _age_seconds("", fallback_path=managed_log) if managed_log else None
+    outer_log_age = _age_seconds("", fallback_path=outer_log)
+    quiescent = bool(
+        not active_task
+        and not implementation_in_progress
+        and ready_count == 0
+        and blocked_count == 0
+        and idle_reason == "no_shard_selectable_ready_tasks"
+    )
 
     reasons: list[str] = []
     notes: list[str] = []
@@ -248,6 +285,8 @@ def _shard_health(
         reasons.append("managed PID command does not match this shard")
     if not status and not starting:
         reasons.append("supervisor status is missing after startup grace")
+    if status and heartbeat_age is None and not starting:
+        reasons.append("supervisor heartbeat is missing or unparseable")
     if heartbeat_age is not None and heartbeat_age > heartbeat_limit and not starting:
         reasons.append(f"heartbeat is stale ({heartbeat_age:.0f}s > {heartbeat_limit}s)")
     if status.get("stalled_without_active_worker") is True:
@@ -258,8 +297,44 @@ def _shard_health(
         reasons.append(f"task projection has {blocked_count} blocked task(s)")
     if worker_count > 0 and not worker_alive and active_task and not starting:
         reasons.append("active task declares workers but no worker PID is alive")
-    if active_task and log_age is not None and log_age > log_limit and not starting:
-        reasons.append(f"active implementation log is stale ({log_age:.0f}s > {log_limit}s)")
+    if implementation_in_progress and active_task and active_log is None and not starting:
+        reasons.append("active implementation log is missing")
+    if (
+        implementation_in_progress
+        and active_task
+        and active_log_age is not None
+        and active_log_age > log_limit
+        and not starting
+    ):
+        reasons.append(
+            f"active implementation log is stale ({active_log_age:.0f}s > {log_limit}s)"
+        )
+    if (
+        quiescent
+        and managed_alive
+        and managed_log is None
+        and not starting
+    ):
+        reasons.append("managed daemon pass log is missing")
+    if (
+        quiescent
+        and managed_alive
+        and managed_log is not None
+        and managed_log_age is None
+        and not starting
+    ):
+        reasons.append("managed daemon pass log cannot be inspected")
+    if (
+        quiescent
+        and managed_alive
+        and managed_log_age is not None
+        and managed_log_age > heartbeat_limit
+        and not starting
+    ):
+        reasons.append(
+            "managed daemon pass log is stale "
+            f"({managed_log_age:.0f}s > {heartbeat_limit}s)"
+        )
     if (
         ready_count > 0
         and not active_task
@@ -292,12 +367,26 @@ def _shard_health(
         "managed_alive": managed_alive,
         "supervisor_state": supervisor_state,
         "heartbeat_age_seconds": round(heartbeat_age, 1) if heartbeat_age is not None else None,
+        "task_projection_age_seconds": (
+            round(task_projection_age, 1) if task_projection_age is not None else None
+        ),
         "active_task_id": active_task,
         "active_phase": active_phase,
+        "implementation_in_progress": implementation_in_progress,
+        "quiescent": quiescent,
         "active_worker_pids": worker_pids,
         "active_worker_pids_alive": worker_alive,
         "active_log_path": str(active_log) if active_log else "",
-        "active_log_age_seconds": round(log_age, 1) if log_age is not None else None,
+        "active_log_age_seconds": (
+            round(active_log_age, 1) if active_log_age is not None else None
+        ),
+        "managed_log_path": str(managed_log) if managed_log else "",
+        "managed_log_age_seconds": (
+            round(managed_log_age, 1) if managed_log_age is not None else None
+        ),
+        "outer_log_age_seconds": (
+            round(outer_log_age, 1) if outer_log_age is not None else None
+        ),
         "ready_count": ready_count,
         "waiting_count": waiting_count,
         "blocked_count": blocked_count,

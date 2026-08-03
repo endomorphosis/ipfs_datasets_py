@@ -1456,3 +1456,603 @@ Program invariants:
 - Retry repair source: PATLAW-024
 - Retry failure kind: validation
 - Acceptance: The reviewed proposal-gate archive/fixture false positives are fixed and tested; release PATLAW-024 from strategy blocked_tasks without editing durable task state directly.
+
+## PATLAW-120 Add bounded production HTTP transport and credential references
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-acquisition
+- Depends on:
+- Goal id: PATLAW-G111
+- Outputs: ipfs_datasets_py/processors/domains/uspto/providers/http_transport.py, ipfs_datasets_py/processors/domains/uspto/providers/credential_resolver.py, tests/unit/processors/domains/uspto/providers/test_http_transport.py, tests/security/test_uspto_credential_resolution.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/providers/test_http_transport.py tests/security/test_uspto_credential_resolution.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-production-transport
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: io-medium
+- Token class: large
+- Estimated tokens: 14000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/providers/http_transport.py, ipfs_datasets_py/processors/domains/uspto/providers/credential_resolver.py, tests/unit/processors/domains/uspto/providers/test_http_transport.py, tests/security/test_uspto_credential_resolution.py
+- Allow concurrent with: PATLAW-121, PATLAW-122, PATLAW-123
+- Conflict policy: Own the concrete transport and credential-reference adapter only; do not edit provider package exports, supervisor files, store secrets, log authorization headers, or bypass the existing host/rate/privacy policy.
+- Preconditions: Existing ODP client contracts, retry/rate-limit policy, privacy boundary, artifact receipts, and recorded transport tests are treated as immutable inputs.
+- Effects: Implement a reusable HTTPS transport with allowlisted hosts, explicit timeouts, bounded retries/backoff, response-size limits, conditional requests, cancellation, structured quota/error classification, and vault/environment credential references resolved only at request time.
+- Acceptance: Recorded and fake-server tests cover success, pagination, 304, 401/403, 404, 429/quota, 5xx, timeout, oversized body, cancellation, and redacted diagnostics; secrets never enter artifacts or logs; no live network is required by default.
+
+## PATLAW-121 Bridge USPTO documents to the specialized PDF/OCR stack
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: document-understanding
+- Depends on:
+- Goal id: PATLAW-G121
+- Outputs: ipfs_datasets_py/processors/domains/uspto/pdf_ocr_bridge.py, ipfs_datasets_py/processors/domains/uspto/structured_filing_bridge.py, tests/unit/processors/domains/uspto/test_pdf_ocr_bridge.py, tests/unit/processors/domains/uspto/test_structured_filing_bridge.py, tests/integration/processors/domains/uspto/test_private_ocr_bridge.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/test_pdf_ocr_bridge.py tests/unit/processors/domains/uspto/test_structured_filing_bridge.py tests/integration/processors/domains/uspto/test_private_ocr_bridge.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-pdf-ocr-bridge
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/pdf_ocr_bridge.py, ipfs_datasets_py/processors/domains/uspto/structured_filing_bridge.py, tests/unit/processors/domains/uspto/test_pdf_ocr_bridge.py, tests/unit/processors/domains/uspto/test_structured_filing_bridge.py, tests/integration/processors/domains/uspto/test_private_ocr_bridge.py
+- Allow concurrent with: PATLAW-120, PATLAW-122, PATLAW-123
+- Conflict policy: Own the USPTO-to-specialized-PDF adapter only; do not fork generic PDF processors, alter encrypted artifact stores, or send private pages to a remote OCR/model provider without an explicit approved route.
+- Preconditions: Existing document bytes, classification, extraction/span contracts, specialized PDF processors, and private-compute policy are available as stable inputs.
+- Effects: Route born-digital PDFs through layout/text extraction and image-only or low-confidence pages through a configurable local OCR backend while retaining page geometry, reading order, tables, signatures/stamps, confidence, and byte/page provenance; add bounded TXT, XML, image, PCT ZIP, Web ADS/bibliographic, and ST.26 XML dispatch with pinned local schema/DTD validation and external-entity/network resolution disabled.
+- Acceptance: Native and scanned fixtures yield deterministic normalized spans linked to source CID/page/bounds; OCR fallback is confidence-gated and resumable; corrupt/encrypted/unsupported PDFs fail closed; XML/XXE and archive-bomb cases fail safely; every structured format is validated or explicitly unsupported; private fixtures prove zero unauthorized provider calls and zero plaintext persistence.
+
+## PATLAW-122 Define exact USPTO span, authority, fact, and Legal IR contracts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: legal-logic-assurance
+- Depends on:
+- Goal id: PATLAW-G131
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/legal_ir_contracts.py, tests/unit/processors/domains/uspto/analysis/test_legal_ir_contracts.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_legal_ir_contracts.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-legal-ir-contracts
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-small
+- Token class: large
+- Estimated tokens: 12000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/analysis/legal_ir_contracts.py, tests/unit/processors/domains/uspto/analysis/test_legal_ir_contracts.py
+- Allow concurrent with: PATLAW-120, PATLAW-121, PATLAW-123
+- Conflict policy: Own the versioned boundary contracts only; do not modify the shared Legal IR/compiler/proof engine, infer missing source spans, or represent guidance as binding authority.
+- Preconditions: Existing USPTO extraction spans, citation resolver, temporal authority records, requirements, evidence graph, and legal/logic APIs have been inventoried.
+- Effects: Define lossless mappings for source spans, normalized propositions, actors, modalities, conditions, deadlines, exceptions, citations, authority rank/effective time, submission facts, proof obligations, assumptions, counterevidence, and tri-state outcomes.
+- Acceptance: Round trips preserve exact source identity and temporal/disclosure metadata; invalid or ambiguous mappings are rejected or marked unknown; schemas distinguish quoted text, deterministic normalization, model candidates, human findings, and proven conclusions.
+
+## PATLAW-123 Make gold-corpus metrics executable and receipt-bound
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: evaluation-release
+- Depends on:
+- Goal id: PATLAW-G151
+- Outputs: ipfs_datasets_py/processors/domains/uspto/evaluation.py, tests/integration/processors/domains/uspto/test_gold_metric_evaluator.py, tests/fixtures/uspto/gold/metrics/observed_metrics.schema.json
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_gold_metric_evaluator.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-gold-metrics
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 13000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/evaluation.py, tests/integration/processors/domains/uspto/test_gold_metric_evaluator.py, tests/fixtures/uspto/gold/metrics/observed_metrics.schema.json
+- Allow concurrent with: PATLAW-120, PATLAW-121, PATLAW-122
+- Conflict policy: Own metric computation and observed-result schema only; do not rewrite gold labels, silently relax thresholds, claim official provenance, or replace existing release gates with schema/hash presence checks.
+- Preconditions: Existing synthetic gold cases, metric threshold manifest, dossier schemas, and evaluation contracts are readable without network access.
+- Effects: Compute document classification, span, semantic field, citation, obligation, contradiction, deadline, privacy, determinism, and end-to-end completeness metrics from actual processor outputs and emit content-addressed evaluation receipts.
+- Acceptance: Intentionally degraded outputs fail their corresponding metric; thresholds are versioned and compared to observed values; receipts bind corpus/parser/ruleset/model/config identities; missing labels or unmeasurable cases produce explicit unknown/not-applicable counts rather than passes.
+
+## PATLAW-124 Bootstrap ODP clients and durable matter state
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-acquisition
+- Depends on: PATLAW-120
+- Goal id: PATLAW-G111
+- Outputs: ipfs_datasets_py/processors/domains/uspto/runtime.py, ipfs_datasets_py/processors/domains/uspto/durable_stores.py, ipfs_datasets_py/processors/domains/uspto/status_vocabulary.py, ipfs_datasets_py/processors/domains/uspto/providers/odp_contract_monitor.py, ipfs_datasets_py/processors/domains/uspto/providers/patent_file_wrapper.py, ipfs_datasets_py/processors/domains/uspto/application_status_processor.py, tests/integration/processors/domains/uspto/test_live_runtime_bootstrap.py, tests/integration/processors/domains/uspto/test_durable_matter_state.py, tests/integration/processors/domains/uspto/test_odp_family_status_contract.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_live_runtime_bootstrap.py tests/integration/processors/domains/uspto/test_durable_matter_state.py tests/integration/processors/domains/uspto/test_odp_family_status_contract.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-runtime-state
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: io-large
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/runtime.py, ipfs_datasets_py/processors/domains/uspto/durable_stores.py, ipfs_datasets_py/processors/domains/uspto/status_vocabulary.py, ipfs_datasets_py/processors/domains/uspto/providers/odp_contract_monitor.py, ipfs_datasets_py/processors/domains/uspto/providers/patent_file_wrapper.py, ipfs_datasets_py/processors/domains/uspto/application_status_processor.py, tests/integration/processors/domains/uspto/test_live_runtime_bootstrap.py, tests/integration/processors/domains/uspto/test_durable_matter_state.py, tests/integration/processors/domains/uspto/test_odp_family_status_contract.py
+- Allow concurrent with: PATLAW-125, PATLAW-126, PATLAW-127
+- Conflict policy: Own runtime construction and durable store implementations only; do not edit CLI/API registries, persist credentials, invent Patent Center scraping, or weaken tenant/disclosure checks.
+- Preconditions: Production transport and existing ODP status/document clients, checkpoint contracts, matter ledger, artifact manifest, and private store interfaces are available.
+- Effects: Construct production or recorded clients from explicit profiles; retrieve application, transaction, document, continuity, and foreign-priority records; normalize only a versioned protected ODP status vocabulary while retaining unknown raw codes; probe the announced 2026 sign-in/profile contract; and add transactional status, document, cursor/checkpoint, matter-ledger, idempotency, and key-reference stores with schema versioning, locking, crash recovery, and tenant-scoped encryption metadata.
+- Acceptance: Ordinary configured API/CLI paths no longer require a fixture recipe; continuity/foreign-priority facts are immutable and source-bound; unknown numeric status codes return unknown/quarantine rather than known; opt-in canaries distinguish 401/403 authentication/profile drift from quota/outage/empty results; restart tests resume without duplicate events/downloads; key references remain stable across CLI invocations; tenant separation and least-privilege file modes are enforced.
+
+## PATLAW-125 Add a checkpointed USPTO document processing job
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: document-understanding
+- Depends on: PATLAW-121, PATLAW-124
+- Goal id: PATLAW-G121
+- Outputs: ipfs_datasets_py/processors/domains/uspto/document_pipeline_processor.py, tests/integration/processors/domains/uspto/test_document_pipeline_processor.py, tests/integration/processors/domains/uspto/test_document_pipeline_recovery.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_document_pipeline_processor.py tests/integration/processors/domains/uspto/test_document_pipeline_recovery.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-document-pipeline
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/document_pipeline_processor.py, tests/integration/processors/domains/uspto/test_document_pipeline_processor.py, tests/integration/processors/domains/uspto/test_document_pipeline_recovery.py
+- Allow concurrent with: PATLAW-126, PATLAW-127
+- Conflict policy: Own the new orchestration processor and its tests only; consume classifiers/extractors/validators/stores through public contracts and do not edit their implementations or shared registries.
+- Preconditions: Durable matter state and the specialized PDF/OCR bridge are merged; existing classification, artifact, extraction, and span-validation APIs remain available.
+- Effects: Execute classify, authorize, decrypt in memory, extract/OCR, normalize, validate spans, persist encrypted derived artifacts, and checkpoint each immutable stage with deterministic idempotency keys and quarantine routes.
+- Acceptance: Mixed PDF/DOCX fixtures complete through every stage; restart from each injected failure does not repeat committed work; corrupt, untrusted, or policy-denied inputs quarantine with diagnostics; processor success reflects domain outcome rather than exception absence.
+
+## PATLAW-126 Execute Legal IR compilation and proofs inside the privacy boundary
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: legal-logic-assurance
+- Depends on: PATLAW-122
+- Goal id: PATLAW-G131
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/legal_ir_proof_executor.py, tests/unit/processors/domains/uspto/analysis/test_legal_ir_proof_executor.py, tests/security/test_uspto_private_proof_non_disclosure.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_legal_ir_proof_executor.py tests/security/test_uspto_private_proof_non_disclosure.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-legal-proof
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 17000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/analysis/legal_ir_proof_executor.py, tests/unit/processors/domains/uspto/analysis/test_legal_ir_proof_executor.py, tests/security/test_uspto_private_proof_non_disclosure.py
+- Allow concurrent with: PATLAW-124, PATLAW-125, PATLAW-127
+- Conflict policy: Own the USPTO adapter to LegalIRCompilerAPI and ProofExecutionEngine only; do not modify either shared engine, allow generated text to become authority, or disclose private propositions to an unapproved remote provider.
+- Preconditions: Versioned Legal IR boundary contracts and shared compiler/proof APIs are available; allowed local execution routes and resource ceilings are explicit.
+- Effects: Compile normalized office-action rules and submission facts, invoke bounded proofs, capture assumptions/derivations/countermodels/timeouts, and translate engine results into provenance-linked proved/disproved/unknown/error outcomes.
+- Acceptance: Known satisfiable, contradictory, incomplete, and timeout fixtures map correctly; every conclusion cites its premises and engine/config identity; unavailable or unsupported logic returns unknown; private tests observe zero remote calls and no plaintext logs.
+
+## PATLAW-127 Add a common live legal-source fetch and receipt layer
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-acquisition
+- Depends on: PATLAW-120
+- Goal id: PATLAW-G112
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/patent_source_transport.py, ipfs_datasets_py/processors/legal_data/patent_authority_contracts_v2.py, tests/unit/processors/legal_scrapers/federal_scrapers/test_patent_source_transport.py, tests/unit/processors/legal_data/test_patent_authority_contracts_v2.py
+- Validation: python -m pytest tests/unit/processors/legal_scrapers/federal_scrapers/test_patent_source_transport.py tests/unit/processors/legal_data/test_patent_authority_contracts_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-authority-transport
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: io-medium
+- Token class: large
+- Estimated tokens: 13000
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/patent_source_transport.py, ipfs_datasets_py/processors/legal_data/patent_authority_contracts_v2.py, tests/unit/processors/legal_scrapers/federal_scrapers/test_patent_source_transport.py, tests/unit/processors/legal_data/test_patent_authority_contracts_v2.py
+- Allow concurrent with: PATLAW-124, PATLAW-125, PATLAW-126
+- Conflict policy: Own the legal-source fetch adapter and receipt contract only; do not alter individual source parsers, scrape non-allowlisted sites, or mark transport success as source authenticity.
+- Preconditions: Bounded HTTP transport, official-source allowlist, artifact-manifest contract, and existing federal source processors are available.
+- Effects: Add conditional-download, pagination, content-type/size validation, fixity, cache, retry-after, robots/terms metadata, source timestamp, and immutable acquisition receipts; define independent authority kind, tier, rendition legal status, jurisdiction, edition/release point and exclusions, document/package/granule IDs, media type, signature/fixity evidence, and full temporal-role contracts shared by live CFR, GovInfo, Federal Register, and USPTO guidance processors.
+- Acceptance: Fake-server tests cover unchanged, changed, truncated, mislabeled, throttled, and unavailable sources; bytes and receipts are content-addressed; statute, regulation, adjudicatory authority, guidance, editorial aid, and extracted candidates cannot collapse into one tier; parser input is never accepted without an acquisition outcome; network use remains explicit and bounded.
+
+## PATLAW-128 Acquire live eCFR and annual CFR authority snapshots
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-acquisition
+- Depends on: PATLAW-127
+- Goal id: PATLAW-G112
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/live_cfr_source_processor.py, tests/integration/legal_data/test_live_cfr_acquisition.py, tests/fixtures/legal_data/patent_authorities/live/cfr_recipe.json
+- Validation: python -m pytest tests/integration/legal_data/test_live_cfr_acquisition.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-cfr-acquisition
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: io-large
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/live_cfr_source_processor.py, tests/integration/legal_data/test_live_cfr_acquisition.py, tests/fixtures/legal_data/patent_authorities/live/cfr_recipe.json
+- Allow concurrent with: PATLAW-129, PATLAW-131, PATLAW-132
+- Conflict policy: Own the live CFR acquisition wrapper and replay recipe only; do not rewrite existing eCFR/annual parsers, hard-code a latest edition, or treat eCFR editorial text as authenticated annual print.
+- Preconditions: Common legal-source transport and the existing eCFR/annual CFR processors, source ranking, temporal model, and official-verification contracts are available.
+- Effects: Discover and fetch relevant Title 37 current/effective snapshots and annual editions, preserve edition/granule/source metadata, feed recorded bytes to existing parsers, and reconcile current editorial text with annual official baselines.
+- Acceptance: Recorded integration covers pagination, point-in-time lookup, annual edition rollover, changed/removed sections, missing granules, and conflicting text; every provision has source CID/span/effective interval and separate authority/authentication status.
+
+## PATLAW-129 Parse layout-aware office-action semantics v2
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: document-understanding
+- Depends on: PATLAW-125
+- Goal id: PATLAW-G122
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/office_action_semantics_v2.py, tests/unit/processors/domains/uspto/analysis/test_office_action_semantics_v2.py, tests/fixtures/uspto/office_actions/semantic_v2_recipe.json
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_office_action_semantics_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-office-action-semantics
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 19000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/analysis/office_action_semantics_v2.py, tests/unit/processors/domains/uspto/analysis/test_office_action_semantics_v2.py, tests/fixtures/uspto/office_actions/semantic_v2_recipe.json
+- Allow concurrent with: PATLAW-128, PATLAW-131, PATLAW-132
+- Conflict policy: Own the v2 semantic parser and fixtures only; do not overwrite the v1 parser, promote model candidates without deterministic validation, or detach findings from page/span provenance.
+- Preconditions: Validated layout/OCR spans are available from the checkpointed document job; v1 office-action and citation contracts define compatibility requirements.
+- Effects: Parse headers, mailing/notification dates, response periods, examiner contacts, claim groupings, objections, rejections, allowances, requirements, statutory/regulatory citations, forms, attachments, signatures, tables, and cross-page continuations into confidence-scored candidate semantics across missing-parts/omitted-item/no-filing-date, restriction/election, Quayle, advisory, sequence-compliance, allowance/issue-fee, appeal/pre-appeal, petition, rescinded/reissued, non-final, and final communication families.
+- Acceptance: Gold fixtures cover every named family, document-code drift, and noisy scans; each field retains exact supporting spans; deterministic rules validate identifiers/dates/citations and flag contradictions; model output remains a candidate until admitted; missing, unknown-family, or ambiguous content stays unknown/review-required.
+
+## PATLAW-130 Bind obligations to specific submission evidence and proofs
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: legal-logic-assurance
+- Depends on: PATLAW-126, PATLAW-129, PATLAW-133
+- Goal id: PATLAW-G131
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/semantic_compliance_processor.py, tests/unit/processors/domains/uspto/analysis/test_semantic_compliance_processor.py, tests/integration/processors/domains/uspto/test_semantic_submission_compliance.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_semantic_compliance_processor.py tests/integration/processors/domains/uspto/test_semantic_submission_compliance.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-semantic-compliance
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/analysis/semantic_compliance_processor.py, tests/unit/processors/domains/uspto/analysis/test_semantic_compliance_processor.py, tests/integration/processors/domains/uspto/test_semantic_submission_compliance.py
+- Allow concurrent with: PATLAW-128, PATLAW-131, PATLAW-132
+- Conflict policy: Own obligation-specific matching/proof orchestration only; do not edit source parsers, accept broad fact-category presence as compliance, or convert lack of counterevidence into proof.
+- Preconditions: Office-action v2 semantics, submission-package v2 semantics, and privacy-safe Legal IR proof execution are merged.
+- Effects: Normalize each government demand into atomic obligations and bind it to exact responsive document/claim/argument/amendment/declaration/fee/form evidence, required conditions, exceptions, contradictions, and proof results.
+- Acceptance: Unrelated remarks cannot satisfy a rejection response; partial/conditional/contradictory evidence yields incomplete/unknown/fail as appropriate; every result has obligation, evidence, authority, and proof provenance; model similarity can rank candidates but cannot establish satisfaction.
+
+## PATLAW-131 Acquire and verify GovInfo, U.S. Code, Public Law, and Federal Register sources
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-acquisition
+- Depends on: PATLAW-127
+- Goal id: PATLAW-G112
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/live_official_patent_authority_processor.py, tests/integration/legal_data/test_live_official_patent_authorities.py, tests/fixtures/legal_data/patent_authorities/live/official_authorities_recipe.json
+- Validation: python -m pytest tests/integration/legal_data/test_live_official_patent_authorities.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-official-authority-acquisition
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: io-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/live_official_patent_authority_processor.py, tests/integration/legal_data/test_live_official_patent_authorities.py, tests/fixtures/legal_data/patent_authorities/live/official_authorities_recipe.json
+- Allow concurrent with: PATLAW-128, PATLAW-129, PATLAW-132
+- Conflict policy: Own the live multi-source acquisition/verification wrapper and replay recipe only; consume existing source processors/verifiers and never infer official authentication from HTTPS or a secondary mirror.
+- Preconditions: Common legal-source transport and existing GovInfo, USLM/U.S. Code, Public Law change, Federal Register, fixity, signature, and source-authority processors are available.
+- Effects: Discover relevant Title 35 OLRC release points and declared exclusions, Statutes at Large/Public Laws, Title 37 annual materials, and Federal Register issues/notices/rules; download official packages/renditions and metadata; verify fixity/authentication where available; distinguish GovInfo official electronic Federal Register artifacts from FederalRegister.gov discovery representations; cross-link amendments and effective dates.
+- Acceptance: Recorded cases cover edition rollover, release-point exclusions, amended/renumbered provisions, missing package/granule, bad fixity, unavailable signature, delayed issue, and source conflict; adjudicatory coverage is explicitly present or recorded as a blocking research gap; unverified or incomplete sources remain usable only with explicit degraded status.
+
+## PATLAW-132 Acquire live MPEP, forms, fees, and examination guidance
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: production-acquisition
+- Depends on: PATLAW-127
+- Goal id: PATLAW-G112
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/live_uspto_guidance_processor.py, tests/integration/legal_data/test_live_uspto_guidance.py, tests/fixtures/legal_data/patent_authorities/live/uspto_guidance_recipe.json
+- Validation: python -m pytest tests/integration/legal_data/test_live_uspto_guidance.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-uspto-guidance-acquisition
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: io-large
+- Token class: large
+- Estimated tokens: 17000
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/live_uspto_guidance_processor.py, tests/integration/legal_data/test_live_uspto_guidance.py, tests/fixtures/legal_data/patent_authorities/live/uspto_guidance_recipe.json
+- Allow concurrent with: PATLAW-128, PATLAW-129, PATLAW-131
+- Conflict policy: Own live USPTO guidance acquisition and replay data only; do not classify the MPEP, forms, fee schedules, FAQs, or examination guides as statutes/regulations, and do not automate filing or payment.
+- Preconditions: Common legal-source transport, existing USPTO guidance parsers, source hierarchy, and temporal authority registry are available.
+- Effects: Discover dated MPEP editions/revisions, official forms/instructions, fee schedules, and examination guidance; acquire immutable bytes/metadata; detect replacements; and preserve the guidance/nonbinding authority class and applicable dates.
+- Acceptance: Recorded rollover/removal/conflict fixtures retain old and new versions; every item has source CID/span/retrieved/published/effective metadata where supplied; unavailable dates and supersession remain explicit; links never silently select latest.
+
+## PATLAW-133 Parse submission-package semantics v2
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: document-understanding
+- Depends on: PATLAW-125
+- Goal id: PATLAW-G122
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/submission_package_semantics_v2.py, tests/unit/processors/domains/uspto/analysis/test_submission_package_semantics_v2.py, tests/fixtures/uspto/submissions/semantic_v2_recipe.json
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_submission_package_semantics_v2.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-submission-semantics
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 19000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/analysis/submission_package_semantics_v2.py, tests/unit/processors/domains/uspto/analysis/test_submission_package_semantics_v2.py, tests/fixtures/uspto/submissions/semantic_v2_recipe.json
+- Allow concurrent with: PATLAW-128, PATLAW-131, PATLAW-132
+- Conflict policy: Own the v2 package parser and fixtures only; do not overwrite v1 parsing, infer a filed document that is absent, or treat filenames/document codes as sufficient semantic evidence.
+- Preconditions: Validated layout/OCR spans and synchronized submission document manifests are available; v1 submission/fact/evidence contracts define compatibility requirements.
+- Effects: Parse package inventory, bibliographic/ADS and benefit identifiers, claims and amendments, specification/drawings, arguments mapped to issues/claims/citations, declarations, signatures-as-present, certifications, forms, fee assertions, sequence-listing applicability, attachments, replacement-page instructions, submitted DOCX, feedback document, converted/auxiliary/split PDFs, and warnings/errors with cross-document links; distinguish transmission attempt, Electronic Submission Receipt, payment receipt, official/corrected Filing Receipt, and first ODP appearance.
+- Acceptance: Gold fixtures cover complete, partial, duplicate, inconsistent, scanned, and conversion-warning packages; every normalized fact cites exact document/page/span or structured-field anchor; hashes and effects for every receipt/rendering type remain distinct; inventory and internal-content discrepancies are reported; candidate associations remain confidence-scored and reviewable.
+
+## PATLAW-134 Verify government instructions against authority and logic
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: legal-logic-assurance
+- Depends on: PATLAW-126, PATLAW-129, PATLAW-135
+- Goal id: PATLAW-G131
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/semantic_instruction_consistency_processor.py, tests/unit/processors/domains/uspto/analysis/test_semantic_instruction_consistency.py, tests/integration/processors/domains/uspto/test_instruction_logic_assurance.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_semantic_instruction_consistency.py tests/integration/processors/domains/uspto/test_instruction_logic_assurance.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-instruction-consistency
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/analysis/semantic_instruction_consistency_processor.py, tests/unit/processors/domains/uspto/analysis/test_semantic_instruction_consistency.py, tests/integration/processors/domains/uspto/test_instruction_logic_assurance.py
+- Allow concurrent with: PATLAW-137, PATLAW-138, PATLAW-139
+- Conflict policy: Own semantic instruction checking only; do not mark an instruction consistent merely because a citation resolves, substitute MPEP/guidance for controlling law, or make a final legal determination without review.
+- Preconditions: Office-action v2 semantics, privacy-safe proof execution, and temporally materialized authority snapshots are merged.
+- Effects: Compare each instruction, deadline basis, required act, exception, and cited proposition with exact quoted authority spans, hierarchy/effective date, derived Legal IR, conflicts, and counterexamples; distinguish clerical mismatch, unsupported instruction, ambiguity, and verified consistency.
+- Acceptance: Exact-citation-but-wrong-proposition fixtures fail or require review; superseded/conflicting/missing authority cannot pass; consistent results require proposition-level support plus proof or a documented deterministic rule; findings expose sources, assumptions, confidence, and human-review boundary.
+
+## PATLAW-135 Materialize scheduled temporal patent-authority snapshots
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: production-acquisition
+- Depends on: PATLAW-128, PATLAW-131, PATLAW-132
+- Goal id: PATLAW-G112
+- Outputs: ipfs_datasets_py/processors/legal_data/patent_authority_materializer.py, tests/integration/legal_data/test_patent_authority_materializer.py, tests/fixtures/legal_data/patent_authorities/live/temporal_materialization_recipe.json
+- Validation: python -m pytest tests/integration/legal_data/test_patent_authority_materializer.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-authority-materialization
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: io-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/legal_data/patent_authority_materializer.py, tests/integration/legal_data/test_patent_authority_materializer.py, tests/fixtures/legal_data/patent_authorities/live/temporal_materialization_recipe.json
+- Allow concurrent with: PATLAW-129, PATLAW-133
+- Conflict policy: Own the new materializer, its replay fixture, and tests only; do not rewrite source acquisitions, mutate prior snapshots, or collapse conflicting authority records into a fabricated consensus.
+- Preconditions: Live CFR, official statutory/rulemaking, and USPTO guidance acquisition processors are merged with existing temporal resolver and canonical legal corpora interfaces.
+- Effects: Run incremental acquisitions on explicit schedules, normalize/cross-link versions, build immutable as-of views and freshness manifests, retain conflicts and gaps, and publish local content-addressed snapshot references for downstream analysis.
+- Acceptance: Replaying identical inputs is byte-stable; changed sources create new snapshots without mutating old ones; as-of queries never leak later law; statute/regulation/adjudicatory/guidance/editorial tiers and rendition status persist; absent adjudicatory coverage is a visible blocking research gap; stale/missing/conflicting mandatory sources block an authoritative-ready state.
+
+## PATLAW-136 Orchestrate resumable matter analysis end to end
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: product-workflow
+- Depends on: PATLAW-124, PATLAW-125, PATLAW-129, PATLAW-130, PATLAW-133, PATLAW-134, PATLAW-135
+- Goal id: PATLAW-G141
+- Outputs: ipfs_datasets_py/processors/domains/uspto/matter_analysis_processor.py, tests/integration/processors/domains/uspto/test_matter_analysis_processor.py, tests/integration/processors/domains/uspto/test_matter_analysis_resume.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_matter_analysis_processor.py tests/integration/processors/domains/uspto/test_matter_analysis_resume.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-matter-analysis
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 24000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/matter_analysis_processor.py, tests/integration/processors/domains/uspto/test_matter_analysis_processor.py, tests/integration/processors/domains/uspto/test_matter_analysis_resume.py
+- Allow concurrent with: PATLAW-137, PATLAW-138, PATLAW-139
+- Conflict policy: Own the new matter-level orchestrator and tests only; call leaf processors through stable interfaces, do not edit shared API/CLI/MCP registries, and never perform filing, payment, signature, or legal-strategy selection.
+- Preconditions: Durable ODP/matter state, document processing, office-action/submission semantics, compliance, instruction consistency, and temporal authority materialization are merged.
+- Effects: Given a tenant and matter reference, incrementally sync authorized status/documents, process changed artifacts, select the correct as-of authority view, run semantic/legal/logic checks, assemble a versioned dossier, and checkpoint a stage/result DAG.
+- Acceptance: One call handles a new matter and a later delta; retries resume exactly; unchanged stages are reused by input digest; partial, quarantined, stale-authority, proof-unknown, and review-required states propagate to the top-level result instead of reporting unconditional success.
+
+## PATLAW-137 Build versioned baseline filing-obligation packs
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: legal-logic-assurance
+- Depends on: PATLAW-133, PATLAW-135
+- Goal id: PATLAW-G132
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/filing_obligation_processor.py, ipfs_datasets_py/processors/domains/uspto/analysis/filing_rule_packs.py, tests/unit/processors/domains/uspto/analysis/test_filing_obligation_processor.py, tests/fixtures/uspto/filing_rules/baseline_rules.json
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_filing_obligation_processor.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-filing-obligations
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-medium
+- Token class: xlarge
+- Estimated tokens: 21000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/analysis/filing_obligation_processor.py, ipfs_datasets_py/processors/domains/uspto/analysis/filing_rule_packs.py, tests/unit/processors/domains/uspto/analysis/test_filing_obligation_processor.py, tests/fixtures/uspto/filing_rules/baseline_rules.json
+- Allow concurrent with: PATLAW-134, PATLAW-138, PATLAW-139
+- Conflict policy: Own baseline rule-pack contracts/processor/fixture only; do not encode matter-specific legal strategy, silently update rules, claim exhaustive coverage, or treat form instructions as controlling law.
+- Preconditions: Submission-package semantics and authoritative as-of snapshots are available; supported filing/response scenarios and human rule-review workflow are explicitly bounded.
+- Effects: Compile reviewed, versioned obligation packs for utility, design under 37 CFR 1.151–1.155, and plant under 37 CFR 1.161–1.167 application and office-action response components, keyed by filing date, AIA/pre-AIA regime, prosecution stage/finality, and entity status, including signatures/certifications, ADS/benefit claims, claim amendments, attachments, sequence listings, fees/forms, identifiers, and conditional exceptions, each linked to exact authority and guidance provenance.
+- Acceptance: Rules identify jurisdiction, application type, scenario, applicability/effective interval, required evidence, exceptions, citations, reviewer/version, and tests; provisional, PCT national-stage, reissue, continuation, divisional, and CIP cases have an explicit reviewed profile or return out-of-scope/unknown; unsupported scenarios return coverage gaps; a pack cannot become active until source digests and human approval are recorded.
+
+## PATLAW-138 Build authoritative deadline and closure-calendar snapshots
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: legal-logic-assurance
+- Depends on: PATLAW-135
+- Goal id: PATLAW-G132
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/authoritative_deadline_calendar.py, tests/unit/processors/domains/uspto/analysis/test_authoritative_deadline_calendar.py, tests/fixtures/uspto/deadlines/closure_calendar_recipe.json
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_authoritative_deadline_calendar.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-authoritative-deadlines
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/analysis/authoritative_deadline_calendar.py, tests/unit/processors/domains/uspto/analysis/test_authoritative_deadline_calendar.py, tests/fixtures/uspto/deadlines/closure_calendar_recipe.json
+- Allow concurrent with: PATLAW-134, PATLAW-137, PATLAW-139
+- Conflict policy: Own closure-calendar snapshots and enhanced deadline computation only; do not replace docketing counsel, assume extensions, infer service dates, or mutate the v1 calculator.
+- Preconditions: Temporal authority snapshots, parsed mailing/notification dates, and existing deadline/event contracts are available.
+- Effects: Materialize sourced federal/USPTO closure and emergency-relief calendars, compute rule-specific base/extension/maximum dates and uncertainty bounds, and retain timezone, service channel, trigger, authority, and as-of provenance.
+- Acceptance: Weekend/holiday/closure/emergency/extension/conflicting-date fixtures are deterministic; missing trigger or calendar provenance blocks a definitive deadline; output separates calculated dates, source-stated dates, assumptions, and human confirmation requirements.
+
+## PATLAW-139 Add an approved-public-official USPTO evaluation corpus
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: evaluation-release
+- Depends on: PATLAW-124, PATLAW-129, PATLAW-133, PATLAW-135
+- Goal id: PATLAW-G151
+- Outputs: tests/fixtures/uspto/gold/public_official/README.md, tests/fixtures/uspto/gold/public_official/manifest.json, tests/contract/processors/test_uspto_public_official_corpus.py
+- Validation: python -m pytest tests/contract/processors/test_uspto_public_official_corpus.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-public-official-corpus
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: io-medium
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: tests/fixtures/uspto/gold/public_official/README.md, tests/fixtures/uspto/gold/public_official/manifest.json, tests/contract/processors/test_uspto_public_official_corpus.py
+- Allow concurrent with: PATLAW-134, PATLAW-137, PATLAW-138
+- Conflict policy: Own only reviewed public-official corpus metadata and its contract test; do not include confidential/unpublished submissions, redistribute unreviewed documents, or label synthetic material official.
+- Preconditions: Authorized public document acquisition and source snapshots work; licensing/redistribution, privacy, PII, provenance, and reviewer criteria are documented.
+- Effects: Curate diverse publicly available USPTO/government document references and immutable permitted artifacts with human-reviewed labels for layout, fields, instructions, citations, obligations, submission evidence, deadlines, and expected uncertainty.
+- Acceptance: Manifest distinguishes official bytes from annotations and synthetic supplements; every artifact has source URL/CID, public status, rights/privacy review, acquisition date, label reviewer/version, and split assignment; leakage and duplicate-family checks pass.
+
+## PATLAW-140 Expose a serialized submission-assurance workflow through API and CLI
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: product-workflow
+- Depends on: PATLAW-060, PATLAW-136, PATLAW-137, PATLAW-138
+- Goal id: PATLAW-G141
+- Outputs: ipfs_datasets_py/processors/domains/uspto/submission_assurance_processor.py, ipfs_datasets_py/processors/domains/uspto/api.py, ipfs_datasets_py/processors/adapters/uspto_adapter.py, ipfs_datasets_py/processors/domains/uspto/__init__.py, ipfs_datasets_py/cli/uspto.py, tests/cli/test_uspto_assurance_commands.py, tests/integration/processors/domains/uspto/test_submission_assurance_processor.py
+- Validation: python -m pytest tests/cli/test_uspto_assurance_commands.py tests/integration/processors/domains/uspto/test_submission_assurance_processor.py tests/unit/processors/domains/uspto/test_api.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-submission-assurance
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 26000
+- Predicted files: ipfs_datasets_py/processors/domains/uspto/submission_assurance_processor.py, ipfs_datasets_py/processors/domains/uspto/api.py, ipfs_datasets_py/processors/adapters/uspto_adapter.py, ipfs_datasets_py/processors/domains/uspto/__init__.py, ipfs_datasets_py/cli/uspto.py, tests/cli/test_uspto_assurance_commands.py, tests/integration/processors/domains/uspto/test_submission_assurance_processor.py
+- Allow concurrent with:
+- Conflict policy: This task is the serialized owner of USPTO API/adapter/package-export/CLI integration surfaces for v2; preserve v1 compatibility, do not edit MCP/scheduler surfaces, and require explicit opt-in for live/private operations.
+- Preconditions: Matter analysis, filing-obligation packs, authoritative deadlines, and the completed v1 serialized integration task are merged; no other active task owns the reserved integration files.
+- Effects: Add a one-shot and resumable processor/API/CLI flow that accepts a tenant/matter plus authorized source profile, derives classification from admitted artifacts with unknown/quarantine as the default, runs the actual pipeline, compares submission contents with government instructions and baseline obligations, distinguishes transport execution from domain assurance disposition, and exports a redacted or encrypted assurance dossier.
+- Acceptance: Recorded E2E commands work without hand-built middle-stage objects; adapter/core success cannot conceal outage, quarantine, incomplete analysis, or mandatory review; result status reflects sync/extraction/authority/proof/compliance coverage; output lists satisfied/missing/contradictory/unknown/review items with exact provenance; no command files, pays, signs, or claims legal advice.
+
+## PATLAW-141 Add read-only MCP assurance queries and delta alerts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: product-workflow
+- Depends on: PATLAW-061, PATLAW-062, PATLAW-140
+- Goal id: PATLAW-G142
+- Outputs: ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/uspto_tools.py, ipfs_datasets_py/processors/domains/uspto/scheduler.py, tests/mcp/unit/test_uspto_persisted_assurance_tools.py, tests/integration/processors/domains/uspto/test_assurance_delta_scheduler.py
+- Validation: python -m pytest tests/mcp/unit/test_uspto_persisted_assurance_tools.py tests/integration/processors/domains/uspto/test_assurance_delta_scheduler.py tests/mcp/unit/test_uspto_tools.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-mcp-alerts
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: io-medium
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/uspto_tools.py, ipfs_datasets_py/processors/domains/uspto/scheduler.py, tests/mcp/unit/test_uspto_persisted_assurance_tools.py, tests/integration/processors/domains/uspto/test_assurance_delta_scheduler.py
+- Allow concurrent with:
+- Conflict policy: This task is the serialized v2 owner of existing USPTO MCP/scheduler surfaces; preserve tenant authorization and v1 compatibility, expose read-only operations only, and never include private document text in alerts by default.
+- Preconditions: Submission assurance is integrated and completed v1 MCP/scheduler tasks are merged; durable dossier and checkpoint stores are available.
+- Effects: Query persisted dossier summaries/findings/provenance through tenant-scoped MCP tools and schedule incremental status/document/authority refreshes that emit deduplicated metadata-only alerts for meaningful state, deadline, instruction, compliance, or source changes.
+- Acceptance: Unauthorized tenants receive no existence oracle; MCP does not trigger filing/payment or implicit live sync; unchanged runs emit no duplicate alert; alert payloads identify matter by configured opaque reference and link to a protected dossier rather than embedding content.
+
+## PATLAW-142 Exercise every processor in true offline E2E and an optional live canary
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: evaluation-release
+- Depends on: PATLAW-123, PATLAW-139, PATLAW-140, PATLAW-141
+- Goal id: PATLAW-G152
+- Outputs: tests/e2e/test_uspto_full_processor_pipeline_v2.py, tests/fixtures/uspto/replay/full_pipeline_v2_recipe.json, tests/integration/processors/domains/uspto/test_live_contract_canary.py
+- Validation: python -m pytest tests/e2e/test_uspto_full_processor_pipeline_v2.py tests/integration/processors/domains/uspto/test_live_contract_canary.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-full-pipeline-e2e
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 26000
+- Predicted files: tests/e2e/test_uspto_full_processor_pipeline_v2.py, tests/fixtures/uspto/replay/full_pipeline_v2_recipe.json, tests/integration/processors/domains/uspto/test_live_contract_canary.py
+- Allow concurrent with:
+- Conflict policy: Own the v2 replay recipe and E2E/canary tests only; do not hand-construct dossier middle stages, embed credentials, make live tests mandatory, or mutate production/private matter state.
+- Preconditions: Executable metrics, public-official corpus, serialized assurance API/CLI, MCP queries, and scheduler alerts are merged.
+- Effects: Replay recorded ODP/legal-source responses and real permitted fixture documents through transport, stores, sync, extraction/OCR, semantics, authority materialization, Legal IR/proofs, obligations/compliance/deadlines, dossier, API/CLI/MCP, scheduler, and metric evaluator; add a separately gated minimal public live-contract probe.
+- Acceptance: Test fails if any named processor is bypassed; output and metric receipts bind all versions/digests; injected quota/timeout/corruption/stale-law/restart cases propagate correctly; default suite is deterministic/offline and the canary is read-only, opt-in, bounded, and secret-redacted.
+
+## PATLAW-143 Seal adversarial, migration, and release evidence for v2
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: evaluation-release
+- Depends on: PATLAW-142
+- Goal id: PATLAW-G152
+- Outputs: tests/security/test_uspto_v2_adversarial_assurance.py, tests/property/test_uspto_v2_pipeline_properties.py, tests/release/test_uspto_v2_submission_assurance_release.py, scripts/ops/uspto/validate_v2_release.py, data/release/uspto_submission_assurance/v2_receipt.schema.json
+- Validation: python -m pytest tests/security/test_uspto_v2_adversarial_assurance.py tests/property/test_uspto_v2_pipeline_properties.py tests/release/test_uspto_v2_submission_assurance_release.py -q && python scripts/ops/uspto/validate_v2_release.py --offline
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/v2-release-assurance
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 24000
+- Predicted files: tests/security/test_uspto_v2_adversarial_assurance.py, tests/property/test_uspto_v2_pipeline_properties.py, tests/release/test_uspto_v2_submission_assurance_release.py, scripts/ops/uspto/validate_v2_release.py, data/release/uspto_submission_assurance/v2_receipt.schema.json
+- Allow concurrent with:
+- Conflict policy: Own v2 adversarial/property/migration/release tests, offline validator, and receipt schema only; do not edit protected supervisor artifacts, weaken thresholds, publish data, or declare release readiness from task status alone.
+- Preconditions: The true full-processor E2E suite and all functional tasks are merged; v1 persisted-state fixtures and versioned schemas are available for migration tests.
+- Effects: Exercise malicious PDFs/XML/archives, XXE/schema attacks, prompt injection, spoofed citations, hostile metadata, tenant crossover, credential leakage, oversized inputs, retry storms, contradictory law, corrupt checkpoints, schema migrations, key rotation, retention/deletion, backup/restore, deterministic rebuilds, and rollback; aggregate evidence into a content-free release receipt and a separately signed independent legal-review receipt.
+- Acceptance: Security/property/privacy-lifecycle/migration/release gates pass on the exact tree; no-disclosure and provider-call evidence is explicit; v1 state either migrates transactionally or fails without mutation; receipt binds code/config/corpus/rules/parser/compiler/prover/model/test/metric digests and supervisor merge receipts, includes independent human legal-review scope and exceptions, and leaves every unknown mandatory gate blocking; task completion alone cannot reconcile goal status.

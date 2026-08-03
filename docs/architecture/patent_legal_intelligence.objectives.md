@@ -26,7 +26,7 @@ Program invariants:
 - Priority: P0
 - Bundle: patlaw/root
 - Goal: Deliver a safe, replayable processor system that verifies official patent authorities, retrieves public and authorized private USPTO matter records, parses correspondence and submissions, indexes public law/patent/prosecution evidence with BM25/vector/knowledge-graph retrieval, produces reproducible prior-art and filing-review artifacts, publishes approved public shards to JusticeDAO, and preserves mandatory human legal and filing control.
-- Evidence: PATLAW-G010, PATLAW-G020, PATLAW-G030, PATLAW-G040, PATLAW-G050, PATLAW-G060, PATLAW-G070, PATLAW-G080, PATLAW-G090, PATLAW-G100
+- Evidence: PATLAW-G010, PATLAW-G020, PATLAW-G030, PATLAW-G040, PATLAW-G050, PATLAW-G060, PATLAW-G070, PATLAW-G080, PATLAW-G090, PATLAW-G100, PATLAW-G110, PATLAW-G120, PATLAW-G130, PATLAW-G140, PATLAW-G150
 - Outputs: ipfs_datasets_py/processors, ipfs_datasets_py/processors/legal_scrapers/federal_scrapers, ipfs_datasets_py/processors/legal_data, ipfs_datasets_py/knowledge_graphs, ipfs_datasets_py/huggingface, ipfs_datasets_py/mcp_server, ipfs_datasets_py/cli, tests
 - Validation: python -m pytest tests/integration/processors tests/e2e/test_uspto_application_analysis.py -q
 - Acceptance: Every child goal is complete with fresh evidence on the target tree; reviewed public and synthetic private fixtures replay to provenance-complete authority, status, requirement, evidence, retrieval, prior-art, candidate-date, and human-review reports; approved public release re-downloads verify; private isolation and no-sign/no-file/no-pay boundaries pass.
@@ -412,3 +412,273 @@ Program invariants:
 - Refinement: Preserve all legacy publication profiles; keep release building separate from publication and require a later operator-approved live action.
 - Embedding query: JusticeDAO Hugging Face append only patent legal corpus BM25 vector graph privacy rights CID approval pinned redownload
 - AST query: HuggingFacePublicationProfile HuggingFaceReleasePublisher JusticeDAOPatentRelease ReleasePlan ReleaseReceipt
+
+## PATLAW-G110 Operate live, durable, and time-versioned acquisition
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 1
+- Track: production-acquisition
+- Priority: P0
+- Bundle: patlaw/v2-acquisition
+- Goal: Replace fixture-only and in-memory production paths with bounded authenticated transports, durable tenant-aware state, and independently refreshable official USPTO and legal-authority materializations.
+- Evidence: PATLAW-G111, PATLAW-G112
+- Outputs: ipfs_datasets_py/processors/domains/uspto/providers, ipfs_datasets_py/processors/legal_scrapers/federal_scrapers, ipfs_datasets_py/processors/legal_data, ipfs_datasets_py/processors/domains/uspto/stores
+- Validation: python -m pytest tests/unit/processors/domains/uspto/providers tests/integration/processors/domains/uspto tests/unit/processors/legal_scrapers/federal_scrapers -q
+- Acceptance: A configured deployment can retrieve supported live public records without fixture injection, preserve immutable source receipts and durable checkpoints, recover after restart, and expose stale/outage/auth/schema states without inventing facts.
+- Gap task: Implement the highest-priority incomplete live-acquisition or durable-state child using recorded fixtures in CI and opt-in network canaries.
+- Refinement: Transport, credentials, persistence, and source-specific normalization stay separable; no Patent Center browser automation is introduced.
+- Embedding query: live USPTO ODP HTTP transport credential reference durable checkpoint official legal source materialization
+- AST query: BoundedHttpTransport PatentFileWrapperClient DurableMatterStore AuthorityMaterializer
+
+## PATLAW-G111 Run production ODP retrieval with durable matter state
+
+- Status: active
+- Parent: PATLAW-G110
+- Fib priority: 1
+- Track: live-uspto
+- Priority: P0
+- Bundle: patlaw/v2-uspto-live
+- Goal: Supply a concrete bounded HTTP transport, vault-resolved API-key references, complete supported Patent File Wrapper endpoint coverage, protected status vocabularies, and durable status/document/ledger/checkpoint stores.
+- Evidence: PATLAW-120, PATLAW-124
+- Outputs: ipfs_datasets_py/processors/domains/uspto/providers/http_transport.py, ipfs_datasets_py/processors/domains/uspto/providers/patent_file_wrapper.py, ipfs_datasets_py/processors/domains/uspto/stores
+- Validation: python -m pytest tests/unit/processors/domains/uspto/providers tests/integration/processors/domains/uspto/test_live_bootstrap_contract.py -q
+- Acceptance: Ordinary configured CLI/API use no longer returns `missing_client`; continuity and foreign-priority data are available for benefit checks; unknown upstream status codes quarantine; restart preserves snapshots and checkpoints; authentication-contract drift is observable.
+- Gap task: Close the next live ODP, status-vocabulary, endpoint, credential, or persistence gap without putting secrets or private content in receipts.
+- Refinement: Live smoke tests are opt-in; deterministic recorded transport tests remain mandatory in CI.
+- Embedding query: ODP Patent File Wrapper live client status vocabulary continuity foreign priority persistent document store
+- AST query: BoundedHttpTransport ODPClientBootstrap ApplicationStatusVocabulary DurableDocumentStore
+
+## PATLAW-G112 Materialize official law and USPTO guidance from live sources
+
+- Status: active
+- Parent: PATLAW-G110
+- Fib priority: 2
+- Track: live-authority
+- Priority: P0
+- Bundle: patlaw/v2-authority-live
+- Goal: Add a common receipt-bearing live fetch layer and source-specific acquisition for eCFR, annual CFR, U.S. Code, Public Laws, Federal Register, GovInfo, MPEP, forms, fees, and examination guidance, followed by scheduled temporal materialization.
+- Evidence: PATLAW-127, PATLAW-128, PATLAW-131, PATLAW-132, PATLAW-135
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/live_source_transport.py, ipfs_datasets_py/processors/legal_scrapers/federal_scrapers, ipfs_datasets_py/processors/legal_data/patent_authority_materializer.py
+- Validation: python -m pytest tests/unit/processors/legal_scrapers/federal_scrapers tests/integration/legal_data/test_live_authority_materialization.py -q
+- Acceptance: Each authority snapshot distinguishes official rendition, editorial current presentation, guidance, and adjudicatory tiers; every assertion has exact version/time/source identity; conflicts, exclusions, and freshness gaps remain explicit.
+- Gap task: Implement the next source connector or temporal materialization rule behind the common transport and receipt contract.
+- Refinement: Official annual and daily artifacts control dispositive verification; eCFR and FederalRegister.gov remain clearly labelled discovery/editorial representations.
+- Embedding query: eCFR annual CFR GovInfo Federal Register US Code Public Law MPEP forms fees temporal materializer
+- AST query: LiveAuthorityTransport GovInfoProcessor ECFRProcessor PatentAuthorityMaterializer
+
+## PATLAW-G120 Understand every supported government and submission artifact
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 2
+- Track: production-document-understanding
+- Priority: P0
+- Bundle: patlaw/v2-document
+- Goal: Route USPTO artifacts through the repaired specialized extraction stack and expand source-anchored semantics across real correspondence, filing-package, receipt, XML, text, and archive families.
+- Evidence: PATLAW-G121, PATLAW-G122
+- Outputs: ipfs_datasets_py/processors/domains/uspto/document_pipeline.py, ipfs_datasets_py/processors/domains/uspto/analysis, ipfs_datasets_py/processors/specialized/pdf
+- Validation: python -m pytest tests/unit/processors/domains/uspto tests/integration/processors/domains/uspto/test_document_understanding.py -q
+- Acceptance: Every supported artifact is safely classified, extracted, checkpointed, and semantically parsed with validated spans; incomplete coverage or unsupported language produces `unknown` and review.
+- Gap task: Implement the highest-priority incomplete extraction or semantic child using reviewed synthetic or approved public fixtures.
+- Refinement: Generic extraction remains domain-neutral; USPTO interpretation consumes its immutable page/span products.
+- Embedding query: USPTO PDF OCR DOCX XML TXT ZIP ST.26 office action submission semantic extraction
+- AST query: USPTOExtractionPipeline OfficeActionProcessor SubmissionProcessor SpanValidator
+
+## PATLAW-G121 Use the specialized extraction pipeline with durable checkpoints
+
+- Status: active
+- Parent: PATLAW-G120
+- Fib priority: 1
+- Track: document-pipeline
+- Priority: P0
+- Bundle: patlaw/v2-extraction
+- Goal: Bridge USPTO extraction to the specialized native/render/OCR pipeline, add a governed local OCR default, support safely bounded filing formats, and persist resumable classify/extract/span-validation jobs.
+- Evidence: PATLAW-121, PATLAW-125
+- Outputs: ipfs_datasets_py/processors/domains/uspto/document_pipeline.py, ipfs_datasets_py/processors/domains/uspto/document_jobs.py, tests/fixtures/uspto/documents
+- Validation: python -m pytest tests/unit/processors/domains/uspto/test_document_pipeline.py tests/integration/processors/domains/uspto/test_document_jobs.py -q
+- Acceptance: Native and image-only pages, DOCX, XML, TXT, PCT ZIP, and ST.26 XML follow bounded format-specific paths; no page disappears; restart resumes by immutable artifact/parser digest; OCR disagreement is preserved.
+- Gap task: Close the next extraction-format, OCR, safety-limit, checkpoint, or span-coverage gap.
+- Refinement: OCR is local-only by default for private material and may never disclose content through logs or external prompts.
+- Embedding query: specialized PDF OCR page render USPTO XML TXT PCT ZIP sequence listing checkpoint
+- AST query: PDFProcessor USPTOExtractionPipeline DocumentJobStore SpanValidator
+
+## PATLAW-G122 Parse complete office-action and submission-package semantics
+
+- Status: active
+- Parent: PATLAW-G120
+- Fib priority: 2
+- Track: document-semantics-v2
+- Priority: P0
+- Bundle: patlaw/v2-semantics
+- Goal: Expand governed, source-anchored parsing for office-action families and application-type-specific submission packages while distinguishing candidate extraction from admitted facts.
+- Evidence: PATLAW-129, PATLAW-133
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/office_action_semantics_v2.py, ipfs_datasets_py/processors/domains/uspto/analysis/submission_semantics_v2.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_office_action_semantics_v2.py tests/unit/processors/domains/uspto/analysis/test_submission_semantics_v2.py -q
+- Acceptance: Missing-parts, restriction/election, Quayle, advisory, allowance, appeal, and sequence-listing correspondence plus utility/design/plant package elements, claims, ADS/benefit data, forms, fees, attachments, signatures-as-present, and distinct receipts are source-bound or explicitly unsupported.
+- Gap task: Add the next reviewed document family or package semantic with exact span annotations and negative controls.
+- Refinement: Model output is a governed candidate only; deterministic validation and admission decide whether it can support an assertion.
+- Embedding query: missing parts restriction election Quayle advisory allowance appeal utility design plant filing package receipt
+- AST query: OfficeActionSemanticsV2 SubmissionSemanticsV2 CandidateAdmissionPolicy
+
+## PATLAW-G130 Prove obligation-specific legal and instruction assurance
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 3
+- Track: legal-logic-v2
+- Priority: P0
+- Bundle: patlaw/v2-logic
+- Goal: Compile exact source spans, authority, applicability, and submission facts into Legal IR and require obligation-specific proof or countermodel receipts before reporting compliance or instruction consistency.
+- Evidence: PATLAW-G131, PATLAW-G132
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/legal_ir_bridge.py, ipfs_datasets_py/processors/domains/uspto/analysis/proof_adapter.py, ipfs_datasets_py/processors/domains/uspto/analysis/obligation_assurance.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_obligation_assurance.py tests/integration/processors/domains/uspto/test_legal_logic_assurance.py -q
+- Acceptance: Broad evidence categories, citation resolution alone, skipped proof, timeout, missing applicability, or unresolved authority cannot yield `satisfied` or `consistent`; every positive result has verified bindings and a replayable proof receipt.
+- Gap task: Implement the highest-priority incomplete Legal IR, proof, rule-pack, or candidate-date child with false-positive regression tests.
+- Refinement: Preserve extracted candidates, admitted facts, compiled obligations, and proof results as distinct immutable stages.
+- Embedding query: USPTO Legal IR theorem proof obligation evidence binding instruction consistency fail closed
+- AST query: LegalIRCompilerAPI ProofExecutionEngine ObligationAssuranceProcessor
+
+## PATLAW-G131 Integrate Legal IR and fail-closed proof execution
+
+- Status: active
+- Parent: PATLAW-G130
+- Fib priority: 1
+- Track: proof-assurance
+- Priority: P0
+- Bundle: patlaw/v2-proof
+- Goal: Define exact USPTO-to-Legal-IR source maps, invoke the existing compiler and proof engine through privacy-safe adapters, and replace category-level shortcuts with obligation-specific entailment and contradiction checks.
+- Evidence: PATLAW-122, PATLAW-126, PATLAW-130, PATLAW-134
+- Outputs: ipfs_datasets_py/processors/domains/uspto/analysis/legal_ir_bridge.py, ipfs_datasets_py/processors/domains/uspto/analysis/proof_adapter.py, ipfs_datasets_py/processors/domains/uspto/analysis/obligation_assurance.py, ipfs_datasets_py/processors/domains/uspto/analysis/instruction_assurance_v2.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/analysis/test_legal_ir_bridge.py tests/integration/processors/domains/uspto/test_legal_logic_assurance.py -q
+- Acceptance: Compiler/prover version, inputs, timeout, proof/countermodel, exact evidence bindings, and redaction policy are receipted; unsupported semantics or absent proof produces `unknown`; resolved authority without semantic comparison never produces `consistent`.
+- Gap task: Close the next source-map, proof-engine, obligation-binding, contradiction, or consistency-level gap.
+- Refinement: External model/provider calls over private content remain denied unless an explicit audited tenant policy authorizes them.
+- Embedding query: source map LegalIR compiler proof engine countermodel exact evidence instruction semantic consistency
+- AST query: USPTOToLegalIRSourceMap LegalIRCompilerAPI ProofExecutionEngine InstructionAssuranceV2
+
+## PATLAW-G132 Maintain time-versioned filing obligations and candidate dates
+
+- Status: active
+- Parent: PATLAW-G130
+- Fib priority: 2
+- Track: filing-rules
+- Priority: P0
+- Bundle: patlaw/v2-rules
+- Goal: Encode reviewed, versioned baseline obligation packs for utility, design, and plant filings and compute only reviewable candidate dates from authoritative calendars, closure notices, event facts, and explicit assumptions.
+- Evidence: PATLAW-137, PATLAW-138
+- Outputs: ipfs_datasets_py/processors/domains/uspto/rule_packs, ipfs_datasets_py/processors/domains/uspto/official_calendar.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/test_filing_rule_packs.py tests/unit/processors/domains/uspto/test_official_calendar.py -q
+- Acceptance: Title 35, Title 37, Federal Register changes, application-type applicability, forms/fees/guidance, exceptions, and exact effective intervals are visible; ambiguous or stale dates remain conflicting candidates pending named human review.
+- Gap task: Add the next source-reviewed filing obligation, exception, application type, closure notice, or deadline ambiguity fixture.
+- Refinement: Rule packs are decision-support inputs, not legal advice or self-updating conclusions; no result files, signs, pays, or alters a docket automatically.
+- Embedding query: utility design plant filing completeness Title 35 Title 37 Federal Register USPTO closure deadline
+- AST query: FilingObligationPack OfficialUSPTOCalendar CandidateDeadline
+
+## PATLAW-G140 Deliver one resumable assurance workflow through safe interfaces
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 5
+- Track: product-workflow-v2
+- Priority: P0
+- Bundle: patlaw/v2-product
+- Goal: Compose acquisition, extraction, semantic parsing, authority materialization, proof, dossier, and submission preflight into one restartable processor and expose identical safe results through SDK, CLI, MCP, and scheduled alerts.
+- Evidence: PATLAW-G141, PATLAW-G142
+- Outputs: ipfs_datasets_py/processors/domains/uspto/matter_analysis_processor.py, ipfs_datasets_py/processors/domains/uspto/submission_assurance_processor.py, ipfs_datasets_py/processors/domains/uspto/api.py, ipfs_datasets_py/cli/uspto.py, ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/uspto_tools.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_full_assurance_workflow.py tests/cli/test_uspto_commands.py tests/mcp/unit/test_uspto_tools.py -q
+- Acceptance: An identifier or authorized import produces one provenance-complete replayable bundle without caller-assembled middle records; restart is idempotent; interfaces preserve classification, assurance disposition, and human gates.
+- Gap task: Implement the highest-priority incomplete workflow or interface child while reserving shared registrations for the serialized integration task.
+- Refinement: Transport success and assurance disposition are distinct; unknown classification defaults to quarantine rather than `public_user`.
+- Embedding query: one shot USPTO matter analysis submission assurance SDK CLI MCP scheduler resumable dossier
+- AST query: MatterAnalysisProcessor SubmissionAssuranceProcessor USPTOAnalysisAPI USPTOProcessorAdapter
+
+## PATLAW-G141 Compose matter and submission assurance processors
+
+- Status: active
+- Parent: PATLAW-G140
+- Fib priority: 1
+- Track: assurance-workflow
+- Priority: P0
+- Bundle: patlaw/v2-workflow
+- Goal: Implement resumable orchestration from configured acquisition or authorized import through document jobs, semantics, authority, proof, candidate dates, dossier, and filing-package preflight, then perform one serialized public registration.
+- Evidence: PATLAW-136, PATLAW-140
+- Outputs: ipfs_datasets_py/processors/domains/uspto/matter_analysis_processor.py, ipfs_datasets_py/processors/domains/uspto/submission_assurance_processor.py, ipfs_datasets_py/processors/adapters/uspto_adapter.py, ipfs_datasets_py/processors/domains/uspto/api.py, ipfs_datasets_py/cli/uspto.py
+- Validation: python -m pytest tests/integration/processors/domains/uspto/test_full_assurance_workflow.py tests/cli/test_uspto_commands.py -q
+- Acceptance: A single call executes every required stage with immutable stage receipts; outages/quarantine/review are not core success; default classification is unknown; all public interfaces serialize the same versioned bundle.
+- Gap task: Close the next orchestration, restart, disposition, serialization, or human-gate gap without duplicating domain logic in an interface.
+- Refinement: Shared exports and registries change only in the final serialized task after leaf processors are merged.
+- Embedding query: resumable matter processor submission preflight analysis bundle adapter outcome classification quarantine
+- AST query: MatterAnalysisProcessor SubmissionAssuranceProcessor USPTOProcessorAdapter AnalysisBundle
+
+## PATLAW-G142 Expose persisted read-only review and change alerts
+
+- Status: active
+- Parent: PATLAW-G140
+- Fib priority: 2
+- Track: assurance-interfaces
+- Priority: P1
+- Bundle: patlaw/v2-interfaces
+- Goal: Let authorized reviewers query persisted dossiers and receive bounded status/document/authority delta alerts and reanalysis requests without exposing mutation, filing, signing, payment, secrets, or private content.
+- Evidence: PATLAW-141
+- Outputs: ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/uspto_dossier_tools.py, ipfs_datasets_py/processors/domains/uspto/analysis_scheduler.py
+- Validation: python -m pytest tests/mcp/unit/test_uspto_dossier_tools.py tests/integration/processors/domains/uspto/test_analysis_scheduler.py -q
+- Acceptance: MCP remains read-only and tenant-isolated; alerts contain safe identifiers and receipt references; deltas checkpoint and coalesce; reanalysis retains the original and new authority/artifact snapshots.
+- Gap task: Add the next persisted query, delta, alert, retry, tenant-isolation, or safe-observability behavior.
+- Refinement: Notifications point to authorized review surfaces and never contain document text or legal conclusions as instructions.
+- Embedding query: persisted USPTO dossier read only MCP scheduled delta alert reanalysis tenant isolation
+- AST query: USPTODossierTools AnalysisScheduler MatterDelta
+
+## PATLAW-G150 Measure real quality and release only verified behavior
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 8
+- Track: assurance-evaluation-v2
+- Priority: P0
+- Bundle: patlaw/v2-evaluation
+- Goal: Compute quality metrics from actual processor outputs, expand rights-reviewed public coverage, execute the genuine end-to-end pipeline, and bind adversarial, migration, rollback, and current-tree evidence into a release receipt.
+- Evidence: PATLAW-G151, PATLAW-G152
+- Outputs: ipfs_datasets_py/processors/domains/uspto/evaluation.py, tests/fixtures/uspto/gold, tests/e2e/test_uspto_application_analysis_v2.py, scripts/ops/uspto/release_gate_v2.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/test_evaluation.py tests/e2e/test_uspto_application_analysis_v2.py tests/security/test_uspto_assurance_boundary.py -q
+- Acceptance: Thresholds are computed rather than merely declared; approved public official and synthetic cases cover supported families; genuine pipeline replay, adversarial checks, migrations, rollback, and opt-in live canary gates bind the exact tree/config/source/parser/prover receipts.
+- Gap task: Implement the highest-priority incomplete metric, corpus, end-to-end, adversarial, migration, or release-evidence child.
+- Refinement: Public official fixtures require recorded rights review; private gold remains encrypted outside git; no CI test depends on live network.
+- Embedding query: USPTO gold corpus executable metrics official public fixture end to end adversarial migration release receipt
+- AST query: USPTOGoldEvaluator EndToEndReplay ReleaseGateV2
+
+## PATLAW-G151 Compute metrics over reviewed official and synthetic cases
+
+- Status: active
+- Parent: PATLAW-G150
+- Fib priority: 1
+- Track: gold-evaluation
+- Priority: P0
+- Bundle: patlaw/v2-gold
+- Goal: Execute processors against annotated cases, calculate extraction/compliance/provenance metrics and false-positive budgets, and add rights-reviewed approved public official coverage across correspondence and application types.
+- Evidence: PATLAW-123, PATLAW-139
+- Outputs: ipfs_datasets_py/processors/domains/uspto/evaluation.py, tests/fixtures/uspto/gold, tests/integration/processors/domains/uspto/test_gold_metrics.py
+- Validation: python -m pytest tests/unit/processors/domains/uspto/test_evaluation.py tests/integration/processors/domains/uspto/test_gold_metrics.py -q
+- Acceptance: Metric receipts bind annotations, actual outputs, configuration, and versions; thresholds fail loudly; official cases carry source/fixity/rights receipts; coverage gaps and false positives are enumerated.
+- Gap task: Add the next executable metric, negative control, approved source receipt, correspondence family, or application-type case.
+- Refinement: Do not tune and evaluate on an undisclosed same case set; preserve a held-out reviewed partition.
+- Embedding query: executable gold evaluation precision recall provenance false positive official USPTO public fixture
+- AST query: USPTOGoldEvaluator GoldCase RightsReviewReceipt
+
+## PATLAW-G152 Prove the genuine pipeline and operational release
+
+- Status: active
+- Parent: PATLAW-G150
+- Fib priority: 2
+- Track: release-gate-v2
+- Priority: P0
+- Bundle: patlaw/v2-release
+- Goal: Run acquisition replay through every real middle processor and interface, then exercise adversarial inputs, recovery, schema migrations, rollback, and current-tree release evidence with an optional isolated live canary.
+- Evidence: PATLAW-142, PATLAW-143
+- Outputs: tests/e2e/test_uspto_application_analysis_v2.py, tests/security/test_uspto_v2_adversarial.py, scripts/ops/uspto/release_gate_v2.py, docs/operations/USPTO_SUBMISSION_ASSURANCE_V2_RUNBOOK.md
+- Validation: python -m pytest tests/e2e/test_uspto_application_analysis_v2.py tests/security/test_uspto_v2_adversarial.py -q
+- Acceptance: No middle-stage bundle is hand-built; deterministic offline replay passes; corrupt/malicious/stale/conflicting inputs fail closed; durable-state upgrades and rollback are tested; final receipt binds observed metrics and supervisor merge evidence.
+- Gap task: Close the next true-pipeline, adversarial, recovery, migration, rollback, canary, or release-receipt gap.
+- Refinement: Live canaries are isolated, read-only, bounded, redacted, opt-in, and never required for deterministic CI.
+- Embedding query: true end to end USPTO pipeline adversarial recovery migration rollback live canary release gate
+- AST query: EndToEndReplay ReleaseGateV2 MigrationReceipt RollbackReceipt

@@ -63,6 +63,12 @@ REQUIRED_GOAL_FIELDS = {
     "ast query",
 }
 NON_EXECUTABLE_STATUSES = {"completed", "cancelled", "canceled", "deferred"}
+FORBIDDEN_TASK_PROVIDER_FIELDS = {
+    "provider role",
+    "implementation provider",
+    "implementation model",
+    "reasoning effort",
+}
 
 
 @dataclass(frozen=True)
@@ -111,6 +117,16 @@ def _parse_cards(text: str, pattern: re.Pattern[str]) -> list[Card]:
 def _relative_safe(value: str) -> bool:
     path = Path(value)
     return bool(value) and not path.is_absolute() and ".." not in path.parts
+
+
+def _task_provider_overrides(fields: Mapping[str, str]) -> list[str]:
+    """Return task-local fields that could bypass the program provider fence."""
+
+    return sorted(
+        field
+        for field in FORBIDDEN_TASK_PROVIDER_FIELDS
+        if fields.get(field, "").strip()
+    )
 
 
 def _cycle(nodes: Iterable[str], edges: Mapping[str, Sequence[str]]) -> list[str]:
@@ -229,6 +245,12 @@ def validate(repo_root: Path, config_path: Path) -> dict[str, object]:
         missing = REQUIRED_TASK_FIELDS - set(task.fields)
         if missing:
             errors.append(f"{task.identifier} line {task.line} missing task fields: {sorted(missing)}")
+        provider_overrides = _task_provider_overrides(task.fields)
+        if provider_overrides:
+            errors.append(
+                f"{task.identifier} overrides the program provider policy through "
+                f"forbidden field(s): {provider_overrides}"
+            )
         for key in REQUIRED_TASK_FIELDS - {"depends on", "allow concurrent with"}:
             if key in task.fields and not task.fields[key].strip():
                 errors.append(f"{task.identifier} has empty required field {key!r}")

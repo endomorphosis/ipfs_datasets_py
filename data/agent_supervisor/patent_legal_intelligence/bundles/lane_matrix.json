@@ -6,10 +6,10 @@
   "routing": "numeric task suffix modulo shard_count",
   "strict_task_sharding": true,
   "initial_ready": {
-    "0": ["PATLAW-004", "PATLAW-100"],
-    "1": ["PATLAW-005"],
-    "2": ["PATLAW-002", "PATLAW-006", "PATLAW-090"],
-    "3": ["PATLAW-011"]
+    "0": ["PATLAW-004", "PATLAW-100", "PATLAW-120"],
+    "1": ["PATLAW-005", "PATLAW-121"],
+    "2": ["PATLAW-002", "PATLAW-006", "PATLAW-090", "PATLAW-122"],
+    "3": ["PATLAW-011", "PATLAW-123"]
   },
   "execution_slice_source": "config/agent_supervisor_patent_legal_intelligence.json",
   "shared_merge_queue": true,

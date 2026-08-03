@@ -1,6 +1,6 @@
 {
-  "schema": "patent-legal-source-authority-policy-v1",
-  "policy_id": "patlaw-source-authority-v1",
+  "schema": "patent-legal-source-authority-policy-v2",
+  "policy_id": "patlaw-source-authority-v2",
   "discovery": {
     "latest_is_runtime_discovered": true,
     "permitted_https_hosts": [
@@ -14,7 +14,7 @@
       "www.gpo.gov",
       "uscode.house.gov"
     ],
-    "primary_collections": ["CFR", "USCODE", "PLAW", "FR"],
+    "primary_collections": ["CFR", "USCODE", "STATUTE", "PLAW", "FR"],
     "initial_titles": {"cfr": [37], "uscode": [35]}
   },
   "authority_views": {
@@ -24,19 +24,53 @@
     "guidance_crosscheck": "Non-controlling MPEP, form, fee, notice, or examination guidance used only with its version and cutoff.",
     "extracted_candidate": "A parser or model candidate that is never authoritative without source-span admission."
   },
+  "authority_kinds": [
+    "enacted_statute_at_large",
+    "codified_statute",
+    "promulgated_regulation",
+    "binding_adjudicatory_authority",
+    "official_agency_guidance",
+    "unofficial_editorial_aid",
+    "extracted_candidate"
+  ],
+  "rendition_legal_status": [
+    "official_electronic",
+    "official_print_equivalent",
+    "official_source_artifact",
+    "unofficial_editorial_presentation",
+    "derived_materialization",
+    "candidate_only"
+  ],
   "required_identity_fields": [
     "provider",
     "source_id",
     "artifact_sha256",
     "source_url",
-    "retrieved_at"
+    "retrieved_at",
+    "authority_kind",
+    "authority_tier",
+    "rendition_legal_status",
+    "jurisdiction",
+    "media_type",
+    "edition_or_release_point",
+    "release_point_exclusions",
+    "document_package_granule_ids",
+    "signature_or_fixity_evidence"
   ],
   "distinct_time_roles": [
     "edition",
+    "enactment",
     "date_issued",
     "publication",
     "effective",
+    "applicability",
+    "compliance",
     "termination",
+    "mailing_or_notification",
+    "submission",
+    "receipt",
+    "official_filing",
+    "proposed_response",
     "upstream_last_modified",
     "retrieval"
   ],
@@ -48,6 +82,10 @@
     "Digital fixity/authentication and human printed-edition attestation are separate evidence.",
     "Proposed, future-effective, stayed, corrected, withdrawn, and repealed events remain distinct.",
     "FederalRegister.gov discovery and guidance sources cannot enter the verified GovInfo authority path.",
+    "GovInfo official Federal Register renditions remain distinct from FederalRegister.gov HTML or XML discovery representations.",
+    "House OLRC release-point coverage and every listed exclusion are stored together and never generalized to a later public-law cutoff.",
+    "Missing adjudicatory coverage is a declared research-coverage gap and cannot support a complete-law conclusion.",
+    "Authority kind, verification state, rendition status, and semantic relevance are independent fields.",
     "Mailing-date and proposed-response-date authority views are resolved separately.",
     "The MPEP is guidance and never outranks enacted statute or promulgated regulation."
   ]

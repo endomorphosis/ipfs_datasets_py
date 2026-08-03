@@ -1,6 +1,6 @@
 # USPTO Submission Assurance and Patent Legal Intelligence Plan
 
-Status: approved for supervised implementation
+Status: v1 task projection complete; production-assurance v2 approved for supervised implementation
 Checked against official sources: 2026-08-03
 Objective root: `PATLAW-G000`
 Task prefix: `PATLAW-`
@@ -103,11 +103,55 @@ logic components, but they cannot simply be wired together:
 
 Therefore Wave 0 is a release-blocking processor-foundation repair.
 
+### 3.1 Continuation audit after the v1 task projection
+
+The first supervised projection has landed substantial reusable code: 57 of
+57 v1 tasks are marked completed, 22 original goals remain active pending
+fresh acceptance evidence, and the package now contains USPTO contracts,
+status/document synchronization, private import, extraction, office-action and
+submission analysis, authority resolution, dossiers, interfaces, retrieval,
+and release controls. Task labels alone are not a production-readiness claim.
+The 2026-08-03 current-tree audit found these release-blocking gaps:
+
+- live commands do not construct a concrete ODP HTTP client unless a recorded
+  fixture transport is injected, and public matter/status/document stores
+  default to process memory rather than durable restartable state;
+- legal-source processors normalize supplied payloads or fixtures but do not
+  yet constitute a live, scheduled eCFR/CFR/U.S. Code/Public Law/Federal
+  Register/GovInfo/MPEP acquisition service;
+- no one-shot processor executes status/document acquisition through
+  extraction, semantics, temporal authority, Legal IR/proof, and dossier
+  generation; callers currently assemble intermediate records themselves;
+- the USPTO extractor bypasses the repaired specialized PDF/OCR path and has
+  no governed production OCR default or complete XML/TXT/PCT ZIP/ST.26 path;
+- office-action and submission semantics are predominantly deterministic
+  patterns, with insufficient document-family and utility/design/plant
+  applicability coverage;
+- compliance can treat broad evidence categories as support, and instruction
+  comparison can treat a resolved citation plus no detected contradictory
+  quote as consistent, without obligation-level entailment;
+- the default USPTO compliance path does not execute `LegalIRCompilerAPI` and
+  `ProofExecutionEngine` and therefore cannot produce a proof receipt or
+  countermodel for its positive claims;
+- the existing end-to-end replay hand-assembles middle-stage records, the gold
+  thresholds are not computed from actual outputs, and all current gold cases
+  are synthetic rather than rights-reviewed official public examples;
+- numeric application-status values are too broadly accepted as known,
+  continuity and foreign-priority facts are absent, and receipt types conflate
+  transmission acknowledgement, payment, and the later official filing
+  receipt; and
+- default classification and adapter result handling can blur quarantine,
+  upstream outage, mandatory review, and successful assurance.
+
+The v2 continuation adds `PATLAW-G110` through `PATLAW-G150` and pending tasks
+`PATLAW-120` through `PATLAW-143`. It preserves the completed v1 history while
+requiring new current-tree evidence before any goal or the program is closed.
+
 ## 4. Supported source and access policy
 
 | Information | Supported source | Authentication | Trust/use rule |
 | --- | --- | --- | --- |
-| Public patent application data, status, transactions | [ODP Patent File Wrapper application-data API](https://data.uspto.gov/apis/patent-file-wrapper/application-data) | USPTO.gov registration and API key are currently required | Supported public API; capture request/response version and never infer private access |
+| Public patent application data, status, transactions, continuity, and foreign priority | [ODP application-data](https://data.uspto.gov/apis/patent-file-wrapper/application-data), [continuity](https://data.uspto.gov/apis/patent-file-wrapper/continuity), and [foreign-priority](https://data.uspto.gov/apis/patent-file-wrapper/foreign-priority) APIs | USPTO.gov registration and API key are currently required | Supported public APIs; capture request/response version and never infer private access |
 | Public application document metadata and bytes | [ODP Patent File Wrapper documents API](https://data.uspto.gov/apis/patent-file-wrapper/documents) | USPTO.gov registration and API key | Preserve raw bytes and upstream IDs; ODP may omit confidential records and NPL |
 | Private/unpublished application material | User-authorized Patent Center export, downloaded artifacts, and receipts | Interactive user access outside this processor | Import only; no UI scraping, MFA automation, shared account, or unattended retrieval |
 | Filing and receipt behavior | [Patent Center](https://www.uspto.gov/patents/apply/patent-center) and its current legal framework | Identity-verified interactive user | Model original DOCX, converted PDF, GUI metadata, acknowledgement, and payment receipt as distinct evidence |
@@ -118,6 +162,11 @@ Therefore Wave 0 is a release-blocking processor-foundation repair.
 | Examination guidance | [MPEP](https://www.uspto.gov/web/offices/pac/mpep/index.html), forms, notices, fee schedules, Examination Guides | Public | Label as guidance/operations, record cutoff and later publications, never elevate above statute/regulation |
 
 Legacy PEDS and the legacy USPTO Developer Hub are not implementation targets.
+ODP announced required USPTO.gov sign-in beginning 2026-06-18 and additional
+profile requirements beginning 2026-08-18. A bounded, read-only authentication
+contract canary must distinguish expected 401/403/key/profile failures from
+quota, outage, schema drift, and an empty application result without exposing
+the API key.
 The source registry must discover current endpoints and operational notices; it
 must not hard-code a year as “latest.” Numeric rate limits are configurable
 unless the official interface publishes a current value. Every connector
@@ -136,10 +185,21 @@ The default hierarchy is:
 4. MPEP, Examination Guide, form, fee, and agency operational guidance;
 5. extracted or model-generated candidate.
 
+The serialized authority contract records `authority_kind` separately from
+verification state and semantic relevance: enacted statute/Statutes at Large,
+codified statute, promulgated regulation, binding adjudicatory authority when
+covered, official agency guidance, unofficial editorial aid, and extracted
+candidate. Absence of an adjudicatory corpus is a visible coverage gap and
+precludes a claim of complete legal research. Official electronic rendition,
+package/granule/document identifiers, media type, jurisdiction, edition or
+release point and exclusions, signature/fixity evidence, and derivation state
+are retained independently.
+
 The temporal graph preserves `amends`, `supersedes`, `corrects`, `withdraws`,
 `stays`, and `delays_effective_date` events. It distinguishes publication,
-effective, compliance, applicability, mailing, receipt, filing, and retrieval
-dates. It must be possible to ask both:
+enactment, effective, compliance, applicability, mailing/notification,
+submission, receipt, official filing, proposed-response, and retrieval dates.
+It must be possible to ask both:
 
 - “What governed on the correspondence mailing date?” and
 - “What governs a response submitted on the proposed filing date?”
@@ -230,6 +290,22 @@ ipfs_datasets_py/processors/domains/uspto/
 └── api.py
 ```
 
+The v2 leaf modules add concrete live/durable and assurance boundaries without
+moving source-specific logic into interfaces:
+
+```text
+providers/http_transport.py + stores/
+document_pipeline.py + document_jobs.py
+analysis/office_action_semantics_v2.py
+analysis/submission_semantics_v2.py
+analysis/legal_ir_bridge.py + proof_adapter.py
+analysis/obligation_assurance.py + instruction_assurance_v2.py
+rule_packs/ + official_calendar.py
+matter_analysis_processor.py + submission_assurance_processor.py
+legal_scrapers/federal_scrapers/live_source_transport.py
+legal_data/patent_authority_materializer.py
+```
+
 The existing `processors/domains/patent/` package remains limited to public
 patent/publication and prior-art discovery. Its broken/drifting compatibility
 imports and models are repaired by `PATLAW-019`, but it is not treated as an
@@ -295,6 +371,15 @@ The document pipeline must:
 9. return `unknown` plus a human-review item whenever readability, coverage, or
    extraction disagreement crosses a configured threshold.
 
+Supported structured filing inputs include safely bounded XML, TXT, image,
+PCT ZIP, Web ADS/bibliographic data, and ST.26 sequence-listing XML. Parsers
+disable external entities and network resolution, use pinned applicable
+schemas/DTDs, enforce archive member/ratio/depth limits, and retain validation
+errors. Patent Center DOCX evidence includes the submitted DOCX, feedback
+document, USPTO-converted PDF, auxiliary PDF, split outputs, warnings/errors,
+and local/upstream hashes as distinct artifacts rather than interchangeable
+renderings.
+
 No document text is written to stdout, ordinary logs, telemetry, crash names,
 or debug files. Safe logs contain identifiers only after classification and
 redaction.
@@ -327,6 +412,11 @@ The matter ledger reconciles:
 Missing or delayed public documents are reported as retrieval freshness gaps,
 not proof that USPTO did not receive an item.
 
+Receipt evidence distinguishes a transmission attempt, Electronic Submission
+Receipt/acknowledgement, payment receipt, official Filing Receipt, corrected
+Filing Receipt, and first public ODP appearance. These events have different
+legal and operational effects and never substitute for one another.
+
 ## 11. Government-instruction analysis
 
 The office-action processor classifies the document, sections it, extracts
@@ -350,6 +440,11 @@ examiner/instruction span
 ```
 
 It never substitutes an LLM summary for the government text or governing text.
+The reviewed corpus and taxonomy cover, at minimum, missing-parts and
+omitted-item/no-filing-date notices, restriction/election, Quayle actions,
+advisory actions, sequence-compliance notices, allowance/issue-fee notices,
+appeal/pre-appeal and petition communications, rescission/reissue, and
+document-code drift. Unimplemented families are reported as unsupported.
 
 ## 12. Submission-completeness analysis
 
@@ -360,6 +455,14 @@ and flags mismatched matter identifiers or document descriptions.
 
 The compliance engine maps every applicable government requirement to exact
 submission evidence through the existing support-map and Legal IR machinery.
+Application profiles are versioned by utility, design, and plant requirements,
+filing date, AIA/pre-AIA law, prosecution stage/finality, and entity status.
+Provisional, PCT national-stage, reissue, continuation, divisional, and CIP
+matters receive an explicit supported profile or `out_of_scope`/`unknown`;
+utility rules are never silently reused. Signature-presence/representation,
+ADS/benefit claims, fee codes/effective dates/entity status, sequence-listing
+applicability, and receipt evidence are evaluated without authenticating a
+signer, certifying under 37 CFR 11.18, or paying a fee.
 Outcomes are deliberately fail closed:
 
 - `satisfied`: all necessary predicates have validated evidence and no
@@ -375,6 +478,14 @@ Absent requirements, empty evidence, parser errors, skipped proofs, timeouts,
 unsupported semantics, or missing source versions can never produce an overall
 pass. The top-level package result remains `unknown` if any mandatory item is
 unknown.
+
+In v2, `satisfied` requires a compiled obligation, validated authority and
+applicability, exact admitted fact bindings, and a successful replayable proof
+receipt. `consistent` requires an actual semantic comparison at a declared
+level; exact citation resolution alone is insufficient. Category similarity
+may rank candidate evidence but cannot prove a requirement. A proof timeout,
+countermodel, compiler omission, privacy denial, or incomplete authority
+coverage remains explicit and fail closed.
 
 ## 13. Candidate-date policy
 
@@ -433,6 +544,21 @@ in the runtime, PDF, legal-analysis, source-authority, and USPTO-contract
 bundles. Shared exports, CLI/MCP registration, and final integration are late,
 serialized tasks.
 
+The v2 frontier starts exactly four file-disjoint tasks in parallel:
+
+- lane 0, `PATLAW-120`: bounded live HTTP transport and credential references;
+- lane 1, `PATLAW-121`: specialized PDF/OCR and structured-format bridge;
+- lane 2, `PATLAW-122`: exact USPTO span/authority/fact to Legal IR contract;
+- lane 3, `PATLAW-123`: executable gold-output metric evaluator.
+
+Every later task has an explicit dependency path from that frontier. Numeric
+task suffix modulo four remains the strict shard identity. The supervisor is
+considered healthy when each outer and managed PID is alive, its outer
+heartbeat and managed pass log are fresh, ready work is selected within the
+grace period, active implementation logs advance, no protected-path incident
+or blocked task is latched, and merge receipts advance the target. Historical
+completed-task log timestamps are not liveness heartbeats.
+
 ## 16. Implementation waves
 
 | Wave | Goals | Parallel result |
@@ -444,6 +570,11 @@ serialized tasks.
 | 4 | `PATLAW-G060`, `PATLAW-G090`, `PATLAW-G100` | Assemble dossiers/preflight, evaluate hybrid retrieval/prior-art review, and build deterministic privacy-reviewed public artifacts |
 | 5 | `PATLAW-G070`, `PATLAW-G100` | Integrate SDK/CLI/read-only MCP/polling and prove the fake-service, human-approved publication transaction |
 | 6 | `PATLAW-G080` | Prove gold fixtures, privacy/adversarial isolation, offline replay, recovery/sync operations, and the current-tree release gate |
+| 7 | `PATLAW-G111`, `PATLAW-G121`, `PATLAW-G131`, `PATLAW-G151` | Begin one task per strict lane: live transport, extraction bridge, Legal IR contract, and executable metrics |
+| 8 | `PATLAW-G111`, `PATLAW-G112`, `PATLAW-G121` | Bootstrap durable live ODP and legal-source acquisition while checkpointing real document jobs |
+| 9 | `PATLAW-G122`, `PATLAW-G131`, `PATLAW-G132` | Expand correspondence/submission semantics, bind obligation proofs, and build versioned filing/date rules |
+| 10 | `PATLAW-G141`, `PATLAW-G142` | Compose the one-shot matter/submission workflow, then serialize interfaces, persisted review, and alerts |
+| 11 | `PATLAW-G151`, `PATLAW-G152` | Evaluate approved public and synthetic cases through the genuine pipeline and issue the v2 release/legal-review receipt |
 
 Lane ownership is conflict-exclusive while tasks are concurrent:
 
@@ -479,7 +610,14 @@ Each task ships focused unit/contract tests. Program gates additionally cover:
   and an explicit false-negative budget set from a reviewed gold corpus;
 - vacuous-pass, proof-skip, missing-source, unsupported-language, and deadline
   ambiguity tests that must yield `unknown`/review;
-- offline deterministic replay from immutable source receipts; and
+- offline deterministic replay from immutable source receipts;
+- computed (not merely declared) precision/recall/provenance/false-positive
+  metrics over held-out cases, including rights-reviewed official public
+  examples;
+- safe XML/DTD/XXE, ZIP/archive-bomb, malformed structured filing, key
+  rotation, retention/deletion, backup/restore, and tenant-bound audit tests;
+- opt-in, read-only ODP/source authentication and schema canaries that never
+  make CI depend on live network; and
 - zero private bytes/text/embeddings/CIDs in logs, telemetry, public IPFS,
   public caches, or public release surfaces.
 
@@ -515,7 +653,8 @@ filing surface, not a scraping target.
 
 ## 20. Definition of done
 
-For at least one synthetic and one approved public application fixture, an
+For at least one synthetic and one rights-reviewed approved public application
+fixture per supported application profile, an
 operator can provide an identifier or authorized export and receive a
 replayable dossier containing current/as-of status, complete artifact
 inventory, extracted correspondence/submission spans, government requirement
@@ -524,4 +663,8 @@ inconsistencies, candidate dates, and explicit human-review actions. All
 results are provenance-bound and fail closed; private-material isolation and
 the no-file/no-sign/no-pay boundary are proven by tests; the SDK/CLI/MCP expose
 the same result contract; and all supervisor tasks have merged validation
-receipts on `feature/patent-legal-intelligence`.
+receipts on `feature/patent-legal-intelligence`. The v2 release receipt must
+bind observed metrics, the exact tree/config/source/parser/compiler/prover
+versions, migration and rollback evidence, supervisor merge receipts, and an
+independent human legal-review receipt. Only then may active child-goal status
+be reconciled; the earlier PATLAW-074 label does not close the expanded scope.
