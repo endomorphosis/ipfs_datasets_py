@@ -1299,7 +1299,7 @@ Program invariants:
 
 ## PATLAW-100 Generalize the append-only Hugging Face publication profile
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
