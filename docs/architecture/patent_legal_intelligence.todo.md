@@ -199,7 +199,7 @@ Program invariants:
 
 ## PATLAW-011 Define the patent authority source and receipt registry
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
