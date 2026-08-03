@@ -1,0 +1,3611 @@
+{
+  "chart": {
+    "chart_id": "chart:prior-art:814808cb8e9df219",
+    "coverage_gaps": [
+      {
+        "corpus": "foreign_patents",
+        "description": "Foreign-patent corpus was not searched (or only partially covered). This gap remains visible and must not be treated as a complete search.",
+        "gap_id": "gap:foreign-patent",
+        "kind": "foreign_patent",
+        "metadata": {},
+        "remains_visible": true,
+        "searched": false
+      },
+      {
+        "corpus": "npl",
+        "description": "Non-patent literature (NPL) corpus was not searched (or only partially covered). Unlicensed NPL body text is not reproduced. This gap remains visible and must not be treated as a complete search.",
+        "gap_id": "gap:npl",
+        "kind": "npl",
+        "metadata": {},
+        "remains_visible": true,
+        "searched": false
+      }
+    ],
+    "disclaimer": "This artifact is a reproducible prior-art search plan and/or source-linked claim chart for human review. Generated limitations and keywords are candidates only. Foreign-patent and non-patent literature (NPL) coverage gaps remain visible when those corpora were not searched. This output is not a novelty, obviousness, or patentability determination, not legal advice, not an IDS filing, and not a substitute for a licensed search.",
+    "entries": [
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-1:doc:patent-encode:q-lim-1",
+        "limitation_id": "lim:c1-1",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-lim-1",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-lim-1",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-2:doc:patent-encode:q-lim-2",
+        "limitation_id": "lim:c1-2",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-lim-2",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-lim-2",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-3:doc:patent-encode:q-lim-3",
+        "limitation_id": "lim:c1-3",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-lim-3",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-lim-3",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 12.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-network",
+        "entry_id": "entry:lim:c1-3:doc:patent-network:q-lim-3",
+        "limitation_id": "lim:c1-3",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-lim-3",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-lim-3",
+        "rank": 2,
+        "role": "source_bound",
+        "score": 3.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-10123456",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "source_receipt_id": null,
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-4:doc:patent-encode:q-lim-4",
+        "limitation_id": "lim:c1-4",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-lim-4",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-lim-4",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-1:doc:patent-encode:q-kw-5",
+        "limitation_id": "lim:c1-1",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-kw-5",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-kw-5",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-2:doc:patent-encode:q-kw-5",
+        "limitation_id": "lim:c1-2",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-kw-5",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-kw-5",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-3:doc:patent-encode:q-kw-5",
+        "limitation_id": "lim:c1-3",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-kw-5",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-kw-5",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-4:doc:patent-encode:q-kw-5",
+        "limitation_id": "lim:c1-4",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-kw-5",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-kw-5",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-1:doc:patent-encode:q-class-6",
+        "limitation_id": "lim:c1-1",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-6",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 12.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-2:doc:patent-encode:q-class-6",
+        "limitation_id": "lim:c1-2",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-6",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 12.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-3:doc:patent-encode:q-class-6",
+        "limitation_id": "lim:c1-3",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-6",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 12.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-4:doc:patent-encode:q-class-6",
+        "limitation_id": "lim:c1-4",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-6",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 12.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-network",
+        "entry_id": "entry:lim:c1-1:doc:patent-network:q-class-6",
+        "limitation_id": "lim:c1-1",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-6",
+        "rank": 2,
+        "role": "source_bound",
+        "score": 3.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-10123456",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "source_receipt_id": null,
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-network",
+        "entry_id": "entry:lim:c1-2:doc:patent-network:q-class-6",
+        "limitation_id": "lim:c1-2",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-6",
+        "rank": 2,
+        "role": "source_bound",
+        "score": 3.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-10123456",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "source_receipt_id": null,
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-network",
+        "entry_id": "entry:lim:c1-3:doc:patent-network:q-class-6",
+        "limitation_id": "lim:c1-3",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-6",
+        "rank": 2,
+        "role": "source_bound",
+        "score": 3.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-10123456",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "source_receipt_id": null,
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-network",
+        "entry_id": "entry:lim:c1-4:doc:patent-network:q-class-6",
+        "limitation_id": "lim:c1-4",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-6",
+        "rank": 2,
+        "role": "source_bound",
+        "score": 3.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-10123456",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "source_receipt_id": null,
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-1:doc:patent-encode:q-class-7",
+        "limitation_id": "lim:c1-1",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-7",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 12.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-2:doc:patent-encode:q-class-7",
+        "limitation_id": "lim:c1-2",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-7",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 12.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-3:doc:patent-encode:q-class-7",
+        "limitation_id": "lim:c1-3",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-7",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 12.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-4:doc:patent-encode:q-class-7",
+        "limitation_id": "lim:c1-4",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-7",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 12.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-network",
+        "entry_id": "entry:lim:c1-1:doc:patent-network:q-class-7",
+        "limitation_id": "lim:c1-1",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-7",
+        "rank": 2,
+        "role": "source_bound",
+        "score": 3.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-10123456",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "source_receipt_id": null,
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-network",
+        "entry_id": "entry:lim:c1-2:doc:patent-network:q-class-7",
+        "limitation_id": "lim:c1-2",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-7",
+        "rank": 2,
+        "role": "source_bound",
+        "score": 3.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-10123456",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "source_receipt_id": null,
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-network",
+        "entry_id": "entry:lim:c1-3:doc:patent-network:q-class-7",
+        "limitation_id": "lim:c1-3",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-7",
+        "rank": 2,
+        "role": "source_bound",
+        "score": 3.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-10123456",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "source_receipt_id": null,
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-network",
+        "entry_id": "entry:lim:c1-4:doc:patent-network:q-class-7",
+        "limitation_id": "lim:c1-4",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-class-7",
+        "rank": 2,
+        "role": "source_bound",
+        "score": 3.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-10123456",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "source_receipt_id": null,
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-1:doc:patent-encode:q-cite-expand",
+        "limitation_id": "lim:c1-1",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-cite-expand",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-cite-expand",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-2:doc:patent-encode:q-cite-expand",
+        "limitation_id": "lim:c1-2",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-cite-expand",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-cite-expand",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-3:doc:patent-encode:q-cite-expand",
+        "limitation_id": "lim:c1-3",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-cite-expand",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-cite-expand",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-4:doc:patent-encode:q-cite-expand",
+        "limitation_id": "lim:c1-4",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-cite-expand",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-cite-expand",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-1:doc:patent-encode:q-family-expand",
+        "limitation_id": "lim:c1-1",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-family-expand",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-family-expand",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-2:doc:patent-encode:q-family-expand",
+        "limitation_id": "lim:c1-2",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-family-expand",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-family-expand",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-3:doc:patent-encode:q-family-expand",
+        "limitation_id": "lim:c1-3",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-family-expand",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-family-expand",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "authority_claim": "source_bound",
+        "claim_number": 1,
+        "document_id": "doc:patent-encode",
+        "entry_id": "entry:lim:c1-4:doc:patent-encode:q-family-expand",
+        "limitation_id": "lim:c1-4",
+        "log_id": "log:plan:prior-art:golden-us11222333:q-family-expand",
+        "metadata": {},
+        "passage_excerpt": null,
+        "query_id": "q-family-expand",
+        "rank": 1,
+        "role": "source_bound",
+        "score": 9.0,
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "source_receipt_id": null,
+            "span": {
+              "end": 60,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      }
+    ],
+    "filing_date": "2022-03-15",
+    "limitations": [
+      {
+        "authority_claim": "none",
+        "claim_number": 1,
+        "is_candidate": true,
+        "limitation_id": "lim:c1-1",
+        "metadata": {
+          "generator": "deterministic_split"
+        },
+        "ordinal": 1,
+        "provenance": "candidate",
+        "role": "candidate",
+        "source_claim_span": {
+          "end": 11,
+          "start": 3,
+          "unit": "char"
+        },
+        "text": "A method"
+      },
+      {
+        "authority_claim": "none",
+        "claim_number": 1,
+        "is_candidate": true,
+        "limitation_id": "lim:c1-2",
+        "metadata": {
+          "generator": "deterministic_split"
+        },
+        "ordinal": 2,
+        "provenance": "candidate",
+        "role": "candidate",
+        "source_claim_span": {
+          "end": 56,
+          "start": 23,
+          "unit": "char"
+        },
+        "text": "encoding claim text for retrieval"
+      },
+      {
+        "authority_claim": "none",
+        "claim_number": 1,
+        "is_candidate": true,
+        "limitation_id": "lim:c1-3",
+        "metadata": {
+          "generator": "deterministic_split"
+        },
+        "ordinal": 3,
+        "provenance": "candidate",
+        "role": "candidate",
+        "source_claim_span": {
+          "end": 108,
+          "start": 58,
+          "unit": "char"
+        },
+        "text": "wherein the system indexes CPC G06F16/00 documents"
+      },
+      {
+        "authority_claim": "none",
+        "claim_number": 1,
+        "is_candidate": true,
+        "limitation_id": "lim:c1-4",
+        "metadata": {
+          "generator": "deterministic_split"
+        },
+        "ordinal": 4,
+        "provenance": "candidate",
+        "role": "candidate",
+        "source_claim_span": {
+          "end": 163,
+          "start": 110,
+          "unit": "char"
+        },
+        "text": "and applying 35 U.S.C. section 102 prior art analysis"
+      }
+    ],
+    "metadata": {},
+    "output_kind": "claim_chart",
+    "plan_id": "plan:prior-art:golden-us11222333",
+    "priority_date": "2021-03-15",
+    "schema_version": "patent.prior_art.v1",
+    "search_date_utc": "2024-06-01T12:00:00Z",
+    "subject_id": "subject:app-16-123456"
+  },
+  "disclaimer": "This artifact is a reproducible prior-art search plan and/or source-linked claim chart for human review. Generated limitations and keywords are candidates only. Foreign-patent and non-patent literature (NPL) coverage gaps remain visible when those corpora were not searched. This output is not a novelty, obviousness, or patentability determination, not legal advice, not an IDS filing, and not a substitute for a licensed search.",
+  "fixture_id": "golden-prior-art-claim-chart",
+  "plan": {
+    "claims": [
+      {
+        "claim_kind": "independent",
+        "claim_number": 1,
+        "claim_text": "1. A method comprising encoding claim text for retrieval; wherein the system indexes CPC G06F16/00 documents; and applying 35 U.S.C. section 102 prior art analysis."
+      }
+    ],
+    "coverage_gaps": [
+      {
+        "corpus": "foreign_patents",
+        "description": "Foreign-patent corpus was not searched (or only partially covered). This gap remains visible and must not be treated as a complete search.",
+        "gap_id": "gap:foreign-patent",
+        "kind": "foreign_patent",
+        "metadata": {},
+        "remains_visible": true,
+        "searched": false
+      },
+      {
+        "corpus": "npl",
+        "description": "Non-patent literature (NPL) corpus was not searched (or only partially covered). Unlicensed NPL body text is not reproduced. This gap remains visible and must not be treated as a complete search.",
+        "gap_id": "gap:npl",
+        "kind": "npl",
+        "metadata": {},
+        "remains_visible": true,
+        "searched": false
+      }
+    ],
+    "disclaimer": "This artifact is a reproducible prior-art search plan and/or source-linked claim chart for human review. Generated limitations and keywords are candidates only. Foreign-patent and non-patent literature (NPL) coverage gaps remain visible when those corpora were not searched. This output is not a novelty, obviousness, or patentability determination, not legal advice, not an IDS filing, and not a substitute for a licensed search.",
+    "filing_date": "2022-03-15",
+    "filters": {
+      "allowed_disclosures": [
+        "public_official",
+        "public_user"
+      ],
+      "applied": true,
+      "as_of_utc": "2024-06-01T12:00:00Z",
+      "denied_provider_call_count": 0,
+      "filter_receipt_id": "filter:prior-art-golden",
+      "metadata": {},
+      "schema_version": "patent.retrieval.contracts.v1",
+      "tenant_id": "tenant-public"
+    },
+    "intended_corpora": [
+      "us_patents",
+      "us_publications"
+    ],
+    "keywords": [
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:1",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "encoding"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:2",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "text"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:3",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "retrieval"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:4",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "indexes"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:5",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "cpc"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:6",
+        "kind": "classification",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "g06f16/00"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:7",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "documents"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:8",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "applying"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:9",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "section"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:10",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "prior"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:11",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "art"
+      },
+      {
+        "authority_claim": "none",
+        "is_candidate": true,
+        "keyword_id": "kw:12",
+        "kind": "keyword",
+        "metadata": {
+          "generator": "token_extract"
+        },
+        "provenance": "candidate",
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "role": "candidate",
+        "text": "analysis"
+      }
+    ],
+    "limitations": [
+      {
+        "authority_claim": "none",
+        "claim_number": 1,
+        "is_candidate": true,
+        "limitation_id": "lim:c1-1",
+        "metadata": {
+          "generator": "deterministic_split"
+        },
+        "ordinal": 1,
+        "provenance": "candidate",
+        "role": "candidate",
+        "source_claim_span": {
+          "end": 11,
+          "start": 3,
+          "unit": "char"
+        },
+        "text": "A method"
+      },
+      {
+        "authority_claim": "none",
+        "claim_number": 1,
+        "is_candidate": true,
+        "limitation_id": "lim:c1-2",
+        "metadata": {
+          "generator": "deterministic_split"
+        },
+        "ordinal": 2,
+        "provenance": "candidate",
+        "role": "candidate",
+        "source_claim_span": {
+          "end": 56,
+          "start": 23,
+          "unit": "char"
+        },
+        "text": "encoding claim text for retrieval"
+      },
+      {
+        "authority_claim": "none",
+        "claim_number": 1,
+        "is_candidate": true,
+        "limitation_id": "lim:c1-3",
+        "metadata": {
+          "generator": "deterministic_split"
+        },
+        "ordinal": 3,
+        "provenance": "candidate",
+        "role": "candidate",
+        "source_claim_span": {
+          "end": 108,
+          "start": 58,
+          "unit": "char"
+        },
+        "text": "wherein the system indexes CPC G06F16/00 documents"
+      },
+      {
+        "authority_claim": "none",
+        "claim_number": 1,
+        "is_candidate": true,
+        "limitation_id": "lim:c1-4",
+        "metadata": {
+          "generator": "deterministic_split"
+        },
+        "ordinal": 4,
+        "provenance": "candidate",
+        "role": "candidate",
+        "source_claim_span": {
+          "end": 163,
+          "start": 110,
+          "unit": "char"
+        },
+        "text": "and applying 35 U.S.C. section 102 prior art analysis"
+      }
+    ],
+    "metadata": {
+      "corpus": "us_public_record",
+      "fixture": "golden"
+    },
+    "output_kind": "prior_art_search_plan",
+    "plan_id": "plan:prior-art:golden-us11222333",
+    "priority_date": "2021-03-15",
+    "queries": [
+      {
+        "classification_codes": [],
+        "family": "claim_limitation",
+        "intended_corpora": [
+          "us_patents",
+          "us_publications"
+        ],
+        "metadata": {
+          "source": "limitation_candidate"
+        },
+        "query_id": "q-lim-1",
+        "query_text": "A method",
+        "rank_cutoff": 5,
+        "related_keyword_ids": [],
+        "related_limitation_ids": [
+          "lim:c1-1"
+        ],
+        "seed_document_ids": []
+      },
+      {
+        "classification_codes": [],
+        "family": "claim_limitation",
+        "intended_corpora": [
+          "us_patents",
+          "us_publications"
+        ],
+        "metadata": {
+          "source": "limitation_candidate"
+        },
+        "query_id": "q-lim-2",
+        "query_text": "encoding claim text for retrieval",
+        "rank_cutoff": 5,
+        "related_keyword_ids": [],
+        "related_limitation_ids": [
+          "lim:c1-2"
+        ],
+        "seed_document_ids": []
+      },
+      {
+        "classification_codes": [],
+        "family": "claim_limitation",
+        "intended_corpora": [
+          "us_patents",
+          "us_publications"
+        ],
+        "metadata": {
+          "source": "limitation_candidate"
+        },
+        "query_id": "q-lim-3",
+        "query_text": "wherein the system indexes CPC G06F16/00 documents",
+        "rank_cutoff": 5,
+        "related_keyword_ids": [],
+        "related_limitation_ids": [
+          "lim:c1-3"
+        ],
+        "seed_document_ids": []
+      },
+      {
+        "classification_codes": [],
+        "family": "claim_limitation",
+        "intended_corpora": [
+          "us_patents",
+          "us_publications"
+        ],
+        "metadata": {
+          "source": "limitation_candidate"
+        },
+        "query_id": "q-lim-4",
+        "query_text": "and applying 35 U.S.C. section 102 prior art analysis",
+        "rank_cutoff": 5,
+        "related_keyword_ids": [],
+        "related_limitation_ids": [
+          "lim:c1-4"
+        ],
+        "seed_document_ids": []
+      },
+      {
+        "classification_codes": [],
+        "family": "keyword",
+        "intended_corpora": [
+          "us_patents",
+          "us_publications"
+        ],
+        "metadata": {
+          "source": "keyword_candidates"
+        },
+        "query_id": "q-kw-5",
+        "query_text": "encoding text retrieval indexes cpc documents applying section prior art analysis",
+        "rank_cutoff": 5,
+        "related_keyword_ids": [
+          "kw:1",
+          "kw:2",
+          "kw:3",
+          "kw:4",
+          "kw:5",
+          "kw:7",
+          "kw:8",
+          "kw:9",
+          "kw:10",
+          "kw:11",
+          "kw:12"
+        ],
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "seed_document_ids": []
+      },
+      {
+        "classification_codes": [
+          "G06F16/00"
+        ],
+        "family": "classification_cpc",
+        "intended_corpora": [
+          "us_patents",
+          "us_publications"
+        ],
+        "metadata": {
+          "source": "classification_candidate"
+        },
+        "query_id": "q-class-6",
+        "query_text": "G06F16/00",
+        "rank_cutoff": 5,
+        "related_keyword_ids": [],
+        "related_limitation_ids": [],
+        "seed_document_ids": []
+      },
+      {
+        "classification_codes": [
+          "g06f16/00"
+        ],
+        "family": "classification_cpc",
+        "intended_corpora": [
+          "us_patents",
+          "us_publications"
+        ],
+        "metadata": {
+          "source": "classification_candidate"
+        },
+        "query_id": "q-class-7",
+        "query_text": "g06f16/00",
+        "rank_cutoff": 5,
+        "related_keyword_ids": [],
+        "related_limitation_ids": [],
+        "seed_document_ids": []
+      },
+      {
+        "classification_codes": [],
+        "family": "citation_expansion",
+        "intended_corpora": [
+          "us_patents",
+          "us_publications"
+        ],
+        "metadata": {
+          "source": "citation_expansion"
+        },
+        "query_id": "q-cite-expand",
+        "query_text": "doc:patent-encode",
+        "rank_cutoff": 5,
+        "related_keyword_ids": [],
+        "related_limitation_ids": [],
+        "seed_document_ids": [
+          "doc:patent-encode"
+        ]
+      },
+      {
+        "classification_codes": [],
+        "family": "family_expansion",
+        "intended_corpora": [
+          "us_patents",
+          "us_publications"
+        ],
+        "metadata": {
+          "source": "family_expansion"
+        },
+        "query_id": "q-family-expand",
+        "query_text": "doc:patent-encode",
+        "rank_cutoff": 5,
+        "related_keyword_ids": [],
+        "related_limitation_ids": [],
+        "seed_document_ids": [
+          "doc:patent-encode"
+        ]
+      }
+    ],
+    "rank_cutoff": 5,
+    "ruleset_version": "prior-art-rules@1",
+    "schema_version": "patent.prior_art.v1",
+    "search_date_utc": "2024-06-01T12:00:00Z",
+    "subject_id": "subject:app-16-123456"
+  },
+  "report": {
+    "chart": {
+      "chart_id": "chart:prior-art:814808cb8e9df219",
+      "coverage_gaps": [
+        {
+          "corpus": "foreign_patents",
+          "description": "Foreign-patent corpus was not searched (or only partially covered). This gap remains visible and must not be treated as a complete search.",
+          "gap_id": "gap:foreign-patent",
+          "kind": "foreign_patent",
+          "metadata": {},
+          "remains_visible": true,
+          "searched": false
+        },
+        {
+          "corpus": "npl",
+          "description": "Non-patent literature (NPL) corpus was not searched (or only partially covered). Unlicensed NPL body text is not reproduced. This gap remains visible and must not be treated as a complete search.",
+          "gap_id": "gap:npl",
+          "kind": "npl",
+          "metadata": {},
+          "remains_visible": true,
+          "searched": false
+        }
+      ],
+      "disclaimer": "This artifact is a reproducible prior-art search plan and/or source-linked claim chart for human review. Generated limitations and keywords are candidates only. Foreign-patent and non-patent literature (NPL) coverage gaps remain visible when those corpora were not searched. This output is not a novelty, obviousness, or patentability determination, not legal advice, not an IDS filing, and not a substitute for a licensed search.",
+      "entries": [
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-1:doc:patent-encode:q-lim-1",
+          "limitation_id": "lim:c1-1",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-lim-1",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-lim-1",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-2:doc:patent-encode:q-lim-2",
+          "limitation_id": "lim:c1-2",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-lim-2",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-lim-2",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-3:doc:patent-encode:q-lim-3",
+          "limitation_id": "lim:c1-3",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-lim-3",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-lim-3",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 12.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 80,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-network",
+          "entry_id": "entry:lim:c1-3:doc:patent-network:q-lim-3",
+          "limitation_id": "lim:c1-3",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-lim-3",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-lim-3",
+          "rank": 2,
+          "role": "source_bound",
+          "score": 3.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-10123456",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+              "source_receipt_id": null,
+              "span": {
+                "end": 40,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-4:doc:patent-encode:q-lim-4",
+          "limitation_id": "lim:c1-4",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-lim-4",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-lim-4",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-1:doc:patent-encode:q-kw-5",
+          "limitation_id": "lim:c1-1",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-kw-5",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-kw-5",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-2:doc:patent-encode:q-kw-5",
+          "limitation_id": "lim:c1-2",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-kw-5",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-kw-5",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-3:doc:patent-encode:q-kw-5",
+          "limitation_id": "lim:c1-3",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-kw-5",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-kw-5",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-4:doc:patent-encode:q-kw-5",
+          "limitation_id": "lim:c1-4",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-kw-5",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-kw-5",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-1:doc:patent-encode:q-class-6",
+          "limitation_id": "lim:c1-1",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-6",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 12.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 80,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-2:doc:patent-encode:q-class-6",
+          "limitation_id": "lim:c1-2",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-6",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 12.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 80,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-3:doc:patent-encode:q-class-6",
+          "limitation_id": "lim:c1-3",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-6",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 12.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 80,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-4:doc:patent-encode:q-class-6",
+          "limitation_id": "lim:c1-4",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-6",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 12.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 80,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-network",
+          "entry_id": "entry:lim:c1-1:doc:patent-network:q-class-6",
+          "limitation_id": "lim:c1-1",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-6",
+          "rank": 2,
+          "role": "source_bound",
+          "score": 3.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-10123456",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+              "source_receipt_id": null,
+              "span": {
+                "end": 40,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-network",
+          "entry_id": "entry:lim:c1-2:doc:patent-network:q-class-6",
+          "limitation_id": "lim:c1-2",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-6",
+          "rank": 2,
+          "role": "source_bound",
+          "score": 3.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-10123456",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+              "source_receipt_id": null,
+              "span": {
+                "end": 40,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-network",
+          "entry_id": "entry:lim:c1-3:doc:patent-network:q-class-6",
+          "limitation_id": "lim:c1-3",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-6",
+          "rank": 2,
+          "role": "source_bound",
+          "score": 3.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-10123456",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+              "source_receipt_id": null,
+              "span": {
+                "end": 40,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-network",
+          "entry_id": "entry:lim:c1-4:doc:patent-network:q-class-6",
+          "limitation_id": "lim:c1-4",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-6",
+          "rank": 2,
+          "role": "source_bound",
+          "score": 3.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-10123456",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+              "source_receipt_id": null,
+              "span": {
+                "end": 40,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-1:doc:patent-encode:q-class-7",
+          "limitation_id": "lim:c1-1",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-7",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 12.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 80,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-2:doc:patent-encode:q-class-7",
+          "limitation_id": "lim:c1-2",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-7",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 12.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 80,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-3:doc:patent-encode:q-class-7",
+          "limitation_id": "lim:c1-3",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-7",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 12.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 80,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-4:doc:patent-encode:q-class-7",
+          "limitation_id": "lim:c1-4",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-7",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 12.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 80,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-network",
+          "entry_id": "entry:lim:c1-1:doc:patent-network:q-class-7",
+          "limitation_id": "lim:c1-1",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-7",
+          "rank": 2,
+          "role": "source_bound",
+          "score": 3.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-10123456",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+              "source_receipt_id": null,
+              "span": {
+                "end": 40,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-network",
+          "entry_id": "entry:lim:c1-2:doc:patent-network:q-class-7",
+          "limitation_id": "lim:c1-2",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-7",
+          "rank": 2,
+          "role": "source_bound",
+          "score": 3.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-10123456",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+              "source_receipt_id": null,
+              "span": {
+                "end": 40,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-network",
+          "entry_id": "entry:lim:c1-3:doc:patent-network:q-class-7",
+          "limitation_id": "lim:c1-3",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-7",
+          "rank": 2,
+          "role": "source_bound",
+          "score": 3.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-10123456",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+              "source_receipt_id": null,
+              "span": {
+                "end": 40,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-network",
+          "entry_id": "entry:lim:c1-4:doc:patent-network:q-class-7",
+          "limitation_id": "lim:c1-4",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-class-7",
+          "rank": 2,
+          "role": "source_bound",
+          "score": 3.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-10123456",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+              "source_receipt_id": null,
+              "span": {
+                "end": 40,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-1:doc:patent-encode:q-cite-expand",
+          "limitation_id": "lim:c1-1",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-cite-expand",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-cite-expand",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-2:doc:patent-encode:q-cite-expand",
+          "limitation_id": "lim:c1-2",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-cite-expand",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-cite-expand",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-3:doc:patent-encode:q-cite-expand",
+          "limitation_id": "lim:c1-3",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-cite-expand",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-cite-expand",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-4:doc:patent-encode:q-cite-expand",
+          "limitation_id": "lim:c1-4",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-cite-expand",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-cite-expand",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-1:doc:patent-encode:q-family-expand",
+          "limitation_id": "lim:c1-1",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-family-expand",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-family-expand",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-2:doc:patent-encode:q-family-expand",
+          "limitation_id": "lim:c1-2",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-family-expand",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-family-expand",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-3:doc:patent-encode:q-family-expand",
+          "limitation_id": "lim:c1-3",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-family-expand",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-family-expand",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        },
+        {
+          "authority_claim": "source_bound",
+          "claim_number": 1,
+          "document_id": "doc:patent-encode",
+          "entry_id": "entry:lim:c1-4:doc:patent-encode:q-family-expand",
+          "limitation_id": "lim:c1-4",
+          "log_id": "log:plan:prior-art:golden-us11222333:q-family-expand",
+          "metadata": {},
+          "passage_excerpt": null,
+          "query_id": "q-family-expand",
+          "rank": 1,
+          "role": "source_bound",
+          "score": 9.0,
+          "source_links": [
+            {
+              "artifact_id": "artifact:patent-11222333",
+              "authority_tier": "official-base",
+              "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+              "source_receipt_id": null,
+              "span": {
+                "end": 60,
+                "start": 0,
+                "unit": "char"
+              }
+            }
+          ]
+        }
+      ],
+      "filing_date": "2022-03-15",
+      "limitations": [
+        {
+          "authority_claim": "none",
+          "claim_number": 1,
+          "is_candidate": true,
+          "limitation_id": "lim:c1-1",
+          "metadata": {
+            "generator": "deterministic_split"
+          },
+          "ordinal": 1,
+          "provenance": "candidate",
+          "role": "candidate",
+          "source_claim_span": {
+            "end": 11,
+            "start": 3,
+            "unit": "char"
+          },
+          "text": "A method"
+        },
+        {
+          "authority_claim": "none",
+          "claim_number": 1,
+          "is_candidate": true,
+          "limitation_id": "lim:c1-2",
+          "metadata": {
+            "generator": "deterministic_split"
+          },
+          "ordinal": 2,
+          "provenance": "candidate",
+          "role": "candidate",
+          "source_claim_span": {
+            "end": 56,
+            "start": 23,
+            "unit": "char"
+          },
+          "text": "encoding claim text for retrieval"
+        },
+        {
+          "authority_claim": "none",
+          "claim_number": 1,
+          "is_candidate": true,
+          "limitation_id": "lim:c1-3",
+          "metadata": {
+            "generator": "deterministic_split"
+          },
+          "ordinal": 3,
+          "provenance": "candidate",
+          "role": "candidate",
+          "source_claim_span": {
+            "end": 108,
+            "start": 58,
+            "unit": "char"
+          },
+          "text": "wherein the system indexes CPC G06F16/00 documents"
+        },
+        {
+          "authority_claim": "none",
+          "claim_number": 1,
+          "is_candidate": true,
+          "limitation_id": "lim:c1-4",
+          "metadata": {
+            "generator": "deterministic_split"
+          },
+          "ordinal": 4,
+          "provenance": "candidate",
+          "role": "candidate",
+          "source_claim_span": {
+            "end": 163,
+            "start": 110,
+            "unit": "char"
+          },
+          "text": "and applying 35 U.S.C. section 102 prior art analysis"
+        }
+      ],
+      "metadata": {},
+      "output_kind": "claim_chart",
+      "plan_id": "plan:prior-art:golden-us11222333",
+      "priority_date": "2021-03-15",
+      "schema_version": "patent.prior_art.v1",
+      "search_date_utc": "2024-06-01T12:00:00Z",
+      "subject_id": "subject:app-16-123456"
+    },
+    "coverage_gaps": [
+      {
+        "corpus": "foreign_patents",
+        "description": "Foreign-patent corpus was not searched (or only partially covered). This gap remains visible and must not be treated as a complete search.",
+        "gap_id": "gap:foreign-patent",
+        "kind": "foreign_patent",
+        "metadata": {},
+        "remains_visible": true,
+        "searched": false
+      },
+      {
+        "corpus": "npl",
+        "description": "Non-patent literature (NPL) corpus was not searched (or only partially covered). Unlicensed NPL body text is not reproduced. This gap remains visible and must not be treated as a complete search.",
+        "gap_id": "gap:npl",
+        "kind": "npl",
+        "metadata": {},
+        "remains_visible": true,
+        "searched": false
+      }
+    ],
+    "disclaimer": "This artifact is a reproducible prior-art search plan and/or source-linked claim chart for human review. Generated limitations and keywords are candidates only. Foreign-patent and non-patent literature (NPL) coverage gaps remain visible when those corpora were not searched. This output is not a novelty, obviousness, or patentability determination, not legal advice, not an IDS filing, and not a substitute for a licensed search.",
+    "metadata": {},
+    "output_kind": "prior_art_report",
+    "plan": {
+      "claims": [
+        {
+          "claim_kind": "independent",
+          "claim_number": 1,
+          "claim_text": "1. A method comprising encoding claim text for retrieval; wherein the system indexes CPC G06F16/00 documents; and applying 35 U.S.C. section 102 prior art analysis."
+        }
+      ],
+      "coverage_gaps": [
+        {
+          "corpus": "foreign_patents",
+          "description": "Foreign-patent corpus was not searched (or only partially covered). This gap remains visible and must not be treated as a complete search.",
+          "gap_id": "gap:foreign-patent",
+          "kind": "foreign_patent",
+          "metadata": {},
+          "remains_visible": true,
+          "searched": false
+        },
+        {
+          "corpus": "npl",
+          "description": "Non-patent literature (NPL) corpus was not searched (or only partially covered). Unlicensed NPL body text is not reproduced. This gap remains visible and must not be treated as a complete search.",
+          "gap_id": "gap:npl",
+          "kind": "npl",
+          "metadata": {},
+          "remains_visible": true,
+          "searched": false
+        }
+      ],
+      "disclaimer": "This artifact is a reproducible prior-art search plan and/or source-linked claim chart for human review. Generated limitations and keywords are candidates only. Foreign-patent and non-patent literature (NPL) coverage gaps remain visible when those corpora were not searched. This output is not a novelty, obviousness, or patentability determination, not legal advice, not an IDS filing, and not a substitute for a licensed search.",
+      "filing_date": "2022-03-15",
+      "filters": {
+        "allowed_disclosures": [
+          "public_official",
+          "public_user"
+        ],
+        "applied": true,
+        "as_of_utc": "2024-06-01T12:00:00Z",
+        "denied_provider_call_count": 0,
+        "filter_receipt_id": "filter:prior-art-golden",
+        "metadata": {},
+        "schema_version": "patent.retrieval.contracts.v1",
+        "tenant_id": "tenant-public"
+      },
+      "intended_corpora": [
+        "us_patents",
+        "us_publications"
+      ],
+      "keywords": [
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:1",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "encoding"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:2",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "text"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:3",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "retrieval"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:4",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "indexes"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:5",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "cpc"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:6",
+          "kind": "classification",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "g06f16/00"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:7",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "documents"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:8",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "applying"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:9",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "section"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:10",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "prior"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:11",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "art"
+        },
+        {
+          "authority_claim": "none",
+          "is_candidate": true,
+          "keyword_id": "kw:12",
+          "kind": "keyword",
+          "metadata": {
+            "generator": "token_extract"
+          },
+          "provenance": "candidate",
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "role": "candidate",
+          "text": "analysis"
+        }
+      ],
+      "limitations": [
+        {
+          "authority_claim": "none",
+          "claim_number": 1,
+          "is_candidate": true,
+          "limitation_id": "lim:c1-1",
+          "metadata": {
+            "generator": "deterministic_split"
+          },
+          "ordinal": 1,
+          "provenance": "candidate",
+          "role": "candidate",
+          "source_claim_span": {
+            "end": 11,
+            "start": 3,
+            "unit": "char"
+          },
+          "text": "A method"
+        },
+        {
+          "authority_claim": "none",
+          "claim_number": 1,
+          "is_candidate": true,
+          "limitation_id": "lim:c1-2",
+          "metadata": {
+            "generator": "deterministic_split"
+          },
+          "ordinal": 2,
+          "provenance": "candidate",
+          "role": "candidate",
+          "source_claim_span": {
+            "end": 56,
+            "start": 23,
+            "unit": "char"
+          },
+          "text": "encoding claim text for retrieval"
+        },
+        {
+          "authority_claim": "none",
+          "claim_number": 1,
+          "is_candidate": true,
+          "limitation_id": "lim:c1-3",
+          "metadata": {
+            "generator": "deterministic_split"
+          },
+          "ordinal": 3,
+          "provenance": "candidate",
+          "role": "candidate",
+          "source_claim_span": {
+            "end": 108,
+            "start": 58,
+            "unit": "char"
+          },
+          "text": "wherein the system indexes CPC G06F16/00 documents"
+        },
+        {
+          "authority_claim": "none",
+          "claim_number": 1,
+          "is_candidate": true,
+          "limitation_id": "lim:c1-4",
+          "metadata": {
+            "generator": "deterministic_split"
+          },
+          "ordinal": 4,
+          "provenance": "candidate",
+          "role": "candidate",
+          "source_claim_span": {
+            "end": 163,
+            "start": 110,
+            "unit": "char"
+          },
+          "text": "and applying 35 U.S.C. section 102 prior art analysis"
+        }
+      ],
+      "metadata": {
+        "corpus": "us_public_record",
+        "fixture": "golden"
+      },
+      "output_kind": "prior_art_search_plan",
+      "plan_id": "plan:prior-art:golden-us11222333",
+      "priority_date": "2021-03-15",
+      "queries": [
+        {
+          "classification_codes": [],
+          "family": "claim_limitation",
+          "intended_corpora": [
+            "us_patents",
+            "us_publications"
+          ],
+          "metadata": {
+            "source": "limitation_candidate"
+          },
+          "query_id": "q-lim-1",
+          "query_text": "A method",
+          "rank_cutoff": 5,
+          "related_keyword_ids": [],
+          "related_limitation_ids": [
+            "lim:c1-1"
+          ],
+          "seed_document_ids": []
+        },
+        {
+          "classification_codes": [],
+          "family": "claim_limitation",
+          "intended_corpora": [
+            "us_patents",
+            "us_publications"
+          ],
+          "metadata": {
+            "source": "limitation_candidate"
+          },
+          "query_id": "q-lim-2",
+          "query_text": "encoding claim text for retrieval",
+          "rank_cutoff": 5,
+          "related_keyword_ids": [],
+          "related_limitation_ids": [
+            "lim:c1-2"
+          ],
+          "seed_document_ids": []
+        },
+        {
+          "classification_codes": [],
+          "family": "claim_limitation",
+          "intended_corpora": [
+            "us_patents",
+            "us_publications"
+          ],
+          "metadata": {
+            "source": "limitation_candidate"
+          },
+          "query_id": "q-lim-3",
+          "query_text": "wherein the system indexes CPC G06F16/00 documents",
+          "rank_cutoff": 5,
+          "related_keyword_ids": [],
+          "related_limitation_ids": [
+            "lim:c1-3"
+          ],
+          "seed_document_ids": []
+        },
+        {
+          "classification_codes": [],
+          "family": "claim_limitation",
+          "intended_corpora": [
+            "us_patents",
+            "us_publications"
+          ],
+          "metadata": {
+            "source": "limitation_candidate"
+          },
+          "query_id": "q-lim-4",
+          "query_text": "and applying 35 U.S.C. section 102 prior art analysis",
+          "rank_cutoff": 5,
+          "related_keyword_ids": [],
+          "related_limitation_ids": [
+            "lim:c1-4"
+          ],
+          "seed_document_ids": []
+        },
+        {
+          "classification_codes": [],
+          "family": "keyword",
+          "intended_corpora": [
+            "us_patents",
+            "us_publications"
+          ],
+          "metadata": {
+            "source": "keyword_candidates"
+          },
+          "query_id": "q-kw-5",
+          "query_text": "encoding text retrieval indexes cpc documents applying section prior art analysis",
+          "rank_cutoff": 5,
+          "related_keyword_ids": [
+            "kw:1",
+            "kw:2",
+            "kw:3",
+            "kw:4",
+            "kw:5",
+            "kw:7",
+            "kw:8",
+            "kw:9",
+            "kw:10",
+            "kw:11",
+            "kw:12"
+          ],
+          "related_limitation_ids": [
+            "lim:c1-1",
+            "lim:c1-2",
+            "lim:c1-3",
+            "lim:c1-4"
+          ],
+          "seed_document_ids": []
+        },
+        {
+          "classification_codes": [
+            "G06F16/00"
+          ],
+          "family": "classification_cpc",
+          "intended_corpora": [
+            "us_patents",
+            "us_publications"
+          ],
+          "metadata": {
+            "source": "classification_candidate"
+          },
+          "query_id": "q-class-6",
+          "query_text": "G06F16/00",
+          "rank_cutoff": 5,
+          "related_keyword_ids": [],
+          "related_limitation_ids": [],
+          "seed_document_ids": []
+        },
+        {
+          "classification_codes": [
+            "g06f16/00"
+          ],
+          "family": "classification_cpc",
+          "intended_corpora": [
+            "us_patents",
+            "us_publications"
+          ],
+          "metadata": {
+            "source": "classification_candidate"
+          },
+          "query_id": "q-class-7",
+          "query_text": "g06f16/00",
+          "rank_cutoff": 5,
+          "related_keyword_ids": [],
+          "related_limitation_ids": [],
+          "seed_document_ids": []
+        },
+        {
+          "classification_codes": [],
+          "family": "citation_expansion",
+          "intended_corpora": [
+            "us_patents",
+            "us_publications"
+          ],
+          "metadata": {
+            "source": "citation_expansion"
+          },
+          "query_id": "q-cite-expand",
+          "query_text": "doc:patent-encode",
+          "rank_cutoff": 5,
+          "related_keyword_ids": [],
+          "related_limitation_ids": [],
+          "seed_document_ids": [
+            "doc:patent-encode"
+          ]
+        },
+        {
+          "classification_codes": [],
+          "family": "family_expansion",
+          "intended_corpora": [
+            "us_patents",
+            "us_publications"
+          ],
+          "metadata": {
+            "source": "family_expansion"
+          },
+          "query_id": "q-family-expand",
+          "query_text": "doc:patent-encode",
+          "rank_cutoff": 5,
+          "related_keyword_ids": [],
+          "related_limitation_ids": [],
+          "seed_document_ids": [
+            "doc:patent-encode"
+          ]
+        }
+      ],
+      "rank_cutoff": 5,
+      "ruleset_version": "prior-art-rules@1",
+      "schema_version": "patent.prior_art.v1",
+      "search_date_utc": "2024-06-01T12:00:00Z",
+      "subject_id": "subject:app-16-123456"
+    },
+    "query_logs": [
+      {
+        "corpus": "us_patents",
+        "family": "claim_limitation",
+        "filters": {
+          "allowed_disclosures": [
+            "public_official",
+            "public_user"
+          ],
+          "applied": true,
+          "as_of_utc": "2024-06-01T12:00:00Z",
+          "denied_provider_call_count": 0,
+          "filter_receipt_id": "filter:prior-art-golden",
+          "metadata": {},
+          "schema_version": "patent.retrieval.contracts.v1",
+          "tenant_id": "tenant-public"
+        },
+        "hits": [
+          {
+            "document_id": "doc:patent-encode",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 1,
+            "score": 9.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-11222333",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 60,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          }
+        ],
+        "log_id": "log:plan:prior-art:golden-us11222333:q-lim-1",
+        "metadata": {},
+        "query_id": "q-lim-1",
+        "query_text": "A method",
+        "rank_cutoff": 5,
+        "related_limitation_ids": [
+          "lim:c1-1"
+        ],
+        "search_date_utc": "2024-06-01T12:00:00Z"
+      },
+      {
+        "corpus": "us_patents",
+        "family": "claim_limitation",
+        "filters": {
+          "allowed_disclosures": [
+            "public_official",
+            "public_user"
+          ],
+          "applied": true,
+          "as_of_utc": "2024-06-01T12:00:00Z",
+          "denied_provider_call_count": 0,
+          "filter_receipt_id": "filter:prior-art-golden",
+          "metadata": {},
+          "schema_version": "patent.retrieval.contracts.v1",
+          "tenant_id": "tenant-public"
+        },
+        "hits": [
+          {
+            "document_id": "doc:patent-encode",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 1,
+            "score": 9.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-11222333",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 60,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          }
+        ],
+        "log_id": "log:plan:prior-art:golden-us11222333:q-lim-2",
+        "metadata": {},
+        "query_id": "q-lim-2",
+        "query_text": "encoding claim text for retrieval",
+        "rank_cutoff": 5,
+        "related_limitation_ids": [
+          "lim:c1-2"
+        ],
+        "search_date_utc": "2024-06-01T12:00:00Z"
+      },
+      {
+        "corpus": "us_patents",
+        "family": "claim_limitation",
+        "filters": {
+          "allowed_disclosures": [
+            "public_official",
+            "public_user"
+          ],
+          "applied": true,
+          "as_of_utc": "2024-06-01T12:00:00Z",
+          "denied_provider_call_count": 0,
+          "filter_receipt_id": "filter:prior-art-golden",
+          "metadata": {},
+          "schema_version": "patent.retrieval.contracts.v1",
+          "tenant_id": "tenant-public"
+        },
+        "hits": [
+          {
+            "document_id": "doc:patent-encode",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 1,
+            "score": 12.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-11222333",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 80,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          },
+          {
+            "document_id": "doc:patent-network",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 2,
+            "score": 3.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-10123456",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 40,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          }
+        ],
+        "log_id": "log:plan:prior-art:golden-us11222333:q-lim-3",
+        "metadata": {},
+        "query_id": "q-lim-3",
+        "query_text": "wherein the system indexes CPC G06F16/00 documents",
+        "rank_cutoff": 5,
+        "related_limitation_ids": [
+          "lim:c1-3"
+        ],
+        "search_date_utc": "2024-06-01T12:00:00Z"
+      },
+      {
+        "corpus": "us_patents",
+        "family": "claim_limitation",
+        "filters": {
+          "allowed_disclosures": [
+            "public_official",
+            "public_user"
+          ],
+          "applied": true,
+          "as_of_utc": "2024-06-01T12:00:00Z",
+          "denied_provider_call_count": 0,
+          "filter_receipt_id": "filter:prior-art-golden",
+          "metadata": {},
+          "schema_version": "patent.retrieval.contracts.v1",
+          "tenant_id": "tenant-public"
+        },
+        "hits": [
+          {
+            "document_id": "doc:patent-encode",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 1,
+            "score": 9.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-11222333",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 60,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          }
+        ],
+        "log_id": "log:plan:prior-art:golden-us11222333:q-lim-4",
+        "metadata": {},
+        "query_id": "q-lim-4",
+        "query_text": "and applying 35 U.S.C. section 102 prior art analysis",
+        "rank_cutoff": 5,
+        "related_limitation_ids": [
+          "lim:c1-4"
+        ],
+        "search_date_utc": "2024-06-01T12:00:00Z"
+      },
+      {
+        "corpus": "us_patents",
+        "family": "keyword",
+        "filters": {
+          "allowed_disclosures": [
+            "public_official",
+            "public_user"
+          ],
+          "applied": true,
+          "as_of_utc": "2024-06-01T12:00:00Z",
+          "denied_provider_call_count": 0,
+          "filter_receipt_id": "filter:prior-art-golden",
+          "metadata": {},
+          "schema_version": "patent.retrieval.contracts.v1",
+          "tenant_id": "tenant-public"
+        },
+        "hits": [
+          {
+            "document_id": "doc:patent-encode",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 1,
+            "score": 9.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-11222333",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 60,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          }
+        ],
+        "log_id": "log:plan:prior-art:golden-us11222333:q-kw-5",
+        "metadata": {},
+        "query_id": "q-kw-5",
+        "query_text": "encoding text retrieval indexes cpc documents applying section prior art analysis",
+        "rank_cutoff": 5,
+        "related_limitation_ids": [
+          "lim:c1-1",
+          "lim:c1-2",
+          "lim:c1-3",
+          "lim:c1-4"
+        ],
+        "search_date_utc": "2024-06-01T12:00:00Z"
+      },
+      {
+        "corpus": "us_patents",
+        "family": "classification_cpc",
+        "filters": {
+          "allowed_disclosures": [
+            "public_official",
+            "public_user"
+          ],
+          "applied": true,
+          "as_of_utc": "2024-06-01T12:00:00Z",
+          "denied_provider_call_count": 0,
+          "filter_receipt_id": "filter:prior-art-golden",
+          "metadata": {},
+          "schema_version": "patent.retrieval.contracts.v1",
+          "tenant_id": "tenant-public"
+        },
+        "hits": [
+          {
+            "document_id": "doc:patent-encode",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 1,
+            "score": 12.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-11222333",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 80,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          },
+          {
+            "document_id": "doc:patent-network",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 2,
+            "score": 3.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-10123456",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 40,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          }
+        ],
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-6",
+        "metadata": {},
+        "query_id": "q-class-6",
+        "query_text": "G06F16/00",
+        "rank_cutoff": 5,
+        "related_limitation_ids": [],
+        "search_date_utc": "2024-06-01T12:00:00Z"
+      },
+      {
+        "corpus": "us_patents",
+        "family": "classification_cpc",
+        "filters": {
+          "allowed_disclosures": [
+            "public_official",
+            "public_user"
+          ],
+          "applied": true,
+          "as_of_utc": "2024-06-01T12:00:00Z",
+          "denied_provider_call_count": 0,
+          "filter_receipt_id": "filter:prior-art-golden",
+          "metadata": {},
+          "schema_version": "patent.retrieval.contracts.v1",
+          "tenant_id": "tenant-public"
+        },
+        "hits": [
+          {
+            "document_id": "doc:patent-encode",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 1,
+            "score": 12.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-11222333",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 80,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          },
+          {
+            "document_id": "doc:patent-network",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 2,
+            "score": 3.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-10123456",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 40,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          }
+        ],
+        "log_id": "log:plan:prior-art:golden-us11222333:q-class-7",
+        "metadata": {},
+        "query_id": "q-class-7",
+        "query_text": "g06f16/00",
+        "rank_cutoff": 5,
+        "related_limitation_ids": [],
+        "search_date_utc": "2024-06-01T12:00:00Z"
+      },
+      {
+        "corpus": "us_patents",
+        "family": "citation_expansion",
+        "filters": {
+          "allowed_disclosures": [
+            "public_official",
+            "public_user"
+          ],
+          "applied": true,
+          "as_of_utc": "2024-06-01T12:00:00Z",
+          "denied_provider_call_count": 0,
+          "filter_receipt_id": "filter:prior-art-golden",
+          "metadata": {},
+          "schema_version": "patent.retrieval.contracts.v1",
+          "tenant_id": "tenant-public"
+        },
+        "hits": [
+          {
+            "document_id": "doc:patent-encode",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 1,
+            "score": 9.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-11222333",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 60,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          }
+        ],
+        "log_id": "log:plan:prior-art:golden-us11222333:q-cite-expand",
+        "metadata": {},
+        "query_id": "q-cite-expand",
+        "query_text": "doc:patent-encode",
+        "rank_cutoff": 5,
+        "related_limitation_ids": [],
+        "search_date_utc": "2024-06-01T12:00:00Z"
+      },
+      {
+        "corpus": "us_patents",
+        "family": "family_expansion",
+        "filters": {
+          "allowed_disclosures": [
+            "public_official",
+            "public_user"
+          ],
+          "applied": true,
+          "as_of_utc": "2024-06-01T12:00:00Z",
+          "denied_provider_call_count": 0,
+          "filter_receipt_id": "filter:prior-art-golden",
+          "metadata": {},
+          "schema_version": "patent.retrieval.contracts.v1",
+          "tenant_id": "tenant-public"
+        },
+        "hits": [
+          {
+            "document_id": "doc:patent-encode",
+            "family": "fusion",
+            "metadata": {},
+            "passage_excerpt": null,
+            "rank": 1,
+            "score": 9.0,
+            "source_links": [
+              {
+                "artifact_id": "artifact:patent-11222333",
+                "authority_tier": "official-base",
+                "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+                "source_receipt_id": null,
+                "span": {
+                  "end": 60,
+                  "start": 0,
+                  "unit": "char"
+                }
+              }
+            ]
+          }
+        ],
+        "log_id": "log:plan:prior-art:golden-us11222333:q-family-expand",
+        "metadata": {},
+        "query_id": "q-family-expand",
+        "query_text": "doc:patent-encode",
+        "rank_cutoff": 5,
+        "related_limitation_ids": [],
+        "search_date_utc": "2024-06-01T12:00:00Z"
+      }
+    ],
+    "report_id": "report:prior-art:golden-us11222333",
+    "schema_version": "patent.prior_art.v1"
+  },
+  "schema_version": "patent.prior_art.v1"
+}
