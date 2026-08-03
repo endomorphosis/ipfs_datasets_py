@@ -10,9 +10,13 @@ from abc import ABC, abstractmethod
 import logging
 import io
 import importlib
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from cachetools import cached
 
+try:
+    import anyio
+except ImportError:  # pragma: no cover - optional for sync-only use
+    anyio = None
 
 from PIL import Image
 
@@ -1419,13 +1423,19 @@ class MultiEngineOCR:
         - Thread-safe for concurrent processing operations
     """
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         """Ensure only one instance of MultiEngineOCR is created (singleton pattern)."""
-        if not hasattr(cls, 'instance'):
+        if not hasattr(cls, 'instance') or cls.instance is None:
             cls.instance = super(MultiEngineOCR, cls).__new__(cls)
+            cls.instance._multi_ocr_initialized = False
         return cls.instance
-    
-    def __init__(self, logger=logger, mock_dict=None) -> None:
+
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Drop the singleton so the next constructor rebuilds engines (tests)."""
+        cls.instance = None
+
+    def __init__(self, logger=logger, mock_dict=None, force_reinit: bool = False) -> None:
         """Initialize the OCR engine manager with all available OCR engines.
 
         Attempts to initialize and register multiple OCR engines including SuryaOCR,
@@ -1436,7 +1446,7 @@ class MultiEngineOCR:
         1. Creates an empty engines dictionary
         2. Iterates through predefined engine classes
         3. Instantiates each engine and checks availability
-        4. Registers available engines by name
+        4. Registers available engines by name (unavailable engines are recorded, not attempted)
         5. Logs initialization status for each engine
 
         Raises:
@@ -1452,7 +1462,11 @@ class MultiEngineOCR:
             Individual engine initialization failures are caught and logged as errors,
             but do not prevent the manager from initializing with remaining engines.
         """
-        self.engines = {}
+        if getattr(self, "_multi_ocr_initialized", False) and not force_reinit and mock_dict is None:
+            return
+
+        self.engines: Dict[str, OCREngine] = {}
+        self.unavailable_engines: Dict[str, str] = {}
         self.logger = logger
 
         # Initialize engines
@@ -1462,114 +1476,46 @@ class MultiEngineOCR:
             try:
                 engine = engine_class(logger=logger, mock_dict=mock_dict)
                 if engine.is_available():
-                    self.logger.info(f"OCR engine '{engine.name}' is available")
+                    self.logger.info("OCR engine '%s' is available", engine.name)
+                    self.engines[engine.name] = engine
                 else:
-                    self.logger.warning(f"OCR engine '{engine.name}' is not available")
-                self.engines[engine.name] = engine
+                    self.logger.warning("OCR engine '%s' is not available", engine.name)
+                    self.unavailable_engines[engine.name] = "not_available"
             except Exception as e:
-                self.logger.error(f"Failed to initialize {engine_class.__name__}: {e}")
+                name = getattr(engine_class, "__name__", "unknown")
+                self.logger.error("Failed to initialize %s: %s", name, e)
+                self.unavailable_engines[name.lower().replace("engine", "").replace("ocr", "") or name] = str(e)
         if not self.engines:
             self.logger.warning("No OCR engines available!")
-    
-    def extract_with_ocr(self, 
-                            image_data: bytes, 
-                            strategy: str = 'quality_first',
-                            confidence_threshold: float = 0.8) -> Dict[str, Any]:
+        self._multi_ocr_initialized = True
+
+    def extract_with_ocr(
+        self,
+        image_data: bytes,
+        strategy: str = "quality_first",
+        confidence_threshold: float = 0.8,
+    ) -> Dict[str, Any]:
         """
-        Extract text from image data using multiple OCR engines with intelligent retry strategies.
+        Extract text from image data using only available OCR engines.
 
-        This method orchestrates text extraction across multiple OCR engines using configurable
-        processing strategies and quality thresholds. It automatically retries with different
-        engines until the confidence threshold is met or all available engines are exhausted,
-        ensuring optimal text extraction quality and reliability.
-
-        The method implements intelligent engine selection based on document characteristics,
-        confidence scoring, and processing strategy preferences. It provides comprehensive
-        error handling and falls back gracefully when engines fail, returning the best
-        available result even if no engine meets the specified confidence threshold.
+        Unavailable engines are never attempted. When no engines are available the
+        result is explicit: status=ocr_unavailable, confidence=None (not a high
+        default), engine='none'.
 
         Args:
-            image_data (bytes): Raw image data in any PIL-supported format (PNG, JPEG, TIFF, etc.).
-            Must be non-empty bytes containing valid image content. Higher resolution images
-            typically provide better OCR accuracy across all engines.
-            
-            strategy (str, optional): Processing strategy determining engine priority order.
-            Defaults to 'quality_first'. Available strategies:
-            - 'quality_first': Prioritizes accuracy (Surya → Tesseract → EasyOCR → TrOCR)
-            - 'speed_first': Prioritizes processing speed (Tesseract → Surya → EasyOCR → TrOCR)  
-            - 'accuracy_first': Prioritizes maximum accuracy (Surya → EasyOCR → TrOCR → Tesseract)
-            
-            confidence_threshold (float, optional): Minimum confidence score (0.0-1.0) required
-            to accept OCR results without trying additional engines. Defaults to 0.8.
-            Higher thresholds improve quality but may require more processing attempts.
+            image_data: Raw image bytes (PNG/JPEG/TIFF/etc.).
+            strategy: 'quality_first' | 'speed_first' | 'accuracy_first'.
+            confidence_threshold: Minimum confidence (0.0-1.0) to stop early.
 
         Returns:
-            Dict[str, Any]: Comprehensive extraction results containing:
-            - 'text' (str): Extracted text content with formatting preserved
-            - 'confidence' (float): Confidence score (0.0-1.0) from the successful engine
-            - 'engine' (str): Name of the OCR engine that produced the result
-            - 'error' (str, optional): Error message if all engines failed
-            - Additional engine-specific metadata may include:
-              - 'text_blocks': Spatial text information with bounding boxes
-              - 'word_boxes': Word-level confidence and position data
-
-        Raises:
-            RuntimeError: If no OCR engines are available for processing
-            TypeError: If image_data is not bytes or confidence_threshold is not float
-            ValueError: If image_data is empty, confidence_threshold is out of range (0.0-1.0),
-            or strategy is not one of the supported values
-            MemoryError: If image is too large for available system memory
-            OSError: If image data is corrupted or in an unsupported format
-
-        Examples:
-            >>> multi_ocr = MultiEngineOCR()
-            >>> 
-            >>> # High-quality extraction with quality priority
-            >>> result = multi_ocr.extract_with_ocr(
-            ...     image_data=document_bytes,
-            ...     strategy='quality_first',
-            ...     confidence_threshold=0.9
-            ... )
-            >>> 
-            >>> # Fast processing for real-time applications
-            >>> result = multi_ocr.extract_with_ocr(
-            ...     image_data=document_bytes,
-            ...     strategy='speed_first',
-            ...     confidence_threshold=0.7
-            ... )
-            >>> 
-            >>> # Maximum accuracy for critical documents
-            >>> result = multi_ocr.extract_with_ocr(
-            ...     image_data=document_bytes,
-            ...     strategy='accuracy_first',
-            ...     confidence_threshold=0.95
-            ... )
-
-        Processing Flow:
-            1. Validate input parameters and engine availability
-            2. Select engine priority order based on processing strategy
-            3. Filter to only available engines in the current environment
-            4. Iterate through engines in priority order:
-               - Attempt text extraction with current engine
-               - Evaluate confidence score against threshold
-               - Return result if threshold is met
-               - Continue to next engine if threshold not met or engine fails
-            5. Return best available result if no engine meets threshold
-            6. Return error result if all engines fail
-
-        Notes:
-            - Processing stops as soon as confidence threshold is achieved
-            - All engine failures are logged but don't prevent trying other engines
-            - Results are ranked by confidence score to return the best available outcome
-            - Engine selection can be influenced by document type classification
-            - Memory usage scales with number of engines and image size
-            - Thread-safe for concurrent processing operations
+            Dict with text, confidence (float|None), engine, status, available_engines,
+            engines_attempted, and optional error / word_boxes.
         """
-        if not self.engines:
-            raise RuntimeError("No OCR engines available")
-
-        if not isinstance(confidence_threshold, float):
+        if not isinstance(confidence_threshold, (int, float)) or isinstance(
+            confidence_threshold, bool
+        ):
             raise TypeError("confidence_threshold must be a float")
+        confidence_threshold = float(confidence_threshold)
 
         if not isinstance(image_data, bytes):
             raise TypeError("image_data must be bytes")
@@ -1580,53 +1526,145 @@ class MultiEngineOCR:
         if confidence_threshold < 0.0 or confidence_threshold > 1.0:
             raise ValueError("confidence_threshold must be between 0.0 and 1.0")
 
-        # Define engine order based on strategy
         match strategy:
-            case 'quality_first':
-                engines = ['surya', 'tesseract', 'easyocr', 'trocr']
-            case 'speed_first':
-                engines = ['tesseract', 'surya', 'easyocr', 'trocr']
-            case 'accuracy_first':
-                engines = ['surya', 'easyocr', 'trocr', 'tesseract']
+            case "quality_first":
+                engines = ["surya", "tesseract", "easyocr", "trocr"]
+            case "speed_first":
+                engines = ["tesseract", "surya", "easyocr", "trocr"]
+            case "accuracy_first":
+                engines = ["surya", "easyocr", "trocr", "tesseract"]
             case _:
                 raise ValueError(f"Unknown strategy: {strategy}")
 
-        # Filter to only available engines
-        available_engines = [name for name in engines if name in self.engines]
-        
+        # Only engines that are registered AND report available
+        available_engines = [
+            name
+            for name in engines
+            if name in self.engines and self.engines[name].is_available()
+        ]
+        # Also include any available engines not in the strategy list (custom)
+        for name, engine in self.engines.items():
+            if name not in available_engines and engine.is_available():
+                available_engines.append(name)
+
+        if not available_engines:
+            self.logger.warning("OCR unavailable: no engines ready for extraction")
+            return {
+                "text": "",
+                "confidence": None,  # never invent high confidence
+                "engine": "none",
+                "status": "ocr_unavailable",
+                "error": "No OCR engines available",
+                "available_engines": [],
+                "engines_attempted": [],
+                "unavailable_engines": dict(self.unavailable_engines),
+                "word_boxes": [],
+            }
+
         results = []
-        
+        engines_attempted: List[str] = []
+
         for engine_name in available_engines:
+            engine = self.engines[engine_name]
+            if not engine.is_available():
+                continue
             try:
-                self.logger.info(f"Trying OCR with {engine_name}")
-                
-                result = self.engines[engine_name].extract_text(image_data)
-                result['engine'] = engine_name
+                self.logger.info("Trying OCR with %s", engine_name)
+                engines_attempted.append(engine_name)
+
+                result = engine.extract_text(image_data)
+                if not isinstance(result, dict):
+                    raise TypeError(f"OCR engine {engine_name} returned non-dict result")
+                result = dict(result)
+                result["engine"] = engine_name
+                result["available_engines"] = list(available_engines)
+                result["engines_attempted"] = list(engines_attempted)
+
+                conf = result.get("confidence")
+                if conf is not None:
+                    try:
+                        conf_f = float(conf)
+                        if conf_f > 1.0:
+                            conf_f = conf_f / 100.0
+                        result["confidence"] = conf_f
+                    except (TypeError, ValueError):
+                        result["confidence"] = None
+
+                if result.get("confidence") is None:
+                    result["status"] = "low_confidence"
+                elif result["confidence"] < confidence_threshold:
+                    result["status"] = "low_confidence"
+                else:
+                    result["status"] = "ok"
+
                 results.append(result)
 
-                # Check if result meets confidence threshold
-                if result.get('confidence', 0) >= confidence_threshold:
-                    self.logger.info(f"OCR successful with {engine_name}, confidence: {result['confidence']:.2f}")
+                if (
+                    result.get("confidence") is not None
+                    and result["confidence"] >= confidence_threshold
+                ):
+                    self.logger.info(
+                        "OCR successful with %s, confidence: %.2f",
+                        engine_name,
+                        result["confidence"],
+                    )
                     return result
-                
+
             except Exception as e:
-                self.logger.warning(f"OCR engine {engine_name} failed: {e}")
+                self.logger.warning("OCR engine %s failed: %s", engine_name, e)
                 continue
 
-        # If no engine met the threshold, return the best result
         if results:
-            best_result = max(results, key=lambda x: x.get('confidence', 0))
-            self.logger.info(f"Returning best result from {best_result['engine']} with confidence {best_result['confidence']:.2f}")
+            def _conf_key(item: Dict[str, Any]) -> float:
+                c = item.get("confidence")
+                return float(c) if c is not None else -1.0
+
+            best_result = max(results, key=_conf_key)
+            best_result = dict(best_result)
+            best_result["available_engines"] = list(available_engines)
+            best_result["engines_attempted"] = list(engines_attempted)
+            if best_result.get("confidence") is None:
+                best_result["status"] = "low_confidence"
+            elif best_result["confidence"] < confidence_threshold:
+                best_result["status"] = "low_confidence"
+            self.logger.info(
+                "Returning best result from %s with confidence %s",
+                best_result.get("engine"),
+                best_result.get("confidence"),
+            )
             return best_result
-        
-        # If all engines failed, return empty result with error
+
         self.logger.error("All OCR engines failed")
         return {
-            'text': '',
-            'confidence': 0.0,
-            'engine': 'none',
-            'error': 'All OCR engines failed'
+            "text": "",
+            "confidence": None,  # failed is not high confidence
+            "engine": "none",
+            "status": "ocr_failed",
+            "error": "All OCR engines failed",
+            "available_engines": list(available_engines),
+            "engines_attempted": list(engines_attempted),
+            "word_boxes": [],
         }
+
+    async def extract_with_ocr_async(
+        self,
+        image_data: bytes,
+        strategy: str = "quality_first",
+        confidence_threshold: float = 0.8,
+    ) -> Dict[str, Any]:
+        """Async wrapper around extract_with_ocr (runs in a worker thread)."""
+        if anyio is None:
+            return self.extract_with_ocr(
+                image_data,
+                strategy=strategy,
+                confidence_threshold=confidence_threshold,
+            )
+        return await anyio.to_thread.run_sync(
+            self.extract_with_ocr,
+            image_data,
+            strategy,
+            confidence_threshold,
+        )
 
     def get_available_engines(self) -> List[str]:
         """
