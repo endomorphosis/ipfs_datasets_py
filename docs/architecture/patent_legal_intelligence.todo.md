@@ -1325,7 +1325,7 @@ Program invariants:
 
 ## PATLAW-101 Build deterministic, privacy-reviewed JusticeDAO artifacts
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
