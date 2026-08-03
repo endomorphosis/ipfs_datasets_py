@@ -1,0 +1,44 @@
+{
+  "case_id": "gold-docx-pdf-difference",
+  "expected_assessment_status": "unknown",
+  "expected_human_review": "required",
+  "goal_id": "PATLAW-G080",
+  "notes": "Pagination/equation disagreement must yield unknown plus human review, not pass.",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [],
+    "dates": [],
+    "provenance": [
+      {
+        "artifact_id": "art:orig-docx-1",
+        "classification": "public_user",
+        "item_id": "pair:docx-pdf-1",
+        "item_kind": "artifact_pair",
+        "origin": "native",
+        "page_index": 1,
+        "source_receipt_id": "receipt:synthetic:docx-pdf-1",
+        "span_id": "span:docx-eq-1"
+      },
+      {
+        "artifact_id": "art:uspto-pdf-1",
+        "classification": "public_user",
+        "item_id": "pair:docx-pdf-1",
+        "item_kind": "artifact_pair",
+        "origin": "native",
+        "page_index": 2,
+        "source_receipt_id": "receipt:synthetic:docx-pdf-1",
+        "span_id": "span:pdf-eq-1"
+      }
+    ],
+    "requirements": []
+  }
+}

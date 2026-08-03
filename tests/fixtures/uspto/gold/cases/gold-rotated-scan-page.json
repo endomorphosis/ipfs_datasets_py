@@ -1,0 +1,55 @@
+{
+  "case_id": "gold-rotated-scan-page",
+  "categories": [
+    "requirements",
+    "rotated",
+    "scanned"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [
+      {
+        "artifact_id": "art:rotated-scan-1",
+        "classification": "public_user",
+        "content_sha256": "0dcd59c344e395e9e1fa7173bd69312a062606ece8768d57ce65f627edd52a85",
+        "role": "office_action_page"
+      }
+    ],
+    "extraction_profile": "scanned_ocr_rotated",
+    "media_type": "application/pdf",
+    "page_count": 1,
+    "pages": [
+      {
+        "canary": "SYNTHETIC-ROTATED-SCAN-CLAIM-AMEND",
+        "kind": "image_only",
+        "page_index": 0,
+        "rotation_degrees": 90
+      }
+    ],
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/rotated-scan",
+        "receipt_id": "receipt:synthetic:rotated-1",
+        "request_digest": "bc26ebd14b4f63ef57673582adf0679d5fc3eb4a5151eaacaaa99885905205cb",
+        "response_digest": "0dcd59c344e395e9e1fa7173bd69312a062606ece8768d57ce65f627edd52a85",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:05:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Fully synthetic.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "single page scanned at 90 degrees"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Rotated scanned page with claim amendment instruction"
+}

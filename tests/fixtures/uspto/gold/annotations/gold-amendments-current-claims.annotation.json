@@ -1,0 +1,59 @@
+{
+  "case_id": "gold-amendments-current-claims",
+  "expected_current_claims": {
+    "1": "A device comprising a temperature sensor.",
+    "2": "The device of claim 1 further comprising a filter."
+  },
+  "goal_id": "PATLAW-G080",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [
+      {
+        "authority_tier": "official-base",
+        "citation_id": "cite:37cfr1.121-amend",
+        "kind": "regulation",
+        "source_span_id": "span:amend-claim-1",
+        "text": "37 CFR 1.121"
+      }
+    ],
+    "dates": [],
+    "provenance": [
+      {
+        "artifact_id": "art:amendment-1",
+        "classification": "public_user",
+        "item_id": "req:current-claim-set-binding",
+        "item_kind": "requirement",
+        "origin": "native",
+        "page_index": 0,
+        "source_receipt_id": "receipt:synthetic:amend-1",
+        "span_id": "span:amend-claim-1"
+      }
+    ],
+    "requirements": [
+      {
+        "affected_claims": [
+          "1"
+        ],
+        "classification": "public_user",
+        "instruction_text_digest": "b32d5b92237d4843a71f5fb4526749ce6e930b6c931b63dfa0c5ea13c9152685",
+        "legal_citations": [
+          "37 CFR 1.121"
+        ],
+        "proposed_date_rule": null,
+        "requirement_id": "req:current-claim-set-binding",
+        "requirement_type": "current_claim_reconstruction",
+        "review_state": "complete",
+        "source_span_id": "span:amend-claim-1"
+      }
+    ]
+  }
+}

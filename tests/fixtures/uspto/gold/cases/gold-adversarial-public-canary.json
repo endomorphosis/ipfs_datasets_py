@@ -1,0 +1,59 @@
+{
+  "case_id": "gold-adversarial-public-canary",
+  "categories": [
+    "adversarial",
+    "provenance"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [
+      {
+        "artifact_id": "art:adversarial-canary-1",
+        "classification": "public_user",
+        "content_sha256": "05d49cef0b147fb273103c13df53ce08fc667afd57032b0f77ac0c03cab5d8b4",
+        "role": "correspondence"
+      }
+    ],
+    "extraction_profile": "native_text",
+    "forbidden_in_corpus": [
+      "password",
+      "mfa_secret",
+      "session_cookie",
+      "api_key",
+      "payment_card_data"
+    ],
+    "media_type": "application/pdf",
+    "pages": [
+      {
+        "canary": "SYNTHETIC-PUBLIC-CANARY-PATLAW-070-DO-NOT-TREAT-AS-PRIVATE",
+        "kind": "native_text",
+        "page_index": 0
+      }
+    ],
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/adversarial-public-canary",
+        "receipt_id": "receipt:synthetic:adv-1",
+        "request_digest": "d04a1ede2de7e12548da3966035b79e396a2fb2fd83a658f60eb8b9575df848a",
+        "response_digest": "05d49cef0b147fb273103c13df53ce08fc667afd57032b0f77ac0c03cab5d8b4",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:55:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Synthetic canary string; not real confidential matter.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "public_user canary used by privacy tests; gold corpus itself remains public"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Adversarial public canary for sink non-disclosure regression"
+}
