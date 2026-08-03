@@ -925,7 +925,7 @@ Program invariants:
 
 ## PATLAW-062 Add checkpointed polling, change detection, and alerts
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
