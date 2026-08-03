@@ -207,9 +207,17 @@ run_shard() {
     "${command[@]}"
     return
   fi
-  nohup "${command[@]}" >"$log_dir/supervisor.log" 2>&1 &
+  setsid "${command[@]}" </dev/null >"$log_dir/supervisor.log" 2>&1 &
   local launched_pid=$!
   echo "$launched_pid" >"$pid_file"
+  # A printed PID is not launch evidence.  Give the detached process enough
+  # time to import the supervisor and fail closed if it did not survive.
+  sleep 1
+  if ! kill -0 "$launched_pid" 2>/dev/null; then
+    echo "Shard $shard supervisor exited during startup; tail follows:" >&2
+    tail -n 40 "$log_dir/supervisor.log" >&2 || true
+    return 1
+  fi
   echo "[patlaw] shard=$shard pid=$launched_pid log=$log_dir/supervisor.log"
 }
 
