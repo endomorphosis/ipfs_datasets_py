@@ -1784,7 +1784,7 @@ Program invariants:
 
 ## PATLAW-133 Parse submission-package semantics v2
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
