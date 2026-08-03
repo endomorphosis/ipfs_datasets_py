@@ -1659,7 +1659,7 @@ Program invariants:
 
 ## PATLAW-128 Acquire live eCFR and annual CFR authority snapshots
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
