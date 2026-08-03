@@ -224,7 +224,7 @@ Program invariants:
 
 ## PATLAW-012 Implement current and historical Title 37 CFR acquisition
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
