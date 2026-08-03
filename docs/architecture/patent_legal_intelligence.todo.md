@@ -500,7 +500,7 @@ Program invariants:
 
 ## PATLAW-025 Reconcile originals, converted files, receipts, status, and versions
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
