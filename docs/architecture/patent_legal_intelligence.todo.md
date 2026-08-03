@@ -299,7 +299,7 @@ Program invariants:
 
 ## PATLAW-015 Ingest versioned MPEP, forms, fees, and later guidance
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
