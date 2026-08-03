@@ -159,11 +159,12 @@ docs/
 |-- tutorials/
 |-- examples/
 |-- maintenance/
-|   |-- INFORMATION_ARCHITECTURE.md  # this file
-|   |-- CURRENT_STATE_BASELINE.md
-|   |-- DRIFT_AND_CLAIM_MATRIX.md    # target
+|   |-- INFORMATION_ARCHITECTURE.md  # this file (canonical policy)
+|   |-- CURRENT_STATE_BASELINE.md    # evidence (IPFSDOC-001)
+|   |-- DRIFT_AND_CLAIM_MATRIX.md    # evidence / claim audit
 |   |-- COVERAGE_MATRIX.md           # target
 |   |-- LEGACY_DISPOSITION.md        # target
+|   |-- PACKAGE_LOCAL_DOCUMENTATION_MAP.md  # target (authority map)
 |   `-- RELEASE_EVIDENCE.md          # target
 |-- archive/                         # historical only
 `-- implementation/plans/            # plan state; protected program inputs
@@ -171,6 +172,8 @@ docs/
 
 Existing equivalent pages are reviewed before a new canonical page is created.
 When a maintained page already owns the concern, refresh or route to it.
+Labels `target` mark deliverables owned by later tasks; do not invent competing
+homes for the same concern while those tasks land.
 
 ### 3.2 File naming conventions
 
@@ -604,3 +607,4 @@ imports against the current tree and update **Last verified**.
 | Date | Change |
 | --- | --- |
 | 2026-08-03 | Initial `DocumentationPageContract@1` for IPFSDOC-003 |
+| 2026-08-03 | Align maintenance tree labels with live baseline/drift artifacts |

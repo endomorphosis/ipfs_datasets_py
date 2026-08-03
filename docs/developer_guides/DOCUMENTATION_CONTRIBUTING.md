@@ -209,9 +209,9 @@ Also:
 6. Never delete an accepted ADR; use `superseded` / `deprecated` and link the
    successor.
 
-Package-local ADRs (e.g. under `ipfs_datasets_py/mcp_server/docs/adr/`) remain
-valid until an authority-map task promotes or pointers them. Do not duplicate
-full ADR bodies in two trees.
+Package-local ADRs under `ipfs_datasets_py/mcp_server/docs/adr/` (ADR-001 …
+ADR-006 as of 2026-08-03) remain valid until an authority-map task promotes or
+points them. Do not duplicate full ADR bodies in two trees.
 
 ---
 
@@ -323,3 +323,4 @@ test -s docs/architecture/decisions/ADR_TEMPLATE.md
 | Date | Change |
 | --- | --- |
 | 2026-08-03 | Initial contributor workflow for IPFSDOC-003 |
+| 2026-08-03 | Cross-check against IA lifecycle and live package-local ADR paths |

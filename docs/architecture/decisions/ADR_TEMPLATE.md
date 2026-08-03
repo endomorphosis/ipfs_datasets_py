@@ -52,13 +52,21 @@ promotes or points them. Do not copy full ADR bodies into two trees. New
 
 ### Relationship to prior MCP ADRs
 
-Useful precedents for tone and structure:
+Useful precedents for tone and structure (package-local; not the global index):
 
-- `ipfs_datasets_py/mcp_server/docs/adr/ADR-001-thin-wrapper-pattern.md`
-- sibling ADR-002 … ADR-006 in the same directory
+| Local id | Path |
+| --- | --- |
+| ADR-001 | `ipfs_datasets_py/mcp_server/docs/adr/ADR-001-thin-wrapper-pattern.md` |
+| ADR-002 | `ipfs_datasets_py/mcp_server/docs/adr/ADR-002-dual-runtime.md` |
+| ADR-003 | `ipfs_datasets_py/mcp_server/docs/adr/ADR-003-hierarchical-tool-system.md` |
+| ADR-004 | `ipfs_datasets_py/mcp_server/docs/adr/ADR-004-engine-extraction-pattern.md` |
+| ADR-005 | `ipfs_datasets_py/mcp_server/docs/adr/ADR-005-v6-coverage-hardening.md` |
+| ADR-006 | `ipfs_datasets_py/mcp_server/docs/adr/ADR-006-mcp++-alignment.md` |
 
-Those files predate this global template; new work should follow the sections
-below even when the domain is MCP-related.
+Those files predate this global template; new **cross-cutting** product work
+should follow the sections below even when the domain is MCP-related. Prefer
+pointing from the architecture hub rather than duplicating bodies under
+`docs/architecture/decisions/`.
 
 ---
 
