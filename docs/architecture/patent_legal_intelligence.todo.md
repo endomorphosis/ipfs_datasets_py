@@ -1609,7 +1609,7 @@ Program invariants:
 
 ## PATLAW-126 Execute Legal IR compilation and proofs inside the privacy boundary
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
