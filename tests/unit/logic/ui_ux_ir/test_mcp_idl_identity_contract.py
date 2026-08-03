@@ -373,38 +373,31 @@ def test_reject_mismatched_preimage(vectors: dict[str, Any]) -> None:
     assert _verified_interface_cid(descriptor) != claimed
 
 
-def test_reject_stale_mutable_cache_behavior() -> None:
-    """Record and reject datasets InterfaceDescriptor mutable-cache authority.
+def test_reject_stale_mutable_cache_behavior(vectors: dict[str, Any]) -> None:
+    """Reject stale mutable-cache identity; require preimage recomputation.
 
-    This test intentionally exercises the existing incompatible surface and
-    asserts that stale cache results must not be treated as verified identity.
-    It does not rewrite the production class.
+    Profile rule: after an identity-affecting mutation, only the recomputed
+    CIDv1/raw/sha2-256/base32 of the new immutable snapshot is verified.
+    A pre-mutation CID (or any live value that no longer matches the current
+    preimage) is non-authoritative.
+
+    Inventory records historical mutable-cache surfaces without requiring the
+    production bug to remain; a conforming future fix must not fail this test.
     """
 
-    from ipfs_datasets_py.mcp_server.interface_descriptor import (
-        InterfaceDescriptor,
-        MethodSignature,
-    )
-
-    descriptor = InterfaceDescriptor(
-        name="uir.demo.catalog.v1",
-        namespace="uir.demo",
-        version="1.0.0",
-        methods=[MethodSignature(name="list_items")],
-        requires=["mcp++/ucan"],
-    )
-    first = str(descriptor.interface_cid)
-    # Mutate an identity-affecting field after the cache is populated.
-    descriptor.name = "uir.demo.catalog.v2"
-    second = str(descriptor.interface_cid)
-    assert first == second, "expected stale mutable cache (incompatible inventory)"
-
-    # Authoritative recomputation from an immutable snapshot must differ.
     snap_before = {
         "name": "uir.demo.catalog.v1",
         "namespace": "uir.demo",
         "version": "1.0.0",
-        "methods": [{"name": "list_items", "input_schema": {}, "output_schema": {}, "errors": [], "streaming": False}],
+        "methods": [
+            {
+                "name": "list_items",
+                "input_schema": {},
+                "output_schema": {},
+                "errors": [],
+                "streaming": False,
+            }
+        ],
         "errors": [],
         "requires": ["mcp++/ucan"],
         "compatibility": {"compatible_with": [], "supersedes": []},
@@ -414,49 +407,100 @@ def test_reject_stale_mutable_cache_behavior() -> None:
     }
     snap_after = copy.deepcopy(snap_before)
     snap_after["name"] = "uir.demo.catalog.v2"
-    assert _verified_interface_cid(snap_before) != _verified_interface_cid(snap_after)
-    # Cached value is non-authoritative relative to the mutated logical state.
-    assert second == first
-    assert not (first == _verified_interface_cid(snap_after))
+
+    cid_before = _verified_interface_cid(snap_before)
+    cid_after = _verified_interface_cid(snap_after)
+    assert cid_before != cid_after
+    assert _is_verified_interface_cid_string(cid_before)
+    assert _is_verified_interface_cid_string(cid_after)
+    # Pre-mutation CID must not verify against the mutated descriptor.
+    assert not _verify_preimage(cid_before, snap_after)
+    assert _verify_preimage(cid_after, snap_after)
+
+    # Live production probe is optional evidence only. Whatever value a mutable
+    # object returns, it is verified for the new state only when it matches the
+    # profile recomputation — never when it remains stale relative to snap_after.
+    try:
+        from ipfs_datasets_py.mcp_server.interface_descriptor import (
+            InterfaceDescriptor,
+            MethodSignature,
+        )
+    except Exception:
+        live_cid = None
+    else:
+        descriptor = InterfaceDescriptor(
+            name="uir.demo.catalog.v1",
+            namespace="uir.demo",
+            version="1.0.0",
+            methods=[MethodSignature(name="list_items")],
+            requires=["mcp++/ucan"],
+        )
+        _ = str(descriptor.interface_cid)  # populate any first-access cache
+        descriptor.name = "uir.demo.catalog.v2"
+        live_cid = str(descriptor.interface_cid)
+
+    if live_cid is not None and live_cid != cid_after:
+        # Stale or wrong-codec live value is rejected for the mutated state.
+        assert not _verify_preimage(live_cid, snap_after)
+
+    inv = next(
+        item
+        for item in vectors["incompatible_inventory"]
+        if item["id"] == "inv.datasets_mutable_cache"
+    )
+    assert inv["rewrite_in_uir_002"] is False
+    assert inv["disposition"] == "reject_as_authority"
+    assert "stale" in inv["issue"]
 
 
 def test_reject_datasets_dagpb_as_interface_authority(vectors: dict[str, Any]) -> None:
-    from ipfs_datasets_py.mcp_server.interface_descriptor import compute_cid
+    """Reject mislabeled DAG-PB as interface authority without locking production.
+
+    Independent CIDv1/dag-pb twins are never verified under this profile. A live
+    ``compute_cid`` result is accepted only if it already matches the verified
+    raw profile CID; any other form is rejected. Do not require production to
+    keep emitting dag-pb.
+    """
 
     preimage = _canonical_bytes(vectors["golden"]["descriptor"])
-    datasets_cid = compute_cid(preimage)
-    assert datasets_cid.startswith("bafybei")
-    assert datasets_cid != vectors["golden"]["interface_cid"]
-    assert not _verify_preimage(datasets_cid, vectors["golden"]["descriptor"])
+    dagpb = _dag_pb_cid(preimage)
+    assert dagpb != vectors["golden"]["interface_cid"]
+    assert not _verify_preimage(dagpb, vectors["golden"]["descriptor"])
+    assert dagpb.startswith("bafybei")
 
+    try:
+        from ipfs_datasets_py.mcp_server.interface_descriptor import compute_cid
+    except Exception:
+        live = None
+    else:
+        live = compute_cid(preimage)
 
-def test_reject_datasets_resource_cost_hints_exclusion() -> None:
-    """Existing datasets canonical_bytes omits resource_cost_hints — incompatible."""
+    if live is not None and live != vectors["golden"]["interface_cid"]:
+        assert not _verify_preimage(live, vectors["golden"]["descriptor"])
 
-    from ipfs_datasets_py.mcp_server.interface_descriptor import (
-        InterfaceDescriptor,
-        MethodSignature,
+    inv = next(
+        item
+        for item in vectors["incompatible_inventory"]
+        if item["id"] == "inv.datasets_dagpb"
     )
+    assert inv["rewrite_in_uir_002"] is False
+    assert inv["disposition"] == "reject_as_interface_authority"
 
-    a = InterfaceDescriptor(
-        name="hints.demo",
-        namespace="demo",
-        version="1.0.0",
-        methods=[MethodSignature(name="m")],
-        resource_cost_hints={"tokens_per_call": 1},
-    )
-    b = InterfaceDescriptor(
-        name="hints.demo",
-        namespace="demo",
-        version="1.0.0",
-        methods=[MethodSignature(name="m")],
-        resource_cost_hints={"tokens_per_call": 999},
-    )
-    # Incompatible surface: identity does not bind hints.
-    assert a.canonical_bytes() == b.canonical_bytes()
-    assert str(a.interface_cid) == str(b.interface_cid)
 
-    # Profile requires binding when hints are claimed.
+def test_reject_resource_cost_hints_omission_from_verified_identity(
+    vectors: dict[str, Any],
+) -> None:
+    """Bind resource_cost_hints in verified identity; reject omission as authority.
+
+    Profile rule: when ``resource_cost_hints`` are claimed, they are identity-
+    affecting. Distinct hint values must yield distinct verified CIDs; a preimage
+    that omits claimed hints is not interchangeable with one that binds them.
+
+    Inventory records historical datasets exclusion of hints from
+    ``canonical_bytes`` without requiring that omission to remain; a conforming
+    future fix must not fail this test.
+    """
+
     snap_a = {
         "name": "hints.demo",
         "namespace": "demo",
@@ -471,7 +515,67 @@ def test_reject_datasets_resource_cost_hints_exclusion() -> None:
         "methods": [{"name": "m"}],
         "resource_cost_hints": {"tokens_per_call": 999},
     }
-    assert _verified_interface_cid(snap_a) != _verified_interface_cid(snap_b)
+    snap_omitted = {
+        "name": "hints.demo",
+        "namespace": "demo",
+        "version": "1.0.0",
+        "methods": [{"name": "m"}],
+    }
+
+    cid_a = _verified_interface_cid(snap_a)
+    cid_b = _verified_interface_cid(snap_b)
+    cid_omitted = _verified_interface_cid(snap_omitted)
+    assert cid_a != cid_b
+    assert cid_a != cid_omitted
+    assert cid_b != cid_omitted
+    assert _verify_preimage(cid_a, snap_a)
+    assert not _verify_preimage(cid_a, snap_b)
+    assert not _verify_preimage(cid_omitted, snap_a)
+    assert not _verify_preimage(cid_omitted, snap_b)
+
+    # Live production probe is optional evidence only. If a surface still equates
+    # distinct-hint descriptors, that equated form is non-authoritative under the
+    # profile — but equality of live bytes is not required to hold forever.
+    live_cid: str | None = None
+    try:
+        from ipfs_datasets_py.mcp_server.interface_descriptor import (
+            InterfaceDescriptor,
+            MethodSignature,
+        )
+
+        live_a = InterfaceDescriptor(
+            name="hints.demo",
+            namespace="demo",
+            version="1.0.0",
+            methods=[MethodSignature(name="m")],
+            resource_cost_hints={"tokens_per_call": 1},
+        )
+        live_b = InterfaceDescriptor(
+            name="hints.demo",
+            namespace="demo",
+            version="1.0.0",
+            methods=[MethodSignature(name="m")],
+            resource_cost_hints={"tokens_per_call": 999},
+        )
+        if live_a.canonical_bytes() == live_b.canonical_bytes():
+            live_cid = str(live_a.interface_cid)
+    except Exception:
+        live_cid = None
+
+    if live_cid is not None:
+        # An equated live value cannot verify both distinct bound snapshots.
+        assert not (
+            _verify_preimage(live_cid, snap_a) and _verify_preimage(live_cid, snap_b)
+        )
+
+    inv = next(
+        item
+        for item in vectors["incompatible_inventory"]
+        if item["id"] == "inv.datasets_hints_excluded"
+    )
+    assert inv["rewrite_in_uir_002"] is False
+    assert inv["disposition"] == "incompatible_with_profile_section_4"
+    assert "resource_cost_hints" in inv["observed_form"]
 
 
 # ---------------------------------------------------------------------------
@@ -491,21 +595,29 @@ def test_incompatible_inventory_is_complete_and_nonrewriting(vectors: dict[str, 
     }.issubset(ids)
     for item in inventory:
         assert item["rewrite_in_uir_002"] is False
+        assert item.get("lock_in_defect") is False
         assert "disposition" in item
         assert item["path"]
+    policy = vectors["inventory_policy"]
+    assert policy["lock_in_defects"] is False
+    assert policy["conforming_future_fix_allowed"] is True
 
 
 def test_accelerator_placeholder_is_recorded_not_equated(vectors: dict[str, Any]) -> None:
+    """Placeholder form is not verified; a migrated real CID is allowed."""
+
     descriptor = vectors["golden"]["descriptor"]
-    placeholder = compute_interface_cid(descriptor)
-    assert PLACEHOLDER_RE.match(placeholder)
-    assert placeholder == (
-        "cidv1-sha256-" + vectors["golden"]["sha256_hex"]
-    )
-    assert placeholder != vectors["golden"]["interface_cid"]
-    assert not _is_verified_interface_cid_string(placeholder)
-    # Digest agreement is acknowledged; wire authority is not.
-    assert vectors["golden"]["sha256_hex"] in placeholder
+    value = compute_interface_cid(descriptor)
+    if PLACEHOLDER_RE.match(value):
+        assert value == ("cidv1-sha256-" + vectors["golden"]["sha256_hex"])
+        assert value != vectors["golden"]["interface_cid"]
+        assert not _is_verified_interface_cid_string(value)
+        # Digest agreement is acknowledged; wire authority is not.
+        assert vectors["golden"]["sha256_hex"] in value
+    else:
+        # Conforming migration: live constructor emits the verified profile CID.
+        assert value == vectors["golden"]["interface_cid"]
+        assert _verify_preimage(value, descriptor)
 
 
 def test_explicit_rejections_cover_acceptance_criteria(vectors: dict[str, Any]) -> None:
@@ -514,9 +626,11 @@ def test_explicit_rejections_cover_acceptance_criteria(vectors: dict[str, Any]) 
     assert "interface_cid_equals_legacy_alias" in rejections
     assert "mutable_cache_identity_as_authority" in rejections
     assert "mislabeled_dag_pb_as_interface_authority" in rejections
+    assert "resource_cost_hints_omission_as_authority" in rejections
     assert "silent_rewrite_of_incompatible_fixtures" in rejections
     assert "pseudo_cid_as_verified_interface_cid" in rejections
     assert "mismatched_preimage_as_identity" in rejections
+    assert "lock_in_known_bad_production_behavior" in rejections
 
 
 def test_registry_canonicalize_is_interface_preimage_authority(vectors: dict[str, Any]) -> None:

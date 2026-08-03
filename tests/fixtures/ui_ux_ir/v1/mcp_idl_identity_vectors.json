@@ -394,7 +394,15 @@
       "id": "reject.mutable_cache_authority",
       "kind": "stale_mutable_cache",
       "source": "ipfs_datasets_py.mcp_server.interface_descriptor.InterfaceDescriptor._interface_cid",
-      "reason": "Cached interface identity on a mutable descriptor is non-authoritative after field mutation."
+      "reason": "Cached interface identity on a mutable descriptor is non-authoritative after field mutation. Profile requires recomputation; tests assert snapshot preimage rules and do not require the live cache to stay stale.",
+      "profile_rule": "pre_mutation_cid_must_not_verify_post_mutation_preimage"
+    },
+    {
+      "id": "reject.hints_omission_as_authority",
+      "kind": "partial_field_binding",
+      "field": "resource_cost_hints",
+      "reason": "Omitting claimed resource_cost_hints from the preimage is rejected for verified interface_cid. Profile binds hints; tests assert snapshot binding and do not require live surfaces to keep omitting them.",
+      "profile_rule": "distinct_claimed_resource_cost_hints_must_yield_distinct_verified_cids"
     }
   ],
   "incompatible_inventory": [
@@ -405,7 +413,9 @@
       "observed_form": "cidv1-sha256-<hex>",
       "issue": "placeholder_not_real_cidv1",
       "disposition": "record_as_legacy_alias_do_not_rewrite_in_place",
-      "rewrite_in_uir_002": false
+      "rewrite_in_uir_002": false,
+      "lock_in_defect": false,
+      "notes": "Observational inventory only; a later migration to verified CIDv1 is allowed."
     },
     {
       "id": "inv.ts_sha256_prefix",
@@ -414,7 +424,8 @@
       "observed_form": "sha256:<hex>",
       "issue": "non_cid_wire_form",
       "disposition": "record_as_legacy_alias_do_not_rewrite_in_place",
-      "rewrite_in_uir_002": false
+      "rewrite_in_uir_002": false,
+      "lock_in_defect": false
     },
     {
       "id": "inv.datasets_dagpb",
@@ -423,7 +434,9 @@
       "observed_form": "cidv1_dag_pb_sha2_256_base32",
       "issue": "mislabeled_dag_pb_codec",
       "disposition": "reject_as_interface_authority",
-      "rewrite_in_uir_002": false
+      "rewrite_in_uir_002": false,
+      "lock_in_defect": false,
+      "notes": "Contract tests reject independent DAG-PB twins; they do not require compute_cid to keep emitting dag-pb."
     },
     {
       "id": "inv.datasets_mutable_cache",
@@ -432,7 +445,9 @@
       "observed_form": "mutable_instance_cache",
       "issue": "stale_mutable_cache_identity",
       "disposition": "reject_as_authority",
-      "rewrite_in_uir_002": false
+      "rewrite_in_uir_002": false,
+      "lock_in_defect": false,
+      "notes": "Contract tests require post-mutation recomputation via snapshots; they do not assert the live cache stays stale."
     },
     {
       "id": "inv.datasets_hints_excluded",
@@ -441,16 +456,26 @@
       "observed_form": "resource_cost_hints_omitted_from_preimage",
       "issue": "incomplete_identity_field_binding",
       "disposition": "incompatible_with_profile_section_4",
-      "rewrite_in_uir_002": false
+      "rewrite_in_uir_002": false,
+      "lock_in_defect": false,
+      "notes": "Contract tests require resource_cost_hints binding under the profile; they do not require live omission to remain."
     }
   ],
+  "inventory_policy": {
+    "purpose": "record_incompatible_surfaces_without_silent_rewrite",
+    "lock_in_defects": false,
+    "conforming_future_fix_allowed": true,
+    "contract_tests_assert": "profile_rules_via_snapshots_and_independent_constructors"
+  },
   "explicit_rejections": [
     "ui_ir_cid_equals_interface_cid",
     "interface_cid_equals_legacy_alias",
     "mutable_cache_identity_as_authority",
     "mislabeled_dag_pb_as_interface_authority",
+    "resource_cost_hints_omission_as_authority",
     "silent_rewrite_of_incompatible_fixtures",
     "pseudo_cid_as_verified_interface_cid",
-    "mismatched_preimage_as_identity"
+    "mismatched_preimage_as_identity",
+    "lock_in_known_bad_production_behavior"
   ]
 }

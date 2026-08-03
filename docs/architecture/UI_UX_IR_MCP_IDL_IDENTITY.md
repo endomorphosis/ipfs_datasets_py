@@ -32,9 +32,10 @@ must never be confused with:
 | --- | --- |
 | `ui_ir_cid == interface_cid` | Different domains and preimages; comparing them as interchangeable is an authority error. |
 | `interface_cid == legacy_alias` | Historical `sha256:*`, mock `bafy-*`, placeholder `cidv1-sha256-*`, and mislabeled labels are typed aliases only. |
-| Mutable-cache identity as authority | Caching an interface CID on a mutable descriptor object without invalidation is non-authoritative. |
+| Mutable-cache identity as authority | Caching an interface CID on a mutable descriptor object without invalidation is non-authoritative. After mutation, only a recomputed preimage CID is verified. |
 | Mislabeled DAG-PB as interface authority | Encoding raw descriptor bytes under multicodec `dag-pb` (`0x70`) is incompatible with the reviewed profile. |
-| Silent fixture rewrite | Incompatible existing fixtures are inventoried with disposition; they are not rewritten in place by this task. |
+| Omitting identity-affecting fields | Excluding claimed fields such as `resource_cost_hints` from the preimage is rejected for verified `interface_cid`. |
+| Silent fixture rewrite | Incompatible existing fixtures are inventoried with disposition; they are not rewritten in place by this task. Inventory is observational and does not require known-bad production behavior to remain. |
 | UIIR owns MCP operation contracts | MCP-IDL remains the operation/schema authority; UIIR only binds stable references. |
 
 ## 2. Authority
@@ -174,9 +175,15 @@ Any implementation that stores `_interface_cid` (or equivalent) on a **mutable**
 descriptor instance and returns the cached value after field mutation without
 recomputing from the current preimage is **non-authoritative**.
 
-Observed example (read-only inventory):
+**Profile rejection rule (normative):** after an identity-affecting mutation, the
+pre-mutation CID must not verify against the new descriptor preimage. Only the
+recomputed CIDv1/raw/sha2-256/base32 of the current immutable snapshot is
+verified. Contract tests assert this rule via snapshots; they must not require a
+live mutable cache to stay stale (a conforming fix is allowed).
+
+Observed historical example (read-only inventory, not a lock-in):
 `ipfs_datasets_py.mcp_server.interface_descriptor.InterfaceDescriptor.interface_cid`
-caches on first access; mutating `name` afterward leaves a stale CID.
+has cached on first access; mutating `name` afterward could leave a stale CID.
 
 UIIR and adapters must recompute from immutable snapshot bytes or freeze the
 descriptor before hashing.
@@ -201,12 +208,22 @@ The following are never accepted as verified `interface_cid`:
 
 Excluding identity-affecting fields such as `resource_cost_hints` from the
 preimage while still serializing them on the descriptor is rejected for
-verified interface identity. (The datasets `InterfaceDescriptor.canonical_bytes`
-path currently exhibits this exclusion; recorded in §7.)
+verified interface identity.
+
+**Profile rejection rule (normative):** distinct claimed `resource_cost_hints`
+values must yield distinct verified CIDs; a preimage that omits claimed hints is
+not interchangeable with one that binds them. Contract tests assert binding via
+profile snapshots; they must not require a live surface to keep omitting hints
+(a conforming fix is allowed). Historical datasets
+`InterfaceDescriptor.canonical_bytes` exclusion is recorded in §7 only.
 
 ## 7. Incompatible existing fixtures and surfaces (inventory)
 
-This section **records** incompatibilities. It does not rewrite them.
+This section **records** observed incompatibilities as of freeze time. It does
+not rewrite them, and contract tests **must not** require these defects to
+remain present in production code. A later adapter or registry fix that adopts
+this profile is expected; inventory rows stay as historical disposition until
+explicitly closed by a follow-on task.
 
 | ID | Location | Observed form | Issue | Disposition |
 | --- | --- | --- | --- | --- |
@@ -273,6 +290,8 @@ An implementation conforms to `MCPIDLIdentityInterop@1` when it:
 - [ ] Binds every identity-affecting field listed in §4;
 - [ ] Verifies preimages before accepting interface CIDs as verified;
 - [ ] Rejects DAG-PB, placeholders, pseudo-CIDs, and stale mutable caches;
+- [ ] Binds claimed `resource_cost_hints` (and other §4 fields) in verified identity;
 - [ ] Never equates `ui_ir_cid`, `interface_cid`, and `legacy_alias`;
 - [ ] Records incompatible legacy surfaces instead of silently rewriting them;
+- [ ] Does not lock contract tests to known-bad production behavior remaining present;
 - [ ] Passes `tests/unit/logic/ui_ux_ir/test_mcp_idl_identity_contract.py`.
