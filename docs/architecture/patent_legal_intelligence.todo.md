@@ -1509,7 +1509,7 @@ Program invariants:
 
 ## PATLAW-122 Define exact USPTO span, authority, fact, and Legal IR contracts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
