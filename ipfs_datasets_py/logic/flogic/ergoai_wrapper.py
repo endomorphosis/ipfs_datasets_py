@@ -59,6 +59,8 @@ LIVE_TOOLCHAIN_INTERFACE = "ErgoAILiveToolchainContract@1"
 LIVE_ADAPTER_SCHEMA_VERSION = "ergoai-live-semantic-adapter/v1"
 JAVA_API_TOOLCHAIN_INTERFACE = "ErgoAIJavaAPIToolchainContract@1"
 JAVA_API_ADAPTER_SCHEMA_VERSION = "ergoai-java-api-adapter/v1"
+JAVA_API_LIVE_INTERFACE = "ErgoAIJavaAPILiveCertification@1"
+JAVA_API_LIVE_ADAPTER_SCHEMA_VERSION = "ergoai-java-api-live-adapter/v1"
 AUTHORITY_CEILING = "advisory"
 EVIDENCE_CLASS = "proposal_or_candidate_until_independent_reconstruction"
 LIVE_CASE_KINDS = (
@@ -1101,6 +1103,58 @@ class ErgoAIWrapper:
             }
         root = self.install_root or _configured_managed_install_root()
         return run_ergoai_java_api_semantic_cases(install_root=root)
+
+    def run_java_api_vendor_consumer(
+        self,
+        *,
+        allow_hermetic_ergoai: bool = False,
+    ) -> dict[str, Any]:
+        """Run the ErgoAI-bound Java vendor consumer under the managed JDK."""
+
+        try:
+            from ipfs_datasets_py.logic.backends.installers.advisors import (
+                run_ergoai_java_vendor_consumer,
+            )
+        except Exception as exc:
+            return {
+                "interface": JAVA_API_LIVE_INTERFACE,
+                "status": "failed",
+                "error": f"java_api_vendor_consumer_unavailable:{exc}",
+                "satisfies_vendor_java_consumer": False,
+            }
+        root = self.install_root or _configured_managed_install_root()
+        return run_ergoai_java_vendor_consumer(
+            install_root=root,
+            allow_hermetic_ergoai=allow_hermetic_ergoai,
+        )
+
+    def build_java_api_live_certification(
+        self,
+        *,
+        run_live_cases: bool = True,
+        allow_hermetic_ergoai: bool = False,
+        yes: bool = False,
+    ) -> dict[str, Any]:
+        """Build ``ErgoAIJavaAPILiveCertification@1`` evidence for this wrapper."""
+
+        try:
+            from ipfs_datasets_py.logic.backends.installers.advisors import (
+                build_ergoai_java_api_live_certification,
+            )
+        except Exception as exc:
+            return {
+                "interface": JAVA_API_LIVE_INTERFACE,
+                "schema_version": JAVA_API_LIVE_ADAPTER_SCHEMA_VERSION,
+                "certified": False,
+                "error": f"java_api_live_certification_unavailable:{exc}",
+            }
+        root = self.install_root or _configured_managed_install_root()
+        return build_ergoai_java_api_live_certification(
+            install_root=root,
+            run_live_cases=run_live_cases,
+            allow_hermetic_ergoai=allow_hermetic_ergoai,
+            yes=yes,
+        )
 
 def _parse_ergo_output(output: str) -> list[dict[str, Any]]:
     """
