@@ -649,7 +649,7 @@ Program invariants:
 
 ## PATLAW-040 Compile government instructions into typed requirements
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
