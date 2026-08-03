@@ -1559,7 +1559,7 @@ Program invariants:
 
 ## PATLAW-124 Bootstrap ODP clients and durable matter state
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
