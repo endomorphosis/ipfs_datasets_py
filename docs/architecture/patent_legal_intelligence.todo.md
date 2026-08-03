@@ -274,7 +274,7 @@ Program invariants:
 
 ## PATLAW-014 Implement Federal Register discovery and GovInfo verification
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
