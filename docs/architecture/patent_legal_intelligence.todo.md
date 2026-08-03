@@ -324,7 +324,7 @@ Program invariants:
 
 ## PATLAW-016 Build the patent temporal authority graph and as-of resolver
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
