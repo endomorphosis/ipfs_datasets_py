@@ -549,7 +549,7 @@ Program invariants:
 
 ## PATLAW-031 Extract PDF, DOCX, layout, and filing metadata with provenance
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
