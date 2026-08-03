@@ -49,7 +49,7 @@ Program invariants:
 
 ## PATLAW-003 Consolidate the registry and UniversalProcessor routing
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
