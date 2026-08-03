@@ -374,7 +374,7 @@ Program invariants:
 
 ## PATLAW-020 Normalize patent application identity and matter events
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
