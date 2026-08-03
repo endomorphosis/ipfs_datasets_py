@@ -33,10 +33,12 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Final
+from urllib.request import Request, urlopen
 
 from .registry import (
     DEFAULT_LOCK_RELATIVE,
@@ -65,6 +67,27 @@ SYMBOLICAI_VERSION: Final = ">=1.14.0,<2.0.0"
 SYMBOLICAI_PACKAGE: Final = "symbolicai"
 ERGOAI_VERSION: Final = "3.0"
 ERGOAI_EXECUTABLES: Final = ("ergoai", "runErgo.sh", "runergo")
+ERGOAI_RELEASE_TAG: Final = "v3.0_release"
+ERGOAI_RELEASE_URL: Final = (
+    "https://github.com/ErgoAI/.github/releases/download/"
+    "v3.0_release/ergoAI_3.0.run"
+)
+# SHA-256 of the official GitHub release asset published under
+# ``ErgoAI/.github@v3.0_release``.  A live installer must never execute the
+# self-extracting archive unless this digest matches exactly.
+ERGOAI_RELEASE_SHA256: Final = (
+    "46f9747db118567a7da50f70b439e35ee36ea02c3dfde971a57c77a8ce94aa01"
+)
+ERGOAI_RELEASE_SIZE_BYTES: Final = 53_064_767
+# The shared Linux/Mac release is source-bearing and compiles XSB for the host.
+# These are the platforms for which this project carries an exact reviewed pin;
+# other hosts fail closed until their artifact is independently exercised.
+ERGOAI_SUPPORTED_PLATFORMS: Final = (
+    "linux-x86_64",
+    "linux-aarch64",
+)
+ERGOAI_BUILD_COMMANDS: Final = ("sh", "make", "gcc", "flex", "bison")
+ERGOAI_LICENSE_COMPONENTS: Final = ("Apache-2.0", "LGPL-2.0")
 
 LOCKED_VERSIONS: Final[Mapping[str, str]] = {
     TOOL_SYMBOLICAI: SYMBOLICAI_VERSION,
@@ -92,27 +115,29 @@ _FALLBACK_PINS: Final[dict[str, tuple[dict[str, Any], ...]]] = {
             "tool_id": TOOL_ERGOAI,
             "version": ERGOAI_VERSION,
             "platform": "linux-x86_64",
-            "artifact_url": (
-                "https://github.com/ErgoAI/.github/releases/download/"
-                "v3.0_release/ergoAI_3.0.run"
-            ),
-            "sha256": "",
+            "artifact_url": ERGOAI_RELEASE_URL,
+            "sha256": ERGOAI_RELEASE_SHA256,
             "identity_kind": "immutable_release_tag",
             "license": "Apache-2.0",
             "source": "https://github.com/ErgoAI/ErgoEngine",
-            "is_checksummed": False,
+            "is_checksummed": True,
             "requires_checksum_at_install": True,
+            "release_tag": ERGOAI_RELEASE_TAG,
+            "artifact_size_bytes": ERGOAI_RELEASE_SIZE_BYTES,
         },
         {
             "tool_id": TOOL_ERGOAI,
             "version": ERGOAI_VERSION,
-            "platform": "source",
-            "artifact_url": "",
-            "sha256": "",
+            "platform": "linux-aarch64",
+            "artifact_url": ERGOAI_RELEASE_URL,
+            "sha256": ERGOAI_RELEASE_SHA256,
             "identity_kind": "immutable_release_tag",
             "license": "Apache-2.0",
             "source": "https://github.com/ErgoAI/ErgoEngine",
-            "is_checksummed": False,
+            "is_checksummed": True,
+            "requires_checksum_at_install": True,
+            "release_tag": ERGOAI_RELEASE_TAG,
+            "artifact_size_bytes": ERGOAI_RELEASE_SIZE_BYTES,
         },
     ),
 }
@@ -155,6 +180,8 @@ class ToolPin:
     package_name: str = ""
     is_checksummed: bool = False
     requires_checksum_at_install: bool = False
+    release_tag: str = ""
+    artifact_size_bytes: int = 0
 
     def __post_init__(self) -> None:
         for name in ("tool_id", "version", "platform"):
@@ -167,6 +194,8 @@ class ToolPin:
                 f"sha256 for {self.tool_id!r} must be empty or a 64-char hex digest"
             )
         object.__setattr__(self, "sha256", digest)
+        if self.artifact_size_bytes < 0:
+            raise AdvisorInstallerError("artifact_size_bytes must be non-negative")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -181,6 +210,8 @@ class ToolPin:
             "package_name": self.package_name,
             "is_checksummed": self.is_checksummed,
             "requires_checksum_at_install": self.requires_checksum_at_install,
+            "release_tag": self.release_tag,
+            "artifact_size_bytes": self.artifact_size_bytes,
         }
 
 
@@ -304,6 +335,367 @@ def content_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _ergoai_version_root(install_root: Path, version: str) -> Path:
+    return install_root / "advisors" / TOOL_ERGOAI / version
+
+
+def _ergoai_identity_path(install_root: Path, version: str) -> Path:
+    return _ergoai_version_root(install_root, version) / "identity.json"
+
+
+def _ergoai_vendor_root(install_root: Path, version: str, digest: str) -> Path:
+    # Content-address the extracted tree so a failed/partial install never
+    # overwrites a previously certified vendor payload.
+    return _ergoai_version_root(install_root, version) / f"vendor-{digest[:16]}"
+
+
+def _load_identity_manifest(path: Path) -> dict[str, Any] | None:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    return dict(value) if isinstance(value, Mapping) else None
+
+
+def _copy_or_download_ergoai_artifact(
+    pin: ToolPin,
+    destination: Path,
+    *,
+    artifact_path: str | Path | None = None,
+    timeout: float = 180.0,
+    on_progress: ProgressCallback | None = None,
+) -> tuple[bool, str | None, int | None]:
+    """Materialize the reviewed release asset and verify it before execution."""
+
+    if not pin.sha256 or not _HEX64.fullmatch(pin.sha256):
+        _announce(
+            "ErgoAI live installation has no reviewed SHA-256 pin; refusing",
+            on_progress,
+            phase="failed",
+        )
+        return False, None, None
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.is_file():
+        observed = content_sha256(destination)
+        observed_size = destination.stat().st_size
+        if observed == pin.sha256 and (
+            not pin.artifact_size_bytes
+            or observed_size == pin.artifact_size_bytes
+        ):
+            _announce(
+                f"Reusing checksummed ErgoAI artifact at {destination}",
+                on_progress,
+                phase="available",
+            )
+            return True, observed, observed_size
+
+    source = Path(artifact_path).expanduser() if artifact_path else None
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=destination.parent,
+            prefix=f".{destination.name}.",
+            suffix=".partial",
+            delete=False,
+        ) as handle:
+            temporary = Path(handle.name)
+            if source is not None:
+                if not source.is_file():
+                    _announce(
+                        f"Configured ErgoAI release file does not exist: {source}",
+                        on_progress,
+                        phase="failed",
+                    )
+                    return False, None, None
+                _announce(
+                    f"Copying operator-provided ErgoAI release asset {source}",
+                    on_progress,
+                    phase="installing",
+                )
+                with source.open("rb") as input_stream:
+                    shutil.copyfileobj(input_stream, handle, length=1024 * 1024)
+            else:
+                if not pin.artifact_url:
+                    _announce(
+                        "ErgoAI pin has no artifact URL; refusing live install",
+                        on_progress,
+                        phase="failed",
+                    )
+                    return False, None, None
+                _announce(
+                    f"Downloading checksummed ErgoAI {pin.version} release",
+                    on_progress,
+                    phase="installing",
+                )
+                request = Request(
+                    pin.artifact_url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-py-ergoai-installer/1"
+                    },
+                )
+                with urlopen(request, timeout=timeout) as response:  # noqa: S310
+                    shutil.copyfileobj(response, handle, length=1024 * 1024)
+            handle.flush()
+            os.fsync(handle.fileno())
+
+        observed = content_sha256(temporary)
+        observed_size = temporary.stat().st_size
+        if observed != pin.sha256:
+            _announce(
+                "ErgoAI release checksum mismatch; refusing to execute artifact",
+                on_progress,
+                phase="failed",
+            )
+            return False, observed, observed_size
+        if pin.artifact_size_bytes and observed_size != pin.artifact_size_bytes:
+            _announce(
+                "ErgoAI release size mismatch; refusing to execute artifact",
+                on_progress,
+                phase="failed",
+            )
+            return False, observed, observed_size
+        temporary.replace(destination)
+        temporary = None
+        return True, observed, observed_size
+    except Exception as exc:  # pragma: no cover - network/host-specific failure
+        _announce(f"ErgoAI artifact acquisition failed: {exc}", on_progress, phase="failed")
+        return False, None, None
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def _ergoai_missing_build_commands() -> list[str]:
+    return [name for name in ERGOAI_BUILD_COMMANDS if shutil.which(name) is None]
+
+
+def _find_vendor_ergoai_binary(vendor_root: Path, version: str) -> Path | None:
+    expected = (
+        vendor_root
+        / f"ERGOAI_{version}"
+        / "ErgoAI"
+        / "runergo"
+    )
+    candidates = [expected]
+    try:
+        candidates.extend(sorted(vendor_root.glob("ERGOAI_*/ErgoAI/runergo")))
+    except OSError:
+        pass
+    for candidate in candidates:
+        try:
+            if (
+                candidate.is_file()
+                and (candidate.parent / ".ergo_paths").is_file()
+            ):
+                candidate.chmod(candidate.stat().st_mode | stat.S_IXUSR)
+                return candidate.resolve()
+        except OSError:
+            continue
+    return None
+
+
+def _find_vendor_xsb_binary(vendor_binary: Path) -> Path | None:
+    version_root = vendor_binary.parents[1]
+    config_root = version_root / "XSB" / "config"
+    try:
+        candidates = sorted(config_root.glob("*/bin/xsb"))
+    except OSError:
+        return None
+    executable = [
+        path
+        for path in candidates
+        if path.is_file() and os.access(path, os.X_OK)
+    ]
+    return executable[0].resolve() if len(executable) == 1 else None
+
+
+def _write_vendor_ergoai_launchers(
+    *,
+    install_root: Path,
+    vendor_binary: Path,
+    version: str,
+    platform_key: str,
+) -> dict[str, str]:
+    """Write launchers that expose a deterministic pin identity probe."""
+
+    bin_dir = install_root / "bin"
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    launchers: dict[str, str] = {}
+    for name in ERGOAI_EXECUTABLES:
+        launcher = bin_dir / name
+        source = (
+            "#!/bin/sh\n"
+            "set -eu\n"
+            "case \"${1:-}\" in\n"
+            "  --version|-v|version)\n"
+            f"    printf '%s\\n' 'ErgoAI {version} (managed {platform_key}; "
+            f"{ERGOAI_RELEASE_TAG})'\n"
+            "    exit 0\n"
+            "    ;;\n"
+            "esac\n"
+            f"exec {_shell_quote(str(vendor_binary))} \"$@\"\n"
+        )
+        digest = _write_executable(launcher, source)
+        launchers[name] = digest
+    return launchers
+
+
+def _normalize_ergoai_verdict(output: str) -> str:
+    if "++Error" in output or "++Abort" in output:
+        return "error"
+    verdicts = re.findall(r"(?m)^\s*(Yes|No)\s*$", output)
+    if not verdicts:
+        return "unknown"
+    return verdicts[-1].lower()
+
+
+def _run_ergoai_semantic_case(
+    executable: str | Path,
+    *,
+    program: str,
+    query: str,
+    timeout: float,
+) -> dict[str, Any]:
+    source_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            suffix=".ergo",
+            prefix="ipfs-datasets-ergoai-cert-",
+            delete=False,
+        ) as handle:
+            handle.write(program)
+            source_path = Path(handle.name)
+        commands = f"load{{'{source_path}'}}.\n{query}.\n\\halt.\n"
+        completed = subprocess.run(
+            [str(executable)],
+            input=commands,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            shell=False,
+        )
+        combined = "\n".join(
+            part for part in (completed.stdout, completed.stderr) if part
+        )
+        verdict = _normalize_ergoai_verdict(combined)
+        return {
+            "returncode": completed.returncode,
+            "verdict": verdict,
+            "output_digest_sha256": hashlib.sha256(
+                combined.encode("utf-8")
+            ).hexdigest(),
+            "program_digest_sha256": hashlib.sha256(
+                program.encode("utf-8")
+            ).hexdigest(),
+            "query_digest_sha256": hashlib.sha256(
+                query.encode("utf-8")
+            ).hexdigest(),
+            "passed_process_boundary": completed.returncode == 0,
+        }
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {
+            "returncode": None,
+            "verdict": "error",
+            "error": str(exc)[:300],
+            "passed_process_boundary": False,
+        }
+    finally:
+        if source_path is not None:
+            source_path.unlink(missing_ok=True)
+
+
+def run_ergoai_semantic_checks(
+    executable: str | Path,
+    *,
+    timeout: float = 30.0,
+) -> dict[str, Any]:
+    """Run bounded positive/negative/mutation/replay checks on real ErgoAI."""
+
+    base_program = "fvt_ergo_subject : fvt_ergo_expected.\n"
+    mutated_program = "fvt_ergo_subject : fvt_ergo_mutated.\n"
+    positive = _run_ergoai_semantic_case(
+        executable,
+        program=base_program,
+        query="fvt_ergo_subject : fvt_ergo_expected",
+        timeout=timeout,
+    )
+    negative = _run_ergoai_semantic_case(
+        executable,
+        program=base_program,
+        query="fvt_ergo_subject : fvt_ergo_absent",
+        timeout=timeout,
+    )
+    mutation = _run_ergoai_semantic_case(
+        executable,
+        program=mutated_program,
+        query="fvt_ergo_subject : fvt_ergo_expected",
+        timeout=timeout,
+    )
+    replay = _run_ergoai_semantic_case(
+        executable,
+        program=base_program,
+        query="fvt_ergo_subject : fvt_ergo_expected",
+        timeout=timeout,
+    )
+    checks = {
+        "positive": {**positive, "expected": "yes"},
+        "negative": {**negative, "expected": "no"},
+        "mutation": {**mutation, "expected": "no"},
+        "replay": {**replay, "expected": "yes"},
+    }
+    for value in checks.values():
+        value["passed"] = bool(
+            value.get("passed_process_boundary")
+            and value.get("verdict") == value.get("expected")
+        )
+    replay_bound = (
+        positive.get("verdict") == replay.get("verdict") == "yes"
+        and positive.get("program_digest_sha256")
+        == replay.get("program_digest_sha256")
+        and positive.get("query_digest_sha256")
+        == replay.get("query_digest_sha256")
+    )
+    passed = all(value["passed"] for value in checks.values()) and replay_bound
+    normalized_evidence = {
+        name: {
+            "expected": value["expected"],
+            "verdict": value.get("verdict"),
+            "returncode": value.get("returncode"),
+            "program_digest_sha256": value.get("program_digest_sha256"),
+            "query_digest_sha256": value.get("query_digest_sha256"),
+            "passed": value["passed"],
+        }
+        for name, value in checks.items()
+    }
+    return {
+        "schema_version": "ergoai-live-semantic-checks/v1",
+        "tool_id": TOOL_ERGOAI,
+        "checks": checks,
+        "replay_bound": replay_bound,
+        "passed": passed,
+        "normalized_evidence_digest_sha256": hashlib.sha256(
+            json.dumps(
+                {
+                    "checks": normalized_evidence,
+                    "replay_bound": replay_bound,
+                    "passed": passed,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest(),
+        "network_used": False,
+        "install_attempted": False,
+        "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
+        "grants_proof_authority": False,
+    }
+
+
 def _announce(
     message: str,
     on_progress: ProgressCallback | None,
@@ -410,6 +802,22 @@ def pins_for_tool(
                             if isinstance(entry.get("deployment_contract"), Mapping)
                             else False
                         ),
+                        release_tag=str(
+                            raw.get("release_tag")
+                            or (
+                                (entry.get("deployment_contract") or {}).get(
+                                    "release_tag"
+                                )
+                                if isinstance(
+                                    entry.get("deployment_contract"), Mapping
+                                )
+                                else ""
+                            )
+                            or ""
+                        ),
+                        artifact_size_bytes=int(
+                            raw.get("artifact_size_bytes") or 0
+                        ),
                     )
                 )
             break
@@ -430,6 +838,8 @@ def pins_for_tool(
                     requires_checksum_at_install=bool(
                         raw.get("requires_checksum_at_install")
                     ),
+                    release_tag=str(raw.get("release_tag") or ""),
+                    artifact_size_bytes=int(raw.get("artifact_size_bytes") or 0),
                 )
             )
     if not pins:
@@ -612,11 +1022,131 @@ def read_version_banner(
     return text or None
 
 
+def read_ergoai_version_banner(
+    executable: str,
+    *,
+    timeout: float = 15.0,
+) -> str | None:
+    """Read an ErgoAI banner from a managed launcher or the vendor runner.
+
+    The upstream ``runergo`` script forwards ``--version`` to XSB and therefore
+    prints the XSB 5.0 banner rather than the ErgoAI 3.0 identity.  Fall back to
+    a bounded no-query session and halt it through stdin; this observes the
+    actual ErgoAI Reasoner banner without mutating the installation.
+    """
+
+    banner = read_version_banner(executable, timeout=timeout)
+    if banner and "ergoai" in banner.casefold():
+        return banner
+    try:
+        completed = subprocess.run(
+            [executable],
+            input="\\halt.\n",
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            shell=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return banner
+    observed = "\n".join(
+        part for part in (completed.stdout, completed.stderr) if part
+    ).strip()
+    if completed.returncode == 0 and "ergoai" in observed.casefold():
+        return observed
+    return banner
+
+
+def _validate_ergoai_managed_provenance(
+    *,
+    install_root: Path,
+    expected_version: str,
+    expected_platform: str,
+) -> dict[str, Any]:
+    manifest_path = _ergoai_identity_path(install_root, expected_version)
+    manifest = _load_identity_manifest(manifest_path)
+    result: dict[str, Any] = {
+        "identity_manifest_path": str(manifest_path),
+        "identity_manifest_present": manifest is not None,
+        "managed_vendor_provenance_verified": False,
+        "is_hermetic_advisor_shim": False,
+        "manifest": manifest,
+        "reason_codes": [],
+    }
+    if manifest is None:
+        result["reason_codes"].append("managed_identity_manifest_missing")
+        return result
+    result["is_hermetic_advisor_shim"] = bool(
+        manifest.get("is_hermetic_advisor_shim")
+    )
+    if result["is_hermetic_advisor_shim"]:
+        result["reason_codes"].append("hermetic_advisor_shim_is_not_vendor")
+        return result
+
+    scalar_checks = {
+        "tool_id": manifest.get("tool_id") == TOOL_ERGOAI,
+        "version": str(manifest.get("version") or "") == expected_version,
+        "platform": str(manifest.get("selected_platform") or "")
+        == expected_platform,
+        "release_tag": str(manifest.get("release_tag") or "")
+        == ERGOAI_RELEASE_TAG,
+        "release_sha256": str(
+            manifest.get("release_artifact_sha256") or ""
+        ).lower()
+        == ERGOAI_RELEASE_SHA256,
+        "release_size": int(manifest.get("release_artifact_size_bytes") or 0)
+        == ERGOAI_RELEASE_SIZE_BYTES,
+        "checksum_verified": manifest.get("checksum_verified") is True,
+        "live_vendor": manifest.get("is_live_vendor") is True,
+        "proof_authority_false": manifest.get("grants_proof_authority") is False,
+    }
+    for name, passed in scalar_checks.items():
+        if not passed:
+            result["reason_codes"].append(f"manifest_{name}_mismatch")
+
+    path_checks: dict[str, bool] = {}
+    for label, path_key, digest_key in (
+        ("release_artifact", "release_artifact_path", "release_artifact_sha256"),
+        ("vendor_executable", "vendor_executable", "vendor_executable_sha256"),
+        ("xsb_executable", "xsb_executable", "xsb_executable_sha256"),
+    ):
+        raw_path = str(manifest.get(path_key) or "")
+        expected_digest = str(manifest.get(digest_key) or "").lower()
+        path = Path(raw_path) if raw_path else None
+        inside_managed_root = False
+        if path is not None:
+            try:
+                path.resolve().relative_to(install_root.resolve())
+                inside_managed_root = True
+            except (OSError, ValueError):
+                inside_managed_root = False
+        valid = bool(
+            path
+            and inside_managed_root
+            and path.is_file()
+            and _HEX64.fullmatch(expected_digest)
+            and content_sha256(path) == expected_digest
+        )
+        path_checks[label] = valid
+        if not valid:
+            result["reason_codes"].append(f"{label}_digest_mismatch")
+
+    result["scalar_checks"] = scalar_checks
+    result["path_checks"] = path_checks
+    result["managed_vendor_provenance_verified"] = bool(
+        all(scalar_checks.values()) and all(path_checks.values())
+    )
+    return result
+
+
 def probe_ergoai_identity(
     *,
     expected_version: str = ERGOAI_VERSION,
     executable: str | None = None,
     install_root: str | Path | None = None,
+    require_managed_vendor: bool = False,
+    platform_key: str | None = None,
 ) -> dict[str, Any]:
     """Probe ErgoAI without installing or opening the network."""
 
@@ -633,11 +1163,14 @@ def probe_ergoai_identity(
         "probe_error": None,
         "network_used": False,
         "install_attempted": False,
+        "managed_vendor_provenance_verified": False,
+        "is_hermetic_advisor_shim": False,
     }
+    root = expand_user_local_root(install_root)
+    expected_platform = platform_key or detect_platform_key()
     binary = executable
     if binary is None:
         # Prefer managed install root, then PATH.
-        root = expand_user_local_root(install_root)
         managed_candidates = [
             root / "bin" / name for name in ERGOAI_EXECUTABLES
         ] + [
@@ -660,7 +1193,7 @@ def probe_ergoai_identity(
 
     result["path_present"] = True
     result["executable_path"] = binary
-    banner = read_version_banner(binary)
+    banner = read_ergoai_version_banner(binary)
     if not banner:
         result["probe_error"] = "empty_version_banner"
         return result
@@ -671,6 +1204,18 @@ def probe_ergoai_identity(
     )
     if not result["version_match"]:
         result["probe_error"] = "locked_version_mismatch"
+        return result
+
+    provenance = _validate_ergoai_managed_provenance(
+        install_root=root,
+        expected_version=expected_version,
+        expected_platform=expected_platform,
+    )
+    result.update(provenance)
+    if require_managed_vendor and not result[
+        "managed_vendor_provenance_verified"
+    ]:
+        result["probe_error"] = "managed_vendor_provenance_unverified"
     return result
 
 
@@ -1122,12 +1667,18 @@ def ensure_ergoai(
     import_context: bool = False,
     capability_discovery: bool = False,
     lock: Mapping[str, Any] | None = None,
+    artifact_path: str | Path | None = None,
+    download_timeout: float = 180.0,
+    install_timeout: float = 900.0,
 ) -> InstallReceipt:
-    """Ensure the locked ErgoAI 3.0 identity is present (advisor only).
+    """Ensure the checksum-pinned ErgoAI 3.0 runtime (advisor only).
 
-    When live vendor binaries are unavailable offline, ``hermetic_shim=True``
-    materializes a pin-bound identity shim that only answers version probes.
-    The shim never grants theorem or proof authority.
+    ``hermetic_shim=True`` is reserved for offline role-contract tests and only
+    materializes an identity shim.  A real lazy execution request passes
+    ``hermetic_shim=False``; that path downloads (or consumes
+    ``artifact_path``), verifies, builds, probes, and semantically exercises
+    the official release before exposing a launcher.  Neither path grants
+    theorem or proof authority.
     """
 
     receipt = InstallReceipt(
@@ -1139,12 +1690,27 @@ def ensure_ergoai(
     root = expand_user_local_root(install_root)
     platform_name = platform_key or detect_platform_key()
 
+    def fail(phase: str, code: str, message: str) -> InstallReceipt:
+        receipt.status = "blocked" if code in {
+            "unsupported_platform",
+            "offline_policy_blocks_live_install",
+            "missing_build_dependency",
+        } else "failed"
+        receipt.phase = phase
+        receipt.reason_codes.append(code)
+        receipt.messages.append(message)
+        _announce(message, on_progress, phase="failed")
+        if strict:
+            raise AdvisorInstallerError(message)
+        return receipt
+
     try:
         pin = select_strict_pin(
             TOOL_ERGOAI,
             platform_key=platform_name,
             repo_root=repo_root,
             lock=lock,
+            allow_source_fallback=False,
         )
     except AdvisorInstallerError as exc:
         receipt.status = "failed"
@@ -1169,25 +1735,28 @@ def ensure_ergoai(
         "grants_theorem_authority": False,
         "grants_proof_authority": False,
         "proposals_only": True,
-        "supported_platforms": ["linux-x86_64"],
+        "supported_platforms": list(ERGOAI_SUPPORTED_PLATFORMS),
+        "release_tag": pin.release_tag or ERGOAI_RELEASE_TAG,
+        "release_artifact_sha256": pin.sha256,
+        "release_artifact_size_bytes": pin.artifact_size_bytes,
+        "license_components": list(ERGOAI_LICENSE_COMPONENTS),
+        "required_build_commands": list(ERGOAI_BUILD_COMMANDS),
     }
 
-    # Unsupported platforms fail closed under strict mode (except hermetic shim).
-    if (
-        pin.platform not in {platform_name, "source", "any"}
-        and platform_name != "linux-x86_64"
-        and not hermetic_shim
-        and not test_mode
-    ):
-        receipt.status = "blocked"
-        receipt.phase = "platform"
-        receipt.reason_codes.append("unsupported_platform")
-        receipt.messages.append(
-            f"ErgoAI pin platform {pin.platform!r} is not supported on {platform_name!r}"
+    if platform_name not in ERGOAI_SUPPORTED_PLATFORMS:
+        return fail(
+            "platform",
+            "unsupported_platform",
+            f"ErgoAI live install is not reviewed for {platform_name!r}; "
+            f"supported pins are {list(ERGOAI_SUPPORTED_PLATFORMS)!r}",
         )
-        if strict:
-            raise AdvisorInstallerError(receipt.messages[-1])
-        return receipt
+    if pin.platform != platform_name:
+        return fail(
+            "platform",
+            "platform_pin_mismatch",
+            f"ErgoAI pin platform {pin.platform!r} does not match "
+            f"host platform {platform_name!r}",
+        )
 
     if import_context or capability_discovery:
         try:
@@ -1197,16 +1766,8 @@ def ensure_ergoai(
                 strict=strict,
                 import_context=import_context,
                 capability_discovery=capability_discovery,
-                checksum_verified=True if hermetic_shim or test_mode else None,
-                platform_key=platform_name
-                if platform_name
-                in {
-                    "linux-x86_64",
-                    "linux-aarch64",
-                    "darwin-x86_64",
-                    "darwin-arm64",
-                }
-                else None,
+                checksum_verified=True if hermetic_shim else None,
+                platform_key=platform_name,
                 test_mode=test_mode,
             )
         except AdvisorInstallerError as exc:
@@ -1225,8 +1786,18 @@ def ensure_ergoai(
     probe = probe_ergoai_identity(
         expected_version=pin.version,
         install_root=root,
+        require_managed_vendor=not hermetic_shim,
+        platform_key=platform_name,
     )
-    if probe.get("path_present") and probe.get("version_match") and not force:
+    managed_identity_acceptable = bool(
+        hermetic_shim or probe.get("managed_vendor_provenance_verified")
+    )
+    if (
+        probe.get("path_present")
+        and probe.get("version_match")
+        and managed_identity_acceptable
+        and not force
+    ):
         receipt.executable_path = probe.get("executable_path")
         receipt.already_present = True
         receipt.installed = True
@@ -1236,6 +1807,19 @@ def ensure_ergoai(
             f"ErgoAI {pin.version} already available at {receipt.executable_path}"
         )
         receipt.bindings["observed_version"] = probe.get("version_string")
+        receipt.bindings["managed_provenance"] = {
+            key: probe.get(key)
+            for key in (
+                "identity_manifest_path",
+                "managed_vendor_provenance_verified",
+                "is_hermetic_advisor_shim",
+                "reason_codes",
+            )
+        }
+        receipt.checksum_verified = bool(
+            probe.get("managed_vendor_provenance_verified")
+            or probe.get("is_hermetic_advisor_shim")
+        )
         return receipt
 
     if dry_run:
@@ -1264,11 +1848,9 @@ def ensure_ergoai(
             strict=strict,
             import_context=import_context,
             capability_discovery=capability_discovery,
-            # Empty lock sha256: checksum verified only when artifact is downloaded.
-            checksum_verified=True if hermetic_shim or test_mode else None,
-            platform_key=platform_name if platform_name in {
-                "linux-x86_64", "linux-aarch64", "darwin-x86_64", "darwin-arm64"
-            } else None,
+            # Vendor bytes are authorized again after their digest is observed.
+            checksum_verified=True if hermetic_shim else None,
+            platform_key=platform_name,
             test_mode=test_mode,
         )
     except AdvisorInstallerError as exc:
@@ -1284,10 +1866,9 @@ def ensure_ergoai(
         receipt.messages.append(message)
         return receipt
 
-    # Prefer hermetic pin-bound shim for offline certification and tests.
-    if hermetic_shim or test_mode or os.environ.get(
-        "FORMAL_VERIFICATION_FORBID_NETWORK"
-    ) == "1" or os.environ.get("FORMAL_VERIFICATION_CERTIFY_OFFLINE") == "1":
+    # Hermetic shims are explicit role-contract fixtures.  Never silently
+    # substitute one for a requested vendor execution path.
+    if hermetic_shim:
         receipt.install_attempted = True
         identity = materialize_hermetic_ergoai(
             install_root=root,
@@ -1310,28 +1891,245 @@ def ensure_ergoai(
         )
         return receipt
 
-    # Live vendor install is deliberately not performed by this plugin when the
-    # .run artifact has no reviewed checksum — fail closed rather than download
-    # an unbound installer.
-    if not pin.sha256:
-        receipt.status = "blocked"
-        receipt.phase = "checksum"
-        receipt.reason_codes.append("checksum_required_for_live_install")
-        receipt.messages.append(
-            "Live ErgoAI install requires a reviewed checksum; use "
-            "hermetic_shim=True or supply a checksummed pin."
-        )
-        if strict:
-            raise AdvisorInstallerError(receipt.messages[-1])
-        return receipt
-
-    receipt.status = "blocked"
-    receipt.phase = "blocked"
-    receipt.reason_codes.append("live_vendor_install_not_enabled")
-    receipt.messages.append(
-        "Live ErgoAI vendor install is operator-bound; prefer hermetic_shim "
-        "for offline certification."
+    certification_forbids_install = bool(
+        os.environ.get("FORMAL_VERIFICATION_CERTIFY_OFFLINE") == "1"
+        or os.environ.get("FORMAL_VERIFICATION_FORBID_INSTALL") == "1"
     )
+    network_forbidden_without_artifact = bool(
+        os.environ.get("FORMAL_VERIFICATION_FORBID_NETWORK") == "1"
+        and artifact_path is None
+        and not os.environ.get("IPFS_DATASETS_PY_ERGOAI_RELEASE_FILE")
+    )
+    if certification_forbids_install or network_forbidden_without_artifact:
+        return fail(
+            "offline_policy",
+            "offline_policy_blocks_live_install",
+            "Offline certification forbids an ErgoAI vendor download/install; "
+            "provide a pre-fetched checksummed artifact outside certification "
+            "or use the explicit hermetic role fixture.",
+        )
+
+    if not pin.sha256 or not pin.is_checksummed:
+        return fail(
+            "checksum",
+            "checksum_required_for_live_install",
+            "Live ErgoAI install requires an exact reviewed SHA-256 pin.",
+        )
+    missing_commands = _ergoai_missing_build_commands()
+    if missing_commands:
+        return fail(
+            "dependencies",
+            "missing_build_dependency",
+            "ErgoAI build dependencies are missing: " + ", ".join(missing_commands),
+        )
+
+    configured_artifact = artifact_path or os.environ.get(
+        "IPFS_DATASETS_PY_ERGOAI_RELEASE_FILE"
+    )
+    release_name = Path(pin.artifact_url).name or "ergoAI_3.0.run"
+    release_path = root / "downloads" / release_name
+    ok, observed_digest, observed_size = _copy_or_download_ergoai_artifact(
+        pin,
+        release_path,
+        artifact_path=configured_artifact,
+        timeout=download_timeout,
+        on_progress=on_progress,
+    )
+    if not ok or observed_digest != pin.sha256:
+        return fail(
+            "checksum",
+            "download_or_checksum_failed",
+            "ErgoAI release acquisition or checksum verification failed.",
+        )
+    receipt.checksum_verified = True
+    receipt.bindings["observed_release_artifact_sha256"] = observed_digest
+    receipt.bindings["observed_release_artifact_size_bytes"] = observed_size
+
+    # Re-authorize after the bytes, rather than only the metadata, have been
+    # verified.  This keeps the registry gate evidence truthful.
+    try:
+        authorize_plugin_install(
+            TOOL_ERGOAI,
+            yes=yes,
+            strict=strict,
+            checksum_verified=True,
+            platform_key=platform_name,
+            test_mode=test_mode,
+        )
+    except AdvisorInstallerError as exc:
+        return fail("authorization", "authorization_failed", str(exc))
+
+    version_root = _ergoai_version_root(root, pin.version)
+    version_root.mkdir(parents=True, exist_ok=True)
+    vendor_root = _ergoai_vendor_root(root, pin.version, pin.sha256)
+    vendor_binary = _find_vendor_ergoai_binary(vendor_root, pin.version)
+    if vendor_binary is None and vendor_root.exists() and any(vendor_root.iterdir()):
+        return fail(
+            "install",
+            "partial_install_requires_manual_cleanup",
+            f"ErgoAI vendor directory exists without a configured runtime: {vendor_root}",
+        )
+
+    if vendor_binary is None:
+        install_home = version_root / "install-home"
+        install_home.mkdir(parents=True, exist_ok=True)
+        environment = os.environ.copy()
+        environment["HOME"] = str(install_home)
+        environment["TERM"] = "dumb"
+        shell = shutil.which("sh")
+        if shell is None:  # guarded by dependency preflight, defensive only
+            return fail("dependencies", "missing_build_dependency", "sh is unavailable")
+        receipt.install_attempted = True
+        _announce(
+            f"Building checksummed ErgoAI {pin.version} for {platform_name}",
+            on_progress,
+            phase="installing",
+        )
+        try:
+            completed = subprocess.run(
+                [
+                    shell,
+                    str(release_path),
+                    "--target",
+                    str(vendor_root),
+                    "--",
+                    "noninteractive",
+                ],
+                cwd=version_root,
+                env=environment,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=install_timeout,
+                shell=False,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            return fail("install", "vendor_install_failed", f"ErgoAI install failed: {exc}")
+        receipt.bindings["installer_output_digest_sha256"] = hashlib.sha256(
+            f"{completed.stdout}\n{completed.stderr}".encode()
+        ).hexdigest()
+        if completed.returncode != 0:
+            detail = (completed.stderr or completed.stdout or "").strip()[-500:]
+            return fail(
+                "install",
+                "vendor_install_failed",
+                f"ErgoAI installer exited {completed.returncode}: {detail}",
+            )
+        vendor_binary = _find_vendor_ergoai_binary(vendor_root, pin.version)
+
+    if vendor_binary is None:
+        return fail(
+            "validation",
+            "vendor_executable_missing",
+            "Checksummed ErgoAI installer did not produce a configured runergo.",
+        )
+    xsb_binary = _find_vendor_xsb_binary(vendor_binary)
+    if xsb_binary is None:
+        return fail(
+            "validation",
+            "xsb_executable_missing",
+            "ErgoAI installation did not produce exactly one executable XSB runtime.",
+        )
+    expected_arch_token = "aarch64" if platform_name == "linux-aarch64" else "x86_64"
+    xsb_configuration = xsb_binary.parent.parent.name
+    if expected_arch_token not in xsb_configuration:
+        return fail(
+            "platform",
+            "compiled_platform_mismatch",
+            f"ErgoAI XSB configuration {xsb_configuration!r} does not match "
+            f"the selected platform {platform_name!r}",
+        )
+
+    banner = read_ergoai_version_banner(str(vendor_binary), timeout=30.0)
+    if not banner or pin.version not in banner or "ergoai" not in banner.casefold():
+        return fail(
+            "validation",
+            "locked_version_mismatch",
+            "Installed ErgoAI runtime did not report the locked 3.0 identity.",
+        )
+    semantics = run_ergoai_semantic_checks(vendor_binary, timeout=30.0)
+    if not semantics.get("passed"):
+        return fail(
+            "semantic_validation",
+            "semantic_checks_failed",
+            "Installed ErgoAI failed positive/negative/mutation/replay checks.",
+        )
+
+    launcher_digests = _write_vendor_ergoai_launchers(
+        install_root=root,
+        vendor_binary=vendor_binary,
+        version=pin.version,
+        platform_key=platform_name,
+    )
+    primary_launcher = root / "bin" / "ergoai"
+    identity = {
+        "schema_version": "ergoai-managed-vendor-identity/v1",
+        "tool_id": TOOL_ERGOAI,
+        "version": pin.version,
+        "selected_platform": platform_name,
+        "release_tag": pin.release_tag or ERGOAI_RELEASE_TAG,
+        "release_url": pin.artifact_url,
+        "release_artifact_path": str(release_path.resolve()),
+        "release_artifact_sha256": content_sha256(release_path),
+        "release_artifact_size_bytes": release_path.stat().st_size,
+        "vendor_executable": str(vendor_binary),
+        "vendor_executable_sha256": content_sha256(vendor_binary),
+        "xsb_executable": str(xsb_binary),
+        "xsb_executable_sha256": content_sha256(xsb_binary),
+        "xsb_configuration": xsb_configuration,
+        "launcher": str(primary_launcher.resolve()),
+        "launcher_sha256": launcher_digests["ergoai"],
+        "launcher_digests": launcher_digests,
+        "version_banner_digest_sha256": hashlib.sha256(
+            banner.encode("utf-8")
+        ).hexdigest(),
+        "semantic_checks": semantics,
+        "checksum_verified": True,
+        "is_live_vendor": True,
+        "is_hermetic_advisor_shim": False,
+        "role": ADVISOR_ROLE,
+        "authority_ceiling": ADVISOR_AUTHORITY_CEILING,
+        "grants_theorem_authority": False,
+        "grants_proof_authority": False,
+        "license": pin.license,
+        "license_components": list(ERGOAI_LICENSE_COMPONENTS),
+        "source": pin.source,
+    }
+    identity["identity_digest_sha256"] = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    identity_path = _ergoai_identity_path(root, pin.version)
+    _write_identity_manifest(identity_path, identity)
+
+    provenance = _validate_ergoai_managed_provenance(
+        install_root=root,
+        expected_version=pin.version,
+        expected_platform=platform_name,
+    )
+    if not provenance.get("managed_vendor_provenance_verified"):
+        return fail(
+            "provenance",
+            "managed_vendor_provenance_unverified",
+            "ErgoAI identity manifest did not replay against installed artifacts.",
+        )
+
+    os.environ["ERGOAI_BINARY"] = str(primary_launcher)
+    receipt.executable_path = str(primary_launcher)
+    receipt.installed = True
+    receipt.status = "installed"
+    receipt.phase = "installed"
+    receipt.bindings["managed_provenance"] = {
+        "identity_manifest_path": str(identity_path),
+        "identity_digest_sha256": identity["identity_digest_sha256"],
+        "managed_vendor_provenance_verified": True,
+        "is_hermetic_advisor_shim": False,
+    }
+    receipt.bindings["semantic_checks"] = semantics
+    receipt.messages.append(
+        f"Installed checksummed ErgoAI {pin.version} for {platform_name}; "
+        "runtime remains advisor/candidate only"
+    )
+    _announce(receipt.messages[-1], on_progress, phase="installed")
     return receipt
 
 
@@ -1465,6 +2263,13 @@ __all__ = [
     "ADVISOR_INSTALL_TOOLS",
     "SYMBOLICAI_VERSION",
     "ERGOAI_VERSION",
+    "ERGOAI_RELEASE_TAG",
+    "ERGOAI_RELEASE_URL",
+    "ERGOAI_RELEASE_SHA256",
+    "ERGOAI_RELEASE_SIZE_BYTES",
+    "ERGOAI_SUPPORTED_PLATFORMS",
+    "ERGOAI_BUILD_COMMANDS",
+    "ERGOAI_LICENSE_COMPONENTS",
     "LOCKED_VERSIONS",
     "ADVISOR_ROLE",
     "ADVISOR_AUTHORITY_CEILING",
@@ -1483,6 +2288,8 @@ __all__ = [
     "python_version_satisfies_range",
     "probe_symbolicai_package",
     "probe_ergoai_identity",
+    "read_ergoai_version_banner",
+    "run_ergoai_semantic_checks",
     "authorize_plugin_install",
     "materialize_hermetic_ergoai",
     "materialize_hermetic_symbolicai_marker",

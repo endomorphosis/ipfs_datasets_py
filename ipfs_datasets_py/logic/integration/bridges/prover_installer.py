@@ -28,6 +28,7 @@ Environment variables (all optional):
 - IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS: allow lazy Coq install to use interactive sudo (default: 0)
 - IPFS_DATASETS_PY_ERGOAI_GIT_URL: override ErgoAI/ErgoEngine source repository.
 - IPFS_DATASETS_PY_ERGOAI_RELEASE_URL: override the official ErgoAI .run installer URL.
+- IPFS_DATASETS_PY_ERGOAI_RELEASE_SHA256: required checksum for a release URL override.
 - IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR: user-local directory for official ErgoAI release installs.
 - IPFS_DATASETS_PY_ERGOAI_INSTALL_RELEASE=0: skip the official release installer path.
 - IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND: custom command used before git clone fallback.
@@ -992,15 +993,15 @@ _SYSTEM_PACKAGE_NAMES: dict[str, dict[str, list[str]]] = {
         "mamba": ["coq"],
     },
     "ergoai_build": {
-        "apt": ["git", "make", "gcc", "g++", "unzip", "tar"],
-        "dnf": ["git", "make", "gcc", "gcc-c++", "unzip", "tar"],
-        "yum": ["git", "make", "gcc", "gcc-c++", "unzip", "tar"],
-        "pacman": ["git", "make", "gcc", "unzip", "tar"],
-        "zypper": ["git", "make", "gcc", "gcc-c++", "unzip", "tar"],
-        "apk": ["git", "make", "gcc", "g++", "musl-dev", "unzip", "tar"],
-        "brew": ["git", "make", "gcc", "unzip"],
-        "conda": ["git", "make", "compilers", "unzip"],
-        "mamba": ["git", "make", "compilers", "unzip"],
+        "apt": ["git", "make", "gcc", "g++", "flex", "bison", "unzip", "tar"],
+        "dnf": ["git", "make", "gcc", "gcc-c++", "flex", "bison", "unzip", "tar"],
+        "yum": ["git", "make", "gcc", "gcc-c++", "flex", "bison", "unzip", "tar"],
+        "pacman": ["git", "make", "gcc", "flex", "bison", "unzip", "tar"],
+        "zypper": ["git", "make", "gcc", "gcc-c++", "flex", "bison", "unzip", "tar"],
+        "apk": ["git", "make", "gcc", "g++", "musl-dev", "flex", "bison", "unzip", "tar"],
+        "brew": ["git", "make", "gcc", "flex", "bison", "unzip"],
+        "conda": ["git", "make", "compilers", "flex", "bison", "unzip"],
+        "mamba": ["git", "make", "compilers", "flex", "bison", "unzip"],
     },
 }
 
@@ -1298,7 +1299,7 @@ def _download_file(
     try:
         destination.parent.mkdir(parents=True, exist_ok=True)
         if destination.is_file():
-            observed = _sha256_path(destination)
+            observed = _sha256(destination)
             size_matches = (
                 not expected_size_bytes
                 or destination.stat().st_size == expected_size_bytes
@@ -1308,7 +1309,7 @@ def _download_file(
         print(f"Downloading ErgoAI release installer from {url}...")
         partial = destination.with_suffix(destination.suffix + ".partial")
         urllib.request.urlretrieve(url, partial)
-        observed = _sha256_path(partial)
+        observed = _sha256(partial)
         size_matches = (
             not expected_size_bytes or partial.stat().st_size == expected_size_bytes
         )
@@ -1332,7 +1333,11 @@ def _install_ergoai_release(*, strict: bool) -> bool:
     if os.environ.get("IPFS_DATASETS_PY_ERGOAI_INSTALL_RELEASE") == "0":
         return False
     system = platform.system().lower()
-    machine = _normalized_machine()
+    machine = platform.machine().lower()
+    if machine == "amd64":
+        machine = "x86_64"
+    elif machine == "arm64":
+        machine = "aarch64"
     if (system, machine) not in ERGOAI_RELEASE_SUPPORTED_PLATFORMS:
         print(
             "No reviewed ErgoAI 3.0 release pin for "
@@ -1633,9 +1638,9 @@ def ensure_ergoai(
     Strategy:
     - Respect ``ERGOAI_BINARY`` or an existing ``ergo``/``ergoai``/``runErgo.sh``.
     - Run ``IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND`` when configured.
-    - Install the official user-local ErgoAI release on Linux/macOS when enabled.
-    - Hydrate the vendored ``ipfs_datasets_py/logic/ErgoAI`` checkout from
-      ErgoAI/ErgoEngine as a best-effort source install.
+    - Install the official user-local ErgoAI release on reviewed Linux platforms.
+    - Fail closed rather than hydrating an unpinned/incomplete source checkout;
+      the official release contains the matching XSB source needed to build.
 
     ErgoAI may still require host-specific build/runtime dependencies.  In
     that case this function leaves a clear message and the wrapper can continue
@@ -1671,13 +1676,10 @@ def ensure_ergoai(
 
     if force:
         _announce(
-            "ErgoAI update requested. Refreshing the configured source checkout; "
-            "set IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND to select a reviewed release.",
+            "ErgoAI update requested. Revalidating the checksummed official release; "
+            "set IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND only for an operator-reviewed override.",
             on_progress,
         )
-        if _clone_or_update_ergoai(strict=strict):
-            _announce("Updated the configured ErgoAI source checkout.", on_progress, phase="installed")
-            return True
 
     profile = detect_platform_install_profile()
     build_packages = _package_names_for("ergoai_build", profile.package_manager)
@@ -1695,14 +1697,6 @@ def ensure_ergoai(
             os.environ["ERGOAI_BINARY"] = str(binary)
             _write_ergoai_launchers(Path(binary))
         _announce("Installed the configured ErgoAI release.", on_progress, phase="installed")
-        return True
-
-    if _clone_or_update_ergoai(strict=strict):
-        binary = _find_ergoai_binary()
-        if binary is not None:
-            os.environ["ERGOAI_BINARY"] = str(binary)
-            _write_ergoai_launchers(Path(binary))
-        _announce("Installed ErgoAI from the configured source checkout.", on_progress, phase="installed")
         return True
 
     _announce(
