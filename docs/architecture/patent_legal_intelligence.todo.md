@@ -1350,7 +1350,7 @@ Program invariants:
 
 ## PATLAW-102 Verify JusticeDAO publication through the append-only publisher
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
