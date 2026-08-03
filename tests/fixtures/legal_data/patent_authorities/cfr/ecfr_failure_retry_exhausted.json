@@ -1,0 +1,30 @@
+{
+  "failures": [
+    {
+      "attempts": 5,
+      "endpoint": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+      "kind": "retry_exhausted",
+      "message": "eCFR retries exhausted after 5 attempts",
+      "response_status": 503
+    }
+  ],
+  "fixture_id": "ecfr-failure-retry_exhausted",
+  "notes": "Typed failure fixture for retry_exhausted.",
+  "packages": {},
+  "presentation_label": "unofficial presentation",
+  "schema_version": "ecfr-crosscheck-fixture-v1",
+  "sections": [],
+  "title": "37",
+  "version": {
+    "content_sha256": "3c8cd9abc3d9c38c772dccc66db829dcb6f1217f16f8a0640558f9251efc541d",
+    "is_current_snapshot": true,
+    "provider": "ecfr",
+    "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+    "title": "37",
+    "up_to_date_as_of": "2024-07-01",
+    "version_id": "ecfr-title-37-as-of-2024-07-01"
+  },
+  "version_history": [
+    "2024-07-01"
+  ]
+}

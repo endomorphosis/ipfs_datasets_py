@@ -1,0 +1,124 @@
+{
+  "failures": [],
+  "fixture_id": "ecfr-title37-historical-2020-01-01",
+  "notes": "Compact historical Title 37 eCFR as-of recipe. Current eCFR text is not used to judge a historical event without as-of reconstruction.",
+  "packages": {
+    "full_xml": {
+      "byte_size": 2100000,
+      "content_kind": "full_xml",
+      "content_sha256": "bfead8966372b4d6c91b9505cb70568745c5c27bfe94ba85d7c9b209f436fed2",
+      "media_type": "application/xml",
+      "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2020-01-01/title-37.xml",
+      "up_to_date_as_of": "2020-01-01",
+      "version_id": "ecfr-title-37-as-of-2020-01-01"
+    },
+    "structure": {
+      "byte_size": 3500,
+      "content_kind": "structure",
+      "content_sha256": "bf663b6571cb9800525c491eda0557a9741888165050320b2b11bea513056147",
+      "media_type": "application/json",
+      "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2020-01-01/title-37.json",
+      "up_to_date_as_of": "2020-01-01",
+      "version_id": "ecfr-title-37-as-of-2020-01-01"
+    }
+  },
+  "presentation_label": "unofficial presentation",
+  "schema_version": "ecfr-crosscheck-fixture-v1",
+  "sections": [
+    {
+      "amendment": {
+        "amendatory_action": "in force",
+        "effective_date": "1992-03-16",
+        "notes": "Historical text as of 2020-01-01"
+      },
+      "citation": "37 CFR 1.56",
+      "content_kind": "section",
+      "content_sha256": "65d3860841a6899d146c38e3b106ceeae7d3b3e82e44dad90998aa419830f5e8",
+      "heading": "Duty to disclose information material to patentability",
+      "media_type": "application/xml",
+      "part": "1",
+      "section": "1.56",
+      "source_url": "https://www.ecfr.gov/current/title-37/section-1.56",
+      "text_excerpt": "[historical excerpt 37 CFR 1.56 as of 2020-01-01]",
+      "title": "37",
+      "up_to_date_as_of": "2020-01-01",
+      "version_id": "ecfr-title-37-as-of-2020-01-01"
+    },
+    {
+      "amendment": {
+        "amendatory_action": "in force",
+        "effective_date": "1992-03-16",
+        "notes": "Historical text as of 2020-01-01"
+      },
+      "citation": "37 CFR 1.97",
+      "content_kind": "section",
+      "content_sha256": "13f0e09f834b4b63d12477da12ccd296799147e79ae49c00dd83b6f667af4a21",
+      "heading": "Filing of information disclosure statement",
+      "media_type": "application/xml",
+      "part": "1",
+      "section": "1.97",
+      "source_url": "https://www.ecfr.gov/current/title-37/section-1.97",
+      "text_excerpt": "[historical excerpt 37 CFR 1.97 as of 2020-01-01]",
+      "title": "37",
+      "up_to_date_as_of": "2020-01-01",
+      "version_id": "ecfr-title-37-as-of-2020-01-01"
+    },
+    {
+      "amendment": {
+        "amendatory_action": "in force",
+        "effective_date": "1992-03-16",
+        "notes": "Historical text as of 2020-01-01"
+      },
+      "citation": "37 CFR 1.98",
+      "content_kind": "section",
+      "content_sha256": "d86bd3d7456fb22953c8ef4f152942e5cc196622fb2f790767c1cf96e15b4442",
+      "heading": "Content of information disclosure statement",
+      "media_type": "application/xml",
+      "part": "1",
+      "section": "1.98",
+      "source_url": "https://www.ecfr.gov/current/title-37/section-1.98",
+      "text_excerpt": "[historical excerpt 37 CFR 1.98 as of 2020-01-01]",
+      "title": "37",
+      "up_to_date_as_of": "2020-01-01",
+      "version_id": "ecfr-title-37-as-of-2020-01-01"
+    },
+    {
+      "amendment": {
+        "amendatory_action": "in force",
+        "effective_date": "2004-09-13",
+        "notes": "Historical text as of 2020-01-01"
+      },
+      "citation": "37 CFR 41.50",
+      "content_kind": "section",
+      "content_sha256": "a6557650628159092ae1618e8e63dfcd1ecf356d0b522cc8890a81a349972fb8",
+      "heading": "Decisions and other actions by the Board",
+      "media_type": "application/xml",
+      "part": "41",
+      "section": "41.50",
+      "source_url": "https://www.ecfr.gov/current/title-37/section-41.50",
+      "text_excerpt": "[historical excerpt 37 CFR 41.50 as of 2020-01-01]",
+      "title": "37",
+      "up_to_date_as_of": "2020-01-01",
+      "version_id": "ecfr-title-37-as-of-2020-01-01"
+    }
+  ],
+  "title": "37",
+  "version": {
+    "content_sha256": "bfead8966372b4d6c91b9505cb70568745c5c27bfe94ba85d7c9b209f436fed2",
+    "full_xml_url": "https://www.ecfr.gov/api/versioner/v1/full/2020-01-01/title-37.xml",
+    "is_current_snapshot": false,
+    "provider": "ecfr",
+    "retrieved_at": "2024-07-15T12:05:00Z",
+    "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2020-01-01/title-37.json",
+    "structure_url": "https://www.ecfr.gov/api/versioner/v1/structure/2020-01-01/title-37.json",
+    "title": "37",
+    "up_to_date_as_of": "2020-01-01",
+    "version_id": "ecfr-title-37-as-of-2020-01-01",
+    "versions_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json"
+  },
+  "version_history": [
+    "2018-07-01",
+    "2019-07-01",
+    "2020-01-01"
+  ]
+}
