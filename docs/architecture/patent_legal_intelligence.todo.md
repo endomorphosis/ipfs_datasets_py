@@ -2109,7 +2109,7 @@ Program invariants:
 
 ## PATLAW-146 Build persistent incremental BM25, vector, and graph snapshots
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
