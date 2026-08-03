@@ -1884,7 +1884,7 @@ Program invariants:
 
 ## PATLAW-137 Build versioned baseline filing-obligation packs
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
