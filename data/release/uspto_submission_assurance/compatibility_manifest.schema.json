@@ -1,0 +1,385 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/uspto-cross-repo-compatibility-manifest.v1.schema.json",
+  "title": "USPTO Cross-Repo Compatibility Manifest v1",
+  "description": "Atomic compatibility receipt for a serialized datasets/accelerator upstream pair (PATLAW-080). An accepted manifest binds both repository SHAs and test receipts. Push is forbidden; recursive mutual-submodule chase is forbidden; dirty or active work aborts without mutation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "interface",
+    "manifest_id",
+    "status",
+    "trigger",
+    "datasets",
+    "accelerator",
+    "test_receipts",
+    "policy",
+    "started_at_utc",
+    "completed_at_utc",
+    "mutation_attempted",
+    "push_attempted",
+    "recursive_submodule_chase"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "uspto.cross-repo-compatibility.v1"
+    },
+    "interface": {
+      "const": "UsptoCrossRepoCompatibility@1"
+    },
+    "manifest_id": {
+      "$ref": "#/$defs/manifestId"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "rejected", "aborted"]
+    },
+    "trigger": {
+      "$ref": "#/$defs/trigger"
+    },
+    "datasets": {
+      "$ref": "#/$defs/repoPin"
+    },
+    "accelerator": {
+      "$ref": "#/$defs/repoPin"
+    },
+    "test_receipts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/testReceipt"
+      },
+      "minItems": 0
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "started_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "completed_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "abort_reason": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      ]
+    },
+    "mutation_attempted": {
+      "type": "boolean",
+      "description": "True only when a non-fetch working-tree mutation was attempted."
+    },
+    "push_attempted": {
+      "type": "boolean",
+      "const": false,
+      "description": "Push is never permitted; must always be false."
+    },
+    "recursive_submodule_chase": {
+      "type": "boolean",
+      "const": false,
+      "description": "Recursive mutual-submodule updates are never permitted; must always be false."
+    },
+    "conflict": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/conflictRecord" }
+      ]
+    },
+    "lock_path": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      ]
+    },
+    "receipt_digest_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/sha256Hex" }
+      ]
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 512
+      },
+      "maxItems": 32
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "accepted" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["datasets", "accelerator", "test_receipts"],
+        "properties": {
+          "datasets": {
+            "type": "object",
+            "required": ["name", "sha"],
+            "properties": {
+              "sha": { "$ref": "#/$defs/gitSha" }
+            }
+          },
+          "accelerator": {
+            "type": "object",
+            "required": ["name", "sha"],
+            "properties": {
+              "sha": { "$ref": "#/$defs/gitSha" }
+            }
+          },
+          "test_receipts": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["name", "status", "exit_code"],
+              "properties": {
+                "status": { "const": "passed" },
+                "exit_code": { "const": 0 }
+              }
+            }
+          },
+          "abort_reason": { "type": "null" },
+          "mutation_attempted": { "type": "boolean" },
+          "push_attempted": { "const": false },
+          "recursive_submodule_chase": { "const": false }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "aborted" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["abort_reason"],
+        "properties": {
+          "abort_reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mutation_attempted": { "const": false }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "manifestId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "startup",
+        "eight-hour",
+        "twice-daily",
+        "pre-release",
+        "security-fix"
+      ],
+      "description": "Explicit operator/scheduler trigger. startup and eight-hour are fetch-only; twice-daily, pre-release, and security-fix perform serialized integration on clean branches."
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Full 40-character lowercase git object SHA."
+    },
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "repoPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "sha"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": ["datasets", "accelerator"]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "ref": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            { "type": "null" }
+          ]
+        },
+        "origin_url": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024
+            },
+            { "type": "null" }
+          ]
+        },
+        "dirty": {
+          "type": "boolean"
+        },
+        "fetched": {
+          "type": "boolean"
+        }
+      }
+    },
+    "testReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status", "exit_code"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "skipped", "error"]
+        },
+        "exit_code": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "command": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "sha256": {
+          "oneOf": [
+            { "$ref": "#/$defs/sha256Hex" },
+            { "type": "null" }
+          ]
+        },
+        "datasets_sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "accelerator_sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "push_allowed",
+        "recursive_submodules",
+        "require_clean_worktree",
+        "fail_closed_on_conflict",
+        "serialize_integrations",
+        "fetch_only_triggers",
+        "integration_triggers"
+      ],
+      "properties": {
+        "push_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "recursive_submodules": {
+          "type": "boolean",
+          "const": false
+        },
+        "require_clean_worktree": {
+          "type": "boolean",
+          "const": true
+        },
+        "fail_closed_on_conflict": {
+          "type": "boolean",
+          "const": true
+        },
+        "serialize_integrations": {
+          "type": "boolean",
+          "const": true
+        },
+        "fetch_only_triggers": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/trigger" },
+          "contains": { "const": "startup" }
+        },
+        "integration_triggers": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/trigger" }
+        }
+      }
+    },
+    "conflictRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "message"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "merge_conflict",
+            "divergent_history",
+            "dirty_worktree",
+            "active_work",
+            "lock_held",
+            "sha_mismatch",
+            "submodule_cycle",
+            "policy_violation"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "maxItems": 64
+        }
+      }
+    }
+  }
+}
