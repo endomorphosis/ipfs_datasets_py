@@ -2059,7 +2059,7 @@ Program invariants:
 
 ## PATLAW-144 Define persistent content-addressed index snapshot contracts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
