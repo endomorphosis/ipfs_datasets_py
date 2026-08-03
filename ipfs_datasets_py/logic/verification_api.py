@@ -19,11 +19,12 @@ Design invariants
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Any, Final, Optional
+from typing import Any, Final
 
 from ipfs_datasets_py.logic.ir_core.claims import FrozenMap, stable_digest
 
@@ -543,43 +544,85 @@ def _is_cancelled(cancellation: object | None) -> bool:
 
 
 def _redact_public_mapping(value: object, *, label: str = "payload") -> dict[str, Any]:
-    """Drop private/secret channels from public response payloads."""
+    """Normalize a public response to bounded JSON primitives or fail closed."""
 
-    forbidden_markers = (
+    forbidden_keys = {
         "secret",
+        "secrets",
         "password",
+        "passwords",
         "credential",
+        "credentials",
         "private_key",
+        "private_key_bytes",
+        "private_witness",
         "raw_witness",
         "hidden_witness",
+        "witness_bytes",
+        "proving_key",
+        "proving_key_bytes",
+        "verification_key_bytes",
+        "trapdoor",
+        "toxic_waste",
+        "coordinator_seed",
         "authorization_token",
+        "access_token",
+        "refresh_token",
         "api_key",
         "bearer",
-    )
+        "stdin",
+        "private",
+        "raw",
+    }
+
+    def _key(value: object) -> str:
+        return str(value).strip().lower().replace("-", "_").replace(" ", "_")
 
     def _walk(node: Any, *, path: str) -> Any:
         if isinstance(node, Mapping):
             cleaned: dict[str, Any] = {}
             for key, item in node.items():
                 key_text = str(key)
-                lowered = key_text.lower()
-                if any(marker in lowered for marker in forbidden_markers):
-                    continue
-                if lowered in {"raw", "private", "secrets", "credentials", "stdin"}:
-                    continue
+                if _key(key_text) in forbidden_keys:
+                    raise VerificationAPIError(
+                        f"private field is forbidden in {path}.{key_text}"
+                    )
                 cleaned[key_text] = _walk(item, path=f"{path}.{key_text}")
             return cleaned
         if isinstance(node, (list, tuple)):
             return [_walk(item, path=f"{path}[]") for item in node]
+        if isinstance(node, (bytes, bytearray, memoryview)):
+            raise VerificationAPIError(f"binary material is forbidden in {path}")
         if isinstance(node, str) and len(node) > 16_384:
             return node[:16_384] + "…[truncated]"
-        return node
+        if node is None or isinstance(node, (str, bool, int, float)):
+            return node
+        raise VerificationAPIError(
+            f"unsupported non-JSON value {type(node).__name__} in {path}"
+        )
 
     if value is None:
         return {}
-    if not isinstance(value, Mapping):
-        return {"value": _walk(value, path=label)}
-    return _walk(value, path=label)
+    normalized = (
+        _walk(value, path=label)
+        if isinstance(value, Mapping)
+        else {"value": _walk(value, path=label)}
+    )
+    try:
+        encoded = json.dumps(
+            normalized,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise VerificationAPIError(f"{label} is not strict JSON") from exc
+    if len(encoded) > 256_000:
+        raise VerificationAPIError(f"{label} exceeds the 256000-byte public limit")
+    if not isinstance(normalized, dict):  # pragma: no cover - construction invariant
+        raise VerificationAPIError(f"{label} must normalize to a mapping")
+    return normalized
 
 
 def _reject_forbidden_controls(payload: Mapping[str, Any] | None, operation: str) -> str | None:
@@ -858,8 +901,14 @@ class LogicVerificationAPI:
     interface: Final = LOGIC_VERIFICATION_API_INTERFACE
     version: Final = LOGIC_VERIFICATION_API_VERSION
 
-    def __init__(self, *, backend_registry: Any | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        backend_registry: Any | None = None,
+        installer_executor: Any | None = None,
+    ) -> None:
         self._backend_registry = backend_registry
+        self._installer_executor = installer_executor
 
     def _registry(self) -> Any:
         if self._backend_registry is not None:
@@ -2881,48 +2930,223 @@ class LogicVerificationAPI:
         *,
         request_id: str = "",
         allow_install: bool = False,
+        dry_run: bool = False,
+        offline: bool = False,
+        force: bool = False,
+        strict: bool = False,
+        installer_options: Mapping[str, Any] | None = None,
     ) -> VerificationResponse:
-        """Opt-in installer hook.
+        """Plan or explicitly execute one reviewed provider installation.
 
-        Installation is never performed by default.  Callers must pass
-        ``allow_install=True``; even then this facade only reports the
-        install pathway and does not mutate the environment unless a bound
-        installer is injected in a future revision.
+        Denied authorization, inventory, dry-run, and offline paths never
+        import a family plugin.  Live mutation requires ``allow_install=True``
+        and delegates to ``LogicVerificationLazyInstaller@1``, which resolves
+        exactly one registry-selected callable and returns bounded evidence.
         """
 
         provider_id = _text(provider_id, "provider_id")
         request_id = _text(request_id, "request_id", optional=True)
-        if not allow_install:
+        try:
+            for label, value in (
+                ("allow_install", allow_install),
+                ("dry_run", dry_run),
+                ("offline", offline),
+                ("force", force),
+                ("strict", strict),
+            ):
+                if type(value) is not bool:
+                    raise VerificationAPIError(f"{label} must be a boolean")
+            if installer_options is not None and not isinstance(
+                installer_options, Mapping
+            ):
+                raise VerificationAPIError("installer_options must be a mapping")
+
+            # The public boundary itself owns denial, dry-run, and offline
+            # behavior.  It never delegates these paths—even to an injected
+            # executor—so discovery/test doubles cannot hide side effects.
+            if not allow_install or dry_run or offline:
+                from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+                    LOGIC_VERIFICATION_INSTALL_RECEIPT_SCHEMA,
+                    plan_reviewed_install,
+                )
+
+                plan = plan_reviewed_install(
+                    provider_id,
+                    force=force,
+                    installer_options=dict(installer_options or {}),
+                )
+                boundary_status = (
+                    "planned"
+                    if dry_run
+                    else "blocked"
+                    if offline
+                    else "authorization_required"
+                )
+                receipt: Mapping[str, Any] = {
+                    "schema_version": LOGIC_VERIFICATION_INSTALL_RECEIPT_SCHEMA,
+                    "interface": "LogicVerificationLazyInstaller@1",
+                    "provider_id": provider_id,
+                    "status": boundary_status,
+                    "plan": plan,
+                    "dry_run": dry_run,
+                    "offline": offline,
+                    "install_attempted": False,
+                    "mutation_authorized": False,
+                    "installed": False,
+                    "certified": False,
+                    "authority": "none",
+                    "evidence": {
+                        "authorization": {
+                            "allowed": False,
+                            "reason": (
+                                "dry_run"
+                                if dry_run
+                                else "offline_policy"
+                                if offline
+                                else "allow_install_required"
+                            ),
+                        },
+                        "network": {"attempted": False},
+                    },
+                }
+            else:
+                if self._installer_executor is not None:
+                    executor = self._installer_executor
+                else:
+                    from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+                        execute_reviewed_install,
+                    )
+
+                    executor = execute_reviewed_install
+                receipt = executor(
+                    provider_id,
+                    allow_install=allow_install,
+                    dry_run=dry_run,
+                    offline=offline,
+                    force=force,
+                    strict=strict,
+                    installer_options=dict(installer_options or {}),
+                )
+                if not isinstance(receipt, Mapping):
+                    raise VerificationAPIError(
+                        "installer executor must return a mapping"
+                    )
+            payload = _redact_public_mapping(receipt, label="installer_receipt")
+        except Exception as error:
+            registry_error = type(error).__name__ == "InstallerRegistryError"
+            invalid = not registry_error and isinstance(
+                error, (VerificationAPIError, TypeError, ValueError)
+            )
+            error_result: dict[str, Any] = {
+                "provider_id": provider_id,
+                "installed": False,
+            }
+            if invalid:
+                error_result.update(
+                    {
+                        "status": "invalid_options",
+                        "install_attempted": False,
+                        "mutation_authorized": False,
+                        "evidence": {
+                            "unsupported_options": sorted(
+                                str(key) for key in (installer_options or {})
+                            )
+                        },
+                    }
+                )
             return _response(
                 "install_provider",
-                VerificationStatus.UNSUPPORTED,
+                VerificationStatus.INVALID
+                if invalid
+                else VerificationStatus.UNSUPPORTED
+                if registry_error
+                else VerificationStatus.ERROR,
                 authority=VerificationAuthority.NONE,
-                result={"provider_id": provider_id, "installed": False},
-                unsupported_features=("install_without_opt_in",),
-                diagnostics=(
-                    "install_provider requires allow_install=True; "
-                    "discovery never installs providers",
-                ),
+                result=error_result,
+                unsupported_features=(f"provider_installer:{provider_id}",),
+                diagnostics=(f"{type(error).__name__}: {error}",),
                 request_id=request_id,
                 provider_id=provider_id,
             )
-        # Fail closed: the stable facade does not perform installs itself.
+
+        install_status = str(payload.get("status") or "failed").strip().lower()
+        evidence = payload.get("evidence")
+        evidence = evidence if isinstance(evidence, Mapping) else {}
+        checksum = evidence.get("checksum")
+        checksum = checksum if isinstance(checksum, Mapping) else {}
+        rollback = evidence.get("rollback")
+        rollback = rollback if isinstance(rollback, Mapping) else {}
+        semantic_probe = evidence.get("semantic_probe")
+        checksum_complete = (
+            checksum.get("required") is not True
+            or checksum.get("verified") is True
+        )
+        rollback_complete = (
+            rollback.get("required") is not True
+            or rollback.get("verified") is True
+        )
+        independently_complete = bool(
+            payload.get("certified") is True
+            and checksum_complete
+            and evidence.get("identity_bound") is True
+            and isinstance(semantic_probe, Mapping)
+            and bool(semantic_probe)
+            and rollback_complete
+        )
+        availability_statuses = {"installed", "available", "already_present"}
+        unverified_statuses = {
+            "installed_unverified",
+            "available_unverified",
+            "already_present_unverified",
+        }
+        if install_status in availability_statuses:
+            status = (
+                VerificationStatus.SUCCEEDED
+                if independently_complete
+                else VerificationStatus.PARTIAL
+            )
+        elif install_status in unverified_statuses:
+            status = VerificationStatus.PARTIAL
+        else:
+            status = {
+            "planned": VerificationStatus.DECLARATIVE,
+            "authorization_required": VerificationStatus.UNSUPPORTED,
+            "refused": VerificationStatus.UNSUPPORTED,
+            "blocked": VerificationStatus.UNAVAILABLE,
+            "unavailable": VerificationStatus.UNAVAILABLE,
+            "unsupported_platform": VerificationStatus.UNAVAILABLE,
+            "invalid_options": VerificationStatus.INVALID,
+            "failed": VerificationStatus.ERROR,
+            }.get(install_status, VerificationStatus.ERROR)
+        unsupported: tuple[str, ...] = ()
+        diagnostics: tuple[str, ...] = ()
+        if install_status == "authorization_required":
+            unsupported = ("install_without_opt_in",)
+            diagnostics = (
+                "install_provider requires allow_install=True for mutation; "
+                "the returned plan performed no plugin import or install",
+            )
+        elif install_status in {"blocked", "unsupported_platform", "unavailable"}:
+            unsupported = (
+                "offline_install" if offline else f"provider_installer:{provider_id}",
+            )
+        elif status is VerificationStatus.PARTIAL:
+            diagnostics = (
+                "provider is available or installed, but required checksum, "
+                "identity, rollback, and semantic evidence is incomplete",
+            )
+        elif install_status == "failed":
+            diagnostics = (str(payload.get("error") or "provider installation failed"),)
         return _response(
             "install_provider",
-            VerificationStatus.UNAVAILABLE,
+            status,
             authority=VerificationAuthority.NONE,
-            result={
-                "provider_id": provider_id,
-                "installed": False,
-                "reason": "installer_not_bound_in_facade",
-            },
-            unsupported_features=("provider_installer",),
-            diagnostics=(
-                "no installer is bound to LogicVerificationAPI; "
-                "use the toolchain installer surface explicitly",
-            ),
+            result=payload,
+            unsupported_features=unsupported,
+            diagnostics=diagnostics,
             request_id=request_id,
             provider_id=provider_id,
+            cache=_empty_cache(source="reviewed_installer"),
         )
 
     # ── GoalTacticianAPI@1 (FVT-G050) ─────────────────────────────────────

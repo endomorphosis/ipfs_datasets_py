@@ -208,6 +208,17 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Explicit opt-in for install side effects",
     )
+    p_install.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Return the reviewed install plan without importing a plugin",
+    )
+    p_install.add_argument(
+        "--offline",
+        action="store_true",
+        help="Enforce the no-command/no-network offline boundary",
+    )
+    p_install.add_argument("--force", action="store_true")
     p_install.add_argument("--request-id", default="")
 
     p_v_caps = sub.add_parser(
@@ -292,11 +303,23 @@ async def _run_verification_command(ns: argparse.Namespace) -> Dict[str, Any]:
             request_id=ns.request_id or "",
         )
     if cmd == "install-provider":
-        return await lv.verification_install_provider(
-            provider_id=ns.provider_id,
-            allow_install=bool(ns.allow_install),
-            request_id=ns.request_id or "",
+        # A local CLI invocation is itself the operator boundary.  Keep it
+        # separate from the MCP wrapper's additional server-policy gate while
+        # still offloading potentially long native builds from the event loop.
+        from ipfs_datasets_py.logic.verification_api import get_verification_api
+
+        response = await anyio.to_thread.run_sync(
+            lambda: get_verification_api().install_provider(
+                ns.provider_id,
+                allow_install=bool(ns.allow_install),
+                dry_run=bool(ns.dry_run),
+                offline=bool(ns.offline),
+                force=bool(ns.force),
+                request_id=ns.request_id or "",
+            ),
+            abandon_on_cancel=False,
         )
+        return response.to_dict()
     if cmd == "verification-capabilities":
         payload = await lv.verification_capabilities()
         payload["cli_interface"] = LOGIC_VERIFICATION_CLI_INTERFACE
@@ -426,6 +449,12 @@ def main(argv: Optional[List[str]] = None) -> int:
             "verification-capabilities",
         }
         _print(data, json_output=force_json)
+        if ns.command == "install-provider" and isinstance(data, dict):
+            install_status = str(data.get("status") or "error").strip().lower()
+            if install_status == "partial":
+                return 3
+            if install_status not in {"succeeded", "declarative"}:
+                return 2
         return 0
     except KeyboardInterrupt:
         return 1

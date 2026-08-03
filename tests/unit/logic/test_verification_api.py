@@ -289,9 +289,10 @@ def test_monitor_receipt_advisor_and_opt_in_ops() -> None:
     assert no_install.status is VerificationStatus.UNSUPPORTED
     assert "install_without_opt_in" in no_install.unsupported_features
 
-    install_unbound = api.install_provider("z3", allow_install=True)
-    assert install_unbound.status is VerificationStatus.UNAVAILABLE
-    assert "provider_installer" in install_unbound.unsupported_features
+    install_plan = api.install_provider("z3", allow_install=True, dry_run=True)
+    assert install_plan.status is VerificationStatus.DECLARATIVE
+    assert install_plan.result["status"] == "planned"
+    assert install_plan.result["install_attempted"] is False
 
     probe = api.probe_provider("z3")
     assert probe.status in {

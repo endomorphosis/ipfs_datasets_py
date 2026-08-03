@@ -251,6 +251,14 @@ def test_platform_system_install_runs_update_and_install(monkeypatch):
     commands = []
 
     monkeypatch.setattr(prover_installer, "detect_platform_install_profile", lambda: profile)
+    # This unit test exercises command planning with a mocked executor.  The
+    # production guard correctly rejects real system-package mutation under
+    # pytest, so make the no-op boundary explicit instead of weakening it.
+    monkeypatch.setattr(
+        prover_installer,
+        "refuse_system_package_mutation_in_tests",
+        lambda **_kwargs: None,
+    )
     monkeypatch.setattr(
         prover_installer,
         "_run",
