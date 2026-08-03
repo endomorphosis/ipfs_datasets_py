@@ -1000,7 +1000,7 @@ Program invariants:
 
 ## PATLAW-072 Prove deterministic offline end-to-end replay
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
