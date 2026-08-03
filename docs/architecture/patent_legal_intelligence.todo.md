@@ -2509,7 +2509,7 @@ Program invariants:
 
 ## PATLAW-162 Install recurring fetch, integration, and release triggers
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
