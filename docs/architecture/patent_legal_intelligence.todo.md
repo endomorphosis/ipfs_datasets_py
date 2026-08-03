@@ -1149,7 +1149,7 @@ Program invariants:
 
 ## PATLAW-090 Define source-linked BM25, vector, graph, and evaluation contracts
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
