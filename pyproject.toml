@@ -13,6 +13,23 @@ requires-python = ">=3.12"
 # prefer the vendored ipfs_kit_py/ipfs_accelerate_py checkouts when present.
 dynamic = ["dependencies"]
 
+[tool.ipfs-datasets-py.dependency-inventory]
+schema-version = "ipfs-datasets-dependency-inventory/v1"
+runtime-authority = "setup.py:install_requires"
+requirements-txt-role = "source-checkout-development-and-integration"
+requirements-lazy-role = "eager-superset-of-first-use-lazy-catalog"
+requirements-theorem-provers-role = "theorem-python-binding-profile"
+parity-scope = "formal-verification-python-bindings"
+shared-formal-verification-bindings = [
+    "z3-solver",
+    "cvc5",
+    "pysmt",
+    "beartype",
+    "jsonschema",
+]
+optional-formal-verification-bindings = ["symbolicai"]
+external-native-tools-policy = "explicit-transactional-lazy-installer-only"
+
 [project.optional-dependencies]
 # IPLD / CAR format extras
 ipld = [

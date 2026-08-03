@@ -2460,11 +2460,9 @@ def _identity_from_disk(
                     r"[0-9a-f]{64}",
                     str(payload.get("deployment_lock_sha256") or ""),
                 )
-                or (
-                    not is_relocated_install
-                    and payload.get("deployment_lock_sha256")
-                    != contract["deployment_lock_sha256"]
-                )
+                # The manifest lock digest records build-time provenance.  A
+                # later lock revision is acceptable only when the validated
+                # Soufflé pin contract below is unchanged.
                 or payload.get("pin_contract_sha256")
                 != contract["pin_contract_sha256"]
                 or dict(build_deps) != contract["build_dependencies"]

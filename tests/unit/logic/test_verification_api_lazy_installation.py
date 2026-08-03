@@ -601,6 +601,42 @@ def test_failed_publication_and_missing_rollback_never_promote_authority(
     assert partial.result["evidence"]["rollback"]["verified"] is False
 
 
+def test_truthy_non_boolean_transaction_marker_cannot_certify(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = importlib.import_module
+
+    def selected(name: str, *args, **kwargs):
+        if name.endswith(".installers.solver"):
+            return SimpleNamespace(
+                ensure_z3=lambda **_kwargs: {
+                    "status": "installed",
+                    "installed": True,
+                    "checksum_verified": True,
+                    "executable_path": "/managed/z3",
+                    "bindings": {
+                        "transactional_publication": "true",
+                        "semantic_probe": {"version": "4.12.2"},
+                    },
+                }
+            )
+        return original(name, *args, **kwargs)
+
+    monkeypatch.setattr(lazy_installer.importlib, "import_module", selected)
+    monkeypatch.setattr(
+        lazy_installer, "_cross_process_install_lock", _test_process_lock
+    )
+
+    receipt = lazy_installer.execute_reviewed_install(
+        "z3",
+        allow_install=True,
+    )
+
+    assert receipt["certified"] is False
+    assert receipt["status"] == "installed_unverified"
+    assert receipt["evidence"]["rollback"]["verified"] is False
+
+
 def test_inventory_covers_every_plugin_family_and_plan_phases() -> None:
     from ipfs_datasets_py.logic.backends.installers.registry import (
         InstallerPluginFamily,

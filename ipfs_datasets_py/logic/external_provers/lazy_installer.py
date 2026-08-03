@@ -44,6 +44,7 @@ import logging
 import os
 import platform as platform_module
 import shutil
+import stat
 import subprocess
 import threading
 import time
@@ -277,11 +278,13 @@ def _configured_user_install_root() -> Path:
     if len(configured_values) > 1:
         raise ValueError("configured theorem-prover roots disagree")
     home = Path.home().expanduser().resolve()
-    root = (
-        Path(next(iter(configured_values))).expanduser().resolve()
-        if configured_values
-        else home / ".local" / "share" / "ipfs_datasets_py" / "theorem-provers"
-    )
+    if configured_values:
+        configured = Path(next(iter(configured_values))).expanduser()
+        if not configured.is_absolute():
+            raise ValueError("configured theorem-prover root must be absolute")
+        root = configured.resolve()
+    else:
+        root = home / ".local" / "share" / "ipfs_datasets_py" / "theorem-provers"
     try:
         root.relative_to(home)
     except ValueError as exc:
@@ -291,6 +294,17 @@ def _configured_user_install_root() -> Path:
     if root == home:
         raise ValueError("lazy installer root must not be the home directory")
     return root
+
+
+def configured_user_install_root() -> Path:
+    """Return the validated root used by reviewed lazy installers.
+
+    This public, read-only resolver lets execution adapters bind the launcher
+    they select to the same user-local root as the installer.  It deliberately
+    performs no directory creation or installer import.
+    """
+
+    return _configured_user_install_root()
 
 
 @contextmanager
@@ -304,13 +318,25 @@ def _cross_process_install_lock(provider: str) -> Iterator[dict[str, Any]]:
 
     root = _configured_user_install_root()
     lock_dir = root / ".locks"
-    lock_dir.mkdir(parents=True, exist_ok=True)
+    root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("lazy installer root must be a real directory")
+    lock_dir.mkdir(mode=0o700, exist_ok=True)
+    if lock_dir.is_symlink() or not lock_dir.is_dir():
+        raise ValueError("lazy installer lock root must be a real directory")
     safe_provider = "".join(
         character if character.isalnum() or character in {"-", "_"} else "_"
         for character in provider
     )
     path = lock_dir / f"facade-{safe_provider}.lock"
-    handle = path.open("a+b")
+    flags = os.O_RDWR | os.O_CREAT | os.O_APPEND
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(path, flags, 0o600)
+    if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+        os.close(descriptor)
+        raise ValueError("lazy installer lease must be a regular file")
+    handle = os.fdopen(descriptor, "a+b")
     deadline = time.monotonic() + _PROCESS_LOCK_TIMEOUT_SECONDS
     acquired = False
     try:
@@ -694,6 +720,14 @@ def execute_reviewed_install(
             parameter.kind is inspect.Parameter.VAR_KEYWORD
             for parameter in signature.parameters.values()
         )
+        if entry.user_local_only and (
+            accepts_kwargs or "install_root" in signature.parameters
+        ):
+            # Bind the reviewed plugin to the same validated user-local root
+            # that owns the cross-process publication lease.  This prevents a
+            # plugin default or legacy environment variable from publishing
+            # somewhere different from the path certified by the facade.
+            kwargs["install_root"] = str(configured_user_install_root())
         unconsumed_options = sorted(
             key
             for key in options
@@ -751,9 +785,9 @@ def execute_reviewed_install(
             or bindings.get("deployment_lock_sha256")
             or bindings.get("identity_manifest_sha256")
         )
-        rollback_verified = bool(
-            bindings.get("previous_good_preserved")
-            or bindings.get("transactional_publication")
+        rollback_verified = (
+            bindings.get("previous_good_preserved") is True
+            or bindings.get("transactional_publication") is True
         )
         checksum_required = bool(entry.requires_checksum_for_managed_artifacts)
         certified = bool(
@@ -1223,6 +1257,13 @@ def _lazy_install_prover_once(
         # shadow/shim for the external prover it names.  Such shadows remain
         # available through their explicit certification entrypoints.
         if reviewed_ensure is not None:
+            signature = inspect.signature(ensure)
+            accepts_kwargs = any(
+                parameter.kind is inspect.Parameter.VAR_KEYWORD
+                for parameter in signature.parameters.values()
+            )
+            if accepts_kwargs or "install_root" in signature.parameters:
+                kwargs["install_root"] = str(configured_user_install_root())
             if prover in {"hyperltl", "autohyper", "mchyper"}:
                 kwargs.update({"vendor": True, "hermetic_engine": False})
             elif prover in {"souffle", "secpal"}:
@@ -1252,7 +1293,12 @@ def _lazy_install_prover_once(
             ),
             progress,
         )
-        result = ensure(**kwargs)
+        # The ordinary first-use facade shares the same filesystem lease as
+        # the explicit transactional API.  The in-process lock in
+        # ``lazy_install_prover`` handles threads; this lease prevents two
+        # Python processes from concurrently staging or publishing one tool.
+        with _cross_process_install_lock(prover):
+            result = ensure(**kwargs)
         ok = _reviewed_installer_succeeds(result)
         importlib.invalidate_caches()
         clear_feature_detection_cache()
@@ -1407,6 +1453,7 @@ def reset_lazy_install_attempts() -> None:
 
 
 __all__ = [
+    "configured_user_install_root",
     "find_executable",
     "ensure_prover_executable",
     "lazy_install_prover",

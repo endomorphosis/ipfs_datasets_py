@@ -1,5 +1,7 @@
-# Optional Python bindings for theorem-prover integrations.
+# Python binding profile for theorem-prover integrations.
 #
+# Z3, CVC5, pySMT, beartype, and jsonschema are mirrored deterministic base
+# bindings.  SymbolicAI is the optional advisor binding in this profile.
 # Native solvers are installed lazily, user-locally, when an execution path
 # requests them. Native solver binaries are intentionally not pip packages;
 # install pinned user-local Tamarin, ProVerif, Rocq, and other native tools with

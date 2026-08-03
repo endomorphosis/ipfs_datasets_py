@@ -68,6 +68,13 @@ def _env_truthy(name: str, default: str = "1") -> bool:
     return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
 
 
+def _env_explicitly_enabled(name: str) -> bool:
+    """Return true only for an affirmative operator opt-in value."""
+
+    value = os.environ.get(name, "")
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _include_vcs_dependencies() -> bool:
     """Allow constrained builds to skip optional VCS-based dependencies."""
 
@@ -77,11 +84,11 @@ def _include_vcs_dependencies() -> bool:
 def _maybe_download_nltk_data() -> None:
     """Best-effort NLTK data download during install.
 
-    Controlled via env var:
-    - IPFS_DATASETS_PY_AUTO_NLTK_DOWNLOAD (default: 1)
+    Disabled by default.  Legacy setup.py install/develop callers must opt in
+    with IPFS_DATASETS_PY_AUTO_NLTK_DOWNLOAD=1 (or true/yes/on).
     """
 
-    if not _env_truthy("IPFS_DATASETS_PY_AUTO_NLTK_DOWNLOAD", "1"):
+    if not _env_explicitly_enabled("IPFS_DATASETS_PY_AUTO_NLTK_DOWNLOAD"):
         return
 
     try:
@@ -122,11 +129,11 @@ def _maybe_download_nltk_data() -> None:
 def _maybe_build_groth16_backend() -> None:
     """Best-effort build/setup for the bundled Rust Groth16 backend.
 
-    Controlled via env var:
-    - IPFS_DATASETS_PY_AUTO_GROTH16_BUILD (default: 1)
+    Disabled by default.  Legacy setup.py install/develop callers must opt in
+    with IPFS_DATASETS_PY_AUTO_GROTH16_BUILD=1 (or true/yes/on).
     """
 
-    if not _env_truthy("IPFS_DATASETS_PY_AUTO_GROTH16_BUILD", "1"):
+    if not _env_explicitly_enabled("IPFS_DATASETS_PY_AUTO_GROTH16_BUILD"):
         return
     backend_dir = os.path.join(os.path.dirname(__file__), "ipfs_datasets_py", "processors", "groth16_backend")
     platform_name = f"{platform.system().lower()}-{'aarch64' if platform.machine().lower() in {'aarch64', 'arm64'} else 'x86_64' if platform.machine().lower() in {'x86_64', 'amd64'} else platform.machine().lower()}"

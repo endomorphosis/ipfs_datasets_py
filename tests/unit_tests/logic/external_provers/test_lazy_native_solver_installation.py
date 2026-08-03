@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
+
+import pytest
 
 
 def _clear_lazy_install_environment(monkeypatch) -> None:
@@ -13,6 +16,8 @@ def _clear_lazy_install_environment(monkeypatch) -> None:
         "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS",
         "IPFS_DATASETS_PY_MINIMAL_IMPORTS",
         "IPFS_DATASETS_PY_BENCHMARK",
+        "IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT",
+        "IPFS_DATASETS_PY_THEOREM_PROVERS_ROOT",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -83,10 +88,16 @@ def test_parallel_first_use_installs_each_prover_once(monkeypatch) -> None:
     assert calls == ["vampire"]
 
 
-def test_reviewed_gap_installer_uses_real_vendor_path(monkeypatch) -> None:
+def test_reviewed_gap_installer_uses_real_vendor_path(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
     from ipfs_datasets_py.logic.external_provers import lazy_installer
 
     _clear_lazy_install_environment(monkeypatch)
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
     lazy_installer.reset_lazy_install_attempts()
     calls: list[dict[str, object]] = []
 
@@ -111,10 +122,129 @@ def test_reviewed_gap_installer_uses_real_vendor_path(monkeypatch) -> None:
         {
             "yes": True,
             "strict": False,
+            "install_root": str(
+                home
+                / ".local"
+                / "share"
+                / "ipfs_datasets_py"
+                / "theorem-provers"
+            ),
             "vendor": True,
             "hermetic_parity_engine": False,
         }
     ]
+
+
+def test_normal_lazy_path_holds_process_lease_and_binds_reviewed_root(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    home = tmp_path / "home"
+    home.mkdir()
+    root = home / "managed" / "theorem-provers"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    lazy_installer.reset_lazy_install_attempts()
+    events: list[str] = []
+    calls: list[dict[str, object]] = []
+
+    def ensure_runtime_mtl(**kwargs):
+        events.append("ensure")
+        calls.append(dict(kwargs))
+        return SimpleNamespace(status="installed", installed=True)
+
+    @contextmanager
+    def observed_process_lock(provider: str):
+        events.append(f"lock-enter:{provider}")
+        yield {"cross_process": True, "lock_name": "observed.lock"}
+        events.append(f"lock-exit:{provider}")
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_resolve_reviewed_installer",
+        lambda prover: ensure_runtime_mtl
+        if prover == "runtime-mtl-external"
+        else None,
+    )
+    monkeypatch.setattr(
+        lazy_installer,
+        "_cross_process_install_lock",
+        observed_process_lock,
+    )
+
+    assert lazy_installer.lazy_install_prover(
+        "runtime_mtl",
+        allow_automatic=True,
+        reason="live trace verification",
+    )
+    assert events == [
+        "lock-enter:runtime-mtl-external",
+        "ensure",
+        "lock-exit:runtime-mtl-external",
+    ]
+    assert calls[0]["install_root"] == str(root)
+
+
+def test_normal_lazy_path_rejects_non_user_local_managed_root(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT",
+        str(tmp_path / "outside-home"),
+    )
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[dict[str, object]] = []
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_resolve_reviewed_installer",
+        lambda prover: (
+            lambda **kwargs: calls.append(dict(kwargs)) or True
+        )
+        if prover == "runtime-mtl-external"
+        else None,
+    )
+
+    assert not lazy_installer.lazy_install_prover(
+        "runtime_mtl",
+        allow_automatic=True,
+        reason="unsafe root must fail closed",
+    )
+    assert calls == []
+
+
+def test_process_lease_refuses_symlink_lock_file(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    home = tmp_path / "home"
+    root = home / "managed"
+    lock_dir = root / ".locks"
+    lock_dir.mkdir(parents=True)
+    victim = tmp_path / "victim"
+    victim.write_text("unchanged\n", encoding="utf-8")
+    (lock_dir / "facade-ergoai.lock").symlink_to(victim)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+
+    with pytest.raises((OSError, ValueError)):
+        with lazy_installer._cross_process_install_lock("ergoai"):
+            pass
+
+    assert victim.read_text(encoding="utf-8") == "unchanged\n"
 
 
 def test_reviewed_installer_receipt_does_not_leak_object_truthiness(

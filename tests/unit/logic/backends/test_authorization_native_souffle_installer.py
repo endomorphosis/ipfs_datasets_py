@@ -208,6 +208,98 @@ def test_native_vendor_identity_binds_archive_dependencies_and_executable(
     assert all(item.binding_sha256 for item in identity.build_dependency_identities)
 
 
+def test_native_vendor_identity_survives_unrelated_deployment_lock_revision(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    install_root, _, manifest, pin = _native_install_fixture(tmp_path, monkeypatch)
+    original_contract = dict(installer._validated_vendor_souffle_contract())
+    original_manifest = json.loads(manifest.read_text(encoding="utf-8"))
+    revised_lock_sha256 = "f" * 64
+    assert revised_lock_sha256 != original_contract["deployment_lock_sha256"]
+    monkeypatch.setattr(
+        installer,
+        "_validated_vendor_souffle_contract",
+        lambda **_kwargs: {
+            **original_contract,
+            "deployment_lock_sha256": revised_lock_sha256,
+        },
+    )
+
+    identity = installer._identity_from_disk(
+        installer.TOOL_SOUFFLE,
+        install_root,
+        pin,
+        vendor=True,
+    )
+
+    assert identity is not None
+    assert identity.deployment_lock_sha256 == revised_lock_sha256
+    assert (
+        original_manifest["deployment_lock_sha256"]
+        == original_contract["deployment_lock_sha256"]
+    )
+
+
+def test_native_vendor_identity_rejects_changed_souffle_pin_contract(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    install_root, _, _, pin = _native_install_fixture(tmp_path, monkeypatch)
+    original_contract = dict(installer._validated_vendor_souffle_contract())
+    monkeypatch.setattr(
+        installer,
+        "_validated_vendor_souffle_contract",
+        lambda **_kwargs: {
+            **original_contract,
+            "pin_contract_sha256": "f" * 64,
+        },
+    )
+
+    assert (
+        installer._identity_from_disk(
+            installer.TOOL_SOUFFLE,
+            install_root,
+            pin,
+            vendor=True,
+        )
+        is None
+    )
+
+
+def test_vendor_souffle_contract_rejects_weakened_global_install_policy(
+    tmp_path: Path,
+) -> None:
+    payload = json.loads(installer.resolve_lock_path().read_text(encoding="utf-8"))
+    payload["install_policy"]["never_on_import"] = False
+    lock_path = tmp_path / "weakened-global-policy.lock.json"
+    lock_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(installer.AuthorizationInstallerError):
+        installer._validated_vendor_souffle_contract(
+            repo_root=None,
+            lock_path=lock_path,
+        )
+
+
+def test_vendor_souffle_contract_rejects_weakened_tool_policy(
+    tmp_path: Path,
+) -> None:
+    payload = json.loads(installer.resolve_lock_path().read_text(encoding="utf-8"))
+    souffle = next(
+        item for item in payload["tools"] if item.get("tool_id") == "souffle"
+    )
+    souffle["deployment_contract"]["requires_checksum_at_install"] = False
+    lock_path = tmp_path / "weakened-souffle-policy.lock.json"
+    lock_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(installer.AuthorizationInstallerError):
+        installer._validated_vendor_souffle_contract(
+            repo_root=None,
+            lock_path=lock_path,
+        )
+
+
 def test_python_shim_cannot_claim_native_vendor_identity(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
