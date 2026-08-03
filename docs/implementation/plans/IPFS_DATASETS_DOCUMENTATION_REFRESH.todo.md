@@ -16,7 +16,9 @@ working-tree state are read-only evidence for this v1 documentation program.
 
 Program rules:
 
-- Use manual completion with fresh validation evidence bound to the current tree.
+- Use artifact completion after fresh validation and merge. Tasks whose product
+  outputs existed at the planning baseline must also create their declared
+  current-tree completion receipt so stale pages cannot satisfy completion.
 - Prefer current code, tests, schemas, packaging, and accepted ADRs over old
   plans, status reports, generated summaries, or prose claims.
 - Do not change product behavior to make stale documentation true.
@@ -33,7 +35,7 @@ Program rules:
 ## IPFSDOC-001 Capture the current documentation and code-surface baseline
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -63,7 +65,7 @@ Program rules:
 ## IPFSDOC-002 Build the claim-level drift and stale-surface matrix
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -93,7 +95,7 @@ Program rules:
 ## IPFSDOC-003 Define information architecture, page contracts, and contribution policy
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -123,7 +125,7 @@ Program rules:
 ## IPFSDOC-004 Map package-local, generated, and competing documentation authorities
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -153,7 +155,7 @@ Program rules:
 ## IPFSDOC-005 Publish the source-authority and coverage matrix
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -183,7 +185,7 @@ Program rules:
 ## IPFSDOC-006 Create deterministic documentation validation tooling and runbook
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -213,7 +215,7 @@ Program rules:
 ## IPFSDOC-010 Write the current system context and domain ownership map
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -243,7 +245,7 @@ Program rules:
 ## IPFSDOC-011 Document end-to-end flows and runtime entry points
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -273,7 +275,7 @@ Program rules:
 ## IPFSDOC-012 Explain dependency initialization routers and submodule boundaries
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -303,7 +305,7 @@ Program rules:
 ## IPFSDOC-013 Record ADRs for content identity provenance and lazy capabilities
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -333,7 +335,7 @@ Program rules:
 ## IPFSDOC-014 Record ADRs for layered authority and fail-closed degradation
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -363,7 +365,7 @@ Program rules:
 ## IPFSDOC-015 Record ADRs for registries adapters layering and dual runtimes
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -393,7 +395,7 @@ Program rules:
 ## IPFSDOC-016 Index decisions and reconcile existing package-local MCP ADRs
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -423,7 +425,7 @@ Program rules:
 ## IPFSDOC-017 Document agent supervisor taskboards worktrees and Profile G
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -453,7 +455,7 @@ Program rules:
 ## IPFSDOC-020 Document processor contracts pipeline and file/multimedia processing
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -483,7 +485,7 @@ Program rules:
 ## IPFSDOC-021 Document web archival and legal evidence ingestion
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -513,7 +515,7 @@ Program rules:
 ## IPFSDOC-022 Publish the processing architecture index and extension routes
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -543,7 +545,7 @@ Program rules:
 ## IPFSDOC-023 Document content addressing IPLD storage backends and caches
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -573,7 +575,7 @@ Program rules:
 ## IPFSDOC-024 Document P2P workflows distribution and publication
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -603,7 +605,7 @@ Program rules:
 ## IPFSDOC-025 Document immutable dataset build publish and load lifecycles
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -633,7 +635,7 @@ Program rules:
 ## IPFSDOC-026 Publish the storage and distribution architecture index
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -663,7 +665,7 @@ Program rules:
 ## IPFSDOC-030 Document embeddings vector stores indexing and search
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -693,7 +695,7 @@ Program rules:
 ## IPFSDOC-031 Document the knowledge graph lifecycle and authority model
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -723,7 +725,7 @@ Program rules:
 ## IPFSDOC-032 Document GraphRAG and optimizer control loops
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -753,7 +755,7 @@ Program rules:
 ## IPFSDOC-033 Publish retrieval and knowledge architecture indexes
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -783,7 +785,7 @@ Program rules:
 ## IPFSDOC-040 Document IR family ownership canonical identity and provenance
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -813,7 +815,7 @@ Program rules:
 ## IPFSDOC-041 Document formal compilation decompilation and semantic round trips
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -843,7 +845,7 @@ Program rules:
 ## IPFSDOC-042 Document external provers hammers backends and lazy provisioning
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -873,7 +875,7 @@ Program rules:
 ## IPFSDOC-043 Document legal security constraints proof attestations and ZKP
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -903,7 +905,7 @@ Program rules:
 ## IPFSDOC-044 Document governed intent authorization and result authority
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -933,7 +935,7 @@ Program rules:
 ## IPFSDOC-045 Publish the logic proof and policy architecture index
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -963,7 +965,7 @@ Program rules:
 ## IPFSDOC-050 Document MCP server context dispatch and tool lifecycle
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -993,7 +995,7 @@ Program rules:
 ## IPFSDOC-051 Document MCP interfaces identity transports and runtime routing
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1023,7 +1025,7 @@ Program rules:
 ## IPFSDOC-052 Document MCP policy audit event DAG and observability
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1053,7 +1055,7 @@ Program rules:
 ## IPFSDOC-053 Publish the MCP architecture index and operator runbook
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1083,7 +1085,7 @@ Program rules:
 ## IPFSDOC-060 Write the threat model and secrets credential guide
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1113,7 +1115,7 @@ Program rules:
 ## IPFSDOC-061 Document audit provenance incidents and wallet trust/privacy
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -1143,7 +1145,7 @@ Program rules:
 ## IPFSDOC-062 Write deployment performance capacity diagnostics and recovery guides
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -1173,7 +1175,7 @@ Program rules:
 ## IPFSDOC-063 Write capability installation and configuration references
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1203,20 +1205,20 @@ Program rules:
 ## IPFSDOC-064 Refresh the capability matrix and changelog policy
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
 - Track: user-docs
 - Depends on: IPFSDOC-005, IPFSDOC-022, IPFSDOC-026, IPFSDOC-033, IPFSDOC-045, IPFSDOC-053, IPFSDOC-061
 - Goal id: IPFSDOC-G020
-- Outputs: docs/FEATURES.md, docs/CHANGELOG.md
-- Validation: test -s docs/FEATURES.md && test -s docs/CHANGELOG.md && rg -n 'Intent IR|proof corpus|Profile G|wallet|lazy|Current|Experimental|Optional' docs/FEATURES.md docs/CHANGELOG.md
+- Outputs: docs/FEATURES.md, docs/CHANGELOG.md, docs/maintenance/completion_receipts/IPFSDOC-064.md
+- Validation: test -s docs/FEATURES.md && test -s docs/CHANGELOG.md && test -s docs/maintenance/completion_receipts/IPFSDOC-064.md && rg -n 'Intent IR|proof corpus|Profile G|wallet|lazy|Current|Experimental|Optional' docs/FEATURES.md docs/CHANGELOG.md
 - Board namespace: ipfs-datasets-documentation-v1
 - Bundle: documentation/product-status
 - Parallel lane: user-capabilities-history
 - Resource class: cpu-small
-- Predicted files: docs/FEATURES.md, docs/CHANGELOG.md
+- Predicted files: docs/FEATURES.md, docs/CHANGELOG.md, docs/maintenance/completion_receipts/IPFSDOC-064.md
 - Interfaces: CapabilityStatusMatrix@1, ChangelogPolicy@1
 - Allow concurrent with:
 - Conflict policy: Exclusive ownership of the declared outputs. Read current code, tests, configuration, historical docs, and sibling guide outputs as evidence; do not edit production files, protected planning files, shared indexes owned by later tasks, or unrelated documentation.
@@ -1228,12 +1230,12 @@ Program rules:
 - Estimated context tokens: 16000
 - Estimated validation seconds: 300
 - Merge fate: objective/IPFSDOC-G020
-- Acceptance: Replace undated marketing/count claims with a source-grounded capability matrix that labels stable/optional/experimental/compatibility/deprecated/unavailable states and covers current major domains. Turn CHANGELOG into a project release/change policy and truthful retained history rather than a worker/stub completion report; do not fabricate releases.
+- Acceptance: Replace undated marketing/count claims with a source-grounded capability matrix that labels stable/optional/experimental/compatibility/deprecated/unavailable states and covers current major domains. Turn CHANGELOG into a project release/change policy and truthful retained history rather than a worker/stub completion report; do not fabricate releases. Record the validated current tree, command, and result in the declared completion receipt.
 
 ## IPFSDOC-070 Write the current developer repository map
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1263,7 +1265,7 @@ Program rules:
 ## IPFSDOC-071 Write subsystem extension recipes
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1293,7 +1295,7 @@ Program rules:
 ## IPFSDOC-072 Define focused testing and evidence selection
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1323,7 +1325,7 @@ Program rules:
 ## IPFSDOC-073 Write agent invariants troubleshooting and handoff guides
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1353,20 +1355,20 @@ Program rules:
 ## IPFSDOC-074 Refresh the root developer guide
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
 - Track: developer-docs
 - Depends on: IPFSDOC-070, IPFSDOC-071, IPFSDOC-072, IPFSDOC-073
 - Goal id: IPFSDOC-G080
-- Outputs: docs/developer_guide.md
-- Validation: test -s docs/developer_guide.md && rg -n 'Python 3.12|REPOSITORY_MAP|EXTENSION_RECIPES|TESTING_AND_EVIDENCE|FOR_AGENTS' docs/developer_guide.md
+- Outputs: docs/developer_guide.md, docs/maintenance/completion_receipts/IPFSDOC-074.md
+- Validation: test -s docs/developer_guide.md && test -s docs/maintenance/completion_receipts/IPFSDOC-074.md && rg -n 'Python 3.12|REPOSITORY_MAP|EXTENSION_RECIPES|TESTING_AND_EVIDENCE|FOR_AGENTS' docs/developer_guide.md
 - Board namespace: ipfs-datasets-documentation-v1
 - Bundle: documentation/developers
 - Parallel lane: developer-integration
 - Resource class: cpu-small
-- Predicted files: docs/developer_guide.md
+- Predicted files: docs/developer_guide.md, docs/maintenance/completion_receipts/IPFSDOC-074.md
 - Interfaces: DeveloperGuide@1
 - Allow concurrent with:
 - Conflict policy: Exclusive ownership of the declared outputs. Read current code, tests, configuration, historical docs, and sibling guide outputs as evidence; do not edit production files, protected planning files, shared indexes owned by later tasks, or unrelated documentation.
@@ -1378,12 +1380,12 @@ Program rules:
 - Estimated context tokens: 12000
 - Estimated validation seconds: 180
 - Merge fate: objective/IPFSDOC-G080
-- Acceptance: Replace removed requirements/scripts/modules and stale setup instructions with a concise current contributor entry routing to repository, architecture, recipe, testing, agent, contributing, security, and documentation guides. Validate all introduced paths and commands; do not duplicate detailed leaf content.
+- Acceptance: Replace removed requirements/scripts/modules and stale setup instructions with a concise current contributor entry routing to repository, architecture, recipe, testing, agent, contributing, security, and documentation guides. Validate all introduced paths and commands; do not duplicate detailed leaf content. Record the validated current tree, command, and result in the declared completion receipt.
 
 ## IPFSDOC-080 Build core data processing and retrieval API domain references
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -1413,7 +1415,7 @@ Program rules:
 ## IPFSDOC-081 Build knowledge logic proof MCP and operations API references
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -1443,7 +1445,7 @@ Program rules:
 ## IPFSDOC-082 Publish the API reference index and generation provenance
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -1473,7 +1475,7 @@ Program rules:
 ## IPFSDOC-083 Write first-dataset and retrieval/knowledge tutorials
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -1503,7 +1505,7 @@ Program rules:
 ## IPFSDOC-084 Write logic/proof and MCP client tutorials
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -1533,7 +1535,7 @@ Program rules:
 ## IPFSDOC-085 Publish the example verification ledger
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P1
@@ -1563,20 +1565,20 @@ Program rules:
 ## IPFSDOC-090 Rebuild the architecture documentation hub
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
 - Track: navigation
 - Depends on: IPFSDOC-016, IPFSDOC-017, IPFSDOC-022, IPFSDOC-026, IPFSDOC-033, IPFSDOC-045, IPFSDOC-053, IPFSDOC-061, IPFSDOC-062
 - Goal id: IPFSDOC-G111
-- Outputs: docs/architecture/README.md
-- Validation: test -s docs/architecture/README.md && rg -n 'SYSTEM_CONTEXT|DOMAIN_MAP|processing|storage|retrieval|knowledge|logic|mcp|decisions|runtime' docs/architecture/README.md
+- Outputs: docs/architecture/README.md, docs/maintenance/completion_receipts/IPFSDOC-090.md
+- Validation: test -s docs/architecture/README.md && test -s docs/maintenance/completion_receipts/IPFSDOC-090.md && rg -n 'SYSTEM_CONTEXT|DOMAIN_MAP|processing|storage|retrieval|knowledge|logic|mcp|decisions|runtime' docs/architecture/README.md
 - Board namespace: ipfs-datasets-documentation-v1
 - Bundle: documentation/navigation
 - Parallel lane: navigation-architecture
 - Resource class: cpu-small
-- Predicted files: docs/architecture/README.md
+- Predicted files: docs/architecture/README.md, docs/maintenance/completion_receipts/IPFSDOC-090.md
 - Interfaces: ArchitectureDocumentationHub@1
 - Allow concurrent with:
 - Conflict policy: Exclusive ownership of the declared outputs. Read current code, tests, configuration, historical docs, and sibling guide outputs as evidence; do not edit production files, protected planning files, shared indexes owned by later tasks, or unrelated documentation.
@@ -1588,25 +1590,25 @@ Program rules:
 - Estimated context tokens: 12000
 - Estimated validation seconds: 180
 - Merge fate: objective/IPFSDOC-G111
-- Acceptance: Replace the stale short diagram/index with audience and decision routes across system, runtime, processing, storage, retrieval, knowledge, logic, MCP, security/wallet, ADRs, operations and package-local details. Clearly label current architecture versus proposed plans, implementation evidence, compatibility and history.
+- Acceptance: Replace the stale short diagram/index with audience and decision routes across system, runtime, processing, storage, retrieval, knowledge, logic, MCP, security/wallet, ADRs, operations and package-local details. Clearly label current architecture versus proposed plans, implementation evidence, compatibility and history. Record the validated current tree, command, and result in the declared completion receipt.
 
 ## IPFSDOC-091 Refresh root installation and configuration pages
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
 - Track: user-docs
 - Depends on: IPFSDOC-063
 - Goal id: IPFSDOC-G021
-- Outputs: docs/installation.md, docs/configuration.md
-- Validation: test -s docs/installation.md && test -s docs/configuration.md && rg -n 'Python 3.12|CAPABILITY_INSTALLATION|CONFIGURATION_REFERENCE|optional|unavailable' docs/installation.md docs/configuration.md
+- Outputs: docs/installation.md, docs/configuration.md, docs/maintenance/completion_receipts/IPFSDOC-091.md
+- Validation: test -s docs/installation.md && test -s docs/configuration.md && test -s docs/maintenance/completion_receipts/IPFSDOC-091.md && rg -n 'Python 3.12|CAPABILITY_INSTALLATION|CONFIGURATION_REFERENCE|optional|unavailable' docs/installation.md docs/configuration.md
 - Board namespace: ipfs-datasets-documentation-v1
 - Bundle: documentation/install-config
 - Parallel lane: user-install-integration
 - Resource class: cpu-small
-- Predicted files: docs/installation.md, docs/configuration.md
+- Predicted files: docs/installation.md, docs/configuration.md, docs/maintenance/completion_receipts/IPFSDOC-091.md
 - Interfaces: InstallationGuide@1, ConfigurationGuide@1
 - Allow concurrent with:
 - Conflict policy: Exclusive ownership of the declared outputs. Read current code, tests, configuration, historical docs, and sibling guide outputs as evidence; do not edit production files, protected planning files, shared indexes owned by later tasks, or unrelated documentation.
@@ -1618,25 +1620,25 @@ Program rules:
 - Estimated context tokens: 12000
 - Estimated validation seconds: 300
 - Merge fate: objective/IPFSDOC-G021
-- Acceptance: Replace Python 3.7/3.9, nonexistent extras, placeholder organizations, obsolete CUDA advice, and incomplete environment coverage with concise verified base/capability installation and configuration precedence routes. Preserve platform/security/offline caveats and link to the detailed references.
+- Acceptance: Replace Python 3.7/3.9, nonexistent extras, placeholder organizations, obsolete CUDA advice, and incomplete environment coverage with concise verified base/capability installation and configuration precedence routes. Preserve platform/security/offline caveats and link to the detailed references. Record the validated current tree, command, and result in the declared completion receipt.
 
 ## IPFSDOC-092 Refresh getting-started and user-guide journeys
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
 - Track: user-docs
 - Depends on: IPFSDOC-064, IPFSDOC-082, IPFSDOC-083, IPFSDOC-084, IPFSDOC-085, IPFSDOC-091
 - Goal id: IPFSDOC-G022
-- Outputs: docs/getting_started.md, docs/user_guide.md
-- Validation: test -s docs/getting_started.md && test -s docs/user_guide.md && rg -n 'FIRST_DATASET_WORKFLOW|MCP_CLIENT_WORKFLOW|LOGIC_AND_PROOF_WORKFLOW|unavailable' docs/getting_started.md docs/user_guide.md
+- Outputs: docs/getting_started.md, docs/user_guide.md, docs/maintenance/completion_receipts/IPFSDOC-092.md
+- Validation: test -s docs/getting_started.md && test -s docs/user_guide.md && test -s docs/maintenance/completion_receipts/IPFSDOC-092.md && rg -n 'FIRST_DATASET_WORKFLOW|MCP_CLIENT_WORKFLOW|LOGIC_AND_PROOF_WORKFLOW|unavailable' docs/getting_started.md docs/user_guide.md
 - Board namespace: ipfs-datasets-documentation-v1
 - Bundle: documentation/journeys
 - Parallel lane: user-journey-integration
 - Resource class: cpu-small
-- Predicted files: docs/getting_started.md, docs/user_guide.md
+- Predicted files: docs/getting_started.md, docs/user_guide.md, docs/maintenance/completion_receipts/IPFSDOC-092.md
 - Interfaces: GettingStartedGuide@1, UserGuide@1
 - Allow concurrent with:
 - Conflict policy: Exclusive ownership of the declared outputs. Read current code, tests, configuration, historical docs, and sibling guide outputs as evidence; do not edit production files, protected planning files, shared indexes owned by later tasks, or unrelated documentation.
@@ -1648,25 +1650,25 @@ Program rules:
 - Estimated context tokens: 16000
 - Estimated validation seconds: 300
 - Merge fate: objective/IPFSDOC-G022
-- Acceptance: Remove missing legacy modules and invalid extras; provide the shortest verified first success and route Python/CLI/MCP, processing/storage, retrieval/knowledge, logic/proof and operations journeys to canonical tutorials/references. State optional requirements, side effects, cleanup, compatibility and unavailable/degraded outcomes.
+- Acceptance: Remove missing legacy modules and invalid extras; provide the shortest verified first success and route Python/CLI/MCP, processing/storage, retrieval/knowledge, logic/proof and operations journeys to canonical tutorials/references. State optional requirements, side effects, cleanup, compatibility and unavailable/degraded outcomes. Record the validated current tree, command, and result in the declared completion receipt.
 
 ## IPFSDOC-093 Rebuild the glossary and authority vocabulary
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
 - Track: navigation
 - Depends on: IPFSDOC-013, IPFSDOC-014, IPFSDOC-015, IPFSDOC-045, IPFSDOC-053, IPFSDOC-061
 - Goal id: IPFSDOC-G111
-- Outputs: docs/GLOSSARY.md
-- Validation: test -s docs/GLOSSARY.md && rg -n 'capability|CID|IR|proof|policy|receipt|provenance|adapter|backend|fallback|authority' docs/GLOSSARY.md
+- Outputs: docs/GLOSSARY.md, docs/maintenance/completion_receipts/IPFSDOC-093.md
+- Validation: test -s docs/GLOSSARY.md && test -s docs/maintenance/completion_receipts/IPFSDOC-093.md && rg -n 'capability|CID|IR|proof|policy|receipt|provenance|adapter|backend|fallback|authority' docs/GLOSSARY.md
 - Board namespace: ipfs-datasets-documentation-v1
 - Bundle: documentation/navigation
 - Parallel lane: navigation-glossary
 - Resource class: cpu-small
-- Predicted files: docs/GLOSSARY.md
+- Predicted files: docs/GLOSSARY.md, docs/maintenance/completion_receipts/IPFSDOC-093.md
 - Interfaces: DocumentationGlossary@1
 - Allow concurrent with:
 - Conflict policy: Exclusive ownership of the declared outputs. Read current code, tests, configuration, historical docs, and sibling guide outputs as evidence; do not edit production files, protected planning files, shared indexes owned by later tasks, or unrelated documentation.
@@ -1678,12 +1680,12 @@ Program rules:
 - Estimated context tokens: 12000
 - Estimated validation seconds: 180
 - Merge fate: objective/IPFSDOC-G111
-- Acceptance: Define current project-specific terms, distinguish commonly conflated identity/evidence/authority/runtime states, name canonical aliases and deprecated terminology, and cross-link architecture sources. Avoid generic dictionary text and unsupported acronym expansion.
+- Acceptance: Define current project-specific terms, distinguish commonly conflated identity/evidence/authority/runtime states, name canonical aliases and deprecated terminology, and cross-link architecture sources. Avoid generic dictionary text and unsupported acronym expansion. Record the validated current tree, command, and result in the declared completion receipt.
 
 ## IPFSDOC-094 Publish the legacy duplicate and historical disposition map
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1713,20 +1715,20 @@ Program rules:
 ## IPFSDOC-095 Rebuild root documentation navigation
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
 - Track: navigation
 - Depends on: IPFSDOC-064, IPFSDOC-074, IPFSDOC-082, IPFSDOC-090, IPFSDOC-091, IPFSDOC-092, IPFSDOC-093, IPFSDOC-094
 - Goal id: IPFSDOC-G111
-- Outputs: docs/index.md, docs/README.md, docs/DOCUMENTATION_INDEX.md
-- Validation: test -s docs/index.md && test -s docs/README.md && test -s docs/DOCUMENTATION_INDEX.md && rg -n 'Getting Started|Architecture|Developers|API|Operations|Security|Historical' docs/index.md docs/README.md docs/DOCUMENTATION_INDEX.md
+- Outputs: docs/index.md, docs/README.md, docs/DOCUMENTATION_INDEX.md, docs/maintenance/completion_receipts/IPFSDOC-095.md
+- Validation: test -s docs/index.md && test -s docs/README.md && test -s docs/DOCUMENTATION_INDEX.md && test -s docs/maintenance/completion_receipts/IPFSDOC-095.md && rg -n 'Getting Started|Architecture|Developers|API|Operations|Security|Historical' docs/index.md docs/README.md docs/DOCUMENTATION_INDEX.md
 - Board namespace: ipfs-datasets-documentation-v1
 - Bundle: documentation/navigation
 - Parallel lane: navigation-root
 - Resource class: cpu-small
-- Predicted files: docs/index.md, docs/README.md, docs/DOCUMENTATION_INDEX.md
+- Predicted files: docs/index.md, docs/README.md, docs/DOCUMENTATION_INDEX.md, docs/maintenance/completion_receipts/IPFSDOC-095.md
 - Interfaces: DocumentationNavigationRoot@1
 - Allow concurrent with:
 - Conflict policy: Exclusive ownership of the declared outputs. Read current code, tests, configuration, historical docs, and sibling guide outputs as evidence; do not edit production files, protected planning files, shared indexes owned by later tasks, or unrelated documentation.
@@ -1738,12 +1740,12 @@ Program rules:
 - Estimated context tokens: 16000
 - Estimated validation seconds: 300
 - Merge fate: objective/IPFSDOC-G111
-- Acceptance: Choose one canonical landing flow and make the three existing entry files consistent pointers rather than competing indexes. Route by audience and task to every canonical guide/domain, remove stale February/latest/count/completion claims, distinguish maintained/generated/historical material, and avoid orphaning deep component docs.
+- Acceptance: Choose one canonical landing flow and make the three existing entry files consistent pointers rather than competing indexes. Route by audience and task to every canonical guide/domain, remove stale February/latest/count/completion claims, distinguish maintained/generated/historical material, and avoid orphaning deep component docs. Record the validated current tree, command, and result in the declared completion receipt.
 
 ## IPFSDOC-096 Run cross-guide validation and publish the quality report
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1773,7 +1775,7 @@ Program rules:
 ## IPFSDOC-097 Publish documentation maintenance cadence and ownership
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0
@@ -1803,7 +1805,7 @@ Program rules:
 ## IPFSDOC-098 Publish provisioned build disposition and final release evidence
 
 - Status: todo
-- Completion: manual
+- Completion: artifact
 - Is schedulable: true
 - Review only: false
 - Priority: P0

@@ -265,10 +265,11 @@ status or alter the program contract.
 
 ### Wave 1: Establish evidence and governance
 
-`IPFSDOC-001` through `IPFSDOC-005` can use separate files and mostly execute
-in parallel. Their outputs give later writers a common inventory, source
-policy, terminology, and page template. `IPFSDOC-006` joins those artifacts
-into a coverage matrix.
+`IPFSDOC-001` establishes the measured baseline. After it lands,
+`IPFSDOC-002` through `IPFSDOC-006` can use separate files and execute in
+parallel. They establish the drift matrix, information architecture,
+package-local documentation map, source-authority and coverage policy, and
+validation tooling.
 
 ### Wave 2: Write architecture leaves in parallel
 
@@ -317,22 +318,27 @@ The following files are hot and have one late owner each:
 | Shared file | Exclusive task |
 | --- | --- |
 | `docs/architecture/README.md` | `IPFSDOC-090` |
-| `docs/api/README.md` | `IPFSDOC-091` |
-| `docs/developer_guide.md` | `IPFSDOC-092` |
-| `docs/installation.md`, `docs/configuration.md` | `IPFSDOC-093` |
-| `docs/getting_started.md`, `docs/user_guide.md` | `IPFSDOC-094` |
-| `docs/index.md`, `docs/README.md`, `docs/DOCUMENTATION_INDEX.md` | `IPFSDOC-100` |
-| `docs/GLOSSARY.md` | `IPFSDOC-101` |
+| `docs/api/README.md` | `IPFSDOC-082` |
+| `docs/developer_guide.md` | `IPFSDOC-074` |
+| `docs/installation.md`, `docs/configuration.md` | `IPFSDOC-091` |
+| `docs/getting_started.md`, `docs/user_guide.md` | `IPFSDOC-092` |
+| `docs/index.md`, `docs/README.md`, `docs/DOCUMENTATION_INDEX.md` | `IPFSDOC-095` |
+| `docs/GLOSSARY.md` | `IPFSDOC-093` |
 
 All earlier leaf tasks write new, exclusive files. Workers must not opportunistically
 fix shared navigation while producing a leaf guide.
 
 ### Completion policy
 
-Tasks use manual completion after fresh validation. A worker commit, a generated
-page, or a status line is not completion evidence by itself. The supervisor may
-retry implementation and validation failures, but it must not weaken acceptance
-criteria or edit the protected plan inputs to make progress appear unblocked.
+Tasks use artifact completion after the supervisor validates and merges every
+declared output. Outputs that were absent at the planning baseline act as their
+own durable completion artifacts. A task whose product outputs already existed
+at that baseline also owns a new receipt under
+`docs/maintenance/completion_receipts/`; the receipt binds its current tree,
+validation command, and result so stale files cannot be mistaken for completed
+work. The supervisor may retry implementation and validation failures, but it
+must not weaken acceptance criteria or let workers edit the protected plan
+inputs to make progress appear unblocked.
 
 ## 9. Blocker-prevention strategy
 
