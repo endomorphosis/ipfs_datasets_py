@@ -2184,7 +2184,7 @@ Program invariants:
 
 ## PATLAW-149 Decompose claims into reviewed limitations and search plans
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
