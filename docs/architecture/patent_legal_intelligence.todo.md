@@ -2484,7 +2484,7 @@ Program invariants:
 
 ## PATLAW-161 Implement safe paired-repository integration worktrees
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
