@@ -2209,7 +2209,7 @@ Program invariants:
 
 ## PATLAW-150 Expand citations, families, foreign patents, and NPL coverage
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
