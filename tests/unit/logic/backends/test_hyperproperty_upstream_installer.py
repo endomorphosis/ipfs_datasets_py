@@ -79,6 +79,28 @@ def _unseal_relocated_test_tree(
     _make_test_tree_writable(install_root)
 
 
+def _seal_relocated_identity_trees(
+    monkeypatch: pytest.MonkeyPatch,
+    manifest: Path,
+    install_root: Path,
+) -> Path:
+    """Seal a version tree and every directory dependency artifact."""
+
+    boundary = _seal_relocated_test_tree(
+        monkeypatch, manifest.parent, install_root
+    )
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    recorded_root = Path(payload["install_root"])
+    for artifact in payload.get("dependency_artifacts", []):
+        if artifact.get("artifact_kind") != "directory":
+            continue
+        artifact_root = install_root / Path(artifact["path"]).relative_to(
+            recorded_root
+        )
+        _make_sealed_test_tree(artifact_root, install_root)
+    return boundary
+
+
 def _archive(
     tmp_path: Path,
     *,
@@ -381,6 +403,11 @@ def test_synthetic_upstream_builds_are_identity_bound_without_adapter_shims(
             "abc-source",
             "python-source",
         } == {item.name for item in identity.dependency_artifacts}
+        assert all(
+            item.artifact_content_tree_sha256
+            for item in identity.dependency_artifacts
+            if item.artifact_kind == "directory"
+        )
         runtime_path = dict(identity.runtime_environment)["PATH"].split(":")
         python_identity = next(
             item
@@ -695,6 +722,103 @@ def test_sealed_mode_normalization_rejects_unsafe_link_even_if_digest_is_replace
     )
     boundary = _seal_relocated_test_tree(
         monkeypatch, manifest.parent, relocated_root
+    )
+    try:
+        assert (
+            hp._identity_from_disk(
+                tool_id, relocated_root, pin, vendor=True
+            )
+            is None
+        )
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+def test_mchyper_sealed_relocation_accepts_dependency_mode_normalization_and_links(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_MCHYPER
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    original_manifest = hp.identity_manifest_path(
+        install_root, tool_id, pin["version"], vendor=True
+    )
+    payload = json.loads(original_manifest.read_text(encoding="utf-8"))
+    python_artifact = next(
+        item
+        for item in payload["dependency_artifacts"]
+        if item["name"] == "python-source"
+    )
+    python_root = Path(python_artifact["path"])
+    link = python_root / "canonicalized-link"
+    link.symlink_to((python_root / "SOURCE").resolve())
+    python_artifact["artifact_sha256"] = hp._tree_sha256(python_root)
+    python_artifact["artifact_content_tree_sha256"] = (
+        hp._tree_relocation_content_sha256(python_root)
+    )
+    original_manifest.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        hp._identity_from_disk(tool_id, install_root, pin, vendor=True)
+        is not None
+    )
+
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root, symlinks=True)
+    relocated_manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    relocated_python_root = relocated_root / python_root.relative_to(
+        install_root
+    )
+    relocated_link = relocated_python_root / link.name
+    relocated_link.unlink()
+    relocated_link.symlink_to("SOURCE")
+    shutil.rmtree(install_root)
+    boundary = _seal_relocated_identity_trees(
+        monkeypatch, relocated_manifest, relocated_root
+    )
+    try:
+        relocated = hp._identity_from_disk(
+            tool_id, relocated_root, pin, vendor=True
+        )
+        assert relocated is not None
+        assert all(
+            item.artifact_content_tree_sha256
+            for item in relocated.dependency_artifacts
+        )
+    finally:
+        _unseal_relocated_test_tree(relocated_root, boundary)
+
+
+def test_mchyper_sealed_relocation_requires_dependency_content_digest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    tool_id = hp.TOOL_MCHYPER
+    _identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, tool_id
+    )
+    relocated_root = tmp_path / "sealed" / "provers"
+    shutil.copytree(install_root, relocated_root)
+    shutil.rmtree(install_root)
+    relocated_manifest = hp.identity_manifest_path(
+        relocated_root, tool_id, pin["version"], vendor=True
+    )
+    payload = json.loads(relocated_manifest.read_text(encoding="utf-8"))
+    payload["dependency_artifacts"][0].pop(
+        "artifact_content_tree_sha256"
+    )
+    relocated_manifest.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    boundary = _seal_relocated_identity_trees(
+        monkeypatch, relocated_manifest, relocated_root
     )
     try:
         assert (

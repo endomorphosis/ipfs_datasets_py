@@ -361,6 +361,7 @@ class DependencyArtifactIdentity:
     artifact_kind: str
     artifact_sha256: str
     version: str
+    artifact_content_tree_sha256: str = ""
     phase: str = "build"
     source_archive_url: str = ""
     source_archive_path: str = ""
@@ -383,6 +384,15 @@ class DependencyArtifactIdentity:
             raise HyperpropertyInstallerError(
                 f"invalid dependency artifact digest for {self.name!r}"
             )
+        if self.artifact_content_tree_sha256 and (
+            self.artifact_kind != "directory"
+            or not re.fullmatch(
+                r"[0-9a-f]{64}", self.artifact_content_tree_sha256
+            )
+        ):
+            raise HyperpropertyInstallerError(
+                f"invalid dependency content-tree digest for {self.name!r}"
+            )
         archive_fields = (
             self.source_archive_url,
             self.source_archive_path,
@@ -400,6 +410,9 @@ class DependencyArtifactIdentity:
         return {
             "artifact_kind": self.artifact_kind,
             "artifact_sha256": self.artifact_sha256,
+            "artifact_content_tree_sha256": (
+                self.artifact_content_tree_sha256
+            ),
             "name": self.name,
             "path": self.path,
             "phase": self.phase,
@@ -1382,6 +1395,57 @@ def _tree_content_sha256(root: Path, *, exclude: Sequence[str] = ()) -> str:
     return digest.hexdigest()
 
 
+def _tree_relocation_content_sha256(
+    root: Path,
+    *,
+    exclude: Sequence[str] = (),
+) -> str:
+    """Hash a relocatable tree while preserving each link's in-tree identity.
+
+    Some upstream source trees contain absolute links to another path inside
+    the same source root.  A sealed deployment must rewrite those links to
+    relative in-tree targets.  This digest represents both spellings by the
+    canonical artifact-relative target.  Broken, escaping, or otherwise
+    external links are rejected rather than normalized.
+    """
+
+    try:
+        resolved_root = root.resolve(strict=True)
+    except OSError as exc:
+        raise HyperpropertyInstallerError(
+            f"relocatable content tree is unavailable: {root}"
+        ) from exc
+    excluded = frozenset(exclude)
+    digest = hashlib.sha256()
+    digest.update(b"hyperproperty-relocatable-content-tree/v1\0")
+    for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
+        relative = path.relative_to(root).as_posix()
+        if relative in excluded:
+            continue
+        if path.is_symlink():
+            kind = "link"
+            try:
+                target = path.resolve(strict=True)
+                target_relative = target.relative_to(resolved_root).as_posix()
+            except (OSError, RuntimeError, ValueError) as exc:
+                raise HyperpropertyInstallerError(
+                    f"dependency artifact link escapes its tree: {relative!r}"
+                ) from exc
+            body = target_relative.encode("utf-8")
+        elif path.is_dir():
+            kind = "dir"
+            body = b""
+        elif path.is_file():
+            kind = "file"
+            body = bytes.fromhex(_sha256_file(path))
+        else:
+            raise HyperpropertyInstallerError(
+                f"unsupported dependency artifact object {relative!r}"
+            )
+        digest.update(f"{kind}\0{relative}\0".encode() + body + b"\0")
+    return digest.hexdigest()
+
+
 _SEALED_DEPLOYMENT_OWNER_UID: Final = 0
 _SEALED_DEPLOYMENT_ANCESTOR_BOUNDARY: Final = Path("/")
 _WRITE_MODE_BITS: Final = stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
@@ -1961,6 +2025,9 @@ def _dependency_artifacts_for_tool(
             path=str(package_db),
             artifact_kind="directory",
             artifact_sha256=_tree_sha256(package_db),
+            artifact_content_tree_sha256=(
+                _tree_relocation_content_sha256(package_db)
+            ),
             version=ghc_version,
             phase="build",
         )
@@ -2018,6 +2085,9 @@ def _dependency_artifacts_for_tool(
                 path=str(source_root),
                 artifact_kind="directory",
                 artifact_sha256=_tree_sha256(source_root),
+                artifact_content_tree_sha256=(
+                    _tree_relocation_content_sha256(source_root)
+                ),
                 version=version,
                 phase=phase,
                 source_archive_url=url,
@@ -2402,6 +2472,9 @@ def _identity_from_disk(
                     artifact_kind=str(item.get("artifact_kind") or ""),
                     artifact_sha256=str(item.get("artifact_sha256") or ""),
                     version=str(item.get("version") or ""),
+                    artifact_content_tree_sha256=str(
+                        item.get("artifact_content_tree_sha256") or ""
+                    ),
                     phase=str(item.get("phase") or "build"),
                     source_archive_url=str(
                         item.get("source_archive_url") or ""
@@ -2414,18 +2487,38 @@ def _identity_from_disk(
                     ),
                 )
                 if artifact.artifact_kind == "directory":
-                    observed_artifact_sha = (
-                        _tree_sha256(artifact_path)
-                        if artifact_path.is_dir()
-                        else ""
-                    )
+                    if not artifact_path.is_dir():
+                        return None
+                    observed_artifact_sha = _tree_sha256(artifact_path)
+                    if observed_artifact_sha == artifact.artifact_sha256:
+                        if (
+                            artifact.artifact_content_tree_sha256
+                            and _tree_relocation_content_sha256(artifact_path)
+                            != artifact.artifact_content_tree_sha256
+                        ):
+                            return None
+                    elif (
+                        recorded_install_root is None
+                        or recorded_install_root == active_install_root
+                        or not artifact.artifact_content_tree_sha256
+                        or not _sealed_vendor_tree_is_immutable(
+                            artifact_path,
+                            install_root=active_install_root,
+                        )
+                        or _tree_relocation_content_sha256(artifact_path)
+                        != artifact.artifact_content_tree_sha256
+                    ):
+                        return None
                 else:
                     observed_artifact_sha = (
                         _sha256_file(artifact_path)
                         if artifact_path.is_file()
                         else ""
                     )
-                if observed_artifact_sha != artifact.artifact_sha256:
+                if (
+                    artifact.artifact_kind != "directory"
+                    and observed_artifact_sha != artifact.artifact_sha256
+                ):
                     return None
                 if artifact.source_archive_path:
                     assert archive_path is not None
@@ -2765,10 +2858,31 @@ def write_sealed_vendor_relocation_identity(
         )
 
     content_field = "distribution_content_tree_sha256"
-    original_without_content = dict(original_payload)
-    relocated_without_content = dict(relocated_payload)
-    original_without_content.pop(content_field, None)
-    relocated_without_content.pop(content_field, None)
+    artifact_content_field = "artifact_content_tree_sha256"
+
+    def without_relocation_digests(
+        payload: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        sanitized = dict(payload)
+        sanitized.pop(content_field, None)
+        raw_artifacts = sanitized.get("dependency_artifacts")
+        if isinstance(raw_artifacts, list):
+            sanitized["dependency_artifacts"] = [
+                (
+                    {
+                        key: value
+                        for key, value in artifact.items()
+                        if key != artifact_content_field
+                    }
+                    if isinstance(artifact, Mapping)
+                    else artifact
+                )
+                for artifact in raw_artifacts
+            ]
+        return sanitized
+
+    original_without_content = without_relocation_digests(original_payload)
+    relocated_without_content = without_relocation_digests(relocated_payload)
     if original_without_content != relocated_without_content:
         raise HyperpropertyInstallerError(
             "relocated vendor identity differs from the validated original"
@@ -2822,6 +2936,90 @@ def write_sealed_vendor_relocation_identity(
             "and symlink-safe"
         )
 
+    enriched_payload = dict(relocated_payload)
+    original_artifacts = original_payload.get("dependency_artifacts") or []
+    relocated_artifacts = relocated_payload.get("dependency_artifacts") or []
+    if not isinstance(original_artifacts, list) or not isinstance(
+        relocated_artifacts, list
+    ):
+        raise HyperpropertyInstallerError(
+            "vendor dependency artifacts must be a JSON list"
+        )
+    enriched_artifacts: list[dict[str, Any]] = []
+    for original_artifact, relocated_artifact in zip(
+        original_artifacts, relocated_artifacts, strict=True
+    ):
+        if not isinstance(original_artifact, Mapping) or not isinstance(
+            relocated_artifact, Mapping
+        ):
+            raise HyperpropertyInstallerError(
+                "vendor dependency artifact must be a JSON object"
+            )
+        enriched_artifact = dict(relocated_artifact)
+        if str(original_artifact.get("artifact_kind") or "") == "directory":
+            try:
+                original_artifact_path = Path(
+                    os.path.expanduser(
+                        str(original_artifact.get("path") or "")
+                    )
+                ).resolve(strict=True)
+                relative_artifact_path = original_artifact_path.relative_to(
+                    original_root
+                )
+                relocated_artifact_path = (
+                    relocated_root / relative_artifact_path
+                ).resolve(strict=True)
+                relocated_artifact_path.relative_to(relocated_root)
+            except (OSError, ValueError) as exc:
+                raise HyperpropertyInstallerError(
+                    "directory dependency artifact is not relocatable "
+                    "inside the supplied install roots"
+                ) from exc
+            primary_sha = str(
+                original_artifact.get("artifact_sha256") or ""
+            )
+            if (
+                not original_artifact_path.is_dir()
+                or not relocated_artifact_path.is_dir()
+                or not re.fullmatch(r"[0-9a-f]{64}", primary_sha)
+                or _tree_sha256(original_artifact_path) != primary_sha
+            ):
+                raise HyperpropertyInstallerError(
+                    "original mode-inclusive dependency artifact no longer "
+                    "validates"
+                )
+            original_artifact_content_sha = (
+                _tree_relocation_content_sha256(original_artifact_path)
+            )
+            if (
+                _tree_relocation_content_sha256(relocated_artifact_path)
+                != original_artifact_content_sha
+                or not _sealed_vendor_tree_is_immutable(
+                    relocated_artifact_path,
+                    install_root=relocated_root,
+                )
+            ):
+                raise HyperpropertyInstallerError(
+                    "relocated dependency artifact changed content or is not "
+                    "root-owned, read-only, and symlink-safe"
+                )
+            for artifact in (original_artifact, relocated_artifact):
+                existing = str(artifact.get(artifact_content_field) or "")
+                if existing and existing != original_artifact_content_sha:
+                    raise HyperpropertyInstallerError(
+                        "existing dependency content-tree digest does not "
+                        "validate"
+                    )
+            enriched_artifact[
+                artifact_content_field
+            ] = original_artifact_content_sha
+        elif relocated_artifact.get(artifact_content_field):
+            raise HyperpropertyInstallerError(
+                "file dependency artifact cannot carry a content-tree digest"
+            )
+        enriched_artifacts.append(enriched_artifact)
+    enriched_payload["dependency_artifacts"] = enriched_artifacts
+
     output = Path(os.path.abspath(os.path.expanduser(str(output_path))))
     try:
         output_parent = output.parent.resolve(strict=True)
@@ -2842,7 +3040,6 @@ def write_sealed_vendor_relocation_identity(
             "sealed relocation identity output must be outside install trees"
         )
 
-    enriched_payload = dict(relocated_payload)
     enriched_payload[content_field] = original_content_sha
     temporary: Path | None = None
     try:
