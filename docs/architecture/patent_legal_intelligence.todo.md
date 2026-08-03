@@ -2159,7 +2159,7 @@ Program invariants:
 
 ## PATLAW-148 Add a live public-patent prior-art search adapter and journal
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
