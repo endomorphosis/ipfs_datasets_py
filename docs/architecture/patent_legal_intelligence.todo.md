@@ -1834,7 +1834,7 @@ Program invariants:
 
 ## PATLAW-135 Materialize scheduled temporal patent-authority snapshots
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
