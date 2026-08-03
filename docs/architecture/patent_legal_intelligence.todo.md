@@ -624,7 +624,7 @@ Program invariants:
 
 ## PATLAW-034 Validate span coverage, readability, and extraction disagreements
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
