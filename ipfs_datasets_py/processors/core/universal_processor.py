@@ -1,110 +1,71 @@
-"""UniversalProcessor - Async single entry point for all processing operations.
+"""UniversalProcessor - async single entry point for canonical routing.
 
-This module provides the UniversalProcessor class, which acts as a unified async interface
-for processing any input type (URLs, files, folders, text, binary, IPFS content).
+PATLAW-003: routes exclusively through the canonical core registry and
+core ``ProcessorProtocol`` (async ``can_handle`` / ``process``). Legacy
+processors enter only via
+:class:`~ipfs_datasets_py.processors.adapters.legacy_protocol_adapter.LegacyProtocolAdapter`.
 
-The UniversalProcessor automatically:
-1. Detects the input type using InputDetector
-2. Finds suitable processors using ProcessorRegistry (async)
-3. Processes the input with retry logic and fallbacks (async)
-4. Returns standardized ProcessingResult
-
-Requires anyio for unified async support across asyncio/trio backends.
-
-Example usage:
-    >>> import anyio
-    >>> from ipfs_datasets_py.processors.core import UniversalProcessor
-    >>> 
-    >>> async def main():
-    ...     processor = UniversalProcessor()
-    ...     result = await processor.process("https://example.com")
-    ...     if result.success:
-    ...         print(f"Found {result.get_entity_count()} entities")
-    >>> 
-    >>> anyio.run(main)
-
-Or using the convenience function:
-    >>> import anyio
-    >>> from ipfs_datasets_py.processors.core import process
-    >>> result = anyio.run(process, "document.pdf")
+Empty processor sets are never silent successes: zero registered processors
+or zero can_handle matches yield ``ProcessingResult(success=False, ...)``
+with explicit errors.
 """
 
+from __future__ import annotations
+
+import inspect
 import logging
 import time
 from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass, field
 
-# anyio for unified async support
 try:
     import anyio
+
     ANYIO_AVAILABLE = True
 except ImportError:
     ANYIO_AVAILABLE = False
+    anyio = None  # type: ignore
 
-from .protocol import ProcessingContext, ProcessingResult, ProcessorProtocol, InputType
+from .protocol import InputType, ProcessingContext, ProcessingResult, is_processor
 from .input_detector import InputDetector
-from .processor_registry import ProcessorRegistry, get_global_registry
+from .registry import (
+    EmptyProcessorSetError,
+    ProcessorRegistry,
+    get_global_registry,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class UniversalProcessor:
-    """Universal processor that automatically handles any input type.
-    
-    This is the main entry point for the processor system. It integrates
-    InputDetector and ProcessorRegistry to provide automatic input classification,
-    processor selection, and processing with error handling and retries.
-    
-    All processing operations are async and use anyio for unified async support
-    across asyncio and trio backends.
-    
+    """Universal processor that routes via the canonical ProcessorRegistry.
+
     Attributes:
-        registry: ProcessorRegistry for finding suitable processors
-        detector: InputDetector for classifying inputs
-        max_retries: Default maximum number of retry attempts
-        retry_delay: Default delay between retries in seconds
-    
-    Example:
-        >>> import anyio
-        >>> from ipfs_datasets_py.processors.core import UniversalProcessor
-        >>> 
-        >>> async def main():
-        ...     processor = UniversalProcessor()
-        ...     # Register your processors
-        ...     processor.register_processor(pdf_processor, priority=10)
-        ...     # Process any input
-        ...     result = await processor.process("document.pdf")
-        ...     if result.success:
-        ...         print(f"Success! {result.get_entity_count()} entities")
-        >>> 
-        >>> anyio.run(main)
+        registry: Canonical ProcessorRegistry
+        detector: InputDetector for classifying bare inputs
+        max_retries: Default max retry attempts per processor
+        retry_delay: Base delay between retries (seconds)
     """
-    
+
     def __init__(
         self,
         registry: Optional[ProcessorRegistry] = None,
         detector: Optional[InputDetector] = None,
         max_retries: int = 3,
-        retry_delay: float = 1.0
-    ):
-        """Initialize the UniversalProcessor.
-        
-        Args:
-            registry: ProcessorRegistry to use. If None, uses global registry.
-            detector: InputDetector to use. If None, creates new instance.
-            max_retries: Default maximum number of retry attempts per processor.
-            retry_delay: Default delay between retries in seconds.
-        """
+        retry_delay: float = 1.0,
+    ) -> None:
         self.registry = registry if registry is not None else get_global_registry()
         self.detector = detector if detector is not None else InputDetector()
         self.max_retries = max_retries
         self.retry_delay = retry_delay
-        
+
         logger.info(
-            f"UniversalProcessor initialized with {len(self.registry)} processors, "
-            f"max_retries={max_retries}, retry_delay={retry_delay}"
+            "UniversalProcessor initialized with %s processors, "
+            "max_retries=%s, retry_delay=%s",
+            len(self.registry),
+            max_retries,
+            retry_delay,
         )
-    
+
     async def process(
         self,
         input_data: Any,
@@ -114,375 +75,372 @@ class UniversalProcessor:
         use_multiple: bool = False,
         max_processors: Optional[int] = None,
         timeout: Optional[float] = None,
-        **options
+        **options: Any,
     ) -> ProcessingResult:
-        """Process input data automatically (async).
-        
-        This is the main method for processing. It:
-        1. Detects input type (if context not provided)
-        2. Finds suitable processors
-        3. Attempts processing with retry logic
-        4. Falls back to next processor on failure
-        5. Returns standardized result
-        
-        Args:
-            input_data: The input to process (URL, file path, text, etc.)
-            context: Optional pre-created ProcessingContext
-            max_retries: Maximum retry attempts per processor (overrides default)
-            retry_delay: Delay between retries in seconds (overrides default)
-            use_multiple: If True, try multiple processors and aggregate results
-            max_processors: Maximum number of processors to try
-            timeout: Optional processing timeout in seconds (uses anyio.fail_after)
-            **options: Additional options passed to processor
-        
-        Returns:
-            ProcessingResult with success status, knowledge graph, vectors, etc.
-        
-        Example:
-            >>> import anyio
-            >>> 
-            >>> async def main():
-            ...     processor = UniversalProcessor()
-            ...     result = await processor.process("https://example.com")
-            ...     if result.success:
-            ...         print(f"Success! {result.get_entity_count()} entities")
-            ...     else:
-            ...         print(f"Failed: {result.errors}")
-            >>> 
-            >>> anyio.run(main)
+        """Process input via deterministic core-protocol routing.
+
+        Steps:
+        1. Detect input type when *context* is omitted
+        2. Discover processors with ``registry.get_processors``
+        3. Try processors in priority order with retries
+        4. Return the first successful core ``ProcessingResult``
+           (or merge when *use_multiple* is True)
         """
         if not ANYIO_AVAILABLE:
             raise ImportError(
                 "anyio is required for async processing. "
                 "Install it with: pip install anyio"
             )
-        # Use defaults if not specified
+
         max_retries = max_retries if max_retries is not None else self.max_retries
         retry_delay = retry_delay if retry_delay is not None else self.retry_delay
-        
-        # Store context at function level
         processing_context = context
-        
-        async def _process_impl():
+
+        async def _process_impl() -> ProcessingResult:
             nonlocal processing_context
-            # Step 1: Detect input type if context not provided
+
             if processing_context is None:
                 try:
                     processing_context = self.detector.detect(input_data, **options)
                     logger.info(
-                        f"Detected input type: {processing_context.input_type.value}, "
-                        f"format: {processing_context.get_format()}"
+                        "Detected input type: %s, format: %s",
+                        processing_context.input_type.value,
+                        processing_context.get_format(),
                     )
                 except Exception as e:
-                    logger.error(f"Error detecting input: {e}", exc_info=True)
+                    logger.error("Error detecting input: %s", e, exc_info=True)
                     return ProcessingResult(
                         success=False,
-                        errors=[f"Input detection failed: {str(e)}"]
+                        errors=[f"Input detection failed: {e}"],
                     )
-            
-            # Step 2: Find suitable processors
+            # Merge call-site options into context for adapters
+            if options:
+                processing_context.options = {
+                    **(processing_context.options or {}),
+                    **options,
+                }
+
+            # Fail closed on empty registry (no silent empty set)
+            if len(self.registry) == 0:
+                logger.error(
+                    "UniversalProcessor routing failed: registry is empty"
+                )
+                return ProcessingResult(
+                    success=False,
+                    errors=[
+                        "No processors registered in the canonical registry; "
+                        "register core processors or LegacyProtocolAdapter "
+                        "wrappers before processing"
+                    ],
+                    metadata={
+                        "routing": "empty_registry",
+                        "registered": 0,
+                    },
+                )
+
             try:
                 processors = await self.registry.get_processors(
                     processing_context,
-                    limit=max_processors
+                    limit=max_processors,
+                    allow_empty_registry=True,
                 )
-                logger.info(f"Found {len(processors)} suitable processors")
-                
-                if not processors:
-                    logger.warning("No suitable processors found for input")
-                    return ProcessingResult(
-                        success=False,
-                        errors=["No suitable processors found for this input type"]
-                    )
-            except Exception as e:
-                logger.error(f"Error finding processors: {e}", exc_info=True)
+            except EmptyProcessorSetError as e:
                 return ProcessingResult(
                     success=False,
-                    errors=[f"Processor selection failed: {str(e)}"]
+                    errors=[str(e)],
+                    metadata={"routing": "empty_registry"},
                 )
-            
-            # Step 3: Try processors in priority order
-            results = []
-            all_errors = []
-            
+            except Exception as e:
+                logger.error("Error finding processors: %s", e, exc_info=True)
+                return ProcessingResult(
+                    success=False,
+                    errors=[f"Processor selection failed: {e}"],
+                )
+
+            logger.info("Found %s suitable processors", len(processors))
+
+            if not processors:
+                return ProcessingResult(
+                    success=False,
+                    errors=[
+                        "No suitable processors found for this input type "
+                        f"({processing_context.input_type.value}, "
+                        f"format={processing_context.get_format()!r}); "
+                        f"registry has {len(self.registry)} registered "
+                        f"({self.registry.get_enabled_count()} enabled)"
+                    ],
+                    metadata={
+                        "routing": "no_match",
+                        "registered": len(self.registry),
+                        "enabled": self.registry.get_enabled_count(),
+                        "input_type": processing_context.input_type.value,
+                        "format": processing_context.get_format(),
+                    },
+                )
+
+            results: List[ProcessingResult] = []
+            all_errors: List[str] = []
+
             for processor in processors:
-                processor_name = processor.__class__.__name__
-                
-                # Try this processor with retries
+                processor_name = self._processor_name(processor)
+
                 for attempt in range(max_retries):
                     try:
                         logger.info(
-                            f"Attempting processing with {processor_name} "
-                            f"(attempt {attempt + 1}/{max_retries})"
+                            "Attempting %s (attempt %s/%s)",
+                            processor_name,
+                            attempt + 1,
+                            max_retries,
                         )
-                        
-                        # Check if processor can handle the context
-                        if hasattr(processor, 'can_handle'):
-                            can_handle = processor.can_handle(processing_context)
-                            if hasattr(can_handle, '__await__'):
-                                can_handle = await can_handle
-                            if not can_handle:
-                                logger.info(f"{processor_name} cannot handle this context")
-                                continue
-                        
-                        # Process with the processor
+
+                        # Registered processors already passed is_processor;
+                        # re-check can_handle only via the canonical method.
+                        if not await self._can_handle(processor, processing_context):
+                            logger.info(
+                                "%s cannot handle this context", processor_name
+                            )
+                            break  # next processor
+
                         start_time = time.time()
-                        result = processor.process(processing_context)
-                        # Await if it's a coroutine
-                        if hasattr(result, '__await__'):
-                            result = await result
+                        result = await self._run_process(
+                            processor, processing_context
+                        )
                         elapsed = time.time() - start_time
-                        
+
+                        if not isinstance(result, ProcessingResult):
+                            error_msg = (
+                                f"{processor_name} returned non-core result "
+                                f"{type(result)!r}"
+                            )
+                            logger.warning(error_msg)
+                            all_errors.append(error_msg)
+                            break
+
+                        self.registry.record_call(
+                            processor_name if processor_name in self.registry else (
+                                self._registered_name(processor) or processor_name
+                            ),
+                            success=bool(result.success),
+                            duration_seconds=elapsed,
+                        )
+
                         if result.success:
                             logger.info(
-                                f"{processor_name} succeeded in {elapsed:.2f}s"
+                                "%s succeeded in %.2fs", processor_name, elapsed
                             )
+                            # Annotate routing metadata without clobbering adapter fields
+                            result.metadata.setdefault("routed_processor", processor_name)
+                            result.metadata.setdefault("routing", "canonical_core")
                             results.append(result)
-                            
-                            # If not using multiple processors, return first success
                             if not use_multiple:
                                 return result
-                            
-                            # Break retry loop on success
                             break
                         else:
-                            # Log failure but continue to retry or next processor
                             error_msg = f"{processor_name} failed: {result.errors}"
                             logger.warning(error_msg)
                             all_errors.append(error_msg)
-                            
-                            # Retry with exponential backoff
                             if attempt < max_retries - 1:
                                 delay = retry_delay * (2 ** attempt)
-                                logger.info(f"Retrying in {delay:.1f}s...")
                                 await anyio.sleep(delay)
-                            
+
                     except Exception as e:
                         error_msg = (
-                            f"{processor_name} raised exception (attempt "
-                            f"{attempt + 1}/{max_retries}): {str(e)}"
+                            f"{processor_name} raised exception "
+                            f"(attempt {attempt + 1}/{max_retries}): {e}"
                         )
                         logger.error(error_msg, exc_info=True)
                         all_errors.append(error_msg)
-                        
-                        # Retry with exponential backoff
                         if attempt < max_retries - 1:
                             delay = retry_delay * (2 ** attempt)
-                            logger.info(f"Retrying in {delay:.1f}s...")
                             await anyio.sleep(delay)
-                
-                # If using multiple processors, continue to next processor
-                # If not using multiple, we already returned on success above
+
                 if not use_multiple and results:
                     break
-            
-            # Step 4: Return aggregated results or error
+
             if results:
                 if len(results) == 1:
                     return results[0]
-                else:
-                    # Merge multiple results
-                    logger.info(f"Aggregating {len(results)} successful results")
-                    merged = results[0]
-                    for result in results[1:]:
-                        merged = merged.merge(result)
-                    return merged
-            else:
-                # All processors failed
-                logger.error("All processors failed")
-                return ProcessingResult(
-                    success=False,
-                    errors=all_errors or ["All processors failed"],
-                    metadata={'processors_tried': len(processors)}
-                )
-        
+                logger.info("Aggregating %s successful results", len(results))
+                merged = results[0]
+                for extra in results[1:]:
+                    merged.merge(extra)
+                return merged
+
+            return ProcessingResult(
+                success=False,
+                errors=all_errors or ["All processors failed"],
+                metadata={
+                    "routing": "all_failed",
+                    "processors_tried": len(processors),
+                },
+            )
+
         try:
-            # Apply timeout using anyio.fail_after if specified
             if timeout:
                 with anyio.fail_after(timeout):
                     return await _process_impl()
-            else:
-                return await _process_impl()
-                
+            return await _process_impl()
         except Exception as e:
-            # Handle both anyio timeout/cancellation and other exceptions
-            # anyio uses different exception types depending on the backend
             if ANYIO_AVAILABLE:
                 try:
                     cancelled_exc = anyio.get_cancelled_exc_class()
                     if isinstance(e, cancelled_exc):
-                        logger.error(f"Processing timeout/cancelled after {timeout}s")
+                        logger.error(
+                            "Processing timeout/cancelled after %ss", timeout
+                        )
                         return ProcessingResult(
                             success=False,
-                            errors=[f"Processing timeout after {timeout}s"]
+                            errors=[f"Processing timeout after {timeout}s"],
                         )
                 except Exception as exc_err:
-                    # Failed to check cancellation exception class, log and continue
-                    logger.debug(f"Could not check cancellation exception: {exc_err}")
-            
-            logger.error(f"Unexpected error in process(): {e}", exc_info=True)
+                    logger.debug(
+                        "Could not check cancellation exception: %s", exc_err
+                    )
+
+            logger.error("Unexpected error in process(): %s", e, exc_info=True)
             return ProcessingResult(
                 success=False,
-                errors=[f"Unexpected processing error: {str(e)}"]
+                errors=[f"Unexpected processing error: {e}"],
             )
-    
+
+    @staticmethod
+    async def _can_handle(processor: Any, context: ProcessingContext) -> bool:
+        if not hasattr(processor, "can_handle"):
+            return False
+        method = processor.can_handle
+        if inspect.iscoroutinefunction(method):
+            return bool(await method(context))
+        result = method(context)
+        if inspect.isawaitable(result):
+            return bool(await result)
+        return bool(result)
+
+    @staticmethod
+    async def _run_process(
+        processor: Any, context: ProcessingContext
+    ) -> ProcessingResult:
+        method = processor.process
+        if inspect.iscoroutinefunction(method):
+            return await method(context)
+        result = method(context)
+        if inspect.isawaitable(result):
+            return await result
+        return result
+
+    @staticmethod
+    def _processor_name(processor: Any) -> str:
+        if hasattr(processor, "get_name") and callable(processor.get_name):
+            try:
+                return str(processor.get_name())
+            except Exception:
+                pass
+        if hasattr(processor, "name") and isinstance(processor.name, str):
+            return processor.name
+        return processor.__class__.__name__
+
+    def _registered_name(self, processor: Any) -> Optional[str]:
+        for name, proc, _priority in self.registry.get_all_processors():
+            if proc is processor:
+                return name
+        return None
+
     async def process_batch(
         self,
         inputs: List[Any],
         parallel: bool = False,
-        **options
+        **options: Any,
     ) -> List[ProcessingResult]:
-        """Process multiple inputs (async).
-        
-        Args:
-            inputs: List of inputs to process
-            parallel: If True, process in parallel using anyio task groups (default: False)
-            **options: Options passed to process()
-        
-        Returns:
-            List of ProcessingResult objects, one per input
-        
-        Example:
-            >>> import anyio
-            >>> 
-            >>> async def main():
-            ...     processor = UniversalProcessor()
-            ...     results = await processor.process_batch(["file1.pdf", "file2.pdf"])
-            ...     success_count = sum(1 for r in results if r.success)
-            ...     print(f"{success_count}/{len(results)} succeeded")
-            >>> 
-            >>> anyio.run(main)
-        """
         if not ANYIO_AVAILABLE:
             raise ImportError(
                 "anyio is required for async batch processing. "
                 "Install it with: pip install anyio"
             )
-        
-        logger.info(f"Processing batch of {len(inputs)} inputs (parallel={parallel})")
-        
+
+        logger.info(
+            "Processing batch of %s inputs (parallel=%s)", len(inputs), parallel
+        )
+
         if parallel:
-            # Use anyio task groups for concurrent processing
-            results = [None] * len(inputs)
-            
-            async def process_item(index: int, input_data: Any):
+            results: List[Optional[ProcessingResult]] = [None] * len(inputs)
+
+            async def process_item(index: int, input_data: Any) -> None:
                 try:
-                    logger.info(f"Processing batch item {index + 1}/{len(inputs)}")
-                    result = await self.process(input_data, **options)
-                    results[index] = result
+                    results[index] = await self.process(input_data, **options)
                 except Exception as e:
-                    logger.error(f"Error processing batch item {index + 1}: {e}", exc_info=True)
+                    logger.error(
+                        "Error processing batch item %s: %s",
+                        index + 1,
+                        e,
+                        exc_info=True,
+                    )
                     results[index] = ProcessingResult(
                         success=False,
-                        errors=[f"Batch processing error: {str(e)}"]
+                        errors=[f"Batch processing error: {e}"],
                     )
-            
+
             async with anyio.create_task_group() as tg:
                 for i, input_data in enumerate(inputs):
                     tg.start_soon(process_item, i, input_data)
+            final: List[ProcessingResult] = [
+                r
+                if r is not None
+                else ProcessingResult(
+                    success=False, errors=["Batch item produced no result"]
+                )
+                for r in results
+            ]
         else:
-            # Sequential processing
-            results = []
+            final = []
             for i, input_data in enumerate(inputs):
-                logger.info(f"Processing batch item {i + 1}/{len(inputs)}")
-                result = await self.process(input_data, **options)
-                results.append(result)
-        
-        success_count = sum(1 for r in results if r.success)
+                logger.info("Processing batch item %s/%s", i + 1, len(inputs))
+                final.append(await self.process(input_data, **options))
+
+        success_count = sum(1 for r in final if r.success)
         logger.info(
-            f"Batch processing complete: {success_count}/{len(inputs)} succeeded"
+            "Batch complete: %s/%s succeeded", success_count, len(inputs)
         )
-        
-        return results
-    
+        return final
+
     def register_processor(
         self,
-        processor: ProcessorProtocol,
+        processor: Any,
         priority: int = 10,
         name: Optional[str] = None,
-        **metadata
-    ) -> None:
-        """Register a processor with the registry.
-        
-        This is a convenience method that delegates to the registry.
-        
-        Args:
-            processor: Processor instance to register
-            priority: Priority for this processor (higher = checked first)
-            name: Optional name for the processor
-            **metadata: Additional metadata for the processor
-        
-        Example:
-            >>> processor.register_processor(my_processor, priority=20, name="Custom")
+        **metadata: Any,
+    ) -> str:
+        """Register a core processor (or LegacyProtocolAdapter) on the registry.
+
+        Returns the registered name. Raises ProcessorRegistrationError for
+        bare legacy processors or non-conforming objects.
         """
-        self.registry.register(processor, priority=priority, name=name, **metadata)
-        logger.info(
-            f"Registered processor {name or processor.__class__.__name__} "
-            f"with priority {priority}"
+        registered = self.registry.register(
+            processor, priority=priority, name=name, **metadata
         )
-    
-    def unregister_processor(self, name: str) -> None:
-        """Unregister a processor from the registry.
-        
-        Args:
-            name: Name of the processor to unregister
-        
-        Example:
-            >>> processor.unregister_processor("Custom")
-        """
-        self.registry.unregister(name)
-        logger.info(f"Unregistered processor {name}")
-    
+        logger.info(
+            "Registered processor %s with priority %s",
+            registered,
+            priority,
+        )
+        return registered
+
+    def unregister_processor(self, name: str) -> bool:
+        result = self.registry.unregister(name)
+        logger.info("Unregistered processor %s (ok=%s)", name, result)
+        return result
+
     def get_registered_processors(self) -> List[tuple]:
-        """Get all registered processors.
-        
-        Returns:
-            List of (processor, priority) tuples
-        
-        Example:
-            >>> processors = processor.get_registered_processors()
-            >>> for proc, priority in processors:
-            ...     print(f"{proc.__class__.__name__}: priority {priority}")
-        """
+        """Return (name, processor, priority) tuples from the registry."""
         return self.registry.get_all_processors()
-    
+
     def get_capabilities(self) -> Dict[str, Any]:
-        """Get system capabilities from the registry.
-        
-        Returns:
-            Dictionary with supported formats, input types, etc.
-        
-        Example:
-            >>> caps = processor.get_capabilities()
-            >>> print(f"Supports: {caps['supported_formats']}")
-        """
         return self.registry.get_capabilities()
 
 
-# Global instance
 _global_processor: Optional[UniversalProcessor] = None
 
 
 def get_universal_processor() -> UniversalProcessor:
-    """Get the global UniversalProcessor instance.
-    
-    This implements a singleton pattern for convenient access to a shared
-    processor instance across your application.
-    
-    Returns:
-        The global UniversalProcessor instance
-    
-    Example:
-        >>> import anyio
-        >>> 
-        >>> async def main():
-        ...     processor = get_universal_processor()
-        ...     result = await processor.process("document.pdf")
-        ...     if result.success:
-        ...         print("Success!")
-        >>> 
-        >>> anyio.run(main)
-    """
+    """Return the process-wide UniversalProcessor singleton."""
     global _global_processor
     if _global_processor is None:
         _global_processor = UniversalProcessor()
@@ -490,34 +448,17 @@ def get_universal_processor() -> UniversalProcessor:
     return _global_processor
 
 
-async def process(input_data: Any, **options) -> ProcessingResult:
-    """Convenience function to process input with the global processor (async).
-    
-    This is the simplest way to process data - just one function call.
-    
-    Args:
-        input_data: The input to process
-        **options: Options passed to UniversalProcessor.process()
-    
-    Returns:
-        ProcessingResult
-    
-    Example:
-        >>> import anyio
-        >>> from ipfs_datasets_py.processors.core import process
-        >>> 
-        >>> async def main():
-        ...     result = await process("https://example.com")
-        ...     if result.success:
-        ...         print("Success!")
-        >>> 
-        >>> anyio.run(main)
-        
-    Or directly with anyio.run:
-        >>> import anyio
-        >>> from ipfs_datasets_py.processors.core import process
-        >>> result = anyio.run(process, "https://example.com")
-    """
+def reset_universal_processor(
+    registry: Optional[ProcessorRegistry] = None,
+) -> UniversalProcessor:
+    """Replace the global UniversalProcessor (primarily for tests)."""
+    global _global_processor
+    _global_processor = UniversalProcessor(registry=registry)
+    return _global_processor
+
+
+async def process(input_data: Any, **options: Any) -> ProcessingResult:
+    """Process *input_data* with the global UniversalProcessor."""
     if not ANYIO_AVAILABLE:
         raise ImportError(
             "anyio is required for async processing. "
@@ -527,32 +468,8 @@ async def process(input_data: Any, **options) -> ProcessingResult:
     return await processor.process(input_data, **options)
 
 
-async def process_batch(inputs: List[Any], **options) -> List[ProcessingResult]:
-    """Convenience function to process multiple inputs (async).
-    
-    Args:
-        inputs: List of inputs to process
-        **options: Options passed to UniversalProcessor.process_batch()
-    
-    Returns:
-        List of ProcessingResult objects
-    
-    Example:
-        >>> import anyio
-        >>> from ipfs_datasets_py.processors.core import process_batch
-        >>> 
-        >>> async def main():
-        ...     results = await process_batch(["file1.pdf", "file2.pdf", "https://example.com"])
-        ...     success_count = sum(1 for r in results if r.success)
-        ...     print(f"{success_count}/{len(results)} succeeded")
-        >>> 
-        >>> anyio.run(main)
-        
-    Or directly with anyio.run:
-        >>> import anyio
-        >>> from ipfs_datasets_py.processors.core import process_batch
-        >>> results = anyio.run(process_batch, ["file1.pdf", "file2.pdf"])
-    """
+async def process_batch(inputs: List[Any], **options: Any) -> List[ProcessingResult]:
+    """Batch-process with the global UniversalProcessor."""
     if not ANYIO_AVAILABLE:
         raise ImportError(
             "anyio is required for async batch processing. "
@@ -560,3 +477,14 @@ async def process_batch(inputs: List[Any], **options) -> List[ProcessingResult]:
         )
     processor = get_universal_processor()
     return await processor.process_batch(inputs, **options)
+
+
+__all__ = [
+    "UniversalProcessor",
+    "get_universal_processor",
+    "reset_universal_processor",
+    "process",
+    "process_batch",
+    "InputType",
+    "is_processor",
+]
