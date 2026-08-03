@@ -74,7 +74,7 @@ Program invariants:
 
 ## PATLAW-004 Repair OCR, page coverage, text merge, and disclosure behavior
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
