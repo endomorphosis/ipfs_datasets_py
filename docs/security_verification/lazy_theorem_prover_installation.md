@@ -15,8 +15,9 @@ pip install -e '.[theorem-provers]'
 pip install -r requirements-theorem-provers.txt
 ```
 
-This extra installs `z3-solver`, `cvc5`, and `symbolicai` (imported as
-`symai`). It does not install native solver executables during `pip install`.
+This extra installs `z3-solver`, `cvc5`, PySMT, beartype, JSON Schema, and
+`symbolicai` (imported as `symai`). It does not install native solver
+executables during `pip install`.
 
 ## Native Solver Behavior
 
@@ -34,7 +35,7 @@ the current process `PATH`.
 
 | Solver | First-use installation |
 | --- | --- |
-| Apalache | Pinned portable JVM release; requires Java and works on Linux x86_64/arm64. |
+| TLC / Apalache | Pinned portable JVM releases; TLC requires Java 11+ and Apalache requires Java 17+. |
 | Maude | Pinned, checksum-verified native release; Linux arm64 uses the reviewed Debian Maude `3.5.1` package. |
 | Tamarin | Pinned native release when available, or a managed Stack source build on Linux arm64; paired with an explicitly compatible Maude. |
 | ProVerif | Pinned source archive, checksum verified, built without the optional GTK UI; reuses OCaml or creates an isolated OPAM switch. |
@@ -78,6 +79,30 @@ executable = ensure_prover_executable(
 The default terminal integration prints the same messages with the
 `[ipfs_datasets_py]` prefix. Long-running downloads, extraction, OPAM switch
 creation, and ProVerif builds each emit a distinct stage.
+
+State-model installs validate `java -version` and launch the selected tool
+before publishing a managed launcher. Pass `java_executable=...` to the
+state-model installer API or set
+`IPFS_DATASETS_PY_JAVA_EXECUTABLE=/path/to/java` to select a user-local JVM
+without changing the process-wide Java installation. An invalid explicit
+override fails closed and never falls back silently to another JVM.
+`JAVA_TOOL_OPTIONS`, `_JAVA_OPTIONS`, and `JDK_JAVA_OPTIONS` are removed from
+the bounded identity/runtime probe environment so injected JVM arguments
+cannot alter the certified probe.
+
+TLC's managed 1.8.0 jar must match the reviewed SHA-256 digest
+`e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5`.
+The real TLC help command returns status 1, so its runtime probe accepts that
+status only when the complete TLC help identity markers are present. TLC and
+Apalache repairs are extracted and validated in staging; artifacts and
+launchers replace the prior installation only after validation, with rollback
+on publication failure.
+
+`dry_run=True` performs pin selection without resolving or executing Java or a
+prover. `require_java=False` is supported only with dry-run selection; live
+ensures reject it rather than reporting an unvalidated artifact usable.
+`strict=False` continues to accept a runnable existing nonlocked tool, while
+every managed install still requires its reviewed locked artifact identity.
 
 Tamarin installation is complete only after its pinned binary accepts the
 selected Maude `3.5.1` runtime with Tamarin's `checking installation: OK`

@@ -16,6 +16,7 @@
 
 - [Key Features](#-key-features)
 - [Quick Start](#-quick-start)
+- [Wallet Processors](#-wallet-processors)
 - [CLI Tools](#-cli-tools)
 - [Hybrid Legal V2 Ops](#-hybrid-legal-v2-ops)
 - [MCP Server](#-mcp-server)
@@ -46,6 +47,7 @@
 - 📊 **Production Monitoring** - Dashboards, analytics, and observability
 - 🔄 **Distributed Compute** - P2P networking and distributed workflows
 - 🛡️ **Enterprise Ready** - Security, audit logging, and provenance tracking
+- 💳 **Multi-Chain Wallet Processors** - Read-only ledger ingest/export for Bitcoin, Ethereum, Solana, XRPL, Xaman, World ID / World Chain (no signing or broadcast)
 
 ## 🚀 Quick Start
 
@@ -73,6 +75,24 @@ Its currently installable release depends on an older `httpx` range that
 conflicts with the MCP/FastMCP stack used by this workspace. If you need Brave
 Search specifically, install it in a separate optional environment.
 
+### Wallet processor extras (optional)
+
+Multi-chain wallet processors are optional and never auto-installed:
+
+```bash
+pip install "ipfs_datasets_py[wallets]"
+pip install "ipfs_datasets_py[wallets-worldcoin]"   # World ID + World Chain
+pip install "ipfs_datasets_py[wallets-ethereum]"
+pip install "ipfs_datasets_py[wallets-xrpl]"
+pip install "ipfs_datasets_py[wallets-xaman]"       # Xaman payloads over XRPL
+pip install "ipfs_datasets_py[wallets-bitcoin]"
+pip install "ipfs_datasets_py[wallets-solana]"
+pip install "ipfs_datasets_py[wallets-all]"
+```
+
+See [docs/wallet_processors/README.md](docs/wallet_processors/README.md) and
+[docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md](docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md).
+
 ### Basic Usage
 
 ```python
@@ -83,6 +103,39 @@ manager = DatasetManager()
 dataset = manager.load_dataset("squad", split="train[:1000]")
 manager.save_dataset(dataset, "output/processed_data.parquet")
 ```
+
+## 💳 Wallet Processors
+
+Read-only multi-chain wallet and public-ledger processors live under
+`ipfs_datasets_py.processors.wallets`. They normalize, checkpoint, and export
+ledger evidence — they **do not** custody keys, sign, submit, or broadcast.
+
+| Concept | Meaning |
+| --- | --- |
+| **World ID** | Proof-of-personhood protocol (IDKit / proofs) — family `worldcoin` |
+| **World Chain** | OP-Stack EVM L2 ledger (chain ids 480 / 4801) — family `world-chain` |
+| **WLD** | ERC-20 asset on World Chain mainnet — not a protocol or chain |
+| **XRPL** | XRP Ledger classic accounts — family `xrpl` |
+| **Xaman** | Payload application surface composed over XRPL — family `xaman` |
+
+```python
+from ipfs_datasets_py.processors.wallets import default_registry, get_wallet_processor
+
+reg = default_registry()
+print(reg.list_families())
+# Construct only after installing the matching optional extra:
+# processor = get_wallet_processor("ethereum", network="ethereum-mainnet")
+```
+
+- **Docs:** [docs/wallet_processors/README.md](docs/wallet_processors/README.md)
+- **Offline examples:** [examples/wallet_processors/](examples/wallet_processors/)
+- **Schemas:** [docs/schemas/wallet-ledger-record-v1.schema.json](docs/schemas/wallet-ledger-record-v1.schema.json)
+- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
+- **Import / schema migration windows and rollback** (package version + outer
+  gitlink/wrapper): see the wallet processors README.
+
+Examples are offline by default. Live network requires both
+`WALLET_PROCESSORS_ALLOW_NETWORK=1` and `--allow-network`.
 
 ## 🔧 CLI Tools
 
@@ -1098,15 +1151,20 @@ car_cid = create_car_file("data/", "output.car")
 - **[Deprecation Timeline](docs/DEPRECATION_TIMELINE.md)** - 6-month deprecation schedule (Feb-Aug 2026)
 - **[GraphRAG Consolidation](docs/GRAPHRAG_CONSOLIDATION_GUIDE.md)** - Unified GraphRAG processor guide
 - **[Multimedia Migration](docs/MULTIMEDIA_MIGRATION_GUIDE.md)** - Multimedia processor migration
+- **[Wallet Processors](docs/wallet_processors/README.md)** - Multi-chain wallet ingest/export docs, extras, migration windows, rollback
 
 ### Features & Integration
 - **[Complete Features List](docs/FEATURES.md)** - All capabilities explained
 - **[Hardware Acceleration](docs/guides/IPFS_ACCELERATE_INTEGRATION.md)** - ipfs_accelerate_py (2-20x speedup)
 - **[IPFS Operations](docs/guides/IPFS_KIT_INTEGRATION.md)** - ipfs_kit_py integration
 - **[Best Practices](docs/guides/BEST_PRACTICES.md)** - Performance, security, patterns
+- **[Wallet Processor Threat Model](docs/security/WALLET_PROCESSOR_THREAT_MODEL.md)** - Privacy and denied custody/signing capabilities
+- **[Wallet Processor Dependencies](docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md)** - Optional extras and SBOM notes
 
 ### Migration & CLI
 - **[CLI Tools](docs/guides/CLI_TOOL_MERGE.md)** - Command-line interface guide
+- **[Wallet Processor Examples](examples/wallet_processors/)** - Offline normalize/export and identity distinction examples
+- **[Changelog](CHANGELOG.md)** - Package release notes
 
 ## 📄 License
 

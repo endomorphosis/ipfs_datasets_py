@@ -150,6 +150,19 @@ class AudioArtifactDescriptor:
             "uri": self.uri,
         }
 
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> AudioArtifactDescriptor:
+        if not isinstance(payload, Mapping):
+            raise TypeError("audio artifact descriptor must be a mapping")
+        return cls(
+            audio_id=str(payload["audio_id"]),
+            content_sha256=str(payload["content_sha256"]),
+            byte_length=int(payload["byte_length"]),
+            media_type=str(payload["media_type"]),
+            uri=str(payload.get("uri") or ""),
+            ipfs_cid=str(payload.get("ipfs_cid") or ""),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class AudioWorkItem:
@@ -204,6 +217,31 @@ class AudioWorkItem:
         result["work_id"] = self.work_id
         return result
 
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> AudioWorkItem:
+        if not isinstance(payload, Mapping):
+            raise TypeError("audio work item must be a mapping")
+        audio_payload = payload.get("audio")
+        audio = (
+            AudioArtifactDescriptor.from_dict(audio_payload)
+            if isinstance(audio_payload, Mapping)
+            else None
+        )
+        return cls(
+            operation=payload["operation"],
+            reason=payload["reason"],
+            subject_id=str(payload["subject_id"]),
+            subject_schema_version=str(payload["subject_schema_version"]),
+            spoken_text=str(payload["spoken_text"]),
+            text_sha256=str(payload["text_sha256"]),
+            locale=str(payload["locale"]),
+            source_manifest_id=str(payload["source_manifest_id"]),
+            policy_id=str(payload["policy_id"]),
+            audio=audio,
+            depends_on=tuple(payload.get("depends_on") or ()),
+            work_id=str(payload.get("work_id") or ""),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class AudioWorkManifest:
@@ -242,6 +280,22 @@ class AudioWorkManifest:
 
     def canonical_bytes(self) -> bytes:
         return _canonical_bytes(self.to_dict())
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> AudioWorkManifest:
+        if not isinstance(payload, Mapping):
+            raise TypeError("audio work manifest must be a mapping")
+        items_payload = payload.get("items") or ()
+        if not isinstance(items_payload, list | tuple):
+            raise TypeError("audio work manifest items must be a sequence")
+        return cls(
+            operation=payload["operation"],
+            items=tuple(AudioWorkItem.from_dict(item) for item in items_payload),
+            schema_version=str(
+                payload.get("schema_version") or VOICE_AUDIO_WORK_MANIFEST_SCHEMA_VERSION
+            ),
+            manifest_id=str(payload.get("manifest_id") or ""),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -461,6 +515,27 @@ class VoiceAudioWorkset:
 
     def canonical_bytes(self) -> bytes:
         return _canonical_bytes(self.to_dict())
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> VoiceAudioWorkset:
+        if not isinstance(payload, Mapping):
+            raise TypeError("voice audio workset must be a mapping")
+        return cls(
+            tts_manifest=AudioWorkManifest.from_dict(payload["tts_manifest"]),
+            asr_manifest=AudioWorkManifest.from_dict(payload["asr_manifest"]),
+            validation_manifest=AudioWorkManifest.from_dict(
+                payload["validation_manifest"]
+            ),
+            source_manifest_id=str(payload["source_manifest_id"]),
+            policy_id=str(payload["policy_id"]),
+            intentionally_text_only_subject_ids=tuple(
+                payload.get("intentionally_text_only_subject_ids") or ()
+            ),
+            schema_version=str(
+                payload.get("schema_version") or VOICE_AUDIO_WORKSET_SCHEMA_VERSION
+            ),
+            workset_id=str(payload.get("workset_id") or ""),
+        )
 
 
 WorkManifest = AudioWorkManifest

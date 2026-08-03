@@ -1,0 +1,57 @@
+{
+  "schema": "wallet_processor_migration/worldcoin-fixture-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "task_id": "WALPROC-003",
+  "generated_at": "2026-07-28T22:30:00Z",
+  "purpose": "Freeze World ID / Worldcoin golden vectors, route DTO shapes, snapshot shapes, import identities, and public projections before production code moves. Safe API/crypto vectors only; known vulnerabilities live in security-baseline.json as failures to fix.",
+  "source_of_truth_pre_move": "wallet_interface/world_id.py",
+  "target_package": "ipfs_datasets_py/ipfs_datasets_py/processors/wallets/worldcoin",
+  "classification": {
+    "compatibility_freeze": true,
+    "security_vulnerabilities_frozen_as_ok": false,
+    "offline_default": true
+  },
+  "coverage": {
+    "hash_to_field": "golden_vectors.json#hash_to_field",
+    "rp_signing": "golden_vectors.json#rp_signing",
+    "idkit_v3_legacy": "idkit_v3_legacy.json",
+    "idkit_v4_uniqueness": "idkit_v4_uniqueness.json",
+    "idkit_v4_session": "idkit_v4_session.json",
+    "verify_success": "verify_success.json",
+    "verify_failure": "verify_failure.json",
+    "redaction": "redaction_cases.json",
+    "route_shapes": "route_shapes.json",
+    "import_identities": "import_identities.json",
+    "snapshot_shapes": "snapshot_shapes.json",
+    "public_projections": "public_projections.json"
+  },
+  "files": [
+    "manifest.json",
+    "README.md",
+    "golden_vectors.json",
+    "idkit_v3_legacy.json",
+    "idkit_v4_uniqueness.json",
+    "idkit_v4_session.json",
+    "verify_success.json",
+    "verify_failure.json",
+    "redaction_cases.json",
+    "route_shapes.json",
+    "import_identities.json",
+    "snapshot_shapes.json",
+    "public_projections.json"
+  ],
+  "acceptance_keys": [
+    "world_id_signing",
+    "hash_to_field",
+    "idkit_v3_legacy",
+    "idkit_v4_uniqueness",
+    "idkit_v4_session",
+    "verify_success",
+    "verify_failure",
+    "redaction",
+    "old_snapshot_import",
+    "route_shapes",
+    "old_import_identities"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "datasets_contract_analysis/sample-dataset@1",
+  "dataset_id": "dscon-g300-sample-v1",
+  "format": "json",
+  "description": "Hermetic offline sample for DSCON-G300 baseline probes. Not a production dataset.",
+  "data": [
+    {"id": 1, "text": "alpha", "label": 0},
+    {"id": 2, "text": "beta", "label": 1},
+    {"id": 3, "text": "gamma", "label": 0}
+  ],
+  "features": {
+    "id": "int64",
+    "text": "string",
+    "label": "int64"
+  },
+  "record_count": 3,
+  "notes": [
+    "Used to prove no-write saves and no-op process paths without network.",
+    "Filter mock is expected to invent a 0.9 reduction rather than apply predicates."
+  ]
+}

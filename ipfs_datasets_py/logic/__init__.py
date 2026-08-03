@@ -60,9 +60,11 @@ _SUBMODULE_EXPORTS = {
     "security",
     "security_models",
     "submodule_registry",
+    "tactician",
     "TDFOL",
     "tools",
     "types",
+    "verification_api",
     "zkp",
 }
 

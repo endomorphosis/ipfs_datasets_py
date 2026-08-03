@@ -1,0 +1,108 @@
+{
+  "baselines": [
+    {
+      "baseline_id": "kg-bl-concurrent_mixed-ci-linux-aarch64-py3.12-v1",
+      "environment_label": "ci-linux-aarch64-py3.12",
+      "path": "environments/ci-linux-aarch64-py3.12/profiles/concurrent_mixed.json",
+      "profile": "concurrent_mixed",
+      "status": "ratified"
+    },
+    {
+      "baseline_id": "kg-bl-corpus_211-ci-linux-aarch64-py3.12-v1",
+      "environment_label": "ci-linux-aarch64-py3.12",
+      "path": "environments/ci-linux-aarch64-py3.12/profiles/corpus_211.json",
+      "profile": "corpus_211",
+      "status": "ratified"
+    },
+    {
+      "baseline_id": "kg-bl-corpus_cvefixes-ci-linux-aarch64-py3.12-v1",
+      "environment_label": "ci-linux-aarch64-py3.12",
+      "path": "environments/ci-linux-aarch64-py3.12/profiles/corpus_cvefixes.json",
+      "profile": "corpus_cvefixes",
+      "status": "ratified"
+    },
+    {
+      "baseline_id": "kg-bl-smoke-ci-linux-aarch64-py3.12-v1",
+      "environment_label": "ci-linux-aarch64-py3.12",
+      "path": "environments/ci-linux-aarch64-py3.12/profiles/smoke.json",
+      "profile": "smoke",
+      "status": "ratified"
+    },
+    {
+      "baseline_id": "kg-bl-synthetic_large-ci-linux-aarch64-py3.12-v1",
+      "environment_label": "ci-linux-aarch64-py3.12",
+      "path": "environments/ci-linux-aarch64-py3.12/profiles/synthetic_large.json",
+      "profile": "synthetic_large",
+      "status": "environment_gated"
+    },
+    {
+      "baseline_id": "kg-bl-tiny-ci-linux-aarch64-py3.12-v1",
+      "environment_label": "ci-linux-aarch64-py3.12",
+      "path": "environments/ci-linux-aarch64-py3.12/profiles/tiny.json",
+      "profile": "tiny",
+      "status": "ratified"
+    },
+    {
+      "baseline_id": "kg-bl-concurrent_mixed-reference-lab-linux-v1",
+      "environment_label": "reference-lab-linux",
+      "path": "environments/reference-lab-linux/profiles/concurrent_mixed.json",
+      "profile": "concurrent_mixed",
+      "status": "ratified"
+    },
+    {
+      "baseline_id": "kg-bl-corpus_211-reference-lab-linux-v1",
+      "environment_label": "reference-lab-linux",
+      "path": "environments/reference-lab-linux/profiles/corpus_211.json",
+      "profile": "corpus_211",
+      "status": "ratified"
+    },
+    {
+      "baseline_id": "kg-bl-corpus_cvefixes-reference-lab-linux-v1",
+      "environment_label": "reference-lab-linux",
+      "path": "environments/reference-lab-linux/profiles/corpus_cvefixes.json",
+      "profile": "corpus_cvefixes",
+      "status": "ratified"
+    },
+    {
+      "baseline_id": "kg-bl-smoke-reference-lab-linux-v1",
+      "environment_label": "reference-lab-linux",
+      "path": "environments/reference-lab-linux/profiles/smoke.json",
+      "profile": "smoke",
+      "status": "ratified"
+    },
+    {
+      "baseline_id": "kg-bl-synthetic_large-reference-lab-linux-v1",
+      "environment_label": "reference-lab-linux",
+      "path": "environments/reference-lab-linux/profiles/synthetic_large.json",
+      "profile": "synthetic_large",
+      "status": "environment_gated"
+    },
+    {
+      "baseline_id": "kg-bl-tiny-reference-lab-linux-v1",
+      "environment_label": "reference-lab-linux",
+      "path": "environments/reference-lab-linux/profiles/tiny.json",
+      "profile": "tiny",
+      "status": "ratified"
+    }
+  ],
+  "correctness_error_max": 0,
+  "environments": [
+    "ci-linux-aarch64-py3.12",
+    "reference-lab-linux"
+  ],
+  "notes": "Hardware-labelled load baselines for KGP-030. Absolute latency and throughput bounds are not portable; compare only within a matching environment_label or re-ratify. Unexplained p95 or throughput regressions above 10% block release. Correctness and security error budgets are always zero.",
+  "optional_profiles": [
+    "tiny"
+  ],
+  "regression_ratio_limit": 0.1,
+  "required_profiles": [
+    "smoke",
+    "corpus_211",
+    "corpus_cvefixes",
+    "synthetic_large",
+    "concurrent_mixed"
+  ],
+  "schema": "ipfs-datasets.knowledge-graphs.load-baseline.v1",
+  "schema_version": 1,
+  "security_error_max": 0
+}

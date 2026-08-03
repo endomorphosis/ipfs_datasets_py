@@ -1,0 +1,72 @@
+{
+  "schema": "wallet_processor_migration/xaman-fixture-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G210",
+  "task_id": "WALPROC-021",
+  "generated_at": "2026-07-29T12:00:00Z",
+  "purpose": "Xaman payload lifecycle, network binding, redaction, and XRPL settlement correlation fixtures for WALPROC-G210. Formal assurance linkage fixtures from WALPROC-G020 remain present. API success is never settlement.",
+  "classification": {
+    "compatibility_freeze": true,
+    "formal_assurance_is_not_runtime_correctness": true,
+    "offline_default": true,
+    "immutable_when_digested": true,
+    "status": "golden"
+  },
+  "source": {
+    "kind": "synthetic_offline",
+    "description": "Deterministic offline Xaman payload and XRPL correlation fixtures; not live network data."
+  },
+  "license": {
+    "spdx": "Apache-2.0"
+  },
+  "provenance": {
+    "chain_namespace": "xrpl",
+    "network": "xrpl-testnet",
+    "provider_family": "xaman-http",
+    "xaman_payloads": true,
+    "api_success_is_settlement": false,
+    "settlement_via": "xrpl",
+    "not_live_network_data": true,
+    "extends_shared_checks": true
+  },
+  "target_runtime_packages": {
+    "xaman_processor": "ipfs_datasets_py/ipfs_datasets_py/processors/wallets/xaman",
+    "xrpl_processor": "ipfs_datasets_py/ipfs_datasets_py/processors/wallets/xrpl",
+    "status": "implemented"
+  },
+  "formal_assurance_roots": [
+    "ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/xaman",
+    "ipfs_datasets_py/ipfs_datasets_py/logic/security_models/crypto_exchange"
+  ],
+  "coverage": {
+    "assurance_links": "assurance_links.json",
+    "runtime_projection_boundary": "runtime_projection_boundary.json",
+    "sample_ledger_records": "sample_ledger_records.json",
+    "payload_lifecycle": "payload_lifecycle_states.json",
+    "settlement_correlation": "settlement_correlation.json",
+    "redaction": "redaction_cases.json",
+    "network_binding": "network_binding.json"
+  },
+  "files": [
+    "manifest.json",
+    "README.md",
+    "assurance_links.json",
+    "runtime_projection_boundary.json",
+    "sample_ledger_records.json",
+    "payload_lifecycle_states.json",
+    "settlement_correlation.json",
+    "redaction_cases.json",
+    "network_binding.json"
+  ],
+  "acceptance_keys": [
+    "xaman_assurance_links",
+    "runtime_vs_formal_boundary",
+    "offline_sample_ledger_shapes",
+    "distinct_payload_lifecycle_states",
+    "api_success_is_not_settlement",
+    "xrpl_settlement_verification",
+    "network_account_payload_identity_bound",
+    "memo_instruction_redaction_size_policy",
+    "no_approve_sign_submit"
+  ]
+}

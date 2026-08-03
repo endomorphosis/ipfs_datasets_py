@@ -143,8 +143,10 @@ cvc5 --version
 ### Apalache
 
 Apalache is a JVM-based TLA+ model checker used for temporal/state-machine
-coverage when a task or release gate requires it. It requires a Java runtime
-compatible with the installed Apalache release.
+coverage when a task or release gate requires it. The managed Apalache 0.58.3
+lane requires Java 17 or newer. The TLC 1.8.0 lane requires Java 11 or newer.
+Use `IPFS_DATASETS_PY_JAVA_EXECUTABLE=/path/to/java` to bind a compatible
+user-local runtime without changing the system Java.
 
 Install from the Apalache release artifacts or a controlled package-manager
 mirror, then put the `apalache-mc` launcher on `PATH`.
@@ -155,6 +157,14 @@ Validate:
 java -version
 apalache-mc version
 ```
+
+The state-model installer does not report either tool usable until the Java
+minimum is satisfied and a bounded post-install launch probe exits
+with its accepted tool-specific semantics. TLC 1.8.0 help intentionally exits
+1, so that result is accepted only with the complete TLC help markers and the
+reviewed jar digest. Java option-injection variables are removed from probes,
+and repairs are validated in staging before the previous installation is
+replaced.
 
 Missing Apalache blocks only checks that the probe marks required. If it is
 reported as optional, record the capability gap and do not claim Apalache-backed

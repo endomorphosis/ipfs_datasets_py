@@ -1,0 +1,54 @@
+{
+  "schema": "wallet_processor_migration/shared-wallet-fixture-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "task_id": "WALPROC-013",
+  "generated_at": "2026-07-29T00:00:00Z",
+  "purpose": "Chain-neutral offline fixtures for the shared wallet processor conformance harness.",
+  "classification": {
+    "offline_default": true,
+    "immutable_when_digested": true,
+    "synthetic": true
+  },
+  "source": {
+    "kind": "synthetic",
+    "description": "Hand-authored offline vectors for WALPROC-G090; not captured from live networks.",
+    "authors": ["wallet-processor-migration"]
+  },
+  "license": {
+    "spdx": "Apache-2.0"
+  },
+  "provenance": {
+    "created_for": "shared provider/normalizer/processor conformance",
+    "chain_namespaces": ["eip155", "bip122", "solana", "xrpl", "worldcoin"],
+    "not_live_network_data": true
+  },
+  "coverage": {
+    "address_network_identity": "identity_vectors.json",
+    "exact_amounts": "amount_vectors.json",
+    "deterministic_ids": "deterministic_ids.json",
+    "malformed_empty_partial": "malformed_payloads.json",
+    "pagination": "pagination_pages.json",
+    "retries": "retry_and_cancel.json#retries",
+    "cancellation": "retry_and_cancel.json#cancellation",
+    "idempotency": "cas_checkpoint.json#idempotent_replay",
+    "cas_conflicts": "cas_checkpoint.json#cas_conflicts",
+    "shallow_deep_reorg": "reorg_histories.json",
+    "export_round_trip": "export_sample_records.json",
+    "secret_leaks": "secret_redaction_cases.json"
+  },
+  "files": [
+    "manifest.json",
+    "README.md",
+    "identity_vectors.json",
+    "amount_vectors.json",
+    "deterministic_ids.json",
+    "malformed_payloads.json",
+    "pagination_pages.json",
+    "retry_and_cancel.json",
+    "reorg_histories.json",
+    "export_sample_records.json",
+    "secret_redaction_cases.json",
+    "cas_checkpoint.json"
+  ]
+}

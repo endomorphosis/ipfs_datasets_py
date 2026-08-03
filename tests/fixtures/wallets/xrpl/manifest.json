@@ -1,0 +1,61 @@
+{
+  "schema": "wallet_processor_migration/chain-fixture-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G200",
+  "task_id": "WALPROC-017",
+  "chain_id": "xrpl",
+  "generated_at": "2026-07-29T00:00:00Z",
+  "purpose": "XRPL ledger golden fixtures for WALPROC-G200 (account_tx marker pagination, delivered_amount, issued currency, tags/memos, validated finality, outcomes).",
+  "classification": {
+    "offline_default": true,
+    "immutable_when_digested": true,
+    "status": "golden"
+  },
+  "source": {
+    "kind": "synthetic_offline",
+    "description": "Deterministic offline fixtures; not live network data. XRPL JSON-RPC account_tx and ledger shaped payloads."
+  },
+  "license": {
+    "spdx": "Apache-2.0"
+  },
+  "provenance": {
+    "chain_namespace": "xrpl",
+    "network": "xrpl-mainnet",
+    "network_id": 0,
+    "genesis_hash": "03DEAF45E5A5E0C0C1C2C3D4E5F60718293A4B5C6D7E8F90123456789ABCDEF0",
+    "not_live_network_data": true,
+    "extends_shared_checks": true,
+    "provider_family": "xrpl-json-rpc",
+    "xaman_payloads": false
+  },
+  "coverage": {
+    "marker_pagination": "account_tx_marker_pages.json",
+    "delivered_amount": "partial_payment_delivered_amount.json",
+    "issued_currency": "issued_currency_trustline.json",
+    "tags_memos": "destination_tag_and_memos.json",
+    "outcomes": "outcomes_validated_failed_unknown.json",
+    "ledger_continuity": "ledger_hash_continuity.json",
+    "sample_transactions": "sample_transactions.json"
+  },
+  "files": [
+    "manifest.json",
+    "README.md",
+    "account_tx_marker_pages.json",
+    "partial_payment_delivered_amount.json",
+    "issued_currency_trustline.json",
+    "destination_tag_and_memos.json",
+    "outcomes_validated_failed_unknown.json",
+    "ledger_hash_continuity.json",
+    "sample_transactions.json"
+  ],
+  "acceptance_keys": [
+    "marker_pagination_no_gaps_duplicates",
+    "validated_only_final",
+    "ledger_hash_index_continuity",
+    "partial_payment_delivered_amount",
+    "issued_asset_currency_and_issuer",
+    "tags_memos_privacy_policy",
+    "failed_unvalidated_unknown_distinct",
+    "no_signing_submission"
+  ]
+}

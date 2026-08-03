@@ -1,0 +1,39 @@
+{
+  "schema": "wallet_processor_migration/xrpl-issued-currency@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G200",
+  "network": "xrpl-mainnet",
+  "notes": "Issued asset identity must include both currency and issuer.",
+  "entry": {
+    "validated": true,
+    "ledger_index": 85000200,
+    "tx": {
+      "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+      "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+      "TransactionType": "Payment",
+      "Amount": {
+        "currency": "USD",
+        "issuer": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+        "value": "25.50"
+      },
+      "Fee": "12",
+      "Sequence": 50,
+      "hash": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
+    },
+    "meta": {
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": {
+        "currency": "USD",
+        "issuer": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+        "value": "25.50"
+      }
+    }
+  },
+  "expect": {
+    "currency": "USD",
+    "issuer": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+    "asset_namespace": "xrpl-token",
+    "asset_reference_contains_issuer": true,
+    "value": "25.50"
+  }
+}

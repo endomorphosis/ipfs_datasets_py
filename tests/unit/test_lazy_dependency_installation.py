@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import multiprocessing
 import threading
 import time
@@ -325,6 +326,23 @@ def test_proxy_resolves_only_on_first_attribute_access(monkeypatch):
     assert calls == ["proxy_demo"]
 
 
+def test_solver_bindings_are_registered_in_default_lazy_proxy():
+    import tomllib
+
+    from ipfs_datasets_py.dependency_catalog import dependencies_for_component
+    from ipfs_datasets_py.lazy_dependencies import DEFAULT_DEPENDENCY_MODULES
+
+    assert {"z3", "cvc5"} <= set(DEFAULT_DEPENDENCY_MODULES)
+    assert {"z3-solver", "cvc5"} <= {
+        dependency.distribution
+        for dependency in dependencies_for_component("lazy")
+    }
+    root = Path(__file__).resolve().parents[2]
+    metadata = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    lazy_extra = set(metadata["project"]["optional-dependencies"]["lazy"])
+    assert {"z3-solver>=4.12.0,<5.0.0", "cvc5==1.3.3"} <= lazy_extra
+
+
 def test_previously_installer_only_packages_are_declared():
     root = Path(__file__).resolve().parents[2]
     declarations = "\n".join(
@@ -332,6 +350,7 @@ def test_previously_installer_only_packages_are_declared():
         for filename in (
             "setup.py",
             "pyproject.toml",
+            "requirements.txt",
             "requirements-lazy.txt",
             "requirements-theorem-provers.txt",
         )
@@ -345,6 +364,87 @@ def test_previously_installer_only_packages_are_declared():
         "pysmt",
     ):
         assert distribution in declarations
+
+
+@pytest.mark.parametrize(
+    ("import_name", "distribution"),
+    (
+        ("z3", "z3-solver"),
+        ("cvc5", "cvc5"),
+        ("pysmt", "pysmt"),
+        ("beartype", "beartype"),
+        ("jsonschema", "jsonschema"),
+    ),
+)
+def test_formal_logic_dependencies_are_lazy_and_packaged(
+    import_name,
+    distribution,
+):
+    from ipfs_datasets_py.dependency_catalog import (
+        COMPONENT_MODULES,
+        dependency_for_import,
+    )
+    from ipfs_datasets_py.lazy_dependencies import DEFAULT_DEPENDENCY_MODULES
+
+    root = Path(__file__).resolve().parents[2]
+    assert import_name in DEFAULT_DEPENDENCY_MODULES
+    assert import_name in COMPONENT_MODULES["theorem_provers"]
+    dependency = dependency_for_import(import_name)
+    assert dependency.distribution == distribution
+    assert dependency.system_dependencies == ()
+
+    for filename in (
+        "setup.py",
+        "pyproject.toml",
+        "requirements.txt",
+        "requirements-lazy.txt",
+        "requirements-theorem-provers.txt",
+    ):
+        declarations = (root / filename).read_text(encoding="utf-8").lower()
+        assert distribution.lower() in declarations
+
+
+def test_provekit_cli_is_not_misdeclared_as_a_python_distribution():
+    from ipfs_datasets_py.dependency_catalog import canonical_distribution_name
+
+    root = Path(__file__).resolve().parents[2]
+    declared_requirements: list[str] = []
+    for filename in ("requirements.txt", "requirements-lazy.txt"):
+        declared_requirements.extend(
+            line.strip().lower()
+            for line in (root / filename).read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        )
+
+    setup_tree = ast.parse((root / "setup.py").read_text(encoding="utf-8"))
+    setup_call = next(
+        node
+        for node in ast.walk(setup_tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "setup"
+    )
+    install_requires = next(
+        keyword.value
+        for keyword in setup_call.keywords
+        if keyword.arg == "install_requires"
+    )
+    declared_requirements.extend(
+        element.value
+        for element in install_requires.elts
+        if isinstance(element, ast.Constant) and isinstance(element.value, str)
+    )
+
+    import tomllib
+
+    pyproject = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    for requirements in pyproject["project"]["optional-dependencies"].values():
+        declared_requirements.extend(requirements)
+
+    assert all(
+        canonical_distribution_name(requirement) != "provekit"
+        for requirement in declared_requirements
+    )
 
 
 def test_repo_bootstrap_is_not_implied_by_lazy_python_installs(monkeypatch):

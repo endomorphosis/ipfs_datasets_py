@@ -1,0 +1,39 @@
+{
+  "schema": "wallet_processor_migration/idkit-payload@1",
+  "schema_version": 1,
+  "label": "idkit_v3_legacy",
+  "protocol_version": "3.0",
+  "proof_type": "legacy",
+  "payload": {
+    "protocol_version": "3.0",
+    "nonce": "0xabc123",
+    "action": "wallet-attach-world-id-v1",
+    "environment": "staging",
+    "responses": [
+      {
+        "identifier": "orb",
+        "merkle_root": "0xroot",
+        "nullifier": "0xnullifier",
+        "proof": "0xproof",
+        "signal_hash": "0xsignal"
+      }
+    ]
+  },
+  "expected_normalization": {
+    "protocol_version": "3.0",
+    "proof_type": "legacy",
+    "action": "wallet-attach-world-id-v1",
+    "environment": "staging",
+    "credential_identifiers": ["orb"],
+    "nullifiers": ["0xnullifier"],
+    "signal_hashes": ["0xsignal"],
+    "session_id": "",
+    "verification_timestamps": []
+  },
+  "sensitive_tokens_must_not_appear_in_repr_or_public_dict": [
+    "0xnullifier",
+    "0xproof",
+    "0xroot",
+    "0xsignal"
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "schema": "datasets_contract_analysis/dataset-manipulator-safe-vectors@1",
+  "goal_id": "DSCON-G300",
+  "task_id": "DSCON-005",
+  "policy": "Safe vectors must continue to fail closed. They are not mock-success paths.",
+  "vectors": [
+    {
+      "vector_id": "SAFE-001",
+      "surface": "mcp process_dataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/process_dataset.py",
+      "behavior": "reject_dangerous_operation_types",
+      "inputs": {
+        "dataset_source": {"data": [{"id": 1}]},
+        "operations": [{"type": "eval"}]
+      },
+      "expected": {
+        "status": "error",
+        "error_type": "validation",
+        "message_contains": "not allowed"
+      },
+      "rationale": "Arbitrary code/eval must never become a process success."
+    },
+    {
+      "vector_id": "SAFE-002",
+      "surface": "mcp process_dataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/process_dataset.py",
+      "behavior": "reject_exec_operation_types",
+      "inputs": {
+        "dataset_source": {"data": [{"id": 1}]},
+        "operations": [{"type": "exec"}]
+      },
+      "expected": {
+        "status": "error",
+        "error_type": "validation"
+      },
+      "rationale": "exec is blocked by the same dangerous-ops allowlist."
+    },
+    {
+      "vector_id": "SAFE-003",
+      "surface": "mcp process_dataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/process_dataset.py",
+      "behavior": "reject_empty_operations",
+      "inputs": {
+        "dataset_source": {"data": [{"id": 1}]},
+        "operations": []
+      },
+      "expected": {
+        "status": "error",
+        "error_type": "validation"
+      },
+      "rationale": "Empty operations list is validation-rejected."
+    },
+    {
+      "vector_id": "SAFE-004",
+      "surface": "mcp save_dataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/save_dataset.py",
+      "behavior": "reject_executable_destination",
+      "inputs": {
+        "dataset_data": {"data": [{"id": 1}]},
+        "destination": "/tmp/evil.py",
+        "format": "json"
+      },
+      "expected": {
+        "status": "error",
+        "message_contains": "executable"
+      },
+      "rationale": "Refuse writing datasets as executable files."
+    },
+    {
+      "vector_id": "SAFE-005",
+      "surface": "core DatasetLoader",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_loader.py",
+      "behavior": "reject_python_source",
+      "inputs": {
+        "source": "payload.py"
+      },
+      "expected": {
+        "status": "error",
+        "message_contains": "Python files"
+      },
+      "rationale": "Python modules are not valid dataset sources."
+    },
+    {
+      "vector_id": "SAFE-006",
+      "surface": "mcp save_dataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/save_dataset.py",
+      "behavior": "require_destination",
+      "inputs": {
+        "dataset_data": {"data": [{"id": 1}]},
+        "destination": null
+      },
+      "expected": {
+        "status": "error"
+      },
+      "rationale": "Destination is mandatory for the typed save path (non JSON-string entrypoint)."
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "schema": "wallet_processor_migration/bitcoin-rbf@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G400",
+  "network": "bitcoin-mainnet",
+  "notes": "Mempool replacement: higher-fee child replaces lower-fee parent spend.",
+  "seed_utxo": {
+    "txid": "3333333333333333333333333333333333333333333333333333333333333333",
+    "vout": 0,
+    "value": 100000,
+    "address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+    "script_hex": "0014751e76e8199196d454941c45d1b3a323f1433bd6"
+  },
+  "original": {
+    "txid": "4444444444444444444444444444444444444444444444444444444444444444",
+    "vin": [
+      {
+        "txid": "3333333333333333333333333333333333333333333333333333333333333333",
+        "vout": 0,
+        "prevout": {
+          "value": 100000,
+          "scriptpubkey": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+          "scriptpubkey_address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        },
+        "sequence": 4294967293
+      }
+    ],
+    "vout": [
+      {
+        "n": 0,
+        "value": 90000,
+        "scriptpubkey": "76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac",
+        "scriptpubkey_address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+      }
+    ],
+    "fee": 10000,
+    "status": {
+      "confirmed": false
+    }
+  },
+  "replacement": {
+    "txid": "5555555555555555555555555555555555555555555555555555555555555555",
+    "replaces": "4444444444444444444444444444444444444444444444444444444444444444",
+    "vin": [
+      {
+        "txid": "3333333333333333333333333333333333333333333333333333333333333333",
+        "vout": 0,
+        "prevout": {
+          "value": 100000,
+          "scriptpubkey": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+          "scriptpubkey_address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        },
+        "sequence": 4294967293
+      }
+    ],
+    "vout": [
+      {
+        "n": 0,
+        "value": 80000,
+        "scriptpubkey": "76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac",
+        "scriptpubkey_address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+      }
+    ],
+    "fee": 20000,
+    "status": {
+      "confirmed": false
+    }
+  },
+  "expect_after_replacement": {
+    "balance_destination": 80000,
+    "original_status": "replaced"
+  }
+}

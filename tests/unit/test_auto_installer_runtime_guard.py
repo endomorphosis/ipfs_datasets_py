@@ -64,6 +64,85 @@ def test_test_component_installs_pytest_extras(monkeypatch):
     assert ("hypothesis", "hypothesis", ()) in ensured
 
 
+def test_theorem_prover_component_installs_catalog_and_checks_native_results(
+    monkeypatch,
+):
+    import ipfs_datasets_py.auto_installer as auto_installer
+
+    installer = auto_installer.DependencyInstaller(auto_install=True)
+    calls: list[tuple[str, object]] = []
+    monkeypatch.setattr(auto_installer, "_installer", installer)
+    monkeypatch.setattr(
+        installer,
+        "install_component_dependencies",
+        lambda component: calls.append(("catalog", component)) or True,
+    )
+    monkeypatch.setattr(
+        installer,
+        "install_theorem_provers",
+        lambda: calls.append(("native", None))
+        or {"z3": True, "cvc5": True, "lean": True, "coq": True},
+    )
+
+    assert auto_installer.install_for_component("theorem_provers") is True
+    assert calls == [
+        ("catalog", "theorem_provers"),
+        ("native", None),
+    ]
+
+    monkeypatch.setattr(
+        installer,
+        "install_theorem_provers",
+        lambda: {"z3": True, "cvc5": False},
+    )
+    assert auto_installer.install_for_component("theorem_provers") is False
+
+
+def test_theorem_prover_runtime_uses_managed_installers_without_system_packages(
+    monkeypatch,
+):
+    import ipfs_datasets_py.auto_installer as auto_installer
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    installer = auto_installer.DependencyInstaller(auto_install=True)
+    calls: list[tuple[str, dict[str, object]]] = []
+    monkeypatch.delenv(
+        "IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS",
+        raising=False,
+    )
+    monkeypatch.setattr(
+        installer,
+        "install_system_dependency",
+        lambda _name: (_ for _ in ()).throw(
+            AssertionError("legacy system-package installer must not run")
+        ),
+    )
+
+    for name in ("z3", "cvc5", "cvc5_cli", "lean", "coq"):
+        monkeypatch.setattr(
+            prover_installer,
+            f"ensure_{name}",
+            lambda _name=name, **kwargs: calls.append((_name, kwargs)) or True,
+        )
+
+    assert installer.install_theorem_provers() == {
+        "z3": True,
+        "cvc5": True,
+        "cvc5_cli": True,
+        "lean": True,
+        "coq": True,
+    }
+    assert [name for name, _kwargs in calls] == [
+        "z3",
+        "cvc5",
+        "cvc5_cli",
+        "lean",
+        "coq",
+    ]
+    assert all(kwargs["yes"] is True for _name, kwargs in calls)
+    assert calls[-1][1]["allow_sudo"] is False
+
+
 def test_runtime_installer_runs_when_marker_missing(monkeypatch, tmp_path):
     import ipfs_datasets_py.auto_installer as auto_installer
 

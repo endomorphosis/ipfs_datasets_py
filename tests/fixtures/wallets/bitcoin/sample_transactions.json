@@ -1,0 +1,81 @@
+{
+  "schema": "wallet_processor_migration/bitcoin-sample-txs@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G400",
+  "network": "bitcoin-mainnet",
+  "tip_height": 840010,
+  "tip_hash": "00000000000000000002ffffffffffffffffffffffffffffffffffffffffff",
+  "blocks": {
+    "840000": "00000000000000000001ffffffffffffffffffffffffffffffffffffffffff",
+    "840001": "00000000000000000002ffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "address_index": {
+    "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    ]
+  },
+  "transactions": [
+    {
+      "txid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "vin": [
+        {
+          "is_coinbase": true,
+          "scriptsig": "03f40101",
+          "sequence": 4294967295
+        }
+      ],
+      "vout": [
+        {
+          "n": 0,
+          "value": 5000000000,
+          "scriptpubkey": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+          "scriptpubkey_address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        }
+      ],
+      "fee": 0,
+      "status": {
+        "confirmed": true,
+        "block_height": 840000,
+        "block_hash": "00000000000000000001ffffffffffffffffffffffffffffffffffffffffff",
+        "block_time": 1710000000
+      }
+    },
+    {
+      "txid": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "vin": [
+        {
+          "txid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "vout": 0,
+          "prevout": {
+            "value": 5000000000,
+            "scriptpubkey": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+            "scriptpubkey_address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+          },
+          "sequence": 4294967295
+        }
+      ],
+      "vout": [
+        {
+          "n": 0,
+          "value": 4999990000,
+          "scriptpubkey": "5120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc4876cb9be242b74ada3621f",
+          "scriptpubkey_address": "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
+        },
+        {
+          "n": 1,
+          "value": 5000,
+          "scriptpubkey": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+          "scriptpubkey_address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        }
+      ],
+      "fee": 5000,
+      "status": {
+        "confirmed": true,
+        "block_height": 840001,
+        "block_hash": "00000000000000000002ffffffffffffffffffffffffffffffffffffffffff",
+        "block_time": 1710001000
+      }
+    }
+  ]
+}

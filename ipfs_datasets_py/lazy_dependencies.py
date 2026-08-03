@@ -19,8 +19,10 @@ DEFAULT_DEPENDENCY_MODULES: tuple[str, ...] = (
     "anthropic",
     "aiohttp",
     "aiohttp_cache",
+    "beartype",
     "bs4",
     "chardet",
+    "cvc5",
     "cv2",
     "docx",
     "duckdb",
@@ -31,6 +33,7 @@ DEFAULT_DEPENDENCY_MODULES: tuple[str, ...] = (
     "ipfshttpclient",
     "ipld_car",
     "jinja2",
+    "jsonschema",
     "llama_cpp",
     "lxml",
     "magic",
@@ -47,6 +50,7 @@ DEFAULT_DEPENDENCY_MODULES: tuple[str, ...] = (
     "pydantic",
     "pydocx",
     "pydub",
+    "pysmt",
     "pymediainfo",
     "PyPDF2",
     "pytesseract",
@@ -65,6 +69,7 @@ DEFAULT_DEPENDENCY_MODULES: tuple[str, ...] = (
     "xformers",
     "xformers.ops",
     "yaml",
+    "z3",
 )
 
 DEFAULT_ATTRIBUTE_ALIASES: dict[str, str] = {

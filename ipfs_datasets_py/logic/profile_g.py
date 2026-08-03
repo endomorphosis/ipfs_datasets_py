@@ -374,7 +374,9 @@ def _validate_specific(kind: str, o: Mapping[str, Any], limits: Mapping[str, int
         if o["deadline_ms"] is not None:
             i("deadline_ms")
         _millionths(o["expected_value_millionths"], "/expected_value_millionths")
-        i("max_attempts", 1, 100)
+        # Zero is the cross-runtime sentinel for an unlimited attempt budget.
+        # Positive values retain the bounded Profile-G retry contract.
+        i("max_attempts", 0, 100)
         _enum(o["execution_mode"], "/execution_mode", ("idempotent", "compensatable", "exclusive"))
     elif kind == "RiskModel":
         s("name")

@@ -5,6 +5,7 @@ Minimal CLI surface for the `ipfs_datasets_py.logic` feature.
 Design constraints:
 - Keep module import light (import feature code inside handlers)
 - Prefer stable wrapper functions where available
+- Preserve existing command names and behavior (LFV-G071 additive)
 """
 
 from __future__ import annotations
@@ -16,6 +17,8 @@ from typing import Any, Dict, List, Optional
 
 import anyio
 
+LOGIC_VERIFICATION_CLI_INTERFACE = "LogicVerificationCLI@1"
+
 
 def _print(data: Any, *, json_output: bool) -> None:
     if json_output:
@@ -24,15 +27,28 @@ def _print(data: Any, *, json_output: bool) -> None:
         print(data)
 
 
+def _load_json_arg(raw: Optional[str], label: str) -> Any:
+    if raw is None:
+        return None
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"{label} is not valid JSON: {error}") from error
+
+
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ipfs-datasets logic",
-        description="Logic tools (FOL + deontic + temporal-deontic helpers)",
+        description=(
+            "Logic tools (FOL + deontic + temporal-deontic helpers + "
+            "software-verification facade)"
+        ),
     )
     parser.add_argument("--json", action="store_true", help="Output JSON")
 
     sub = parser.add_subparsers(dest="command", required=True)
 
+    # ── Legacy / domain helpers (preserve names and behavior) ─────────────
     p_fol = sub.add_parser("convert-fol", help="Convert text to FOL")
     p_fol.add_argument("text", help="Input text")
 
@@ -62,14 +78,231 @@ def create_parser() -> argparse.ArgumentParser:
     p_query.add_argument("--limit", type=int, default=10)
     p_query.add_argument("--min-relevance", type=float, default=0.5)
 
-    p_check = sub.add_parser("check-document", help="Check a document for consistency")
-    p_check.add_argument("document_text", help="Document text")
-    p_check.add_argument("--document-id", default=None)
-    p_check.add_argument("--jurisdiction", default="Federal")
-    p_check.add_argument("--legal-domain", default="general")
-    p_check.add_argument("--temporal-context", default="current_time")
+    p_check_doc = sub.add_parser("check-document", help="Check a document for consistency")
+    p_check_doc.add_argument("document_text", help="Document text")
+    p_check_doc.add_argument("--document-id", default=None)
+    p_check_doc.add_argument("--jurisdiction", default="Federal")
+    p_check_doc.add_argument("--legal-domain", default="general")
+    p_check_doc.add_argument("--temporal-context", default="current_time")
+
+    # ── Software verification (LogicVerificationCLI@1) ────────────────────
+    p_list_features = sub.add_parser(
+        "list-features",
+        help="List stable verification operations (LogicVerificationCLI@1)",
+    )
+    p_list_features.add_argument("--request-id", default="")
+
+    p_list_families = sub.add_parser(
+        "list-families",
+        help="List declarative logic families",
+    )
+    p_list_families.add_argument("--request-id", default="")
+
+    p_list_providers = sub.add_parser(
+        "list-providers",
+        help="List declared verification providers (no environment probes)",
+    )
+    p_list_providers.add_argument("--request-id", default="")
+
+    p_caps = sub.add_parser(
+        "provider-capabilities",
+        help="Show capability declarations for one or all providers",
+    )
+    p_caps.add_argument("--provider-id", default=None)
+    p_caps.add_argument("--request-id", default="")
+
+    p_compile = sub.add_parser(
+        "compile",
+        help="Compile a verification artifact (JSON obligation)",
+    )
+    p_compile.add_argument(
+        "--artifact",
+        required=True,
+        help="JSON mapping for the obligation / artifact",
+    )
+    p_compile.add_argument("--target", default="smtlib2")
+    p_compile.add_argument("--request-id", default="")
+
+    p_check = sub.add_parser(
+        "check",
+        help="Run a typed verification check (JSON request)",
+    )
+    p_check.add_argument(
+        "--request",
+        required=True,
+        help="JSON BackendRequest-shaped mapping",
+    )
+    p_check.add_argument("--backend-id", default=None)
+    p_check.add_argument("--request-id", default="")
+
+    p_monitor = sub.add_parser(
+        "monitor",
+        help="Evaluate a runtime MTL formula over observations",
+    )
+    p_monitor.add_argument("--formula", required=True, help="JSON formula mapping")
+    p_monitor.add_argument(
+        "--observations",
+        required=True,
+        help="JSON trace / observations mapping",
+    )
+    p_monitor.add_argument("--request-id", default="")
+
+    p_portfolio = sub.add_parser(
+        "portfolio",
+        help="Plan a property-specific prover portfolio",
+    )
+    p_portfolio.add_argument("--obligation", required=True, help="JSON obligation mapping")
+    p_portfolio.add_argument("--capabilities", default=None, help="Optional JSON capabilities")
+    p_portfolio.add_argument("--resource-policy", default=None, help="Optional JSON policy")
+    p_portfolio.add_argument("--request-id", default="")
+
+    p_cex = sub.add_parser(
+        "counterexample",
+        help="Explain a counterexample witness",
+    )
+    p_cex.add_argument("--witness", required=True, help="JSON witness mapping")
+    p_cex.add_argument("--request-id", default="")
+
+    p_receipt = sub.add_parser(
+        "verify-receipt",
+        help="Validate a translation or proof receipt",
+    )
+    p_receipt.add_argument("--receipt", required=True, help="JSON receipt mapping")
+    p_receipt.add_argument("--expectation", default=None, help="Optional JSON expectation")
+    p_receipt.add_argument("--request-id", default="")
+
+    p_advise = sub.add_parser(
+        "advise",
+        help="Produce untrusted formalization proposals",
+    )
+    p_advise.add_argument("--request", required=True, help="JSON advisor request")
+    p_advise.add_argument("--provider", default="static")
+    p_advise.add_argument("--request-id", default="")
+
+    p_attest = sub.add_parser(
+        "attest-receipt",
+        help="Prepare or record a ZKP attestation for a receipt",
+    )
+    p_attest.add_argument("--receipt", required=True, help="JSON receipt mapping")
+    p_attest.add_argument("--backend-mode", default="disabled")
+    p_attest.add_argument("--backend-policy", default=None)
+    p_attest.add_argument("--witness", default=None)
+    p_attest.add_argument("--issued-at", default="")
+    p_attest.add_argument("--expires-at", default="")
+    p_attest.add_argument("--request-id", default="")
+
+    p_probe = sub.add_parser(
+        "probe-provider",
+        help="Opt-in probe of provider availability",
+    )
+    p_probe.add_argument("provider_id")
+    p_probe.add_argument("--request-id", default="")
+
+    p_install = sub.add_parser(
+        "install-provider",
+        help="Opt-in install of a provider (requires --allow-install)",
+    )
+    p_install.add_argument("provider_id")
+    p_install.add_argument(
+        "--allow-install",
+        action="store_true",
+        help="Explicit opt-in for install side effects",
+    )
+    p_install.add_argument("--request-id", default="")
+
+    p_v_caps = sub.add_parser(
+        "verification-capabilities",
+        help="List CLI/MCP verification tool surface and bounds",
+    )
+    p_v_caps.add_argument("--request-id", default="")
 
     return parser
+
+
+async def _run_verification_command(ns: argparse.Namespace) -> Dict[str, Any]:
+    """Dispatch software-verification CLI commands via the MCP tool layer."""
+
+    from ipfs_datasets_py.mcp_server.tools import logic_verification as lv
+
+    cmd = ns.command
+
+    if cmd == "list-features":
+        return await lv.verification_list_features()
+    if cmd == "list-families":
+        return await lv.verification_list_logic_families()
+    if cmd == "list-providers":
+        return await lv.verification_list_providers()
+    if cmd == "provider-capabilities":
+        return await lv.verification_provider_capabilities(provider_id=ns.provider_id)
+    if cmd == "compile":
+        return await lv.verification_compile(
+            artifact=_load_json_arg(ns.artifact, "artifact"),
+            target=ns.target,
+            request_id=ns.request_id or "",
+        )
+    if cmd == "check":
+        return await lv.verification_check(
+            request=_load_json_arg(ns.request, "request"),
+            backend_id=ns.backend_id,
+            request_id=ns.request_id or "",
+        )
+    if cmd == "monitor":
+        return await lv.verification_monitor(
+            formula=_load_json_arg(ns.formula, "formula"),
+            observations=_load_json_arg(ns.observations, "observations"),
+            request_id=ns.request_id or "",
+        )
+    if cmd == "portfolio":
+        return await lv.verification_portfolio(
+            obligation=_load_json_arg(ns.obligation, "obligation"),
+            capabilities=_load_json_arg(ns.capabilities, "capabilities"),
+            resource_policy=_load_json_arg(ns.resource_policy, "resource_policy"),
+            request_id=ns.request_id or "",
+        )
+    if cmd == "counterexample":
+        return await lv.verification_explain_counterexample(
+            witness=_load_json_arg(ns.witness, "witness"),
+            request_id=ns.request_id or "",
+        )
+    if cmd == "verify-receipt":
+        return await lv.verification_verify_receipt(
+            receipt=_load_json_arg(ns.receipt, "receipt"),
+            expectation=_load_json_arg(ns.expectation, "expectation"),
+            request_id=ns.request_id or "",
+        )
+    if cmd == "advise":
+        return await lv.verification_advise(
+            request=_load_json_arg(ns.request, "request"),
+            provider=ns.provider,
+            request_id=ns.request_id or "",
+        )
+    if cmd == "attest-receipt":
+        return await lv.verification_attest_receipt(
+            receipt=_load_json_arg(ns.receipt, "receipt"),
+            backend_mode=ns.backend_mode,
+            backend_policy=_load_json_arg(ns.backend_policy, "backend_policy"),
+            witness=_load_json_arg(ns.witness, "witness"),
+            issued_at=ns.issued_at or "",
+            expires_at=ns.expires_at or "",
+            request_id=ns.request_id or "",
+        )
+    if cmd == "probe-provider":
+        return await lv.verification_probe_provider(
+            provider_id=ns.provider_id,
+            request_id=ns.request_id or "",
+        )
+    if cmd == "install-provider":
+        return await lv.verification_install_provider(
+            provider_id=ns.provider_id,
+            allow_install=bool(ns.allow_install),
+            request_id=ns.request_id or "",
+        )
+    if cmd == "verification-capabilities":
+        payload = await lv.verification_capabilities()
+        payload["cli_interface"] = LOGIC_VERIFICATION_CLI_INTERFACE
+        return payload
+
+    raise ValueError(f"Unknown verification command: {cmd}")
 
 
 async def _run_async(ns: argparse.Namespace) -> Dict[str, Any]:
@@ -145,6 +378,27 @@ async def _run_async(ns: argparse.Namespace) -> Dict[str, Any]:
         }
         return await check_document_consistency_from_parameters(params)
 
+    # Software-verification commands (LFV-G071).
+    verification_commands = {
+        "list-features",
+        "list-families",
+        "list-providers",
+        "provider-capabilities",
+        "compile",
+        "check",
+        "monitor",
+        "portfolio",
+        "counterexample",
+        "verify-receipt",
+        "advise",
+        "attest-receipt",
+        "probe-provider",
+        "install-provider",
+        "verification-capabilities",
+    }
+    if cmd in verification_commands:
+        return await _run_verification_command(ns)
+
     raise ValueError(f"Unknown command: {cmd}")
 
 
@@ -152,7 +406,26 @@ def main(argv: Optional[List[str]] = None) -> int:
     ns = create_parser().parse_args(argv)
     try:
         data = anyio.run(_run_async, ns)
-        _print(data, json_output=bool(ns.json))
+        # Verification commands are always machine-readable JSON when --json
+        # is set; without it, still prefer structured dumps for verification.
+        force_json = bool(ns.json) or ns.command in {
+            "list-features",
+            "list-families",
+            "list-providers",
+            "provider-capabilities",
+            "compile",
+            "check",
+            "monitor",
+            "portfolio",
+            "counterexample",
+            "verify-receipt",
+            "advise",
+            "attest-receipt",
+            "probe-provider",
+            "install-provider",
+            "verification-capabilities",
+        }
+        _print(data, json_output=force_json)
         return 0
     except KeyboardInterrupt:
         return 1

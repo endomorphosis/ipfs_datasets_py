@@ -254,8 +254,16 @@ setup(
         "datasets>=4.0.0,<5.0.0",
         "huggingface-hub>=0.34.0,<1.0.0",
         "jsonpatch>=1.33",
-        "jsonschema>=4.0.0",
+        "jsonschema>=4.0.0,<5.0.0",
         "cffi>=1.16.0",
+
+        # Formal logic and theorem-prover Python bindings. ProveKit itself is
+        # an operator-provided, content-addressed CLI binary rather than a
+        # Python distribution.
+        "z3-solver>=4.12.0,<5.0.0",
+        "cvc5==1.3.3",
+        "pysmt>=0.9.5,<1.0.0",
+        "beartype>=0.15.0,<1.0.0",
 
         # IPLD components (always available)
         "libipld>=3.3.2",
@@ -339,9 +347,10 @@ setup(
         # side effect of pip installation.
         'theorem-provers': [
             'z3-solver>=4.12.0,<5.0.0',
-            'cvc5>=1.0.0,<2.0.0',
+            'cvc5==1.3.3',
             'pysmt>=0.9.5,<1.0.0',
             'beartype>=0.15.0,<1.0.0',
+            'jsonschema>=4.0.0,<5.0.0',
             'symbolicai>=1.14.0,<2.0.0',
         ],
         # API server extras for the logic module (FastAPI + uvicorn for api_server.py)
@@ -430,6 +439,40 @@ setup(
             'pytest-benchmark>=4.0.0',
             'pytest-mock>=3.12.0',  # mocker fixture for knowledge_graphs and other unit tests
             'hypothesis>=6.0.0',
+        ],
+
+        # Multi-chain wallet processors (WALPROC-G050 / WALPROC-010).
+        # Shared kernel and chain ingestion use raw REST/JSON-RPC. Chain SDKs
+        # are not selected: SDK convenience is not sufficient justification
+        # for a mandatory dependency. Full rationale, license/SBOM notes, and
+        # the coincurve/pycryptodome vs eth-hash/eth-keys decision live in
+        # docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md.
+        'wallets': [
+            # Shared processor kernel: stdlib + base package only.
+        ],
+        'wallets-worldcoin': [
+            # Keccak via eth-hash pycryptodome backend; RP signing via eth-keys.
+            'eth-hash[pycryptodome]>=0.3.2,<1.0.0',
+            'eth-keys>=0.5.0,<1.0.0',
+        ],
+        'wallets-ethereum': [
+            # Raw JSON-RPC only; web3.py not required.
+        ],
+        'wallets-xrpl': [
+            # Raw REST/JSON-RPC only; xrpl-py not required.
+        ],
+        'wallets-xaman': [
+            # Composes XRPL; Xaman payloads over raw HTTP; no xumm-sdk.
+        ],
+        'wallets-bitcoin': [
+            # Raw REST/JSON-RPC only; python-bitcoinlib / bitcoinlib not required.
+        ],
+        'wallets-solana': [
+            # Raw JSON-RPC only; solana / solders SDKs not required.
+        ],
+        'wallets-all': [
+            'eth-hash[pycryptodome]>=0.3.2,<1.0.0',
+            'eth-keys>=0.5.0,<1.0.0',
         ],
 
         # ZKP Groth16 (Rust FFI wrapper)
@@ -526,6 +569,8 @@ setup(
         # Dependencies exposed by the shared on-demand dependency proxy. This
         # extra is the eager equivalent of first-use lazy installation.
         'lazy': [
+            'z3-solver>=4.12.0,<5.0.0',
+            'cvc5==1.3.3',
             'chardet>=5.0.0,<6.0.0',
             'llama-cpp-python',
             'playsound3',

@@ -83,6 +83,86 @@ def test_parallel_first_use_installs_each_prover_once(monkeypatch) -> None:
     assert calls == ["vampire"]
 
 
+def test_tlc_lazy_install_binds_attempt_cache_to_selected_java(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    first_java = tmp_path / "jdk-17" / "bin" / "java"
+    second_java = tmp_path / "jdk-21" / "bin" / "java"
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        prover_installer,
+        "ensure_tlc",
+        lambda **kwargs: calls.append(dict(kwargs)) or True,
+    )
+
+    assert lazy_installer.lazy_install_prover(
+        "tlc",
+        allow_automatic=True,
+        java_executable=first_java,
+    )
+    assert lazy_installer.lazy_install_prover(
+        "tlc2",
+        allow_automatic=True,
+        java_executable=first_java,
+    )
+    assert lazy_installer.lazy_install_prover(
+        "tla2tools",
+        allow_automatic=True,
+        java_executable=second_java,
+    )
+
+    assert [call["java_executable"] for call in calls] == [
+        first_java,
+        second_java,
+    ]
+    assert all(call["yes"] is True for call in calls)
+
+
+def test_managed_tlc_status_uses_digest_bound_release_not_generic_version_flag(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    monkeypatch.setattr(
+        prover_installer,
+        "_which",
+        lambda name: "/managed/bin/tlc" if name == "tlc" else None,
+    )
+    monkeypatch.setattr(prover_installer, "_read_version", lambda _path: "")
+    monkeypatch.setattr(
+        prover_installer,
+        "_distribution_version",
+        lambda _distribution: "",
+    )
+    monkeypatch.setattr(prover_installer, "_find_ergoai_binary", lambda: None)
+    observed: list[str | None] = []
+
+    def managed_release(executable: str | None) -> str:
+        observed.append(executable)
+        return prover_installer.TLC_VERSION
+
+    monkeypatch.setattr(
+        prover_installer,
+        "_managed_tlc_release",
+        managed_release,
+    )
+
+    statuses = {
+        item["solver"]: item
+        for item in prover_installer.managed_solver_version_status()
+    }
+
+    assert observed == ["/managed/bin/tlc"]
+    assert statuses["tlc"]["status"] == "managed"
+    assert statuses["tlc"]["installed_version"] == prover_installer.TLC_VERSION
+
+
 def test_execution_request_respects_global_opt_out(monkeypatch) -> None:
     from ipfs_datasets_py.logic.external_provers import lazy_installer
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
@@ -212,41 +292,158 @@ def test_cvc5_resolution_accepts_explicit_portable_launcher(
     assert lazy_installer.find_executable("cvc5") == str(launcher)
 
 
-def test_apalache_installer_handles_versioned_archive_root(monkeypatch, tmp_path: Path) -> None:
+def test_apalache_bridge_delegates_to_reviewed_state_model_installer(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.backends.installers import state_model
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
     root = tmp_path / "provers"
     monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
-    monkeypatch.setattr(prover_installer.platform, "system", lambda: "Linux")
-    monkeypatch.setattr(prover_installer.platform, "machine", lambda: "aarch64")
-    downloaded: dict[str, str] = {}
+    selected_java = tmp_path / "jdk" / "bin" / "java"
+    calls: list[dict[str, object]] = []
 
-    def fake_which(name: str) -> str | None:
-        if name == "java":
-            return "/fixture/java"
-        launcher = root / "bin" / name
-        return str(launcher) if launcher.is_file() else None
+    def fake_ensure_apalache(**kwargs):
+        calls.append(dict(kwargs))
+        return SimpleNamespace(
+            status="installed",
+            installed=True,
+            executable_path=str(root / "bin" / "apalache-mc"),
+        )
 
-    def fake_download(url, destination, sha256, **_kwargs) -> bool:
-        downloaded.update(url=url, sha256=sha256)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(b"fixture")
-        return True
+    monkeypatch.setattr(state_model, "ensure_apalache", fake_ensure_apalache)
+    monkeypatch.setattr(
+        state_model,
+        "probe_java_runtime",
+        lambda **_kwargs: SimpleNamespace(
+            usable=True,
+            executable=str(selected_java),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_apalache_identity",
+        lambda *_args, **_kwargs: {"usable": True},
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_apalache_runtime",
+        lambda *_args, **_kwargs: SimpleNamespace(usable=True),
+    )
 
-    def fake_extract(_archive: Path, destination: Path) -> None:
-        executable = destination / "apalache-0.58.3" / "bin" / "apalache-mc"
-        executable.parent.mkdir(parents=True, exist_ok=True)
-        executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-        executable.chmod(0o755)
+    assert prover_installer.ensure_apalache(
+        yes=True,
+        strict=True,
+        force=True,
+        java_executable=selected_java,
+    )
+    assert calls == [
+        {
+            "yes": True,
+            "strict": True,
+            "force": True,
+            "on_progress": None,
+            "install_root": root,
+            "java_executable": selected_java,
+        }
+    ]
 
-    monkeypatch.setattr(prover_installer, "_which", fake_which)
-    monkeypatch.setattr(prover_installer, "_download_release_artifact", fake_download)
-    monkeypatch.setattr(prover_installer, "_safe_extract_tar", fake_extract)
 
-    assert prover_installer.ensure_apalache(yes=True, strict=True)
-    assert (root / "bin" / "apalache-mc").is_file()
-    assert downloaded["url"].endswith("/apalache-0.58.3.tgz")
-    assert downloaded["sha256"] == prover_installer.APALACHE_PORTABLE_SHA256
+def test_state_model_bridge_rejects_success_flag_without_final_managed_identity(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.backends.installers import state_model
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    root = tmp_path / "provers"
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    selected_java = tmp_path / "jdk" / "bin" / "java"
+    monkeypatch.setattr(
+        state_model,
+        "ensure_tlc",
+        lambda **_kwargs: SimpleNamespace(
+            status="installed",
+            installed=True,
+            executable_path=str(root / "bin" / "tlc"),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_java_runtime",
+        lambda **_kwargs: SimpleNamespace(
+            usable=True,
+            executable=str(selected_java),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_tlc_identity",
+        lambda *_args, **_kwargs: {"usable": False},
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_tlc_runtime",
+        lambda *_args, **_kwargs: SimpleNamespace(usable=True),
+    )
+
+    assert not prover_installer.ensure_tlc(
+        yes=True,
+        strict=True,
+        java_executable=selected_java,
+    )
+
+
+def test_state_model_bridge_rejects_symlink_alias_in_success_receipt(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.backends.installers import state_model
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    root = tmp_path / "provers"
+    launcher = root / "bin" / state_model.TLC_EXECUTABLE
+    launcher.parent.mkdir(parents=True)
+    launcher.write_text("#!/bin/sh\n", encoding="utf-8")
+    launcher.chmod(0o755)
+    alias = tmp_path / "tlc-alias"
+    alias.symlink_to(launcher)
+    selected_java = tmp_path / "jdk" / "bin" / "java"
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    monkeypatch.setattr(
+        state_model,
+        "ensure_tlc",
+        lambda **_kwargs: SimpleNamespace(
+            status="installed",
+            installed=True,
+            executable_path=str(alias),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_java_runtime",
+        lambda **_kwargs: SimpleNamespace(
+            usable=True,
+            executable=str(selected_java),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_tlc_identity",
+        lambda *_args, **_kwargs: {"usable": True},
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_tlc_runtime",
+        lambda *_args, **_kwargs: SimpleNamespace(usable=True),
+    )
+
+    assert not prover_installer.ensure_tlc(
+        yes=True,
+        strict=True,
+        java_executable=selected_java,
+    )
 
 
 def test_opam_bootstrap_uses_official_user_local_arm_binary(

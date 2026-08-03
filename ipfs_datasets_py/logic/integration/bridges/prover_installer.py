@@ -84,6 +84,13 @@ APALACHE_PORTABLE_URL = (
 APALACHE_PORTABLE_SHA256 = (
     "ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"
 )
+TLC_VERSION = "1.8.0"
+TLC_PORTABLE_URL = (
+    "https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
+)
+TLC_PORTABLE_SHA256 = (
+    "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+)
 # Compatibility aliases retained for callers that imported the old names.
 APALACHE_LINUX_X86_64_URL = APALACHE_PORTABLE_URL
 APALACHE_LINUX_X86_64_SHA256 = APALACHE_PORTABLE_SHA256
@@ -252,6 +259,7 @@ ProgressCallback = Callable[[str, str], None]
 # through the installer CLI so solver evidence remains reproducible.
 MANAGED_SOLVER_VERSIONS: dict[str, str] = {
     "apalache": APALACHE_VERSION,
+    "tlc": TLC_VERSION,
     "tamarin": TAMARIN_VERSION,
     "maude": MAUDE_VERSION,
     "proverif": PROVERIF_VERSION,
@@ -283,6 +291,7 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
     # Native engines attached to specific LegalIR families.
     "legal_ir_specialists": (
         "ergoai",
+        "tlc",
         "apalache",
         "maude",
         "tamarin",
@@ -302,6 +311,7 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
         "vampire",
         "eprover",
         "ergoai",
+        "tlc",
         "apalache",
         "maude",
         "tamarin",
@@ -318,6 +328,7 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
         "vampire",
         "eprover",
         "ergoai",
+        "tlc",
         "apalache",
         "maude",
         "tamarin",
@@ -427,6 +438,8 @@ def _read_version(executable: str | None) -> str:
 
     if executable is None:
         return ""
+    if Path(executable).name == "proverif":
+        return _read_proverif_version(executable)
     version_pattern = re.compile(
         r"(?:^|\b(?:version|proverif|tamarin-prover|lean|rocq|coq|maude|cvc5|vampire|e(?:prover)?|apalache(?:-mc)?|isabelle)\s*(?:is|,)?\s*)v?\d+\.\d+",
         flags=re.IGNORECASE,
@@ -443,10 +456,10 @@ def _read_version(executable: str | None) -> str:
         except (OSError, subprocess.SubprocessError):
             continue
         # Several otherwise usable solvers disagree on their version flag.
-        # ProVerif, for example, reports an unsupported ``--version`` option
-        # before printing its version, while cvc5 can print a usage line before
-        # succeeding with ``-version``.  Keep searching for an informative
-        # line instead of rejecting the whole probe output.
+        # Keep trying only after failed invocations; output from a non-zero
+        # command is never version identity evidence.
+        if completed.returncode != 0:
+            continue
         output = "\n".join(
             value.strip() for value in (completed.stdout, completed.stderr) if value.strip()
         )
@@ -460,12 +473,32 @@ def _read_version(executable: str | None) -> str:
                 continue
             if re.search(r"\bIsabelle\d{4}(?:-\d+)?\b", compact):
                 return compact
-            # A few tools (notably ProVerif) return a non-zero status for an
-            # unsupported flag but still print an authoritative version line.
-            # Do not accept arbitrary output from those failed invocations.
             if version_pattern.search(compact):
                 return compact
     return ""
+
+
+def _read_proverif_version(executable: str | None) -> str:
+    """Return ProVerif's exact version from its canonical successful probe."""
+
+    if executable is None:
+        return ""
+    from ipfs_datasets_py.logic.backends.installers import proverif
+
+    probe = proverif.probe_proverif_runtime(
+        executable,
+        expected_version=PROVERIF_VERSION,
+    )
+    return probe.observed_version if probe.usable and probe.observed_version else ""
+
+
+def _proverif_version_matches(
+    executable: str | None,
+    expected: str = PROVERIF_VERSION,
+) -> bool:
+    """Return whether the canonical ProVerif probe reports the exact pin."""
+
+    return _read_proverif_version(executable) == str(expected)
 
 
 def _version_matches(executable: str | None, expected: str) -> bool:
@@ -482,10 +515,33 @@ def _distribution_version(distribution: str) -> str:
         return ""
 
 
+def _managed_tlc_release(executable: str | None) -> str:
+    """Bind TLC's release to its reviewed jar digest, not a version flag."""
+
+    if executable is None:
+        return ""
+    from ipfs_datasets_py.logic.backends.installers import state_model
+
+    path = Path(executable)
+    if path.parent.name != "bin":
+        return ""
+    java = state_model.probe_java_runtime(
+        minimum_major=state_model.TLC_MIN_JAVA_MAJOR,
+    )
+    if not java.usable or java.executable is None:
+        return ""
+    identity = state_model.managed_tlc_identity(
+        path.parent.parent,
+        java_executable=java.executable,
+    )
+    return TLC_VERSION if identity.get("usable") else ""
+
+
 def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
     """Report managed-version drift without downloading or changing any solver."""
 
     specs = (
+        ("tlc", "tlc", TLC_VERSION, None),
         ("apalache", "apalache-mc", APALACHE_VERSION, None),
         ("tamarin", "tamarin-prover", TAMARIN_VERSION, None),
         ("maude", "maude", MAUDE_VERSION, None),
@@ -507,20 +563,27 @@ def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
             if isinstance(executable_name, Path)
             else _which(executable_name) if isinstance(executable_name, str) else None
         )
-        observed = _distribution_version(distribution) if distribution else _read_version(executable)
-        if name == "proverif" and executable and not observed:
-            try:
-                launcher_contents = Path(executable).read_text(encoding="utf-8", errors="ignore")
-            except OSError:
-                launcher_contents = ""
-            if f"proverif{target}" in launcher_contents:
-                observed = str(target)
+        observed = (
+            _managed_tlc_release(executable)
+            if name == "tlc"
+            else (
+                _read_proverif_version(executable)
+                if name == "proverif"
+                else (
+                    _distribution_version(distribution)
+                    if distribution
+                    else _read_version(executable)
+                )
+            )
+        )
         present = bool(observed or executable)
         # Version strings vary by solver; containment catches the reviewed
         # fixed releases while package ranges are reported for human review.
         normalized_target = str(target).lstrip("v")
         normalized_observed = observed.lstrip("v")
         matches = bool(observed and normalized_target in normalized_observed)
+        if name == "proverif":
+            matches = observed == PROVERIF_VERSION
         if name in {"z3", "symbolicai"}:
             matches = bool(observed)
         statuses.append(
@@ -545,6 +608,131 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def verify_artifact_sha256(path: Path | str, expected_sha256: str) -> str:
+    """Return the observed digest and raise on checksum mismatch.
+
+    Public security helper used by toolchain tests and install gates.  A
+    mismatched artifact is never trusted or left in place by callers that
+    delete on failure.
+    """
+
+    expected = str(expected_sha256 or "").strip().lower()
+    if len(expected) != 64 or any(ch not in "0123456789abcdef" for ch in expected):
+        raise ValueError("expected_sha256 must be a 64-character lowercase hex digest")
+    observed = _sha256(Path(path))
+    if observed != expected:
+        raise RuntimeError(
+            f"checksum mismatch for {Path(path).name}: expected {expected}, got {observed}"
+        )
+    return observed
+
+
+def require_explicit_install_consent(*, yes: bool, action: str = "install") -> None:
+    """Refuse installer mutation without an explicit ``yes=True`` consent flag."""
+
+    if not yes:
+        raise PermissionError(
+            f"refusing to {action} without explicit yes=True consent; "
+            "installers never run during import, discovery, or tests by default"
+        )
+
+
+def refuse_system_package_mutation_in_tests(
+    *,
+    test_mode: bool | None = None,
+    system_package_mutation: bool,
+    action: str = "install system packages",
+) -> None:
+    """Block apt/dnf/yum style mutation when running under the test harness."""
+
+    if test_mode is None:
+        test_mode = bool(
+            os.environ.get("PYTEST_CURRENT_TEST")
+            or os.environ.get("IPFS_DATASETS_PY_TEST_MODE")
+        )
+    if test_mode and system_package_mutation:
+        raise PermissionError(
+            f"refusing to {action} while tests are active; "
+            "system package managers must not be mutated by the test suite"
+        )
+
+
+def pinned_release_inventory() -> dict[str, dict[str, str]]:
+    """Return reviewed pin identities for managed native artifacts.
+
+    Values are best-effort summaries for discovery/tests.  Platform-specific
+    multi-arch digests remain authoritative inside the download helpers.
+    """
+
+    return {
+        "tlc": {
+            "version": TLC_VERSION,
+            "url": TLC_PORTABLE_URL,
+            "sha256": TLC_PORTABLE_SHA256,
+        },
+        "apalache": {
+            "version": APALACHE_VERSION,
+            "url": APALACHE_PORTABLE_URL,
+            "sha256": APALACHE_PORTABLE_SHA256,
+        },
+        "tamarin": {
+            "version": TAMARIN_VERSION,
+            "url": TAMARIN_LINUX_X86_64_URL,
+            "sha256": TAMARIN_LINUX_X86_64_SHA256,
+        },
+        "tamarin_source": {
+            "version": TAMARIN_VERSION,
+            "url": TAMARIN_SOURCE_URL,
+            "sha256": TAMARIN_SOURCE_SHA256,
+        },
+        "maude": {
+            "version": MAUDE_VERSION,
+            "url": MAUDE_LINUX_X86_64_URL,
+            "sha256": MAUDE_LINUX_X86_64_SHA256,
+        },
+        "proverif": {
+            "version": PROVERIF_VERSION,
+            "url": PROVERIF_SOURCE_URL,
+            "sha256": PROVERIF_SOURCE_SHA256,
+        },
+        "eprover": {
+            "version": EPROVER_VERSION,
+            "url": EPROVER_SOURCE_URL,
+            "sha256": EPROVER_SOURCE_SHA256,
+        },
+        "cvc5": {"version": CVC5_VERSION},
+        "vampire": {"version": VAMPIRE_VERSION},
+        "lean": {"version": LEAN_TOOLCHAIN},
+        "rocq": {"version": ROCQ_VERSION},
+        "isabelle": {"version": ISABELLE_VERSION},
+        "opam": {"version": OPAM_VERSION},
+        "stack": {"version": STACK_VERSION},
+    }
+
+
+def authorize_managed_install(
+    prover: str,
+    *,
+    yes: bool,
+    checksum_verified: bool | None = None,
+) -> None:
+    """Gate a managed install through the verification toolchain registry."""
+
+    require_explicit_install_consent(yes=yes, action=f"install {prover}")
+    try:
+        from ipfs_datasets_py.logic.backends.toolchains import authorize_provider_install
+    except Exception:
+        # Registry is optional at import time for legacy call sites; consent
+        # already enforced above.
+        return
+    authorize_provider_install(
+        prover,
+        yes=yes,
+        explicit_call=True,
+        checksum_verified=checksum_verified,
+    )
+
+
 def _download_release_artifact(
     url: str,
     destination: Path,
@@ -563,14 +751,10 @@ def _download_release_artifact(
                 on_progress,
             )
             urllib.request.urlretrieve(url, destination)
-        observed = _sha256(destination)
-        if observed != expected_sha256:
-            destination.unlink(missing_ok=True)
-            raise RuntimeError(
-                f"checksum mismatch for {destination.name}: expected {expected_sha256}, got {observed}"
-            )
+        verify_artifact_sha256(destination, expected_sha256)
         return True
     except Exception as exc:
+        destination.unlink(missing_ok=True)
         _announce(f"Theorem-prover download failed: {exc}", on_progress, phase="failed")
         if strict:
             raise
@@ -588,6 +772,12 @@ def _safe_extract_tar(archive: Path, destination: Path) -> None:
         bundle.extractall(destination, filter="data")
 
 
+def safe_extract_tar(archive: Path | str, destination: Path | str) -> None:
+    """Public path-traversal-safe tar extraction for managed installs and tests."""
+
+    _safe_extract_tar(Path(archive), Path(destination))
+
+
 def _safe_extract_zip(archive: Path, destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     root = destination.resolve()
@@ -597,6 +787,12 @@ def _safe_extract_zip(archive: Path, destination: Path) -> None:
             if not target.is_relative_to(root):
                 raise RuntimeError(f"refusing unsafe archive member: {member.filename}")
         bundle.extractall(destination)
+
+
+def safe_extract_zip(archive: Path | str, destination: Path | str) -> None:
+    """Public path-traversal-safe zip extraction for managed installs and tests."""
+
+    _safe_extract_zip(Path(archive), Path(destination))
 
 
 def _write_launcher(
@@ -846,6 +1042,10 @@ def _install_system_packages(
 ) -> bool:
     """Install system packages using the detected package manager."""
 
+    refuse_system_package_mutation_in_tests(
+        system_package_mutation=True,
+        action=f"install system packages for {reason}",
+    )
     profile = detect_platform_install_profile()
     command_plan = _platform_install_command(
         profile,
@@ -1283,7 +1483,7 @@ def ensure_cvc5(
         pip_kwargs = {"strict": strict}
         if force:
             pip_kwargs["upgrade"] = True
-        if _pip_install("cvc5>=1.0.0,<2.0.0", **pip_kwargs) and _module_available("cvc5"):
+        if _pip_install("cvc5==1.3.3", **pip_kwargs) and _module_available("cvc5"):
             _announce(
                 "Updated cvc5 Python bindings." if force else "Installed cvc5 Python bindings.",
                 on_progress,
@@ -1766,61 +1966,132 @@ def _proverif_build_environment(
         return None
 
 
-def ensure_apalache(
-    *, yes: bool, strict: bool, on_progress: ProgressCallback | None = None, force: bool = False
+def _state_model_available(
+    receipt: object,
+    *,
+    tool_id: str,
+    install_root: Path,
+    java_executable: str | Path | None,
 ) -> bool:
-    """Ensure the pinned JVM-based Apalache distribution is user-local."""
+    """Verify the final managed bundle instead of trusting receipt flags."""
 
-    existing = _which("apalache-mc") or _which("apalache")
-    if existing and not force:
-        _announce(f"Apalache is already available at {existing}", on_progress, phase="available")
-        return True
-    if not yes:
-        _announce("Apalache is missing; rerun with --yes to install it user-locally.", on_progress, phase="blocked")
+    if (
+        str(getattr(receipt, "status", "")) not in {"available", "installed"}
+        or not bool(getattr(receipt, "installed", False))
+    ):
         return False
-    if _run_custom_solver_installer("apalache", strict=strict, on_progress=on_progress):
-        return _which("apalache-mc") is not None or _which("apalache") is not None
-    if platform.system().lower() not in {"linux", "darwin"}:
-        _announce(
-            "The portable Apalache launcher supports Linux and macOS. Set "
-            "IPFS_DATASETS_PY_APALACHE_INSTALL_COMMAND for this platform.",
-            on_progress,
-            phase="blocked",
-        )
-        return False
-    if _which("java") is None:
-        _announce(
-            "Apalache requires a Java runtime. Install Java or set JAVA_HOME before retrying.",
-            on_progress,
-            phase="blocked",
-        )
-        return False
+    from ipfs_datasets_py.logic.backends.installers import state_model
 
-    root = _external_prover_root()
-    archive = root / "downloads" / f"apalache-{APALACHE_VERSION}.tgz"
-    destination = root / f"apalache-{APALACHE_VERSION}"
-    try:
-        if not _download_release_artifact(
-            APALACHE_PORTABLE_URL,
-            archive,
-            APALACHE_PORTABLE_SHA256,
-            strict=strict,
-            on_progress=on_progress,
-        ):
-            return False
-        _announce(f"Extracting Apalache {APALACHE_VERSION} into {destination}", on_progress)
-        _safe_extract_tar(archive, destination)
-        candidates = [path for path in destination.rglob("apalache-mc") if path.is_file()]
-        if len(candidates) != 1:
-            raise RuntimeError("Apalache archive did not contain exactly one apalache-mc executable")
-        _write_launcher("apalache-mc", candidates[0])
-        _announce(f"Installed Apalache {APALACHE_VERSION} user-locally.", on_progress, phase="installed")
-        return _which("apalache-mc") is not None
-    except Exception as exc:
-        _announce(f"Apalache installation failed: {exc}", on_progress, phase="failed")
-        if strict:
-            raise
+    minimum_java = (
+        state_model.TLC_MIN_JAVA_MAJOR
+        if tool_id == "tlc"
+        else state_model.APALACHE_MIN_JAVA_MAJOR
+    )
+    java = state_model.probe_java_runtime(
+        java_executable=java_executable,
+        minimum_major=minimum_java,
+    )
+    if not java.usable or java.executable is None:
         return False
+    root = state_model.expand_user_local_root(install_root)
+    if tool_id == "tlc":
+        identity = state_model.managed_tlc_identity(
+            root,
+            java_executable=java.executable,
+        )
+        launcher = root / "bin" / state_model.TLC_EXECUTABLE
+        probe = state_model.probe_tlc_runtime(
+            executable=str(launcher),
+            java_executable=java.executable,
+        )
+    elif tool_id == "apalache":
+        identity = state_model.managed_apalache_identity(
+            root,
+            java_executable=java.executable,
+        )
+        launcher = root / "bin" / state_model.APALACHE_EXECUTABLE
+        probe = state_model.probe_apalache_runtime(
+            str(launcher),
+            java_executable=java.executable,
+            expected_version=state_model.APALACHE_VERSION,
+        )
+    else:
+        return False
+    receipt_executable = getattr(receipt, "executable_path", None)
+    receipt_path = (
+        Path(os.path.abspath(os.path.expanduser(str(receipt_executable))))
+        if receipt_executable
+        else None
+    )
+    return bool(
+        identity.get("usable")
+        and probe.usable
+        and receipt_path is not None
+        and not receipt_path.is_symlink()
+        and receipt_path == launcher
+    )
+
+
+def ensure_tlc(
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+    java_executable: str | Path | None = None,
+) -> bool:
+    """Public compatibility bridge to the reviewed TLC state-model installer."""
+
+    from ipfs_datasets_py.logic.backends.installers.state_model import (
+        ensure_tlc as ensure_managed_tlc,
+    )
+
+    install_root = _external_prover_root()
+    receipt = ensure_managed_tlc(
+        yes=yes,
+        strict=strict,
+        force=force,
+        on_progress=on_progress,
+        install_root=install_root,
+        java_executable=java_executable,
+    )
+    return _state_model_available(
+        receipt,
+        tool_id="tlc",
+        install_root=install_root,
+        java_executable=java_executable,
+    )
+
+
+def ensure_apalache(
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+    java_executable: str | Path | None = None,
+) -> bool:
+    """Public compatibility bridge to the reviewed Apalache installer."""
+
+    from ipfs_datasets_py.logic.backends.installers.state_model import (
+        ensure_apalache as ensure_managed_apalache,
+    )
+
+    install_root = _external_prover_root()
+    receipt = ensure_managed_apalache(
+        yes=yes,
+        strict=strict,
+        force=force,
+        on_progress=on_progress,
+        install_root=install_root,
+        java_executable=java_executable,
+    )
+    return _state_model_available(
+        receipt,
+        tool_id="apalache",
+        install_root=install_root,
+        java_executable=java_executable,
+    )
 
 
 def _numeric_version(value: str) -> tuple[int, ...]:
@@ -2373,13 +2644,28 @@ def ensure_proverif(
 
     existing = _which("proverif")
     if existing and not force:
-        _announce(f"ProVerif is already available at {existing}", on_progress, phase="available")
-        return True
+        if _proverif_version_matches(existing):
+            _announce(
+                f"ProVerif is already available at {existing}",
+                on_progress,
+                phase="available",
+            )
+            return True
+        _announce(
+            f"ProVerif at {existing} failed the canonical -help identity probe.",
+            on_progress,
+            phase="mismatched",
+        )
     if not yes:
-        _announce("ProVerif is missing; rerun with --yes to build it user-locally.", on_progress, phase="blocked")
+        _announce(
+            "ProVerif is missing or mismatched; rerun with --yes to build it "
+            "user-locally.",
+            on_progress,
+            phase="blocked",
+        )
         return False
     if _run_custom_solver_installer("proverif", strict=strict, on_progress=on_progress):
-        return _which("proverif") is not None
+        return _proverif_version_matches(_which("proverif"))
 
     build_env = _proverif_build_environment(
         allow_sudo=allow_sudo,
@@ -2426,7 +2712,7 @@ def ensure_proverif(
             } if "OPAMROOT" in build_env and "OPAMSWITCH" in build_env else None,
         )
         _announce(f"Installed headless ProVerif {PROVERIF_VERSION} user-locally.", on_progress, phase="installed")
-        if not _version_matches(_which("proverif"), PROVERIF_VERSION):
+        if not _proverif_version_matches(_which("proverif")):
             raise RuntimeError(f"ProVerif launcher does not report {PROVERIF_VERSION}")
         return True
     except Exception as exc:
@@ -2808,6 +3094,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cvc5", action="store_true", help="Install/ensure CVC5 Python bindings")
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean")
     parser.add_argument("--coq", "--rocq", action="store_true", help="Install/ensure Rocq 9.1.1 (Coq-compatible CLI)")
+    parser.add_argument("--tlc", action="store_true", help="Install/ensure TLC 1.8.0")
     parser.add_argument("--apalache", action="store_true", help="Install/ensure Apalache")
     parser.add_argument("--tamarin", action="store_true", help="Install/ensure Tamarin and Maude")
     parser.add_argument("--maude", action="store_true", help="Install/ensure the Maude runtime")
@@ -2888,6 +3175,7 @@ def main(argv: list[str] | None = None) -> int:
     want_cvc5 = bool(args.cvc5)
     want_lean = bool(args.lean)
     want_coq = bool(args.coq)
+    want_tlc = bool(args.tlc)
     want_apalache = bool(args.apalache)
     want_tamarin = bool(args.tamarin)
     want_maude = bool(args.maude)
@@ -2908,6 +3196,7 @@ def main(argv: list[str] | None = None) -> int:
     want_cvc5 = want_cvc5 or "cvc5" in portfolio_solvers
     want_lean = want_lean or "lean" in portfolio_solvers
     want_coq = want_coq or "coq" in portfolio_solvers
+    want_tlc = want_tlc or "tlc" in portfolio_solvers
     want_apalache = want_apalache or "apalache" in portfolio_solvers
     want_tamarin = want_tamarin or "tamarin" in portfolio_solvers
     want_maude = want_maude or "maude" in portfolio_solvers
@@ -2919,7 +3208,7 @@ def main(argv: list[str] | None = None) -> int:
     want_symbolicai = want_symbolicai or "symbolicai" in portfolio_solvers
     want_ergoai = want_ergoai or "ergoai" in portfolio_solvers
     if not (
-        want_z3 or want_cvc5 or want_lean or want_coq or want_apalache
+        want_z3 or want_cvc5 or want_lean or want_coq or want_tlc or want_apalache
         or want_tamarin or want_maude or want_proverif or want_cvc5_cli
         or want_vampire or want_eprover or want_isabelle
         or want_symbolicai or want_ergoai
@@ -2928,6 +3217,7 @@ def main(argv: list[str] | None = None) -> int:
         want_cvc5 = True
         want_lean = True
         want_coq = True
+        want_tlc = True
         want_apalache = True
         want_tamarin = True
         want_proverif = True
@@ -2953,6 +3243,8 @@ def main(argv: list[str] | None = None) -> int:
             allow_sudo=bool(args.allow_sudo),
             **update_kwargs,
         ) and ok
+    if want_tlc:
+        ok = ensure_tlc(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_apalache:
         ok = ensure_apalache(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_maude:

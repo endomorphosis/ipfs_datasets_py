@@ -62,6 +62,7 @@ CRITICAL_SLOT_NAMES: frozenset[str] = frozenset(
         "emergency",
         "hours",
         "phone",
+        "phone_extension",
         "zip",
         "zip_code",
         "postal_code",
@@ -96,6 +97,107 @@ _DIGIT_WORDS = {
     "9": "nine",
 }
 _WORD_TO_DIGIT = {word: digit for digit, word in _DIGIT_WORDS.items()}
+_TENS_TO_VALUE = {
+    "twenty": 20,
+    "thirty": 30,
+    "forty": 40,
+    "fifty": 50,
+    "sixty": 60,
+    "seventy": 70,
+    "eighty": 80,
+    "ninety": 90,
+}
+_DIGIT_TO_ORDINAL = {
+    "1": "first",
+    "2": "second",
+    "3": "third",
+    "4": "fourth",
+    "5": "fifth",
+    "6": "sixth",
+    "7": "seventh",
+    "8": "eighth",
+    "9": "ninth",
+}
+_LEGACY_DIGIT_WORD_TO_DIGIT = {**_WORD_TO_DIGIT, "oh": "0"}
+_LEGACY_DIGIT_TOKEN = (
+    r"(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|\d)"
+)
+_LEGACY_DIGIT_SEPARATOR = (
+    r"(?:[\s,()/:;`'\"“”‘’\-–—…]*|\.{2,})"
+)
+_LEGACY_DIGIT_RUN_RE = re.compile(
+    rf"(?<![A-Za-z0-9])(?:{_LEGACY_DIGIT_TOKEN})(?:"
+    rf"{_LEGACY_DIGIT_SEPARATOR}(?:{_LEGACY_DIGIT_TOKEN})){{2,}}"
+    rf"(?![A-Za-z0-9])",
+    re.IGNORECASE,
+)
+_LEGACY_PHONE_EXTENSION_RE = re.compile(
+    rf"\b(?:extension|ext\.?)\s*(?:(?:number\s+)?(?:is\s+)?)?"
+    rf"(?:[:#-]\s*)?(?P<value>(?:{_LEGACY_DIGIT_TOKEN})(?:"
+    rf"{_LEGACY_DIGIT_SEPARATOR}(?:{_LEGACY_DIGIT_TOKEN})){{0,5}})"
+    rf"(?![A-Za-z0-9])",
+    re.IGNORECASE,
+)
+_LEGACY_CRITICAL_SHORT_CODES = frozenset(
+    {"211", "311", "411", "511", "611", "711", "811", "911", "988"}
+)
+# Treat a single full stop (or !/?) as a sentence boundary, but retain ASCII
+# ellipses inside the sentence so digit runs such as ``5...0...3`` stay whole.
+_LEGACY_SENTENCE_RE = re.compile(
+    r".+?(?:(?<!\.)\.(?!\.)|[!?]+|$)",
+    re.DOTALL,
+)
+_LEGACY_STREET_RE = re.compile(
+    r"\b(?:avenue|ave|boulevard|blvd|court|ct|drive|dr|highway|hwy|"
+    r"lane|ln|road|rd|street|st|way)\b",
+    re.IGNORECASE,
+)
+_LEGACY_ELIGIBILITY_RE = re.compile(
+    r"\b(?:documents?|paperwork|eligib(?:ility|le)|identification|"
+    r"(?:photo\s+)?id|proof(?:\s+of\s+\w+)?|qualif(?:y|ies|ied)|"
+    r"requirements?|verification|birth\s+certificate|social\s+security\s+card|"
+    r"(?:must\s+|need(?:s)?\s+to\s+|please\s+)?"
+    r"(?:bring|have|provide|show|present|take)\b[^.!?\n]{0,96}\b"
+    r"(?:id|identification|card|documents?|paperwork|proof|lease|bill|mail|"
+    r"letter|forms?|records?|verification)|"
+    r"(?:id|identification|card|documents?|paperwork|proof|lease|bill|mail|"
+    r"letter|forms?|records?|verification)\b[^.!?\n]{0,64}\b"
+    r"(?:required|needed|acceptable|to\s+(?:bring|show|provide|present)))\b",
+    re.IGNORECASE,
+)
+_LEGACY_HOURS_RE = re.compile(
+    r"\b(?:hours?|open|appointment|monday|tuesday|wednesday|thursday|"
+    r"friday|saturday|sunday|\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))\b",
+    re.IGNORECASE,
+)
+_LEGACY_NUMBER_WORD_ATOM = (
+    r"(?:a|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|"
+    r"twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|"
+    r"twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|"
+    r"thousand|million)"
+)
+_LEGACY_AMOUNT_RE = re.compile(
+    rf"(?:\$\s*\d+(?:[.,]\d{{1,2}})?|"
+    rf"\b(?:free|\d+(?:[.,]\d{{1,2}})?\s+dollars?|"
+    rf"{_LEGACY_NUMBER_WORD_ATOM}(?:[\s-]+(?:and[\s-]+)?"
+    rf"{_LEGACY_NUMBER_WORD_ATOM})*\s+dollars?)\b)",
+    re.IGNORECASE,
+)
+_LEGACY_UNCLASSIFIED_DIGIT_CONTEXT_RE = re.compile(
+    r"\b(?:(?:access|account|case|client|confirmation|member|pin|reference)"
+    r"\s+(?:code|id|number))\b",
+    re.IGNORECASE,
+)
+_LEGACY_AMOUNT_CONTEXT_RE = re.compile(r"\bdollars?\b", re.IGNORECASE)
+_LEGACY_UNKNOWN_AMOUNT_RE = re.compile(
+    r"\b(?:amount\s+(?:is\s+)?(?:unknown|unavailable|not\s+known)|"
+    r"(?:do\s+not|don't|don’t)\s+(?:need|have|know)\s+(?:the\s+)?"
+    r"exact\s+dollar\s+amount|(?:no|without)\s+(?:an?\s+)?exact\s+"
+    r"dollar\s+amount|exact\s+dollar\s+amount[^.!?]{0,32}\b"
+    r"(?:unknown|unavailable|not\s+known))\b",
+    re.IGNORECASE,
+)
+LEGACY_CRITICAL_SLOT_EXTRACTOR_VERSION = "abby_voice_legacy_critical_slots_v2"
 
 
 class AudioQualityGate(StrEnum):
@@ -340,6 +442,25 @@ class RoundTripMetrics:
             "wer_bp": self.wer_bp,
         }
 
+    def evidence_dict(self) -> dict[str, Any]:
+        """Return the privacy-safe, persistable round-trip evidence.
+
+        The full reference and ASR hypothesis remain available in memory for
+        diagnostics through :meth:`to_dict`, but neither belongs in durable
+        quality receipts. Their full SHA-256 identities are sufficient to bind
+        the persisted error rates and critical-slot counts.
+        """
+
+        return {
+            "cer_bp": self.cer_bp,
+            "critical_slots_checked": self.critical_slots_checked,
+            "critical_slots_passed": self.critical_slots_passed,
+            "failed_slots": list(self.failed_slots),
+            "hypothesis_sha256": self.hypothesis_sha256,
+            "reference_sha256": self.reference_sha256,
+            "wer_bp": self.wer_bp,
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class QualityGateResult:
@@ -361,7 +482,26 @@ class QualityGateResult:
             raise TypeError("retryable must be boolean")
         if not isinstance(self.detail, str):
             raise TypeError("detail must be text")
-        object.__setattr__(self, "metrics", dict(self.metrics))
+        if not isinstance(self.metrics, Mapping):
+            raise TypeError("metrics must be a mapping")
+        metrics = dict(self.metrics)
+        if not all(isinstance(key, str) for key in metrics):
+            raise TypeError("metric keys must be strings")
+        try:
+            canonical_metrics = json.loads(
+                json.dumps(
+                    metrics,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                )
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError("metrics must contain canonical JSON values") from exc
+        if canonical_metrics != metrics:
+            raise ValueError("metrics must contain canonical JSON values")
+        object.__setattr__(self, "metrics", metrics)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -372,6 +512,34 @@ class QualityGateResult:
             "reason": self.reason.value,
             "retryable": self.retryable,
         }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> QualityGateResult:
+        """Strictly deserialize one closed-schema quality-gate result."""
+
+        if not isinstance(payload, Mapping):
+            raise TypeError("quality gate result must be a mapping")
+        expected = frozenset(
+            {"detail", "gate", "metrics", "passed", "reason", "retryable"}
+        )
+        actual = frozenset(payload)
+        if actual != expected:
+            raise ValueError(
+                "quality gate result has missing fields "
+                f"{sorted(expected - actual)!r} and unknown fields "
+                f"{sorted(actual - expected)!r}"
+            )
+        result = cls(
+            gate=payload["gate"],
+            passed=payload["passed"],
+            reason=payload["reason"],
+            detail=payload["detail"],
+            metrics=payload["metrics"],
+            retryable=payload["retryable"],
+        )
+        if result.to_dict() != dict(payload):
+            raise ValueError("quality gate result is not canonical")
+        return result
 
 
 def rate_to_basis_points(rate: float) -> int:
@@ -427,13 +595,72 @@ def character_error_rate_bp(reference: str, hypothesis: str) -> int:
     return rate_to_basis_points(distance / len(reference_chars))
 
 
-def _tokenize_words(text: str) -> list[str]:
+def _normalize_roundtrip_text(text: str) -> str:
+    """Canonicalize common TTS/Whisper formatting differences."""
+
     normalized = normalized_text_identity(normalize_indextts_spoken_text(text))
-    return [token for token in normalized.split(" ") if token]
+    normalized = normalized.replace("’", "'").replace("‘", "'")
+
+    # Whisper may join a five-digit spoken street number with a following
+    # ordinal road name: "one six four three zero third" -> "164303rd".
+    def split_joined_ordinal(match: re.Match[str]) -> str:
+        return f"{match.group(1)} {_DIGIT_TO_ORDINAL.get(match.group(2), match.group(2))}"
+
+    normalized = re.sub(
+        r"\b(\d+)-(\d+)(\d)(?:st|nd|rd|th)\b",
+        lambda match: (
+            f"{match.group(1)}{match.group(2)} "
+            f"{_DIGIT_TO_ORDINAL.get(match.group(3), match.group(3))}"
+        ),
+        normalized,
+    )
+    normalized = re.sub(
+        r"\b(\d+)(\d)(?:st|nd|rd|th)\b",
+        split_joined_ordinal,
+        normalized,
+    )
+    normalized = re.sub(r"[^a-z0-9']+", " ", normalized.casefold())
+    raw_tokens = [token for token in normalized.split() if token]
+    output: list[str] = []
+    index = 0
+    while index < len(raw_tokens):
+        token = raw_tokens[index]
+        if (
+            token in _TENS_TO_VALUE
+            and index + 1 < len(raw_tokens)
+            and raw_tokens[index + 1] in _WORD_TO_DIGIT
+        ):
+            output.append(
+                str(_TENS_TO_VALUE[token] + int(_WORD_TO_DIGIT[raw_tokens[index + 1]]))
+            )
+            index += 2
+            continue
+        run: list[str] = []
+        cursor = index
+        while cursor < len(raw_tokens):
+            current = raw_tokens[cursor]
+            if current in _WORD_TO_DIGIT:
+                run.append(_WORD_TO_DIGIT[current])
+            elif len(current) == 1 and current.isdigit():
+                run.append(current)
+            else:
+                break
+            cursor += 1
+        if len(run) >= 2:
+            output.append("".join(run))
+            index = cursor
+            continue
+        output.append(token)
+        index += 1
+    return " ".join(output)
+
+
+def _tokenize_words(text: str) -> list[str]:
+    return [token for token in _normalize_roundtrip_text(text).split(" ") if token]
 
 
 def _normalize_for_cer(text: str) -> str:
-    return _SPACE_RE.sub("", normalized_text_identity(normalize_indextts_spoken_text(text)))
+    return _SPACE_RE.sub("", _normalize_roundtrip_text(text))
 
 
 def normalize_slot_value(name: str, value: str) -> str:
@@ -441,10 +668,10 @@ def normalize_slot_value(name: str, value: str) -> str:
 
     slot = str(name or "").strip().casefold()
     raw = str(value or "").strip()
-    if slot in {"phone"}:
+    if slot in {"phone", "phone_extension"}:
         digits = _PHONE_DIGITS_RE.sub("", raw)
         # Preserve emergency short codes.
-        if digits in {"911", "211", "311", "411", "511", "611", "711", "811"}:
+        if digits in _LEGACY_CRITICAL_SHORT_CODES:
             return digits
         return digits
     if slot in {"zip", "zip_code", "postal_code"}:
@@ -488,6 +715,107 @@ def _normalize_spoken_haystack(text: str) -> str:
     return _SPACE_RE.sub(" ", cleaned).strip()
 
 
+def _extract_digit_runs(text: str) -> tuple[str, ...]:
+    """Extract contiguous digit runs from literal digits and spoken digit words.
+
+    Runs are whole candidates (e.g. phone numbers, zips), not a single
+    concatenated global digit stream. Substring containment against the
+    global stream is intentionally not used for critical-slot fidelity.
+    """
+
+    runs: list[str] = []
+    for match in re.finditer(r"\d+", text or ""):
+        if match.group(0):
+            runs.append(match.group(0))
+
+    tokens = _normalize_spoken_haystack(text).split()
+    current: list[str] = []
+    for token in tokens:
+        bare = token.strip(".,;:()\"'")
+        if bare in _WORD_TO_DIGIT:
+            current.append(_WORD_TO_DIGIT[bare])
+            continue
+        if bare.isdigit():
+            current.extend(list(bare))
+            continue
+        if current:
+            runs.append("".join(current))
+            current = []
+    if current:
+        runs.append("".join(current))
+    # Preserve order while de-duplicating identical runs.
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for run in runs:
+        if run and run not in seen:
+            seen.add(run)
+            ordered.append(run)
+    return tuple(ordered)
+
+
+def _spoken_phrase_present(expected_digits: str, haystack: str) -> bool:
+    """Return True when spoken digit-words for *expected_digits* appear as a phrase."""
+
+    spoken_words = _digits_to_spoken_words(expected_digits)
+    if not spoken_words:
+        return False
+    lowered = _normalize_spoken_haystack(haystack)
+    if spoken_words in lowered:
+        return True
+    # Allow omitted spaces between digit words only when the phrase is token-bounded.
+    compacted = spoken_words.replace(" ", "")
+    compact_hay = lowered.replace(" ", "")
+    if compacted not in compact_hay:
+        return False
+    # Reject partial embeddings like "one two" inside "zero one two three" by
+    # requiring a contiguous token subsequence match.
+    expected_tokens = spoken_words.split()
+    hay_tokens = lowered.split()
+    width = len(expected_tokens)
+    if width == 0 or width > len(hay_tokens):
+        return False
+    for index in range(0, len(hay_tokens) - width + 1):
+        if hay_tokens[index : index + width] == expected_tokens:
+            return True
+    return False
+
+
+def _digit_slot_present(expected: str, haystack: str) -> bool:
+    """Match a critical digit slot as a whole run, not a substring of a larger number."""
+
+    if not expected:
+        return False
+    if expected in _extract_digit_runs(haystack):
+        return True
+    return _spoken_phrase_present(expected, haystack)
+
+
+def _amount_slot_present(expected: str, haystack: str) -> bool:
+    """Match amounts as discrete candidates, not as substrings of larger numbers."""
+
+    if not expected:
+        return False
+    # Currency / numeric amount forms from the hypothesis.
+    for match in _AMOUNT_RE.finditer(haystack or ""):
+        candidate = match.group(0).replace(" ", "").replace(",", "")
+        if candidate.startswith("$"):
+            candidate = candidate[1:]
+        if candidate == expected:
+            return True
+    # Word amounts already normalized to identity text ("four hundred dollars").
+    lowered_expected = normalized_text_identity(expected)
+    lowered_hay = normalized_text_identity(haystack or "")
+    if lowered_expected and lowered_expected in lowered_hay:
+        # Require word-boundary containment for short numeric expectations.
+        if expected.isdigit():
+            return bool(re.search(rf"(?<!\d){re.escape(expected)}(?!\d)", haystack or ""))
+        return True
+    # Spoken/digit run equality for purely numeric expectations.
+    if expected.isdigit() and expected in _extract_digit_runs(haystack):
+        return True
+    return False
+
+
 def slot_present_in_text(name: str, value: str, text: str) -> bool:
     """Return True when the normalized slot value is present in *text*."""
 
@@ -496,34 +824,196 @@ def slot_present_in_text(name: str, value: str, text: str) -> bool:
         return False
     slot = str(name or "").strip().casefold()
     haystack = text or ""
-    if slot == "phone":
-        # Prefer literal digits, then contiguous spoken digit-word phrases.
-        # Do not mix street-number digits into the phone spoken stream check.
-        compact_digits = _PHONE_DIGITS_RE.sub("", haystack)
-        if expected in compact_digits:
-            return True
-        spoken_words = _digits_to_spoken_words(expected)
-        lowered = _normalize_spoken_haystack(haystack)
-        if spoken_words and spoken_words in lowered:
-            return True
-        if spoken_words and spoken_words.replace(" ", "") in lowered.replace(" ", ""):
-            return True
-        spoken_digits = _spoken_words_to_digits(haystack)
-        return expected in spoken_digits
-    if slot in {"zip", "zip_code", "postal_code", "amount"}:
-        compact = _PHONE_DIGITS_RE.sub("", haystack) if slot != "amount" else haystack.replace(",", "").replace(" ", "")
-        if expected in compact or expected in haystack:
-            return True
-        spoken_digits = _spoken_words_to_digits(haystack)
-        if expected in spoken_digits:
-            return True
-        return expected in normalized_text_identity(haystack)
+    if slot in {"phone", "phone_extension"}:
+        # Whole-run digit equality only. Substring matches against a global
+        # digit stream (e.g. 5551234 inside 15551234199) are false accepts.
+        return _digit_slot_present(expected, haystack)
+    if slot in {"zip", "zip_code", "postal_code"}:
+        # Prefer structured zip candidates; fall back to whole digit runs.
+        for match in _ZIP_RE.finditer(haystack):
+            if normalize_slot_value(slot, match.group(0)) == expected:
+                return True
+        return _digit_slot_present(expected, haystack)
+    if slot == "amount":
+        return _amount_slot_present(expected, haystack)
     if slot == "emergency":
         lowered = _normalize_spoken_haystack(haystack)
-        return expected in lowered or "nine one one" in lowered or "911" in haystack
-    needle = expected
-    hay = _normalize_spoken_haystack(haystack)
+        if expected in lowered or "nine one one" in lowered:
+            return True
+        return "911" in _extract_digit_runs(haystack)
+    needle = _normalize_roundtrip_text(expected)
+    hay = _normalize_roundtrip_text(haystack)
     return needle in hay
+
+
+def _legacy_digit_run(value: str) -> str:
+    digits: list[str] = []
+    for token in re.findall(_LEGACY_DIGIT_TOKEN, value.casefold()):
+        if token.isdigit():
+            digits.extend(token)
+        else:
+            digit = _LEGACY_DIGIT_WORD_TO_DIGIT.get(token)
+            if digit is not None:
+                digits.append(digit)
+    return "".join(digits)
+
+
+def _legacy_digit_binding(
+    digit_match: re.Match[str],
+    *,
+    street: re.Match[str] | None,
+) -> tuple[str, str] | None:
+    """Classify one deterministic legacy digit run, if its type is known."""
+
+    digits = _legacy_digit_run(digit_match.group(0))
+    if digits == "911":
+        return ("emergency", digits)
+    if len(digits) >= 7 or digits in (_LEGACY_CRITICAL_SHORT_CODES - {"911"}):
+        return ("phone", digits)
+    if len(digits) == 5:
+        # A five-digit run before a street suffix is commonly a spoken street
+        # number (e.g. "one six four three zero third Street"). The whole
+        # address sentence is already bound above.
+        if street is None or digit_match.start() > street.end():
+            return ("zip", digits)
+    return None
+
+
+def derive_legacy_critical_slots(text: str) -> tuple[tuple[str, str], ...]:
+    """Derive explicit critical-fact bindings from a pinned legacy response.
+
+    The historical Abby response manifest predates structured slots. This
+    deterministic, versioned compatibility extractor makes zero-slot results
+    auditable instead of silently treating them as proof that no critical
+    facts existed. It intentionally favors recall: full eligibility, hours,
+    and address sentences are bound so their facts must survive ASR exactly,
+    while digit runs bind phones, postal codes, and emergency short codes.
+
+    These bindings describe only the immutable reference text. They never use
+    current GraphRAG evidence to rewrite or infer a historical recording.
+    """
+
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError("legacy critical-slot extraction requires non-empty text")
+    bindings: list[tuple[str, str]] = []
+    for extension_match in _LEGACY_PHONE_EXTENSION_RE.finditer(text):
+        digits = _legacy_digit_run(extension_match.group("value"))
+        if digits:
+            bindings.append(("phone_extension", digits))
+    for match in _LEGACY_SENTENCE_RE.finditer(text):
+        sentence = " ".join(match.group(0).strip().split())
+        if not sentence:
+            continue
+        street = _LEGACY_STREET_RE.search(sentence)
+        if street is not None:
+            bindings.append(("address", sentence))
+        if _LEGACY_ELIGIBILITY_RE.search(sentence):
+            bindings.append(("eligibility", sentence))
+        if _LEGACY_HOURS_RE.search(sentence):
+            bindings.append(("hours", sentence))
+        for amount in _LEGACY_AMOUNT_RE.finditer(sentence):
+            bindings.append(("amount", " ".join(amount.group(0).split())))
+
+        lowered = normalized_text_identity(
+            normalize_indextts_spoken_text(sentence)
+        )
+        if "911" in sentence or "nine one one" in lowered:
+            bindings.append(("emergency", "911"))
+
+        for digit_match in _LEGACY_DIGIT_RUN_RE.finditer(sentence):
+            binding = _legacy_digit_binding(digit_match, street=street)
+            if binding is not None:
+                bindings.append(binding)
+
+    unique = {
+        (str(name).casefold(), str(value).strip())
+        for name, value in bindings
+        if str(value).strip()
+    }
+    return tuple(sorted(unique, key=lambda item: (item[0], item[1])))
+
+
+def find_unclassified_legacy_critical_facts(
+    text: str,
+    bindings: tuple[tuple[str, str], ...] | None = None,
+) -> tuple[str, ...]:
+    """Return privacy-safe markers for likely critical facts left unbound.
+
+    The compatibility extractor intentionally supports a closed set of slot
+    types. This second pass prevents likely critical source text from silently
+    becoming ``no critical facts detected`` when a known pattern regresses or
+    when a contextual identifier cannot yet be represented by that slot set.
+    Markers identify only the fact category; they never persist source text or
+    the value itself.
+    """
+
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError("legacy critical-fact classification requires non-empty text")
+    selected = (
+        derive_legacy_critical_slots(text)
+        if bindings is None
+        else tuple(bindings)
+    )
+    normalized_bindings = {
+        (str(name).casefold(), normalize_slot_value(name, value))
+        for name, value in selected
+    }
+    markers: set[str] = set()
+    unknown_amount = _LEGACY_UNKNOWN_AMOUNT_RE.search(text) is not None
+
+    for extension_match in _LEGACY_PHONE_EXTENSION_RE.finditer(text):
+        digits = _legacy_digit_run(extension_match.group("value"))
+        if digits and (
+            "phone_extension",
+            normalize_slot_value("phone_extension", digits),
+        ) not in normalized_bindings:
+            markers.add("phone_extension_unbound")
+
+    for match in _LEGACY_SENTENCE_RE.finditer(text):
+        sentence = " ".join(match.group(0).strip().split())
+        if not sentence:
+            continue
+        normalized_sentence = normalize_slot_value("eligibility", sentence)
+        if (
+            _LEGACY_ELIGIBILITY_RE.search(sentence)
+            and ("eligibility", normalized_sentence) not in normalized_bindings
+        ):
+            markers.add("eligibility_pattern_unbound")
+
+        amount_matches = tuple(_LEGACY_AMOUNT_RE.finditer(sentence))
+        for amount in amount_matches:
+            value = " ".join(amount.group(0).split())
+            if (
+                "amount",
+                normalize_slot_value("amount", value),
+            ) not in normalized_bindings:
+                markers.add("amount_pattern_unbound")
+        if (
+            _LEGACY_AMOUNT_CONTEXT_RE.search(sentence)
+            and not amount_matches
+            and not unknown_amount
+        ):
+            markers.add("amount_context_unclassified")
+
+        street = _LEGACY_STREET_RE.search(sentence)
+        for digit_match in _LEGACY_DIGIT_RUN_RE.finditer(sentence):
+            binding = _legacy_digit_binding(digit_match, street=street)
+            if binding is not None:
+                name, value = binding
+                if (
+                    name,
+                    normalize_slot_value(name, value),
+                ) not in normalized_bindings:
+                    markers.add(f"{name}_digit_run_unbound")
+                continue
+            digits = _legacy_digit_run(digit_match.group(0))
+            if (
+                3 <= len(digits) <= 6
+                and _LEGACY_UNCLASSIFIED_DIGIT_CONTEXT_RE.search(sentence)
+            ):
+                markers.add("contextual_identifier_unclassified")
+
+    return tuple(sorted(markers))
 
 
 def detect_media_type(payload: bytes) -> str | None:
@@ -662,7 +1152,13 @@ def validate_decode_and_acoustic(
             detail=f"media type {media!r} is not allowed by policy",
         )
     metrics: dict[str, Any] = {}
-    if payload is not None:
+    detected_payload_media = detect_media_type(payload) if payload is not None else None
+    use_external_decode_metrics = bool(
+        payload is not None
+        and detected_payload_media is not None
+        and detected_payload_media not in _WAV_ALIASES
+    )
+    if payload is not None and not use_external_decode_metrics:
         try:
             acoustic = decode_acoustic_metrics(
                 payload,
@@ -694,16 +1190,75 @@ def validate_decode_and_acoustic(
                 gate=AudioQualityGate.DECODE,
                 passed=False,
                 reason=AudioQualityReason.BYTES_UNAVAILABLE,
-                detail="audio bytes and precomputed metrics are both absent",
+                detail=(
+                    "trusted decoder metrics are required for non-WAV audio"
+                    if use_external_decode_metrics
+                    else "audio bytes and precomputed metrics are both absent"
+                ),
                 retryable=True,
             )
-        metrics = {key: int(value) for key, value in precomputed_metrics.items() if isinstance(value, int)}
-        sample_rate = int(metrics.get("sample_rate_hz") or declared_sample_rate_hz or 0)
-        channels = int(metrics.get("channels") or declared_channels or 0)
-        duration_ms = int(metrics.get("duration_ms") or declared_duration_ms or 0)
-        silence_bp = int(metrics.get("silence_ratio_bp") or 0)
-        clipping_bp = int(metrics.get("clipping_ratio_bp") or 0)
-        detected_media = media
+        required_metric_names = {
+            "channels",
+            "clipping_ratio_bp",
+            "duration_ms",
+            "sample_rate_hz",
+            "silence_ratio_bp",
+        }
+        if any(
+            isinstance(precomputed_metrics.get(name), bool)
+            or not isinstance(precomputed_metrics.get(name), int)
+            for name in required_metric_names
+        ):
+            return QualityGateResult(
+                gate=AudioQualityGate.DECODE,
+                passed=False,
+                reason=AudioQualityReason.DECODE_FAILED,
+                detail="trusted decoder metrics are incomplete or non-integer",
+            )
+        metrics = {
+            key: int(value)
+            for key, value in precomputed_metrics.items()
+            if isinstance(value, int) and not isinstance(value, bool)
+        }
+        sample_rate = metrics["sample_rate_hz"]
+        channels = metrics["channels"]
+        duration_ms = metrics["duration_ms"]
+        silence_bp = metrics["silence_ratio_bp"]
+        clipping_bp = metrics["clipping_ratio_bp"]
+        if (
+            sample_rate <= 0
+            or channels <= 0
+            or duration_ms <= 0
+            or not 0 <= silence_bp <= _BASIS_POINT_SCALE
+            or not 0 <= clipping_bp <= _BASIS_POINT_SCALE
+        ):
+            return QualityGateResult(
+                gate=AudioQualityGate.DECODE,
+                passed=False,
+                reason=AudioQualityReason.DECODE_FAILED,
+                detail="trusted decoder metrics are outside valid ranges",
+                metrics=metrics,
+            )
+        if payload is not None:
+            if detected_payload_media is None:
+                return QualityGateResult(
+                    gate=AudioQualityGate.DECODE,
+                    passed=False,
+                    reason=AudioQualityReason.DECODE_FAILED,
+                    detail="audio container magic is not recognized",
+                    metrics=metrics,
+                )
+            if not media_types_compatible(media, detected_payload_media):
+                return QualityGateResult(
+                    gate=AudioQualityGate.DECODE,
+                    passed=False,
+                    reason=AudioQualityReason.MEDIA_MISMATCH,
+                    detail="declared media type does not match audio container magic",
+                    metrics=metrics,
+                )
+            detected_media = detected_payload_media
+        else:
+            detected_media = media
 
     if declared_sample_rate_hz is not None and sample_rate and declared_sample_rate_hz != sample_rate:
         return QualityGateResult(
@@ -811,7 +1366,7 @@ def validate_tts_asr_roundtrip(
                 passed=False,
                 reason=AudioQualityReason.MISSING_REFERENCE_TEXT,
                 detail="reference spoken text is required for round-trip evaluation",
-                metrics=metrics.to_dict(),
+                metrics=metrics.evidence_dict(),
             ),
             metrics,
         )
@@ -832,7 +1387,7 @@ def validate_tts_asr_roundtrip(
                 passed=False,
                 reason=AudioQualityReason.MISSING_TRANSCRIPT,
                 detail="ASR hypothesis text is required for round-trip evaluation",
-                metrics=metrics.to_dict(),
+                metrics=metrics.evidence_dict(),
             ),
             metrics,
         )
@@ -877,7 +1432,7 @@ def validate_tts_asr_roundtrip(
                 passed=False,
                 reason=AudioQualityReason.SLOT_FIDELITY_FAILED,
                 detail="critical factual slots must have exact normalized ASR fidelity",
-                metrics=metrics.to_dict(),
+                metrics=metrics.evidence_dict(),
             ),
             metrics,
         )
@@ -888,7 +1443,7 @@ def validate_tts_asr_roundtrip(
                 passed=False,
                 reason=AudioQualityReason.WER_THRESHOLD_EXCEEDED,
                 detail="word error rate exceeds the versioned policy threshold",
-                metrics=metrics.to_dict(),
+                metrics=metrics.evidence_dict(),
             ),
             metrics,
         )
@@ -899,7 +1454,7 @@ def validate_tts_asr_roundtrip(
                 passed=False,
                 reason=AudioQualityReason.CER_THRESHOLD_EXCEEDED,
                 detail="character error rate exceeds the versioned policy threshold",
-                metrics=metrics.to_dict(),
+                metrics=metrics.evidence_dict(),
             ),
             metrics,
         )
@@ -909,7 +1464,7 @@ def validate_tts_asr_roundtrip(
             passed=True,
             reason=AudioQualityReason.PASSED,
             detail="TTS-to-ASR round-trip and critical-slot fidelity passed",
-            metrics=metrics.to_dict(),
+            metrics=metrics.evidence_dict(),
         ),
         metrics,
     )
@@ -1035,6 +1590,7 @@ __all__ = [
     "AUDIO_QUALITY_POLICY_SCHEMA_VERSION",
     "AUDIO_QUALITY_POLICY_VERSION",
     "CRITICAL_SLOT_NAMES",
+    "LEGACY_CRITICAL_SLOT_EXTRACTOR_VERSION",
     "AcousticMetrics",
     "AudioQualityGate",
     "AudioQualityPolicy",
@@ -1045,7 +1601,9 @@ __all__ = [
     "character_error_rate_bp",
     "decode_acoustic_metrics",
     "detect_media_type",
+    "derive_legacy_critical_slots",
     "edit_distance",
+    "find_unclassified_legacy_critical_facts",
     "media_types_compatible",
     "normalize_slot_value",
     "rate_to_basis_points",

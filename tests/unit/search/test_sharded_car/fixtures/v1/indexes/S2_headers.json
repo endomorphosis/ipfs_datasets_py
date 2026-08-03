@@ -1,0 +1,29 @@
+{
+  "e03": {
+    "cid": "bafkreih663feh7uvrmaibcmzzayo35q7l6ev7kdjivewdm75ptt5v5ci5i",
+    "name": "Acme",
+    "properties": {
+      "idx": 3,
+      "sector": "tech"
+    },
+    "type": "Org"
+  },
+  "e05": {
+    "cid": "bafkreie7ieepc7lgher3ltuhcpfdz6jkxliggtso7yby35rus72cfn7x6m",
+    "name": "BetaCo",
+    "properties": {
+      "idx": 5,
+      "sector": "bio"
+    },
+    "type": "Org"
+  },
+  "e06": {
+    "cid": "bafkreidskl5tdi7nexqzgmwo3vbp5r46wrdzkmay7sa2cstyomr3x26lfe",
+    "name": "Dave",
+    "properties": {
+      "idx": 6,
+      "role": "qa"
+    },
+    "type": "Person"
+  }
+}

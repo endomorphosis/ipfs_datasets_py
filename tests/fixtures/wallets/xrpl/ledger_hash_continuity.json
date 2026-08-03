@@ -1,0 +1,70 @@
+{
+  "schema": "wallet_processor_migration/xrpl-ledger-continuity@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G200",
+  "network": "xrpl-mainnet",
+  "notes": "Consecutive validated ledgers with parent_hash continuity for checkpoint anchors.",
+  "start_index": 85000500,
+  "end_index": 85000501,
+  "ledgers": {
+    "85000500": {
+      "validated": true,
+      "ledger": {
+        "ledger_index": 85000500,
+        "ledger_hash": "DDDD000000000000000000000000000000000000000000000000000000000500",
+        "parent_hash": "DDDD0000000000000000000000000000000000000000000000000000000004FF",
+        "transactions": [
+          {
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+            "TransactionType": "Payment",
+            "Amount": "100",
+            "Fee": "12",
+            "Sequence": 80,
+            "hash": "LCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCL1",
+            "metaData": {
+              "TransactionResult": "tesSUCCESS",
+              "delivered_amount": "100"
+            }
+          }
+        ]
+      }
+    },
+    "85000501": {
+      "validated": true,
+      "ledger": {
+        "ledger_index": 85000501,
+        "ledger_hash": "DDDD000000000000000000000000000000000000000000000000000000000501",
+        "parent_hash": "DDDD000000000000000000000000000000000000000000000000000000000500",
+        "transactions": [
+          {
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+            "TransactionType": "Payment",
+            "Amount": "200",
+            "Fee": "12",
+            "Sequence": 81,
+            "hash": "LCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCLCL2",
+            "metaData": {
+              "TransactionResult": "tesSUCCESS",
+              "delivered_amount": "200"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "broken_ledger": {
+    "validated": true,
+    "ledger": {
+      "ledger_index": 85000501,
+      "ledger_hash": "DDDD000000000000000000000000000000000000000000000000000000000501",
+      "parent_hash": "DEADBEEF00000000000000000000000000000000000000000000000000000000",
+      "transactions": []
+    }
+  },
+  "expect": {
+    "ledger_count": 2,
+    "tx_count": 2
+  }
+}

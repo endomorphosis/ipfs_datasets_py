@@ -11,22 +11,25 @@ Covers the G018 acceptance subset:
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
 
 import pyarrow.parquet as pq
 import pytest
-
 from ipfs_datasets_py.huggingface.release import (
     DEFAULT_SHARD_ROWS,
     FileDescriptor,
     HuggingFaceReleaseError,
+    canonical_json_bytes,
     describe_file,
     reject_identity_contamination,
     shard_sequence,
     validate_zstd_parquet,
     write_zstd_parquet,
 )
+from ipfs_datasets_py.logic.ir_core.artifacts import ArtifactManifest
+from ipfs_datasets_py.logic.ir_core.identity import cid_v1_from_digest
 from ipfs_datasets_py.voice.evaluation_schema import (
     ABBY_VOICE_EVALUATION_V2,
     AbbyVoiceEvaluation,
@@ -38,6 +41,7 @@ from ipfs_datasets_py.voice.hf_release import (
     AbbyVoiceHFReleaseBuilder,
     AbbyVoiceHFReleaseError,
     AbbyVoiceHFReleasePolicy,
+    AbbyVoiceReleaseSupportSource,
     validate_abby_voice_hf_release,
 )
 from ipfs_datasets_py.voice.schema import (
@@ -187,6 +191,15 @@ def _build(tmp_path: Path, *, shard_rows: int = 2, release_id: str = "release-te
         repository_commit="commit:test",
     )
     return builder.build(output_dir=tmp_path, release_id=release_id, **fixture)
+
+
+def _reseal_release_manifest(path: Path, manifest: dict) -> None:
+    body = dict(manifest)
+    body.pop("release_cid", None)
+    manifest["release_cid"] = cid_v1_from_digest(
+        sha256(canonical_json_bytes(body)).digest()
+    )
+    path.write_bytes(canonical_json_bytes(manifest) + b"\n")
 
 
 def test_generic_helpers_write_sharded_zstd_parquet_descriptors(tmp_path: Path):
@@ -382,6 +395,93 @@ def test_deterministic_release_construction_five_configs_and_descriptors(tmp_pat
     assert receipt["index_cid"] == result.index_cid
 
 
+def test_release_license_and_pre_artifact_identity_are_consistent(tmp_path: Path):
+    fixture = _fixture_bundle()
+    mit_fixture = {
+        name: (
+            rows
+            if name == "evaluations"
+            else tuple(replace(row, license_id="MIT") for row in rows)
+        )
+        for name, rows in fixture.items()
+    }
+    result = AbbyVoiceHFReleaseBuilder(
+        policy=AbbyVoiceHFReleasePolicy(shard_rows=2),
+        repository_commit="commit:test",
+    ).build(
+        output_dir=tmp_path,
+        release_id="release-license-mit",
+        license_id="MIT",
+        **mit_fixture,
+    )
+
+    manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
+    assert manifest["license_id"] == "MIT"
+    assert (tmp_path / "README.md").read_text(encoding="utf-8").startswith(
+        "---\nlicense: mit\n"
+    )
+    assert {
+        item["license_id"]
+        for item in manifest["descriptors"]
+        if item["license_id"]
+    } == {"MIT"}
+
+    artifact_payload = json.loads(
+        (tmp_path / "manifests" / "artifact-manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    metadata = artifact_payload["deterministic_metadata"]
+    assert "release_cid" not in metadata
+    assert metadata["pre_artifact_release_body_cid"] != manifest["release_cid"]
+    assert validate_abby_voice_hf_release(tmp_path)["valid"] is True
+
+
+def test_validate_rejects_release_license_mismatch(tmp_path: Path):
+    result = _build(tmp_path, shard_rows=2)
+    manifest_path = Path(result.manifest_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["license_id"] = "MIT"
+    _reseal_release_manifest(manifest_path, manifest)
+
+    with pytest.raises(
+        AbbyVoiceHFReleaseError,
+        match="descriptor licenses do not match",
+    ):
+        validate_abby_voice_hf_release(tmp_path)
+
+
+def test_validate_rejects_legacy_cyclic_artifact_release_cid(tmp_path: Path):
+    result = _build(tmp_path, shard_rows=2)
+    manifest_path = Path(result.manifest_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    artifact_path = tmp_path / "manifests" / "artifact-manifest.json"
+    artifact_payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+    metadata = artifact_payload["deterministic_metadata"]
+    metadata["release_cid"] = metadata.pop("pre_artifact_release_body_cid")
+    artifact_path.write_bytes(canonical_json_bytes(artifact_payload) + b"\n")
+
+    artifact_sha256 = sha256(artifact_path.read_bytes()).hexdigest()
+    for descriptor in manifest["descriptors"]:
+        if descriptor["relative_path"] == "manifests/artifact-manifest.json":
+            descriptor["sha256"] = artifact_sha256
+            descriptor["content_cid"] = cid_v1_from_digest(
+                bytes.fromhex(artifact_sha256)
+            )
+            descriptor["size_bytes"] = artifact_path.stat().st_size
+            break
+    manifest["artifact_manifest_id"] = ArtifactManifest.from_dict(
+        artifact_payload
+    ).manifest_id
+    _reseal_release_manifest(manifest_path, manifest)
+
+    with pytest.raises(
+        AbbyVoiceHFReleaseError,
+        match="does not bind the pre-artifact release body",
+    ):
+        validate_abby_voice_hf_release(tmp_path)
+
+
 def test_byte_identical_rebuild_is_order_independent(tmp_path: Path):
     """byte-identical rebuild from the same pinned source and policy."""
 
@@ -429,6 +529,149 @@ def test_byte_identical_rebuild_is_order_independent(tmp_path: Path):
     assert "/resolve/main/" not in encoded
     assert "/tmp/" not in encoded
     assert "/home/" not in encoded
+
+
+def test_release_embeds_exact_audio_and_retained_support_without_mutable_refs(
+    tmp_path: Path,
+):
+    fixture = _fixture_bundle()
+    source_root = tmp_path / "sources"
+    source_root.mkdir()
+    audio_source = source_root / "fixture.mp3"
+    audio_source.write_bytes(b"RIFF....WAVE")
+    support_source = source_root / "vocabulary.jsonl"
+    support_source.write_text(
+        '{"id":"vocabulary-one","text":"shelter"}\n'
+        '{"id":"vocabulary-two","text":"food"}\n',
+        encoding="utf-8",
+    )
+    support_sha256 = sha256(support_source.read_bytes()).hexdigest()
+    release_root = tmp_path / "release"
+    result = AbbyVoiceHFReleaseBuilder(
+        policy=AbbyVoiceHFReleasePolicy(shard_rows=2),
+        repository_commit="commit:test",
+    ).build(
+        output_dir=release_root,
+        release_id="release-embedded-assets",
+        **fixture,
+        audio_asset_sources={"audio-food": audio_source},
+        support_sources=(
+            AbbyVoiceReleaseSupportSource(
+                relative_path="metadata/vocabulary.jsonl",
+                source_path=support_source,
+                expected_sha256=support_sha256,
+                media_type="application/x-ndjson",
+                schema_type="abby_voice_vocabulary_v1",
+                row_count=2,
+                metadata={"kind": "retained_vocabulary"},
+            ),
+        ),
+    )
+
+    manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
+    assert manifest["embedded_assets"] == {
+        "audio_asset_bytes": len(b"RIFF....WAVE"),
+        "audio_asset_count": 1,
+        "audio_asset_prefix": "assets/audio",
+        "retained_support_bytes": support_source.stat().st_size,
+        "retained_support_count": 1,
+        "retained_support_paths": ["metadata/vocabulary.jsonl"],
+    }
+    audio_descriptor = next(
+        item
+        for item in result.descriptors
+        if item.metadata.get("role") == "audio_asset"
+    )
+    assert audio_descriptor.relative_path == "assets/audio/audio-food.mp3"
+    assert (release_root / audio_descriptor.relative_path).read_bytes() == b"RIFF....WAVE"
+    support_descriptor = next(
+        item
+        for item in result.descriptors
+        if item.metadata.get("role") == "retained_support"
+    )
+    assert support_descriptor.row_count == 2
+    audio_rows = []
+    for descriptor in result.descriptors:
+        if descriptor.config_name == ABBY_VOICE_AUDIO_V2:
+            audio_rows.extend(
+                pq.read_table(release_root / descriptor.relative_path).to_pylist()
+            )
+    assert audio_rows[0]["uri"] == "assets/audio/audio-food.mp3"
+    receipt = validate_abby_voice_hf_release(release_root)
+    assert receipt["embedded_audio_asset_count"] == 1
+
+    all_text = b"\n".join(
+        path.read_bytes()
+        for path in release_root.rglob("*")
+        if path.is_file() and path.suffix in {".json", ".jsonl", ".md"}
+    ).lower()
+    assert b"/resolve/main/" not in all_text
+
+
+def test_embedded_release_rejects_unpinned_or_mutable_support(tmp_path: Path):
+    fixture = _fixture_bundle()
+    audio_source = tmp_path / "fixture.mp3"
+    audio_source.write_bytes(b"RIFF....WAVE")
+    support_source = tmp_path / "bad.jsonl"
+    support_source.write_text(
+        '{"uri":"https://huggingface.co/datasets/x/resolve/main/a.mp3"}\n',
+        encoding="utf-8",
+    )
+    builder = AbbyVoiceHFReleaseBuilder(
+        policy=AbbyVoiceHFReleasePolicy(shard_rows=2),
+        repository_commit="commit:test",
+    )
+    with pytest.raises(AbbyVoiceHFReleaseError, match="SHA-256 mismatch"):
+        builder.build(
+            output_dir=tmp_path / "bad-digest",
+            release_id="release-bad-digest",
+            **fixture,
+            audio_asset_sources={"audio-food": audio_source},
+            support_sources=(
+                AbbyVoiceReleaseSupportSource(
+                    relative_path="metadata/bad.jsonl",
+                    source_path=support_source,
+                    expected_sha256="0" * 64,
+                    row_count=1,
+                ),
+            ),
+        )
+    with pytest.raises(AbbyVoiceHFReleaseError, match="mutable Hugging Face ref"):
+        builder.build(
+            output_dir=tmp_path / "bad-ref",
+            release_id="release-bad-ref",
+            **fixture,
+            audio_asset_sources={"audio-food": audio_source},
+            support_sources=(
+                AbbyVoiceReleaseSupportSource(
+                    relative_path="metadata/bad.jsonl",
+                    source_path=support_source,
+                    expected_sha256=sha256(support_source.read_bytes()).hexdigest(),
+                    row_count=1,
+                ),
+            ),
+        )
+    support_source.write_text(
+        '{"audio_path":"tmp_assets/regeneration/audio-one.mp3"}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(AbbyVoiceHFReleaseError, match="local execution path"):
+        builder.build(
+            output_dir=tmp_path / "bad-local-path",
+            release_id="release-bad-local-path",
+            **fixture,
+            audio_asset_sources={"audio-food": audio_source},
+            support_sources=(
+                AbbyVoiceReleaseSupportSource(
+                    relative_path="metadata/bad.jsonl",
+                    source_path=support_source,
+                    expected_sha256=sha256(
+                        support_source.read_bytes()
+                    ).hexdigest(),
+                    row_count=1,
+                ),
+            ),
+        )
 
 
 def test_validate_rejects_tampered_parquet_bytes(tmp_path: Path):

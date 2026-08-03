@@ -171,6 +171,61 @@ def _canonical_bytes(value: Any) -> bytes:
     ).encode("utf-8")
 
 
+def _strict_deserialization_mapping(
+    value: Mapping[str, Any],
+    *,
+    expected: frozenset[str],
+    label: str,
+) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise TypeError(f"{label} must be a mapping")
+    actual = frozenset(value)
+    if actual != expected:
+        raise ValueError(
+            f"{label} has missing fields {sorted(expected - actual)!r} "
+            f"and unknown fields {sorted(actual - expected)!r}"
+        )
+    return value
+
+
+def _reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON field {key!r}")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_json_constant(value: str) -> None:
+    raise ValueError(f"non-finite JSON number {value!r} is not supported")
+
+
+def _json_deserialization_mapping(
+    value: str | bytes | bytearray,
+    *,
+    label: str,
+) -> Mapping[str, Any]:
+    if isinstance(value, bytes | bytearray):
+        try:
+            value = bytes(value).decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"{label} JSON must be UTF-8") from exc
+    if not isinstance(value, str):
+        raise TypeError(f"{label} JSON must be str or bytes")
+    try:
+        decoded = json.loads(
+            value,
+            object_pairs_hook=_reject_duplicate_json_keys,
+            parse_constant=_reject_nonfinite_json_constant,
+        )
+    except ValueError as exc:
+        raise ValueError(f"{label} JSON is invalid: {exc}") from exc
+    if not isinstance(decoded, Mapping):
+        raise ValueError(f"{label} JSON must encode a mapping")
+    return decoded
+
+
 def _require_sha256(name: str, value: str) -> str:
     if not isinstance(value, str) or not _SHA256_RE.fullmatch(value):
         raise ValueError(f"{name} must be a full lowercase SHA-256")
@@ -360,7 +415,23 @@ class AudioDisposition:
         object.__setattr__(self, "reason", AudioDispositionReason(self.reason))
         if not isinstance(self.retryable, bool):
             raise TypeError("retryable must be boolean")
-        object.__setattr__(self, "gates", tuple(self.gates))
+        for name in (
+            "subject_id",
+            "task_id",
+            "work_item_id",
+            "audio_id",
+            "artifact_sha256",
+            "policy_identity",
+            "detail",
+        ):
+            if not isinstance(getattr(self, name), str):
+                raise TypeError(f"{name} must be text")
+        if self.artifact_sha256:
+            _require_sha256("artifact_sha256", self.artifact_sha256)
+        gates = tuple(self.gates)
+        if not all(isinstance(gate, QualityGateResult) for gate in gates):
+            raise TypeError("gates must contain QualityGateResult values")
+        object.__setattr__(self, "gates", gates)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -379,6 +450,56 @@ class AudioDisposition:
             "work_item_id": self.work_item_id,
         }
 
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> AudioDisposition:
+        """Strictly deserialize one canonical disposition row."""
+
+        payload = _strict_deserialization_mapping(
+            payload,
+            expected=frozenset(
+                {
+                    "artifact_sha256",
+                    "audio_id",
+                    "detail",
+                    "gates",
+                    "policy_identity",
+                    "reason",
+                    "retryable",
+                    "source_ref",
+                    "source_sha256",
+                    "status",
+                    "subject_id",
+                    "task_id",
+                    "work_item_id",
+                }
+            ),
+            label="audio disposition",
+        )
+        if not isinstance(payload["gates"], list) or not all(
+            isinstance(item, Mapping) for item in payload["gates"]
+        ):
+            raise TypeError("audio disposition gates must be a list of mappings")
+        result = cls(
+            source_ref=payload["source_ref"],
+            source_sha256=payload["source_sha256"],
+            status=payload["status"],
+            reason=payload["reason"],
+            subject_id=payload["subject_id"],
+            task_id=payload["task_id"],
+            work_item_id=payload["work_item_id"],
+            audio_id=payload["audio_id"],
+            artifact_sha256=payload["artifact_sha256"],
+            policy_identity=payload["policy_identity"],
+            retryable=payload["retryable"],
+            gates=tuple(
+                QualityGateResult.from_dict(item) for item in payload["gates"]
+            ),
+            detail=payload["detail"],
+        )
+        if result.to_dict() != dict(payload):
+            raise ValueError("audio disposition is not canonical")
+        return result
+
 
 @dataclass(frozen=True, slots=True)
 class AudioReconciliationResult:
@@ -393,6 +514,24 @@ class AudioReconciliationResult:
     reconciliation_id: str = ""
 
     def __post_init__(self) -> None:
+        if not all(isinstance(row, AbbyVoiceAudio) for row in self.linked_audio):
+            raise TypeError("linked_audio must contain AbbyVoiceAudio rows")
+        if not all(
+            isinstance(row, AbbyVoiceProvenance) for row in self.provenance
+        ):
+            raise TypeError("provenance must contain AbbyVoiceProvenance rows")
+        if not all(
+            isinstance(item, AudioDisposition) for item in self.dispositions
+        ):
+            raise TypeError("dispositions must contain AudioDisposition rows")
+        if not isinstance(self.quality_report, Mapping):
+            raise TypeError("quality_report must be a mapping")
+        if not isinstance(self.policy_identity, str):
+            raise TypeError("policy_identity must be text")
+        if not isinstance(self.schema_version, str):
+            raise TypeError("schema_version must be text")
+        if not isinstance(self.reconciliation_id, str):
+            raise TypeError("reconciliation_id must be text")
         linked = tuple(sorted(self.linked_audio, key=lambda row: row.audio_id))
         provenance = tuple(sorted(self.provenance, key=lambda row: row.provenance_id))
         dispositions = tuple(sorted(self.dispositions, key=lambda item: item.source_ref))
@@ -409,16 +548,29 @@ class AudioReconciliationResult:
             raise ValueError("every source must have exactly one disposition")
         if self.schema_version != AUDIO_RECONCILIATION_SCHEMA_VERSION:
             raise ValueError("unsupported audio reconciliation schema")
+        quality_report = dict(self.quality_report)
+        if not all(isinstance(key, str) for key in quality_report):
+            raise TypeError("quality_report keys must be strings")
+        try:
+            canonical_quality_report = json.loads(
+                _canonical_bytes(quality_report)
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "quality_report must contain canonical JSON values"
+            ) from exc
+        if canonical_quality_report != quality_report:
+            raise ValueError("quality_report must contain canonical JSON values")
         object.__setattr__(self, "linked_audio", linked)
         object.__setattr__(self, "provenance", provenance)
         object.__setattr__(self, "dispositions", dispositions)
-        object.__setattr__(self, "quality_report", dict(self.quality_report))
+        object.__setattr__(self, "quality_report", quality_report)
         identity = {
             "dispositions": [item.to_dict() for item in dispositions],
             "linked_audio": [row.to_dict() for row in linked],
             "policy_identity": self.policy_identity,
             "provenance": [row.to_dict() for row in provenance],
-            "quality_report": dict(self.quality_report),
+            "quality_report": quality_report,
             "schema_version": self.schema_version,
         }
         computed = f"abby-voice-audio-reconcile:sha256:{sha256(_canonical_bytes(identity)).hexdigest()}"
@@ -447,6 +599,71 @@ class AudioReconciliationResult:
 
     def canonical_bytes(self) -> bytes:
         return _canonical_bytes(self.to_dict())
+
+    @classmethod
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> AudioReconciliationResult:
+        """Strictly deserialize and re-verify a reconciliation identity."""
+
+        payload = _strict_deserialization_mapping(
+            payload,
+            expected=frozenset(
+                {
+                    "dispositions",
+                    "linked_audio",
+                    "policy_identity",
+                    "provenance",
+                    "quality_report",
+                    "reconciliation_id",
+                    "schema_version",
+                }
+            ),
+            label="audio reconciliation result",
+        )
+        for field_name in ("dispositions", "linked_audio", "provenance"):
+            if not isinstance(payload[field_name], list) or not all(
+                isinstance(item, Mapping) for item in payload[field_name]
+            ):
+                raise TypeError(
+                    f"audio reconciliation {field_name} must be a list of mappings"
+                )
+        if not isinstance(payload["quality_report"], Mapping):
+            raise TypeError("audio reconciliation quality_report must be a mapping")
+        result = cls(
+            linked_audio=tuple(
+                AbbyVoiceAudio.from_dict(item)
+                for item in payload["linked_audio"]
+            ),
+            provenance=tuple(
+                AbbyVoiceProvenance.from_dict(item)
+                for item in payload["provenance"]
+            ),
+            dispositions=tuple(
+                AudioDisposition.from_dict(item)
+                for item in payload["dispositions"]
+            ),
+            quality_report=payload["quality_report"],
+            policy_identity=payload["policy_identity"],
+            schema_version=payload["schema_version"],
+            reconciliation_id=payload["reconciliation_id"],
+        )
+        if result.to_dict() != dict(payload):
+            raise ValueError("audio reconciliation result is not canonical")
+        return result
+
+    @classmethod
+    def from_json(
+        cls, value: str | bytes | bytearray
+    ) -> AudioReconciliationResult:
+        """Deserialize a strict aggregate JSON reconciliation document."""
+
+        return cls.from_dict(
+            _json_deserialization_mapping(
+                value,
+                label="audio reconciliation result",
+            )
+        )
 
     def to_jsonl_lines(self) -> list[str]:
         """Emit one JSON object per disposition for ``audio-reconciliation.jsonl``."""
@@ -1019,6 +1236,34 @@ def reconcile_voice_job_result(
         )
 
     quality_metrics = _quality_metrics(payload)
+    if (
+        media_type.casefold() not in {"audio/wav", "audio/wave", "audio/x-wav"}
+        and str(payload.get("task_type") or "") != "voice.audio-validate"
+    ):
+        gate = QualityGateResult(
+            gate=AudioQualityGate.DECODE,
+            passed=False,
+            reason=AudioQualityReason.DECODE_FAILED,
+            detail=(
+                "non-WAV promotion requires metrics from a completed "
+                "voice.audio-validate receipt"
+            ),
+        )
+        disposition = _disposition_from_quality(
+            source_ref=source_ref,
+            source_sha256=source_sha256,
+            subject=bound_subject,
+            task_id=task_id,
+            work_item_id=work_item_id,
+            policy_identity=policy_identity,
+            gate=gate,
+            artifact_sha256=artifact_sha,
+        )
+        return AudioReconciliationResult(
+            dispositions=(disposition,),
+            policy_identity=policy_identity,
+            quality_report={"acoustic": gate.to_dict()},
+        )
     acoustic = validate_decode_and_acoustic(
         payload=payload_bytes,
         declared_media_type=media_type,
@@ -1079,7 +1324,7 @@ def reconcile_voice_job_result(
             policy=selected,
         )
         gates.append(round_trip_gate)
-        round_trip_metrics = metrics.to_dict()
+        round_trip_metrics = metrics.evidence_dict()
         if not round_trip_gate.passed:
             disposition = _disposition_from_quality(
                 source_ref=source_ref,

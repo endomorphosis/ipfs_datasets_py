@@ -28,8 +28,10 @@ from ipfs_datasets_py.voice.audio_quality import (
     CRITICAL_SLOT_NAMES,
     G017_AUDIO_QUALITY_EVIDENCE_TERMS,
     AcousticMetrics,
+    AudioQualityGate,
     AudioQualityPolicy,
     AudioQualityReason,
+    QualityGateResult,
     build_minimal_wav,
     character_error_rate_bp,
     decode_acoustic_metrics,
@@ -43,8 +45,10 @@ from ipfs_datasets_py.voice.reconcile import (
     AUDIO_RECONCILIATION_SCHEMA_VERSION,
     G017_AUTHORITATIVE_EVIDENCE_MAP,
     G017_REQUIRED_EVIDENCE_TERMS,
+    AudioDisposition,
     AudioDispositionReason,
     AudioDispositionStatus,
+    AudioReconciliationResult,
     AudioReconciliationSubject,
     reconcile_voice_job_result,
     reconcile_voice_job_results,
@@ -55,7 +59,6 @@ from ipfs_datasets_py.voice.schema import (
     sha256_text,
     validate_bundle,
 )
-
 
 _TASK_ID = "a" * 64
 _WORK_ITEM = "abby-voice-work:sha256:" + "b" * 64
@@ -169,6 +172,46 @@ def test_audio_quality_policy_is_versioned_and_content_addressed():
     assert set(CRITICAL_SLOT_NAMES) >= {"phone", "address", "zip", "hours", "eligibility", "amount", "emergency"}
 
 
+def test_quality_gate_result_strict_deserialization_round_trips():
+    gate = QualityGateResult(
+        gate=AudioQualityGate.ROUND_TRIP,
+        passed=False,
+        reason=AudioQualityReason.WER_THRESHOLD_EXCEEDED,
+        detail="word error rate exceeded the threshold",
+        metrics={"failed_slots": ["phone"], "wer_bp": 2_500},
+        retryable=False,
+    )
+
+    restored = QualityGateResult.from_dict(gate.to_dict())
+
+    assert restored == gate
+    assert restored.to_dict() == gate.to_dict()
+
+
+def test_quality_gate_result_strict_deserialization_rejects_malformed_fields():
+    payload = QualityGateResult(
+        gate=AudioQualityGate.INTEGRITY,
+        passed=True,
+        reason=AudioQualityReason.PASSED,
+        metrics={"byte_length": 128},
+    ).to_dict()
+
+    with pytest.raises(ValueError, match="unknown fields"):
+        QualityGateResult.from_dict({**payload, "unexpected": True})
+    missing = dict(payload)
+    missing.pop("reason")
+    with pytest.raises(ValueError, match="missing fields"):
+        QualityGateResult.from_dict(missing)
+    with pytest.raises(TypeError, match="passed must be boolean"):
+        QualityGateResult.from_dict({**payload, "passed": 1})
+    with pytest.raises(TypeError, match="metrics must be a mapping"):
+        QualityGateResult.from_dict({**payload, "metrics": []})
+    with pytest.raises(ValueError, match="canonical JSON"):
+        QualityGateResult.from_dict(
+            {**payload, "metrics": {"values": ("not", "a", "JSON", "list")}}
+        )
+
+
 def test_word_and_character_error_rates_are_integer_basis_points():
     assert word_error_rate_bp("hello world", "hello world") == 0
     assert character_error_rate_bp("hello", "hello") == 0
@@ -204,6 +247,33 @@ def test_validate_tts_asr_roundtrip_requires_exact_critical_slot_fidelity():
     assert failed.passed is False
     assert failed.reason is AudioQualityReason.SLOT_FIDELITY_FAILED
     assert "phone" in failed_metrics.failed_slots
+    persisted_gate = json.dumps(failed.to_dict(), sort_keys=True)
+    assert reference not in persisted_gate
+    assert "Please call for shelter assistance." not in persisted_gate
+    assert failed_metrics.reference_sha256 in persisted_gate
+    assert failed_metrics.hypothesis_sha256 in persisted_gate
+
+
+def test_critical_slot_presence_rejects_digit_substring_false_accepts():
+    from ipfs_datasets_py.voice.audio_quality import slot_present_in_text
+
+    # Phone digits must not match as a substring of a longer number.
+    assert slot_present_in_text("phone", "5551234", "call 15551234199 please") is False
+    assert slot_present_in_text("phone", "5551234", "call 5551234 please") is True
+    assert (
+        slot_present_in_text(
+            "phone",
+            "5035551212",
+            "call five zero three five five five one two one two",
+        )
+        is True
+    )
+
+    # Short amounts/zips must not match inside larger numbers.
+    assert slot_present_in_text("amount", "10", "the total is 100 dollars") is False
+    assert slot_present_in_text("amount", "10", "the fee is $10 today") is True
+    assert slot_present_in_text("zip", "50123", "ship to 1501239") is False
+    assert slot_present_in_text("zip", "97201", "zip is 97201") is True
 
 
 def test_validate_tts_asr_roundtrip_enforces_wer_threshold():
@@ -305,6 +375,145 @@ def test_reconcile_voice_job_result_promotes_passing_artifact_to_audio_row():
         provenance=report.provenance,
         require_references=False,
     )
+    serialized_quality_evidence = json.dumps(
+        {
+            "quality_report": report.quality_report,
+            "gates": [
+                gate.to_dict() for gate in report.dispositions[0].gates
+            ],
+        },
+        sort_keys=True,
+    )
+    assert subject.spoken_text not in serialized_quality_evidence
+    assert report.quality_report["round_trip"]["reference_sha256"] == subject.text_sha256
+    assert "reference_text" not in report.quality_report["round_trip"]
+    assert "hypothesis_text" not in report.quality_report["round_trip"]
+
+
+def test_reconciliation_models_strict_deserialization_round_trip():
+    subject = _subject()
+    payload = _wav()
+    report = reconcile_voice_job_result(
+        _completed_result(payload=payload, subject=subject),
+        subject=subject,
+        asr_transcript=subject.spoken_text,
+        artifact_bytes=payload,
+    )
+
+    disposition = AudioDisposition.from_dict(report.dispositions[0].to_dict())
+    from_dict = AudioReconciliationResult.from_dict(report.to_dict())
+    from_json = AudioReconciliationResult.from_json(
+        report.canonical_bytes() + b"\n"
+    )
+
+    assert disposition == report.dispositions[0]
+    assert from_dict == report
+    assert from_json == report
+    assert from_json.reconciliation_id == report.reconciliation_id
+    assert from_json.canonical_bytes() == report.canonical_bytes()
+
+
+def test_reconciliation_strict_deserialization_rejects_tampering_and_shape_errors():
+    subject = _subject()
+    audio_payload = _wav()
+    report = reconcile_voice_job_result(
+        _completed_result(payload=audio_payload, subject=subject),
+        subject=subject,
+        asr_transcript=subject.spoken_text,
+        artifact_bytes=audio_payload,
+    )
+    payload = json.loads(report.canonical_bytes())
+    disposition_payload = report.dispositions[0].to_dict()
+
+    with pytest.raises(ValueError, match="unknown fields"):
+        AudioDisposition.from_dict(
+            {**disposition_payload, "unexpected": True}
+        )
+    missing_disposition = dict(disposition_payload)
+    missing_disposition.pop("status")
+    with pytest.raises(ValueError, match="missing fields"):
+        AudioDisposition.from_dict(missing_disposition)
+    with pytest.raises(TypeError, match="gates must be a list"):
+        AudioDisposition.from_dict({**disposition_payload, "gates": {}})
+
+    with pytest.raises(ValueError, match="unknown fields"):
+        AudioReconciliationResult.from_dict({**payload, "unexpected": True})
+    missing = dict(payload)
+    missing.pop("policy_identity")
+    with pytest.raises(ValueError, match="missing fields"):
+        AudioReconciliationResult.from_dict(missing)
+    with pytest.raises(TypeError, match="linked_audio must be a list"):
+        AudioReconciliationResult.from_dict({**payload, "linked_audio": {}})
+
+    nested_unknown = json.loads(report.canonical_bytes())
+    nested_unknown["dispositions"][0]["unexpected"] = True
+    with pytest.raises(ValueError, match="unknown fields"):
+        AudioReconciliationResult.from_dict(nested_unknown)
+
+    tampered = json.loads(report.canonical_bytes())
+    tampered["quality_report"]["tampered"] = True
+    with pytest.raises(ValueError, match="reconciliation_id does not match"):
+        AudioReconciliationResult.from_dict(tampered)
+
+    with pytest.raises(ValueError, match="must encode a mapping"):
+        AudioReconciliationResult.from_json("[]\n")
+    with pytest.raises(ValueError, match="duplicate JSON field"):
+        AudioReconciliationResult.from_json(
+            '{"schema_version":"first","schema_version":"second"}'
+        )
+
+
+def test_non_wav_promotion_requires_complete_audio_validation_metrics():
+    subject = _subject()
+    payload = b"ID3\x04\x00\x00\x00\x00\x00\x00fixture-mp3"
+    metrics = {
+        "channels": 1,
+        "clipping_ratio_bp": 0,
+        "duration_ms": 1_200,
+        "sample_rate_hz": 24_000,
+        "silence_ratio_bp": 100,
+    }
+    result = _completed_result(
+        payload=payload,
+        subject=subject,
+        media_type="audio/mpeg",
+        quality_metrics=metrics,
+    )
+    result["task_type"] = "voice.audio-validate"
+
+    promoted = reconcile_voice_job_result(
+        result,
+        subject=subject,
+        asr_transcript=subject.spoken_text,
+        artifact_bytes=payload,
+    )
+    assert promoted.promoted_count == 1
+    assert promoted.linked_audio[0].mime_type == "audio/mpeg"
+
+    incomplete = {
+        **result,
+        "quality_metrics": {
+            key: value for key, value in metrics.items() if key != "clipping_ratio_bp"
+        },
+    }
+    rejected = reconcile_voice_job_result(
+        incomplete,
+        subject=subject,
+        asr_transcript=subject.spoken_text,
+        artifact_bytes=payload,
+    )
+    assert rejected.promoted_count == 0
+    assert rejected.dispositions[0].reason is AudioDispositionReason.DECODE_FAILED
+
+    wrong_receipt_type = {**result, "task_type": "voice.asr"}
+    rejected_type = reconcile_voice_job_result(
+        wrong_receipt_type,
+        subject=subject,
+        asr_transcript=subject.spoken_text,
+        artifact_bytes=payload,
+    )
+    assert rejected_type.promoted_count == 0
+    assert rejected_type.dispositions[0].reason is AudioDispositionReason.DECODE_FAILED
 
 
 def test_reconcile_rejects_subject_mismatch_without_nearby_fallback():

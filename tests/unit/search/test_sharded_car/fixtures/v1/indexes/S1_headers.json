@@ -1,0 +1,38 @@
+{
+  "e01": {
+    "cid": "bafkreickmhj43tij62oig2z444ydyhkcqiwj23qwogmgtfcgqhhjbad3ee",
+    "name": "Alice",
+    "properties": {
+      "idx": 1,
+      "role": "lead"
+    },
+    "type": "Person"
+  },
+  "e04": {
+    "cid": "bafkreifjz4z6spuryyojzpfltmtot7vho6w5e7ka73vfvi5sv3vzv3wtpu",
+    "name": "Carol",
+    "properties": {
+      "idx": 4,
+      "role": "ops"
+    },
+    "type": "Person"
+  },
+  "e08": {
+    "cid": "bafkreie6qygtie6othibrowysychvuhkzhxiarkpi4533t7xet4cucqity",
+    "name": "Eve",
+    "properties": {
+      "idx": 8,
+      "role": "sec"
+    },
+    "type": "Person"
+  },
+  "e09": {
+    "cid": "bafkreia476663a7s3au6svi6imns7dxlpm47l6ugnkxc44sxtlitm2n3me",
+    "name": "Gamma",
+    "properties": {
+      "idx": 9,
+      "sector": "fin"
+    },
+    "type": "Org"
+  }
+}
