@@ -524,7 +524,7 @@ Program invariants:
 
 ## PATLAW-030 Classify USPTO artifacts and authoritative relationships
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
