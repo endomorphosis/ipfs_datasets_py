@@ -1909,7 +1909,7 @@ Program invariants:
 
 ## PATLAW-138 Build authoritative deadline and closure-calendar snapshots
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
