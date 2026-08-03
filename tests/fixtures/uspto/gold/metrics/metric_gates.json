@@ -1,0 +1,92 @@
+{
+  "schema": "uspto.gold-metric-gates.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "goal_id": "PATLAW-G080",
+  "description": "Machine-readable release-assurance gates for requirement/citation recall, evidence precision, provenance completeness, and an explicit false-negative budget over the reviewed USPTO gold corpus.",
+  "evaluation_scope": "corpus",
+  "matching": {
+    "requirement_id_field": "requirement_id",
+    "citation_field": "legal_citations",
+    "date_id_field": "deadline_id",
+    "provenance_required_fields": [
+      "artifact_id",
+      "source_receipt_id",
+      "span_id",
+      "page_index",
+      "origin",
+      "classification"
+    ]
+  },
+  "gates": {
+    "requirement_recall": {
+      "metric_id": "requirement_recall",
+      "family": "recall",
+      "definition": "True positives / (true positives + false negatives) over gold requirement_id set.",
+      "numerator": "count of gold requirements present in system output",
+      "denominator": "count of gold requirements",
+      "operator": ">=",
+      "threshold": 0.95,
+      "aggregation": "micro",
+      "fail_closed": true
+    },
+    "citation_recall": {
+      "metric_id": "citation_recall",
+      "family": "recall",
+      "definition": "True positives / (true positives + false negatives) over gold legal citation strings (normalized).",
+      "numerator": "count of gold citations present in system output",
+      "denominator": "count of gold citations",
+      "operator": ">=",
+      "threshold": 0.95,
+      "aggregation": "micro",
+      "fail_closed": true
+    },
+    "evidence_precision": {
+      "metric_id": "evidence_precision",
+      "family": "precision",
+      "definition": "True positives / (true positives + false positives) over claimed evidence span links for requirements and assessments.",
+      "numerator": "count of predicted evidence links that match gold span anchors",
+      "denominator": "count of predicted evidence links",
+      "operator": ">=",
+      "threshold": 0.90,
+      "aggregation": "micro",
+      "fail_closed": true
+    },
+    "provenance_completeness": {
+      "metric_id": "provenance_completeness",
+      "family": "provenance",
+      "definition": "Fraction of extracted requirements, citations, dates, and facts that carry every required provenance field from matching.provenance_required_fields.",
+      "numerator": "count of annotated items with complete provenance",
+      "denominator": "count of annotated items requiring provenance",
+      "operator": ">=",
+      "threshold": 0.99,
+      "aggregation": "micro",
+      "fail_closed": true
+    },
+    "false_negative_budget": {
+      "metric_id": "false_negative_rate",
+      "family": "false_negative",
+      "definition": "False negatives / gold positives for government requirements on the reviewed corpus. Explicit budget for missed demands (OCR/parser misses).",
+      "numerator": "count of gold requirements absent from system output",
+      "denominator": "count of gold requirements",
+      "operator": "<=",
+      "threshold": 0.05,
+      "aggregation": "micro",
+      "fail_closed": true,
+      "notes": "Complement of requirement_recall at the same matching policy; both gates must pass."
+    }
+  },
+  "required_gate_ids": [
+    "requirement_recall",
+    "citation_recall",
+    "evidence_precision",
+    "provenance_completeness",
+    "false_negative_budget"
+  ],
+  "families_required": [
+    "recall",
+    "precision",
+    "provenance",
+    "false_negative"
+  ]
+}

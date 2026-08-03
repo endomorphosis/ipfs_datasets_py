@@ -1,0 +1,68 @@
+{
+  "case_id": "gold-authority-amendment-correction",
+  "goal_id": "PATLAW-G080",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [
+      {
+        "authority_tier": "official-base",
+        "citation_id": "cite:37cfr1.56",
+        "kind": "regulation",
+        "source_span_id": "span:auth-base",
+        "text": "37 CFR 1.56"
+      },
+      {
+        "authority_tier": "official-change",
+        "citation_id": "cite:90fr12345",
+        "kind": "federal_register",
+        "source_span_id": "span:auth-correction",
+        "text": "90 FR 12345"
+      }
+    ],
+    "dates": [
+      {
+        "candidate_utc": "2025-06-01T04:00:00Z",
+        "classification": "public_official",
+        "deadline_id": "date:auth-effective-2025-06-01",
+        "event_basis": "federal_register_correction_effective_date",
+        "reviewer_confirmation": "complete",
+        "rule_chain": [
+          "FR effective date statement"
+        ],
+        "uncertainty": "none_for_published_effective_date"
+      }
+    ],
+    "provenance": [
+      {
+        "artifact_id": "art:auth-base-1",
+        "classification": "public_official",
+        "item_id": "cite:37cfr1.56",
+        "item_kind": "citation",
+        "origin": "metadata",
+        "page_index": 0,
+        "source_receipt_id": "receipt:synthetic:auth-1",
+        "span_id": "span:auth-base"
+      },
+      {
+        "artifact_id": "art:auth-fr-1",
+        "classification": "public_official",
+        "item_id": "cite:90fr12345",
+        "item_kind": "citation",
+        "origin": "metadata",
+        "page_index": 0,
+        "source_receipt_id": "receipt:synthetic:auth-1",
+        "span_id": "span:auth-correction"
+      }
+    ],
+    "requirements": []
+  }
+}
