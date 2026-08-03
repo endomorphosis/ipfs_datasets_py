@@ -1,0 +1,662 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/uspto-paired-revision-receipt.v1.schema.json",
+  "title": "USPTO Paired Revision Receipt v1",
+  "description": "Atomic paired-repository integration receipt (PATLAW-161). An accepted receipt binds before/remote/integrated SHAs for both datasets and accelerator, the accelerator capability pin, ordered merge/test results, trigger, and lock identity. Integration uses isolated maintenance worktrees only; active-worktree pull and push are forbidden; dirty/active/locked/conflicting/missing-branch states abort without mutation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "interface",
+    "receipt_id",
+    "status",
+    "disposition",
+    "trigger",
+    "datasets",
+    "accelerator",
+    "capability_pin",
+    "merge_order",
+    "merge_trace",
+    "test_results",
+    "lock",
+    "policy",
+    "started_at_utc",
+    "completed_at_utc",
+    "mutation_attempted",
+    "push_attempted",
+    "active_worktree_pull_attempted",
+    "recursive_submodule_chase"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "uspto.paired-revision-receipt.v1"
+    },
+    "interface": {
+      "const": "UsptoPairedRevisionReceipt@1"
+    },
+    "receipt_id": {
+      "$ref": "#/$defs/receiptId"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "rejected", "aborted", "quarantined"]
+    },
+    "disposition": {
+      "type": "string",
+      "enum": [
+        "integrated",
+        "aborted",
+        "quarantined",
+        "rejected",
+        "fetch_only"
+      ]
+    },
+    "trigger": {
+      "$ref": "#/$defs/trigger"
+    },
+    "datasets": {
+      "$ref": "#/$defs/repoRevision"
+    },
+    "accelerator": {
+      "$ref": "#/$defs/repoRevision"
+    },
+    "capability_pin": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/capabilityPin" }
+      ]
+    },
+    "merge_order": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "enum": ["accelerator", "datasets"]
+      },
+      "description": "Canonical merge order: accelerator first, then datasets against the pinned accelerator SHA."
+    },
+    "merge_trace": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/mergeTraceStep"
+      },
+      "maxItems": 64
+    },
+    "test_results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/testResult"
+      },
+      "minItems": 0
+    },
+    "lock": {
+      "$ref": "#/$defs/lockIdentity"
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "started_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "completed_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "abort_reason": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      ]
+    },
+    "mutation_attempted": {
+      "type": "boolean",
+      "description": "True only when an isolated maintenance worktree mutation was attempted."
+    },
+    "push_attempted": {
+      "type": "boolean",
+      "const": false,
+      "description": "Push is never permitted; must always be false."
+    },
+    "active_worktree_pull_attempted": {
+      "type": "boolean",
+      "const": false,
+      "description": "Pull on active worktrees is never permitted; must always be false."
+    },
+    "recursive_submodule_chase": {
+      "type": "boolean",
+      "const": false,
+      "description": "Recursive mutual-submodule updates are never permitted; must always be false."
+    },
+    "conflict": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/conflictRecord" }
+      ]
+    },
+    "quarantine": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/quarantineRecord" }
+      ]
+    },
+    "worktrees": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "maxLength": 1024 }
+          ]
+        },
+        "accelerator": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "maxLength": 1024 }
+          ]
+        },
+        "datasets": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "maxLength": 1024 }
+          ]
+        },
+        "cleaned": {
+          "type": "boolean"
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 512
+      },
+      "maxItems": 32
+    },
+    "receipt_digest_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/sha256Hex" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "accepted" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": [
+          "datasets",
+          "accelerator",
+          "capability_pin",
+          "test_results",
+          "lock",
+          "merge_order"
+        ],
+        "properties": {
+          "disposition": { "const": "integrated" },
+          "abort_reason": { "type": "null" },
+          "push_attempted": { "const": false },
+          "active_worktree_pull_attempted": { "const": false },
+          "recursive_submodule_chase": { "const": false },
+          "capability_pin": { "$ref": "#/$defs/capabilityPin" },
+          "merge_order": {
+            "const": ["accelerator", "datasets"]
+          },
+          "datasets": {
+            "type": "object",
+            "required": ["name", "before_sha", "remote_sha", "integrated_sha"],
+            "properties": {
+              "before_sha": { "$ref": "#/$defs/gitSha" },
+              "remote_sha": { "$ref": "#/$defs/gitSha" },
+              "integrated_sha": { "$ref": "#/$defs/gitSha" }
+            }
+          },
+          "accelerator": {
+            "type": "object",
+            "required": ["name", "before_sha", "remote_sha", "integrated_sha"],
+            "properties": {
+              "before_sha": { "$ref": "#/$defs/gitSha" },
+              "remote_sha": { "$ref": "#/$defs/gitSha" },
+              "integrated_sha": { "$ref": "#/$defs/gitSha" }
+            }
+          },
+          "test_results": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["name", "status", "exit_code", "phase"],
+              "properties": {
+                "status": { "const": "passed" },
+                "exit_code": { "const": 0 }
+              }
+            }
+          },
+          "lock": {
+            "type": "object",
+            "required": ["path", "identity"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "aborted" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["abort_reason"],
+        "properties": {
+          "disposition": { "const": "aborted" },
+          "abort_reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mutation_attempted": { "const": false },
+          "push_attempted": { "const": false },
+          "active_worktree_pull_attempted": { "const": false }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "quarantined" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["quarantine", "conflict"],
+        "properties": {
+          "disposition": { "const": "quarantined" },
+          "push_attempted": { "const": false },
+          "active_worktree_pull_attempted": { "const": false }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "receiptId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "startup",
+        "eight-hour",
+        "twice-daily",
+        "pre-release",
+        "security-fix"
+      ],
+      "description": "Explicit operator/scheduler trigger. startup and eight-hour are fetch-only; twice-daily, pre-release, and security-fix perform serialized isolated-worktree integration."
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Full 40-character lowercase git object SHA."
+    },
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "repoRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "before_sha", "remote_sha", "integrated_sha"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": ["datasets", "accelerator"]
+        },
+        "path": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 1024 },
+            { "type": "null" }
+          ]
+        },
+        "ref": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 256 },
+            { "type": "null" }
+          ]
+        },
+        "remote_ref": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 256 },
+            { "type": "null" }
+          ]
+        },
+        "before_sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "remote_sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "integrated_sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "dirty": {
+          "type": "boolean"
+        },
+        "fetched": {
+          "type": "boolean"
+        },
+        "worktree_path": {
+          "oneOf": [
+            { "type": "string", "maxLength": 1024 },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "capabilityPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "sha", "source"],
+      "properties": {
+        "name": {
+          "const": "accelerator"
+        },
+        "sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "integrated_worktree",
+            "remote_tip",
+            "declared",
+            "before_head"
+          ]
+        },
+        "bound_at_phase": {
+          "type": "string",
+          "enum": [
+            "after_accelerator_merge",
+            "after_accelerator_tests",
+            "declared"
+          ]
+        }
+      }
+    },
+    "mergeTraceStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seq", "repo", "action", "outcome"],
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repo": {
+          "type": "string",
+          "enum": ["accelerator", "datasets", "pair", "system"]
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "skipped",
+            "failed",
+            "aborted",
+            "quarantined"
+          ]
+        },
+        "sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 512
+        }
+      }
+    },
+    "testResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status", "exit_code", "phase"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "accelerator",
+            "datasets",
+            "pair",
+            "fetch_only"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "skipped", "error"]
+        },
+        "exit_code": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "command": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "datasets_sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "accelerator_sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "capability_pin_sha": {
+          "oneOf": [
+            { "$ref": "#/$defs/gitSha" },
+            { "type": "null" }
+          ]
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "oneOf": [
+            { "$ref": "#/$defs/sha256Hex" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "lockIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "identity"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "identity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Lock holder identity (pid, token, or synthetic dry-run id)."
+        },
+        "method": {
+          "type": "string",
+          "enum": ["flock", "mkdir", "dry-run", "none", "external"]
+        },
+        "acquired": {
+          "type": "boolean"
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "push_allowed",
+        "active_worktree_pull_allowed",
+        "recursive_submodules",
+        "require_clean_worktree",
+        "fail_closed_on_conflict",
+        "serialize_integrations",
+        "use_isolated_worktrees",
+        "merge_order",
+        "fetch_only_triggers",
+        "integration_triggers"
+      ],
+      "properties": {
+        "push_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "active_worktree_pull_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "recursive_submodules": {
+          "type": "boolean",
+          "const": false
+        },
+        "require_clean_worktree": {
+          "type": "boolean",
+          "const": true
+        },
+        "fail_closed_on_conflict": {
+          "type": "boolean",
+          "const": true
+        },
+        "serialize_integrations": {
+          "type": "boolean",
+          "const": true
+        },
+        "use_isolated_worktrees": {
+          "type": "boolean",
+          "const": true
+        },
+        "merge_order": {
+          "const": ["accelerator", "datasets"]
+        },
+        "fetch_only_triggers": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/trigger" }
+        },
+        "integration_triggers": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/trigger" }
+        }
+      }
+    },
+    "conflictRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "message"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "merge_conflict",
+            "divergent_history",
+            "dirty_worktree",
+            "active_work",
+            "lock_held",
+            "missing_branch",
+            "sha_mismatch",
+            "test_failure",
+            "submodule_cycle",
+            "policy_violation",
+            "capability_unpinned"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "maxItems": 64
+        },
+        "repo": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": ["datasets", "accelerator", "pair"]
+            },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "quarantineRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "reason"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "repo": {
+          "type": "string",
+          "enum": ["datasets", "accelerator"]
+        },
+        "retained": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

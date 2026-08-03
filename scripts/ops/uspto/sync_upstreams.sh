@@ -1,19 +1,25 @@
 #!/usr/bin/env bash
-# PATLAW-080: Serialized datasets/accelerator upstream synchronization.
+# PATLAW-080 / PATLAW-161: Serialized datasets/accelerator upstream synchronization.
 #
 # Explicit triggers:
 #   startup       — fetch both origins (no integration mutation)
 #   eight-hour    — fetch both origins (periodic; no integration mutation)
-#   twice-daily   — serialized integration on clean branches + pair tests
-#   pre-release   — serialized integration on clean branches + pair tests
-#   security-fix  — serialized integration on clean branches + pair tests
+#   twice-daily   — isolated worktree integration on clean branches + pair tests
+#   pre-release   — isolated worktree integration for release gate + pair tests
+#   security-fix  — isolated worktree integration for security fix lane + pair tests
 #
 # Hard policy (fail-closed):
 #   * dirty or active work aborts WITHOUT mutation
-#   * conflicts fail closed
+#   * locked / conflicting / missing-branch abort WITHOUT mutation
+#   * conflicts fail closed (quarantine isolated worktrees; never auto-resolve)
 #   * no recursive mutual-submodule chase
-#   * accepted receipt binds both SHAs and test receipts
+#   * no git pull on active worktrees (fetch + isolated merge only)
+#   * accepted receipt binds before/remote/integrated SHAs, capability pin,
+#     test results, trigger and lock identity
 #   * NO PUSH occurs under any path
+#
+# Integration (PATLAW-161) is delegated to integrate_upstreams.py.
+# Fetch-only compatibility receipts remain via check_cross_repo_compatibility.py.
 #
 # Usage:
 #   scripts/ops/uspto/sync_upstreams.sh --trigger <name> [options]
@@ -24,6 +30,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${CROSS_REPO_SYNC_REPO_ROOT:-$SCRIPT_DIR/../../..}" && pwd)"
 CHECKER="${SCRIPT_DIR}/check_cross_repo_compatibility.py"
+INTEGRATOR="${SCRIPT_DIR}/integrate_upstreams.py"
 PYTHON_BIN="${CROSS_REPO_SYNC_PYTHON:-python3}"
 
 # Defaults — overridable via env or flags.
@@ -35,7 +42,9 @@ _XDG_STATE="${XDG_STATE_HOME:-$_HOME/.local/state}"
 STATE_ROOT="${CROSS_REPO_SYNC_STATE_ROOT:-$_XDG_STATE/ipfs_accelerate_py/uspto_submission_assurance/cross_repo_sync}"
 LOCK_PATH="${CROSS_REPO_SYNC_LOCK_PATH:-$STATE_ROOT/sync.lock}"
 OUTPUT_PATH="${CROSS_REPO_SYNC_OUTPUT_PATH:-$STATE_ROOT/compatibility_manifest.json}"
+INTEGRATION_OUTPUT_PATH="${CROSS_REPO_INTEGRATE_OUTPUT_PATH:-$STATE_ROOT/paired_revision_receipt.json}"
 ACTIVE_MARKER="${CROSS_REPO_SYNC_ACTIVE_MARKER:-}"
+WORKTREE_ROOT="${CROSS_REPO_INTEGRATE_WORKTREE_ROOT:-$STATE_ROOT/worktrees}"
 TRIGGER=""
 DRY_RUN=0
 SKIP_FETCH=0
@@ -77,16 +86,17 @@ Usage: sync_upstreams.sh --trigger <trigger> [options]
 Triggers (explicit):
   startup        Fetch both origins (no integration mutation)
   eight-hour     Fetch both origins every eight hours (no integration mutation)
-  twice-daily    Serialized integration on clean branches + pair tests
-  pre-release    Serialized integration for release gate + pair tests
-  security-fix   Serialized integration for security fix lane + pair tests
+  twice-daily    Isolated worktree integration on clean branches + pair tests
+  pre-release    Isolated worktree integration for release gate + pair tests
+  security-fix   Isolated worktree integration for security fix lane + pair tests
 
 Options:
   --datasets-path PATH       Datasets repository path
   --accelerator-path PATH    Accelerator repository path
-  --output PATH              Atomic compatibility manifest output path
+  --output PATH              Atomic receipt/manifest output path
   --lock-path PATH           Serialization lock path
-  --state-root PATH          Default state directory for lock/output
+  --state-root PATH          Default state directory for lock/output/worktrees
+  --worktree-root PATH       Isolated maintenance worktree root
   --active-marker PATH       If this path exists, abort without mutation
   --repo-root PATH           Repository root for path defaults
   --dry-run                  Plan + synthetic receipts; no network fetch
@@ -100,10 +110,12 @@ Environment:
   CROSS_REPO_SYNC_ACCELERATOR_PATH, CROSS_REPO_SYNC_STATE_ROOT,
   CROSS_REPO_SYNC_LOCK_PATH, CROSS_REPO_SYNC_OUTPUT_PATH,
   CROSS_REPO_SYNC_ACTIVE_MARKER, CROSS_REPO_SYNC_PYTHON,
+  CROSS_REPO_INTEGRATE_OUTPUT_PATH, CROSS_REPO_INTEGRATE_WORKTREE_ROOT,
   CROSS_REPO_SYNC_FORCE_ACTIVE=1  (test hook: force active-work abort)
 
-Policy: never push; never git submodule update --recursive;
-dirty/active work aborts without mutation; conflicts fail closed.
+Policy: never push; never pull on active worktrees; never git submodule
+update --recursive; dirty/active/locked/conflicting/missing-branch aborts
+without mutation; accelerator merges before datasets; conflicts fail closed.
 EOF
 }
 
@@ -140,10 +152,13 @@ is_integration() {
   return 1
 }
 
-# Refuse any push invocation that might be introduced later in this script.
+# Refuse any push or active-worktree pull invocation that might be introduced later.
 git_no_push() {
   if [[ "${1:-}" == "push" ]]; then
     die "git push is forbidden by cross-repo sync policy"
+  fi
+  if [[ "${1:-}" == "pull" ]]; then
+    die "git pull on active worktrees is forbidden by cross-repo sync policy"
   fi
   # Also refuse recursive submodule chase via this wrapper.
   if [[ "${1:-}" == "submodule" ]]; then
@@ -189,6 +204,9 @@ active_work_present() {
   if [[ "${CROSS_REPO_SYNC_FORCE_ACTIVE:-}" == "1" || "${CROSS_REPO_SYNC_FORCE_ACTIVE:-}" == "true" ]]; then
     return 0
   fi
+  if [[ "${CROSS_REPO_INTEGRATE_FORCE_ACTIVE:-}" == "1" || "${CROSS_REPO_INTEGRATE_FORCE_ACTIVE:-}" == "true" ]]; then
+    return 0
+  fi
   if [[ -n "$ACTIVE_MARKER" && -e "$ACTIVE_MARKER" ]]; then
     return 0
   fi
@@ -231,16 +249,46 @@ acquire_lock() {
   die "serialization lock held: $lock_dir (fail closed)"
 }
 
-abort_via_checker() {
-  # Produce an aborted receipt without mutating either worktree.
+abort_via_integrator() {
+  # Produce an aborted paired-revision receipt without mutating either worktree.
   local reason_note="$1"
   log "abort_without_mutation reason=$reason_note"
   local marker_args=()
   if [[ -n "$ACTIVE_MARKER" ]]; then
     marker_args+=(--active-marker "$ACTIVE_MARKER")
   fi
-  # Force active/dirty detection through the checker by setting env when needed.
-  local env_force=()
+  if [[ "$reason_note" == "active_work" ]]; then
+    export CROSS_REPO_SYNC_FORCE_ACTIVE=1
+    export CROSS_REPO_INTEGRATE_FORCE_ACTIVE=1
+  fi
+  local out="$INTEGRATION_OUTPUT_PATH"
+  if [[ "$OUTPUT_EXPLICIT" -eq 1 ]]; then
+    out="$OUTPUT_PATH"
+  fi
+  "$PYTHON_BIN" "$INTEGRATOR" \
+    --run \
+    --skip-fetch \
+    --trigger "$TRIGGER" \
+    --datasets-path "$DATASETS_PATH" \
+    --accelerator-path "$ACCELERATOR_PATH" \
+    --output "$out" \
+    --lock-path "$LOCK_PATH" \
+    --state-root "$STATE_ROOT" \
+    --worktree-root "$WORKTREE_ROOT" \
+    --repo-root "$REPO_ROOT" \
+    "${marker_args[@]}" \
+    || true
+  exit 3
+}
+
+abort_via_checker() {
+  # Produce an aborted compatibility receipt without mutating either worktree.
+  local reason_note="$1"
+  log "abort_without_mutation reason=$reason_note"
+  local marker_args=()
+  if [[ -n "$ACTIVE_MARKER" ]]; then
+    marker_args+=(--active-marker "$ACTIVE_MARKER")
+  fi
   if [[ "$reason_note" == "active_work" ]]; then
     export CROSS_REPO_SYNC_FORCE_ACTIVE=1
   fi
@@ -255,7 +303,6 @@ abort_via_checker() {
     --repo-root "$REPO_ROOT" \
     "${marker_args[@]}" \
     || true
-  # Exit code 3 = aborted (policy).
   exit 3
 }
 
@@ -279,6 +326,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --output)
       OUTPUT_PATH="${2:-}"
+      INTEGRATION_OUTPUT_PATH="${2:-}"
       OUTPUT_EXPLICIT=1
       shift 2
       ;;
@@ -295,7 +343,13 @@ while [[ $# -gt 0 ]]; do
       fi
       if [[ "$OUTPUT_EXPLICIT" -eq 0 ]]; then
         OUTPUT_PATH="$STATE_ROOT/compatibility_manifest.json"
+        INTEGRATION_OUTPUT_PATH="$STATE_ROOT/paired_revision_receipt.json"
       fi
+      WORKTREE_ROOT="$STATE_ROOT/worktrees"
+      shift 2
+      ;;
+    --worktree-root)
+      WORKTREE_ROOT="${2:-}"
       shift 2
       ;;
     --active-marker)
@@ -339,8 +393,11 @@ print(json.dumps({
   "triggers": ["startup", "eight-hour", "twice-daily", "pre-release", "security-fix"],
   "fetch_only_triggers": ["startup", "eight-hour"],
   "integration_triggers": ["twice-daily", "pre-release", "security-fix"],
+  "merge_order": ["accelerator", "datasets"],
   "push_allowed": False,
+  "active_worktree_pull_allowed": False,
   "recursive_submodules": False,
+  "use_isolated_worktrees": True,
 }, indent=2, sort_keys=True))
 PY
   exit 0
@@ -358,9 +415,13 @@ fi
 if [[ ! -f "$CHECKER" ]]; then
   die "checker missing: $CHECKER"
 fi
+if [[ ! -f "$INTEGRATOR" ]]; then
+  die "integrator missing: $INTEGRATOR"
+fi
 
 mkdir -p "$(dirname "$OUTPUT_PATH")"
 mkdir -p "$(dirname "$LOCK_PATH")"
+mkdir -p "$(dirname "$INTEGRATION_OUTPUT_PATH")"
 
 log "start trigger=$TRIGGER datasets=$DATASETS_PATH accelerator=$ACCELERATOR_PATH dry_run=$DRY_RUN"
 
@@ -370,32 +431,54 @@ log "start trigger=$TRIGGER datasets=$DATASETS_PATH accelerator=$ACCELERATOR_PAT
 
 if active_work_present; then
   log "active_work_detected marker=${ACTIVE_MARKER:-forced}"
+  if is_integration "$TRIGGER"; then
+    abort_via_integrator "active_work"
+  fi
   abort_via_checker "active_work"
 fi
 
 # Conflicts before dirty: unmerged paths also appear dirty.
 if repo_has_conflicts "$DATASETS_PATH" || repo_has_conflicts "$ACCELERATOR_PATH"; then
   log "merge_conflict_detected"
+  if is_integration "$TRIGGER"; then
+    abort_via_integrator "merge_conflict"
+  fi
   abort_via_checker "merge_conflict"
 fi
 
 if repo_is_dirty "$DATASETS_PATH" || repo_is_dirty "$ACCELERATOR_PATH"; then
   log "dirty_worktree_detected"
+  if is_integration "$TRIGGER"; then
+    abort_via_integrator "dirty_worktree"
+  fi
   abort_via_checker "dirty_worktree"
 fi
 
 # ---------------------------------------------------------------------------
-# Serialization for integration triggers (and for any non-plan run)
+# Serialization for non-plan runs (integrator also locks; shell lock is belt)
 # ---------------------------------------------------------------------------
 
 if [[ "$PLAN_ONLY" -eq 0 ]]; then
-  acquire_lock
+  # Integration path lets integrate_upstreams.py own the lock identity in the
+  # paired receipt; shell still serializes fetch-only and outer wrapper runs.
+  if is_fetch_only "$TRIGGER"; then
+    acquire_lock
+  fi
 fi
 
 if [[ "$PLAN_ONLY" -eq 1 ]]; then
   marker_args=()
   if [[ -n "$ACTIVE_MARKER" ]]; then
     marker_args+=(--active-marker "$ACTIVE_MARKER")
+  fi
+  if is_integration "$TRIGGER"; then
+    exec "$PYTHON_BIN" "$INTEGRATOR" \
+      --plan-only \
+      --trigger "$TRIGGER" \
+      --datasets-path "$DATASETS_PATH" \
+      --accelerator-path "$ACCELERATOR_PATH" \
+      --repo-root "$REPO_ROOT" \
+      "${marker_args[@]}"
   fi
   exec "$PYTHON_BIN" "$CHECKER" \
     --plan-only \
@@ -407,15 +490,58 @@ if [[ "$PLAN_ONLY" -eq 1 ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Optional direct fetch (non-recursive). Checker also fetches unless skipped.
-# Shell-level fetch documents the no-recurse policy explicitly for operators.
+# Integration triggers → integrate_upstreams.py (isolated worktrees)
+# ---------------------------------------------------------------------------
+
+if is_integration "$TRIGGER"; then
+  out="$INTEGRATION_OUTPUT_PATH"
+  if [[ "$OUTPUT_EXPLICIT" -eq 1 ]]; then
+    out="$OUTPUT_PATH"
+  fi
+  integrator_args=(
+    --run
+    --trigger "$TRIGGER"
+    --datasets-path "$DATASETS_PATH"
+    --accelerator-path "$ACCELERATOR_PATH"
+    --output "$out"
+    --lock-path "$LOCK_PATH"
+    --state-root "$STATE_ROOT"
+    --worktree-root "$WORKTREE_ROOT"
+    --repo-root "$REPO_ROOT"
+  )
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    integrator_args+=(--dry-run)
+  fi
+  if [[ "$SKIP_FETCH" -eq 1 ]]; then
+    integrator_args+=(--skip-fetch)
+  fi
+  if [[ -n "$ACTIVE_MARKER" ]]; then
+    integrator_args+=(--active-marker "$ACTIVE_MARKER")
+  fi
+  log "integrator_begin output=$out merge_order=accelerator,datasets"
+  set +e
+  "$PYTHON_BIN" "$INTEGRATOR" "${integrator_args[@]}"
+  rc=$?
+  set -e
+  if [[ ! -f "$out" ]]; then
+    die "paired revision receipt was not written: $out"
+  fi
+  log "integrator_done exit=$rc receipt=$out push_attempted=false active_worktree_pull_attempted=false"
+  log "policy push_allowed=false active_worktree_pull_allowed=false recursive_submodules=false fail_closed_on_conflict=true"
+  log "merge_order accelerator,datasets use_isolated_worktrees=true"
+  log "triggers_explicit startup,eight-hour,twice-daily,pre-release,security-fix"
+  exit "$rc"
+fi
+
+# ---------------------------------------------------------------------------
+# Fetch-only triggers: optional shell fetch + compatibility checker receipt
 # ---------------------------------------------------------------------------
 
 if [[ "$DRY_RUN" -eq 0 && "$SKIP_FETCH" -eq 0 ]]; then
   for repo in "$DATASETS_PATH" "$ACCELERATOR_PATH"; do
     if git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-      log "fetch_begin repo=$repo recurse_submodules=false"
-      # Explicit: never --recurse-submodules.
+      log "fetch_begin repo=$repo recurse_submodules=false pull=false"
+      # Explicit: never --recurse-submodules; never pull.
       if ! git_no_push -C "$repo" fetch origin --no-recurse-submodules; then
         log "fetch_soft_fail repo=$repo (fail closed only if integration requires it)"
       else
@@ -438,12 +564,6 @@ if repo_has_conflicts "$DATASETS_PATH" || repo_has_conflicts "$ACCELERATOR_PATH"
   log "conflict_after_fetch_abort"
   abort_via_checker "merge_conflict"
 fi
-
-# ---------------------------------------------------------------------------
-# Delegate receipt production, SHA binding, and pair tests to the checker.
-# Integration triggers run pair tests; fetch-only binds SHAs when available.
-# Never push. Never recursive submodule update.
-# ---------------------------------------------------------------------------
 
 checker_args=(
   --run
@@ -474,10 +594,7 @@ if [[ ! -f "$OUTPUT_PATH" ]]; then
 fi
 
 log "checker_done exit=$rc manifest=$OUTPUT_PATH push_attempted=false recursive_submodule_chase=false"
-
-# Final hard guarantees for operators inspecting the script contract.
-# These greppable tokens document the permanent policy in process logs.
-log "policy push_allowed=false recursive_submodules=false fail_closed_on_conflict=true"
+log "policy push_allowed=false active_worktree_pull_allowed=false recursive_submodules=false fail_closed_on_conflict=true"
 log "triggers_explicit startup,eight-hour,twice-daily,pre-release,security-fix"
 
 exit "$rc"
