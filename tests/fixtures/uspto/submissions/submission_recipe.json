@@ -1,0 +1,78 @@
+{
+  "schema_version": "uspto.submission-recipe.v1",
+  "notes": "Compact recipes for PATLAW-033. Prefer generators over bulk golden dumps.",
+  "task_id": "PATLAW-033",
+  "cases": [
+    {
+      "id": "amendment_current_claims",
+      "generator": "build_amendment_claims_text",
+      "role": "amendment",
+      "version": "preliminary_amendment",
+      "expect": {
+        "has_claims": true,
+        "has_amendment": true,
+        "has_remarks": true,
+        "has_signature_presence": true,
+        "signature_material_suppressed": true,
+        "has_form": true,
+        "has_fee": true,
+        "has_attachment": true,
+        "current_claim_1_contains": "temperature sensor"
+      }
+    },
+    {
+      "id": "docx_authoritative_over_pdf",
+      "generator": "build_docx_authoritative_text",
+      "compare_generator": "build_converted_pdf_text",
+      "expect": {
+        "docx_authoritative": true,
+        "docx_pdf_difference_explicit": true
+      }
+    },
+    {
+      "id": "filing_receipts",
+      "artifacts": [
+        {
+          "role": "acknowledgement_receipt",
+          "generator": "build_acknowledgement_receipt_text"
+        },
+        {
+          "role": "payment_receipt",
+          "fields_generator": "build_payment_receipt_fields"
+        }
+      ],
+      "expect": {
+        "has_ack_id": true,
+        "payment_receipt_present": true
+      }
+    },
+    {
+      "id": "declaration_and_form",
+      "generator": "build_declaration_text",
+      "role": "declaration",
+      "expect": {
+        "has_declaration": true,
+        "has_form": true,
+        "has_signature_presence": true
+      }
+    },
+    {
+      "id": "missing_receipt",
+      "generator": "build_as_filed_claims_text",
+      "role": "claim_set",
+      "require_ack_receipt": true,
+      "expect": {
+        "missing_receipt_explicit": true
+      }
+    },
+    {
+      "id": "mismatched_metadata",
+      "generator": "build_mismatched_metadata_text",
+      "role": "submission",
+      "expected_application_number": "16/123,456",
+      "expect": {
+        "mismatched_metadata_explicit": true
+      }
+    }
+  ]
+}
