@@ -1,0 +1,226 @@
+{
+  "schema_version": "uspto.submission-package-semantics-v2-recipe.v1",
+  "notes": "Compact recipes for PATLAW-133. Generators live in the unit test module; prefer generators over bulk golden dumps.",
+  "task_id": "PATLAW-133",
+  "package_profiles": [
+    "complete",
+    "partial",
+    "duplicate",
+    "inconsistent",
+    "scanned",
+    "conversion_warning"
+  ],
+  "receipt_kinds": [
+    "transmission_attempt",
+    "electronic_submission_receipt",
+    "payment_receipt",
+    "official_filing_receipt",
+    "corrected_filing_receipt",
+    "first_odp_appearance"
+  ],
+  "rendering_kinds": [
+    "submitted_docx",
+    "converted_pdf",
+    "auxiliary_pdf",
+    "split_pdf",
+    "feedback_document"
+  ],
+  "application_types": [
+    "utility",
+    "design",
+    "plant"
+  ],
+  "cases": [
+    {
+      "id": "complete_utility_package",
+      "generator": "build_complete_utility_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "package_profile": "complete",
+        "has_inventory": true,
+        "has_claims": true,
+        "has_specification": true,
+        "has_drawings": true,
+        "has_ads": true,
+        "has_amendment": true,
+        "has_declaration": true,
+        "has_form": true,
+        "has_fee": true,
+        "has_signature_presence": true,
+        "has_electronic_submission_receipt": true,
+        "has_payment_receipt": true,
+        "every_fact_has_anchors": true,
+        "receipts_distinct_hashes_and_effects": true
+      }
+    },
+    {
+      "id": "partial_package",
+      "generator": "build_partial_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "package_profile": "partial",
+        "has_inventory": true,
+        "inventory_gap": true,
+        "every_fact_has_anchors": true
+      }
+    },
+    {
+      "id": "duplicate_package",
+      "generator": "build_duplicate_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "package_profile": "duplicate",
+        "has_duplicate_discrepancy": true,
+        "every_fact_has_anchors": true,
+        "review_required": true
+      }
+    },
+    {
+      "id": "inconsistent_package",
+      "generator": "build_inconsistent_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "package_profile": "inconsistent",
+        "has_identifier_conflict": true,
+        "every_fact_has_anchors": true,
+        "review_required": true
+      }
+    },
+    {
+      "id": "scanned_package",
+      "generator": "build_scanned_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "package_profile": "scanned",
+        "noisy_scan": true,
+        "every_fact_has_anchors": true,
+        "review_required": true
+      }
+    },
+    {
+      "id": "conversion_warning_package",
+      "generator": "build_conversion_warning_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "package_profile": "conversion_warning",
+        "has_submitted_docx": true,
+        "has_converted_pdf": true,
+        "has_feedback_document": true,
+        "conversion_warning": true,
+        "rendering_divergence": true,
+        "receipts_distinct_hashes_and_effects": false,
+        "renderings_distinct_hashes_and_effects": true,
+        "every_fact_has_anchors": true,
+        "review_required": true
+      }
+    },
+    {
+      "id": "all_receipt_kinds",
+      "generator": "build_all_receipts_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "all_receipt_kinds_present": true,
+        "receipts_distinct_hashes_and_effects": true,
+        "every_fact_has_anchors": true
+      }
+    },
+    {
+      "id": "design_application_package",
+      "generator": "build_design_package",
+      "application_type": "design",
+      "classification": "public_user",
+      "expect": {
+        "application_type": "design",
+        "has_drawings": true,
+        "has_claims": true,
+        "every_fact_has_anchors": true
+      }
+    },
+    {
+      "id": "plant_application_package",
+      "generator": "build_plant_package",
+      "application_type": "plant",
+      "classification": "public_user",
+      "expect": {
+        "application_type": "plant",
+        "has_specification": true,
+        "every_fact_has_anchors": true
+      }
+    },
+    {
+      "id": "arguments_mapped_package",
+      "generator": "build_arguments_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "has_arguments": true,
+        "has_claims": true,
+        "has_cross_document_links": true,
+        "every_fact_has_anchors": true
+      }
+    },
+    {
+      "id": "sequence_listing_package",
+      "generator": "build_sequence_listing_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "has_sequence_listing": true,
+        "sequence_listing_applicable": true,
+        "every_fact_has_anchors": true
+      }
+    },
+    {
+      "id": "model_candidate_association",
+      "generator": "build_complete_utility_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "model_candidate": true,
+      "expect": {
+        "has_candidate_associations": true,
+        "model_never_admitted_without_receipt": true,
+        "candidates_confidence_scored": true,
+        "every_fact_has_anchors": true
+      }
+    },
+    {
+      "id": "structured_payment_receipt",
+      "generator": "build_structured_payment_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "has_payment_receipt": true,
+        "has_structured_field_anchor": true,
+        "every_fact_has_anchors": true
+      }
+    },
+    {
+      "id": "replacement_pages_package",
+      "generator": "build_replacement_pages_package",
+      "application_type": "utility",
+      "classification": "public_user",
+      "expect": {
+        "has_replacement_pages": true,
+        "every_fact_has_anchors": true
+      }
+    },
+    {
+      "id": "empty_package",
+      "generator": "build_empty_package",
+      "application_type": "unknown",
+      "classification": "public_user",
+      "expect": {
+        "disposition_in": ["malformed", "review"],
+        "empty_package": true,
+        "retained": true
+      }
+    }
+  ]
+}
