@@ -24,7 +24,7 @@ Program invariants:
 
 ## PATLAW-002 Decide and test the canonical processor contract
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
