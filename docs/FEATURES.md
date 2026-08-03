@@ -1,338 +1,263 @@
-# IPFS Datasets Python - Complete Features List
+# Capability matrix — IPFS Datasets Python
 
-This document provides a comprehensive list of all features and capabilities in IPFS Datasets Python.
+| Field | Value |
+| --- | --- |
+| Interface | `CapabilityStatusMatrix@1` |
+| Task | `IPFSDOC-064` |
+| Status | `canonical` (product capability surface) |
+| Package | `ipfs_datasets_py` **0.2.0** (`pyproject.toml`) |
+| Python | `requires-python = ">=3.12"` |
+| Last verified | 2026-08-03 |
+| Authority | Tests/schemas → current code → packaging → ADRs → guides → history ([SOURCE_AUTHORITY.md](maintenance/SOURCE_AUTHORITY.md)) |
+| Related | [DOMAIN_MAP.md](architecture/DOMAIN_MAP.md), [SYSTEM_CONTEXT.md](architecture/SYSTEM_CONTEXT.md), [DEPENDENCY_AND_INITIALIZATION.md](architecture/DEPENDENCY_AND_INITIALIZATION.md), [DRIFT_AND_CLAIM_MATRIX.md](maintenance/DRIFT_AND_CLAIM_MATRIX.md) |
 
-## 🎯 Core Features
+## Purpose
 
-### Mathematical Theorem Proving
-Convert natural language (especially legal text) to verified formal logic:
-- **Supported Provers:** Z3, CVC5, Lean 4, Coq
-- **Logic Types:** Propositional logic, first-order logic, deontic logic
-- **Use Cases:** Legal document verification, contract analysis, compliance checking
-- **Integration:** SymbolicAI framework for automated theorem generation
+This page is the **source-grounded product capability matrix** for
+`ipfs_datasets_py`. It replaces undated marketing and hard count claims with
+labeled capability states derived from the current tree, packaging extras, and
+architecture guides.
 
-**Example:**
-```python
-from ipfs_datasets_py.logic_integration import LogicProcessor
+**This is not a release notes file.** Release policy and retained history live
+in [CHANGELOG.md](CHANGELOG.md). Documentation coverage (where guides exist)
+lives in [COVERAGE_MATRIX.md](maintenance/COVERAGE_MATRIX.md).
 
-processor = LogicProcessor()
-result = processor.convert_to_logic("Citizens must vote")
-proof = result.generate_proof()  # Verified formal proof
-```
+### Rules for reading claims
 
-### GraphRAG Document Processing
-AI-powered document processing with knowledge graph integration:
-- **PDF Analysis:** Extract text, tables, images, and structure
-- **Entity Extraction:** Named entities, relationships, concepts
-- **Knowledge Graphs:** Build semantic networks from documents
-- **Cross-Document Reasoning:** Connect information across multiple sources
-- **LLM Optimization:** Prepare documents for optimal LLM consumption
-- **Production Quality:** 4,400+ test functions ensuring reliability
-
-**Example:**
-```python
-from ipfs_datasets_py.pdf_processing import PDFProcessor
-from ipfs_datasets_py.search.logic_integration import LogicEnhancedRAG
-
-pdf = PDFProcessor()
-rag = LogicEnhancedRAG()
-
-content = pdf.process("document.pdf")
-rag.ingest_document(content, "doc1")
-results = rag.query("What are the key findings?")
-```
-
-### Universal File Conversion
-Convert any file type to text for AI processing:
-- **60+ Supported Formats:** Documents, spreadsheets, presentations, archives, media
-- **Backend Selection:** Automatic selection of best converter for each file type
-- **Async/Sync Support:** Both async and synchronous conversion modes
-- **Error Handling:** Comprehensive error handling with graceful fallbacks
-- **Result Monads:** Type-safe results with success/error handling
-
-**Example:**
-```python
-from ipfs_datasets_py.processors.file_converter import FileConverter
-
-converter = FileConverter()
-result = await converter.convert('document.pdf')
-print(result.text)  # Extracted text ready for processing
-```
-
-### Universal Media Processing
-Download and process media from 1000+ platforms:
-- **Platforms:** YouTube, Vimeo, TikTok, Instagram, Twitter, Facebook, and 1000+ more
-- **yt-dlp Integration:** Advanced video/audio downloading
-- **FFmpeg Processing:** Video/audio conversion, transcoding, streaming
-- **Metadata Extraction:** Title, description, tags, timestamps
-- **Quality Selection:** Choose video/audio quality
-- **Playlist Support:** Download entire playlists or channels
-
-**Example:**
-```python
-import asyncio
-from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
-
-async def main():
-	dl = YtDlpWrapper()
-	result = await dl.download_video("https://youtube.com/watch?v=...")
-	print(result.get("title"))
-
-asyncio.run(main())
-```
-
-### Knowledge Graph Intelligence
-Advanced knowledge graph operations and reasoning:
-- **Entity Recognition:** NER with multiple models
-- **Relationship Extraction:** Identify connections between entities
-- **Graph Construction:** Build semantic networks
-- **Graph Traversal:** Query and explore knowledge graphs
-- **Semantic Search:** Find related concepts and entities
-- **Cross-Document Links:** Connect information across sources
-
-### Decentralized Storage (IPFS)
-Native IPFS integration for content-addressed storage:
-- **ipfs_kit_py Integration:** Comprehensive IPFS operations
-- **Content Addressing:** CID-based content identification
-- **Pinning Management:** Keep important content available
-- **IPLD Support:** InterPlanetary Linked Data
-- **CAR Archives:** Content Archive format support
-- **Gateway Access:** Public and private gateway support
-
-**Example:**
-```python
-from ipfs_datasets_py.ipfs_datasets import ipfs_datasets
-
-ipfs = ipfs_datasets()
-cid = ipfs.add_file("data.json")
-content = ipfs.get_file(cid)
-ipfs.pin(cid)  # Keep content available
-```
-
-### Hardware Acceleration
-Significant performance improvements with multi-backend acceleration:
-- **ipfs_accelerate_py Integration:** 2-20x speedup for operations
-- **Multi-Backend Support:** GPU, CUDA, CPU optimization
-- **Automatic Selection:** Choose best backend for each operation
-- **Batch Processing:** Efficient batch operations
-- **Memory Optimization:** Reduced memory usage
-
-## 🤖 MCP Server (Model Context Protocol)
-
-### Tool Categories (200+ tools across 50+ categories)
-
-**Dataset Operations:**
-- dataset_tools - Load, process, and manage datasets
-- embedding_tools - Generate and manage embeddings
-- vector_tools - Vector similarity search and operations
-
-**Web & Data Collection:**
-- web_archive_tools - Web scraping, yt-dlp, Common Crawl
-- legal_dataset_tools - Legal document scraping (US Code, state laws, PACER)
-- media_tools - Multimedia download and processing
-
-**Document Processing:**
-- pdf_tools - PDF processing and analysis
-- knowledge_graph_tools - Entity extraction and graph operations
-- file_conversion_tools - Universal file format conversion
-
-**IPFS & Storage:**
-- ipfs_tools - IPFS operations (add, get, pin, cat)
-- storage_tools - Multi-backend storage management
-- cache_tools - Caching strategies and optimization
-
-**Infrastructure:**
-- p2p_tools - Distributed computing and workflows
-- monitoring_tools - System monitoring and metrics
-- admin_tools - Administrative operations
-- security_tools - Security and audit features
-
-**Development:**
-- software_engineering_tools - Auto-healing, PR review, code analysis
-- development_tools - Development utilities
-- vscode_cli_tools - VSCode CLI integration
-- github_cli_tools - GitHub CLI integration
-
-### MCP Dashboard
-Real-time monitoring and analytics:
-- **Investigation Tracking** - GitHub issues → MCP tools → AI suggestions
-- **Tool Usage Analytics** - Execution times, success rates, usage patterns
-- **System Monitoring** - Resource usage, health checks, error tracking
-- **WebSocket Updates** - Live real-time updates
-
-## 🔧 Production Features
-
-### Auto-Fix with GitHub Copilot
-Automated code fixing and maintenance:
-- **Workflow Failure Detection** - Monitors 13+ GitHub Actions workflows
-- **Automatic Issue Creation** - Creates issues for failures
-- **Draft PR Generation** - Generates PRs with @copilot mentions
-- **100% Verification** - All fixes verified before deployment
-
-### Automatic Error Reporting
-Runtime error handling and reporting:
-- **Exception Capture** - Capture and analyze runtime errors
-- **GitHub Issue Creation** - Automatic issue creation
-- **Stack Trace Analysis** - Detailed error analysis
-- **Error Categorization** - Group similar errors
-
-### Production Monitoring
-Comprehensive monitoring and observability:
-- **Prometheus Metrics** - Industry-standard metrics
-- **Health Checks** - Service health monitoring
-- **Resource Tracking** - CPU, memory, disk usage
-- **Performance Monitoring** - Latency, throughput, error rates
-- **Unified Dashboard** - Single pane of glass for all metrics
-
-### Distributed Computing
-P2P networking and distributed workflows:
-- **libp2p Integration** - Peer-to-peer networking
-- **Distributed Task Queue** - Distribute work across nodes
-- **Workflow Orchestration** - Complex workflow management
-- **Node Discovery** - Automatic peer discovery
-- **Load Balancing** - Distribute work efficiently
-
-### Enterprise Features
-Production-ready enterprise capabilities:
-- **Security & Audit Logging** - Comprehensive audit trails
-- **Data Provenance** - Track data lineage and transformations
-- **Access Control** - Fine-grained permissions
-- **Rate Limiting** - Protect services from overload
-- **Multi-tenancy** - Isolated environments for multiple users
-
-## 🛠️ CLI Tools
-
-### Command Categories
-- **Info Commands** - System status, version, configuration
-- **MCP Server** - Start, stop, status, logs
-- **Tool Management** - List, run, discover 200+ tools
-- **VSCode CLI** - VSCode integration and automation
-- **GitHub CLI** - GitHub operations and automation
-- **Discord Integration** - Send messages, files, webhooks
-- **Email Integration** - Send emails, check status
-
-## 📦 Core Modules
-
-### Data Processing
-1. **dataset_manager** - Dataset loading and management
-2. **file_converter** - Universal file format conversion
-3. **embeddings** - Vector embeddings and similarity
-
-### Document Intelligence
-4. **pdf_processing** - PDF analysis and extraction
-5. **rag** - Retrieval-Augmented Generation
-6. **knowledge_graphs** - Graph construction and querying
-
-### Logic & Proving
-7. **logic_integration** - Formal logic and theorem proving
-8. **reasoning_coordinator** - Multi-system reasoning
-
-### Storage & Infrastructure
-9. **ipfs_datasets** - Core IPFS operations
-10. **ipfs_formats** - IPFS format handling (CAR, IPLD)
-11. **content_discovery** - Content indexing and discovery
-
-### System
-12. **config** - Configuration management
-13. **security** - Authentication and authorization
-14. **monitoring** - Metrics and health checks
-
-## 🔗 Integration Capabilities
-
-### External Integrations
-- **HuggingFace Datasets** - Direct integration
-- **yt-dlp** - 1000+ video platforms
-- **FFmpeg** - Video/audio processing
-- **Common Crawl** - Web-scale data access
-- **Internet Archive** - Historical web content
-
-### AI/ML Frameworks
-- **Transformers** - Hugging Face models
-- **Sentence Transformers** - Embeddings
-- **SymbolicAI** - Symbolic reasoning
-- **Z3, CVC5, Lean 4, Coq** - Theorem provers
-
-### Vector Databases
-- **FAISS** - Facebook AI Similarity Search
-- **Qdrant** - Vector search engine
-- **Elasticsearch** - Full-text and vector search
-- **Chroma** - AI-native vector database
-
-### Communication
-- **Discord** - Webhook and bot integration
-- **Email** - SMTP integration
-- **GitHub** - API integration
-- **Slack** - (planned)
-
-## 📊 Performance Characteristics
-
-### Benchmarks
-- **Vector Search:** <100ms for millions of vectors
-- **PDF Processing:** 10-50 pages/second
-- **Embedding Generation:** 100-1000 docs/sec (with GPU)
-- **File Conversion:** Varies by format and size
-- **IPFS Operations:** Network-dependent
-
-### Scalability
-- **Dataset Size:** Tested up to 100GB+
-- **Concurrent Operations:** 100+ simultaneous operations
-- **Distributed:** Multi-node deployment supported
-- **Memory Efficiency:** Memory-mapped file support
-
-## 🔒 Security Features
-
-### Authentication & Authorization
-- API key management
-- OAuth integration (planned)
-- Role-based access control
-- Fine-grained permissions
-
-### Audit & Compliance
-- Comprehensive audit logging
-- Data provenance tracking
-- Compliance reporting
-- Security event monitoring
-
-### Data Security
-- Encryption at rest
-- Encryption in transit (TLS)
-- Secure secret management
-- Input validation and sanitization
-
-## 🚀 Deployment Options
-
-### Supported Platforms
-- **Docker** - Single container deployment
-- **Docker Compose** - Multi-container orchestration
-- **Kubernetes** - Cloud-native deployment
-- **Bare Metal** - Direct server installation
-
-### Environments
-- **Development** - Local development setup
-- **Staging** - Pre-production testing
-- **Production** - Full production deployment
-- **Edge** - Edge computing nodes
-
-## 📈 Future Roadmap
-
-### Planned Features
-- Multi-language support for theorem proving
-- Advanced AI agents for autonomous data processing
-- Blockchain integration for immutable audit trails
-- Enhanced visualization with interactive dashboards
-- Mobile SDKs for mobile app integration
-- Additional vector database backends
-- Expanded file format support
-- Real-time collaboration features
-
-## 📚 Learn More
-
-- **[Getting Started](getting_started.md)** - Quick start guide
-- **[User Guide](user_guide.md)** - Comprehensive usage guide
-- **[API Reference](guides/reference/api_reference.md)** - Complete API documentation
-- **[Architecture](architecture/)** - System design and architecture
-- **[Examples](../examples/)** - Usage examples and tutorials
+1. **Code presence ≠ production readiness.** A package directory means code
+   exists; trust, proof, and side effects follow fail-closed policy
+   ([ADR-004](architecture/decisions/ADR-004-FAIL-CLOSED-DEGRADATION.md)).
+2. **Probe ≠ capability.** Feature detection may report “present” without
+   authorizing use or proving correctness.
+3. **Optional stacks are not base install.** Base package import is hermetic;
+   heavy stacks require extras, binaries, submodules, or env flags.
+4. **Counts are inventory estimates** unless a measurement command and date are
+   attached. Prefer category names over “N+ tools” marketing.
+5. **Empty git submodules** make nested backends **unavailable** in this
+   checkout until initialized—not “missing from the product design.”
 
 ---
 
-**For the most up-to-date feature list, see the [project documentation](./README.md).**
+## Capability status vocabulary
+
+Exactly one primary **product-status** label per row. Secondary notes may add
+install or authority detail.
+
+| Status | Meaning | Typical evidence |
+| --- | --- | --- |
+| **Stable** | Intended public path for new work; contracts and ownership are documented and code exists in-tree | Package path + tests/architecture leaf; packaging entry when install-facing |
+| **Optional** | Works only when declared extras, native binaries, services, or initialized submodules are present | `pyproject.toml` extras; lazy installers; submodule paths |
+| **Experimental** | Present and exercised, but contracts, trust class, or UX may change; not a silent production trust claim | Explicit experimental flags, portfolio provers, evolving IR adapters |
+| **Compatibility** | Alias, facade, dual packaging path, or migration surface; prefer the canonical path for new work | Root facades, `setup.py`-only scripts, legacy tool trees |
+| **Deprecated** | Scheduled for removal or migration; still may exist for migration windows | Deprecation modules, registry `deprecated` roles, migration guides |
+| **Unavailable** | Required dependency, submodule, binary, or network is not present **in this environment**—feature degrades or errors; never silent allow for trust gates | Empty submodule checkout; missing prover binary; offline mode |
+
+**Current** (used in tables as a snapshot qualifier) means “verified against this
+tree on the date above,” not “always production-ready on every host.”
+
+---
+
+## 1. Product surfaces (entry points)
+
+| Surface | Status | Anchors | Notes |
+| --- | --- | --- | --- |
+| Python library API | **Stable** | `ipfs_datasets_py/`, hermetic `__init__`, `initialize()` | Heavy stacks opt-in; see env flags in dependency architecture |
+| MCP server (stdio default) | **Stable** | `python -m ipfs_datasets_py.mcp_server` | Tools wrap domains; do not own domain algorithms |
+| MCP HTTP / FastAPI host | **Optional** | `mcp_server/fastapi_service.py`, extra `api` | Requires API stack install |
+| Primary CLI (`ipfs-datasets`) | **Compatibility** | `setup.py` console_scripts; root `ipfs-datasets` wrapper | **Not** in `pyproject.toml` `[project.scripts]` |
+| pyproject console scripts | **Stable** | `ipfs-datasets-install-provers`, `ipfs-datasets-sms-bridge`, `netherlands-laws`, `ipfs-netherlands-laws` | Pure pyproject install surface |
+| File converter CLI (`file-converter` / `fc`) | **Compatibility** | `setup.py` only | Prefer package API or setuptools install path |
+| Docker / compose / k8s | **Optional** | `docker/`, `deployments/` | Ops manifests; environment-dependent |
+| Profile G planning service | **Optional** / fail-closed | `profile_g.py` → `logic.profile_g`; MCP `profile_g_service` | Placement advisory; side effects fail closed unless validators configured |
+
+---
+
+## 2. Packaging extras (install surface)
+
+Authoritative keys: `pyproject.toml` `[project.optional-dependencies]` (18 extras).
+`setup.py` extras are a **superset**—document setuptools-only names only when
+the install path uses setuptools.
+
+| Extra | Status | Role |
+| --- | --- | --- |
+| *(base / no extra)* | **Stable** | Hermetic library core; not full platform |
+| `lazy` | **Optional** | Curated optional Python deps for lazy resolution (~20 catalog entries) |
+| `vectors` | **Optional** | Embeddings / FAISS-class local search stack |
+| `knowledge_graphs` | **Optional** | Graph / Neo4j-adjacent KG dependencies |
+| `logic` | **Optional** | Logic-domain Python deps |
+| `theorem-provers` | **Optional** | Python bindings toward external provers (not native Lean/Coq binaries) |
+| `multimedia` | **Optional** | yt-dlp / media Python deps; FFmpeg still system-level |
+| `file_conversion` | **Optional** | File converter backends |
+| `ocr` | **Optional** | OCR tooling |
+| `scraping` | **Optional** | Web/legal scraping stacks |
+| `ipld` | **Optional** | IPLD/CAR related Python deps |
+| `api` | **Optional** | FastAPI / HTTP service stack |
+| `test` | **Optional** | Test harness deps |
+| `legal_netherlands` | **Optional** | Netherlands laws scraper surface |
+| `symai_router` | **Optional** / **Experimental** | SymbolicAI router path |
+| `groth16` / `provekit` / `profile-f-zk` | **Optional** / **Experimental** | ZK / circuit profile tooling |
+| `all` | **Optional** | Union of declared non-platform extras in pyproject; still not OS binaries or submodules |
+
+**Lazy behavior:** `lazy_dependencies.py` + `auto_installer` resolve modules on
+first use when configured. Lazy install does **not** turn a missing trust
+dependency into an allow decision. Native provers: prefer
+`ipfs-datasets-install-provers` (pyproject script) after Python extras.
+
+There is **no** `vector`, `graphrag`, `webarchive`, or `theorem_proving` extra
+key in pyproject—use the names above.
+
+---
+
+## 3. Major domain capability matrix
+
+Statuses reflect **product design and current tree presence**, not a full
+CI matrix for every host. Submodule-backed rows note **Unavailable** when the
+declared gitlink is empty in this worktree (`git submodule status` all `-`).
+
+### 3.1 Processing and ingest
+
+| Capability | Status | Package anchors | Optional prerequisites | Degrades when missing |
+| --- | --- | --- | --- | --- |
+| Processor pipelines (PDF, batch, domains) | **Stable** | `processors/` | Domain extras as needed | Feature error / skip path |
+| File conversion (`FileConverter`) | **Stable** | `processors/file_converter/` | `file_conversion` extra; system tools per backend | Conversion unavailable for that format |
+| Web archiving engines | **Optional** | `web_archiving/`, `processors/web_archiving/` | Network; Common Crawl submodule | Engine **Unavailable** |
+| Legal / medical scrapers | **Optional** | `processors/legal_scrapers/`, … | `scraping`, `legal_netherlands` | Scraper offline |
+| Multimedia download (yt-dlp wrapper) | **Optional** | `processors/multimedia/` | `multimedia`; FFmpeg | Download/transcode **Unavailable** |
+| Nested multimedia converters | **Optional** / often **Unavailable** | git submodules under `multimedia/` | `git submodule update --init` | Empty tree → **Unavailable** |
+| Legacy convert_to_txt paths | **Deprecated** | migration guides; deprecation schedule | — | Prefer `FileConverter` |
+
+### 3.2 Logic, IR, proof, and authorization
+
+| Capability | Status | Package anchors | Notes |
+| --- | --- | --- | --- |
+| IR core (canonical JSON, CID identity, provenance) | **Stable** | `logic/ir_core/` | Domain-neutral kernel; not theorem authority |
+| Legal IR | **Stable** | `logic/legal_ir/` | Non-interchangeable with Security/Intent |
+| Security IR | **Stable** | `logic/security_ir/` | Immutable declaration/result authority patterns |
+| **Intent IR** | **Stable** (schema) / **Experimental** (rollout) | `logic/intent_ir/` | Source-grounded intent documents; invocation adapters are **non-executing** |
+| Intent invocation / SkillCenter adapters | **Experimental** / fail-closed | `logic/intent_ir/invocation/` | Must not be documented as silent side-effect dispatch |
+| **Proof corpus** | **Stable** (store/query model) | `logic/proof_corpus/` | Attested artifacts, query, revocation; simulated ZKP is **not** production theorem authority |
+| Admissibility / authorization gate | **Stable** | `logic/admissibility/` | Deny-overrides; incomplete evidence → abstain / non-allow |
+| External provers (Z3, CVC5, Lean, Coq, …) | **Optional** | `logic/external_provers/`, `theorem-provers` extra | Bindings vs native binaries; lazy install path |
+| ITP hammer / portfolio | **Experimental** | `logic/hammers/`, backends | Typed outcomes: proved / countermodel / UNKNOWN / unavailable |
+| CEC / ShadowProver / Talos assets | **Optional** / often **Unavailable** | `logic/CEC/*` submodules | Empty checkout until initialized |
+| ErgoAI placeholder | **Optional** / **Unavailable** without binary | registry `ErgoAI` | `import_check=False` style external |
+| `logic.tools` | **Deprecated** / **Compatibility** | registry role | Prefer `logic.integration` |
+| FOL / deontic / modal / TDFOL | **Stable**–**Experimental** by path | `logic/fol`, `deontic`, `modal`, `TDFOL` | Domain-specific; check registry |
+| ZK / Groth16 / Provekit bridges | **Optional** / **Experimental** | extras + processors backends | Not base install |
+
+### 3.3 Knowledge, retrieval, and optimization
+
+| Capability | Status | Package anchors | Optional prerequisites |
+| --- | --- | --- | --- |
+| Knowledge graphs / extraction | **Stable** | `knowledge_graphs/` | `knowledge_graphs` extra for heavy backends |
+| GraphRAG optimizers | **Stable**–**Experimental** | `optimizers/` (GraphRAG / agentic / theorem loops) | Models, graph backends |
+| Embeddings engines | **Optional** | `embeddings/`, routers | `vectors` / model deps |
+| Vector stores (FAISS, Qdrant, ES bridges) | **Optional** | `vector_stores/` | `vectors` extra; backend services |
+| Search / discovery | **Stable** (library) | `search/` | Hybrid stacks optional |
+| ML helpers | **Optional** / thin | `ml/` | Heavy optional stacks |
+
+### 3.4 Storage, network, and publication
+
+| Capability | Status | Package anchors | Notes |
+| --- | --- | --- | --- |
+| Storage facade / caching | **Stable** (thin) | `storage/`, `caching/` | Backend depth varies |
+| IPLD / CAR helpers | **Optional** | `ipld` extra; related processors | Not full IPFS kit |
+| `ipfs_kit_py` operations | **Optional** / often **Unavailable** | git submodule (root + `.tools`) | External ownership |
+| `ipfs_accelerate_py` acceleration | **Optional** / often **Unavailable** | git submodule | External ownership; speedup claims require the package |
+| P2P networking helpers | **Optional** | `p2p_networking/` | Network-dependent |
+| Hugging Face dataset helpers | **Optional** | `huggingface/` | Hub availability external |
+| Voice immutable dataset contracts | **Stable** (contracts) | `voice/`, `voice_router.py` | HF/release paths optional |
+
+### 3.5 Trust, wallet, audit, Profile G
+
+| Capability | Status | Package anchors | Notes |
+| --- | --- | --- | --- |
+| **Wallet** trust / grants / privacy | **Stable** (domain code) | `wallet/` | User-controlled trust surface; not chain settlement SLA |
+| Wallet CLI / API / multisig / proofs | **Stable**–**Optional** | `wallet/cli.py`, `service.py`, `proofs.py`, … | External proof backends optional |
+| Audit / provenance helpers | **Stable** (helpers) | `audit/`, package `audit.py` | **Not** formal proof authority |
+| Security facade | **Compatibility** | package `security.py` | Prefer domain logic security / wallet / audit as appropriate |
+| **Profile G** datasets primitives | **Stable** (facade + logic) | `profile_g.py` → `logic.profile_g` | Planning/evidence oriented |
+| Profile G MCP service | **Optional** / fail-closed | `mcp_server/profile_g_service.py` | Side effects require configured validators |
+| Agent supervisor / taskboards | **Unavailable** as in-tree owner | external `ipfs_accelerate` | Datasets provides compat hooks only |
+
+### 3.6 MCP tool surface (inventory, not marketing)
+
+| Fact | Value | Kind |
+| --- | --- | --- |
+| Tool category directories (`*_tools`) | **47** under `mcp_server/tools/` | Filesystem inventory (this tree) |
+| Non-`__init__` tool `.py` files | **~394** | Filesystem inventory—not registered-callable census |
+| Registration | `tool_registration.py`, hierarchical manager | Runtime may expose a subset |
+| Legacy tools tree | **Compatibility** | `legacy_mcp_tools` |
+| MCP++ peers/workflows | **Optional** / **Experimental** | `mcplusplus*` tools |
+
+Representative **Stable** categories (directories present): `dataset_tools`,
+`ipfs_tools`, `embedding_tools`, `graph_tools`, `pdf_tools`, `media_tools`,
+`logic_tools`, `legal_dataset_tools`, `security_tools`, `audit_tools`,
+`storage_tools`, `file_converter_tools`, `monitoring_tools`, admin/dashboard
+tools, and others listed under `ipfs_datasets_py/mcp_server/tools/`.
+
+Do **not** treat “200+ tools / 50+ categories” as an exact product KPI without
+a dated registry measurement. Prefer this inventory method or a runtime
+discovery command.
+
+### 3.7 Cross-cutting lifecycle
+
+| Capability | Status | Anchors |
+| --- | --- | --- |
+| Hermetic default import | **Stable** | `ipfs_datasets_py/__init__.py` flags (`IPFS_DATASETS_PY_*`) |
+| Explicit `initialize()` / RouterDeps | **Stable** | `router_deps.py` |
+| **Lazy** dependency proxy | **Optional** | `lazy_dependencies.py`, `auto_installer.py`, extra `lazy` |
+| Capability probing without import | **Stable** | `logic/common/feature_detection.py` |
+| Error reporting helpers | **Stable** | `error_reporting/` |
+| Rate limiting / sessions / messaging | **Optional** / thin | respective packages; SMS bridge script |
+| Package `install/` directory | **Unavailable** as feature | Empty / n/a—do not advertise |
+
+---
+
+## 4. External and submodule gates
+
+| Dependency | Status in empty worktree | How to enable (operator) |
+| --- | --- | --- |
+| `ipfs_kit_py` | **Unavailable** until submodule init | `git submodule update --init` (or product-approved path) |
+| `ipfs_accelerate_py` | **Unavailable** until submodule init | Same |
+| CEC / multimedia / Common Crawl submodules | **Unavailable** until init | Same |
+| Native theorem provers | **Unavailable** until install | `ipfs-datasets-install-provers` + OS packages as needed |
+| IPFS daemon / network | **Optional** | Local or remote API; offline → network features **Unavailable** |
+
+---
+
+## 5. Explicit non-claims
+
+The product **does not** claim any of the following as evergreen facts on this
+page:
+
+- Fixed “production-ready everywhere” for every domain listed.
+- Exact tool counts, test function totals, or “4,400+ tests” without a
+  measurement command and date.
+- Universal “60+ formats” / “1000+ platforms” as local enumeration (those are
+  backend/upstream characteristics when the optional stack is present).
+- Fixed 2–20× acceleration without a populated accelerate integration and
+  benchmark evidence.
+- That **Intent IR**, **proof corpus**, **Profile G**, or **wallet** discovery
+  equals authorization or theorem proof.
+- That **lazy** install or a green probe is an allow decision for side effects.
+
+---
+
+## 6. Where to go next
+
+| Need | Document |
+| --- | --- |
+| Install extras and first success | [installation.md](installation.md), [getting_started.md](getting_started.md) |
+| Ownership and canonical imports | [DOMAIN_MAP.md](architecture/DOMAIN_MAP.md) |
+| Lazy install and probes | [DEPENDENCY_AND_INITIALIZATION.md](architecture/DEPENDENCY_AND_INITIALIZATION.md) |
+| Intent IR / IR family | [logic/IR_FAMILY_AND_IDENTITY.md](architecture/logic/IR_FAMILY_AND_IDENTITY.md) |
+| External provers | [logic/EXTERNAL_PROVERS.md](architecture/logic/EXTERNAL_PROVERS.md) |
+| Fail-closed outcomes | [ADR-004](architecture/decisions/ADR-004-FAIL-CLOSED-DEGRADATION.md) |
+| Release / history policy | [CHANGELOG.md](CHANGELOG.md) |
+| Claim drift inventory | [DRIFT_AND_CLAIM_MATRIX.md](maintenance/DRIFT_AND_CLAIM_MATRIX.md) |
+
+---
+
+*Capability rows are re-verified when packaging extras, major domain ownership,
+or submodule topology change. Prefer architecture leaves for deep contracts.*
