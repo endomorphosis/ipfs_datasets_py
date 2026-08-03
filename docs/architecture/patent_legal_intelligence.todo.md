@@ -249,7 +249,7 @@ Program invariants:
 
 ## PATLAW-013 Implement Title 35 U.S. Code release-point acquisition
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
