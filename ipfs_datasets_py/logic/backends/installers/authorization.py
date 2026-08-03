@@ -101,6 +101,38 @@ TOOL_SOUFFLE: Final = "souffle"
 TOOL_SECPAL: Final = "secpal"
 EXTERNAL_TOOLS: Final = (TOOL_SOUFFLE, TOOL_SECPAL)
 SECPAL_VENDOR_UNAVAILABLE_REASON: Final = "authentic_vendor_artifact_unavailable"
+SECPAL_OFFICIAL_PROJECT_URL: Final = (
+    "https://www.microsoft.com/en-us/research/project/secpal/"
+)
+SECPAL_OFFICIAL_DOWNLOAD_URL: Final = (
+    "https://www.microsoft.com/en-us/download/details.aspx?id=52356"
+)
+SECPAL_OFFICIAL_BINARY_RELEASE_EVIDENCE_URL: Final = (
+    "https://www.microsoft.com/en-us/research/wp-content/uploads/2009/07/FinalTR.pdf"
+)
+SECPAL_HISTORICAL_VERSION_REFERENCE_URL: Final = (
+    "https://era.ed.ac.uk/handle/1842/31341"
+)
+SECPAL_HISTORICAL_RELEASE_VERSION: Final = "1.1"
+SECPAL_UPSTREAM_AUDIT_AS_OF: Final = "2026-08-03"
+SECPAL_UPSTREAM_DISTRIBUTION_STATUS: Final = "retired"
+SECPAL_VENDOR_INSTALLER_IMPLEMENTED: Final = False
+SECPAL_VENDOR_PREREQUISITE_SCHEMA: Final = (
+    "secpal-vendor-prerequisite-report/v1"
+)
+SECPAL_VENDOR_PREREQUISITE_REASONS: Final = (
+    SECPAL_VENDOR_UNAVAILABLE_REASON,
+    "official_vendor_distribution_retired",
+    "vendor_release_version_unverified",
+    "vendor_artifact_url_missing",
+    "vendor_artifact_checksum_missing",
+    "vendor_artifact_provenance_missing",
+    "vendor_license_evidence_missing",
+    "vendor_runtime_contract_missing",
+    "vendor_executable_contract_missing",
+    "vendor_platform_matrix_unverified",
+    "vendor_installer_not_implemented",
+)
 
 # Immutable reviewed source archive for Soufflé 2.4.1 (lock may override).
 SOUFFLE_SOURCE_ARCHIVE_URL: Final = (
@@ -753,6 +785,193 @@ def build_dependencies_for_tool(
     if tool_id == TOOL_SOUFFLE:
         return dict(SOUFFLE_BUILD_DEPENDENCIES)
     return {}
+
+
+def secpal_vendor_prerequisite_report(
+    *,
+    repo_root: Path | str | None = None,
+    lock_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Return the fail-closed prerequisites for a genuine SecPAL release.
+
+    Microsoft historically shipped SecPAL as the ``SecPAL Research Release
+    for Microsoft .NET`` version 1.1.  Its official Download Center entry is
+    now retired, and the current deployment lock intentionally has no vendor
+    artifact URL or checksum.  A Python SecPAL-compatible implementation is
+    not a substitute for that binary.
+
+    This function is deliberately offline and side-effect free.  It consumes
+    only the reviewed deployment lock; a separate, explicitly invoked live
+    provenance audit is required to refresh the upstream-distribution status.
+    A future operator-supplied archive may become eligible only after *all*
+    artifact, checksum, provenance, license, runtime, executable, and platform
+    contracts below are reviewed and the genuine installer is implemented.
+    """
+
+    lock_error = ""
+    try:
+        lock = load_deployment_lock(repo_root, lock_path=lock_path)
+    except Exception as exc:
+        lock = {}
+        # Keep discovery/receipt metadata free of host-private paths.
+        lock_error = type(exc).__name__
+
+    tool_entry: Mapping[str, Any] = {}
+    tools = lock.get("tools") if isinstance(lock, Mapping) else None
+    if isinstance(tools, list):
+        for candidate in tools:
+            if (
+                isinstance(candidate, Mapping)
+                and candidate.get("tool_id") == TOOL_SECPAL
+            ):
+                tool_entry = candidate
+                break
+
+    pins = tool_entry.get("pins") if isinstance(tool_entry, Mapping) else None
+    pin0: Mapping[str, Any] = (
+        pins[0]
+        if isinstance(pins, list) and pins and isinstance(pins[0], Mapping)
+        else DEFAULT_PINS[TOOL_SECPAL]
+    )
+    deployment = (
+        tool_entry.get("deployment_contract")
+        if isinstance(tool_entry, Mapping)
+        else None
+    )
+    deployment = deployment if isinstance(deployment, Mapping) else {}
+    vendor = deployment.get("vendor_install")
+    vendor = vendor if isinstance(vendor, Mapping) else {}
+
+    version = str(pin0.get("version") or "")
+    artifact_url = str(pin0.get("artifact_url") or "")
+    artifact_sha256 = str(pin0.get("sha256") or "").lower()
+    distribution_status = str(
+        vendor.get("upstream_distribution_status")
+        or SECPAL_UPSTREAM_DISTRIBUTION_STATUS
+    )
+    provenance = vendor.get("artifact_provenance")
+    provenance = provenance if isinstance(provenance, Mapping) else {}
+    license_evidence = vendor.get("license_evidence")
+    license_evidence = (
+        license_evidence if isinstance(license_evidence, Mapping) else {}
+    )
+    runtime_contract = vendor.get("runtime_contract")
+    runtime_contract = (
+        runtime_contract if isinstance(runtime_contract, Mapping) else {}
+    )
+    executable_contract = vendor.get("executable_contract")
+    executable_contract = (
+        executable_contract if isinstance(executable_contract, Mapping) else {}
+    )
+    platform_evidence = vendor.get("platform_matrix_evidence")
+    platform_evidence = (
+        platform_evidence if isinstance(platform_evidence, Mapping) else {}
+    )
+    supported_platforms = tuple(
+        str(item)
+        for item in (deployment.get("supported_platforms") or ())
+        if isinstance(item, str) and item
+    )
+
+    reasons: list[str] = [SECPAL_VENDOR_UNAVAILABLE_REASON]
+    if distribution_status not in {"available", "verified_official_archive"}:
+        reasons.append("official_vendor_distribution_retired")
+    if version != SECPAL_HISTORICAL_RELEASE_VERSION:
+        reasons.append("vendor_release_version_unverified")
+    parsed_url = urllib.parse.urlparse(artifact_url)
+    if parsed_url.scheme != "https" or not parsed_url.netloc:
+        reasons.append("vendor_artifact_url_missing")
+    if not re.fullmatch(r"[0-9a-f]{64}", artifact_sha256):
+        reasons.append("vendor_artifact_checksum_missing")
+    if not (
+        str(provenance.get("publisher") or "").casefold()
+        == "microsoft research"
+        and str(provenance.get("original_download_url") or "")
+        == SECPAL_OFFICIAL_DOWNLOAD_URL
+        and re.fullmatch(
+            r"[0-9a-f]{64}",
+            str(provenance.get("evidence_sha256") or "").lower(),
+        )
+    ):
+        reasons.append("vendor_artifact_provenance_missing")
+    if not (
+        str(license_evidence.get("identifier") or "")
+        and str(license_evidence.get("source_path") or "")
+        and re.fullmatch(
+            r"[0-9a-f]{64}",
+            str(license_evidence.get("sha256") or "").lower(),
+        )
+        and license_evidence.get("reviewed") is True
+    ):
+        reasons.append("vendor_license_evidence_missing")
+    if not (
+        str(runtime_contract.get("kind") or "")
+        and str(runtime_contract.get("version_constraint") or "")
+        and isinstance(runtime_contract.get("launcher_candidates"), list)
+        and runtime_contract.get("launcher_candidates")
+    ):
+        reasons.append("vendor_runtime_contract_missing")
+    if not (
+        str(executable_contract.get("interface") or "")
+        and str(executable_contract.get("entrypoint") or "")
+        and isinstance(executable_contract.get("version_probe_argv"), list)
+        and executable_contract.get("version_probe_argv")
+        and str(executable_contract.get("semantic_probe") or "")
+    ):
+        reasons.append("vendor_executable_contract_missing")
+    if not (
+        supported_platforms
+        and re.fullmatch(
+            r"[0-9a-f]{64}",
+            str(platform_evidence.get("sha256") or "").lower(),
+        )
+        and platform_evidence.get("reviewed") is True
+    ):
+        reasons.append("vendor_platform_matrix_unverified")
+    if (
+        not SECPAL_VENDOR_INSTALLER_IMPLEMENTED
+        or vendor.get("installer_implemented") is not True
+    ):
+        reasons.append("vendor_installer_not_implemented")
+    if lock_error or not tool_entry:
+        reasons.append("deployment_lock_unavailable")
+
+    # ``authentic_vendor_artifact_unavailable`` is a summary reason and is
+    # removed only when every concrete prerequisite is complete.
+    concrete_reasons = tuple(dict.fromkeys(reasons[1:]))
+    ready = not concrete_reasons
+    block_reasons = () if ready else tuple(dict.fromkeys(reasons))
+    return {
+        "schema_version": SECPAL_VENDOR_PREREQUISITE_SCHEMA,
+        "tool_id": TOOL_SECPAL,
+        "ready": ready,
+        "installable": ready,
+        "authoritative_live_evidence_available": ready,
+        "historical_release_version": SECPAL_HISTORICAL_RELEASE_VERSION,
+        "configured_version": version,
+        "official_project_url": SECPAL_OFFICIAL_PROJECT_URL,
+        "official_download_url": SECPAL_OFFICIAL_DOWNLOAD_URL,
+        "official_binary_release_evidence_url": (
+            SECPAL_OFFICIAL_BINARY_RELEASE_EVIDENCE_URL
+        ),
+        "historical_version_reference_url": (
+            SECPAL_HISTORICAL_VERSION_REFERENCE_URL
+        ),
+        "historical_version_evidence_class": (
+            "institutional_secondary_reference"
+        ),
+        "upstream_audit_as_of": SECPAL_UPSTREAM_AUDIT_AS_OF,
+        "upstream_distribution_status": distribution_status,
+        "vendor_installer_implemented": SECPAL_VENDOR_INSTALLER_IMPLEMENTED,
+        "artifact_url": artifact_url,
+        "artifact_sha256": artifact_sha256,
+        "configured_license": str(tool_entry.get("license") or ""),
+        "supported_platforms": sorted(supported_platforms),
+        "block_reasons": list(block_reasons),
+        "lock_error": lock_error,
+        "python_compatible_engine_is_shadow_only": True,
+        "platform_exception_satisfies_live_readiness": False,
+    }
 
 
 def supported_platforms_for_tool(
@@ -3103,20 +3322,27 @@ def materialize_vendor_secpal(
 
     tool_id = TOOL_SECPAL
     pin = pin_for_tool(tool_id, repo_root=repo_root, lock_path=lock_path)
+    prerequisite_report = secpal_vendor_prerequisite_report(
+        repo_root=repo_root,
+        lock_path=lock_path,
+    )
+    prerequisite_reasons = tuple(prerequisite_report["block_reasons"])
     host = platform_id or _detect_platform()
     if not tool_supported_on_platform(
         tool_id, host, repo_root=repo_root, lock_path=lock_path
     ):
         raise AuthorizationInstallerError(
             f"external SecPAL is unsupported on {host!r} under the current "
-            "deployment contract (narrow platform exception)"
+            "deployment contract (narrow platform exception); independent "
+            "vendor prerequisites are also incomplete: "
+            + ",".join(prerequisite_reasons)
         )
 
     raise AuthorizationInstallerError(
         f"{SECPAL_VENDOR_UNAVAILABLE_REASON}: external SecPAL {pin['version']} "
-        f"is unavailable on {host!r}; the operator-bound pin has no reviewed "
-        "immutable checksummed vendor artifact or genuine build installer, and "
-        "the Python SecPAL-compatible engine is shadow-only"
+        f"is unavailable on {host!r}; prerequisite failures="
+        f"{','.join(prerequisite_reasons)}; the Python SecPAL-compatible "
+        "engine is shadow-only"
     )
 
 
@@ -3314,10 +3540,27 @@ def _ensure_tool(
     if is_vendor and not tool_supported_on_platform(
         tool_id, host_platform, repo_root=repo_root, lock_path=lock_path
     ):
+        secpal_prerequisites = (
+            secpal_vendor_prerequisite_report(
+                repo_root=repo_root,
+                lock_path=lock_path,
+            )
+            if tool_id == TOOL_SECPAL
+            else None
+        )
+        secpal_reasons = tuple(
+            (secpal_prerequisites or {}).get("block_reasons") or ()
+        )
         detail = (
             f"{tool_id} unsupported on {host_platform} under the current "
             "deployment contract; narrow platform exception — never counts as "
             "installed, complete, authoritative, or production-certified"
+            + (
+                "; independent vendor prerequisites are incomplete: "
+                + ",".join(secpal_reasons)
+                if secpal_reasons
+                else ""
+            )
         )
         _announce(f"{tool_id} platform exception: {detail}", on_progress)
         return InstallReceipt(
@@ -3332,7 +3575,9 @@ def _ensure_tool(
             interface=receipt_interface,
             goal_id=receipt_goal,
             task_id=receipt_task,
-            block_reasons=("unsupported_platform_exception",),
+            block_reasons=tuple(
+                dict.fromkeys(("unsupported_platform_exception", *secpal_reasons))
+            ),
             platform_id=host_platform,
             platform_exception=True,
             production_certified=False,
@@ -3343,12 +3588,16 @@ def _ensure_tool(
         )
 
     if is_vendor and tool_id == TOOL_SECPAL:
+        prerequisite_report = secpal_vendor_prerequisite_report(
+            repo_root=repo_root,
+            lock_path=lock_path,
+        )
+        prerequisite_reasons = tuple(prerequisite_report["block_reasons"])
         detail = (
             f"{SECPAL_VENDOR_UNAVAILABLE_REASON}: external SecPAL "
-            f"{selected_version} is unavailable on {host_platform}; the "
-            "operator-bound pin has no reviewed immutable checksummed vendor "
-            "artifact or genuine build installer, and the Python "
-            "SecPAL-compatible engine remains shadow-only"
+            f"{selected_version} is unavailable on {host_platform}; "
+            f"prerequisite failures={','.join(prerequisite_reasons)}; the "
+            "Python SecPAL-compatible engine remains shadow-only"
         )
         _announce(f"{tool_id} vendor dependency unavailable: {detail}", on_progress)
         return InstallReceipt(
@@ -3363,7 +3612,7 @@ def _ensure_tool(
             interface=receipt_interface,
             goal_id=receipt_goal,
             task_id=receipt_task,
-            block_reasons=(SECPAL_VENDOR_UNAVAILABLE_REASON,),
+            block_reasons=prerequisite_reasons,
             platform_id=host_platform,
             production_certified=False,
             complete=False,
@@ -3784,6 +4033,7 @@ def describe_authorization_installer() -> dict[str, Any]:
     """Side-effect-free metadata for packaging and discovery."""
 
     registry = default_installer_registry()
+    secpal_prerequisites = secpal_vendor_prerequisite_report()
     entries = []
     for tool_id in EXTERNAL_TOOLS:
         entry = registry.get(tool_id)
@@ -3812,6 +4062,9 @@ def describe_authorization_installer() -> dict[str, Any]:
                     if tool_id == TOOL_SECPAL
                     else ""
                 ),
+                "vendor_prerequisite_report": (
+                    secpal_prerequisites if tool_id == TOOL_SECPAL else None
+                ),
             }
         )
     return {
@@ -3833,6 +4086,7 @@ def describe_authorization_installer() -> dict[str, Any]:
         "tools": entries,
         "souffle_source_archive_sha256": SOUFFLE_SOURCE_ARCHIVE_SHA256,
         "souffle_build_dependencies": dict(SOUFFLE_BUILD_DEPENDENCIES),
+        "secpal_vendor_prerequisite_report": secpal_prerequisites,
         "policy": {
             "never_on_import": True,
             "requires_yes_true": True,
@@ -3846,6 +4100,9 @@ def describe_authorization_installer() -> dict[str, Any]:
             "secpal_python_engine_is_shadow_only": True,
             "secpal_vendor_requires_authentic_immutable_artifact": True,
             "secpal_vendor_supported_platform_is_explicitly_unavailable": True,
+            "secpal_platform_exception_does_not_satisfy_live_readiness": True,
+            "secpal_requires_live_authoritative_vendor_evidence": True,
+            "secpal_vendor_license_claim_requires_artifact_evidence": True,
             "souffle_vendor_requires_native_compilation": True,
             "souffle_vendor_rejects_script_shims": True,
             "souffle_native_build_is_transactional": True,
@@ -3888,6 +4145,16 @@ __all__ = [
     "TOOL_SECPAL",
     "EXTERNAL_TOOLS",
     "SECPAL_VENDOR_UNAVAILABLE_REASON",
+    "SECPAL_OFFICIAL_PROJECT_URL",
+    "SECPAL_OFFICIAL_DOWNLOAD_URL",
+    "SECPAL_OFFICIAL_BINARY_RELEASE_EVIDENCE_URL",
+    "SECPAL_HISTORICAL_VERSION_REFERENCE_URL",
+    "SECPAL_HISTORICAL_RELEASE_VERSION",
+    "SECPAL_UPSTREAM_AUDIT_AS_OF",
+    "SECPAL_UPSTREAM_DISTRIBUTION_STATUS",
+    "SECPAL_VENDOR_INSTALLER_IMPLEMENTED",
+    "SECPAL_VENDOR_PREREQUISITE_SCHEMA",
+    "SECPAL_VENDOR_PREREQUISITE_REASONS",
     "DEFAULT_PINS",
     "SOUFFLE_SOURCE_ARCHIVE_SHA256",
     "SOUFFLE_SOURCE_ARCHIVE_URL",
@@ -3917,6 +4184,7 @@ __all__ = [
     "materialize_vendor_secpal",
     "materialize_vendor_souffle",
     "pin_for_tool",
+    "secpal_vendor_prerequisite_report",
     "supported_platforms_for_tool",
     "tool_supported_on_platform",
 ]

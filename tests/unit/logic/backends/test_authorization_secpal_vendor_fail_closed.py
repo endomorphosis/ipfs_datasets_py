@@ -153,6 +153,37 @@ def test_vendor_materializer_reports_x86_unavailable_without_writes(
     assert not install_root.exists()
 
 
+def test_vendor_prerequisites_expose_real_upstream_legal_and_runtime_gaps(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _network_forbidden(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("offline prerequisite discovery attempted network access")
+
+    monkeypatch.setattr(installer.urllib.request, "urlopen", _network_forbidden)
+    report = installer.secpal_vendor_prerequisite_report()
+
+    assert report["schema_version"] == installer.SECPAL_VENDOR_PREREQUISITE_SCHEMA
+    assert report["ready"] is False
+    assert report["installable"] is False
+    assert report["authoritative_live_evidence_available"] is False
+    assert report["historical_release_version"] == "1.1"
+    assert report["configured_version"] == "1.0.0-reviewed"
+    assert report["official_download_url"].endswith("details.aspx?id=52356")
+    assert report["official_binary_release_evidence_url"].startswith(
+        "https://www.microsoft.com/"
+    )
+    assert report["historical_version_evidence_class"] == (
+        "institutional_secondary_reference"
+    )
+    assert report["upstream_distribution_status"] == "retired"
+    assert report["vendor_installer_implemented"] is False
+    assert report["python_compatible_engine_is_shadow_only"] is True
+    assert report["platform_exception_satisfies_live_readiness"] is False
+    assert set(installer.SECPAL_VENDOR_PREREQUISITE_REASONS) <= set(
+        report["block_reasons"]
+    )
+
+
 def test_x86_vendor_request_rejects_historical_python_vendor_shim(
     tmp_path: Path,
 ) -> None:
@@ -185,8 +216,9 @@ def test_x86_vendor_request_rejects_historical_python_vendor_shim(
     assert receipt.status == "unavailable"
     assert receipt.identity is None
     assert receipt.ok is False
-    assert receipt.block_reasons == (
-        installer.SECPAL_VENDOR_UNAVAILABLE_REASON,
+    assert receipt.block_reasons[0] == installer.SECPAL_VENDOR_UNAVAILABLE_REASON
+    assert set(installer.SECPAL_VENDOR_PREREQUISITE_REASONS) <= set(
+        receipt.block_reasons
     )
     assert receipt.is_vendor_path is True
     assert receipt.installed is False
@@ -213,7 +245,10 @@ def test_arm64_vendor_request_is_explicit_platform_exception(
     assert receipt.status == "unsupported_platform"
     assert receipt.identity is None
     assert receipt.platform_exception is True
-    assert receipt.block_reasons == ("unsupported_platform_exception",)
+    assert receipt.block_reasons[0] == "unsupported_platform_exception"
+    assert set(installer.SECPAL_VENDOR_PREREQUISITE_REASONS) <= set(
+        receipt.block_reasons
+    )
     assert receipt.ok is False
     assert receipt.to_dict()["installed"] is False
 
@@ -249,6 +284,14 @@ def test_installer_discovery_reports_shadow_and_vendor_scopes_separately() -> No
         installer.SECPAL_VENDOR_UNAVAILABLE_REASON
     )
     assert description["policy"]["secpal_python_engine_is_shadow_only"] is True
+    assert (
+        description["policy"]
+        ["secpal_platform_exception_does_not_satisfy_live_readiness"]
+        is True
+    )
+    report = description["secpal_vendor_prerequisite_report"]
+    assert report["ready"] is False
+    assert report["upstream_distribution_status"] == "retired"
 
 
 def test_secpal_vendor_identity_cannot_be_constructed() -> None:
