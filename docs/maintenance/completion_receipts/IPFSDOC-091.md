@@ -7,16 +7,16 @@
 | Title | Refresh root installation and configuration pages |
 | Status | `evidence` |
 | Owner | user-docs (implementation agent) |
-| Goal id | `IPFSDOC-G111` |
+| Goal id | `IPFSDOC-G021` |
 | Track | user-docs |
-| Bundle | documentation / installation-configuration |
-| Attempt | 2 |
-| Measured at (UTC) | 2026-08-03T08:30:51Z |
-| Worktree commit (`HEAD`) | `15149fb7f507ea535a9bfc11f2b2237d60a84a2f` |
-| Worktree commit tree (`HEAD^{tree}`) | `1f802980c480b9cc9bd02d1cfac448910327d11a` |
-| Supervisor tree_id (packet) | `3d8043a6f47e8e23e55cf87707b7e4c69b0de37f` |
+| Bundle | documentation/install-config |
+| Attempt | 3 |
+| Measured at (UTC) | 2026-08-03T08:43:20Z |
+| Worktree commit (`HEAD`) | `e5beb77fbba11b99384027428e319282074a6236` |
+| Worktree commit tree (`HEAD^{tree}`) | `fa5e11a96c0c5be6ba48ff0dab19786431d7c883` |
+| Supervisor tree_id (packet) | `1d7d7ff8a36085a941467c7e2467ae43ec510795` |
 | Objective revision | `baguqeerazrdt3hotny7sgnnurffntds53vy6jntcs6nck5wth6ncp4gb47qa` |
-| Branch | `implementation/ipfsdoc-091-cc473d9dd36e-attempt-2-1785745741` |
+| Branch | `implementation/ipfsdoc-091-cc473d9dd36e-attempt-3-1785746543` |
 | Package version (cited) | `ipfs_datasets_py` **0.2.0** (`requires-python >= 3.12`) |
 | Checkpoint dir | `$IPFS_ACCELERATE_AGENT_TASK_CHECKPOINT_DIR` → `…/implementation_checkpoints/ipfsdoc-091-cc473d9dd36e` |
 | Audience | maintainer, agent, daemon validation gate |
@@ -43,11 +43,12 @@ the validated current tree, command, and result in this completion receipt.
 | --- | --- |
 | `docs/guides/installation/CAPABILITY_INSTALLATION.md` (IPFSDOC-063) | Verified extras, base install, native tools, offline, probes |
 | `docs/guides/installation/CONFIGURATION_REFERENCE.md` (IPFSDOC-063) | Precedence model, env catalog, security, profiles |
-| `pyproject.toml` (`requires-python >=3.12`, optional-dependencies, version 0.2.0) | Packaging truth for extras and Python floor |
-| `setup.py` / README clone URL `endomorphosis/ipfs_datasets_py` | Real org; console scripts; platform markers |
-| Prior stale `docs/installation.md` / `docs/configuration.md` | Replaced content (3.7/3.9, singular extras, placeholders, CUDA 10/11 pins) |
+| `pyproject.toml` (`requires-python >=3.12`, optional-dependencies, version 0.2.0) | Packaging truth for Python floor and pyproject extras |
+| `setup.py` extras_require (includes `web_archive`, platform markers) | Full extra inventory including setup-only keys |
+| README / clone URL `endomorphosis/ipfs_datasets_py` | Real org; no placeholders |
+| Prior attempt-2 root pages + receipt | Re-verified against current tree; content accepted; receipt refreshed |
 | Sibling receipts `IPFSDOC-064`, `IPFSDOC-090`, `IPFSDOC-093` | Receipt shape and validation table pattern |
-| Checkpoint `status.txt` (prior attempt claimed validated) | Inspected; worktree still held stale root pages—reimplemented |
+| Checkpoint `status.txt` (attempt 2 claimed validated on older tree) | Inspected; tree identity advanced—re-recorded on attempt 3 |
 
 Protected plan files under `docs/implementation/plans/IPFS_DATASETS_DOCUMENTATION_REFRESH*` were **not** modified.
 
@@ -57,7 +58,7 @@ Depends-on (IPFSDOC-063) consulted as source only; detailed guides not re-edited
 
 ### `docs/installation.md`
 
-Replaced the long stale guide with a concise **RootInstallationPage@1**:
+Concise **RootInstallationPage@1** (retained and re-verified on attempt 3):
 
 1. Metadata + explicit routes to `CAPABILITY_INSTALLATION` and `CONFIGURATION_REFERENCE`.
 2. **Python 3.12+** requirements; 3.7–3.11 called unsupported.
@@ -71,7 +72,7 @@ Replaced the long stale guide with a concise **RootInstallationPage@1**:
 
 ### `docs/configuration.md`
 
-Replaced sparse env/YAML sketch with a concise **RootConfigurationPage@1**:
+Concise **RootConfigurationPage@1** (retained and re-verified on attempt 3):
 
 1. Metadata + routes to `CONFIGURATION_REFERENCE` and `CAPABILITY_INSTALLATION`.
 2. Precedence model: CLI → env → files → defaults; CLI dashboard table; auto-install security note.
@@ -83,17 +84,18 @@ Replaced sparse env/YAML sketch with a concise **RootConfigurationPage@1**:
 
 ### `docs/maintenance/completion_receipts/IPFSDOC-091.md`
 
-This receipt: validated tree identity, command, pass table, acceptance map.
+This receipt: attempt **3** tree identity, validation command, pass table, acceptance map (goal **IPFSDOC-G021**).
 
 ## Validated current tree
 
 ```text
-HEAD:     15149fb7f507ea535a9bfc11f2b2237d60a84a2f
-Tree:     1f802980c480b9cc9bd02d1cfac448910327d11a
-Subject:  Merge commit '285b6eb825449cbd0eaf55bfa1cc4d0554b93368' into implementation/ipfsdoc-091-cc473d9dd36e-attempt-2-1785745741
-Committer date: 2026-08-03 08:29:02 +0000
-Branch:   implementation/ipfsdoc-091-cc473d9dd36e-attempt-2-1785745741
+HEAD:     e5beb77fbba11b99384027428e319282074a6236
+Tree:     fa5e11a96c0c5be6ba48ff0dab19786431d7c883
+Subject:  Merge commit '0115b99a760df754d6d26d7bf51411f659933fc8' into implementation/ipfsdoc-083-e80fdd41fa32-attempt-2-1785746061
+Committer date: 2026-08-03 08:34:22 +0000
+Branch:   implementation/ipfsdoc-091-cc473d9dd36e-attempt-3-1785746543
 Package:  ipfs_datasets_py 0.2.0, requires-python >=3.12
+Packet tree_id (supervisor): 1d7d7ff8a36085a941467c7e2467ae43ec510795
 ```
 
 Commands used for identity:
@@ -106,8 +108,9 @@ git branch --show-current
 ```
 
 Note: `HEAD` / tree above are the worktree base at measurement time (pre-daemon
-commit of these documentation outputs). Content SHAs of the three declared
-output files are recorded in the Declared outputs table.
+commit of these documentation outputs). Content SHAs of the declared route pages
+are recorded in the Declared outputs table. Supervisor `tree_id` is recorded for
+packet correlation; worktree `HEAD^{tree}` is the measured git object.
 
 ## Validation command and result
 
@@ -131,7 +134,7 @@ test -s docs/installation.md && test -s docs/configuration.md && test -s docs/ma
 
 | Token | Present in `docs/installation.md` | Present in `docs/configuration.md` |
 | --- | --- | --- |
-| Python 3.12 | yes | (via related install route; required set covered across both files) |
+| Python 3.12 | yes | (install route linked; required set covered across both files) |
 | CAPABILITY_INSTALLATION | yes | yes |
 | CONFIGURATION_REFERENCE | yes | yes |
 | optional | yes | yes |
@@ -157,7 +160,7 @@ test -s docs/installation.md && test -s docs/configuration.md && test -s docs/ma
 - Root route pages do not outrank packaging (`pyproject.toml` / `setup.py`), tests, or the detailed CAPABILITY_INSTALLATION / CONFIGURATION_REFERENCE guides when they disagree.
 - No production code, packaging, or protected plan files were changed.
 - Daemon commit/merge remains subject to the supervisor validation gate.
-- Prior checkpoint `status=validated` did not match worktree content; full rewrite performed on attempt 2.
+- Attempt-2 checkpoint (`status=validated`, tree `1f802980…`) was for a prior worktree base; attempt 3 re-verified content and re-recorded identity for the current worktree.
 
 ## Re-run recipe
 
