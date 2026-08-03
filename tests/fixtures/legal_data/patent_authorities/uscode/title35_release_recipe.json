@@ -1,0 +1,365 @@
+{
+  "exclusions": [
+    {
+      "affects_sections": [],
+      "citation": "Pub. L. 118-100 § 3",
+      "kind": "uncodified_slip_law",
+      "public_law": "Pub. L. 118-100",
+      "reason": "Enacted patent-fee adjustment not yet classified into positive-law Title 35 at this release point."
+    },
+    {
+      "affects_sections": [
+        "122"
+      ],
+      "citation": "Pub. L. 117-328 div. W",
+      "kind": "classification_gap",
+      "public_law": "Pub. L. 117-328",
+      "reason": "Classification table records a pending editorial reclassification affecting cross-references in Title 35."
+    },
+    {
+      "affects_sections": [
+        "181",
+        "182",
+        "183",
+        "184",
+        "185",
+        "186",
+        "187",
+        "188"
+      ],
+      "citation": "Uncodified national-security notice schedule",
+      "kind": "positive_law_pending",
+      "reason": "Agency secrecy-order implementing schedule published as uncodified material; not part of 35 U.S.C. 181–188 text."
+    }
+  ],
+  "fixture_id": "title35-uspl-118-45",
+  "notes": "Compact Title 35 release-point recipe. Exact release point and uncodified/classification exclusions are recorded; sections 122 and 181–188 resolve with format-independent stable identities.",
+  "release": {
+    "congress": 118,
+    "content_sha256": "b4e6cec9e2fccdbd121e71bcce2170db40d1866cc9a0238a0c32dcc6b1698370",
+    "edition": "olrc-us-pl-118-45",
+    "formats": {
+      "html": {
+        "artifact_sha256": "0cc4ba6cd81dcd6310a5eff64343fd4fe5f938be6195fe654e2bf4b81f429265",
+        "format": "html",
+        "media_type": "text/html",
+        "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+        "upstream_package_id": "us/pl/118/45"
+      },
+      "uslm": {
+        "artifact_sha256": "b4e6cec9e2fccdbd121e71bcce2170db40d1866cc9a0238a0c32dcc6b1698370",
+        "format": "uslm",
+        "media_type": "application/uslm+xml",
+        "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+        "upstream_package_id": "us/pl/118/45"
+      }
+    },
+    "provider": "ushouse",
+    "release": "45",
+    "release_point": "us/pl/118/45",
+    "retrieved_at": "2024-09-15T14:00:00Z",
+    "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+    "title": "35"
+  },
+  "schema_version": "uscode-release-fixture-v1",
+  "sections": [
+    {
+      "citation": "35 U.S.C. § 122",
+      "formats": {
+        "html": {
+          "artifact_sha256": "345df84d0f3eaf96e5dbf35dea14492b6ae9a4d1f6b6bdc690ad67a62696ed1d",
+          "byte_size": 1122,
+          "format": "html",
+          "media_type": "text/html",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "pdf": {
+          "artifact_sha256": "d5866e799ce6ed6da8c1507b8f6db178ba2cca9d0213a554c4ef9f0109503515",
+          "byte_size": 1132,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/pdf_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "uslm": {
+          "artifact_sha256": "b04e192a759ea1fa5de8d999c1b227439462c9cbfc154d19ebfc3cba6e805c56",
+          "byte_size": 1122,
+          "format": "uslm",
+          "media_type": "application/uslm+xml",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        }
+      },
+      "heading": "Confidential status of applications; publication of patent applications",
+      "section": "122",
+      "text_excerpt": "(a) Except as provided in subsection (b), applications for patents shall be kept in confidence by the Patent and Trademark Office...",
+      "title": "35"
+    },
+    {
+      "citation": "35 U.S.C. § 181",
+      "formats": {
+        "html": {
+          "artifact_sha256": "b739f0f224e3630512d99db21a58903b354e93d13023efa81f1cb3b42363024a",
+          "byte_size": 1181,
+          "format": "html",
+          "media_type": "text/html",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "pdf": {
+          "artifact_sha256": "9718c1de6c7a2ead33304d2b55995357dcf21ee1f9fce423b56aadb1e7b8aee0",
+          "byte_size": 1191,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/pdf_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "uslm": {
+          "artifact_sha256": "25934081cab56667a09535f75e4e2b06d71d12ce09dbe32cc8088dd1040882ff",
+          "byte_size": 1181,
+          "format": "uslm",
+          "media_type": "application/uslm+xml",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        }
+      },
+      "heading": "Secrecy of certain inventions and withholding of patent",
+      "section": "181",
+      "text_excerpt": "Whenever publication or disclosure by the publication of an application or by the grant of a patent...",
+      "title": "35"
+    },
+    {
+      "citation": "35 U.S.C. § 182",
+      "formats": {
+        "html": {
+          "artifact_sha256": "ae1037d024e80e31ec731a299d44e0581147adc787bb3dd518ff641e142a4174",
+          "byte_size": 1182,
+          "format": "html",
+          "media_type": "text/html",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "pdf": {
+          "artifact_sha256": "4e39c0b3421b489cc6e3e354c8ea337760137a67f008306e3423ea766d8fdd8c",
+          "byte_size": 1192,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/pdf_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "uslm": {
+          "artifact_sha256": "d728768cc9308a903644ab70ff33a4c74e540aa98451e7d3396fb1b6f197c048",
+          "byte_size": 1182,
+          "format": "uslm",
+          "media_type": "application/uslm+xml",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        }
+      },
+      "heading": "Abandonment of invention for unauthorized disclosure",
+      "section": "182",
+      "text_excerpt": "[excerpt 35 U.S.C. § 182]",
+      "title": "35"
+    },
+    {
+      "citation": "35 U.S.C. § 183",
+      "formats": {
+        "html": {
+          "artifact_sha256": "6fc5f8a09cb99ac6ed7b5d2fc0fe26d863de74a953b0e4953f3cff6ae298ad23",
+          "byte_size": 1183,
+          "format": "html",
+          "media_type": "text/html",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "pdf": {
+          "artifact_sha256": "6c1d07b29442199457aaa8ae931a9c2e58acd42284901a833f3623d0d9e3e9b4",
+          "byte_size": 1193,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/pdf_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "uslm": {
+          "artifact_sha256": "0a5c6ebd01bd61d057855438f812f07aa6c0c5c275a02f726a11d2ccddda5e6d",
+          "byte_size": 1183,
+          "format": "uslm",
+          "media_type": "application/uslm+xml",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        }
+      },
+      "heading": "Right to compensation",
+      "section": "183",
+      "text_excerpt": "[excerpt 35 U.S.C. § 183]",
+      "title": "35"
+    },
+    {
+      "citation": "35 U.S.C. § 184",
+      "formats": {
+        "html": {
+          "artifact_sha256": "4f987876bd8b7739a3e2a7fcfae60301a261d936097b55a70c50b561126c578e",
+          "byte_size": 1184,
+          "format": "html",
+          "media_type": "text/html",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "pdf": {
+          "artifact_sha256": "ee51cc0417a2107ad47636d6799e10e7b3c1ec513f6fee440578e7d3b40a2557",
+          "byte_size": 1194,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/pdf_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "uslm": {
+          "artifact_sha256": "6a2117c027abfa2ffaa66d01ebed69d92c5c7ea4d074656b37dc78f0771bc240",
+          "byte_size": 1184,
+          "format": "uslm",
+          "media_type": "application/uslm+xml",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        }
+      },
+      "heading": "Filing of application in foreign country",
+      "section": "184",
+      "text_excerpt": "[excerpt 35 U.S.C. § 184]",
+      "title": "35"
+    },
+    {
+      "citation": "35 U.S.C. § 185",
+      "formats": {
+        "html": {
+          "artifact_sha256": "d32b2bd493e9d9bf519ca6e04ab07036b3dfd5459d8f698e216d7cd0591327ce",
+          "byte_size": 1185,
+          "format": "html",
+          "media_type": "text/html",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "pdf": {
+          "artifact_sha256": "ccd5e9cca2fe9c80cc860fc7a760fee43cbfd25384d90a8fca0efedc3e791566",
+          "byte_size": 1195,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/pdf_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "uslm": {
+          "artifact_sha256": "c376ea154bb2c14eeb4413f1a53690c564f58184c090463e43009bc6d3f8ed38",
+          "byte_size": 1185,
+          "format": "uslm",
+          "media_type": "application/uslm+xml",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        }
+      },
+      "heading": "Patent barred for filing without license",
+      "section": "185",
+      "text_excerpt": "[excerpt 35 U.S.C. § 185]",
+      "title": "35"
+    },
+    {
+      "citation": "35 U.S.C. § 186",
+      "formats": {
+        "html": {
+          "artifact_sha256": "2caefd1457e460fa72f47f835ef0f94c1d5c6345c7dd6edcbedf228fe0e2699a",
+          "byte_size": 1186,
+          "format": "html",
+          "media_type": "text/html",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "pdf": {
+          "artifact_sha256": "527645bfe3801629a128043aae0a6d70e364136e2880b753b1e4050a88d2549c",
+          "byte_size": 1196,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/pdf_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "uslm": {
+          "artifact_sha256": "c7b4738bca2b77d4403d14bacf91cfb44bd87c5a5b6c7b1417c3d28738d42282",
+          "byte_size": 1186,
+          "format": "uslm",
+          "media_type": "application/uslm+xml",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        }
+      },
+      "heading": "Penalty",
+      "section": "186",
+      "text_excerpt": "[excerpt 35 U.S.C. § 186]",
+      "title": "35"
+    },
+    {
+      "citation": "35 U.S.C. § 187",
+      "formats": {
+        "html": {
+          "artifact_sha256": "91e2e2eafdcb81821d998fb0799c916ab3ab48950cd9252b4db79bd108d36d9b",
+          "byte_size": 1187,
+          "format": "html",
+          "media_type": "text/html",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "pdf": {
+          "artifact_sha256": "0953dfe48062cc6abcbddb826e96e202fa5eb461bdb4a6967de9ef2d2e12e0a6",
+          "byte_size": 1197,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/pdf_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "uslm": {
+          "artifact_sha256": "135b2b10059323504c21ac33913df132aacdc4927e18cdf872c084b8472b297d",
+          "byte_size": 1187,
+          "format": "uslm",
+          "media_type": "application/uslm+xml",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        }
+      },
+      "heading": "Nonapplicability to certain persons",
+      "section": "187",
+      "text_excerpt": "[excerpt 35 U.S.C. § 187]",
+      "title": "35"
+    },
+    {
+      "citation": "35 U.S.C. § 188",
+      "formats": {
+        "html": {
+          "artifact_sha256": "abcd294e44402f8c515b7a6796345dcfda19089a16fa59b87262342650d35883",
+          "byte_size": 1188,
+          "format": "html",
+          "media_type": "text/html",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/htm_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "pdf": {
+          "artifact_sha256": "59439eed330c9ea5c2ec441bd1ee01a9ffeaf97b4df9ed07f16eb3b69a9f7dd7",
+          "byte_size": 1198,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/pdf_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        },
+        "uslm": {
+          "artifact_sha256": "6b66092a69ccd866b84c2b86dc62a8648446ca34c42bab39d6e9f15249a88eec",
+          "byte_size": 1188,
+          "format": "uslm",
+          "media_type": "application/uslm+xml",
+          "source_url": "https://uscode.house.gov/download/releasepoints/us/pl/118/45/xml_usc35@118-45.zip",
+          "upstream_package_id": "us/pl/118/45"
+        }
+      },
+      "heading": "Rules and regulations, delegation of power",
+      "section": "188",
+      "text_excerpt": "[excerpt 35 U.S.C. § 188]",
+      "title": "35"
+    }
+  ],
+  "title": "35"
+}

@@ -1,0 +1,13 @@
+{
+  "exclusions": [],
+  "fixture_id": "title35-missing-release",
+  "notes": "Release identity deliberately omitted for unknown-status tests.",
+  "release": {
+    "provider": "ushouse",
+    "release_point": null,
+    "title": "35"
+  },
+  "schema_version": "uscode-release-fixture-v1",
+  "sections": [],
+  "title": "35"
+}
