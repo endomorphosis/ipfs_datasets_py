@@ -825,7 +825,7 @@ Program invariants:
 
 ## PATLAW-051 Render the explainable requirement/evidence gap report
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
