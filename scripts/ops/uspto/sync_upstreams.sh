@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# PATLAW-080 / PATLAW-161: Serialized datasets/accelerator upstream synchronization.
+# PATLAW-080 / PATLAW-161 / PATLAW-162: Serialized datasets/accelerator upstream
+# synchronization with schedule-aware program-family locking.
 #
 # Explicit triggers:
 #   startup       — fetch both origins (no integration mutation)
@@ -7,6 +8,13 @@
 #   twice-daily   — isolated worktree integration on clean branches + pair tests
 #   pre-release   — isolated worktree integration for release gate + pair tests
 #   security-fix  — isolated worktree integration for security fix lane + pair tests
+#
+# Schedule slots (PATLAW-162, via install_sync_schedule.py) map onto the triggers
+# above. The schedule engine also owns a wave-boundary slot that maps to
+# twice-daily. All schedule + sync runs share one program-family lock:
+#   $STATE_ROOT/sync.lock  (CROSS_REPO_SYNC_LOCK_PATH)
+# Operator-generated systemd/cron templates are never auto-enabled; activation
+# requires an explicit --activate-templates opt-in.
 #
 # Hard policy (fail-closed):
 #   * dirty or active work aborts WITHOUT mutation
@@ -16,10 +24,12 @@
 #   * no git pull on active worktrees (fetch + isolated merge only)
 #   * accepted receipt binds before/remote/integrated SHAs, capability pin,
 #     test results, trigger and lock identity
+#   * every schedule-driven run produces or references a paired-revision receipt
 #   * NO PUSH occurs under any path
 #
 # Integration (PATLAW-161) is delegated to integrate_upstreams.py.
 # Fetch-only compatibility receipts remain via check_cross_repo_compatibility.py.
+# Recurring schedule install/tick lives in install_sync_schedule.py.
 #
 # Usage:
 #   scripts/ops/uspto/sync_upstreams.sh --trigger <name> [options]
@@ -31,6 +41,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${CROSS_REPO_SYNC_REPO_ROOT:-$SCRIPT_DIR/../../..}" && pwd)"
 CHECKER="${SCRIPT_DIR}/check_cross_repo_compatibility.py"
 INTEGRATOR="${SCRIPT_DIR}/integrate_upstreams.py"
+SCHEDULER="${SCRIPT_DIR}/install_sync_schedule.py"
 PYTHON_BIN="${CROSS_REPO_SYNC_PYTHON:-python3}"
 
 # Defaults — overridable via env or flags.
@@ -40,11 +51,14 @@ ACCELERATOR_PATH="${CROSS_REPO_SYNC_ACCELERATOR_PATH:-$REPO_ROOT/ipfs_accelerate
 _HOME="${HOME:-${TMPDIR:-/tmp}}"
 _XDG_STATE="${XDG_STATE_HOME:-$_HOME/.local/state}"
 STATE_ROOT="${CROSS_REPO_SYNC_STATE_ROOT:-$_XDG_STATE/ipfs_accelerate_py/uspto_submission_assurance/cross_repo_sync}"
+# Program-family lock: shared with install_sync_schedule.py (mutual exclusion).
 LOCK_PATH="${CROSS_REPO_SYNC_LOCK_PATH:-$STATE_ROOT/sync.lock}"
 OUTPUT_PATH="${CROSS_REPO_SYNC_OUTPUT_PATH:-$STATE_ROOT/compatibility_manifest.json}"
 INTEGRATION_OUTPUT_PATH="${CROSS_REPO_INTEGRATE_OUTPUT_PATH:-$STATE_ROOT/paired_revision_receipt.json}"
 ACTIVE_MARKER="${CROSS_REPO_SYNC_ACTIVE_MARKER:-}"
 WORKTREE_ROOT="${CROSS_REPO_INTEGRATE_WORKTREE_ROOT:-$STATE_ROOT/worktrees}"
+# Optional schedule slot name when invoked by install_sync_schedule.py timers.
+SCHEDULE_TRIGGER="${CROSS_REPO_SYNC_SCHEDULE_TRIGGER:-}"
 TRIGGER=""
 DRY_RUN=0
 SKIP_FETCH=0
@@ -60,10 +74,17 @@ fi
 if [[ -n "${CROSS_REPO_SYNC_LOCK_PATH:-}" ]]; then
   LOCK_EXPLICIT=1
 fi
+# Hard deny any accidental push enablement from the environment.
+if [[ "${CROSS_REPO_SYNC_PUSH_ALLOWED:-0}" == "1" || "${CROSS_REPO_SYNC_PUSH_ALLOWED:-0}" == "true" ]]; then
+  echo "ERROR: CROSS_REPO_SYNC_PUSH_ALLOWED must not be enabled" >&2
+  exit 2
+fi
 
 FETCH_ONLY_TRIGGERS=("startup" "eight-hour")
 INTEGRATION_TRIGGERS=("twice-daily" "pre-release" "security-fix")
 ALL_TRIGGERS=("startup" "eight-hour" "twice-daily" "pre-release" "security-fix")
+# Schedule-level slots (PATLAW-162). wave-boundary maps to twice-daily below.
+SCHEDULE_SLOTS=("eight-hour" "twice-daily" "wave-boundary" "pre-release" "security-fix")
 
 timestamp() {
   date -u +"%Y-%m-%dT%H:%M:%SZ"
@@ -94,11 +115,12 @@ Options:
   --datasets-path PATH       Datasets repository path
   --accelerator-path PATH    Accelerator repository path
   --output PATH              Atomic receipt/manifest output path
-  --lock-path PATH           Serialization lock path
+  --lock-path PATH           Program-family serialization lock path
   --state-root PATH          Default state directory for lock/output/worktrees
   --worktree-root PATH       Isolated maintenance worktree root
   --active-marker PATH       If this path exists, abort without mutation
   --repo-root PATH           Repository root for path defaults
+  --schedule-trigger NAME    Schedule slot name (PATLAW-162; optional)
   --dry-run                  Plan + synthetic receipts; no network fetch
   --skip-fetch               Do not git fetch
   --plan-only                Print plan JSON and exit (no mutation)
@@ -110,8 +132,13 @@ Environment:
   CROSS_REPO_SYNC_ACCELERATOR_PATH, CROSS_REPO_SYNC_STATE_ROOT,
   CROSS_REPO_SYNC_LOCK_PATH, CROSS_REPO_SYNC_OUTPUT_PATH,
   CROSS_REPO_SYNC_ACTIVE_MARKER, CROSS_REPO_SYNC_PYTHON,
-  CROSS_REPO_INTEGRATE_OUTPUT_PATH, CROSS_REPO_INTEGRATE_WORKTREE_ROOT,
+  CROSS_REPO_SYNC_SCHEDULE_TRIGGER, CROSS_REPO_INTEGRATE_OUTPUT_PATH,
+  CROSS_REPO_INTEGRATE_WORKTREE_ROOT,
   CROSS_REPO_SYNC_FORCE_ACTIVE=1  (test hook: force active-work abort)
+
+Schedule (PATLAW-162): install_sync_schedule.py generates systemd/cron
+templates only; operator must activate with --activate-templates. All
+schedule and sync runs share one program-family lock and never push.
 
 Policy: never push; never pull on active worktrees; never git submodule
 update --recursive; dirty/active/locked/conflicting/missing-branch aborts
@@ -372,6 +399,10 @@ while [[ $# -gt 0 ]]; do
       PLAN_ONLY=1
       shift
       ;;
+    --schedule-trigger)
+      SCHEDULE_TRIGGER="${2:-}"
+      shift 2
+      ;;
     --list-triggers)
       LIST_TRIGGERS=1
       shift
@@ -393,14 +424,33 @@ print(json.dumps({
   "triggers": ["startup", "eight-hour", "twice-daily", "pre-release", "security-fix"],
   "fetch_only_triggers": ["startup", "eight-hour"],
   "integration_triggers": ["twice-daily", "pre-release", "security-fix"],
+  "schedule_slots": ["eight-hour", "twice-daily", "wave-boundary", "pre-release", "security-fix"],
+  "schedule_to_sync_trigger": {
+    "eight-hour": "eight-hour",
+    "twice-daily": "twice-daily",
+    "wave-boundary": "twice-daily",
+    "pre-release": "pre-release",
+    "security-fix": "security-fix",
+  },
+  "program_family": "uspto-cross-repo-sync",
+  "program_family_lock": "sync.lock",
   "merge_order": ["accelerator", "datasets"],
   "push_allowed": False,
   "active_worktree_pull_allowed": False,
   "recursive_submodules": False,
   "use_isolated_worktrees": True,
+  "operator_activation_required": True,
+  "schedule_installer": "scripts/ops/uspto/install_sync_schedule.py",
 }, indent=2, sort_keys=True))
 PY
   exit 0
+fi
+
+# Schedule slot alias: wave-boundary → twice-daily (integrator contract).
+if [[ "$TRIGGER" == "wave-boundary" ]]; then
+  SCHEDULE_TRIGGER="${SCHEDULE_TRIGGER:-wave-boundary}"
+  TRIGGER="twice-daily"
+  log "schedule_slot_mapped wave-boundary -> twice-daily"
 fi
 
 if [[ -z "$TRIGGER" ]]; then
@@ -410,6 +460,11 @@ fi
 
 if ! is_known_trigger "$TRIGGER"; then
   die "unknown trigger: $TRIGGER (expected: ${ALL_TRIGGERS[*]})"
+fi
+
+if [[ -n "$SCHEDULE_TRIGGER" ]]; then
+  export CROSS_REPO_SYNC_SCHEDULE_TRIGGER="$SCHEDULE_TRIGGER"
+  log "schedule_trigger=$SCHEDULE_TRIGGER sync_trigger=$TRIGGER program_family=uspto-cross-repo-sync"
 fi
 
 if [[ ! -f "$CHECKER" ]]; then
@@ -530,6 +585,8 @@ if is_integration "$TRIGGER"; then
   log "policy push_allowed=false active_worktree_pull_allowed=false recursive_submodules=false fail_closed_on_conflict=true"
   log "merge_order accelerator,datasets use_isolated_worktrees=true"
   log "triggers_explicit startup,eight-hour,twice-daily,pre-release,security-fix"
+  log "program_family=uspto-cross-repo-sync lock=$LOCK_PATH schedule_trigger=${SCHEDULE_TRIGGER:-none}"
+  log "paired_revision_receipt=$out"
   exit "$rc"
 fi
 
@@ -596,5 +653,13 @@ fi
 log "checker_done exit=$rc manifest=$OUTPUT_PATH push_attempted=false recursive_submodule_chase=false"
 log "policy push_allowed=false active_worktree_pull_allowed=false recursive_submodules=false fail_closed_on_conflict=true"
 log "triggers_explicit startup,eight-hour,twice-daily,pre-release,security-fix"
+log "program_family=uspto-cross-repo-sync lock=$LOCK_PATH schedule_trigger=${SCHEDULE_TRIGGER:-none}"
+# Fetch-only paths still reference the latest paired-revision receipt when present
+# so schedule bookkeeping always has a receipt pointer (PATLAW-162).
+if [[ -f "$INTEGRATION_OUTPUT_PATH" ]]; then
+  log "paired_revision_receipt_ref=$INTEGRATION_OUTPUT_PATH"
+else
+  log "paired_revision_receipt_ref=none"
+fi
 
 exit "$rc"
