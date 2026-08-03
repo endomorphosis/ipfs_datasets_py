@@ -1684,7 +1684,7 @@ Program invariants:
 
 ## PATLAW-129 Parse layout-aware office-action semantics v2
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
