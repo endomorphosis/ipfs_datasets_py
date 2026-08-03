@@ -449,7 +449,7 @@ Program invariants:
 
 ## PATLAW-023 Synchronize public file-wrapper document metadata and bytes
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
