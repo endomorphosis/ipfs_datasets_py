@@ -724,7 +724,7 @@ Program invariants:
 
 ## PATLAW-043 Map rejections, claims, statutory bases, and cited references
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
