@@ -99,7 +99,7 @@ Program invariants:
 
 ## PATLAW-005 Make legal and form verification fail closed
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
