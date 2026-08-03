@@ -1734,7 +1734,7 @@ Program invariants:
 
 ## PATLAW-131 Acquire and verify GovInfo, U.S. Code, Public Law, and Federal Register sources
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
