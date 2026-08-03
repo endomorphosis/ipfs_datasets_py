@@ -850,7 +850,7 @@ Program invariants:
 
 ## PATLAW-052 Implement the pre-submission workflow and mandatory human gate
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
