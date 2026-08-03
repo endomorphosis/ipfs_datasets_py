@@ -85,32 +85,27 @@ DEFAULT_MAX_ALTERNATIONS_AUTOHYPER: Final = 2
 DEFAULT_MAX_ALTERNATIONS_MCHYPER: Final = 2
 
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
-_SUCCESS_MARKERS: Final = (
-    "holds",
-    "verified",
-    "satisfied",
-    "sat",
-    "true",
-    "no violation",
-    "property holds",
-    "property proved",
+_UNSUPPORTED_LINES: Final = frozenset(
+    (
+        "unsupported alternation",
+        "unsupported quantifier alternation",
+        "unsupported quantifier",
+        "too many alternations",
+        "quantifier alternation not supported",
+        "fragment not supported",
+        "at most one quantifier alternation, starting with exists, allowed",
+    )
 )
-_VIOLATION_MARKERS: Final = (
-    "violated",
-    "violation",
-    "counterexample",
-    "falsified",
-    "unsat",
-    "does not hold",
-    "property violated",
+_MCHYPER_PROVED_LINE = re.compile(
+    r"^Property proved\.\s+Time\s*=\s*[0-9]+(?:\.[0-9]+)?\s+sec$"
 )
-_UNSUPPORTED_MARKERS: Final = (
-    "unsupported alternation",
-    "unsupported quantifier",
-    "too many alternations",
-    "quantifier alternation not supported",
-    "fragment not supported",
+_MCHYPER_VIOLATION_LINES: Final = frozenset(
+    (
+        "Counterexample found. Safety violation.",
+        "Counterexample found. Liveness involved.",
+    )
 )
+_AUTOHYPER_ERROR_BANNER: Final = "=========== ERROR ==========="
 _NATIVE_SYMBOL = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 
 
@@ -2102,33 +2097,81 @@ class HyperpropertyBackend:
                 HyperCheckOutcomeStatus.ERROR,
                 f"{self.engine.value} run was cancelled",
             )
-        folded = combined.casefold()
-        if any(marker in folded for marker in _UNSUPPORTED_MARKERS):
+        lines = tuple(
+            line.strip() for line in combined.splitlines() if line.strip()
+        )
+        folded_lines = {line.casefold() for line in lines}
+        if folded_lines & _UNSUPPORTED_LINES:
             return (
                 HyperCheckOutcomeStatus.UNSUPPORTED,
                 f"{self.engine.value} reported unsupported quantifier/fragment",
-            )
-        if any(marker in folded for marker in _VIOLATION_MARKERS):
-            return (
-                HyperCheckOutcomeStatus.VIOLATED,
-                f"{self.engine.value} reported a hyperproperty violation",
-            )
-        if process.returncode == 0 and any(
-            marker in folded for marker in _SUCCESS_MARKERS
-        ):
-            return (
-                HyperCheckOutcomeStatus.SATISFIED,
-                f"{self.engine.value} reported the hyperproperty holds under its model",
-            )
-        if process.returncode not in (0, None) and not combined.strip():
-            return (
-                HyperCheckOutcomeStatus.ERROR,
-                f"{self.engine.value} exited with code {process.returncode}",
             )
         if process.output_truncated:
             return (
                 HyperCheckOutcomeStatus.UNKNOWN,
                 f"{self.engine.value} output was truncated before a verdict",
+            )
+        if process.returncode != 0:
+            return (
+                HyperCheckOutcomeStatus.ERROR,
+                f"{self.engine.value} exited with code {process.returncode}",
+            )
+
+        diagnostic = False
+        satisfied = False
+        violated = False
+        if self.engine is HyperEngine.HYPERLTL:
+            # EAHyper's non-verbose satisfiability mode emits one exact,
+            # lowercase token.  Formula text and diagnostics are deliberately
+            # not searched for verdict substrings.
+            satisfied = "sat" in lines
+            violated = "unsat" in lines
+        elif self.engine is HyperEngine.AUTOHYPER:
+            # AutoHyper's reviewed CLI contract terminates with an uppercase
+            # SAT/UNSAT line and prints a conspicuous error banner on caught
+            # exceptions (which otherwise still exit zero).
+            diagnostic = _AUTOHYPER_ERROR_BANNER in lines
+            satisfied = "SAT" in lines
+            violated = "UNSAT" in lines
+        else:
+            # MCHyper passes ABC's anchored success line through at -v 1 and
+            # emits one of two exact counterexample lines itself.
+            diagnostic = any(
+                line.startswith(
+                    (
+                        "Error:",
+                        "Error (",
+                        "Tool error:",
+                        "Parsing error ",
+                    )
+                )
+                for line in lines
+            )
+            satisfied = any(
+                _MCHYPER_PROVED_LINE.fullmatch(line) is not None
+                for line in lines
+            )
+            violated = bool(set(lines) & _MCHYPER_VIOLATION_LINES)
+
+        if diagnostic:
+            return (
+                HyperCheckOutcomeStatus.ERROR,
+                f"{self.engine.value} emitted a reviewed error diagnostic",
+            )
+        if satisfied and violated:
+            return (
+                HyperCheckOutcomeStatus.UNKNOWN,
+                f"{self.engine.value} emitted conflicting verdict tokens",
+            )
+        if violated:
+            return (
+                HyperCheckOutcomeStatus.VIOLATED,
+                f"{self.engine.value} reported a hyperproperty violation",
+            )
+        if satisfied:
+            return (
+                HyperCheckOutcomeStatus.SATISFIED,
+                f"{self.engine.value} reported the hyperproperty holds under its model",
             )
         return (
             HyperCheckOutcomeStatus.UNKNOWN,

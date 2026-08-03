@@ -16,7 +16,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.logic.backends.hyperproperties.adapters import (
     AUTOHYPER_BACKEND_VERSION,
     AUTOHYPER_CAPABILITY,
@@ -403,7 +402,7 @@ def test_render_preserves_alternating_quantifier_order():
 def test_engine_success_is_hyperproperty_authority_not_theorem():
     document = _document()
     backend = HyperLTLBackend(
-        runner=_process_runner("property holds\nverified\n"),
+        runner=_process_runner("sat\n"),
         which=lambda name: "/bin/hyperltl" if name == "hyperltl" else None,
         executable="/bin/hyperltl",
     )
@@ -461,7 +460,7 @@ DIFF field=status left=ok right=leak
 
 def test_engine_violation_attaches_replayed_witness_bundle():
     counterexample = """\
-violated
+unsat
 TRACE pi1:
   public.user_id = alice
   obs.status = ok
@@ -472,7 +471,7 @@ DIFF field=status left=ok right=leak
 """
     document = _document()
     backend = HyperLTLBackend(
-        runner=_process_runner(counterexample, returncode=1),
+        runner=_process_runner(counterexample),
         executable="/bin/hyperltl",
     )
     outcome = backend.check(document)
@@ -493,7 +492,7 @@ def test_autohyper_uses_explicit_system_auxiliary_and_argv():
         invocations.append(invocation)
         return RawProcessResult(
             returncode=0,
-            stdout="sat\n",
+            stdout="SAT\n",
             elapsed_seconds=0.01,
         )
 
@@ -555,7 +554,11 @@ def test_vendor_identity_runtime_environment_and_native_cli_are_consumed(
         assert (invocation.cwd / "property.hltl").is_file()
         return RawProcessResult(
             returncode=0,
-            stdout="SAT\n",
+            stdout=(
+                "SAT\n"
+                if engine is HyperEngine.AUTOHYPER
+                else "sat\n"
+            ),
             elapsed_seconds=0.01,
         )
 
@@ -663,6 +666,110 @@ def test_mchyper_requires_aiger_and_uses_native_cli_contract():
         "-v",
         "1",
     )
+
+
+@pytest.mark.parametrize(
+    "output",
+    (
+        "satisfiability result unknown\n",
+        "no counterexample found\n",
+        "the property is not unsat\n",
+    ),
+)
+def test_diagnostic_substrings_do_not_become_hyperltl_verdicts(
+    output: str,
+) -> None:
+    backend = HyperLTLBackend(
+        runner=_process_runner(output),
+        executable="/bin/hyperltl",
+    )
+
+    outcome = backend.check(_document())
+
+    assert outcome.result.status is ResultStatus.UNKNOWN
+    assert outcome.receipt.status is HyperCheckOutcomeStatus.UNKNOWN
+
+
+def test_no_counterexample_diagnostic_is_not_mchyper_violation() -> None:
+    backend = MCHyperBackend(
+        runner=_process_runner("no counterexample found\n"),
+        executable="/bin/mchyper",
+    )
+
+    outcome = backend.check(
+        _document(), system_model="aag 0 0 0 0 0\n"
+    )
+
+    assert outcome.result.status is ResultStatus.UNKNOWN
+    assert outcome.receipt.status is HyperCheckOutcomeStatus.UNKNOWN
+
+
+def test_conflicting_exact_eahyper_tokens_are_unknown() -> None:
+    backend = HyperLTLBackend(
+        runner=_process_runner("sat\nunsat\n"),
+        executable="/bin/hyperltl",
+    )
+
+    outcome = backend.check(_document())
+
+    assert outcome.result.status is ResultStatus.UNKNOWN
+    assert "conflicting verdict tokens" in outcome.receipt.reason
+
+
+def test_autohyper_error_banner_overrides_exact_sat_token() -> None:
+    backend = AutoHyperBackend(
+        runner=_process_runner(
+            "=========== ERROR ===========\n"
+            "SAT\n"
+            "=============================\n"
+        ),
+        executable="/bin/AutoHyper",
+    )
+
+    outcome = backend.check(_document())
+
+    assert outcome.result.status is ResultStatus.ERROR
+    assert outcome.receipt.status is HyperCheckOutcomeStatus.ERROR
+
+
+@pytest.mark.parametrize(
+    ("backend", "output", "system_model"),
+    (
+        (
+            AutoHyperBackend,
+            "UNSAT\n",
+            None,
+        ),
+        (
+            MCHyperBackend,
+            "Counterexample found. Safety violation.\n",
+            "aag 0 0 0 0 0\n",
+        ),
+    ),
+)
+def test_engine_specific_native_violation_lines_are_recognized(
+    backend,
+    output: str,
+    system_model: str | None,
+) -> None:
+    trace = """\
+TRACE pi1:
+  public.user_id = alice
+  obs.status = ok
+TRACE pi2:
+  public.user_id = alice
+  obs.status = leak
+DIFF field=status left=ok right=leak
+"""
+    checker = backend(
+        runner=_process_runner(output + trace),
+        executable="/bin/reviewed-hyper-engine",
+    )
+
+    outcome = checker.check(_document(), system_model=system_model)
+
+    assert outcome.result.status is ResultStatus.VIOLATED
+    assert outcome.receipt.status is HyperCheckOutcomeStatus.VIOLATED
 
 
 # ---------------------------------------------------------------------------

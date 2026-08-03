@@ -46,7 +46,7 @@ import tarfile
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from types import MappingProxyType
 from typing import Any, Final
 from urllib.parse import urlparse
@@ -513,6 +513,18 @@ class EngineIdentity:
             raise HyperpropertyInstallerError(
                 "vendor builds cannot be labeled hermetic engines"
             )
+        if self.executable_origin:
+            origin = PurePosixPath(self.executable_origin)
+            if (
+                origin.is_absolute()
+                or self.executable_origin != origin.as_posix()
+                or any(part in {".", ".."} for part in origin.parts)
+                or "\\" in self.executable_origin
+            ):
+                raise HyperpropertyInstallerError(
+                    "executable_origin must be a canonical relative path "
+                    "without traversal"
+                )
         if self.is_vendor_build:
             if not self.is_upstream_build:
                 raise HyperpropertyInstallerError(
@@ -1124,16 +1136,25 @@ def _trace_names(text: str) -> list[str]:
 
 
 def _emit_satisfied() -> int:
-    sys.stdout.write("property holds\nverified\nsatisfied\n")
+    verdict_lines = {{
+        "hyperltl": "sat",
+        "autohyper": "SAT",
+        "mchyper": "Property proved. Time = 0.00 sec",
+    }}
+    sys.stdout.write(verdict_lines[TOOL_ID] + "\n")
     return 0
 
 
 def _emit_violated(obs_fields: list[str], names: list[str]) -> int:
     field = obs_fields[0] if obs_fields else "status"
     left, right = names[0], names[1]
+    verdict_lines = {{
+        "hyperltl": "unsat",
+        "autohyper": "UNSAT",
+        "mchyper": "Counterexample found. Safety violation.",
+    }}
     lines = [
-        "violated",
-        "counterexample",
+        verdict_lines[TOOL_ID],
         f"TRACE {{left}}:",
         "  public.user_id = alice",
         f"  obs.{{field}} = ok",
@@ -1157,7 +1178,7 @@ def _emit_violated(obs_fields: list[str], names: list[str]) -> int:
         Path("witness.txt").write_text(body, encoding="utf-8")
     except OSError:
         pass
-    return 1
+    return 0
 
 
 def _default_verdict(text: str) -> str:
@@ -2028,13 +2049,37 @@ def _identity_from_disk(
     vendor: bool = False,
 ) -> EngineIdentity | None:
     version = pin["version"]
-    manifest = identity_manifest_path(
-        install_root, tool_id, version, vendor=vendor
+    # The identity file is part of the authority boundary.  Never follow a
+    # symlinked install root, lane component, or manifest: doing so would let a
+    # writable file outside the managed tree impersonate a pinned install.
+    lexical_install_root = Path(
+        os.path.abspath(os.path.expanduser(str(install_root)))
     )
-    if not manifest.is_file():
+    try:
+        active_install_root = lexical_install_root.resolve(strict=True)
+    except OSError:
+        return None
+    if active_install_root != lexical_install_root:
+        return None
+    manifest = identity_manifest_path(
+        lexical_install_root, tool_id, version, vendor=vendor
+    )
+    try:
+        resolved_manifest = manifest.resolve(strict=True)
+    except OSError:
+        return None
+    if (
+        manifest.is_symlink()
+        or resolved_manifest != manifest
+        or not resolved_manifest.is_file()
+    ):
         return None
     try:
-        payload = json.loads(manifest.read_text(encoding="utf-8"))
+        resolved_manifest.relative_to(active_install_root)
+    except ValueError:
+        return None
+    try:
+        payload = json.loads(resolved_manifest.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
     if not isinstance(payload, dict):
@@ -2043,7 +2088,6 @@ def _identity_from_disk(
     version = str(payload.get("version") or version)
     if version != pin["version"] or payload.get("tool_id") != tool_id:
         return None
-    active_install_root = install_root.resolve()
     recorded_install_root_raw = str(payload.get("install_root") or "")
     recorded_install_root = (
         Path(os.path.expanduser(recorded_install_root_raw)).resolve()
@@ -2052,8 +2096,18 @@ def _identity_from_disk(
     )
     declared_executable = str(payload.get("executable") or "")
     executable_origin = str(payload.get("executable_origin") or "")
-    if vendor and executable_origin:
-        exe = manifest.parent / executable_origin
+    origin_path: PurePosixPath | None = None
+    if executable_origin:
+        origin_path = PurePosixPath(executable_origin)
+        if (
+            origin_path.is_absolute()
+            or executable_origin != origin_path.as_posix()
+            or any(part in {".", ".."} for part in origin_path.parts)
+            or "\\" in executable_origin
+        ):
+            return None
+    if vendor and origin_path is not None:
+        exe = resolved_manifest.parent.joinpath(*origin_path.parts)
     elif declared_executable:
         try:
             exe = _rebind_common_tree_path(
@@ -2108,12 +2162,12 @@ def _identity_from_disk(
             or _is_internal_python_adapter(resolved_exe)
         ):
             return None
-        version_root = manifest.parent.resolve()
+        version_root = resolved_manifest.parent
         if version_root not in resolved_exe.parents:
             return None
         if (
-            not executable_origin
-            or (version_root / executable_origin).resolve() != resolved_exe
+            origin_path is None
+            or version_root.joinpath(*origin_path.parts).resolve() != resolved_exe
         ):
             return None
         meta = _vendor_meta_for_tool(tool_id, pin)

@@ -626,6 +626,83 @@ def test_tampered_upstream_executable_is_not_reused(
     )
 
 
+def test_symlinked_external_identity_manifest_is_not_reused(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, hp.TOOL_HYPERLTL
+    )
+    manifest = hp.identity_manifest_path(
+        install_root,
+        identity.tool_id,
+        identity.version,
+        vendor=True,
+    )
+    external_manifest = tmp_path / "outside-managed-tree" / "identity.json"
+    external_manifest.parent.mkdir()
+    external_manifest.write_bytes(manifest.read_bytes())
+    manifest.unlink()
+    manifest.symlink_to(external_manifest)
+
+    assert (
+        hp._identity_from_disk(
+            identity.tool_id, install_root, pin, vendor=True
+        )
+        is None
+    )
+
+
+def test_symlinked_install_root_is_not_a_canonical_managed_identity(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, hp.TOOL_HYPERLTL
+    )
+    install_alias = tmp_path / "install-alias"
+    install_alias.symlink_to(install_root, target_is_directory=True)
+
+    assert (
+        hp._identity_from_disk(
+            identity.tool_id, install_alias, pin, vendor=True
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize("origin_kind", ("absolute", "traversal"))
+def test_non_relative_or_traversal_executable_origin_is_not_reused(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    origin_kind: str,
+) -> None:
+    identity, install_root, pin = _install_synthetic_upstream(
+        monkeypatch, tmp_path, hp.TOOL_HYPERLTL
+    )
+    manifest = hp.identity_manifest_path(
+        install_root,
+        identity.tool_id,
+        identity.version,
+        vendor=True,
+    )
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    if origin_kind == "absolute":
+        payload["executable_origin"] = identity.executable
+    else:
+        payload["executable_origin"] = (
+            f"../{identity.version}/{payload['executable_origin']}"
+        )
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert (
+        hp._identity_from_disk(
+            identity.tool_id, install_root, pin, vendor=True
+        )
+        is None
+    )
+
+
 def test_tampered_mchyper_dependency_artifact_is_not_reused(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
