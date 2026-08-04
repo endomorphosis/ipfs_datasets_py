@@ -272,7 +272,7 @@ def test_ensure_apalache_without_yes_does_not_install(monkeypatch: pytest.Monkey
     assert called["download"] is False
 
 
-def test_lazy_installer_refuses_declared_gap_providers(
+def test_lazy_installer_refuses_gap_without_reviewed_runtime_installer(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", "1")
@@ -282,9 +282,9 @@ def test_lazy_installer_refuses_declared_gap_providers(
     def progress(event: lazy_installer.ProverInstallEvent) -> None:
         events.append(event.phase)
 
-    assert lazy_installer.lazy_install_prover("hyperltl", progress=progress) is False
+    assert lazy_installer.lazy_install_prover("zkp-circuit", progress=progress) is False
     assert "blocked" in events
-    assert "hyperltl" in lazy_installer.declared_install_gap_providers()
+    assert "zkp_circuit" in lazy_installer.declared_install_gap_providers()
 
 
 def test_lazy_install_disabled_by_default_and_import_context_blocks(

@@ -42,32 +42,33 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .ergoai_wrapper import (
-        ErgoAIWrapper,
         ERGOAI_AVAILABLE,
         ERGOAI_SUBMODULE_PATH,
+        ErgoAIWrapper,
+        ergoai_available,
         resolve_ergo_binary,
     )
-    from .flogic_types import (
-        FLogicStatus,
-        FLogicFrame,
-        FLogicClass,
-        FLogicQuery,
-        FLogicOntology,
-    )
     from .flogic_proof_cache import (
-        FLogicCachedQueryResult,
         CachedErgoAIWrapper,
+        FLogicCachedQueryResult,
         get_global_cached_wrapper,
+    )
+    from .flogic_types import (
+        FLogicClass,
+        FLogicFrame,
+        FLogicOntology,
+        FLogicQuery,
+        FLogicStatus,
     )
     from .flogic_zkp_integration import (
         FLogicProvingMethod,
-        ZKPFLogicResult,
         ZKPFLogicProver,
+        ZKPFLogicResult,
     )
     from .semantic_normalizer import (
+        DEFAULT_SYNONYM_MAP,
         SemanticNormalizer,
         get_global_normalizer,
-        DEFAULT_SYNONYM_MAP,
     )
 
 __all__ = [
@@ -75,6 +76,7 @@ __all__ = [
     "ErgoAIWrapper",
     "ERGOAI_AVAILABLE",
     "ERGOAI_SUBMODULE_PATH",
+    "ergoai_available",
     "resolve_ergo_binary",
     # F-logic types
     "FLogicStatus",
@@ -100,6 +102,7 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "ErgoAIWrapper": (".ergoai_wrapper", "ErgoAIWrapper"),
     "ERGOAI_AVAILABLE": (".ergoai_wrapper", "ERGOAI_AVAILABLE"),
     "ERGOAI_SUBMODULE_PATH": (".ergoai_wrapper", "ERGOAI_SUBMODULE_PATH"),
+    "ergoai_available": (".ergoai_wrapper", "ergoai_available"),
     "resolve_ergo_binary": (".ergoai_wrapper", "resolve_ergo_binary"),
     "FLogicStatus": (".flogic_types", "FLogicStatus"),
     "FLogicFrame": (".flogic_types", "FLogicFrame"),

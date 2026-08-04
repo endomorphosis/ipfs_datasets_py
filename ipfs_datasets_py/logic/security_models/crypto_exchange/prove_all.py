@@ -5,16 +5,21 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from .assumption_registry import evaluate_assumption_registry
-from .claims.base import SecurityClaim
 from .claims import default_claims
+from .claims.base import SecurityClaim
 from .extractors import SourceCodeExtractor
 from .ir.cid import calculate_model_cid
 from .ir.examples import example_minimal_exchange_model
-from .ir.schema import DEFAULT_ASSUMPTION_REGISTRY, SecurityModelIR, evidence_review_statuses, validate_ir
+from .ir.schema import (
+    DEFAULT_ASSUMPTION_REGISTRY,
+    SecurityModelIR,
+    evidence_review_statuses,
+    validate_ir,
+)
 from .release_policy import evaluate_release_policy
 from .reports.proof_receipt import ProofReceipt
 from .reports.proof_report import (
@@ -218,9 +223,9 @@ def _execution_policy_violations(
     if require_real_ergoai and flogic_mode == 'simulated':
         violations.append('simulated F-logic dependencies are forbidden for this proof run')
     if require_real_ergoai and flogic_mode in {'required', 'real'}:
-        from ipfs_datasets_py.logic.flogic.ergoai_wrapper import ERGOAI_AVAILABLE
+        from ipfs_datasets_py.logic.flogic.ergoai_wrapper import ergoai_available
 
-        if not ERGOAI_AVAILABLE:
+        if not ergoai_available():
             violations.append(
                 'real ErgoAI was required, but the model metadata indicates an F-logic dependency without an available ErgoAI binary'
             )

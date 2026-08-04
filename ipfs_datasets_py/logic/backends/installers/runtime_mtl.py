@@ -1000,8 +1000,16 @@ def resolve_vendor_package_root(
     alt = datasets / "typescript" / "logic-runtime-mtl"
     if alt.is_dir():
         return alt.resolve()
+    # Wheels carry the reviewed build inputs under the Python package because
+    # the source-checkout-level ``typescript/`` directory is not otherwise a
+    # wheel package.  Prefer checkout paths above so development and release
+    # certification continue to bind the canonical source tree.
+    packaged = Path(__file__).resolve().parents[3] / "_vendor" / "logic-runtime-mtl"
+    if packaged.is_dir():
+        return packaged.resolve()
     raise RuntimeMTLInstallerError(
-        f"vendor TypeScript package not found at {VENDOR_PACKAGE_RELATIVE}"
+        "vendor TypeScript package not found in the source checkout or "
+        "installed wheel"
     )
 
 
