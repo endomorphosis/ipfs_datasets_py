@@ -163,7 +163,9 @@ class ApplicationStatusSnapshot:
         object.__setattr__(
             self,
             "entity_status",
-            _optional_str(self.entity_status, "entity_status", max_len=64),
+            # ODP businessEntityStatusCategory values are short labels but can
+            # exceed 64 chars when upstream adds qualifiers; keep a safe ceiling.
+            _optional_str(self.entity_status, "entity_status", max_len=128),
         )
         object.__setattr__(
             self,

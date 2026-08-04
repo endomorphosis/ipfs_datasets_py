@@ -1542,8 +1542,28 @@ def normalize_status_from_meta(
     for key, value in meta.items():
         raw_fields[str(key)] = _stringify_raw(value)
 
-    entity = meta.get("entityStatusData") or meta.get("businessEntityStatusCategory")
-    entity_status = None if entity is None or entity == "" else str(entity)
+    # ODP often returns entityStatusData as a structured object, e.g.
+    # {"smallEntityStatusIndicator": false, "businessEntityStatusCategory": "..."}.
+    # Never str(dict) into entity_status — that exceeds snapshot bounds and loses
+    # the category. Prefer the explicit category / indicator fields.
+    entity = meta.get("entityStatusData")
+    entity_status: str | None = None
+    if isinstance(entity, Mapping):
+        category = entity.get("businessEntityStatusCategory")
+        if category is not None and str(category).strip():
+            entity_status = str(category).strip()
+        elif entity.get("microEntityStatusIndicator") is True:
+            entity_status = "Micro"
+        elif entity.get("smallEntityStatusIndicator") is True:
+            entity_status = "Small"
+        elif entity.get("smallEntityStatusIndicator") is False:
+            entity_status = "Regular Undiscounted"
+    elif entity is not None and entity != "":
+        entity_status = str(entity).strip() or None
+    if entity_status is None:
+        fallback = meta.get("businessEntityStatusCategory")
+        if fallback is not None and str(fallback).strip():
+            entity_status = str(fallback).strip()
 
     as_of = _coerce_source_utc(
         meta.get("applicationStatusDate")

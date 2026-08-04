@@ -38,17 +38,32 @@
       "import_user_supplied_payment_receipt",
       "compare_original_docx_to_converted_pdf",
       "prepare_local_review_package",
-      "produce_human_review_checklist"
+      "produce_human_review_checklist",
+      "discover_public_odp",
+      "sync_public_status",
+      "sync_public_documents",
+      "build_export_manifest_from_folder",
+      "import_user_authorized_export",
+      "attended_browser_export_with_human_login",
+      "watch_download_folder"
     ],
     "forbidden": [
       "scrape_authenticated_patent_center",
+      "unattended_patent_center_scrape",
       "store_credentials_or_cookies",
       "bypass_mfa",
+      "automate_mfa",
+      "network_login_with_password",
       "apply_signature",
       "pay_fee",
       "perform_final_submission",
       "automatically_file_ids",
-      "read_browser_profile_or_session_storage"
+      "read_browser_password_manager"
+    ],
+    "notes": [
+      "Attended browser export requires a natural person to complete login/MFA in a headed browser; the helper may navigate and capture downloads but must not type passwords or MFA codes.",
+      "Persistent browser profiles may retain USPTO session cookies on disk under operator control; they must never be committed to git or uploaded to public sinks.",
+      "Reading an existing browser profile only for attended export is operator-local; unattended session replay remains forbidden."
     ]
   },
   "invariants": [

@@ -54,7 +54,10 @@ inside an active lane or co-launch another program over this state namespace.
 Read-only fetch can occur at the reviewed intervals, but integration is a
 separate serialized, checkpointed operator maintenance event; implementation
 lanes do not pull. Patent Center remains authorized user export/import only—
-never login, MFA, signature, payment, or filing automation.
+never unattended login, MFA bypass, signature, payment, or filing automation.
+Operator portfolio helpers (public ODP discover/refresh + attended human-login
+export → import-private) live under `scripts/ops/uspto/portfolio_cli.py` and
+`docs/operations/USPTO_PORTFOLIO_AUTOMATION.md`.
 
 To stop this program, send `TERM` only to the exact live PIDs recorded under
 `$PATLAW_STATE_ROOT/shards/*/supervisor.pid` (or the default state root), then
