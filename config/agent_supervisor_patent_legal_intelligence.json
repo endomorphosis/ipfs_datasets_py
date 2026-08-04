@@ -47,7 +47,9 @@
     "max_task_attempts": 4,
     "merge_reconciliation_max_merges": 1,
     "strict_task_sharding": true,
-    "reviewed_board_execution_only": true
+    "reviewed_board_execution_only": true,
+    "post_completion_ops_refill": true,
+    "post_completion_ops_catalog": "data/agent_supervisor/patent_legal_intelligence/bundles/post_completion_ops_catalog.json"
   },
   "health": {
     "maximum_heartbeat_age_seconds": 120,
@@ -71,7 +73,8 @@
     "data/agent_supervisor/patent_legal_intelligence/bundles/launch_recipe.json",
     "data/agent_supervisor/patent_legal_intelligence/bundles/private_boundary_policy.json",
     "data/agent_supervisor/patent_legal_intelligence/bundles/protected_paths.json",
-    "data/agent_supervisor/patent_legal_intelligence/bundles/source_authority_policy.json"
+    "data/agent_supervisor/patent_legal_intelligence/bundles/source_authority_policy.json",
+    "data/agent_supervisor/patent_legal_intelligence/bundles/post_completion_ops_catalog.json"
   ],
   "lane_slices": {
     "0": [
@@ -101,7 +104,8 @@
       "PATLAW-152",
       "PATLAW-156",
       "PATLAW-160",
-      "PATLAW-164"
+      "PATLAW-164",
+      "PATLAW-168"
     ],
     "1": [
       "PATLAW-005",
@@ -126,7 +130,9 @@
       "PATLAW-149",
       "PATLAW-153",
       "PATLAW-157",
-      "PATLAW-161"
+      "PATLAW-161",
+      "PATLAW-165",
+      "PATLAW-169"
     ],
     "2": [
       "PATLAW-002",
@@ -154,7 +160,8 @@
       "PATLAW-150",
       "PATLAW-154",
       "PATLAW-158",
-      "PATLAW-162"
+      "PATLAW-162",
+      "PATLAW-166"
     ],
     "3": [
       "PATLAW-003",
@@ -179,7 +186,8 @@
       "PATLAW-151",
       "PATLAW-155",
       "PATLAW-159",
-      "PATLAW-163"
+      "PATLAW-163",
+      "PATLAW-167"
     ]
   }
 }

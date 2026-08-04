@@ -26,7 +26,7 @@ Program invariants:
 - Priority: P0
 - Bundle: patlaw/root
 - Goal: Deliver a safe, replayable processor system that verifies official patent authorities, retrieves public and authorized private USPTO matter records, parses correspondence and submissions, indexes public law/patent/prosecution evidence with BM25/vector/knowledge-graph retrieval, produces reproducible prior-art and filing-review artifacts, publishes approved public shards to JusticeDAO, and preserves mandatory human legal and filing control.
-- Evidence: PATLAW-G010, PATLAW-G020, PATLAW-G030, PATLAW-G040, PATLAW-G050, PATLAW-G060, PATLAW-G070, PATLAW-G080, PATLAW-G090, PATLAW-G100, PATLAW-G110, PATLAW-G120, PATLAW-G130, PATLAW-G140, PATLAW-G150, PATLAW-G160, PATLAW-G170, PATLAW-G180, PATLAW-G190
+- Evidence: PATLAW-G010, PATLAW-G020, PATLAW-G030, PATLAW-G040, PATLAW-G050, PATLAW-G060, PATLAW-G070, PATLAW-G080, PATLAW-G090, PATLAW-G100, PATLAW-G110, PATLAW-G120, PATLAW-G130, PATLAW-G140, PATLAW-G150, PATLAW-G160, PATLAW-G170, PATLAW-G180, PATLAW-G190, PATLAW-G200
 - Outputs: ipfs_datasets_py/processors, ipfs_datasets_py/processors/legal_scrapers/federal_scrapers, ipfs_datasets_py/processors/legal_data, ipfs_datasets_py/knowledge_graphs, ipfs_datasets_py/huggingface, ipfs_datasets_py/mcp_server, ipfs_datasets_py/cli, tests
 - Validation: python -m pytest tests/integration/processors tests/e2e/test_uspto_application_analysis.py -q
 - Acceptance: Every child goal is complete with fresh evidence on the target tree; reviewed public and synthetic private fixtures replay to provenance-complete authority, status, requirement, evidence, retrieval, prior-art, candidate-date, and human-review reports; approved public release re-downloads verify; private isolation and no-sign/no-file/no-pay boundaries pass.
@@ -898,3 +898,76 @@ Program invariants:
 - Refinement: A drained board or task status never substitutes for current-tree evidence; unresolved mandatory gaps remain blocking.
 - Embedding query: production health source freshness retrieval metric private isolation Hub commit paired SHA exact tree receipt
 - AST query: ProductionStatus ProductionReleaseGate EvidenceBundle CompletionReceipt
+
+## PATLAW-G200 Operate post-completion production follow-ons
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 89
+- Track: post-completion-ops
+- Priority: P0
+- Bundle: patlaw/post-completion-ops
+- Goal: After the reviewed implementation board drains, automatically seed and execute bounded post-completion operator follow-ons that validate completion evidence, prepare a PR package, run optional live canaries, dry-run Hub staging, and seal an operator handoff receipt without unattended filing or main publish.
+- Evidence: PATLAW-G201, PATLAW-G202, PATLAW-G203
+- Outputs: scripts/ops/patent_legal_intelligence, docs/operations/PATENT_LEGAL_POST_COMPLETION_OPS.md, docs/operations/PATENT_LEGAL_OPERATOR_HANDOFF.md
+- Validation: python scripts/validate_patent_legal_intelligence_board.py --repo-root .
+- Acceptance: Post-completion catalog tasks exist after drain, remain file-disjoint by lane, and produce fail-closed operator artifacts without auto-push, Patent Center login, payment, signature, or unattended Hub main upload.
+- Gap task: Implement the next incomplete post-completion child.
+- Refinement: Keep free-form objective/codebase refill disabled; only the reviewed post-completion catalog may refill after drain.
+- Embedding query: post completion ops drained board completion gate PR package live canary Hub dry-run handoff receipt
+- AST query: PostCompletionOpsCatalog seed_post_completion_ops ProductionStatus HandoffReceipt
+
+## PATLAW-G201 Validate completion evidence and prepare PR package
+
+- Status: active
+- Parent: PATLAW-G200
+- Fib priority: 1
+- Track: post-completion-ops
+- Priority: P0
+- Bundle: patlaw/post-completion-validation-pr
+- Goal: Validate offline production completion-gate artifacts and assemble a feature-branch PR package that a human can open or update without automatic push.
+- Evidence: PATLAW-165, PATLAW-166
+- Outputs: scripts/ops/uspto/validate_production_release.py, scripts/ops/patent_legal_intelligence/prepare_pr_package.py, docs/operations/PATENT_LEGAL_PR_PACKAGE.md
+- Validation: python -m pytest tests/release/test_patent_legal_production_release.py tests/unit/scripts/ops/patent_legal_intelligence/test_prepare_pr_package.py -q
+- Acceptance: Offline gate and production status are coherent; PR package lists commits, receipts, and human push/PR steps only.
+- Gap task: Close the next offline validation or PR-package gap.
+- Refinement: Never push or open authenticated remote PRs unattended.
+- Embedding query: offline completion gate production status PR package no push
+- AST query: validate_production_release prepare_pr_package ProductionStatus
+
+## PATLAW-G202 Exercise optional live canary and Hub dry-run staging
+
+- Status: active
+- Parent: PATLAW-G200
+- Fib priority: 2
+- Track: post-completion-ops
+- Priority: P0
+- Bundle: patlaw/post-completion-canary-hub
+- Goal: Provide an optional live official-source canary with offline fallback and exercise Hub release dry-run staging verification without main upload.
+- Evidence: PATLAW-167, PATLAW-168
+- Outputs: scripts/ops/patent_legal_intelligence/live_canary.py, scripts/ops/legal_data/stage_patent_hf_release.py, docs/operations/PATENT_LEGAL_LIVE_CANARY.md, docs/operations/PATENT_LEGAL_HUB_DRY_RUN.md
+- Validation: python -m pytest tests/integration/ops/patent_legal_intelligence/test_live_canary.py tests/release/test_patent_hf_release_dry_run.py -q
+- Acceptance: Canary defaults offline; live probes are receipt-bound; Hub path is dry-run only with DLP/rights gates preserved.
+- Gap task: Close the next canary or Hub dry-run gap.
+- Refinement: No private portfolio content in public receipts; no unattended main publish.
+- Embedding query: live canary offline fallback Hub dry-run staging DLP rights
+- AST query: live_canary stage_patent_hf_release PatentHFReleaseV2
+
+## PATLAW-G203 Seal operator handoff after post-completion ops
+
+- Status: active
+- Parent: PATLAW-G200
+- Fib priority: 3
+- Track: post-completion-ops
+- Priority: P0
+- Bundle: patlaw/post-completion-handoff
+- Goal: Bind offline gate, PR package, canary, and Hub dry-run results into one operator handoff receipt and completed-status projection.
+- Evidence: PATLAW-169
+- Outputs: scripts/ops/patent_legal_intelligence/handoff_receipt.py, docs/operations/PATENT_LEGAL_OPERATOR_HANDOFF.md, tests/release/test_patent_legal_handoff_receipt.py
+- Validation: python -m pytest tests/release/test_patent_legal_handoff_receipt.py -q
+- Acceptance: One receipt binds exact tree SHA and remaining human actions; production_status can surface completed when mandatory evidence is present.
+- Gap task: Close the next handoff-receipt or completed-projection gap.
+- Refinement: Natural-person sign-off remains mandatory for filing and Hub promote.
+- Embedding query: operator handoff receipt completed projection exact tree human actions
+- AST query: handoff_receipt ProductionStatus CompletionReceipt
+

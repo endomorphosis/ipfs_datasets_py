@@ -39,10 +39,14 @@ authorize fallback. The failed Grok worktree is discarded; the backup begins
 from the same clean base with a separate receipt. The independent LLM merge
 resolver is disabled, so merge conflicts fail closed for deterministic
 reconciliation instead of invoking another model. The task
-graph is execution-only: automatic objective/codebase refill, goal mutation,
-task janitor, and generated repair guardrails are disabled. Implementation
-agents cannot edit protected plan, heap, board, configuration, policies, or
-operator scripts.
+graph is execution-only for free-form objective/codebase refill, goal mutation,
+task janitor, and generated repair guardrails (those remain disabled). After the
+reviewed board drains to zero open tasks, the supervisor automatically seeds a
+bounded **post-completion ops catalog** (`post_completion_ops_catalog.json`) so
+operator follow-ons (completion-gate validation, PR package, live canary,
+Hub dry-run, handoff receipt) appear as new `PATLAW-165+` tasks without manual
+board editing. Implementation agents still cannot edit protected plan, heap,
+board, configuration, policies, or operator scripts during task work.
 
 The supervisor may update its external runtime projection and merge receipts;
 it does not infer completion from Markdown status alone. Never run `git pull`

@@ -1,0 +1,125 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/post-completion-ops-catalog@1",
+  "program": "patent-legal-intelligence-v1",
+  "task_prefix": "PATLAW-",
+  "trigger": "board_drained",
+  "notes": "Bounded operator/ops follow-on work after the reviewed PATLAW-000..164 board drains. No unattended Hub main publish, Patent Center login, payment, signature, or auto-push.",
+  "tasks": [
+    {
+      "task_id": "PATLAW-165",
+      "title": "Validate production completion-gate artifacts and evidence bundle offline",
+      "depends_on": ["PATLAW-164"],
+      "goal_id": "PATLAW-G201",
+      "track": "post-completion-ops",
+      "priority": "P0",
+      "bundle": "patlaw/post-completion-gate-validation",
+      "parallel_lane": "patlaw-v2-lane-1",
+      "outputs": [
+        "scripts/ops/uspto/validate_production_release.py",
+        "scripts/ops/patent_legal_intelligence/production_status.py",
+        "tests/release/test_patent_legal_production_release.py",
+        "docs/operations/PATENT_LEGAL_POST_COMPLETION_OPS.md"
+      ],
+      "validation": "python -m pytest tests/release/test_patent_legal_production_release.py -q && python scripts/ops/uspto/validate_production_release.py --offline && python scripts/ops/patent_legal_intelligence/production_status.py --json >/tmp/patlaw-production-status.json",
+      "acceptance": "Offline completion-gate and production-status both report a coherent drained-or-completed projection with required evidence paths present or explicitly gap-listed; no contentful private data is printed.",
+      "preconditions": "PATLAW-164 completion-gate implementation is merged on feature/patent-legal-intelligence.",
+      "effects": "Produces a durable offline validation receipt and operator-readable production status snapshot for the current tree.",
+      "conflict_policy": "Own only post-completion validation docs/receipts and non-breaking status/gate fixes; do not reopen foundation board tasks or weaken privacy gates.",
+      "resource_class": "cpu-large",
+      "token_class": "large",
+      "estimated_tokens": 12000
+    },
+    {
+      "task_id": "PATLAW-166",
+      "title": "Assemble feature-branch PR package without auto-push",
+      "depends_on": ["PATLAW-165"],
+      "goal_id": "PATLAW-G201",
+      "track": "post-completion-ops",
+      "priority": "P0",
+      "bundle": "patlaw/post-completion-pr-package",
+      "parallel_lane": "patlaw-v2-lane-2",
+      "outputs": [
+        "docs/operations/PATENT_LEGAL_PR_PACKAGE.md",
+        "scripts/ops/patent_legal_intelligence/prepare_pr_package.py",
+        "tests/unit/scripts/ops/patent_legal_intelligence/test_prepare_pr_package.py"
+      ],
+      "validation": "python -m pytest tests/unit/scripts/ops/patent_legal_intelligence/test_prepare_pr_package.py -q",
+      "acceptance": "A local PR package summarizes commits, changed paths, completion receipts, and human-required push/PR steps; no git push or remote publish occurs.",
+      "preconditions": "Offline completion validation has a non-blocking or explicitly acknowledged gap list.",
+      "effects": "Creates an operator handoff package for opening or updating a GitHub PR on feature/patent-legal-intelligence.",
+      "conflict_policy": "Never push, force-push, or open authenticated remote PRs unattended; package only.",
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "estimated_tokens": 9000
+    },
+    {
+      "task_id": "PATLAW-167",
+      "title": "Run optional live official-source canary with offline fallback",
+      "depends_on": ["PATLAW-165"],
+      "goal_id": "PATLAW-G202",
+      "track": "post-completion-ops",
+      "priority": "P1",
+      "bundle": "patlaw/post-completion-live-canary",
+      "parallel_lane": "patlaw-v2-lane-3",
+      "outputs": [
+        "scripts/ops/patent_legal_intelligence/live_canary.py",
+        "tests/integration/ops/patent_legal_intelligence/test_live_canary.py",
+        "docs/operations/PATENT_LEGAL_LIVE_CANARY.md"
+      ],
+      "validation": "python -m pytest tests/integration/ops/patent_legal_intelligence/test_live_canary.py -q",
+      "acceptance": "Canary defaults to offline fixtures; optional live mode records bounded eCFR/GovInfo/Federal Register/ODP probes with receipts and never mutates private matter state.",
+      "preconditions": "Completion-gate validation exists and privacy boundary policy remains enforced.",
+      "effects": "Adds a bounded live/offline canary operator tool and tests.",
+      "conflict_policy": "Live network access is optional and receipt-bound; never store private portfolio content in public receipts.",
+      "resource_class": "cpu-large",
+      "token_class": "large",
+      "estimated_tokens": 14000
+    },
+    {
+      "task_id": "PATLAW-168",
+      "title": "Exercise Hub release dry-run staging verification",
+      "depends_on": ["PATLAW-165", "PATLAW-157", "PATLAW-158"],
+      "goal_id": "PATLAW-G202",
+      "track": "post-completion-ops",
+      "priority": "P0",
+      "bundle": "patlaw/post-completion-hub-dry-run",
+      "parallel_lane": "patlaw-v2-lane-0",
+      "outputs": [
+        "scripts/ops/legal_data/stage_patent_hf_release.py",
+        "tests/release/test_patent_hf_release_dry_run.py",
+        "docs/operations/PATENT_LEGAL_HUB_DRY_RUN.md"
+      ],
+      "validation": "python -m pytest tests/release/test_patent_hf_release_dry_run.py -q",
+      "acceptance": "Dry-run staging verifies manifests, DLP/rights gates, and viewer contracts without uploading to main or mutating remote default branches.",
+      "preconditions": "HF release builder and DLP/rights gates from the drained board are merged.",
+      "effects": "Proves the publication path in dry-run mode and records a staging receipt for human approval.",
+      "conflict_policy": "No authenticated main upload or unattended approve/publish; dry-run and local staging only.",
+      "resource_class": "cpu-large",
+      "token_class": "large",
+      "estimated_tokens": 14000
+    },
+    {
+      "task_id": "PATLAW-169",
+      "title": "Seal operator production handoff receipt and completed status projection",
+      "depends_on": ["PATLAW-166", "PATLAW-167", "PATLAW-168"],
+      "goal_id": "PATLAW-G203",
+      "track": "post-completion-ops",
+      "priority": "P0",
+      "bundle": "patlaw/post-completion-handoff",
+      "parallel_lane": "patlaw-v2-lane-1",
+      "outputs": [
+        "scripts/ops/patent_legal_intelligence/handoff_receipt.py",
+        "tests/release/test_patent_legal_handoff_receipt.py",
+        "docs/operations/PATENT_LEGAL_OPERATOR_HANDOFF.md"
+      ],
+      "validation": "python -m pytest tests/release/test_patent_legal_handoff_receipt.py -q",
+      "acceptance": "A single handoff receipt binds offline gate results, PR package path, canary disposition, Hub dry-run receipt, exact tree SHA, and remaining human actions; production_status can surface completed when mandatory evidence is present.",
+      "preconditions": "PR package, canary, and Hub dry-run tasks have completed or recorded explicit waived gaps.",
+      "effects": "Closes the post-completion ops phase with an operator-ready handoff artifact.",
+      "conflict_policy": "Do not auto-push, auto-file, or mark legal sign-off complete without a natural-person action.",
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "estimated_tokens": 10000
+    }
+  ]
+}

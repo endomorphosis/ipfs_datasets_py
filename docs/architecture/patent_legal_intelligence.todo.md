@@ -2581,3 +2581,133 @@ Program invariants:
 - Preconditions: V2 functional release evidence, reviewed prior-art coverage, filing receipt workflow, verified Hub release and production status are merged on the exact target tree; independent human legal/publication approvals are supplied separately where required.
 - Effects: Execute the declared offline suites, validate optional live canary receipts when claimed, bind official source roots/current-through values, corpus/index/model/qrels roots, retrieval metrics, private isolation/provider-call counts, filing handoff/receipt results, Hub commit/Viewer verification, paired repository SHAs, supervisor merge receipts, config and git tree.
 - Acceptance: One content-free immutable receipt proves every mandatory gate on the current tree; mismatched/stale/missing/unknown evidence blocks; no legal opinion, patentability guarantee, filing claim or publication claim appears without the corresponding reviewed evidence; root goal remains active until this receipt and every child receipt validate.
+
+## PATLAW-165 Validate production completion-gate artifacts and evidence bundle offline
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: post-completion-ops
+- Depends on: PATLAW-164
+- Goal id: PATLAW-G201
+- Outputs: scripts/ops/uspto/validate_production_release.py, scripts/ops/patent_legal_intelligence/production_status.py, tests/release/test_patent_legal_production_release.py, docs/operations/PATENT_LEGAL_POST_COMPLETION_OPS.md
+- Validation: python -m pytest tests/release/test_patent_legal_production_release.py -q && python scripts/ops/uspto/validate_production_release.py --offline && python scripts/ops/patent_legal_intelligence/production_status.py --json >/tmp/patlaw-production-status.json
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/post-completion-gate-validation
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 12000
+- Predicted files: scripts/ops/uspto/validate_production_release.py, scripts/ops/patent_legal_intelligence/production_status.py, tests/release/test_patent_legal_production_release.py, docs/operations/PATENT_LEGAL_POST_COMPLETION_OPS.md
+- Allow concurrent with: PATLAW-166, PATLAW-167, PATLAW-168
+- Conflict policy: Own only post-completion validation docs/receipts and non-breaking status/gate fixes; do not reopen foundation board tasks or weaken privacy gates.
+- Preconditions: PATLAW-164 completion-gate implementation is merged on feature/patent-legal-intelligence.
+- Effects: Produces a durable offline validation receipt and operator-readable production status snapshot for the current tree.
+- Acceptance: Offline completion-gate and production-status both report a coherent drained-or-completed projection with required evidence paths present or explicitly gap-listed; no contentful private data is printed.
+- Dedupe key: post-completion-ops:PATLAW-165:1f27f90e71e7de6d
+
+## PATLAW-166 Assemble feature-branch PR package without auto-push
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: post-completion-ops
+- Depends on: PATLAW-165
+- Goal id: PATLAW-G201
+- Outputs: docs/operations/PATENT_LEGAL_PR_PACKAGE.md, scripts/ops/patent_legal_intelligence/prepare_pr_package.py, tests/unit/scripts/ops/patent_legal_intelligence/test_prepare_pr_package.py
+- Validation: python -m pytest tests/unit/scripts/ops/patent_legal_intelligence/test_prepare_pr_package.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/post-completion-pr-package
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-medium
+- Token class: medium
+- Estimated tokens: 9000
+- Predicted files: docs/operations/PATENT_LEGAL_PR_PACKAGE.md, scripts/ops/patent_legal_intelligence/prepare_pr_package.py, tests/unit/scripts/ops/patent_legal_intelligence/test_prepare_pr_package.py
+- Allow concurrent with: PATLAW-167, PATLAW-168
+- Conflict policy: Never push, force-push, or open authenticated remote PRs unattended; package only.
+- Preconditions: Offline completion validation has a non-blocking or explicitly acknowledged gap list.
+- Effects: Creates an operator handoff package for opening or updating a GitHub PR on feature/patent-legal-intelligence.
+- Acceptance: A local PR package summarizes commits, changed paths, completion receipts, and human-required push/PR steps; no git push or remote publish occurs.
+- Dedupe key: post-completion-ops:PATLAW-166:351d595823e16f01
+
+## PATLAW-167 Run optional live official-source canary with offline fallback
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: post-completion-ops
+- Depends on: PATLAW-165
+- Goal id: PATLAW-G202
+- Outputs: scripts/ops/patent_legal_intelligence/live_canary.py, tests/integration/ops/patent_legal_intelligence/test_live_canary.py, docs/operations/PATENT_LEGAL_LIVE_CANARY.md
+- Validation: python -m pytest tests/integration/ops/patent_legal_intelligence/test_live_canary.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/post-completion-live-canary
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 14000
+- Predicted files: scripts/ops/patent_legal_intelligence/live_canary.py, tests/integration/ops/patent_legal_intelligence/test_live_canary.py, docs/operations/PATENT_LEGAL_LIVE_CANARY.md
+- Allow concurrent with: PATLAW-166, PATLAW-168
+- Conflict policy: Live network access is optional and receipt-bound; never store private portfolio content in public receipts.
+- Preconditions: Completion-gate validation exists and privacy boundary policy remains enforced.
+- Effects: Adds a bounded live/offline canary operator tool and tests.
+- Acceptance: Canary defaults to offline fixtures; optional live mode records bounded eCFR/GovInfo/Federal Register/ODP probes with receipts and never mutates private matter state.
+- Dedupe key: post-completion-ops:PATLAW-167:9f718e78fb84042b
+
+## PATLAW-168 Exercise Hub release dry-run staging verification
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: post-completion-ops
+- Depends on: PATLAW-165, PATLAW-157, PATLAW-158
+- Goal id: PATLAW-G202
+- Outputs: scripts/ops/legal_data/stage_patent_hf_release.py, tests/release/test_patent_hf_release_dry_run.py, docs/operations/PATENT_LEGAL_HUB_DRY_RUN.md
+- Validation: python -m pytest tests/release/test_patent_hf_release_dry_run.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/post-completion-hub-dry-run
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 14000
+- Predicted files: scripts/ops/legal_data/stage_patent_hf_release.py, tests/release/test_patent_hf_release_dry_run.py, docs/operations/PATENT_LEGAL_HUB_DRY_RUN.md
+- Allow concurrent with: PATLAW-166, PATLAW-167
+- Conflict policy: No authenticated main upload or unattended approve/publish; dry-run and local staging only.
+- Preconditions: HF release builder and DLP/rights gates from the drained board are merged.
+- Effects: Proves the publication path in dry-run mode and records a staging receipt for human approval.
+- Acceptance: Dry-run staging verifies manifests, DLP/rights gates, and viewer contracts without uploading to main or mutating remote default branches.
+- Dedupe key: post-completion-ops:PATLAW-168:050b7fb0c1005101
+
+## PATLAW-169 Seal operator production handoff receipt and completed status projection
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: post-completion-ops
+- Depends on: PATLAW-166, PATLAW-167, PATLAW-168
+- Goal id: PATLAW-G203
+- Outputs: scripts/ops/patent_legal_intelligence/handoff_receipt.py, tests/release/test_patent_legal_handoff_receipt.py, docs/operations/PATENT_LEGAL_OPERATOR_HANDOFF.md
+- Validation: python -m pytest tests/release/test_patent_legal_handoff_receipt.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/post-completion-handoff
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-medium
+- Token class: medium
+- Estimated tokens: 10000
+- Predicted files: scripts/ops/patent_legal_intelligence/handoff_receipt.py, tests/release/test_patent_legal_handoff_receipt.py, docs/operations/PATENT_LEGAL_OPERATOR_HANDOFF.md
+- Allow concurrent with: 
+- Conflict policy: Do not auto-push, auto-file, or mark legal sign-off complete without a natural-person action.
+- Preconditions: PR package, canary, and Hub dry-run tasks have completed or recorded explicit waived gaps.
+- Effects: Closes the post-completion ops phase with an operator-ready handoff artifact.
+- Acceptance: A single handoff receipt binds offline gate results, PR package path, canary disposition, Hub dry-run receipt, exact tree SHA, and remaining human actions; production_status can surface completed when mandatory evidence is present.
+- Dedupe key: post-completion-ops:PATLAW-169:5329e769c82b730b

@@ -8,6 +8,7 @@ ACCELERATE_ROOT="$(cd "${PATLAW_ACCELERATE_ROOT:-$REPO_ROOT/../ipfs_accelerate_p
 CONFIG_PATH="${PATLAW_CONFIG_PATH:-$REPO_ROOT/config/agent_supervisor_patent_legal_intelligence.json}"
 TODO_PATH="$REPO_ROOT/docs/architecture/patent_legal_intelligence.todo.md"
 OBJECTIVE_PATH="$REPO_ROOT/docs/architecture/patent_legal_intelligence.objectives.md"
+POST_COMPLETION_OPS_CATALOG="${PATLAW_POST_COMPLETION_OPS_CATALOG:-$REPO_ROOT/data/agent_supervisor/patent_legal_intelligence/bundles/post_completion_ops_catalog.json}"
 STATE_BASE="${XDG_STATE_HOME:-${HOME}/.local/state}"
 STATE_ROOT="${PATLAW_STATE_ROOT:-$STATE_BASE/ipfs_accelerate_py/patent-legal-intelligence-v1}"
 MERGE_QUEUE_DIR="${PATLAW_MERGE_QUEUE_DIR:-$STATE_ROOT/merge_queue}"
@@ -64,6 +65,10 @@ if [[ ! -f "$CONFIG_PATH" || ! -f "$TODO_PATH" || ! -f "$OBJECTIVE_PATH" ]]; the
   echo "Missing reviewed program input; run the board validator for details." >&2
   exit 1
 fi
+if [[ ! -f "$POST_COMPLETION_OPS_CATALOG" ]]; then
+  echo "Missing post-completion ops catalog: $POST_COMPLETION_OPS_CATALOG" >&2
+  exit 1
+fi
 if [[ -e "$REPO_ROOT/.git/MERGE_HEAD" || -e "$(git rev-parse --git-path MERGE_HEAD)" ]]; then
   echo "Repository has a merge in progress; refusing to launch." >&2
   exit 1
@@ -112,6 +117,7 @@ PROTECTED_PATHS=(
   "data/agent_supervisor/patent_legal_intelligence/bundles/private_boundary_policy.json"
   "data/agent_supervisor/patent_legal_intelligence/bundles/protected_paths.json"
   "data/agent_supervisor/patent_legal_intelligence/bundles/source_authority_policy.json"
+  "data/agent_supervisor/patent_legal_intelligence/bundles/post_completion_ops_catalog.json"
 )
 
 lane_task_ids() {
@@ -181,6 +187,10 @@ run_shard() {
     --no-objective-goal-refinement
     --no-objective-goal-completion-reconcile
     --no-objective-goal-migration
+    --post-completion-ops-refill
+    --post-completion-ops-catalog "$POST_COMPLETION_OPS_CATALOG"
+    --post-completion-ops-config "$CONFIG_PATH"
+    --post-completion-ops-board-namespace "patent-legal-intelligence-v1"
   )
 
   local protected_path
