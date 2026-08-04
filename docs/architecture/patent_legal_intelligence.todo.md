@@ -2234,7 +2234,7 @@ Program invariants:
 
 ## PATLAW-151 Produce source-quoted claim charts and an IDS review queue
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
