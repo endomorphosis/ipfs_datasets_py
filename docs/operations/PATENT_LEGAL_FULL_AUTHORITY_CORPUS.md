@@ -1,11 +1,23 @@
-# Patent Legal Intelligence — Full-Authority Production Public-Legal Recipe
+# Patent Legal Intelligence — Full-Authority Corpus Integrate, Publish, and Hub Republication
 
-**Task:** `PATLAW-186`  
+**Tasks:** `PATLAW-186` … `PATLAW-191`  
 **Goal:** `PATLAW-G218`  
 **Track:** hub-full-authority-integrate-publish  
-**Depends on:** `PATLAW-181` (full annual CFR Title 37), `PATLAW-183` (full MPEP sections), `PATLAW-185` (USPTO guidance PDFs)  
-**CLI:** `scripts/ops/legal_data/build_public_legal_production_recipe.py`  
-**Tests:** `tests/integration/processors/patent/test_build_public_legal_production_recipe_full_authority.py`  
+**Depends on:** `PATLAW-181` (full annual CFR Title 37), `PATLAW-183` (full MPEP sections), `PATLAW-185` (USPTO guidance PDFs), `PATLAW-174`–`177` / `PATLAW-179` (package / admit / stage / verify / seal)  
+**CLIs:**
+
+| Surface | Script |
+| --- | --- |
+| Full-authority recipe | `scripts/ops/legal_data/build_public_legal_production_recipe.py` |
+| Materialize corpus | `scripts/ops/legal_data/materialize_public_legal_corpus.py` |
+| BM25 / vector / graph rebuilds | `build_public_legal_{bm25_index,vector_index,knowledge_graph}.py` |
+| **Hub republication (PATLAW-191)** | `scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py` |
+
+**Tests:**
+
+* Recipe: `tests/integration/processors/patent/test_build_public_legal_production_recipe_full_authority.py`
+* **Republication:** `tests/release/test_full_authority_hub_republication.py`
+
 **Upstream acquisitions:**
 
 | Source | Task | CLI |
@@ -15,13 +27,12 @@
 | USPTO guidance PDFs | PATLAW-185 | `acquire_uspto_guidance_pdfs.py` |
 
 This runbook is the operator surface for **integrating full-authority public
-sources into the production public-legal recipe**. The recipe binds document
-counts, by-family tallies, source receipts, rights reviews, and current-through
-pins so downstream corpus materialization / BM25 / vector / graph rebuilds
-(PATLAW-187+) share one expanded authority root.
+sources into the production public-legal recipe**, rebuilding BM25 / vector /
+knowledge-graph indexes, and **packaging, admitting, staging, verifying, and
+sealing a JusticeDAO Hub republication** without unattended `main` promote.
 
-It does **not** upload to Hugging Face Hub, open publication PRs, or treat
-chapter-only MPEP HTML or eCFR-only crawls as full-authority completion.
+Chapter-only MPEP HTML and eCFR-only crawls are never treated as full-authority
+completion. CI remains offline **fake-service** by default.
 
 ## Standing rules (fail-closed)
 
@@ -41,11 +52,16 @@ chapter-only MPEP HTML or eCFR-only crawls as full-authority completion.
 6. **Rights + current-through + receipts.** Every full-authority source root
    and document carries reviewed redistribution rights, a concrete
    current-through watermark, and a content-addressed source receipt.
-7. **Offline CI path.** Default `--full-authority` consumes offline acquisition
-   fixtures/catalogs (no network, no Hub upload). Live Title 35 / eCFR /
-   chapter MPEP remain optional supplements.
-8. **No Hub upload in this task.** Recipe JSON is a local packaging input for
-   later Hub-track republication.
+7. **Offline CI path.** Default `--full-authority` / republication
+   `--fake-service` consumes offline acquisition fixtures/catalogs (no network,
+   no Hub upload). Live Title 35 / eCFR / chapter MPEP remain optional
+   supplements.
+8. **No unattended Hub main promote.** Package → admit → stage → verify → seal
+   may complete offline. `disposition=promoted` requires a **real promote
+   evidence blob** (operator-signed fake-service drill or live promote). The
+   receipt cannot claim promoted without that evidence.
+9. **Credentials never appear in receipts.** Admission runs with Hub tokens
+   unset. Tokens are never embedded in stage / verify / publication receipts.
 
 ## What full-authority acceptance answers
 
@@ -53,12 +69,18 @@ chapter-only MPEP HTML or eCFR-only crawls as full-authority completion.
 > CFR Title 37, full MPEP sections, and USPTO guidance PDFs are present, with
 > source receipts — while rejecting chapter-only MPEP and eCFR-only substitutes?
 
+> For Hub republication: do **package counts** match that corpus, does
+> **admission** pass, does **verification bind expanded artifact digests**, and
+> does the **publication receipt** refuse fabricated promote claims while CI
+> stays on **fake-service**?
+
 | Surface | Role |
 | --- | --- |
 | `build_public_legal_production_recipe.py` | Full-authority recipe builder + CLI |
-| `assert_full_authority_complete` | Fail-closed acceptance gate |
-| `test_build_public_legal_production_recipe_full_authority.py` | Integration acceptance |
-| PATLAW-181 / 183 / 185 CLIs | Offline full-authority acquisitions consumed here |
+| `assert_full_authority_complete` | Fail-closed recipe acceptance gate |
+| `publish_patent_legal_hub_indexes_live.py` | PATLAW-191 package/admit/stage/verify/seal |
+| `test_full_authority_hub_republication.py` | Republication release acceptance |
+| PATLAW-181 / 183 / 185 CLIs | Offline full-authority acquisitions |
 
 ## Prerequisites
 
@@ -67,7 +89,8 @@ chapter-only MPEP HTML or eCFR-only crawls as full-authority completion.
 2. Offline fixtures / catalogs used by those acquisitions remain available
    (GovInfo annual Title 37 fixture, compact MPEP inventory, required guidance
    PDF catalog).
-3. Optional: writable output path for the recipe JSON (not under protected
+3. PATLAW-174…177 / 179 package, admit, stage, verify, and seal tooling exist.
+4. Optional: writable work directory for package + receipts (not under protected
    architecture paths).
 
 ## Operator commands
@@ -145,7 +168,7 @@ python scripts/ops/legal_data/build_public_legal_production_recipe.py \
 This path fetches Title 35 + eCFR + MPEP chapter pages over the network and
 sets `full_authority.complete=false`. It does **not** pass PATLAW-186 acceptance.
 
-## Flags
+## Recipe flags
 
 | Flag | Meaning |
 | --- | --- |
@@ -219,6 +242,128 @@ Full CFR Title 37 is proven by `counts.full_authority.cfr_inventory_total`
 matching the complete Title 37 section catalog (present + explicit gaps), not by
 eCFR HTML alone.
 
+---
+
+## PATLAW-191 — Hub republication (package / admit / stage / verify / seal)
+
+### What republication does
+
+`publish_patent_legal_hub_indexes_live.py` orchestrates:
+
+1. **Package** — materialize full-authority corpus (PATLAW-187) and rebuild
+   BM25 / vector / graph (PATLAW-188/189/190); assemble multi-repo Hub package
+   with shared corpus root pins.
+2. **Admit** — DLP / rights / Viewer gates (PATLAW-175) with Hub tokens
+   **unset**.
+3. **Stage** — authenticated branch + PR plan (PATLAW-176). **CI default:
+   `--fake-service`** (in-memory Hub; no network).
+4. **Verify** — pinned redownload of every projection (PATLAW-177); binds
+   **expanded per-artifact digests** (path → sha256) for corpus / BM25 /
+   vectors / knowledge_graph.
+5. **Seal** — staged-vs-promoted publication receipt (PATLAW-179). Default
+   disposition is `staged_not_promoted`. Claiming `promoted` without a real
+   promote evidence blob **fails closed**.
+
+### CI / supervisor command (authoritative offline)
+
+```bash
+python scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py \
+  --work-dir /var/tmp/patlaw-191-ci \
+  --fake-service
+```
+
+Defaults:
+
+| Control | CI default |
+| --- | --- |
+| Full-authority package | on |
+| `fake-service` stage / verify | on |
+| Live Hub network | off |
+| Promote to `main` | off (`--skip-promote`) |
+| Publication disposition | `staged_not_promoted` |
+| Auto-promote | always `false` |
+
+Receipts under `--work-dir`:
+
+| Path | Content |
+| --- | --- |
+| `package/` | Staged multi-artifact package + admission receipt |
+| `receipts/stage-receipt.json` | Stage plan digests + SHAs (`fake_service=true`) |
+| `receipts/verify-receipt.json` | Expanded projection digests + pin proof |
+| `receipts/publication-receipt.json` | Sealed staged-vs-promoted receipt |
+| `receipts/republication-summary.json` | PATLAW-191 summary (counts, digests, paths) |
+| `receipts/package-count-proof.json` | Package vs recipe count parity |
+| `receipts/expanded-digest-proof.json` | Verification expansion proof |
+
+### Optional offline promote drill (still fake-service)
+
+```bash
+python scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py \
+  --work-dir /var/tmp/patlaw-191-promote-drill \
+  --fake-service \
+  --promote \
+  --no-skip-promote \
+  --claim-promoted
+```
+
+This signs an operator approval with an ephemeral key under the work directory,
+runs PATLAW-176 `--mode promote --fake-service`, and seals
+`disposition=promoted` **only** because a real promote evidence blob exists.
+It still does not contact the live Hub.
+
+### Fabricated promote is refused
+
+```bash
+# claim promoted without --promote evidence → non-zero
+python scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py \
+  --work-dir /var/tmp/patlaw-191-bad \
+  --fake-service \
+  --claim-promoted
+# ERROR: fabricated promote claim: ...
+```
+
+### Operator live Hub path (explicit)
+
+```bash
+# Requires HF_TOKEN / ~/.cache/huggingface/token with write access
+python scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py \
+  --work-dir /var/tmp/patlaw-191-live \
+  --live-hub \
+  --approver "operator@example.com" \
+  --skip-promote
+```
+
+Live promote remains operator-invoked (`--promote --no-skip-promote`) with an
+operator-held approval key. Never unattended; tokens never appear in receipts.
+
+### Republication flags
+
+| Flag | Meaning |
+| --- | --- |
+| `--work-dir PATH` | Package + receipts root |
+| `--recipe PATH` | Optional pre-built full-authority recipe JSON |
+| `--fake-service` | Offline FakeHubService (CI default: on) |
+| `--no-fake-service` | Disable fake-service (requires `--live-hub`) |
+| `--live-hub` | Operator live Hub stage/promote |
+| `--skip-promote` | Do not promote (default) |
+| `--promote` / `--no-skip-promote` | Run sign+promote after stage |
+| `--claim-promoted` | Seal promoted disposition (requires promote evidence) |
+| `--approver ID` | Approver identity on HMAC approval |
+| `--organization ORG` | Hub org (default `justicedao`) |
+| `--legacy-default-fixture` | Pre-full-authority multi-family fixture path |
+| `--dry-run-only` | Legacy dry-run stage plan only |
+
+### Acceptance checklist (PATLAW-191)
+
+| Check | Evidence |
+| --- | --- |
+| Package counts = full-authority corpus | `package_counts.corpus_documents == recipe.counts.documents`; BM25/vector parity; `by_family` has cfr/mpep/guidance |
+| Admission passes | `admission.admitted=true`; gates pass with tokens unset |
+| Verification binds expanded digests | `verify-receipt.projection_digests.{corpus,bm25,vectors,knowledge_graph}` multi-path sha256 maps |
+| No fabricated promote | Default `disposition=staged_not_promoted`; `--claim-promoted` without evidence fails |
+| CI fake-service default | `stage.fake_service=true`; `live_network=false`; `auto_promote=false` |
+| Offline release tests | `pytest tests/release/test_full_authority_hub_republication.py -q` |
+
 ## Artifacts
 
 | Artifact | Description |
@@ -226,8 +371,11 @@ eCFR HTML alone.
 | Production recipe JSON | PATLAW-170-compatible `source_roots` + `documents` with full-authority tallies |
 | Source receipts | Per-family package digests / CIDs from PATLAW-181/183/185 |
 | `full_authority.sources` | Structured proof block for inventory / section / PDF completeness |
+| Hub package directory | Corpus + BM25 + vector + graph pins, Viewer layouts, rights/privacy |
+| Admission / stage / verify / publication receipts | Content-free, credential-free, digest-bound |
+| `republication-summary.json` | PATLAW-191 operator summary |
 
-## Acceptance checklist
+## Recipe acceptance checklist
 
 | Check | Evidence |
 | --- | --- |
@@ -237,22 +385,40 @@ eCFR HTML alone.
 | Rights / current-through / receipts | Present on every full-authority root and document |
 | eCFR-only rejected | `--reject-ecfr-only` non-zero; assert gate rejects missing annual `cfr` |
 | Chapter-only MPEP rejected | `--reject-chapter-only-mpep` non-zero; assert gate rejects chapter landings |
-| Offline CI | `pytest tests/integration/processors/patent/test_build_public_legal_production_recipe_full_authority.py -q` |
+| Offline CI (recipe) | `pytest tests/integration/processors/patent/test_build_public_legal_production_recipe_full_authority.py -q` |
+| Offline CI (republication) | `pytest tests/release/test_full_authority_hub_republication.py -q` |
 
 ## Validation
 
 ```bash
+# Full-authority recipe
 python -m pytest tests/integration/processors/patent/test_build_public_legal_production_recipe_full_authority.py -q
+
+# Full-authority Hub republication (PATLAW-191)
+python -m pytest tests/release/test_full_authority_hub_republication.py -q
 ```
 
-## Downstream
+## Policy summary
 
-- **PATLAW-187** — materialize public legal corpus from this full-authority recipe
+| Control | Value |
+| --- | --- |
+| Full-authority recipe complete | Required for republication package |
+| Package count parity | Corpus = BM25 = vectors = recipe documents |
+| Admission | Fail-closed DLP/rights/Viewer; no premature tokens |
+| CI Hub service | `fake-service` default |
+| Live Hub | Operator-only (`--live-hub`) |
+| Auto-promote | Always `false` |
+| Promoted disposition | Requires real promote evidence blob |
+| Tokens in receipts | Forbidden |
+
+## Downstream / related
+
+- **PATLAW-187** — materialize public legal corpus from the full-authority recipe
 - **PATLAW-188 / 189 / 190** — rebuild BM25 / vector / knowledge graph indexes
-- **PATLAW-191** — Hub republication with expanded artifact digests
-
-## Related runbooks
-
+- **PATLAW-191** — this republication surface (package/admit/stage/verify/seal)
 - `docs/operations/PATENT_LEGAL_CFR_TITLE37_FULL.md` (PATLAW-181)
 - `docs/operations/PATENT_LEGAL_MPEP_FULL.md` (PATLAW-183)
 - `docs/operations/PATENT_LEGAL_USPTO_GUIDANCE_PDFS.md` (PATLAW-185)
+- `docs/operations/PATENT_LEGAL_HUB_INDEX_ADMISSION.md` (PATLAW-175)
+- `docs/operations/PATENT_LEGAL_HUB_INDEX_STAGE.md` (PATLAW-176)
+- `docs/operations/PATENT_LEGAL_HUB_INDEX_PUBLICATION.md` (PATLAW-178/179)
