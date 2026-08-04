@@ -233,6 +233,70 @@ Without a `READY` file, a folder imports only after its newest file is stable
 for `--min-stable-seconds` (default 15) so in-progress downloads are not sealed
 early.
 
+## Revise a submission (deficiency letter / office action)
+
+When USPTO mails a deficiency notice, missing-parts letter, non-compliant
+amendment notice, or office action, use the **revise** workflow. It never
+auto-files; it tracks the letter, builds a response package, and reuses
+filing-assist hard barriers.
+
+```bash
+# 1) Refresh IFW inventory (if needed)
+python3 scripts/ops/uspto/portfolio_cli.py export-ui --application-number 18654466
+
+# 2) Scan local IFW metadata for letters that likely need a reply
+python3 scripts/ops/uspto/portfolio_cli.py revise scan \
+  --application-number 18654466
+
+# 3) Open a revision case for a specific letter
+python3 scripts/ops/uspto/portfolio_cli.py revise open \
+  --application-number 18654466 \
+  --document-code CTNF \
+  --document-id OA123 \
+  --document-description "Non-Final Rejection" \
+  --official-date 2024-05-03
+
+# 4) Attach human-authored revised documents
+python3 scripts/ops/uspto/portfolio_cli.py revise attach \
+  --revision-id rev-18654466-… \
+  --file ~/drafts/amended_claims.pdf \
+  --role amended_claims
+
+python3 scripts/ops/uspto/portfolio_cli.py revise attach \
+  --revision-id rev-18654466-… \
+  --file ~/drafts/remarks.docx \
+  --role remarks
+
+# 5) Prepare package digest + filing checklist
+python3 scripts/ops/uspto/portfolio_cli.py revise prepare \
+  --revision-id rev-18654466-…
+
+# 6) Attended Patent Center assist (YOU still Sign / Pay / Submit)
+python3 scripts/ops/uspto/portfolio_cli.py revise filing-assist \
+  --revision-id rev-18654466-… \
+  --watch-seconds 600
+
+# 7) After you file: record human assertion + import EAR
+python3 scripts/ops/uspto/portfolio_cli.py revise mark-submitted \
+  --revision-id rev-18654466-… \
+  --authorizing-user "operator:you"
+
+python3 scripts/ops/uspto/portfolio_cli.py revise close \
+  --revision-id rev-18654466-…
+```
+
+Cases live under:
+
+`~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/revisions/`
+
+Reply-date fields are **review-only candidates** (calendar-month stub + weekend
+adjustment). Always confirm the period on the face of the USPTO letter.
+
+Attachment roles: `amended_claims`, `amended_specification`,
+`substitute_specification`, `amended_drawings`, `remarks`,
+`amendment_transmittal`, `ids`, `declaration`, `fee_transmittal`, `evidence`,
+`other`, `triggering_letter`.
+
 ## Filing assist (human Sign / Pay / Submit)
 
 Automation **never** signs, pays, or performs final submission. It *does*

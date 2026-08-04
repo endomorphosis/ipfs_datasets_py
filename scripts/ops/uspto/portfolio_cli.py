@@ -14,6 +14,7 @@ Subcommands:
                  Content-free filing checklist + hard barriers (never sign/pay/submit)
   filing-assist  Attended Patent Center assist (nav + checklist + receipt watch)
   watch-receipts Poll post_submit_receipts/<app>/ after human Submit and import
+  revise         Respond to deficiency letters / office actions (scan, open, prepare)
   login / login-status / logout
                  Patent Center password+OTP login helper (refs/prompts; no secret echo)
   show           Print seed / last review summary
@@ -645,6 +646,172 @@ def _cmd_watch_inbox(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_revise(args: argparse.Namespace) -> int:
+    """Deficiency / office-action revision workflow (never auto-files)."""
+    from ipfs_datasets_py.processors.domains.uspto.revision_response import (
+        RevisionError,
+        attach_to_revision,
+        close_revision_case,
+        list_revision_cases,
+        load_revision_case,
+        mark_revision_submitted,
+        open_revision_case,
+        prepare_revision_package,
+        scan_response_triggers,
+    )
+
+    state = _state_root(args)
+    state.mkdir(parents=True, exist_ok=True)
+    action = str(args.revise_action or "").strip()
+
+    try:
+        if action == "scan":
+            result = scan_response_triggers(
+                str(args.application_number),
+                state_root=state,
+                include_all_outgoing=bool(args.include_all_outgoing),
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if int(result.get("trigger_count") or 0) >= 0 else 1
+
+        if action == "open":
+            case = open_revision_case(
+                str(args.application_number),
+                state_root=state,
+                document_identifier=str(args.document_id or ""),
+                document_code=str(args.document_code or ""),
+                document_description=str(args.document_description or ""),
+                official_date=str(args.official_date or ""),
+                direction=str(args.direction or "OUTGOING"),
+                local_path=str(args.local_path or ""),
+                kind=str(args.kind or ""),
+                period_months=int(args.period_months)
+                if args.period_months is not None
+                else None,
+                notes=[str(args.note)] if args.note else (),
+            )
+            print(json.dumps({"ok": True, "case": case.to_dict()}, indent=2, default=str))
+            return 0
+
+        if action == "list":
+            cases = list_revision_cases(
+                state_root=state,
+                application_number=str(args.application_number or ""),
+                include_closed=bool(args.include_closed),
+            )
+            print(
+                json.dumps(
+                    {
+                        "ok": True,
+                        "count": len(cases),
+                        "cases": [c.to_dict() for c in cases],
+                    },
+                    indent=2,
+                    default=str,
+                )
+            )
+            return 0
+
+        if action == "show":
+            case = load_revision_case(str(args.revision_id), state_root=state)
+            print(json.dumps({"ok": True, "case": case.to_dict()}, indent=2, default=str))
+            return 0
+
+        if action == "attach":
+            case = attach_to_revision(
+                str(args.revision_id),
+                Path(args.file),
+                role=str(args.role or "other"),
+                state_root=state,
+            )
+            print(json.dumps({"ok": True, "case": case.to_dict()}, indent=2, default=str))
+            return 0
+
+        if action == "prepare":
+            result = prepare_revision_package(
+                str(args.revision_id), state_root=state
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "mark-submitted":
+            case = mark_revision_submitted(
+                str(args.revision_id),
+                authorizing_user=str(args.authorizing_user),
+                package_digest=str(args.package_digest or ""),
+                state_root=state,
+                notes=[str(args.note)] if args.note else (),
+            )
+            print(json.dumps({"ok": True, "case": case.to_dict()}, indent=2, default=str))
+            return 0
+
+        if action == "close":
+            case = close_revision_case(
+                str(args.revision_id),
+                state_root=state,
+                cancel=bool(args.cancel),
+                note=str(args.note or ""),
+            )
+            print(json.dumps({"ok": True, "case": case.to_dict()}, indent=2, default=str))
+            return 0
+
+        if action == "filing-assist":
+            case = load_revision_case(str(args.revision_id), state_root=state)
+            # Delegate to filing-assist with response package
+            helper = Path(__file__).resolve().parent / "attended_filing_assist.py"
+            cmd = [
+                sys.executable,
+                str(helper),
+                "--state-root",
+                str(state),
+                "--application-number",
+                case.application_number,
+                "--package-dir",
+                case.package_dir,
+                "--package-digest",
+                case.package_digest or "",
+                "--navigate",
+                "application",
+                "--json",
+            ]
+            if args.headless:
+                cmd.append("--headless")
+            if args.no_browser:
+                cmd.append("--no-browser")
+            if args.watch_seconds is not None:
+                cmd.extend(["--watch-seconds", str(args.watch_seconds)])
+            return subprocess.call(cmd)
+
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": f"unknown revise action: {action}",
+                    "actions": [
+                        "scan",
+                        "open",
+                        "list",
+                        "show",
+                        "attach",
+                        "prepare",
+                        "filing-assist",
+                        "mark-submitted",
+                        "close",
+                    ],
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+        return 2
+    except RevisionError as exc:
+        print(
+            json.dumps({"ok": False, "code": exc.code, "message": str(exc)}, indent=2),
+            file=sys.stderr,
+        )
+        return 2
+
+
 def _cmd_filing_checklist(args: argparse.Namespace) -> int:
     from ipfs_datasets_py.processors.domains.uspto.filing_assist import (
         build_filing_checklist,
@@ -1082,6 +1249,64 @@ def build_parser() -> argparse.ArgumentParser:
         help="Import even if filename does not look like an acknowledgement",
     )
     wrec.set_defaults(func=_cmd_watch_receipts)
+
+    rev = sub.add_parser(
+        "revise",
+        help=(
+            "Respond to USPTO deficiency letters / office actions: scan IFW, "
+            "open a revision case, attach revised docs, prepare package, "
+            "filing-assist (human Sign/Pay/Submit still required)"
+        ),
+    )
+    rev.add_argument(
+        "revise_action",
+        choices=(
+            "scan",
+            "open",
+            "list",
+            "show",
+            "attach",
+            "prepare",
+            "filing-assist",
+            "mark-submitted",
+            "close",
+        ),
+        help="Revision workflow action",
+    )
+    rev.add_argument("--application-number", default="")
+    rev.add_argument("--revision-id", default="")
+    rev.add_argument("--document-id", default="")
+    rev.add_argument("--document-code", default="")
+    rev.add_argument("--document-description", default="")
+    rev.add_argument("--official-date", default="")
+    rev.add_argument("--direction", default="OUTGOING")
+    rev.add_argument("--local-path", default="")
+    rev.add_argument(
+        "--kind",
+        default="",
+        help="Trigger kind override (e.g. missing_parts, office_action_nonfinal)",
+    )
+    rev.add_argument("--period-months", type=int, default=None)
+    rev.add_argument("--file", default="", help="With attach: path to revised document")
+    rev.add_argument(
+        "--role",
+        default="other",
+        help="With attach: amended_claims|remarks|substitute_specification|…",
+    )
+    rev.add_argument("--authorizing-user", default="operator:local")
+    rev.add_argument("--package-digest", default="")
+    rev.add_argument("--note", default="")
+    rev.add_argument("--include-closed", action="store_true")
+    rev.add_argument(
+        "--include-all-outgoing",
+        action="store_true",
+        help="With scan: list all OUTGOING docs, not only classified triggers",
+    )
+    rev.add_argument("--cancel", action="store_true", help="With close: mark cancelled")
+    rev.add_argument("--headless", action="store_true")
+    rev.add_argument("--no-browser", action="store_true")
+    rev.add_argument("--watch-seconds", type=float, default=300.0)
+    rev.set_defaults(func=_cmd_revise)
 
     return p
 
