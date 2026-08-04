@@ -1,0 +1,414 @@
+{
+  "description": "Cross-language golden vectors for UI/UX IR v1 (UIR-062)",
+  "interface": "UIIRCrossLanguageParity@1",
+  "schema_version": "ui-ux-ir/v1",
+  "vectors": [
+    {
+      "canonical_sha256": "sha256:a207b68313d08be024c39f87b6b976629526066ee56edc7b441a44bf3dbc134b",
+      "canonical_utf8_length": 2406,
+      "document": {
+        "accessibility": [],
+        "adaptive_variants": [],
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "composition_edges": [],
+        "configuration": null,
+        "content_references": [],
+        "data_bindings": [],
+        "design_token_refs": [],
+        "device_capability_requirements": [],
+        "document_id": "doc:form-v1",
+        "effects": [],
+        "entry_components": [
+          "component:root"
+        ],
+        "events": [],
+        "extensions": [],
+        "feedback_contracts": [],
+        "formal_constraint_refs": [],
+        "guards": [],
+        "initial_states": [],
+        "input_modality_requirements": [],
+        "intent_ir_bindings": [],
+        "invocation_bindings": [],
+        "journeys": [],
+        "layout_constraints": [],
+        "layout_regions": [],
+        "locale_defaults": {
+          "default_locale": "en",
+          "fallback_locales": [],
+          "text_direction": "ltr"
+        },
+        "localization": [],
+        "mcp_idl_bindings": [],
+        "modality_alternatives": [],
+        "output_modality_requirements": [],
+        "producer": null,
+        "program_bindings": [],
+        "proof_obligation_refs": [],
+        "review": {
+          "notes": "",
+          "review_status": "unreviewed",
+          "reviewer": ""
+        },
+        "schema_version": "ui-ux-ir/v1",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "state_variables": [],
+        "states": [],
+        "success_failure_recovery": [],
+        "tags": [],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "title": "Sample form",
+        "transitions": [],
+        "trust_bindings": [],
+        "ux_tasks": []
+      },
+      "id": "valid-minimal-form",
+      "kind": "valid_document"
+    },
+    {
+      "document": {
+        "accessibility": [],
+        "adaptive_variants": [],
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "composition_edges": [],
+        "configuration": null,
+        "content_references": [],
+        "data_bindings": [],
+        "design_token_refs": [],
+        "device_capability_requirements": [],
+        "document_id": "doc:form-v1",
+        "effects": [],
+        "events": [],
+        "extensions": [],
+        "feedback_contracts": [],
+        "formal_constraint_refs": [],
+        "guards": [],
+        "initial_states": [],
+        "input_modality_requirements": [],
+        "intent_ir_bindings": [],
+        "invocation_bindings": [],
+        "journeys": [],
+        "layout_constraints": [],
+        "layout_regions": [],
+        "locale_defaults": {
+          "default_locale": "en",
+          "fallback_locales": [],
+          "text_direction": "ltr"
+        },
+        "localization": [],
+        "mcp_idl_bindings": [],
+        "modality_alternatives": [],
+        "output_modality_requirements": [],
+        "producer": null,
+        "program_bindings": [],
+        "proof_obligation_refs": [],
+        "review": {
+          "notes": "",
+          "review_status": "unreviewed",
+          "reviewer": ""
+        },
+        "schema_version": "ui-ux-ir/v1",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "state_variables": [],
+        "states": [],
+        "success_failure_recovery": [],
+        "tags": [],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "title": "Sample form",
+        "transitions": [],
+        "trust_bindings": [],
+        "ux_tasks": []
+      },
+      "expected_error_class": "decode",
+      "id": "invalid-missing-entry-components",
+      "kind": "invalid_document"
+    },
+    {
+      "document": {
+        "accessibility": [],
+        "adaptive_variants": [],
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "composition_edges": [],
+        "configuration": null,
+        "content_references": [],
+        "data_bindings": [],
+        "design_token_refs": [],
+        "device_capability_requirements": [],
+        "document_id": "doc:form-v1",
+        "effects": [],
+        "entry_components": [
+          "component:root"
+        ],
+        "events": [],
+        "extensions": [],
+        "feedback_contracts": [],
+        "formal_constraint_refs": [],
+        "guards": [],
+        "initial_states": [],
+        "input_modality_requirements": [],
+        "intent_ir_bindings": [],
+        "invocation_bindings": [],
+        "journeys": [],
+        "layout_constraints": [],
+        "layout_regions": [],
+        "locale_defaults": {
+          "default_locale": "en",
+          "fallback_locales": [],
+          "text_direction": "ltr"
+        },
+        "localization": [],
+        "mcp_idl_bindings": [],
+        "modality_alternatives": [],
+        "output_modality_requirements": [],
+        "producer": null,
+        "program_bindings": [],
+        "proof_obligation_refs": [],
+        "review": {
+          "notes": "",
+          "review_status": "unreviewed",
+          "reviewer": ""
+        },
+        "schema_version": "ui-ux-ir/v9",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "state_variables": [],
+        "states": [],
+        "success_failure_recovery": [],
+        "tags": [],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "title": "Sample form",
+        "transitions": [],
+        "trust_bindings": [],
+        "ux_tasks": []
+      },
+      "expected_error_class": "decode_or_migrate",
+      "id": "invalid-unknown-schema-version",
+      "kind": "invalid_document"
+    },
+    {
+      "id": "decision-fail-closed-deny",
+      "kind": "decision",
+      "payload": {
+        "can_execute": false,
+        "outcome": "deny",
+        "reasons": [
+          "no_matching_policy_norm",
+          "fail_closed"
+        ],
+        "vector_kind": "decision"
+      },
+      "semantic": {
+        "can_execute": false,
+        "outcome": "deny"
+      }
+    },
+    {
+      "id": "receipt-denial-no-invocation",
+      "kind": "receipt",
+      "payload": {
+        "content_digest_prefix": "sha256:",
+        "has_invocation": false,
+        "outcome": "deny",
+        "vector_kind": "receipt"
+      },
+      "semantic": {
+        "has_invocation": false,
+        "outcome": "deny"
+      }
+    }
+  ]
+}
