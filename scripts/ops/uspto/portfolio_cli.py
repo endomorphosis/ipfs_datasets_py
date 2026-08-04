@@ -660,6 +660,10 @@ def _cmd_revise(args: argparse.Namespace) -> int:
         prepare_revision_package,
         scan_response_triggers,
     )
+    from ipfs_datasets_py.processors.domains.uspto.revision_law_guide import (
+        build_revision_law_guide,
+        seed_authority_corpus_readme,
+    )
 
     state = _state_root(args)
     state.mkdir(parents=True, exist_ok=True)
@@ -748,8 +752,61 @@ def _cmd_revise(args: argparse.Namespace) -> int:
             result = prepare_revision_package(
                 str(args.revision_id), state_root=state
             )
+            # Optionally attach law guide after prepare
+            if not bool(getattr(args, "no_law_guide", False)):
+                try:
+                    seed_authority_corpus_readme(state)
+                    guide = build_revision_law_guide(
+                        str(args.revision_id),
+                        state_root=state,
+                        application_type=str(
+                            getattr(args, "application_type", None) or "utility"
+                        ),
+                    )
+                    result["law_guide_path"] = guide.get("law_guide_path")
+                    result["law_guide_brief"] = {
+                        "matched_rule_ids": (guide.get("filing_obligations") or {}).get(
+                            "matched_rule_ids"
+                        ),
+                        "missing_mandatory_count": (
+                            guide.get("package_evidence") or {}
+                        ).get("missing_mandatory_count"),
+                        "authority_found_count": guide.get("authority_found_count"),
+                        "revision_tips": guide.get("revision_tips"),
+                    }
+                except Exception as exc:  # noqa: BLE001
+                    result["law_guide_error"] = f"{type(exc).__name__}:{exc}"
             print(json.dumps(result, indent=2, default=str))
             return 0 if result.get("ok") else 1
+
+        if action == "guide":
+            seed_authority_corpus_readme(state)
+            guide = build_revision_law_guide(
+                str(args.revision_id),
+                state_root=state,
+                application_type=str(
+                    getattr(args, "application_type", None) or "utility"
+                ),
+            )
+            print(json.dumps(guide, indent=2, default=str))
+            return 0
+
+        if action == "seed-corpus":
+            path = seed_authority_corpus_readme(state)
+            print(
+                json.dumps(
+                    {
+                        "ok": True,
+                        "authority_corpus": str(path),
+                        "hint": (
+                            "Copy scraped CFR/USC/MPEP text files into this tree "
+                            "or set USPTO_AUTHORITY_CORPUS_ROOT"
+                        ),
+                    },
+                    indent=2,
+                )
+            )
+            return 0
 
         if action == "mark-submitted":
             case = mark_revision_submitted(
@@ -812,6 +869,8 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                         "show",
                         "attach",
                         "prepare",
+                        "guide",
+                        "seed-corpus",
                         "filing-assist",
                         "mark-submitted",
                         "close",
@@ -1286,6 +1345,8 @@ def build_parser() -> argparse.ArgumentParser:
             "show",
             "attach",
             "prepare",
+            "guide",
+            "seed-corpus",
             "filing-assist",
             "mark-submitted",
             "close",
@@ -1345,6 +1406,16 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=40,
         help="With analyze: max PDF pages to OCR (default 40)",
+    )
+    rev.add_argument(
+        "--application-type",
+        default="utility",
+        help="With prepare/guide: utility|design|plant (default utility)",
+    )
+    rev.add_argument(
+        "--no-law-guide",
+        action="store_true",
+        help="With prepare: skip filing-rule / authority law guide",
     )
     rev.set_defaults(func=_cmd_revise)
 
