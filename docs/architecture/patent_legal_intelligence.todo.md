@@ -3065,7 +3065,7 @@ Program invariants:
 
 ## PATLAW-184 Define USPTO guidance PDF inventory and extraction contracts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
