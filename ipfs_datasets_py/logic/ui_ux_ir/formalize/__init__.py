@@ -11,5 +11,6 @@ __all__ = [
     "flogic",
     "ontology",
     "roundtrip",
+    "synthesis",
     "tdfol",
 ]

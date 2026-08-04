@@ -9,4 +9,5 @@ __all__ = [
     "mobile",
     "solver",
     "voice",
+    "web",
 ]

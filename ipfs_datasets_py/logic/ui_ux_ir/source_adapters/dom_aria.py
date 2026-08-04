@@ -1068,13 +1068,23 @@ def _sanitize_node(
                 continue
         value_l = value.strip().lower()
         if any(value_l.startswith(scheme) for scheme in _EXECUTABLE_URI_SCHEMES):
+            # Never echo the raw executable URI into receipts/tests: only the
+            # attribute name and a scheme class label (no javascript: payload).
+            scheme_label = next(
+                (
+                    scheme.rstrip(":")
+                    for scheme in _EXECUTABLE_URI_SCHEMES
+                    if value_l.startswith(scheme)
+                ),
+                "executable-uri",
+            )
             losses.append(
                 DomAriaLoss(
                     loss_id=f"loss:sanitized-uri:{node_id}:{attr_l}",
                     path=f"{path}/attributes/{attr}",
                     reason="Executable URI scheme stripped; markup is never executed",
                     category=DomAriaLossCategory.SANITIZED,
-                    detail=f"{attr}={value[:64]}",
+                    detail=f"{attr_l}:{scheme_label}",
                 )
             )
 
