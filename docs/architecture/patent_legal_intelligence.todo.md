@@ -2940,7 +2940,7 @@ Program invariants:
 
 ## PATLAW-179 Seal Hub index publication receipt distinguishing staged vs promoted
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
