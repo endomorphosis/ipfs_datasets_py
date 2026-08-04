@@ -2459,7 +2459,7 @@ Program invariants:
 
 ## PATLAW-160 Verify pinned Hub downloads and exercise rollback
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
