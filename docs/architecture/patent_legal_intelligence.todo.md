@@ -2409,7 +2409,7 @@ Program invariants:
 
 ## PATLAW-158 Enforce public-release DLP, rights, and Dataset Viewer gates
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
