@@ -2009,7 +2009,7 @@ Program invariants:
 
 ## PATLAW-142 Exercise every processor in true offline E2E and an optional live canary
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
