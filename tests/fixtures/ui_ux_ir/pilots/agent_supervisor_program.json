@@ -1,0 +1,7 @@
+{
+  "pilot_id": "agent-supervisor-program-v1",
+  "program_states": ["idle", "proposal_visible", "awaiting_human", "executing", "complete"],
+  "agent_proposal_visible": true,
+  "task_goal_injection_blocked": true,
+  "capability_bound_ui_changes": true
+}
