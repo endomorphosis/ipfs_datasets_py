@@ -932,6 +932,317 @@ def drop_matters(
     return seed, dropped
 
 
+def summarize_public_documents(documents_root: Path) -> dict[str, Any]:
+    """Summarize durable public document checkpoints (content-free metadata)."""
+    root = Path(documents_root)
+    checkpoints_dir = root / "checkpoints"
+    admitted_dir = root / "admitted"
+    apps: list[dict[str, Any]] = []
+    if checkpoints_dir.is_dir():
+        for path in sorted(checkpoints_dir.glob("doc-sync-*.json")):
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if not isinstance(payload, Mapping):
+                continue
+            entries = payload.get("entries") or {}
+            if not isinstance(entries, Mapping):
+                entries = {}
+            outcomes: dict[str, int] = {}
+            sample_files: list[str] = []
+            for entry in entries.values():
+                if not isinstance(entry, Mapping):
+                    continue
+                outcome = str(entry.get("last_outcome") or "unknown")
+                outcomes[outcome] = outcomes.get(outcome, 0) + 1
+                marker = entry.get("marker") or {}
+                if isinstance(marker, Mapping):
+                    url = str(marker.get("download_url") or "")
+                    if url:
+                        sample_files.append(url.rsplit("/", 1)[-1][:120])
+            apps.append(
+                {
+                    "application_number": payload.get("application_number"),
+                    "document_count": len(entries),
+                    "outcomes": outcomes,
+                    "inventory_receipt_id": payload.get("inventory_receipt_id"),
+                    "inventory_retrieved_utc": payload.get("inventory_retrieved_utc"),
+                    "sample_filenames": sample_files[:12],
+                    "checkpoint_path": str(path),
+                }
+            )
+    admitted_bins = 0
+    admitted_bytes = 0
+    if admitted_dir.is_dir():
+        for bin_path in admitted_dir.glob("*.bin"):
+            admitted_bins += 1
+            try:
+                admitted_bytes += bin_path.stat().st_size
+            except OSError:
+                pass
+    return {
+        "schema": "patlaw-public-docs-summary-v1",
+        "documents_root": str(root),
+        "application_count": len(apps),
+        "admitted_bin_count": admitted_bins,
+        "admitted_bytes": admitted_bytes,
+        "applications": apps,
+        "generated_at_utc": utc_now_iso(),
+    }
+
+
+def build_portfolio_dashboard(state_root: Path) -> dict[str, Any]:
+    """Aggregate seed, last review, public docs, exports, and schedule status."""
+    state = Path(state_root)
+    seed_path = state / "portfolio_seed.json"
+    review_path = state / "public_status_review.json"
+    docs_root = state / "public_docs"
+    exports_dir = state / "exports"
+    inbox_dir = state / "private_inbox"
+    schedule_manifest = state / "schedule" / "install_manifest.json"
+
+    seed_payload: dict[str, Any] | None = None
+    if seed_path.is_file():
+        seed = load_portfolio_seed(seed_path)
+        seed_payload = {
+            "tenant_id": seed.tenant_id,
+            "matter_count": len(seed.matters),
+            "confirmed_count": sum(
+                1
+                for m in seed.matters
+                if not str(m.ownership).startswith("candidate")
+            ),
+            "candidate_count": sum(
+                1 for m in seed.matters if str(m.ownership).startswith("candidate")
+            ),
+            "matters": [
+                {
+                    "application_number": m.application_number,
+                    "ownership": m.ownership,
+                    "title": (m.title or "")[:100],
+                    "status_odp_search": m.status_odp_search,
+                    "filing_date": m.filing_date,
+                    "applicant": m.applicant,
+                }
+                for m in seed.matters
+            ],
+        }
+
+    review_summary: dict[str, Any] | None = None
+    if review_path.is_file():
+        try:
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            review = None
+        if isinstance(review, Mapping):
+            docs = review.get("documents") if isinstance(review.get("documents"), Mapping) else {}
+            review_summary = {
+                "generated_at_utc": review.get("generated_at_utc"),
+                "success_count": review.get("success_count"),
+                "failure_count": review.get("failure_count"),
+                "documents_enabled": bool(docs),
+                "documents_success_count": docs.get("success_count") if docs else None,
+                "documents_failure_count": docs.get("failure_count") if docs else None,
+            }
+
+    export_dirs = []
+    if exports_dir.is_dir():
+        for child in sorted(exports_dir.iterdir()):
+            if not child.is_dir():
+                continue
+            files = [
+                p.name
+                for p in child.rglob("*")
+                if p.is_file()
+                and p.name
+                not in {"export_manifest.json", "authorization.json", ".DS_Store"}
+            ]
+            export_dirs.append(
+                {
+                    "name": child.name,
+                    "path": str(child),
+                    "file_count": len(files),
+                    "sealed": (child / "export_manifest.json").is_file(),
+                }
+            )
+
+    inbox_dirs = []
+    if inbox_dir.is_dir():
+        for child in sorted(inbox_dir.iterdir()):
+            if child.is_dir():
+                inbox_dirs.append(_inbox_folder_status(child))
+
+    schedule: dict[str, Any] | None = None
+    if schedule_manifest.is_file():
+        try:
+            schedule = json.loads(schedule_manifest.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            schedule = {"error": "unreadable_manifest"}
+
+    return {
+        "schema": "patlaw-portfolio-dashboard-v1",
+        "generated_at_utc": utc_now_iso(),
+        "state_root": str(state),
+        "seed": seed_payload,
+        "last_review": review_summary,
+        "public_documents": summarize_public_documents(docs_root)
+        if docs_root.exists()
+        else {"application_count": 0, "documents_root": str(docs_root)},
+        "exports": export_dirs,
+        "private_inbox": inbox_dirs,
+        "schedule": schedule,
+        "next_steps": [
+            "keep-only / confirm your real application numbers",
+            "refresh --with-documents for confirmed public wrappers",
+            "drop Patent Center downloads into private_inbox/<app>/ then inbox-import",
+            "attended-export for interactive private retrieval when needed",
+        ],
+    }
+
+
+def _inbox_folder_status(folder: Path) -> dict[str, Any]:
+    files = [
+        p
+        for p in folder.rglob("*")
+        if p.is_file()
+        and p.name
+        not in {
+            "export_manifest.json",
+            "authorization.json",
+            ".DS_Store",
+            "READY",
+            "IMPORTED",
+            ".importing",
+        }
+        and not p.name.startswith(".")
+    ]
+    mtimes = []
+    for path in files:
+        try:
+            mtimes.append(path.stat().st_mtime)
+        except OSError:
+            continue
+    newest = max(mtimes) if mtimes else None
+    age_seconds = (time.time() - newest) if newest is not None else None
+    return {
+        "application_number": folder.name,
+        "path": str(folder),
+        "file_count": len(files),
+        "has_ready_marker": (folder / "READY").is_file(),
+        "already_imported": (folder / "IMPORTED").is_file(),
+        "sealed": (folder / "export_manifest.json").is_file(),
+        "newest_mtime_age_seconds": age_seconds,
+        "stable": bool(age_seconds is not None and age_seconds >= 15.0 and files),
+    }
+
+
+def scan_private_inbox(inbox_root: Path) -> list[dict[str, Any]]:
+    root = Path(inbox_root)
+    if not root.is_dir():
+        return []
+    return [
+        _inbox_folder_status(child)
+        for child in sorted(root.iterdir())
+        if child.is_dir()
+    ]
+
+
+def import_ready_inbox_folders(
+    inbox_root: Path,
+    *,
+    tenant_id: str,
+    authorizing_user: str,
+    store_root: Path,
+    require_ready_marker: bool = False,
+    min_stable_seconds: float = 15.0,
+    classification: str = DisclosureClassification.CONFIDENTIAL_APPLICATION.value,
+) -> dict[str, Any]:
+    """Seal + import private inbox folders that look ready.
+
+    A folder is ready when it has files and either:
+    * contains a ``READY`` marker file, or
+    * newest file mtime is at least *min_stable_seconds* old (download settled).
+
+    Skips folders already marked ``IMPORTED`` unless files changed (no IMPORTED).
+    """
+    assert_operator_capability("import_user_authorized_export")
+    root = Path(inbox_root)
+    root.mkdir(parents=True, exist_ok=True)
+    imported: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+
+    for status in scan_private_inbox(root):
+        folder = Path(status["path"])
+        app = str(status["application_number"])
+        if status.get("already_imported"):
+            skipped.append({**status, "reason": "already_imported"})
+            continue
+        if status.get("file_count", 0) <= 0:
+            skipped.append({**status, "reason": "empty"})
+            continue
+        ready = bool(status.get("has_ready_marker"))
+        stable = bool(status.get("stable"))
+        age = status.get("newest_mtime_age_seconds")
+        if require_ready_marker and not ready:
+            skipped.append({**status, "reason": "waiting_for_READY_marker"})
+            continue
+        if not ready and not (
+            stable
+            and age is not None
+            and float(age) >= float(min_stable_seconds)
+        ):
+            skipped.append({**status, "reason": "not_stable_yet"})
+            continue
+        try:
+            result = import_export_folder(
+                folder,
+                tenant_id=tenant_id,
+                application_number=app,
+                authorizing_user=authorizing_user,
+                store_root=store_root,
+                classification=classification,
+            )
+            (folder / "IMPORTED").write_text(
+                json.dumps(
+                    {
+                        "imported_at_utc": utc_now_iso(),
+                        "application_number": app,
+                        "tenant_id": tenant_id,
+                    },
+                    indent=2,
+                )
+                + "\n"
+            )
+            imported.append(
+                {
+                    "application_number": app,
+                    "path": str(folder),
+                    "ok": True,
+                    "result": result,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            skipped.append(
+                {
+                    **status,
+                    "reason": "import_failed",
+                    "error_type": type(exc).__name__,
+                    "error": str(exc)[:400],
+                }
+            )
+
+    return {
+        "schema": "patlaw-private-inbox-import-v1",
+        "generated_at_utc": utc_now_iso(),
+        "inbox_root": str(root),
+        "imported_count": len(imported),
+        "skipped_count": len(skipped),
+        "imported": imported,
+        "skipped": skipped,
+    }
+
+
 def keep_only_matters(
     seed: PortfolioSeed,
     application_numbers: Iterable[str],
@@ -998,16 +1309,20 @@ __all__ = [
     "assert_operator_capability",
     "build_export_manifest_from_folder",
     "build_import_authorization",
+    "build_portfolio_dashboard",
     "confirm_ownership",
     "default_state_root",
     "discover_public_by_inventor",
     "drop_matters",
     "import_export_folder",
+    "import_ready_inbox_folders",
     "inventorf_phrase_query",
     "keep_only_matters",
     "load_portfolio_seed",
     "merge_matters",
     "save_portfolio_seed",
+    "scan_private_inbox",
+    "summarize_public_documents",
     "sync_public_documents_batch",
     "sync_public_status_batch",
     "utc_now_iso",

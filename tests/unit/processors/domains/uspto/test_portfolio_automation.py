@@ -15,14 +15,17 @@ from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (
     assert_operator_capability,
     build_export_manifest_from_folder,
     build_import_authorization,
+    build_portfolio_dashboard,
     confirm_ownership,
     discover_public_by_inventor,
     drop_matters,
+    import_ready_inbox_folders,
     inventorf_phrase_query,
     keep_only_matters,
     merge_matters,
     save_portfolio_seed,
     load_portfolio_seed,
+    summarize_public_documents,
     write_export_package_sidecar,
 )
 
@@ -117,6 +120,70 @@ def test_drop_and_keep_only() -> None:
     assert set(apps) == {"111", "999"}
     assert apps["111"].ownership == "confirmed_operator"
     assert apps["999"].ownership == "confirmed_operator"
+
+
+def test_dashboard_and_inbox_import(tmp_path: Path) -> None:
+    state = tmp_path / "state"
+    state.mkdir()
+    seed = PortfolioSeed(
+        tenant_id="t1",
+        matters=[PortfolioMatter(application_number="16000001", ownership="confirmed_operator")],
+    )
+    save_portfolio_seed(seed, state / "portfolio_seed.json")
+    docs = state / "public_docs" / "checkpoints"
+    docs.mkdir(parents=True)
+    (docs / "doc-sync-16000001.json").write_text(
+        json.dumps(
+            {
+                "application_number": "16000001",
+                "entries": {
+                    "d1": {
+                        "source_document_id": "d1",
+                        "last_outcome": "admitted",
+                        "last_version": 1,
+                        "marker": {
+                            "download_url": "https://example.test/files/spec.pdf"
+                        },
+                    }
+                },
+                "inventory_receipt_id": "r1",
+                "inventory_retrieved_utc": "2026-08-04T00:00:00Z",
+                "schema_version": "uspto.document_sync.v1",
+            }
+        )
+    )
+    summary = summarize_public_documents(state / "public_docs")
+    assert summary["application_count"] == 1
+    assert summary["applications"][0]["document_count"] == 1
+
+    dash = build_portfolio_dashboard(state)
+    assert dash["seed"]["matter_count"] == 1
+    assert dash["public_documents"]["application_count"] == 1
+
+    inbox = state / "private_inbox" / "16000001"
+    inbox.mkdir(parents=True)
+    (inbox / "office_action.pdf").write_bytes(b"%PDF-1.4 synthetic")
+    (inbox / "READY").write_text("ready\n")
+    result = import_ready_inbox_folders(
+        state / "private_inbox",
+        tenant_id="t1",
+        authorizing_user="operator:test",
+        store_root=state / "private_store",
+        require_ready_marker=True,
+        min_stable_seconds=0,
+    )
+    assert result["imported_count"] == 1
+    assert (inbox / "IMPORTED").is_file()
+    # Second pass skips
+    again = import_ready_inbox_folders(
+        state / "private_inbox",
+        tenant_id="t1",
+        authorizing_user="operator:test",
+        store_root=state / "private_store",
+        require_ready_marker=True,
+    )
+    assert again["imported_count"] == 0
+    assert any(s.get("reason") == "already_imported" for s in again["skipped"])
 
 
 def test_document_sync_skips_candidates_when_confirmed_only(tmp_path: Path) -> None:

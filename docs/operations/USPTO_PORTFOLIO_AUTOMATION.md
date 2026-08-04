@@ -118,6 +118,28 @@ python3 scripts/ops/uspto/portfolio_cli.py attended-export \
   --user-data-dir ~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/browser-profile
 ```
 
+## Dashboard and private inbox auto-import
+
+```bash
+# Full operator dashboard (seed, public docs, exports, inbox, schedule)
+python3 scripts/ops/uspto/portfolio_cli.py dashboard
+
+# After Patent Center downloads (manual or attended-export), drop files here:
+#   ~/.local/state/.../private_inbox/<application_number>/
+# Optionally add a READY marker file when the download batch is complete.
+
+python3 scripts/ops/uspto/portfolio_cli.py inbox-import \
+  --authorizing-user "operator:$USER"
+
+# Or poll for 5 minutes and auto-import settled folders
+python3 scripts/ops/uspto/portfolio_cli.py watch-inbox \
+  --duration-seconds 300 --authorizing-user "operator:$USER"
+```
+
+Without a `READY` file, a folder imports only after its newest file is stable
+for `--min-stable-seconds` (default 15) so in-progress downloads are not sealed
+early.
+
 ## Hard rules
 
 **Allowed:** public ODP discovery/sync; build manifest from local files; import

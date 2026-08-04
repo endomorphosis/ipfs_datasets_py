@@ -33,15 +33,19 @@ if str(_REPO_ROOT) not in sys.path:
 from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (  # noqa: E402
     PortfolioAutomationError,
     PortfolioSeed,
+    build_portfolio_dashboard,
     confirm_ownership,
     default_state_root,
     discover_public_by_inventor,
     drop_matters,
     import_export_folder,
+    import_ready_inbox_folders,
     keep_only_matters,
     load_portfolio_seed,
     merge_matters,
     save_portfolio_seed,
+    scan_private_inbox,
+    summarize_public_documents,
     sync_public_status_batch,
     write_export_package_sidecar,
 )
@@ -343,31 +347,147 @@ def _cmd_attended_export(args: argparse.Namespace) -> int:
 
 def _cmd_show(args: argparse.Namespace) -> int:
     state = _state_root(args)
-    seed_path = _seed_path(state)
-    review_path = state / "public_status_review.json"
-    payload: dict[str, Any] = {
-        "state_root": str(state),
-        "seed_exists": seed_path.is_file(),
-        "review_exists": review_path.is_file(),
-    }
-    if seed_path.is_file():
-        seed = load_portfolio_seed(seed_path)
-        payload["seed"] = {
-            "tenant_id": seed.tenant_id,
-            "matter_count": len(seed.matters),
-            "matters": [
-                {
-                    "application_number": m.application_number,
-                    "ownership": m.ownership,
-                    "title": m.title[:80],
-                    "status_odp_search": m.status_odp_search,
-                }
-                for m in seed.matters
-            ],
+    if args.dashboard:
+        payload = build_portfolio_dashboard(state)
+    else:
+        seed_path = _seed_path(state)
+        review_path = state / "public_status_review.json"
+        payload = {
+            "state_root": str(state),
+            "seed_exists": seed_path.is_file(),
+            "review_exists": review_path.is_file(),
         }
-    if review_path.is_file() and args.include_review:
-        payload["review"] = json.loads(review_path.read_text(encoding="utf-8"))
+        if seed_path.is_file():
+            seed = load_portfolio_seed(seed_path)
+            payload["seed"] = {
+                "tenant_id": seed.tenant_id,
+                "matter_count": len(seed.matters),
+                "matters": [
+                    {
+                        "application_number": m.application_number,
+                        "ownership": m.ownership,
+                        "title": m.title[:80],
+                        "status_odp_search": m.status_odp_search,
+                    }
+                    for m in seed.matters
+                ],
+            }
+        if review_path.is_file() and args.include_review:
+            payload["review"] = json.loads(review_path.read_text(encoding="utf-8"))
+        if args.include_docs:
+            payload["public_documents"] = summarize_public_documents(
+                state / "public_docs"
+            )
+        if args.include_inbox:
+            inbox = state / "private_inbox"
+            payload["private_inbox"] = scan_private_inbox(inbox)
     print(json.dumps(payload, indent=2))
+    return 0
+
+
+def _cmd_dashboard(args: argparse.Namespace) -> int:
+    state = _state_root(args)
+    payload = build_portfolio_dashboard(state)
+    out = state / "portfolio_dashboard.json"
+    out.write_text(json.dumps(payload, indent=2) + "\n")
+    try:
+        os.chmod(out, 0o600)
+    except OSError:
+        pass
+    print(json.dumps({**payload, "dashboard_path": str(out)}, indent=2))
+    return 0
+
+
+def _cmd_inbox_import(args: argparse.Namespace) -> int:
+    state = _state_root(args)
+    inbox = (
+        Path(args.inbox_root).expanduser().resolve()
+        if args.inbox_root
+        else state / "private_inbox"
+    )
+    store = (
+        Path(args.store_root).expanduser().resolve()
+        if args.store_root
+        else state / "private_store"
+    )
+    result = import_ready_inbox_folders(
+        inbox,
+        tenant_id=str(args.tenant),
+        authorizing_user=str(args.authorizing_user),
+        store_root=store,
+        require_ready_marker=bool(args.require_ready_marker),
+        min_stable_seconds=float(args.min_stable_seconds),
+        classification=str(args.classification),
+    )
+    receipt_dir = state / "import_receipts"
+    receipt_dir.mkdir(parents=True, exist_ok=True)
+    receipt = receipt_dir / f"inbox-import-{result['generated_at_utc'].replace(':', '')}.json"
+    receipt.write_text(json.dumps(result, indent=2, default=str) + "\n")
+    try:
+        os.chmod(receipt, 0o600)
+    except OSError:
+        pass
+    print(json.dumps({"ok": True, "receipt": str(receipt), **result}, indent=2, default=str))
+    return 0 if int(result.get("imported_count") or 0) >= 0 else 1
+
+
+def _cmd_watch_inbox(args: argparse.Namespace) -> int:
+    """Poll private_inbox and auto-import settled folders."""
+    import time as _time
+
+    state = _state_root(args)
+    inbox = (
+        Path(args.inbox_root).expanduser().resolve()
+        if args.inbox_root
+        else state / "private_inbox"
+    )
+    inbox.mkdir(parents=True, exist_ok=True)
+    store = (
+        Path(args.store_root).expanduser().resolve()
+        if args.store_root
+        else state / "private_store"
+    )
+    deadline = _time.time() + float(args.duration_seconds)
+    cycles = 0
+    total_imported = 0
+    print(
+        json.dumps(
+            {
+                "watching": str(inbox),
+                "poll_seconds": args.poll_seconds,
+                "duration_seconds": args.duration_seconds,
+                "hint": "Drop Patent Center downloads into private_inbox/<application_number>/",
+            },
+            indent=2,
+        ),
+        flush=True,
+    )
+    while _time.time() < deadline:
+        cycles += 1
+        result = import_ready_inbox_folders(
+            inbox,
+            tenant_id=str(args.tenant),
+            authorizing_user=str(args.authorizing_user),
+            store_root=store,
+            require_ready_marker=bool(args.require_ready_marker),
+            min_stable_seconds=float(args.min_stable_seconds),
+            classification=str(args.classification),
+        )
+        total_imported += int(result.get("imported_count") or 0)
+        if result.get("imported_count") or args.verbose:
+            print(json.dumps(result, indent=2, default=str), flush=True)
+        _time.sleep(float(args.poll_seconds))
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "cycles": cycles,
+                "total_imported": total_imported,
+                "inbox": str(inbox),
+            },
+            indent=2,
+        )
+    )
     return 0
 
 
@@ -502,7 +622,63 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("show", help="Show portfolio seed summary")
     s.add_argument("--include-review", action="store_true")
+    s.add_argument("--include-docs", action="store_true")
+    s.add_argument("--include-inbox", action="store_true")
+    s.add_argument(
+        "--dashboard",
+        action="store_true",
+        help="Emit full dashboard (seed + docs + exports + inbox + schedule)",
+    )
     s.set_defaults(func=_cmd_show)
+
+    dash = sub.add_parser(
+        "dashboard",
+        help="Write portfolio_dashboard.json (seed, docs, inbox, schedule)",
+    )
+    dash.set_defaults(func=_cmd_dashboard)
+
+    inbox = sub.add_parser(
+        "inbox-import",
+        help="Import settled folders under private_inbox/<application_number>/",
+    )
+    inbox.add_argument("--inbox-root", default="")
+    inbox.add_argument("--store-root", default="")
+    inbox.add_argument("--tenant", default="operator-default")
+    inbox.add_argument("--authorizing-user", default="operator:local")
+    inbox.add_argument("--classification", default="confidential_application")
+    inbox.add_argument(
+        "--require-ready-marker",
+        action="store_true",
+        help="Only import folders that contain a READY file",
+    )
+    inbox.add_argument(
+        "--min-stable-seconds",
+        type=float,
+        default=15.0,
+        help="Without READY, wait until newest file is this old (default 15)",
+    )
+    inbox.set_defaults(func=_cmd_inbox_import)
+
+    watch = sub.add_parser(
+        "watch-inbox",
+        help="Poll private_inbox and auto-import settled download folders",
+    )
+    watch.add_argument("--inbox-root", default="")
+    watch.add_argument("--store-root", default="")
+    watch.add_argument("--tenant", default="operator-default")
+    watch.add_argument("--authorizing-user", default="operator:local")
+    watch.add_argument("--classification", default="confidential_application")
+    watch.add_argument("--require-ready-marker", action="store_true")
+    watch.add_argument("--min-stable-seconds", type=float, default=15.0)
+    watch.add_argument("--poll-seconds", type=float, default=10.0)
+    watch.add_argument(
+        "--duration-seconds",
+        type=float,
+        default=300.0,
+        help="How long to watch before exiting (default 300)",
+    )
+    watch.add_argument("--verbose", action="store_true")
+    watch.set_defaults(func=_cmd_watch_inbox)
 
     return p
 

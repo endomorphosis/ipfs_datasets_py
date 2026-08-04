@@ -15,11 +15,19 @@ if [[ "${1:-}" == "discover" || "${1:-}" == "all" ]]; then
   "${CLI[@]}" discover --inventor-name "$INVENTOR"
 fi
 if [[ "${1:-refresh}" == "refresh" || "${1:-}" == "all" || -z "${1:-}" ]]; then
-  "${CLI[@]}" refresh
+  if [[ "${PATLAW_WITH_DOCUMENTS:-0}" == "1" ]]; then
+    "${CLI[@]}" refresh --with-documents
+  else
+    "${CLI[@]}" refresh
+  fi
 fi
-"${CLI[@]}" show
+if [[ "${1:-}" == "inbox" || "${1:-}" == "all" ]]; then
+  "${CLI[@]}" inbox-import --authorizing-user "operator:${USER:-local}"
+fi
+"${CLI[@]}" dashboard
 echo
 echo "Private next steps:"
+echo "  Drop Patent Center downloads into private_inbox/<APP>/ (optional READY marker)"
+echo "  ${CLI[*]} watch-inbox --duration-seconds 600 --authorizing-user operator:\$USER"
 echo "  ${CLI[*]} attended-export --application-number <APP> --authorizing-user operator:\$USER"
-echo "  ${CLI[*]} import-folder --export-dir <DIR> --application-number <APP>"
 echo "Docs: docs/operations/USPTO_PORTFOLIO_AUTOMATION.md"
