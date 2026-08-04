@@ -3190,7 +3190,7 @@ Program invariants:
 
 ## PATLAW-189 Rebuild vector index from full-authority public legal corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
