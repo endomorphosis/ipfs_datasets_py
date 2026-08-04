@@ -2815,7 +2815,7 @@ Program invariants:
 
 ## PATLAW-174 Package multi-artifact corpus BM25 vector and graph Hub release
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
