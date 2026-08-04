@@ -1,0 +1,642 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/patent-legal-production-release.v1.schema.json",
+  "title": "Patent Legal Intelligence Production Release Receipt v1",
+  "description": "Content-free immutable production completion receipt (PATLAW-164 / PATLAW-G192). An accepted receipt proves every mandatory gate on the exact tree: official source roots/current-through, corpus/index/model/qrels roots, retrieval metrics, private isolation and provider-call counts, filing handoff/receipt results, Hub commit/Viewer verification, paired repository SHAs, supervisor merge receipts, config and git tree. Mismatched, stale, missing, or unknown evidence blocks. No legal opinion, patentability guarantee, filing claim, or publication claim may appear without corresponding reviewed evidence. The root goal remains active until this receipt and every child receipt validate. Task/backlog/goal status alone cannot satisfy acceptance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "interface",
+    "policy_id",
+    "task_id",
+    "goal_id",
+    "receipt_id",
+    "status",
+    "mode",
+    "started_at_utc",
+    "completed_at_utc",
+    "git",
+    "digests",
+    "bindings",
+    "child_receipts",
+    "test_results",
+    "supervisor_merge_receipts",
+    "claim_surface",
+    "root_goal",
+    "prior_tasks",
+    "gates",
+    "mandatory_gates",
+    "missing_mandatory_gates",
+    "policy",
+    "content_free",
+    "notes",
+    "receipt_digest_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "patent-legal.production-release.v1"
+    },
+    "interface": {
+      "const": "PatentLegalProductionRelease@1"
+    },
+    "policy_id": {
+      "const": "patent-legal-production-release/v1"
+    },
+    "task_id": {
+      "const": "PATLAW-164"
+    },
+    "goal_id": {
+      "const": "PATLAW-G192"
+    },
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "rejected", "blocked"]
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["offline", "live", "validate"]
+    },
+    "started_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "completed_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "git": {
+      "$ref": "#/$defs/gitBinding"
+    },
+    "digests": {
+      "$ref": "#/$defs/digestInventory"
+    },
+    "bindings": {
+      "$ref": "#/$defs/productionBindings"
+    },
+    "child_receipts": {
+      "$ref": "#/$defs/childReceipts"
+    },
+    "test_results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/testResult"
+      }
+    },
+    "supervisor_merge_receipts": {
+      "$ref": "#/$defs/supervisorMergeBlock"
+    },
+    "claim_surface": {
+      "$ref": "#/$defs/claimSurface"
+    },
+    "root_goal": {
+      "$ref": "#/$defs/rootGoal"
+    },
+    "prior_tasks": {
+      "type": "object"
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/gate"
+      }
+    },
+    "mandatory_gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "missing_mandatory_gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "content_free": {
+      "const": true
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 512
+      }
+    },
+    "receipt_digest_sha256": {
+      "$ref": "#/$defs/sha256Hex"
+    }
+  },
+  "$defs": {
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "gitBinding": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "head_sha": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/gitSha" }
+          ]
+        },
+        "tree_sha": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/gitSha" }
+          ]
+        },
+        "ref": {
+          "type": ["string", "null"]
+        },
+        "is_repo": {
+          "type": "boolean"
+        }
+      }
+    },
+    "digestBlock": {
+      "type": "object",
+      "required": ["label", "digest_sha256", "paths", "missing", "complete"],
+      "additionalProperties": true,
+      "properties": {
+        "label": { "type": "string" },
+        "digest_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "paths": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "missing": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "complete": { "type": "boolean" }
+      }
+    },
+    "digestInventory": {
+      "type": "object",
+      "required": [
+        "code",
+        "config",
+        "source",
+        "index",
+        "model",
+        "qrels",
+        "retrieval_metrics",
+        "filing",
+        "hub",
+        "sync",
+        "test",
+        "all_complete",
+        "aggregate_sha256"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "code": { "$ref": "#/$defs/digestBlock" },
+        "config": { "$ref": "#/$defs/digestBlock" },
+        "source": { "$ref": "#/$defs/digestBlock" },
+        "index": { "$ref": "#/$defs/digestBlock" },
+        "model": { "$ref": "#/$defs/digestBlock" },
+        "qrels": { "$ref": "#/$defs/digestBlock" },
+        "retrieval_metrics": { "$ref": "#/$defs/digestBlock" },
+        "filing": { "$ref": "#/$defs/digestBlock" },
+        "hub": { "$ref": "#/$defs/digestBlock" },
+        "sync": { "$ref": "#/$defs/digestBlock" },
+        "test": { "$ref": "#/$defs/digestBlock" },
+        "all_complete": { "type": "boolean" },
+        "aggregate_sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "productionBindings": {
+      "type": "object",
+      "required": [
+        "source_roots",
+        "corpus_index_model_qrels",
+        "retrieval_metrics",
+        "private_isolation",
+        "filing_handoff",
+        "hub_verification",
+        "paired_repositories",
+        "production_status",
+        "content_free"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "source_roots": {
+          "type": "object",
+          "required": ["status", "content_free"],
+          "additionalProperties": true,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["passed", "failed", "blocked", "unknown", "missing", "stale"]
+            },
+            "current_through_bound": { "type": "boolean" },
+            "roots": { "type": "object" },
+            "content_free": { "const": true }
+          }
+        },
+        "corpus_index_model_qrels": {
+          "type": "object",
+          "required": ["status", "content_free"],
+          "additionalProperties": true,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["passed", "failed", "blocked", "unknown", "missing", "stale"]
+            },
+            "corpus_root_bound": { "type": "boolean" },
+            "index_root_bound": { "type": "boolean" },
+            "model_root_bound": { "type": "boolean" },
+            "qrels_root_bound": { "type": "boolean" },
+            "content_free": { "const": true }
+          }
+        },
+        "retrieval_metrics": {
+          "type": "object",
+          "required": ["status", "content_free"],
+          "additionalProperties": true,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["passed", "failed", "blocked", "unknown", "missing", "stale"]
+            },
+            "metrics_bound": { "type": "boolean" },
+            "content_free": { "const": true }
+          }
+        },
+        "private_isolation": {
+          "type": "object",
+          "required": [
+            "status",
+            "provider_calls_total",
+            "isolation_incidents",
+            "no_disclosure",
+            "content_free"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["passed", "failed", "blocked", "unknown", "missing", "stale"]
+            },
+            "provider_calls_total": { "type": "integer", "minimum": 0 },
+            "isolation_incidents": { "type": "integer", "minimum": 0 },
+            "no_disclosure": { "type": "boolean" },
+            "content_free": { "const": true }
+          }
+        },
+        "filing_handoff": {
+          "type": "object",
+          "required": ["status", "content_free"],
+          "additionalProperties": true,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["passed", "failed", "blocked", "unknown", "missing", "stale"]
+            },
+            "reconciler_present": { "type": "boolean" },
+            "filing_claim_asserted": { "type": "boolean" },
+            "content_free": { "const": true }
+          }
+        },
+        "hub_verification": {
+          "type": "object",
+          "required": ["status", "content_free"],
+          "additionalProperties": true,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["passed", "failed", "blocked", "unknown", "missing", "stale"]
+            },
+            "verifier_present": { "type": "boolean" },
+            "publication_claim_asserted": { "type": "boolean" },
+            "content_free": { "const": true }
+          }
+        },
+        "paired_repositories": {
+          "type": "object",
+          "required": ["status", "content_free"],
+          "additionalProperties": true,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["passed", "failed", "blocked", "unknown", "missing", "stale"]
+            },
+            "integrator_present": { "type": "boolean" },
+            "schema_present": { "type": "boolean" },
+            "content_free": { "const": true }
+          }
+        },
+        "production_status": {
+          "type": "object",
+          "required": ["status", "content_free"],
+          "additionalProperties": true,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["passed", "failed", "blocked", "unknown", "missing", "stale"]
+            },
+            "surface_present": { "type": "boolean" },
+            "content_free": { "const": true }
+          }
+        },
+        "content_free": { "const": true }
+      }
+    },
+    "childReceipt": {
+      "type": "object",
+      "required": [
+        "task_id",
+        "status",
+        "content_free",
+        "outputs_present",
+        "missing_outputs"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^PATLAW-[0-9]+$"
+        },
+        "title": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": [
+            "validated",
+            "present",
+            "missing",
+            "stale",
+            "mismatched",
+            "unknown",
+            "blocked",
+            "failed"
+          ]
+        },
+        "tree_sha": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/gitSha" }
+          ]
+        },
+        "head_sha": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/gitSha" }
+          ]
+        },
+        "outputs_present": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "missing_outputs": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "digest_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sha256Hex" }
+          ]
+        },
+        "content_free": { "const": true },
+        "synthetic": { "type": "boolean" }
+      }
+    },
+    "childReceipts": {
+      "type": "object",
+      "required": [
+        "status",
+        "required_task_ids",
+        "receipts",
+        "all_validated",
+        "content_free"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "blocked", "unknown"]
+        },
+        "required_task_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "receipts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/childReceipt" }
+        },
+        "all_validated": { "type": "boolean" },
+        "missing_or_invalid": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "content_free": { "const": true }
+      }
+    },
+    "testResult": {
+      "type": "object",
+      "required": ["name", "status", "exit_code", "suite"],
+      "additionalProperties": true,
+      "properties": {
+        "name": { "type": "string" },
+        "status": { "type": "string" },
+        "exit_code": { "type": "integer" },
+        "command": { "type": "string" },
+        "suite": { "type": "string" },
+        "sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "supervisorMergeBlock": {
+      "type": "object",
+      "required": ["status", "receipts", "content_free"],
+      "additionalProperties": true,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "blocked", "unknown"]
+        },
+        "receipts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["task_id", "status", "content_free"],
+            "additionalProperties": true,
+            "properties": {
+              "task_id": { "type": "string" },
+              "status": { "type": "string" },
+              "content_free": { "const": true },
+              "tree_sha": {
+                "oneOf": [
+                  { "type": "null" },
+                  { "$ref": "#/$defs/gitSha" }
+                ]
+              },
+              "sha256": { "$ref": "#/$defs/sha256Hex" }
+            }
+          }
+        },
+        "prior_tasks_bound": { "type": "boolean" },
+        "content_free": { "const": true },
+        "synthetic": { "type": "boolean" }
+      }
+    },
+    "claimSurface": {
+      "type": "object",
+      "required": [
+        "legal_opinion",
+        "patentability_guarantee",
+        "filing_claim",
+        "publication_claim",
+        "content_free",
+        "unreviewed_claims_block"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "legal_opinion": {
+          "$ref": "#/$defs/reviewedClaim"
+        },
+        "patentability_guarantee": {
+          "$ref": "#/$defs/reviewedClaim"
+        },
+        "filing_claim": {
+          "$ref": "#/$defs/reviewedClaim"
+        },
+        "publication_claim": {
+          "$ref": "#/$defs/reviewedClaim"
+        },
+        "content_free": { "const": true },
+        "unreviewed_claims_block": { "const": true },
+        "any_unreviewed_asserted": { "type": "boolean" }
+      }
+    },
+    "reviewedClaim": {
+      "type": "object",
+      "required": ["asserted", "reviewed_evidence_present"],
+      "additionalProperties": true,
+      "properties": {
+        "asserted": { "type": "boolean" },
+        "reviewed_evidence_present": { "type": "boolean" },
+        "evidence_ref": {
+          "type": ["string", "null"],
+          "maxLength": 256
+        },
+        "status": {
+          "type": "string",
+          "enum": ["absent", "reviewed", "unreviewed", "blocked"]
+        }
+      }
+    },
+    "rootGoal": {
+      "type": "object",
+      "required": [
+        "goal_id",
+        "status",
+        "requires_receipt_and_children",
+        "this_receipt_validated",
+        "children_validated",
+        "completion_eligible",
+        "content_free"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "goal_id": { "const": "PATLAW-G192" },
+        "status": {
+          "type": "string",
+          "enum": ["active", "completion_eligible", "blocked"]
+        },
+        "requires_receipt_and_children": { "const": true },
+        "this_receipt_validated": { "type": "boolean" },
+        "children_validated": { "type": "boolean" },
+        "completion_eligible": { "type": "boolean" },
+        "task_status_alone_insufficient": { "const": true },
+        "content_free": { "const": true }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "required": ["gate_id", "status", "evidence_kind"],
+      "additionalProperties": true,
+      "properties": {
+        "gate_id": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "pass",
+            "ok",
+            "success",
+            "accepted",
+            "failed",
+            "fail",
+            "error",
+            "blocked",
+            "unknown",
+            "missing",
+            "rejected",
+            "stale",
+            "mismatched"
+          ]
+        },
+        "detail": { "type": "string", "maxLength": 512 },
+        "evidence_kind": { "type": "string" },
+        "sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "task_status_alone_insufficient",
+        "goal_status_alone_insufficient",
+        "fail_closed",
+        "content_free",
+        "unknown_mandatory_gates_block",
+        "stale_missing_mismatch_block",
+        "unreviewed_claims_block",
+        "root_goal_active_until_validated",
+        "child_receipts_required",
+        "receipts_outside_tracked_source_default"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "task_status_alone_insufficient": { "const": true },
+        "goal_status_alone_insufficient": { "const": true },
+        "fail_closed": { "const": true },
+        "content_free": { "const": true },
+        "unknown_mandatory_gates_block": { "const": true },
+        "stale_missing_mismatch_block": { "const": true },
+        "unreviewed_claims_block": { "const": true },
+        "root_goal_active_until_validated": { "const": true },
+        "child_receipts_required": { "const": true },
+        "receipts_outside_tracked_source_default": { "const": true },
+        "drained_board_not_evidence": { "const": true },
+        "rejected_substitutes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "required_prior_tasks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
