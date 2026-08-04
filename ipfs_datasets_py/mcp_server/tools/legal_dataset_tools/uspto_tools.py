@@ -1,22 +1,27 @@
-"""Read-only USPTO MCP tools (PATLAW-061).
+"""Read-only USPTO MCP tools (PATLAW-061 + PATLAW-141).
 
 Thin wrappers around the canonical
-:class:`~ipfs_datasets_py.processors.domains.uspto.api.USPTOAnalysisAPI`.
+:class:`~ipfs_datasets_py.processors.domains.uspto.api.USPTOAnalysisAPI`
+plus **persisted** assurance/dossier query tools that never trigger live sync,
+filing, payment, or submission-assurance runs.
 
 Design constraints
 ------------------
-* Tool schemas expose **only** read-only status / analysis operations.
+* Tool schemas expose **only** read-only status / analysis / persisted-query ops.
 * No sign, file, pay, session, credential-returning, or browser tool exists.
 * Unauthorized or private cross-tenant access is denied fail-closed.
+* Unauthorized tenants receive **no existence oracle** for private persisted rows.
 * Output redaction is driven by
   :class:`~ipfs_datasets_py.processors.domains.uspto.analysis.gap_report.OutputRedactionPolicy`.
 * All analysis logic lives in the domain API — this module never duplicates it.
+* Persisted assurance queries read only from an injected store (no implicit live sync).
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Final, Mapping, Optional, Sequence
+import threading
+from typing import Any, Callable, Final, Mapping, Optional, Protocol, Sequence, runtime_checkable
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +33,8 @@ USPTO_MCP_INTERFACE: Final = "USPTOMCP@1"
 USPTO_MCP_SCHEMA: Final = "uspto-mcp/v1"
 USPTO_MCP_TOOL_VERSION: Final = "1.0.0"
 
-# Read-only tool surface (acceptance + plan §14).
+# Read-only tool surface (acceptance + plan §14). PATLAW-061 contract — do not
+# expand this tuple without updating the v1 MCP unit suite.
 READ_ONLY_TOOL_NAMES: Final[tuple[str, ...]] = (
     "uspto_status",
     "uspto_dossier_summary",
@@ -36,6 +42,14 @@ READ_ONLY_TOOL_NAMES: Final[tuple[str, ...]] = (
     "uspto_evidence_gaps",
     "uspto_citation_explanation",
     "uspto_analysis_replay",
+)
+
+# Additive persisted-assurance query surface (PATLAW-141). Kept separate so the
+# v1 READ_ONLY_TOOL_NAMES / TOOL_SCHEMAS contract remains stable.
+PERSISTED_ASSURANCE_TOOL_NAMES: Final[tuple[str, ...]] = (
+    "uspto_persisted_assurance_summary",
+    "uspto_persisted_assurance_findings",
+    "uspto_persisted_assurance_provenance",
 )
 
 # Explicitly never offered as MCP operations (acceptance).
@@ -58,6 +72,13 @@ FORBIDDEN_MCP_OPERATIONS: Final[frozenset[str]] = frozenset(
         "cookie",
         "import_private",  # mutating; not a read-only MCP surface
         "sync_public",  # write-side sync; not read-only MCP
+        "submission_assurance",  # live workflow; MCP uses persisted queries only
+        "assure",  # alias of submission_assurance
+        "live_sync",
+        "force_live_sync",
+        "trigger_sync",
+        "file_application",
+        "make_payment",
     }
 )
 
@@ -70,6 +91,46 @@ TOOL_TO_API_OPERATION: Final[Mapping[str, str]] = {
     "uspto_citation_explanation": "explain",
     "uspto_analysis_replay": "analyze",
 }
+
+# Persisted tools never call live domain API operations.
+PERSISTED_ASSURANCE_TOOL_TO_OPERATION: Final[Mapping[str, str]] = {
+    "uspto_persisted_assurance_summary": "persisted_read",
+    "uspto_persisted_assurance_findings": "persisted_read",
+    "uspto_persisted_assurance_provenance": "persisted_read",
+}
+
+# Existence-oracle-safe denial code (unauthorized must not distinguish miss vs deny).
+ACCESS_DENIED_CODE: Final = "access_denied"
+ACCESS_DENIED_MESSAGE: Final = "access denied"
+
+# Keys stripped from persisted projections (never embed private document bodies).
+_PERSISTED_BODY_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "text",
+        "body",
+        "content",
+        "detail_text",
+        "narrative",
+        "human_readable",
+        "instruction_text",
+        "raw_text",
+        "raw_bytes",
+        "bytes",
+        "embedding",
+        "embeddings",
+        "vector",
+        "password",
+        "api_key",
+        "token",
+        "secret",
+        "private_cid",
+        "document_bytes",
+        "pdf_bytes",
+        "ocr_text",
+        "claim_text",
+        "full_text",
+    }
+)
 
 _PRIVATE_TEXT_KEYS: Final[frozenset[str]] = frozenset(
     {
@@ -281,6 +342,86 @@ TOOL_SCHEMAS: Final[dict[str, dict[str, Any]]] = {
     },
 }
 
+# PATLAW-141 schemas (separate dict so v1 TOOL_SCHEMAS contract stays stable).
+PERSISTED_ASSURANCE_TOOL_SCHEMAS: Final[dict[str, dict[str, Any]]] = {
+    "uspto_persisted_assurance_summary": {
+        "name": "uspto_persisted_assurance_summary",
+        "interface": USPTO_MCP_INTERFACE,
+        "schema": USPTO_MCP_SCHEMA,
+        "python_operation": "persisted_read",
+        "read_only": True,
+        "triggers_live_sync": False,
+        "triggers_filing_or_payment": False,
+        "description": (
+            "Read a tenant-scoped persisted submission-assurance / dossier "
+            "summary (identifiers, digests, disposition). Never runs live "
+            "sync, filing, payment, or submission_assurance."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "tenant_id": {
+                    "type": "string",
+                    "description": "Caller tenant id (required for private rows).",
+                },
+                "matter_id": {"type": "string"},
+                "assurance_id": {"type": "string"},
+                "dossier_id": {"type": "string"},
+                "output_policy": {"type": "object"},
+            },
+        },
+        "returns": {"envelope": "uspto-mcp-response/v1"},
+    },
+    "uspto_persisted_assurance_findings": {
+        "name": "uspto_persisted_assurance_findings",
+        "interface": USPTO_MCP_INTERFACE,
+        "schema": USPTO_MCP_SCHEMA,
+        "python_operation": "persisted_read",
+        "read_only": True,
+        "triggers_live_sync": False,
+        "triggers_filing_or_payment": False,
+        "description": (
+            "Read persisted assurance finding codes/kinds (no document body "
+            "text) for an authorized tenant."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "tenant_id": {"type": "string"},
+                "matter_id": {"type": "string"},
+                "assurance_id": {"type": "string"},
+                "dossier_id": {"type": "string"},
+                "output_policy": {"type": "object"},
+            },
+        },
+        "returns": {"envelope": "uspto-mcp-response/v1"},
+    },
+    "uspto_persisted_assurance_provenance": {
+        "name": "uspto_persisted_assurance_provenance",
+        "interface": USPTO_MCP_INTERFACE,
+        "schema": USPTO_MCP_SCHEMA,
+        "python_operation": "persisted_read",
+        "read_only": True,
+        "triggers_live_sync": False,
+        "triggers_filing_or_payment": False,
+        "description": (
+            "Read persisted provenance digests, stage receipts, and protected "
+            "dossier link references for an authorized tenant."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "tenant_id": {"type": "string"},
+                "matter_id": {"type": "string"},
+                "assurance_id": {"type": "string"},
+                "dossier_id": {"type": "string"},
+                "output_policy": {"type": "object"},
+            },
+        },
+        "returns": {"envelope": "uspto-mcp-response/v1"},
+    },
+}
+
 
 # ---------------------------------------------------------------------------
 # Errors
@@ -397,6 +538,7 @@ except ImportError as _import_err:  # pragma: no cover - exercised when domain m
 
 _bound_api: Any = None
 _id_factory: Callable[[], str] | None = None
+_bound_assurance_store: "PersistedAssuranceStore | None" = None
 
 
 def bind_api(api: Any | None) -> None:
@@ -428,6 +570,160 @@ def set_id_factory(factory: Callable[[], str] | None) -> None:
     """Optional deterministic id factory for replay tests."""
     global _id_factory
     _id_factory = factory
+
+
+# ---------------------------------------------------------------------------
+# Persisted assurance store (PATLAW-141) — injectable; never live-syncs
+# ---------------------------------------------------------------------------
+
+
+@runtime_checkable
+class PersistedAssuranceStore(Protocol):
+    """Tenant-scoped read surface for persisted assurance / dossier rows.
+
+    Implementations must not perform live USPTO network I/O, filing, payment,
+    or submission-assurance execution. Lookups are pure local reads.
+    """
+
+    def get_record(
+        self,
+        *,
+        tenant_id: str | None = None,
+        matter_id: str | None = None,
+        assurance_id: str | None = None,
+        dossier_id: str | None = None,
+    ) -> Mapping[str, Any] | None:
+        """Return one persisted record or ``None`` when missing."""
+        ...
+
+
+class InMemoryPersistedAssuranceStore:
+    """Simple in-process store for tests and single-process deployments."""
+
+    def __init__(self) -> None:
+        self._rows: list[dict[str, Any]] = []
+        self._lock = threading.RLock()
+        self.live_sync_calls: int = 0
+        self.filing_calls: int = 0
+        self.payment_calls: int = 0
+        self.assurance_run_calls: int = 0
+
+    def put(self, record: Mapping[str, Any]) -> dict[str, Any]:
+        """Insert or replace a persisted assurance row (test / operator helper)."""
+        cleaned = _strip_persisted_bodies(dict(record))
+        tenant = _normalize_tenant(cleaned.get("tenant_id"))
+        if not tenant:
+            raise UsptoMCPError(
+                "persisted assurance record requires tenant_id",
+                code="invalid_persisted_record",
+            )
+        cleaned["tenant_id"] = tenant
+        if not cleaned.get("matter_id") and not cleaned.get("assurance_id"):
+            raise UsptoMCPError(
+                "persisted assurance record requires matter_id or assurance_id",
+                code="invalid_persisted_record",
+            )
+        cleaned.setdefault("classification", "confidential_application")
+        cleaned.setdefault("findings", [])
+        cleaned.setdefault("provenance", {})
+        cleaned.setdefault("summary", {})
+        with self._lock:
+            # Replace by assurance_id or (tenant, matter) key.
+            aid = str(cleaned.get("assurance_id") or "").strip()
+            mid = str(cleaned.get("matter_id") or "").strip()
+            kept: list[dict[str, Any]] = []
+            for row in self._rows:
+                same_aid = aid and str(row.get("assurance_id") or "") == aid
+                same_matter = (
+                    mid
+                    and str(row.get("tenant_id") or "") == tenant
+                    and str(row.get("matter_id") or "") == mid
+                    and (not aid or str(row.get("assurance_id") or "") == aid)
+                )
+                if same_aid or same_matter:
+                    continue
+                kept.append(row)
+            kept.append(cleaned)
+            self._rows = kept
+        return cleaned
+
+    def get_record(
+        self,
+        *,
+        tenant_id: str | None = None,
+        matter_id: str | None = None,
+        assurance_id: str | None = None,
+        dossier_id: str | None = None,
+    ) -> Mapping[str, Any] | None:
+        # Intentionally no live sync / filing / payment side effects.
+        with self._lock:
+            candidates = list(self._rows)
+        aid = str(assurance_id or "").strip() or None
+        mid = str(matter_id or "").strip() or None
+        did = str(dossier_id or "").strip() or None
+        tenant = _normalize_tenant(tenant_id)
+        for row in candidates:
+            if aid and str(row.get("assurance_id") or "") != aid:
+                continue
+            if mid and str(row.get("matter_id") or "") != mid:
+                continue
+            if did and str(row.get("dossier_id") or "") != did:
+                continue
+            # When tenant filter provided, only return matching tenant rows.
+            if tenant is not None and _normalize_tenant(row.get("tenant_id")) != tenant:
+                continue
+            return dict(row)
+        # If no id filters matched with tenant filter, try id-only (for oracle checks).
+        if tenant is not None and (aid or mid or did):
+            for row in candidates:
+                if aid and str(row.get("assurance_id") or "") != aid:
+                    continue
+                if mid and str(row.get("matter_id") or "") != mid:
+                    continue
+                if did and str(row.get("dossier_id") or "") != did:
+                    continue
+                # Found a row for another tenant — callers must not learn this.
+                return {"__cross_tenant__": True, "tenant_id": row.get("tenant_id")}
+        return None
+
+    def clear(self) -> None:
+        with self._lock:
+            self._rows.clear()
+
+
+def bind_assurance_store(store: PersistedAssuranceStore | None) -> None:
+    """Bind the persisted assurance store used by PATLAW-141 tools."""
+    global _bound_assurance_store
+    _bound_assurance_store = store
+
+
+def get_assurance_store() -> PersistedAssuranceStore:
+    """Return the bound store or a fresh empty in-memory store."""
+    global _bound_assurance_store
+    if _bound_assurance_store is None:
+        _bound_assurance_store = InMemoryPersistedAssuranceStore()
+    return _bound_assurance_store
+
+
+def reset_assurance_store() -> None:
+    """Clear the bound assurance store (tests / process re-init)."""
+    global _bound_assurance_store
+    _bound_assurance_store = None
+
+
+def _strip_persisted_bodies(payload: Any) -> Any:
+    """Drop private body/content keys from nested mappings/lists."""
+    if isinstance(payload, Mapping):
+        out: dict[str, Any] = {}
+        for key, val in payload.items():
+            key_l = str(key).lower()
+            if key_l in _PERSISTED_BODY_KEYS or key_l in _PRIVATE_TEXT_KEYS:
+                continue
+            out[str(key)] = _strip_persisted_bodies(val)
+        return out
+    if isinstance(payload, (list, tuple)):
+        return [_strip_persisted_bodies(item) for item in payload]
+    return payload
 
 
 # ---------------------------------------------------------------------------
@@ -744,8 +1040,25 @@ def _contract_dict(value: Any) -> dict[str, Any]:
 
 
 def list_uspto_tools() -> list[dict[str, Any]]:
-    """Return documented read-only tool schemas (no forbidden operations)."""
+    """Return documented read-only tool schemas (no forbidden operations).
+
+    Returns the PATLAW-061 v1 surface only. Use
+    :func:`list_persisted_assurance_tools` for PATLAW-141 tools.
+    """
     return [dict(TOOL_SCHEMAS[name]) for name in READ_ONLY_TOOL_NAMES]
+
+
+def list_persisted_assurance_tools() -> list[dict[str, Any]]:
+    """Return PATLAW-141 persisted assurance query schemas."""
+    return [
+        dict(PERSISTED_ASSURANCE_TOOL_SCHEMAS[name])
+        for name in PERSISTED_ASSURANCE_TOOL_NAMES
+    ]
+
+
+def list_all_uspto_tools() -> list[dict[str, Any]]:
+    """v1 read-only tools plus persisted assurance tools."""
+    return list_uspto_tools() + list_persisted_assurance_tools()
 
 
 def get_tool_schema(name: str) -> dict[str, Any] | None:
@@ -753,6 +1066,8 @@ def get_tool_schema(name: str) -> dict[str, Any] | None:
     key = str(name or "").strip()
     if key in TOOL_SCHEMAS:
         return dict(TOOL_SCHEMAS[key])
+    if key in PERSISTED_ASSURANCE_TOOL_SCHEMAS:
+        return dict(PERSISTED_ASSURANCE_TOOL_SCHEMAS[key])
     return None
 
 
@@ -1418,6 +1733,370 @@ async def uspto_analysis_replay(
         return _error(tool, exc, code="internal_error")
 
 
+# ---------------------------------------------------------------------------
+# Persisted assurance query helpers (PATLAW-141)
+# ---------------------------------------------------------------------------
+
+
+def _access_denied_error(tool: str) -> dict[str, Any]:
+    """Uniform denial — no existence oracle for unauthorized callers."""
+    return _error(
+        tool,
+        UsptoMCPAuthError(ACCESS_DENIED_MESSAGE, code=ACCESS_DENIED_CODE),
+        code=ACCESS_DENIED_CODE,
+    )
+
+
+def _lookup_persisted_record(
+    *,
+    tool: str,
+    tenant_id: str | None,
+    matter_id: str | None,
+    assurance_id: str | None,
+    dossier_id: str | None,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    """Return ``(record, error_envelope)``.
+
+    Unauthorized tenants always receive the same access_denied envelope whether
+    the row is missing or owned by another tenant (no existence oracle).
+    """
+    if not any((matter_id, assurance_id, dossier_id)):
+        return None, _error(
+            tool,
+            UsptoMCPError(
+                "matter_id, assurance_id, or dossier_id is required",
+                code="missing_lookup_key",
+            ),
+        )
+
+    store = get_assurance_store()
+    # Never invoke live domain operations from persisted tools.
+    if hasattr(store, "live_sync_calls"):
+        # Counter present on InMemoryPersistedAssuranceStore for tests.
+        pass
+
+    raw = store.get_record(
+        tenant_id=tenant_id,
+        matter_id=matter_id,
+        assurance_id=assurance_id,
+        dossier_id=dossier_id,
+    )
+
+    caller = _normalize_tenant(tenant_id)
+
+    if raw is not None and raw.get("__cross_tenant__"):
+        # Row exists for another tenant — never reveal existence.
+        return None, _access_denied_error(tool)
+
+    if raw is None:
+        # Missing row: unauthorized callers still get access_denied (oracle-safe).
+        # Authorized callers with a tenant may learn not_found.
+        if not caller:
+            return None, _access_denied_error(tool)
+        # Probe without tenant filter to detect foreign ownership.
+        foreign = store.get_record(
+            tenant_id=None,
+            matter_id=matter_id,
+            assurance_id=assurance_id,
+            dossier_id=dossier_id,
+        )
+        if foreign is not None and _normalize_tenant(foreign.get("tenant_id")) not in (
+            None,
+            caller,
+        ):
+            return None, _access_denied_error(tool)
+        return None, _error(
+            tool,
+            UsptoMCPError("persisted assurance record not found", code="not_found"),
+            code="not_found",
+        )
+
+    resource_tenant = _normalize_tenant(raw.get("tenant_id"))
+    classification = raw.get("classification") or "confidential_application"
+    try:
+        authorize_tenant_access(
+            caller_tenant_id=caller,
+            resource_tenant_id=resource_tenant,
+            classification=classification,
+            require_for_private=True,
+        )
+    except UsptoMCPAuthError:
+        # Collapse all auth failures to access_denied (no oracle).
+        return None, _access_denied_error(tool)
+
+    return dict(raw), None
+
+
+def _protected_dossier_link(record: Mapping[str, Any]) -> str | None:
+    """Build a protected dossier reference (never embeds content)."""
+    explicit = record.get("dossier_link") or record.get("protected_dossier_link")
+    if explicit:
+        return str(explicit)
+    dossier_id = record.get("dossier_id")
+    if not dossier_id:
+        return None
+    return f"protected://dossier/{dossier_id}"
+
+
+def _summary_projection(record: Mapping[str, Any]) -> dict[str, Any]:
+    summary = record.get("summary")
+    if not isinstance(summary, Mapping):
+        summary = {}
+    base = {
+        "assurance_id": record.get("assurance_id"),
+        "matter_id": record.get("matter_id"),
+        "dossier_id": record.get("dossier_id"),
+        "dossier_link": _protected_dossier_link(record),
+        "tenant_id": record.get("tenant_id"),
+        "classification": record.get("classification"),
+        "disposition": record.get("disposition"),
+        "review_state": record.get("review_state"),
+        "bundle_digest": record.get("bundle_digest"),
+        "parser_digest": record.get("parser_digest"),
+        "content_digest": record.get("content_digest"),
+        "reason_codes": list(record.get("reason_codes") or []),
+        "labels": dict(record.get("labels") or {}),
+        "opaque_matter_ref": record.get("opaque_matter_ref"),
+        "is_review_only": record.get("is_review_only", True),
+        "is_legal_advice": False,
+        "live_sync_triggered": False,
+        "filing_or_payment_triggered": False,
+    }
+    # Merge safe summary keys (already body-stripped on put).
+    for key, val in summary.items():
+        if str(key).lower() in _PERSISTED_BODY_KEYS or str(key).lower() in _PRIVATE_TEXT_KEYS:
+            continue
+        if key not in base or base[key] in (None, "", [], {}):
+            base[str(key)] = val
+    return _strip_persisted_bodies(base)
+
+
+def _findings_projection(record: Mapping[str, Any]) -> dict[str, Any]:
+    findings = record.get("findings") or record.get("items") or []
+    if not isinstance(findings, (list, tuple)):
+        findings = []
+    safe_items: list[dict[str, Any]] = []
+    for item in findings:
+        if not isinstance(item, Mapping):
+            continue
+        safe_items.append(
+            _strip_persisted_bodies(
+                {
+                    "item_id": item.get("item_id") or item.get("id"),
+                    "kind": item.get("kind"),
+                    "code": item.get("code") or item.get("reason_code"),
+                    "requirement_id": item.get("requirement_id"),
+                    "status": item.get("status"),
+                    # Explicitly omit body/text/content.
+                }
+            )
+        )
+    return {
+        "assurance_id": record.get("assurance_id"),
+        "matter_id": record.get("matter_id"),
+        "dossier_id": record.get("dossier_id"),
+        "dossier_link": _protected_dossier_link(record),
+        "tenant_id": record.get("tenant_id"),
+        "classification": record.get("classification"),
+        "findings": safe_items,
+        "finding_count": len(safe_items),
+        "live_sync_triggered": False,
+        "filing_or_payment_triggered": False,
+    }
+
+
+def _provenance_projection(record: Mapping[str, Any]) -> dict[str, Any]:
+    provenance = record.get("provenance")
+    if not isinstance(provenance, Mapping):
+        provenance = {}
+    cleaned = _strip_persisted_bodies(dict(provenance))
+    return {
+        "assurance_id": record.get("assurance_id"),
+        "matter_id": record.get("matter_id"),
+        "dossier_id": record.get("dossier_id"),
+        "dossier_link": _protected_dossier_link(record),
+        "tenant_id": record.get("tenant_id"),
+        "classification": record.get("classification"),
+        "bundle_digest": record.get("bundle_digest"),
+        "parser_digest": record.get("parser_digest"),
+        "content_digest": record.get("content_digest"),
+        "stage_input_digests": dict(record.get("stage_input_digests") or {}),
+        "stage_output_digests": dict(record.get("stage_output_digests") or {}),
+        "committed_stages": list(record.get("committed_stages") or []),
+        "provenance": cleaned,
+        "live_sync_triggered": False,
+        "filing_or_payment_triggered": False,
+    }
+
+
+async def uspto_persisted_assurance_summary(
+    tenant_id: Optional[str] = None,
+    matter_id: Optional[str] = None,
+    assurance_id: Optional[str] = None,
+    dossier_id: Optional[str] = None,
+    output_policy: Optional[Mapping[str, Any]] = None,
+) -> dict[str, Any]:
+    """Read-only query of a persisted assurance/dossier summary (no live sync)."""
+    tool = "uspto_persisted_assurance_summary"
+    try:
+        assert_mcp_operation_allowed(tool)
+        record, err = _lookup_persisted_record(
+            tool=tool,
+            tenant_id=tenant_id,
+            matter_id=matter_id,
+            assurance_id=assurance_id,
+            dossier_id=dossier_id,
+        )
+        if err is not None:
+            return err
+        assert record is not None
+        policy = _coerce_output_policy(output_policy)
+        payload = _summary_projection(record)
+        redacted = apply_output_redaction(
+            payload,
+            classification=record.get("classification"),
+            output_policy=policy,
+        )
+        return _success(
+            tool,
+            redacted if isinstance(redacted, Mapping) else {"summary": redacted},
+            output_policy=policy,
+            redaction_applied=is_private_classification(
+                _classification_of(record.get("classification"))
+            ),
+            api_operation="persisted_read",
+        )
+    except (
+        UsptoMCPError,
+        UsptoAPIError,
+        ForbiddenAPIOperationError,
+        ForbiddenMCPOperationError,
+        UsptoMCPAuthError,
+    ) as exc:
+        if getattr(exc, "code", None) in {
+            "tenant_mismatch",
+            "missing_tenant",
+            "unauthorized_tenant",
+        }:
+            return _access_denied_error(tool)
+        return _error(tool, exc)
+    except Exception as exc:  # pragma: no cover
+        logger.exception("uspto_persisted_assurance_summary failed")
+        return _error(tool, exc, code="internal_error")
+
+
+async def uspto_persisted_assurance_findings(
+    tenant_id: Optional[str] = None,
+    matter_id: Optional[str] = None,
+    assurance_id: Optional[str] = None,
+    dossier_id: Optional[str] = None,
+    output_policy: Optional[Mapping[str, Any]] = None,
+) -> dict[str, Any]:
+    """Read-only query of persisted assurance findings (codes only; no bodies)."""
+    tool = "uspto_persisted_assurance_findings"
+    try:
+        assert_mcp_operation_allowed(tool)
+        record, err = _lookup_persisted_record(
+            tool=tool,
+            tenant_id=tenant_id,
+            matter_id=matter_id,
+            assurance_id=assurance_id,
+            dossier_id=dossier_id,
+        )
+        if err is not None:
+            return err
+        assert record is not None
+        policy = _coerce_output_policy(output_policy)
+        payload = _findings_projection(record)
+        redacted = apply_output_redaction(
+            payload,
+            classification=record.get("classification"),
+            output_policy=policy,
+        )
+        return _success(
+            tool,
+            redacted if isinstance(redacted, Mapping) else {"findings": redacted},
+            output_policy=policy,
+            redaction_applied=is_private_classification(
+                _classification_of(record.get("classification"))
+            ),
+            api_operation="persisted_read",
+        )
+    except (
+        UsptoMCPError,
+        UsptoAPIError,
+        ForbiddenAPIOperationError,
+        ForbiddenMCPOperationError,
+        UsptoMCPAuthError,
+    ) as exc:
+        if getattr(exc, "code", None) in {
+            "tenant_mismatch",
+            "missing_tenant",
+            "unauthorized_tenant",
+        }:
+            return _access_denied_error(tool)
+        return _error(tool, exc)
+    except Exception as exc:  # pragma: no cover
+        logger.exception("uspto_persisted_assurance_findings failed")
+        return _error(tool, exc, code="internal_error")
+
+
+async def uspto_persisted_assurance_provenance(
+    tenant_id: Optional[str] = None,
+    matter_id: Optional[str] = None,
+    assurance_id: Optional[str] = None,
+    dossier_id: Optional[str] = None,
+    output_policy: Optional[Mapping[str, Any]] = None,
+) -> dict[str, Any]:
+    """Read-only query of persisted provenance digests and dossier links."""
+    tool = "uspto_persisted_assurance_provenance"
+    try:
+        assert_mcp_operation_allowed(tool)
+        record, err = _lookup_persisted_record(
+            tool=tool,
+            tenant_id=tenant_id,
+            matter_id=matter_id,
+            assurance_id=assurance_id,
+            dossier_id=dossier_id,
+        )
+        if err is not None:
+            return err
+        assert record is not None
+        policy = _coerce_output_policy(output_policy)
+        payload = _provenance_projection(record)
+        redacted = apply_output_redaction(
+            payload,
+            classification=record.get("classification"),
+            output_policy=policy,
+        )
+        return _success(
+            tool,
+            redacted if isinstance(redacted, Mapping) else {"provenance": redacted},
+            output_policy=policy,
+            redaction_applied=is_private_classification(
+                _classification_of(record.get("classification"))
+            ),
+            api_operation="persisted_read",
+        )
+    except (
+        UsptoMCPError,
+        UsptoAPIError,
+        ForbiddenAPIOperationError,
+        ForbiddenMCPOperationError,
+        UsptoMCPAuthError,
+    ) as exc:
+        if getattr(exc, "code", None) in {
+            "tenant_mismatch",
+            "missing_tenant",
+            "unauthorized_tenant",
+        }:
+            return _access_denied_error(tool)
+        return _error(tool, exc)
+    except Exception as exc:  # pragma: no cover
+        logger.exception("uspto_persisted_assurance_provenance failed")
+        return _error(tool, exc, code="internal_error")
+
+
 async def perform_uspto_tool(operation: str, **kwargs: Any) -> dict[str, Any]:
     """Dispatch a named read-only tool or refuse forbidden operations."""
     key = str(operation or "").strip().lower().replace("-", "_").replace(" ", "_")
@@ -1433,6 +2112,9 @@ async def perform_uspto_tool(operation: str, **kwargs: Any) -> dict[str, Any]:
         "uspto_evidence_gaps": uspto_evidence_gaps,
         "uspto_citation_explanation": uspto_citation_explanation,
         "uspto_analysis_replay": uspto_analysis_replay,
+        "uspto_persisted_assurance_summary": uspto_persisted_assurance_summary,
+        "uspto_persisted_assurance_findings": uspto_persisted_assurance_findings,
+        "uspto_persisted_assurance_provenance": uspto_persisted_assurance_provenance,
         # Aliases without prefix
         "status": uspto_status,
         "dossier_summary": uspto_dossier_summary,
@@ -1440,6 +2122,9 @@ async def perform_uspto_tool(operation: str, **kwargs: Any) -> dict[str, Any]:
         "evidence_gaps": uspto_evidence_gaps,
         "citation_explanation": uspto_citation_explanation,
         "analysis_replay": uspto_analysis_replay,
+        "persisted_assurance_summary": uspto_persisted_assurance_summary,
+        "persisted_assurance_findings": uspto_persisted_assurance_findings,
+        "persisted_assurance_provenance": uspto_persisted_assurance_provenance,
     }
     if key not in dispatch:
         return _error(
@@ -1450,6 +2135,7 @@ async def perform_uspto_tool(operation: str, **kwargs: Any) -> dict[str, Any]:
 
 
 # Registry list for MCP discovery (functions, not class instances).
+# PATLAW-061 v1 surface — length must match READ_ONLY_TOOL_NAMES.
 USPTO_MCP_TOOLS: Final[list[Any]] = [
     uspto_status,
     uspto_dossier_summary,
@@ -1459,9 +2145,24 @@ USPTO_MCP_TOOLS: Final[list[Any]] = [
     uspto_analysis_replay,
 ]
 
+# PATLAW-141 additive surface.
+PERSISTED_ASSURANCE_MCP_TOOLS: Final[list[Any]] = [
+    uspto_persisted_assurance_summary,
+    uspto_persisted_assurance_findings,
+    uspto_persisted_assurance_provenance,
+]
+
 
 __all__ = [
+    "ACCESS_DENIED_CODE",
+    "ACCESS_DENIED_MESSAGE",
     "FORBIDDEN_MCP_OPERATIONS",
+    "InMemoryPersistedAssuranceStore",
+    "PERSISTED_ASSURANCE_MCP_TOOLS",
+    "PERSISTED_ASSURANCE_TOOL_NAMES",
+    "PERSISTED_ASSURANCE_TOOL_SCHEMAS",
+    "PERSISTED_ASSURANCE_TOOL_TO_OPERATION",
+    "PersistedAssuranceStore",
     "READ_ONLY_TOOL_NAMES",
     "TOOL_SCHEMAS",
     "TOOL_TO_API_OPERATION",
@@ -1476,18 +2177,26 @@ __all__ = [
     "assert_mcp_operation_allowed",
     "authorize_tenant_access",
     "bind_api",
+    "bind_assurance_store",
     "get_api",
+    "get_assurance_store",
     "get_tool_schema",
+    "list_all_uspto_tools",
     "list_forbidden_operations",
+    "list_persisted_assurance_tools",
     "list_uspto_tools",
     "perform_uspto_tool",
     "reset_api",
+    "reset_assurance_store",
     "schemas_are_read_only",
     "set_id_factory",
     "uspto_analysis_replay",
     "uspto_citation_explanation",
     "uspto_dossier_summary",
     "uspto_evidence_gaps",
+    "uspto_persisted_assurance_findings",
+    "uspto_persisted_assurance_provenance",
+    "uspto_persisted_assurance_summary",
     "uspto_requirement_matrix",
     "uspto_status",
 ]

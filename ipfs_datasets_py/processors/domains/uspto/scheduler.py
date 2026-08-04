@@ -1,4 +1,5 @@
-"""Checkpointed USPTO polling, change detection, and redacted alerts (PATLAW-062).
+"""Checkpointed USPTO polling, change detection, and redacted alerts
+(PATLAW-062 + PATLAW-141).
 
 Resilient application-matter synchronisation:
 
@@ -9,7 +10,10 @@ Resilient application-matter synchronisation:
 * repeated 5xx opens a per-service circuit breaker;
 * parse / security failures go to dead-letter (reviewable, not infinite retry);
 * durable checkpoints so restart resumes without duplicate alerts or artifacts;
-* heartbeat / progress is content-free (no document bodies or secrets).
+* heartbeat / progress is content-free (no document bodies or secrets);
+* assurance delta observation emits deduplicated metadata-only alerts that
+  identify matters by configured opaque references and protected dossier links
+  (never embeds document body text or legal conclusions).
 
 The scheduler never signs, pays, files, scrapes, or returns credential secrets.
 Poll execution is injected so operators can wire the canonical API/provider
@@ -60,6 +64,35 @@ DEFAULT_CIRCUIT_RECOVERY_SECONDS: Final = 30.0
 DEFAULT_HEARTBEAT_INTERVAL_SECONDS: Final = 30.0
 DEFAULT_MAX_ALERTS_RETAINED: Final = 10_000
 DEFAULT_MAX_DEAD_LETTERS: Final = 5_000
+DEFAULT_OPAQUE_MATTER_REF_TEMPLATE: Final = "opaque:{matter_digest}"
+DEFAULT_DOSSIER_LINK_TEMPLATE: Final = "protected://dossier/{dossier_id}"
+
+_ASSURANCE_CONTENT_KEYS: Final = frozenset(
+    {
+        "text",
+        "body",
+        "content",
+        "detail_text",
+        "narrative",
+        "human_readable",
+        "instruction_text",
+        "raw_text",
+        "raw_bytes",
+        "bytes",
+        "document_bytes",
+        "pdf_bytes",
+        "ocr_text",
+        "claim_text",
+        "full_text",
+        "embedding",
+        "embeddings",
+        "vector",
+        "password",
+        "api_key",
+        "token",
+        "secret",
+    }
+)
 
 _SECRET_KEY_FRAGMENTS: Final = frozenset(
     {
@@ -143,6 +176,9 @@ class AlertKind(str, Enum):
     HEARTBEAT = "heartbeat"
     JOB_SUCCEEDED = "job_succeeded"
     JOB_WAITING = "job_waiting"
+    # PATLAW-141: metadata-only assurance / reanalysis alerts
+    ASSURANCE_DELTA = "assurance_delta"
+    REANALYSIS_REQUESTED = "reanalysis_requested"
 
 
 class ActionKind(str, Enum):
@@ -152,6 +188,21 @@ class ActionKind(str, Enum):
     REVIEW_DEAD_LETTER = "review_dead_letter"
     CIRCUIT_RECOVERY = "circuit_recovery"
     RESUME_POLL = "resume_poll"
+    REVIEW_ASSURANCE_DELTA = "review_assurance_delta"
+    REVIEW_REANALYSIS = "review_reanalysis"
+
+
+class AssuranceDeltaField(str, Enum):
+    """Meaningful assurance fields that may trigger a metadata-only delta alert."""
+
+    STATE = "state"
+    DEADLINE = "deadline"
+    INSTRUCTION = "instruction"
+    COMPLIANCE = "compliance"
+    SOURCE = "source"
+    AUTHORITY = "authority"
+    DOCUMENT = "document"
+    STATUS = "status"
 
 
 class DeadLetterReason(str, Enum):
@@ -397,6 +448,9 @@ class SchedulerConfig:
     max_alerts_retained: int = DEFAULT_MAX_ALERTS_RETAINED
     max_dead_letters: int = DEFAULT_MAX_DEAD_LETTERS
     metadata_before_binary: bool = True
+    # PATLAW-141: templates for metadata-only alert identity (no content).
+    opaque_matter_ref_template: str = DEFAULT_OPAQUE_MATTER_REF_TEMPLATE
+    dossier_link_template: str = DEFAULT_DOSSIER_LINK_TEMPLATE
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -452,12 +506,27 @@ class SchedulerConfig:
             raise SchedulerError(
                 "metadata_before_binary must be bool", code="invalid_config"
             )
+        ref_tmpl = str(self.opaque_matter_ref_template or "").strip()
+        if not ref_tmpl or len(ref_tmpl) > 256:
+            raise SchedulerError(
+                "opaque_matter_ref_template must be a non-empty string ≤256 chars",
+                code="invalid_config",
+            )
+        object.__setattr__(self, "opaque_matter_ref_template", ref_tmpl)
+        link_tmpl = str(self.dossier_link_template or "").strip()
+        if not link_tmpl or len(link_tmpl) > 512:
+            raise SchedulerError(
+                "dossier_link_template must be a non-empty string ≤512 chars",
+                code="invalid_config",
+            )
+        object.__setattr__(self, "dossier_link_template", link_tmpl)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "base_backoff_seconds": self.base_backoff_seconds,
             "circuit_failure_threshold": self.circuit_failure_threshold,
             "circuit_recovery_seconds": self.circuit_recovery_seconds,
+            "dossier_link_template": self.dossier_link_template,
             "heartbeat_interval_seconds": self.heartbeat_interval_seconds,
             "max_alerts_retained": self.max_alerts_retained,
             "max_backoff_seconds": self.max_backoff_seconds,
@@ -466,6 +535,7 @@ class SchedulerConfig:
             "max_retry_after_seconds": self.max_retry_after_seconds,
             "max_workers": self.max_workers,
             "metadata_before_binary": self.metadata_before_binary,
+            "opaque_matter_ref_template": self.opaque_matter_ref_template,
         }
 
 
@@ -822,7 +892,12 @@ class PollJob:
 
 @dataclass(frozen=True, slots=True)
 class SchedulerAlert:
-    """Redacted, dedupe-keyed alert (safe to log / persist)."""
+    """Redacted, dedupe-keyed alert (safe to log / persist).
+
+    PATLAW-141 assurance alerts identify the matter via
+    :attr:`opaque_matter_ref` and point at a :attr:`dossier_link` rather than
+    embedding document body text or private findings.
+    """
 
     alert_id: str
     kind: AlertKind
@@ -837,6 +912,10 @@ class SchedulerAlert:
     labels: Mapping[str, str] = field(default_factory=dict)
     # Stable dedupe key distinct from alert_id (alert_id is unique per emission attempt).
     dedupe_key: str = ""
+    # PATLAW-141 identity fields (metadata-only).
+    opaque_matter_ref: str | None = None
+    dossier_link: str | None = None
+    delta_fields: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "alert_id", _safe_id(self.alert_id, field_name="alert_id"))
@@ -847,27 +926,59 @@ class SchedulerAlert:
         msg = sanitize_secret_text(str(self.message or ""))
         if len(msg) > _ALERT_BODY_MAX:
             msg = msg[:_ALERT_BODY_MAX] + "…"
+        # Never allow body-like content through the message channel.
+        for banned in ("document body", "full text", "claim text"):
+            if banned in msg.lower():
+                msg = "assurance delta (content omitted)"
+                break
         object.__setattr__(self, "message", msg)
-        object.__setattr__(
-            self,
-            "labels",
-            MappingProxyType(
-                {
-                    str(k): sanitize_secret_text(str(v))
-                    for k, v in dict(self.labels or {}).items()
-                }
-            ),
-        )
+        cleaned_labels: dict[str, str] = {}
+        for k, v in dict(self.labels or {}).items():
+            key_l = str(k).lower()
+            if key_l in _ASSURANCE_CONTENT_KEYS:
+                continue
+            cleaned_labels[str(k)] = sanitize_secret_text(str(v))
+        object.__setattr__(self, "labels", MappingProxyType(cleaned_labels))
+        if self.opaque_matter_ref is not None:
+            object.__setattr__(
+                self,
+                "opaque_matter_ref",
+                sanitize_secret_text(str(self.opaque_matter_ref))[:256] or None,
+            )
+        if self.dossier_link is not None:
+            object.__setattr__(
+                self,
+                "dossier_link",
+                sanitize_secret_text(str(self.dossier_link))[:512] or None,
+            )
+        if not isinstance(self.delta_fields, tuple):
+            object.__setattr__(
+                self,
+                "delta_fields",
+                tuple(str(x) for x in (self.delta_fields or ())),
+            )
         if not self.dedupe_key:
             material = {
                 "action": None if self.action is None else self.action.value,
                 "application_number": self.application_number or "",
+                "delta_fields": list(self.delta_fields),
+                "dossier_link": self.dossier_link or "",
                 "job_id": self.job_id or "",
                 "kind": self.kind.value,
                 "matter_id": self.matter_id or "",
+                "opaque_matter_ref": self.opaque_matter_ref or "",
                 "service": self.service or "",
                 "status_code": self.status_code,
             }
+            # Include stable labels that participate in change identity.
+            for label_key in (
+                "assurance_digest",
+                "overall_digest",
+                "fingerprint",
+                "delta_kind",
+            ):
+                if label_key in cleaned_labels:
+                    material[label_key] = cleaned_labels[label_key]
             object.__setattr__(self, "dedupe_key", sha256_hex(canonical_json(material)))
 
     def to_dict(self) -> dict[str, Any]:
@@ -877,11 +988,14 @@ class SchedulerAlert:
             "application_number": self.application_number,
             "created_at_utc": self.created_at_utc,
             "dedupe_key": self.dedupe_key,
+            "delta_fields": list(self.delta_fields),
+            "dossier_link": self.dossier_link,
             "job_id": self.job_id,
             "kind": self.kind.value,
             "labels": dict(self.labels),
             "matter_id": self.matter_id,
             "message": self.message,
+            "opaque_matter_ref": self.opaque_matter_ref,
             "service": self.service,
             "status_code": self.status_code,
         }
@@ -889,6 +1003,7 @@ class SchedulerAlert:
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "SchedulerAlert":
         action_raw = value.get("action")
+        delta_raw = value.get("delta_fields") or ()
         return cls(
             alert_id=str(value.get("alert_id") or ""),
             kind=AlertKind(str(value.get("kind") or "heartbeat")),
@@ -904,6 +1019,9 @@ class SchedulerAlert:
             ),
             labels=value.get("labels") or {},
             dedupe_key=str(value.get("dedupe_key") or ""),
+            opaque_matter_ref=_optional_str(value.get("opaque_matter_ref")),
+            dossier_link=_optional_str(value.get("dossier_link")),
+            delta_fields=tuple(str(x) for x in delta_raw),
         )
 
 
@@ -1122,6 +1240,10 @@ class SchedulerCheckpoint:
     progress: SchedulerProgress = field(default_factory=SchedulerProgress)
     # services that completed metadata successfully (gate binary)
     metadata_ready_keys: set[str] = field(default_factory=set)
+    # PATLAW-141: last observed assurance digests by matter_id
+    assurance_snapshots: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # PATLAW-141: configured opaque identity by matter_id
+    matter_identities: dict[str, dict[str, str]] = field(default_factory=dict)
 
     def resource_key(
         self,
@@ -1140,6 +1262,11 @@ class SchedulerCheckpoint:
             "actions": [a.to_dict() for a in self.actions],
             "alert_dedupe_index": dict(sorted(self.alert_dedupe_index.items())),
             "alerts": [a.to_dict() for a in self.alerts],
+            "assurance_snapshots": {
+                k: dict(v)
+                for k, v in sorted(self.assurance_snapshots.items())
+                if isinstance(v, Mapping)
+            },
             "circuit_states": {
                 k: dict(v) for k, v in sorted(self.circuit_states.items())
             },
@@ -1147,6 +1274,11 @@ class SchedulerCheckpoint:
             "fingerprints": dict(sorted(self.fingerprints.items())),
             "jobs": {jid: job.to_dict() for jid, job in sorted(self.jobs.items())},
             "known_artifact_ids": sorted(self.known_artifact_ids),
+            "matter_identities": {
+                k: dict(v)
+                for k, v in sorted(self.matter_identities.items())
+                if isinstance(v, Mapping)
+            },
             "metadata_ready_keys": sorted(self.metadata_ready_keys),
             "progress": self.progress.to_dict(),
             "schema_version": self.schema_version,
@@ -1192,6 +1324,17 @@ class SchedulerCheckpoint:
         known = set(str(x) for x in (value.get("known_artifact_ids") or []))
         fps = {str(k): str(v) for k, v in dict(value.get("fingerprints") or {}).items()}
         meta_ready = set(str(x) for x in (value.get("metadata_ready_keys") or []))
+        assurance_snaps: dict[str, dict[str, Any]] = {}
+        for k, v in dict(value.get("assurance_snapshots") or {}).items():
+            if isinstance(v, Mapping):
+                assurance_snaps[str(k)] = dict(v)
+        matter_ids: dict[str, dict[str, str]] = {}
+        for k, v in dict(value.get("matter_identities") or {}).items():
+            if isinstance(v, Mapping):
+                matter_ids[str(k)] = {
+                    str(ik): sanitize_secret_text(str(iv))
+                    for ik, iv in v.items()
+                }
         return cls(
             schema_version=str(
                 value.get("schema_version") or SCHEDULER_SCHEMA_VERSION
@@ -1206,6 +1349,8 @@ class SchedulerCheckpoint:
             fingerprints=fps,
             progress=SchedulerProgress.from_dict(value.get("progress")),
             metadata_ready_keys=meta_ready,
+            assurance_snapshots=assurance_snaps,
+            matter_identities=matter_ids,
         )
 
 
@@ -1726,9 +1871,23 @@ class USPTOApplicationScheduler:
         service: str | None = None,
         labels: Mapping[str, str] | None = None,
         force: bool = False,
+        matter_id: str | None = None,
+        opaque_matter_ref: str | None = None,
+        dossier_link: str | None = None,
+        delta_fields: Sequence[str] | None = None,
     ) -> SchedulerAlert | None:
         """Emit alert if dedupe_key is new. Returns None when suppressed as duplicate."""
         created = self._now_utc()
+        resolved_matter = matter_id or (None if job is None else job.matter_id)
+        # Attach configured opaque identity when available.
+        identity = None
+        if resolved_matter:
+            identity = self._checkpoint.matter_identities.get(str(resolved_matter))
+        resolved_opaque = opaque_matter_ref
+        resolved_link = dossier_link
+        if identity:
+            resolved_opaque = resolved_opaque or identity.get("opaque_matter_ref")
+            resolved_link = resolved_link or identity.get("dossier_link")
         # Provisional alert to compute dedupe_key
         provisional = SchedulerAlert(
             alert_id=self._id_factory(),
@@ -1737,11 +1896,14 @@ class USPTOApplicationScheduler:
             service=service or (None if job is None else job.service),
             job_id=None if job is None else job.job_id,
             application_number=None if job is None else job.application_number,
-            matter_id=None if job is None else job.matter_id,
+            matter_id=resolved_matter,
             action=action,
             message=message,
             status_code=status_code,
             labels=labels or {},
+            opaque_matter_ref=resolved_opaque,
+            dossier_link=resolved_link,
+            delta_fields=tuple(str(x) for x in (delta_fields or ())),
         )
         if not force and provisional.dedupe_key in self._checkpoint.alert_dedupe_index:
             return None
@@ -2527,6 +2689,279 @@ class USPTOApplicationScheduler:
     def circuit_state(self, service: str) -> str:
         return self._get_circuit(service).state.value
 
+    # ------------------------------------------------------------------
+    # PATLAW-141: matter identity + assurance delta observation
+    # ------------------------------------------------------------------
+
+    def _render_identity_template(
+        self,
+        template: str,
+        *,
+        matter_id: str,
+        tenant_id: str | None = None,
+        dossier_id: str | None = None,
+        opaque_matter_ref: str | None = None,
+    ) -> str:
+        matter = str(matter_id or "").strip()
+        digest = sha256_hex(f"{tenant_id or ''}|{matter}")[:24]
+        values = {
+            "matter_id": matter,
+            "matter_digest": digest,
+            "tenant_id": str(tenant_id or ""),
+            "dossier_id": str(dossier_id or ""),
+            "opaque_matter_ref": str(opaque_matter_ref or ""),
+            "opaque_reference": str(opaque_matter_ref or ""),
+        }
+        try:
+            rendered = str(template).format(**values)
+        except (KeyError, ValueError, IndexError):
+            rendered = str(template)
+        return sanitize_secret_text(rendered)[:512]
+
+    def configure_matter_alert_identity(
+        self,
+        matter_id: str,
+        *,
+        opaque_matter_ref: str | None = None,
+        dossier_id: str | None = None,
+        dossier_link: str | None = None,
+        tenant_id: str | None = None,
+    ) -> dict[str, str]:
+        """Configure opaque reference + protected dossier link for a matter.
+
+        Alert payloads prefer these fields over raw matter identifiers and never
+        embed document content.
+        """
+        mid = _safe_id(matter_id, field_name="matter_id")
+        opaque = opaque_matter_ref
+        if not opaque:
+            opaque = self._render_identity_template(
+                self._config.opaque_matter_ref_template,
+                matter_id=mid,
+                tenant_id=tenant_id,
+                dossier_id=dossier_id,
+            )
+        link = dossier_link
+        if not link and dossier_id:
+            link = self._render_identity_template(
+                self._config.dossier_link_template,
+                matter_id=mid,
+                tenant_id=tenant_id,
+                dossier_id=dossier_id,
+                opaque_matter_ref=opaque,
+            )
+        elif not link:
+            link = None
+        identity = {
+            "matter_id": mid,
+            "opaque_matter_ref": sanitize_secret_text(str(opaque))[:256],
+        }
+        if tenant_id:
+            identity["tenant_id"] = sanitize_secret_text(str(tenant_id))[:128]
+        if dossier_id:
+            identity["dossier_id"] = _safe_id(str(dossier_id), field_name="dossier_id")
+        if link:
+            identity["dossier_link"] = sanitize_secret_text(str(link))[:512]
+        self._checkpoint.matter_identities[mid] = identity
+        self._persist()
+        return dict(identity)
+
+    def get_matter_alert_identity(self, matter_id: str) -> dict[str, str] | None:
+        mid = str(matter_id or "").strip()
+        raw = self._checkpoint.matter_identities.get(mid)
+        return None if raw is None else dict(raw)
+
+    def _digest_value(self, value: Any) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, Mapping):
+            # Strip content keys before digesting.
+            cleaned = {
+                str(k): v
+                for k, v in value.items()
+                if str(k).lower() not in _ASSURANCE_CONTENT_KEYS
+            }
+            return sha256_hex(canonical_json(cleaned))
+        if isinstance(value, (list, tuple)):
+            return sha256_hex(canonical_json(list(value)))
+        text = str(value).strip()
+        if not text:
+            return None
+        if len(text) == 64 and all(c in "0123456789abcdef" for c in text.lower()):
+            return text.lower()
+        return sha256_hex(text)
+
+    def observe_assurance_delta(
+        self,
+        *,
+        matter_id: str,
+        tenant_id: str | None = None,
+        dossier_id: str | None = None,
+        dossier_link: str | None = None,
+        opaque_matter_ref: str | None = None,
+        state: Any = None,
+        deadline: Any = None,
+        instruction: Any = None,
+        compliance: Any = None,
+        source: Any = None,
+        authority: Any = None,
+        document: Any = None,
+        status: Any = None,
+        request_reanalysis: bool = False,
+        message: str | None = None,
+    ) -> SchedulerAlert | None:
+        """Compare an assurance snapshot to the last checkpointed one.
+
+        Emits a single metadata-only :attr:`AlertKind.ASSURANCE_DELTA` (or
+        :attr:`AlertKind.REANALYSIS_REQUESTED`) when meaningful fields change.
+        Unchanged observations return ``None`` and do **not** emit a duplicate
+        alert. Alert payloads carry the configured opaque matter reference and a
+        protected dossier link — never document body text.
+        """
+        mid = _safe_id(matter_id, field_name="matter_id")
+        # Ensure identity is configured (opaque ref + optional dossier link).
+        identity = self._checkpoint.matter_identities.get(mid)
+        if identity is None or opaque_matter_ref or dossier_id or dossier_link:
+            identity = self.configure_matter_alert_identity(
+                mid,
+                opaque_matter_ref=opaque_matter_ref
+                or (None if identity is None else identity.get("opaque_matter_ref")),
+                dossier_id=dossier_id
+                or (None if identity is None else identity.get("dossier_id")),
+                dossier_link=dossier_link
+                or (None if identity is None else identity.get("dossier_link")),
+                tenant_id=tenant_id
+                or (None if identity is None else identity.get("tenant_id")),
+            )
+
+        field_map: dict[str, Any] = {
+            AssuranceDeltaField.STATE.value: state,
+            AssuranceDeltaField.DEADLINE.value: deadline,
+            AssuranceDeltaField.INSTRUCTION.value: instruction,
+            AssuranceDeltaField.COMPLIANCE.value: compliance,
+            AssuranceDeltaField.SOURCE.value: source,
+            AssuranceDeltaField.AUTHORITY.value: authority,
+            AssuranceDeltaField.DOCUMENT.value: document,
+            AssuranceDeltaField.STATUS.value: status,
+        }
+        digests: dict[str, str] = {}
+        for field_name, raw in field_map.items():
+            d = self._digest_value(raw)
+            if d is not None:
+                digests[field_name] = d
+
+        overall = sha256_hex(
+            canonical_json(
+                {
+                    "digests": digests,
+                    "dossier_id": identity.get("dossier_id") or "",
+                    "matter_id": mid,
+                    "request_reanalysis": bool(request_reanalysis),
+                    "tenant_id": identity.get("tenant_id") or tenant_id or "",
+                }
+            )
+        )
+        snapshot = {
+            "digests": digests,
+            "dossier_id": identity.get("dossier_id") or "",
+            "dossier_link": identity.get("dossier_link") or "",
+            "matter_id": mid,
+            "opaque_matter_ref": identity.get("opaque_matter_ref") or "",
+            "overall_digest": overall,
+            "request_reanalysis": bool(request_reanalysis),
+            "tenant_id": identity.get("tenant_id") or tenant_id or "",
+            "updated_at_utc": self._now_utc(),
+        }
+
+        prior = self._checkpoint.assurance_snapshots.get(mid)
+        changed_fields: list[str] = []
+        if prior is None:
+            # First observation seeds the snapshot without alerting unless
+            # reanalysis was explicitly requested.
+            self._checkpoint.assurance_snapshots[mid] = snapshot
+            if not request_reanalysis:
+                self._persist()
+                return None
+            changed_fields = sorted(digests.keys()) or ["state"]
+        else:
+            prior_digests = dict(prior.get("digests") or {})
+            for field_name, digest in digests.items():
+                if prior_digests.get(field_name) != digest:
+                    changed_fields.append(field_name)
+            # Fields that disappeared or newly appeared count as changes.
+            for field_name in prior_digests:
+                if field_name not in digests and field_name not in changed_fields:
+                    changed_fields.append(field_name)
+            if not changed_fields and not request_reanalysis:
+                # Unchanged run — no duplicate alert.
+                if str(prior.get("overall_digest") or "") == overall:
+                    return None
+            if not changed_fields and request_reanalysis:
+                changed_fields = ["reanalysis"]
+            if not changed_fields:
+                return None
+
+        self._checkpoint.assurance_snapshots[mid] = snapshot
+        kind = (
+            AlertKind.REANALYSIS_REQUESTED
+            if request_reanalysis and not any(
+                f != "reanalysis" for f in changed_fields
+            )
+            else AlertKind.ASSURANCE_DELTA
+        )
+        if request_reanalysis and kind is AlertKind.ASSURANCE_DELTA:
+            # Combined change + reanalysis request still surfaces as delta with label.
+            pass
+        action = (
+            ActionKind.REVIEW_REANALYSIS
+            if request_reanalysis
+            else ActionKind.REVIEW_ASSURANCE_DELTA
+        )
+        labels = {
+            "overall_digest": overall[:64],
+            "delta_fields": ",".join(sorted(changed_fields)),
+            "assurance_digest": overall[:64],
+        }
+        if request_reanalysis:
+            labels["reanalysis_requested"] = "true"
+        # Never put document content into the message.
+        safe_message = message or (
+            "reanalysis requested"
+            if request_reanalysis and kind is AlertKind.REANALYSIS_REQUESTED
+            else f"assurance delta: {','.join(sorted(changed_fields))}"
+        )
+        # Strip any accidental content markers.
+        safe_message = sanitize_secret_text(str(safe_message))[:_ALERT_BODY_MAX]
+
+        alert = self._emit_alert(
+            kind=kind,
+            action=action,
+            message=safe_message,
+            matter_id=mid,
+            opaque_matter_ref=identity.get("opaque_matter_ref"),
+            dossier_link=identity.get("dossier_link"),
+            delta_fields=sorted(changed_fields),
+            labels=labels,
+        )
+        if alert is not None:
+            self._checkpoint.progress.changes_detected += 1
+            self._emit_action(
+                kind=action,
+                message=safe_message,
+                labels={
+                    "opaque_matter_ref": identity.get("opaque_matter_ref") or "",
+                    "dossier_link": identity.get("dossier_link") or "",
+                    "matter_id": mid,
+                },
+            )
+        self._persist()
+        return alert
+
+    def list_assurance_snapshots(self) -> dict[str, dict[str, Any]]:
+        return {
+            k: dict(v) for k, v in sorted(self._checkpoint.assurance_snapshots.items())
+        }
+
 
 def create_scheduler(
     poller: Poller | Callable[[PollJob], PollResult],
@@ -2558,9 +2993,12 @@ __all__ = [
     "SCHEDULER_SCHEMA_VERSION",
     "ActionKind",
     "AlertKind",
+    "AssuranceDeltaField",
     "BoundedServiceQueues",
     "ChangeFingerprint",
     "ContentKind",
+    "DEFAULT_DOSSIER_LINK_TEMPLATE",
+    "DEFAULT_OPAQUE_MATTER_REF_TEMPLATE",
     "DeadLetterReason",
     "DeadLetterRecord",
     "JobState",
