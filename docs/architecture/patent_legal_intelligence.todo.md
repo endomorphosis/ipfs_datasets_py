@@ -2965,7 +2965,7 @@ Program invariants:
 
 ## PATLAW-180 Define full annual CFR Title 37 inventory and acquisition contracts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
