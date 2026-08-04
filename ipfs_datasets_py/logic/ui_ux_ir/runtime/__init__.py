@@ -1,5 +1,5 @@
-"""Runtime event envelope, input adapters, fusion, and state machine."""
+"""Runtime event envelope, input adapters, fusion, state machine, and mediator."""
 
 from __future__ import annotations
 
-__all__ = ["events", "fusion", "input", "state_machine"]
+__all__ = ["events", "fusion", "input", "mediator", "state_machine"]
