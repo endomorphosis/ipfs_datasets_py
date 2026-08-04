@@ -2384,7 +2384,7 @@ Program invariants:
 
 ## PATLAW-157 Build deterministic public corpus, index, and graph release artifacts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
