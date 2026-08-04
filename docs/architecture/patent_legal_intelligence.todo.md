@@ -1984,7 +1984,7 @@ Program invariants:
 
 ## PATLAW-141 Add read-only MCP assurance queries and delta alerts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
