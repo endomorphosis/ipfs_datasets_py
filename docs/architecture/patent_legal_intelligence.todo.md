@@ -3040,7 +3040,7 @@ Program invariants:
 
 ## PATLAW-183 Acquire full MPEP section-level texts for public corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
