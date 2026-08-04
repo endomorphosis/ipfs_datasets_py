@@ -1859,7 +1859,7 @@ Program invariants:
 
 ## PATLAW-136 Orchestrate resumable matter analysis end to end
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
