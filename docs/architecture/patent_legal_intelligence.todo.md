@@ -2890,7 +2890,7 @@ Program invariants:
 
 ## PATLAW-177 Verify pinned Hub redownload of BM25 vector and graph artifacts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
