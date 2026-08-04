@@ -341,6 +341,8 @@ def _cmd_attended_export(args: argparse.Namespace) -> int:
         cmd.extend(["--session-name", str(args.session_name)])
     if getattr(args, "no_saved_session", False):
         cmd.append("--no-saved-session")
+    if getattr(args, "headless", False):
+        cmd.append("--headless")
     if args.seal_only:
         cmd.append("--seal-only")
     if args.json:
@@ -672,6 +674,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-saved-session",
         action="store_true",
         help="Ignore saved login session; require interactive login in browser",
+    )
+    att.add_argument(
+        "--headless",
+        action="store_true",
+        help="Run export browser headless (auto if DISPLAY unset)",
     )
     att.add_argument("--seal-only", action="store_true")
     att.add_argument("--login-timeout-seconds", type=float, default=600.0)

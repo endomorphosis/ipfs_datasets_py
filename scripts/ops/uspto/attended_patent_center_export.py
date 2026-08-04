@@ -123,6 +123,11 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Do not load storage_state; require interactive login.",
     )
     p.add_argument(
+        "--headless",
+        action="store_true",
+        help="Run Chromium headless (required without an X display).",
+    )
+    p.add_argument(
         "--login-timeout-seconds",
         type=float,
         default=600.0,
@@ -340,6 +345,8 @@ def _run_browser_session(
     state_root: Path,
     session_name: str = "patent_center",
     use_saved_session: bool = True,
+    headless: bool = False,
+    download_dir: Path | None = None,
 ) -> dict[str, Any]:
     assert_operator_capability("attended_browser_export_with_human_login")
     try:
@@ -350,6 +357,10 @@ def _run_browser_session(
             "(pip install playwright && playwright install chromium)",
             code="playwright_missing",
         ) from exc
+
+    # Auto-headless when no display is available.
+    if not headless and not os.environ.get("DISPLAY"):
+        headless = True
 
     storage_state_path = None
     if use_saved_session:
@@ -366,26 +377,50 @@ def _run_browser_session(
         except Exception:
             storage_state_path = None
 
+    if headless and not storage_state_path and not user_data_dir:
+        raise PortfolioAutomationError(
+            "headless export requires a saved login session "
+            "(run portfolio_cli login first)",
+            code="headless_requires_session",
+        )
+
     start_url = PATENT_CENTER_TRAINING_URL if training else PATENT_CENTER_URL
     assists: list[dict[str, Any]] = []
     login_info: dict[str, Any] = {}
+    downloads_seen: list[str] = []
+    download_root = Path(download_dir) if download_dir else next(iter(export_dirs.values()))
+    download_root.mkdir(parents=True, exist_ok=True)
 
     with sync_playwright() as playwright:
         browser = None
         if user_data_dir:
             context = playwright.chromium.launch_persistent_context(
                 user_data_dir,
-                headless=False,
+                headless=bool(headless),
                 accept_downloads=True,
             )
         else:
-            browser = playwright.chromium.launch(headless=False)
+            browser = playwright.chromium.launch(headless=bool(headless))
             context_kwargs: dict[str, Any] = {"accept_downloads": True}
             if storage_state_path:
                 context_kwargs["storage_state"] = storage_state_path
             context = browser.new_context(**context_kwargs)
+
+        def _on_download(download: Any) -> None:
+            try:
+                suggested = download.suggested_filename or f"download-{int(time.time())}"
+                target = download_root / suggested
+                # Avoid clobber
+                if target.exists():
+                    target = download_root / f"{target.stem}-{int(time.time())}{target.suffix}"
+                download.save_as(str(target))
+                downloads_seen.append(str(target))
+            except Exception:
+                pass
+
         try:
             page = context.pages[0] if context.pages else context.new_page()
+            page.on("download", _on_download)
             page.goto(start_url, wait_until="domcontentloaded", timeout=60000)
             # If we loaded a saved session, check whether it still authenticates.
             if storage_state_path:
@@ -403,13 +438,22 @@ def _run_browser_session(
                         continue
                 if not login_info.get("logged_in"):
                     # Session may still work without visible logout control.
+                    on_auth = "auth.uspto.gov" in (page.url or "")
                     login_info = {
-                        "logged_in": True,
+                        "logged_in": not on_auth,
                         "method": "saved_session_unverified",
                         "session_path": storage_state_path,
                         "at_utc": utc_now_iso(),
-                        "note": "no logout selector; continuing with storage_state",
+                        "url": (page.url or "")[:160],
+                        "note": "no logout selector; continuing with storage_state"
+                        if not on_auth
+                        else "redirected_to_auth_session_may_be_stale",
                     }
+                    if on_auth:
+                        raise PortfolioAutomationError(
+                            "saved session redirected to Okta auth; re-run login",
+                            code="session_expired",
+                        )
             else:
                 login_info = _wait_for_login(page, login_timeout_seconds)
                 if not login_info.get("logged_in"):
@@ -424,12 +468,14 @@ def _run_browser_session(
                         context.set_default_timeout(15000)
                     except Exception:
                         pass
+                    # Point downloads at the app-specific export dir when possible.
+                    app_dir = export_dirs.get(app, download_root)
+                    app_dir.mkdir(parents=True, exist_ok=True)
                     assists.append(_assist_application(page, app))
                     time.sleep(1.0)
             if watch_seconds > 0:
                 print(
-                    f"\nWatching for downloads for {watch_seconds:.0f}s. "
-                    "Complete any manual downloads in Patent Center now.\n",
+                    f"\nWatching for downloads for {watch_seconds:.0f}s.\n",
                     flush=True,
                 )
                 time.sleep(watch_seconds)
@@ -443,6 +489,8 @@ def _run_browser_session(
         "assists": assists,
         "start_url": start_url,
         "used_saved_session": bool(storage_state_path),
+        "headless": bool(headless),
+        "downloads": downloads_seen,
     }
 
 
@@ -484,6 +532,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         session: dict[str, Any] = {"skipped": True}
         if not args.seal_only:
+            first_export = next(iter(export_dirs.values()))
             session = _run_browser_session(
                 apps=apps,
                 export_dirs=export_dirs,
@@ -495,6 +544,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 state_root=state_root,
                 session_name=str(getattr(args, "session_name", "patent_center") or "patent_center"),
                 use_saved_session=not bool(getattr(args, "no_saved_session", False)),
+                headless=bool(getattr(args, "headless", False)),
+                download_dir=first_export,
             )
 
         sealed: list[dict[str, Any]] = []
