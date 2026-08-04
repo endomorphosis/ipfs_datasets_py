@@ -2715,7 +2715,7 @@ Program invariants:
 
 ## PATLAW-170 Materialize public patent-law and regulations corpus for Hub release
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
