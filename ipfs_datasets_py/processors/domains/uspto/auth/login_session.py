@@ -40,7 +40,9 @@ from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (
 LOGIN_SCHEMA: Final = "patlaw-uspto-login-session-v1"
 DEFAULT_SESSION_NAME: Final = "patent_center"
 PATENT_CENTER_LOGIN_URL: Final = "https://patentcenter.uspto.gov"
-MYUSPTO_LOGIN_HINT: Final = "https://my.uspto.gov"
+MYUSPTO_HOME_URL: Final = "https://my.uspto.gov/home"
+# USPTO uses Okta at auth.uspto.gov; starting at MyUSPTO home triggers the authorize flow.
+DEFAULT_LOGIN_ENTRY_URL: Final = MYUSPTO_HOME_URL
 
 FORBIDDEN_LOGIN_CAPABILITIES: Final[frozenset[str]] = frozenset(
     {
@@ -345,7 +347,50 @@ def _write_session(
     return path
 
 
-def _looks_logged_in(page: Any) -> bool:
+def _visible_input(page: Any, selectors: tuple[str, ...]) -> Any | None:
+    for sel in selectors:
+        try:
+            loc = page.locator(sel)
+            count = loc.count()
+            for i in range(min(count, 6)):
+                el = loc.nth(i)
+                try:
+                    if el.is_visible():
+                        return el
+                except Exception:
+                    continue
+        except Exception:
+            continue
+    return None
+
+
+def _click_first(page: Any, selectors: tuple[str, ...]) -> bool:
+    for sel in selectors:
+        try:
+            loc = page.locator(sel)
+            count = loc.count()
+            for i in range(min(count, 6)):
+                el = loc.nth(i)
+                try:
+                    if el.is_visible():
+                        el.click()
+                        return True
+                except Exception:
+                    continue
+        except Exception:
+            continue
+    return False
+
+
+def _looks_logged_in(page: Any, *, storage: Mapping[str, Any] | None = None) -> bool:
+    cookies = []
+    if isinstance(storage, Mapping):
+        cookies = list(storage.get("cookies") or [])
+    # Require real session cookies for success — empty storage_state is a false positive.
+    if cookies:
+        domains = " ".join(str(c.get("domain") or "") for c in cookies if isinstance(c, dict))
+        if "uspto.gov" in domains or "okta" in domains.lower():
+            return True
     selectors = (
         "text=Log Out",
         "text=Logout",
@@ -353,21 +398,134 @@ def _looks_logged_in(page: Any) -> bool:
         "text=My Workbench",
         "text=Workbench",
         "a[href*='logout' i]",
+        "text=MyUSPTO",
     )
     for sel in selectors:
         try:
-            if page.locator(sel).count() > 0:
-                return True
+            if page.locator(sel).count() > 0 and "auth.uspto.gov" not in (page.url or ""):
+                # Prefer cookie evidence; UI alone is weak without cookies.
+                if cookies:
+                    return True
         except Exception:
             continue
-    # Cookie heuristic after navigation
     try:
         url = page.url or ""
-        if "patentcenter.uspto.gov" in url and "login" not in url.lower():
+        if cookies and "my.uspto.gov" in url and "auth.uspto.gov" not in url:
+            return True
+        if cookies and "patentcenter.uspto.gov" in url and "auth.uspto.gov" not in url:
             return True
     except Exception:
         pass
     return False
+
+
+def _fill_okta_identifier(page: Any, username: str) -> None:
+    el = _visible_input(
+        page,
+        (
+            "input[name='identifier']",
+            "input[autocomplete='username']",
+            "input[type='email']",
+            "input[type='text']",
+        ),
+    )
+    if el is None:
+        raise LoginError("Okta username/identifier field not found", code="identifier_field_missing")
+    el.fill(username)
+    if not _click_first(
+        page,
+        (
+            "input[type='submit']",
+            "button[type='submit']",
+            "input[value='Next']",
+            "button:has-text('Next')",
+            "button:has-text('Continue')",
+            "input[type='submit'][value*='Sign']",
+        ),
+    ):
+        el.press("Enter")
+
+
+def _fill_password(page: Any, password: str) -> None:
+    # Okta password is often step 2.
+    deadline = time.time() + 30
+    el = None
+    while time.time() < deadline and el is None:
+        el = _visible_input(
+            page,
+            (
+                "input[type='password']",
+                "input[name='credentials.passcode']",
+                "input[name='password']",
+                "input[autocomplete='current-password']",
+            ),
+        )
+        if el is None:
+            page.wait_for_timeout(500)
+    if el is None:
+        raise LoginError("password field not found after identifier step", code="password_field_missing")
+    el.fill(password)
+    if not _click_first(
+        page,
+        (
+            "input[type='submit']",
+            "button[type='submit']",
+            "button:has-text('Verify')",
+            "button:has-text('Sign In')",
+            "button:has-text('Log In')",
+            "button:has-text('Next')",
+        ),
+    ):
+        el.press("Enter")
+
+
+def _fill_otp(page: Any, code: str) -> None:
+    code = re.sub(r"\s+", "", str(code or ""))
+    if not code:
+        raise LoginError("OTP code is empty", code="empty_otp")
+    deadline = time.time() + 45
+    el = None
+    while time.time() < deadline and el is None:
+        el = _visible_input(
+            page,
+            (
+                "input[name='credentials.passcode']",
+                "input[autocomplete='one-time-code']",
+                "input[name*='otp' i]",
+                "input[name*='code' i]",
+                "input[inputmode='numeric']",
+                "input[type='tel']",
+                "input[type='text']",
+            ),
+        )
+        # Prefer passcode/otp-named fields over generic text if both exist.
+        named = _visible_input(
+            page,
+            (
+                "input[name='credentials.passcode']",
+                "input[autocomplete='one-time-code']",
+                "input[name*='otp' i]",
+                "input[name*='code' i]",
+            ),
+        )
+        if named is not None:
+            el = named
+        if el is None:
+            page.wait_for_timeout(500)
+    if el is None:
+        raise LoginError("OTP field not found", code="otp_field_missing")
+    el.fill(code)
+    if not _click_first(
+        page,
+        (
+            "input[type='submit']",
+            "button[type='submit']",
+            "button:has-text('Verify')",
+            "button:has-text('Continue')",
+            "button:has-text('Submit')",
+        ),
+    ):
+        el.press("Enter")
 
 
 def login_patent_center(
@@ -381,12 +539,12 @@ def login_patent_center(
     state_root: Path | None = None,
     session_name: str = DEFAULT_SESSION_NAME,
     headless: bool = False,
-    login_url: str = PATENT_CENTER_LOGIN_URL,
+    login_url: str = DEFAULT_LOGIN_ENTRY_URL,
     timeout_seconds: float = 180.0,
     allow_prompt: bool = True,
     otp_provider: Callable[[], str] | None = None,
 ) -> LoginResult:
-    """Log into Patent Center with username/password + OTP and save session.
+    """Log into USPTO Okta (MyUSPTO) then bind session for Patent Center.
 
     Parameters
     ----------
@@ -411,18 +569,22 @@ def login_patent_center(
 
     def _resolve_otp() -> str:
         if otp_provider is not None:
-            return str(otp_provider() or "").strip()
+            return re.sub(r"\s+", "", str(otp_provider() or ""))
         if mode == "none":
             return ""
         if mode == "code":
             if otp_code.strip():
-                return otp_code.strip()
+                return re.sub(r"\s+", "", otp_code.strip())
             if otp_ref.strip():
-                return resolve_secret_ref(
-                    otp_ref, prompt_label="USPTO OTP", allow_prompt=allow_prompt
+                return re.sub(
+                    r"\s+",
+                    "",
+                    resolve_secret_ref(
+                        otp_ref, prompt_label="USPTO OTP", allow_prompt=allow_prompt
+                    ),
                 )
             if allow_prompt:
-                return getpass.getpass("USPTO OTP code: ").strip()
+                return re.sub(r"\s+", "", getpass.getpass("USPTO OTP code: ").strip())
             raise LoginError("otp_mode=code requires otp_code or otp_ref", code="missing_otp")
         if mode == "totp":
             secret = resolve_secret_ref(
@@ -431,9 +593,8 @@ def login_patent_center(
                 allow_prompt=False,
             )
             return generate_totp(secret)
-        # prompt
         if allow_prompt:
-            return getpass.getpass("USPTO OTP / MFA code: ").strip()
+            return re.sub(r"\s+", "", getpass.getpass("USPTO OTP / MFA code: ").strip())
         raise LoginError("otp_mode=prompt requires an interactive terminal", code="prompt_unavailable")
 
     try:
@@ -447,6 +608,7 @@ def login_patent_center(
     logged_in = False
     message = "login_incomplete"
     path = session_path(state_root, name=session_name)
+    cookie_count = 0
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=bool(headless))
@@ -454,142 +616,120 @@ def login_patent_center(
         page = context.new_page()
         page.set_default_timeout(min(60_000, int(timeout_seconds * 1000)))
         try:
-            page.goto(login_url, wait_until="domcontentloaded", timeout=60_000)
-            # Common username fields
-            for sel in (
-                "input[name='username']",
-                "input[name='USER']",
-                "input[id*='user' i]",
-                "input[type='email']",
-                "input[autocomplete='username']",
-                "input[name='identifier']",
-            ):
-                try:
-                    loc = page.locator(sel).first
-                    if loc.count() > 0:
-                        loc.fill(username)
-                        break
-                except Exception:
-                    continue
-            for sel in (
-                "input[name='password']",
-                "input[type='password']",
-                "input[autocomplete='current-password']",
-            ):
-                try:
-                    loc = page.locator(sel).first
-                    if loc.count() > 0:
-                        loc.fill(password)
-                        break
-                except Exception:
-                    continue
-            # Submit password form
-            for sel in (
-                "button[type='submit']",
-                "input[type='submit']",
-                "button:has-text('Sign In')",
-                "button:has-text('Log In')",
-                "button:has-text('Login')",
-                "button:has-text('Continue')",
-                "text=Sign in",
-            ):
-                try:
-                    loc = page.locator(sel).first
-                    if loc.count() > 0:
-                        loc.click()
-                        break
-                except Exception:
-                    continue
+            # MyUSPTO home redirects into Okta authorize (identifier → password → MFA).
+            page.goto(login_url, wait_until="domcontentloaded", timeout=90_000)
+            # Wait for Okta host; home may bounce through my.uspto.gov first.
+            deadline = time.time() + 60
+            while time.time() < deadline:
+                url = page.url or ""
+                if "auth.uspto.gov" in url:
+                    break
+                if "my.uspto.gov" in url:
+                    _click_first(
+                        page,
+                        (
+                            "a:has-text('Sign in')",
+                            "a:has-text('Sign In')",
+                            "button:has-text('Sign in')",
+                            "text=Sign in",
+                        ),
+                    )
+                page.wait_for_timeout(500)
+            try:
+                page.wait_for_selector(
+                    "input[name='identifier'], input[autocomplete='username']",
+                    timeout=45_000,
+                    state="visible",
+                )
+            except Exception as exc:
+                raise LoginError(
+                    "Okta username/identifier field not found",
+                    code="identifier_field_missing",
+                ) from exc
 
-            # Wait briefly for MFA or landing
-            page.wait_for_timeout(2000)
+            _fill_okta_identifier(page, username)
+            try:
+                page.wait_for_selector(
+                    "input[type='password'], input[name='credentials.passcode']",
+                    timeout=45_000,
+                    state="visible",
+                )
+            except Exception as exc:
+                raise LoginError(
+                    "password field not found after identifier step",
+                    code="password_field_missing",
+                ) from exc
+            # If the first post-identifier field is already OTP (rare), skip password fill path.
+            if _visible_input(page, ("input[type='password']",)) is not None:
+                _fill_password(page, password)
+                page.wait_for_timeout(1200)
 
             if mode != "none":
-                otp_selectors = (
-                    "input[name*='otp' i]",
-                    "input[name*='mfa' i]",
-                    "input[name*='code' i]",
-                    "input[autocomplete='one-time-code']",
-                    "input[inputmode='numeric']",
-                    "input[type='tel']",
-                )
-                needs_otp = False
-                for sel in otp_selectors:
-                    try:
-                        if page.locator(sel).count() > 0:
-                            needs_otp = True
-                            break
-                    except Exception:
-                        continue
-                # Also check page text
+                # Detect MFA page or always attempt when mode requests OTP.
+                body = ""
                 try:
-                    body = page.content().lower()
-                    if any(
-                        k in body
-                        for k in (
-                            "one-time",
-                            "verification code",
-                            "authentication code",
-                            "mfa",
-                            "passcode",
-                        )
-                    ):
-                        needs_otp = True
+                    body = (page.content() or "").lower()
                 except Exception:
-                    pass
-
+                    body = ""
+                needs_otp = any(
+                    k in body
+                    for k in (
+                        "one-time",
+                        "verification code",
+                        "google authenticator",
+                        "okta verify",
+                        "enter code",
+                        "passcode",
+                        "security code",
+                    )
+                )
+                if (
+                    _visible_input(
+                        page,
+                        (
+                            "input[name='credentials.passcode']",
+                            "input[autocomplete='one-time-code']",
+                        ),
+                    )
+                    is not None
+                ):
+                    needs_otp = True
                 if needs_otp or mode in {"prompt", "totp", "code"}:
                     code = _resolve_otp()
-                    if not code and mode != "none":
-                        raise LoginError("OTP code is empty", code="empty_otp")
-                    if code:
-                        filled = False
-                        for sel in otp_selectors:
-                            try:
-                                loc = page.locator(sel).first
-                                if loc.count() > 0:
-                                    loc.fill(code)
-                                    filled = True
-                                    break
-                            except Exception:
-                                continue
-                        if filled:
-                            for sel in (
-                                "button[type='submit']",
-                                "input[type='submit']",
-                                "button:has-text('Verify')",
-                                "button:has-text('Continue')",
-                                "button:has-text('Submit')",
-                            ):
-                                try:
-                                    loc = page.locator(sel).first
-                                    if loc.count() > 0:
-                                        loc.click()
-                                        break
-                                except Exception:
-                                    continue
+                    _fill_otp(page, code)
 
-            # Allow redirects / workbench load
-            deadline = time.time() + max(30.0, float(timeout_seconds) - 30.0)
+            # Wait for redirect off Okta authorize
+            deadline = time.time() + max(40.0, float(timeout_seconds) - 40.0)
             while time.time() < deadline:
-                if _looks_logged_in(page):
-                    logged_in = True
+                url = page.url or ""
+                if "auth.uspto.gov" not in url and "uspto.gov" in url:
                     break
-                page.wait_for_timeout(1000)
-                # Try navigating to patent center home after auth
-                try:
-                    if "login" in (page.url or "").lower():
-                        pass
-                    elif "uspto.gov" in (page.url or ""):
-                        page.goto(
-                            PATENT_CENTER_LOGIN_URL,
-                            wait_until="domcontentloaded",
-                            timeout=30_000,
-                        )
-                except Exception:
-                    pass
+                page.wait_for_timeout(750)
+
+            # Touch Patent Center so its cookies/storage are included when possible.
+            try:
+                page.goto(
+                    PATENT_CENTER_LOGIN_URL,
+                    wait_until="domcontentloaded",
+                    timeout=60_000,
+                )
+                page.wait_for_timeout(2000)
+            except Exception:
+                pass
 
             storage = context.storage_state()
+            cookie_count = len(storage.get("cookies") or []) if isinstance(storage, dict) else 0
+            logged_in = _looks_logged_in(page, storage=storage) and cookie_count > 0
+            if cookie_count == 0:
+                logged_in = False
+                message = "login_failed_empty_session_cookies"
+            elif logged_in:
+                message = "login_succeeded_session_saved"
+            else:
+                message = (
+                    f"session_has_{cookie_count}_cookies_but_login_unconfirmed"
+                )
+
             _write_session(
                 storage,
                 state_root=state_root,
@@ -597,12 +737,11 @@ def login_patent_center(
                 username_hint=hint,
                 logged_in=logged_in,
             )
-            if logged_in:
-                message = "login_succeeded_session_saved"
-            else:
-                message = (
-                    "session_saved_but_login_not_confirmed; "
-                    "complete MFA in headed mode or check credentials"
+            if not logged_in and cookie_count == 0:
+                raise LoginError(
+                    "USPTO login did not produce session cookies "
+                    "(check credentials/OTP; Okta multi-step may have failed)",
+                    code="empty_session",
                 )
         except LoginError:
             raise
