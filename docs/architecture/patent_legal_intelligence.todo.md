@@ -2990,7 +2990,7 @@ Program invariants:
 
 ## PATLAW-181 Acquire full annual CFR Title 37 text package for public corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
