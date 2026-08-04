@@ -2636,7 +2636,7 @@ Program invariants:
 
 ## PATLAW-167 Run optional live official-source canary with offline fallback
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
