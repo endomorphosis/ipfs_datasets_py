@@ -32,8 +32,8 @@
   },
   "accelerator": {
     "branch": "feature/patent-legal-supervisor",
-    "required_feature_commit": "bfe45f429992ed55deb3c42eb8d1d49b39900329",
-    "required_capability": "strict slices, quota-only isolated Codex fallback, quiescent heartbeat, exact synthetic artifact authority, and bounded failure diagnostics"
+    "required_feature_commit": "db5ffcacde69f9f15fada3404c42841aa72e2bcb",
+    "required_capability": "strict slices, quota-only isolated Codex fallback, quiescent heartbeat, exact synthetic artifact authority, bounded failure diagnostics, post-completion ops refill, and protected generated dirty auto-heal"
   },
   "supervisor": {
     "daemon_interval_seconds": 45,

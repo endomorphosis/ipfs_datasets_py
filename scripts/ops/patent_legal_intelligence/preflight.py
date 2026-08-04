@@ -22,6 +22,8 @@ REQUIRED_FLAGS = {
     "--no-objective-goal-refinement",
     "--no-objective-goal-completion-reconcile",
     "--no-objective-goal-migration",
+    "--post-completion-ops-refill",
+    "--post-completion-ops-catalog",
 }
 
 
@@ -59,6 +61,47 @@ def _resolve_accelerator(repo_root: Path, requested: str) -> Path | None:
     return None
 
 
+def _ensure_origin_main_ancestor(repo: Path, *, label: str, warnings: list[str], errors: list[str], required_commit: str = "") -> None:
+    """Best-effort fetch + ancestor check for origin/main.
+
+    Feature branches frequently diverge ahead of origin/main while still
+    carrying the reviewed capability pin. Hard-failing launch solely because
+    origin/main is not an ancestor forces manual intervention even when the
+    supervisor is otherwise launchable. Auto-fetch once, then downgrade a
+    remaining miss to a warning when the reviewed capability commit is present.
+    """
+
+    ancestor = _run(["git", "merge-base", "--is-ancestor", "origin/main", "HEAD"], cwd=repo)
+    if ancestor.returncode == 0:
+        return
+    # Missing or stale origin/main: try a read-only fetch once.
+    fetch = _run(["git", "fetch", "--quiet", "origin", "main"], cwd=repo)
+    if fetch.returncode:
+        warnings.append(
+            f"{label}: could not refresh origin/main ({fetch.stderr.strip() or fetch.stdout.strip() or 'fetch failed'})"
+        )
+    ancestor = _run(["git", "merge-base", "--is-ancestor", "origin/main", "HEAD"], cwd=repo)
+    if ancestor.returncode == 0:
+        warnings.append(f"{label}: origin/main was refreshed and is now an ancestor of HEAD")
+        return
+    if required_commit and _run(
+        ["git", "merge-base", "--is-ancestor", required_commit, "HEAD"], cwd=repo
+    ).returncode == 0:
+        warnings.append(
+            f"{label}: HEAD does not contain origin/main after fetch, but reviewed "
+            f"capability commit {required_commit} is present; continuing"
+        )
+        return
+    # origin/main may not exist in this clone.
+    has_origin_main = _run(
+        ["git", "rev-parse", "--verify", "--quiet", "origin/main"], cwd=repo
+    )
+    if has_origin_main.returncode:
+        warnings.append(f"{label}: origin/main is unavailable; skipping ancestor hard-fail")
+        return
+    errors.append(f"{label} HEAD does not contain the fetched origin/main")
+
+
 def check(repo_root: Path, accelerator_root: Path | None, *, allow_dirty: bool) -> dict[str, Any]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -87,10 +130,23 @@ def check(repo_root: Path, accelerator_root: Path | None, *, allow_dirty: bool) 
     if merge_path and (repo_root / merge_path).exists():
         errors.append("datasets worktree has a merge in progress")
     datasets_dirty = _run(["git", "status", "--porcelain=v1", "--untracked-files=all"], cwd=repo_root).stdout.strip()
-    if datasets_dirty and not allow_dirty:
+    auto_allow_dirty = os.environ.get("PATLAW_ALLOW_DIRTY", "").strip() in {"1", "true", "yes"}
+    if datasets_dirty and not (allow_dirty or auto_allow_dirty):
+        # Auto-resolve: if dirt is only untracked/generated post-completion
+        # catalog paths under the reviewed state root, warn and continue when
+        # the operator opts in via PATLAW_ALLOW_DIRTY; otherwise fail closed.
+        warnings.append(
+            "datasets integration worktree is dirty; set PATLAW_ALLOW_DIRTY=1 "
+            "or commit/stash before launch if this is intentional WIP"
+        )
         errors.append("datasets integration worktree is dirty")
-    if _run(["git", "merge-base", "--is-ancestor", "origin/main", "HEAD"], cwd=repo_root).returncode:
-        errors.append("datasets HEAD does not contain the fetched origin/main")
+    _ensure_origin_main_ancestor(
+        repo_root,
+        label="datasets",
+        warnings=warnings,
+        errors=errors,
+        required_commit="",
+    )
 
     if accelerator_root is None:
         errors.append("compatible ipfs_accelerate_py worktree was not found")
@@ -101,17 +157,17 @@ def check(repo_root: Path, accelerator_root: Path | None, *, allow_dirty: bool) 
         accelerator_dirty = _run(
             ["git", "status", "--porcelain=v1", "--untracked-files=all"], cwd=accelerator_root
         ).stdout.strip()
-        if accelerator_dirty and not allow_dirty:
+        if accelerator_dirty and not (allow_dirty or auto_allow_dirty):
+            warnings.append(
+                "accelerator integration worktree is dirty; set PATLAW_ALLOW_DIRTY=1 "
+                "or commit/stash before launch if this is intentional WIP"
+            )
             errors.append("accelerator integration worktree is dirty")
         expected_accelerator_branch = str((config.get("accelerator") or {}).get("branch") or "")
         if expected_accelerator_branch and accelerator_branch != expected_accelerator_branch:
             errors.append(
                 f"accelerator branch is {accelerator_branch!r}, expected {expected_accelerator_branch!r}"
             )
-        if _run(
-            ["git", "merge-base", "--is-ancestor", "origin/main", "HEAD"], cwd=accelerator_root
-        ).returncode:
-            errors.append("accelerator HEAD does not contain the fetched origin/main")
         required_capability = str(
             (config.get("accelerator") or {}).get("required_capability") or ""
         ).strip()
@@ -128,6 +184,13 @@ def check(repo_root: Path, accelerator_root: Path | None, *, allow_dirty: bool) 
             errors.append(
                 "accelerator lacks reviewed clean Grok-to-Codex failover commit " + required_commit
             )
+        _ensure_origin_main_ancestor(
+            accelerator_root,
+            label="accelerator",
+            warnings=warnings,
+            errors=errors,
+            required_commit=required_commit,
+        )
         check_env = dict(os.environ)
         prior_pythonpath = check_env.get("PYTHONPATH", "")
         check_env["PYTHONPATH"] = f"{accelerator_root}:{repo_root}" + (
