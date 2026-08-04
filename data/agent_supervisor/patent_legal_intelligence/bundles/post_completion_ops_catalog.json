@@ -8,7 +8,9 @@
     {
       "task_id": "PATLAW-165",
       "title": "Validate production completion-gate artifacts and evidence bundle offline",
-      "depends_on": ["PATLAW-164"],
+      "depends_on": [
+        "PATLAW-164"
+      ],
       "goal_id": "PATLAW-G201",
       "track": "post-completion-ops",
       "priority": "P0",
@@ -32,7 +34,9 @@
     {
       "task_id": "PATLAW-166",
       "title": "Assemble feature-branch PR package without auto-push",
-      "depends_on": ["PATLAW-165"],
+      "depends_on": [
+        "PATLAW-165"
+      ],
       "goal_id": "PATLAW-G201",
       "track": "post-completion-ops",
       "priority": "P0",
@@ -55,7 +59,9 @@
     {
       "task_id": "PATLAW-167",
       "title": "Run optional live official-source canary with offline fallback",
-      "depends_on": ["PATLAW-165"],
+      "depends_on": [
+        "PATLAW-165"
+      ],
       "goal_id": "PATLAW-G202",
       "track": "post-completion-ops",
       "priority": "P1",
@@ -78,7 +84,11 @@
     {
       "task_id": "PATLAW-168",
       "title": "Exercise Hub release dry-run staging verification",
-      "depends_on": ["PATLAW-165", "PATLAW-157", "PATLAW-158"],
+      "depends_on": [
+        "PATLAW-165",
+        "PATLAW-157",
+        "PATLAW-158"
+      ],
       "goal_id": "PATLAW-G202",
       "track": "post-completion-ops",
       "priority": "P0",
@@ -101,7 +111,11 @@
     {
       "task_id": "PATLAW-169",
       "title": "Seal operator production handoff receipt and completed status projection",
-      "depends_on": ["PATLAW-166", "PATLAW-167", "PATLAW-168"],
+      "depends_on": [
+        "PATLAW-166",
+        "PATLAW-167",
+        "PATLAW-168"
+      ],
       "goal_id": "PATLAW-G203",
       "track": "post-completion-ops",
       "priority": "P0",
@@ -120,6 +134,268 @@
       "resource_class": "cpu-medium",
       "token_class": "medium",
       "estimated_tokens": 10000
+    },
+    {
+      "task_id": "PATLAW-170",
+      "title": "Materialize public patent-law and regulations corpus for Hub release",
+      "depends_on": [
+        "PATLAW-128",
+        "PATLAW-131",
+        "PATLAW-132",
+        "PATLAW-157"
+      ],
+      "goal_id": "PATLAW-G211",
+      "track": "hub-index-build",
+      "priority": "P0",
+      "bundle": "patlaw/hub-public-legal-corpus",
+      "parallel_lane": "patlaw-v2-lane-2",
+      "outputs": [
+        "ipfs_datasets_py/processors/domains/patent/public_legal_corpus_materializer.py",
+        "scripts/ops/legal_data/materialize_public_legal_corpus.py",
+        "tests/integration/processors/patent/test_public_legal_corpus_materializer.py"
+      ],
+      "validation": "python -m pytest tests/integration/processors/patent/test_public_legal_corpus_materializer.py -q",
+      "acceptance": "Deterministic public legal corpus materialization with rights and source receipts; private inputs fail closed.",
+      "preconditions": "Legal source acquisition and HF release contracts are merged.",
+      "effects": "Produces public corpus ready for BM25/vector/graph builders.",
+      "conflict_policy": "Own corpus materializer only; no Hub upload.",
+      "resource_class": "cpu-large",
+      "token_class": "xlarge",
+      "estimated_tokens": 22000
+    },
+    {
+      "task_id": "PATLAW-171",
+      "title": "Build production BM25 index snapshot for public legal corpus",
+      "depends_on": [
+        "PATLAW-146",
+        "PATLAW-170"
+      ],
+      "goal_id": "PATLAW-G211",
+      "track": "hub-index-build",
+      "priority": "P0",
+      "bundle": "patlaw/hub-public-legal-bm25",
+      "parallel_lane": "patlaw-v2-lane-3",
+      "outputs": [
+        "ipfs_datasets_py/processors/domains/patent/public_legal_bm25_builder.py",
+        "scripts/ops/legal_data/build_public_legal_bm25_index.py",
+        "tests/integration/processors/patent/test_public_legal_bm25_builder.py"
+      ],
+      "validation": "python -m pytest tests/integration/processors/patent/test_public_legal_bm25_builder.py -q",
+      "acceptance": "Deterministic BM25 snapshot bound to corpus root.",
+      "preconditions": "Public corpus materializer and index contracts available.",
+      "effects": "Builds BM25 documents/terms/postings snapshot.",
+      "conflict_policy": "Own BM25 builder only; no Hub upload.",
+      "resource_class": "cpu-large",
+      "token_class": "xlarge",
+      "estimated_tokens": 20000
+    },
+    {
+      "task_id": "PATLAW-172",
+      "title": "Build production vector index snapshot for public legal corpus",
+      "depends_on": [
+        "PATLAW-145",
+        "PATLAW-146",
+        "PATLAW-170"
+      ],
+      "goal_id": "PATLAW-G211",
+      "track": "hub-index-build",
+      "priority": "P0",
+      "bundle": "patlaw/hub-public-legal-vector",
+      "parallel_lane": "patlaw-v2-lane-0",
+      "outputs": [
+        "ipfs_datasets_py/processors/domains/patent/public_legal_vector_builder.py",
+        "scripts/ops/legal_data/build_public_legal_vector_index.py",
+        "tests/integration/processors/patent/test_public_legal_vector_builder.py"
+      ],
+      "validation": "python -m pytest tests/integration/processors/patent/test_public_legal_vector_builder.py -q",
+      "acceptance": "Vector snapshot binds model pin and corpus root.",
+      "preconditions": "Pinned local embeddings and public corpus available.",
+      "effects": "Builds production vector index artifacts.",
+      "conflict_policy": "Own vector builder only; no Hub upload.",
+      "resource_class": "gpu-optional",
+      "token_class": "xlarge",
+      "estimated_tokens": 22000
+    },
+    {
+      "task_id": "PATLAW-173",
+      "title": "Build production knowledge-graph snapshot for public legal corpus",
+      "depends_on": [
+        "PATLAW-146",
+        "PATLAW-147",
+        "PATLAW-170"
+      ],
+      "goal_id": "PATLAW-G211",
+      "track": "hub-index-build",
+      "priority": "P0",
+      "bundle": "patlaw/hub-public-legal-graph",
+      "parallel_lane": "patlaw-v2-lane-1",
+      "outputs": [
+        "ipfs_datasets_py/processors/domains/patent/public_legal_graph_builder.py",
+        "scripts/ops/legal_data/build_public_legal_knowledge_graph.py",
+        "tests/integration/processors/patent/test_public_legal_graph_builder.py"
+      ],
+      "validation": "python -m pytest tests/integration/processors/patent/test_public_legal_graph_builder.py -q",
+      "acceptance": "Graph snapshot has no orphan edges and cites source receipts.",
+      "preconditions": "Public corpus and graph snapshot contracts available.",
+      "effects": "Builds knowledge-graph nodes/edges/JSON-LD snapshot.",
+      "conflict_policy": "Own graph builder only; no Hub upload.",
+      "resource_class": "cpu-large",
+      "token_class": "xlarge",
+      "estimated_tokens": 22000
+    },
+    {
+      "task_id": "PATLAW-174",
+      "title": "Package multi-artifact corpus BM25 vector and graph Hub release",
+      "depends_on": [
+        "PATLAW-157",
+        "PATLAW-170",
+        "PATLAW-171",
+        "PATLAW-172",
+        "PATLAW-173"
+      ],
+      "goal_id": "PATLAW-G212",
+      "track": "hub-index-package",
+      "priority": "P0",
+      "bundle": "patlaw/hub-index-package",
+      "parallel_lane": "patlaw-v2-lane-2",
+      "outputs": [
+        "scripts/ops/legal_data/package_patent_legal_hub_indexes.py",
+        "tests/integration/processors/patent/test_hub_index_package.py"
+      ],
+      "validation": "python -m pytest tests/integration/processors/patent/test_hub_index_package.py -q",
+      "acceptance": "Package binds corpus and all three index families.",
+      "preconditions": "Builders and release v2 available.",
+      "effects": "Creates multi-artifact Hub package.",
+      "conflict_policy": "Package only; dry-run default; no upload.",
+      "resource_class": "cpu-large",
+      "token_class": "xlarge",
+      "estimated_tokens": 20000
+    },
+    {
+      "task_id": "PATLAW-175",
+      "title": "Admit hub index package through DLP rights and Viewer gates",
+      "depends_on": [
+        "PATLAW-158",
+        "PATLAW-174"
+      ],
+      "goal_id": "PATLAW-G212",
+      "track": "hub-index-package",
+      "priority": "P0",
+      "bundle": "patlaw/hub-index-admission",
+      "parallel_lane": "patlaw-v2-lane-3",
+      "outputs": [
+        "scripts/ops/legal_data/admit_patent_legal_hub_indexes.py",
+        "tests/security/test_patent_legal_hub_index_admission.py"
+      ],
+      "validation": "python -m pytest tests/security/test_patent_legal_hub_index_admission.py -q",
+      "acceptance": "Fail-closed admission over multi-index package.",
+      "preconditions": "Package and DLP policy available.",
+      "effects": "Emits admission receipt.",
+      "conflict_policy": "Admission only; no Hub upload.",
+      "resource_class": "cpu-large",
+      "token_class": "large",
+      "estimated_tokens": 18000
+    },
+    {
+      "task_id": "PATLAW-176",
+      "title": "Stage authenticated Hub PR for corpus BM25 vector and graph artifacts",
+      "depends_on": [
+        "PATLAW-159",
+        "PATLAW-175"
+      ],
+      "goal_id": "PATLAW-G212",
+      "track": "hub-index-package",
+      "priority": "P0",
+      "bundle": "patlaw/hub-index-stage",
+      "parallel_lane": "patlaw-v2-lane-0",
+      "outputs": [
+        "scripts/ops/legal_data/stage_patent_legal_hub_indexes.py",
+        "tests/integration/processors/patent/test_stage_patent_legal_hub_indexes.py"
+      ],
+      "validation": "python -m pytest tests/integration/processors/patent/test_stage_patent_legal_hub_indexes.py -q",
+      "acceptance": "Staged PR path with exact approval; no unattended main publish.",
+      "preconditions": "Admitted package and publisher v2 available.",
+      "effects": "Stages Hub PR for indexes.",
+      "conflict_policy": "No direct-main upload or self-approval.",
+      "resource_class": "io-large",
+      "token_class": "xlarge",
+      "estimated_tokens": 23000
+    },
+    {
+      "task_id": "PATLAW-177",
+      "title": "Verify pinned Hub redownload of BM25 vector and graph artifacts",
+      "depends_on": [
+        "PATLAW-160",
+        "PATLAW-176"
+      ],
+      "goal_id": "PATLAW-G213",
+      "track": "hub-index-verify",
+      "priority": "P0",
+      "bundle": "patlaw/hub-index-verify",
+      "parallel_lane": "patlaw-v2-lane-1",
+      "outputs": [
+        "scripts/ops/legal_data/verify_patent_legal_hub_indexes.py",
+        "tests/release/test_verify_patent_legal_hub_indexes.py"
+      ],
+      "validation": "python -m pytest tests/release/test_verify_patent_legal_hub_indexes.py -q",
+      "acceptance": "Pinned redownload verifies all projections.",
+      "preconditions": "Staged/promoted revision identity available.",
+      "effects": "Verification receipt for multi-index package.",
+      "conflict_policy": "No unpinned latest selection.",
+      "resource_class": "io-large",
+      "token_class": "large",
+      "estimated_tokens": 18000
+    },
+    {
+      "task_id": "PATLAW-178",
+      "title": "Build operator promote checklist for Hub index publication",
+      "depends_on": [
+        "PATLAW-176"
+      ],
+      "goal_id": "PATLAW-G213",
+      "track": "hub-index-verify",
+      "priority": "P0",
+      "bundle": "patlaw/hub-index-promote-checklist",
+      "parallel_lane": "patlaw-v2-lane-2",
+      "outputs": [
+        "scripts/ops/legal_data/prepare_patent_legal_hub_promote_checklist.py",
+        "docs/operations/PATENT_LEGAL_HUB_INDEX_PUBLICATION.md",
+        "tests/unit/scripts/ops/legal_data/test_prepare_patent_legal_hub_promote_checklist.py"
+      ],
+      "validation": "python -m pytest tests/unit/scripts/ops/legal_data/test_prepare_patent_legal_hub_promote_checklist.py -q",
+      "acceptance": "Exact-digest operator promote checklist without auto-promote.",
+      "preconditions": "Staged PR and package receipts exist.",
+      "effects": "Operator checklist for promote/pin/rollback.",
+      "conflict_policy": "Checklist only; no live promote.",
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "estimated_tokens": 12000
+    },
+    {
+      "task_id": "PATLAW-179",
+      "title": "Seal Hub index publication receipt distinguishing staged vs promoted",
+      "depends_on": [
+        "PATLAW-177",
+        "PATLAW-178"
+      ],
+      "goal_id": "PATLAW-G213",
+      "track": "hub-index-verify",
+      "priority": "P0",
+      "bundle": "patlaw/hub-index-publication-receipt",
+      "parallel_lane": "patlaw-v2-lane-3",
+      "outputs": [
+        "scripts/ops/legal_data/seal_patent_legal_hub_index_publication_receipt.py",
+        "tests/release/test_patent_legal_hub_index_publication_receipt.py",
+        "data/release/patent_legal_intelligence/hub_index_publication_receipt.schema.json"
+      ],
+      "validation": "python -m pytest tests/release/test_patent_legal_hub_index_publication_receipt.py -q",
+      "acceptance": "Receipt distinguishes staged vs promoted without fabricating live success.",
+      "preconditions": "Verify receipt and promote checklist exist.",
+      "effects": "Seals publication receipt for corpus/BM25/vector/graph.",
+      "conflict_policy": "No fabricated promoted state; no unattended Hub write.",
+      "resource_class": "cpu-medium",
+      "token_class": "large",
+      "estimated_tokens": 14000
     }
   ]
 }

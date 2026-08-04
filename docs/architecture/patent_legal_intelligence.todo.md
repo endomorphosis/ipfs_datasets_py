@@ -2711,3 +2711,254 @@ Program invariants:
 - Effects: Closes the post-completion ops phase with an operator-ready handoff artifact.
 - Acceptance: A single handoff receipt binds offline gate results, PR package path, canary disposition, Hub dry-run receipt, exact tree SHA, and remaining human actions; production_status can surface completed when mandatory evidence is present.
 - Dedupe key: post-completion-ops:PATLAW-169:5329e769c82b730b
+
+
+## PATLAW-170 Materialize public patent-law and regulations corpus for Hub release
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-build
+- Depends on: PATLAW-128, PATLAW-131, PATLAW-132, PATLAW-157
+- Goal id: PATLAW-G211
+- Outputs: ipfs_datasets_py/processors/domains/patent/public_legal_corpus_materializer.py, scripts/ops/legal_data/materialize_public_legal_corpus.py, tests/integration/processors/patent/test_public_legal_corpus_materializer.py, data/release/patent_legal_intelligence/public_legal_corpus.manifest.schema.json
+- Validation: python -m pytest tests/integration/processors/patent/test_public_legal_corpus_materializer.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-public-legal-corpus
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/public_legal_corpus_materializer.py, scripts/ops/legal_data/materialize_public_legal_corpus.py, tests/integration/processors/patent/test_public_legal_corpus_materializer.py, data/release/patent_legal_intelligence/public_legal_corpus.manifest.schema.json
+- Allow concurrent with: PATLAW-171, PATLAW-172, PATLAW-173, PATLAW-166, PATLAW-169
+- Conflict policy: Own public legal corpus materializer/scripts/tests/schema only; public-official sources only; never include private ODP matter or unreviewed AI text as authoritative law.
+- Preconditions: Live legal-source acquisition modules and HF release builder contracts are merged; CI may use approved public fixtures when live sources are unavailable.
+- Effects: Materialize a deterministic public corpus projection covering eCFR/CFR, U.S. Code/Public Law/Federal Register, and MPEP/guidance with rights, current-through, and source receipts.
+- Acceptance: Repeat materializations for the same source roots are content-address stable; private/mixed inputs fail closed; manifest binds source roots, counts, and CIDs suitable for BM25/vector/graph builders.
+
+## PATLAW-171 Build production BM25 index snapshot for public legal corpus
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-build
+- Depends on: PATLAW-146, PATLAW-170
+- Goal id: PATLAW-G211
+- Outputs: ipfs_datasets_py/processors/domains/patent/public_legal_bm25_builder.py, scripts/ops/legal_data/build_public_legal_bm25_index.py, tests/integration/processors/patent/test_public_legal_bm25_builder.py
+- Validation: python -m pytest tests/integration/processors/patent/test_public_legal_bm25_builder.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-public-legal-bm25
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 20000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/public_legal_bm25_builder.py, scripts/ops/legal_data/build_public_legal_bm25_index.py, tests/integration/processors/patent/test_public_legal_bm25_builder.py
+- Allow concurrent with: PATLAW-172, PATLAW-173, PATLAW-166, PATLAW-169
+- Conflict policy: Own BM25 builder/script/tests only; do not mutate vector or graph builders; do not upload to Hub.
+- Preconditions: Public legal corpus materializer and persistent index snapshot contracts are available.
+- Effects: Build documents/terms/postings BM25 artifacts and a snapshot receipt binding corpus root and index CID.
+- Acceptance: Deterministic rebuild for pinned corpus root; orphan terms/postings fail; snapshot schema matches release packaging expectations.
+
+## PATLAW-172 Build production vector index snapshot for public legal corpus
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-build
+- Depends on: PATLAW-145, PATLAW-146, PATLAW-170
+- Goal id: PATLAW-G211
+- Outputs: ipfs_datasets_py/processors/domains/patent/public_legal_vector_builder.py, scripts/ops/legal_data/build_public_legal_vector_index.py, tests/integration/processors/patent/test_public_legal_vector_builder.py
+- Validation: python -m pytest tests/integration/processors/patent/test_public_legal_vector_builder.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-public-legal-vector
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: gpu-optional
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/public_legal_vector_builder.py, scripts/ops/legal_data/build_public_legal_vector_index.py, tests/integration/processors/patent/test_public_legal_vector_builder.py
+- Allow concurrent with: PATLAW-171, PATLAW-173, PATLAW-166, PATLAW-169
+- Conflict policy: Own vector builder/script/tests only; use pinned local embedding runtime; no remote embedding APIs that exfiltrate corpus text.
+- Preconditions: Pinned local embedding runtime and public legal corpus materializer are available.
+- Effects: Build vector mappings/artifacts with model pin, dimensions, and content-addressed index root.
+- Acceptance: Snapshot binds embedding model pin and corpus root; private text cannot enter; rebuild is stable under fixed model/corpus pins.
+
+## PATLAW-173 Build production knowledge-graph snapshot for public legal corpus
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-build
+- Depends on: PATLAW-146, PATLAW-147, PATLAW-170
+- Goal id: PATLAW-G211
+- Outputs: ipfs_datasets_py/processors/domains/patent/public_legal_graph_builder.py, scripts/ops/legal_data/build_public_legal_knowledge_graph.py, tests/integration/processors/patent/test_public_legal_graph_builder.py
+- Validation: python -m pytest tests/integration/processors/patent/test_public_legal_graph_builder.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-public-legal-graph
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/public_legal_graph_builder.py, scripts/ops/legal_data/build_public_legal_knowledge_graph.py, tests/integration/processors/patent/test_public_legal_graph_builder.py
+- Allow concurrent with: PATLAW-171, PATLAW-172, PATLAW-166, PATLAW-169
+- Conflict policy: Own graph builder/script/tests only; authoritative citations remain span-bound; no invented legal edges without source receipts.
+- Preconditions: Public corpus materializer and hybrid retrieval/graph snapshot contracts are available.
+- Effects: Build graph nodes/edges/JSON-LD and a knowledge-graph snapshot receipt for Hub packaging.
+- Acceptance: No orphan edges; authority edges cite source spans/receipts; snapshot is deterministic for pinned corpus/graph schema versions.
+
+## PATLAW-174 Package multi-artifact corpus BM25 vector and graph Hub release
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-package
+- Depends on: PATLAW-157, PATLAW-170, PATLAW-171, PATLAW-172, PATLAW-173
+- Goal id: PATLAW-G212
+- Outputs: scripts/ops/legal_data/package_patent_legal_hub_indexes.py, ipfs_datasets_py/processors/domains/patent/hub_index_package.py, tests/integration/processors/patent/test_hub_index_package.py, data/release/patent_legal_intelligence/hub_index_package.manifest.schema.json
+- Validation: python -m pytest tests/integration/processors/patent/test_hub_index_package.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-index-package
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-large
+- Token class: xlarge
+- Estimated tokens: 20000
+- Predicted files: scripts/ops/legal_data/package_patent_legal_hub_indexes.py, ipfs_datasets_py/processors/domains/patent/hub_index_package.py, tests/integration/processors/patent/test_hub_index_package.py, data/release/patent_legal_intelligence/hub_index_package.manifest.schema.json
+- Allow concurrent with: PATLAW-166, PATLAW-169
+- Conflict policy: Own packaging module/script/tests/schema only; retain dry-run default; do not authenticate or upload.
+- Preconditions: Corpus, BM25, vector, and graph snapshots and HF release v2 builder are present.
+- Effects: Assemble a multi-repo-compatible package binding corpus + BM25 + vector + graph roots, cards, counts, and Viewer layouts.
+- Acceptance: Package is byte-stable for pinned inputs; missing any of the three index families fails; rights/privacy metadata required on every artifact.
+
+## PATLAW-175 Admit hub index package through DLP rights and Viewer gates
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-package
+- Depends on: PATLAW-158, PATLAW-174
+- Goal id: PATLAW-G212
+- Outputs: scripts/ops/legal_data/admit_patent_legal_hub_indexes.py, tests/security/test_patent_legal_hub_index_admission.py, docs/operations/PATENT_LEGAL_HUB_INDEX_ADMISSION.md
+- Validation: python -m pytest tests/security/test_patent_legal_hub_index_admission.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-index-admission
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: scripts/ops/legal_data/admit_patent_legal_hub_indexes.py, tests/security/test_patent_legal_hub_index_admission.py, docs/operations/PATENT_LEGAL_HUB_INDEX_ADMISSION.md
+- Allow concurrent with: PATLAW-166, PATLAW-169
+- Conflict policy: Own admission script/tests/docs only; never weaken DLP or auto-pass private leakage; no Hub upload.
+- Preconditions: Multi-artifact package and release policy v2 gates are available.
+- Effects: Run fail-closed DLP/rights/Viewer admission over the package and emit an admission receipt.
+- Acceptance: Private/mixed/unknown rights, secret-like leakage, orphan rows, invalid Parquet, or Viewer contract failure blocks; admission receipt binds package root and gate outcomes.
+
+## PATLAW-176 Stage authenticated Hub PR for corpus BM25 vector and graph artifacts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-package
+- Depends on: PATLAW-159, PATLAW-175
+- Goal id: PATLAW-G212
+- Outputs: scripts/ops/legal_data/stage_patent_legal_hub_indexes.py, tests/integration/processors/patent/test_stage_patent_legal_hub_indexes.py, docs/operations/PATENT_LEGAL_HUB_INDEX_STAGE.md
+- Validation: python -m pytest tests/integration/processors/patent/test_stage_patent_legal_hub_indexes.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-index-stage
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: io-large
+- Token class: xlarge
+- Estimated tokens: 23000
+- Predicted files: scripts/ops/legal_data/stage_patent_legal_hub_indexes.py, tests/integration/processors/patent/test_stage_patent_legal_hub_indexes.py, docs/operations/PATENT_LEGAL_HUB_INDEX_STAGE.md
+- Allow concurrent with: PATLAW-166, PATLAW-169
+- Conflict policy: Own staging command/tests/docs only; no direct-main upload, embedded tokens, supervisor self-approval, or unattended promote.
+- Preconditions: Admitted package exists; publisher v2 contracts are merged; CI uses fake Hub service.
+- Effects: Stage an add-only Hub branch/PR enumerating corpus/BM25/vector/graph artifacts and return staged commit/diff identity for operator approval.
+- Acceptance: Fake-service tests prove missing/wrong approval cannot publish; credentials never appear in receipts; default path does not contact live Hub unless operator-invoked.
+
+## PATLAW-177 Verify pinned Hub redownload of BM25 vector and graph artifacts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-verify
+- Depends on: PATLAW-160, PATLAW-176
+- Goal id: PATLAW-G213
+- Outputs: scripts/ops/legal_data/verify_patent_legal_hub_indexes.py, tests/release/test_verify_patent_legal_hub_indexes.py
+- Validation: python -m pytest tests/release/test_verify_patent_legal_hub_indexes.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-index-verify
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: io-large
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: scripts/ops/legal_data/verify_patent_legal_hub_indexes.py, tests/release/test_verify_patent_legal_hub_indexes.py
+- Allow concurrent with: PATLAW-178, PATLAW-166, PATLAW-169
+- Conflict policy: Own verifier/tests only; unpinned latest/main selection is forbidden; live network only under explicit operator mode with fakes in CI.
+- Preconditions: Staged or promoted Hub commit identity and local package manifest exist.
+- Effects: Redownload and hash-verify corpus, BM25, vector, and graph artifacts at exact revision; emit multi-projection verification receipt.
+- Acceptance: Any missing/changed artifact or manifest mismatch blocks; receipt binds repo IDs, revision SHA, and every artifact digest by projection.
+
+## PATLAW-178 Build operator promote checklist for Hub index publication
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-verify
+- Depends on: PATLAW-176
+- Goal id: PATLAW-G213
+- Outputs: scripts/ops/legal_data/prepare_patent_legal_hub_promote_checklist.py, docs/operations/PATENT_LEGAL_HUB_INDEX_PUBLICATION.md, tests/unit/scripts/ops/legal_data/test_prepare_patent_legal_hub_promote_checklist.py
+- Validation: python -m pytest tests/unit/scripts/ops/legal_data/test_prepare_patent_legal_hub_promote_checklist.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-index-promote-checklist
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-medium
+- Token class: medium
+- Estimated tokens: 12000
+- Predicted files: scripts/ops/legal_data/prepare_patent_legal_hub_promote_checklist.py, docs/operations/PATENT_LEGAL_HUB_INDEX_PUBLICATION.md, tests/unit/scripts/ops/legal_data/test_prepare_patent_legal_hub_promote_checklist.py
+- Allow concurrent with: PATLAW-177, PATLAW-166, PATLAW-169
+- Conflict policy: Checklist preparation only; never perform live promote/merge or store operator approval secrets in git.
+- Preconditions: Staged Hub PR identity and admission/package receipts exist.
+- Effects: Produce an exact-digest operator checklist covering approve, merge/promote, pin, canary, and rollback steps for corpus/BM25/vector/graph publication.
+- Acceptance: Checklist binds staged commit SHA and all artifact digests; documents required natural-person actions; no auto-promote path is introduced.
+
+## PATLAW-179 Seal Hub index publication receipt distinguishing staged vs promoted
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-index-verify
+- Depends on: PATLAW-177, PATLAW-178
+- Goal id: PATLAW-G213
+- Outputs: scripts/ops/legal_data/seal_patent_legal_hub_index_publication_receipt.py, tests/release/test_patent_legal_hub_index_publication_receipt.py, data/release/patent_legal_intelligence/hub_index_publication_receipt.schema.json
+- Validation: python -m pytest tests/release/test_patent_legal_hub_index_publication_receipt.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/hub-index-publication-receipt
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 14000
+- Predicted files: scripts/ops/legal_data/seal_patent_legal_hub_index_publication_receipt.py, tests/release/test_patent_legal_hub_index_publication_receipt.py, data/release/patent_legal_intelligence/hub_index_publication_receipt.schema.json
+- Allow concurrent with: PATLAW-166, PATLAW-169
+- Conflict policy: Own receipt sealer/tests/schema only; never fabricate promoted state without operator promote evidence; no unattended Hub write.
+- Preconditions: Verification receipt and promote checklist exist; optional live promote evidence is separate and explicit.
+- Effects: Seal an immutable publication receipt with staged/promoted disposition for corpus/BM25/vector/graph artifacts.
+- Acceptance: Receipt cannot claim promoted success offline without a real promote evidence blob; staged-only state is valid and non-vacuous; digests bind all three index families plus corpus.

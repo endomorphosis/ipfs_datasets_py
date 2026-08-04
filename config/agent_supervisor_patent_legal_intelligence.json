@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "program": "patent-legal-intelligence-v1",
-  "reviewed_at": "2026-08-03T00:00:00Z",
+  "reviewed_at": "2026-08-04T00:00:00Z",
   "task_prefix": "PATLAW-",
   "goal_prefix": "PATLAW-G",
   "merge_target_branch": "feature/patent-legal-intelligence",
@@ -105,7 +105,9 @@
       "PATLAW-156",
       "PATLAW-160",
       "PATLAW-164",
-      "PATLAW-168"
+      "PATLAW-168",
+      "PATLAW-172",
+      "PATLAW-176"
     ],
     "1": [
       "PATLAW-005",
@@ -132,7 +134,9 @@
       "PATLAW-157",
       "PATLAW-161",
       "PATLAW-165",
-      "PATLAW-169"
+      "PATLAW-169",
+      "PATLAW-173",
+      "PATLAW-177"
     ],
     "2": [
       "PATLAW-002",
@@ -161,7 +165,10 @@
       "PATLAW-154",
       "PATLAW-158",
       "PATLAW-162",
-      "PATLAW-166"
+      "PATLAW-166",
+      "PATLAW-170",
+      "PATLAW-174",
+      "PATLAW-178"
     ],
     "3": [
       "PATLAW-003",
@@ -187,7 +194,10 @@
       "PATLAW-155",
       "PATLAW-159",
       "PATLAW-163",
-      "PATLAW-167"
+      "PATLAW-167",
+      "PATLAW-171",
+      "PATLAW-175",
+      "PATLAW-179"
     ]
   }
 }

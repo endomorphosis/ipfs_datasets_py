@@ -971,3 +971,75 @@ Program invariants:
 - Embedding query: operator handoff receipt completed projection exact tree human actions
 - AST query: handoff_receipt ProductionStatus CompletionReceipt
 
+
+## PATLAW-G210 Publish full public legal indexes and knowledge graph to Hub
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 55
+- Track: hub-index-publication
+- Priority: P0
+- Bundle: patlaw/hub-index-kg-publish
+- Goal: Materialize production public patent-law and regulations corpus projections, build durable BM25, vector, and knowledge-graph indexes, package them for JusticeDAO/Hugging Face Viewer layouts, admit them through DLP/rights/Viewer gates, stage an authenticated Hub PR, and verify pinned redownloads without unattended main publish.
+- Evidence: PATLAW-G211, PATLAW-G212, PATLAW-G213
+- Outputs: scripts/ops/legal_data, ipfs_datasets_py/processors/domains/patent, docs/operations/PATENT_LEGAL_HUB_INDEX_PUBLICATION.md
+- Validation: python scripts/validate_patent_legal_intelligence_board.py --repo-root .
+- Acceptance: BM25, vector, and graph artifacts are built from rights-reviewed public legal sources only; release manifests bind artifact CIDs/SHAs/counts; Hub path remains staged-PR + exact operator approval; pinned redownload verifies each projection before promotion claims.
+- Gap task: Implement the highest-priority incomplete corpus, BM25, vector, graph, package, admission, stage, verify, or promote-checklist child.
+- Refinement: Keep dry-run default and never auto-approve Hub main or pointer promotion; private/mixed/unreviewed inputs fail closed before staging.
+- Embedding query: patent law regulations BM25 vector knowledge graph Hugging Face JusticeDAO staged PR pinned redownload
+- AST query: PatentLegalCorpusMaterializer BM25IndexSnapshot VectorIndexSnapshot KnowledgeGraphSnapshot PatentHFReleaseV2 PatentHFPublisherV2
+
+## PATLAW-G211 Materialize public legal corpus and production indexes
+
+- Status: active
+- Parent: PATLAW-G210
+- Fib priority: 1
+- Track: hub-index-build
+- Priority: P0
+- Bundle: patlaw/hub-index-build
+- Goal: Produce a public-official patent-law/regulations corpus materialization and independent production BM25, vector, and knowledge-graph snapshots ready for HF packaging.
+- Evidence: PATLAW-170, PATLAW-171, PATLAW-172, PATLAW-173
+- Outputs: ipfs_datasets_py/processors/domains/patent, scripts/ops/legal_data/build_patent_legal_public_indexes.py, tests/integration/processors/patent/test_public_legal_index_build.py
+- Validation: python -m pytest tests/integration/processors/patent/test_public_legal_index_build.py -q
+- Acceptance: Corpus materialization is deterministic for pinned source roots; BM25/vector/graph snapshots share content-addressed roots and fail on private or unreviewed inputs.
+- Gap task: Close the next corpus, BM25, vector, or graph build gap.
+- Refinement: Prefer approved public fixtures in CI; live acquisition remains optional and receipt-bound.
+- Embedding query: public legal corpus materialize BM25 postings vector embeddings knowledge graph nodes edges
+- AST query: PublicLegalCorpusMaterializer BM25IndexBuilder VectorIndexBuilder KnowledgeGraphBuilder
+
+## PATLAW-G212 Package, admit, and stage Hub index releases
+
+- Status: active
+- Parent: PATLAW-G210
+- Fib priority: 2
+- Track: hub-index-package
+- Priority: P0
+- Bundle: patlaw/hub-index-package-stage
+- Goal: Assemble multi-artifact release packages for corpus/BM25/vector/graph, enforce DLP/rights/Viewer admission, and stage an authenticated Hub PR that cannot promote without exact operator approval.
+- Evidence: PATLAW-174, PATLAW-175, PATLAW-176
+- Outputs: scripts/ops/legal_data/package_patent_legal_hub_indexes.py, scripts/ops/legal_data/stage_patent_legal_hub_indexes.py, tests/integration/processors/patent/test_hub_index_package_stage.py
+- Validation: python -m pytest tests/integration/processors/patent/test_hub_index_package_stage.py -q
+- Acceptance: Package binds all three index families plus corpus; admission blocks private leakage; staging uses fake-service tests by default and never writes main unattended.
+- Gap task: Close the next package, admission, or stage gap.
+- Refinement: Reuse existing PatentHFReleaseV2/PatentHFPublisherV2 contracts where possible.
+- Embedding query: multi artifact package DLP viewer admission staged Hub PR exact approval indexes
+- AST query: HubIndexPackageBuilder DatasetViewerGate PatentHFPublisherV2 StageHubIndexes
+
+## PATLAW-G213 Verify, prepare promote, and seal publication receipts
+
+- Status: active
+- Parent: PATLAW-G210
+- Fib priority: 3
+- Track: hub-index-verify
+- Priority: P0
+- Bundle: patlaw/hub-index-verify-promote
+- Goal: Verify pinned redownloads of BM25/vector/graph artifacts, prepare an operator promote checklist that binds exact digests, and seal a publication receipt without claiming unattended promotion.
+- Evidence: PATLAW-177, PATLAW-178, PATLAW-179
+- Outputs: scripts/ops/legal_data/verify_patent_legal_hub_indexes.py, docs/operations/PATENT_LEGAL_HUB_INDEX_PUBLICATION.md, tests/release/test_patent_legal_hub_index_publication.py
+- Validation: python -m pytest tests/release/test_patent_legal_hub_index_publication.py -q
+- Acceptance: Verification covers corpus, BM25, vector, and graph projections; promote checklist requires natural-person approval; receipt distinguishes staged vs promoted states and never fabricates live Hub success offline.
+- Gap task: Close the next verify, promote-checklist, or receipt gap.
+- Refinement: Live Hub network remains operator-invoked; CI uses fakes.
+- Embedding query: pinned redownload BM25 vector graph promote checklist publication receipt
+- AST query: HubIndexVerifier PromoteChecklist PublicationReceipt
