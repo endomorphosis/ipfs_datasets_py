@@ -2662,7 +2662,7 @@ Program invariants:
 
 ## PATLAW-168 Exercise Hub release dry-run staging verification
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
