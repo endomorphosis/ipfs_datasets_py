@@ -276,8 +276,16 @@ python3 scripts/ops/uspto/portfolio_cli.py revise attach \
   --role remarks
 
 # 5) Prepare package digest + filing checklist
+#    Also builds a law guide from filing-obligation rules + local authority corpus
 python3 scripts/ops/uspto/portfolio_cli.py revise prepare \
   --revision-id rev-18654466-…
+
+# Law guide only (filing rules + citations + optional scraped CFR/USC/MPEP excerpts)
+python3 scripts/ops/uspto/portfolio_cli.py revise seed-corpus
+# Drop text under ~/.local/state/.../authority_corpus/ (see README + index.json)
+python3 scripts/ops/uspto/portfolio_cli.py revise guide \
+  --revision-id rev-18654466-… \
+  --application-type utility
 
 # 6) Attended Patent Center assist (YOU still Sign / Pay / Submit)
 python3 scripts/ops/uspto/portfolio_cli.py revise filing-assist \
