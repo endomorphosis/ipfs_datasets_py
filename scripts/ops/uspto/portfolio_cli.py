@@ -8,12 +8,15 @@ Subcommands:
   prepare-import Build export_manifest.json + authorization.json for a folder
   import-folder  Import a local export folder into the private store
   attended-export
-                 Launch attended Patent Center browser export helper
+                 Launch Patent Center export (uses saved login session if present)
+  login / login-status / logout
+                 Patent Center password+OTP login helper (refs/prompts; no secret echo)
   show           Print seed / last review summary
 
 Credentials:
   Public ODP uses env:USPTO_ODP_API_KEY (never pass the raw key on the CLI).
-  Patent Center passwords are never accepted.
+  Patent Center login uses env:USPTO_USERNAME / USPTO_PASSWORD / USPTO_TOTP_SECRET
+  (or prompts). Secrets are never printed.
 """
 
 from __future__ import annotations
@@ -334,6 +337,10 @@ def _cmd_attended_export(args: argparse.Namespace) -> int:
         cmd.append("--training")
     if args.user_data_dir:
         cmd.extend(["--user-data-dir", args.user_data_dir])
+    if getattr(args, "session_name", None):
+        cmd.extend(["--session-name", str(args.session_name)])
+    if getattr(args, "no_saved_session", False):
+        cmd.append("--no-saved-session")
     if args.seal_only:
         cmd.append("--seal-only")
     if args.json:
@@ -342,6 +349,48 @@ def _cmd_attended_export(args: argparse.Namespace) -> int:
         cmd.extend(["--login-timeout-seconds", str(args.login_timeout_seconds)])
     if args.watch_seconds is not None:
         cmd.extend(["--watch-seconds", str(args.watch_seconds)])
+    return subprocess.call(cmd)
+
+
+def _cmd_login(args: argparse.Namespace) -> int:
+    helper = Path(__file__).resolve().parent / "uspto_login_cli.py"
+    cmd = [sys.executable, str(helper)]
+    if args.state_root:
+        cmd.extend(["--state-root", args.state_root])
+    cmd.extend(["--session-name", str(args.session_name)])
+    cmd.append("login")
+    cmd.extend(["--username-ref", str(args.username_ref)])
+    cmd.extend(["--password-ref", str(args.password_ref)])
+    cmd.extend(["--otp-mode", str(args.otp_mode)])
+    if args.totp_secret_ref:
+        cmd.extend(["--totp-secret-ref", str(args.totp_secret_ref)])
+    if args.otp_ref:
+        cmd.extend(["--otp-ref", str(args.otp_ref)])
+    if args.otp_code:
+        cmd.extend(["--otp-code", str(args.otp_code)])
+    if args.headless:
+        cmd.append("--headless")
+    if args.no_prompt:
+        cmd.append("--no-prompt")
+    cmd.extend(["--timeout-seconds", str(args.timeout_seconds)])
+    return subprocess.call(cmd)
+
+
+def _cmd_login_status(args: argparse.Namespace) -> int:
+    helper = Path(__file__).resolve().parent / "uspto_login_cli.py"
+    cmd = [sys.executable, str(helper)]
+    if args.state_root:
+        cmd.extend(["--state-root", args.state_root])
+    cmd.extend(["--session-name", str(args.session_name), "status"])
+    return subprocess.call(cmd)
+
+
+def _cmd_logout(args: argparse.Namespace) -> int:
+    helper = Path(__file__).resolve().parent / "uspto_login_cli.py"
+    cmd = [sys.executable, str(helper)]
+    if args.state_root:
+        cmd.extend(["--state-root", args.state_root])
+    cmd.extend(["--session-name", str(args.session_name), "logout"])
     return subprocess.call(cmd)
 
 
@@ -614,11 +663,49 @@ def build_parser() -> argparse.ArgumentParser:
     att.add_argument("--authorizing-user", default="operator:local")
     att.add_argument("--training", action="store_true")
     att.add_argument("--user-data-dir", default="")
+    att.add_argument(
+        "--session-name",
+        default="patent_center",
+        help="Use storage_state from uspto_login_cli (default patent_center)",
+    )
+    att.add_argument(
+        "--no-saved-session",
+        action="store_true",
+        help="Ignore saved login session; require interactive login in browser",
+    )
     att.add_argument("--seal-only", action="store_true")
     att.add_argument("--login-timeout-seconds", type=float, default=600.0)
     att.add_argument("--watch-seconds", type=float, default=120.0)
     att.add_argument("--json", action="store_true")
     att.set_defaults(func=_cmd_attended_export)
+
+    login = sub.add_parser(
+        "login",
+        help="Patent Center login (password+OTP via env refs/prompts)",
+    )
+    login.add_argument("--session-name", default="patent_center")
+    login.add_argument("--username-ref", default="env:USPTO_USERNAME")
+    login.add_argument("--password-ref", default="env:USPTO_PASSWORD")
+    login.add_argument(
+        "--otp-mode",
+        choices=("prompt", "totp", "code", "none"),
+        default="prompt",
+    )
+    login.add_argument("--totp-secret-ref", default="env:USPTO_TOTP_SECRET")
+    login.add_argument("--otp-ref", default="")
+    login.add_argument("--otp-code", default="")
+    login.add_argument("--headless", action="store_true")
+    login.add_argument("--no-prompt", action="store_true")
+    login.add_argument("--timeout-seconds", type=float, default=180.0)
+    login.set_defaults(func=_cmd_login)
+
+    login_st = sub.add_parser("login-status", help="Show saved Patent Center session")
+    login_st.add_argument("--session-name", default="patent_center")
+    login_st.set_defaults(func=_cmd_login_status)
+
+    logout = sub.add_parser("logout", help="Delete saved Patent Center session")
+    logout.add_argument("--session-name", default="patent_center")
+    logout.set_defaults(func=_cmd_logout)
 
     s = sub.add_parser("show", help="Show portfolio seed summary")
     s.add_argument("--include-review", action="store_true")

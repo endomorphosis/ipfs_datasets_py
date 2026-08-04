@@ -45,15 +45,18 @@
       "build_export_manifest_from_folder",
       "import_user_authorized_export",
       "attended_browser_export_with_human_login",
-      "watch_download_folder"
+      "watch_download_folder",
+      "operator_cli_login_with_credential_refs",
+      "operator_mcp_login_with_credential_refs",
+      "operator_totp_or_prompt_otp",
+      "operator_local_session_storage_state"
     ],
     "forbidden": [
       "scrape_authenticated_patent_center",
       "unattended_patent_center_scrape",
-      "store_credentials_or_cookies",
-      "bypass_mfa",
-      "automate_mfa",
-      "network_login_with_password",
+      "store_password_in_git_or_receipts",
+      "return_password_or_otp_in_tool_output",
+      "bypass_mfa_without_code",
       "apply_signature",
       "pay_fee",
       "perform_final_submission",
@@ -61,9 +64,11 @@
       "read_browser_password_manager"
     ],
     "notes": [
-      "Attended browser export requires a natural person to complete login/MFA in a headed browser; the helper may navigate and capture downloads but must not type passwords or MFA codes.",
-      "Persistent browser profiles may retain USPTO session cookies on disk under operator control; they must never be committed to git or uploaded to public sinks.",
-      "Reading an existing browser profile only for attended export is operator-local; unattended session replay remains forbidden."
+      "Operator CLI/MCP login may resolve username/password/TOTP from env: or file: refs (or interactive prompts) and may type them into Patent Center only for the operator's own account.",
+      "Passwords, OTP codes, and TOTP seeds must never appear in MCP/CLI JSON output, receipts, boards, or git.",
+      "Playwright storage_state / session cookies may be stored mode 0600 under the operator state root only; never commit or publish them.",
+      "MFA still requires a code (prompt, one-shot code, or local TOTP generation); silent MFA bypass is forbidden.",
+      "Sign, pay, and final submission remain natural-person-only and are never automated."
     ]
   },
   "invariants": [

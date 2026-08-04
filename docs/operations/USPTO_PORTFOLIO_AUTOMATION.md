@@ -87,7 +87,54 @@ python3 scripts/ops/uspto/portfolio_cli.py import-folder \
   --authorizing-user "operator:you"
 ```
 
-## Attended browser export (human login)
+## Patent Center login CLI / MCP (password + OTP)
+
+Prefer **credential references** over typing secrets on the command line:
+
+```bash
+# ~/.config/ipfs_datasets_py/uspto.env (mode 600) may also hold:
+#   export USPTO_USERNAME='you@example.com'
+#   export USPTO_PASSWORD='...'
+#   export USPTO_TOTP_SECRET='BASE32SEED'   # optional authenticator
+
+source ~/.config/ipfs_datasets_py/uspto.env
+
+# Login (headed browser by default via portfolio_cli → uspto_login_cli)
+python3 scripts/ops/uspto/portfolio_cli.py login --otp-mode totp
+# or interactive OTP:
+python3 scripts/ops/uspto/portfolio_cli.py login --otp-mode prompt
+# or one-shot code (not stored):
+python3 scripts/ops/uspto/portfolio_cli.py login --otp-mode code --otp-code 123456
+
+python3 scripts/ops/uspto/portfolio_cli.py login-status
+python3 scripts/ops/uspto/portfolio_cli.py logout
+```
+
+Direct CLI:
+
+```bash
+python3 scripts/ops/uspto/uspto_login_cli.py login \
+  --username-ref env:USPTO_USERNAME \
+  --password-ref env:USPTO_PASSWORD \
+  --otp-mode totp \
+  --totp-secret-ref env:USPTO_TOTP_SECRET
+```
+
+MCP operator tools (separate from read-only USPTO MCP surface):
+
+| Tool | Purpose |
+| --- | --- |
+| `uspto_operator_login` | Login with refs; saves local session |
+| `uspto_operator_session_status` | Session present? |
+| `uspto_operator_logout` | Delete local session |
+
+Responses never include passwords, OTP seeds, or raw cookies.
+
+Session file (mode 0600):
+
+`~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/sessions/patent_center.storage_state.json`
+
+## Browser export (uses saved session when available)
 
 Opens a **headed** Chromium window. **You** complete USPTO login and MFA.
 The helper never types passwords. It may navigate to application numbers and

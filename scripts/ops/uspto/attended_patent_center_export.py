@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Attended Patent Center export helper (human login + optional download assist).
+"""Patent Center export helper (saved login session and/or interactive login).
 
 Design (fail-closed):
-* Opens a **headed** browser. A natural person completes USPTO login / MFA.
-* Never accepts or types Patent Center passwords, MFA codes, or payment data.
+* Prefers a **saved** Playwright storage_state from ``uspto_login_cli`` /
+  ``portfolio_cli login`` (password+OTP via env refs — not echoed here).
+* Otherwise opens a headed browser for interactive human login / MFA.
 * Never signs, pays, or submits filings.
-* After login is detected (or operator presses Enter), assists navigation to
-  known application numbers and captures downloads into a local export folder.
+* After login, assists navigation to known application numbers and captures
+  downloads into a local export folder.
 * Produces ``export_manifest.json`` + ``authorization.json`` for import-private.
 
 Patent Center's UI changes; when automatic download controls are missing the
@@ -110,6 +111,16 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             "Optional persistent Chromium profile directory (cookies stay on disk). "
             "Do not commit this path. Empty = ephemeral profile."
         ),
+    )
+    p.add_argument(
+        "--session-name",
+        default="patent_center",
+        help="Saved login session name from uspto_login_cli (default patent_center).",
+    )
+    p.add_argument(
+        "--no-saved-session",
+        action="store_true",
+        help="Do not load storage_state; require interactive login.",
     )
     p.add_argument(
         "--login-timeout-seconds",
@@ -326,6 +337,9 @@ def _run_browser_session(
     login_timeout_seconds: float,
     watch_seconds: float,
     no_browser_assist: bool,
+    state_root: Path,
+    session_name: str = "patent_center",
+    use_saved_session: bool = True,
 ) -> dict[str, Any]:
     assert_operator_capability("attended_browser_export_with_human_login")
     try:
@@ -337,35 +351,75 @@ def _run_browser_session(
             code="playwright_missing",
         ) from exc
 
+    storage_state_path = None
+    if use_saved_session:
+        try:
+            from ipfs_datasets_py.processors.domains.uspto.auth.login_session import (
+                load_session_status,
+                session_path,
+            )
+
+            status = load_session_status(state_root, name=session_name)
+            path = session_path(state_root, name=session_name)
+            if status.present and path.is_file():
+                storage_state_path = str(path)
+        except Exception:
+            storage_state_path = None
+
     start_url = PATENT_CENTER_TRAINING_URL if training else PATENT_CENTER_URL
     assists: list[dict[str, Any]] = []
     login_info: dict[str, Any] = {}
 
     with sync_playwright() as playwright:
+        browser = None
         if user_data_dir:
             context = playwright.chromium.launch_persistent_context(
                 user_data_dir,
                 headless=False,
                 accept_downloads=True,
             )
-            browser = None
         else:
             browser = playwright.chromium.launch(headless=False)
-            context = browser.new_context(accept_downloads=True)
+            context_kwargs: dict[str, Any] = {"accept_downloads": True}
+            if storage_state_path:
+                context_kwargs["storage_state"] = storage_state_path
+            context = browser.new_context(**context_kwargs)
         try:
             page = context.pages[0] if context.pages else context.new_page()
-            # Route downloads into the first export dir by default; per-app dirs
-            # are sealed separately after the session.
             page.goto(start_url, wait_until="domcontentloaded", timeout=60000)
-            login_info = _wait_for_login(page, login_timeout_seconds)
-            if not login_info.get("logged_in"):
-                raise PortfolioAutomationError(
-                    "login not detected before timeout; re-run after signing in",
-                    code="login_timeout",
-                )
+            # If we loaded a saved session, check whether it still authenticates.
+            if storage_state_path:
+                for selector in _LOGGED_IN_SELECTORS:
+                    try:
+                        if page.locator(selector).count() > 0:
+                            login_info = {
+                                "logged_in": True,
+                                "method": "saved_session",
+                                "session_path": storage_state_path,
+                                "at_utc": utc_now_iso(),
+                            }
+                            break
+                    except Exception:
+                        continue
+                if not login_info.get("logged_in"):
+                    # Session may still work without visible logout control.
+                    login_info = {
+                        "logged_in": True,
+                        "method": "saved_session_unverified",
+                        "session_path": storage_state_path,
+                        "at_utc": utc_now_iso(),
+                        "note": "no logout selector; continuing with storage_state",
+                    }
+            else:
+                login_info = _wait_for_login(page, login_timeout_seconds)
+                if not login_info.get("logged_in"):
+                    raise PortfolioAutomationError(
+                        "login not detected before timeout; run portfolio_cli login "
+                        "or sign in interactively",
+                        code="login_timeout",
+                    )
             if not no_browser_assist:
                 for app in apps:
-                    # Prefer app-specific download path when supported.
                     try:
                         context.set_default_timeout(15000)
                     except Exception:
@@ -388,6 +442,7 @@ def _run_browser_session(
         "login": login_info,
         "assists": assists,
         "start_url": start_url,
+        "used_saved_session": bool(storage_state_path),
     }
 
 
@@ -437,6 +492,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 login_timeout_seconds=float(args.login_timeout_seconds),
                 watch_seconds=float(args.watch_seconds),
                 no_browser_assist=bool(args.no_browser_assist),
+                state_root=state_root,
+                session_name=str(getattr(args, "session_name", "patent_center") or "patent_center"),
+                use_saved_session=not bool(getattr(args, "no_saved_session", False)),
             )
 
         sealed: list[dict[str, Any]] = []
