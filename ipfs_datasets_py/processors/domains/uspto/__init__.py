@@ -9,6 +9,7 @@ signs, pays, files, or automates a browser.
 from __future__ import annotations
 
 from .api import (
+    ASSURANCE_OPERATIONS,
     FORBIDDEN_API_OPERATIONS,
     PUBLIC_OPERATIONS,
     USPTO_API_INTERFACE,
@@ -17,11 +18,29 @@ from .api import (
     CredentialRef,
     ForbiddenAPIOperationError,
     PublicSyncResult,
+    SubmissionAssuranceInput,
+    SubmissionAssuranceResult,
     USPTOAnalysisAPI,
     UsptoAPIError,
     assert_operation_allowed,
     create_api,
     scrub_credential_fields,
+)
+from .submission_assurance_processor import (
+    ASSURANCE_STAGE_ORDER,
+    SUBMISSION_ASSURANCE_INTERFACE,
+    SUBMISSION_ASSURANCE_SCHEMA_VERSION,
+    AssuranceDisposition,
+    AssuranceItem,
+    AssuranceItemKind,
+    CoverageDimension,
+    CoverageReport,
+    CoverageStatus,
+    ProvenanceRef,
+    REVIEW_ONLY_ASSURANCE_DISCLAIMER,
+    SubmissionAssuranceProcessor,
+    assure_submission,
+    create_submission_assurance_processor,
 )
 from .application_status_processor import (
     ApplicationStatusProcessor,
@@ -98,6 +117,7 @@ except ImportError:  # pragma: no cover - optional adapter path
 
 __all__ = [
     # API
+    "ASSURANCE_OPERATIONS",
     "FORBIDDEN_API_OPERATIONS",
     "PUBLIC_OPERATIONS",
     "USPTO_API_INTERFACE",
@@ -106,11 +126,28 @@ __all__ = [
     "CredentialRef",
     "ForbiddenAPIOperationError",
     "PublicSyncResult",
+    "SubmissionAssuranceInput",
+    "SubmissionAssuranceResult",
     "USPTOAnalysisAPI",
     "UsptoAPIError",
     "assert_operation_allowed",
     "create_api",
     "scrub_credential_fields",
+    # Submission assurance (PATLAW-140)
+    "ASSURANCE_STAGE_ORDER",
+    "SUBMISSION_ASSURANCE_INTERFACE",
+    "SUBMISSION_ASSURANCE_SCHEMA_VERSION",
+    "AssuranceDisposition",
+    "AssuranceItem",
+    "AssuranceItemKind",
+    "CoverageDimension",
+    "CoverageReport",
+    "CoverageStatus",
+    "ProvenanceRef",
+    "REVIEW_ONLY_ASSURANCE_DISCLAIMER",
+    "SubmissionAssuranceProcessor",
+    "assure_submission",
+    "create_submission_assurance_processor",
     # Registry
     "USPTOProcessorAdapter",
     "register_uspto_processors",

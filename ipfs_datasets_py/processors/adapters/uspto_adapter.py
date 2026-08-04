@@ -45,6 +45,8 @@ _USPTO_FORMATS: Final[frozenset[str]] = frozenset(
         "uspto_analyze",
         "uspto_preflight",
         "uspto_explain",
+        "uspto_assurance",
+        "uspto_submission_assurance",
         "patent_center_export",
         "odp",
     }
@@ -61,6 +63,10 @@ _OPERATION_ALIASES: Final[Mapping[str, str]] = {
     "analyze": "analyze",
     "preflight": "preflight",
     "explain": "explain",
+    "assure": "submission_assurance",
+    "assurance": "submission_assurance",
+    "submission_assurance": "submission_assurance",
+    "submission-assurance": "submission_assurance",
 }
 
 
@@ -111,19 +117,23 @@ class USPTOProcessorAdapter:
                 "analysis_bundle",
                 "preflight_result",
                 "gap_report",
+                "submission_assurance_result",
             ],
-            "operations": list(PUBLIC_OPERATIONS),
+            "operations": list(PUBLIC_OPERATIONS) + ["submission_assurance"],
             "forbidden_operations": sorted(FORBIDDEN_API_OPERATIONS),
             "priority": self._priority,
             "description": (
                 "USPTO status, public sync, authorized private import, "
-                "analyze, preflight, and explain — credentials by reference only"
+                "analyze, preflight, explain, and submission-assurance — "
+                "credentials by reference only"
             ),
             "features": [
                 "credential_references",
                 "canonical_contracts",
                 "no_sign_pay_file_browser",
                 "tenant_bound_private_import",
+                "submission_assurance",
+                "domain_disposition_not_concealed",
             ],
             "interface": self._api.interface,
             "schema_version": self._api.schema_version,
@@ -197,14 +207,42 @@ class USPTOProcessorAdapter:
                 if hasattr(result_obj, "to_dict")
                 else dict(result_obj)
             )
+            # Domain disposition must not be concealed by transport success
+            # (PATLAW-140): outage / quarantine / incomplete / review → success=False.
+            domain_ok = self._domain_success(operation, payload, result_obj)
+            warnings: list[str] = []
+            errors: list[str] = []
+            if not domain_ok:
+                disposition = payload.get("disposition") or payload.get(
+                    "domain_disposition"
+                )
+                warnings.append(
+                    "domain_disposition_not_success:"
+                    f"{disposition or 'unknown'}"
+                )
+                if payload.get("is_quarantined"):
+                    errors.append("quarantined")
+                if payload.get("is_outage"):
+                    errors.append("outage")
+                if payload.get("is_review_required"):
+                    errors.append("review_required")
+                if payload.get("is_partial"):
+                    errors.append("partial")
+                if payload.get("is_proof_unknown"):
+                    errors.append("proof_unknown")
+                if payload.get("is_stale_authority"):
+                    errors.append("stale_authority")
             return ProcessingResult(
-                success=True,
+                success=domain_ok,
                 knowledge_graph={
                     "entities": [],
                     "relationships": [],
                     "properties": {
                         "uspto_operation": operation,
                         "schema_version": payload.get("schema_version"),
+                        "domain_ok": domain_ok,
+                        "transport_ok": payload.get("transport_ok", True),
+                        "disposition": payload.get("disposition"),
                     },
                 },
                 vectors=[],
@@ -214,9 +252,12 @@ class USPTOProcessorAdapter:
                     "processing_time_seconds": time.time() - start,
                     "operation": operation,
                     "schema_version": payload.get("schema_version"),
+                    "domain_ok": domain_ok,
+                    "transport_ok": payload.get("transport_ok", True),
+                    "disposition": payload.get("disposition"),
                 },
-                warnings=[],
-                errors=[],
+                warnings=warnings,
+                errors=errors,
                 raw_output=payload,
             )
         except Exception as exc:
@@ -381,10 +422,96 @@ class USPTOProcessorAdapter:
                 labels=options.get("labels") or meta.get("labels"),
             )
 
+        if operation == "submission_assurance":
+            assurance_input = (
+                options.get("assurance_input")
+                or options.get("submission_assurance_input")
+                or meta.get("assurance_input")
+                or meta.get("submission_assurance_input")
+            )
+            # Build kwargs from options when no full input object is provided.
+            kwargs: dict[str, Any] = {}
+            for key in (
+                "tenant_id",
+                "matter_id",
+                "assurance_id",
+                "application_number",
+                "documents",
+                "status_snapshot",
+                "source_profile",
+                "application_type",
+                "scenario",
+                "prosecution_stage",
+                "filing_date",
+                "as_of_utc",
+                "authority_snapshot_id",
+                "authority_digest",
+                "authority_stale",
+                "force_proof_unknown",
+                "force_review_required",
+                "force_partial",
+                "force_quarantine",
+                "force_outage",
+                "classification",
+                "labels",
+                "offline",
+                "run_preflight",
+                "delta_token",
+            ):
+                if key in options:
+                    kwargs[key] = options[key]
+                elif key in meta:
+                    kwargs[key] = meta[key]
+            if assurance_input is not None:
+                return api.submission_assurance(assurance_input, **kwargs)
+            if not kwargs.get("tenant_id") or not kwargs.get("matter_id"):
+                raise UsptoAPIError(
+                    "submission_assurance requires tenant_id and matter_id "
+                    "(plus documents/source profile) or assurance_input",
+                    code="missing_assurance_input",
+                )
+            return api.submission_assurance(**kwargs)
+
         raise UsptoAPIError(
             f"unknown operation: {operation!r}",
             code="unknown_operation",
         )
+
+    @staticmethod
+    def _domain_success(
+        operation: str,
+        payload: Mapping[str, Any],
+        result_obj: Any,
+    ) -> bool:
+        """Map domain disposition to adapter success (fail-closed for assurance).
+
+        Legacy v1 operations without a domain ``success``/``ok`` field remain
+        transport-success when no exception was raised. Assurance results must
+        surface quarantine/outage/partial/review as ``success=False``.
+        """
+        if hasattr(result_obj, "success") and isinstance(
+            getattr(result_obj, "success"), bool
+        ):
+            # Prefer explicit domain property when present.
+            if operation in {"submission_assurance", "assure"}:
+                return bool(result_obj.success)
+            # For other result types with success, still honor it when False.
+            if result_obj.success is False and operation in {
+                "submission_assurance",
+                "assure",
+            }:
+                return False
+        if operation in {"submission_assurance", "assure"}:
+            if "success" in payload:
+                return bool(payload.get("success"))
+            if "ok" in payload:
+                return bool(payload.get("ok"))
+            if "domain_ok" in payload:
+                return bool(payload.get("domain_ok"))
+            disposition = str(payload.get("disposition") or "").lower()
+            if disposition and disposition != "completed":
+                return False
+        return True
 
 
 def register_uspto_processors(
