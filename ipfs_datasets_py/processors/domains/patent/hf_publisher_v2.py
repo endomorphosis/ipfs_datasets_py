@@ -1476,6 +1476,282 @@ class _CommitOp:
     operation: str = "add"
 
 
+class LiveHubApiAdapter:
+    """Adapt real ``huggingface_hub.HfApi`` to the FakeHubService duck-type.
+
+    The publisher calls create_branch → create_commit → create_pull_request →
+    merge_pull_request with FakeHub-shaped kwargs.  Real HfApi uses different
+    operation objects and PR parameter names; this adapter bridges them without
+    embedding tokens in receipts.
+
+    Live stage strategy:
+
+    * ``create_branch`` creates the add-only stage branch from the audited base
+    * ``create_commit`` uploads artifacts onto that branch (no direct main write)
+    * ``create_pull_request`` opens a PR via a follow-up ``create_commit`` with
+      ``create_pr=True`` is **not** used for the file commit (to keep the stage
+      branch identity stable); instead we open a PR discussion after the
+      branch commit.  When the Hub refuses a head-less PR, we re-commit with
+      ``create_pr=True`` against ``main`` from ``parent_commit=base``.
+    * ``merge_pull_request`` maps ``number`` → ``discussion_num``
+    """
+
+    def __init__(self, *, token: str, endpoint: str | None = None) -> None:
+        text = str(token or "").strip()
+        if not text:
+            raise AuthError("LiveHubApiAdapter requires a non-empty Hub token")
+        try:
+            import importlib
+
+            hub_mod = importlib.import_module("huggingface_hub")
+        except ImportError as exc:  # pragma: no cover - env dependency
+            raise PatentHFPublisherV2Error(
+                "huggingface_hub is required for live Hub stage/promote"
+            ) from exc
+        api_cls = getattr(hub_mod, "HfApi")
+        kwargs: dict[str, Any] = {"token": text}
+        if endpoint:
+            kwargs["endpoint"] = endpoint
+        self._api = api_cls(**kwargs)
+        self._token = text
+        # dataset_id → last PR number opened for promote
+        self._pr_by_repo: dict[str, int] = {}
+        # dataset_id → last staged branch commit sha
+        self._branch_head: dict[str, str] = {}
+        # dataset_id → base sha used for last stage commit
+        self._base_by_repo: dict[str, str] = {}
+
+    def repo_info(
+        self,
+        *,
+        repo_id: str,
+        repo_type: str = "dataset",
+        revision: str | None = None,
+        token: str | None = None,
+        **_: Any,
+    ) -> Any:
+        return self._api.repo_info(
+            repo_id=repo_id,
+            repo_type=repo_type,
+            revision=revision,
+            token=token or self._token,
+        )
+
+    def create_repo(
+        self,
+        *,
+        repo_id: str,
+        repo_type: str = "dataset",
+        private: bool = False,
+        exist_ok: bool = True,
+        token: str | None = None,
+        **_: Any,
+    ) -> Any:
+        return self._api.create_repo(
+            repo_id=repo_id,
+            repo_type=repo_type,
+            private=private,
+            exist_ok=exist_ok,
+            token=token or self._token,
+        )
+
+    def create_branch(
+        self,
+        *,
+        branch: str,
+        repo_id: str,
+        revision: str | None = None,
+        repo_type: str = "dataset",
+        token: str | None = None,
+        exist_ok: bool = True,
+        **_: Any,
+    ) -> None:
+        try:
+            self._api.create_branch(
+                repo_id=repo_id,
+                branch=branch,
+                revision=revision,
+                repo_type=repo_type,
+                token=token or self._token,
+                exist_ok=exist_ok,
+            )
+        except Exception as exc:
+            # exist_ok race / already exists
+            msg = str(exc).casefold()
+            if exist_ok and (
+                "already exists" in msg or "409" in msg or "exist" in msg
+            ):
+                return
+            raise ConflictError(f"create_branch failed for {repo_id}: {exc}") from exc
+
+    def create_commit(
+        self,
+        *,
+        repo_id: str,
+        operations: Sequence[Any],
+        commit_message: str,
+        repo_type: str = "dataset",
+        revision: str | None = None,
+        parent_commit: str | None = None,
+        token: str | None = None,
+        create_pr: bool = False,
+        **_: Any,
+    ) -> dict[str, Any]:
+        import importlib
+
+        hub_mod = importlib.import_module("huggingface_hub")
+        add_cls = getattr(hub_mod, "CommitOperationAdd")
+
+        ops: list[Any] = []
+        for item in operations:
+            path_in_repo = getattr(item, "path_in_repo", None)
+            path_or_fileobj = getattr(item, "path_or_fileobj", None)
+            if path_in_repo is None and isinstance(item, Mapping):
+                path_in_repo = item.get("path_in_repo")
+                path_or_fileobj = item.get("path_or_fileobj")
+            if not path_in_repo or path_or_fileobj is None:
+                raise PatentHFPublisherV2Error(
+                    f"invalid commit operation for {repo_id}: {item!r}"
+                )
+            ops.append(
+                add_cls(
+                    path_in_repo=str(path_in_repo),
+                    path_or_fileobj=path_or_fileobj,
+                )
+            )
+        if not ops and not create_pr:
+            raise PatentHFPublisherV2Error(
+                f"no commit operations for {repo_id}"
+            )
+
+        # For live stage, open a PR carrying the artifact commit so promote can
+        # merge via discussion_num.  parent_commit pins the audited main base.
+        # Do not force create_pr when the caller already targets a non-main
+        # revision without parent (branch maintenance commits).
+        use_create_pr = bool(create_pr)
+        use_revision = revision
+        if (
+            not use_create_pr
+            and parent_commit
+            and ops
+            and (revision is None or str(revision).casefold() not in {"main", "master"})
+        ):
+            # Publisher stages onto a branch then opens a PR.  Real Hub PRs with
+            # file payloads are created most reliably via create_pr=True from the
+            # audited parent (main).  Keep branch create as audit sidecar only.
+            use_create_pr = True
+            use_revision = None
+
+        info = self._api.create_commit(
+            repo_id=repo_id,
+            operations=ops,
+            commit_message=commit_message,
+            repo_type=repo_type,
+            revision=use_revision,
+            parent_commit=parent_commit,
+            token=token or self._token,
+            create_pr=use_create_pr,
+        )
+        oid = getattr(info, "oid", None) or getattr(info, "commit_sha", None)
+        if not oid:
+            raise PartialUploadError(
+                f"create_commit returned no oid for {repo_id}"
+            )
+        key = repo_id.casefold()
+        self._branch_head[key] = _commit_sha(oid)
+        if parent_commit:
+            self._base_by_repo[key] = _commit_sha(parent_commit)
+        pr_num_raw = getattr(info, "pr_num", None)
+        if pr_num_raw is not None and str(pr_num_raw).strip():
+            try:
+                self._pr_by_repo[key] = int(pr_num_raw)
+            except (TypeError, ValueError):
+                pass
+        return {
+            "commit_sha": _commit_sha(oid),
+            "oid": _commit_sha(oid),
+            "sha": _commit_sha(oid),
+            "pr_num": self._pr_by_repo.get(key),
+            "pr_url": getattr(info, "pr_url", None),
+        }
+
+    def create_pull_request(
+        self,
+        *,
+        repo_id: str,
+        title: str,
+        head: str,
+        base: str = "main",
+        token: str | None = None,
+        **_: Any,
+    ) -> dict[str, Any]:
+        """Return the PR number opened by the preceding live create_commit."""
+        del title, head, base, token  # title/head recorded on the create_pr commit
+        key = repo_id.casefold()
+        number = self._pr_by_repo.get(key)
+        if number is None:
+            raise PartialUploadError(
+                f"no PR number recorded for {repo_id}; live create_commit must "
+                "open a PR (create_pr=True) before create_pull_request"
+            )
+        return {
+            "number": int(number),
+            "html_url": (
+                f"https://huggingface.co/datasets/{repo_id}/discussions/{int(number)}"
+            ),
+        }
+
+    def merge_pull_request(
+        self,
+        *,
+        repo_id: str,
+        number: int,
+        token: str | None = None,
+        parent_commit: str | None = None,
+        **_: Any,
+    ) -> dict[str, Any]:
+        # Optional race check against main.
+        if parent_commit is not None:
+            info = self.repo_info(
+                repo_id=repo_id, repo_type="dataset", revision="main", token=token
+            )
+            current = getattr(info, "sha", None)
+            if current and _commit_sha(current) != _commit_sha(parent_commit):
+                raise BaseRevisionError(
+                    f"merge race: main advanced after audit "
+                    f"(expected {parent_commit}, current {current})"
+                )
+        try:
+            result = self._api.merge_pull_request(
+                repo_id=repo_id,
+                discussion_num=int(number),
+                token=token or self._token,
+                repo_type="dataset",
+                comment="Operator-approved patent-legal hub index promote",
+            )
+        except Exception as exc:
+            raise PartialUploadError(
+                f"merge_pull_request failed for {repo_id}: {exc}"
+            ) from exc
+
+        # After merge, resolve main head sha.
+        info = self.repo_info(
+            repo_id=repo_id, repo_type="dataset", revision="main", token=token
+        )
+        sha = getattr(info, "sha", None)
+        if not sha:
+            # DiscussionStatusChange may not include commit; fail closed.
+            raise PartialUploadError(
+                f"merge returned no main sha for {repo_id} (result={result!r})"
+            )
+        return {
+            "merged": True,
+            "sha": _commit_sha(sha),
+            "commit_sha": _commit_sha(sha),
+            "discussion_num": int(number),
+        }
+
+
 # ---------------------------------------------------------------------------
 # Publisher
 # ---------------------------------------------------------------------------
@@ -2281,6 +2557,7 @@ __all__ = [
     "DirectMainUploadError",
     "FakeHubService",
     "GOAL_ID",
+    "LiveHubApiAdapter",
     "PartialUploadError",
     "PatentHFPublisherV2",
     "PatentHFPublisherV2Error",

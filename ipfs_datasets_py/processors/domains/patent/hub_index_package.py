@@ -1698,6 +1698,121 @@ class HubIndexPackageBuilder:
             )
         )
 
+        # Bulk BM25 payload (documents / terms / postings) for Hub consumers.
+        def _jsonl_bytes(rows: Sequence[Any]) -> bytes:
+            lines: list[str] = []
+            for row in rows:
+                if hasattr(row, "to_dict"):
+                    payload = row.to_dict()
+                elif isinstance(row, Mapping):
+                    payload = dict(row)
+                else:
+                    payload = {"value": row}
+                lines.append(canonical_json(payload))
+            return ("\n".join(lines) + ("\n" if lines else "")).encode("utf-8")
+
+        artifacts.append(
+            _make_artifact(
+                relative_path="indexes/bm25/bm25-documents.jsonl",
+                content=_jsonl_bytes(bm25.documents),
+                media_type="application/x-ndjson",
+                role="bm25",
+                family="bm25",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(bm25.documents),
+                config_name="bm25_documents",
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="indexes/bm25/bm25-terms.jsonl",
+                content=_jsonl_bytes(bm25.terms),
+                media_type="application/x-ndjson",
+                role="bm25",
+                family="bm25",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(bm25.terms),
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="indexes/bm25/bm25-postings.jsonl",
+                content=_jsonl_bytes(bm25.postings),
+                media_type="application/x-ndjson",
+                role="bm25",
+                family="bm25",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(bm25.postings),
+                config_name="bm25_postings",
+            )
+        )
+        # Viewer-aligned release paths (jsonl; parquet optional elsewhere).
+        release_docs = (
+            bm25.release_document_rows()
+            if callable(getattr(bm25, "release_document_rows", None))
+            else bm25.documents
+        )
+        release_posts = (
+            bm25.release_posting_rows()
+            if callable(getattr(bm25, "release_posting_rows", None))
+            else bm25.postings
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="data/bm25/documents/train.jsonl",
+                content=_jsonl_bytes(release_docs),
+                media_type="application/x-ndjson",
+                role="bm25",
+                family="bm25",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(bm25.documents),
+                config_name="bm25_documents",
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="data/bm25/postings/train.jsonl",
+                content=_jsonl_bytes(release_posts),
+                media_type="application/x-ndjson",
+                role="bm25",
+                family="bm25",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(bm25.postings),
+                config_name="bm25_postings",
+            )
+        )
+
+        # Corpus document payloads (full public legal texts).
+        artifacts.append(
+            _make_artifact(
+                relative_path="indexes/corpus/documents.jsonl",
+                content=_jsonl_bytes(corpus.documents),
+                media_type="application/x-ndjson",
+                role="corpus",
+                family="corpus",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(corpus.documents),
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="data/corpus/documents/train.jsonl",
+                content=_jsonl_bytes(corpus.documents),
+                media_type="application/x-ndjson",
+                role="corpus",
+                family="corpus",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(corpus.documents),
+            )
+        )
+
         artifacts.append(
             _make_artifact(
                 relative_path=f"indexes/vectors/{VECTOR_MANIFEST_FILENAME}",
@@ -1767,6 +1882,112 @@ class HubIndexPackageBuilder:
                 family="knowledge_graph",
                 rights=rights,
                 privacy=privacy,
+            )
+        )
+
+        # Vector payload rows + dense vectors.
+        artifacts.append(
+            _make_artifact(
+                relative_path="indexes/vectors/vector-rows.jsonl",
+                content=_jsonl_bytes(vector.rows),
+                media_type="application/x-ndjson",
+                role="vectors",
+                family="vectors",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(vector.rows),
+                config_name="vectors",
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="indexes/vectors/vectors.jsonl",
+                content=_jsonl_bytes(vector.vectors),
+                media_type="application/x-ndjson",
+                role="vectors",
+                family="vectors",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(vector.vectors),
+                config_name="vectors",
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="data/vectors/mapping/train.jsonl",
+                content=_jsonl_bytes(vector.rows),
+                media_type="application/x-ndjson",
+                role="vectors",
+                family="vectors",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(vector.rows),
+                config_name="vectors",
+            )
+        )
+
+        # Knowledge-graph nodes / edges / json-ld.
+        artifacts.append(
+            _make_artifact(
+                relative_path="indexes/knowledge_graph/nodes.jsonl",
+                content=_jsonl_bytes(graph.nodes),
+                media_type="application/x-ndjson",
+                role="knowledge_graph",
+                family="knowledge_graph",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(graph.nodes),
+                config_name="graph_nodes",
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="indexes/knowledge_graph/edges.jsonl",
+                content=_jsonl_bytes(graph.edges),
+                media_type="application/x-ndjson",
+                role="knowledge_graph",
+                family="knowledge_graph",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(graph.edges),
+                config_name="graph_edges",
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="indexes/knowledge_graph/graph.jsonld",
+                content=(canonical_json(dict(graph.jsonld)) + "\n").encode("utf-8"),
+                media_type="application/ld+json",
+                role="knowledge_graph",
+                family="knowledge_graph",
+                rights=rights,
+                privacy=privacy,
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="data/knowledge_graph/nodes/train.jsonl",
+                content=_jsonl_bytes(graph.nodes),
+                media_type="application/x-ndjson",
+                role="knowledge_graph",
+                family="knowledge_graph",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(graph.nodes),
+                config_name="graph_nodes",
+            )
+        )
+        artifacts.append(
+            _make_artifact(
+                relative_path="data/knowledge_graph/edges/train.jsonl",
+                content=_jsonl_bytes(graph.edges),
+                media_type="application/x-ndjson",
+                role="knowledge_graph",
+                family="knowledge_graph",
+                rights=rights,
+                privacy=privacy,
+                row_count=len(graph.edges),
+                config_name="graph_edges",
             )
         )
 

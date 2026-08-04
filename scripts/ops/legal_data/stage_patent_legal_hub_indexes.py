@@ -20,19 +20,21 @@ Operator workflow after a successful dry-run receipt:
 
 1. ``--mode dry-run``  — plan + package/admission verification only (default)
 2. ``--mode stage``    — authenticated add-only branch + PR (``--fake-service``
-   for CI; live Hub requires an operator-injected API client)
+   for CI; ``--live-hub`` for real Hugging Face with operator token)
 3. ``--mode sign``     — create operator approval from an external key file
 4. ``--mode promote``  — merge staged PRs after verifying operator approval
 
 This script never:
 
-* uploads directly to ``main`` / ``master``;
+* uploads directly to ``main`` / ``master`` without promote;
 * embeds or logs Hub tokens;
 * moves runtime release pointers (see PATLAW-177 / PATLAW-160);
 * self-approves without an external operator key file;
 * contacts the live Hub on the default dry-run path.
 
 ``--fake-service`` exercises the offline stage/promote path for supervisor tests.
+``--live-hub`` constructs :class:`LiveHubApiAdapter` from ``HF_TOKEN`` (or
+``--token-env``) and is required for real Hub stage/promote.
 """
 
 from __future__ import annotations
@@ -68,6 +70,7 @@ from ipfs_datasets_py.processors.domains.patent.hf_publisher_v2 import (  # noqa
     ConflictError,
     DEFAULT_TARGET_REVISION,
     FakeHubService,
+    LiveHubApiAdapter,
     PartialUploadError,
     PatentHFPublisherV2,
     PatentHFPublisherV2Error,
@@ -815,6 +818,7 @@ def run_stage(
     create_pr: bool,
     admission_receipt: Mapping[str, Any] | Path | None = None,
     require_admission: bool = False,
+    live_hub: bool = False,
 ) -> dict[str, Any]:
     """Stage add-only Hub branches/PRs for hub index package artifacts."""
     ctx = load_package_context(package_dir)
@@ -838,15 +842,14 @@ def run_stage(
     if fake_service:
         api = FakeHubService(base_revisions=base_revisions, require_auth=True)
         token = api.auth_token
-    else:
+    elif live_hub:
         env_token = os.environ.get(token_env) or None
         token = resolve_hub_token(token=env_token, allow_missing=False)
-        # Live clients are never constructed here — operators inject via an
-        # operator-controlled process. Fail closed without --fake-service.
+        api = LiveHubApiAdapter(token=token)
+    else:
         raise StageHubIndexError(
-            "live Hub stage requires an injected API client; use --fake-service "
-            "for offline verification, or call PatentHFPublisherV2 from an "
-            "operator-controlled process with an authenticated HfApi"
+            "live Hub stage requires --live-hub (operator token) or "
+            "--fake-service for offline verification"
         )
 
     publisher = PatentHFPublisherV2(
@@ -935,6 +938,7 @@ def run_promote(
     operator_key: bytes,
     fake_service: bool,
     token_env: str,
+    live_hub: bool = False,
 ) -> dict[str, Any]:
     plan, release_manifest, root = _build_plan(
         package_dir=package_dir,
@@ -1004,14 +1008,27 @@ def run_promote(
             operator_key=operator_key,
             local_root=root,
         )
-    else:
-        # token resolved only to prove operator intent; still fail closed.
-        _ = resolve_hub_token(
+    elif live_hub:
+        token = resolve_hub_token(
             token=os.environ.get(token_env) or None, allow_missing=False
         )
+        api = LiveHubApiAdapter(token=token)
+        publisher = PatentHFPublisherV2(
+            api=api, token=token, organization=organization
+        )
+        # Live promote merges the staged PR numbers from the stage receipt —
+        # do not re-stage (would open a second PR).
+        promotion = publisher.promote_approved(
+            plan,
+            staged=staged,
+            approval=approval_payload,
+            operator_key=operator_key,
+            local_root=root,
+        )
+    else:
         raise StageHubIndexError(
-            "live Hub promote requires an injected API client; use --fake-service "
-            "for offline verification"
+            "live Hub promote requires --live-hub (operator token) or "
+            "--fake-service for offline verification"
         )
 
     payload = promotion.to_dict()
@@ -1143,6 +1160,15 @@ def _parser() -> argparse.ArgumentParser:
         help="Use in-memory FakeHubService (no network; supervisor-safe)",
     )
     parser.add_argument(
+        "--live-hub",
+        action="store_true",
+        help=(
+            "Contact the real Hugging Face Hub for stage/promote using "
+            "LiveHubApiAdapter and HF_TOKEN (or --token-env). Mutually "
+            "exclusive with --fake-service."
+        ),
+    )
+    parser.add_argument(
         "--no-create-pr",
         action="store_true",
         help="Stage branches/commits without opening pull requests",
@@ -1244,6 +1270,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             _write_json(args.receipt_out, payload)
             return 0
 
+        if bool(args.fake_service) and bool(args.live_hub):
+            parser.error("--fake-service and --live-hub are mutually exclusive")
+
         if args.mode == "stage":
             payload = run_stage(
                 package_dir=package_dir,
@@ -1254,6 +1283,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 version_tag=args.version_tag,
                 release_id=args.release_id,
                 fake_service=bool(args.fake_service),
+                live_hub=bool(args.live_hub),
                 token_env=args.token_env,
                 create_pr=not args.no_create_pr,
                 admission_receipt=admission_path,
@@ -1298,6 +1328,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 staged_receipt_file=args.staged_receipt_file,
                 operator_key=key,
                 fake_service=bool(args.fake_service),
+                live_hub=bool(args.live_hub),
                 token_env=args.token_env,
             )
             _write_json(args.receipt_out, payload)

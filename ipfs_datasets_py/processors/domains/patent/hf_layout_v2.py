@@ -1409,6 +1409,35 @@ class PatentHubLayoutV2:
 # ---------------------------------------------------------------------------
 
 
+# Hugging Face dataset-card ``license`` front-matter must use a Hub-known tag.
+# Internal SPDX-ish expressions (e.g. public-domain-US-government) map here.
+_HF_CARD_LICENSE_ALIASES: Final[Mapping[str, str]] = {
+    "public-domain-us-government": "cc0-1.0",
+    "public-domain": "cc0-1.0",
+    "public domain": "cc0-1.0",
+    "us-government-work": "cc0-1.0",
+    "pd": "cc0-1.0",
+    "cc0": "cc0-1.0",
+    "pddl": "pddl",
+    "other": "other",
+    "unknown": "unknown",
+}
+
+
+def hub_dataset_card_license(license_expression: str) -> str:
+    """Map an internal license expression to a Hub-valid dataset-card tag."""
+    text = str(license_expression or "").strip()
+    if not text:
+        return "other"
+    alias = _HF_CARD_LICENSE_ALIASES.get(text.casefold())
+    if alias:
+        return alias
+    # Already a Hub-style tag (mit, apache-2.0, cc-by-4.0, …).
+    if re.fullmatch(r"[a-z0-9.+-]+", text.casefold()):
+        return text.casefold()
+    return "other"
+
+
 def render_dataset_card(
     *,
     identity: HubRepositoryIdentity,
@@ -1427,7 +1456,10 @@ def render_dataset_card(
             )
 
     licenses = list(coverage.licenses)
-    primary_license = licenses[0] if len(licenses) == 1 else "other"
+    if len(licenses) == 1:
+        primary_license = hub_dataset_card_license(licenses[0])
+    else:
+        primary_license = "other"
 
     lines: list[str] = [
         "---",
