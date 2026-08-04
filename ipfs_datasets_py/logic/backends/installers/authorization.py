@@ -11,14 +11,20 @@ External engines never hold authorization authority: the certified
 in-process Datalog/SecPAL references remain the sole authorization-decision
 authorities.
 
-Objective validation repair (FVT-073)
--------------------------------------
+Objective validation repair (FVT-073 / FVT-101)
+-----------------------------------------------
 Path evidence for this installer and the vendor certification surface may
 already exist while the supervisor validation gate still needs an explicit
 re-proof of FVT-G209.  The synthetic evidence term
 ``objective validation repair`` is bound here so objective scans re-find
 coverage together with the certifier, focused tests, lock pins, and
 checked-in vendor receipt after the hermetic validation command passes.
+
+FVT-101 is the objective validation repair for FVT-G217 (genuine SecPAL
+artifact intake and capability ceiling).  The same synthetic evidence term
+is bound on the SecPAL operator-artifact intake path, the offline
+prerequisite report, and ``test_secpal_live_toolchain_contract.py`` so
+objective scans re-find coverage when path evidence already exists.
 
 Design
 ------
@@ -88,8 +94,20 @@ VENDOR_GOAL_ID: Final = "FVT-G209"
 VENDOR_TASK_ID: Final = "FVT-055"
 # Validation-gate task that re-proves FVT-G209 when path evidence already exists.
 VENDOR_REPAIR_TASK_ID: Final = "FVT-073"
+# SecPAL live toolchain (FVT-G217): original task FVT-086; repair gate FVT-101.
+SECPAL_LIVE_GOAL_ID: Final = "FVT-G217"
+SECPAL_LIVE_TASK_ID: Final = "FVT-086"
+SECPAL_LIVE_REPAIR_TASK_ID: Final = "FVT-101"
 # Synthetic evidence term required by objective-scan validation gates.
 OBJECTIVE_VALIDATION_EVIDENCE: Final = "objective validation repair"
+# Hermetic validation command bound by FVT-G217 / FVT-101 (and FVT-G209 / FVT-073).
+OBJECTIVE_VALIDATION_COMMAND: Final = (
+    "PYTHONPATH=ipfs_datasets_py python -m pytest "
+    "test/integration/toolchains/test_secpal_live_toolchain_contract.py "
+    "test/integration/toolchains/test_external_authorization_vendor_certification.py "
+    "test/integration/toolchains/test_external_authorization_toolchain_certification.py "
+    "-q"
+)
 PROGRAM: Final = "formal-verification-tactician/authorization-toolchains"
 VENDOR_PROGRAM: Final = (
     "formal-verification-tactician/authorization-vendor-toolchains"
@@ -1256,6 +1274,13 @@ def secpal_vendor_prerequisite_report(
     return {
         "schema_version": SECPAL_VENDOR_PREREQUISITE_SCHEMA,
         "tool_id": TOOL_SECPAL,
+        # FVT-101 objective validation repair: re-prove FVT-G217 acceptance.
+        "goal_id": SECPAL_LIVE_GOAL_ID,
+        "task_id": SECPAL_LIVE_TASK_ID,
+        "repair_task_id": SECPAL_LIVE_REPAIR_TASK_ID,
+        "objective_validation_evidence": OBJECTIVE_VALIDATION_EVIDENCE,
+        "objective_validation_repair": True,
+        "objective_validation_command": OBJECTIVE_VALIDATION_COMMAND,
         "ready": ready,
         "installable": ready,
         "authoritative_live_evidence_available": ready,
@@ -4904,8 +4929,12 @@ def describe_authorization_installer() -> dict[str, Any]:
         "vendor_goal_id": VENDOR_GOAL_ID,
         "vendor_task_id": VENDOR_TASK_ID,
         "vendor_repair_task_id": VENDOR_REPAIR_TASK_ID,
+        "secpal_live_goal_id": SECPAL_LIVE_GOAL_ID,
+        "secpal_live_task_id": SECPAL_LIVE_TASK_ID,
+        "secpal_live_repair_task_id": SECPAL_LIVE_REPAIR_TASK_ID,
         "objective_validation_evidence": OBJECTIVE_VALIDATION_EVIDENCE,
         "objective_validation_repair": True,
+        "objective_validation_command": OBJECTIVE_VALIDATION_COMMAND,
         "program": PROGRAM,
         "vendor_program": VENDOR_PROGRAM,
         "family": FAMILY,
@@ -4968,7 +4997,11 @@ __all__ = [
     "VENDOR_GOAL_ID",
     "VENDOR_TASK_ID",
     "VENDOR_REPAIR_TASK_ID",
+    "SECPAL_LIVE_GOAL_ID",
+    "SECPAL_LIVE_TASK_ID",
+    "SECPAL_LIVE_REPAIR_TASK_ID",
     "OBJECTIVE_VALIDATION_EVIDENCE",
+    "OBJECTIVE_VALIDATION_COMMAND",
     "PROGRAM",
     "VENDOR_PROGRAM",
     "FAMILY",
