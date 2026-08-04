@@ -2840,7 +2840,7 @@ Program invariants:
 
 ## PATLAW-175 Admit hub index package through DLP rights and Viewer gates
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
