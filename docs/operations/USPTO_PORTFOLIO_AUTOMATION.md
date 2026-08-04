@@ -136,12 +136,14 @@ Session file (mode 0600):
 
 ## Browser export (uses saved session when available)
 
-Opens a **headed** Chromium window. **You** complete USPTO login and MFA.
-The helper never types passwords. It may navigate to application numbers and
+Uses the saved login session from `portfolio_cli login` when present; otherwise
+opens a headed browser for interactive login. After auth it may navigate and
 attempt download clicks; if the UI does not cooperate, download manually into
-the export directory, then seal.
+the export directory (or `private_inbox/<app>/`), then seal/import.
 
 ```bash
+# Prefer: login first (refs/TOTP), then export with saved session
+python3 scripts/ops/uspto/portfolio_cli.py login --otp-mode totp
 python3 scripts/ops/uspto/portfolio_cli.py attended-export \
   --application-number 18654466 \
   --authorizing-user "operator:you"
