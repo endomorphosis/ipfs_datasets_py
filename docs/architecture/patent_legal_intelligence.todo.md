@@ -2765,7 +2765,7 @@ Program invariants:
 
 ## PATLAW-172 Build production vector index snapshot for public legal corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
