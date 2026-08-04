@@ -1,7 +1,11 @@
 from ipfs_datasets_py.logic.ui_ux_ir.formalize.contracts import FormalView
 from ipfs_datasets_py.logic.ui_ux_ir.formalize.tdfol import compile_action_bindings_to_tdfol
 from ipfs_datasets_py.logic.ui_ux_ir.model.bindings import (
-    ProgramBindingTargetKind, RiskClass, UIActionBinding, UIProgramRef,
+    ConfirmationClass,
+    ProgramBindingTargetKind,
+    RiskClass,
+    UIActionBinding,
+    UIProgramRef,
 )
 
 def test_tdfol_compiles_confirmation_obligations_for_high_risk():
@@ -14,6 +18,7 @@ def test_tdfol_compiles_confirmation_obligations_for_high_risk():
             mcp_idl_method_name="delete",
         ),
         risk_class=RiskClass.HIGH,
+        confirmation_class=ConfirmationClass.CONFIRM,
     )
     result = compile_action_bindings_to_tdfol((binding,))
     assert result.view is FormalView.TDFOL
