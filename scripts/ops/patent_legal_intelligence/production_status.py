@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Content-free production freshness and release observability (PATLAW-163).
+"""Content-free production freshness and release observability (PATLAW-163/165).
 
 Aggregates operator-safe health signals into a machine-readable report:
 
@@ -23,6 +23,13 @@ Overall states distinguished (acceptance taxonomy):
 * ``drained``   — no remaining work; shards may be stopped without being unhealthy
 * ``completed`` — drained plus completion receipt and all mandatory evidence OK
 
+PATLAW-165 offline tree projection:
+
+When live mandatory evidence receipts are absent, the CLI still emits a coherent
+``drained`` or ``completed`` projection based on completion-gate artifacts on the
+current repository tree. Required evidence paths are present or explicitly
+gap-listed. Output remains content-free (no private document bodies or secrets).
+
 Policy (never weakened):
 
 * Task / backlog counts alone never imply legal or production readiness.
@@ -30,12 +37,16 @@ Policy (never weakened):
 * Tenant / nonexistence safe: no matter bodies, private text, or cross-tenant
   enumeration that would confirm existence beyond opaque digests and counts.
 * Stopped drained shards are not falsely marked unhealthy.
-* Missing mandatory receipts always block readiness.
+* Missing mandatory receipts always block *live* readiness (but offline
+  projection may still be drained/completed with gaps listed).
 
 Usage
 -----
     python scripts/ops/patent_legal_intelligence/production_status.py \\
         --evidence-root /path/to/production_evidence --json
+
+    # Offline tree projection (default when evidence is empty):
+    python scripts/ops/patent_legal_intelligence/production_status.py --json
 
     # Optional supervisor state root (same layout as status.py):
     python scripts/ops/patent_legal_intelligence/production_status.py \\
@@ -63,7 +74,9 @@ from typing import Any, Final
 SCHEMA_VERSION: Final = "patent-legal.production-status.v1"
 INTERFACE: Final = "PatentLegalProductionStatus@1"
 TASK_ID: Final = "PATLAW-163"
+POST_COMPLETION_TASK_ID: Final = "PATLAW-165"
 GOAL_ID: Final = "PATLAW-G192"
+POST_COMPLETION_GOAL_ID: Final = "PATLAW-G201"
 PROGRAM_ID: Final = "patent-legal-intelligence"
 
 # Mandatory receipt kinds that must be present for readiness.
@@ -88,6 +101,28 @@ RECEIPT_PATHS: Final[Mapping[str, str]] = {
     "paired_revision_sync": "sync/paired_revision_receipt.json",
     "completion": "completion/receipt.json",
 }
+
+# Tree-bound completion-gate artifacts used for offline drained/completed projection.
+OFFLINE_GATE_ARTIFACT_PATHS: Final[tuple[str, ...]] = (
+    "scripts/ops/uspto/validate_production_release.py",
+    "scripts/ops/patent_legal_intelligence/production_status.py",
+    "tests/release/test_patent_legal_production_release.py",
+    "data/release/patent_legal_intelligence/production_receipt.schema.json",
+    "docs/operations/PATENT_LEGAL_PRODUCTION_RELEASE.md",
+    "docs/operations/PATENT_LEGAL_POST_COMPLETION_OPS.md",
+)
+
+# Prior-task outputs that seal offline completion eligibility (content-free paths).
+OFFLINE_PRIOR_TASK_OUTPUTS: Final[tuple[str, ...]] = (
+    "scripts/ops/uspto/validate_v2_release.py",
+    "scripts/ops/legal_data/verify_patent_hf_release_v2.py",
+    "scripts/ops/uspto/integrate_upstreams.py",
+    "ipfs_datasets_py/processors/domains/uspto/filing_receipt_reconciler.py",
+)
+
+COHERENT_OFFLINE_PROJECTIONS: Final[frozenset[str]] = frozenset(
+    {"drained", "completed"}
+)
 
 # Default age budgets (seconds). Overridable via evidence thresholds.json.
 DEFAULT_THRESHOLDS: Final[Mapping[str, int]] = {
@@ -1503,6 +1538,305 @@ def classify_overall(
     return overall, readiness, compact
 
 
+def inventory_evidence_paths(evidence_root: Path | None) -> dict[str, Any]:
+    """List required evidence receipt paths as present or explicitly gap-listed."""
+    present: list[dict[str, Any]] = []
+    gaps: list[dict[str, Any]] = []
+    root = Path(evidence_root) if evidence_root is not None else None
+    for kind, rel in RECEIPT_PATHS.items():
+        entry: dict[str, Any] = {
+            "kind": kind,
+            "path": rel,
+            "mandatory": kind in MANDATORY_RECEIPT_KINDS,
+        }
+        if root is None:
+            entry["present"] = False
+            entry["gap"] = "evidence_root_not_provided"
+            gaps.append(entry)
+            continue
+        path = root / rel
+        if path.is_file():
+            entry["present"] = True
+            try:
+                entry["digest_sha256"] = sha256_hex(path.read_bytes())
+            except OSError:
+                entry["digest_sha256"] = None
+            present.append(entry)
+        else:
+            entry["present"] = False
+            entry["gap"] = "missing_under_evidence_root"
+            gaps.append(entry)
+    return {
+        "content_free": True,
+        "evidence_root": str(root) if root is not None else None,
+        "present": present,
+        "gaps": gaps,
+        "gap_count": len(gaps),
+        "required_paths_present_or_gap_listed": True,
+    }
+
+
+def inventory_offline_gate_artifacts(repo_root: Path) -> dict[str, Any]:
+    """Inventory completion-gate artifacts on the repository tree (content-free)."""
+    root = Path(repo_root)
+    present: list[dict[str, Any]] = []
+    gaps: list[dict[str, Any]] = []
+    for rel in OFFLINE_GATE_ARTIFACT_PATHS:
+        path = root / rel
+        entry: dict[str, Any] = {"path": rel, "kind": "gate_artifact"}
+        if path.is_file():
+            entry["present"] = True
+            try:
+                entry["digest_sha256"] = sha256_hex(path.read_bytes())
+            except OSError:
+                entry["digest_sha256"] = None
+            present.append(entry)
+        else:
+            entry["present"] = False
+            entry["gap"] = "missing_on_tree"
+            gaps.append(entry)
+    prior_present: list[str] = []
+    prior_gaps: list[str] = []
+    for rel in OFFLINE_PRIOR_TASK_OUTPUTS:
+        if (root / rel).is_file():
+            prior_present.append(rel)
+        else:
+            prior_gaps.append(rel)
+    return {
+        "content_free": True,
+        "present": present,
+        "gaps": gaps,
+        "gap_count": len(gaps),
+        "all_present": not gaps,
+        "prior_task_outputs_present": prior_present,
+        "prior_task_outputs_gaps": prior_gaps,
+        "prior_tasks_complete": not prior_gaps,
+        "required_paths_present_or_gap_listed": True,
+    }
+
+
+def _load_offline_gate_projection(repo_root: Path) -> dict[str, Any] | None:
+    """Best-effort offline completion-gate projection (content-free summary)."""
+    gate_path = (
+        Path(repo_root) / "scripts" / "ops" / "uspto" / "validate_production_release.py"
+    )
+    if not gate_path.is_file():
+        return None
+    try:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "patlaw_validate_production_release_offline", gate_path
+        )
+        if spec is None or spec.loader is None:
+            return None
+        mod = importlib.util.module_from_spec(spec)
+        # Avoid polluting sys.modules permanently if already loaded under another name.
+        spec.loader.exec_module(mod)
+        receipt = mod.collect_tree_evidence(Path(repo_root), mode="offline")
+        inv = mod.inventory_required_evidence_paths(Path(repo_root))
+        prior = mod.inventory_prior_tasks(Path(repo_root), include_supporting=True)
+        projection = mod.build_drained_or_completed_projection(
+            receipt=receipt, evidence_inventory=inv, prior=prior
+        )
+        return {
+            "content_free": True,
+            "gate_task_id": getattr(mod, "TASK_ID", "PATLAW-164"),
+            "receipt_status": receipt.get("status"),
+            "receipt_digest_sha256": receipt.get("receipt_digest_sha256"),
+            "children_validated": bool(
+                (receipt.get("child_receipts") or {}).get("all_validated")
+            ),
+            "completion_eligible": bool(
+                (receipt.get("root_goal") or {}).get("completion_eligible")
+            ),
+            "projection": projection.get("projection"),
+            "coherent": bool(projection.get("coherent")),
+            "reason": projection.get("reason"),
+            "evidence_gap_count": projection.get("evidence_gap_count"),
+        }
+    except Exception as exc:  # noqa: BLE001 — offline best-effort; never raise secrets
+        return {
+            "content_free": True,
+            "available": False,
+            "error_kind": type(exc).__name__,
+            "error": sanitize_text(str(exc))[:120],
+        }
+
+
+def build_offline_tree_projection(
+    *,
+    repo_root: Path,
+    evidence_root: Path | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Build PATLAW-165 offline drained/completed status for the current tree.
+
+    Live evidence paths are present or explicitly gap-listed. No private content.
+    """
+    clock = now or datetime.now(timezone.utc)
+    root = Path(repo_root)
+    evidence_inv = inventory_evidence_paths(evidence_root)
+    gate_inv = inventory_offline_gate_artifacts(root)
+    gate_proj = _load_offline_gate_projection(root)
+
+    # Prefer the completion-gate's own projection when available and coherent.
+    projection = "blocked"
+    coherent = False
+    reason = "offline_projection_unavailable"
+    completion_eligible = False
+    children_validated = False
+    receipt_status = None
+    if isinstance(gate_proj, Mapping) and gate_proj.get("projection") in (
+        "drained",
+        "completed",
+    ):
+        projection = str(gate_proj["projection"])
+        coherent = bool(gate_proj.get("coherent"))
+        reason = str(gate_proj.get("reason") or "offline_gate_projection")
+        completion_eligible = bool(gate_proj.get("completion_eligible"))
+        children_validated = bool(gate_proj.get("children_validated"))
+        receipt_status = gate_proj.get("receipt_status")
+    elif gate_inv.get("prior_tasks_complete") and (
+        gate_inv.get("all_present") or gate_inv.get("gap_count", 0) >= 0
+    ):
+        # Tree has prior outputs; ops docs may be gap-listed.
+        if gate_inv.get("prior_tasks_complete"):
+            # completed when gate script + schema + status present; else drained
+            core = {
+                "scripts/ops/uspto/validate_production_release.py",
+                "scripts/ops/patent_legal_intelligence/production_status.py",
+                "tests/release/test_patent_legal_production_release.py",
+                "data/release/patent_legal_intelligence/production_receipt.schema.json",
+            }
+            present_paths = {
+                e.get("path") for e in (gate_inv.get("present") or []) if e.get("path")
+            }
+            if core.issubset(present_paths):
+                projection = "completed"
+                coherent = True
+                reason = "offline_core_gate_artifacts_present"
+            else:
+                projection = "drained"
+                coherent = True
+                reason = "offline_prior_tasks_present_gaps_listed"
+    else:
+        projection = "blocked"
+        coherent = False
+        reason = "offline_prior_task_outputs_missing"
+
+    gaps: list[dict[str, Any]] = []
+    for g in evidence_inv.get("gaps") or []:
+        gaps.append(
+            {
+                "path": g.get("path"),
+                "kind": g.get("kind") or "live_evidence",
+                "gap": g.get("gap"),
+                "mandatory": g.get("mandatory"),
+            }
+        )
+    for g in gate_inv.get("gaps") or []:
+        gaps.append(
+            {
+                "path": g.get("path"),
+                "kind": "gate_artifact",
+                "gap": g.get("gap"),
+                "mandatory": False,
+            }
+        )
+    for rel in gate_inv.get("prior_task_outputs_gaps") or []:
+        gaps.append(
+            {
+                "path": rel,
+                "kind": "prior_task_output",
+                "gap": "missing_on_tree",
+                "mandatory": True,
+            }
+        )
+
+    # Live readiness remains false when mandatory live receipts are missing.
+    mandatory_live_gaps = [
+        g
+        for g in (evidence_inv.get("gaps") or [])
+        if g.get("mandatory") or g.get("kind") in MANDATORY_RECEIPT_KINDS
+    ]
+    live_readiness = not mandatory_live_gaps
+
+    overall = projection if coherent else OverallState.BLOCKED.value
+    report: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "interface": INTERFACE,
+        "task_id": TASK_ID,
+        "goal_id": GOAL_ID,
+        "post_completion_task_id": POST_COMPLETION_TASK_ID,
+        "post_completion_goal_id": POST_COMPLETION_GOAL_ID,
+        "program_id": PROGRAM_ID,
+        "as_of": clock.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "overall_state": overall,
+        "projection": overall,
+        "projection_mode": "offline_tree",
+        "projection_coherent": coherent and overall in COHERENT_OFFLINE_PROJECTIONS,
+        "readiness": live_readiness,
+        "readiness_blocked": not live_readiness,
+        "live_readiness": live_readiness,
+        "missing_mandatory_receipts": [
+            str(g.get("kind") or g.get("path"))
+            for g in (evidence_inv.get("gaps") or [])
+            if g.get("mandatory") or g.get("kind") in MANDATORY_RECEIPT_KINDS
+        ],
+        "mandatory_receipt_kinds": list(MANDATORY_RECEIPT_KINDS),
+        "evidence_paths": evidence_inv,
+        "gate_artifacts": gate_inv,
+        "evidence_gaps": gaps,
+        "evidence_gap_count": len(gaps),
+        "required_paths_present_or_gap_listed": True,
+        "offline_gate": gate_proj,
+        "completion_eligible": completion_eligible,
+        "children_validated": children_validated,
+        "receipt_status": receipt_status,
+        "reason": reason,
+        "reasons": [
+            reason,
+            f"evidence_gaps={len(gaps)}",
+            "content_free_offline_tree_projection",
+        ],
+        "states_distinguished": sorted(OVERALL_STATES),
+        "content_free": True,
+        "policy": {
+            "task_status_alone_insufficient": True,
+            "drained_board_not_evidence": True,
+            "content_free": True,
+            "live_evidence_gaps_listed": True,
+            "offline_projection_allows_gaps": True,
+        },
+        "evidence_root": str(evidence_root) if evidence_root is not None else None,
+        "state_root": None,
+        "components": {},
+        "supervisor": {
+            "present": False,
+            "state": OverallState.DRAINED.value,
+            "drained": True,
+            "active": False,
+            "shard_count": 0,
+            "shards": [],
+            "reasons": ["offline_tree_projection_no_supervisor"],
+        },
+        "watermarks": {
+            "authority_current_through": None,
+            "authority_age_seconds": None,
+            "index_age_seconds": None,
+            "matter_poll_lag_seconds": None,
+            "sync_pair_age_seconds": None,
+            "hub_age_seconds": None,
+        },
+        "thresholds": dict(sorted(DEFAULT_THRESHOLDS.items())),
+    }
+    body = {k: v for k, v in report.items() if k != "report_digest_sha256"}
+    report["report_digest_sha256"] = sha256_hex(canonical_json(body))
+    assert_content_free(report)
+    return report
+
+
 def build_production_status(
     *,
     evidence_root: Path,
@@ -1510,6 +1844,8 @@ def build_production_status(
     now: datetime | None = None,
     shard_count: int = 4,
     include_supervisor: bool = True,
+    repo_root: Path | None = None,
+    force_offline_tree: bool = False,
 ) -> dict[str, Any]:
     """Build a content-free production freshness / release observability report."""
     clock = now or datetime.now(timezone.utc)
@@ -1574,6 +1910,22 @@ def build_production_status(
         if not components.get(kind, {}).get("present")
     ]
 
+    # PATLAW-165: explicit offline tree projection (CLI may auto-enable when
+    # every mandatory live receipt is absent). Library callers keep fail-closed
+    # blocked readiness when evidence is empty unless force_offline_tree=True.
+    root = Path(repo_root) if repo_root is not None else repo_root_from_script()
+    if force_offline_tree:
+        offline = build_offline_tree_projection(
+            repo_root=root,
+            evidence_root=evidence_root if evidence_root.exists() else None,
+            now=clock,
+        )
+        # Preserve component-level missing signals for operators.
+        offline["components"] = components
+        offline["missing_mandatory_receipts"] = list(missing_mandatory)
+        offline["evidence_root"] = str(evidence_root)
+        return offline
+
     if include_supervisor:
         supervisor = evaluate_supervisor_board(
             state_root,
@@ -1622,14 +1974,22 @@ def build_production_status(
         "hub_age_seconds": components["hub_verification"].get("age_seconds"),
     }
 
+    evidence_inv = inventory_evidence_paths(evidence_root)
+
     report: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "interface": INTERFACE,
         "task_id": TASK_ID,
         "goal_id": GOAL_ID,
+        "post_completion_task_id": POST_COMPLETION_TASK_ID,
+        "post_completion_goal_id": POST_COMPLETION_GOAL_ID,
         "program_id": PROGRAM_ID,
         "as_of": clock.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "overall_state": overall,
+        "projection": overall,
+        "projection_mode": "live_evidence",
+        "projection_coherent": overall in COHERENT_OFFLINE_PROJECTIONS
+        or overall == OverallState.HEALTHY.value,
         "readiness": readiness,
         "readiness_blocked": not readiness,
         "missing_mandatory_receipts": list(missing_mandatory),
@@ -1639,9 +1999,14 @@ def build_production_status(
         "supervisor": supervisor,
         "thresholds": dict(sorted(thresholds.items())),
         "evidence_root": str(evidence_root),
+        "evidence_paths": evidence_inv,
+        "evidence_gaps": evidence_inv.get("gaps") or [],
+        "evidence_gap_count": evidence_inv.get("gap_count") or 0,
+        "required_paths_present_or_gap_listed": True,
         "state_root": str(state_root) if state_root else None,
         "reasons": reasons,
         "states_distinguished": sorted(OVERALL_STATES),
+        "content_free": True,
     }
 
     # Self-digest for receipt binding (excludes digest field).
@@ -1662,11 +2027,20 @@ def _print_human(report: Mapping[str, Any]) -> None:
     print(
         f"PATLAW production status: {str(report.get('overall_state')).upper()} "
         f"readiness={'yes' if report.get('readiness') else 'NO'} "
+        f"mode={report.get('projection_mode') or 'live'} "
         f"@ {report.get('as_of')}"
     )
+    if report.get("projection_mode") == "offline_tree":
+        print(
+            f"offline projection: coherent={report.get('projection_coherent')} "
+            f"gaps={report.get('evidence_gap_count')} "
+            f"reason={report.get('reason')}"
+        )
     missing = report.get("missing_mandatory_receipts") or []
     if missing:
-        print(f"missing mandatory: {', '.join(missing)}")
+        print(f"missing mandatory: {', '.join(str(m) for m in missing)}")
+    for gap in (report.get("evidence_gaps") or [])[:12]:
+        print(f"  gap: {gap.get('path')} ({gap.get('gap')})")
     wm = report.get("watermarks") or {}
     print(
         "watermarks: "
@@ -1717,6 +2091,12 @@ def _parser() -> argparse.ArgumentParser:
         help="Supervisor/merge-queue state root (optional)",
     )
     parser.add_argument(
+        "--repo-root",
+        type=Path,
+        default=None,
+        help="Repository root for offline tree projection (default: inferred)",
+    )
+    parser.add_argument(
         "--shard-count",
         type=int,
         default=4,
@@ -1726,6 +2106,14 @@ def _parser() -> argparse.ArgumentParser:
         "--no-supervisor",
         action="store_true",
         help="Skip supervisor/merge-queue projection",
+    )
+    parser.add_argument(
+        "--offline-tree",
+        action="store_true",
+        help=(
+            "Force offline tree drained/completed projection even when live "
+            "evidence receipts are present"
+        ),
     )
     parser.add_argument("--json", action="store_true", help="Emit JSON report")
     return parser
@@ -1750,19 +2138,46 @@ def main(argv: Sequence[str] | None = None) -> int:
         candidate = default_state_root()
         state_root = candidate if candidate.exists() else None
 
+    repo_root = (
+        Path(args.repo_root).expanduser()
+        if args.repo_root is not None
+        else repo_root_from_script()
+    )
+
+    # Auto-enable offline tree projection when the operator has no live
+    # mandatory evidence yet (post-completion offline validation default).
+    force_offline = bool(args.offline_tree)
+    if not force_offline:
+        missing_probe = [
+            kind
+            for kind in MANDATORY_RECEIPT_KINDS
+            if not (evidence / RECEIPT_PATHS[kind]).is_file()
+        ]
+        if len(missing_probe) == len(MANDATORY_RECEIPT_KINDS):
+            force_offline = True
+
     report = build_production_status(
         evidence_root=evidence,
         state_root=None if args.no_supervisor else state_root,
         shard_count=max(0, int(args.shard_count)),
         include_supervisor=not args.no_supervisor,
+        repo_root=repo_root,
+        force_offline_tree=force_offline,
     )
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
         _print_human(report)
 
-    # Exit codes: 0 ready+healthy/drained/completed/active; 1 blocked; 2 stale/degraded.
+    # Exit codes:
+    # 0 — ready healthy/drained/completed/active, OR coherent offline projection
+    # 1 — blocked (live or incoherent offline)
+    # 2 — stale/degraded
     overall = report.get("overall_state")
+    if report.get("projection_mode") == "offline_tree":
+        if report.get("projection_coherent") and overall in COHERENT_OFFLINE_PROJECTIONS:
+            return 0
+        return 1
     if not report.get("readiness") or overall == OverallState.BLOCKED.value:
         return 1
     if overall in {OverallState.STALE.value, OverallState.DEGRADED.value}:

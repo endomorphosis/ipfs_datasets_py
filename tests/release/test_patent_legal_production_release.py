@@ -1,6 +1,6 @@
-"""Release tests for patent legal production completion gate (PATLAW-164).
+"""Release tests for patent legal production completion gate (PATLAW-164/165).
 
-Acceptance:
+Acceptance (PATLAW-164):
 
 * One content-free immutable receipt proves every mandatory gate on the
   current tree
@@ -12,16 +12,26 @@ Acceptance:
 * Task / goal / drained-board status alone cannot satisfy acceptance
 * Child receipts for PATLAW-143, 151, 155, 160, 163 are bound
 
+Acceptance (PATLAW-165):
+
+* Offline completion-gate and production-status both report a coherent
+  drained-or-completed projection
+* Required evidence paths are present or explicitly gap-listed
+* No contentful private data is printed
+
 Validation::
 
     python -m pytest tests/release/test_patent_legal_production_release.py -q
     python scripts/ops/uspto/validate_production_release.py --offline
+    python scripts/ops/patent_legal_intelligence/production_status.py --json \\
+        >/tmp/patlaw-production-status.json
 """
 
 from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -35,6 +45,13 @@ import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _GATE_PATH = _REPO_ROOT / "scripts" / "ops" / "uspto" / "validate_production_release.py"
+_STATUS_PATH = (
+    _REPO_ROOT
+    / "scripts"
+    / "ops"
+    / "patent_legal_intelligence"
+    / "production_status.py"
+)
 _SCHEMA_PATH = (
     _REPO_ROOT
     / "data"
@@ -44,6 +61,9 @@ _SCHEMA_PATH = (
 )
 _RUNBOOK_PATH = (
     _REPO_ROOT / "docs" / "operations" / "PATENT_LEGAL_PRODUCTION_RELEASE.md"
+)
+_POST_COMPLETION_OPS_PATH = (
+    _REPO_ROOT / "docs" / "operations" / "PATENT_LEGAL_POST_COMPLETION_OPS.md"
 )
 
 
@@ -71,11 +91,15 @@ def test_declared_outputs_exist() -> None:
     assert _SCHEMA_PATH.is_file()
     assert Path(__file__).is_file()
     assert _RUNBOOK_PATH.is_file()
+    assert _STATUS_PATH.is_file()
+    assert _POST_COMPLETION_OPS_PATH.is_file()
 
 
 def test_module_identity_and_policy() -> None:
     assert gate.TASK_ID == "PATLAW-164"
     assert gate.GOAL_ID == "PATLAW-G192"
+    assert gate.POST_COMPLETION_TASK_ID == "PATLAW-165"
+    assert gate.POST_COMPLETION_GOAL_ID == "PATLAW-G201"
     assert gate.SCHEMA_VERSION == "patent-legal.production-release.v1"
     assert gate.INTERFACE == "PatentLegalProductionRelease@1"
     assert gate.POLICY_ID == "patent-legal-production-release/v1"
@@ -609,6 +633,137 @@ def test_cli_validate_accepted_receipt(tmp_path: Path) -> None:
     payload = json.loads(result.stdout)
     assert payload["ok"] is True
     assert payload["status"] == "accepted"
+
+
+def test_offline_projection_completed_with_gaps_listed() -> None:
+    """PATLAW-165: offline gate reports coherent completed + explicit gaps."""
+    prior = gate.inventory_prior_tasks(_REPO_ROOT, include_supporting=True)
+    inv = gate.inventory_required_evidence_paths(_REPO_ROOT, evidence_root=None)
+    assert inv["required_paths_present_or_gap_listed"] is True
+    assert inv["gap_count"] >= 1  # live evidence not provided
+    assert inv["live_evidence"]["gaps"]
+    for gap in inv["gaps"]:
+        assert gap.get("path")
+        assert gap.get("gap")
+        assert gap.get("present") is False
+
+    receipt = gate.collect_tree_evidence(_REPO_ROOT, mode="offline")
+    projection = gate.build_drained_or_completed_projection(
+        receipt=receipt, evidence_inventory=inv, prior=prior
+    )
+    assert projection["coherent"] is True
+    assert projection["projection"] in gate.COHERENT_PROJECTIONS
+    assert projection["projection"] == "completed"
+    assert projection["required_paths_present_or_gap_listed"] is True
+    assert projection["evidence_gap_count"] >= 1
+    assert projection["content_free"] is True
+    gate.assert_content_free(projection)
+    gate.assert_content_free(inv)
+
+
+def test_offline_projection_blocked_when_prior_missing(tmp_path: Path) -> None:
+    inv = gate.inventory_required_evidence_paths(tmp_path, evidence_root=None)
+    prior = gate.inventory_prior_tasks(tmp_path, include_supporting=False)
+    projection = gate.build_drained_or_completed_projection(
+        receipt=None, evidence_inventory=inv, prior=prior
+    )
+    assert projection["projection"] == "blocked"
+    assert projection["coherent"] is False
+    assert projection["required_paths_present_or_gap_listed"] is True
+
+
+def test_post_completion_ops_runbook_documents_offline_validation() -> None:
+    text = _POST_COMPLETION_OPS_PATH.read_text(encoding="utf-8")
+    assert "PATLAW-165" in text
+    assert "PATLAW-G201" in text
+    assert "drained" in text.lower()
+    assert "completed" in text.lower()
+    assert "gap" in text.lower()
+    assert "content-free" in text.lower() or "content free" in text.lower()
+    assert "validate_production_release.py" in text
+    assert "production_status.py" in text
+
+
+def test_cli_offline_includes_projection_and_inventory() -> None:
+    result = subprocess.run(
+        [sys.executable, str(_GATE_PATH), "--offline", "--no-write"],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(_REPO_ROOT),
+    )
+    assert result.returncode == 0, result.stderr + result.stdout
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    assert payload["post_completion_task_id"] == "PATLAW-165"
+    proj = payload["projection"]
+    assert proj["coherent"] is True
+    assert proj["projection"] in {"drained", "completed"}
+    assert proj["required_paths_present_or_gap_listed"] is True
+    assert proj["content_free"] is True
+    inv = payload["evidence_inventory"]
+    assert inv["required_paths_present_or_gap_listed"] is True
+    # Live evidence is gap-listed when no evidence root is provided.
+    assert inv["live_evidence"]["gap_count"] >= 1
+    gate.assert_content_free(payload)
+    blob = json.dumps(payload).lower()
+    for marker in (
+        "authorization: bearer",
+        "api_key=",
+        "secret_document_body",
+        "private extracted_text",
+    ):
+        assert marker not in blob
+
+
+def test_production_status_offline_tree_projection_coherent() -> None:
+    """PATLAW-165: production_status reports drained/completed with gaps."""
+    spec = importlib.util.spec_from_file_location(
+        "patlaw_production_status_rel", _STATUS_PATH
+    )
+    assert spec is not None and spec.loader is not None
+    status = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = status
+    spec.loader.exec_module(status)
+
+    report = status.build_offline_tree_projection(repo_root=_REPO_ROOT)
+    assert report["projection_mode"] == "offline_tree"
+    assert report["overall_state"] in {"drained", "completed"}
+    assert report["projection_coherent"] is True
+    assert report["required_paths_present_or_gap_listed"] is True
+    assert report["evidence_gap_count"] >= 1
+    assert report["content_free"] is True
+    assert report["post_completion_task_id"] == "PATLAW-165"
+    status.assert_content_free(report)
+
+    # Default CLI with empty live evidence should exit 0 (coherent offline).
+    result = subprocess.run(
+        [sys.executable, str(_STATUS_PATH), "--json", "--repo-root", str(_REPO_ROOT)],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(_REPO_ROOT),
+        env={
+            **os.environ,
+            "PATLAW_PRODUCTION_EVIDENCE_ROOT": str(
+                _REPO_ROOT / ".no-such-production-evidence"
+            ),
+        },
+    )
+    assert result.returncode == 0, result.stderr + result.stdout
+    cli = json.loads(result.stdout)
+    assert cli["overall_state"] in {"drained", "completed"}
+    assert cli.get("projection_coherent") is True
+    assert cli.get("required_paths_present_or_gap_listed") is True
+    status.assert_content_free(cli)
+    blob = result.stdout.lower()
+    for marker in (
+        "authorization: bearer",
+        "api_key=",
+        "secret_document_body",
+        "private extracted_text",
+    ):
+        assert marker not in blob
 
 
 def test_cli_validate_task_status_only_fails(tmp_path: Path) -> None:

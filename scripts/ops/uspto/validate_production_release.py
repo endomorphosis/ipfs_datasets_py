@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact-tree patent legal production completion gate (PATLAW-164).
+"""Exact-tree patent legal production completion gate (PATLAW-164 / PATLAW-165).
 
 Answers a single fail-closed question: *"does one content-free immutable
 receipt prove every mandatory production gate on the current tree, with
@@ -7,6 +7,10 @@ mismatched/stale/missing/unknown evidence blocking, no legal opinion /
 patentability guarantee / filing claim / publication claim without reviewed
 evidence, and the root goal remaining active until this receipt and every
 child receipt validate?"*
+
+PATLAW-165 extends offline mode with a coherent drained-or-completed
+projection and an explicit inventory of required evidence / artifact paths
+(present or gap-listed). Output remains content-free.
 
 Policy (never weakened):
 
@@ -22,6 +26,8 @@ Policy (never weakened):
   and the task-status rejection rule without requiring a full pytest suite run.
 * Root goal ``PATLAW-G192`` remains active until this receipt and every child
   receipt validate.
+* Offline CLI also reports a drained/completed projection with required
+  evidence paths present or explicitly gap-listed (PATLAW-165).
 
 Usage
 -----
@@ -52,12 +58,47 @@ from typing import Any, Final
 SCHEMA_VERSION: Final = "patent-legal.production-release.v1"
 INTERFACE: Final = "PatentLegalProductionRelease@1"
 TASK_ID: Final = "PATLAW-164"
+POST_COMPLETION_TASK_ID: Final = "PATLAW-165"
 GOAL_ID: Final = "PATLAW-G192"
+POST_COMPLETION_GOAL_ID: Final = "PATLAW-G201"
 POLICY_ID: Final = "patent-legal-production-release/v1"
 CHILD_RECEIPT_SCHEMA: Final = "patent-legal.child-production-receipt.v1"
 SUPERVISOR_MERGE_SCHEMA: Final = "patent-legal.supervisor-merge-receipt.v1"
 RECEIPT_SCHEMA_REL: Final = (
     "data/release/patent_legal_intelligence/production_receipt.schema.json"
+)
+POST_COMPLETION_OPS_DOC: Final = (
+    "docs/operations/PATENT_LEGAL_POST_COMPLETION_OPS.md"
+)
+
+# Offline drained/completed projection labels (PATLAW-165).
+PROJECTION_COMPLETED: Final = "completed"
+PROJECTION_DRAINED: Final = "drained"
+PROJECTION_BLOCKED: Final = "blocked"
+COHERENT_PROJECTIONS: Final[frozenset[str]] = frozenset(
+    {PROJECTION_COMPLETED, PROJECTION_DRAINED}
+)
+
+# Live production evidence receipt paths under an evidence root (relative).
+# Offline inventory gap-lists these when a live evidence root is absent.
+LIVE_EVIDENCE_RECEIPT_RELS: Final[tuple[str, ...]] = (
+    "authority/freshness.json",
+    "indexes/evaluation_receipt.json",
+    "isolation/status.json",
+    "filing/handoff_status.json",
+    "hub/verification_receipt.json",
+    "sync/paired_revision_receipt.json",
+    "completion/receipt.json",
+)
+
+# Tree-bound artifacts required for offline completion-gate validation.
+OFFLINE_REQUIRED_ARTIFACT_PATHS: Final[tuple[str, ...]] = (
+    "scripts/ops/uspto/validate_production_release.py",
+    "scripts/ops/patent_legal_intelligence/production_status.py",
+    "tests/release/test_patent_legal_production_release.py",
+    "data/release/patent_legal_intelligence/production_receipt.schema.json",
+    "docs/operations/PATENT_LEGAL_PRODUCTION_RELEASE.md",
+    POST_COMPLETION_OPS_DOC,
 )
 
 GIT_SHA_RE: Final = re.compile(r"^[0-9a-f]{40}$")
@@ -619,6 +660,183 @@ def inventory_prior_tasks(
             if t["task_id"] in required_ids
         ),
         "all_present": not missing_tasks,
+    }
+
+
+def inventory_required_evidence_paths(
+    repo_root: Path,
+    *,
+    evidence_root: Path | None = None,
+) -> dict[str, Any]:
+    """Inventory offline gate artifacts and optional live evidence paths.
+
+    Every required path is either marked present or explicitly gap-listed.
+    Content-free: paths and digests only (no file bodies).
+    """
+    root = Path(repo_root)
+    present_artifacts: list[dict[str, Any]] = []
+    gap_artifacts: list[dict[str, Any]] = []
+    for rel in OFFLINE_REQUIRED_ARTIFACT_PATHS:
+        path = root / rel
+        entry = {
+            "path": rel,
+            "kind": "gate_artifact",
+            "present": path.is_file(),
+        }
+        if path.is_file():
+            try:
+                entry["digest_sha256"] = file_sha256(path)
+            except OSError:
+                entry["digest_sha256"] = None
+            present_artifacts.append(entry)
+        else:
+            entry["gap"] = "missing_on_tree"
+            gap_artifacts.append(entry)
+
+    live_present: list[dict[str, Any]] = []
+    live_gaps: list[dict[str, Any]] = []
+    evidence_path: str | None = None
+    if evidence_root is not None:
+        evi = Path(evidence_root)
+        evidence_path = str(evi)
+        for rel in LIVE_EVIDENCE_RECEIPT_RELS:
+            path = evi / rel
+            entry = {
+                "path": rel,
+                "kind": "live_evidence_receipt",
+                "present": path.is_file(),
+            }
+            if path.is_file():
+                try:
+                    entry["digest_sha256"] = file_sha256(path)
+                except OSError:
+                    entry["digest_sha256"] = None
+                live_present.append(entry)
+            else:
+                entry["gap"] = "missing_under_evidence_root"
+                live_gaps.append(entry)
+    else:
+        for rel in LIVE_EVIDENCE_RECEIPT_RELS:
+            live_gaps.append(
+                {
+                    "path": rel,
+                    "kind": "live_evidence_receipt",
+                    "present": False,
+                    "gap": "evidence_root_not_provided",
+                }
+            )
+
+    all_gaps = gap_artifacts + live_gaps
+    return {
+        "content_free": True,
+        "repo_root_bound": True,
+        "evidence_root": evidence_path,
+        "gate_artifacts": {
+            "required": list(OFFLINE_REQUIRED_ARTIFACT_PATHS),
+            "present": present_artifacts,
+            "gaps": gap_artifacts,
+            "all_present": not gap_artifacts,
+        },
+        "live_evidence": {
+            "required": list(LIVE_EVIDENCE_RECEIPT_RELS),
+            "present": live_present,
+            "gaps": live_gaps,
+            "all_present": not live_gaps and evidence_root is not None,
+        },
+        "gaps": all_gaps,
+        "gap_count": len(all_gaps),
+        "required_paths_present_or_gap_listed": True,
+    }
+
+
+def build_drained_or_completed_projection(
+    *,
+    receipt: Mapping[str, Any] | None,
+    evidence_inventory: Mapping[str, Any],
+    prior: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Project offline drained | completed | blocked from gate + inventory.
+
+    Coherent projections (PATLAW-165 acceptance):
+
+    * ``completed`` — offline receipt accepted with children validated;
+      live evidence and optional ops docs may still be gap-listed.
+    * ``drained`` — prior-task outputs present on the tree and no active
+      blocking receipt failure; remaining evidence is gap-listed.
+    * ``blocked`` — prior tasks missing or offline receipt rejected/blocked.
+
+    Required paths are always either present or explicitly gap-listed.
+    Live evidence gaps alone never force blocked for offline projection.
+    """
+    gate_block = evidence_inventory.get("gate_artifacts") or {}
+    gate_ok = bool(gate_block.get("all_present"))
+    prior_ok = True if prior is None else bool(prior.get("all_required_present"))
+    live_gaps = list((evidence_inventory.get("live_evidence") or {}).get("gaps") or [])
+    gate_gaps = list(gate_block.get("gaps") or [])
+
+    receipt_status: str | None = None
+    children_ok = False
+    completion_eligible = False
+    if isinstance(receipt, Mapping):
+        receipt_status = str(receipt.get("status") or "") or None
+        children = receipt.get("child_receipts") if "child_receipts" in receipt else None
+        if isinstance(children, Mapping):
+            children_ok = bool(children.get("all_validated"))
+        else:
+            children_ok = bool(receipt.get("children_validated"))
+        root_goal = receipt.get("root_goal") if "root_goal" in receipt else None
+        if isinstance(root_goal, Mapping):
+            completion_eligible = bool(root_goal.get("completion_eligible"))
+        else:
+            completion_eligible = bool(receipt.get("completion_eligible"))
+
+    if receipt_status in {"rejected", "blocked", "failed"}:
+        projection = PROJECTION_BLOCKED
+        coherent = False
+        reason = f"offline_receipt_{receipt_status}"
+    elif not prior_ok:
+        projection = PROJECTION_BLOCKED
+        coherent = False
+        reason = "required_prior_tasks_missing"
+    elif receipt_status == "accepted" and children_ok:
+        projection = PROJECTION_COMPLETED
+        coherent = True
+        reason = "offline_receipt_accepted_children_validated"
+    elif prior_ok:
+        projection = PROJECTION_DRAINED
+        coherent = True
+        reason = "prior_tasks_present_board_drained_projection"
+    else:
+        projection = PROJECTION_BLOCKED
+        coherent = False
+        reason = "incoherent_projection_inputs"
+
+    return {
+        "content_free": True,
+        "projection": projection,
+        "coherent": coherent and projection in COHERENT_PROJECTIONS,
+        "reason": reason,
+        "receipt_status": receipt_status,
+        "children_validated": children_ok,
+        "completion_eligible": completion_eligible,
+        "gate_artifacts_present": gate_ok,
+        "prior_tasks_present": prior_ok,
+        "evidence_gaps": [
+            {"path": g.get("path"), "kind": g.get("kind"), "gap": g.get("gap")}
+            for g in (gate_gaps + live_gaps)
+        ],
+        "evidence_gap_count": len(gate_gaps) + len(live_gaps),
+        "required_paths_present_or_gap_listed": bool(
+            evidence_inventory.get("required_paths_present_or_gap_listed")
+        ),
+        "post_completion_task_id": POST_COMPLETION_TASK_ID,
+        "post_completion_goal_id": POST_COMPLETION_GOAL_ID,
+        "policy": {
+            "task_status_alone_insufficient": True,
+            "drained_board_not_evidence": True,
+            "content_free": True,
+            "live_evidence_gaps_non_blocking_for_offline_projection": True,
+        },
     }
 
 
@@ -2410,6 +2628,7 @@ def run_release_gate(
     mode: str = "live",
     output_path: Path | None = None,
     write_receipt: bool = True,
+    evidence_root: Path | None = None,
 ) -> dict[str, Any]:
     """Run the production release gate and optionally persist a digested receipt."""
     root = Path(repo_root) if repo_root is not None else _REPO_ROOT
@@ -2446,6 +2665,24 @@ def run_release_gate(
             "report": None,
             "receipt": receipt,
         }
+
+    # PATLAW-165: always attach drained/completed projection + evidence inventory.
+    prior = inventory_prior_tasks(root, include_supporting=True)
+    evidence_inventory = inventory_required_evidence_paths(
+        root, evidence_root=evidence_root
+    )
+    projection = build_drained_or_completed_projection(
+        receipt=result.get("receipt"),
+        evidence_inventory=evidence_inventory,
+        prior=prior,
+    )
+    result["evidence_inventory"] = evidence_inventory
+    result["projection"] = projection
+    if result.get("ok") and mode == "offline":
+        # Offline acceptance requires a coherent drained/completed projection.
+        result["ok"] = bool(projection.get("coherent")) and projection.get(
+            "projection"
+        ) in COHERENT_PROJECTIONS
 
     if write_receipt and result.get("receipt") is not None:
         out = output_path
@@ -2558,6 +2795,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "goal_id": GOAL_ID,
             "schema_version": SCHEMA_VERSION,
             "interface": INTERFACE,
+            "post_completion_task_id": POST_COMPLETION_TASK_ID,
+            "post_completion_goal_id": POST_COMPLETION_GOAL_ID,
         }
         if result.get("report") is not None:
             out["report"] = {
@@ -2599,9 +2838,58 @@ def main(argv: Sequence[str] | None = None) -> int:
                 .get("no_disclosure"),
             }
             assert_content_free(out["receipt"])
+        if result.get("projection") is not None:
+            proj = result["projection"]
+            out["projection"] = {
+                "projection": proj.get("projection"),
+                "coherent": proj.get("coherent"),
+                "reason": proj.get("reason"),
+                "completion_eligible": proj.get("completion_eligible"),
+                "children_validated": proj.get("children_validated"),
+                "prior_tasks_present": proj.get("prior_tasks_present"),
+                "gate_artifacts_present": proj.get("gate_artifacts_present"),
+                "evidence_gap_count": proj.get("evidence_gap_count"),
+                "evidence_gaps": proj.get("evidence_gaps") or [],
+                "required_paths_present_or_gap_listed": proj.get(
+                    "required_paths_present_or_gap_listed"
+                ),
+                "content_free": True,
+            }
+            assert_content_free(out["projection"])
+        if result.get("evidence_inventory") is not None:
+            inv = result["evidence_inventory"]
+            out["evidence_inventory"] = {
+                "content_free": True,
+                "gap_count": inv.get("gap_count"),
+                "required_paths_present_or_gap_listed": inv.get(
+                    "required_paths_present_or_gap_listed"
+                ),
+                "gate_artifacts": {
+                    "all_present": (inv.get("gate_artifacts") or {}).get("all_present"),
+                    "gap_count": len((inv.get("gate_artifacts") or {}).get("gaps") or []),
+                    "gaps": [
+                        {"path": g.get("path"), "gap": g.get("gap")}
+                        for g in ((inv.get("gate_artifacts") or {}).get("gaps") or [])
+                    ],
+                    "present_paths": [
+                        e.get("path")
+                        for e in ((inv.get("gate_artifacts") or {}).get("present") or [])
+                    ],
+                },
+                "live_evidence": {
+                    "all_present": (inv.get("live_evidence") or {}).get("all_present"),
+                    "gap_count": len((inv.get("live_evidence") or {}).get("gaps") or []),
+                    "gaps": [
+                        {"path": g.get("path"), "gap": g.get("gap")}
+                        for g in ((inv.get("live_evidence") or {}).get("gaps") or [])
+                    ],
+                },
+            }
+            assert_content_free(out["evidence_inventory"])
         if result.get("receipt_path"):
             out["receipt_path"] = result["receipt_path"]
 
+        assert_content_free(out)
         print(json.dumps(out, indent=2, sort_keys=True))
         return 0 if result["ok"] else 1
     except ProductionReleaseGateError as exc:
