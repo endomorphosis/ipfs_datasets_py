@@ -2,4 +2,4 @@
 
 from __future__ import annotations
 
-__all__ = ["conventional"]
+__all__ = ["conventional", "embodied", "speech"]
