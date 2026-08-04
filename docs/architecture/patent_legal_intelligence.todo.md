@@ -2334,7 +2334,7 @@ Program invariants:
 
 ## PATLAW-155 Reconcile official filing receipts and converted artifacts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
