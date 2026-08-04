@@ -424,6 +424,7 @@ class RevisionCase:
     attachments: list[RevisionAttachment] = field(default_factory=list)
     package_digest: str = ""
     notes: list[str] = field(default_factory=list)
+    letter_analysis: dict[str, Any] = field(default_factory=dict)
     created_at_utc: str = ""
     updated_at_utc: str = ""
     submitted_at_utc: str = ""
@@ -444,6 +445,7 @@ class RevisionCase:
             "attachments": [a.to_dict() for a in self.attachments],
             "package_digest": self.package_digest,
             "notes": list(self.notes),
+            "letter_analysis": dict(self.letter_analysis),
             "created_at_utc": self.created_at_utc,
             "updated_at_utc": self.updated_at_utc,
             "submitted_at_utc": self.submitted_at_utc,
@@ -478,6 +480,7 @@ class RevisionCase:
             attachments=atts,
             package_digest=str(value.get("package_digest") or ""),
             notes=list(value.get("notes") or []),
+            letter_analysis=dict(value.get("letter_analysis") or {}),
             created_at_utc=str(value.get("created_at_utc") or ""),
             updated_at_utc=str(value.get("updated_at_utc") or ""),
             submitted_at_utc=str(value.get("submitted_at_utc") or ""),
@@ -774,6 +777,106 @@ def scan_response_triggers(
     }
 
 
+def analyze_revision_letter(
+    revision_id: str,
+    *,
+    state_root: Path | None = None,
+    letter_path: str = "",
+    force_ocr: bool = False,
+    save_text: bool = False,
+    max_pages: int = 40,
+) -> dict[str, Any]:
+    """OCR/extract + analyze the triggering letter for a revision case."""
+    from ipfs_datasets_py.processors.domains.uspto.letter_analysis import (
+        analyze_letter_file,
+        write_letter_analysis,
+    )
+
+    root = Path(state_root) if state_root else default_state_root()
+    case = load_revision_case(revision_id, state_root=root)
+    path = Path(letter_path) if letter_path else Path(case.trigger.local_path or "")
+    if not path.is_file():
+        # Try resolve from document id
+        found = resolve_local_document_path(
+            case.application_number,
+            case.trigger.document_identifier,
+            state_root=root,
+        )
+        if found:
+            path = found
+    if not path.is_file():
+        raise RevisionError(
+            "no letter PDF/text found; pass --local-path or download via export-ui",
+            code="missing_letter_file",
+        )
+
+    save_text_path = None
+    if save_text and case.case_dir:
+        save_text_path = Path(case.case_dir) / "triggering" / "letter_text.txt"
+
+    analysis = analyze_letter_file(
+        path,
+        mailing_date=case.trigger.official_date or None,
+        document_kind=case.trigger.document_code or case.trigger.kind,
+        application_number=case.application_number,
+        force_ocr=force_ocr,
+        max_pages=max_pages,
+        save_text_path=save_text_path,
+    )
+
+    # Prefer period months extracted from letter face when present.
+    analysis_body = analysis.get("analysis") or {}
+    period = analysis_body.get("period_months_from_text")
+    if period is not None:
+        case.candidate_reply = candidate_reply_window(
+            official_date=case.trigger.official_date or None,
+            period_months=int(period),
+        )
+        case.candidate_reply["period_source"] = "letter_text"
+        case.trigger.period_months = int(period)
+
+    # Store compact analysis on the case (no full body).
+    case.letter_analysis = {
+        "source_path": analysis.get("source_path"),
+        "content_sha256": analysis.get("content_sha256"),
+        "extraction": analysis.get("extraction"),
+        "analysis": analysis_body,
+        "suggested_response_roles": analysis.get("suggested_response_roles"),
+        "analyzed_at_utc": utc_now_iso(),
+    }
+    if case.case_dir:
+        write_letter_analysis(
+            analysis, Path(case.case_dir) / "letter_analysis.json"
+        )
+        # Copy letter into triggering/ if not already there
+        tdir = Path(case.case_dir) / "triggering"
+        tdir.mkdir(parents=True, exist_ok=True)
+        dest = tdir / path.name
+        if not dest.exists():
+            try:
+                shutil.copy2(path, dest)
+                case.trigger.local_path = str(dest)
+            except OSError:
+                pass
+
+    # Notes for operator checklist
+    rejections = analysis_body.get("rejections") or []
+    claims = analysis_body.get("claim_ranges") or []
+    if rejections:
+        case.notes = list(case.notes) + [
+            f"letter_analysis: {len(rejections)} rejection surface(s); "
+            f"claims={claims[:5]!r}"
+        ]
+    save_revision_case(case, state_root=root)
+    return {
+        "ok": bool(analysis_body.get("ok")),
+        "revision_id": case.revision_id,
+        "case": case.to_dict(),
+        "letter_analysis": analysis,
+        "generated_at_utc": utc_now_iso(),
+    }
+
+
 def open_revision_case(
     application_number: str,
     *,
@@ -787,6 +890,9 @@ def open_revision_case(
     kind: str = "",
     period_months: int | None = None,
     notes: Sequence[str] = (),
+    analyze: bool = True,
+    force_ocr: bool = False,
+    save_text: bool = False,
 ) -> RevisionCase:
     """Create a revision case directory + record for a deficiency/OA letter."""
     app = _normalize_app(application_number)
@@ -876,6 +982,23 @@ def open_revision_case(
         updated_at_utc=now,
     )
     save_revision_case(case, state_root=root)
+
+    # Optional: OCR + office-action analysis when a letter file is available.
+    if analyze and case.trigger.local_path and Path(case.trigger.local_path).is_file():
+        try:
+            analyze_revision_letter(
+                case.revision_id,
+                state_root=root,
+                force_ocr=force_ocr,
+                save_text=save_text,
+            )
+            case = load_revision_case(case.revision_id, state_root=root)
+        except Exception as exc:  # noqa: BLE001
+            case.notes = list(case.notes) + [
+                f"letter_analysis_deferred:{type(exc).__name__}:{exc}"
+            ]
+            save_revision_case(case, state_root=root)
+
     return case
 
 
@@ -996,11 +1119,15 @@ def prepare_revision_package(
     case_receipts.mkdir(parents=True, exist_ok=True)
     checklist.post_submit_receipt_dir = str(case_receipts)
     # Augment checklist with revision-specific preamble note via warnings
+    la = (case.letter_analysis or {}).get("analysis") or {}
     checklist.warnings = list(checklist.warnings) + [
         f"revision_id={case.revision_id}",
         f"trigger_kind={case.trigger.kind}",
         f"trigger_code={case.trigger.document_code}",
         f"candidate_reply={case.candidate_reply.get('candidate_date_adjusted') or case.candidate_reply.get('candidate_date') or 'unknown'}",
+        f"letter_action_kind={la.get('action_kind') or 'unanalyzed'}",
+        f"rejection_count={len(la.get('rejections') or [])}",
+        f"claim_ranges={la.get('claim_ranges') or []}",
         REVIEW_ONLY_DEADLINE_DISCLAIMER,
     ]
     checklist_path = write_filing_checklist(
@@ -1024,6 +1151,18 @@ def prepare_revision_package(
             )
         ),
         "attached": [a.to_dict() for a in case.attachments],
+        "letter_analysis_summary": {
+            "action_kind": la.get("action_kind"),
+            "rejections": la.get("rejections") or [],
+            "objections": la.get("objections") or [],
+            "claim_ranges": la.get("claim_ranges") or [],
+            "response_instructions": la.get("response_instructions") or [],
+            "period_months_from_text": la.get("period_months_from_text"),
+            "suggested_response_roles": (case.letter_analysis or {}).get(
+                "suggested_response_roles"
+            )
+            or [],
+        },
         "package_dir": case.package_dir,
         "package_digest": case.package_digest,
         "package_file_count": len(files),
@@ -1112,6 +1251,7 @@ __all__ = [
     "RevisionError",
     "TriggerDocument",
     "TriggerKind",
+    "analyze_revision_letter",
     "attach_to_revision",
     "candidate_reply_window",
     "classify_trigger",
