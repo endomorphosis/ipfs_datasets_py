@@ -3115,7 +3115,7 @@ Program invariants:
 
 ## PATLAW-186 Integrate full CFR MPEP and guidance PDFs into production public-legal recipe
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
