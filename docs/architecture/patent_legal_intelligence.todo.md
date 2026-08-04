@@ -3165,7 +3165,7 @@ Program invariants:
 
 ## PATLAW-188 Rebuild BM25 index from full-authority public legal corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
