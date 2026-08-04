@@ -13,6 +13,13 @@ the network; live mutation requires ``allow_install=True`` and returns bounded
 platform/dependency/license/checksum/artifact/executable/rollback/semantic
 evidence without promoting capability or semantic authority.
 
+``LogicVerificationProviderRoleClosure@1`` (FVT-G227 / FVT-095) classifies every
+installer-backed provider for public dispatch: runnable provers/advisors expose
+typed inventory, probe, install, and verification/advisor surfaces; support
+companions (Stack, Temurin JDK, Maude, OPAM) keep semantic/authority/public-
+verification axes not applicable; legacy Microsoft SecPAL is archival artifact
+intake and compatibility lookup only.
+
 Design invariants
 -----------------
 * Importing this module never probes the environment, installs packages,
@@ -44,6 +51,11 @@ LOGIC_VERIFICATION_FEATURE_SCHEMA: Final = "logic-verification-feature/v1"
 LOGIC_VERIFICATION_PROVIDER_SCHEMA: Final = "logic-verification-provider/v1"
 LOGIC_VERIFICATION_CACHE_SCHEMA: Final = "logic-verification-cache-provenance/v1"
 LOGIC_VERIFICATION_REQUEST_SCHEMA: Final = "logic-verification-request/v1"
+# FVT-G227 / public provider + installer role closure surface.
+LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE: Final = (
+    "LogicVerificationProviderRoleClosure@1"
+)
+LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA: Final = "logic-verification-provider-role/v1"
 # FVT-G012 / ExecutableProviderMatrix@1 surface identity (lazy full matrix).
 EXECUTABLE_PROVIDER_MATRIX_INTERFACE: Final = "ExecutableProviderMatrix@1"
 FORMAL_VERIFICATION_MCP_PARITY_INTERFACE: Final = "FormalVerificationMCPParity@1"
@@ -99,6 +111,35 @@ GOAL_TACTICIAN_OPERATIONS: Final[tuple[str, ...]] = (
     "explain_counterexample_causal",
     "replay_counterexample",
     "list_goal_tactician_operations",
+)
+
+# Additive LogicVerificationProviderRoleClosure@1 operations (FVT-G227).
+PROVIDER_ROLE_CLOSURE_OPERATIONS: Final[tuple[str, ...]] = (
+    "list_provider_roles",
+    "provider_role",
+    "secpal_artifact_intake",
+    "secpal_compatibility_lookup",
+)
+
+# Installer / public-surface aliases normalized by the role-closure catalog.
+_PROVIDER_ROLE_ALIASES: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "symai": "symbolicai",
+        "sym_ai": "symbolicai",
+        "symbolic_ai": "symbolicai",
+        "formalization:symai-proposal-advisor": "symbolicai",
+        "ergo": "ergoai",
+        "ergo_ai": "ergoai",
+        "ergoengine": "ergoai",
+        "runtime_mtl_external": "runtime-mtl-external",
+        "runtime_mtl": "runtime-mtl-external",
+        "mtl_monitor": "runtime-mtl-external",
+        "temurin": "temurin-jdk",
+        "temurin_jdk": "temurin-jdk",
+        "jdk": "temurin-jdk",
+        "openjdk": "temurin-jdk",
+        "eclipse_temurin": "temurin-jdk",
+    }
 )
 
 # Supervisor-only controls that datasets public surfaces must never expose.
@@ -512,7 +553,103 @@ def list_stable_features() -> tuple[FeatureDescriptor, ...]:
                 notes=GOAL_TACTICIAN_API_INTERFACE,
             )
         )
+    # Additive LogicVerificationProviderRoleClosure@1 discovery.
+    for feature_id in PROVIDER_ROLE_CLOSURE_OPERATIONS:
+        opt_in = feature_id in {
+            "secpal_artifact_intake",
+            "secpal_compatibility_lookup",
+        }
+        features.append(
+            FeatureDescriptor(
+                feature_id=feature_id,
+                availability=(
+                    FeatureAvailability.OPT_IN
+                    if opt_in
+                    else FeatureAvailability.DECLARED
+                ),
+                description=f"Provider role-closure operation {feature_id}",
+                authority_ceiling=VerificationAuthority.DECLARATIVE,
+                requires_opt_in=opt_in,
+                notes=LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE,
+            )
+        )
     return tuple(features)
+
+
+def _normalize_provider_role_id(provider_id: str) -> str:
+    text = _text(provider_id, "provider_id")
+    return _PROVIDER_ROLE_ALIASES.get(text, text)
+
+
+def _lazy_installer_registry():
+    from ipfs_datasets_py.logic.backends.installers.registry import (
+        default_installer_registry,
+    )
+
+    return default_installer_registry()
+
+
+def build_provider_role_descriptor(provider_id: str) -> dict[str, Any] | None:
+    """Return a typed public-role descriptor for one installer-backed provider."""
+
+    from ipfs_datasets_py.logic.backends.installers.registry import (
+        InstallerRegistryError,
+        get_installer_entry,
+    )
+
+    normalized = _normalize_provider_role_id(provider_id)
+    try:
+        entry = get_installer_entry(normalized)
+    except InstallerRegistryError:
+        return None
+    payload = entry.to_dict()
+    return {
+        "schema_version": LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA,
+        "interface": LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE,
+        "provider_id": entry.tool_id,
+        "public_role": payload["public_role"],
+        "support_only": payload["support_only"],
+        "semantic_axis_applicable": payload["semantic_axis_applicable"],
+        "authority_axis_applicable": payload["authority_axis_applicable"],
+        "public_verification_applicable": payload["public_verification_applicable"],
+        "dispatch_surfaces": list(payload["dispatch_surfaces"]),
+        "is_live_verification_provider": payload["is_live_verification_provider"],
+        "installer": {
+            "family": payload["family"],
+            "module_path": payload["module_path"],
+            "ensure_name": payload["ensure_name"],
+            "license": payload["license"],
+            "source": payload["source"],
+            "identity_kind": payload["identity_kind"],
+        },
+        "axes": {
+            "semantic": (
+                "applicable" if payload["semantic_axis_applicable"] else "not_applicable"
+            ),
+            "authority": (
+                "applicable"
+                if payload["authority_axis_applicable"]
+                else "not_applicable"
+            ),
+            "public_verification": (
+                "applicable"
+                if payload["public_verification_applicable"]
+                else "not_applicable"
+            ),
+        },
+    }
+
+
+def list_provider_role_descriptors() -> tuple[dict[str, Any], ...]:
+    """Declarative role inventory for every installer registry entry."""
+
+    registry = _lazy_installer_registry()
+    descriptors: list[dict[str, Any]] = []
+    for tool_id in registry.list_tool_ids():
+        descriptor = build_provider_role_descriptor(tool_id)
+        if descriptor is not None:
+            descriptors.append(descriptor)
+    return tuple(descriptors)
 
 
 def _is_cancelled(cancellation: object | None) -> bool:
@@ -924,6 +1061,60 @@ class LogicVerificationAPI:
             return self._backend_registry
         return _lazy_backend_registry()
 
+    def _refuse_non_verification_dispatch(
+        self,
+        operation: str,
+        provider_id: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse | None:
+        """Fail closed when support/advisor/archival tools are used for check."""
+
+        role = build_provider_role_descriptor(provider_id)
+        if role is None:
+            return None
+        public_role = str(role.get("public_role") or "")
+        if role.get("is_live_verification_provider"):
+            return None
+        reason = {
+            "support": (
+                f"provider {role['provider_id']!r} is support-only; semantic, "
+                "authority, and public-verification axes are not applicable"
+            ),
+            "advisor": (
+                f"provider {role['provider_id']!r} is advisor-only; use advise "
+                "dispatch rather than live verification"
+            ),
+            "archival_intake": (
+                f"provider {role['provider_id']!r} exposes only reviewed "
+                "non-executable artifact intake and compatibility lookup, never "
+                "live verification"
+            ),
+        }.get(
+            public_role,
+            (
+                f"provider {role['provider_id']!r} role {public_role!r} does not "
+                "authorize public verification dispatch"
+            ),
+        )
+        return _response(
+            operation,
+            VerificationStatus.UNSUPPORTED,
+            authority=VerificationAuthority.NONE,
+            result={
+                "provider_id": role["provider_id"],
+                "provider_role": role,
+                "public_verification_applicable": False,
+            },
+            unsupported_features=(
+                f"provider_role:{public_role}",
+                f"public_verification:{role['provider_id']}",
+            ),
+            diagnostics=(reason,),
+            request_id=request_id,
+            provider_id=role["provider_id"],
+        )
+
     # ── Discovery (side-effect free) ──────────────────────────────────────
 
     def list_logic_families(self) -> VerificationResponse:
@@ -1283,7 +1474,36 @@ class LogicVerificationAPI:
         selected = backend_id or backend_request.requested_backend_id
         supporting = registry.supporting(backend_request)
         registered_ids = set(registry)
+        if selected:
+            role_refusal = self._refuse_non_verification_dispatch(
+                "check",
+                selected,
+                request_id=backend_request.request_id,
+            )
+            if role_refusal is not None:
+                return role_refusal
         if selected and selected not in registered_ids:
+            # Installer-backed tools with verification surfaces but no live
+            # backend registration remain explicitly unsupported here.
+            role = build_provider_role_descriptor(selected)
+            if role is not None and role.get("is_live_verification_provider"):
+                return _response(
+                    "check",
+                    VerificationStatus.UNAVAILABLE,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "requested_backend_id": selected,
+                        "supporting": list(supporting),
+                        "provider_role": role,
+                    },
+                    unsupported_features=(f"provider_runtime:{selected}",),
+                    diagnostics=(
+                        f"provider {selected!r} has a verification dispatch surface "
+                        "but no live backend registration in this process",
+                    ),
+                    request_id=backend_request.request_id,
+                    provider_id=_normalize_provider_role_id(selected),
+                )
             return _response(
                 "check",
                 VerificationStatus.UNSUPPORTED,
@@ -2823,14 +3043,48 @@ class LogicVerificationAPI:
                 raise VerificationAPIError("request must be ProposalAdvisorRequest or mapping")
 
             static_model = StaticProposalModel(response='{"candidates":[]}')
+            role = build_provider_role_descriptor(provider)
+            if role is not None and role.get("public_role") != "advisor":
+                return _response(
+                    "advise",
+                    VerificationStatus.UNSUPPORTED,
+                    authority=VerificationAuthority.ADVISORY,
+                    result={"provider": provider, "provider_role": role},
+                    unsupported_features=(
+                        f"provider_role:{role.get('public_role')}",
+                        f"advisor:{provider}",
+                    ),
+                    diagnostics=(
+                        f"provider {role['provider_id']!r} role "
+                        f"{role.get('public_role')!r} is not an advisor "
+                        "dispatch surface",
+                    ),
+                    request_id=request_id,
+                    provider_id=role["provider_id"],
+                )
             if provider in {LEANSTRAL_ADVISOR_ID, "leanstral", "static"}:
                 advisor = LeanstralProposalAdvisor(model=static_model)
                 provider_id = (
                     LEANSTRAL_ADVISOR_ID if provider != "static" else "static"
                 )
-            elif provider in {SYMAI_ADVISOR_ID, "symai", "sym_ai"}:
+            elif provider in {
+                SYMAI_ADVISOR_ID,
+                "symai",
+                "sym_ai",
+                "symbolicai",
+                "symbolic_ai",
+            }:
                 advisor = SymAIProposalAdvisor(model=static_model)
-                provider_id = SYMAI_ADVISOR_ID
+                provider_id = (
+                    "symbolicai"
+                    if provider in {"symbolicai", "symbolic_ai"}
+                    else SYMAI_ADVISOR_ID
+                )
+            elif provider in {"ergoai", "ergo", "ergo_ai", "ergoengine"}:
+                # ErgoAI remains proposal/advisor-only until independent
+                # reconstruction; the static model keeps authority advisory.
+                advisor = SymAIProposalAdvisor(model=static_model)
+                provider_id = "ergoai"
             else:
                 return _response(
                     "advise",
@@ -2885,52 +3139,117 @@ class LogicVerificationAPI:
         *,
         request_id: str = "",
     ) -> VerificationResponse:
-        """Explicit availability probe for one registered backend."""
+        """Explicit availability probe for one registered or role-closed provider."""
 
         provider_id = _text(provider_id, "provider_id")
         request_id = _text(request_id, "request_id", optional=True)
+        role = build_provider_role_descriptor(provider_id)
+        normalized = (
+            str(role["provider_id"]) if role is not None else provider_id
+        )
+        if role is not None:
+            surfaces = set(role.get("dispatch_surfaces") or ())
+            if "probe" not in surfaces:
+                if role.get("public_role") == "archival_intake":
+                    probe_diagnostic = (
+                        f"provider {normalized!r} role "
+                        f"{role.get('public_role')!r} does not expose probe; "
+                        "use artifact intake / compatibility lookup surfaces instead"
+                    )
+                else:
+                    probe_diagnostic = (
+                        f"provider {normalized!r} does not expose a probe surface"
+                    )
+                return _response(
+                    "probe_provider",
+                    VerificationStatus.UNSUPPORTED,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": normalized,
+                        "available": False,
+                        "provider_role": role,
+                        "live_verification_provider": False,
+                    },
+                    unsupported_features=(
+                        f"provider_role:{role.get('public_role')}",
+                        f"probe:{normalized}",
+                    ),
+                    diagnostics=(probe_diagnostic,),
+                    request_id=request_id,
+                    provider_id=normalized,
+                )
         registry = self._registry()
         # ProofBackendRegistry.__contains__ routes through __getitem__ and
         # raises UnknownBackendError; compare against the key view instead.
-        if provider_id not in set(registry):
+        if normalized in set(registry) or provider_id in set(registry):
+            probe_id = normalized if normalized in set(registry) else provider_id
+            try:
+                available = bool(registry.is_available(probe_id))
+            except Exception as error:
+                return _response(
+                    "probe_provider",
+                    VerificationStatus.ERROR,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": probe_id,
+                        "available": False,
+                        "provider_role": role,
+                    },
+                    diagnostics=(f"{type(error).__name__}: {error}",),
+                    request_id=request_id,
+                    provider_id=probe_id,
+                )
             return _response(
                 "probe_provider",
-                VerificationStatus.UNSUPPORTED,
+                VerificationStatus.SUCCEEDED
+                if available
+                else VerificationStatus.UNAVAILABLE,
                 authority=VerificationAuthority.NONE,
-                result={"provider_id": provider_id, "available": False},
-                unsupported_features=(f"provider:{provider_id}",),
-                diagnostics=(f"provider {provider_id!r} is not registered",),
+                result={
+                    "provider_id": probe_id,
+                    "available": available,
+                    "availability": (
+                        FeatureAvailability.AVAILABLE.value
+                        if available
+                        else FeatureAvailability.UNAVAILABLE.value
+                    ),
+                    "provider_role": role,
+                },
                 request_id=request_id,
-                provider_id=provider_id,
+                provider_id=probe_id,
+                cache=_empty_cache(source="probe"),
             )
-        try:
-            available = bool(registry.is_available(provider_id))
-        except Exception as error:
+        if role is not None:
+            # Installer-backed role inventory: probe is declarative and never
+            # imports plugins or opens the network.
             return _response(
                 "probe_provider",
-                VerificationStatus.ERROR,
+                VerificationStatus.DECLARATIVE,
                 authority=VerificationAuthority.NONE,
-                result={"provider_id": provider_id, "available": False},
-                diagnostics=(f"{type(error).__name__}: {error}",),
+                result={
+                    "provider_id": normalized,
+                    "available": None,
+                    "availability": FeatureAvailability.DECLARED.value,
+                    "provider_role": role,
+                    "live_verification_provider": bool(
+                        role.get("is_live_verification_provider")
+                    ),
+                    "probe_kind": "role_inventory",
+                    "mutation_attempted": False,
+                },
                 request_id=request_id,
-                provider_id=provider_id,
+                provider_id=normalized,
+                cache=_empty_cache(source="provider_role_probe"),
             )
         return _response(
             "probe_provider",
-            VerificationStatus.SUCCEEDED if available else VerificationStatus.UNAVAILABLE,
+            VerificationStatus.UNSUPPORTED,
             authority=VerificationAuthority.NONE,
-            result={
-                "provider_id": provider_id,
-                "available": available,
-                "availability": (
-                    FeatureAvailability.AVAILABLE.value
-                    if available
-                    else FeatureAvailability.UNAVAILABLE.value
-                ),
-            },
+            result={"provider_id": provider_id, "available": False},
+            unsupported_features=(f"provider:{provider_id}",),
+            diagnostics=(f"provider {provider_id!r} is not registered",),
             request_id=request_id,
             provider_id=provider_id,
-            cache=_empty_cache(source="probe"),
         )
 
     def install_provider(
@@ -3146,6 +3465,19 @@ class LogicVerificationAPI:
             )
         elif install_status == "failed":
             diagnostics = (str(payload.get("error") or "provider installation failed"),)
+        role = build_provider_role_descriptor(provider_id)
+        if isinstance(payload, dict) and role is not None:
+            # Bounded public role metadata; never upgrades install authority.
+            payload = dict(payload)
+            payload["provider_role"] = role
+            if role.get("support_only"):
+                payload["support_only"] = True
+                payload["semantic_axis_applicable"] = False
+                payload["authority_axis_applicable"] = False
+                payload["public_verification_applicable"] = False
+            if role.get("public_role") == "archival_intake":
+                payload["live_verification_provider"] = False
+                payload["artifact_intake_only"] = True
         return _response(
             "install_provider",
             status,
@@ -3154,9 +3486,293 @@ class LogicVerificationAPI:
             unsupported_features=unsupported,
             diagnostics=diagnostics,
             request_id=request_id,
-            provider_id=provider_id,
+            provider_id=(
+                str(role["provider_id"]) if role is not None else provider_id
+            ),
             cache=_empty_cache(source="reviewed_installer"),
         )
+
+    # ── LogicVerificationProviderRoleClosure@1 (FVT-G227) ─────────────────
+
+    def list_provider_roles(
+        self,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Declarative inventory of public provider roles and dispatch surfaces."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        roles = list(list_provider_role_descriptors())
+        by_role: dict[str, list[str]] = {}
+        for item in roles:
+            by_role.setdefault(str(item["public_role"]), []).append(
+                str(item["provider_id"])
+            )
+        for key in by_role:
+            by_role[key] = sorted(by_role[key])
+        return _response(
+            "list_provider_roles",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "interface": LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE,
+                "schema_version": LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA,
+                "roles": roles,
+                "count": len(roles),
+                "by_role": by_role,
+                "support_only": sorted(
+                    item["provider_id"]
+                    for item in roles
+                    if item.get("support_only")
+                ),
+                "live_verification_providers": sorted(
+                    item["provider_id"]
+                    for item in roles
+                    if item.get("is_live_verification_provider")
+                ),
+                "archival_intake_providers": sorted(
+                    item["provider_id"]
+                    for item in roles
+                    if item.get("public_role") == "archival_intake"
+                ),
+            },
+            request_id=request_id,
+            cache=_empty_cache(source="provider_role_closure"),
+        )
+
+    def provider_role(
+        self,
+        provider_id: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Return the typed public role for one provider id or alias."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        role = build_provider_role_descriptor(provider_id)
+        if role is None:
+            return _response(
+                "provider_role",
+                VerificationStatus.UNSUPPORTED,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={"provider_id": provider_id, "provider_role": None},
+                unsupported_features=(f"provider_role:{provider_id}",),
+                diagnostics=(
+                    f"provider {provider_id!r} has no installer role-closure entry",
+                ),
+                request_id=request_id,
+                provider_id=provider_id,
+            )
+        return _response(
+            "provider_role",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={"provider_id": role["provider_id"], "provider_role": role},
+            request_id=request_id,
+            provider_id=role["provider_id"],
+            cache=_empty_cache(source="provider_role_closure"),
+        )
+
+    def secpal_compatibility_lookup(
+        self,
+        *,
+        request_id: str = "",
+        repo_root: str | None = None,
+        lock_path: str | None = None,
+    ) -> VerificationResponse:
+        """Lookup reviewed SecPAL operator-compatibility / intake readiness.
+
+        Never elevates SecPAL to a live verification provider and never
+        executes restricted package bytes.
+        """
+
+        request_id = _text(request_id, "request_id", optional=True)
+        role = build_provider_role_descriptor("secpal")
+        try:
+            from ipfs_datasets_py.logic.backends.installers.authorization import (
+                secpal_vendor_prerequisite_report,
+            )
+
+            report = secpal_vendor_prerequisite_report(
+                repo_root=repo_root,
+                lock_path=lock_path,
+            )
+        except Exception as error:
+            return _response(
+                "secpal_compatibility_lookup",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                result={
+                    "provider_id": "secpal",
+                    "provider_role": role,
+                    "live_verification_provider": False,
+                },
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id="secpal",
+            )
+        public_report = _redact_public_mapping(report, label="secpal_compatibility")
+        return _response(
+            "secpal_compatibility_lookup",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.NONE,
+            result={
+                "provider_id": "secpal",
+                "provider_role": role,
+                "live_verification_provider": False,
+                "execution_eligible": False,
+                "compatibility": public_report,
+                "operator_compatibility_can_promote": False,
+            },
+            request_id=request_id,
+            provider_id="secpal",
+            cache=_empty_cache(source="secpal_compatibility_lookup"),
+        )
+
+    def secpal_artifact_intake(
+        self,
+        artifact_path: str,
+        *,
+        request_id: str = "",
+        license_accepted: bool = False,
+        allow_intake: bool = False,
+        dry_run: bool = False,
+        force: bool = False,
+        install_root: str | None = None,
+        repo_root: str | None = None,
+        lock_path: str | None = None,
+    ) -> VerificationResponse:
+        """Stage reviewed non-executable SecPAL operator artifact intake only.
+
+        Requires explicit ``allow_intake=True`` and ``license_accepted=True``.
+        Dry-run and denied paths never touch the filesystem.  Never registers
+        a live verification provider.
+        """
+
+        request_id = _text(request_id, "request_id", optional=True)
+        role = build_provider_role_descriptor("secpal")
+        try:
+            for label, value in (
+                ("license_accepted", license_accepted),
+                ("allow_intake", allow_intake),
+                ("dry_run", dry_run),
+                ("force", force),
+            ):
+                if type(value) is not bool:
+                    raise VerificationAPIError(f"{label} must be a boolean")
+            artifact_path = _text(artifact_path, "artifact_path")
+            if dry_run or not allow_intake:
+                return _response(
+                    "secpal_artifact_intake",
+                    VerificationStatus.DECLARATIVE
+                    if dry_run
+                    else VerificationStatus.UNSUPPORTED,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": "secpal",
+                        "provider_role": role,
+                        "status": "planned" if dry_run else "authorization_required",
+                        "live_verification_provider": False,
+                        "execution_eligible": False,
+                        "intake_attempted": False,
+                        "mutation_authorized": False,
+                        "artifact_path": artifact_path,
+                    },
+                    unsupported_features=(
+                        ()
+                        if dry_run
+                        else ("secpal_artifact_intake_without_opt_in",)
+                    ),
+                    diagnostics=(
+                        (
+                            "dry-run SecPAL artifact intake performs no staging "
+                            "and never becomes a live verification provider",
+                        )
+                        if dry_run
+                        else (
+                            "secpal_artifact_intake requires allow_intake=True; "
+                            "legacy Microsoft SecPAL is archival intake only",
+                        )
+                    ),
+                    request_id=request_id,
+                    provider_id="secpal",
+                )
+            if not license_accepted:
+                return _response(
+                    "secpal_artifact_intake",
+                    VerificationStatus.UNSUPPORTED,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": "secpal",
+                        "provider_role": role,
+                        "status": "license_required",
+                        "live_verification_provider": False,
+                        "execution_eligible": False,
+                        "intake_attempted": False,
+                    },
+                    unsupported_features=("secpal_license_acceptance_required",),
+                    diagnostics=(
+                        "SecPAL artifact intake requires explicit EULA acceptance",
+                    ),
+                    request_id=request_id,
+                    provider_id="secpal",
+                )
+            from ipfs_datasets_py.logic.backends.installers.authorization import (
+                stage_secpal_operator_artifact,
+            )
+
+            receipt = stage_secpal_operator_artifact(
+                artifact_path,
+                license_accepted=True,
+                install_root=install_root,
+                repo_root=repo_root,
+                lock_path=lock_path,
+                force=force,
+            )
+            payload = (
+                receipt.to_dict()
+                if hasattr(receipt, "to_dict")
+                else {"receipt": str(receipt)}
+            )
+            public_payload = _redact_public_mapping(
+                payload, label="secpal_artifact_intake"
+            )
+            public_payload["provider_id"] = "secpal"
+            public_payload["provider_role"] = role
+            public_payload["live_verification_provider"] = False
+            public_payload["execution_eligible"] = False
+            public_payload["intake_attempted"] = True
+            public_payload["mutation_authorized"] = True
+            return _response(
+                "secpal_artifact_intake",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result=public_payload,
+                diagnostics=(
+                    "SecPAL operator artifact staged for compatibility evidence only; "
+                    "never a live verification provider",
+                ),
+                request_id=request_id,
+                provider_id="secpal",
+                cache=_empty_cache(source="secpal_artifact_intake"),
+            )
+        except Exception as error:
+            invalid = isinstance(error, (VerificationAPIError, TypeError, ValueError))
+            return _response(
+                "secpal_artifact_intake",
+                VerificationStatus.INVALID if invalid else VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                result={
+                    "provider_id": "secpal",
+                    "provider_role": role,
+                    "live_verification_provider": False,
+                    "execution_eligible": False,
+                    "intake_attempted": False,
+                },
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id="secpal",
+            )
 
     # ── GoalTacticianAPI@1 (FVT-G050) ─────────────────────────────────────
 
@@ -4434,6 +5050,10 @@ class LogicVerificationAPI:
             "operations": list(STABLE_OPERATIONS),
             "goal_tactician_interface": GOAL_TACTICIAN_API_INTERFACE,
             "goal_tactician_operations": list(GOAL_TACTICIAN_OPERATIONS),
+            "provider_role_closure_interface": (
+                LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE
+            ),
+            "provider_role_closure_operations": list(PROVIDER_ROLE_CLOSURE_OPERATIONS),
             "version": self.version,
         }
 
@@ -4515,6 +5135,22 @@ def probe_provider(provider_id: str, **kwargs: Any) -> VerificationResponse:
 
 def install_provider(provider_id: str, **kwargs: Any) -> VerificationResponse:
     return get_verification_api().install_provider(provider_id, **kwargs)
+
+
+def list_provider_roles(**kwargs: Any) -> VerificationResponse:
+    return get_verification_api().list_provider_roles(**kwargs)
+
+
+def provider_role(provider_id: str, **kwargs: Any) -> VerificationResponse:
+    return get_verification_api().provider_role(provider_id, **kwargs)
+
+
+def secpal_compatibility_lookup(**kwargs: Any) -> VerificationResponse:
+    return get_verification_api().secpal_compatibility_lookup(**kwargs)
+
+
+def secpal_artifact_intake(artifact_path: str, **kwargs: Any) -> VerificationResponse:
+    return get_verification_api().secpal_artifact_intake(artifact_path, **kwargs)
 
 
 def list_goal_tactician_operations(**kwargs: Any) -> VerificationResponse:
@@ -4700,7 +5336,10 @@ __all__ = [
     "LOGIC_TRANSLATION_RECEIPT_SCHEMA",
     "LOGIC_VERIFICATION_API_INTERFACE",
     "LOGIC_VERIFICATION_API_VERSION",
+    "LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE",
+    "LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA",
     "LogicVerificationAPI",
+    "PROVIDER_ROLE_CLOSURE_OPERATIONS",
     "ProviderDescriptor",
     "STABLE_OPERATIONS",
     "TRUSTED_PROOF_RECEIPT_SCHEMA",
@@ -4711,6 +5350,7 @@ __all__ = [
     "VerificationStatus",
     "advise",
     "attest_receipt",
+    "build_provider_role_descriptor",
     "check",
     "compare_interpretations",
     "compile_verification_artifact",
@@ -4728,6 +5368,8 @@ __all__ = [
     "list_goal_tactician_cli_mcp_surface",
     "list_goal_tactician_operations",
     "list_logic_families",
+    "list_provider_role_descriptors",
+    "list_provider_roles",
     "list_providers",
     "list_stable_features",
     "minimize_counterexample",
@@ -4736,8 +5378,11 @@ __all__ = [
     "probe_provider",
     "proof_status",
     "provider_capabilities",
+    "provider_role",
     "replay_counterexample",
     "run_portfolio",
+    "secpal_artifact_intake",
+    "secpal_compatibility_lookup",
     "validate_proof_candidate",
     "verify_receipt",
 ]
