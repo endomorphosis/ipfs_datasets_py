@@ -3215,7 +3215,7 @@ Program invariants:
 
 ## PATLAW-190 Rebuild knowledge graph from full-authority public legal corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
