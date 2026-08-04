@@ -3240,7 +3240,7 @@ Program invariants:
 
 ## PATLAW-191 Package admit stage verify and seal full-authority Hub republication
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
