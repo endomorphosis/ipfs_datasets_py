@@ -2584,7 +2584,7 @@ Program invariants:
 
 ## PATLAW-165 Validate production completion-gate artifacts and evidence bundle offline
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
