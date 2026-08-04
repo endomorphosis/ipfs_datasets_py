@@ -418,6 +418,149 @@ def _default_http_post(
         return int(exc.code), parsed
 
 
+def _status_entry_from_payload(
+    matter: PortfolioMatter, payload: Mapping[str, Any]
+) -> dict[str, Any]:
+    entry: dict[str, Any] = {
+        "application_number": matter.application_number,
+        "title": matter.title,
+        "ownership": matter.ownership,
+        "applicant": matter.applicant,
+        "filing_date": matter.filing_date,
+        "ok": True,
+        "provider_kind": payload.get("provider_kind"),
+        "provider_status_code": payload.get("provider_status_code"),
+        "outcome": payload.get("outcome"),
+    }
+    freshness = payload.get("freshness") or {}
+    if isinstance(freshness, Mapping):
+        entry["freshness_class"] = freshness.get("freshness_class")
+    snap = payload.get("snapshot") or {}
+    raw: Mapping[str, Any] = {}
+    status_blob: dict[str, Any] = {}
+    if isinstance(snap, Mapping):
+        raw_candidate = snap.get("raw_application_meta") or {}
+        if isinstance(raw_candidate, Mapping):
+            raw = raw_candidate
+        for key in ("status", "normalized_status", "application_status"):
+            nested = snap.get(key)
+            if isinstance(nested, Mapping):
+                status_blob = dict(nested)
+                break
+        for key in (
+            "status_code",
+            "status_text",
+            "entity_status",
+            "lifecycle_phase",
+            "is_patented",
+            "is_pending",
+            "is_abandoned",
+        ):
+            if key in snap and key not in status_blob:
+                status_blob[key] = snap[key]
+    entry["status_code"] = status_blob.get("status_code") or raw.get(
+        "applicationStatusCode"
+    )
+    entry["status_text"] = status_blob.get("status_text") or raw.get(
+        "applicationStatusDescriptionText"
+    )
+    entry["entity_status"] = status_blob.get("entity_status")
+    entry["patent_number"] = raw.get("patentNumber")
+    return entry
+
+
+def sync_public_documents_batch(
+    seed: PortfolioSeed,
+    *,
+    client: Any,
+    documents_root: Path,
+    sleep_seconds: float = 2.0,
+    force_download: bool = False,
+    confirmed_only: bool = True,
+    document_codes: str | Sequence[str] | None = None,
+) -> dict[str, Any]:
+    """Sync public ODP document inventory/bytes for seed matters.
+
+    Uses :class:`DocumentSyncProcessor` with a durable admitted-document store
+    under *documents_root*. By default only matters with non-candidate
+    ownership are synced (reduces same-name noise and ODP load).
+    """
+    assert_operator_capability("sync_public_documents")
+    from ipfs_datasets_py.processors.domains.uspto.document_sync_processor import (
+        AdmittedDocumentStore,
+        CheckpointStore,
+        DocumentSyncProcessor,
+    )
+
+    documents_root = Path(documents_root)
+    documents_root.mkdir(parents=True, exist_ok=True)
+    store = AdmittedDocumentStore(root=documents_root / "admitted")
+    checkpoints = CheckpointStore(root=documents_root / "checkpoints")
+    quarantine = documents_root / "quarantine"
+    quarantine.mkdir(parents=True, exist_ok=True)
+
+    matters = list(seed.matters)
+    if confirmed_only:
+        matters = [
+            m
+            for m in matters
+            if not str(m.ownership).startswith("candidate")
+        ]
+
+    results: list[dict[str, Any]] = []
+    with DocumentSyncProcessor(
+        client=client,
+        store=store,
+        checkpoints=checkpoints,
+        quarantine_root=quarantine,
+    ) as processor:
+        for index, matter in enumerate(matters):
+            if index and sleep_seconds > 0:
+                time.sleep(sleep_seconds)
+            app = matter.application_number
+            entry: dict[str, Any] = {
+                "application_number": app,
+                "ownership": matter.ownership,
+                "title": matter.title,
+            }
+            try:
+                doc_result = processor.sync_application(
+                    app,
+                    document_codes=document_codes,
+                    force_download=force_download,
+                )
+                payload = doc_result.to_dict()
+                entry["ok"] = bool(doc_result.ok)
+                entry["inventory_count"] = payload.get("inventory_count")
+                entry["admitted_count"] = payload.get("admitted_count")
+                entry["deduplicated_count"] = payload.get("deduplicated_count")
+                entry["versioned_count"] = payload.get("versioned_count")
+                entry["freshness_gap_count"] = payload.get("freshness_gap_count")
+                entry["unavailable_count"] = payload.get("unavailable_count")
+                entry["partial_rejected_count"] = payload.get(
+                    "partial_rejected_count"
+                )
+                entry["metadata_error"] = payload.get("metadata_error")
+                entry["inventory_receipt_id"] = payload.get("inventory_receipt_id")
+            except Exception as exc:  # noqa: BLE001
+                entry["ok"] = False
+                entry["error_type"] = type(exc).__name__
+                entry["error"] = str(exc)[:400]
+            results.append(entry)
+
+    return {
+        "schema": "patlaw-public-document-sync-v1",
+        "tenant_id": seed.tenant_id,
+        "generated_at_utc": utc_now_iso(),
+        "documents_root": str(documents_root),
+        "confirmed_only": confirmed_only,
+        "matter_count": len(matters),
+        "success_count": sum(1 for r in results if r.get("ok")),
+        "failure_count": sum(1 for r in results if not r.get("ok")),
+        "results": results,
+    }
+
+
 def sync_public_status_batch(
     seed: PortfolioSeed,
     *,
@@ -425,8 +568,13 @@ def sync_public_status_batch(
     force_refresh: bool = True,
     sleep_seconds: float = 2.0,
     credential_ref: str | None = None,
+    with_documents: bool = False,
+    documents_root: Path | None = None,
+    force_document_download: bool = False,
+    documents_confirmed_only: bool = True,
+    document_codes: str | Sequence[str] | None = None,
 ) -> dict[str, Any]:
-    """Refresh public ODP status for every matter in *seed*."""
+    """Refresh public ODP status (and optionally document inventory/bytes)."""
     assert_operator_capability("sync_public_status")
     ref = credential_ref or seed.credential_ref or "env:USPTO_ODP_API_KEY"
     store_root = Path(store_root)
@@ -442,13 +590,6 @@ def sync_public_status_batch(
         if index and sleep_seconds > 0:
             time.sleep(sleep_seconds)
         app = matter.application_number
-        entry: dict[str, Any] = {
-            "application_number": app,
-            "title": matter.title,
-            "ownership": matter.ownership,
-            "applicant": matter.applicant,
-            "filing_date": matter.filing_date,
-        }
         try:
             result = runtime.status_processor.sync(
                 app,
@@ -456,53 +597,32 @@ def sync_public_status_batch(
                 force_refresh=force_refresh,
             )
             payload = result.to_dict() if hasattr(result, "to_dict") else {}
-            entry["ok"] = True
-            entry["provider_kind"] = payload.get("provider_kind")
-            entry["provider_status_code"] = payload.get("provider_status_code")
-            entry["outcome"] = payload.get("outcome")
-            freshness = payload.get("freshness") or {}
-            if isinstance(freshness, Mapping):
-                entry["freshness_class"] = freshness.get("freshness_class")
-            snap = payload.get("snapshot") or {}
-            raw = {}
-            status_blob: dict[str, Any] = {}
-            if isinstance(snap, Mapping):
-                raw = snap.get("raw_application_meta") or {}
-                for key in ("status", "normalized_status", "application_status"):
-                    nested = snap.get(key)
-                    if isinstance(nested, Mapping):
-                        status_blob = dict(nested)
-                        break
-                # Some snapshots embed status fields at top level.
-                for key in (
-                    "status_code",
-                    "status_text",
-                    "entity_status",
-                    "lifecycle_phase",
-                    "is_patented",
-                    "is_pending",
-                    "is_abandoned",
-                ):
-                    if key in snap and key not in status_blob:
-                        status_blob[key] = snap[key]
-            if isinstance(raw, Mapping):
-                entry["status_code"] = status_blob.get("status_code") or raw.get(
-                    "applicationStatusCode"
-                )
-                entry["status_text"] = status_blob.get("status_text") or raw.get(
-                    "applicationStatusDescriptionText"
-                )
-                entry["entity_status"] = status_blob.get("entity_status")
-                entry["patent_number"] = raw.get("patentNumber")
-            else:
-                entry["status_code"] = status_blob.get("status_code")
-                entry["status_text"] = status_blob.get("status_text")
-                entry["entity_status"] = status_blob.get("entity_status")
+            entry = _status_entry_from_payload(matter, payload)
         except Exception as exc:  # noqa: BLE001 — operator batch continues
-            entry["ok"] = False
-            entry["error_type"] = type(exc).__name__
-            entry["error"] = str(exc)[:400]
+            entry = {
+                "application_number": app,
+                "title": matter.title,
+                "ownership": matter.ownership,
+                "applicant": matter.applicant,
+                "filing_date": matter.filing_date,
+                "ok": False,
+                "error_type": type(exc).__name__,
+                "error": str(exc)[:400],
+            }
         reviews.append(entry)
+
+    documents_report: dict[str, Any] | None = None
+    if with_documents:
+        doc_root = Path(documents_root) if documents_root else store_root.parent / "public_docs"
+        documents_report = sync_public_documents_batch(
+            seed,
+            client=runtime.client,
+            documents_root=doc_root,
+            sleep_seconds=sleep_seconds,
+            force_download=force_document_download,
+            confirmed_only=documents_confirmed_only,
+            document_codes=document_codes,
+        )
 
     report = {
         "schema": "patlaw-public-status-review-v1",
@@ -513,8 +633,10 @@ def sync_public_status_batch(
         "success_count": sum(1 for r in reviews if r.get("ok")),
         "failure_count": sum(1 for r in reviews if not r.get("ok")),
         "reviews_compact": reviews,
+        "documents": documents_report,
         "next_steps": [
             "Confirm candidate ownership (same-name inventors exist).",
+            "Document sync defaults to confirmed ownership only; use drop/keep-only first.",
             "For unpublished matters use attended-export or import-folder.",
             "Never store Patent Center passwords in the seed or review files.",
         ],
@@ -886,6 +1008,7 @@ __all__ = [
     "load_portfolio_seed",
     "merge_matters",
     "save_portfolio_seed",
+    "sync_public_documents_batch",
     "sync_public_status_batch",
     "utc_now_iso",
     "write_export_package_sidecar",

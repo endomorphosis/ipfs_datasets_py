@@ -125,11 +125,21 @@ def _cmd_refresh(args: argparse.Namespace) -> int:
         )
     seed = load_portfolio_seed(seed_path)
     store = state / "odp_store"
+    docs_root = (
+        Path(args.documents_root).expanduser().resolve()
+        if getattr(args, "documents_root", None)
+        else state / "public_docs"
+    )
     report = sync_public_status_batch(
         seed,
         store_root=store,
         force_refresh=not bool(args.use_cache),
         sleep_seconds=float(args.sleep_seconds),
+        with_documents=bool(args.with_documents),
+        documents_root=docs_root,
+        force_document_download=bool(args.force_document_download),
+        documents_confirmed_only=not bool(args.documents_all_matters),
+        document_codes=args.document_codes or None,
     )
     out = state / "public_status_review.json"
     out.write_text(json.dumps(report, indent=2) + "\n")
@@ -137,15 +147,28 @@ def _cmd_refresh(args: argparse.Namespace) -> int:
         os.chmod(out, 0o600)
     except OSError:
         pass
+    docs = report.get("documents") or {}
     summary = {
         "ok": True,
         "review_path": str(out),
         "success_count": report.get("success_count"),
         "failure_count": report.get("failure_count"),
         "reviews_compact": report.get("reviews_compact"),
+        "documents": {
+            "enabled": bool(args.with_documents),
+            "success_count": docs.get("success_count"),
+            "failure_count": docs.get("failure_count"),
+            "matter_count": docs.get("matter_count"),
+            "documents_root": docs.get("documents_root"),
+            "results": docs.get("results"),
+        }
+        if args.with_documents
+        else {"enabled": False},
     }
     print(json.dumps(summary, indent=2))
-    return 0 if int(report.get("failure_count") or 0) == 0 else 1
+    status_fail = int(report.get("failure_count") or 0)
+    doc_fail = int(docs.get("failure_count") or 0) if args.with_documents else 0
+    return 0 if status_fail == 0 and doc_fail == 0 else 1
 
 
 def _cmd_confirm(args: argparse.Namespace) -> int:
@@ -239,6 +262,10 @@ def _cmd_schedule(args: argparse.Namespace) -> int:
         cmd.extend(["--interval-hours", str(args.interval_hours)])
         if args.activate:
             cmd.append("--activate")
+        if getattr(args, "with_documents", False):
+            cmd.append("--with-documents")
+        if getattr(args, "documents_all_matters", False):
+            cmd.append("--documents-all-matters")
     if action == "tick" and args.dry_run:
         cmd.append("--dry-run")
     return subprocess.call(cmd)
@@ -365,6 +392,31 @@ def build_parser() -> argparse.ArgumentParser:
     r = sub.add_parser("refresh", help="Batch public ODP status refresh")
     r.add_argument("--sleep-seconds", type=float, default=2.0)
     r.add_argument("--use-cache", action="store_true")
+    r.add_argument(
+        "--with-documents",
+        action="store_true",
+        help="Also sync public document inventory/bytes (confirmed matters by default).",
+    )
+    r.add_argument(
+        "--documents-all-matters",
+        action="store_true",
+        help="With --with-documents: include candidate (unconfirmed) matters too.",
+    )
+    r.add_argument(
+        "--force-document-download",
+        action="store_true",
+        help="Re-download document bytes even when checkpoint says unchanged.",
+    )
+    r.add_argument(
+        "--documents-root",
+        default="",
+        help="Durable public document store root (default: state-root/public_docs).",
+    )
+    r.add_argument(
+        "--document-codes",
+        default="",
+        help="Optional comma-separated ODP documentCodes filter.",
+    )
     r.set_defaults(func=_cmd_refresh)
 
     c = sub.add_parser("confirm", help="Mark apps as confirmed ownership")
@@ -400,6 +452,16 @@ def build_parser() -> argparse.ArgumentParser:
     sch.add_argument("--interval-hours", type=int, default=24)
     sch.add_argument("--activate", action="store_true", help="With install: enable timer")
     sch.add_argument("--repo-root", default="")
+    sch.add_argument(
+        "--with-documents",
+        action="store_true",
+        help="With install: scheduled refresh includes public document sync",
+    )
+    sch.add_argument(
+        "--documents-all-matters",
+        action="store_true",
+        help="With install --with-documents: include unconfirmed candidates",
+    )
     sch.add_argument("--dry-run", action="store_true")
     sch.set_defaults(func=_cmd_schedule)
 

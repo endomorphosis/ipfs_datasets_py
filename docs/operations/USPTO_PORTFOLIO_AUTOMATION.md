@@ -42,9 +42,15 @@ python3 scripts/ops/uspto/portfolio_cli.py drop --application-number 18844946
 # Refresh public ODP status for the whole seed
 python3 scripts/ops/uspto/portfolio_cli.py refresh
 
+# Also sync public document inventory/bytes for *confirmed* matters
+python3 scripts/ops/uspto/portfolio_cli.py refresh --with-documents
+
 # Inspect seed
 python3 scripts/ops/uspto/portfolio_cli.py show
 ```
+
+Public document bytes land under
+`~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/public_docs/`.
 
 ## Scheduled public refresh
 
@@ -53,12 +59,16 @@ python3 scripts/ops/uspto/portfolio_cli.py show
 python3 scripts/ops/uspto/portfolio_cli.py schedule install \
   --interval-hours 24 --activate
 
+# Include public document sync for confirmed matters on the schedule
+python3 scripts/ops/uspto/portfolio_cli.py schedule install \
+  --interval-hours 24 --with-documents --activate
+
 python3 scripts/ops/uspto/portfolio_cli.py schedule status
 python3 scripts/ops/uspto/portfolio_cli.py schedule tick   # run once now
 ```
 
-The timer only runs public ODP refresh. It never opens Patent Center, signs,
-pays, files, or pushes git.
+The timer only runs public ODP refresh (status and optional public documents).
+It never opens Patent Center, signs, pays, files, or pushes git.
 
 ## Private import (no browser)
 

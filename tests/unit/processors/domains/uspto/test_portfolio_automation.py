@@ -119,6 +119,36 @@ def test_drop_and_keep_only() -> None:
     assert apps["999"].ownership == "confirmed_operator"
 
 
+def test_document_sync_skips_candidates_when_confirmed_only(tmp_path: Path) -> None:
+    from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (
+        sync_public_documents_batch,
+    )
+
+    seed = PortfolioSeed(
+        tenant_id="t1",
+        matters=[
+            PortfolioMatter(
+                application_number="18654466",
+                ownership="candidate_unconfirmed",
+            )
+        ],
+    )
+
+    class _NoClient:
+        def get_documents(self, *a, **k):  # pragma: no cover
+            raise AssertionError("should not call client for candidates-only seed")
+
+    report = sync_public_documents_batch(
+        seed,
+        client=_NoClient(),
+        documents_root=tmp_path / "docs",
+        confirmed_only=True,
+    )
+    assert report["matter_count"] == 0
+    assert report["success_count"] == 0
+    assert report["results"] == []
+
+
 def test_discover_with_mock_http() -> None:
     sample = {
         "count": 1,
