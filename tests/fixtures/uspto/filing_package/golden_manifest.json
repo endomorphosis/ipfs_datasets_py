@@ -1,0 +1,513 @@
+{
+  "digests": {
+    "candidate_dates": "74bfaab3633a602f4cd0b799b421a4a3a22c621beac73d8abf974b2b6a94d220",
+    "claims": "5f2d6521612fd679bd32c84d5df4b9bb8f3c7be15194045f70d55f83e50e4a3a",
+    "coverage": "721836c807edf64980b6f497ec0802faf033540ae88db9f2ed643d5208474d66",
+    "docx": "a091838a9816fad9871aff53dd9c6d0ef826dc3ccadbfdf4e0679cef59289836",
+    "drawing_sheet": "fd44ddf7204c43f86e6debf0b1269b0d2e067815620ed453350a192eb36504b4",
+    "drawings": "d3d402a46eaf6ca68b659bf2c3c67168958925e2352cae6d95bd563510259c73",
+    "pack": "aa90ea2fc75625718b30ae67ab2371486189595b8219da959be90ce3a3f929cb",
+    "pdf_render": "30e85968acef9d1b87d39e21a32c10975250518ed145783915067b7355c987b7",
+    "portfolio": "7e07ce4167d3b5895a9114e527dcd677f09956c2c8aabcc582c3cac783211a7f"
+  },
+  "expected": {
+    "block_reasons": [],
+    "can_file": false,
+    "can_pay": false,
+    "can_sign": false,
+    "certification_asserted": false,
+    "content_digest": "83e90b01daef931bd52356c5ac6186ff01146beb3f6431e69ce008c3eb63b963",
+    "drawings_inventory": [
+      {
+        "content_digest": "fd44ddf7204c43f86e6debf0b1269b0d2e067815620ed453350a192eb36504b4",
+        "description": "System overview",
+        "figure_label": "FIG. 1",
+        "item_id": "fig:1",
+        "labels": {},
+        "sheet_number": 1
+      },
+      {
+        "content_digest": null,
+        "description": "Sensor detail",
+        "figure_label": "FIG. 2",
+        "item_id": "fig:2",
+        "labels": {},
+        "sheet_number": 2
+      }
+    ],
+    "filing_is_external": true,
+    "is_submitted": false,
+    "mandatory_checklist_categories_present": [
+      "export_control",
+      "fees",
+      "forms",
+      "ids",
+      "inventorship",
+      "new_matter",
+      "nonpublication",
+      "priority"
+    ],
+    "open_confirmation_ids": [],
+    "operator_checklist": [
+      {
+        "authority_citation": "37 CFR 1.51",
+        "bound_package_digest": "1d2ee92c3177efec256826325b32adde4dd1c9a800634b3071ca4478c7ff47e3",
+        "category": "forms",
+        "confirmed": true,
+        "confirmed_at_utc": "2026-03-15T14:00:00Z",
+        "confirmed_by": "Pat Attorney",
+        "item_id": "check:forms",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Confirm required USPTO forms are selected and complete for review"
+      },
+      {
+        "authority_citation": "37 CFR 1.16",
+        "bound_package_digest": "1d2ee92c3177efec256826325b32adde4dd1c9a800634b3071ca4478c7ff47e3",
+        "category": "fees",
+        "confirmed": true,
+        "confirmed_at_utc": "2026-03-15T14:00:00Z",
+        "confirmed_by": "Pat Attorney",
+        "item_id": "check:fees",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Confirm fee codes/entity status; payment remains a natural-person action"
+      },
+      {
+        "authority_citation": "35 U.S.C. 119/120",
+        "bound_package_digest": "1d2ee92c3177efec256826325b32adde4dd1c9a800634b3071ca4478c7ff47e3",
+        "category": "priority",
+        "confirmed": true,
+        "confirmed_at_utc": "2026-03-15T14:00:00Z",
+        "confirmed_by": "Pat Attorney",
+        "item_id": "check:priority",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review priority / benefit claims for accuracy and supporting documents"
+      },
+      {
+        "authority_citation": "35 U.S.C. 115",
+        "bound_package_digest": "1d2ee92c3177efec256826325b32adde4dd1c9a800634b3071ca4478c7ff47e3",
+        "category": "inventorship",
+        "confirmed": true,
+        "confirmed_at_utc": "2026-03-15T14:00:00Z",
+        "confirmed_by": "Pat Attorney",
+        "item_id": "check:inventorship",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review inventorship listing and oath/declaration readiness"
+      },
+      {
+        "authority_citation": "35 U.S.C. 132",
+        "bound_package_digest": "1d2ee92c3177efec256826325b32adde4dd1c9a800634b3071ca4478c7ff47e3",
+        "category": "new_matter",
+        "confirmed": true,
+        "confirmed_at_utc": "2026-03-15T14:00:00Z",
+        "confirmed_by": "Pat Attorney",
+        "item_id": "check:new-matter",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Confirm no new matter introduced relative to priority / parent filings"
+      },
+      {
+        "authority_citation": "35 U.S.C. 122(b)",
+        "bound_package_digest": "1d2ee92c3177efec256826325b32adde4dd1c9a800634b3071ca4478c7ff47e3",
+        "category": "nonpublication",
+        "confirmed": true,
+        "confirmed_at_utc": "2026-03-15T14:00:00Z",
+        "confirmed_by": "Pat Attorney",
+        "item_id": "check:nonpublication",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review nonpublication request applicability and certifications"
+      },
+      {
+        "authority_citation": "35 U.S.C. 184",
+        "bound_package_digest": "1d2ee92c3177efec256826325b32adde4dd1c9a800634b3071ca4478c7ff47e3",
+        "category": "export_control",
+        "confirmed": true,
+        "confirmed_at_utc": "2026-03-15T14:00:00Z",
+        "confirmed_by": "Pat Attorney",
+        "item_id": "check:export",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review export-control / foreign-filing-license considerations"
+      },
+      {
+        "authority_citation": "37 CFR 1.56/1.97",
+        "bound_package_digest": "1d2ee92c3177efec256826325b32adde4dd1c9a800634b3071ca4478c7ff47e3",
+        "category": "ids",
+        "confirmed": true,
+        "confirmed_at_utc": "2026-03-15T14:00:00Z",
+        "confirmed_by": "Pat Attorney",
+        "item_id": "check:ids",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review IDS queue and prior-art coverage signoff before handoff"
+      }
+    ],
+    "original_files": [
+      {
+        "byte_size": 12000,
+        "content_digest": "a091838a9816fad9871aff53dd9c6d0ef826dc3ccadbfdf4e0679cef59289836",
+        "derived_from_file_id": null,
+        "family": "original_file",
+        "file_id": "file:spec-docx",
+        "filename": "specification.docx",
+        "labels": {},
+        "media_kind": "docx",
+        "role": "specification",
+        "source_root": "vault://tenant-a/matters/m1/originals"
+      },
+      {
+        "byte_size": 4000,
+        "content_digest": "5f2d6521612fd679bd32c84d5df4b9bb8f3c7be15194045f70d55f83e50e4a3a",
+        "derived_from_file_id": null,
+        "family": "original_file",
+        "file_id": "file:claims-docx",
+        "filename": "claims.docx",
+        "labels": {},
+        "media_kind": "docx",
+        "role": "claims",
+        "source_root": "vault://tenant-a/matters/m1/originals"
+      },
+      {
+        "byte_size": 8000,
+        "content_digest": "d3d402a46eaf6ca68b659bf2c3c67168958925e2352cae6d95bd563510259c73",
+        "derived_from_file_id": null,
+        "family": "original_file",
+        "file_id": "file:drawings-pdf",
+        "filename": "drawings.pdf",
+        "labels": {},
+        "media_kind": "pdf",
+        "role": "drawings",
+        "source_root": "vault://tenant-a/matters/m1/originals"
+      }
+    ],
+    "package_digest": "1d2ee92c3177efec256826325b32adde4dd1c9a800634b3071ca4478c7ff47e3",
+    "package_id": "pkg:golden-patlaw-153",
+    "proposed_metadata": {
+      "ads_fields": [
+        {
+          "field_id": "ads:title",
+          "field_name": "invention_title",
+          "labels": {},
+          "origin": "operator_supplied",
+          "proposed_value": "Temperature Sensing Apparatus",
+          "required_confirmation": true
+        },
+        {
+          "field_id": "ads:entity",
+          "field_name": "entity_status",
+          "labels": {},
+          "origin": "portfolio_projection",
+          "proposed_value": "small",
+          "required_confirmation": true
+        },
+        {
+          "field_id": "ads:inventor-1",
+          "field_name": "inventor_1_name",
+          "labels": {},
+          "origin": "operator_supplied",
+          "proposed_value": "Ada Inventor",
+          "required_confirmation": true
+        }
+      ],
+      "family": "proposed_metadata",
+      "note": "Proposed metadata only \u2014 not filed fact and not a USPTO record until a human submits via Patent Center."
+    },
+    "reason_codes": [
+      "material_digest_computed",
+      "artifact_families_distinguished",
+      "external_filing_only",
+      "never_marked_submitted",
+      "not_legal_advice",
+      "no_certification_asserted",
+      "rules_bound",
+      "prior_art_bound",
+      "human_confirmations_complete",
+      "package_draft",
+      "package_compiled",
+      "package_validated"
+    ],
+    "rendered_derivatives": [
+      {
+        "byte_size": 15000,
+        "content_digest": "30e85968acef9d1b87d39e21a32c10975250518ed145783915067b7355c987b7",
+        "derived_from_file_id": "file:spec-docx",
+        "family": "rendered_derivative",
+        "file_id": "file:spec-pdf-render",
+        "filename": "specification.converted.pdf",
+        "labels": {},
+        "media_kind": "pdf",
+        "role": "specification",
+        "source_root": "vault://tenant-a/matters/m1/renders"
+      }
+    ],
+    "source_roots": [
+      "vault://tenant-a/matters/m1/originals",
+      "vault://tenant-a/matters/m1/renders"
+    ],
+    "state": "validated"
+  },
+  "fixture_id": "patlaw-153-filing-package-golden",
+  "input_recipe": {
+    "application_type": "utility",
+    "candidate_dates_digest": "74bfaab3633a602f4cd0b799b421a4a3a22c621beac73d8abf974b2b6a94d220",
+    "classification": "confidential_application",
+    "confirm": {
+      "confirmed_at_utc": "2026-03-15T14:00:00Z",
+      "confirmed_by": "Pat Attorney"
+    },
+    "drawings_inventory": [
+      {
+        "content_digest": "fd44ddf7204c43f86e6debf0b1269b0d2e067815620ed453350a192eb36504b4",
+        "description": "System overview",
+        "figure_label": "FIG. 1",
+        "item_id": "fig:1",
+        "labels": {},
+        "sheet_number": 1
+      },
+      {
+        "content_digest": null,
+        "description": "Sensor detail",
+        "figure_label": "FIG. 2",
+        "item_id": "fig:2",
+        "labels": {},
+        "sheet_number": 2
+      }
+    ],
+    "labels": {
+      "channel": "unit",
+      "fixture": "patlaw-153"
+    },
+    "matter_id": "matter:patlaw-153-1",
+    "operator_checklist": [
+      {
+        "authority_citation": "37 CFR 1.51",
+        "bound_package_digest": null,
+        "category": "forms",
+        "confirmed": false,
+        "confirmed_at_utc": null,
+        "confirmed_by": null,
+        "item_id": "check:forms",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Confirm required USPTO forms are selected and complete for review"
+      },
+      {
+        "authority_citation": "37 CFR 1.16",
+        "bound_package_digest": null,
+        "category": "fees",
+        "confirmed": false,
+        "confirmed_at_utc": null,
+        "confirmed_by": null,
+        "item_id": "check:fees",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Confirm fee codes/entity status; payment remains a natural-person action"
+      },
+      {
+        "authority_citation": "35 U.S.C. 119/120",
+        "bound_package_digest": null,
+        "category": "priority",
+        "confirmed": false,
+        "confirmed_at_utc": null,
+        "confirmed_by": null,
+        "item_id": "check:priority",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review priority / benefit claims for accuracy and supporting documents"
+      },
+      {
+        "authority_citation": "35 U.S.C. 115",
+        "bound_package_digest": null,
+        "category": "inventorship",
+        "confirmed": false,
+        "confirmed_at_utc": null,
+        "confirmed_by": null,
+        "item_id": "check:inventorship",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review inventorship listing and oath/declaration readiness"
+      },
+      {
+        "authority_citation": "35 U.S.C. 132",
+        "bound_package_digest": null,
+        "category": "new_matter",
+        "confirmed": false,
+        "confirmed_at_utc": null,
+        "confirmed_by": null,
+        "item_id": "check:new-matter",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Confirm no new matter introduced relative to priority / parent filings"
+      },
+      {
+        "authority_citation": "35 U.S.C. 122(b)",
+        "bound_package_digest": null,
+        "category": "nonpublication",
+        "confirmed": false,
+        "confirmed_at_utc": null,
+        "confirmed_by": null,
+        "item_id": "check:nonpublication",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review nonpublication request applicability and certifications"
+      },
+      {
+        "authority_citation": "35 U.S.C. 184",
+        "bound_package_digest": null,
+        "category": "export_control",
+        "confirmed": false,
+        "confirmed_at_utc": null,
+        "confirmed_by": null,
+        "item_id": "check:export",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review export-control / foreign-filing-license considerations"
+      },
+      {
+        "authority_citation": "37 CFR 1.56/1.97",
+        "bound_package_digest": null,
+        "category": "ids",
+        "confirmed": false,
+        "confirmed_at_utc": null,
+        "confirmed_by": null,
+        "item_id": "check:ids",
+        "labels": {},
+        "mandatory": true,
+        "requires_human_confirmation": true,
+        "summary": "Review IDS queue and prior-art coverage signoff before handoff"
+      }
+    ],
+    "original_files": [
+      {
+        "byte_size": 12000,
+        "content_digest": "a091838a9816fad9871aff53dd9c6d0ef826dc3ccadbfdf4e0679cef59289836",
+        "derived_from_file_id": null,
+        "family": "original_file",
+        "file_id": "file:spec-docx",
+        "filename": "specification.docx",
+        "labels": {},
+        "media_kind": "docx",
+        "role": "specification",
+        "source_root": "vault://tenant-a/matters/m1/originals"
+      },
+      {
+        "byte_size": 4000,
+        "content_digest": "5f2d6521612fd679bd32c84d5df4b9bb8f3c7be15194045f70d55f83e50e4a3a",
+        "derived_from_file_id": null,
+        "family": "original_file",
+        "file_id": "file:claims-docx",
+        "filename": "claims.docx",
+        "labels": {},
+        "media_kind": "docx",
+        "role": "claims",
+        "source_root": "vault://tenant-a/matters/m1/originals"
+      },
+      {
+        "byte_size": 8000,
+        "content_digest": "d3d402a46eaf6ca68b659bf2c3c67168958925e2352cae6d95bd563510259c73",
+        "derived_from_file_id": null,
+        "family": "original_file",
+        "file_id": "file:drawings-pdf",
+        "filename": "drawings.pdf",
+        "labels": {},
+        "media_kind": "pdf",
+        "role": "drawings",
+        "source_root": "vault://tenant-a/matters/m1/originals"
+      },
+      {
+        "byte_size": 15000,
+        "content_digest": "30e85968acef9d1b87d39e21a32c10975250518ed145783915067b7355c987b7",
+        "derived_from_file_id": "file:spec-docx",
+        "family": "rendered_derivative",
+        "file_id": "file:spec-pdf-render",
+        "filename": "specification.converted.pdf",
+        "labels": {},
+        "media_kind": "pdf",
+        "role": "specification",
+        "source_root": "vault://tenant-a/matters/m1/renders"
+      }
+    ],
+    "portfolio_fact_digest": "7e07ce4167d3b5895a9114e527dcd677f09956c2c8aabcc582c3cac783211a7f",
+    "prior_art": {
+      "blocking_reason_codes": [],
+      "coverage_complete": true,
+      "coverage_digest": "721836c807edf64980b6f497ec0802faf033540ae88db9f2ed643d5208474d66",
+      "declaration_id": "coverage:patlaw-153-1",
+      "expected_coverage_digest": "721836c807edf64980b6f497ec0802faf033540ae88db9f2ed643d5208474d66",
+      "human_signoff_recorded": true,
+      "ids_queue_digest": "d4682b29f2dd297ff77b92acc999915fa3553211ea7afb6b947d87913441ef19",
+      "labels": {},
+      "unresolved_gap_ids": []
+    },
+    "proposed_ads_fields": [
+      {
+        "field_id": "ads:title",
+        "field_name": "invention_title",
+        "labels": {},
+        "origin": "operator_supplied",
+        "proposed_value": "Temperature Sensing Apparatus",
+        "required_confirmation": true
+      },
+      {
+        "field_id": "ads:entity",
+        "field_name": "entity_status",
+        "labels": {},
+        "origin": "portfolio_projection",
+        "proposed_value": "small",
+        "required_confirmation": true
+      },
+      {
+        "field_id": "ads:inventor-1",
+        "field_name": "inventor_1_name",
+        "labels": {},
+        "origin": "operator_supplied",
+        "proposed_value": "Ada Inventor",
+        "required_confirmation": true
+      }
+    ],
+    "rule_pack": {
+      "expected_pack_digest": "aa90ea2fc75625718b30ae67ab2371486189595b8219da959be90ce3a3f929cb",
+      "human_approval_recorded": true,
+      "labels": {},
+      "pack_digest": "aa90ea2fc75625718b30ae67ab2371486189595b8219da959be90ce3a3f929cb",
+      "pack_id": "uspto.baseline-filing-obligations",
+      "pack_version": "1.0.0",
+      "rule_ids": [
+        "rule:utility:spec",
+        "rule:utility:claims",
+        "rule:utility:ads"
+      ],
+      "source_digests_recorded": true,
+      "status": "active"
+    },
+    "source_roots": [
+      "vault://tenant-a/matters/m1/originals",
+      "vault://tenant-a/matters/m1/renders"
+    ],
+    "warnings": [
+      "rendered PDF is derivative of DOCX; DOCX remains authoritative"
+    ]
+  },
+  "notes": "Compact golden for PATLAW-153. Recipe + expected digests for a validated package. Distinguishes proposed_metadata, original_files, rendered_derivatives, and operator_checklist. Not a filing authorization; no certifications asserted.",
+  "schema_version": "uspto.filing-package.v1",
+  "task_id": "PATLAW-153"
+}
