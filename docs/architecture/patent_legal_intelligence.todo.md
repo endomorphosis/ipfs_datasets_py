@@ -2915,7 +2915,7 @@ Program invariants:
 
 ## PATLAW-178 Build operator promote checklist for Hub index publication
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
