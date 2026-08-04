@@ -16,12 +16,18 @@ from .login_session import (
     logout_session,
     resolve_secret_ref,
 )
+from .patent_center_export_client import (
+    PatentCenterExportResult,
+    export_application_via_patent_center,
+)
 
 __all__ = [
     "FORBIDDEN_LOGIN_CAPABILITIES",
     "LoginError",
     "LoginResult",
+    "PatentCenterExportResult",
     "SessionStatus",
+    "export_application_via_patent_center",
     "generate_totp",
     "load_session_status",
     "login_patent_center",

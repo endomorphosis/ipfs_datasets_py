@@ -134,16 +134,60 @@ Session file (mode 0600):
 
 `~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/sessions/patent_center.storage_state.json`
 
-## Browser export (uses saved session when available)
+## Patent Center UI export (saved session; automated)
+
+After `portfolio_cli login`, `export-ui` drives Patent Center headless:
+
+1. Completes Patent Center SSO (`userLoggedIn`)
+2. Reads SPA tokens from `sessionStorage` (not written to disk receipts)
+3. Fetches private metadata (bib data, addresses, fees, eGrant, IFW inventory)
+4. Clicks eGrant Download PDF / XML controls
+5. Optionally downloads IFW PDFs via public ODP (`USPTO_ODP_API_KEY`) using
+   document identifiers from the Patent Center IFW inventory
+6. Seals `package/` with `export_manifest.json` + `authorization.json`
+
+```bash
+source ~/.config/ipfs_datasets_py/uspto.env
+export PYTHONPATH=.
+
+python3 scripts/ops/uspto/portfolio_cli.py login --otp-mode totp
+python3 scripts/ops/uspto/portfolio_cli.py export-ui \
+  --application-number 18654466 \
+  --authorizing-user "operator:you"
+
+# Metadata + eGrant only (skip ODP IFW PDFs)
+python3 scripts/ops/uspto/portfolio_cli.py export-ui \
+  --application-number 18654466 --no-odp-ifw
+
+# Import sealed package
+python3 scripts/ops/uspto/portfolio_cli.py import-folder \
+  --export-dir ~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/exports/18654466/patent_center_ui/package \
+  --application-number 18654466
+```
+
+Artifacts land under:
+
+`~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/exports/<app>/patent_center_ui/`
+
+## Browser export (attended; uses saved session when available)
 
 Uses the saved login session from `portfolio_cli login` when present; otherwise
 opens a headed browser for interactive login. After auth it may navigate and
 attempt download clicks; if the UI does not cooperate, download manually into
 the export directory (or `private_inbox/<app>/`), then seal/import.
 
+Prefer **`export-ui`** for unattended headless runs with a saved session.
+Use **`attended-export`** when you need a human in the loop (watch-folder,
+training env, or stubborn UI).
+
 ```bash
-# Prefer: login first (refs/TOTP), then export with saved session
+# Prefer: login first (refs/TOTP), then automated UI export
 python3 scripts/ops/uspto/portfolio_cli.py login --otp-mode totp
+python3 scripts/ops/uspto/portfolio_cli.py export-ui \
+  --application-number 18654466 \
+  --authorizing-user "operator:you"
+
+# Attended / watch-folder fallback
 python3 scripts/ops/uspto/portfolio_cli.py attended-export \
   --application-number 18654466 \
   --authorizing-user "operator:you"

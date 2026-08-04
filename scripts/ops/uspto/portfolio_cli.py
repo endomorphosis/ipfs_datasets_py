@@ -9,6 +9,7 @@ Subcommands:
   import-folder  Import a local export folder into the private store
   attended-export
                  Launch Patent Center export (uses saved login session if present)
+  export-ui      Automated Patent Center UI export (SSO + private APIs + eGrant/IFW)
   login / login-status / logout
                  Patent Center password+OTP login helper (refs/prompts; no secret echo)
   show           Print seed / last review summary
@@ -354,6 +355,104 @@ def _cmd_attended_export(args: argparse.Namespace) -> int:
     return subprocess.call(cmd)
 
 
+def _cmd_export_ui(args: argparse.Namespace) -> int:
+    """Run authenticated Patent Center UI export (saved session required)."""
+    from ipfs_datasets_py.processors.domains.uspto.auth.login_session import LoginError
+    from ipfs_datasets_py.processors.domains.uspto.auth.patent_center_export_client import (
+        export_application_via_patent_center,
+    )
+
+    state = Path(args.state_root).expanduser() if args.state_root else default_state_root()
+    apps = [str(a).strip() for a in (args.application_number or []) if str(a).strip()]
+    if not apps:
+        seed_path = state / "portfolio_seed.json"
+        if seed_path.is_file():
+            seed = load_portfolio_seed(seed_path)
+            apps = [
+                m.application_number
+                for m in seed.matters
+                if not str(m.ownership).startswith("candidate")
+            ]
+    if not apps:
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": "no application numbers; pass --application-number",
+                }
+            ),
+            file=sys.stderr,
+        )
+        return 2
+
+    headless = bool(getattr(args, "headless", False))
+    if not headless and not os.environ.get("DISPLAY"):
+        headless = True
+
+    results: list[dict[str, Any]] = []
+    exit_code = 0
+    for app in apps:
+        export_dir = None
+        if args.export_dir:
+            base = Path(args.export_dir).expanduser()
+            export_dir = base if len(apps) == 1 else base / app
+        try:
+            result = export_application_via_patent_center(
+                app,
+                state_root=state,
+                session_name=str(getattr(args, "session_name", None) or "patent_center"),
+                export_dir=export_dir,
+                authorizing_user=str(args.authorizing_user or "operator:local"),
+                tenant_id=str(args.tenant or "operator-default"),
+                headless=headless,
+                download_ifw_via_odp=not bool(getattr(args, "no_odp_ifw", False)),
+                max_ifw_downloads=int(getattr(args, "max_ifw_downloads", 200) or 200),
+            )
+            results.append(result.to_dict())
+            if not result.ok:
+                exit_code = 1
+        except (LoginError, PortfolioAutomationError) as exc:
+            results.append(
+                {
+                    "ok": False,
+                    "application_number": app,
+                    "error": str(exc),
+                    "code": getattr(exc, "code", None),
+                }
+            )
+            exit_code = 1
+        except Exception as exc:  # noqa: BLE001
+            results.append(
+                {
+                    "ok": False,
+                    "application_number": app,
+                    "error": f"{type(exc).__name__}:{exc}",
+                }
+            )
+            exit_code = 1
+
+    payload: dict[str, Any] = {
+        "schema": "patlaw-portfolio-export-ui-v1",
+        "ok": exit_code == 0,
+        "results": results,
+    }
+    # Write receipt under state root (no secrets).
+    try:
+        receipt_dir = state / "exports"
+        receipt_dir.mkdir(parents=True, exist_ok=True)
+        receipt = receipt_dir / "export_ui_receipt.json"
+        receipt.write_text(json.dumps(payload, indent=2, default=str) + "\n")
+        try:
+            os.chmod(receipt, 0o600)
+        except OSError:
+            pass
+        payload["receipt"] = str(receipt)
+    except Exception:
+        pass
+    print(json.dumps(payload, indent=2, default=str))
+    return exit_code
+
+
 def _cmd_login(args: argparse.Namespace) -> int:
     helper = Path(__file__).resolve().parent / "uspto_login_cli.py"
     cmd = [sys.executable, str(helper)]
@@ -685,6 +784,40 @@ def build_parser() -> argparse.ArgumentParser:
     att.add_argument("--watch-seconds", type=float, default=120.0)
     att.add_argument("--json", action="store_true")
     att.set_defaults(func=_cmd_attended_export)
+
+    exp_ui = sub.add_parser(
+        "export-ui",
+        help=(
+            "Automated Patent Center UI export using saved login session "
+            "(private metadata + eGrant UI download + optional ODP IFW PDFs)"
+        ),
+    )
+    exp_ui.add_argument("--export-dir", default="")
+    exp_ui.add_argument("--application-number", action="append", default=[])
+    exp_ui.add_argument("--tenant", default="operator-default")
+    exp_ui.add_argument("--authorizing-user", default="operator:local")
+    exp_ui.add_argument(
+        "--session-name",
+        default="patent_center",
+        help="Saved login session name (default patent_center)",
+    )
+    exp_ui.add_argument(
+        "--headless",
+        action="store_true",
+        help="Force headless Chromium (auto when DISPLAY unset)",
+    )
+    exp_ui.add_argument(
+        "--no-odp-ifw",
+        action="store_true",
+        help="Do not download IFW PDFs via public ODP (metadata only + eGrant UI)",
+    )
+    exp_ui.add_argument(
+        "--max-ifw-downloads",
+        type=int,
+        default=200,
+        help="Max IFW documents to pull via ODP (default 200)",
+    )
+    exp_ui.set_defaults(func=_cmd_export_ui)
 
     login = sub.add_parser(
         "login",
