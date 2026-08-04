@@ -2559,7 +2559,7 @@ Program invariants:
 
 ## PATLAW-164 Run the exact-tree patent legal production completion gate
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
