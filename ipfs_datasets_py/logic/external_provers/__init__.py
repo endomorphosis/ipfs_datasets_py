@@ -40,6 +40,7 @@ try:
         ProverInstallEvent,
         ProgressCallback,
         ensure_prover_executable,
+        ensure_managed_ergoai_if_missing,
         find_executable,
         lazy_install_prover,
         lazy_installs_enabled,
@@ -49,6 +50,7 @@ except ImportError:
     ProverInstallEvent = None
     ProgressCallback = None
     ensure_prover_executable = None
+    ensure_managed_ergoai_if_missing = None
     find_executable = None
     lazy_install_prover = None
     lazy_installs_enabled = None
@@ -184,6 +186,7 @@ __all__ = [
     "check_prover_availability",
     "find_executable",
     "ensure_prover_executable",
+    "ensure_managed_ergoai_if_missing",
     "lazy_install_prover",
     "lazy_installs_enabled",
     "prover_lazy_install_enabled",

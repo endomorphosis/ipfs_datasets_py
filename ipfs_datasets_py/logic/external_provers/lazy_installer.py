@@ -18,7 +18,10 @@ semantic probe).  Incomplete rollback or identity evidence cannot certify or
 promote capability/semantic authority; failed publication keeps prior installs.
 
 Environment variables:
-- IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1 enables requested-prover installs.
+- IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1 enables requested-prover installs for
+  the general solver portfolio. ErgoAI is default-on for first-use / missing
+  managed vendor installs without this flag (package consumers such as
+  SwissKnife); set LAZY_INSTALL_PROVERS=0 or LAZY_INSTALL_ERGOAI=0 to opt out.
 - IPFS_DATASETS_PY_LAZY_INSTALL_<PROVER>=0/1 overrides a prover.
 - IPFS_DATASETS_PY_LAZY_INSTALL_STRICT=1 raises on installer failure.
 - IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS=1 permits interactive sudo for Coq.
@@ -1201,10 +1204,17 @@ def _emit(event: ProverInstallEvent, progress: ProgressCallback | None) -> None:
 
 
 def prover_lazy_install_enabled(prover_name: str) -> bool:
-    """Return True when lazy installation is enabled for a specific prover."""
+    """Return True when lazy installation is enabled for a specific prover.
+
+    ErgoAI defaults to enabled for package-consumer first use (missing managed
+    vendor only) so hosts that import this package through another product do
+    not need ``IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1``. Global or per-prover
+    ``=0`` still opts out. Other native solvers remain opt-in unless the global
+    lazy-install flag is set; Coq/Isabelle stay conservative even then.
+    """
 
     prover = normalize_prover_name(prover_name)
-    if not lazy_installs_enabled():
+    if minimal_imports_enabled():
         return False
 
     env_name = _ENV_NAMES.get(prover, prover.upper())
@@ -1215,6 +1225,19 @@ def prover_lazy_install_enabled(prover_name: str) -> bool:
     auto_install = os.environ.get(f"IPFS_DATASETS_PY_AUTO_INSTALL_{env_name}")
     if auto_install is not None:
         return _truthy(auto_install)
+
+    # Explicit global opt-out always wins for every prover, including ErgoAI.
+    if _explicitly_disabled():
+        return False
+
+    # ErgoAI: default-on without the global portfolio flag so dependent
+    # packages (SwissKnife, etc.) get a real managed vendor on first use when
+    # the binary is missing. Hermetic advisor shims never satisfy this path.
+    if prover == "ergoai":
+        return True
+
+    if not lazy_installs_enabled():
+        return False
 
     # Reconstruction kernels are large/slow, so ordinary optional bridge use
     # stays opt-in. An execution path that explicitly requests the kernel uses
@@ -1284,7 +1307,12 @@ def _lazy_install_prover_once(
             ProverInstallEvent(
                 prover,
                 "disabled",
-                "lazy installation is disabled; set IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1 to enable it",
+                (
+                    "lazy installation is disabled for this prover "
+                    "(set IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1, or for "
+                    "ErgoAI leave defaults and avoid "
+                    "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=0)"
+                ),
             ),
             progress,
         )
@@ -1468,6 +1496,41 @@ def lazy_install_prover(
         return bool(installed)
 
 
+def _find_managed_vendor_ergoai_executable() -> str | None:
+    """Return only a provenance-valid managed ErgoAI launcher, never a shim."""
+
+    try:
+        from ipfs_datasets_py.logic.backends.installers.advisors import (
+            expand_user_local_root,
+            probe_ergoai_identity,
+            ergoai_offline_subprocess_env,
+        )
+    except Exception:
+        return None
+
+    root = expand_user_local_root(configured_user_install_root())
+    for name in _PROVER_EXECUTABLES.get("ergoai", ("ergoai",)):
+        candidate = root / "bin" / name
+        try:
+            if not candidate.is_file() or not os.access(str(candidate), os.X_OK):
+                continue
+            probe = probe_ergoai_identity(
+                executable=str(candidate),
+                install_root=root,
+                require_managed_vendor=True,
+                env=ergoai_offline_subprocess_env(),
+                allow_path_fallback=False,
+            )
+        except Exception:
+            continue
+        if (
+            probe.get("managed_vendor_provenance_verified") is True
+            and probe.get("is_hermetic_advisor_shim") is not True
+        ):
+            return str(Path(str(probe.get("executable_path") or candidate)).resolve())
+    return None
+
+
 def ensure_prover_executable(
     prover_name: str,
     *,
@@ -1476,24 +1539,71 @@ def ensure_prover_executable(
     strict: bool | None = None,
     java_executable: str | Path | None = None,
 ) -> str | None:
-    """Return a required executable, installing it lazily when explicitly used.
+    """Return a required executable, installing it when missing and allowed.
 
-    This function is the integration point for real execution paths. It does
-    not run at import time, but it does make first use visibly install the
-    selected optional native solver unless the caller explicitly opted out
-    through ``IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=0``. This is deliberately
-    separate from normal bridge imports, which never trigger a download or
-    build.
+    For most solvers this is first-use only (not import). ErgoAI is default-on
+    when a real managed vendor is missing so package consumers do not need a
+    portfolio opt-in; hermetic advisor shims never count as installed. Callers
+    can still opt out with ``IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=0`` or
+    ``IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=0``.
     """
 
     prover = normalize_prover_name(prover_name)
     candidates = _PROVER_EXECUTABLES.get(prover, (prover,))
-    explicit_ergoai = os.environ.get("ERGOAI_BINARY") if prover == "ergoai" else None
-    if explicit_ergoai:
-        path = Path(explicit_ergoai).expanduser()
-        if path.is_file() and os.access(str(path), os.X_OK):
-            _emit(ProverInstallEvent(prover, "available", f"using {path}"), progress)
-            return str(path)
+    if prover == "ergoai":
+        explicit_ergoai = os.environ.get("ERGOAI_BINARY")
+        if explicit_ergoai:
+            path = Path(explicit_ergoai).expanduser()
+            if path.is_file() and os.access(str(path), os.X_OK):
+                _emit(
+                    ProverInstallEvent(prover, "available", f"using {path}"),
+                    progress,
+                )
+                return str(path)
+        _emit(
+            ProverInstallEvent(
+                prover, "checking", f"resolving managed ErgoAI for {reason}"
+            ),
+            progress,
+        )
+        managed = _find_managed_vendor_ergoai_executable()
+        if managed:
+            _emit(
+                ProverInstallEvent(prover, "available", f"using {managed}"),
+                progress,
+            )
+            return managed
+        # Missing real vendor: install without portfolio opt-in (unless opted out).
+        lazy_install_prover(
+            prover,
+            strict=strict,
+            reason=reason,
+            progress=progress,
+            allow_automatic=True,
+            java_executable=java_executable,
+        )
+        managed = _find_managed_vendor_ergoai_executable()
+        if managed:
+            _emit(
+                ProverInstallEvent(
+                    prover, "installed", f"using installed executable {managed}"
+                ),
+                progress,
+            )
+            return managed
+        explicit_ergoai = os.environ.get("ERGOAI_BINARY")
+        if explicit_ergoai:
+            path = Path(explicit_ergoai).expanduser()
+            if path.is_file() and os.access(str(path), os.X_OK):
+                _emit(
+                    ProverInstallEvent(
+                        prover, "installed", f"using installed executable {path}"
+                    ),
+                    progress,
+                )
+                return str(path)
+        return None
+
     _emit(
         ProverInstallEvent(prover, "checking", f"resolving executable for {reason}"),
         progress,
@@ -1512,19 +1622,43 @@ def ensure_prover_executable(
         allow_automatic=True,
         java_executable=java_executable,
     )
-    if prover == "ergoai":
-        explicit_ergoai = os.environ.get("ERGOAI_BINARY")
-        if explicit_ergoai:
-            path = Path(explicit_ergoai).expanduser()
-            if path.is_file() and os.access(str(path), os.X_OK):
-                _emit(ProverInstallEvent(prover, "installed", f"using installed executable {path}"), progress)
-                return str(path)
     for candidate in candidates:
         executable = find_executable(candidate)
         if executable:
             _emit(ProverInstallEvent(prover, "installed", f"using installed executable {executable}"), progress)
             return executable
     return None
+
+
+def ensure_managed_ergoai_if_missing(
+    *,
+    reason: str = "package import ensure missing managed ErgoAI",
+    progress: ProgressCallback | None = None,
+    strict: bool | None = None,
+) -> str | None:
+    """Install real ErgoAI only when a managed vendor is not already present.
+
+    Safe for package-import side effects: a provenance-valid managed install is
+    a no-op; hermetic shims do not suppress install; explicit opt-out and
+    minimal-import modes still block work. Never runs under
+    ``IPFS_DATASETS_PY_IMPORT_CONTEXT=1`` (certification / pure-import probes).
+    """
+
+    if minimal_imports_enabled() or _explicitly_disabled():
+        return _find_managed_vendor_ergoai_executable()
+    if os.environ.get("IPFS_DATASETS_PY_IMPORT_CONTEXT"):
+        return _find_managed_vendor_ergoai_executable()
+    if not prover_lazy_install_enabled("ergoai"):
+        return _find_managed_vendor_ergoai_executable()
+    managed = _find_managed_vendor_ergoai_executable()
+    if managed:
+        return managed
+    return ensure_prover_executable(
+        "ergoai",
+        reason=reason,
+        progress=progress,
+        strict=strict,
+    )
 
 
 def reset_lazy_install_attempts() -> None:
@@ -1539,6 +1673,7 @@ __all__ = [
     "configured_user_install_root",
     "find_executable",
     "ensure_prover_executable",
+    "ensure_managed_ergoai_if_missing",
     "lazy_install_prover",
     "lazy_install_strict",
     "lazy_installs_enabled",
