@@ -1,5 +1,5 @@
-"""UI/UX IR runtime events, inputs, and mediation."""
+"""Runtime event envelope, input adapters, and multimodal fusion."""
 
 from __future__ import annotations
 
-__all__ = ["events"]
+__all__ = ["events", "fusion", "input"]

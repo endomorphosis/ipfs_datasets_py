@@ -6,8 +6,10 @@ __all__ = [
     "compiler",
     "contracts",
     "dcec",
+    "decompiler",
     "event_calculus",
     "flogic",
     "ontology",
+    "roundtrip",
     "tdfol",
 ]

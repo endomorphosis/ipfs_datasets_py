@@ -1,5 +1,12 @@
-"""Capability negotiation, projection solving, and loss receipts (UIR-040)."""
+"""Capability negotiation, projection solving, and target adapters."""
 
 from __future__ import annotations
 
-__all__ = ["capabilities", "loss", "solver"]
+__all__ = [
+    "capabilities",
+    "glasses",
+    "loss",
+    "mobile",
+    "solver",
+    "voice",
+]
