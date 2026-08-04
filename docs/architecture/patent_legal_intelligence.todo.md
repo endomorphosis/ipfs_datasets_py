@@ -2034,7 +2034,7 @@ Program invariants:
 
 ## PATLAW-143 Seal adversarial, migration, and release evidence for v2
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
