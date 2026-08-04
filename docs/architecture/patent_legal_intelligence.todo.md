@@ -2790,7 +2790,7 @@ Program invariants:
 
 ## PATLAW-173 Build production knowledge-graph snapshot for public legal corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
