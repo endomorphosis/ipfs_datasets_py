@@ -1,0 +1,61 @@
+{
+  "case_id": "gold-forms-and-tables",
+  "goal_id": "PATLAW-G080",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [
+      {
+        "authority_tier": "official-base",
+        "citation_id": "cite:37cfr1.17p",
+        "kind": "regulation",
+        "source_span_id": "span:forms-p0-table-r2",
+        "text": "37 CFR 1.17(p)"
+      },
+      {
+        "authority_tier": "official-base",
+        "citation_id": "cite:37cfr1.97",
+        "kind": "regulation",
+        "source_span_id": "span:forms-p0-table-r2",
+        "text": "37 CFR 1.97"
+      }
+    ],
+    "dates": [],
+    "provenance": [
+      {
+        "artifact_id": "art:forms-tables-1",
+        "classification": "public_user",
+        "item_id": "req:forms-ids-fee",
+        "item_kind": "requirement",
+        "origin": "native",
+        "page_index": 0,
+        "source_receipt_id": "receipt:synthetic:forms-1",
+        "span_id": "span:forms-p0-table-r2"
+      }
+    ],
+    "requirements": [
+      {
+        "affected_claims": [],
+        "classification": "public_user",
+        "instruction_text_digest": "e609fecef120e5b0e99ab5c67165891edff41b4ffc55e8f5d2f7c09e30beed7b",
+        "legal_citations": [
+          "37 CFR 1.17(p)",
+          "37 CFR 1.97"
+        ],
+        "proposed_date_rule": null,
+        "requirement_id": "req:forms-ids-fee",
+        "requirement_type": "fee_or_form_request",
+        "review_state": "complete",
+        "source_span_id": "span:forms-p0-table-r2"
+      }
+    ]
+  }
+}

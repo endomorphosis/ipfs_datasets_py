@@ -1,0 +1,2288 @@
+{
+  "annual_editions": {
+    "2023": {
+      "ecfr_presentation": {
+        "artifact_sha256": "d2065510f49c5ae45c4f2202a911fd6015205785d73e4df0227c6c45b49d591b",
+        "media_type": "application/xml",
+        "provider": "ecfr",
+        "role": "derived_presentation",
+        "source_id": "ecfr:title-37:as-of-2023-07-01",
+        "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2023-07-01/title-37.xml",
+        "upstream_package_id": "ecfr-title-37-as-of-2023-07-01"
+      },
+      "ecfr_presentation_sha256": "d2065510f49c5ae45c4f2202a911fd6015205785d73e4df0227c6c45b49d591b",
+      "failures": [],
+      "fixture_id": "cfr-annual-2023-title37",
+      "notes": "Compact official annual Title 37 GovInfo CFR recipe. Official artifact identity is separate from any eCFR presentation identity.",
+      "package": {
+        "content_sha256": "f4460158c37e0f3ac9c814d380808b43d9f4511c6cc7cd2d38116f0edbe8e69b",
+        "date_issued": "2023-07-01",
+        "edition": "annual-2023",
+        "formats": {
+          "mods": {
+            "artifact_sha256": "dc0a4a1aaaf79c76416b92f3437982ca0e5654917ddf2100928c8406ca98ffbb",
+            "format": "mods",
+            "media_type": "application/mods+xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/mods.xml",
+            "upstream_package_id": "CFR-2023-title37"
+          },
+          "pdf": {
+            "artifact_sha256": "81f81ba90744116829a14c4a032f31188f5a4dde8a9ab8519c849c7b4d456f75",
+            "byte_size": 4500000,
+            "format": "pdf",
+            "media_type": "application/pdf",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37.pdf",
+            "upstream_package_id": "CFR-2023-title37"
+          },
+          "xml": {
+            "artifact_sha256": "f4460158c37e0f3ac9c814d380808b43d9f4511c6cc7cd2d38116f0edbe8e69b",
+            "byte_size": 3000000,
+            "format": "xml",
+            "media_type": "application/xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37.xml",
+            "upstream_package_id": "CFR-2023-title37"
+          }
+        },
+        "package_id": "CFR-2023-title37",
+        "provider": "govinfo",
+        "retrieved_at": "2024-09-01T10:00:00Z",
+        "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37.xml",
+        "title": "37",
+        "volume": "1",
+        "year": "2023"
+      },
+      "schema_version": "cfr-annual-fixture-v1",
+      "sections": [
+        {
+          "citation": "37 CFR 1.56",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "c1a4d0976d73f400704beceb3d5a403d162f34d07e6869de518092eb2bb6be37",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part1-sec1-56",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part1-sec1-56.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "821a7c7f023620f5034ec00a258dd8398c40bafe4ab07ebd3671ce495ee17489",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part1-sec1-56",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part1-sec1-56.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Duty to disclose information material to patentability",
+          "part": "1",
+          "section": "1.56",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.56, 2023 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.97",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "7955d066a1d5f316d08506e1d330921bb76a960a6e23ac27518a0bbc97f44138",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part1-sec1-97",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part1-sec1-97.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "22dd3b773653ac105892a40841b00c4fa2faba7d5937291bdcf41bce8bd3cb61",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part1-sec1-97",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part1-sec1-97.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Filing of information disclosure statement",
+          "part": "1",
+          "section": "1.97",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.97, 2023 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.98",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "802a7929c4786afd0b4df03e6e7378af57d7743a47618bd829e2f43844f6b534",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part1-sec1-98",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part1-sec1-98.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "91e17c7477896490168aeee860bef4ff0e27cd20eb1603333f079cf0bdb851b5",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part1-sec1-98",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part1-sec1-98.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Content of information disclosure statement",
+          "part": "1",
+          "section": "1.98",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.98, 2023 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 41.50",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "d042f377e4e91d7501cb1abfef2ea9b8b3ed3a1caa2754a284c2da45148fd8a9",
+              "byte_size": 2100,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part41-sec41-50",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part41-sec41-50.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "d30a9da4c2840ea4c3c4f49cc8fa27e6105c77cc5fa5a25357e3b35a5b971333",
+              "byte_size": 2050,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part41-sec41-50",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part41-sec41-50.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Decisions and other actions by the Board",
+          "part": "41",
+          "section": "41.50",
+          "text_excerpt": "[official annual excerpt 37 CFR 41.50, 2023 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 42.100",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "24487fbb99833d6d8dda1d508a2174b9d67c09fcdd3c1342bb0fff44280241c4",
+              "byte_size": 2110,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part42-sec42-100",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part42-sec42-100.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "0b412de4be55ec732fad4c50a4705d11ffd3ed5b818d9049771e5b8b16bd451d",
+              "byte_size": 2060,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part42-sec42-100",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part42-sec42-100.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Procedure; pendency",
+          "part": "42",
+          "section": "42.100",
+          "text_excerpt": "[official annual excerpt 37 CFR 42.100, 2023 edition]",
+          "title": "37"
+        }
+      ],
+      "title": "37"
+    },
+    "2024": {
+      "ecfr_presentation": {
+        "artifact_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+        "media_type": "application/xml",
+        "provider": "ecfr",
+        "role": "derived_presentation",
+        "source_id": "ecfr:title-37:as-of-2024-07-01",
+        "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+        "upstream_package_id": "ecfr-title-37-as-of-2024-07-01"
+      },
+      "ecfr_presentation_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+      "failures": [],
+      "fixture_id": "cfr-annual-2024-title37",
+      "notes": "Compact official annual Title 37 GovInfo CFR recipe. Official artifact identity is separate from any eCFR presentation identity.",
+      "package": {
+        "content_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+        "date_issued": "2024-07-01",
+        "edition": "annual-2024",
+        "formats": {
+          "mods": {
+            "artifact_sha256": "2d48f198bd9dd9daf94f607018a736eb273f939080876284be58281595661079",
+            "format": "mods",
+            "media_type": "application/mods+xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/mods.xml",
+            "upstream_package_id": "CFR-2024-title37"
+          },
+          "pdf": {
+            "artifact_sha256": "0274dea8220db2201049267d415a12523f2d1bb2843922a9f4b10473df04e7f1",
+            "byte_size": 4500000,
+            "format": "pdf",
+            "media_type": "application/pdf",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37.pdf",
+            "upstream_package_id": "CFR-2024-title37"
+          },
+          "xml": {
+            "artifact_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+            "byte_size": 3000000,
+            "format": "xml",
+            "media_type": "application/xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+            "upstream_package_id": "CFR-2024-title37"
+          }
+        },
+        "package_id": "CFR-2024-title37",
+        "provider": "govinfo",
+        "retrieved_at": "2024-09-01T10:00:00Z",
+        "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+        "title": "37",
+        "volume": "1",
+        "year": "2024"
+      },
+      "schema_version": "cfr-annual-fixture-v1",
+      "sections": [
+        {
+          "citation": "37 CFR 1.56",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "6e300769fddae278f2bbc2c3c08a1b11acf5eaf818e419714c74954a1c23d9c9",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-56",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-56.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "91a9281e55c49776c47a98859e791a0ba5471c25f894e085314825e8d06dcfb7",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-56",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-56.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Duty to disclose information material to patentability",
+          "part": "1",
+          "section": "1.56",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.56, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.97",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "797e5ff1353633b259e731c435aea663507d83a44504225c3d046b2114e197bc",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-97",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-97.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "7830f6f55d734928499f2ea9cebbaa8815c89ed02b4ce5ad1ada8a7b34f0d38a",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-97",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-97.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Filing of information disclosure statement",
+          "part": "1",
+          "section": "1.97",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.97, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.98",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "336ca1074781b3a7c2ae614a22b1a5d4af35c24dee16a38082975803137d16ff",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-98",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-98.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "47be760669ab169406cb16bccb91eeef7c02d19a3e7e4de508cae4aa2347d042",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-98",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-98.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Content of information disclosure statement",
+          "part": "1",
+          "section": "1.98",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.98, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 41.50",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "256bea9168a6b1f5142292591c2c2855892c4c770bb9f40381c323f93acb7808",
+              "byte_size": 2100,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part41-sec41-50",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part41-sec41-50.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "9541404776859fde19c381d9d72687f562701778a805e67738fc67bbfac1c92f",
+              "byte_size": 2050,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part41-sec41-50",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part41-sec41-50.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Decisions and other actions by the Board",
+          "part": "41",
+          "section": "41.50",
+          "text_excerpt": "[official annual excerpt 37 CFR 41.50, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 42.100",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "5cdd84184396847a2e76423cf14348235ae017fdd8a858dd34ac382ca34cb368",
+              "byte_size": 2110,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part42-sec42-100",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part42-sec42-100.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "b574165d662cfcb51f326795dc6bf69b88c02ad2145faf97b07ca2ec4db19b5c",
+              "byte_size": 2060,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part42-sec42-100",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part42-sec42-100.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Procedure; pendency",
+          "part": "42",
+          "section": "42.100",
+          "text_excerpt": "[official annual excerpt 37 CFR 42.100, 2024 edition]",
+          "title": "37"
+        }
+      ],
+      "title": "37"
+    },
+    "CFR-2023-title37": {
+      "ecfr_presentation": {
+        "artifact_sha256": "d2065510f49c5ae45c4f2202a911fd6015205785d73e4df0227c6c45b49d591b",
+        "media_type": "application/xml",
+        "provider": "ecfr",
+        "role": "derived_presentation",
+        "source_id": "ecfr:title-37:as-of-2023-07-01",
+        "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2023-07-01/title-37.xml",
+        "upstream_package_id": "ecfr-title-37-as-of-2023-07-01"
+      },
+      "ecfr_presentation_sha256": "d2065510f49c5ae45c4f2202a911fd6015205785d73e4df0227c6c45b49d591b",
+      "failures": [],
+      "fixture_id": "cfr-annual-2023-title37",
+      "notes": "Compact official annual Title 37 GovInfo CFR recipe. Official artifact identity is separate from any eCFR presentation identity.",
+      "package": {
+        "content_sha256": "f4460158c37e0f3ac9c814d380808b43d9f4511c6cc7cd2d38116f0edbe8e69b",
+        "date_issued": "2023-07-01",
+        "edition": "annual-2023",
+        "formats": {
+          "mods": {
+            "artifact_sha256": "dc0a4a1aaaf79c76416b92f3437982ca0e5654917ddf2100928c8406ca98ffbb",
+            "format": "mods",
+            "media_type": "application/mods+xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/mods.xml",
+            "upstream_package_id": "CFR-2023-title37"
+          },
+          "pdf": {
+            "artifact_sha256": "81f81ba90744116829a14c4a032f31188f5a4dde8a9ab8519c849c7b4d456f75",
+            "byte_size": 4500000,
+            "format": "pdf",
+            "media_type": "application/pdf",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37.pdf",
+            "upstream_package_id": "CFR-2023-title37"
+          },
+          "xml": {
+            "artifact_sha256": "f4460158c37e0f3ac9c814d380808b43d9f4511c6cc7cd2d38116f0edbe8e69b",
+            "byte_size": 3000000,
+            "format": "xml",
+            "media_type": "application/xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37.xml",
+            "upstream_package_id": "CFR-2023-title37"
+          }
+        },
+        "package_id": "CFR-2023-title37",
+        "provider": "govinfo",
+        "retrieved_at": "2024-09-01T10:00:00Z",
+        "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37.xml",
+        "title": "37",
+        "volume": "1",
+        "year": "2023"
+      },
+      "schema_version": "cfr-annual-fixture-v1",
+      "sections": [
+        {
+          "citation": "37 CFR 1.56",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "c1a4d0976d73f400704beceb3d5a403d162f34d07e6869de518092eb2bb6be37",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part1-sec1-56",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part1-sec1-56.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "821a7c7f023620f5034ec00a258dd8398c40bafe4ab07ebd3671ce495ee17489",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part1-sec1-56",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part1-sec1-56.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Duty to disclose information material to patentability",
+          "part": "1",
+          "section": "1.56",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.56, 2023 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.97",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "7955d066a1d5f316d08506e1d330921bb76a960a6e23ac27518a0bbc97f44138",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part1-sec1-97",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part1-sec1-97.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "22dd3b773653ac105892a40841b00c4fa2faba7d5937291bdcf41bce8bd3cb61",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part1-sec1-97",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part1-sec1-97.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Filing of information disclosure statement",
+          "part": "1",
+          "section": "1.97",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.97, 2023 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.98",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "802a7929c4786afd0b4df03e6e7378af57d7743a47618bd829e2f43844f6b534",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part1-sec1-98",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part1-sec1-98.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "91e17c7477896490168aeee860bef4ff0e27cd20eb1603333f079cf0bdb851b5",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part1-sec1-98",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part1-sec1-98.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Content of information disclosure statement",
+          "part": "1",
+          "section": "1.98",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.98, 2023 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 41.50",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "d042f377e4e91d7501cb1abfef2ea9b8b3ed3a1caa2754a284c2da45148fd8a9",
+              "byte_size": 2100,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part41-sec41-50",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part41-sec41-50.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "d30a9da4c2840ea4c3c4f49cc8fa27e6105c77cc5fa5a25357e3b35a5b971333",
+              "byte_size": 2050,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part41-sec41-50",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part41-sec41-50.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Decisions and other actions by the Board",
+          "part": "41",
+          "section": "41.50",
+          "text_excerpt": "[official annual excerpt 37 CFR 41.50, 2023 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 42.100",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "24487fbb99833d6d8dda1d508a2174b9d67c09fcdd3c1342bb0fff44280241c4",
+              "byte_size": 2110,
+              "format": "pdf",
+              "granule_id": "CFR-2023-title37-part42-sec42-100",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/pdf/CFR-2023-title37-part42-sec42-100.pdf",
+              "upstream_package_id": "CFR-2023-title37"
+            },
+            "xml": {
+              "artifact_sha256": "0b412de4be55ec732fad4c50a4705d11ffd3ed5b818d9049771e5b8b16bd451d",
+              "byte_size": 2060,
+              "format": "xml",
+              "granule_id": "CFR-2023-title37-part42-sec42-100",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37/xml/CFR-2023-title37-part42-sec42-100.xml",
+              "upstream_package_id": "CFR-2023-title37"
+            }
+          },
+          "heading": "Procedure; pendency",
+          "part": "42",
+          "section": "42.100",
+          "text_excerpt": "[official annual excerpt 37 CFR 42.100, 2023 edition]",
+          "title": "37"
+        }
+      ],
+      "title": "37"
+    },
+    "CFR-2024-title37": {
+      "ecfr_presentation": {
+        "artifact_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+        "media_type": "application/xml",
+        "provider": "ecfr",
+        "role": "derived_presentation",
+        "source_id": "ecfr:title-37:as-of-2024-07-01",
+        "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+        "upstream_package_id": "ecfr-title-37-as-of-2024-07-01"
+      },
+      "ecfr_presentation_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+      "failures": [],
+      "fixture_id": "cfr-annual-2024-title37",
+      "notes": "Compact official annual Title 37 GovInfo CFR recipe. Official artifact identity is separate from any eCFR presentation identity.",
+      "package": {
+        "content_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+        "date_issued": "2024-07-01",
+        "edition": "annual-2024",
+        "formats": {
+          "mods": {
+            "artifact_sha256": "2d48f198bd9dd9daf94f607018a736eb273f939080876284be58281595661079",
+            "format": "mods",
+            "media_type": "application/mods+xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/mods.xml",
+            "upstream_package_id": "CFR-2024-title37"
+          },
+          "pdf": {
+            "artifact_sha256": "0274dea8220db2201049267d415a12523f2d1bb2843922a9f4b10473df04e7f1",
+            "byte_size": 4500000,
+            "format": "pdf",
+            "media_type": "application/pdf",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37.pdf",
+            "upstream_package_id": "CFR-2024-title37"
+          },
+          "xml": {
+            "artifact_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+            "byte_size": 3000000,
+            "format": "xml",
+            "media_type": "application/xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+            "upstream_package_id": "CFR-2024-title37"
+          }
+        },
+        "package_id": "CFR-2024-title37",
+        "provider": "govinfo",
+        "retrieved_at": "2024-09-01T10:00:00Z",
+        "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+        "title": "37",
+        "volume": "1",
+        "year": "2024"
+      },
+      "schema_version": "cfr-annual-fixture-v1",
+      "sections": [
+        {
+          "citation": "37 CFR 1.56",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "6e300769fddae278f2bbc2c3c08a1b11acf5eaf818e419714c74954a1c23d9c9",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-56",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-56.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "91a9281e55c49776c47a98859e791a0ba5471c25f894e085314825e8d06dcfb7",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-56",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-56.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Duty to disclose information material to patentability",
+          "part": "1",
+          "section": "1.56",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.56, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.97",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "797e5ff1353633b259e731c435aea663507d83a44504225c3d046b2114e197bc",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-97",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-97.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "7830f6f55d734928499f2ea9cebbaa8815c89ed02b4ce5ad1ada8a7b34f0d38a",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-97",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-97.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Filing of information disclosure statement",
+          "part": "1",
+          "section": "1.97",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.97, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.98",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "336ca1074781b3a7c2ae614a22b1a5d4af35c24dee16a38082975803137d16ff",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-98",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-98.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "47be760669ab169406cb16bccb91eeef7c02d19a3e7e4de508cae4aa2347d042",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-98",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-98.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Content of information disclosure statement",
+          "part": "1",
+          "section": "1.98",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.98, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 41.50",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "256bea9168a6b1f5142292591c2c2855892c4c770bb9f40381c323f93acb7808",
+              "byte_size": 2100,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part41-sec41-50",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part41-sec41-50.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "9541404776859fde19c381d9d72687f562701778a805e67738fc67bbfac1c92f",
+              "byte_size": 2050,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part41-sec41-50",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part41-sec41-50.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Decisions and other actions by the Board",
+          "part": "41",
+          "section": "41.50",
+          "text_excerpt": "[official annual excerpt 37 CFR 41.50, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 42.100",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "5cdd84184396847a2e76423cf14348235ae017fdd8a858dd34ac382ca34cb368",
+              "byte_size": 2110,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part42-sec42-100",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part42-sec42-100.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "b574165d662cfcb51f326795dc6bf69b88c02ad2145faf97b07ca2ec4db19b5c",
+              "byte_size": 2060,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part42-sec42-100",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part42-sec42-100.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Procedure; pendency",
+          "part": "42",
+          "section": "42.100",
+          "text_excerpt": "[official annual excerpt 37 CFR 42.100, 2024 edition]",
+          "title": "37"
+        }
+      ],
+      "title": "37"
+    },
+    "conflict": {
+      "ecfr_presentation": {
+        "artifact_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+        "media_type": "application/xml",
+        "provider": "ecfr",
+        "role": "derived_presentation",
+        "source_id": "ecfr:title-37:as-of-2024-07-01",
+        "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+        "upstream_package_id": "ecfr-title-37-as-of-2024-07-01"
+      },
+      "ecfr_presentation_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+      "failures": [],
+      "fixture_id": "cfr-annual-2024-title37",
+      "notes": "Compact official annual Title 37 GovInfo CFR recipe. Official artifact identity is separate from any eCFR presentation identity.",
+      "package": {
+        "content_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+        "date_issued": "2024-07-01",
+        "edition": "annual-2024",
+        "formats": {
+          "mods": {
+            "artifact_sha256": "2d48f198bd9dd9daf94f607018a736eb273f939080876284be58281595661079",
+            "format": "mods",
+            "media_type": "application/mods+xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/mods.xml",
+            "upstream_package_id": "CFR-2024-title37"
+          },
+          "pdf": {
+            "artifact_sha256": "0274dea8220db2201049267d415a12523f2d1bb2843922a9f4b10473df04e7f1",
+            "byte_size": 4500000,
+            "format": "pdf",
+            "media_type": "application/pdf",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37.pdf",
+            "upstream_package_id": "CFR-2024-title37"
+          },
+          "xml": {
+            "artifact_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+            "byte_size": 3000000,
+            "format": "xml",
+            "media_type": "application/xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+            "upstream_package_id": "CFR-2024-title37"
+          }
+        },
+        "package_id": "CFR-2024-title37",
+        "provider": "govinfo",
+        "retrieved_at": "2024-09-01T10:00:00Z",
+        "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+        "title": "37",
+        "volume": "1",
+        "year": "2024"
+      },
+      "schema_version": "cfr-annual-fixture-v1",
+      "sections": [
+        {
+          "citation": "37 CFR 1.56",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "6e300769fddae278f2bbc2c3c08a1b11acf5eaf818e419714c74954a1c23d9c9",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-56",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-56.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "91a9281e55c49776c47a98859e791a0ba5471c25f894e085314825e8d06dcfb7",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-56",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-56.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Duty to disclose information material to patentability",
+          "part": "1",
+          "section": "1.56",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.56, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.97",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "797e5ff1353633b259e731c435aea663507d83a44504225c3d046b2114e197bc",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-97",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-97.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "7830f6f55d734928499f2ea9cebbaa8815c89ed02b4ce5ad1ada8a7b34f0d38a",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-97",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-97.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Filing of information disclosure statement",
+          "part": "1",
+          "section": "1.97",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.97, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.98",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "336ca1074781b3a7c2ae614a22b1a5d4af35c24dee16a38082975803137d16ff",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-98",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-98.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "47be760669ab169406cb16bccb91eeef7c02d19a3e7e4de508cae4aa2347d042",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-98",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-98.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Content of information disclosure statement",
+          "part": "1",
+          "section": "1.98",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.98, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 41.50",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "256bea9168a6b1f5142292591c2c2855892c4c770bb9f40381c323f93acb7808",
+              "byte_size": 2100,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part41-sec41-50",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part41-sec41-50.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "9541404776859fde19c381d9d72687f562701778a805e67738fc67bbfac1c92f",
+              "byte_size": 2050,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part41-sec41-50",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part41-sec41-50.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Decisions and other actions by the Board",
+          "part": "41",
+          "section": "41.50",
+          "text_excerpt": "[official annual excerpt 37 CFR 41.50, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 42.100",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "5cdd84184396847a2e76423cf14348235ae017fdd8a858dd34ac382ca34cb368",
+              "byte_size": 2110,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part42-sec42-100",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part42-sec42-100.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "b574165d662cfcb51f326795dc6bf69b88c02ad2145faf97b07ca2ec4db19b5c",
+              "byte_size": 2060,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part42-sec42-100",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part42-sec42-100.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Procedure; pendency",
+          "part": "42",
+          "section": "42.100",
+          "text_excerpt": "[official annual excerpt 37 CFR 42.100, 2024 edition]",
+          "title": "37"
+        }
+      ],
+      "title": "37"
+    },
+    "missing": {
+      "ecfr_presentation": {
+        "artifact_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+        "media_type": "application/xml",
+        "provider": "ecfr",
+        "role": "derived_presentation",
+        "source_id": "ecfr:title-37:as-of-2024-07-01",
+        "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+        "upstream_package_id": "ecfr-title-37-as-of-2024-07-01"
+      },
+      "ecfr_presentation_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+      "failures": [],
+      "fixture_id": "cfr-annual-2024-missing-granules",
+      "notes": "Compact official annual Title 37 GovInfo CFR recipe. Official artifact identity is separate from any eCFR presentation identity.",
+      "package": {
+        "content_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+        "date_issued": "2024-07-01",
+        "edition": "annual-2024",
+        "formats": {
+          "mods": {
+            "artifact_sha256": "2d48f198bd9dd9daf94f607018a736eb273f939080876284be58281595661079",
+            "format": "mods",
+            "media_type": "application/mods+xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/mods.xml",
+            "upstream_package_id": "CFR-2024-title37"
+          },
+          "pdf": {
+            "artifact_sha256": "0274dea8220db2201049267d415a12523f2d1bb2843922a9f4b10473df04e7f1",
+            "byte_size": 4500000,
+            "format": "pdf",
+            "media_type": "application/pdf",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37.pdf",
+            "upstream_package_id": "CFR-2024-title37"
+          },
+          "xml": {
+            "artifact_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+            "byte_size": 3000000,
+            "format": "xml",
+            "media_type": "application/xml",
+            "role": "official_artifact",
+            "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+            "upstream_package_id": "CFR-2024-title37"
+          }
+        },
+        "package_id": "CFR-2024-title37",
+        "provider": "govinfo",
+        "retrieved_at": "2024-09-01T10:00:00Z",
+        "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+        "title": "37",
+        "volume": "1",
+        "year": "2024"
+      },
+      "schema_version": "cfr-annual-fixture-v1",
+      "sections": [
+        {
+          "citation": "37 CFR 1.56",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "6e300769fddae278f2bbc2c3c08a1b11acf5eaf818e419714c74954a1c23d9c9",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-56",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-56.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "91a9281e55c49776c47a98859e791a0ba5471c25f894e085314825e8d06dcfb7",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-56",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-56.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Duty to disclose information material to patentability",
+          "part": "1",
+          "section": "1.56",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.56, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.97",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "797e5ff1353633b259e731c435aea663507d83a44504225c3d046b2114e197bc",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-97",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-97.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "7830f6f55d734928499f2ea9cebbaa8815c89ed02b4ce5ad1ada8a7b34f0d38a",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-97",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-97.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Filing of information disclosure statement",
+          "part": "1",
+          "section": "1.97",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.97, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 1.98",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "336ca1074781b3a7c2ae614a22b1a5d4af35c24dee16a38082975803137d16ff",
+              "byte_size": 2090,
+              "format": "pdf",
+              "granule_id": "CFR-2024-title37-part1-sec1-98",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-98.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "47be760669ab169406cb16bccb91eeef7c02d19a3e7e4de508cae4aa2347d042",
+              "byte_size": 2040,
+              "format": "xml",
+              "granule_id": "CFR-2024-title37-part1-sec1-98",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-98.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "heading": "Content of information disclosure statement",
+          "part": "1",
+          "section": "1.98",
+          "text_excerpt": "[official annual excerpt 37 CFR 1.98, 2024 edition]",
+          "title": "37"
+        },
+        {
+          "citation": "37 CFR 42.100",
+          "formats": {},
+          "heading": "Procedure; pendency",
+          "part": "42",
+          "section": "42.100",
+          "text_excerpt": "[official annual excerpt 37 CFR 42.100, 2024 edition]",
+          "title": "37"
+        }
+      ],
+      "title": "37"
+    }
+  },
+  "cases": {
+    "annual_edition_rollover": {
+      "as_of": "2024-08-01",
+      "notes": "Select CFR-2024-title37 after July 1 2024 rollover."
+    },
+    "changed_removed_sections": {
+      "baseline_package_id": "CFR-2023-title37",
+      "baseline_sections": {
+        "1.56": {
+          "content_sha256": "c8e56dc639251a44c246b3e098b87ce3525402ca29b2e0825c7e1ab759f593f3",
+          "heading": "Duty to disclose information material to patentability",
+          "part": "1",
+          "section": "1.56",
+          "text_excerpt": "[official annual 2023] duty to disclose baseline text"
+        },
+        "1.97": {
+          "content_sha256": "feb10c4a807925bcf07753e71f82810f5a2c8c6a43a91fae4e797c7a5a553378",
+          "heading": "Filing of information disclosure statement",
+          "part": "1",
+          "section": "1.97",
+          "text_excerpt": "[official annual 2023] IDS filing (same)"
+        },
+        "99.99": {
+          "content_sha256": "3bd2b4b5cbf7f2f07fd0810ce2e37c9773f95901d3883b8fed7d271ff0a3f28b",
+          "heading": "Obsolete reserved section",
+          "part": "99",
+          "section": "99.99",
+          "text_excerpt": "[official annual 2023] removed in subsequent edition"
+        }
+      },
+      "baseline_year": "2023",
+      "current_package_id": "CFR-2024-title37",
+      "current_sections": {
+        "1.56": {
+          "content_sha256": "440f083770a3fa4b31f6bd1589df6aad4a9b736b0d41dbf982ca90119562ba62",
+          "heading": "Duty to disclose information material to patentability",
+          "part": "1",
+          "section": "1.56",
+          "text_excerpt": "[official annual 2024] duty to disclose revised text"
+        },
+        "1.97": {
+          "content_sha256": "feb10c4a807925bcf07753e71f82810f5a2c8c6a43a91fae4e797c7a5a553378",
+          "heading": "Filing of information disclosure statement",
+          "part": "1",
+          "section": "1.97",
+          "text_excerpt": "[official annual 2023] IDS filing (same)"
+        },
+        "1.98": {
+          "content_sha256": "9713f69cf6f7020de85e1bf87f56752a6981cdf74348c53dd98ca28b593ad1e2",
+          "heading": "Content of information disclosure statement",
+          "part": "1",
+          "section": "1.98",
+          "text_excerpt": "[official annual 2024] IDS content (added)"
+        }
+      }
+    },
+    "conflicting_text": {
+      "annual": {
+        "ecfr_presentation": {
+          "artifact_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+          "media_type": "application/xml",
+          "provider": "ecfr",
+          "role": "derived_presentation",
+          "source_id": "ecfr:title-37:as-of-2024-07-01",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+          "upstream_package_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        "ecfr_presentation_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+        "failures": [],
+        "fixture_id": "cfr-annual-2024-title37",
+        "notes": "Compact official annual Title 37 GovInfo CFR recipe. Official artifact identity is separate from any eCFR presentation identity.",
+        "package": {
+          "content_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+          "date_issued": "2024-07-01",
+          "edition": "annual-2024",
+          "formats": {
+            "mods": {
+              "artifact_sha256": "2d48f198bd9dd9daf94f607018a736eb273f939080876284be58281595661079",
+              "format": "mods",
+              "media_type": "application/mods+xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/mods.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "pdf": {
+              "artifact_sha256": "0274dea8220db2201049267d415a12523f2d1bb2843922a9f4b10473df04e7f1",
+              "byte_size": 4500000,
+              "format": "pdf",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+              "byte_size": 3000000,
+              "format": "xml",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "package_id": "CFR-2024-title37",
+          "provider": "govinfo",
+          "retrieved_at": "2024-09-01T10:00:00Z",
+          "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+          "title": "37",
+          "volume": "1",
+          "year": "2024"
+        },
+        "schema_version": "cfr-annual-fixture-v1",
+        "sections": [
+          {
+            "citation": "37 CFR 1.56",
+            "formats": {
+              "pdf": {
+                "artifact_sha256": "6e300769fddae278f2bbc2c3c08a1b11acf5eaf818e419714c74954a1c23d9c9",
+                "byte_size": 2090,
+                "format": "pdf",
+                "granule_id": "CFR-2024-title37-part1-sec1-56",
+                "media_type": "application/pdf",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-56.pdf",
+                "upstream_package_id": "CFR-2024-title37"
+              },
+              "xml": {
+                "artifact_sha256": "91a9281e55c49776c47a98859e791a0ba5471c25f894e085314825e8d06dcfb7",
+                "byte_size": 2040,
+                "format": "xml",
+                "granule_id": "CFR-2024-title37-part1-sec1-56",
+                "media_type": "application/xml",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-56.xml",
+                "upstream_package_id": "CFR-2024-title37"
+              }
+            },
+            "heading": "Duty to disclose information material to patentability",
+            "part": "1",
+            "section": "1.56",
+            "text_excerpt": "[official annual excerpt 37 CFR 1.56, 2024 edition]",
+            "title": "37"
+          },
+          {
+            "citation": "37 CFR 1.97",
+            "formats": {
+              "pdf": {
+                "artifact_sha256": "797e5ff1353633b259e731c435aea663507d83a44504225c3d046b2114e197bc",
+                "byte_size": 2090,
+                "format": "pdf",
+                "granule_id": "CFR-2024-title37-part1-sec1-97",
+                "media_type": "application/pdf",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-97.pdf",
+                "upstream_package_id": "CFR-2024-title37"
+              },
+              "xml": {
+                "artifact_sha256": "7830f6f55d734928499f2ea9cebbaa8815c89ed02b4ce5ad1ada8a7b34f0d38a",
+                "byte_size": 2040,
+                "format": "xml",
+                "granule_id": "CFR-2024-title37-part1-sec1-97",
+                "media_type": "application/xml",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-97.xml",
+                "upstream_package_id": "CFR-2024-title37"
+              }
+            },
+            "heading": "Filing of information disclosure statement",
+            "part": "1",
+            "section": "1.97",
+            "text_excerpt": "[official annual excerpt 37 CFR 1.97, 2024 edition]",
+            "title": "37"
+          },
+          {
+            "citation": "37 CFR 1.98",
+            "formats": {
+              "pdf": {
+                "artifact_sha256": "336ca1074781b3a7c2ae614a22b1a5d4af35c24dee16a38082975803137d16ff",
+                "byte_size": 2090,
+                "format": "pdf",
+                "granule_id": "CFR-2024-title37-part1-sec1-98",
+                "media_type": "application/pdf",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-98.pdf",
+                "upstream_package_id": "CFR-2024-title37"
+              },
+              "xml": {
+                "artifact_sha256": "47be760669ab169406cb16bccb91eeef7c02d19a3e7e4de508cae4aa2347d042",
+                "byte_size": 2040,
+                "format": "xml",
+                "granule_id": "CFR-2024-title37-part1-sec1-98",
+                "media_type": "application/xml",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-98.xml",
+                "upstream_package_id": "CFR-2024-title37"
+              }
+            },
+            "heading": "Content of information disclosure statement",
+            "part": "1",
+            "section": "1.98",
+            "text_excerpt": "[official annual excerpt 37 CFR 1.98, 2024 edition]",
+            "title": "37"
+          },
+          {
+            "citation": "37 CFR 41.50",
+            "formats": {
+              "pdf": {
+                "artifact_sha256": "256bea9168a6b1f5142292591c2c2855892c4c770bb9f40381c323f93acb7808",
+                "byte_size": 2100,
+                "format": "pdf",
+                "granule_id": "CFR-2024-title37-part41-sec41-50",
+                "media_type": "application/pdf",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part41-sec41-50.pdf",
+                "upstream_package_id": "CFR-2024-title37"
+              },
+              "xml": {
+                "artifact_sha256": "9541404776859fde19c381d9d72687f562701778a805e67738fc67bbfac1c92f",
+                "byte_size": 2050,
+                "format": "xml",
+                "granule_id": "CFR-2024-title37-part41-sec41-50",
+                "media_type": "application/xml",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part41-sec41-50.xml",
+                "upstream_package_id": "CFR-2024-title37"
+              }
+            },
+            "heading": "Decisions and other actions by the Board",
+            "part": "41",
+            "section": "41.50",
+            "text_excerpt": "[official annual excerpt 37 CFR 41.50, 2024 edition]",
+            "title": "37"
+          },
+          {
+            "citation": "37 CFR 42.100",
+            "formats": {
+              "pdf": {
+                "artifact_sha256": "5cdd84184396847a2e76423cf14348235ae017fdd8a858dd34ac382ca34cb368",
+                "byte_size": 2110,
+                "format": "pdf",
+                "granule_id": "CFR-2024-title37-part42-sec42-100",
+                "media_type": "application/pdf",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part42-sec42-100.pdf",
+                "upstream_package_id": "CFR-2024-title37"
+              },
+              "xml": {
+                "artifact_sha256": "b574165d662cfcb51f326795dc6bf69b88c02ad2145faf97b07ca2ec4db19b5c",
+                "byte_size": 2060,
+                "format": "xml",
+                "granule_id": "CFR-2024-title37-part42-sec42-100",
+                "media_type": "application/xml",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part42-sec42-100.xml",
+                "upstream_package_id": "CFR-2024-title37"
+              }
+            },
+            "heading": "Procedure; pendency",
+            "part": "42",
+            "section": "42.100",
+            "text_excerpt": "[official annual excerpt 37 CFR 42.100, 2024 edition]",
+            "title": "37"
+          }
+        ],
+        "title": "37"
+      },
+      "ecfr": {
+        "failures": [],
+        "fixture_id": "ecfr-conflict-1.56",
+        "notes": "Compact current Title 37 eCFR recipe. Labeled unofficial presentation; up_to_date_as_of and amendment/effective metadata retained. Official annual CFR identity lives in cfr_annual fixtures, not here.",
+        "packages": {
+          "full_xml": {
+            "byte_size": 2500000,
+            "content_kind": "full_xml",
+            "content_sha256": "2c20fc0886291a970470f1740cc8226fcc7b198cbae4eb8b093101ab3af61bda",
+            "media_type": "application/xml",
+            "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+            "up_to_date_as_of": "2024-07-01",
+            "version_id": "ecfr-title-37-as-of-2024-07-01"
+          },
+          "structure": {
+            "byte_size": 4096,
+            "content_kind": "structure",
+            "content_sha256": "36131cbbc0d1425d3c2486264746f45f543025613ed1fc82472acc9b9715b398",
+            "media_type": "application/json",
+            "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+            "up_to_date_as_of": "2024-07-01",
+            "version_id": "ecfr-title-37-as-of-2024-07-01"
+          },
+          "version_history": {
+            "byte_size": 8192,
+            "content_kind": "version_history",
+            "content_sha256": "2d86185ec27762eb7165f4dd7174003711d7ed2d3bf04b1fc2be669228ab6407",
+            "media_type": "application/json",
+            "source_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json",
+            "up_to_date_as_of": "2024-07-01",
+            "version_id": "ecfr-title-37-as-of-2024-07-01"
+          }
+        },
+        "presentation_label": "unofficial presentation",
+        "schema_version": "ecfr-crosscheck-fixture-v1",
+        "sections": [
+          {
+            "amendment": {
+              "amendatory_action": "revised",
+              "authority_citation": "35 U.S.C. 2(b)(2)",
+              "effective_date": "1992-03-16",
+              "fr_citation": "57 FR 2034",
+              "publication_date": "1992-01-17",
+              "source_citation": "57 FR 2034, Jan. 17, 1992"
+            },
+            "citation": "37 CFR 1.56",
+            "content_kind": "section",
+            "content_sha256": "f21ef214cee8e3f629af5758c1d7be1bc7a901745895aef90109d1bae5736c60",
+            "heading": "Duty to disclose information material to patentability",
+            "media_type": "application/xml",
+            "part": "1",
+            "section": "1.56",
+            "source_url": "https://www.ecfr.gov/current/title-37/section-1.56",
+            "text_excerpt": "[ecfr editorial conflict] duty to disclose diverges from official annual print [conflict]",
+            "title": "37",
+            "up_to_date_as_of": "2024-07-01",
+            "version_id": "ecfr-title-37-as-of-2024-07-01"
+          },
+          {
+            "amendment": null,
+            "citation": "37 CFR 1.97",
+            "content_kind": "section",
+            "content_sha256": "fe1b38fb06a8adf4a2df3bf2c53c821ab8cd9aad6e7e7301f43cf54590c7ba33",
+            "heading": "Filing of information disclosure statement",
+            "media_type": "application/xml",
+            "part": "1",
+            "section": "1.97",
+            "source_url": "https://www.ecfr.gov/current/title-37/section-1.97",
+            "text_excerpt": "(a) In order for an applicant for a patent or for a reissue of a patent to have an information disclosure statement in a nonprovisional patent application...",
+            "title": "37",
+            "up_to_date_as_of": "2024-07-01",
+            "version_id": "ecfr-title-37-as-of-2024-07-01"
+          },
+          {
+            "amendment": null,
+            "citation": "37 CFR 1.98",
+            "content_kind": "section",
+            "content_sha256": "65de97977c691d5cfc84fab7040040363add9d63a261fe6018fc71442a197c53",
+            "heading": "Content of information disclosure statement",
+            "media_type": "application/xml",
+            "part": "1",
+            "section": "1.98",
+            "source_url": "https://www.ecfr.gov/current/title-37/section-1.98",
+            "text_excerpt": "[excerpt 37 CFR 1.98]",
+            "title": "37",
+            "up_to_date_as_of": "2024-07-01",
+            "version_id": "ecfr-title-37-as-of-2024-07-01"
+          },
+          {
+            "amendment": null,
+            "citation": "37 CFR 41.50",
+            "content_kind": "section",
+            "content_sha256": "d68482e0ac99cf718eae7c34a6195368e213a55993a761ff8c56ce86f55aaa44",
+            "heading": "Decisions and other actions by the Board",
+            "media_type": "application/xml",
+            "part": "41",
+            "section": "41.50",
+            "source_url": "https://www.ecfr.gov/current/title-37/section-41.50",
+            "text_excerpt": "[excerpt 37 CFR 41.50]",
+            "title": "37",
+            "up_to_date_as_of": "2024-07-01",
+            "version_id": "ecfr-title-37-as-of-2024-07-01"
+          },
+          {
+            "amendment": {
+              "amendatory_action": "added",
+              "authority_citation": "35 U.S.C. 316",
+              "effective_date": "2012-09-16",
+              "fr_citation": "77 FR 48680",
+              "publication_date": "2012-08-14",
+              "source_citation": "77 FR 48680, Aug. 14, 2012"
+            },
+            "citation": "37 CFR 42.100",
+            "content_kind": "section",
+            "content_sha256": "057bc401a7ee7e59a0ac3bd5ea0aef4fe0b25633b4c3d7d2f90759efaff37238",
+            "heading": "Procedure; pendency",
+            "media_type": "application/xml",
+            "part": "42",
+            "section": "42.100",
+            "source_url": "https://www.ecfr.gov/current/title-37/section-42.100",
+            "text_excerpt": "[excerpt 37 CFR 42.100]",
+            "title": "37",
+            "up_to_date_as_of": "2024-07-01",
+            "version_id": "ecfr-title-37-as-of-2024-07-01"
+          }
+        ],
+        "title": "37",
+        "version": {
+          "content_sha256": "2c20fc0886291a970470f1740cc8226fcc7b198cbae4eb8b093101ab3af61bda",
+          "full_xml_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+          "is_current_snapshot": true,
+          "provider": "ecfr",
+          "retrieved_at": "2024-07-15T12:00:00Z",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+          "structure_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01",
+          "versions_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json"
+        },
+        "version_history": [
+          "2023-07-01",
+          "2024-01-01",
+          "2024-07-01"
+        ]
+      },
+      "sections": [
+        "1.56"
+      ]
+    },
+    "missing_granules": {
+      "annual": {
+        "ecfr_presentation": {
+          "artifact_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+          "media_type": "application/xml",
+          "provider": "ecfr",
+          "role": "derived_presentation",
+          "source_id": "ecfr:title-37:as-of-2024-07-01",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+          "upstream_package_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        "ecfr_presentation_sha256": "c24135a2cefbff1ac78b03492cac2227f236a96508b9b57179c0270e92770d4d",
+        "failures": [],
+        "fixture_id": "cfr-annual-2024-missing-granules",
+        "notes": "Compact official annual Title 37 GovInfo CFR recipe. Official artifact identity is separate from any eCFR presentation identity.",
+        "package": {
+          "content_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+          "date_issued": "2024-07-01",
+          "edition": "annual-2024",
+          "formats": {
+            "mods": {
+              "artifact_sha256": "2d48f198bd9dd9daf94f607018a736eb273f939080876284be58281595661079",
+              "format": "mods",
+              "media_type": "application/mods+xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/mods.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "pdf": {
+              "artifact_sha256": "0274dea8220db2201049267d415a12523f2d1bb2843922a9f4b10473df04e7f1",
+              "byte_size": 4500000,
+              "format": "pdf",
+              "media_type": "application/pdf",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37.pdf",
+              "upstream_package_id": "CFR-2024-title37"
+            },
+            "xml": {
+              "artifact_sha256": "29df01158775bcceb32c24148647b8ad4ba4477c5697807f143123b0266e5d80",
+              "byte_size": 3000000,
+              "format": "xml",
+              "media_type": "application/xml",
+              "role": "official_artifact",
+              "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+              "upstream_package_id": "CFR-2024-title37"
+            }
+          },
+          "package_id": "CFR-2024-title37",
+          "provider": "govinfo",
+          "retrieved_at": "2024-09-01T10:00:00Z",
+          "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37.xml",
+          "title": "37",
+          "volume": "1",
+          "year": "2024"
+        },
+        "schema_version": "cfr-annual-fixture-v1",
+        "sections": [
+          {
+            "citation": "37 CFR 1.56",
+            "formats": {
+              "pdf": {
+                "artifact_sha256": "6e300769fddae278f2bbc2c3c08a1b11acf5eaf818e419714c74954a1c23d9c9",
+                "byte_size": 2090,
+                "format": "pdf",
+                "granule_id": "CFR-2024-title37-part1-sec1-56",
+                "media_type": "application/pdf",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-56.pdf",
+                "upstream_package_id": "CFR-2024-title37"
+              },
+              "xml": {
+                "artifact_sha256": "91a9281e55c49776c47a98859e791a0ba5471c25f894e085314825e8d06dcfb7",
+                "byte_size": 2040,
+                "format": "xml",
+                "granule_id": "CFR-2024-title37-part1-sec1-56",
+                "media_type": "application/xml",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-56.xml",
+                "upstream_package_id": "CFR-2024-title37"
+              }
+            },
+            "heading": "Duty to disclose information material to patentability",
+            "part": "1",
+            "section": "1.56",
+            "text_excerpt": "[official annual excerpt 37 CFR 1.56, 2024 edition]",
+            "title": "37"
+          },
+          {
+            "citation": "37 CFR 1.97",
+            "formats": {
+              "pdf": {
+                "artifact_sha256": "797e5ff1353633b259e731c435aea663507d83a44504225c3d046b2114e197bc",
+                "byte_size": 2090,
+                "format": "pdf",
+                "granule_id": "CFR-2024-title37-part1-sec1-97",
+                "media_type": "application/pdf",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-97.pdf",
+                "upstream_package_id": "CFR-2024-title37"
+              },
+              "xml": {
+                "artifact_sha256": "7830f6f55d734928499f2ea9cebbaa8815c89ed02b4ce5ad1ada8a7b34f0d38a",
+                "byte_size": 2040,
+                "format": "xml",
+                "granule_id": "CFR-2024-title37-part1-sec1-97",
+                "media_type": "application/xml",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-97.xml",
+                "upstream_package_id": "CFR-2024-title37"
+              }
+            },
+            "heading": "Filing of information disclosure statement",
+            "part": "1",
+            "section": "1.97",
+            "text_excerpt": "[official annual excerpt 37 CFR 1.97, 2024 edition]",
+            "title": "37"
+          },
+          {
+            "citation": "37 CFR 1.98",
+            "formats": {
+              "pdf": {
+                "artifact_sha256": "336ca1074781b3a7c2ae614a22b1a5d4af35c24dee16a38082975803137d16ff",
+                "byte_size": 2090,
+                "format": "pdf",
+                "granule_id": "CFR-2024-title37-part1-sec1-98",
+                "media_type": "application/pdf",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/pdf/CFR-2024-title37-part1-sec1-98.pdf",
+                "upstream_package_id": "CFR-2024-title37"
+              },
+              "xml": {
+                "artifact_sha256": "47be760669ab169406cb16bccb91eeef7c02d19a3e7e4de508cae4aa2347d042",
+                "byte_size": 2040,
+                "format": "xml",
+                "granule_id": "CFR-2024-title37-part1-sec1-98",
+                "media_type": "application/xml",
+                "role": "official_artifact",
+                "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37/xml/CFR-2024-title37-part1-sec1-98.xml",
+                "upstream_package_id": "CFR-2024-title37"
+              }
+            },
+            "heading": "Content of information disclosure statement",
+            "part": "1",
+            "section": "1.98",
+            "text_excerpt": "[official annual excerpt 37 CFR 1.98, 2024 edition]",
+            "title": "37"
+          },
+          {
+            "citation": "37 CFR 42.100",
+            "formats": {},
+            "heading": "Procedure; pendency",
+            "part": "42",
+            "section": "42.100",
+            "text_excerpt": "[official annual excerpt 37 CFR 42.100, 2024 edition]",
+            "title": "37"
+          }
+        ],
+        "title": "37"
+      },
+      "required_sections": [
+        "1.56",
+        "1.97",
+        "1.98",
+        "41.50",
+        "42.100"
+      ]
+    },
+    "pagination": {
+      "notes": "Two-page eCFR structure pagination with next_page_token.",
+      "pages": [
+        {
+          "endpoint": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json?page=1",
+          "items": [
+            "1.56",
+            "1.97",
+            "1.98"
+          ],
+          "next_page_token": "page-2",
+          "page": 1,
+          "page_size": 3,
+          "total_items": 5
+        },
+        {
+          "endpoint": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json?page=2",
+          "items": [
+            "41.50",
+            "42.100"
+          ],
+          "next_page_token": null,
+          "page": 2,
+          "page_size": 3,
+          "total_items": 5
+        }
+      ]
+    },
+    "point_in_time": {
+      "as_of": "2020-01-01",
+      "notes": "Historical eCFR reconstruction as of 2020-01-01."
+    }
+  },
+  "ecfr_snapshots": {
+    "2020-01-01": {
+      "failures": [],
+      "fixture_id": "ecfr-title37-historical-2020-01-01",
+      "notes": "Compact historical Title 37 eCFR as-of recipe. Current eCFR text is not used to judge a historical event without as-of reconstruction.",
+      "packages": {
+        "full_xml": {
+          "byte_size": 2100000,
+          "content_kind": "full_xml",
+          "content_sha256": "bfead8966372b4d6c91b9505cb70568745c5c27bfe94ba85d7c9b209f436fed2",
+          "media_type": "application/xml",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2020-01-01/title-37.xml",
+          "up_to_date_as_of": "2020-01-01",
+          "version_id": "ecfr-title-37-as-of-2020-01-01"
+        },
+        "structure": {
+          "byte_size": 3500,
+          "content_kind": "structure",
+          "content_sha256": "bf663b6571cb9800525c491eda0557a9741888165050320b2b11bea513056147",
+          "media_type": "application/json",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2020-01-01/title-37.json",
+          "up_to_date_as_of": "2020-01-01",
+          "version_id": "ecfr-title-37-as-of-2020-01-01"
+        }
+      },
+      "presentation_label": "unofficial presentation",
+      "schema_version": "ecfr-crosscheck-fixture-v1",
+      "sections": [
+        {
+          "amendment": {
+            "amendatory_action": "in force",
+            "effective_date": "1992-03-16",
+            "notes": "Historical text as of 2020-01-01"
+          },
+          "citation": "37 CFR 1.56",
+          "content_kind": "section",
+          "content_sha256": "65d3860841a6899d146c38e3b106ceeae7d3b3e82e44dad90998aa419830f5e8",
+          "heading": "Duty to disclose information material to patentability",
+          "media_type": "application/xml",
+          "part": "1",
+          "section": "1.56",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-1.56",
+          "text_excerpt": "[historical excerpt 37 CFR 1.56 as of 2020-01-01]",
+          "title": "37",
+          "up_to_date_as_of": "2020-01-01",
+          "version_id": "ecfr-title-37-as-of-2020-01-01"
+        },
+        {
+          "amendment": {
+            "amendatory_action": "in force",
+            "effective_date": "1992-03-16",
+            "notes": "Historical text as of 2020-01-01"
+          },
+          "citation": "37 CFR 1.97",
+          "content_kind": "section",
+          "content_sha256": "13f0e09f834b4b63d12477da12ccd296799147e79ae49c00dd83b6f667af4a21",
+          "heading": "Filing of information disclosure statement",
+          "media_type": "application/xml",
+          "part": "1",
+          "section": "1.97",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-1.97",
+          "text_excerpt": "[historical excerpt 37 CFR 1.97 as of 2020-01-01]",
+          "title": "37",
+          "up_to_date_as_of": "2020-01-01",
+          "version_id": "ecfr-title-37-as-of-2020-01-01"
+        },
+        {
+          "amendment": {
+            "amendatory_action": "in force",
+            "effective_date": "1992-03-16",
+            "notes": "Historical text as of 2020-01-01"
+          },
+          "citation": "37 CFR 1.98",
+          "content_kind": "section",
+          "content_sha256": "d86bd3d7456fb22953c8ef4f152942e5cc196622fb2f790767c1cf96e15b4442",
+          "heading": "Content of information disclosure statement",
+          "media_type": "application/xml",
+          "part": "1",
+          "section": "1.98",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-1.98",
+          "text_excerpt": "[historical excerpt 37 CFR 1.98 as of 2020-01-01]",
+          "title": "37",
+          "up_to_date_as_of": "2020-01-01",
+          "version_id": "ecfr-title-37-as-of-2020-01-01"
+        },
+        {
+          "amendment": {
+            "amendatory_action": "in force",
+            "effective_date": "2004-09-13",
+            "notes": "Historical text as of 2020-01-01"
+          },
+          "citation": "37 CFR 41.50",
+          "content_kind": "section",
+          "content_sha256": "a6557650628159092ae1618e8e63dfcd1ecf356d0b522cc8890a81a349972fb8",
+          "heading": "Decisions and other actions by the Board",
+          "media_type": "application/xml",
+          "part": "41",
+          "section": "41.50",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-41.50",
+          "text_excerpt": "[historical excerpt 37 CFR 41.50 as of 2020-01-01]",
+          "title": "37",
+          "up_to_date_as_of": "2020-01-01",
+          "version_id": "ecfr-title-37-as-of-2020-01-01"
+        }
+      ],
+      "title": "37",
+      "version": {
+        "content_sha256": "bfead8966372b4d6c91b9505cb70568745c5c27bfe94ba85d7c9b209f436fed2",
+        "full_xml_url": "https://www.ecfr.gov/api/versioner/v1/full/2020-01-01/title-37.xml",
+        "is_current_snapshot": false,
+        "provider": "ecfr",
+        "retrieved_at": "2024-07-15T12:05:00Z",
+        "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2020-01-01/title-37.json",
+        "structure_url": "https://www.ecfr.gov/api/versioner/v1/structure/2020-01-01/title-37.json",
+        "title": "37",
+        "up_to_date_as_of": "2020-01-01",
+        "version_id": "ecfr-title-37-as-of-2020-01-01",
+        "versions_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json"
+      },
+      "version_history": [
+        "2018-07-01",
+        "2019-07-01",
+        "2020-01-01"
+      ]
+    },
+    "2024-07-01": {
+      "failures": [],
+      "fixture_id": "ecfr-title37-current-2024-07-01",
+      "notes": "Compact current Title 37 eCFR recipe. Labeled unofficial presentation; up_to_date_as_of and amendment/effective metadata retained. Official annual CFR identity lives in cfr_annual fixtures, not here.",
+      "packages": {
+        "full_xml": {
+          "byte_size": 2500000,
+          "content_kind": "full_xml",
+          "content_sha256": "2c20fc0886291a970470f1740cc8226fcc7b198cbae4eb8b093101ab3af61bda",
+          "media_type": "application/xml",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        "structure": {
+          "byte_size": 4096,
+          "content_kind": "structure",
+          "content_sha256": "36131cbbc0d1425d3c2486264746f45f543025613ed1fc82472acc9b9715b398",
+          "media_type": "application/json",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        "version_history": {
+          "byte_size": 8192,
+          "content_kind": "version_history",
+          "content_sha256": "2d86185ec27762eb7165f4dd7174003711d7ed2d3bf04b1fc2be669228ab6407",
+          "media_type": "application/json",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        }
+      },
+      "presentation_label": "unofficial presentation",
+      "schema_version": "ecfr-crosscheck-fixture-v1",
+      "sections": [
+        {
+          "amendment": {
+            "amendatory_action": "revised",
+            "authority_citation": "35 U.S.C. 2(b)(2)",
+            "effective_date": "1992-03-16",
+            "fr_citation": "57 FR 2034",
+            "publication_date": "1992-01-17",
+            "source_citation": "57 FR 2034, Jan. 17, 1992"
+          },
+          "citation": "37 CFR 1.56",
+          "content_kind": "section",
+          "content_sha256": "9b3920a73e5c562a1bd61400653f142adaf126a0814e9b4ab6faf8b0b1e5b826",
+          "heading": "Duty to disclose information material to patentability",
+          "media_type": "application/xml",
+          "part": "1",
+          "section": "1.56",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-1.56",
+          "text_excerpt": "(a) A patent by its very nature is affected with a public interest. The public interest is best served, and the most effective patent examination occurs when, at the time an application is being examined, the Office is aware of and evaluates the teachings of all information material to patentability...",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        {
+          "amendment": null,
+          "citation": "37 CFR 1.97",
+          "content_kind": "section",
+          "content_sha256": "fe1b38fb06a8adf4a2df3bf2c53c821ab8cd9aad6e7e7301f43cf54590c7ba33",
+          "heading": "Filing of information disclosure statement",
+          "media_type": "application/xml",
+          "part": "1",
+          "section": "1.97",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-1.97",
+          "text_excerpt": "(a) In order for an applicant for a patent or for a reissue of a patent to have an information disclosure statement in a nonprovisional patent application...",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        {
+          "amendment": null,
+          "citation": "37 CFR 1.98",
+          "content_kind": "section",
+          "content_sha256": "65de97977c691d5cfc84fab7040040363add9d63a261fe6018fc71442a197c53",
+          "heading": "Content of information disclosure statement",
+          "media_type": "application/xml",
+          "part": "1",
+          "section": "1.98",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-1.98",
+          "text_excerpt": "[excerpt 37 CFR 1.98]",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        {
+          "amendment": null,
+          "citation": "37 CFR 41.50",
+          "content_kind": "section",
+          "content_sha256": "d68482e0ac99cf718eae7c34a6195368e213a55993a761ff8c56ce86f55aaa44",
+          "heading": "Decisions and other actions by the Board",
+          "media_type": "application/xml",
+          "part": "41",
+          "section": "41.50",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-41.50",
+          "text_excerpt": "[excerpt 37 CFR 41.50]",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        {
+          "amendment": {
+            "amendatory_action": "added",
+            "authority_citation": "35 U.S.C. 316",
+            "effective_date": "2012-09-16",
+            "fr_citation": "77 FR 48680",
+            "publication_date": "2012-08-14",
+            "source_citation": "77 FR 48680, Aug. 14, 2012"
+          },
+          "citation": "37 CFR 42.100",
+          "content_kind": "section",
+          "content_sha256": "057bc401a7ee7e59a0ac3bd5ea0aef4fe0b25633b4c3d7d2f90759efaff37238",
+          "heading": "Procedure; pendency",
+          "media_type": "application/xml",
+          "part": "42",
+          "section": "42.100",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-42.100",
+          "text_excerpt": "[excerpt 37 CFR 42.100]",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        }
+      ],
+      "title": "37",
+      "version": {
+        "content_sha256": "2c20fc0886291a970470f1740cc8226fcc7b198cbae4eb8b093101ab3af61bda",
+        "full_xml_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+        "is_current_snapshot": true,
+        "provider": "ecfr",
+        "retrieved_at": "2024-07-15T12:00:00Z",
+        "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+        "structure_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+        "title": "37",
+        "up_to_date_as_of": "2024-07-01",
+        "version_id": "ecfr-title-37-as-of-2024-07-01",
+        "versions_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json"
+      },
+      "version_history": [
+        "2023-07-01",
+        "2024-01-01",
+        "2024-07-01"
+      ]
+    },
+    "conflict": {
+      "failures": [],
+      "fixture_id": "ecfr-conflict-1.56",
+      "notes": "Compact current Title 37 eCFR recipe. Labeled unofficial presentation; up_to_date_as_of and amendment/effective metadata retained. Official annual CFR identity lives in cfr_annual fixtures, not here.",
+      "packages": {
+        "full_xml": {
+          "byte_size": 2500000,
+          "content_kind": "full_xml",
+          "content_sha256": "2c20fc0886291a970470f1740cc8226fcc7b198cbae4eb8b093101ab3af61bda",
+          "media_type": "application/xml",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        "structure": {
+          "byte_size": 4096,
+          "content_kind": "structure",
+          "content_sha256": "36131cbbc0d1425d3c2486264746f45f543025613ed1fc82472acc9b9715b398",
+          "media_type": "application/json",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        "version_history": {
+          "byte_size": 8192,
+          "content_kind": "version_history",
+          "content_sha256": "2d86185ec27762eb7165f4dd7174003711d7ed2d3bf04b1fc2be669228ab6407",
+          "media_type": "application/json",
+          "source_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        }
+      },
+      "presentation_label": "unofficial presentation",
+      "schema_version": "ecfr-crosscheck-fixture-v1",
+      "sections": [
+        {
+          "amendment": {
+            "amendatory_action": "revised",
+            "authority_citation": "35 U.S.C. 2(b)(2)",
+            "effective_date": "1992-03-16",
+            "fr_citation": "57 FR 2034",
+            "publication_date": "1992-01-17",
+            "source_citation": "57 FR 2034, Jan. 17, 1992"
+          },
+          "citation": "37 CFR 1.56",
+          "content_kind": "section",
+          "content_sha256": "f21ef214cee8e3f629af5758c1d7be1bc7a901745895aef90109d1bae5736c60",
+          "heading": "Duty to disclose information material to patentability",
+          "media_type": "application/xml",
+          "part": "1",
+          "section": "1.56",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-1.56",
+          "text_excerpt": "[ecfr editorial conflict] duty to disclose diverges from official annual print [conflict]",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        {
+          "amendment": null,
+          "citation": "37 CFR 1.97",
+          "content_kind": "section",
+          "content_sha256": "fe1b38fb06a8adf4a2df3bf2c53c821ab8cd9aad6e7e7301f43cf54590c7ba33",
+          "heading": "Filing of information disclosure statement",
+          "media_type": "application/xml",
+          "part": "1",
+          "section": "1.97",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-1.97",
+          "text_excerpt": "(a) In order for an applicant for a patent or for a reissue of a patent to have an information disclosure statement in a nonprovisional patent application...",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        {
+          "amendment": null,
+          "citation": "37 CFR 1.98",
+          "content_kind": "section",
+          "content_sha256": "65de97977c691d5cfc84fab7040040363add9d63a261fe6018fc71442a197c53",
+          "heading": "Content of information disclosure statement",
+          "media_type": "application/xml",
+          "part": "1",
+          "section": "1.98",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-1.98",
+          "text_excerpt": "[excerpt 37 CFR 1.98]",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        {
+          "amendment": null,
+          "citation": "37 CFR 41.50",
+          "content_kind": "section",
+          "content_sha256": "d68482e0ac99cf718eae7c34a6195368e213a55993a761ff8c56ce86f55aaa44",
+          "heading": "Decisions and other actions by the Board",
+          "media_type": "application/xml",
+          "part": "41",
+          "section": "41.50",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-41.50",
+          "text_excerpt": "[excerpt 37 CFR 41.50]",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        },
+        {
+          "amendment": {
+            "amendatory_action": "added",
+            "authority_citation": "35 U.S.C. 316",
+            "effective_date": "2012-09-16",
+            "fr_citation": "77 FR 48680",
+            "publication_date": "2012-08-14",
+            "source_citation": "77 FR 48680, Aug. 14, 2012"
+          },
+          "citation": "37 CFR 42.100",
+          "content_kind": "section",
+          "content_sha256": "057bc401a7ee7e59a0ac3bd5ea0aef4fe0b25633b4c3d7d2f90759efaff37238",
+          "heading": "Procedure; pendency",
+          "media_type": "application/xml",
+          "part": "42",
+          "section": "42.100",
+          "source_url": "https://www.ecfr.gov/current/title-37/section-42.100",
+          "text_excerpt": "[excerpt 37 CFR 42.100]",
+          "title": "37",
+          "up_to_date_as_of": "2024-07-01",
+          "version_id": "ecfr-title-37-as-of-2024-07-01"
+        }
+      ],
+      "title": "37",
+      "version": {
+        "content_sha256": "2c20fc0886291a970470f1740cc8226fcc7b198cbae4eb8b093101ab3af61bda",
+        "full_xml_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+        "is_current_snapshot": true,
+        "provider": "ecfr",
+        "retrieved_at": "2024-07-15T12:00:00Z",
+        "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+        "structure_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+        "title": "37",
+        "up_to_date_as_of": "2024-07-01",
+        "version_id": "ecfr-title-37-as-of-2024-07-01",
+        "versions_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json"
+      },
+      "version_history": [
+        "2023-07-01",
+        "2024-01-01",
+        "2024-07-01"
+      ]
+    }
+  },
+  "edition_catalog": {
+    "discovery_source": "govinfo-CFR-collection-fixture",
+    "latest_editions": [
+      {
+        "collection": "CFR",
+        "date_issued": "2023-07-01",
+        "discovered_at": "2024-09-01T10:00:00Z",
+        "discovery_source": "govinfo-CFR-collection",
+        "edition": "annual-2023",
+        "package_id": "CFR-2023-title37",
+        "title": "37",
+        "volume": "1",
+        "year": "2023"
+      },
+      {
+        "collection": "CFR",
+        "date_issued": "2024-07-01",
+        "discovered_at": "2024-09-01T10:00:00Z",
+        "discovery_source": "govinfo-CFR-collection",
+        "edition": "annual-2024",
+        "package_id": "CFR-2024-title37",
+        "title": "37",
+        "volume": "1",
+        "year": "2024"
+      }
+    ]
+  },
+  "expected": {
+    "changed_section": "1.56",
+    "conflict_section": "1.56",
+    "pagination_item_count": 5,
+    "point_in_time_as_of": "2020-01-01",
+    "removed_section": "99.99",
+    "required_cases": [
+      "pagination",
+      "point_in_time",
+      "annual_edition_rollover",
+      "changed_removed_sections",
+      "missing_granules",
+      "conflicting_text"
+    ],
+    "rollover_selected_package_id": "CFR-2024-title37"
+  },
+  "fixture_id": "live-cfr-title37-acquisition",
+  "notes": "Compact live eCFR + annual CFR recipe. Covers pagination, point-in-time lookup, annual edition rollover, changed/removed sections, missing granules, and conflicting text. eCFR remains unofficial presentation; annual GovInfo packages are official. Authority status and authentication status are independent.",
+  "schema_version": "live-cfr-recipe-v1",
+  "title": "37"
+}

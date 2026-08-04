@@ -1,0 +1,62 @@
+{
+  "case_id": "gold-rescinded-reissued-action",
+  "categories": [
+    "dates",
+    "reissued",
+    "requirements",
+    "rescinded"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "actions": [
+      {
+        "action_id": "oa:original-2026-02-01",
+        "content_sha256": "0ff3fd0df6681c4fa55af409fae5909f6d19811dfbf569638d1d3dfa253478c2",
+        "mailing_date": "2026-02-01",
+        "status": "rescinded"
+      },
+      {
+        "action_id": "oa:reissue-2026-03-01",
+        "content_sha256": "eca306202c4e127ed3a260b7403decd4d181059c23c19ed3ffb6ecc844cd65ac",
+        "mailing_date": "2026-03-01",
+        "status": "active",
+        "supersedes": "oa:original-2026-02-01"
+      }
+    ],
+    "artifacts": [
+      {
+        "artifact_id": "art:oa-reissue-1",
+        "classification": "public_user",
+        "content_sha256": "eca306202c4e127ed3a260b7403decd4d181059c23c19ed3ffb6ecc844cd65ac",
+        "role": "office_action"
+      }
+    ],
+    "extraction_profile": "action_lifecycle",
+    "media_type": "application/pdf",
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/rescinded-reissued",
+        "receipt_id": "receipt:synthetic:reissue-1",
+        "request_digest": "dd2a4b9f13b5b78edb0b7574964e938381dd0a9a5ab4358a55099a1065212f86",
+        "response_digest": "eca306202c4e127ed3a260b7403decd4d181059c23c19ed3ffb6ecc844cd65ac",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:35:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Synthetic lifecycle.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "original OA rescinded; reissue establishes new mailing date"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Rescinded office action superseded by reissued action"
+}

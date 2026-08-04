@@ -1,0 +1,469 @@
+{
+  "discovery": [
+    {
+      "abstract": "USPTO proposes changes to terminal disclaimer practice.",
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "88 FR 30000",
+      "comments_close_on": "2023-07-10",
+      "content_sha256": "bb701da6e52900521a7e46ec5bf2c6c82b9e508f9055d7ceda9baff7d8431ed4",
+      "document_number": "2023-10001",
+      "document_type": "proposed_rule",
+      "html_url": "https://www.federalregister.gov/documents/2023/05/10/2023-10001",
+      "publication_date": "2023-05-10",
+      "raw_type": "Proposed Rule",
+      "retrieved_at": "2024-06-01T10:00:00Z",
+      "title": "Terminal Disclaimer Practice To Obviate Nonstatutory Double Patenting"
+    },
+    {
+      "abstract": "Alternate proposal subsequently withdrawn.",
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "88 FR 31000",
+      "content_sha256": "1431e14d48557592ddcce50ce517c52c55ebade36ac8b7aafdcdcdb24026aee0",
+      "document_number": "2023-10002",
+      "document_type": "proposed_rule",
+      "html_url": "https://www.federalregister.gov/documents/2023/06/01/2023-10002",
+      "publication_date": "2023-06-01",
+      "raw_type": "Proposed Rule",
+      "retrieved_at": "2024-06-01T10:00:00Z",
+      "title": "Proposed Rule Later Withdrawn — Terminal Disclaimer Alternate Track"
+    },
+    {
+      "abstract": "Final rule setting patent fees for FY2025.",
+      "agencies": [
+        "patent-and-trademark-office",
+        "commerce-department"
+      ],
+      "citation": "89 FR 20100",
+      "content_sha256": "ec0a4b579ff5a4a40b94c7f358ef237cb72b407db6cbbbdcf527146d80a87dc9",
+      "document_number": "2024-05512",
+      "document_type": "final_rule",
+      "effective_on": "2024-05-01",
+      "html_url": "https://www.federalregister.gov/documents/2024/03/15/2024-05512",
+      "publication_date": "2024-03-15",
+      "raw_type": "Rule",
+      "retrieved_at": "2024-06-01T10:00:00Z",
+      "title": "Setting and Adjusting Patent Fees During Fiscal Year 2025"
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "89 FR 20500",
+      "content_sha256": "66b0f44a98b9522b00b45dc7f10cee7cb2800652f82b1645400b1b18038b54a6",
+      "document_number": "2024-06001",
+      "document_type": "correction",
+      "html_url": "https://www.federalregister.gov/documents/2024/03/22/2024-06001",
+      "publication_date": "2024-03-22",
+      "raw_type": "Correction",
+      "retrieved_at": "2024-06-01T10:00:00Z",
+      "title": "Setting and Adjusting Patent Fees; Correction"
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "89 FR 21000",
+      "content_sha256": "154eeac284ff140165098ab174acaedb8ecc1a8af1dfb2596b051d545d6bf494",
+      "document_number": "2024-07001",
+      "document_type": "withdrawal",
+      "html_url": "https://www.federalregister.gov/documents/2024/04/01/2024-07001",
+      "publication_date": "2024-04-01",
+      "raw_type": "Proposed Rule",
+      "retrieved_at": "2024-06-01T10:00:00Z",
+      "title": "Withdrawal of Proposed Rule on Terminal Disclaimer Practice"
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "89 FR 21500",
+      "content_sha256": "cca07fa8c1138964ceed8d7100a382c06ed7a1b07a398a7ec31d8732f9d3ece6",
+      "document_number": "2024-08001",
+      "document_type": "delay_effective_date",
+      "html_url": "https://www.federalregister.gov/documents/2024/04/10/2024-08001",
+      "publication_date": "2024-04-10",
+      "raw_type": "Rule",
+      "retrieved_at": "2024-06-01T10:00:00Z",
+      "title": "Setting and Adjusting Patent Fees; Delay of Effective Date"
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "89 FR 22000",
+      "content_sha256": "6807f3dfc7bd89cf3ee4076866035b94c6ca5f4ce662067c996fd1bd4fb327c6",
+      "document_number": "2024-09001",
+      "document_type": "interim_final_rule",
+      "effective_on": "2024-04-20",
+      "html_url": "https://www.federalregister.gov/documents/2024/04/20/2024-09001",
+      "publication_date": "2024-04-20",
+      "raw_type": "Rule",
+      "retrieved_at": "2024-06-01T10:00:00Z",
+      "title": "Interim Final Rule on Electronic Filing Requirements"
+    }
+  ],
+  "edges": [
+    {
+      "effective_date": "2024-05-01",
+      "reason": "Corrects fee table typographical error in final rule.",
+      "relation": "corrects",
+      "source_document_number": "2024-06001",
+      "target_document_number": "2024-05512"
+    },
+    {
+      "effective_date": "2024-04-01",
+      "reason": "Withdraws proposed rule; proposal remains nonbinding.",
+      "relation": "withdraws",
+      "source_document_number": "2024-07001",
+      "target_document_number": "2023-10002"
+    },
+    {
+      "effective_date": "2024-07-01",
+      "reason": "Delays effective date of final fee rule to 2024-07-01.",
+      "relation": "delays_effective_date",
+      "source_document_number": "2024-08001",
+      "target_document_number": "2024-05512"
+    }
+  ],
+  "fixture_id": "uspto-patent-rule-changes-2024",
+  "govinfo_failures": [
+    {
+      "attempts": 5,
+      "failure_id": "retry:FR-2099-01-01",
+      "kind": "retry",
+      "last_status": 429,
+      "message": "GovInfo API returned 429; retry exhausted after 5 attempts.",
+      "package_id": "FR-2099-01-01",
+      "retry_after": 120.0
+    },
+    {
+      "failure_id": "schema:FR-BAD-PACKAGE",
+      "field_name": "package_id",
+      "kind": "schema",
+      "message": "package payload missing required package_id field.",
+      "package_id": "FR-BAD-PACKAGE"
+    },
+    {
+      "failure_id": "signature:FR-2024-03-15:2024-99999",
+      "granule_id": "2024-99999",
+      "kind": "signature",
+      "message": "GPO signature invalid for granule 2024-99999.",
+      "package_id": "FR-2024-03-15",
+      "signature_result": "invalid"
+    }
+  ],
+  "govinfo_packages": [
+    {
+      "collection": "FR",
+      "content_sha256": "d4aba67a6e52d31986cca5d18c0be7ba3665f1bbd5d77e98bd1bc5156048b414",
+      "date_issued": "2024-03-15",
+      "granules": {
+        "2024-05512": {
+          "citation": "89 FR 20100",
+          "document_number": "2024-05512",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "01ecb535eb216262e5f1eb2093c4e8384a0671bcb14c6c83984580a1a330aab6",
+              "byte_size": 12512,
+              "format": "pdf",
+              "media_type": "application/pdf",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/pdf/FR-2024-03-15-2024-05512.pdf",
+              "upstream_package_id": "FR-2024-03-15"
+            },
+            "xml": {
+              "artifact_sha256": "a6a6651c9314d9169883f41363f8bfbe07c23b9f14294fc33f1a7c464bda4e81",
+              "byte_size": 8512,
+              "format": "xml",
+              "media_type": "application/xml",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/xml/FR-2024-03-15-2024-05512.xml",
+              "upstream_package_id": "FR-2024-03-15"
+            }
+          },
+          "granule_id": "2024-05512",
+          "package_id": "FR-2024-03-15",
+          "publication_date": "2024-03-15",
+          "signature": {
+            "algorithm": "GPO-PAdES",
+            "checked_at": "2024-03-16T12:00:00Z",
+            "evidence": "sig:FR-2024-03-15:2024-05512",
+            "result": "valid",
+            "signer": "U.S. Government Publishing Office"
+          },
+          "title": "Setting and Adjusting Patent Fees During Fiscal Year 2025"
+        },
+        "2024-06001": {
+          "citation": "89 FR 20500",
+          "document_number": "2024-06001",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "0c89cfdae9547db30b19186baae6ecd2bf4088ffefe0ba5cfa33002ce414c7ec",
+              "byte_size": 12001,
+              "format": "pdf",
+              "media_type": "application/pdf",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/pdf/FR-2024-03-15-2024-06001.pdf",
+              "upstream_package_id": "FR-2024-03-15"
+            },
+            "xml": {
+              "artifact_sha256": "5b2a1278f83377150d9fc78622dfd700f213bb6941d303ea08a1c6d3c9034031",
+              "byte_size": 8001,
+              "format": "xml",
+              "media_type": "application/xml",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/xml/FR-2024-03-15-2024-06001.xml",
+              "upstream_package_id": "FR-2024-03-15"
+            }
+          },
+          "granule_id": "2024-06001",
+          "package_id": "FR-2024-03-15",
+          "publication_date": "2024-03-15",
+          "signature": {
+            "algorithm": "GPO-PAdES",
+            "checked_at": "2024-03-16T12:00:00Z",
+            "evidence": "sig:FR-2024-03-15:2024-06001",
+            "result": "valid",
+            "signer": "U.S. Government Publishing Office"
+          },
+          "title": "Setting and Adjusting Patent Fees; Correction"
+        },
+        "2024-07001": {
+          "citation": "89 FR 21000",
+          "document_number": "2024-07001",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "fb099d0728665e67bee0dcfc2b14f8196d7a1f8a94a16b33c1c9bc1a6f533e03",
+              "byte_size": 12001,
+              "format": "pdf",
+              "media_type": "application/pdf",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/pdf/FR-2024-03-15-2024-07001.pdf",
+              "upstream_package_id": "FR-2024-03-15"
+            },
+            "xml": {
+              "artifact_sha256": "10e3f0701546c0a592f20df1dea819eee6d2a3470adaeff2ee1b522a3da556a6",
+              "byte_size": 8001,
+              "format": "xml",
+              "media_type": "application/xml",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/xml/FR-2024-03-15-2024-07001.xml",
+              "upstream_package_id": "FR-2024-03-15"
+            }
+          },
+          "granule_id": "2024-07001",
+          "package_id": "FR-2024-03-15",
+          "publication_date": "2024-03-15",
+          "signature": {
+            "algorithm": "GPO-PAdES",
+            "checked_at": "2024-03-16T12:00:00Z",
+            "evidence": "sig:FR-2024-03-15:2024-07001",
+            "result": "valid",
+            "signer": "U.S. Government Publishing Office"
+          },
+          "title": "Withdrawal of Proposed Rule on Terminal Disclaimer Practice"
+        },
+        "2024-08001": {
+          "citation": "89 FR 21500",
+          "document_number": "2024-08001",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "381dc6a5908e80f1d995340c7e00e56e81fd2460c189181406aa8fa9efb65564",
+              "byte_size": 12001,
+              "format": "pdf",
+              "media_type": "application/pdf",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/pdf/FR-2024-03-15-2024-08001.pdf",
+              "upstream_package_id": "FR-2024-03-15"
+            },
+            "xml": {
+              "artifact_sha256": "51a4740e61d469c1eeee9b07b2b8e73ca8311accf2ce59fc9e7e9e17174e172f",
+              "byte_size": 8001,
+              "format": "xml",
+              "media_type": "application/xml",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/xml/FR-2024-03-15-2024-08001.xml",
+              "upstream_package_id": "FR-2024-03-15"
+            }
+          },
+          "granule_id": "2024-08001",
+          "package_id": "FR-2024-03-15",
+          "publication_date": "2024-03-15",
+          "signature": {
+            "algorithm": "GPO-PAdES",
+            "checked_at": "2024-03-16T12:00:00Z",
+            "evidence": "sig:FR-2024-03-15:2024-08001",
+            "result": "valid",
+            "signer": "U.S. Government Publishing Office"
+          },
+          "title": "Setting and Adjusting Patent Fees; Delay of Effective Date"
+        },
+        "2024-09001": {
+          "citation": "89 FR 22000",
+          "document_number": "2024-09001",
+          "formats": {
+            "pdf": {
+              "artifact_sha256": "1c8a106dba47f8702df54ff9647170f729c096ff3203b71e19819982a9c1ad0c",
+              "byte_size": 12001,
+              "format": "pdf",
+              "media_type": "application/pdf",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/pdf/FR-2024-03-15-2024-09001.pdf",
+              "upstream_package_id": "FR-2024-03-15"
+            },
+            "xml": {
+              "artifact_sha256": "aedab4eb373830dfbe1401a7e96b554c7548985e20315ab352bea1b74afa20ff",
+              "byte_size": 8001,
+              "format": "xml",
+              "media_type": "application/xml",
+              "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/xml/FR-2024-03-15-2024-09001.xml",
+              "upstream_package_id": "FR-2024-03-15"
+            }
+          },
+          "granule_id": "2024-09001",
+          "package_id": "FR-2024-03-15",
+          "publication_date": "2024-03-15",
+          "signature": {
+            "algorithm": "GPO-PAdES",
+            "checked_at": "2024-03-16T12:00:00Z",
+            "evidence": "sig:FR-2024-03-15:2024-09001",
+            "result": "valid",
+            "signer": "U.S. Government Publishing Office"
+          },
+          "title": "Interim Final Rule on Electronic Filing Requirements"
+        }
+      },
+      "package_id": "FR-2024-03-15",
+      "provider": "govinfo",
+      "retrieved_at": "2024-03-16T12:00:00Z",
+      "signature": {
+        "algorithm": "GPO-PAdES",
+        "checked_at": "2024-03-16T12:00:00Z",
+        "evidence": "sig:FR-2024-03-15:package",
+        "result": "valid",
+        "signer": "U.S. Government Publishing Office"
+      },
+      "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15",
+      "title": "Federal Register Vol. 89, No. 52"
+    }
+  ],
+  "notes": "Compact USPTO Federal Register discovery + GovInfo official bind recipe. Unofficial FR.gov discovery is labeled unofficial-current; official PDF/XML come from GovInfo packages/granules with signature results. Proposed and withdrawn rules remain nonbinding. Effective/compliance dates and correction/withdrawal/delay edges survive replay. Retry/schema/signature failures are explicit fixtures.",
+  "records": [
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "cfr_references": [
+        "37 CFR 1.321"
+      ],
+      "citation": "88 FR 30000",
+      "document_number": "2023-10001",
+      "document_type": "proposed_rule",
+      "fr_citation": "88 FR 30000",
+      "is_binding": false,
+      "publication_date": "2023-05-10",
+      "text_excerpt": "The USPTO proposes to revise terminal disclaimer practice...",
+      "title": "Terminal Disclaimer Practice To Obviate Nonstatutory Double Patenting"
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "88 FR 31000",
+      "document_number": "2023-10002",
+      "document_type": "proposed_rule",
+      "fr_citation": "88 FR 31000",
+      "is_binding": false,
+      "publication_date": "2023-06-01",
+      "title": "Proposed Rule Later Withdrawn — Terminal Disclaimer Alternate Track",
+      "withdrawn": true
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office",
+        "commerce-department"
+      ],
+      "cfr_references": [
+        "37 CFR 1.16",
+        "37 CFR 1.17",
+        "37 CFR 1.18"
+      ],
+      "citation": "89 FR 20100",
+      "compliance_date": "2024-06-01",
+      "document_number": "2024-05512",
+      "document_type": "final_rule",
+      "effective_date": "2024-05-01",
+      "fr_citation": "89 FR 20100",
+      "govinfo_granule_id": "2024-05512",
+      "govinfo_package_id": "FR-2024-03-15",
+      "is_binding": true,
+      "publication_date": "2024-03-15",
+      "text_excerpt": "The USPTO sets and adjusts patent fees for fiscal year 2025...",
+      "title": "Setting and Adjusting Patent Fees During Fiscal Year 2025"
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "89 FR 20500",
+      "corrects": "2024-05512",
+      "document_number": "2024-06001",
+      "document_type": "correction",
+      "effective_date": "2024-05-01",
+      "fr_citation": "89 FR 20500",
+      "govinfo_granule_id": "2024-06001",
+      "govinfo_package_id": "FR-2024-03-15",
+      "is_binding": true,
+      "publication_date": "2024-03-22",
+      "text_excerpt": "This document corrects a fee table typographical error...",
+      "title": "Setting and Adjusting Patent Fees; Correction"
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "89 FR 21000",
+      "document_number": "2024-07001",
+      "document_type": "withdrawal",
+      "fr_citation": "89 FR 21000",
+      "govinfo_granule_id": "2024-07001",
+      "govinfo_package_id": "FR-2024-03-15",
+      "is_binding": false,
+      "publication_date": "2024-04-01",
+      "title": "Withdrawal of Proposed Rule on Terminal Disclaimer Practice",
+      "withdrawn": true,
+      "withdraws": "2023-10002"
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "citation": "89 FR 21500",
+      "delayed_effective_date": "2024-07-01",
+      "delays": "2024-05512",
+      "document_number": "2024-08001",
+      "document_type": "delay_effective_date",
+      "fr_citation": "89 FR 21500",
+      "govinfo_granule_id": "2024-08001",
+      "govinfo_package_id": "FR-2024-03-15",
+      "is_binding": false,
+      "publication_date": "2024-04-10",
+      "title": "Setting and Adjusting Patent Fees; Delay of Effective Date"
+    },
+    {
+      "agencies": [
+        "patent-and-trademark-office"
+      ],
+      "cfr_references": [
+        "37 CFR 1.6"
+      ],
+      "citation": "89 FR 22000",
+      "compliance_date": "2024-05-20",
+      "document_number": "2024-09001",
+      "document_type": "interim_final_rule",
+      "effective_date": "2024-04-20",
+      "fr_citation": "89 FR 22000",
+      "govinfo_granule_id": "2024-09001",
+      "govinfo_package_id": "FR-2024-03-15",
+      "is_binding": true,
+      "publication_date": "2024-04-20",
+      "title": "Interim Final Rule on Electronic Filing Requirements"
+    }
+  ],
+  "schema_version": "federal-register-change-fixture-v1"
+}

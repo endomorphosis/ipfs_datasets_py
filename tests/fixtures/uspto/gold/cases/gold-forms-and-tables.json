@@ -1,0 +1,57 @@
+{
+  "case_id": "gold-forms-and-tables",
+  "categories": [
+    "dates",
+    "forms",
+    "requirements",
+    "tables"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [
+      {
+        "artifact_id": "art:forms-tables-1",
+        "classification": "public_user",
+        "content_sha256": "c67086aa2a0f51d3d045c36a2ad35e516cac1f76a66632646a93feb27bb12c91",
+        "role": "notice"
+      }
+    ],
+    "extraction_profile": "native_forms_tables",
+    "media_type": "application/pdf",
+    "page_count": 1,
+    "pages": [
+      {
+        "canary": "SYNTHETIC-FEE-TABLE-FORM-SB08",
+        "has_form_fields": true,
+        "has_table": true,
+        "kind": "native_text",
+        "page_index": 0
+      }
+    ],
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/forms-tables",
+        "receipt_id": "receipt:synthetic:forms-1",
+        "request_digest": "652796115e027d02750e00e0c9fdec1d59b400101d7760cda40d6900dacdcd17",
+        "response_digest": "c67086aa2a0f51d3d045c36a2ad35e516cac1f76a66632646a93feb27bb12c91",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:10:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Fully synthetic.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "native PDF with fee table and PTO form fields"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Fee/form table extraction from native PDF"
+}

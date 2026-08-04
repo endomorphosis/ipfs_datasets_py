@@ -1,0 +1,73 @@
+{
+  "acceptance": {
+    "deterministic_manifest": true,
+    "logical_root_convergence": true,
+    "one_source_join_per_record": true,
+    "private_encrypted_unpublishable": true,
+    "resume_from_checkpoint": true,
+    "zero_orphan": true
+  },
+  "allowed_disclosures": [
+    "public_official",
+    "public_user"
+  ],
+  "builder_interface": "PersistentIndexBuilder@1",
+  "builder_schema_version": "patent.persistent_index_builder.v1",
+  "case_id": "golden-persistent-index-v1",
+  "config_cid": "bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+  "corpus_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+  "corpus_version": "corpus-2024.06",
+  "created_utc": "2024-06-01T00:00:00Z",
+  "default_source_version": "v2024.1",
+  "documents": [
+    {
+      "artifact_id": "artifact:doc:patent-encode",
+      "claims": "1. A method comprising indexing patent claims.",
+      "disclosure": "public_official",
+      "document_id": "doc:patent-encode",
+      "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+      "source_version": "v2024.1",
+      "title": "Method of encoding patent claims"
+    },
+    {
+      "artifact_id": "artifact:doc:patent-network",
+      "claims": "1. An apparatus comprising a cipher module.",
+      "disclosure": "public_official",
+      "document_id": "doc:patent-network",
+      "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+      "source_version": "v2024.1",
+      "title": "Network security apparatus"
+    },
+    {
+      "artifact_id": "artifact:doc:patent-graph",
+      "claims": "1. A method comprising expanding a citation graph.",
+      "disclosure": "public_official",
+      "document_id": "doc:patent-graph",
+      "source_cid": "bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+      "source_version": "v2024.1",
+      "title": "Graph expansion for prior art"
+    }
+  ],
+  "expected": {
+    "active_record_count": 9,
+    "deterministic_manifest_digest": "0cbf696b986b37b2260a0a864aa83725acc2c9ab5a9db7213a796e3c5f8c26ea",
+    "families": [
+      "bm25",
+      "graph",
+      "vector"
+    ],
+    "logical_root_cid": "baguqeera102811bd718a6c0068fc62ed671e3fd495cffd8cba5537ff",
+    "logical_root_digest": "102811bd718a6c0068fc62ed671e3fd495cffd8cba5537ff4f0b054247cf8df6",
+    "record_count": 9,
+    "tombstone_count": 0
+  },
+  "families": [
+    "bm25",
+    "graph",
+    "vector"
+  ],
+  "notes": "Compact golden recipe for PATLAW-146. Rebuild via PersistentIndexBuilder.build_full with the listed documents; expected digests pin logical root and deterministic manifest identity (not path-dependent snapshot roots).",
+  "schema_version": "patent.index_snapshot.golden.v1",
+  "snapshot_schema_version": "patent.index_snapshot.v1",
+  "tenant_id": "tenant-public"
+}

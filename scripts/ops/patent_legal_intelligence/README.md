@@ -1,0 +1,64 @@
+# Patent legal intelligence supervisor
+
+This program runs the reviewed
+`docs/architecture/patent_legal_intelligence.todo.md` projection through four
+strict, explicit implementation slices. Each shard has isolated state/logs/
+worktrees, while all shards share one merge queue targeting
+`feature/patent-legal-intelligence`. Runtime state defaults outside git to
+`~/.local/state/ipfs_accelerate_py/patent-legal-intelligence-v1`.
+
+## Validate, start, and inspect
+
+```bash
+# Repository/provider/supervisor check; does not implement.
+scripts/ops/patent_legal_intelligence/preflight.py
+
+# Exercise all four task slices once without implementation.
+scripts/ops/patent_legal_intelligence/launch_multi_lane.sh --dry-run
+
+# Start four detached, restartable supervisors.
+scripts/ops/patent_legal_intelligence/launch_multi_lane.sh
+
+# Content-free PID/heartbeat/worker/readiness/incident/merge status.
+scripts/ops/patent_legal_intelligence/status.sh
+scripts/ops/patent_legal_intelligence/status.sh --json
+```
+
+Use the `PATLAW_*` environment variables documented by the launcher when the
+datasets and accelerator feature worktrees are not siblings. The launcher uses
+`python3 -P` with an explicit `PYTHONPATH` to prevent the datasets repository's
+nested legacy accelerator package from shadowing the selected supervisor.
+
+## Provider and board policy
+
+Implementation uses `auto`: authenticated Grok (`grok-4.5`) is primary and
+Codex (`gpt-5.6-terra`, medium reasoning effort) is available only through the
+reviewed fresh-attempt fallback after positively classified Grok quota
+exhaustion. Authentication, timeout, validation, and generic failures do not
+authorize fallback. The failed Grok worktree is discarded; the backup begins
+from the same clean base with a separate receipt. The independent LLM merge
+resolver is disabled, so merge conflicts fail closed for deterministic
+reconciliation instead of invoking another model. The task
+graph is execution-only for free-form objective/codebase refill, goal mutation,
+task janitor, and generated repair guardrails (those remain disabled). After the
+reviewed board drains to zero open tasks, the supervisor automatically seeds a
+bounded **post-completion ops catalog** (`post_completion_ops_catalog.json`) so
+operator follow-ons (completion-gate validation, PR package, live canary,
+Hub dry-run, handoff receipt) appear as new `PATLAW-165+` tasks without manual
+board editing. Implementation agents still cannot edit protected plan, heap,
+board, configuration, policies, or operator scripts during task work.
+
+The supervisor may update its external runtime projection and merge receipts;
+it does not infer completion from Markdown status alone. Never run `git pull`
+inside an active lane or co-launch another program over this state namespace.
+Read-only fetch can occur at the reviewed intervals, but integration is a
+separate serialized, checkpointed operator maintenance event; implementation
+lanes do not pull. Patent Center remains authorized user export/import only—
+never unattended login, MFA bypass, signature, payment, or filing automation.
+Operator portfolio helpers (public ODP discover/refresh + attended human-login
+export → import-private) live under `scripts/ops/uspto/portfolio_cli.py` and
+`docs/operations/USPTO_PORTFOLIO_AUTOMATION.md`.
+
+To stop this program, send `TERM` only to the exact live PIDs recorded under
+`$PATLAW_STATE_ROOT/shards/*/supervisor.pid` (or the default state root), then
+verify they exited with `status.sh`. Do not use broad process-name kills.

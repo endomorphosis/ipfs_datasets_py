@@ -1,0 +1,99 @@
+{
+  "schema_version": "patent.retrieval.eval.fixture.v2",
+  "gold_corpus_fixture": "golden_case.json",
+  "latency_max_ms": 30000,
+  "private_document_ids": ["doc:private-draft"],
+  "unsearched_sources": [
+    "foreign_patent_office",
+    "non_patent_literature"
+  ],
+  "declared_sources": [
+    {
+      "source_id": "foreign_patent_office",
+      "label": "Foreign patent offices (EPO/JPO/etc.)",
+      "status": "not_searched"
+    },
+    {
+      "source_id": "non_patent_literature",
+      "label": "Non-patent literature / NPL",
+      "status": "not_searched"
+    },
+    {
+      "source_id": "local_public_snapshot",
+      "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+      "label": "Local public patent snapshot"
+    }
+  ],
+  "thresholds": {
+    "schema_version": "patent.retrieval.evaluation.v1",
+    "thresholds_cid": "bafybeithresholdsv2000000000000000000000000000000000000003",
+    "k": 10,
+    "minima": {
+      "recall": 0.5,
+      "ranking": 0.4,
+      "citation": 0.5,
+      "temporal": 0.5,
+      "source_coverage": 1.0,
+      "private_isolation": 1.0
+    }
+  },
+  "queries": [
+    {
+      "query_id": "q-prior-art-102",
+      "query": "35 U.S.C. § 102 prior art encoding G06F16/00"
+    }
+  ],
+  "qrel_set": {
+    "schema_version": "patent.retrieval.evaluation.v1",
+    "qrels_cid": "bafybeiqrelsv2identity0000000000000000000000000000000000002",
+    "corpus_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+    "description": "Gold qrels for explainable hybrid patent retrieval evaluation (PATLAW-147)",
+    "metadata": {
+      "case_id": "golden-hybrid-us11222333",
+      "track": "patent-retrieval-v2",
+      "task": "PATLAW-147"
+    },
+    "judgments": [
+      {
+        "query_id": "q-prior-art-102",
+        "document_id": "doc:patent-encode",
+        "grade": "exact",
+        "expected_citation": "artifact:patent-11222333",
+        "expected_as_of_utc": "2024-06-01T00:00:00Z",
+        "expected_source_cids": [
+          "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x"
+        ],
+        "notes": [
+          "primary gold hit for 35 USC 102 prior-art encoding query",
+          "must expose CPC G06F16/00 and source span contributions"
+        ]
+      },
+      {
+        "query_id": "q-prior-art-102",
+        "document_id": "doc:patent-network",
+        "grade": "relevant",
+        "expected_source_cids": [
+          "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
+        ],
+        "notes": ["graph-linked related prior art"]
+      },
+      {
+        "query_id": "q-prior-art-102",
+        "document_id": "doc:private-draft",
+        "grade": "not_relevant",
+        "notes": ["private disclosure must never appear under public filters"]
+      },
+      {
+        "query_id": "q-prior-art-102",
+        "document_id": "doc:future-rule",
+        "grade": "not_relevant",
+        "notes": ["not yet effective as of query as-of"]
+      }
+    ]
+  },
+  "metadata": {
+    "task": "PATLAW-147",
+    "interface": "PatentRetrievalEvaluatorV2@1",
+    "hybrid_interface": "HybridRetrievalV2@1"
+  }
+}

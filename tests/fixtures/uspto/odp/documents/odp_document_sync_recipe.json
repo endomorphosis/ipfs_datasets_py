@@ -1,0 +1,269 @@
+{
+  "schema_version": "odp-document-sync-fixture-v1",
+  "provider": "odp_patent_file_wrapper",
+  "notes": "Compact document inventory + download recipes for PATLAW-023. Prefer generators over bulk golden dumps.",
+  "cases": [
+    {
+      "id": "admit_public_pdf",
+      "application_number": "16123456",
+      "documents": [
+        {
+          "applicationNumberText": "16123456",
+          "officialDate": "2020-08-31T01:20:29.000-0400",
+          "documentIdentifier": "DOCID001",
+          "documentCode": "CTNF",
+          "documentCodeDescriptionText": "Non-Final Rejection",
+          "documentDirectionCategory": "OUTGOING",
+          "downloadOptionBag": [
+            {
+              "mimeTypeIdentifier": "PDF",
+              "downloadUrl": "https://api.uspto.gov/api/v1/download/DOCID001.pdf",
+              "pageTotalQuantity": 1
+            }
+          ]
+        }
+      ],
+      "downloads": {
+        "/api/v1/download/DOCID001.pdf": {
+          "status": 200,
+          "content_type": "application/pdf",
+          "body_b64": "JVBERi0xLjEKMSAwIG9iajw8Pj5lbmRvYmoKdHJhaWxlcjw8Pj4KJSVFT0YK",
+          "body_encoding": "base64"
+        }
+      }
+    },
+    {
+      "id": "version_on_changed_bytes",
+      "application_number": "16123456",
+      "documents": [
+        {
+          "documentIdentifier": "DOCID001",
+          "documentCode": "CTNF",
+          "officialDate": "2020-08-31T01:20:29.000-0400",
+          "downloadOptionBag": [
+            {
+              "mimeTypeIdentifier": "PDF",
+              "downloadUrl": "https://api.uspto.gov/api/v1/download/DOCID001.pdf",
+              "pageTotalQuantity": 1
+            }
+          ]
+        }
+      ],
+      "downloads_v1": {
+        "/api/v1/download/DOCID001.pdf": {
+          "status": 200,
+          "content_type": "application/pdf",
+          "body_b64": "JVBERi0xLjEKMSAwIG9iajw8Pj5lbmRvYmoKdHJhaWxlcjw8Pj4KJSVFT0YK",
+          "body_encoding": "base64"
+        }
+      },
+      "downloads_v2": {
+        "/api/v1/download/DOCID001.pdf": {
+          "status": 200,
+          "content_type": "application/pdf",
+          "body_b64": "JVBERi0xLjEKMSAwIG9iajw8L1RpdGxlKHYyKT4+ZW5kb2JqCnRyYWlsZXI8PD4+CiUlRU9GCg==",
+          "body_encoding": "base64"
+        }
+      },
+      "documents_v2_marker": {
+        "documentIdentifier": "DOCID001",
+        "documentCode": "CTNF",
+        "officialDate": "2020-09-15T00:00:00.000-0400",
+        "downloadOptionBag": [
+          {
+            "mimeTypeIdentifier": "PDF",
+            "downloadUrl": "https://api.uspto.gov/api/v1/download/DOCID001.pdf",
+            "pageTotalQuantity": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial_download_rejected",
+      "application_number": "16123456",
+      "documents": [
+        {
+          "documentIdentifier": "DOCID-PARTIAL",
+          "documentCode": "CLM",
+          "officialDate": "2021-01-01T00:00:00.000-0400",
+          "downloadOptionBag": [
+            {
+              "mimeTypeIdentifier": "PDF",
+              "downloadUrl": "https://api.uspto.gov/api/v1/download/DOCID-PARTIAL.pdf",
+              "pageTotalQuantity": 3
+            }
+          ]
+        }
+      ],
+      "downloads": {
+        "/api/v1/download/DOCID-PARTIAL.pdf": {
+          "status": 200,
+          "content_type": "application/pdf",
+          "content_length": 45,
+          "body_b64": "JVBERi0xLjEKMQ==",
+          "body_encoding": "base64",
+          "truncated": true
+        }
+      }
+    },
+    {
+      "id": "size_mismatch_rejected",
+      "application_number": "16123456",
+      "documents": [
+        {
+          "documentIdentifier": "DOCID-SIZE",
+          "documentCode": "SPEC",
+          "downloadOptionBag": [
+            {
+              "mimeTypeIdentifier": "PDF",
+              "downloadUrl": "https://api.uspto.gov/api/v1/download/DOCID-SIZE.pdf",
+              "contentLength": 999
+            }
+          ]
+        }
+      ],
+      "downloads": {
+        "/api/v1/download/DOCID-SIZE.pdf": {
+          "status": 200,
+          "content_type": "application/pdf",
+          "content_length": 999,
+          "body_b64": "JVBERi0xLjEKMSAwIG9iajw8Pj5lbmRvYmoKdHJhaWxlcjw8Pj4KJSVFT0YK",
+          "body_encoding": "base64"
+        }
+      }
+    },
+    {
+      "id": "delayed_inventory_freshness_gap",
+      "application_number": "16123456",
+      "documents": [
+        {
+          "documentIdentifier": "doc-9001",
+          "documentCode": "CTNF",
+          "officialDate": "2026-07-20T00:00:00Z",
+          "downloadOptionBag": [
+            {
+              "mimeTypeIdentifier": "PDF",
+              "downloadUrl": "https://api.uspto.gov/api/v1/download/doc-9001.pdf"
+            }
+          ]
+        }
+      ],
+      "downloads": {
+        "/api/v1/download/doc-9001.pdf": {
+          "status": 404,
+          "body": {"code": "404", "error": "Not Found"}
+        }
+      },
+      "notes": "Metadata present, bytes delayed → freshness gap, never nonreceipt"
+    },
+    {
+      "id": "no_download_options_freshness_gap",
+      "application_number": "16123456",
+      "documents": [
+        {
+          "documentIdentifier": "doc-pending-1",
+          "documentCode": "A...",
+          "officialDate": "2026-07-21T00:00:00Z",
+          "downloadOptionBag": []
+        }
+      ],
+      "downloads": {}
+    },
+    {
+      "id": "unavailable_npl_explicit",
+      "application_number": "16123456",
+      "documents": [
+        {
+          "documentIdentifier": "NPL-REF-001",
+          "documentCode": "NPL",
+          "documentCodeDescriptionText": "Non-Patent Literature",
+          "availability": "npl",
+          "documentAccessCategory": "npl",
+          "downloadOptionBag": []
+        }
+      ],
+      "downloads": {}
+    },
+    {
+      "id": "unavailable_private_explicit",
+      "application_number": "16123456",
+      "documents": [
+        {
+          "documentIdentifier": "PRIV-001",
+          "documentCode": "PRIV",
+          "documentCodeDescriptionText": "Confidential application material",
+          "availability": "private",
+          "accessLimitation": "confidential",
+          "downloadOptionBag": []
+        }
+      ],
+      "downloads": {}
+    },
+    {
+      "id": "forbidden_download_private",
+      "application_number": "16123456",
+      "documents": [
+        {
+          "documentIdentifier": "PRIV-DL-001",
+          "documentCode": "OA.EMAIL",
+          "downloadOptionBag": [
+            {
+              "mimeTypeIdentifier": "PDF",
+              "downloadUrl": "https://api.uspto.gov/api/v1/download/PRIV-DL-001.pdf"
+            }
+          ]
+        }
+      ],
+      "downloads": {
+        "/api/v1/download/PRIV-DL-001.pdf": {
+          "status": 403,
+          "body": {"code": "403", "error": "Forbidden"}
+        }
+      }
+    },
+    {
+      "id": "mixed_inventory",
+      "application_number": "16999999",
+      "documents": [
+        {
+          "documentIdentifier": "DOC-OK",
+          "documentCode": "CLM",
+          "downloadOptionBag": [
+            {
+              "mimeTypeIdentifier": "PDF",
+              "downloadUrl": "https://api.uspto.gov/api/v1/download/DOC-OK.pdf"
+            }
+          ]
+        },
+        {
+          "documentIdentifier": "DOC-DELAYED",
+          "documentCode": "CTNF",
+          "downloadOptionBag": [
+            {
+              "mimeTypeIdentifier": "PDF",
+              "downloadUrl": "https://api.uspto.gov/api/v1/download/DOC-DELAYED.pdf"
+            }
+          ]
+        },
+        {
+          "documentIdentifier": "DOC-NPL",
+          "documentCode": "NPL",
+          "availability": "npl",
+          "downloadOptionBag": []
+        }
+      ],
+      "downloads": {
+        "/api/v1/download/DOC-OK.pdf": {
+          "status": 200,
+          "content_type": "application/pdf",
+          "body_b64": "JVBERi0xLjEKMSAwIG9iajw8Pj5lbmRvYmoKdHJhaWxlcjw8Pj4KJSVFT0YK",
+          "body_encoding": "base64"
+        },
+        "/api/v1/download/DOC-DELAYED.pdf": {
+          "status": 404,
+          "body": null
+        }
+      }
+    }
+  ]
+}

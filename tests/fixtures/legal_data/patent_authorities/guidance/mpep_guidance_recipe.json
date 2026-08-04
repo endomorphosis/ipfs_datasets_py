@@ -1,0 +1,191 @@
+{
+  "edition": {
+    "content_sha256": "0eb4376ae2a8ab90e9e05c181bb2423f9782cf474dd743d1d45cdf9d1392403b",
+    "cutoff": "2022-07-01",
+    "edition": "9",
+    "notes": "MPEP 9 Edition, Revision 07.2022",
+    "provider": "uspto",
+    "publication_date": "2022-07-01",
+    "retrieved_at": "2024-06-01T10:00:00Z",
+    "revision": "07.2022",
+    "source_url": "https://www.uspto.gov/web/offices/pac/mpep/index.html"
+  },
+  "fixture_id": "mpep-9-r07.2022",
+  "freshness_gaps": [
+    {
+      "cutoff": "2022-07-01",
+      "detected_at": "2024-06-01T12:00:00Z",
+      "expected_sha256": "d35a45cea5a8370b2e927f81d8b8f35d3b2e36baa8eb2890b70a349ca63fac9f",
+      "gap_id": "gap-unavailable-exam-guide-2-23",
+      "kind": "unavailable",
+      "reason": "Examination Guide 2-23 is listed in the post-cutoff inventory but the public PDF is currently unavailable (HTTP 404).",
+      "source_id": "exam-guide-2-23",
+      "source_url": "https://www.uspto.gov/patents/laws/examination-policy/examination-guide-2-23.pdf"
+    },
+    {
+      "cutoff": "2022-07-01",
+      "detected_at": "2024-06-01T12:05:00Z",
+      "expected_sha256": "51afff3bf3c1e00118745b1ed97d968eed22c3fb5fc0ed56a86e8efc3eddb2f9",
+      "gap_id": "gap-changed-form-pto-sb-08",
+      "kind": "content_changed",
+      "observed_sha256": "bc23fe93a80178eccdb7976bf23d11a4dbb857eccb098cc391e6cedfc71aecfb",
+      "reason": "Form PTO/SB/08 bytes changed relative to the recorded edition snapshot; treat as a new version, not a silent overwrite.",
+      "source_id": "form-pto-sb-08",
+      "source_url": "https://www.uspto.gov/patents/apply/forms/sb0008.pdf"
+    },
+    {
+      "cutoff": "2022-07-01",
+      "detected_at": "2024-06-01T12:10:00Z",
+      "gap_id": "gap-delayed-fee-inventory",
+      "kind": "delayed_inventory",
+      "reason": "FY2025 fee schedule inventory is delayed upstream; this is a freshness gap, not evidence of non-receipt of any filing.",
+      "source_id": "fees-fy2025-inventory",
+      "source_url": "https://www.uspto.gov/learning-and-resources/fees-and-payment/fy2025"
+    }
+  ],
+  "notes": "Compact MPEP/forms/fees/later-guidance recipe. Every record exposes authority_tier=guidance and the edition cutoff. Later Examination Guides and notices supersede inconsistent manual text without elevating either to law. Unavailable/changed documents are explicit freshness gaps.",
+  "records": [
+    {
+      "anchor": "2106",
+      "citation": "MPEP § 2106",
+      "content_sha256": "c00dd28b9a79329ef0b4ed10f6e81e8d5c7e4a18a869edc29b643b5fbdbf0bd6",
+      "cutoff": "2022-07-01",
+      "edition": "9",
+      "guidance_id": "mpep-2106",
+      "is_post_cutoff_publication": false,
+      "kind": "mpep_section",
+      "media_type": "text/html",
+      "publication_date": "2022-07-01",
+      "revision": "07.2022",
+      "source_url": "https://www.uspto.gov/web/offices/pac/mpep/s2106.html",
+      "text_excerpt": "Subject matter eligibility under 35 U.S.C. 101 is determined using the two-part framework...",
+      "title": "Patent Subject Matter Eligibility"
+    },
+    {
+      "anchor": "706.02",
+      "citation": "MPEP § 706.02",
+      "content_sha256": "11525186c75e5ea71b52e13dcc783e5cd13b70cdf7115d6e23fafdc04cd8edd2",
+      "cutoff": "2022-07-01",
+      "edition": "9",
+      "guidance_id": "mpep-706.02",
+      "is_post_cutoff_publication": false,
+      "kind": "mpep_section",
+      "media_type": "text/html",
+      "publication_date": "2022-07-01",
+      "revision": "07.2022",
+      "source_url": "https://www.uspto.gov/web/offices/pac/mpep/s706.02.html",
+      "text_excerpt": "Under the dual patenting and prior-art framework described in this revision, examiners apply the manual text unless later guidance states otherwise...",
+      "title": "Rejection on Prior Art"
+    },
+    {
+      "anchor": "7.05",
+      "citation": "Form Paragraph 7.05",
+      "content_sha256": "c49870cbbbc20965c1e5d31718be119b9d00747a17ebbcd7486ebee1f671b4a9",
+      "cutoff": "2022-07-01",
+      "edition": "9",
+      "guidance_id": "fp-7.05",
+      "is_post_cutoff_publication": false,
+      "kind": "form_paragraph",
+      "media_type": "text/html",
+      "publication_date": "2022-07-01",
+      "revision": "07.2022",
+      "source_url": "https://www.uspto.gov/web/offices/pac/mpep/index.html#fp-7.05",
+      "text_excerpt": "Claim [1] is rejected under 35 U.S.C. 101 because the claimed invention is directed to a judicial exception...",
+      "title": "Rejection, 35 U.S.C. 101, Non-Statutory"
+    },
+    {
+      "anchor": "PTO/SB/08",
+      "citation": "PTO/SB/08",
+      "content_sha256": "51afff3bf3c1e00118745b1ed97d968eed22c3fb5fc0ed56a86e8efc3eddb2f9",
+      "cutoff": "2022-07-01",
+      "edition": "9",
+      "guidance_id": "form-pto-sb-08",
+      "is_post_cutoff_publication": false,
+      "kind": "form",
+      "media_type": "application/pdf",
+      "publication_date": "2022-07-01",
+      "revision": "07.2022",
+      "source_url": "https://www.uspto.gov/patents/apply/forms/sb0008.pdf",
+      "text_excerpt": "Form for listing information disclosure references.",
+      "title": "Information Disclosure Statement"
+    },
+    {
+      "anchor": "FY2024",
+      "citation": "USPTO Fee Schedule FY2024",
+      "content_sha256": "00b07fb3df306f16d928bb9cdac6608f75fa7b44ad179d8210c4e1c822441956",
+      "cutoff": "2022-07-01",
+      "edition": "9",
+      "effective_start": "2023-10-01",
+      "guidance_id": "fees-fy2024",
+      "is_post_cutoff_publication": true,
+      "kind": "fee_schedule",
+      "media_type": "text/html",
+      "publication_date": "2023-10-01",
+      "revision": "07.2022",
+      "source_url": "https://www.uspto.gov/learning-and-resources/fees-and-payment/fy2024",
+      "text_excerpt": "Fee amounts effective for fiscal year 2024.",
+      "title": "Patent Fee Schedule FY2024"
+    },
+    {
+      "anchor": "1-23",
+      "citation": "Examination Guide 1-23",
+      "content_sha256": "0a6e88aeaaf0d8aa638c362169744548b8481f75646d4b7c16a5bf0a0477bdb9",
+      "cutoff": "2022-07-01",
+      "edition": "9",
+      "effective_start": "2023-03-15",
+      "guidance_id": "exam-guide-1-23",
+      "is_post_cutoff_publication": true,
+      "kind": "examination_guide",
+      "media_type": "application/pdf",
+      "publication_date": "2023-03-15",
+      "revision": "07.2022",
+      "source_url": "https://www.uspto.gov/patents/laws/examination-policy/examination-guide-1-23.pdf",
+      "supersedes": [
+        "mpep-706.02"
+      ],
+      "text_excerpt": "This examination guide supersedes inconsistent MPEP § 706.02 manual text regarding dual-framework application for the scenarios listed herein. This guide is guidance only and does not have the force and effect of law.",
+      "title": "Updated Prior-Art Practice (post-cutoff)"
+    },
+    {
+      "anchor": "2023-10-17-eligibility",
+      "citation": "OG Notice 2023-10-17",
+      "content_sha256": "9885b903bbd5e8a54a1b022d67a8eddb42da73efb06abd63cb1ff1e0f2db2769",
+      "cutoff": "2022-07-01",
+      "edition": "9",
+      "effective_start": "2023-10-17",
+      "guidance_id": "notice-2023-10-17",
+      "is_post_cutoff_publication": true,
+      "kind": "notice",
+      "media_type": "text/html",
+      "publication_date": "2023-10-17",
+      "revision": "07.2022",
+      "source_url": "https://www.uspto.gov/patents/laws/examination-policy/notice-2023-10-17.html",
+      "supersedes": [
+        "mpep-2106"
+      ],
+      "text_excerpt": "This notice clarifies examination practice under MPEP § 2106 for certain AI-related claims. Guidance only; not law.",
+      "title": "Subject Matter Eligibility Update Notice"
+    }
+  ],
+  "schema_version": "mpep-guidance-fixture-v1",
+  "supersessions": [
+    {
+      "effective_date": "2023-03-15",
+      "elevates_to_law": false,
+      "predecessor_id": "mpep-706.02",
+      "reason": "Examination Guide 1-23 supersedes inconsistent MPEP § 706.02 manual text for listed scenarios; both remain guidance, not law.",
+      "relation": "supersedes",
+      "remains_guidance": true,
+      "successor_id": "exam-guide-1-23"
+    },
+    {
+      "effective_date": "2023-10-17",
+      "elevates_to_law": false,
+      "predecessor_id": "mpep-2106",
+      "reason": "OG notice partially supersedes MPEP § 2106 practice notes for AI-related claims; neither is elevated to statute or regulation.",
+      "relation": "partially_supersedes",
+      "remains_guidance": true,
+      "successor_id": "notice-2023-10-17"
+    }
+  ]
+}

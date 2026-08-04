@@ -1,511 +1,453 @@
-"""Unified ProcessorRegistry - Central processor management system.
+"""Canonical ProcessorRegistry - single registration and discovery surface.
 
-This module provides the consolidated processor registry that combines the best
-features from both the legacy registry.py and core/processor_registry.py implementations.
+PATLAW-003 consolidates the dual registry modules into one canonical
+implementation:
 
-Features:
-- Async/await support for modern processors
-- Priority-based processor selection
-- Capability-based routing
-- Statistics tracking and monitoring
-- Hot-reloading support
-- ProcessorEntry dataclass for better organization
+- ``processors.core.registry`` is the source of truth
+- ``processors.core.processor_registry`` re-exports this module
+- Registration requires core ``is_processor`` conformance (or an explicit
+  :class:`~ipfs_datasets_py.processors.adapters.legacy_protocol_adapter.LegacyProtocolAdapter`)
+- Bare legacy ``can_process`` objects are rejected (no implicit mixed routing)
+- ``isinstance(..., ProcessorProtocol)`` is never used (core protocol is not
+  ``@runtime_checkable``)
 
-This is the single source of truth for processor registration and discovery.
-Legacy imports from processors.registry are redirected here via deprecation shims.
+Selection is deterministic: enabled processors are checked in descending
+priority order via async ``can_handle`` only.
 """
 
 from __future__ import annotations
 
-from typing import List, Dict, Any, Optional, Tuple, Union, Set
-from dataclasses import dataclass, field
-from collections import defaultdict
-from pathlib import Path
+import inspect
 import logging
+from collections import defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from .protocol import ProcessorProtocol, ProcessingContext, InputType
+from .protocol import (
+    InputType,
+    ProcessingContext,
+    ProcessorProtocol,
+    is_processor,
+)
 
 logger = logging.getLogger(__name__)
+
+
+class ProcessorRegistrationError(TypeError):
+    """Raised when a non-conforming processor is offered to the registry."""
+
+
+class EmptyProcessorSetError(RuntimeError):
+    """Raised when discovery is requested against an empty registry.
+
+    Callers that prefer a soft empty list may pass
+    ``allow_empty_registry=True`` to :meth:`ProcessorRegistry.get_processors`.
+    UniversalProcessor always treats an empty registry as a hard routing
+    failure so empty sets are never silent successes.
+    """
+
+
+def _is_bare_legacy(obj: Any) -> bool:
+    """True if *obj* implements legacy can_process without can_handle."""
+    return (
+        hasattr(obj, "can_process")
+        and callable(getattr(obj, "can_process", None))
+        and not (
+            hasattr(obj, "can_handle")
+            and callable(getattr(obj, "can_handle", None))
+        )
+    )
+
+
+def _capabilities_from_processor(processor: Any) -> List[str]:
+    """Best-effort capability list for indexing (not used for routing)."""
+    caps: List[str] = []
+    if hasattr(processor, "get_capabilities") and callable(processor.get_capabilities):
+        try:
+            raw = processor.get_capabilities() or {}
+            for key in ("handles", "formats", "input_types", "supported_types"):
+                val = raw.get(key)
+                if isinstance(val, (list, tuple, set)):
+                    for item in val:
+                        if hasattr(item, "value"):
+                            caps.append(str(item.value))
+                        else:
+                            caps.append(str(item))
+        except Exception as exc:
+            logger.debug("get_capabilities failed during index: %s", exc)
+    if not caps and hasattr(processor, "get_supported_types"):
+        try:
+            caps = list(processor.get_supported_types())
+        except Exception as exc:
+            logger.debug("get_supported_types failed during index: %s", exc)
+    # Deduplicate while preserving order
+    seen: Set[str] = set()
+    ordered: List[str] = []
+    for c in caps:
+        if c not in seen:
+            seen.add(c)
+            ordered.append(c)
+    return ordered
 
 
 @dataclass
 class ProcessorEntry:
     """Entry in the processor registry.
-    
-    Represents a registered processor with its metadata and state.
-    
+
     Attributes:
-        processor: The processor instance implementing ProcessorProtocol
-        priority: Processing priority (higher = checked first, default 10)
-        name: Human-readable name for the processor
-        enabled: Whether the processor is currently enabled
-        metadata: Additional metadata about the processor
-        capabilities: List of input types this processor can handle
-        statistics: Runtime statistics for this processor
+        processor: Core-conforming processor instance
+        priority: Higher values are checked first (default 10)
+        name: Human-readable unique name
+        enabled: Whether the processor participates in discovery
+        metadata: Extra registration metadata
+        capabilities: Indexed capability labels (informational)
+        statistics: Runtime call statistics
     """
-    processor: ProcessorProtocol
+
+    processor: Any  # structurally ProcessorProtocol; avoid runtime isinstance
     priority: int = 10
     name: str = ""
     enabled: bool = True
     metadata: Dict[str, Any] = field(default_factory=dict)
     capabilities: List[str] = field(default_factory=list)
-    statistics: Dict[str, Any] = field(default_factory=lambda: {
-        "calls": 0,
-        "successes": 0,
-        "failures": 0,
-        "total_time_seconds": 0.0
-    })
-    
-    def __post_init__(self):
-        """Auto-generate name and capabilities if not provided."""
+    statistics: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "calls": 0,
+            "successes": 0,
+            "failures": 0,
+            "total_time_seconds": 0.0,
+        }
+    )
+
+    def __post_init__(self) -> None:
         if not self.name:
-            self.name = self.processor.__class__.__name__
-        
-        # Auto-discover capabilities if not explicitly set
-        if not self.capabilities and hasattr(self.processor, 'get_supported_types'):
-            try:
-                self.capabilities = self.processor.get_supported_types()
-            except Exception as e:
-                logger.warning(f"Failed to get capabilities for {self.name}: {e}")
+            if hasattr(self.processor, "get_name") and callable(self.processor.get_name):
+                try:
+                    self.name = str(self.processor.get_name())
+                except Exception:
+                    self.name = self.processor.__class__.__name__
+            else:
+                self.name = self.processor.__class__.__name__
+        if not self.capabilities:
+            self.capabilities = _capabilities_from_processor(self.processor)
 
 
 class ProcessorRegistry:
-    """Unified registry for managing processors with async support.
-    
-    The ProcessorRegistry is the central manager for all processors in the
-    unified system. This consolidated version combines the best features of
-    both legacy implementations:
-    
-    - From legacy registry.py: Statistics tracking, capability management
-    - From core/processor_registry.py: Async support, ProcessorEntry dataclass
-    
-    Features:
-    - Processor registration with priorities
-    - Discovery of suitable processors for inputs (async)
-    - Priority-based selection
-    - Capability aggregation and reporting
-    - Runtime statistics and monitoring
-    - Enable/disable processors without unregistering
-    
-    Processors are stored with priorities (default 10). When selecting a
-    processor for an input, the registry checks processors in priority order
-    (highest first) and returns the first one where can_handle() returns True.
-    
-    Note: get_processors() is async to support processors with async can_handle()
-    methods.
-    
-    Example:
-        >>> registry = ProcessorRegistry()
-        >>> registry.register(pdf_processor, priority=10, name="PDF Processor")
-        >>> registry.register(graphrag_processor, priority=20, name="GraphRAG")
-        >>> 
-        >>> context = ProcessingContext(InputType.FILE, "document.pdf")
-        >>> processors = await registry.get_processors(context)
-        >>> if processors:
-        ...     result = await processors[0].process(context)
+    """Canonical registry for core ProcessorProtocol implementers.
+
+    Registration is fail-closed:
+
+    * Bare legacy processors raise :class:`ProcessorRegistrationError` with
+      guidance to use ``LegacyProtocolAdapter``.
+    * Objects that fail :func:`is_processor` are rejected.
+    * ``isinstance(..., ProcessorProtocol)`` is never called.
+
+    Discovery calls only async ``can_handle`` (or awaits a coroutine returned
+    by a sync-shaped but still registered object). There is no dual-API
+    duck-type fallback in the selection loop.
     """
-    
-    def __init__(self):
-        """Initialize empty processor registry."""
+
+    def __init__(self) -> None:
         self._processors: List[ProcessorEntry] = []
         self._name_index: Dict[str, ProcessorEntry] = {}
-        logger.info("Unified ProcessorRegistry initialized")
-    
+        logger.info("Canonical ProcessorRegistry initialized")
+
     def register(
         self,
-        processor: ProcessorProtocol,
+        processor: Any,
         priority: Optional[int] = None,
         name: Optional[str] = None,
         enabled: bool = True,
         capabilities: Optional[List[str]] = None,
-        **metadata: Any
+        **metadata: Any,
     ) -> str:
-        """Register a processor in the registry.
-        
-        Adds a processor to the registry with the specified priority. Higher
-        priority processors are checked first when selecting a processor for
-        an input.
-        
+        """Register a core-conforming processor.
+
         Args:
-            processor: Processor instance implementing ProcessorProtocol
-            priority: Processing priority (default 10, higher = checked first)
-                     If None, tries processor.get_priority() then defaults to 10
-            name: Human-readable name (defaults to class name)
-            enabled: Whether processor is enabled (default True)
-            capabilities: List of supported input types (auto-detected if None)
-            **metadata: Additional metadata to store with the processor
-            
+            processor: Instance that passes :func:`is_processor` (including
+                :class:`LegacyProtocolAdapter` wrappers).
+            priority: Selection priority (higher first). Defaults to
+                ``get_priority()`` / capabilities priority / 10.
+            name: Unique name (defaults to class / get_name()).
+            enabled: Whether the processor is selectable.
+            capabilities: Optional capability labels for reporting.
+            **metadata: Stored on the entry.
+
         Returns:
-            Name of the registered processor
-            
+            Registered processor name.
+
         Raises:
-            ValueError: If a processor with the same name already exists
-            
-        Example:
-            >>> registry.register(
-            ...     pdf_processor,
-            ...     priority=10,
-            ...     name="PDF Processor",
-            ...     capabilities=["file", "pdf"],
-            ...     description="Handles PDF documents"
-            ... )
-            'PDF Processor'
+            ProcessorRegistrationError: Non-conforming or bare-legacy object.
+            ValueError: Duplicate name.
         """
-        # Validate processor implements protocol
-        if not isinstance(processor, ProcessorProtocol):
-            logger.warning(
-                f"Processor {processor.__class__.__name__} does not implement ProcessorProtocol. "
-                "It may not work correctly."
+        if _is_bare_legacy(processor):
+            raise ProcessorRegistrationError(
+                f"Processor {processor.__class__.__name__} implements legacy "
+                "can_process without can_handle. Wrap it with "
+                "ipfs_datasets_py.processors.adapters.legacy_protocol_adapter."
+                "LegacyProtocolAdapter before registration "
+                "(implicit mixed routing is forbidden)."
             )
-        
-        # Get priority
+        if not is_processor(processor):
+            raise ProcessorRegistrationError(
+                f"Processor {processor.__class__.__name__} does not implement "
+                "the canonical async ProcessorProtocol (async can_handle, "
+                "async process, get_capabilities). Use is_processor() to "
+                "validate; do not use isinstance against core ProcessorProtocol."
+            )
+
         if priority is None:
-            if hasattr(processor, 'get_priority'):
-                try:
-                    priority = processor.get_priority()
-                except Exception as e:
-                    logger.warning(f"Failed to get priority: {e}, using default")
-                    priority = 10
-            else:
-                priority = 10
-        
-        # Get capabilities if not provided
+            priority = self._resolve_priority(processor)
+
         if capabilities is None:
-            if hasattr(processor, 'get_supported_types'):
-                try:
-                    capabilities = processor.get_supported_types()
-                except Exception as e:
-                    logger.warning(f"Failed to get capabilities: {e}")
-                    capabilities = []
-            else:
-                capabilities = []
-        
-        # Create entry
+            capabilities = _capabilities_from_processor(processor)
+
         entry = ProcessorEntry(
             processor=processor,
-            priority=priority,
+            priority=int(priority),
             name=name or "",
             enabled=enabled,
-            capabilities=capabilities,
-            metadata=metadata
+            capabilities=list(capabilities),
+            metadata=metadata,
         )
-        
-        # Check for duplicate name
+
         if entry.name in self._name_index:
             raise ValueError(f"Processor with name '{entry.name}' already registered")
-        
-        # Add to registry
+
         self._processors.append(entry)
         self._name_index[entry.name] = entry
-        
-        # Keep sorted by priority (descending)
         self._processors.sort(key=lambda e: e.priority, reverse=True)
-        
+
         logger.info(
-            f"Registered processor '{entry.name}' with priority {priority} "
-            f"and capabilities {entry.capabilities} (total: {len(self._processors)})"
+            "Registered processor '%s' priority=%s capabilities=%s (total=%s)",
+            entry.name,
+            entry.priority,
+            entry.capabilities,
+            len(self._processors),
         )
-        
         return entry.name
-    
+
+    @staticmethod
+    def _resolve_priority(processor: Any) -> int:
+        if hasattr(processor, "get_priority") and callable(processor.get_priority):
+            try:
+                return int(processor.get_priority())
+            except Exception as exc:
+                logger.warning("get_priority failed: %s", exc)
+        if hasattr(processor, "get_capabilities") and callable(processor.get_capabilities):
+            try:
+                caps = processor.get_capabilities() or {}
+                if "priority" in caps:
+                    return int(caps["priority"])
+            except Exception:
+                pass
+        return 10
+
     def unregister(self, name: str) -> bool:
-        """Unregister a processor by name.
-        
-        Removes a processor from the registry permanently.
-        
-        Args:
-            name: Name of the processor to remove
-            
-        Returns:
-            True if processor was found and removed, False otherwise
-            
-        Example:
-            >>> registry.unregister("PDF Processor")
-            True
-        """
         if name not in self._name_index:
-            logger.warning(f"Processor '{name}' not found for unregistration")
+            logger.warning("Processor '%s' not found for unregistration", name)
             return False
-        
-        # Remove from index
-        entry = self._name_index.pop(name)
-        
-        # Remove from list
+        self._name_index.pop(name)
         self._processors = [e for e in self._processors if e.name != name]
-        
-        logger.info(f"Unregistered processor '{name}' (remaining: {len(self._processors)})")
+        logger.info(
+            "Unregistered processor '%s' (remaining: %s)",
+            name,
+            len(self._processors),
+        )
         return True
-    
-    def get_processor(self, name: str) -> Optional[ProcessorProtocol]:
-        """Get a processor by name.
-        
-        Args:
-            name: Name of the processor
-            
-        Returns:
-            Processor instance if found, None otherwise
-            
-        Example:
-            >>> processor = registry.get_processor("PDF Processor")
-        """
+
+    def get_processor(self, name: str) -> Optional[Any]:
         entry = self._name_index.get(name)
         return entry.processor if entry else None
-    
+
     async def get_processors(
         self,
         context: ProcessingContext,
-        enabled_only: bool = True
-    ) -> List[ProcessorProtocol]:
-        """Get processors that can handle the given context (async).
-        
-        Checks each registered processor (in priority order) to see if it can
-        handle the given input context. Returns list of matching processors
-        sorted by priority (highest first).
-        
-        This method is async to support processors with async can_handle() methods.
-        
+        enabled_only: bool = True,
+        limit: Optional[int] = None,
+        *,
+        allow_empty_registry: bool = True,
+    ) -> List[Any]:
+        """Return processors that can_handle *context*, priority-desc.
+
         Args:
-            context: ProcessingContext with input information
-            enabled_only: If True, only return enabled processors (default)
-            
+            context: Canonical processing context.
+            enabled_only: Skip disabled entries when True.
+            limit: Optional maximum number of matches (None = all).
+            allow_empty_registry: When False, raise
+                :class:`EmptyProcessorSetError` if no processors are
+                registered at all (prevents silent empty routing).
+
         Returns:
-            List of processors that can handle the context, sorted by priority
-            
-        Example:
-            >>> context = ProcessingContext(InputType.FILE, "document.pdf")
-            >>> processors = await registry.get_processors(context)
-            >>> for processor in processors:
-            ...     result = await processor.process(context)
+            Matching processor instances (not entries), highest priority first.
         """
-        matching = []
-        
+        if not self._processors and not allow_empty_registry:
+            raise EmptyProcessorSetError(
+                "ProcessorRegistry has no registered processors; "
+                "register core processors or LegacyProtocolAdapter wrappers "
+                "before routing"
+            )
+
+        matching: List[Any] = []
+
         for entry in self._processors:
-            # Skip if disabled and enabled_only is True
             if enabled_only and not entry.enabled:
                 continue
-            
-            # Check if processor can handle this context
             try:
-                processor = entry.processor
-                
-                # Try async can_handle if available
-                if hasattr(processor, 'can_handle'):
-                    can_handle_method = getattr(processor, 'can_handle')
-                    
-                    # Check if it's async
-                    import inspect
-                    if inspect.iscoroutinefunction(can_handle_method):
-                        can_handle = await can_handle_method(context)
-                    else:
-                        can_handle = can_handle_method(context)
-                    
-                    if can_handle:
-                        matching.append(processor)
-                        logger.debug(f"Processor '{entry.name}' can handle context")
-                else:
-                    # Fallback: check capabilities
-                    if str(context.input_type.value) in entry.capabilities:
-                        matching.append(processor)
-                        logger.debug(f"Processor '{entry.name}' matches by capability")
-                        
-            except Exception as e:
-                logger.error(f"Error checking processor '{entry.name}': {e}", exc_info=True)
+                can_handle = await self._await_can_handle(entry.processor, context)
+            except Exception as exc:
+                logger.error(
+                    "Error checking processor '%s': %s",
+                    entry.name,
+                    exc,
+                    exc_info=True,
+                )
                 continue
-        
+
+            if can_handle:
+                matching.append(entry.processor)
+                logger.debug(
+                    "Processor '%s' (priority %s) can handle %s",
+                    entry.name,
+                    entry.priority,
+                    context.input_type,
+                )
+                if limit is not None and len(matching) >= limit:
+                    break
+
+        if not matching:
+            logger.warning(
+                "No suitable processors for %s (format=%s, registered=%s, enabled=%s)",
+                context.input_type,
+                context.get_format(),
+                len(self._processors),
+                self.get_enabled_count(),
+            )
+        else:
+            logger.info(
+                "Found %s suitable processor(s) for %s",
+                len(matching),
+                context.input_type,
+            )
         return matching
-    
+
+    @staticmethod
+    async def _await_can_handle(processor: Any, context: ProcessingContext) -> bool:
+        """Invoke can_handle without dual-API duck typing."""
+        if not hasattr(processor, "can_handle"):
+            # Should be unreachable for registered processors (is_processor gate).
+            return False
+        method = processor.can_handle
+        if not callable(method):
+            return False
+        if inspect.iscoroutinefunction(method):
+            return bool(await method(context))
+        result = method(context)
+        if inspect.isawaitable(result):
+            return bool(await result)
+        return bool(result)
+
     async def find_processors(
         self,
         input_source: Union[str, Path, bytes],
-        input_type: Optional[Union[InputType, str]] = None
-    ) -> List[ProcessorProtocol]:
-        """Find processors for an input (legacy API, async).
-        
-        This is a convenience method that creates a ProcessingContext and calls
-        get_processors(). Provided for backward compatibility with legacy code.
-        
-        Args:
-            input_source: Input source (path, URL, or content)
-            input_type: Type of input (auto-detected if None)
-            
-        Returns:
-            List of matching processors sorted by priority
-        """
-        # Auto-detect input type if not provided
+        input_type: Optional[Union[InputType, str]] = None,
+    ) -> List[Any]:
+        """Legacy convenience: build a context and call get_processors."""
         if input_type is None:
-            # Simple heuristic detection
             if isinstance(input_source, bytes):
                 input_type = InputType.BINARY
             elif isinstance(input_source, (str, Path)):
                 source_str = str(input_source)
-                if source_str.startswith(('http://', 'https://')):
+                if source_str.startswith(("http://", "https://")):
                     input_type = InputType.URL
                 elif Path(source_str).exists():
-                    if Path(source_str).is_dir():
-                        input_type = InputType.FOLDER
-                    else:
-                        input_type = InputType.FILE
+                    input_type = (
+                        InputType.FOLDER if Path(source_str).is_dir() else InputType.FILE
+                    )
                 else:
                     input_type = InputType.TEXT
             else:
                 input_type = InputType.BINARY
         elif isinstance(input_type, str):
             input_type = InputType.from_string(input_type)
-        
-        # Create context
-        context = ProcessingContext(
-            input_type=input_type,
-            source=input_source
-        )
-        
+
+        context = ProcessingContext(input_type=input_type, source=input_source)
         return await self.get_processors(context)
-    
+
     def select_best_processor(
         self,
-        processors: List[ProcessorProtocol],
-        input_source: Any
-    ) -> Optional[ProcessorProtocol]:
-        """Select the best processor from a list (legacy API, sync).
-        
-        Selects the highest priority processor from the list. Since processors
-        are already sorted by priority in get_processors(), this simply returns
-        the first one.
-        
-        Args:
-            processors: List of candidate processors
-            input_source: Input source (for logging)
-            
-        Returns:
-            Best processor or None if list is empty
-        """
+        processors: List[Any],
+        input_source: Any = None,
+    ) -> Optional[Any]:
+        """Return the first processor (already priority-sorted) or None."""
         if not processors:
             return None
-        
         best = processors[0]
         best_name = best.__class__.__name__
-        if hasattr(best, 'get_name'):
+        if hasattr(best, "get_name") and callable(best.get_name):
             try:
                 best_name = best.get_name()
             except Exception:
                 pass
-        
-        logger.info(f"Selected processor '{best_name}' for input: {input_source}")
+        logger.info("Selected processor '%s' for input: %s", best_name, input_source)
         return best
-    
-    def get_all_processors(self) -> List[Tuple[str, ProcessorProtocol, int]]:
-        """Get all registered processors with their names and priorities.
-        
-        Returns:
-            List of (name, processor, priority) tuples sorted by priority
-        """
+
+    def get_all_processors(self) -> List[Tuple[str, Any, int]]:
         return [(e.name, e.processor, e.priority) for e in self._processors]
-    
+
     def list_processors(self) -> Dict[str, Dict[str, Any]]:
-        """List all registered processors with their metadata.
-        
-        Returns:
-            Dictionary mapping processor names to their information:
-            - processor: The processor instance
-            - priority: Priority value
-            - enabled: Whether enabled
-            - capabilities: List of supported types
-            - statistics: Runtime statistics
-            - metadata: Additional metadata
-        """
-        result = {}
+        result: Dict[str, Dict[str, Any]] = {}
         for entry in self._processors:
             result[entry.name] = {
                 "processor": entry.processor,
                 "priority": entry.priority,
                 "enabled": entry.enabled,
-                "capabilities": entry.capabilities,
+                "capabilities": list(entry.capabilities),
                 "statistics": entry.statistics.copy(),
-                "metadata": entry.metadata.copy()
+                "metadata": entry.metadata.copy(),
             }
         return result
-    
+
     def get_processors_by_type(self, input_type: Union[str, InputType]) -> List[str]:
-        """Get processor names that support a specific input type.
-        
-        Args:
-            input_type: Input type to search for (string or InputType enum)
-            
-        Returns:
-            List of processor names that support this type
-        """
         if isinstance(input_type, InputType):
             input_type = input_type.value
-        
-        matching = []
-        for entry in self._processors:
-            if input_type in entry.capabilities:
-                matching.append(entry.name)
-        
-        return matching
-    
+        return [
+            entry.name
+            for entry in self._processors
+            if input_type in entry.capabilities
+        ]
+
     def get_enabled_count(self) -> int:
-        """Get count of enabled processors.
-        
-        Returns:
-            Number of enabled processors
-        """
         return sum(1 for e in self._processors if e.enabled)
-    
+
     def get_total_count(self) -> int:
-        """Get total count of registered processors.
-        
-        Returns:
-            Total number of registered processors
-        """
         return len(self._processors)
-    
+
     def enable(self, name: str) -> bool:
-        """Enable a processor.
-        
-        Args:
-            name: Name of processor to enable
-            
-        Returns:
-            True if processor was found and enabled, False otherwise
-        """
         entry = self._name_index.get(name)
         if entry:
             entry.enabled = True
-            logger.info(f"Enabled processor '{name}'")
+            logger.info("Enabled processor '%s'", name)
             return True
-        logger.warning(f"Processor '{name}' not found for enable")
+        logger.warning("Processor '%s' not found for enable", name)
         return False
-    
+
     def disable(self, name: str) -> bool:
-        """Disable a processor.
-        
-        Args:
-            name: Name of processor to disable
-            
-        Returns:
-            True if processor was found and disabled, False otherwise
-        """
         entry = self._name_index.get(name)
         if entry:
             entry.enabled = False
-            logger.info(f"Disabled processor '{name}'")
+            logger.info("Disabled processor '%s'", name)
             return True
-        logger.warning(f"Processor '{name}' not found for disable")
+        logger.warning("Processor '%s' not found for disable", name)
         return False
-    
+
     def record_call(
         self,
         processor_name: str,
         success: bool,
-        duration_seconds: float
+        duration_seconds: float,
     ) -> None:
-        """Record a processor call for statistics tracking.
-        
-        Args:
-            processor_name: Name of the processor
-            success: Whether the call succeeded
-            duration_seconds: Duration of the call in seconds
-        """
         entry = self._name_index.get(processor_name)
         if entry:
             stats = entry.statistics
@@ -515,127 +457,126 @@ class ProcessorRegistry:
             else:
                 stats["failures"] += 1
             stats["total_time_seconds"] += duration_seconds
-    
+
     def get_statistics(
         self,
-        processor_name: Optional[str] = None
+        processor_name: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Get statistics for processors.
-        
-        Args:
-            processor_name: Specific processor name, or None for all processors
-            
-        Returns:
-            Statistics dictionary for the processor(s)
-        """
         if processor_name:
             entry = self._name_index.get(processor_name)
-            if entry:
-                return entry.statistics.copy()
-            return {}
-        
-        # Return all statistics
-        return {
-            entry.name: entry.statistics.copy()
-            for entry in self._processors
-        }
-    
+            return entry.statistics.copy() if entry else {}
+        return {entry.name: entry.statistics.copy() for entry in self._processors}
+
     def reset_statistics(self, processor_name: Optional[str] = None) -> None:
-        """Reset statistics for processors.
-        
-        Args:
-            processor_name: Specific processor name, or None for all processors
-        """
+        blank = {
+            "calls": 0,
+            "successes": 0,
+            "failures": 0,
+            "total_time_seconds": 0.0,
+        }
         if processor_name:
             entry = self._name_index.get(processor_name)
             if entry:
-                entry.statistics = {
-                    "calls": 0,
-                    "successes": 0,
-                    "failures": 0,
-                    "total_time_seconds": 0.0
-                }
-        else:
-            for entry in self._processors:
-                entry.statistics = {
-                    "calls": 0,
-                    "successes": 0,
-                    "failures": 0,
-                    "total_time_seconds": 0.0
-                }
-    
+                entry.statistics = blank.copy()
+            return
+        for entry in self._processors:
+            entry.statistics = blank.copy()
+
     def get_capabilities(self) -> Dict[str, Any]:
-        """Get aggregated capabilities of all registered processors.
-        
-        Returns:
-            Dictionary with:
-            - total_processors: Total count
-            - enabled_processors: Enabled count
-            - supported_types: Set of all supported input types
-            - by_type: Mapping of input types to processor names
+        """Aggregate capabilities for discovery/reporting.
+
+        Includes both the consolidated registry keys (``supported_types``,
+        ``by_type``) and the processor_registry keys (``processors``,
+        ``supported_formats``, ``supported_input_types``) so callers of either
+        former API continue to work after consolidation.
         """
+        processors_info: List[Dict[str, Any]] = []
+        all_input_types: Set[str] = set()
+        all_formats: Set[str] = set()
         all_types: Set[str] = set()
         by_type: Dict[str, List[str]] = defaultdict(list)
-        
+
         for entry in self._processors:
             for capability in entry.capabilities:
                 all_types.add(capability)
                 by_type[capability].append(entry.name)
-        
+
+            try:
+                caps = entry.processor.get_capabilities()
+                if "input_types" in caps:
+                    types = caps["input_types"]
+                    if isinstance(types, (list, set, tuple)):
+                        for t in types:
+                            all_input_types.add(
+                                str(t.value) if hasattr(t, "value") else str(t)
+                            )
+                if "formats" in caps:
+                    formats = caps["formats"]
+                    if isinstance(formats, (list, set, tuple)):
+                        all_formats.update(str(f) for f in formats)
+                if "handles" in caps:
+                    handles = caps["handles"]
+                    if isinstance(handles, (list, set, tuple)):
+                        all_formats.update(str(h) for h in handles)
+                        all_types.update(str(h) for h in handles)
+
+                processors_info.append(
+                    {
+                        "name": entry.name,
+                        "priority": entry.priority,
+                        "enabled": entry.enabled,
+                        "capabilities": caps,
+                        "metadata": entry.metadata,
+                    }
+                )
+            except Exception as exc:
+                logger.error(
+                    "Error getting capabilities from '%s': %s", entry.name, exc
+                )
+                processors_info.append(
+                    {
+                        "name": entry.name,
+                        "priority": entry.priority,
+                        "enabled": entry.enabled,
+                        "error": str(exc),
+                    }
+                )
+
         return {
             "total_processors": len(self._processors),
             "enabled_processors": self.get_enabled_count(),
-            "supported_types": sorted(all_types),
-            "by_type": dict(by_type)
+            "processors": processors_info,
+            "supported_input_types": sorted(all_input_types),
+            "supported_formats": sorted(all_formats),
+            "supported_types": sorted(all_types | all_formats | all_input_types),
+            "by_type": dict(by_type),
         }
-    
+
     def clear(self) -> None:
-        """Clear all registered processors.
-        
-        Removes all processors from the registry. Use with caution.
-        """
         count = len(self._processors)
         self._processors.clear()
         self._name_index.clear()
-        logger.info(f"Cleared registry ({count} processors removed)")
-    
+        logger.info("Cleared registry (%s processors removed)", count)
+
     def __len__(self) -> int:
-        """Get number of registered processors."""
         return len(self._processors)
-    
+
     def __contains__(self, name: str) -> bool:
-        """Check if a processor name is registered."""
         return name in self._name_index
-    
+
     def __repr__(self) -> str:
-        """String representation of registry."""
-        enabled = self.get_enabled_count()
-        total = len(self._processors)
         return (
-            f"ProcessorRegistry(total={total}, enabled={enabled}, "
-            f"priorities={[e.priority for e in self._processors[:3]]}...)"
+            f"ProcessorRegistry(total={len(self._processors)}, "
+            f"enabled={self.get_enabled_count()})"
         )
 
 
-# Global registry instance
+# Shared global singleton (also re-exported by processor_registry)
 _global_registry: Optional[ProcessorRegistry] = None
 
 
 def get_global_registry() -> ProcessorRegistry:
-    """Get or create the global processor registry singleton.
-    
-    Returns the global registry instance, creating it if it doesn't exist yet.
-    Most applications should use this global registry rather than creating
-    their own instances.
-    
-    Returns:
-        Global ProcessorRegistry instance
-        
-    Example:
-        >>> from processors.core.registry import get_global_registry
-        >>> registry = get_global_registry()
-        >>> registry.register(my_processor)
-    """
+    """Return the process-wide canonical ProcessorRegistry singleton."""
     global _global_registry
     if _global_registry is None:
         _global_registry = ProcessorRegistry()
@@ -643,8 +584,20 @@ def get_global_registry() -> ProcessorRegistry:
     return _global_registry
 
 
+def reset_global_registry() -> ProcessorRegistry:
+    """Replace the global registry with a fresh empty instance (tests)."""
+    global _global_registry
+    _global_registry = ProcessorRegistry()
+    return _global_registry
+
+
 __all__ = [
-    'ProcessorEntry',
-    'ProcessorRegistry',
-    'get_global_registry',
+    "ProcessorEntry",
+    "ProcessorRegistry",
+    "ProcessorRegistrationError",
+    "EmptyProcessorSetError",
+    "get_global_registry",
+    "reset_global_registry",
+    # Re-export for type annotations / compatibility
+    "ProcessorProtocol",
 ]

@@ -1,0 +1,295 @@
+{
+  "schema_version": "odp-http-fixture-v1",
+  "provider": "odp_patent_file_wrapper",
+  "notes": "Compact recorded ODP exchanges for PATLAW-021. Bodies are minimal envelopes, not full golden dumps.",
+  "exchanges": [
+    {
+      "id": "application_data_200",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16123456",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "ETag": "\"etag-app-16123456-v1\"",
+        "Last-Modified": "Wed, 01 Aug 2026 00:00:00 GMT"
+      },
+      "body": {
+        "count": 1,
+        "patentFileWrapperDataBag": [
+          {
+            "applicationNumberText": "16123456",
+            "applicationMetaData": {
+              "applicationStatusCode": 150,
+              "applicationStatusDescriptionText": "Docketed New Case - Ready for Examination",
+              "filingDate": "2019-01-15",
+              "applicationTypeLabelName": "Utility"
+            },
+            "eventDataBag": [
+              {
+                "eventCode": "APP.FILE.REC",
+                "eventDescriptionText": "Application filed",
+                "eventDate": "2019-01-15"
+              }
+            ],
+            "lastIngestionDateTime": "2026-08-01T12:00:00"
+          }
+        ],
+        "requestIdentifier": "fixture-app-200"
+      }
+    },
+    {
+      "id": "application_data_304",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16123456",
+      "status": 304,
+      "headers": {
+        "ETag": "\"etag-app-16123456-v1\""
+      },
+      "body": null
+    },
+    {
+      "id": "meta_data_200",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16123456/meta-data",
+      "status": 200,
+      "body": {
+        "count": 1,
+        "patentFileWrapperDataBag": [
+          {
+            "applicationNumberText": "16123456",
+            "applicationMetaData": {
+              "applicationStatusCode": 150,
+              "applicationStatusDescriptionText": "Docketed New Case - Ready for Examination",
+              "filingDate": "2019-01-15"
+            }
+          }
+        ],
+        "requestIdentifier": "fixture-meta-200"
+      }
+    },
+    {
+      "id": "transactions_200",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16123456/transactions",
+      "status": 200,
+      "body": {
+        "count": 1,
+        "patentFileWrapperDataBag": [
+          {
+            "applicationNumberText": "16123456",
+            "eventDataBag": [
+              {
+                "eventCode": "APP.FILE.REC",
+                "eventDescriptionText": "Application filed",
+                "eventDate": "2019-01-15"
+              },
+              {
+                "eventCode": "CTNF",
+                "eventDescriptionText": "Non-Final Rejection",
+                "eventDate": "2020-06-01"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "documents_200",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16123456/documents",
+      "status": 200,
+      "body": {
+        "documentBag": [
+          {
+            "applicationNumberText": "16123456",
+            "officialDate": "2020-08-31T01:20:29.000-0400",
+            "documentIdentifier": "DOCID001",
+            "documentCode": "CTNF",
+            "documentCodeDescriptionText": "Non-Final Rejection",
+            "documentDirectionCategory": "OUTGOING",
+            "downloadOptionBag": [
+              {
+                "mimeTypeIdentifier": "PDF",
+                "downloadUrl": "https://api.uspto.gov/api/v1/download/DOCID001.pdf",
+                "pageTotalQuantity": 12
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "application_401",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/00000001",
+      "status": 401,
+      "body": {
+        "code": "401",
+        "error": "Unauthorized",
+        "errorDetails": "Invalid or missing API key"
+      }
+    },
+    {
+      "id": "application_403",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/00000002",
+      "status": 403,
+      "body": {
+        "code": "403",
+        "error": "Forbidden"
+      }
+    },
+    {
+      "id": "application_404",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/99999999",
+      "status": 404,
+      "body": {
+        "code": "404",
+        "error": "Not Found",
+        "errorDetails": "No matching records found"
+      }
+    },
+    {
+      "id": "application_malformed",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16111111",
+      "status": 200,
+      "body": {
+        "unexpected": true
+      }
+    },
+    {
+      "id": "application_schema_drift",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16222222",
+      "status": 200,
+      "body": {
+        "count": 1,
+        "patentFileWrapperDataBag": [
+          {
+            "applicationNumberText": "16222222",
+            "applicationMetaData": {
+              "applicationStatusCode": 150
+            }
+          }
+        ],
+        "brandNewEnvelopeField": {
+          "future": true
+        }
+      }
+    },
+    {
+      "id": "application_not_json",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16333333",
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/html"
+      },
+      "body": "<html>not-json</html>"
+    },
+    {
+      "id": "search_page_0",
+      "method": "POST",
+      "path": "/api/v1/patent/applications/search",
+      "status": 200,
+      "body": {
+        "count": 3,
+        "patentFileWrapperDataBag": [
+          {"applicationNumberText": "16100001"},
+          {"applicationNumberText": "16100002"}
+        ],
+        "requestIdentifier": "fixture-search-p0"
+      }
+    },
+    {
+      "id": "search_page_1",
+      "method": "POST",
+      "path": "/api/v1/patent/applications/search",
+      "status": 200,
+      "body": {
+        "count": 3,
+        "patentFileWrapperDataBag": [
+          {"applicationNumberText": "16100003"}
+        ],
+        "requestIdentifier": "fixture-search-p1"
+      }
+    }
+  ],
+  "sequences": [
+    {
+      "id": "retry_5xx_then_200",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16444444",
+      "steps": [
+        {
+          "status": 503,
+          "body": {
+            "code": "503",
+            "error": "Service Unavailable"
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "count": 1,
+            "patentFileWrapperDataBag": [
+              {
+                "applicationNumberText": "16444444",
+                "applicationMetaData": {
+                  "applicationStatusCode": 150,
+                  "applicationStatusDescriptionText": "Ready"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "retry_budget_5xx",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16555555",
+      "steps": [
+        {"status": 500, "body": {"code": "500", "error": "Internal Server Error"}},
+        {"status": 502, "body": {"code": "502", "error": "Bad Gateway"}},
+        {"status": 503, "body": {"code": "503", "error": "Service Unavailable"}}
+      ]
+    },
+    {
+      "id": "rate_limit_429",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16666666",
+      "steps": [
+        {
+          "status": 429,
+          "headers": {"Retry-After": "2"},
+          "body": {"code": "429", "error": "Too Many Requests"}
+        }
+      ]
+    },
+    {
+      "id": "rate_limit_budget",
+      "method": "GET",
+      "path": "/api/v1/patent/applications/16777777",
+      "steps": [
+        {
+          "status": 429,
+          "headers": {"Retry-After": "1"},
+          "body": {"code": "429", "error": "Too Many Requests"}
+        },
+        {
+          "status": 429,
+          "headers": {"Retry-After": "1"},
+          "body": {"code": "429", "error": "Too Many Requests"}
+        },
+        {
+          "status": 429,
+          "headers": {"Retry-After": "1"},
+          "body": {"code": "429", "error": "Too Many Requests"}
+        }
+      ]
+    }
+  ]
+}

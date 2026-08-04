@@ -1,0 +1,8 @@
+{
+  "fixture_id": "public-laws-missing",
+  "inventory_source": "empty-inventory",
+  "notes": "No Public Law packages present; acquisition is unknown.",
+  "public_laws": [],
+  "schema_version": "public-law-change-fixture-v1",
+  "status": "unknown"
+}

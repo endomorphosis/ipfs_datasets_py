@@ -1,0 +1,43 @@
+{
+  "case_id": "gold-filing-receipts",
+  "goal_id": "PATLAW-G080",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [],
+    "dates": [
+      {
+        "candidate_utc": "2026-01-15T18:22:00Z",
+        "classification": "public_user",
+        "deadline_id": "date:filing-effective-2026-01-15",
+        "event_basis": "electronic_acknowledgement_receipt_date",
+        "reviewer_confirmation": "complete",
+        "rule_chain": [
+          "37 CFR 1.6"
+        ],
+        "uncertainty": "none_for_receipt_timestamp"
+      }
+    ],
+    "provenance": [
+      {
+        "artifact_id": "art:ack-receipt-1",
+        "classification": "public_user",
+        "item_id": "date:filing-effective-2026-01-15",
+        "item_kind": "date",
+        "origin": "metadata",
+        "page_index": 0,
+        "source_receipt_id": "receipt:synthetic:filing-1",
+        "span_id": "span:ack-receipt-date"
+      }
+    ],
+    "requirements": []
+  }
+}

@@ -1,0 +1,489 @@
+{
+  "schema_version": "uspto.closure-calendar-recipe.v1",
+  "recipe_id": "patlaw-138-closure-calendar",
+  "notes": "Compact deterministic fixtures for PATLAW-138. Prefer recipe cases over bulk golden dumps.",
+  "shared_calendar_base": {
+    "as_of": "2026-01-15",
+    "year": 2026,
+    "time_zone": "America/New_York",
+    "calendar_id": "US-federal+USPTO-closure",
+    "seed_federal_holidays": true,
+    "materialized_at": "2026-01-15T12:00:00Z",
+    "authority_citations": [
+      "37 C.F.R. 1.7",
+      "5 U.S.C. 6103"
+    ],
+    "sources": [
+      {
+        "source_id": "src:opal-federal-holidays-2026",
+        "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "source_url": "https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/",
+        "provider": "opm",
+        "retrieved_at": "2026-01-01T00:00:00Z",
+        "authority_citation": "5 U.S.C. 6103",
+        "as_of": "2026-01-01"
+      },
+      {
+        "source_id": "src:uspto-closure-notices-2026",
+        "source_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "source_url": "https://www.uspto.gov/about-us/news-updates",
+        "provider": "uspto",
+        "retrieved_at": "2026-01-10T00:00:00Z",
+        "authority_citation": "37 C.F.R. 1.7",
+        "as_of": "2026-01-10"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "weekend",
+      "description": "Base period ends on Saturday; 1.7 advances to Monday.",
+      "request_id": "req:weekend",
+      "matter_id": "matter:weekend",
+      "trigger": {
+        "kind": "mailing_date",
+        "trigger_date": "2026-01-03",
+        "source_id": "src:oa:weekend",
+        "source_span_id": "span:mail:1",
+        "service_channel": "electronic"
+      },
+      "period_amount": 3,
+      "period_unit": "months",
+      "period_surface": "3 months",
+      "legal_citations": ["37 C.F.R. 1.134", "37 C.F.R. 1.7"],
+      "classification": "public_user",
+      "assumptions": {
+        "entity_status": "undiscounted",
+        "extension_months": null,
+        "apply_weekend_holiday": true,
+        "time_zone": "America/New_York"
+      },
+      "calendar": {
+        "snapshot_id": "snap:weekend-2026",
+        "as_of": "2026-01-15",
+        "year": 2026,
+        "seed_federal_holidays": true,
+        "materialized_at": "2026-01-15T12:00:00Z",
+        "authority_citations": ["37 C.F.R. 1.7", "5 U.S.C. 6103"],
+        "sources": [
+          {
+            "source_id": "src:opal-federal-holidays-2026",
+            "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "provider": "opm",
+            "authority_citation": "5 U.S.C. 6103",
+            "as_of": "2026-01-01"
+          }
+        ]
+      },
+      "expect": {
+        "raw_end": "2026-04-03",
+        "adjusted_end": "2026-04-03",
+        "note": "2026-04-03 is Friday; weekend case uses mailing that yields Saturday raw end via days unit in alternate — see weekend_saturday",
+        "is_review_only": true,
+        "is_definitive_computationally": true,
+        "has_calendar_provenance": true,
+        "reason_codes_include": ["weekend_adjusted", "holiday_adjusted", "review_only"],
+        "sections_present": [
+          "calculated_dates",
+          "source_stated_dates",
+          "assumptions",
+          "human_confirmation_requirements"
+        ]
+      }
+    },
+    {
+      "id": "weekend_saturday",
+      "description": "Period of days ending on Saturday advances to Monday.",
+      "request_id": "req:weekend-sat",
+      "matter_id": "matter:weekend-sat",
+      "trigger": {
+        "kind": "mailing_date",
+        "trigger_date": "2026-03-30",
+        "source_id": "src:oa:weekend-sat",
+        "service_channel": "mail"
+      },
+      "period_amount": 5,
+      "period_unit": "days",
+      "period_surface": "5 days",
+      "legal_citations": ["37 C.F.R. 1.7"],
+      "classification": "public_user",
+      "assumptions": {
+        "extension_months": null,
+        "apply_weekend_holiday": true,
+        "time_zone": "America/New_York"
+      },
+      "calendar": {
+        "snapshot_id": "snap:weekend-sat-2026",
+        "as_of": "2026-03-01",
+        "year": 2026,
+        "seed_federal_holidays": true,
+        "materialized_at": "2026-03-01T00:00:00Z",
+        "authority_citations": ["37 C.F.R. 1.7"],
+        "sources": [
+          {
+            "source_id": "src:opal-federal-holidays-2026",
+            "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "provider": "opm",
+            "as_of": "2026-01-01"
+          }
+        ]
+      },
+      "expect": {
+        "raw_end": "2026-04-04",
+        "adjusted_end": "2026-04-06",
+        "hit_kinds_include": ["weekend"],
+        "is_review_only": true,
+        "has_calendar_provenance": true,
+        "reason_codes_include": ["weekend_adjusted"]
+      }
+    },
+    {
+      "id": "holiday",
+      "description": "Period ends on Christmas Day 2026 (Friday); advances to next open day.",
+      "request_id": "req:holiday",
+      "matter_id": "matter:holiday",
+      "trigger": {
+        "kind": "mailing_date",
+        "trigger_date": "2026-09-25",
+        "source_id": "src:oa:holiday",
+        "service_channel": "electronic"
+      },
+      "period_amount": 3,
+      "period_unit": "months",
+      "period_surface": "3 months",
+      "legal_citations": ["37 C.F.R. 1.134", "37 C.F.R. 1.7"],
+      "classification": "public_user",
+      "assumptions": {
+        "entity_status": "small_entity",
+        "extension_months": null,
+        "apply_weekend_holiday": true
+      },
+      "calendar": {
+        "snapshot_id": "snap:holiday-2026",
+        "as_of": "2026-01-15",
+        "year": 2026,
+        "seed_federal_holidays": true,
+        "materialized_at": "2026-01-15T12:00:00Z",
+        "authority_citations": ["37 C.F.R. 1.7", "5 U.S.C. 6103"],
+        "sources": [
+          {
+            "source_id": "src:opal-federal-holidays-2026",
+            "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "provider": "opm",
+            "authority_citation": "5 U.S.C. 6103",
+            "as_of": "2026-01-01"
+          }
+        ]
+      },
+      "expect": {
+        "raw_end": "2026-12-25",
+        "adjusted_end": "2026-12-28",
+        "hit_kinds_include": ["federal_holiday"],
+        "is_review_only": true,
+        "has_calendar_provenance": true,
+        "reason_codes_include": ["holiday_adjusted"]
+      }
+    },
+    {
+      "id": "uspto_closure",
+      "description": "USPTO unscheduled closure day advances deadline.",
+      "request_id": "req:closure",
+      "matter_id": "matter:closure",
+      "trigger": {
+        "kind": "mailing_date",
+        "trigger_date": "2026-02-10",
+        "source_id": "src:oa:closure",
+        "service_channel": "electronic"
+      },
+      "period_amount": 30,
+      "period_unit": "days",
+      "period_surface": "30 days",
+      "legal_citations": ["37 C.F.R. 1.7"],
+      "classification": "public_user",
+      "assumptions": {
+        "extension_months": null,
+        "apply_weekend_holiday": true
+      },
+      "calendar": {
+        "snapshot_id": "snap:uspto-closure-2026",
+        "as_of": "2026-03-01",
+        "year": 2026,
+        "seed_federal_holidays": true,
+        "materialized_at": "2026-03-01T00:00:00Z",
+        "authority_citations": ["37 C.F.R. 1.7"],
+        "sources": [
+          {
+            "source_id": "src:uspto-closure-notices-2026",
+            "source_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "provider": "uspto",
+            "authority_citation": "37 C.F.R. 1.7",
+            "as_of": "2026-03-01"
+          }
+        ],
+        "uspto_closures": [
+          {
+            "entry_id": "uspto-closure:2026-03-12",
+            "closed_date": "2026-03-12",
+            "kind": "uspto_closure",
+            "label": "USPTO administrative closure (fixture)",
+            "authority_citation": "USPTO notice (fixture)",
+            "source_id": "src:uspto-closure-notices-2026",
+            "source_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ]
+      },
+      "expect": {
+        "raw_end": "2026-03-12",
+        "adjusted_end": "2026-03-13",
+        "hit_kinds_include": ["uspto_closure"],
+        "is_review_only": true,
+        "has_calendar_provenance": true,
+        "reason_codes_include": ["uspto_closure_adjusted"]
+      }
+    },
+    {
+      "id": "emergency",
+      "description": "Emergency relief window extends period ending inside the window.",
+      "request_id": "req:emergency",
+      "matter_id": "matter:emergency",
+      "trigger": {
+        "kind": "mailing_date",
+        "trigger_date": "2026-08-01",
+        "source_id": "src:oa:emergency",
+        "service_channel": "electronic"
+      },
+      "period_amount": 1,
+      "period_unit": "months",
+      "period_surface": "1 month",
+      "legal_citations": ["37 C.F.R. 1.7"],
+      "classification": "public_user",
+      "assumptions": {
+        "extension_months": null,
+        "apply_weekend_holiday": true
+      },
+      "calendar": {
+        "snapshot_id": "snap:emergency-2026",
+        "as_of": "2026-08-15",
+        "year": 2026,
+        "seed_federal_holidays": true,
+        "materialized_at": "2026-08-15T00:00:00Z",
+        "authority_citations": ["37 C.F.R. 1.7", "USPTO emergency notice (fixture)"],
+        "sources": [
+          {
+            "source_id": "src:uspto-emergency-2026",
+            "source_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "provider": "uspto",
+            "authority_citation": "USPTO emergency notice (fixture)",
+            "as_of": "2026-08-15",
+            "source_url": "https://www.uspto.gov/emergency-fixture"
+          }
+        ],
+        "emergency_relief": [
+          {
+            "entry_id": "emergency:2026-hurricane-fixture",
+            "closed_date": "2026-08-28",
+            "relief_end_date": "2026-09-10",
+            "kind": "emergency_relief",
+            "label": "Emergency relief window (fixture)",
+            "authority_citation": "USPTO emergency notice (fixture)",
+            "source_id": "src:uspto-emergency-2026",
+            "source_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          }
+        ]
+      },
+      "expect": {
+        "raw_end": "2026-09-01",
+        "emergency_relief_end": "2026-09-10",
+        "is_review_only": true,
+        "has_calendar_provenance": true,
+        "reason_codes_include": ["emergency_relief_applied"]
+      }
+    },
+    {
+      "id": "extension",
+      "description": "Explicit one-month extension assumption; never inferred.",
+      "request_id": "req:extension",
+      "matter_id": "matter:extension",
+      "trigger": {
+        "kind": "mailing_date",
+        "trigger_date": "2026-01-15",
+        "source_id": "src:oa:extension",
+        "service_channel": "electronic"
+      },
+      "period_amount": 3,
+      "period_unit": "months",
+      "period_surface": "3 months",
+      "legal_citations": ["37 C.F.R. 1.134", "37 C.F.R. 1.136(a)"],
+      "classification": "public_user",
+      "assumptions": {
+        "entity_status": "undiscounted",
+        "extension_months": 1,
+        "emit_extension_ladder": true,
+        "max_extension_months": 5,
+        "apply_weekend_holiday": true
+      },
+      "calendar": {
+        "snapshot_id": "snap:extension-2026",
+        "as_of": "2026-01-15",
+        "year": 2026,
+        "seed_federal_holidays": true,
+        "materialized_at": "2026-01-15T12:00:00Z",
+        "authority_citations": ["37 C.F.R. 1.7", "37 C.F.R. 1.136(a)"],
+        "sources": [
+          {
+            "source_id": "src:opal-federal-holidays-2026",
+            "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "provider": "opm",
+            "as_of": "2026-01-01"
+          }
+        ]
+      },
+      "expect": {
+        "base_raw_end": "2026-04-15",
+        "base_adjusted_end": "2026-04-15",
+        "extension_1_month": "2026-05-15",
+        "has_extension_ladder": true,
+        "is_review_only": true,
+        "has_calendar_provenance": true,
+        "assumptions_extension_months": 1,
+        "reason_codes_include": ["extension_explicit"]
+      }
+    },
+    {
+      "id": "conflicting_dates",
+      "description": "Source-stated due date conflicts with calculated adjusted end.",
+      "request_id": "req:conflict",
+      "matter_id": "matter:conflict",
+      "trigger": {
+        "kind": "mailing_date",
+        "trigger_date": "2026-01-15",
+        "source_id": "src:oa:conflict",
+        "service_channel": "electronic"
+      },
+      "period_amount": 3,
+      "period_unit": "months",
+      "period_surface": "3 months",
+      "legal_citations": ["37 C.F.R. 1.134"],
+      "classification": "public_user",
+      "assumptions": {
+        "extension_months": null,
+        "apply_weekend_holiday": true
+      },
+      "source_stated_dates": [
+        {
+          "role": "response_due_date",
+          "stated_date": "2026-04-01",
+          "source_id": "src:oa:conflict",
+          "source_span_id": "span:stated-due",
+          "surface_text": "Response is due by April 1, 2026."
+        }
+      ],
+      "calendar": {
+        "snapshot_id": "snap:conflict-2026",
+        "as_of": "2026-01-15",
+        "year": 2026,
+        "seed_federal_holidays": true,
+        "materialized_at": "2026-01-15T12:00:00Z",
+        "authority_citations": ["37 C.F.R. 1.7"],
+        "sources": [
+          {
+            "source_id": "src:opal-federal-holidays-2026",
+            "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "provider": "opm",
+            "as_of": "2026-01-01"
+          }
+        ]
+      },
+      "expect": {
+        "calculated_adjusted_end": "2026-04-15",
+        "source_stated_due": "2026-04-01",
+        "status": "conflict",
+        "is_definitive": false,
+        "block_reasons_include": ["conflicting_dates"],
+        "is_review_only": true,
+        "sections_separated": true
+      }
+    },
+    {
+      "id": "missing_trigger",
+      "description": "Missing mailing/notification trigger blocks definitive deadline.",
+      "request_id": "req:missing-trigger",
+      "matter_id": "matter:missing-trigger",
+      "trigger": {
+        "kind": "unknown",
+        "trigger_date": null,
+        "service_channel": "unspecified"
+      },
+      "period_amount": 3,
+      "period_unit": "months",
+      "period_surface": "3 months",
+      "legal_citations": ["37 C.F.R. 1.134"],
+      "classification": "public_user",
+      "assumptions": {
+        "extension_months": null
+      },
+      "calendar": {
+        "snapshot_id": "snap:missing-trigger-2026",
+        "as_of": "2026-01-15",
+        "year": 2026,
+        "seed_federal_holidays": true,
+        "materialized_at": "2026-01-15T12:00:00Z",
+        "authority_citations": ["37 C.F.R. 1.7"],
+        "sources": [
+          {
+            "source_id": "src:opal-federal-holidays-2026",
+            "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "provider": "opm",
+            "as_of": "2026-01-01"
+          }
+        ]
+      },
+      "expect": {
+        "is_definitive": false,
+        "status_in": ["blocked", "partial"],
+        "block_reasons_include": ["missing_trigger"],
+        "human_confirmation_includes": "confirm:supply-trigger",
+        "calculated_base_null": true,
+        "is_review_only": true
+      }
+    },
+    {
+      "id": "missing_calendar_provenance",
+      "description": "Calendar without source digests/authority blocks definitive deadline.",
+      "request_id": "req:missing-prov",
+      "matter_id": "matter:missing-prov",
+      "trigger": {
+        "kind": "mailing_date",
+        "trigger_date": "2026-01-15",
+        "source_id": "src:oa:missing-prov",
+        "service_channel": "electronic"
+      },
+      "period_amount": 3,
+      "period_unit": "months",
+      "period_surface": "3 months",
+      "legal_citations": ["37 C.F.R. 1.134"],
+      "classification": "public_user",
+      "assumptions": {
+        "extension_months": null
+      },
+      "calendar_without_provenance": true,
+      "calendar": {
+        "snapshot_id": "snap:no-prov-2026",
+        "as_of": "2026-01-15",
+        "year": 2026,
+        "seed_federal_holidays": true,
+        "materialized_at": "2026-01-15T12:00:00Z",
+        "authority_citations": [],
+        "sources": []
+      },
+      "expect": {
+        "is_definitive": false,
+        "has_calendar_provenance": false,
+        "block_reasons_include": ["missing_calendar_provenance"],
+        "human_confirmation_includes": "confirm:calendar-provenance",
+        "is_review_only": true,
+        "sections_separated": true
+      }
+    }
+  ]
+}

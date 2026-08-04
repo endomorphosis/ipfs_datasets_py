@@ -1,0 +1,295 @@
+{
+  "annotation_truth_fields": [
+    "requirements",
+    "citations",
+    "dates",
+    "provenance"
+  ],
+  "cases": [
+    {
+      "annotation_path": "gold/annotations/gold-scanned-office-action.annotation.json",
+      "case_id": "gold-scanned-office-action",
+      "case_path": "gold/cases/gold-scanned-office-action.json",
+      "categories": [
+        "citations",
+        "office_action",
+        "requirements",
+        "scanned"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": true,
+      "has_date_truth": true,
+      "has_provenance_truth": true,
+      "has_requirement_truth": true,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-rotated-scan-page.annotation.json",
+      "case_id": "gold-rotated-scan-page",
+      "case_path": "gold/cases/gold-rotated-scan-page.json",
+      "categories": [
+        "requirements",
+        "rotated",
+        "scanned"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": true,
+      "has_date_truth": false,
+      "has_provenance_truth": true,
+      "has_requirement_truth": true,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-forms-and-tables.annotation.json",
+      "case_id": "gold-forms-and-tables",
+      "case_path": "gold/cases/gold-forms-and-tables.json",
+      "categories": [
+        "dates",
+        "forms",
+        "requirements",
+        "tables"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": true,
+      "has_date_truth": false,
+      "has_provenance_truth": true,
+      "has_requirement_truth": true,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-docx-pdf-difference.annotation.json",
+      "case_id": "gold-docx-pdf-difference",
+      "case_path": "gold/cases/gold-docx-pdf-difference.json",
+      "categories": [
+        "docx_pdf_difference",
+        "provenance",
+        "unknowns"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": false,
+      "has_date_truth": false,
+      "has_provenance_truth": true,
+      "has_requirement_truth": false,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-filing-receipts.annotation.json",
+      "case_id": "gold-filing-receipts",
+      "case_path": "gold/cases/gold-filing-receipts.json",
+      "categories": [
+        "dates",
+        "provenance",
+        "receipts"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": false,
+      "has_date_truth": true,
+      "has_provenance_truth": true,
+      "has_requirement_truth": false,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-wrong-identifiers.annotation.json",
+      "case_id": "gold-wrong-identifiers",
+      "case_path": "gold/cases/gold-wrong-identifiers.json",
+      "categories": [
+        "adversarial",
+        "unknowns",
+        "wrong_identifiers"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": false,
+      "has_date_truth": false,
+      "has_provenance_truth": true,
+      "has_requirement_truth": false,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-amendments-current-claims.annotation.json",
+      "case_id": "gold-amendments-current-claims",
+      "case_path": "gold/cases/gold-amendments-current-claims.json",
+      "categories": [
+        "amendments",
+        "citations",
+        "current_claims",
+        "requirements"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": true,
+      "has_date_truth": false,
+      "has_provenance_truth": true,
+      "has_requirement_truth": true,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-rescinded-reissued-action.annotation.json",
+      "case_id": "gold-rescinded-reissued-action",
+      "case_path": "gold/cases/gold-rescinded-reissued-action.json",
+      "categories": [
+        "dates",
+        "reissued",
+        "requirements",
+        "rescinded"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": true,
+      "has_date_truth": true,
+      "has_provenance_truth": true,
+      "has_requirement_truth": true,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-delayed-documents.annotation.json",
+      "case_id": "gold-delayed-documents",
+      "case_path": "gold/cases/gold-delayed-documents.json",
+      "categories": [
+        "delayed_docs",
+        "provenance",
+        "unknowns"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": false,
+      "has_date_truth": false,
+      "has_provenance_truth": true,
+      "has_requirement_truth": false,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-authority-amendment-correction.annotation.json",
+      "case_id": "gold-authority-amendment-correction",
+      "case_path": "gold/cases/gold-authority-amendment-correction.json",
+      "categories": [
+        "authority_amendment",
+        "authority_correction",
+        "citations",
+        "dates"
+      ],
+      "classification": "public_official",
+      "has_citation_truth": true,
+      "has_date_truth": true,
+      "has_provenance_truth": true,
+      "has_requirement_truth": false,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-unknown-low-readability.annotation.json",
+      "case_id": "gold-unknown-low-readability",
+      "case_path": "gold/cases/gold-unknown-low-readability.json",
+      "categories": [
+        "adversarial",
+        "scanned",
+        "unknowns"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": false,
+      "has_date_truth": false,
+      "has_provenance_truth": true,
+      "has_requirement_truth": false,
+      "privacy_class": "public_synthetic"
+    },
+    {
+      "annotation_path": "gold/annotations/gold-adversarial-public-canary.annotation.json",
+      "case_id": "gold-adversarial-public-canary",
+      "case_path": "gold/cases/gold-adversarial-public-canary.json",
+      "categories": [
+        "adversarial",
+        "provenance"
+      ],
+      "classification": "public_user",
+      "has_citation_truth": false,
+      "has_date_truth": false,
+      "has_provenance_truth": true,
+      "has_requirement_truth": true,
+      "privacy_class": "public_synthetic"
+    }
+  ],
+  "classification_policy": {
+    "allowed_classifications": [
+      "public_official",
+      "public_user"
+    ],
+    "allowed_privacy_classes": [
+      "public_synthetic",
+      "approved_public_official"
+    ],
+    "forbidden_classifications": [
+      "confidential_application",
+      "privileged_work_product",
+      "restricted_export_review",
+      "credential_or_payment",
+      "unknown"
+    ],
+    "private_real_applications_in_git": false,
+    "repository_policy": "synthetic_and_approved_public_only"
+  },
+  "contracts_schema_version": "uspto.contracts.v1",
+  "corpus_id": "uspto-reviewed-gold-v1",
+  "description": "Reviewed synthetic/public USPTO gold corpus with reviewer-labeled requirements, citations, dates, and provenance plus machine-readable recall/precision/provenance/false-negative gates.",
+  "digest_algorithm": "sha256",
+  "digest_encoding": "hex",
+  "files": {
+    "gold/README.md": "sha256:2c38121f8f20266f1a709a2a3de65102a08d1eeeceada7cd8cd1ae99ba699621",
+    "gold/annotations/gold-adversarial-public-canary.annotation.json": "sha256:40b8040778b9afca6a6213797465213f48e5994f6ca1735ae9449ff602bd8282",
+    "gold/annotations/gold-amendments-current-claims.annotation.json": "sha256:72fcdec25b9aaec88baaf2aa9796845d82716a4be9e9a67bc79028b3120b8cea",
+    "gold/annotations/gold-authority-amendment-correction.annotation.json": "sha256:c7df0ebd5f4f5389d0224c89df3ea48f6057fdec8fd9505cf98d3059b5dc583d",
+    "gold/annotations/gold-delayed-documents.annotation.json": "sha256:6663dd5e71d3d024d5988bd02cc946826205a4cf29278238c54a6d905234a6c6",
+    "gold/annotations/gold-docx-pdf-difference.annotation.json": "sha256:02abea0b013baac2f49de8d72634d9a2e0535126701e17369477366ea4339796",
+    "gold/annotations/gold-filing-receipts.annotation.json": "sha256:09d620ddf8fd3b09505558226560fa6c712bfd15fbb91a680c02c8649c84ad0b",
+    "gold/annotations/gold-forms-and-tables.annotation.json": "sha256:b87e544f126473dcc47de725d4df9b7ad810f12d0e960c3542eceedb4d8a23c8",
+    "gold/annotations/gold-rescinded-reissued-action.annotation.json": "sha256:57a64682b519abe99365d9a0a81d098f73c6cd798ce61b38dd9865b60dfc3c04",
+    "gold/annotations/gold-rotated-scan-page.annotation.json": "sha256:a64290d4e853e392343dbfe0cca548dfcbf2c594df1f86919ceec1d21cab6967",
+    "gold/annotations/gold-scanned-office-action.annotation.json": "sha256:3179d5913f1d09fcaf801d8b0f149ebe77e58d1d251176fd6aed60f274e9498b",
+    "gold/annotations/gold-unknown-low-readability.annotation.json": "sha256:696dd70e8b517819388573db51c02d5245297edc47cd35ab1c54d13cf07c84fe",
+    "gold/annotations/gold-wrong-identifiers.annotation.json": "sha256:e5f79323242f9d3560a87eac7deeb823424bb0a3d3656fea6758794c4df922eb",
+    "gold/cases/gold-adversarial-public-canary.json": "sha256:7fce59c4330d713aaec4b18c47c0644f245873058693c0a94aeb1133d6501d5f",
+    "gold/cases/gold-amendments-current-claims.json": "sha256:d4cfca987aceebb0268440d031d04d41846e9040ef57d270bb23db1e2b307fb3",
+    "gold/cases/gold-authority-amendment-correction.json": "sha256:8e9c613b200c428464f5691399b36134711d943f118299e121e0fe5631e43410",
+    "gold/cases/gold-delayed-documents.json": "sha256:f6c3476719b00110d1d652152f34382823abdf5797cb08906f8647e4886c309a",
+    "gold/cases/gold-docx-pdf-difference.json": "sha256:e67a8315592f8c491c478ae5b13b44851fae57cd69152896bec42ca5ef8d3af5",
+    "gold/cases/gold-filing-receipts.json": "sha256:892c55841c29d4b6fdf7645eacfc23608b1af56a25e97ac1aa7bcc53bf6e2d92",
+    "gold/cases/gold-forms-and-tables.json": "sha256:aaf1e0263adb06d5147baedd5b33b37c3e4c374c85ea38b00a1a0f50c7cc795e",
+    "gold/cases/gold-rescinded-reissued-action.json": "sha256:aa0ac670fd11bf87e53d3281d61573bb931f3597623d29258689fbc9118e7236",
+    "gold/cases/gold-rotated-scan-page.json": "sha256:44300de65ee0d9212827ce5e9953bef221d607ee171d7552b3562eb8f7511fc4",
+    "gold/cases/gold-scanned-office-action.json": "sha256:3396c6ab7c459449d92f39f30772de08bd845c67446945d3638a50669426f0eb",
+    "gold/cases/gold-unknown-low-readability.json": "sha256:21952927c70fe6deb3d43eb479810641be702138f5c958248b4caf1f812f7723",
+    "gold/cases/gold-wrong-identifiers.json": "sha256:c4ad510d5093af2a8964c9c6a2f8859329dae0351dc189a4d0f1bf8d48a5c899",
+    "gold/metrics/metric_gates.json": "sha256:5b5b20b7ee70ea63a89f9cc4f3b435a440f7989f83e5faf931407479448e56c2"
+  },
+  "generated_at": "2026-08-03T00:00:00Z",
+  "goal_id": "PATLAW-G080",
+  "integrity": {
+    "every_case_has_annotation": true,
+    "every_fixture_and_annotation_hashed": true,
+    "manifest_excludes_self": true
+  },
+  "license": {
+    "notes": "Synthetic gold recipes and labels. Public-style authority citations are illustrative only.",
+    "spdx": "CC0-1.0"
+  },
+  "metric_gates_path": "gold/metrics/metric_gates.json",
+  "required_categories": [
+    "adversarial",
+    "amendments",
+    "authority_amendment",
+    "authority_correction",
+    "citations",
+    "current_claims",
+    "dates",
+    "delayed_docs",
+    "docx_pdf_difference",
+    "forms",
+    "provenance",
+    "receipts",
+    "reissued",
+    "requirements",
+    "rescinded",
+    "rotated",
+    "scanned",
+    "tables",
+    "unknowns",
+    "wrong_identifiers"
+  ],
+  "schema": "uspto.gold-corpus-manifest.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070"
+}

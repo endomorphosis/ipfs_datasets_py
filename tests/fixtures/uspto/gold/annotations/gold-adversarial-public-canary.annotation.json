@@ -1,0 +1,43 @@
+{
+  "case_id": "gold-adversarial-public-canary",
+  "goal_id": "PATLAW-G080",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [],
+    "dates": [],
+    "provenance": [
+      {
+        "artifact_id": "art:adversarial-canary-1",
+        "classification": "public_user",
+        "item_id": "req:adversarial-canary-surface",
+        "item_kind": "requirement",
+        "origin": "native",
+        "page_index": 0,
+        "source_receipt_id": "receipt:synthetic:adv-1",
+        "span_id": "span:adv-p0-r0"
+      }
+    ],
+    "requirements": [
+      {
+        "affected_claims": [],
+        "classification": "public_user",
+        "instruction_text_digest": "5752c5a4e89f6ffa2162108b75d22797f0826e8a81f0167616f418885d6dabff",
+        "legal_citations": [],
+        "proposed_date_rule": null,
+        "requirement_id": "req:adversarial-canary-surface",
+        "requirement_type": "informational_marker",
+        "review_state": "complete",
+        "source_span_id": "span:adv-p0-r0"
+      }
+    ]
+  }
+}

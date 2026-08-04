@@ -1,0 +1,83 @@
+{
+  "schema": "patent-private-boundary-policy-v1",
+  "policy_id": "patlaw-private-boundary-v1",
+  "default_disclosure": "unknown",
+  "disclosure_order": [
+    "public_official_record",
+    "public_published_application",
+    "public_patent_grant",
+    "private_unpublished",
+    "privileged_work_product",
+    "restricted_export_review",
+    "private_account",
+    "credential_secret",
+    "unknown"
+  ],
+  "public_sinks": [
+    "public_ipfs",
+    "public_dataset",
+    "justice_dao_hugging_face",
+    "public_cache",
+    "telemetry",
+    "remote_llm"
+  ],
+  "never_artifacts": [
+    "password",
+    "mfa_secret",
+    "session_cookie",
+    "reusable_signature_credential",
+    "payment_card_data",
+    "api_key"
+  ],
+  "account_boundary": {
+    "public_provider": "supported_odp_patent_file_wrapper_api",
+    "private_provider": "authorized_user_export_import_only",
+    "allowed": [
+      "parse_user_downloaded_export",
+      "import_user_supplied_acknowledgement",
+      "import_user_supplied_payment_receipt",
+      "compare_original_docx_to_converted_pdf",
+      "prepare_local_review_package",
+      "produce_human_review_checklist",
+      "discover_public_odp",
+      "sync_public_status",
+      "sync_public_documents",
+      "build_export_manifest_from_folder",
+      "import_user_authorized_export",
+      "attended_browser_export_with_human_login",
+      "watch_download_folder",
+      "operator_cli_login_with_credential_refs",
+      "operator_mcp_login_with_credential_refs",
+      "operator_totp_or_prompt_otp",
+      "operator_local_session_storage_state"
+    ],
+    "forbidden": [
+      "scrape_authenticated_patent_center",
+      "unattended_patent_center_scrape",
+      "store_password_in_git_or_receipts",
+      "return_password_or_otp_in_tool_output",
+      "bypass_mfa_without_code",
+      "apply_signature",
+      "pay_fee",
+      "perform_final_submission",
+      "automatically_file_ids",
+      "read_browser_password_manager"
+    ],
+    "notes": [
+      "Operator CLI/MCP login may resolve username/password/TOTP from env: or file: refs (or interactive prompts) and may type them into Patent Center only for the operator's own account.",
+      "Passwords, OTP codes, and TOTP seeds must never appear in MCP/CLI JSON output, receipts, boards, or git.",
+      "Playwright storage_state / session cookies may be stored mode 0600 under the operator state root only; never commit or publish them.",
+      "MFA still requires a code (prompt, one-shot code, or local TOTP generation); silent MFA bypass is forbidden.",
+      "Sign, pay, and final submission remain natural-person-only and are never automated."
+    ]
+  },
+  "invariants": [
+    "Unknown and mixed-class bundles fail closed.",
+    "Every derivative inherits the most restrictive source classification.",
+    "Private bytes, text, embeddings, graph content, identifiers, prompts, caches, and logs remain tenant-isolated.",
+    "Private content identifiers are never announced to a public DHT, gateway, or pin service.",
+    "External LLM use over private material is denied by default.",
+    "Audit decisions contain digests and reason codes, not matched private content.",
+    "Only an authorized human or practitioner may make legal judgments, sign, pay, or submit."
+  ]
+}

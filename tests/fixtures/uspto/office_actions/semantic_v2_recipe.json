@@ -1,0 +1,264 @@
+{
+  "schema_version": "uspto.office-action-semantics-v2-recipe.v1",
+  "notes": "Compact recipes for PATLAW-129. Generators live in the unit test module; prefer generators over bulk golden dumps.",
+  "named_families": [
+    "missing_parts",
+    "omitted_items",
+    "no_filing_date",
+    "restriction_election",
+    "ex_parte_quayle",
+    "advisory_action",
+    "sequence_compliance",
+    "allowance_issue_fee",
+    "appeal_pre_appeal",
+    "petition",
+    "rescinded_reissued",
+    "non_final",
+    "final"
+  ],
+  "cases": [
+    {
+      "id": "family_missing_parts",
+      "generator": "build_missing_parts_text",
+      "document_code": "CTMS",
+      "classification": "public_user",
+      "expect": {
+        "family": "missing_parts",
+        "has_header": true,
+        "has_requirement": true,
+        "has_response_period": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_omitted_items",
+      "generator": "build_omitted_items_text",
+      "document_code": null,
+      "classification": "public_user",
+      "expect": {
+        "family": "omitted_items",
+        "has_requirement": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_no_filing_date",
+      "generator": "build_no_filing_date_text",
+      "document_code": null,
+      "classification": "public_user",
+      "expect": {
+        "family": "no_filing_date",
+        "has_requirement": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_restriction_election",
+      "generator": "build_restriction_election_text",
+      "document_code": "CTRS",
+      "classification": "public_user",
+      "expect": {
+        "family": "restriction_election",
+        "has_requirement": true,
+        "has_table": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_ex_parte_quayle",
+      "generator": "build_quayle_text",
+      "document_code": "EXIN",
+      "classification": "public_user",
+      "expect": {
+        "family": "ex_parte_quayle",
+        "has_objection": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_advisory",
+      "generator": "build_advisory_text",
+      "document_code": "CTAV",
+      "classification": "public_user",
+      "expect": {
+        "family": "advisory_action",
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_sequence_compliance",
+      "generator": "build_sequence_compliance_text",
+      "document_code": null,
+      "classification": "public_user",
+      "expect": {
+        "family": "sequence_compliance",
+        "has_requirement": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_allowance_issue_fee",
+      "generator": "build_allowance_text",
+      "document_code": "NOA",
+      "classification": "public_user",
+      "expect": {
+        "family": "allowance_issue_fee",
+        "has_allowance": true,
+        "has_form": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_appeal_pre_appeal",
+      "generator": "build_appeal_pre_appeal_text",
+      "document_code": "APPE",
+      "classification": "public_user",
+      "expect": {
+        "family": "appeal_pre_appeal",
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_petition",
+      "generator": "build_petition_text",
+      "document_code": null,
+      "classification": "public_user",
+      "expect": {
+        "family": "petition",
+        "has_signature": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_rescinded_reissued",
+      "generator": "build_reissued_text",
+      "document_code": null,
+      "classification": "public_user",
+      "expect": {
+        "family": "rescinded_reissued",
+        "has_rejection": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_non_final",
+      "generator": "build_non_final_text",
+      "document_code": "CTNF",
+      "classification": "public_user",
+      "expect": {
+        "family": "non_final",
+        "has_rejection": true,
+        "has_claim_grouping": true,
+        "has_mailing_date": true,
+        "has_application_number": true,
+        "has_statutory_citation": true,
+        "has_response_period": true,
+        "has_examiner_contact": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "family_final",
+      "generator": "build_final_text",
+      "document_code": "CTFR",
+      "classification": "public_user",
+      "expect": {
+        "family": "final",
+        "has_rejection": true,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "document_code_drift_ctnf_vs_final",
+      "generator": "build_final_text",
+      "document_code": "CTNF",
+      "classification": "public_user",
+      "expect": {
+        "family": "final",
+        "document_code_drift": true,
+        "has_contradiction": true,
+        "disposition_in": ["review", "analyzed"]
+      }
+    },
+    {
+      "id": "noisy_scan_ocr",
+      "generator": "build_noisy_scan_text",
+      "document_code": "CTNF",
+      "classification": "public_user",
+      "ocr_confidence": 0.32,
+      "expect": {
+        "noisy_scan": true,
+        "review_required": true,
+        "every_field_has_spans": true,
+        "retained": true
+      }
+    },
+    {
+      "id": "cross_page_continuation",
+      "generator": "build_cross_page_pages",
+      "multi_page": true,
+      "classification": "public_user",
+      "expect": {
+        "family": "non_final",
+        "has_cross_page_continuation": true,
+        "page_count_min": 2,
+        "every_field_has_spans": true
+      }
+    },
+    {
+      "id": "model_candidate_gate",
+      "generator": "build_non_final_text",
+      "document_code": "CTNF",
+      "classification": "public_user",
+      "model_candidate": true,
+      "expect": {
+        "model_never_admitted_without_receipt": true,
+        "model_starts_as_candidate": true
+      }
+    },
+    {
+      "id": "unknown_family_emptyish",
+      "generator": "build_unknown_family_text",
+      "document_code": null,
+      "classification": "public_user",
+      "expect": {
+        "family": "unknown",
+        "review_required": true,
+        "retained": true
+      }
+    },
+    {
+      "id": "empty_text",
+      "generator": "build_empty_text",
+      "classification": "public_user",
+      "expect": {
+        "disposition": "malformed",
+        "family": "unknown",
+        "review_required": true
+      }
+    },
+    {
+      "id": "identifier_date_citation_validation",
+      "generator": "build_non_final_text",
+      "document_code": "CTNF",
+      "classification": "public_user",
+      "expect": {
+        "identifier_validated": true,
+        "date_validated": true,
+        "citation_validated_or_present": true
+      }
+    },
+    {
+      "id": "attachment_form_signature_table",
+      "generator": "build_forms_attachments_text",
+      "document_code": "NOA",
+      "classification": "public_user",
+      "expect": {
+        "has_form": true,
+        "has_attachment": true,
+        "has_signature": true,
+        "has_table": true
+      }
+    }
+  ]
+}

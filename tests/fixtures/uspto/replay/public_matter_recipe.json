@@ -1,0 +1,64 @@
+{
+  "schema": "uspto.offline-replay-matter-recipe.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-072",
+  "matter_id": "matter:replay:public:16123456",
+  "analysis_id": "analysis:replay:public:1",
+  "bundle_id": "bundle:replay:public:1",
+  "application_number": "16123456",
+  "classification": "public_user",
+  "privacy_class": "public_synthetic",
+  "channel": "public_odp_recorded",
+  "odp": {
+    "recipe_path": "../odp/http/odp_http_recipe.json",
+    "expected_outcome": "success",
+    "fetch_transactions": true
+  },
+  "artifacts": [
+    {
+      "artifact_id": "art:replay:oa:public-1",
+      "role": "office_action",
+      "media_type": "application/pdf",
+      "generator": "native_pdf_with_metadata",
+      "seed_canary": "SYNTHETIC-NATIVE-EXTRACTION-ABSTRACT-PARAGRAPH"
+    },
+    {
+      "artifact_id": "art:replay:sub:public-1",
+      "role": "submission",
+      "media_type": "application/pdf",
+      "generator": "native_pdf_with_metadata",
+      "seed_canary": "SYNTHETIC-ACK-RECEIPT-ID-A1B2C3D4"
+    }
+  ],
+  "authority_ids": ["auth:usc-112b-2011", "auth:37-cfr-1.104"],
+  "span_policy": {
+    "min_coverage_ratio": 0.01,
+    "min_overall_coverage": 0.01,
+    "min_readability": 0.15
+  },
+  "sections": [
+    "status_snapshot",
+    "artifact_manifest",
+    "office_action",
+    "requirement",
+    "submission_evidence",
+    "compliance",
+    "assessment",
+    "authority",
+    "rejection_mapping",
+    "candidate_date",
+    "span_validation",
+    "validation_receipt"
+  ],
+  "unknown_variant": {
+    "enabled": true,
+    "unknown_id": "unk:replay:low-ocr",
+    "reason": "low_readability_below_threshold",
+    "must_remain_unknown": true
+  },
+  "labels": {
+    "suite": "patlaw-072",
+    "lane": "e2e-replay",
+    "channel": "public"
+  }
+}

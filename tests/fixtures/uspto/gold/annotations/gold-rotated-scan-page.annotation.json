@@ -1,0 +1,55 @@
+{
+  "case_id": "gold-rotated-scan-page",
+  "goal_id": "PATLAW-G080",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [
+      {
+        "authority_tier": "official-base",
+        "citation_id": "cite:37cfr1.121",
+        "kind": "regulation",
+        "source_span_id": "span:rotated-p0-r0",
+        "text": "37 CFR 1.121"
+      }
+    ],
+    "dates": [],
+    "provenance": [
+      {
+        "artifact_id": "art:rotated-scan-1",
+        "classification": "public_user",
+        "item_id": "req:rotated-amend-claim-1",
+        "item_kind": "requirement",
+        "origin": "ocr",
+        "page_index": 0,
+        "source_receipt_id": "receipt:synthetic:rotated-1",
+        "span_id": "span:rotated-p0-r0"
+      }
+    ],
+    "requirements": [
+      {
+        "affected_claims": [
+          "1"
+        ],
+        "classification": "public_user",
+        "instruction_text_digest": "a03bbe176af024b1fc85d7625d5df6a4f989343de3d81c45e5eea102342e5e4b",
+        "legal_citations": [
+          "37 CFR 1.121"
+        ],
+        "proposed_date_rule": null,
+        "requirement_id": "req:rotated-amend-claim-1",
+        "requirement_type": "claim_amendment_instruction",
+        "review_state": "complete",
+        "source_span_id": "span:rotated-p0-r0"
+      }
+    ]
+  }
+}

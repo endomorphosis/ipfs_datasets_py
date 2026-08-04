@@ -1,0 +1,45 @@
+{
+  "edition_catalog": {
+    "discovery_source": "empty-latest-probe",
+    "latest_editions": [
+      {
+        "collection": "CFR",
+        "discovered_at": "2024-09-01T10:00:00Z",
+        "edition": "annual-2020-title37-vol9",
+        "package_id": "CFR-2020-title37-vol9",
+        "title": "37",
+        "volume": "9",
+        "year": "2020"
+      }
+    ]
+  },
+  "fixture_id": "govinfo-missing-volume",
+  "include_public_laws": false,
+  "inventory": [
+    {
+      "collection": "CFR",
+      "edition": "annual-2020-title37-vol9",
+      "expected_formats": [
+        "pdf",
+        "xml",
+        "mods",
+        "premis"
+      ],
+      "formats": {},
+      "kind": "cfr_volume",
+      "metadata": {
+        "missing_all_formats": true,
+        "signature": {
+          "result": "missing"
+        },
+        "volume_missing": true
+      },
+      "package_id": "CFR-2020-title37-vol9",
+      "title": "37",
+      "volume": "9",
+      "year": "2020"
+    }
+  ],
+  "notes": "Missing volume fixture — must not report success.",
+  "schema_version": "govinfo-official-fixture-v1"
+}

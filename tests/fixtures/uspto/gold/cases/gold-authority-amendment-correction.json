@@ -1,0 +1,68 @@
+{
+  "case_id": "gold-authority-amendment-correction",
+  "categories": [
+    "authority_amendment",
+    "authority_correction",
+    "citations",
+    "dates"
+  ],
+  "classification": "public_official",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "as_of_queries": [
+      {
+        "as_of": "2025-01-15",
+        "expected_authority_id": "auth:37cfr1.56-base"
+      },
+      {
+        "as_of": "2025-07-01",
+        "expected_authority_id": "auth:fr-correction-2025"
+      }
+    ],
+    "authorities": [
+      {
+        "authority_id": "auth:37cfr1.56-base",
+        "citation": "37 CFR 1.56",
+        "content_sha256": "542ef8d6ce15226a48ff45ec61fd1f20bf8a411afbd68fa6e247e5ba0b5999c5",
+        "edition": "2024",
+        "effective_from": "2024-07-01",
+        "tier": "official-base"
+      },
+      {
+        "authority_id": "auth:fr-correction-2025",
+        "citation": "90 FR 12345",
+        "content_sha256": "8170fb7fb116ca12408f3c9fa4b9e0137901893868e4a84658acff9a5e27636e",
+        "effective_from": "2025-06-01",
+        "relation": "corrects",
+        "target": "auth:37cfr1.56-base",
+        "tier": "official-change"
+      }
+    ],
+    "extraction_profile": "temporal_authority",
+    "media_type": "application/json",
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/authority-amendment",
+        "receipt_id": "receipt:synthetic:auth-1",
+        "request_digest": "1632cc76b2feecf2dc327d29dba547ece377c23548869186f03a45501568e005",
+        "response_digest": "3773cab7d1a27cad3168e62b1232553a178fddc4abad9dc70c9c8c7f4eec1546",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:45:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Synthetic authority timeline using public-style citations only.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic_public_style",
+    "privacy_class": "public_synthetic",
+    "recipe": "base CFR citation + FR correction document with delayed effective date"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Cited regulation with later FR correction and delayed effective date"
+}

@@ -1,0 +1,63 @@
+{
+  "case_id": "gold-filing-receipts",
+  "categories": [
+    "dates",
+    "provenance",
+    "receipts"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [
+      {
+        "artifact_id": "art:ack-receipt-1",
+        "classification": "public_user",
+        "content_sha256": "e59929c1b3f556cf41e861c160ab216549644747da01fc4fac2568228a0ad258",
+        "fields": {
+          "application_number": "16/900,001",
+          "confirmation_number": "1234",
+          "receipt_date_utc": "2026-01-15T18:22:00Z"
+        },
+        "role": "electronic_acknowledgement_receipt"
+      },
+      {
+        "artifact_id": "art:pay-receipt-1",
+        "classification": "public_user",
+        "content_sha256": "c6b3f63e30e0d9b811f9f22b300d831eb041d558b385ccaaba3601f8dbaced5f",
+        "fields": {
+          "amount_usd": "80.00",
+          "fee_code": "1011",
+          "paid_utc": "2026-01-15T18:22:05Z",
+          "payment_method": "deposit_account_last4_masked"
+        },
+        "role": "payment_receipt"
+      }
+    ],
+    "extraction_profile": "receipt_metadata",
+    "media_type": "application/json",
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/filing-receipts",
+        "receipt_id": "receipt:synthetic:filing-1",
+        "request_digest": "6ddc571f57431d0e21a14e706c04d4f58b4c72ef956193848d2bd32c27e27621",
+        "response_digest": "b02a32c9efb4d9dd2d2ee4b1194f68824418bfde0a62b30ed118509c065983d3",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:20:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Fully synthetic receipt metadata; no payment credentials.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "acknowledgement + payment receipt without card/secrets"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Electronic acknowledgement and payment receipt pair"
+}

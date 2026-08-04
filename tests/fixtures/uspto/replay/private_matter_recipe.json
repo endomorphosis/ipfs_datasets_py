@@ -1,0 +1,55 @@
+{
+  "schema": "uspto.offline-replay-matter-recipe.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-072",
+  "matter_id": "matter:replay:private:syn-16-000001",
+  "analysis_id": "analysis:replay:private:1",
+  "bundle_id": "bundle:replay:private:1",
+  "classification": "confidential_application",
+  "privacy_class": "synthetic_private_tenant",
+  "channel": "authorized_local_export",
+  "tenant_id": "tenant-a",
+  "private_import": {
+    "fixture_root": "../private_import",
+    "authorization_file": "authorization.json",
+    "manifest_file": "export_manifest.json",
+    "package_dir": "package"
+  },
+  "isolation": {
+    "cross_tenant_id": "tenant-evil",
+    "must_deny_cross_tenant": true,
+    "must_redact_private_surface_text": true,
+    "canary_substrings": [
+      "CONFIDENTIAL unpublished claim language",
+      "canary-text"
+    ]
+  },
+  "artifacts": [
+    {
+      "artifact_id": "art:replay:priv:spec",
+      "role": "specification",
+      "relative_path": "package/original_specification.docx"
+    },
+    {
+      "artifact_id": "art:replay:priv:pdf",
+      "role": "converted_specification",
+      "relative_path": "package/converted_specification.pdf"
+    }
+  ],
+  "authority_ids": ["auth:usc-112b-2011"],
+  "sections": [
+    "artifact_manifest",
+    "requirement",
+    "submission_evidence",
+    "assessment",
+    "authority",
+    "span_validation",
+    "validation_receipt"
+  ],
+  "labels": {
+    "suite": "patlaw-072",
+    "lane": "e2e-replay",
+    "channel": "private",
+    "tenant_id": "tenant-a"
+  }
+}

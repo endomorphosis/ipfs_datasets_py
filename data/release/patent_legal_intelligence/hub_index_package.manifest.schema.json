@@ -1,0 +1,527 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/patent-hub-index-package.manifest.v1.schema.json",
+  "title": "Hub Index Package Manifest v1",
+  "description": "Content-addressed multi-artifact Hub package binding public legal corpus + BM25 + vector + knowledge-graph roots (PATLAW-174 / PATLAW-G212). Missing any of the three index families fails closed. Rights and privacy metadata are required on every artifact. Repeat packaging for identical pinned inputs is content-address stable. Default mode is dry-run; staging writes local files only and never uploads to the Hub.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "interface",
+    "task_id",
+    "goal_id",
+    "producer",
+    "config_id",
+    "code_version",
+    "partition",
+    "organization",
+    "version_tag",
+    "package_root_cid",
+    "package_digest_sha256",
+    "corpus_root_cid",
+    "corpus_digest_sha256",
+    "bm25_root_cid",
+    "bm25_digest_sha256",
+    "vector_root_cid",
+    "vector_digest_sha256",
+    "graph_root_cid",
+    "graph_digest_sha256",
+    "layout_bundle_cid",
+    "layout_schema_version",
+    "counts",
+    "families",
+    "index_families_present",
+    "rights_summary",
+    "privacy_summary",
+    "viewer_layouts",
+    "artifact_descriptors",
+    "mode"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "patent.hub_index_package.v1"
+    },
+    "interface": {
+      "const": "HubIndexPackageBuilder@1"
+    },
+    "task_id": {
+      "const": "PATLAW-174"
+    },
+    "goal_id": {
+      "const": "PATLAW-G212"
+    },
+    "producer": {
+      "const": "producer:hub-index-package"
+    },
+    "config_id": {
+      "const": "config:hub-index-package/v1"
+    },
+    "code_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "partition": {
+      "const": "public",
+      "description": "Public package only; private/mixed partitions fail closed."
+    },
+    "organization": {
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,38})$"
+    },
+    "version_tag": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "package_root_cid": {
+      "$ref": "#/$defs/cidV1"
+    },
+    "package_digest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "corpus_root_cid": {
+      "$ref": "#/$defs/cidV1"
+    },
+    "corpus_digest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "bm25_root_cid": {
+      "$ref": "#/$defs/cidV1"
+    },
+    "bm25_digest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "vector_root_cid": {
+      "$ref": "#/$defs/cidV1"
+    },
+    "vector_digest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "graph_root_cid": {
+      "$ref": "#/$defs/cidV1"
+    },
+    "graph_digest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "layout_bundle_cid": {
+      "$ref": "#/$defs/cidV1"
+    },
+    "layout_schema_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "counts": {
+      "$ref": "#/$defs/counts"
+    },
+    "families": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/familyBinding"
+      },
+      "description": "Bindings for corpus + bm25 + vectors + knowledge_graph."
+    },
+    "index_families_present": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["bm25", "vectors", "knowledge_graph"]
+      },
+      "allOf": [
+        {
+          "contains": { "const": "bm25" }
+        },
+        {
+          "contains": { "const": "vectors" }
+        },
+        {
+          "contains": { "const": "knowledge_graph" }
+        }
+      ],
+      "description": "All three index families are required; missing any fails closed."
+    },
+    "rights_summary": {
+      "$ref": "#/$defs/rightsSummary"
+    },
+    "privacy_summary": {
+      "$ref": "#/$defs/privacySummary"
+    },
+    "viewer_layouts": {
+      "type": "object",
+      "description": "Viewer layout bundle summary (repository identities, layout CIDs, configs)."
+    },
+    "artifact_descriptors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/artifactDescriptor"
+      },
+      "description": "Every artifact must include rights_review and privacy_review."
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["dry_run", "stage"]
+    },
+    "staged_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 4096
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "cidV1": {
+      "type": "string",
+      "pattern": "^b[a-z2-7]{20,}$",
+      "minLength": 21,
+      "maxLength": 256
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "role": {
+      "type": "string",
+      "enum": ["corpus", "bm25", "vectors", "knowledge_graph"]
+    },
+    "indexFamily": {
+      "type": "string",
+      "enum": ["bm25", "vectors", "knowledge_graph"]
+    },
+    "classification": {
+      "type": "string",
+      "enum": ["public_official", "public_user"]
+    },
+    "rightsReview": {
+      "type": "object",
+      "required": [
+        "license_expression",
+        "review_status",
+        "reviewed_by",
+        "reviewed_at",
+        "redistribution_allowed"
+      ],
+      "properties": {
+        "license_expression": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "review_status": {
+          "const": "reviewed"
+        },
+        "reviewed_by": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "reviewed_at": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "redistribution_allowed": {
+          "const": true
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2048
+        }
+      },
+      "additionalProperties": true
+    },
+    "privacyReview": {
+      "type": "object",
+      "required": [
+        "review_status",
+        "reviewed_by",
+        "reviewed_at",
+        "privacy_class"
+      ],
+      "properties": {
+        "review_status": {
+          "const": "reviewed"
+        },
+        "reviewed_by": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "reviewed_at": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "privacy_class": {
+          "const": "public"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2048
+        }
+      },
+      "additionalProperties": true
+    },
+    "rightsSummary": {
+      "type": "object",
+      "required": [
+        "all_reviewed",
+        "all_redistribution_allowed",
+        "partition",
+        "license_expressions",
+        "reviewed_by"
+      ],
+      "properties": {
+        "all_reviewed": {
+          "const": true
+        },
+        "all_redistribution_allowed": {
+          "const": true
+        },
+        "partition": {
+          "const": "public"
+        },
+        "license_expressions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "reviewed_by": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "source_root_licenses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "privacySummary": {
+      "type": "object",
+      "required": [
+        "all_reviewed",
+        "partition",
+        "privacy_class",
+        "reviewed_by",
+        "reviewed_at"
+      ],
+      "properties": {
+        "all_reviewed": {
+          "const": true
+        },
+        "partition": {
+          "const": "public"
+        },
+        "privacy_class": {
+          "const": "public"
+        },
+        "reviewed_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewed_at": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "additionalProperties": true
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "corpus_documents",
+        "bm25_documents",
+        "bm25_terms",
+        "bm25_postings",
+        "vector_documents",
+        "vector_dimension",
+        "graph_nodes",
+        "graph_edges",
+        "artifact_count"
+      ],
+      "properties": {
+        "corpus_documents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "bm25_documents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "bm25_terms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "bm25_postings": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "vector_documents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "vector_dimension": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "graph_nodes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "graph_edges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "artifact_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "familyBinding": {
+      "type": "object",
+      "required": [
+        "role",
+        "family",
+        "repository",
+        "dataset_id",
+        "root_cid",
+        "root_digest_sha256",
+        "layout_cid",
+        "counts",
+        "configs",
+        "corpus_root_cid",
+        "schema_version"
+      ],
+      "properties": {
+        "role": {
+          "$ref": "#/$defs/role"
+        },
+        "family": {
+          "$ref": "#/$defs/role"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$"
+        },
+        "root_cid": {
+          "$ref": "#/$defs/cidV1"
+        },
+        "root_digest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "layout_cid": {
+          "$ref": "#/$defs/cidV1"
+        },
+        "counts": {
+          "type": "object"
+        },
+        "configs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "corpus_root_cid": {
+          "$ref": "#/$defs/cidV1"
+        },
+        "schema_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "join_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "extra": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "artifactDescriptor": {
+      "type": "object",
+      "required": [
+        "relative_path",
+        "sha256",
+        "content_cid",
+        "size_bytes",
+        "media_type",
+        "role",
+        "family",
+        "classification",
+        "rights_review",
+        "privacy_review"
+      ],
+      "properties": {
+        "relative_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "content_cid": {
+          "$ref": "#/$defs/cidV1"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "$ref": "#/$defs/role"
+        },
+        "family": {
+          "$ref": "#/$defs/role"
+        },
+        "classification": {
+          "$ref": "#/$defs/classification"
+        },
+        "rights_review": {
+          "$ref": "#/$defs/rightsReview"
+        },
+        "privacy_review": {
+          "$ref": "#/$defs/privacyReview"
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "config_name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
