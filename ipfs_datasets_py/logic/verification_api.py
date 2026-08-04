@@ -121,6 +121,27 @@ PROVIDER_ROLE_CLOSURE_OPERATIONS: Final[tuple[str, ...]] = (
     "secpal_compatibility_lookup",
 )
 
+# FVT-G231 / ProductionAuthorizationReplacement@1 public identity.
+PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE: Final = (
+    "ProductionAuthorizationReplacement@1"
+)
+PRODUCTION_AUTHORIZATION_PROVIDER_ID: Final = "production-authorization-replacement"
+PRODUCTION_AUTHORIZATION_OPERATIONS: Final[tuple[str, ...]] = (
+    "production_authorization_identity",
+    "production_authorization_check",
+    "production_authorization_receipt",
+)
+_PRODUCTION_AUTHORIZATION_ALIASES: Final[frozenset[str]] = frozenset(
+    {
+        PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+        "production-authorization",
+        "production_authorization_replacement",
+        "secpal-style-authorization",
+        "secpal_style_authorization",
+        "project-authorization-prover",
+    }
+)
+
 # Installer / public-surface aliases normalized by the role-closure catalog.
 _PROVIDER_ROLE_ALIASES: Final[Mapping[str, str]] = MappingProxyType(
     {
@@ -1166,6 +1187,33 @@ class LogicVerificationAPI:
                     "schema_version": LOGIC_VERIFICATION_PROVIDER_SCHEMA,
                 }
             )
+        # FVT-G231: separately named production-candidate authorization provider.
+        try:
+            from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                provider_descriptor as _production_authorization_descriptor,
+            )
+
+            production_entry = _production_authorization_descriptor()
+            if not any(
+                str(item.get("provider_id", "")) == PRODUCTION_AUTHORIZATION_PROVIDER_ID
+                for item in providers
+            ):
+                providers.append(production_entry)
+        except Exception as error:  # pragma: no cover - discovery must stay declarative
+            providers.append(
+                {
+                    "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                    "provider_version": "unavailable",
+                    "logic_families": ["authorization", "policy"],
+                    "query_kinds": ["policy_approval"],
+                    "deterministic": True,
+                    "availability": FeatureAvailability.UNAVAILABLE.value,
+                    "source": "production_authorization_replacement",
+                    "schema_version": LOGIC_VERIFICATION_PROVIDER_SCHEMA,
+                    "diagnostics": [f"{type(error).__name__}: {error}"],
+                    "interface": PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE,
+                }
+            )
         providers.sort(key=lambda item: str(item.get("provider_id", "")))
         return _response(
             "list_providers",
@@ -1175,6 +1223,9 @@ class LogicVerificationAPI:
                 "providers": providers,
                 "count": len(providers),
                 "executable_provider_matrix": EXECUTABLE_PROVIDER_MATRIX_INTERFACE,
+                "production_authorization_replacement_interface": (
+                    PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE
+                ),
             },
             cache=_empty_cache(source="provider_catalog"),
         )
@@ -1482,6 +1533,12 @@ class LogicVerificationAPI:
             )
             if role_refusal is not None:
                 return role_refusal
+        # FVT-G231 production-candidate path (not registered in the legacy matrix).
+        if selected and selected in _PRODUCTION_AUTHORIZATION_ALIASES:
+            return self._check_production_authorization(
+                backend_request,
+                request_id=backend_request.request_id,
+            )
         if selected and selected not in registered_ids:
             # Installer-backed tools with verification surfaces but no live
             # backend registration remain explicitly unsupported here.
@@ -3181,6 +3238,55 @@ class LogicVerificationAPI:
         registry = self._registry()
         # ProofBackendRegistry.__contains__ routes through __getitem__ and
         # raises UnknownBackendError; compare against the key view instead.
+        if (
+            normalized in _PRODUCTION_AUTHORIZATION_ALIASES
+            or provider_id in _PRODUCTION_AUTHORIZATION_ALIASES
+        ):
+            try:
+                from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                    SecPALStyleAuthorizationBackend,
+                )
+
+                backend = SecPALStyleAuthorizationBackend()
+                available = bool(backend.is_available())
+                identity = backend.identity()
+            except Exception as error:
+                return _response(
+                    "probe_provider",
+                    VerificationStatus.ERROR,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                        "available": False,
+                    },
+                    diagnostics=(f"{type(error).__name__}: {error}",),
+                    request_id=request_id,
+                    provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                )
+            return _response(
+                "probe_provider",
+                VerificationStatus.SUCCEEDED
+                if available
+                else VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                result={
+                    "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                    "available": available,
+                    "availability": (
+                        FeatureAvailability.AVAILABLE.value
+                        if available
+                        else FeatureAvailability.UNAVAILABLE.value
+                    ),
+                    "identity": identity,
+                    "live_verification_provider": True,
+                    "forbids_fvt_g219_completion": True,
+                    "forbids_microsoft_secpal_authority": True,
+                    "deployment_ready": False,
+                },
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                cache=_empty_cache(source="production_authorization_probe"),
+            )
         if normalized in set(registry) or provider_id in set(registry):
             probe_id = normalized if normalized in set(registry) else provider_id
             try:
@@ -3571,6 +3677,241 @@ class LogicVerificationAPI:
             request_id=request_id,
             provider_id=role["provider_id"],
             cache=_empty_cache(source="provider_role_closure"),
+        )
+
+    def _check_production_authorization(
+        self,
+        backend_request: Any,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Dispatch a policy_approval check to the production-candidate provider."""
+
+        try:
+            from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                SecPALStyleAuthorizationBackend,
+            )
+            from ipfs_datasets_py.logic.ir_core.protocols import QueryKind
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "check",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"production provider import failed: {error}",),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        if backend_request.query_kind is not QueryKind.POLICY_APPROVAL:
+            return _response(
+                "check",
+                VerificationStatus.UNSUPPORTED,
+                authority=VerificationAuthority.AUTHORIZATION,
+                result={
+                    "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                    "query_kind": backend_request.query_kind.value,
+                },
+                unsupported_features=("query_kind:non_policy_approval",),
+                diagnostics=(
+                    "production-authorization-replacement answers policy_approval only",
+                ),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        # Ensure the request targets the production identity (or leave blank).
+        requested = backend_request.requested_backend_id or PRODUCTION_AUTHORIZATION_PROVIDER_ID
+        if requested not in _PRODUCTION_AUTHORIZATION_ALIASES:
+            return _response(
+                "check",
+                VerificationStatus.UNSUPPORTED,
+                authority=VerificationAuthority.AUTHORIZATION,
+                diagnostics=(
+                    f"request targets {requested!r}, not production-authorization-replacement",
+                ),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        try:
+            # Aliases are accepted by the production backend identity set.
+            outcome = SecPALStyleAuthorizationBackend().run(backend_request)
+        except Exception as error:
+            return _response(
+                "check",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.AUTHORIZATION,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        status_map = {
+            "authorized": VerificationStatus.SUCCEEDED,
+            "denied": VerificationStatus.SUCCEEDED,
+            "unknown": VerificationStatus.PARTIAL,
+            "error": VerificationStatus.ERROR,
+        }
+        response_status = status_map.get(
+            outcome.result.status.value, VerificationStatus.PARTIAL
+        )
+        return _response(
+            "check",
+            response_status,
+            authority=VerificationAuthority.AUTHORIZATION,
+            result={
+                "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                "status": outcome.result.status.value,
+                "outcome": outcome.receipt.outcome.value,
+                "authority": "authorization",
+                "is_theorem_authority": False,
+                "forbids_fvt_g219_completion": True,
+                "forbids_microsoft_secpal_authority": True,
+                "deployment_ready": False,
+                "receipt": outcome.receipt.to_dict(),
+                "witness": outcome.result.witness
+                if isinstance(outcome.result.witness, dict)
+                else outcome.result.witness.to_dict(),
+                "source_binding": outcome.source_binding.to_dict(),
+            },
+            request_id=request_id or backend_request.request_id,
+            provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            cache=_empty_cache(source="production_authorization_check"),
+        )
+
+    def production_authorization_identity(
+        self,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Return the production-candidate provider identity and ceilings."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        try:
+            from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                SecPALStyleAuthorizationBackend,
+            )
+
+            identity = SecPALStyleAuthorizationBackend().identity()
+        except Exception as error:
+            return _response(
+                "production_authorization_identity",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        return _response(
+            "production_authorization_identity",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.AUTHORIZATION,
+            result={
+                "identity": identity,
+                "interface": PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE,
+                "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            },
+            request_id=request_id,
+            provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            cache=_empty_cache(source="production_authorization_identity"),
+        )
+
+    def production_authorization_check(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Public check entry that always binds the production-candidate id."""
+
+        return self.check(
+            request,
+            backend_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            request_id=request_id,
+        )
+
+    def production_authorization_receipt(
+        self,
+        *,
+        request_id: str = "",
+        repo_root: str | None = None,
+        rebuild: bool = False,
+    ) -> VerificationResponse:
+        """Load or rebuild the ProductionAuthorizationReplacement@1 receipt."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        try:
+            from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                build_production_authorization_replacement_receipt,
+            )
+
+            if rebuild:
+                receipt = build_production_authorization_replacement_receipt(
+                    repo_root=repo_root
+                )
+            else:
+                from pathlib import Path
+                import json as _json
+
+                root = Path(repo_root) if repo_root else None
+                if root is None:
+                    # Best-effort repo root discovery.
+                    here = Path(__file__).resolve()
+                    root = None
+                    for parent in here.parents:
+                        candidate = (
+                            parent
+                            / "docs"
+                            / "architecture"
+                            / "formal_verification_production_authorization_replacement_receipt.json"
+                        )
+                        if candidate.is_file():
+                            root = parent
+                            break
+                    if root is None:
+                        receipt = build_production_authorization_replacement_receipt()
+                    else:
+                        path = (
+                            root
+                            / "docs"
+                            / "architecture"
+                            / "formal_verification_production_authorization_replacement_receipt.json"
+                        )
+                        receipt = _json.loads(path.read_text(encoding="utf-8"))
+                else:
+                    path = (
+                        Path(root)
+                        / "docs"
+                        / "architecture"
+                        / "formal_verification_production_authorization_replacement_receipt.json"
+                    )
+                    if path.is_file():
+                        receipt = _json.loads(path.read_text(encoding="utf-8"))
+                    else:
+                        receipt = build_production_authorization_replacement_receipt(
+                            repo_root=root
+                        )
+        except Exception as error:
+            return _response(
+                "production_authorization_receipt",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        certified = bool(receipt.get("certified"))
+        return _response(
+            "production_authorization_receipt",
+            VerificationStatus.SUCCEEDED if certified else VerificationStatus.PARTIAL,
+            authority=VerificationAuthority.AUTHORIZATION,
+            result={
+                "receipt": receipt,
+                "interface": PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE,
+                "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                "certified": certified,
+                "deployment_ready": False,
+                "forbids_fvt_g219_completion": True,
+            },
+            request_id=request_id,
+            provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            cache=_empty_cache(source="production_authorization_receipt"),
         )
 
     def secpal_compatibility_lookup(
@@ -5153,6 +5494,20 @@ def secpal_artifact_intake(artifact_path: str, **kwargs: Any) -> VerificationRes
     return get_verification_api().secpal_artifact_intake(artifact_path, **kwargs)
 
 
+def production_authorization_identity(**kwargs: Any) -> VerificationResponse:
+    return get_verification_api().production_authorization_identity(**kwargs)
+
+
+def production_authorization_check(
+    request: Mapping[str, Any] | Any, **kwargs: Any
+) -> VerificationResponse:
+    return get_verification_api().production_authorization_check(request, **kwargs)
+
+
+def production_authorization_receipt(**kwargs: Any) -> VerificationResponse:
+    return get_verification_api().production_authorization_receipt(**kwargs)
+
+
 def list_goal_tactician_operations(**kwargs: Any) -> VerificationResponse:
     return get_verification_api().list_goal_tactician_operations(**kwargs)
 
@@ -5339,6 +5694,9 @@ __all__ = [
     "LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE",
     "LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA",
     "LogicVerificationAPI",
+    "PRODUCTION_AUTHORIZATION_OPERATIONS",
+    "PRODUCTION_AUTHORIZATION_PROVIDER_ID",
+    "PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE",
     "PROVIDER_ROLE_CLOSURE_OPERATIONS",
     "ProviderDescriptor",
     "STABLE_OPERATIONS",
@@ -5376,6 +5734,9 @@ __all__ = [
     "monitor",
     "plan_proof",
     "probe_provider",
+    "production_authorization_check",
+    "production_authorization_identity",
+    "production_authorization_receipt",
     "proof_status",
     "provider_capabilities",
     "provider_role",
