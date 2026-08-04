@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""USPTO CLI — status, sync-public, import-private, analyze, preflight, explain.
+"""USPTO CLI — status, sync-public, import-private, analyze, preflight, explain,
+submission-assurance.
 
 Credentials are accepted only as *references* (``--credential-ref``), never as
 secret values. Private import requires ``--tenant``, ``--path``, and
-``--classification``. No subcommand signs, pays, files, or automates a browser.
+``--classification``. No subcommand signs, pays, files, or automates a browser,
+or claims legal advice.
 """
 
 from __future__ import annotations
@@ -28,6 +30,7 @@ COMMANDS: tuple[str, ...] = (
     "analyze",
     "preflight",
     "explain",
+    "submission-assurance",
 )
 
 FORBIDDEN_COMMANDS: frozenset[str] = frozenset(
@@ -50,8 +53,8 @@ def create_parser() -> argparse.ArgumentParser:
         prog="ipfs-datasets uspto",
         description=(
             "USPTO public status/sync, authorized private import, analyze, "
-            "preflight, and explain. Credentials by reference only; "
-            "no sign/pay/file/browser automation."
+            "preflight, explain, and submission-assurance. Credentials by "
+            "reference only; no sign/pay/file/browser automation; not legal advice."
         ),
     )
     parser.add_argument(
@@ -207,6 +210,70 @@ def create_parser() -> argparse.ArgumentParser:
     )
     p_ex.add_argument("--matter-id", default="")
     p_ex.add_argument("--analysis-id", default="")
+
+    # submission-assurance (PATLAW-140)
+    p_sa = sub.add_parser(
+        "submission-assurance",
+        help=(
+            "One-shot/resumable submission-assurance workflow from tenant/matter "
+            "and authorized documents (never signs, pays, files, or legal advice)."
+        ),
+    )
+    p_sa.add_argument(
+        "--input-json",
+        default="",
+        help=(
+            "Path to SubmissionAssuranceInput JSON recipe (documents, status "
+            "snapshot, flags). Preferred for recorded E2E runs."
+        ),
+    )
+    p_sa.add_argument("--tenant", default="", help="Tenant id (required if no input-json).")
+    p_sa.add_argument("--matter-id", default="", help="Matter id (required if no input-json).")
+    p_sa.add_argument("--assurance-id", default="", help="Optional resumable assurance id.")
+    p_sa.add_argument("--application-number", default="")
+    p_sa.add_argument(
+        "--source-profile",
+        default="offline_authorized",
+        help="Authorized source profile label (default: offline_authorized).",
+    )
+    p_sa.add_argument(
+        "--application-type",
+        default="utility",
+        help="Filing application type for obligation packs (default: utility).",
+    )
+    p_sa.add_argument(
+        "--scenario",
+        default="new_application",
+        help="Filing scenario for obligation packs (default: new_application).",
+    )
+    p_sa.add_argument(
+        "--classification",
+        default="",
+        help=(
+            "Optional seed classification; omitted/unknown defaults to quarantine "
+            "(never silent public success)."
+        ),
+    )
+    p_sa.add_argument(
+        "--as-of-utc",
+        default="",
+        help="Optional as-of timestamp (ISO-8601 Z).",
+    )
+    p_sa.add_argument(
+        "--authority-snapshot-id",
+        default="",
+        help="Optional authority snapshot id for coverage.",
+    )
+    p_sa.add_argument(
+        "--no-preflight",
+        action="store_true",
+        help="Skip package preflight stage (still never files/pays/signs).",
+    )
+    p_sa.add_argument(
+        "--checkpoint-dir",
+        default="",
+        help="Optional durable checkpoint directory for resume.",
+    )
 
     return parser
 
@@ -423,6 +490,94 @@ def _cmd_explain(args: argparse.Namespace) -> int:
     return _emit(result, as_json=bool(args.json))
 
 
+def _cmd_submission_assurance(args: argparse.Namespace) -> int:
+    from ipfs_datasets_py.processors.domains.uspto.api import (
+        USPTOAnalysisAPI,
+        UsptoAPIError,
+    )
+    from ipfs_datasets_py.processors.domains.uspto.submission_assurance_processor import (
+        create_submission_assurance_processor,
+    )
+
+    checkpoint_dir = str(getattr(args, "checkpoint_dir", "") or "").strip() or None
+    assurance_proc = None
+    if checkpoint_dir:
+        assurance_proc = create_submission_assurance_processor(
+            checkpoint_dir=checkpoint_dir
+        )
+    api = USPTOAnalysisAPI(submission_assurance_processor=assurance_proc)
+
+    input_json = str(getattr(args, "input_json", "") or "").strip()
+    if input_json:
+        raw = _load_json(input_json)
+        if not isinstance(raw, Mapping):
+            raise UsptoAPIError(
+                "submission-assurance --input-json must be a JSON object",
+                code="invalid_assurance_input",
+            )
+        # CLI flags override recipe fields when explicitly provided.
+        overrides: dict[str, Any] = {}
+        if args.tenant:
+            overrides["tenant_id"] = args.tenant
+        if args.matter_id:
+            overrides["matter_id"] = args.matter_id
+        if args.assurance_id:
+            overrides["assurance_id"] = args.assurance_id
+        if args.application_number:
+            overrides["application_number"] = args.application_number
+        if args.source_profile:
+            overrides["source_profile"] = args.source_profile
+        if args.application_type:
+            overrides["application_type"] = args.application_type
+        if args.scenario:
+            overrides["scenario"] = args.scenario
+        if args.classification:
+            overrides["classification"] = args.classification
+        if args.as_of_utc:
+            overrides["as_of_utc"] = args.as_of_utc
+        if args.authority_snapshot_id:
+            overrides["authority_snapshot_id"] = args.authority_snapshot_id
+        if args.no_preflight:
+            overrides["run_preflight"] = False
+        result = api.submission_assurance(raw, **overrides)
+    else:
+        tenant = str(args.tenant or "").strip()
+        matter_id = str(args.matter_id or "").strip()
+        if not tenant or not matter_id:
+            raise UsptoAPIError(
+                "submission-assurance requires --input-json or both "
+                "--tenant and --matter-id",
+                code="missing_assurance_input",
+            )
+        kwargs: dict[str, Any] = {
+            "tenant_id": tenant,
+            "matter_id": matter_id,
+            "source_profile": args.source_profile or "offline_authorized",
+            "application_type": args.application_type or "utility",
+            "scenario": args.scenario or "new_application",
+            "offline": True,
+            "run_preflight": not bool(args.no_preflight),
+        }
+        if args.assurance_id:
+            kwargs["assurance_id"] = args.assurance_id
+        if args.application_number:
+            kwargs["application_number"] = args.application_number
+        if args.classification:
+            kwargs["classification"] = args.classification
+        if args.as_of_utc:
+            kwargs["as_of_utc"] = args.as_of_utc
+        if args.authority_snapshot_id:
+            kwargs["authority_snapshot_id"] = args.authority_snapshot_id
+        result = api.submission_assurance(**kwargs)
+
+    # Exit non-zero when domain disposition is not success so scripts cannot
+    # mistake transport completion for assurance clearance.
+    code = _emit(result, as_json=bool(args.json))
+    if not getattr(result, "success", False):
+        return 3
+    return code
+
+
 _HANDLERS = {
     "status": _cmd_status,
     "sync-public": _cmd_sync_public,
@@ -430,6 +585,7 @@ _HANDLERS = {
     "analyze": _cmd_analyze,
     "preflight": _cmd_preflight,
     "explain": _cmd_explain,
+    "submission-assurance": _cmd_submission_assurance,
 }
 
 

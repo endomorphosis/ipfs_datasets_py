@@ -57,6 +57,14 @@ from .providers.patent_center_export import (
     PatentCenterExportProvider,
 )
 from .providers.patent_file_wrapper import PatentFileWrapperClient
+from .submission_assurance_processor import (
+    SUBMISSION_ASSURANCE_INTERFACE,
+    SUBMISSION_ASSURANCE_SCHEMA_VERSION,
+    SubmissionAssuranceInput,
+    SubmissionAssuranceProcessor,
+    SubmissionAssuranceResult,
+    create_submission_assurance_processor,
+)
 from .workflow_processor import (
     FORBIDDEN_WORKFLOW_ACTIONS,
     PreflightPackageInput,
@@ -68,7 +76,9 @@ from .workflow_processor import (
 USPTO_API_SCHEMA_VERSION: Final = "uspto.analysis-api.v1"
 USPTO_API_INTERFACE: Final = "USPTOAnalysisAPI@1"
 
-# Operations exposed on the stable public surface.
+# Operations exposed on the stable public surface (PATLAW-060).
+# submission_assurance is additive (PATLAW-140) and listed in
+# ASSURANCE_OPERATIONS so the v1 PUBLIC_OPERATIONS contract remains stable.
 PUBLIC_OPERATIONS: Final[tuple[str, ...]] = (
     "status",
     "sync_public",
@@ -76,6 +86,12 @@ PUBLIC_OPERATIONS: Final[tuple[str, ...]] = (
     "analyze",
     "preflight",
     "explain",
+)
+
+# Additive assurance workflow surface (PATLAW-140).
+ASSURANCE_OPERATIONS: Final[tuple[str, ...]] = (
+    "submission_assurance",
+    "assure",
 )
 
 # Explicitly never offered (acceptance + plan §14).
@@ -357,6 +373,7 @@ class USPTOAnalysisAPI:
         dossier_processor: DossierProcessor | None = None,
         workflow_processor: WorkflowProcessor | None = None,
         gap_report_renderer: GapReportRenderer | None = None,
+        submission_assurance_processor: SubmissionAssuranceProcessor | None = None,
         privacy_policy: UsptoPrivacyPolicy | None = None,
         credential_ref: CredentialRef | ApiKeySecret | str | None = None,
         id_factory: Callable[[], str] | None = None,
@@ -376,6 +393,7 @@ class USPTOAnalysisAPI:
         self._gap_report_renderer = gap_report_renderer or GapReportRenderer(
             id_factory=id_factory
         )
+        self._submission_assurance_processor = submission_assurance_processor
         self._privacy_policy = privacy_policy or DEFAULT_PRIVACY_POLICY
         self._credential_ref = self._coerce_credential_ref(credential_ref)
         self._id_factory = id_factory
@@ -438,6 +456,7 @@ class USPTOAnalysisAPI:
             dossier_processor=self._dossier_processor,
             workflow_processor=self._workflow_processor,
             gap_report_renderer=self._gap_report_renderer,
+            submission_assurance_processor=self._submission_assurance_processor,
             privacy_policy=self._privacy_policy,
             credential_ref=self._credential_ref,
             id_factory=self._id_factory,
@@ -456,6 +475,7 @@ class USPTOAnalysisAPI:
             dossier_processor=self._dossier_processor,
             workflow_processor=self._workflow_processor,
             gap_report_renderer=self._gap_report_renderer,
+            submission_assurance_processor=self._submission_assurance_processor,
             privacy_policy=self._privacy_policy,
             credential_ref=self._credential_ref,
             id_factory=self._id_factory,
@@ -504,6 +524,13 @@ class USPTOAnalysisAPI:
         )
         return self._private_import_provider
 
+    def _assurance_proc(self) -> SubmissionAssuranceProcessor:
+        if self._submission_assurance_processor is None:
+            self._submission_assurance_processor = (
+                create_submission_assurance_processor(id_factory=self._id_factory)
+            )
+        return self._submission_assurance_processor
+
     # ------------------------------------------------------------------
     # Forbidden surface (explicit for tests / audit)
     # ------------------------------------------------------------------
@@ -540,6 +567,8 @@ class USPTOAnalysisAPI:
             "analyze": self.analyze,
             "preflight": self.preflight,
             "explain": self.explain,
+            "submission_assurance": self.submission_assurance,
+            "assure": self.submission_assurance,
         }
         if key not in dispatch:
             raise UsptoAPIError(
@@ -845,6 +874,37 @@ class USPTOAnalysisAPI:
         )
         return self._gap_report_renderer.render(report_input)
 
+    def submission_assurance(
+        self,
+        assurance_input: SubmissionAssuranceInput | Mapping[str, Any] | None = None,
+        /,
+        **kwargs: Any,
+    ) -> SubmissionAssuranceResult:
+        """Run the serialized submission-assurance workflow (PATLAW-140).
+
+        Accepts tenant/matter plus authorized documents (or a mapping recipe).
+        No hand-built middle-stage dossier/compliance objects are required.
+        Domain ``success``/``ok`` is False for outage, quarantine, incomplete
+        analysis, proof-unknown, and mandatory review even when transport
+        completed. Never files, pays, signs, or claims legal advice.
+        """
+        assert_operation_allowed("submission_assurance")
+        proc = self._assurance_proc()
+        if assurance_input is None and not kwargs:
+            raise UsptoAPIError(
+                "submission_assurance requires SubmissionAssuranceInput, "
+                "mapping, or keyword arguments (tenant_id, matter_id, ...)",
+                code="missing_assurance_input",
+            )
+        if assurance_input is None:
+            return proc.assure(**kwargs)
+        if kwargs:
+            return proc.assure(assurance_input, **kwargs)
+        return proc.assure(assurance_input)
+
+    # Alias preferred by some adapters / CLI surfaces.
+    assure = submission_assurance
+
     # ------------------------------------------------------------------
     # Convenience serialization
     # ------------------------------------------------------------------
@@ -891,14 +951,19 @@ def create_api(
 
 
 __all__ = [
+    "ASSURANCE_OPERATIONS",
     "FORBIDDEN_API_OPERATIONS",
     "PUBLIC_OPERATIONS",
+    "SUBMISSION_ASSURANCE_INTERFACE",
+    "SUBMISSION_ASSURANCE_SCHEMA_VERSION",
     "USPTO_API_INTERFACE",
     "USPTO_API_SCHEMA_VERSION",
     "AnalyzeResult",
     "CredentialRef",
     "ForbiddenAPIOperationError",
     "PublicSyncResult",
+    "SubmissionAssuranceInput",
+    "SubmissionAssuranceResult",
     "USPTOAnalysisAPI",
     "UsptoAPIError",
     "assert_operation_allowed",
