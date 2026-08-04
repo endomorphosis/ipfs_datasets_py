@@ -2284,7 +2284,7 @@ Program invariants:
 
 ## PATLAW-153 Compile a rule- and prior-art-aware filing package
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
