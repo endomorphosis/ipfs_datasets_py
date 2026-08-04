@@ -2534,7 +2534,7 @@ Program invariants:
 
 ## PATLAW-163 Add content-free production freshness and release observability
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
