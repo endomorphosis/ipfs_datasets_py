@@ -2865,7 +2865,7 @@ Program invariants:
 
 ## PATLAW-176 Stage authenticated Hub PR for corpus BM25 vector and graph artifacts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
