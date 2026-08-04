@@ -2740,7 +2740,7 @@ Program invariants:
 
 ## PATLAW-171 Build production BM25 index snapshot for public legal corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
