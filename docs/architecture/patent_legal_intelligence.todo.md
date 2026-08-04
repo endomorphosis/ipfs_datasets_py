@@ -3015,7 +3015,7 @@ Program invariants:
 
 ## PATLAW-182 Define full MPEP section inventory and edition pin contracts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
