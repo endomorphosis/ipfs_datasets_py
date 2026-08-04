@@ -107,7 +107,10 @@
       "PATLAW-164",
       "PATLAW-168",
       "PATLAW-172",
-      "PATLAW-176"
+      "PATLAW-176",
+      "PATLAW-180",
+      "PATLAW-184",
+      "PATLAW-188"
     ],
     "1": [
       "PATLAW-005",
@@ -136,7 +139,10 @@
       "PATLAW-165",
       "PATLAW-169",
       "PATLAW-173",
-      "PATLAW-177"
+      "PATLAW-177",
+      "PATLAW-181",
+      "PATLAW-185",
+      "PATLAW-189"
     ],
     "2": [
       "PATLAW-002",
@@ -168,7 +174,10 @@
       "PATLAW-166",
       "PATLAW-170",
       "PATLAW-174",
-      "PATLAW-178"
+      "PATLAW-178",
+      "PATLAW-182",
+      "PATLAW-186",
+      "PATLAW-190"
     ],
     "3": [
       "PATLAW-003",
@@ -197,7 +206,10 @@
       "PATLAW-167",
       "PATLAW-171",
       "PATLAW-175",
-      "PATLAW-179"
+      "PATLAW-179",
+      "PATLAW-183",
+      "PATLAW-187",
+      "PATLAW-191"
     ]
   }
 }

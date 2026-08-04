@@ -2962,3 +2962,303 @@ Program invariants:
 - Preconditions: Verification receipt and promote checklist exist; optional live promote evidence is separate and explicit.
 - Effects: Seal an immutable publication receipt with staged/promoted disposition for corpus/BM25/vector/graph artifacts.
 - Acceptance: Receipt cannot claim promoted success offline without a real promote evidence blob; staged-only state is valid and non-vacuous; digests bind all three index families plus corpus.
+
+## PATLAW-180 Define full annual CFR Title 37 inventory and acquisition contracts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-cfr
+- Depends on: PATLAW-170, PATLAW-131
+- Goal id: PATLAW-G215
+- Outputs: ipfs_datasets_py/processors/domains/patent/cfr_title37_full_contracts.py, data/release/patent_legal_intelligence/cfr_title37_full.manifest.schema.json, tests/unit/processors/domains/patent/test_cfr_title37_full_contracts.py
+- Validation: python -m pytest tests/unit/processors/domains/patent/test_cfr_title37_full_contracts.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-cfr-title37
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: cpu-medium
+- Token class: medium
+- Estimated tokens: 14000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/cfr_title37_full_contracts.py, data/release/patent_legal_intelligence/cfr_title37_full.manifest.schema.json, tests/unit/processors/domains/patent/test_cfr_title37_full_contracts.py
+- Allow concurrent with: PATLAW-182, PATLAW-184
+- Conflict policy: Own CFR Title 37 inventory contracts/schema/tests only; never claim eCFR alone satisfies annual CFR completion.
+- Preconditions: Live CFR/GovInfo acquisition modules and public corpus materializer exist.
+- Effects: Define pinned annual edition identity, full part/section inventory schema, gap records, and content-addressed package bindings for Title 37.
+- Acceptance: Schema rejects missing edition identity, empty inventory, or unpinned latest; inventory enumerates all Title 37 sections for a pinned annual package.
+
+## PATLAW-181 Acquire full annual CFR Title 37 text package for public corpus
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-cfr
+- Depends on: PATLAW-180
+- Goal id: PATLAW-G215
+- Outputs: scripts/ops/legal_data/acquire_cfr_title37_full.py, tests/integration/processors/patent/test_acquire_cfr_title37_full.py, docs/operations/PATENT_LEGAL_CFR_TITLE37_FULL.md
+- Validation: python -m pytest tests/integration/processors/patent/test_acquire_cfr_title37_full.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-cfr-title37
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: io-large
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: scripts/ops/legal_data/acquire_cfr_title37_full.py, tests/integration/processors/patent/test_acquire_cfr_title37_full.py, docs/operations/PATENT_LEGAL_CFR_TITLE37_FULL.md
+- Allow concurrent with: PATLAW-183, PATLAW-185
+- Conflict policy: Own CFR Title 37 acquisition CLI/tests/docs only; live GovInfo optional with offline fixtures; no Hub upload.
+- Preconditions: CFR Title 37 inventory contracts are merged; CI has a bounded Title 37 fixture.
+- Effects: Download or materialize the full annual Title 37 section texts with digests and emit an acquisition receipt/manifest.
+- Acceptance: Full inventory is present for the pinned edition; each section has text or explicit gap; package sha256/CID binds the acquisition; eCFR-only partial crawls do not complete this task.
+
+## PATLAW-182 Define full MPEP section inventory and edition pin contracts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-mpep
+- Depends on: PATLAW-170, PATLAW-132
+- Goal id: PATLAW-G216
+- Outputs: ipfs_datasets_py/processors/domains/patent/mpep_full_section_contracts.py, data/release/patent_legal_intelligence/mpep_full.manifest.schema.json, tests/unit/processors/domains/patent/test_mpep_full_section_contracts.py
+- Validation: python -m pytest tests/unit/processors/domains/patent/test_mpep_full_section_contracts.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-mpep
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-medium
+- Token class: medium
+- Estimated tokens: 14000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/mpep_full_section_contracts.py, data/release/patent_legal_intelligence/mpep_full.manifest.schema.json, tests/unit/processors/domains/patent/test_mpep_full_section_contracts.py
+- Allow concurrent with: PATLAW-180, PATLAW-184
+- Conflict policy: Own MPEP full-section contracts/schema/tests only; chapter-only inventories cannot satisfy acceptance.
+- Preconditions: MPEP guidance processor contracts exist.
+- Effects: Define pinned MPEP edition/revision identity, complete section and form-paragraph inventory schema, supersession records, and content digests.
+- Acceptance: Schema requires edition+revision pins; inventory enumerates section anchors across all chapters; guidance never elevates to binding law.
+
+## PATLAW-183 Acquire full MPEP section-level texts for public corpus
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-mpep
+- Depends on: PATLAW-182
+- Goal id: PATLAW-G216
+- Outputs: scripts/ops/legal_data/acquire_mpep_full_sections.py, tests/integration/processors/patent/test_acquire_mpep_full_sections.py, docs/operations/PATENT_LEGAL_MPEP_FULL.md
+- Validation: python -m pytest tests/integration/processors/patent/test_acquire_mpep_full_sections.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-mpep
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: io-large
+- Token class: large
+- Estimated tokens: 20000
+- Predicted files: scripts/ops/legal_data/acquire_mpep_full_sections.py, tests/integration/processors/patent/test_acquire_mpep_full_sections.py, docs/operations/PATENT_LEGAL_MPEP_FULL.md
+- Allow concurrent with: PATLAW-181, PATLAW-185
+- Conflict policy: Own MPEP full acquisition CLI/tests/docs only; polite crawl only; no Hub upload; chapter-landing-page-only crawls fail acceptance.
+- Preconditions: Full MPEP inventory contracts are merged; CI has a multi-section fixture beyond chapter stubs.
+- Effects: Fetch every inventoried MPEP section for the pinned edition and emit a content-addressed acquisition receipt.
+- Acceptance: Section count matches inventory minus explicit gaps; each section has stable identity and sha256; supersession edges are retained when present.
+
+## PATLAW-184 Define USPTO guidance PDF inventory and extraction contracts
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-uspto-guidance
+- Depends on: PATLAW-170, PATLAW-132
+- Goal id: PATLAW-G217
+- Outputs: ipfs_datasets_py/processors/domains/patent/uspto_guidance_pdf_contracts.py, data/release/patent_legal_intelligence/uspto_guidance_pdfs.manifest.schema.json, tests/unit/processors/domains/patent/test_uspto_guidance_pdf_contracts.py
+- Validation: python -m pytest tests/unit/processors/domains/patent/test_uspto_guidance_pdf_contracts.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-uspto-guidance-pdfs
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: cpu-medium
+- Token class: medium
+- Estimated tokens: 14000
+- Predicted files: ipfs_datasets_py/processors/domains/patent/uspto_guidance_pdf_contracts.py, data/release/patent_legal_intelligence/uspto_guidance_pdfs.manifest.schema.json, tests/unit/processors/domains/patent/test_uspto_guidance_pdf_contracts.py
+- Allow concurrent with: PATLAW-180, PATLAW-182
+- Conflict policy: Own USPTO guidance PDF contracts/schema/tests only; never treat guidance PDFs as statutes.
+- Preconditions: USPTO guidance processor and public rights contracts exist.
+- Effects: Define discovery inventory, PDF digest/page metadata, publication cutoff, and deterministic text-extraction contracts for USPTO guidance PDFs.
+- Acceptance: Schema binds URI, sha256, publication date/cutoff, and rights review; unpinned latest guidance selection is forbidden.
+
+## PATLAW-185 Acquire USPTO guidance PDFs and extract indexable public text
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-uspto-guidance
+- Depends on: PATLAW-184
+- Goal id: PATLAW-G217
+- Outputs: scripts/ops/legal_data/acquire_uspto_guidance_pdfs.py, tests/integration/processors/patent/test_acquire_uspto_guidance_pdfs.py, docs/operations/PATENT_LEGAL_USPTO_GUIDANCE_PDFS.md
+- Validation: python -m pytest tests/integration/processors/patent/test_acquire_uspto_guidance_pdfs.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-uspto-guidance-pdfs
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: io-large
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: scripts/ops/legal_data/acquire_uspto_guidance_pdfs.py, tests/integration/processors/patent/test_acquire_uspto_guidance_pdfs.py, docs/operations/PATENT_LEGAL_USPTO_GUIDANCE_PDFS.md
+- Allow concurrent with: PATLAW-181, PATLAW-183
+- Conflict policy: Own USPTO guidance PDF acquisition/tests/docs only; retain superseded editions as evidence; no Hub upload in this task.
+- Preconditions: Guidance PDF contracts are merged; CI has offline PDF fixtures.
+- Effects: Discover/download pinned USPTO guidance PDFs, extract deterministic text, and emit acquisition receipts with digests.
+- Acceptance: Inventory PDFs download and hash-verify; text extraction is stable for identical bytes; non-public or failed-auth packages fail closed.
+
+## PATLAW-186 Integrate full CFR MPEP and guidance PDFs into production public-legal recipe
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-integrate-publish
+- Depends on: PATLAW-181, PATLAW-183, PATLAW-185
+- Goal id: PATLAW-G218
+- Outputs: scripts/ops/legal_data/build_public_legal_production_recipe.py, tests/integration/processors/patent/test_build_public_legal_production_recipe_full_authority.py, docs/operations/PATENT_LEGAL_FULL_AUTHORITY_CORPUS.md
+- Validation: python -m pytest tests/integration/processors/patent/test_build_public_legal_production_recipe_full_authority.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-integrate-publish
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/build_public_legal_production_recipe.py, tests/integration/processors/patent/test_build_public_legal_production_recipe_full_authority.py, docs/operations/PATENT_LEGAL_FULL_AUTHORITY_CORPUS.md
+- Allow concurrent with: PATLAW-178, PATLAW-179
+- Conflict policy: Own production recipe builder/tests/docs only; must consume full-authority acquisitions rather than fixture stubs for CFR/MPEP/guidance completion claims.
+- Preconditions: Full CFR Title 37, full MPEP sections, and USPTO guidance PDF acquisitions are complete.
+- Effects: Extend production recipe materialization to include all three full-authority sources with rights, current-through, and source receipts.
+- Acceptance: Recipe document counts and by-family tallies prove full CFR Title 37, full MPEP sections, and guidance PDFs are present; chapter-only or eCFR-only substitutes do not complete acceptance.
+
+## PATLAW-187 Rebuild public legal corpus materialization from full-authority recipe
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-integrate-publish
+- Depends on: PATLAW-186, PATLAW-170
+- Goal id: PATLAW-G218
+- Outputs: scripts/ops/legal_data/materialize_public_legal_corpus.py, tests/integration/processors/patent/test_materialize_full_authority_corpus.py
+- Validation: python -m pytest tests/integration/processors/patent/test_materialize_full_authority_corpus.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-integrate-publish
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/materialize_public_legal_corpus.py, tests/integration/processors/patent/test_materialize_full_authority_corpus.py
+- Allow concurrent with: PATLAW-188, PATLAW-189
+- Conflict policy: Own corpus materialization ops/tests only; public-official sources only.
+- Preconditions: Full-authority production recipe exists and materializer contracts are merged.
+- Effects: Materialize a deterministic full-authority corpus snapshot with shared corpus_root_cid for downstream indexes.
+- Acceptance: Materialization is content-address stable for the same recipe; counts match recipe inventory; private/unreviewed inputs fail closed.
+
+## PATLAW-188 Rebuild BM25 index from full-authority public legal corpus
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-integrate-publish
+- Depends on: PATLAW-187, PATLAW-171
+- Goal id: PATLAW-G218
+- Outputs: scripts/ops/legal_data/build_public_legal_bm25_index.py, tests/integration/processors/patent/test_build_full_authority_bm25.py
+- Validation: python -m pytest tests/integration/processors/patent/test_build_full_authority_bm25.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-integrate-publish
+- Parallel lane: patlaw-v2-lane-0
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/build_public_legal_bm25_index.py, tests/integration/processors/patent/test_build_full_authority_bm25.py
+- Allow concurrent with: PATLAW-189, PATLAW-190
+- Conflict policy: Own BM25 build path/tests only; must pin corpus_root_cid from PATLAW-187.
+- Preconditions: Full-authority corpus materialization exists.
+- Effects: Build fielded BM25 documents/terms/postings snapshot covering the expanded corpus.
+- Acceptance: BM25 document_count equals corpus document_count; index digests bind corpus root; bulk JSONL/parquet payloads are staged for Hub packaging.
+
+## PATLAW-189 Rebuild vector index from full-authority public legal corpus
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-integrate-publish
+- Depends on: PATLAW-187, PATLAW-172
+- Goal id: PATLAW-G218
+- Outputs: scripts/ops/legal_data/build_public_legal_vector_index.py, tests/integration/processors/patent/test_build_full_authority_vectors.py
+- Validation: python -m pytest tests/integration/processors/patent/test_build_full_authority_vectors.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-integrate-publish
+- Parallel lane: patlaw-v2-lane-1
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/build_public_legal_vector_index.py, tests/integration/processors/patent/test_build_full_authority_vectors.py
+- Allow concurrent with: PATLAW-188, PATLAW-190
+- Conflict policy: Own vector build path/tests only; local embedding pin only; no remote embedding APIs.
+- Preconditions: Full-authority corpus materialization and local embedding runtime pin exist.
+- Effects: Build pinned local vector index snapshot for the expanded corpus.
+- Acceptance: Vector document_count equals corpus document_count; model pin and corpus root are bound; bulk vector rows are staged for packaging.
+
+## PATLAW-190 Rebuild knowledge graph from full-authority public legal corpus
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-integrate-publish
+- Depends on: PATLAW-187, PATLAW-173
+- Goal id: PATLAW-G218
+- Outputs: scripts/ops/legal_data/build_public_legal_knowledge_graph.py, tests/integration/processors/patent/test_build_full_authority_knowledge_graph.py
+- Validation: python -m pytest tests/integration/processors/patent/test_build_full_authority_knowledge_graph.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-integrate-publish
+- Parallel lane: patlaw-v2-lane-2
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/build_public_legal_knowledge_graph.py, tests/integration/processors/patent/test_build_full_authority_knowledge_graph.py
+- Allow concurrent with: PATLAW-188, PATLAW-189
+- Conflict policy: Own graph build path/tests only; orphan checks fail closed.
+- Preconditions: Full-authority corpus materialization exists.
+- Effects: Build knowledge-graph nodes/edges/jsonld snapshot covering expanded authorities and citations.
+- Acceptance: Graph document nodes cover corpus documents; orphan checks pass; bulk nodes/edges payloads are staged for packaging.
+
+## PATLAW-191 Package admit stage verify and seal full-authority Hub republication
+
+- Status: pending
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: hub-full-authority-integrate-publish
+- Depends on: PATLAW-188, PATLAW-189, PATLAW-190, PATLAW-174, PATLAW-175, PATLAW-176, PATLAW-177, PATLAW-179
+- Goal id: PATLAW-G218
+- Outputs: scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py, tests/release/test_full_authority_hub_republication.py, docs/operations/PATENT_LEGAL_FULL_AUTHORITY_CORPUS.md
+- Validation: python -m pytest tests/release/test_full_authority_hub_republication.py -q
+- Board namespace: patent-legal-intelligence-v1
+- Bundle: patlaw/full-authority-integrate-publish
+- Parallel lane: patlaw-v2-lane-3
+- Resource class: io-large
+- Token class: xlarge
+- Estimated tokens: 22000
+- Predicted files: scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py, tests/release/test_full_authority_hub_republication.py, docs/operations/PATENT_LEGAL_FULL_AUTHORITY_CORPUS.md
+- Allow concurrent with: PATLAW-178
+- Conflict policy: Own republication orchestration/tests/docs only; no unattended Hub main promote; live network operator-invoked with staged PR + exact approval.
+- Preconditions: Full-authority BM25/vector/graph rebuilds and prior package/admit/stage/verify/receipt tooling exist.
+- Effects: Package the expanded multi-artifact release, admit through DLP/rights/Viewer gates, stage Hub PRs, verify pins, and seal staged-vs-promoted republication receipt for corpus/BM25/vector/graph.
+- Acceptance: Package counts reflect full-authority corpus; admission passes; verification binds expanded digests; receipt cannot claim promoted without real promote evidence; CI remains fake-service default.

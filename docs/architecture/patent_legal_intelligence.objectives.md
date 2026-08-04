@@ -981,7 +981,7 @@ Program invariants:
 - Priority: P0
 - Bundle: patlaw/hub-index-kg-publish
 - Goal: Materialize production public patent-law and regulations corpus projections, build durable BM25, vector, and knowledge-graph indexes, package them for JusticeDAO/Hugging Face Viewer layouts, admit them through DLP/rights/Viewer gates, stage an authenticated Hub PR, and verify pinned redownloads without unattended main publish.
-- Evidence: PATLAW-G211, PATLAW-G212, PATLAW-G213
+- Evidence: PATLAW-G211, PATLAW-G212, PATLAW-G213, PATLAW-G214
 - Outputs: scripts/ops/legal_data, ipfs_datasets_py/processors/domains/patent, docs/operations/PATENT_LEGAL_HUB_INDEX_PUBLICATION.md
 - Validation: python scripts/validate_patent_legal_intelligence_board.py --repo-root .
 - Acceptance: BM25, vector, and graph artifacts are built from rights-reviewed public legal sources only; release manifests bind artifact CIDs/SHAs/counts; Hub path remains staged-PR + exact operator approval; pinned redownload verifies each projection before promotion claims.
@@ -1043,3 +1043,93 @@ Program invariants:
 - Refinement: Live Hub network remains operator-invoked; CI uses fakes.
 - Embedding query: pinned redownload BM25 vector graph promote checklist publication receipt
 - AST query: HubIndexVerifier PromoteChecklist PublicationReceipt
+
+## PATLAW-G214 Expand full official CFR Title 37, MPEP, and USPTO guidance PDFs into indexed Hub release
+
+- Status: active
+- Parent: PATLAW-G000
+- Fib priority: 56
+- Track: hub-full-authority-expansion
+- Priority: P0
+- Bundle: patlaw/full-authority-expansion
+- Goal: Acquire the complete annual CFR Title 37, full MPEP section-level guidance corpus, and USPTO guidance PDF set as rights-reviewed public sources; integrate them into the production public-legal recipe; rebuild BM25/vector/knowledge-graph indexes; package, admit, stage, and verify a Hub republication without unattended main promote.
+- Evidence: PATLAW-G215, PATLAW-G216, PATLAW-G217, PATLAW-G218
+- Outputs: scripts/ops/legal_data/build_public_legal_production_recipe.py, scripts/ops/legal_data, ipfs_datasets_py/processors/domains/patent, docs/operations/PATENT_LEGAL_HUB_INDEX_PUBLICATION.md
+- Validation: python scripts/validate_patent_legal_intelligence_board.py --repo-root .
+- Acceptance: Production recipe documents cover full CFR Title 37 granules, full MPEP section inventory (not chapter-only), and USPTO guidance PDFs with digests/current-through; rebuild indexes bind shared corpus root; Hub republication remains staged-PR + operator approval with pinned verify before promote claims.
+- Gap task: Implement the highest-priority incomplete CFR, MPEP, guidance-PDF, recipe-integration, rebuild, package, admit, stage, or verify child.
+- Refinement: Prefer official GovInfo/USPTO sources; eCFR may supplement but annual CFR remains the official printed edition; fail closed on private/mixed/unreviewed text; no unattended Hub main publish.
+- Embedding query: full CFR title 37 MPEP sections USPTO guidance PDF public legal corpus BM25 vector knowledge graph Hub republish
+- AST query: CfrAnnualProcessor MpepGuidanceProcessor LiveUsptoGuidanceProcessor PublicLegalCorpusMaterializer build_public_legal_production_recipe
+
+## PATLAW-G215 Acquire complete annual CFR Title 37 as public corpus sources
+
+- Status: active
+- Parent: PATLAW-G214
+- Fib priority: 1
+- Track: hub-full-authority-cfr
+- Priority: P0
+- Bundle: patlaw/full-authority-cfr-title37
+- Goal: Acquire and pin the complete annual CFR Title 37 package (all parts/sections/granules) with official edition identity, digests, and current-through receipts suitable for public-legal corpus materialization.
+- Evidence: PATLAW-180, PATLAW-181
+- Outputs: scripts/ops/legal_data/acquire_cfr_title37_full.py, data/release/patent_legal_intelligence/cfr_title37_full.manifest.schema.json, tests/integration/processors/patent/test_acquire_cfr_title37_full.py
+- Validation: python -m pytest tests/integration/processors/patent/test_acquire_cfr_title37_full.py -q
+- Acceptance: Acquisition enumerates the full Title 37 section inventory for a pinned annual edition; every section has text or explicit gap; package digests bind GovInfo package identity; private sources fail closed.
+- Gap task: Close the next CFR Title 37 acquisition or fixture/inventory gap.
+- Refinement: CI may use bounded fixtures; live GovInfo acquisition is receipt-bound and optional offline.
+- Embedding query: annual CFR title 37 GovInfo package granules full sections acquisition
+- AST query: CfrAnnualProcessor GovInfoClient acquire_cfr_title37_full
+
+## PATLAW-G216 Acquire full MPEP section-level corpus beyond chapter HTML
+
+- Status: active
+- Parent: PATLAW-G214
+- Fib priority: 2
+- Track: hub-full-authority-mpep
+- Priority: P0
+- Bundle: patlaw/full-authority-mpep
+- Goal: Acquire the complete MPEP section/form-paragraph inventory for a pinned edition/revision, not merely chapter landing pages, with stable section identities and content digests.
+- Evidence: PATLAW-182, PATLAW-183
+- Outputs: scripts/ops/legal_data/acquire_mpep_full_sections.py, data/release/patent_legal_intelligence/mpep_full.manifest.schema.json, tests/integration/processors/patent/test_acquire_mpep_full_sections.py
+- Validation: python -m pytest tests/integration/processors/patent/test_acquire_mpep_full_sections.py -q
+- Acceptance: Inventory covers all MPEP chapters and section anchors for the pinned edition; each section has text or explicit gap; supersession/edition identity is recorded; guidance is never elevated to binding law.
+- Gap task: Close the next MPEP inventory, section fetch, or edition-pin gap.
+- Refinement: Prefer USPTO official HTML/PDF sources; chapter-only crawls are insufficient for completion.
+- Embedding query: MPEP full sections form paragraphs edition revision USPTO guidance corpus
+- AST query: MpepGuidanceProcessor acquire_mpep_full_sections stable_guidance_identity
+
+## PATLAW-G217 Acquire USPTO guidance PDFs as public corpus sources
+
+- Status: active
+- Parent: PATLAW-G214
+- Fib priority: 3
+- Track: hub-full-authority-uspto-guidance
+- Priority: P0
+- Bundle: patlaw/full-authority-uspto-guidance-pdfs
+- Goal: Discover, download, and pin USPTO examination guidance PDFs (and equivalent official guidance artifacts) with content digests, publication dates, and rights-reviewed public classification for corpus admission.
+- Evidence: PATLAW-184, PATLAW-185
+- Outputs: scripts/ops/legal_data/acquire_uspto_guidance_pdfs.py, data/release/patent_legal_intelligence/uspto_guidance_pdfs.manifest.schema.json, tests/integration/processors/patent/test_acquire_uspto_guidance_pdfs.py
+- Validation: python -m pytest tests/integration/processors/patent/test_acquire_uspto_guidance_pdfs.py -q
+- Acceptance: PDF inventory binds URI, sha256, page/count metadata, and publication/cutoff dates; text extraction is deterministic for the same PDF bytes; unauthenticated or non-public packages fail closed.
+- Gap task: Close the next USPTO guidance discovery, PDF download, or text-extraction gap.
+- Refinement: PDF text is guidance, not statute; retain prior editions when superseded rather than deleting evidence.
+- Embedding query: USPTO guidance PDF examination subject matter eligibility download digest corpus
+- AST query: LiveUsptoGuidanceProcessor acquire_uspto_guidance_pdfs PdfTextExtractor
+
+## PATLAW-G218 Integrate full authorities into production recipe, rebuild indexes, and republication
+
+- Status: active
+- Parent: PATLAW-G214
+- Fib priority: 4
+- Track: hub-full-authority-integrate-publish
+- Priority: P0
+- Bundle: patlaw/full-authority-integrate-publish
+- Goal: Merge full CFR Title 37, MPEP sections, and USPTO guidance PDFs into the production public-legal recipe; rebuild corpus/BM25/vector/graph; package, admit, stage, verify, and seal republication receipts for JusticeDAO Hub datasets.
+- Evidence: PATLAW-186, PATLAW-187, PATLAW-188, PATLAW-189, PATLAW-190, PATLAW-191
+- Outputs: scripts/ops/legal_data/build_public_legal_production_recipe.py, scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py, docs/operations/PATENT_LEGAL_FULL_AUTHORITY_CORPUS.md, tests/release/test_full_authority_hub_republication.py
+- Validation: python -m pytest tests/release/test_full_authority_hub_republication.py -q
+- Acceptance: Recipe counts reflect full-authority acquisitions; rebuilt indexes share corpus root; Hub republication path remains operator-approved; verification binds expanded artifact digests; staged vs promoted dispositions remain explicit.
+- Gap task: Close the next recipe-integration, rebuild, package, admit, stage, verify, or republication-receipt gap.
+- Refinement: Live Hub promote remains natural-person approved; CI uses fakes and bounded fixtures.
+- Embedding query: production recipe integrate full CFR MPEP guidance rebuild BM25 vector graph Hub republication
+- AST query: build_public_legal_production_recipe package_patent_legal_hub_indexes publish_patent_legal_hub_indexes_live
