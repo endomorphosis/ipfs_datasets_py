@@ -1,0 +1,300 @@
+{
+  "schema": "uspto.full-pipeline-v2-recipe.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-142",
+  "goal_id": "PATLAW-G152",
+  "title": "True offline full-processor USPTO pipeline v2 + optional live canary",
+  "network_free_default": true,
+  "notes": "Compact recipe. Named processors must all execute in the offline E2E; digests bind versions. Prefer generators over bulk gold dumps.",
+  "version_pins": {
+    "parser": "patlaw-031.document-extraction.v1",
+    "model": {
+      "ocr": "tesseract@fixture-replay",
+      "layout": "none@offline"
+    },
+    "ruleset": {
+      "analysis_bundle": "analysis-bundle-rules@1",
+      "gap_report": "gap-report-rules@1",
+      "workflow": "preflight-human-gate-rules@1",
+      "requirement": "requirement-compiler-rules@1",
+      "span_validator": "uspto.span-validator.v1",
+      "matter_analysis": "uspto.matter-analysis.v1",
+      "submission_assurance": "uspto.submission-assurance.v1",
+      "document_pipeline": "uspto.document-pipeline.v1",
+      "gold_evaluation": "uspto.gold-evaluation.v1"
+    },
+    "config": {
+      "api_schema": "uspto.analysis-api.v1",
+      "api_interface": "USPTOAnalysisAPI@1",
+      "output_policy": "redact_private",
+      "freshness_max_days": "7300",
+      "offline": "true"
+    },
+    "tree": {
+      "tree_id": "replay-tree:patlaw-142:v2",
+      "tree_digest": "b2c8f41a9e6d70c35a1f8e92d4b7c0e6a5f3d821c9e0476b8a1d5f3e2c0b9a84"
+    }
+  },
+  "binding_keys": [
+    "input_artifact_ids",
+    "parser_versions",
+    "model_versions",
+    "ruleset_versions",
+    "config_versions",
+    "tree_id",
+    "tree_digest",
+    "processor_versions",
+    "processor_digests",
+    "metric_receipt_digest",
+    "pipeline_material_digest"
+  ],
+  "named_processors": [
+    "odp_transport",
+    "status_sync",
+    "document_pipeline",
+    "document_extraction",
+    "span_validation",
+    "matter_analysis",
+    "office_action_semantics",
+    "submission_semantics",
+    "authority_view",
+    "legal_ir_proof",
+    "filing_obligations",
+    "compliance",
+    "deadlines",
+    "dossier",
+    "submission_assurance",
+    "analysis_api",
+    "mcp_persisted_assurance",
+    "scheduler_assurance_delta",
+    "gold_metric_evaluator"
+  ],
+  "processor_stage_map": {
+    "matter_analysis": [
+      "authorize",
+      "status_sync",
+      "document_sync",
+      "document_process",
+      "office_action_semantics",
+      "submission_semantics",
+      "authority_view",
+      "legal_logic",
+      "temporal_candidates",
+      "dossier",
+      "bundle"
+    ],
+    "submission_assurance": [
+      "authorize",
+      "matter_analysis",
+      "filing_obligations",
+      "compliance_compare",
+      "coverage",
+      "preflight",
+      "dossier_export",
+      "finalize"
+    ],
+    "document_pipeline": [
+      "classify",
+      "authorize",
+      "decrypt",
+      "extract",
+      "normalize",
+      "validate_spans",
+      "persist"
+    ]
+  },
+  "matter": {
+    "matter_id": "matter:v2:full-pipeline:16123456",
+    "analysis_id": "analysis:v2:full-pipeline:1",
+    "assurance_id": "assurance:v2:full-pipeline:1",
+    "application_number": "16123456",
+    "tenant_id": "tenant-patlaw-142",
+    "classification": "public_user",
+    "privacy_class": "public_synthetic",
+    "authority_snapshot_id": "auth:v2:snap-1",
+    "as_of_utc": "2024-01-15T00:00:00Z",
+    "application_type": "utility",
+    "scenario": "new_application",
+    "source_profile": "offline_authorized"
+  },
+  "documents": [
+    {
+      "document_id": "art:v2:oa1",
+      "role": "office_action",
+      "document_code": "CTNF",
+      "text_key": "oa_text"
+    },
+    {
+      "document_id": "art:v2:spec",
+      "role": "specification",
+      "text_key": "spec_text"
+    },
+    {
+      "document_id": "art:v2:claims",
+      "role": "claims",
+      "text_key": "claims_text"
+    },
+    {
+      "document_id": "art:v2:draw",
+      "role": "drawings",
+      "text_key": "drawings_text"
+    },
+    {
+      "document_id": "art:v2:ads",
+      "role": "ads",
+      "text_key": "ads_text"
+    },
+    {
+      "document_id": "art:v2:oath",
+      "role": "oath",
+      "text_key": "oath_text"
+    },
+    {
+      "document_id": "art:v2:fee",
+      "role": "fee",
+      "text_key": "fee_text"
+    },
+    {
+      "document_id": "art:v2:seq",
+      "role": "sequence_listing",
+      "text_key": "seq_text"
+    },
+    {
+      "document_id": "art:v2:rem1",
+      "role": "remarks",
+      "text_key": "remarks_text"
+    }
+  ],
+  "document_texts": {
+    "oa_text": "UNITED STATES PATENT AND TRADEMARK OFFICE\nNON-FINAL OFFICE ACTION\nApplication No. 16/123,456\nMailing Date: January 15, 2024\n\nClaim Rejections - 35 USC 103\nClaims 1-3 are rejected under 35 U.S.C. 103 as being unpatentable over Smith\nin view of Jones.\n\nA shortened statutory period for reply is set to expire THREE MONTHS from the\nmailing date of this communication.\n",
+    "spec_text": "DETAILED DESCRIPTION of the invention. Specification body for PATLAW-142 offline replay.",
+    "claims_text": "1. A method comprising claim language for synthetic full-pipeline replay.",
+    "drawings_text": "FIG. 1 is a drawing of the embodiment for full-pipeline v2.",
+    "ads_text": "Application Data Sheet inventors and correspondence address.",
+    "oath_text": "Declaration and oath signed by inventor.",
+    "fee_text": "Fee payment receipt for utility filing fee.",
+    "seq_text": "<SequenceListing>SEQ ID NO:1</SequenceListing>",
+    "remarks_text": "Applicant respectfully submits remarks and claim amendments. Claim 1 is amended to overcome the rejection under 35 U.S.C. 103."
+  },
+  "status_snapshot": {
+    "application_number": "16123456",
+    "mailing_date": "2024-01-15",
+    "status_code": "PEND",
+    "phase": "examination"
+  },
+  "odp": {
+    "recipe_path": "../odp/http/odp_http_recipe.json",
+    "expected_outcome": "success",
+    "fetch_transactions": true
+  },
+  "injection_cases": {
+    "quota": {
+      "kind": "quota_or_rate_limit",
+      "provider_status": 429,
+      "expected_canary_kind": "quota_or_rate_limit",
+      "expected_disposition_contains": ["outage", "rate", "quota"]
+    },
+    "timeout": {
+      "kind": "force_outage",
+      "force_outage": true,
+      "expected_disposition": "outage",
+      "success": false,
+      "transport_ok": false
+    },
+    "corruption": {
+      "kind": "corrupt_pdf",
+      "generator": "build_corrupt_pdf",
+      "expected_disposition": "quarantine",
+      "success": false
+    },
+    "stale_law": {
+      "kind": "authority_stale",
+      "authority_stale": true,
+      "expected_disposition": "stale_authority",
+      "success": false
+    },
+    "restart": {
+      "kind": "inject_failure_before",
+      "inject_failure_before": "filing_obligations",
+      "expected_interrupted_disposition": "interrupted",
+      "resume_must_complete": true
+    }
+  },
+  "metric_evaluation": {
+    "gold_case_id": "gold-scanned-office-action",
+    "bind_identity": true,
+    "require_receipt_metric_ids": true
+  },
+  "mcp": {
+    "tools": [
+      "uspto_persisted_assurance_summary",
+      "uspto_persisted_assurance_findings",
+      "uspto_persisted_assurance_provenance"
+    ],
+    "read_only": true,
+    "triggers_live_sync": false
+  },
+  "scheduler": {
+    "observe_delta": true,
+    "opaque_matter_ref_template": "opaque:{matter_digest}",
+    "dossier_link_template": "protected://dossier/{dossier_id}"
+  },
+  "live_canary": {
+    "opt_in": true,
+    "default_enabled": false,
+    "read_only": true,
+    "bounded": true,
+    "secret_redacted": true,
+    "env_enable_flags": [
+      "USPTO_LIVE_CONTRACT_CANARY",
+      "PATLAW_142_LIVE_CANARY"
+    ],
+    "max_probes": 1,
+    "prefer_meta_data": true,
+    "application_number": "16123456",
+    "forbidden_mutations": [
+      "sign",
+      "pay",
+      "file",
+      "submit",
+      "write",
+      "import_private"
+    ]
+  },
+  "forbidden_capabilities": [
+    "sign",
+    "pay",
+    "file",
+    "submit",
+    "automate_browser",
+    "scrape",
+    "login",
+    "session",
+    "legal_advice"
+  ],
+  "acceptance": {
+    "fails_if_named_processor_bypassed": true,
+    "output_and_metric_receipts_bind_versions_digests": true,
+    "injection_cases_propagate": [
+      "quota",
+      "timeout",
+      "corruption",
+      "stale_law",
+      "restart"
+    ],
+    "default_suite_deterministic_offline": true,
+    "canary_read_only_opt_in_bounded_secret_redacted": true
+  },
+  "dependencies": {
+    "odp_http_recipe": "../odp/http/odp_http_recipe.json",
+    "document_generators": "../documents/generators.py",
+    "gold_case": "../gold/cases/gold-scanned-office-action.json",
+    "gold_metrics_gates": "../gold/metrics/metric_gates.json",
+    "public_matter_recipe": "public_matter_recipe.json"
+  },
+  "labels": {
+    "suite": "patlaw-142",
+    "lane": "e2e-full-pipeline-v2",
+    "channel": "public_offline"
+  }
+}
