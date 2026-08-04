@@ -32,12 +32,33 @@ python3 scripts/ops/uspto/portfolio_cli.py discover \
 python3 scripts/ops/uspto/portfolio_cli.py confirm \
   --application-number 18654466
 
+# Or replace the seed with only your apps
+python3 scripts/ops/uspto/portfolio_cli.py keep-only \
+  --application-number 18654466 --application-number 12252942
+
+# Drop false same-name hits
+python3 scripts/ops/uspto/portfolio_cli.py drop --application-number 18844946
+
 # Refresh public ODP status for the whole seed
 python3 scripts/ops/uspto/portfolio_cli.py refresh
 
 # Inspect seed
 python3 scripts/ops/uspto/portfolio_cli.py show
 ```
+
+## Scheduled public refresh
+
+```bash
+# Write systemd user timer templates (every 24h) and enable them
+python3 scripts/ops/uspto/portfolio_cli.py schedule install \
+  --interval-hours 24 --activate
+
+python3 scripts/ops/uspto/portfolio_cli.py schedule status
+python3 scripts/ops/uspto/portfolio_cli.py schedule tick   # run once now
+```
+
+The timer only runs public ODP refresh. It never opens Patent Center, signs,
+pays, files, or pushes git.
 
 ## Private import (no browser)
 

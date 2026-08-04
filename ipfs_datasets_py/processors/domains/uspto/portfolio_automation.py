@@ -790,6 +790,82 @@ def confirm_ownership(
     return seed
 
 
+def drop_matters(
+    seed: PortfolioSeed,
+    application_numbers: Iterable[str],
+) -> tuple[PortfolioSeed, list[str]]:
+    """Remove application numbers from the seed. Returns (seed, dropped_ids)."""
+    drop = {
+        normalize_application_number_token(a) for a in application_numbers if str(a).strip()
+    }
+    kept: list[PortfolioMatter] = []
+    dropped: list[str] = []
+    for matter in seed.matters:
+        key = normalize_application_number_token(matter.application_number)
+        if key in drop:
+            dropped.append(matter.application_number)
+        else:
+            kept.append(matter)
+    seed.matters = kept
+    return seed, dropped
+
+
+def keep_only_matters(
+    seed: PortfolioSeed,
+    application_numbers: Iterable[str],
+    *,
+    mark_confirmed: bool = True,
+) -> tuple[PortfolioSeed, list[str]]:
+    """Keep only listed apps; optionally mark them confirmed. Returns (seed, removed)."""
+    keep = {
+        normalize_application_number_token(a) for a in application_numbers if str(a).strip()
+    }
+    if not keep:
+        raise PortfolioAutomationError(
+            "keep-only requires at least one application number",
+            code="missing_application_numbers",
+        )
+    kept: list[PortfolioMatter] = []
+    removed: list[str] = []
+    for matter in seed.matters:
+        key = normalize_application_number_token(matter.application_number)
+        if key in keep:
+            ownership = (
+                "confirmed_operator" if mark_confirmed else matter.ownership
+            )
+            kept.append(
+                PortfolioMatter(
+                    application_number=matter.application_number,
+                    title=matter.title,
+                    applicant=matter.applicant,
+                    filing_date=matter.filing_date,
+                    status_odp_search=matter.status_odp_search,
+                    ownership=ownership,
+                    match_basis=matter.match_basis,
+                    labels=dict(matter.labels),
+                )
+            )
+        else:
+            removed.append(matter.application_number)
+    # Also add any keep IDs that were not already in the seed as stubs.
+    present = {
+        normalize_application_number_token(m.application_number) for m in kept
+    }
+    for raw in application_numbers:
+        key = normalize_application_number_token(raw)
+        if key not in present:
+            kept.append(
+                PortfolioMatter(
+                    application_number=str(raw).strip(),
+                    ownership="confirmed_operator" if mark_confirmed else "manual",
+                    match_basis="operator_keep_only",
+                )
+            )
+            present.add(key)
+    seed.matters = kept
+    return seed, removed
+
+
 __all__ = [
     "ALLOWED_OPERATOR_CAPABILITIES",
     "FORBIDDEN_OPERATOR_CAPABILITIES",
@@ -803,8 +879,10 @@ __all__ = [
     "confirm_ownership",
     "default_state_root",
     "discover_public_by_inventor",
+    "drop_matters",
     "import_export_folder",
     "inventorf_phrase_query",
+    "keep_only_matters",
     "load_portfolio_seed",
     "merge_matters",
     "save_portfolio_seed",

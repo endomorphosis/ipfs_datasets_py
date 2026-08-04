@@ -17,7 +17,9 @@ from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (
     build_import_authorization,
     confirm_ownership,
     discover_public_by_inventor,
+    drop_matters,
     inventorf_phrase_query,
+    keep_only_matters,
     merge_matters,
     save_portfolio_seed,
     load_portfolio_seed,
@@ -94,6 +96,27 @@ def test_import_authorization_rejects_secret_user() -> None:
             import_root="/tmp/x",
             authorizing_user="user password=sekrit",
         )
+
+
+def test_drop_and_keep_only() -> None:
+    seed = PortfolioSeed(
+        tenant_id="t1",
+        matters=[
+            PortfolioMatter(application_number="111"),
+            PortfolioMatter(application_number="222"),
+            PortfolioMatter(application_number="333"),
+        ],
+    )
+    seed, dropped = drop_matters(seed, ["222"])
+    assert dropped == ["222"]
+    assert [m.application_number for m in seed.matters] == ["111", "333"]
+
+    seed, removed = keep_only_matters(seed, ["111", "999"])
+    assert "333" in removed
+    apps = {m.application_number: m for m in seed.matters}
+    assert set(apps) == {"111", "999"}
+    assert apps["111"].ownership == "confirmed_operator"
+    assert apps["999"].ownership == "confirmed_operator"
 
 
 def test_discover_with_mock_http() -> None:

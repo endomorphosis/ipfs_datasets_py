@@ -36,7 +36,9 @@ from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (  # 
     confirm_ownership,
     default_state_root,
     discover_public_by_inventor,
+    drop_matters,
     import_export_folder,
+    keep_only_matters,
     load_portfolio_seed,
     merge_matters,
     save_portfolio_seed,
@@ -172,6 +174,76 @@ def _cmd_confirm(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_drop(args: argparse.Namespace) -> int:
+    state = _state_root(args)
+    seed_path = _seed_path(state)
+    seed = load_portfolio_seed(seed_path)
+    apps = list(args.application_number or [])
+    if not apps:
+        raise PortfolioAutomationError(
+            "pass one or more --application-number to drop",
+            code="missing_application_numbers",
+        )
+    seed, dropped = drop_matters(seed, apps)
+    save_portfolio_seed(seed, seed_path)
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "seed_path": str(seed_path),
+                "dropped": dropped,
+                "remaining": len(seed.matters),
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
+def _cmd_keep_only(args: argparse.Namespace) -> int:
+    state = _state_root(args)
+    seed_path = _seed_path(state)
+    if seed_path.is_file():
+        seed = load_portfolio_seed(seed_path)
+    else:
+        seed = PortfolioSeed(tenant_id=str(args.tenant), matters=[])
+    apps = list(args.application_number or [])
+    seed, removed = keep_only_matters(
+        seed, apps, mark_confirmed=not bool(args.no_confirm)
+    )
+    save_portfolio_seed(seed, seed_path)
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "seed_path": str(seed_path),
+                "kept": [m.application_number for m in seed.matters],
+                "removed": removed,
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
+def _cmd_schedule(args: argparse.Namespace) -> int:
+    helper = Path(__file__).resolve().parent / "install_portfolio_schedule.py"
+    cmd = [sys.executable, str(helper)]
+    if args.state_root:
+        cmd.extend(["--state-root", args.state_root])
+    if getattr(args, "repo_root", None):
+        cmd.extend(["--repo-root", args.repo_root])
+    action = str(args.schedule_action)
+    cmd.append(action)
+    if action == "install":
+        cmd.extend(["--interval-hours", str(args.interval_hours)])
+        if args.activate:
+            cmd.append("--activate")
+    if action == "tick" and args.dry_run:
+        cmd.append("--dry-run")
+    return subprocess.call(cmd)
+
+
 def _cmd_prepare_import(args: argparse.Namespace) -> int:
     paths = write_export_package_sidecar(
         Path(args.export_dir),
@@ -299,6 +371,37 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--application-number", action="append", default=[])
     c.add_argument("--ownership", default="confirmed_operator")
     c.set_defaults(func=_cmd_confirm)
+
+    drop = sub.add_parser("drop", help="Remove apps from the portfolio seed")
+    drop.add_argument("--application-number", action="append", default=[])
+    drop.set_defaults(func=_cmd_drop)
+
+    keep = sub.add_parser(
+        "keep-only",
+        help="Replace seed with only the listed apps (marks confirmed by default)",
+    )
+    keep.add_argument("--application-number", action="append", default=[])
+    keep.add_argument("--tenant", default="operator-default")
+    keep.add_argument(
+        "--no-confirm",
+        action="store_true",
+        help="Do not rewrite ownership to confirmed_operator",
+    )
+    keep.set_defaults(func=_cmd_keep_only)
+
+    sch = sub.add_parser(
+        "schedule",
+        help="Install/activate/status/tick public ODP refresh schedule",
+    )
+    sch.add_argument(
+        "schedule_action",
+        choices=("install", "activate", "uninstall", "status", "tick"),
+    )
+    sch.add_argument("--interval-hours", type=int, default=24)
+    sch.add_argument("--activate", action="store_true", help="With install: enable timer")
+    sch.add_argument("--repo-root", default="")
+    sch.add_argument("--dry-run", action="store_true")
+    sch.set_defaults(func=_cmd_schedule)
 
     prep = sub.add_parser("prepare-import", help="Write manifest+auth for a folder")
     prep.add_argument("--export-dir", required=True)
