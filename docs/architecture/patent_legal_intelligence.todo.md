@@ -2259,7 +2259,7 @@ Program invariants:
 
 ## PATLAW-152 Build an authorized tenant-isolated portfolio review service
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
