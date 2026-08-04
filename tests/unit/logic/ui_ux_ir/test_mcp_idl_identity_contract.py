@@ -637,10 +637,16 @@ def test_registry_canonicalize_is_interface_preimage_authority(vectors: dict[str
     """idl_registry.canonicalize_descriptor is the JSON preimage authority.
 
     Verified CID construction for the frozen profile uses kubo_cid over those
-    bytes. compute_interface_cid remains a recorded migration placeholder.
+    bytes.  Older accelerator pins may retain the recorded migration
+    placeholder; conforming pins may emit that verified profile CID directly.
     """
 
     descriptor = vectors["golden"]["descriptor"]
     preimage = canonicalize_descriptor(descriptor)
     assert cid_for_bytes(preimage) == vectors["golden"]["interface_cid"]
-    assert compute_interface_cid(descriptor).startswith("cidv1-sha256-")
+    computed = compute_interface_cid(descriptor)
+    if PLACEHOLDER_RE.match(computed):
+        assert computed == "cidv1-sha256-" + vectors["golden"]["sha256_hex"]
+    else:
+        assert computed == vectors["golden"]["interface_cid"]
+        assert _verify_preimage(computed, descriptor)
