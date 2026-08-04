@@ -2309,7 +2309,7 @@ Program invariants:
 
 ## PATLAW-154 Implement the human Patent Center handoff state machine
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
