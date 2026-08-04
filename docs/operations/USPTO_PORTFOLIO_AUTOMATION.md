@@ -233,14 +233,56 @@ Without a `READY` file, a folder imports only after its newest file is stable
 for `--min-stable-seconds` (default 15) so in-progress downloads are not sealed
 early.
 
+## Filing assist (human Sign / Pay / Submit)
+
+Automation **never** signs, pays, or performs final submission. It *does*
+prepare a checklist, open Patent Center for view-only navigation, watch a local
+folder for receipts **you** download after Submit, and import those receipts.
+
+```bash
+# 1) Content-free checklist + receipt drop folder
+python3 scripts/ops/uspto/portfolio_cli.py filing-checklist \
+  --application-number 18654466 \
+  --package-dir ~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/exports/18654466/patent_center_ui/package \
+  --metadata-dir ~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/exports/18654466/patent_center_ui/metadata
+
+# 2) Attended assist (saved session; hard barrier banner; no Sign/Pay/Submit clicks)
+python3 scripts/ops/uspto/portfolio_cli.py filing-assist \
+  --application-number 18654466 \
+  --package-dir ~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/exports/18654466/patent_center_ui/package \
+  --navigate application \
+  --watch-seconds 600
+
+# Checklist-only (no browser)
+python3 scripts/ops/uspto/portfolio_cli.py filing-assist \
+  --application-number 18654466 --no-browser
+
+# 3) After YOU Submit: drop EAR + payment PDFs into
+#    ~/.local/state/.../post_submit_receipts/<app>/
+# then seal+import:
+python3 scripts/ops/uspto/portfolio_cli.py watch-receipts \
+  --application-number 18654466 \
+  --authorizing-user "operator:you"
+```
+
+Hard-barrier controls (never auto-clicked): Sign, Certify / 11.18, Pay / Payment,
+Submit, checkout, charge, credit card, etc.
+
+Payment prep is **labels only** (e.g. fees-due indicators from prior export
+metadata). No card numbers or deposit-account secrets are stored.
+
+For the formal handoff state machine (package digest → human assertion →
+receipt-verified), see `PATENT_CENTER_HUMAN_HANDOFF.md`.
+
 ## Hard rules
 
 **Allowed:** public ODP discovery/sync; build manifest from local files; import
-authorized exports; attended browser with human login.
+authorized exports; attended browser with human login; filing checklist;
+view-only Patent Center navigation; post-submit receipt watch/import.
 
 **Forbidden:** unattended Patent Center scrape; storing passwords/MFA; typing
-credentials from env; sign / pay / final submission; committing exports or
-browser profiles.
+credentials from env; **sign / pay / final submission automation**; committing
+exports or browser profiles.
 
 ## Policy
 

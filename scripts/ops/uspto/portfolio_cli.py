@@ -10,6 +10,10 @@ Subcommands:
   attended-export
                  Launch Patent Center export (uses saved login session if present)
   export-ui      Automated Patent Center UI export (SSO + private APIs + eGrant/IFW)
+  filing-checklist
+                 Content-free filing checklist + hard barriers (never sign/pay/submit)
+  filing-assist  Attended Patent Center assist (nav + checklist + receipt watch)
+  watch-receipts Poll post_submit_receipts/<app>/ after human Submit and import
   login / login-status / logout
                  Patent Center password+OTP login helper (refs/prompts; no secret echo)
   show           Print seed / last review summary
@@ -641,6 +645,113 @@ def _cmd_watch_inbox(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_filing_checklist(args: argparse.Namespace) -> int:
+    from ipfs_datasets_py.processors.domains.uspto.filing_assist import (
+        build_filing_checklist,
+        prepare_receipt_inbox,
+        write_filing_checklist,
+    )
+
+    state = _state_root(args)
+    state.mkdir(parents=True, exist_ok=True)
+    app = str(args.application_number or "").strip()
+    package_dir = Path(args.package_dir).expanduser() if args.package_dir else None
+    metadata_dir = Path(args.metadata_dir).expanduser() if args.metadata_dir else None
+    checklist = build_filing_checklist(
+        application_number=app,
+        package_dir=package_dir,
+        package_digest=str(args.package_digest or ""),
+        training=bool(args.training),
+        metadata_dir=metadata_dir,
+        state_root=state,
+    )
+    if app:
+        prepare_receipt_inbox(application_number=app, state_root=state)
+    dest = (
+        Path(args.output).expanduser()
+        if args.output
+        else state
+        / "post_submit_receipts"
+        / (app or "_unscoped")
+        / "filing_checklist.json"
+    )
+    path = write_filing_checklist(checklist, dest)
+    print(
+        json.dumps(
+            {"ok": True, "checklist_path": str(path), "checklist": checklist.to_dict()},
+            indent=2,
+            default=str,
+        )
+    )
+    return 0
+
+
+def _cmd_filing_assist(args: argparse.Namespace) -> int:
+    helper = Path(__file__).resolve().parent / "attended_filing_assist.py"
+    cmd = [sys.executable, str(helper)]
+    if args.state_root:
+        cmd.extend(["--state-root", args.state_root])
+    if args.application_number:
+        cmd.extend(["--application-number", args.application_number])
+    if args.package_dir:
+        cmd.extend(["--package-dir", args.package_dir])
+    if args.package_digest:
+        cmd.extend(["--package-digest", args.package_digest])
+    if args.metadata_dir:
+        cmd.extend(["--metadata-dir", args.metadata_dir])
+    if args.training:
+        cmd.append("--training")
+    if args.session_name:
+        cmd.extend(["--session-name", args.session_name])
+    if args.no_saved_session:
+        cmd.append("--no-saved-session")
+    if args.headless:
+        cmd.append("--headless")
+    if args.no_browser:
+        cmd.append("--no-browser")
+    if args.watch_seconds is not None:
+        cmd.extend(["--watch-seconds", str(args.watch_seconds)])
+    if args.navigate:
+        cmd.extend(["--navigate", args.navigate])
+    cmd.append("--json")
+    return subprocess.call(cmd)
+
+
+def _cmd_watch_receipts(args: argparse.Namespace) -> int:
+    from ipfs_datasets_py.processors.domains.uspto.filing_assist import (
+        watch_and_import_receipts,
+    )
+
+    state = _state_root(args)
+    store = (
+        Path(args.store_root).expanduser().resolve()
+        if args.store_root
+        else state / "private_store"
+    )
+    result = watch_and_import_receipts(
+        application_number=str(args.application_number),
+        state_root=state,
+        store_root=store,
+        tenant_id=str(args.tenant),
+        authorizing_user=str(args.authorizing_user),
+        duration_seconds=float(args.duration_seconds),
+        poll_seconds=float(args.poll_seconds),
+        min_stable_seconds=float(args.min_stable_seconds),
+        require_acknowledgement_hint=not bool(args.no_require_ack_hint),
+        classification=str(args.classification),
+    )
+    out = state / "import_receipts"
+    out.mkdir(parents=True, exist_ok=True)
+    receipt = out / f"watch-receipts-{args.application_number}.json"
+    receipt.write_text(json.dumps(result, indent=2, default=str) + "\n")
+    try:
+        os.chmod(receipt, 0o600)
+    except OSError:
+        pass
+    print(json.dumps({"receipt": str(receipt), **result}, indent=2, default=str))
+    return 0 if result.get("ok") else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="portfolio_cli",
@@ -906,6 +1017,71 @@ def build_parser() -> argparse.ArgumentParser:
     )
     watch.add_argument("--verbose", action="store_true")
     watch.set_defaults(func=_cmd_watch_inbox)
+
+    fcheck = sub.add_parser(
+        "filing-checklist",
+        help=(
+            "Write filing checklist with hard barriers "
+            "(Sign/Pay/Submit remain human-only)"
+        ),
+    )
+    fcheck.add_argument("--application-number", default="")
+    fcheck.add_argument("--package-dir", default="")
+    fcheck.add_argument("--package-digest", default="")
+    fcheck.add_argument("--metadata-dir", default="")
+    fcheck.add_argument("--training", action="store_true")
+    fcheck.add_argument("--output", default="")
+    fcheck.set_defaults(func=_cmd_filing_checklist)
+
+    fassist = sub.add_parser(
+        "filing-assist",
+        help=(
+            "Attended Patent Center assist: open PC, show checklist, watch "
+            "receipt downloads. Never clicks Sign/Pay/Submit."
+        ),
+    )
+    fassist.add_argument("--application-number", default="")
+    fassist.add_argument("--package-dir", default="")
+    fassist.add_argument("--package-digest", default="")
+    fassist.add_argument("--metadata-dir", default="")
+    fassist.add_argument("--training", action="store_true")
+    fassist.add_argument("--session-name", default="patent_center")
+    fassist.add_argument("--no-saved-session", action="store_true")
+    fassist.add_argument("--headless", action="store_true")
+    fassist.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Checklist + receipt folder only (no Playwright)",
+    )
+    fassist.add_argument("--watch-seconds", type=float, default=300.0)
+    fassist.add_argument(
+        "--navigate",
+        choices=("home", "workbench", "new-submission", "application", "none"),
+        default="home",
+    )
+    fassist.set_defaults(func=_cmd_filing_assist)
+
+    wrec = sub.add_parser(
+        "watch-receipts",
+        help=(
+            "Watch post_submit_receipts/<app>/ for human-downloaded EAR/payment "
+            "files and seal+import when stable"
+        ),
+    )
+    wrec.add_argument("--application-number", required=True)
+    wrec.add_argument("--store-root", default="")
+    wrec.add_argument("--tenant", default="operator-default")
+    wrec.add_argument("--authorizing-user", default="operator:local")
+    wrec.add_argument("--classification", default="confidential_application")
+    wrec.add_argument("--duration-seconds", type=float, default=300.0)
+    wrec.add_argument("--poll-seconds", type=float, default=10.0)
+    wrec.add_argument("--min-stable-seconds", type=float, default=15.0)
+    wrec.add_argument(
+        "--no-require-ack-hint",
+        action="store_true",
+        help="Import even if filename does not look like an acknowledgement",
+    )
+    wrec.set_defaults(func=_cmd_watch_receipts)
 
     return p
 
