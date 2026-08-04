@@ -1001,7 +1001,7 @@ def _build_default_lanes() -> tuple[SemanticLane, ...]:
             "support",
             "support_companions",
             "Host companions that never hold property authority",
-            ("java", "maude", "opam"),
+            ("java", "maude", "opam", "stack", "temurin-jdk"),
             # Empty: support presence never satisfies certified authority.
             (),
             "tools.logic.certification.roles",
@@ -1288,6 +1288,31 @@ def _build_default_roles() -> tuple[FormalVerificationToolRole, ...]:
             display_name="OPAM",
             families=("kernel", "protocol"),
             notes="Support only; cannot promote a property lane by itself.",
+        ),
+        # Stack — Haskell toolchain support for protocol builds
+        _role(
+            "stack",
+            ToolRole.SUPPORT,
+            ToolchainAuthorityCeiling.NONE,
+            "support",
+            "protocol",
+            display_name="Haskell Stack",
+            families=("protocol", "support"),
+            notes="Support only; cannot promote a property lane by itself.",
+        ),
+        # Temurin JDK — managed JVM for ErgoAI Java API / advisor support
+        _role(
+            "temurin-jdk",
+            ToolRole.SUPPORT,
+            ToolchainAuthorityCeiling.NONE,
+            "support",
+            "hammer",
+            display_name="Eclipse Temurin JDK",
+            families=("jvm", "advisors", "support"),
+            notes=(
+                "Support only; ambient JAVA_HOME is never the managed identity. "
+                "Cannot promote a property lane by itself."
+            ),
         ),
     )
 

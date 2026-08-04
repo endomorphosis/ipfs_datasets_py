@@ -90,6 +90,78 @@ class InstallerPluginFamily(StrEnum):
     ZKP = "zkp"
 
 
+class InstallerPublicRole(StrEnum):
+    """Public dispatch role for a registry tool (FVT-G227 role closure)."""
+
+    AUTHORITY = "authority"
+    ADVISOR = "advisor"
+    SHADOW = "shadow"
+    SUPPORT = "support"
+    ARCHIVAL_INTAKE = "archival_intake"
+
+
+# Closed dispatch surface vocabulary exposed on installer entries.
+DISPATCH_INVENTORY: Final = "inventory"
+DISPATCH_PROBE: Final = "probe"
+DISPATCH_INSTALL: Final = "install"
+DISPATCH_VERIFICATION: Final = "verification"
+DISPATCH_ADVISOR: Final = "advisor"
+DISPATCH_ARTIFACT_INTAKE: Final = "artifact_intake"
+DISPATCH_COMPATIBILITY_LOOKUP: Final = "compatibility_lookup"
+
+CLOSED_DISPATCH_SURFACES: Final[frozenset[str]] = frozenset(
+    {
+        DISPATCH_INVENTORY,
+        DISPATCH_PROBE,
+        DISPATCH_INSTALL,
+        DISPATCH_VERIFICATION,
+        DISPATCH_ADVISOR,
+        DISPATCH_ARTIFACT_INTAKE,
+        DISPATCH_COMPATIBILITY_LOOKUP,
+    }
+)
+
+_AUTHORITY_SURFACES: Final[tuple[str, ...]] = (
+    DISPATCH_INVENTORY,
+    DISPATCH_PROBE,
+    DISPATCH_INSTALL,
+    DISPATCH_VERIFICATION,
+)
+_ADVISOR_SURFACES: Final[tuple[str, ...]] = (
+    DISPATCH_INVENTORY,
+    DISPATCH_PROBE,
+    DISPATCH_INSTALL,
+    DISPATCH_ADVISOR,
+)
+_SHADOW_SURFACES: Final[tuple[str, ...]] = (
+    DISPATCH_INVENTORY,
+    DISPATCH_PROBE,
+    DISPATCH_INSTALL,
+    DISPATCH_VERIFICATION,
+)
+_SUPPORT_SURFACES: Final[tuple[str, ...]] = (
+    DISPATCH_INVENTORY,
+    DISPATCH_PROBE,
+    DISPATCH_INSTALL,
+)
+_ARCHIVAL_SURFACES: Final[tuple[str, ...]] = (
+    DISPATCH_INVENTORY,
+    DISPATCH_INSTALL,
+    DISPATCH_ARTIFACT_INTAKE,
+    DISPATCH_COMPATIBILITY_LOOKUP,
+)
+
+# Explicit support-only companions (semantic / authority / public verification N/A).
+SUPPORT_ONLY_TOOL_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "stack",
+        "temurin-jdk",
+        "maude",
+        "opam",
+    }
+)
+
+
 # Planned plugin module paths.  Modules are not imported here; downstream
 # tasks materialize them.  Paths are stable contracts for packaging evidence.
 PLUGIN_MODULE_PATHS: Final[Mapping[str, str]] = MappingProxyType(
@@ -207,6 +279,11 @@ class InstallerEntry:
     never_on_capability_discovery: bool = True
     requires_checksum_for_managed_artifacts: bool = True
     replaces_gap_id: str = ""
+    public_role: InstallerPublicRole = InstallerPublicRole.AUTHORITY
+    semantic_axis_applicable: bool = True
+    authority_axis_applicable: bool = True
+    public_verification_applicable: bool = True
+    dispatch_surfaces: tuple[str, ...] = _AUTHORITY_SURFACES
     schema_version: str = INSTALLER_ENTRY_SCHEMA
 
     def __post_init__(self) -> None:
@@ -217,6 +294,12 @@ class InstallerEntry:
             else InstallerPluginFamily(str(self.family))
         )
         object.__setattr__(self, "family", family)
+        public_role = (
+            self.public_role
+            if isinstance(self.public_role, InstallerPublicRole)
+            else InstallerPublicRole(str(self.public_role))
+        )
+        object.__setattr__(self, "public_role", public_role)
         object.__setattr__(
             self, "ensure_name", _text(self.ensure_name, "ensure_name")
         )
@@ -236,13 +319,38 @@ class InstallerEntry:
             "never_on_import",
             "never_on_capability_discovery",
             "requires_checksum_for_managed_artifacts",
+            "semantic_axis_applicable",
+            "authority_axis_applicable",
+            "public_verification_applicable",
         ):
             if not isinstance(getattr(self, name), bool):
                 raise InstallerRegistryError(f"{name} must be a boolean")
+        for name in (
+            "requires_explicit_yes",
+            "user_local_only",
+            "never_on_import",
+            "never_on_capability_discovery",
+            "requires_checksum_for_managed_artifacts",
+        ):
             if not getattr(self, name):
                 raise InstallerRegistryError(
                     f"installer entry is fail-closed; {name} must remain true"
                 )
+        surfaces = tuple(str(item) for item in self.dispatch_surfaces)
+        if not surfaces:
+            raise InstallerRegistryError(
+                f"dispatch_surfaces for {self.tool_id!r} must not be empty"
+            )
+        unknown = sorted(set(surfaces) - CLOSED_DISPATCH_SURFACES)
+        if unknown:
+            raise InstallerRegistryError(
+                f"unknown dispatch surfaces for {self.tool_id!r}: {unknown}"
+            )
+        if len(surfaces) != len(set(surfaces)):
+            raise InstallerRegistryError(
+                f"duplicate dispatch surfaces for {self.tool_id!r}"
+            )
+        object.__setattr__(self, "dispatch_surfaces", surfaces)
         if self.schema_version != INSTALLER_ENTRY_SCHEMA:
             raise InstallerRegistryError(
                 f"installer entry schema must be {INSTALLER_ENTRY_SCHEMA}"
@@ -251,10 +359,110 @@ class InstallerEntry:
             raise InstallerRegistryError(
                 f"ensure_name for {self.tool_id!r} must start with 'ensure_'"
             )
+        self._assert_role_axis_invariants()
+
+    def _assert_role_axis_invariants(self) -> None:
+        """Fail closed when public role and axis applicability disagree."""
+
+        role = self.public_role
+        surfaces = set(self.dispatch_surfaces)
+        if role is InstallerPublicRole.SUPPORT:
+            if self.tool_id not in SUPPORT_ONLY_TOOL_IDS and self.tool_id not in {
+                "stack",
+                "temurin-jdk",
+                "maude",
+                "opam",
+            }:
+                # Still allow support role for declared support companions.
+                pass
+            if (
+                self.semantic_axis_applicable
+                or self.authority_axis_applicable
+                or self.public_verification_applicable
+            ):
+                raise InstallerRegistryError(
+                    f"support tool {self.tool_id!r} must mark semantic, "
+                    "authority, and public-verification axes not applicable"
+                )
+            if DISPATCH_VERIFICATION in surfaces or DISPATCH_ADVISOR in surfaces:
+                raise InstallerRegistryError(
+                    f"support tool {self.tool_id!r} cannot expose verification "
+                    "or advisor dispatch"
+                )
+        elif role is InstallerPublicRole.ARCHIVAL_INTAKE:
+            if (
+                self.semantic_axis_applicable
+                or self.authority_axis_applicable
+                or self.public_verification_applicable
+            ):
+                raise InstallerRegistryError(
+                    f"archival intake tool {self.tool_id!r} cannot claim "
+                    "semantic, authority, or public-verification axes"
+                )
+            if DISPATCH_VERIFICATION in surfaces or DISPATCH_ADVISOR in surfaces:
+                raise InstallerRegistryError(
+                    f"archival intake tool {self.tool_id!r} cannot expose live "
+                    "verification or advisor dispatch"
+                )
+            if DISPATCH_ARTIFACT_INTAKE not in surfaces:
+                raise InstallerRegistryError(
+                    f"archival intake tool {self.tool_id!r} must expose "
+                    f"{DISPATCH_ARTIFACT_INTAKE}"
+                )
+        elif role is InstallerPublicRole.ADVISOR:
+            if self.authority_axis_applicable or self.public_verification_applicable:
+                raise InstallerRegistryError(
+                    f"advisor tool {self.tool_id!r} cannot claim authority or "
+                    "public-verification axes"
+                )
+            if DISPATCH_ADVISOR not in surfaces:
+                raise InstallerRegistryError(
+                    f"advisor tool {self.tool_id!r} must expose advisor dispatch"
+                )
+            if DISPATCH_VERIFICATION in surfaces:
+                raise InstallerRegistryError(
+                    f"advisor tool {self.tool_id!r} cannot expose verification dispatch"
+                )
+        elif role is InstallerPublicRole.SHADOW:
+            if self.authority_axis_applicable:
+                raise InstallerRegistryError(
+                    f"shadow tool {self.tool_id!r} cannot claim authority axis"
+                )
+            if DISPATCH_VERIFICATION not in surfaces:
+                raise InstallerRegistryError(
+                    f"shadow tool {self.tool_id!r} must expose verification dispatch"
+                )
+        elif role is InstallerPublicRole.AUTHORITY:
+            if not (
+                self.semantic_axis_applicable
+                and self.authority_axis_applicable
+                and self.public_verification_applicable
+            ):
+                raise InstallerRegistryError(
+                    f"authority tool {self.tool_id!r} must apply semantic, "
+                    "authority, and public-verification axes"
+                )
+            if DISPATCH_VERIFICATION not in surfaces:
+                raise InstallerRegistryError(
+                    f"authority tool {self.tool_id!r} must expose verification dispatch"
+                )
 
     @property
     def module_path(self) -> str:
         return PLUGIN_MODULE_PATHS[self.family.value]
+
+    @property
+    def support_only(self) -> bool:
+        return self.public_role is InstallerPublicRole.SUPPORT
+
+    @property
+    def is_live_verification_provider(self) -> bool:
+        return (
+            self.public_verification_applicable
+            and DISPATCH_VERIFICATION in self.dispatch_surfaces
+            and self.public_role
+            in {InstallerPublicRole.AUTHORITY, InstallerPublicRole.SHADOW}
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -274,6 +482,13 @@ class InstallerEntry:
                 self.requires_checksum_for_managed_artifacts
             ),
             "replaces_gap_id": self.replaces_gap_id,
+            "public_role": self.public_role.value,
+            "support_only": self.support_only,
+            "semantic_axis_applicable": self.semantic_axis_applicable,
+            "authority_axis_applicable": self.authority_axis_applicable,
+            "public_verification_applicable": self.public_verification_applicable,
+            "dispatch_surfaces": list(self.dispatch_surfaces),
+            "is_live_verification_provider": self.is_live_verification_provider,
         }
 
 
@@ -286,7 +501,33 @@ def _entry(
     source: str,
     identity_kind: str,
     replaces_gap_id: str = "",
+    public_role: InstallerPublicRole = InstallerPublicRole.AUTHORITY,
+    semantic_axis_applicable: bool | None = None,
+    authority_axis_applicable: bool | None = None,
+    public_verification_applicable: bool | None = None,
+    dispatch_surfaces: tuple[str, ...] | None = None,
 ) -> InstallerEntry:
+    role = public_role
+    if semantic_axis_applicable is None:
+        semantic_axis_applicable = role in {
+            InstallerPublicRole.AUTHORITY,
+            InstallerPublicRole.SHADOW,
+        }
+    if authority_axis_applicable is None:
+        authority_axis_applicable = role is InstallerPublicRole.AUTHORITY
+    if public_verification_applicable is None:
+        public_verification_applicable = role in {
+            InstallerPublicRole.AUTHORITY,
+            InstallerPublicRole.SHADOW,
+        }
+    if dispatch_surfaces is None:
+        dispatch_surfaces = {
+            InstallerPublicRole.AUTHORITY: _AUTHORITY_SURFACES,
+            InstallerPublicRole.ADVISOR: _ADVISOR_SURFACES,
+            InstallerPublicRole.SHADOW: _SHADOW_SURFACES,
+            InstallerPublicRole.SUPPORT: _SUPPORT_SURFACES,
+            InstallerPublicRole.ARCHIVAL_INTAKE: _ARCHIVAL_SURFACES,
+        }[role]
     return InstallerEntry(
         tool_id=tool_id,
         family=family,
@@ -295,6 +536,11 @@ def _entry(
         source=source,
         identity_kind=identity_kind,
         replaces_gap_id=replaces_gap_id,
+        public_role=role,
+        semantic_axis_applicable=semantic_axis_applicable,
+        authority_axis_applicable=authority_axis_applicable,
+        public_verification_applicable=public_verification_applicable,
+        dispatch_surfaces=dispatch_surfaces,
     )
 
 
@@ -397,6 +643,7 @@ def _build_default_entries() -> tuple[InstallerEntry, ...]:
             license="GPL-3.0-or-later",
             source="https://github.com/maude-lang/Maude",
             identity_kind="release_archive",
+            public_role=InstallerPublicRole.SUPPORT,
         ),
         _entry(
             "stack",
@@ -405,6 +652,7 @@ def _build_default_entries() -> tuple[InstallerEntry, ...]:
             license="BSD-3-Clause",
             source="https://github.com/commercialhaskell/stack",
             identity_kind="release_archive",
+            public_role=InstallerPublicRole.SUPPORT,
         ),
         _entry(
             "proverif",
@@ -437,6 +685,7 @@ def _build_default_entries() -> tuple[InstallerEntry, ...]:
             license="LGPL-2.1-only",
             source="https://github.com/ocaml/opam",
             identity_kind="release_archive",
+            public_role=InstallerPublicRole.SUPPORT,
         ),
         _entry(
             "isabelle",
@@ -481,6 +730,7 @@ def _build_default_entries() -> tuple[InstallerEntry, ...]:
             source="https://github.com/souffle-lang/souffle",
             identity_kind="immutable_source_tag",
             replaces_gap_id="datalog_secpal_external",
+            public_role=InstallerPublicRole.SHADOW,
         ),
         _entry(
             "secpal",
@@ -490,6 +740,7 @@ def _build_default_entries() -> tuple[InstallerEntry, ...]:
             source="https://www.microsoft.com/en-us/research/project/secpal/",
             identity_kind="operator_bound_artifact",
             replaces_gap_id="datalog_secpal_external",
+            public_role=InstallerPublicRole.ARCHIVAL_INTAKE,
         ),
         _entry(
             "runtime-mtl-external",
@@ -499,6 +750,7 @@ def _build_default_entries() -> tuple[InstallerEntry, ...]:
             source="ipfs_datasets_py/typescript/logic-runtime-mtl",
             identity_kind="typescript_package",
             replaces_gap_id="runtime_mtl_external",
+            public_role=InstallerPublicRole.AUTHORITY,
         ),
         _entry(
             "symbolicai",
@@ -507,6 +759,7 @@ def _build_default_entries() -> tuple[InstallerEntry, ...]:
             license="BSD-3-Clause",
             source="https://github.com/ExtensityAI/symbolicai",
             identity_kind="python_package",
+            public_role=InstallerPublicRole.ADVISOR,
         ),
         _entry(
             "ergoai",
@@ -515,6 +768,16 @@ def _build_default_entries() -> tuple[InstallerEntry, ...]:
             license="Apache-2.0",
             source="https://github.com/ErgoAI/ErgoEngine",
             identity_kind="immutable_release_tag",
+            public_role=InstallerPublicRole.ADVISOR,
+        ),
+        _entry(
+            "temurin-jdk",
+            InstallerPluginFamily.ADVISORS,
+            "ensure_temurin_jdk",
+            license="GPL-2.0-with-classpath-exception",
+            source="https://adoptium.net/",
+            identity_kind="immutable_release_archive",
+            public_role=InstallerPublicRole.SUPPORT,
         ),
         _entry(
             "zkp-circuit",
@@ -963,10 +1226,108 @@ def assert_acceptance_tools_have_installer_entries(
         )
 
 
+def resolve_installer_implementation(
+    tool_id: str,
+    *,
+    import_callable: bool = False,
+    registry: FormalVerificationInstallerRegistry | None = None,
+) -> dict[str, Any]:
+    """Resolve one registry entry to a real module/ensure binding.
+
+    Metadata resolution never imports plugins.  When ``import_callable`` is
+    true, the named ensure_* symbol must be a real callable (still never
+    invoked).  Placeholder dispatch is refused.
+    """
+
+    reg = registry or default_installer_registry()
+    entry = reg.get(tool_id)
+    ensure_name = entry.ensure_name
+    if ensure_name in {
+        "ensure_placeholder",
+        "ensure_not_implemented",
+        "ensure_todo",
+    } or ensure_name.endswith("_placeholder"):
+        raise InstallerRegistryError(
+            f"installer entry {tool_id!r} resolves to placeholder dispatch "
+            f"{ensure_name!r}"
+        )
+    payload: dict[str, Any] = {
+        "tool_id": entry.tool_id,
+        "family": entry.family.value,
+        "module_path": entry.module_path,
+        "ensure_name": ensure_name,
+        "public_role": entry.public_role.value,
+        "support_only": entry.support_only,
+        "dispatch_surfaces": list(entry.dispatch_surfaces),
+        "placeholder": False,
+        "callable_resolved": False,
+    }
+    if not import_callable:
+        return payload
+    import importlib
+
+    module = importlib.import_module(entry.module_path)
+    ensure = getattr(module, ensure_name, None)
+    if not callable(ensure):
+        raise InstallerRegistryError(
+            f"installer entry {tool_id!r} module {entry.module_path!r} does not "
+            f"export callable {ensure_name!r}"
+        )
+    payload["callable_resolved"] = True
+    return payload
+
+
+def assert_installer_entries_resolve_to_callables(
+    registry: FormalVerificationInstallerRegistry | None = None,
+) -> tuple[dict[str, Any], ...]:
+    """Prove every registry entry binds a real ensure_* implementation."""
+
+    reg = registry or default_installer_registry()
+    resolved: list[dict[str, Any]] = []
+    for tool_id in reg.list_tool_ids():
+        resolved.append(
+            resolve_installer_implementation(
+                tool_id, import_callable=True, registry=reg
+            )
+        )
+    return tuple(resolved)
+
+
+def list_installer_entries_by_role(
+    public_role: InstallerPublicRole | str,
+    *,
+    registry: FormalVerificationInstallerRegistry | None = None,
+) -> tuple[InstallerEntry, ...]:
+    role = (
+        public_role
+        if isinstance(public_role, InstallerPublicRole)
+        else InstallerPublicRole(str(public_role))
+    )
+    reg = registry or default_installer_registry()
+    return tuple(entry for entry in reg.entries if entry.public_role is role)
+
+
+def support_only_installer_tool_ids(
+    registry: FormalVerificationInstallerRegistry | None = None,
+) -> frozenset[str]:
+    reg = registry or default_installer_registry()
+    return frozenset(
+        entry.tool_id for entry in reg.entries if entry.support_only
+    )
+
+
 __all__ = [
+    "CLOSED_DISPATCH_SURFACES",
     "DEFAULT_LOCK_RELATIVE",
     "DEFAULT_USER_LOCAL_INSTALL_ROOT",
     "DEPLOYMENT_LOCK_SCHEMA",
+    "DISPATCH_ADVISOR",
+    "DISPATCH_ARTIFACT_INTAKE",
+    "DISPATCH_COMPATIBILITY_LOOKUP",
+    "DISPATCH_INSTALL",
+    "DISPATCH_INVENTORY",
+    "DISPATCH_PROBE",
+    "DISPATCH_VERIFICATION",
     "FORMAL_VERIFICATION_DEPLOYMENT_LOCK_INTERFACE",
     "FORMAL_VERIFICATION_INSTALLER_REGISTRY_INTERFACE",
     "FormalVerificationInstallerRegistry",
@@ -976,13 +1337,16 @@ __all__ = [
     "InstallerEntry",
     "InstallerPlugin",
     "InstallerPluginFamily",
+    "InstallerPublicRole",
     "InstallerRegistryError",
     "PLUGIN_MODULE_PATHS",
     "PROGRAM",
     "SUPPORTED_PLATFORMS",
+    "SUPPORT_ONLY_TOOL_IDS",
     "TASK_ID",
     "assert_acceptance_tools_have_installer_entries",
     "assert_deployment_lock_contract",
+    "assert_installer_entries_resolve_to_callables",
     "assert_registry_aligned_with_lock",
     "authorize_installer_entry_install",
     "build_default_installer_registry",
@@ -991,13 +1355,16 @@ __all__ = [
     "get_installer_entry",
     "install_is_forbidden_on_import",
     "list_installer_entries",
+    "list_installer_entries_by_role",
     "list_installer_plugins",
     "list_installer_tool_ids",
     "load_deployment_lock",
     "network_forbidden_during_offline_certification",
     "registry_side_effect_free_on_import",
     "reset_default_installer_registry",
+    "resolve_installer_implementation",
     "resolve_lock_path",
     "reviewed_tools_requiring_installer_entries",
+    "support_only_installer_tool_ids",
     "system_package_mutation_forbidden_in_tests",
 ]

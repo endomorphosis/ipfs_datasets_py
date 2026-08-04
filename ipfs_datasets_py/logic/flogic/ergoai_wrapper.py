@@ -267,12 +267,6 @@ def resolve_ergo_binary(
     return None
 
 
-# Compatibility snapshot retained for callers that imported the historic
-# constant.  New capability checks must use ``ergoai_available()`` so a
-# same-process lazy install or removal is observed immediately.
-ERGOAI_AVAILABLE: bool = _find_ergo_binary() is not None
-
-
 def ergoai_available(*, require_managed_vendor: bool = False) -> bool:
     """Return current ErgoAI availability without installing anything."""
 
@@ -284,6 +278,42 @@ def ergoai_available(*, require_managed_vendor: bool = False) -> bool:
     if require_managed_vendor:
         return False
     return _find_ergo_binary() is not None
+
+
+def _ensure_managed_ergoai_on_package_import() -> None:
+    """If managed ErgoAI is missing, install it once during package import.
+
+    No-op when a provenance-valid managed vendor is already present, when the
+    caller opted out, under minimal-import mode, or under certification
+    import-context probes. Hermetic advisor shims never suppress install.
+    """
+
+    try:
+        from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+            ensure_managed_ergoai_if_missing,
+        )
+    except Exception as exc:  # pragma: no cover - packaging variance
+        logger.debug("ErgoAI import-time ensure unavailable: %s", exc)
+        return
+    try:
+        ensure_managed_ergoai_if_missing(
+            reason="package import ensure missing managed ErgoAI",
+        )
+    except Exception as exc:  # pragma: no cover - best-effort install
+        logger.debug("ErgoAI import-time ensure failed: %s", exc)
+
+
+# Install real managed ErgoAI when this module is first imported by a consumer
+# package *and* no managed vendor is present. Already-installed vendors are
+# never reinstalled. Explicit opt-out still applies.
+_ensure_managed_ergoai_on_package_import()
+
+# Compatibility snapshot retained for callers that imported the historic
+# constant.  New capability checks must use ``ergoai_available()`` so a
+# same-process lazy install or removal is observed immediately.
+ERGOAI_AVAILABLE: bool = ergoai_available(require_managed_vendor=True) or (
+    _find_ergo_binary() is not None
+)
 
 
 class ErgoAIWrapper:
@@ -421,10 +451,12 @@ class ErgoAIWrapper:
             self.refresh_managed_vendor_provenance()
         if self.simulation_mode:
             logger.info(
-                "ErgoAI binary not found — running in simulation mode. "
-                "Install ErgoEngine and set ERGOAI_BINARY, or enable the opt-in "
-                "lazy installer with IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1 "
-                "and IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=1. "
+                "ErgoAI managed vendor not found — running in simulation mode. "
+                "On first import or first use the package installs checksummed "
+                "ErgoAI 3.0 into the user-local theorem-prover root unless "
+                "opted out (IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=0 or "
+                "IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=0). You may also set "
+                "ERGOAI_BINARY to an existing runergo. "
                 "See: https://github.com/ErgoAI/ErgoEngine"
             )
 

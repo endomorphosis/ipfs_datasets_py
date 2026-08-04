@@ -17,6 +17,11 @@ from typing import Optional
 
 import pytest
 
+# Unit/integration collection must not download or compile ErgoAI. Package
+# consumers still get default-on install outside pytest; live installer tests
+# opt in by clearing or setting IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=1.
+os.environ.setdefault("IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI", "0")
+
 
 # ==================== Test Gating (LLM / Network / Heavy) ====================
 
