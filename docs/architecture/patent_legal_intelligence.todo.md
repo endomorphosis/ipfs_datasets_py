@@ -1959,7 +1959,7 @@ Program invariants:
 
 ## PATLAW-140 Expose a serialized submission-assurance workflow through API and CLI
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
