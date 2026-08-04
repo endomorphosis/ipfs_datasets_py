@@ -2610,7 +2610,7 @@ Program invariants:
 
 ## PATLAW-166 Assemble feature-branch PR package without auto-push
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -2688,7 +2688,7 @@ Program invariants:
 
 ## PATLAW-169 Seal operator production handoff receipt and completed status projection
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
