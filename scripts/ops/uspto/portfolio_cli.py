@@ -650,6 +650,7 @@ def _cmd_revise(args: argparse.Namespace) -> int:
     """Deficiency / office-action revision workflow (never auto-files)."""
     from ipfs_datasets_py.processors.domains.uspto.revision_response import (
         RevisionError,
+        analyze_revision_letter,
         attach_to_revision,
         close_revision_case,
         list_revision_cases,
@@ -689,9 +690,25 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                 if args.period_months is not None
                 else None,
                 notes=[str(args.note)] if args.note else (),
+                analyze=not bool(getattr(args, "no_analyze", False)),
+                force_ocr=bool(getattr(args, "force_ocr", False)),
+                save_text=bool(getattr(args, "save_text", False)),
             )
             print(json.dumps({"ok": True, "case": case.to_dict()}, indent=2, default=str))
             return 0
+
+        if action == "analyze":
+            result = analyze_revision_letter(
+                str(args.revision_id),
+                state_root=state,
+                letter_path=str(args.local_path or ""),
+                force_ocr=bool(getattr(args, "force_ocr", False)),
+                save_text=bool(getattr(args, "save_text", False)),
+                max_pages=int(getattr(args, "max_pages", 40) or 40),
+            )
+            # Drop full text if present under nested extraction
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
 
         if action == "list":
             cases = list_revision_cases(
@@ -790,6 +807,7 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                     "actions": [
                         "scan",
                         "open",
+                        "analyze",
                         "list",
                         "show",
                         "attach",
@@ -1263,6 +1281,7 @@ def build_parser() -> argparse.ArgumentParser:
         choices=(
             "scan",
             "open",
+            "analyze",
             "list",
             "show",
             "attach",
@@ -1306,6 +1325,27 @@ def build_parser() -> argparse.ArgumentParser:
     rev.add_argument("--headless", action="store_true")
     rev.add_argument("--no-browser", action="store_true")
     rev.add_argument("--watch-seconds", type=float, default=300.0)
+    rev.add_argument(
+        "--no-analyze",
+        action="store_true",
+        help="With open: skip OCR/letter analysis even if PDF present",
+    )
+    rev.add_argument(
+        "--force-ocr",
+        action="store_true",
+        help="With open/analyze: force local Tesseract OCR",
+    )
+    rev.add_argument(
+        "--save-text",
+        action="store_true",
+        help="With open/analyze: save full OCR text under case_dir/triggering/ (mode 0600)",
+    )
+    rev.add_argument(
+        "--max-pages",
+        type=int,
+        default=40,
+        help="With analyze: max PDF pages to OCR (default 40)",
+    )
     rev.set_defaults(func=_cmd_revise)
 
     return p

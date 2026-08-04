@@ -249,12 +249,20 @@ python3 scripts/ops/uspto/portfolio_cli.py revise scan \
   --application-number 18654466
 
 # 3) Open a revision case for a specific letter
+#    If --local-path points at the letter PDF (or export-ui already downloaded it),
+#    open will OCR (local Tesseract) + parse rejections / reply period automatically.
 python3 scripts/ops/uspto/portfolio_cli.py revise open \
   --application-number 18654466 \
   --document-code CTNF \
   --document-id OA123 \
   --document-description "Non-Final Rejection" \
-  --official-date 2024-05-03
+  --official-date 2024-05-03 \
+  --local-path /path/to/CTNF.pdf
+
+# Re-run / force OCR analysis later:
+python3 scripts/ops/uspto/portfolio_cli.py revise analyze \
+  --revision-id rev-18654466-… \
+  --force-ocr --save-text
 
 # 4) Attach human-authored revised documents
 python3 scripts/ops/uspto/portfolio_cli.py revise attach \
