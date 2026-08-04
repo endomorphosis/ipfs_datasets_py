@@ -2434,7 +2434,7 @@ Program invariants:
 
 ## PATLAW-159 Stage an authenticated Hub PR with exact human approval
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
