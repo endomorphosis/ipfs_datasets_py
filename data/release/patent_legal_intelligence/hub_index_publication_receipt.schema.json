@@ -1,0 +1,549 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/patent-legal-hub-index-publication-receipt.v1.schema.json",
+  "title": "Hub Index Publication Receipt v1",
+  "description": "Immutable publication receipt for multi-artifact Hub index packages (corpus + BM25 + vector + knowledge-graph). Distinguishes staged_not_promoted vs promoted dispositions (PATLAW-179 / PATLAW-G213). Promoted success requires a real promote evidence blob; staged-only is valid and non-vacuous when digests bind all three index families plus corpus. Never fabricates live Hub success offline without operator promote evidence. No unattended Hub write.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "interface",
+    "task_id",
+    "goal_id",
+    "program_id",
+    "producer",
+    "config_id",
+    "code_version",
+    "receipt_id",
+    "sealed_at_utc",
+    "mode",
+    "disposition",
+    "status",
+    "package_root_cid",
+    "plan_digest",
+    "staged_diff_digest",
+    "index_families",
+    "index_families_present",
+    "projections",
+    "projection_digests",
+    "evidence",
+    "publication_claim",
+    "main_published",
+    "pointers_moved",
+    "live_network",
+    "tokens_used",
+    "auto_promote",
+    "unattended_hub_write",
+    "acceptance",
+    "policy",
+    "content_free",
+    "receipt_digest_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "patent-legal-hub-index-publication-receipt/v1"
+    },
+    "interface": {
+      "const": "HubIndexPublicationReceipt@1"
+    },
+    "task_id": {
+      "const": "PATLAW-179"
+    },
+    "goal_id": {
+      "const": "PATLAW-G213"
+    },
+    "program_id": {
+      "const": "patent-legal-intelligence-v1"
+    },
+    "producer": {
+      "const": "seal_patent_legal_hub_index_publication_receipt.py"
+    },
+    "config_id": {
+      "const": "config:hub-index-publication-receipt/v1"
+    },
+    "code_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "sealed_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["offline", "live"]
+    },
+    "disposition": {
+      "type": "string",
+      "enum": ["staged_not_promoted", "promoted"],
+      "description": "staged_not_promoted is valid without promote evidence; promoted requires a validated promote evidence blob."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "rejected", "blocked"]
+    },
+    "package_root_cid": {
+      "$ref": "#/$defs/cidV1"
+    },
+    "package_digest_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/sha256Hex" }
+      ]
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "staged_diff_digest": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "organization": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "version_tag": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "release_id": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "release_root_cid": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1, "maxLength": 256 }
+      ]
+    },
+    "branch_name": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "index_families": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["bm25", "vectors", "knowledge_graph"]
+      },
+      "allOf": [
+        { "contains": { "const": "bm25" } },
+        { "contains": { "const": "vectors" } },
+        { "contains": { "const": "knowledge_graph" } }
+      ]
+    },
+    "index_families_present": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["bm25", "vectors", "knowledge_graph"]
+      }
+    },
+    "projections": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["corpus", "bm25", "vectors", "knowledge_graph"]
+      },
+      "allOf": [
+        { "contains": { "const": "corpus" } },
+        { "contains": { "const": "bm25" } },
+        { "contains": { "const": "vectors" } },
+        { "contains": { "const": "knowledge_graph" } }
+      ]
+    },
+    "projection_digests": {
+      "$ref": "#/$defs/projectionDigests"
+    },
+    "staged_repositories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stagedRepository"
+      }
+    },
+    "promoted_repositories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/promotedRepository"
+      }
+    },
+    "evidence": {
+      "$ref": "#/$defs/evidenceBlock"
+    },
+    "publication_claim": {
+      "$ref": "#/$defs/publicationClaim"
+    },
+    "main_published": {
+      "type": "boolean",
+      "description": "True only when disposition is promoted and promote evidence validates main_published."
+    },
+    "pointers_moved": {
+      "const": false,
+      "description": "Runtime release pointers are never moved by this sealer (PATLAW-160)."
+    },
+    "live_network": {
+      "type": "boolean"
+    },
+    "tokens_used": {
+      "const": false
+    },
+    "auto_promote": {
+      "const": false
+    },
+    "unattended_hub_write": {
+      "const": false
+    },
+    "fake_service": {
+      "type": "boolean"
+    },
+    "evidence_gaps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidenceGap"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 512
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 512
+      }
+    },
+    "acceptance": {
+      "$ref": "#/$defs/acceptance"
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "content_free": {
+      "const": true
+    },
+    "receipt_digest_sha256": {
+      "$ref": "#/$defs/sha256Hex"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "disposition": { "const": "promoted" }
+        },
+        "required": ["disposition"]
+      },
+      "then": {
+        "properties": {
+          "publication_claim": {
+            "properties": {
+              "promoted": { "const": true },
+              "reviewed_promote_evidence_present": { "const": true }
+            },
+            "required": ["promoted", "reviewed_promote_evidence_present"]
+          },
+          "evidence": {
+            "properties": {
+              "promote_evidence": {
+                "properties": {
+                  "present": { "const": true },
+                  "validated": { "const": true }
+                },
+                "required": ["present", "validated"]
+              }
+            },
+            "required": ["promote_evidence"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": { "const": "staged_not_promoted" }
+        },
+        "required": ["disposition"]
+      },
+      "then": {
+        "properties": {
+          "main_published": { "const": false },
+          "publication_claim": {
+            "properties": {
+              "promoted": { "const": false },
+              "main_published": { "const": false },
+              "asserted": { "const": false }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "main_published": { "const": true }
+        },
+        "required": ["main_published"]
+      },
+      "then": {
+        "properties": {
+          "disposition": { "const": "promoted" },
+          "publication_claim": {
+            "properties": {
+              "reviewed_promote_evidence_present": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40,64}$"
+    },
+    "cidV1": {
+      "type": "string",
+      "pattern": "^b[a-z2-7]{20,}$",
+      "minLength": 21,
+      "maxLength": 256
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "familyKey": {
+      "type": "string",
+      "enum": ["corpus", "bm25", "vectors", "knowledge_graph"]
+    },
+    "indexFamilyKey": {
+      "type": "string",
+      "enum": ["bm25", "vectors", "knowledge_graph"]
+    },
+    "projectionDigestEntry": {
+      "type": "object",
+      "required": ["root_cid"],
+      "additionalProperties": true,
+      "properties": {
+        "root_cid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "digest_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sha256Hex" }
+          ]
+        },
+        "sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sha256Hex" }
+          ]
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 128
+        }
+      }
+    },
+    "projectionDigests": {
+      "type": "object",
+      "required": ["corpus", "bm25", "vectors", "knowledge_graph"],
+      "additionalProperties": false,
+      "properties": {
+        "corpus": { "$ref": "#/$defs/projectionDigestEntry" },
+        "bm25": { "$ref": "#/$defs/projectionDigestEntry" },
+        "vectors": { "$ref": "#/$defs/projectionDigestEntry" },
+        "knowledge_graph": { "$ref": "#/$defs/projectionDigestEntry" }
+      },
+      "description": "Digests must bind corpus plus all three index families (non-vacuous)."
+    },
+    "stagedRepository": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "dataset_id": { "type": "string" },
+        "staged_commit_sha": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "null" }
+          ]
+        },
+        "base_commit": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "null" }
+          ]
+        },
+        "branch_name": { "type": "string" },
+        "pull_request_number": {
+          "type": ["integer", "null"]
+        }
+      }
+    },
+    "promotedRepository": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "dataset_id": { "type": "string" },
+        "promoted_commit_sha": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parent_commit": { "type": "string" },
+        "target_revision": { "type": "string" }
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "required": ["present"],
+      "additionalProperties": true,
+      "properties": {
+        "present": { "type": "boolean" },
+        "path": { "type": "string", "maxLength": 512 },
+        "digest_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sha256Hex" }
+          ]
+        },
+        "status": { "type": "string", "maxLength": 128 },
+        "schema_version": { "type": "string", "maxLength": 128 },
+        "disposition": { "type": "string", "maxLength": 64 },
+        "validated": { "type": "boolean" },
+        "package_root_cid": { "type": "string", "maxLength": 256 },
+        "approval_id": { "type": "string", "maxLength": 256 },
+        "main_published": { "type": "boolean" },
+        "live_network": { "type": "boolean" },
+        "fake_service": { "type": "boolean" },
+        "repository_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "evidenceBlock": {
+      "type": "object",
+      "required": [
+        "stage_receipt",
+        "verification_receipt",
+        "promote_checklist",
+        "promote_evidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stage_receipt": { "$ref": "#/$defs/evidenceRef" },
+        "verification_receipt": { "$ref": "#/$defs/evidenceRef" },
+        "promote_checklist": { "$ref": "#/$defs/evidenceRef" },
+        "promote_evidence": { "$ref": "#/$defs/evidenceRef" }
+      }
+    },
+    "publicationClaim": {
+      "type": "object",
+      "required": [
+        "asserted",
+        "promoted",
+        "main_published",
+        "reviewed_promote_evidence_present",
+        "offline_promoted_without_evidence_forbidden",
+        "content_free"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "asserted": { "type": "boolean" },
+        "promoted": { "type": "boolean" },
+        "main_published": { "type": "boolean" },
+        "reviewed_promote_evidence_present": { "type": "boolean" },
+        "offline_promoted_without_evidence_forbidden": { "const": true },
+        "content_free": { "const": true }
+      }
+    },
+    "evidenceGap": {
+      "type": "object",
+      "required": ["kind", "reason"],
+      "additionalProperties": true,
+      "properties": {
+        "kind": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "family": { "type": "string", "maxLength": 64 },
+        "path": { "type": "string", "maxLength": 256 }
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "required": [
+        "staged_only_valid",
+        "promoted_requires_evidence",
+        "digests_bind_all_index_families",
+        "digests_bind_corpus",
+        "non_vacuous",
+        "no_fabricated_promote",
+        "no_unattended_hub_write"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "staged_only_valid": { "type": "boolean" },
+        "promoted_requires_evidence": { "const": true },
+        "digests_bind_all_index_families": { "type": "boolean" },
+        "digests_bind_corpus": { "type": "boolean" },
+        "non_vacuous": { "type": "boolean" },
+        "no_fabricated_promote": { "type": "boolean" },
+        "no_unattended_hub_write": { "const": true },
+        "verification_bound": { "type": "boolean" },
+        "checklist_bound": { "type": "boolean" },
+        "promote_evidence_bound": { "type": "boolean" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "fail_closed",
+        "content_free",
+        "promoted_requires_real_evidence",
+        "staged_only_non_vacuous",
+        "no_auto_promote",
+        "no_unattended_hub_write",
+        "offline_cannot_fabricate_promote",
+        "pointers_never_moved_by_sealer"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "fail_closed": { "const": true },
+        "content_free": { "const": true },
+        "promoted_requires_real_evidence": { "const": true },
+        "staged_only_non_vacuous": { "const": true },
+        "no_auto_promote": { "const": true },
+        "no_unattended_hub_write": { "const": true },
+        "offline_cannot_fabricate_promote": { "const": true },
+        "pointers_never_moved_by_sealer": { "const": true },
+        "required_projections": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "required_index_families": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
