@@ -3090,7 +3090,7 @@ Program invariants:
 
 ## PATLAW-185 Acquire USPTO guidance PDFs and extract indexable public text
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
