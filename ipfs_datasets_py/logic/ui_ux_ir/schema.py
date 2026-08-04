@@ -557,11 +557,25 @@ class UIConfiguration:
     profile: str = "default"
     settings: Mapping[str, Any] = MappingProxyType({})
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.settings, Mapping):
+            raise UIIRValidationError("UIConfiguration.settings must be a mapping")
+        object.__setattr__(
+            self,
+            "settings",
+            _deep_freeze_mapping(self.settings, "UIConfiguration.settings"),
+        )
+
     def validate(self) -> None:
         _validate_identifier("UIConfiguration.configuration_id", self.configuration_id)
         _validate_non_empty_string("UIConfiguration.profile", self.profile)
         if not isinstance(self.settings, Mapping):
             raise UIIRValidationError("UIConfiguration.settings must be a mapping")
+        # MappingProxyType is not reassignable; nested freeze is enforced in __post_init__.
+        if type(self.settings) is not MappingProxyType:
+            raise UIIRValidationError(
+                "UIConfiguration.settings must be an immutable mapping"
+            )
         _reject_executable_payload(dict(self.settings), "UIConfiguration.settings")
 
     def to_dict(self) -> dict[str, Any]:
@@ -1244,9 +1258,17 @@ class UILocalizationBinding:
         _validate_identifier_items(
             "UILocalizationBinding.variable_ids", self.variable_ids
         )
+        _require_unique(
+            self.variable_ids,
+            "UILocalizationBinding.variable_ids member",
+        )
         _require_tuple("UILocalizationBinding.source_ref_ids", self.source_ref_ids)
         _validate_identifier_items(
             "UILocalizationBinding.source_ref_ids", self.source_ref_ids
+        )
+        _require_unique(
+            self.source_ref_ids,
+            "UILocalizationBinding.source_ref_ids member",
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -1370,8 +1392,16 @@ class UIDeviceCapabilityRequirement:
         _validate_identifier_items(
             "UIDeviceCapabilityRequirement.capability_ids", self.capability_ids
         )
+        _require_unique(
+            self.capability_ids,
+            "UIDeviceCapabilityRequirement.capability_ids member",
+        )
         _require_tuple(
             "UIDeviceCapabilityRequirement.source_ref_ids", self.source_ref_ids
+        )
+        _require_unique(
+            self.source_ref_ids,
+            "UIDeviceCapabilityRequirement.source_ref_ids member",
         )
         _validate_identifier_items(
             "UIDeviceCapabilityRequirement.source_ref_ids", self.source_ref_ids
@@ -1409,9 +1439,17 @@ class UIAdaptiveVariant:
             "UIAdaptiveVariant.capability_predicate_ids",
             self.capability_predicate_ids,
         )
+        _require_unique(
+            self.capability_predicate_ids,
+            "UIAdaptiveVariant.capability_predicate_ids member",
+        )
         _require_tuple("UIAdaptiveVariant.source_ref_ids", self.source_ref_ids)
         _validate_identifier_items(
             "UIAdaptiveVariant.source_ref_ids", self.source_ref_ids
+        )
+        _require_unique(
+            self.source_ref_ids,
+            "UIAdaptiveVariant.source_ref_ids member",
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -1738,6 +1776,17 @@ class UINamespacedExtension:
     namespace: str
     version: str
     payload: Mapping[str, Any] = MappingProxyType({})
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.payload, Mapping):
+            raise UIIRValidationError(
+                "UINamespacedExtension.payload must be a mapping"
+            )
+        object.__setattr__(
+            self,
+            "payload",
+            _deep_freeze_mapping(self.payload, "UINamespacedExtension.payload"),
+        )
     required: bool = False
     source_ref_ids: tuple[str, ...] = ()
 
@@ -2451,6 +2500,16 @@ def _validate_cross_references(document: UIIRDocument) -> None:
         item.constraint_id for item in document.formal_constraint_refs
     }
     outcome_ids = {item.outcome_id for item in document.terminal_outcomes}
+    state_variable_ids = {
+        item.variable_id for item in document.state_variables
+    }
+    accessibility_ids = {
+        item.accessibility_id for item in document.accessibility
+    }
+    transition_ids = {item.transition_id for item in document.transitions}
+    device_capability_ids = {
+        item.requirement_id for item in document.device_capability_requirements
+    }
 
     def sources_of(label: str, values: Iterable[str]) -> None:
         _require_known_refs(values, source_ids, label)
@@ -2485,6 +2544,11 @@ def _validate_cross_references(document: UIIRDocument) -> None:
             component.program_binding_ids,
             program_binding_ids,
             f"UIComponent {component.component_id!r}.program_binding_ids",
+        )
+        _require_known_refs(
+            component.modality_binding_ids,
+            modality_req_ids,
+            f"UIComponent {component.component_id!r}.modality_binding_ids",
         )
 
     for edge in document.composition_edges:
@@ -2522,6 +2586,12 @@ def _validate_cross_references(document: UIIRDocument) -> None:
             component_ids,
             f"UILayoutConstraint {constraint.constraint_id!r}.component_ids",
         )
+        if constraint.expression_ref:
+            _require_known_refs(
+                (constraint.expression_ref,),
+                formal_ids,
+                f"UILayoutConstraint {constraint.constraint_id!r}.expression_ref",
+            )
 
     for state in document.states:
         sources_of(f"UIState {state.state_id!r}.source_ref_ids", state.source_ref_ids)
@@ -2568,6 +2638,12 @@ def _validate_cross_references(document: UIIRDocument) -> None:
                 formal_ids,
                 f"UIGuard {guard.guard_id!r}.formal_constraint_id",
             )
+        if guard.constraint_ref:
+            _require_known_refs(
+                (guard.constraint_ref,),
+                formal_ids | state_ids | guard_ids,
+                f"UIGuard {guard.guard_id!r}.constraint_ref",
+            )
 
     for effect in document.effects:
         sources_of(
@@ -2578,6 +2654,12 @@ def _validate_cross_references(document: UIIRDocument) -> None:
                 (effect.program_binding_id,),
                 program_binding_ids,
                 f"UIEffect {effect.effect_id!r}.program_binding_id",
+            )
+        if effect.local_state_transition:
+            _require_known_refs(
+                (effect.local_state_transition,),
+                state_ids | transition_ids,
+                f"UIEffect {effect.effect_id!r}.local_state_transition",
             )
 
     for task in document.ux_tasks:
@@ -2637,6 +2719,30 @@ def _validate_cross_references(document: UIIRDocument) -> None:
             component_ids,
             f"UIAccessibilityBinding {a11y.accessibility_id!r}.component_id",
         )
+        _require_known_refs(
+            a11y.relationship_ids,
+            component_ids | accessibility_ids,
+            f"UIAccessibilityBinding {a11y.accessibility_id!r}.relationship_ids",
+        )
+        _require_unique(
+            a11y.relationship_ids,
+            f"UIAccessibilityBinding {a11y.accessibility_id!r}.relationship_ids member",
+        )
+
+    for localization in document.localization:
+        sources_of(
+            f"UILocalizationBinding {localization.localization_id!r}.source_ref_ids",
+            localization.source_ref_ids,
+        )
+        _require_known_refs(
+            localization.variable_ids,
+            state_variable_ids,
+            f"UILocalizationBinding {localization.localization_id!r}.variable_ids",
+        )
+        _require_unique(
+            localization.variable_ids,
+            f"UILocalizationBinding {localization.localization_id!r}.variable_ids member",
+        )
 
     for content in document.content_references:
         sources_of(
@@ -2650,6 +2756,35 @@ def _validate_cross_references(document: UIIRDocument) -> None:
                 f"UIContentReference {content.content_id!r}.localization_id",
             )
 
+    for requirement in document.input_modality_requirements:
+        if requirement.direction != "input":
+            raise UIIRValidationError(
+                f"input_modality_requirements entry {requirement.requirement_id!r} "
+                f"must use direction='input'"
+            )
+        _require_unique(
+            requirement.capability_ids,
+            f"UIModalityRequirement {requirement.requirement_id!r}.capability_ids member",
+        )
+        _require_unique(
+            requirement.source_ref_ids,
+            f"UIModalityRequirement {requirement.requirement_id!r}.source_ref_ids member",
+        )
+    for requirement in document.output_modality_requirements:
+        if requirement.direction != "output":
+            raise UIIRValidationError(
+                f"output_modality_requirements entry {requirement.requirement_id!r} "
+                f"must use direction='output'"
+            )
+        _require_unique(
+            requirement.capability_ids,
+            f"UIModalityRequirement {requirement.requirement_id!r}.capability_ids member",
+        )
+        _require_unique(
+            requirement.source_ref_ids,
+            f"UIModalityRequirement {requirement.requirement_id!r}.source_ref_ids member",
+        )
+
     for alt in document.modality_alternatives:
         sources_of(
             f"UIModalityAlternative {alt.alternative_id!r}.source_ref_ids",
@@ -2659,6 +2794,46 @@ def _validate_cross_references(document: UIIRDocument) -> None:
             (alt.primary_requirement_id, alt.alternative_requirement_id),
             modality_req_ids,
             f"UIModalityAlternative {alt.alternative_id!r}",
+        )
+
+    for variant in document.adaptive_variants:
+        sources_of(
+            f"UIAdaptiveVariant {variant.variant_id!r}.source_ref_ids",
+            variant.source_ref_ids,
+        )
+        _require_known_refs(
+            variant.capability_predicate_ids,
+            device_capability_ids | modality_req_ids,
+            f"UIAdaptiveVariant {variant.variant_id!r}.capability_predicate_ids",
+        )
+        _require_unique(
+            variant.capability_predicate_ids,
+            f"UIAdaptiveVariant {variant.variant_id!r}.capability_predicate_ids member",
+        )
+        _require_unique(
+            variant.source_ref_ids,
+            f"UIAdaptiveVariant {variant.variant_id!r}.source_ref_ids member",
+        )
+
+    for binding in document.program_bindings:
+        sources_of(
+            f"UIProgramBinding {binding.binding_id!r}.source_ref_ids",
+            binding.source_ref_ids,
+        )
+        _require_known_refs(
+            binding.precondition_ids,
+            formal_ids | guard_ids | state_ids,
+            f"UIProgramBinding {binding.binding_id!r}.precondition_ids",
+        )
+        _require_known_refs(
+            binding.effect_ids,
+            effect_ids,
+            f"UIProgramBinding {binding.binding_id!r}.effect_ids",
+        )
+        _require_known_refs(
+            binding.verification_ids,
+            formal_ids | {item.obligation_id for item in document.proof_obligation_refs},
+            f"UIProgramBinding {binding.binding_id!r}.verification_ids",
         )
 
     for obligation in document.proof_obligation_refs:
@@ -2844,6 +3019,40 @@ def _validate_enum(name: str, value: Any, enum_type: type[Enum]) -> None:
         raise UIIRValidationError(f"{name} must be a {enum_type.__name__} value")
 
 
+def _deep_freeze_mapping(value: Any, label: str) -> Any:
+    """Return an immutable, nested view of mapping/sequence payload data."""
+
+    if callable(value) or isinstance(value, type):
+        raise UIIRValidationError(f"{label} contains an executable callback")
+    if isinstance(value, Mapping):
+        frozen: dict[str, Any] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise UIIRValidationError(f"{label} map keys must be strings")
+            if _is_forbidden_executable_key(key):
+                raise UIIRValidationError(
+                    f"{label}/{key} is an executable callback field"
+                )
+            frozen[key] = _deep_freeze_mapping(item, f"{label}/{key}")
+        return MappingProxyType(frozen)
+    if isinstance(value, (str, bytes, bytearray)) or value is None:
+        return value
+    if isinstance(value, (set, frozenset)):
+        raise UIIRValidationError(
+            f"{label} must not use set containers in declaration payloads"
+        )
+    if isinstance(value, Sequence):
+        return tuple(
+            _deep_freeze_mapping(item, f"{label}[{index}]")
+            for index, item in enumerate(value)
+        )
+    if isinstance(value, (int, float, bool)):
+        return value
+    raise UIIRValidationError(
+        f"{label} contains a non-JSON declaration value of type {type(value).__name__}"
+    )
+
+
 def _require_unique(values: Iterable[str], label: str) -> None:
     seen: set[str] = set()
     for value in values:
@@ -2872,7 +3081,8 @@ def _is_forbidden_executable_key(key: str) -> bool:
 def _reject_executable_payload(value: Any, label: str, *, _path: str = "") -> None:
     """Reject callables and forbidden executable keys anywhere in a payload."""
 
-    if callable(value) and not isinstance(value, type):
+    # Callable class objects are executable entry points just as free functions.
+    if callable(value) or isinstance(value, type):
         raise UIIRValidationError(
             f"{label}{_path} contains an executable callback"
         )
@@ -2889,6 +3099,10 @@ def _reject_executable_payload(value: Any, label: str, *, _path: str = "") -> No
             _reject_executable_payload(item, label, _path=f"{_path}/{key}")
         return
     if isinstance(value, (str, bytes, bytearray)) or value is None:
+        return
+    if isinstance(value, (set, frozenset)):
+        for index, item in enumerate(sorted(value, key=repr)):
+            _reject_executable_payload(item, label, _path=f"{_path}{{{index}}}")
         return
     if isinstance(value, Sequence):
         for index, item in enumerate(value):

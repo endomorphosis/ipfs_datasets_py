@@ -651,3 +651,44 @@ def test_to_dict_is_closed_and_json_schema_valid() -> None:
     assert set(payload) <= set(UIIR_DOCUMENT_FIELDS)
     reject_unknown_document_fields(payload)
     jsonschema.Draft202012Validator(load_ui_ux_ir_json_schema()).validate(payload)
+
+def test_rejects_output_direction_in_input_modality_collection() -> None:
+    doc = _rich_document()
+    bad = replace(doc.input_modality_requirements[0], direction="output")
+    with pytest.raises(UIIRValidationError, match="direction='input'"):
+        replace(doc, input_modality_requirements=(bad,)).validate()
+
+
+def test_rejects_duplicate_capability_ids() -> None:
+    doc = _rich_document()
+    bad = replace(
+        doc.device_capability_requirements[0],
+        capability_ids=("cap.a", "cap.a"),
+    )
+    with pytest.raises(UIIRValidationError, match="Duplicate"):
+        replace(doc, device_capability_requirements=(bad,)).validate()
+
+
+def test_rejects_callable_class_objects_in_settings() -> None:
+    with pytest.raises(UIIRValidationError, match="executable callback"):
+        UIConfiguration(
+            configuration_id="cfg.bad",
+            settings={"factory": dict},
+        )
+
+
+def test_settings_are_deeply_immutable() -> None:
+    nested = {"theme": {"color": "blue"}}
+    cfg = UIConfiguration(configuration_id="cfg.imm", settings=nested)
+    nested["theme"]["color"] = "red"
+    assert cfg.settings["theme"]["color"] == "blue"
+    with pytest.raises(TypeError):
+        cfg.settings["theme"] = {"color": "green"}  # type: ignore[index]
+
+
+def test_rejects_dangling_modality_binding_ids() -> None:
+    doc = _rich_document()
+    bad = replace(doc.components[0], modality_binding_ids=("missing.mod",))
+    with pytest.raises(UIIRValidationError, match="unknown ids"):
+        replace(doc, components=(bad, *doc.components[1:])).validate()
+
