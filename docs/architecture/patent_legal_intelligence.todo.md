@@ -3140,7 +3140,7 @@ Program invariants:
 
 ## PATLAW-187 Rebuild public legal corpus materialization from full-authority recipe
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
