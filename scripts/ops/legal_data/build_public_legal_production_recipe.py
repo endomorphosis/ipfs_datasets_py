@@ -609,18 +609,33 @@ def load_full_cfr_title37(
 def load_full_mpep_sections(
     *,
     inventory: Mapping[str, Any] | None = None,
+    live: bool = False,
+    live_delay_seconds: float = 0.35,
+    allow_partial: bool = False,
 ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
     """Materialize section-level MPEP docs from PATLAW-183 acquisition.
 
     Chapter-landing-page-only inventories fail closed in the acquisition layer.
+    When ``live`` is true, discovers every section linked from USPTO chapter
+    TOC pages and downloads full HTML (converted to plain text).
     """
 
     acq = _load_sibling_module("acquire_mpep_full_sections.py")
-    receipt = acq.acquire_mpep_full_sections(
-        inventory,
-        mode=acq.AcquisitionMode.DRY_RUN,
-        strict_count=True,
-    )
+    if live:
+        receipt = acq.acquire_mpep_full_sections(
+            None,
+            mode=acq.AcquisitionMode.LIVE,
+            allow_live=True,
+            live_delay_seconds=float(live_delay_seconds),
+            strict_count=not bool(allow_partial),
+            discover_live_inventory=True,
+        )
+    else:
+        receipt = acq.acquire_mpep_full_sections(
+            inventory,
+            mode=acq.AcquisitionMode.DRY_RUN,
+            strict_count=True,
+        )
     pin = receipt.edition_pin
     edition_key = pin.edition_key
     current_through = pin.cutoff.isoformat() if hasattr(pin.cutoff, "isoformat") else str(pin.cutoff)
@@ -1144,6 +1159,9 @@ def build_full_authority_recipe(
     cfr_fixture_path: PathLike | None = None,
     cfr_year: str | int | None = None,
     live_cfr: bool = False,
+    live_mpep: bool = False,
+    live_mpep_delay_seconds: float = 0.35,
+    live_mpep_allow_partial: bool = False,
     guidance_cutoff: str | None = None,
     assert_complete: bool = True,
 ) -> dict[str, Any]:
@@ -1151,8 +1169,9 @@ def build_full_authority_recipe(
 
     Offline by default: consumes PATLAW-181/183/185 acquisition fixtures.
     With ``live_cfr=True`` (and ``cfr_year``), downloads official GovInfo
-    annual Title 37 volume XML. Live Title 35 / eCFR / chapter MPEP remain
-    optional supplements only.
+    annual Title 37 volume XML. With ``live_mpep=True``, discovers and fetches
+    every USPTO MPEP section linked from chapter TOC pages. Live Title 35 /
+    eCFR / chapter MPEP remain optional supplements only.
     """
 
     docs: list[dict[str, Any]] = []
@@ -1189,7 +1208,11 @@ def build_full_authority_recipe(
     )
 
     print("loading full MPEP sections (PATLAW-183)…", file=sys.stderr)
-    mpep_docs, mpep_root, mpep_meta = load_full_mpep_sections()
+    mpep_docs, mpep_root, mpep_meta = load_full_mpep_sections(
+        live=bool(live_mpep),
+        live_delay_seconds=float(live_mpep_delay_seconds),
+        allow_partial=bool(live_mpep_allow_partial),
+    )
     docs.extend(mpep_docs)
     roots.append(mpep_root)
     fa_sources["mpep_sections"] = mpep_meta
@@ -1468,6 +1491,25 @@ def main(argv: Sequence[str] | None = None) -> int:
         ),
     )
     p.add_argument(
+        "--live-mpep",
+        action="store_true",
+        help=(
+            "(full-authority) Discover and download the full USPTO MPEP section "
+            "inventory from chapter TOC pages (slow; polite rate limit)"
+        ),
+    )
+    p.add_argument(
+        "--live-mpep-delay-seconds",
+        type=float,
+        default=0.35,
+        help="Delay between live MPEP HTTP fetches (default 0.35)",
+    )
+    p.add_argument(
+        "--live-mpep-allow-partial",
+        action="store_true",
+        help="Allow incomplete live MPEP acquisition (records gaps; not ideal)",
+    )
+    p.add_argument(
         "--reject-ecfr-only",
         action="store_true",
         help="Exit non-zero demonstrating eCFR-only cannot complete full authority",
@@ -1550,6 +1592,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             cfr_fixture_path=args.cfr_fixture,
             cfr_year=args.cfr_year,
             live_cfr=bool(args.live_cfr),
+            live_mpep=bool(args.live_mpep),
+            live_mpep_delay_seconds=float(args.live_mpep_delay_seconds),
+            live_mpep_allow_partial=bool(args.live_mpep_allow_partial),
             assert_complete=True,
         )
 

@@ -42,6 +42,7 @@ from ipfs_datasets_py.processors.domains.patent.mpep_full_section_contracts impo
     AUTHORITY_TIER_GUIDANCE,
     GOAL_ID as INVENTORY_GOAL_ID,
     REQUIRED_CHAPTER_IDS,
+    REQUIRED_MPEP_CHAPTERS,
     SCHEMA_VERSION as INVENTORY_SCHEMA_VERSION,
     BindingElevationError,
     ChapterOnlyInventoryError,
@@ -60,11 +61,13 @@ from ipfs_datasets_py.processors.domains.patent.mpep_full_section_contracts impo
     build_compact_full_inventory_fixture,
     build_mpep_full_manifest,
     canonical_json,
+    chapter_id_for_section,
     cid_from_digest,
     content_digest_of,
     content_sha256,
     is_chapter_landing_anchor,
     mpep_source_url,
+    normalize_mpep_section,
     stable_section_identity,
     validate_full_chapter_coverage,
     validate_inventory_not_chapter_only,
@@ -361,6 +364,12 @@ def live_http_fetcher(
                 body = raw.decode("utf-8")
             except UnicodeDecodeError:
                 body = raw.decode("utf-8", errors="replace")
+            # Prefer plain text for BM25 / vector indexing while keeping HTML
+            # media_type only when conversion collapses to nothing useful.
+            plain = html_to_text(body)
+            if len(plain) >= 40:
+                body = plain
+                media = "text/plain"
             digest = content_sha256(body)
             return FetchResult(
                 body=body,
@@ -850,6 +859,250 @@ def _reject_chapter_only(inventory: Sequence[MpepSectionInventoryEntry]) -> None
 
 
 # ---------------------------------------------------------------------------
+# Live full-manual discovery (USPTO chapter TOCs → section inventory)
+# ---------------------------------------------------------------------------
+
+
+def mpep_chapter_toc_url(chapter_id: str) -> str:
+    """Return the USPTO static HTML TOC URL for a numbered MPEP chapter."""
+
+    ch = str(chapter_id).strip()
+    if not ch.isdigit():
+        raise MpepFullAcquisitionError(
+            f"chapter TOC discovery only supports numbered chapters, got {chapter_id!r}"
+        )
+    n = int(ch)
+    token = f"{n:04d}" if n < 1000 else str(n)
+    return f"https://www.uspto.gov/web/offices/pac/mpep/mpep-{token}.html"
+
+
+def html_to_text(html: str) -> str:
+    """Best-effort HTML → plain text for indexing (no external deps)."""
+
+    text = str(html or "")
+    text = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", text)
+    text = re.sub(r"(?is)<!--.*?-->", " ", text)
+    text = re.sub(r"(?i)<br\s*/?>", "\n", text)
+    text = re.sub(r"(?i)</p\s*>", "\n\n", text)
+    text = re.sub(r"(?i)</(div|tr|li|h[1-6])\s*>", "\n", text)
+    text = re.sub(r"(?s)<[^>]+>", " ", text)
+    text = (
+        text.replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", '"')
+        .replace("&#39;", "'")
+    )
+    text = re.sub(r"[ \t\f\v]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def _http_get_text(
+    url: str,
+    *,
+    timeout_seconds: float = DEFAULT_LIVE_TIMEOUT_SECONDS,
+    user_agent: str = DEFAULT_USER_AGENT,
+) -> str:
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": user_agent, "Accept": "text/html,text/plain,*/*"},
+        method="GET",
+    )
+    with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:
+        raw = resp.read()
+        try:
+            return raw.decode("utf-8")
+        except UnicodeDecodeError:
+            return raw.decode("utf-8", errors="replace")
+
+
+def extract_section_anchors_from_chapter_html(
+    html: str,
+    *,
+    chapter_id: str,
+) -> list[str]:
+    """Extract MPEP section anchors linked from a chapter TOC page."""
+
+    anchors: list[str] = []
+    seen: set[str] = set()
+    for match in re.finditer(
+        r"""(?i)(?:href\s*=\s*["']|/web/offices/pac/mpep/)s(\d{3,4}(?:\.\d+)*)\.html""",
+        html,
+    ):
+        raw = match.group(1)
+        try:
+            sec = normalize_mpep_section(raw)
+            parent = chapter_id_for_section(sec)
+        except Exception:
+            continue
+        if parent != str(chapter_id):
+            # Keep only sections belonging to the requested chapter.
+            continue
+        if sec in seen:
+            continue
+        seen.add(sec)
+        anchors.append(sec)
+    return anchors
+
+
+def discover_live_mpep_inventory(
+    *,
+    edition: str = "9",
+    revision: str = "07.2022",
+    cutoff: str = "2022-07-01",
+    delay_seconds: float = 0.2,
+    timeout_seconds: float = DEFAULT_LIVE_TIMEOUT_SECONDS,
+    include_appendices: bool = True,
+    http_get: Callable[[str], str] | None = None,
+) -> MpepFullInventoryManifest:
+    """Discover the full section inventory by crawling USPTO chapter TOC pages.
+
+    Numbered chapters 100–2900 are expanded to every ``sNNNN.html`` section
+    linked from the chapter TOC. Appendices/index remain compact anchors from
+    the offline fixture when ``include_appendices`` is true (those pages are
+    not uniformly section-numbered on the static HTML mirror).
+    """
+
+    getter = http_get or (
+        lambda url: _http_get_text(url, timeout_seconds=timeout_seconds)
+    )
+    pin = MpepEditionPin(
+        edition=edition,
+        revision=revision,
+        cutoff=cutoff,
+        provider="uspto",
+        publication_date=cutoff,
+        source_url="https://www.uspto.gov/web/offices/pac/mpep/index.html",
+        notes=f"MPEP {edition} Edition, Revision {revision} (live full discovery)",
+    )
+    inventory: list[MpepSectionInventoryEntry] = []
+    discovery_meta: dict[str, Any] = {"chapters": {}, "mode": "live_toc_discovery"}
+
+    for spec in REQUIRED_MPEP_CHAPTERS:
+        if not str(spec.chapter_id).isdigit():
+            continue
+        url = mpep_chapter_toc_url(spec.chapter_id)
+        if delay_seconds > 0:
+            time.sleep(delay_seconds)
+        try:
+            html = getter(url)
+        except Exception as exc:  # noqa: BLE001 — record chapter gap, continue
+            discovery_meta["chapters"][spec.chapter_id] = {
+                "status": "toc_fetch_failed",
+                "error": f"{type(exc).__name__}: {exc}",
+                "url": url,
+                "sections": 0,
+            }
+            # Fall back to one representative anchor so chapter coverage remains.
+            compact = build_compact_full_inventory_fixture()
+            fallback = next(
+                (
+                    MpepSectionInventoryEntry.from_dict(raw)
+                    for raw in compact["inventory"]
+                    if str(raw.get("chapter_id")) == spec.chapter_id
+                ),
+                None,
+            )
+            if fallback is not None:
+                inventory.append(fallback)
+            continue
+        anchors = extract_section_anchors_from_chapter_html(
+            html, chapter_id=spec.chapter_id
+        )
+        discovery_meta["chapters"][spec.chapter_id] = {
+            "status": "ok",
+            "url": url,
+            "sections": len(anchors),
+        }
+        if not anchors:
+            # Keep a single non-landing representative if TOC parse yields nothing.
+            compact = build_compact_full_inventory_fixture()
+            fallback = next(
+                (
+                    MpepSectionInventoryEntry.from_dict(raw)
+                    for raw in compact["inventory"]
+                    if str(raw.get("chapter_id")) == spec.chapter_id
+                    and str(raw.get("kind")) == InventoryEntryKind.MPEP_SECTION.value
+                ),
+                None,
+            )
+            if fallback is not None:
+                inventory.append(fallback)
+            continue
+        for anchor in anchors:
+            if is_chapter_landing_anchor(
+                chapter_id=spec.chapter_id, section_anchor=anchor
+            ):
+                continue
+            inventory.append(
+                MpepSectionInventoryEntry(
+                    entry_id=f"mpep-{spec.chapter_id}-{anchor}",
+                    chapter_id=spec.chapter_id,
+                    section_anchor=anchor,
+                    kind=InventoryEntryKind.MPEP_SECTION,
+                    status=InventoryEntryStatus.PRESENT,
+                    title=f"MPEP § {anchor}",
+                    citation=f"MPEP § {anchor}",
+                    source_url=mpep_source_url(section=anchor),
+                    media_type="text/html",
+                )
+            )
+
+    if include_appendices:
+        compact = build_compact_full_inventory_fixture()
+        for raw in compact["inventory"]:
+            kind = str(raw.get("kind") or "")
+            chapter_id = str(raw.get("chapter_id") or "")
+            if not chapter_id.isdigit() or kind in {
+                InventoryEntryKind.APPENDIX_ANCHOR.value,
+                InventoryEntryKind.INDEX_ANCHOR.value,
+                InventoryEntryKind.FORM_PARAGRAPH.value,
+            }:
+                inventory.append(MpepSectionInventoryEntry.from_dict(raw))
+
+    # Deduplicate by (chapter_id, section_anchor, kind)
+    dedup: dict[tuple[str, str, str], MpepSectionInventoryEntry] = {}
+    for entry in inventory:
+        key = (entry.chapter_id, entry.section_anchor, entry.kind.value)
+        dedup[key] = entry
+    inventory = list(dedup.values())
+    inventory.sort(
+        key=lambda e: (
+            0 if str(e.chapter_id).isdigit() else 1,
+            int(e.chapter_id) if str(e.chapter_id).isdigit() else 0,
+            e.chapter_id,
+            e.section_anchor,
+            e.kind.value,
+        )
+    )
+
+    supersessions = tuple(
+        MpepSupersessionRecord.from_dict(s)
+        for s in (
+            build_compact_full_inventory_fixture().get("supersessions") or []
+        )
+        if isinstance(s, Mapping)
+    )
+    discovery_meta["inventory_entries"] = len(inventory)
+    discovery_meta["section_level"] = sum(
+        1 for e in inventory if e.kind is InventoryEntryKind.MPEP_SECTION
+    )
+    return build_mpep_full_manifest(
+        edition_pin=pin,
+        inventory=inventory,
+        supersessions=supersessions,
+        mode="acquire",
+        notes=(
+            "Live full MPEP section inventory discovered from USPTO chapter TOC "
+            "pages (sNNNN.html). Guidance only; never binding law."
+        ),
+        metadata=discovery_meta,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Core acquisition
 # ---------------------------------------------------------------------------
 
@@ -865,6 +1118,7 @@ def acquire_mpep_full_sections(
     metadata: Optional[Mapping[str, Any]] = None,
     acquired_at: Optional[datetime] = None,
     strict_count: bool = True,
+    discover_live_inventory: bool = False,
 ) -> MpepFullAcquisitionReceipt:
     """Acquire every inventoried section and build a content-addressed receipt.
 
@@ -875,7 +1129,21 @@ def acquire_mpep_full_sections(
     * every acquired section has ``stable_identity`` and ``content_sha256``
     * supersession edges from the inventory are retained unchanged
     """
-    if inventory is None:
+    mode_v = AcquisitionMode.coerce(mode)
+    if mode_v is AcquisitionMode.LIVE and not allow_live:
+        raise LiveNetworkDisabledError(
+            "live acquisition requires allow_live=True / --live"
+        )
+
+    if discover_live_inventory:
+        if mode_v is not AcquisitionMode.LIVE or not allow_live:
+            raise LiveNetworkDisabledError(
+                "discover_live_inventory requires live mode with allow_live=True"
+            )
+        manifest = discover_live_mpep_inventory(
+            delay_seconds=min(float(live_delay_seconds), 0.35),
+        )
+    elif inventory is None:
         manifest = load_inventory_manifest(use_default_fixture=True)
     elif isinstance(inventory, MpepFullInventoryManifest):
         manifest = inventory
@@ -883,12 +1151,6 @@ def acquire_mpep_full_sections(
         manifest = validate_manifest_dict(inventory)
     else:
         raise MpepFullAcquisitionError("inventory must be a manifest or mapping")
-
-    mode_v = AcquisitionMode.coerce(mode)
-    if mode_v is AcquisitionMode.LIVE and not allow_live:
-        raise LiveNetworkDisabledError(
-            "live acquisition requires allow_live=True / --live"
-        )
 
     if fetcher is None:
         if mode_v is AcquisitionMode.LIVE:
@@ -1425,6 +1687,14 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     p.add_argument(
+        "--live-discover",
+        action="store_true",
+        help=(
+            "With --live: discover the full section inventory from USPTO "
+            "chapter TOC pages (every sNNNN.html), not just the compact fixture"
+        ),
+    )
+    p.add_argument(
         "--live-delay-seconds",
         type=float,
         default=DEFAULT_LIVE_DELAY_SECONDS,
@@ -1499,26 +1769,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"wrote compact inventory fixture: {target}")
         return 0
 
-    try:
-        if args.default_fixture or not args.inventory:
-            if not args.default_fixture and not args.inventory:
-                # Default path: compact fixture offline.
-                manifest = load_inventory_manifest(use_default_fixture=True)
-            elif args.default_fixture:
-                manifest = load_inventory_manifest(use_default_fixture=True)
-            else:
-                manifest = load_inventory_manifest(args.inventory)
-        else:
-            manifest = load_inventory_manifest(args.inventory)
-    except (
-        MpepFullAcquisitionError,
-        MpepFullSectionError,
-        EditionPinError,
-        ChapterOnlyInventoryError,
-        IncompleteChapterCoverageError,
-        BindingElevationError,
-    ) as exc:
-        print(f"error: inventory load failed: {exc}", file=sys.stderr)
+    if args.live_discover and not args.live:
+        print("--live-discover requires --live", file=sys.stderr)
         return 2
 
     if args.stage and not args.output_dir:
@@ -1532,6 +1784,30 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     else:
         mode = AcquisitionMode.DRY_RUN
 
+    manifest: MpepFullInventoryManifest | None = None
+    if not args.live_discover:
+        try:
+            if args.default_fixture or not args.inventory:
+                if not args.default_fixture and not args.inventory:
+                    # Default path: compact fixture offline.
+                    manifest = load_inventory_manifest(use_default_fixture=True)
+                elif args.default_fixture:
+                    manifest = load_inventory_manifest(use_default_fixture=True)
+                else:
+                    manifest = load_inventory_manifest(args.inventory)
+            else:
+                manifest = load_inventory_manifest(args.inventory)
+        except (
+            MpepFullAcquisitionError,
+            MpepFullSectionError,
+            EditionPinError,
+            ChapterOnlyInventoryError,
+            IncompleteChapterCoverageError,
+            BindingElevationError,
+        ) as exc:
+            print(f"error: inventory load failed: {exc}", file=sys.stderr)
+            return 2
+
     strict = not bool(args.allow_partial)
     try:
         receipt = acquire_mpep_full_sections(
@@ -1540,9 +1816,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             allow_live=bool(args.live),
             live_delay_seconds=float(args.live_delay_seconds),
             strict_count=strict,
+            discover_live_inventory=bool(args.live_discover),
         )
-        if strict:
+        if strict and manifest is not None:
             validate_acquisition_receipt(receipt, inventory=manifest)
+        # live-discover builds inventory inside acquire_mpep_full_sections and
+        # already enforces strict_count against that inventory.
     except (
         MpepFullAcquisitionError,
         MpepFullSectionError,
