@@ -21,8 +21,8 @@ Environment variables (all optional):
 - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN: enable Lean install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
 - IPFS_DATASETS_PY_AUTO_INSTALL_COQ: enable Coq install attempts (default: 0)
 - IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI: enable SymbolicAI install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
-- IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI: enable ErgoAI/ErgoEngine install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
-- IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS: enable install attempts from requested prover bridges (default: 0)
+- IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI: ErgoAI install override (default: on for missing managed vendor; set 0 to opt out)
+- IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS: enable install attempts for the general solver portfolio (default: 0; ErgoAI is default-on when managed vendor is missing)
 - IPFS_DATASETS_PY_LAZY_INSTALL_<PROVER>: per-prover lazy install override
   (Z3/CVC5/LEAN/COQ/APALACHE/TAMARIN/MAUDE/PROVERIF/SYMBOLICAI/ERGOAI)
 - IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS: allow lazy Coq install to use interactive sudo (default: 0)

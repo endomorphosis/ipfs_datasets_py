@@ -6858,9 +6858,11 @@ def _safe_extract_temurin_archive(archive: Path, destination: Path) -> Path:
                     )
                 if member.issym() or member.islnk():
                     # Symlink members are allowed only when they stay inside the
-                    # extraction root; absolute and escape targets fail closed.
+                    # extraction root after resolution.  Relative ``..`` hops
+                    # are normal inside Temurin legal/ trees (e.g. pointing at
+                    # sibling module licenses); absolute links fail closed.
                     link = member.linkname or ""
-                    if link.startswith("/") or ".." in Path(link).parts:
+                    if not link or link.startswith("/"):
                         raise AdvisorInstallerError(
                             f"JDK archive symlink escapes root: {name!r} -> {link!r}"
                         )

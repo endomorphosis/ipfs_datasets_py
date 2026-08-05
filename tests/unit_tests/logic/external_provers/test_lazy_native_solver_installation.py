@@ -14,10 +14,14 @@ def _clear_lazy_install_environment(monkeypatch) -> None:
     for name in (
         "IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS",
         "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS",
+        "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI",
+        "IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI",
         "IPFS_DATASETS_PY_MINIMAL_IMPORTS",
         "IPFS_DATASETS_PY_BENCHMARK",
         "IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT",
         "IPFS_DATASETS_PY_THEOREM_PROVERS_ROOT",
+        "IPFS_DATASETS_PY_IMPORT_CONTEXT",
+        "ERGOAI_BINARY",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -404,6 +408,111 @@ def test_ergoai_explicit_binary_is_resolved_without_install(monkeypatch, tmp_pat
         "ergoai",
         reason="external proof execution",
     ) == str(executable)
+
+
+def test_ergoai_default_enabled_without_portfolio_opt_in(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+
+    assert lazy_installer.lazy_installs_enabled() is False
+    assert lazy_installer.prover_lazy_install_enabled("ergoai") is True
+    assert lazy_installer.prover_lazy_install_enabled("z3") is False
+
+    monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", "0")
+    assert lazy_installer.prover_lazy_install_enabled("ergoai") is False
+    monkeypatch.delenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI", "0")
+    assert lazy_installer.prover_lazy_install_enabled("ergoai") is False
+
+
+def test_ensure_prover_rejects_hermetic_shim_and_installs_vendor(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[dict[str, object]] = []
+    hermetic = "/tmp/hermetic-shim/bin/ergoai"
+    managed = "/tmp/managed-vendor/bin/ergoai"
+    state = {"phase": "hermetic"}
+
+    def fake_find(name: str) -> str | None:
+        if name in {"ergoai", "runergo", "runErgo.sh", "ergo"}:
+            return hermetic
+        return None
+
+    def fake_managed() -> str | None:
+        return managed if state["phase"] == "managed" else None
+
+    def fake_lazy_install(prover, **kwargs):
+        assert prover == "ergoai"
+        calls.append(dict(kwargs))
+        state["phase"] = "managed"
+        return True
+
+    monkeypatch.setattr(lazy_installer, "find_executable", fake_find)
+    monkeypatch.setattr(
+        lazy_installer, "_find_managed_vendor_ergoai_executable", fake_managed
+    )
+    monkeypatch.setattr(lazy_installer, "lazy_install_prover", fake_lazy_install)
+
+    assert (
+        lazy_installer.ensure_prover_executable(
+            "ergoai", reason="package consumer first use"
+        )
+        == managed
+    )
+    assert calls and calls[0].get("allow_automatic") is True
+
+
+def test_ensure_managed_ergoai_if_missing_is_noop_when_vendor_present(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    managed = "/tmp/managed-vendor/bin/ergoai"
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_find_managed_vendor_ergoai_executable",
+        lambda: managed,
+    )
+    monkeypatch.setattr(
+        lazy_installer,
+        "ensure_prover_executable",
+        lambda *a, **k: calls.append("install") or managed,
+    )
+
+    assert (
+        lazy_installer.ensure_managed_ergoai_if_missing(reason="import") == managed
+    )
+    assert calls == []
+
+
+def test_ensure_managed_ergoai_if_missing_skips_under_import_context(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[str] = []
+    monkeypatch.setenv("IPFS_DATASETS_PY_IMPORT_CONTEXT", "1")
+    monkeypatch.setattr(
+        lazy_installer, "_find_managed_vendor_ergoai_executable", lambda: None
+    )
+    monkeypatch.setattr(
+        lazy_installer,
+        "ensure_prover_executable",
+        lambda *a, **k: calls.append("install") or None,
+    )
+
+    assert lazy_installer.ensure_managed_ergoai_if_missing(reason="import") is None
+    assert calls == []
 
 
 def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch, tmp_path: Path) -> None:

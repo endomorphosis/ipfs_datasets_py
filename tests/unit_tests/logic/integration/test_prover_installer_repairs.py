@@ -124,11 +124,15 @@ def test_lazy_installer_is_opt_in(monkeypatch) -> None:
     lazy_installer.reset_lazy_install_attempts()
     monkeypatch.delenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", raising=False)
     monkeypatch.delenv("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI", raising=False)
     monkeypatch.delenv("IPFS_DATASETS_PY_MINIMAL_IMPORTS", raising=False)
     monkeypatch.delenv("IPFS_DATASETS_PY_BENCHMARK", raising=False)
 
     assert lazy_installer.lazy_installs_enabled() is False
     assert lazy_installer.prover_lazy_install_enabled("z3") is False
+    # ErgoAI is default-on for package consumers when the managed vendor is missing.
+    assert lazy_installer.prover_lazy_install_enabled("ergoai") is True
 
 
 def test_lazy_installer_reuses_successful_packaged_install(monkeypatch) -> None:

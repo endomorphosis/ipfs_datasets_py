@@ -50,7 +50,7 @@ the current process `PATH`.
 | Souffle | Reviewed `2.4.1` source identity built as a native external Datalog checker. |
 | Runtime MTL external | Independent TypeScript/Node monitor built from the package-lock-bound source shipped in source distributions and wheels. |
 | SecPAL | Operator-bound external engine. It fails closed until an authentic, licensed, checksummed vendor artifact is supplied; the Python SecPAL-style engine remains shadow-only. |
-| ErgoAI | Checksummed ErgoAI `3.0` vendor route with managed provenance and semantic checks; an advisor shim never counts as live evidence. |
+| ErgoAI | Checksummed ErgoAI `3.0` vendor route with managed provenance and semantic checks; **default-on** for package consumers when the managed vendor is missing (no portfolio opt-in). An advisor shim never counts as live evidence and never suppresses install. Opt out with `IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=0` or `IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=0`. |
 | Z3 | The optional `z3-solver` Python binding used by the exchange runner. |
 
 For unsupported platforms or organization-managed packages, provide a
@@ -153,8 +153,14 @@ solver before the worker starts.
 ## Control and Safety
 
 Set `IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=0` to block all automatic native
-installation. Set `IPFS_DATASETS_PY_LAZY_INSTALL_STRICT=1` to surface an
-installer failure as an exception. No installer uses `sudo` unless
+installation (including ErgoAI). ErgoAI alone can also be disabled with
+`IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=0` while leaving other solvers alone.
+ErgoAI installs only when a managed vendor is **missing**; an already-present
+checksummed install is never reinstalled on import or first use. Hermetic
+advisor shims do not count as installed.
+
+Set `IPFS_DATASETS_PY_LAZY_INSTALL_STRICT=1` to surface an installer failure as
+an exception. No installer uses `sudo` unless
 `IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS=1` is explicitly set.
 
 When OPAM is not present, the standalone installer can bootstrap it only after
