@@ -1460,6 +1460,39 @@ def executable_path(
     return tool_bin_dir(install_root, tool_id, version, vendor=vendor) / tool_id
 
 
+def _publish_managed_bin_launcher(
+    name: str,
+    target: Path,
+    *,
+    install_root: Path | str | None = None,
+) -> Path:
+    """Publish a thin launcher under ``$managed_root/bin/<name>``.
+
+    Only vendor engines should use this path. Hermetic authorization shadows
+    stay under ``authorization-shadows/`` and never become PATH-visible.
+    """
+
+    root = _expand_install_root(install_root)
+    bin_dir = root / "bin"
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    launcher = bin_dir / name
+    resolved = target.resolve()
+    if not resolved.is_file():
+        raise AuthorizationInstallerError(
+            f"cannot publish managed bin launcher for {name!r}: "
+            f"target missing: {resolved}"
+        )
+    quoted = "'" + str(resolved).replace("'", "'\"'\"'") + "'"
+    launcher.write_text(
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        f"exec {quoted} \"$@\"\n",
+        encoding="utf-8",
+    )
+    launcher.chmod(0o755)
+    return launcher
+
+
 # ---------------------------------------------------------------------------
 # Hermetic shadow shim source
 # ---------------------------------------------------------------------------
@@ -4724,6 +4757,20 @@ def _ensure_tool(
         f"installed {tool_id} {identity.version} {label} at {identity.executable}",
         on_progress,
     )
+    # Vendor Soufflé must be PATH-visible under the managed theorem-prover
+    # root so package consumers and offline certification resolve the real
+    # engine rather than ambient PATH shims or hermetic shadows.
+    if is_vendor and tool_id == TOOL_SOUFFLE:
+        try:
+            _publish_managed_bin_launcher(
+                tool_id,
+                Path(identity.executable),
+                install_root=root,
+            )
+        except OSError as exc:
+            detail = f"managed bin publication failed for {tool_id}: {exc}"
+            if strict:
+                raise AuthorizationInstallerError(detail) from exc
     return InstallReceipt(
         tool_id=tool_id,
         status="installed",

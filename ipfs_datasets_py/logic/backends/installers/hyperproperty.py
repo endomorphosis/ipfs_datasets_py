@@ -1057,6 +1057,57 @@ def executable_path(
     return tool_bin_dir(install_root, tool_id, version, vendor=vendor) / tool_id
 
 
+def _publish_managed_vendor_launcher(
+    identity: "EngineIdentity",
+    *,
+    install_root: Path | str | None = None,
+) -> Path:
+    """Publish a PATH-visible vendor launcher under ``$root/bin/<tool_id>``.
+
+    Hermetic hyperproperty shims must never become PATH-visible here.
+    """
+
+    if identity.is_hermetic_engine or not identity.is_vendor_build:
+        raise HyperpropertyInstallerError(
+            "only vendor hyperproperty engines may publish managed bin launchers"
+        )
+    root = _expand_install_root(install_root)
+    bin_dir = root / "bin"
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    launcher = bin_dir / identity.tool_id
+    target = Path(identity.executable).resolve()
+    if not target.is_file():
+        raise HyperpropertyInstallerError(
+            f"vendor hyperproperty executable missing for publication: {target}"
+        )
+    quoted_target = "'" + str(target).replace("'", "'\"'\"'") + "'"
+    env_exports: list[str] = []
+    for key, value in identity.runtime_environment or ():
+        if not key or value is None:
+            continue
+        quoted_value = "'" + str(value).replace("'", "'\"'\"'") + "'"
+        env_exports.append(f"export {key}={quoted_value}")
+    # AutoHyper needs DOTNET_ROOT on PATH for the host runtime lookup.
+    if identity.tool_id == "autohyper":
+        for key, value in identity.runtime_environment or ():
+            if key == "DOTNET_ROOT" and value:
+                env_exports.append(
+                    f'export PATH="{value}:${{PATH:-}}"'
+                )
+                break
+    body = "#!/usr/bin/env bash\nset -euo pipefail\n"
+    if env_exports:
+        body += "\n".join(env_exports) + "\n"
+    if identity.tool_id == "mchyper" and identity.executable.endswith(".py"):
+        # Prefer the managed Python 2.7 runtime when present in PATH export.
+        body += f'exec {quoted_target} "$@"\n'
+    else:
+        body += f'exec {quoted_target} "$@"\n'
+    launcher.write_text(body, encoding="utf-8")
+    launcher.chmod(0o755)
+    return launcher
+
+
 # ---------------------------------------------------------------------------
 # Hermetic engine shim source
 # ---------------------------------------------------------------------------
@@ -4057,6 +4108,13 @@ def _ensure_tool(
             f"{tool_id} {existing.version} already present at {existing.executable}",
             on_progress,
         )
+        if use_vendor:
+            try:
+                _publish_managed_vendor_launcher(existing, install_root=root)
+            except (OSError, HyperpropertyInstallerError) as exc:
+                detail = f"managed bin publication failed for {tool_id}: {exc}"
+                if strict:
+                    raise HyperpropertyInstallerError(detail) from exc
         return InstallReceipt(
             tool_id=tool_id,
             status="already_present",
@@ -4328,6 +4386,13 @@ def _ensure_tool(
         f"installed {tool_id} {identity.version} at {identity.executable}",
         on_progress,
     )
+    if use_vendor:
+        try:
+            _publish_managed_vendor_launcher(identity, install_root=root)
+        except (OSError, HyperpropertyInstallerError) as exc:
+            detail = f"managed bin publication failed for {tool_id}: {exc}"
+            if strict:
+                raise HyperpropertyInstallerError(detail) from exc
     return InstallReceipt(
         tool_id=tool_id,
         status="installed",
