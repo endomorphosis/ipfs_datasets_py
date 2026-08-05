@@ -13,6 +13,9 @@ requires-python = ">=3.12"
 # prefer the vendored ipfs_kit_py/ipfs_accelerate_py checkouts when present.
 dynamic = ["dependencies"]
 
+# FormalVerificationDistributionContract@1 (FVT-G215 / FVT-084).
+# Shared formal-verification Python bindings stay co-declared across
+# setup.py, requirements*.txt, and project.optional-dependencies.
 [tool.ipfs-datasets-py.dependency-inventory]
 schema-version = "ipfs-datasets-dependency-inventory/v1"
 runtime-authority = "setup.py:install_requires"
