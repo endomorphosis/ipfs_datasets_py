@@ -39,6 +39,8 @@ try:
     from .lazy_installer import (
         ProverInstallEvent,
         ProgressCallback,
+        default_first_use_prover_portfolio,
+        ensure_default_prover_portfolio,
         ensure_prover_executable,
         ensure_managed_ergoai_if_missing,
         find_executable,
@@ -49,6 +51,8 @@ try:
 except ImportError:
     ProverInstallEvent = None
     ProgressCallback = None
+    default_first_use_prover_portfolio = None
+    ensure_default_prover_portfolio = None
     ensure_prover_executable = None
     ensure_managed_ergoai_if_missing = None
     find_executable = None
@@ -187,6 +191,8 @@ __all__ = [
     "find_executable",
     "ensure_prover_executable",
     "ensure_managed_ergoai_if_missing",
+    "ensure_default_prover_portfolio",
+    "default_first_use_prover_portfolio",
     "lazy_install_prover",
     "lazy_installs_enabled",
     "prover_lazy_install_enabled",
