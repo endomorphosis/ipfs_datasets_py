@@ -177,6 +177,33 @@ def _roles_from_revision_attachments(case: Any) -> set[str]:
     return roles
 
 
+def _condition_appears_met(
+    conditional_on: str,
+    roles: set[str],
+    kinds_present: set[str],
+) -> bool:
+    """Heuristic: whether a rule condition is in play for this package."""
+    cond = str(conditional_on or "").strip().lower()
+    if not cond:
+        return True
+    if cond in {"claims_amended", "claim_amendment", "claims_amended_true"}:
+        return (
+            "amended_claims" in roles
+            or "claim_amendment" in kinds_present
+            or "claims" in kinds_present
+        )
+    if cond in {"drawings_amended", "drawing_amendment"}:
+        return "amended_drawings" in roles or "drawings" in kinds_present
+    if cond in {"specification_amended", "spec_amended"}:
+        return (
+            "amended_specification" in roles
+            or "substitute_specification" in roles
+            or "specification" in kinds_present
+        )
+    # Unknown conditions: treat as applicable so we don't hide gaps
+    return True
+
+
 def _find_latest_prior_art_run(
     application_number: str,
     *,
@@ -521,6 +548,14 @@ def audit_filing_rules(
                 continue
             kind = str(ev.get("evidence_kind") or "")
             mandatory = bool(ev.get("mandatory", True))
+            conditional_on = str(ev.get("conditional_on") or "").strip()
+            # Conditional evidence (e.g. claim_amendment when claims_amended) is
+            # only mandatory if the condition appears satisfied by package roles.
+            if conditional_on:
+                condition_met = _condition_appears_met(conditional_on, roles, kinds_present)
+                if not condition_met:
+                    # Not applicable — skip as not required for this package
+                    continue
             if kind == "signature_presence":
                 evidence_gaps.append(
                     {
@@ -542,6 +577,7 @@ def audit_filing_rules(
                         "mandatory": True,
                         "status": "missing",
                         "expected_roles": list(mapped_roles),
+                        "conditional_on": conditional_on or None,
                         "message": (
                             f"Mandatory evidence '{kind}' not found in package "
                             f"(look for roles {list(mapped_roles) or ['(none mapped)']})."
@@ -556,6 +592,7 @@ def audit_filing_rules(
                         "mandatory": False,
                         "status": "optional_missing",
                         "expected_roles": list(mapped_roles),
+                        "conditional_on": conditional_on or None,
                     }
                 )
 
