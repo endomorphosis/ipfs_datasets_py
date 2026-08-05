@@ -800,13 +800,46 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                         "authority_corpus": str(path),
                         "hint": (
                             "Copy scraped CFR/USC/MPEP text files into this tree "
-                            "or set USPTO_AUTHORITY_CORPUS_ROOT"
+                            "or set USPTO_AUTHORITY_CORPUS_ROOT. "
+                            "Hybrid BM25/graph also loads from Hugging Face "
+                            "justicedao/patent-legal-{corpus,bm25,vectors,knowledge-graph}."
                         ),
                     },
                     indent=2,
                 )
             )
             return 0
+
+        if action == "search-law":
+            from ipfs_datasets_py.processors.domains.uspto.public_legal_index_client import (
+                search_public_legal,
+            )
+
+            query = str(getattr(args, "query", None) or args.note or "").strip()
+            if not query and args.revision_id:
+                case = load_revision_case(str(args.revision_id), state_root=state)
+                from ipfs_datasets_py.processors.domains.uspto.public_legal_index_client import (
+                    retrieve_for_revision_case,
+                )
+
+                result = retrieve_for_revision_case(case, top_k=int(args.top_k or 8))
+                print(json.dumps(result, indent=2, default=str))
+                return 0 if result.get("ok") else 1
+            if not query:
+                print(
+                    json.dumps(
+                        {
+                            "ok": False,
+                            "error": "pass --query or --revision-id for search-law",
+                        },
+                        indent=2,
+                    ),
+                    file=sys.stderr,
+                )
+                return 2
+            result = search_public_legal(query, top_k=int(args.top_k or 8))
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("hit_count", 0) >= 0 else 1
 
         if action == "mark-submitted":
             case = mark_revision_submitted(
@@ -871,6 +904,7 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                         "prepare",
                         "guide",
                         "seed-corpus",
+                        "search-law",
                         "filing-assist",
                         "mark-submitted",
                         "close",
@@ -1347,6 +1381,7 @@ def build_parser() -> argparse.ArgumentParser:
             "prepare",
             "guide",
             "seed-corpus",
+            "search-law",
             "filing-assist",
             "mark-submitted",
             "close",
@@ -1416,6 +1451,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-law-guide",
         action="store_true",
         help="With prepare: skip filing-rule / authority law guide",
+    )
+    rev.add_argument(
+        "--query",
+        default="",
+        help="With search-law: free-text query against HF patent-legal hybrid index",
+    )
+    rev.add_argument(
+        "--top-k",
+        type=int,
+        default=8,
+        help="With search-law: number of hybrid hits (default 8)",
     )
     rev.set_defaults(func=_cmd_revise)
 

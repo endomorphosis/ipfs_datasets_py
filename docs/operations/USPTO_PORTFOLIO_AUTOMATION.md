@@ -280,12 +280,17 @@ python3 scripts/ops/uspto/portfolio_cli.py revise attach \
 python3 scripts/ops/uspto/portfolio_cli.py revise prepare \
   --revision-id rev-18654466-…
 
-# Law guide only (filing rules + citations + optional scraped CFR/USC/MPEP excerpts)
+# Law guide only (filing rules + citations + HF hybrid index + local excerpts)
 python3 scripts/ops/uspto/portfolio_cli.py revise seed-corpus
 # Drop text under ~/.local/state/.../authority_corpus/ (see README + index.json)
 python3 scripts/ops/uspto/portfolio_cli.py revise guide \
   --revision-id rev-18654466-… \
   --application-type utility
+
+# Direct hybrid search over JusticeDAO Hub indexes (BM25 + vector + knowledge graph)
+# Repos: justicedao/patent-legal-{corpus,bm25,vectors,knowledge-graph}
+python3 scripts/ops/uspto/portfolio_cli.py revise search-law \
+  --query "37 CFR 1.121 claim amendments status identifiers"
 
 # 6) Attended Patent Center assist (YOU still Sign / Pay / Submit)
 python3 scripts/ops/uspto/portfolio_cli.py revise filing-assist \
