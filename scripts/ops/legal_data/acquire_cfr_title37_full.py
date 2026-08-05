@@ -133,6 +133,8 @@ _MONTHS: Final = {
 _SECTION_NUM_RE = re.compile(
     r"(?P<section>\d+(?:\.\d+)*(?:[A-Za-z]+)?)",
 )
+# Cap expanded reserved ranges (e.g. §§ 11.508-11.700) to keep materialization bounded.
+_MAX_RANGE_EXPANSION: Final = 500
 
 PathLike = Union[str, Path]
 JsonMapping = Mapping[str, Any]
@@ -430,19 +432,44 @@ def _section_text_and_digest(
     return out
 
 
+def _part_for_section_token(section: str) -> str | None:
+    """Return catalog part for a dotted section token when known."""
+
+    token = normalize_section_token(section)
+    if not token or "." not in token:
+        # Try exact membership across catalog parts (rare undotted forms).
+        for part, secs in TITLE37_SECTION_CATALOG.items():
+            if token in secs:
+                return part
+        return None
+    head = token.split(".", 1)[0]
+    if head in TITLE37_PART_METADATA:
+        return head
+    return None
+
+
 def _build_inventory_with_texts(
     identity: EditionIdentity,
     *,
     section_digests: Mapping[str, str],
     section_urls: Mapping[str, str] | None = None,
+    include_edition_extras: bool = False,
 ) -> tuple[InventorySectionEntry, ...]:
-    """Full catalog inventory; present when digest known, else gap."""
+    """Full catalog inventory; present when digest known, else gap.
+
+    When ``include_edition_extras`` is true (live annual packages), also emit
+    present rows for package sections under known Title 37 parts that are not
+    in the static catalog. Catalog coverage remains mandatory; extras are an
+    edition-specific superset allowed by the inventory contract.
+    """
 
     urls = dict(section_urls or {})
     entries: list[InventorySectionEntry] = []
+    catalog_sections: set[str] = set()
     for part in TITLE37_PARTS:
         meta = TITLE37_PART_METADATA[part]
         for section in TITLE37_SECTION_CATALOG[part]:
+            catalog_sections.add(section)
             granule = _govinfo_granule_id(
                 package_id=identity.package_id, part=part, section=section
             )
@@ -475,6 +502,38 @@ def _build_inventory_with_texts(
                         source_url=default_url,
                     )
                 )
+
+    if include_edition_extras:
+        extras = sorted(
+            sec
+            for sec in section_digests
+            if sec not in catalog_sections and _part_for_section_token(sec)
+        )
+        for section in extras:
+            part = _part_for_section_token(section)
+            if part is None:
+                continue
+            meta = TITLE37_PART_METADATA[part]
+            granule = _govinfo_granule_id(
+                package_id=identity.package_id, part=part, section=section
+            )
+            default_url = (
+                f"https://www.govinfo.gov/content/pkg/"
+                f"{identity.package_id}/xml/{granule}.xml"
+            )
+            entries.append(
+                InventorySectionEntry(
+                    part=part,
+                    section=section,
+                    heading=meta.get("heading", ""),
+                    chapter=meta.get("chapter", ""),
+                    granule_id=granule,
+                    presence=SectionPresence.PRESENT,
+                    content_sha256=section_digests[section],
+                    source_url=urls.get(section, default_url),
+                )
+            )
+
     if not entries:
         raise EmptyInventoryError("Title 37 catalog produced an empty inventory")
     return tuple(entries)
@@ -702,15 +761,66 @@ def extract_section_number(sectno_text: str) -> str | None:
     return normalize_section_token(match.group("section"))
 
 
-def parse_cfr_volume_xml(xml_bytes: bytes) -> tuple[dict[str, str], dict[str, str]]:
+def expand_section_range_token(token: str) -> list[str]:
+    """Expand reserved-range SECTNO labels into individual section tokens.
+
+    GovInfo annual XML often uses compact reserved markers such as
+    ``§§ 1.106-1.108 [Reserved]``. The catalog inventories each number
+    separately, so a single range label must fan out to every integer leaf
+    in the inclusive span (same dotted prefix).
+
+    Non-range tokens are returned unchanged. Pathological spans larger than
+    :data:`_MAX_RANGE_EXPANSION` are left unexpanded.
+    """
+
+    try:
+        normalized = normalize_section_token(token)
+    except Exception:
+        normalized = str(token or "").strip()
+    if not normalized or "-" not in normalized:
+        return [normalized] if normalized else []
+    if normalized.count("-") != 1:
+        return [normalized]
+    left_raw, right_raw = normalized.split("-", 1)
+    try:
+        left = normalize_section_token(left_raw)
+        right = normalize_section_token(right_raw)
+    except Exception:
+        return [normalized]
+    left_parts = left.split(".")
+    right_parts = right.split(".")
+    if len(left_parts) != len(right_parts) or left_parts[:-1] != right_parts[:-1]:
+        return [normalized]
+    try:
+        start = int(left_parts[-1])
+        end = int(right_parts[-1])
+    except ValueError:
+        return [normalized]
+    if end < start or (end - start) > _MAX_RANGE_EXPANSION:
+        return [normalized]
+    prefix = ".".join(left_parts[:-1])
+    expanded: list[str] = []
+    for number in range(start, end + 1):
+        token_out = f"{prefix}.{number}" if prefix else str(number)
+        expanded.append(normalize_section_token(token_out))
+    return expanded or [normalized]
+
+
+def parse_cfr_volume_xml(
+    xml_bytes: bytes,
+) -> tuple[dict[str, str], dict[str, str], set[str]]:
     """Parse GovInfo annual CFR volume XML into section texts + metadata.
 
     Returns
     -------
     sections:
-        Map of normalized section token -> plain-text body.
+        Map of normalized section token -> plain-text body (includes leaves
+        expanded from reserved-range SECTNO labels).
     metadata:
         Optional keys such as ``amddate_raw`` / ``date_issued``.
+    direct_sections:
+        Section tokens that appeared as standalone SECTNO labels (not only
+        via range expansion). Used for edition-specific inventory extras.
     """
 
     try:
@@ -720,6 +830,7 @@ def parse_cfr_volume_xml(xml_bytes: bytes) -> tuple[dict[str, str], dict[str, st
 
     sections: dict[str, str] = {}
     metadata: dict[str, str] = {}
+    direct_sections: set[str] = set()
 
     for element in root.iter():
         name = _element_local_name(element.tag).upper()
@@ -748,16 +859,20 @@ def parse_cfr_volume_xml(xml_bytes: bytes) -> tuple[dict[str, str], dict[str, st
             body = subject
         if not body:
             continue
-        # Prefer the longest body if a section appears more than once.
-        previous = sections.get(section)
-        if previous is None or len(body) > len(previous):
-            sections[section] = body
+        # Fan out reserved-range labels onto every catalog leaf they cover.
+        expanded_tokens = expand_section_range_token(section)
+        if len(expanded_tokens) == 1 and "-" not in expanded_tokens[0]:
+            direct_sections.add(expanded_tokens[0])
+        for expanded in expanded_tokens:
+            previous = sections.get(expanded)
+            if previous is None or len(body) > len(previous):
+                sections[expanded] = body
 
     if not sections:
         raise CfrTitle37AcquireError(
             "CFR volume XML contained no parseable SECTION/SECTNO entries"
         )
-    return sections, metadata
+    return sections, metadata, direct_sections
 
 
 def download_govinfo_title37_volumes(
@@ -843,26 +958,36 @@ def acquire_from_govinfo_live(
     )
 
     section_texts: dict[str, str] = {}
+    direct_sections: set[str] = set()
     date_issued = identity.date_issued
     for volume in volumes:
-        parsed_sections, metadata = parse_cfr_volume_xml(volume["payload"])
+        parsed_sections, metadata, volume_direct = parse_cfr_volume_xml(
+            volume["payload"]
+        )
         if metadata.get("date_issued") and not date_issued:
             date_issued = metadata["date_issued"]
+        direct_sections.update(volume_direct)
         for section, text in parsed_sections.items():
             previous = section_texts.get(section)
             if previous is None or len(text) > len(previous):
                 section_texts[section] = text
 
-    # Restrict presence to the Title 37 catalog; extras stay out of inventory.
     catalog_sections = {
         normalize_section_token(sec)
         for part in TITLE37_PARTS
         for sec in TITLE37_SECTION_CATALOG[part]
     }
+    # Keep catalog-mapped text (including reserved-range expansions) plus
+    # standalone edition-specific SECTNO labels under known Title 37 parts.
+    keep_sections = set(catalog_sections) | {
+        sec
+        for sec in direct_sections
+        if sec in section_texts and _part_for_section_token(sec) is not None
+    }
     section_texts = {
         sec: text
         for sec, text in section_texts.items()
-        if sec in catalog_sections and text.strip()
+        if sec in keep_sections and text.strip()
     }
     if not section_texts:
         raise LiveAcquisitionUnavailableError(
@@ -910,6 +1035,7 @@ def acquire_from_govinfo_live(
         identity,
         section_digests=section_digests,
         section_urls=section_urls,
+        include_edition_extras=True,
     )
     gaps = _gap_records_for(
         inventory,
