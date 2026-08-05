@@ -2990,7 +2990,7 @@ Program invariants:
 
 ## PATLAW-181 Acquire full annual CFR Title 37 text package for public corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -3040,7 +3040,7 @@ Program invariants:
 
 ## PATLAW-183 Acquire full MPEP section-level texts for public corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -3065,7 +3065,7 @@ Program invariants:
 
 ## PATLAW-184 Define USPTO guidance PDF inventory and extraction contracts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -3090,7 +3090,7 @@ Program invariants:
 
 ## PATLAW-185 Acquire USPTO guidance PDFs and extract indexable public text
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -3115,7 +3115,7 @@ Program invariants:
 
 ## PATLAW-186 Integrate full CFR MPEP and guidance PDFs into production public-legal recipe
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -3140,7 +3140,7 @@ Program invariants:
 
 ## PATLAW-187 Rebuild public legal corpus materialization from full-authority recipe
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -3165,7 +3165,7 @@ Program invariants:
 
 ## PATLAW-188 Rebuild BM25 index from full-authority public legal corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -3190,7 +3190,7 @@ Program invariants:
 
 ## PATLAW-189 Rebuild vector index from full-authority public legal corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -3215,7 +3215,7 @@ Program invariants:
 
 ## PATLAW-190 Rebuild knowledge graph from full-authority public legal corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -3240,7 +3240,7 @@ Program invariants:
 
 ## PATLAW-191 Package admit stage verify and seal full-authority Hub republication
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false

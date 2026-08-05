@@ -931,17 +931,94 @@ class OdpPublicSearchAdapter:
 
 
 def _build_odp_search_body(query: PublicSearchQuery) -> dict[str, Any]:
-    """Compose a compact ODP search body from an explicit query."""
-    # Prefer structured q string; include classification filters when present.
-    parts = [query.query_text.strip()]
-    if query.classification_codes:
-        codes = " OR ".join(query.classification_codes)
-        parts.append(f"({codes})")
-    q_text = " ".join(p for p in parts if p)
+    """Compose a compact ODP search body from an explicit query.
+
+    Live ODP accepts free-text ``q`` plus fielded clauses such as
+    ``applicationMetaData.inventionTitle:…`` and CPC symbols. Prefer
+    keyword AND for multi-token claim text so results are tighter than a
+    bag-of-words free search. Nested ``pagination`` is set by the client.
+    """
+    text = (query.query_text or "").strip()
+    family = query.family.value if hasattr(query.family, "value") else str(query.family or "")
+
+    # Classification-only queries → fielded CPC/title-safe search
+    if family.startswith("classification") and query.classification_codes:
+        codes = [c.strip() for c in query.classification_codes if str(c).strip()]
+        if len(codes) == 1:
+            q_text = f"applicationMetaData.cpcClassificationBag.cpcSymbolText:{codes[0]}"
+            # Fallback plain code also works as free text for many CPCs
+            if not codes[0]:
+                q_text = text
+        else:
+            joined = " OR ".join(codes)
+            q_text = f"({joined})"
+    elif family == "citation_expansion" or family == "family_expansion":
+        # Prefer application/publication number lookup when seeds look numeric
+        seeds = list(query.filters.get("seed_document_ids", "").split()) if query.filters else []
+        # PublicSearchQuery has no seed field; use query_text tokens
+        tokens = [t for t in re.findall(r"[A-Za-z0-9]{5,}", text)]
+        app_like = [t for t in tokens if t.isdigit() and len(t) >= 8]
+        if app_like:
+            q_text = " OR ".join(f"applicationNumberText:{a}" for a in app_like[:5])
+        else:
+            q_text = text
+    else:
+        # Keyword / claim-limitation free text
+        # Use explicit keywords when provided; else tokenize query_text
+        kws = [k.strip() for k in (query.keywords or ()) if str(k).strip()]
+        if not kws:
+            kws = [
+                t
+                for t in re.findall(r"[A-Za-z][A-Za-z0-9\-]{2,}", text)
+                if t.lower()
+                not in {
+                    "the",
+                    "and",
+                    "for",
+                    "with",
+                    "from",
+                    "method",
+                    "system",
+                    "device",
+                    "comprising",
+                    "including",
+                    "wherein",
+                    "claim",
+                    "said",
+                }
+            ][:8]
+        if len(kws) >= 2:
+            # AND tightens relevance (ODP free-text OR-ish bag is too broad)
+            q_text = " AND ".join(kws[:6])
+        elif kws:
+            q_text = kws[0]
+        else:
+            q_text = text or "*:*"
+
+        # Boost title field when we have a short distinctive phrase
+        if len(kws) >= 2 and len(kws[0]) > 4:
+            title_clause = f'applicationMetaData.inventionTitle:({kws[0]})'
+            # Prefer free-text AND primary; title as alternate not combined poorly
+            # Keep free-text AND as primary q (most reliable on live ODP).
+            q_text = " AND ".join(kws[:6])
+
+        if query.classification_codes:
+            codes = [c.strip() for c in query.classification_codes if str(c).strip()]
+            if codes:
+                # Append first CPC as free-text token (fielded CPC can 404 when empty)
+                q_text = f"({q_text}) AND ({codes[0]})"
+
     body: dict[str, Any] = {"q": q_text}
-    # Optional metadata filters recorded for replay matching.
+    # Optional metadata filters recorded for replay — only pass through string
+    # keys that are safe; unknown filter blobs can 400 the live API.
     if query.filters:
-        body["filters"] = dict(query.filters)
+        safe = {
+            str(k): str(v)
+            for k, v in dict(query.filters).items()
+            if str(k) and str(v) and not str(k).startswith("_")
+        }
+        if safe:
+            body["filters"] = safe
     return body
 
 
@@ -1013,11 +1090,73 @@ def _odp_item_document_id(item: Any) -> str:
                 return f"doc:odp:{val}"
         meta = item.get("applicationMetaData") or {}
         if isinstance(meta, Mapping):
-            for key in ("applicationNumberText", "patentNumber"):
+            for key in (
+                "applicationNumberText",
+                "patentNumber",
+                "earliestPublicationNumber",
+                "pctPublicationNumber",
+            ):
                 val = meta.get(key)
                 if val:
                     return f"doc:odp:{val}"
     return f"doc:odp:{content_digest(item if not hasattr(item, 'to_dict') else item)[:16]}"
+
+
+def _odp_item_identifiers(item: Mapping[str, Any]) -> dict[str, str]:
+    identifiers: dict[str, str] = {}
+    for key in (
+        "applicationNumberText",
+        "patentNumber",
+        "publicationNumber",
+    ):
+        if item.get(key):
+            identifiers[key] = str(item[key]).strip()
+    meta = item.get("applicationMetaData")
+    if isinstance(meta, Mapping):
+        mapping = {
+            "applicationNumberText": "applicationNumberText",
+            "patentNumber": "patentNumber",
+            "publicationNumber": "publicationNumber",
+            "earliestPublicationNumber": "publicationNumber",
+            "pctPublicationNumber": "pctPublicationNumber",
+            "filingDate": "filingDate",
+            "effectiveFilingDate": "effectiveFilingDate",
+            "applicationStatusDescriptionText": "status",
+            "firstInventorName": "firstInventorName",
+            "class": "us_class",
+            "subclass": "us_subclass",
+        }
+        for src, dest in mapping.items():
+            val = meta.get(src)
+            if val and dest not in identifiers:
+                identifiers[dest] = str(val).strip()
+        # CPC symbols (first few)
+        cpc_bag = meta.get("cpcClassificationBag") or []
+        if isinstance(cpc_bag, list):
+            codes = []
+            for row in cpc_bag[:8]:
+                if isinstance(row, Mapping):
+                    code = (
+                        row.get("cpcSymbolText")
+                        or row.get("symbolText")
+                        or row.get("cpcClass")
+                        or ""
+                    )
+                    if code:
+                        codes.append(str(code))
+            if codes:
+                identifiers["cpc"] = ";".join(codes)
+    # Preferred patent_number for Google Patents deep links
+    for cand in (
+        identifiers.get("patentNumber"),
+        identifiers.get("publicationNumber"),
+        identifiers.get("pctPublicationNumber"),
+        identifiers.get("applicationNumberText"),
+    ):
+        if cand:
+            identifiers.setdefault("patent_number", re.sub(r"\s+", "", str(cand)))
+            break
+    return identifiers
 
 
 def _odp_items_to_journal_hits(
@@ -1037,30 +1176,40 @@ def _odp_items_to_journal_hits(
         # Score: deterministic reverse-rank score (no model ranking from ODP).
         score = float(max(rank_cutoff - index, 1))
         title = ""
+        status = ""
+        filing = ""
         if isinstance(item, Mapping):
             meta = item.get("applicationMetaData") or {}
             if isinstance(meta, Mapping):
                 title = str(meta.get("inventionTitle") or meta.get("title") or "")
+                status = str(meta.get("applicationStatusDescriptionText") or "")
+                filing = str(
+                    meta.get("filingDate") or meta.get("effectiveFilingDate") or ""
+                )[:10]
             title = title or str(item.get("inventionTitle") or "")
-        excerpt = (title or doc_id)[:512]
+        excerpt_parts = [p for p in (title, status, filing) if p]
+        excerpt = " | ".join(excerpt_parts)[:512] if excerpt_parts else doc_id[:512]
         identifiers: dict[str, str] = {}
         if isinstance(item, Mapping):
-            for key in (
-                "applicationNumberText",
-                "patentNumber",
-                "publicationNumber",
-            ):
-                if item.get(key):
-                    identifiers[key] = str(item[key])
-            meta = item.get("applicationMetaData")
-            if isinstance(meta, Mapping):
-                for key in (
-                    "applicationNumberText",
-                    "patentNumber",
-                    "publicationNumber",
-                ):
-                    if meta.get(key) and key not in identifiers:
-                        identifiers[key] = str(meta[key])
+            identifiers = _odp_item_identifiers(item)
+        meta_out = {
+            "source": "odp_search",
+            "adapter": ODP_PUBLIC_ADAPTER_NAME,
+        }
+        if title:
+            meta_out["title"] = title[:400]
+        if status:
+            meta_out["status"] = status[:200]
+        if filing:
+            meta_out["filing_date"] = filing
+        # Human review deep links (no scraping)
+        patent_token = identifiers.get("patent_number") or ""
+        if patent_token:
+            clean = re.sub(r"[^A-Za-z0-9]", "", patent_token).upper()
+            if clean:
+                meta_out["google_patents_url"] = (
+                    f"https://patents.google.com/patent/{clean}/en"
+                )
         out.append(
             JournalHit(
                 document_id=doc_id,
@@ -1078,7 +1227,7 @@ def _odp_items_to_journal_hits(
                 ),
                 passage_excerpt=excerpt or None,
                 identifiers=identifiers,
-                metadata={"source": "odp_search"},
+                metadata=meta_out,
             )
         )
     return tuple(out)

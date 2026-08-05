@@ -945,15 +945,21 @@ class PatentFileWrapperClient:
             body: dict[str, Any] = dict(query)
         else:
             body = {"q": str(query)}
-        body.setdefault(
-            "pagination",
-            {"offset": int(offset), "limit": int(page_limit)},
-        )
-        # Prefer explicit top-level pagination when fixture/search expects it.
-        if "offset" not in body:
-            body["offset"] = int(offset)
-        if "limit" not in body:
-            body["limit"] = int(page_limit)
+        # USPTO ODP live API requires nested pagination only. Top-level
+        # offset/limit returns HTTP 400 Bad Request (observed 2026-08).
+        # Always set nested pagination; strip accidental top-level keys unless
+        # the caller explicitly opted into a legacy/fixture body via metadata.
+        pagination = body.get("pagination")
+        if not isinstance(pagination, Mapping):
+            pagination = {}
+        body["pagination"] = {
+            "offset": int(pagination.get("offset", offset)),
+            "limit": int(pagination.get("limit", page_limit)),
+        }
+        # Remove top-level offset/limit that break the live API. Recorded
+        # transports match on path/method, not body shape.
+        body.pop("offset", None)
+        body.pop("limit", None)
 
         result = self._http.request(
             "POST",
