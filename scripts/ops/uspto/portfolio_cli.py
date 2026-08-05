@@ -1067,11 +1067,51 @@ def _cmd_audit_submission(args: argparse.Namespace) -> int:
     from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
         SubmissionComplianceAuditError,
         audit_submission,
+        list_compliance_audits,
+        show_compliance_audit,
     )
 
     state = _state_root(args)
     state.mkdir(parents=True, exist_ok=True)
     try:
+        if bool(getattr(args, "list_audits", False)):
+            result = list_compliance_audits(
+                application_number=str(args.application_number or "") or None,
+                state_root=state,
+                limit=int(getattr(args, "limit", 20) or 20),
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0
+
+        if bool(getattr(args, "show_audit", False)):
+            result = show_compliance_audit(
+                application_number=str(args.application_number or "") or None,
+                audit_path=str(getattr(args, "audit_path", "") or "") or None,
+                audit_dir=str(getattr(args, "audit_dir", "") or "") or None,
+                state_root=state,
+                write_markdown=not bool(getattr(args, "no_markdown", False)),
+            )
+            # Compact unless verbose
+            if not bool(getattr(args, "verbose", False)):
+                result = {
+                    k: result.get(k)
+                    for k in (
+                        "ok",
+                        "audit_path",
+                        "markdown_path",
+                        "overall_status",
+                        "application_number",
+                        "revision_id",
+                        "action_plan",
+                        "ids_queue",
+                        "filing_missing_mandatory",
+                        "prior_art_status",
+                        "disclaimer",
+                    )
+                }
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
         result = audit_submission(
             application_number=str(args.application_number or "") or None,
             revision_id=str(args.revision_id or "") or None,
@@ -1472,6 +1512,95 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
             print(json.dumps(out, indent=2, default=str))
             return 0 if result.get("ok") else 1
 
+        if action in ("ids-list", "ids-review", "ids-export"):
+            from ipfs_datasets_py.processors.domains.uspto.ids_review_operator import (
+                IdsReviewOperatorError,
+                export_ids_ready_checklist,
+                list_ids_candidates,
+                load_ids_queue,
+                resolve_ids_queue_path,
+                review_ids_candidate,
+            )
+
+            try:
+                qpath = resolve_ids_queue_path(
+                    queue_path=str(getattr(args, "queue_path", "") or "") or None,
+                    run_dir=str(args.run_dir or "") or None,
+                    application_number=str(args.application_number or "") or None,
+                    queue_id=str(getattr(args, "queue_id", "") or "") or None,
+                    state_root=state,
+                )
+            except IdsReviewOperatorError as exc:
+                print(
+                    json.dumps(
+                        {
+                            "ok": False,
+                            "code": getattr(exc, "code", None),
+                            "message": str(exc),
+                        },
+                        indent=2,
+                    ),
+                    file=sys.stderr,
+                )
+                return 2
+
+            if action == "ids-list":
+                queue = load_ids_queue(qpath)
+                result = list_ids_candidates(queue)
+                result["queue_path"] = str(qpath)
+                print(json.dumps(result, indent=2, default=str))
+                return 0
+
+            if action == "ids-export":
+                out_path = str(getattr(args, "output", "") or "") or None
+                result = export_ids_ready_checklist(qpath, output_path=out_path)
+                print(json.dumps(result, indent=2, default=str))
+                return 0 if result.get("ok") else 1
+
+            # ids-review
+            cand = str(getattr(args, "candidate_id", "") or "").strip()
+            if not cand:
+                print(
+                    json.dumps(
+                        {
+                            "ok": False,
+                            "error": "ids-review requires --candidate-id",
+                        },
+                        indent=2,
+                    ),
+                    file=sys.stderr,
+                )
+                return 2
+            reviewer = str(
+                getattr(args, "acknowledger", None) or "operator:local"
+            ).strip()
+            try:
+                result = review_ids_candidate(
+                    qpath,
+                    candidate_id=cand,
+                    reviewer_id=reviewer,
+                    relevance=str(getattr(args, "relevance", "") or "") or None,
+                    materiality=str(getattr(args, "materiality", "") or "") or None,
+                    promote=bool(getattr(args, "promote", False)),
+                    reject=bool(getattr(args, "reject", False)),
+                    notes=str(getattr(args, "note", "") or ""),
+                )
+            except IdsReviewOperatorError as exc:
+                print(
+                    json.dumps(
+                        {
+                            "ok": False,
+                            "code": getattr(exc, "code", None),
+                            "message": str(exc),
+                        },
+                        indent=2,
+                    ),
+                    file=sys.stderr,
+                )
+                return 2
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
         if action == "pps-assist":
             helper = Path(__file__).resolve().parent / "attended_pps_assist.py"
             run_dir = _resolve_prior_art_run_dir(args, state)
@@ -1515,6 +1644,9 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
                         "acknowledge",
                         "distinguish-matrix",
                         "ids-queue",
+                        "ids-list",
+                        "ids-review",
+                        "ids-export",
                     ],
                 },
                 indent=2,
@@ -2135,6 +2267,9 @@ def build_parser() -> argparse.ArgumentParser:
             "acknowledge",
             "distinguish-matrix",
             "ids-queue",
+            "ids-list",
+            "ids-review",
+            "ids-export",
         ),
         help="prior-art workflow action",
     )
@@ -2359,6 +2494,46 @@ def build_parser() -> argparse.ArgumentParser:
         default=40,
         help="With ids-queue: max IDS candidates from prior-art hits (default 40)",
     )
+    pa.add_argument(
+        "--queue-path",
+        default="",
+        help="With ids-list/ids-review/ids-export: path to ids_review_queue.json",
+    )
+    pa.add_argument(
+        "--queue-id",
+        default="",
+        help="With ids-list/ids-review: queue id under state-root/ids_queues/",
+    )
+    pa.add_argument(
+        "--candidate-id",
+        default="",
+        help="With ids-review: candidate id to update",
+    )
+    pa.add_argument(
+        "--relevance",
+        default="",
+        help="With ids-review: relevant|not_relevant|uncertain",
+    )
+    pa.add_argument(
+        "--materiality",
+        default="",
+        help="With ids-review: material|not_material|uncertain",
+    )
+    pa.add_argument(
+        "--promote",
+        action="store_true",
+        help="With ids-review: promote to IDS-ready after relevance+materiality",
+    )
+    pa.add_argument(
+        "--reject",
+        action="store_true",
+        help="With ids-review: reject candidate",
+    )
+    pa.add_argument(
+        "--output",
+        default="",
+        help="With ids-export: output JSON path (markdown written alongside)",
+    )
     pa.set_defaults(func=_cmd_prior_art)
 
     audit = sub.add_parser(
@@ -2410,6 +2585,44 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-ids-queue",
         action="store_true",
         help="Do not build IDS candidate queue from prior-art hits",
+    )
+    audit.add_argument(
+        "--list",
+        dest="list_audits",
+        action="store_true",
+        help="List recent compliance audits instead of running a new one",
+    )
+    audit.add_argument(
+        "--show",
+        dest="show_audit",
+        action="store_true",
+        help="Show latest (or specified) audit + write markdown report",
+    )
+    audit.add_argument(
+        "--audit-path",
+        default="",
+        help="With --show: path to submission_compliance_audit.json",
+    )
+    audit.add_argument(
+        "--audit-dir",
+        default="",
+        help="With --show: audit directory containing the JSON",
+    )
+    audit.add_argument(
+        "--limit",
+        type=int,
+        default=20,
+        help="With --list: max audits to return (default 20)",
+    )
+    audit.add_argument(
+        "--no-markdown",
+        action="store_true",
+        help="With --show: skip writing .md report",
+    )
+    audit.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Include full audit/summary payloads in stdout",
     )
     audit.set_defaults(func=_cmd_audit_submission)
 

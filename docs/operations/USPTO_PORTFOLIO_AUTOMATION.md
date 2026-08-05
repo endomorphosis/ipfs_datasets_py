@@ -282,11 +282,31 @@ Also produced on audit:
 python3 scripts/ops/uspto/portfolio_cli.py prior-art ids-queue \
   --application-number 18654466 --run-id run-…
 
+# Human IDS review (natural person records judgment — never auto-files)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art ids-list \
+  --application-number 18654466
+python3 scripts/ops/uspto/portfolio_cli.py prior-art ids-review \
+  --application-number 18654466 \
+  --candidate-id ids-cand:… \
+  --relevance relevant --materiality material --promote \
+  --acknowledger "operator:you"
+python3 scripts/ops/uspto/portfolio_cli.py prior-art ids-export \
+  --application-number 18654466
+
+# List / show audits + markdown report
+python3 scripts/ops/uspto/portfolio_cli.py audit-submission --list \
+  --application-number 18654466
+python3 scripts/ops/uspto/portfolio_cli.py audit-submission --show \
+  --application-number 18654466
+
 # prepare auto-runs audit + IDS queue (skip with --no-audit / --no-ids-queue)
 python3 scripts/ops/uspto/portfolio_cli.py revise prepare --revision-id rev-…
 ```
 
-Library: `ipfs_datasets_py/processors/domains/uspto/submission_compliance_audit.py`.
+Libraries:
+
+* `ipfs_datasets_py/processors/domains/uspto/submission_compliance_audit.py`
+* `ipfs_datasets_py/processors/domains/uspto/ids_review_operator.py`
 
 ## Prior-art search (claim distinguishability)
 

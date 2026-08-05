@@ -1323,6 +1323,18 @@ def audit_submission(
             # Keep copy under prior-art run as well (already written by builder)
             if (ids_info.get("paths") or {}).get("ids_queue"):
                 paths["ids_queue_run"] = ids_info["paths"]["ids_queue"]
+        # Human-readable markdown report
+        try:
+            md = render_audit_markdown(summary)
+            md_path = out_dir / "submission_compliance_audit.md"
+            md_path.write_text(md, encoding="utf-8")
+            try:
+                os.chmod(md_path, 0o600)
+            except OSError:
+                pass
+            paths["markdown"] = str(md_path)
+        except Exception:
+            pass
         # Attach pointer on revision case when present
         if case is not None and getattr(case, "case_dir", None):
             case_dir = Path(case.case_dir)
@@ -1330,6 +1342,7 @@ def audit_submission(
                 "schema": AUDIT_SCHEMA,
                 "audit_id": audit_id,
                 "audit_path": paths["audit"],
+                "markdown_path": paths.get("markdown"),
                 "overall_status": overall,
                 "action_plan_count": len(action_plan),
                 "ids_candidate_count": summary["ids_queue"].get("candidate_count"),
@@ -1351,6 +1364,220 @@ def audit_submission(
     return result.to_dict()
 
 
+def list_compliance_audits(
+    *,
+    application_number: str | None = None,
+    state_root: Path | None = None,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """List recent compliance audits under the portfolio state tree."""
+    root = Path(state_root) if state_root is not None else default_state_root()
+    base = root / "compliance_audits"
+    rows: list[dict[str, Any]] = []
+    if not base.is_dir():
+        return {
+            "schema": AUDIT_SCHEMA,
+            "ok": True,
+            "count": 0,
+            "audits": [],
+            "disclaimer": AUDIT_DISCLAIMER,
+        }
+    app_filter = (
+        _normalize_app(application_number) if application_number else None
+    )
+    for app_dir in sorted(base.iterdir()):
+        if not app_dir.is_dir():
+            continue
+        if app_filter and app_dir.name != app_filter:
+            continue
+        for audit_dir in sorted(app_dir.iterdir(), reverse=True):
+            man = audit_dir / "submission_compliance_audit.json"
+            if not man.is_file():
+                continue
+            try:
+                payload = _read_json(man)
+            except Exception:
+                payload = {}
+            rows.append(
+                {
+                    "application_number": app_dir.name,
+                    "audit_dir": str(audit_dir),
+                    "audit_path": str(man),
+                    "overall_status": payload.get("overall_status"),
+                    "revision_id": payload.get("revision_id"),
+                    "generated_at_utc": payload.get("generated_at_utc"),
+                    "action_plan_count": payload.get("action_plan_count")
+                    or len(payload.get("action_plan") or []),
+                    "ids_candidates": (payload.get("ids_queue") or {}).get(
+                        "candidate_count"
+                    ),
+                }
+            )
+            if len(rows) >= int(limit):
+                break
+        if len(rows) >= int(limit):
+            break
+    return {
+        "schema": AUDIT_SCHEMA,
+        "ok": True,
+        "count": len(rows),
+        "audits": rows,
+        "disclaimer": AUDIT_DISCLAIMER,
+        "generated_at_utc": utc_now_iso(),
+    }
+
+
+def show_compliance_audit(
+    *,
+    application_number: str | None = None,
+    audit_path: str | Path | None = None,
+    audit_dir: str | Path | None = None,
+    state_root: Path | None = None,
+    write_markdown: bool = True,
+) -> dict[str, Any]:
+    """Load latest (or specified) audit and optionally write a markdown report."""
+    if audit_path:
+        path = Path(audit_path).expanduser().resolve()
+    elif audit_dir:
+        path = Path(audit_dir).expanduser().resolve() / "submission_compliance_audit.json"
+    else:
+        listed = list_compliance_audits(
+            application_number=application_number,
+            state_root=state_root,
+            limit=1,
+        )
+        if not listed["audits"]:
+            raise SubmissionComplianceAuditError(
+                "no compliance audits found", code="audit_not_found"
+            )
+        path = Path(listed["audits"][0]["audit_path"])
+
+    if not path.is_file():
+        raise SubmissionComplianceAuditError(
+            f"audit not found: {path}", code="audit_not_found"
+        )
+    summary = _read_json(path)
+    md_path = None
+    if write_markdown:
+        md = render_audit_markdown(summary)
+        md_path = path.with_name("submission_compliance_audit.md")
+        md_path.write_text(md, encoding="utf-8")
+        try:
+            os.chmod(md_path, 0o600)
+        except OSError:
+            pass
+
+    return {
+        "schema": AUDIT_SCHEMA,
+        "ok": True,
+        "audit_path": str(path),
+        "markdown_path": str(md_path) if md_path else None,
+        "overall_status": summary.get("overall_status"),
+        "application_number": summary.get("application_number"),
+        "revision_id": summary.get("revision_id"),
+        "action_plan": summary.get("action_plan") or [],
+        "ids_queue": summary.get("ids_queue") or {},
+        "filing_missing_mandatory": (
+            (summary.get("filing_rules") or {}).get("missing_mandatory_count")
+        ),
+        "prior_art_status": (summary.get("prior_art") or {}).get("status"),
+        "summary": summary,
+        "disclaimer": AUDIT_DISCLAIMER,
+        "generated_at_utc": utc_now_iso(),
+    }
+
+
+def render_audit_markdown(summary: Mapping[str, Any]) -> str:
+    """Render a human-readable compliance audit report."""
+    lines: list[str] = [
+        "# Submission compliance audit",
+        "",
+        str(summary.get("disclaimer") or AUDIT_DISCLAIMER),
+        "",
+        f"- **Application:** `{summary.get('application_number')}`",
+        f"- **Revision:** `{summary.get('revision_id') or '—'}`",
+        f"- **Overall status:** **{summary.get('overall_status')}**",
+        f"- **Generated:** {summary.get('generated_at_utc')}",
+        "",
+        "## Filing rules (MPEP / CFR pack)",
+        "",
+    ]
+    fr = summary.get("filing_rules") or {}
+    lines.extend(
+        [
+            f"- Status: `{fr.get('status')}`",
+            f"- Scenario: `{fr.get('scenario')}` / stage `{fr.get('prosecution_stage')}`",
+            f"- Matched rules: **{fr.get('matched_count')}**",
+            f"- Missing mandatory evidence: **{fr.get('missing_mandatory_count')}**",
+            f"- CFR cites: {', '.join(fr.get('cfr_citations') or []) or '—'}",
+            f"- MPEP cites: {', '.join(fr.get('mpep_citations') or []) or '—'}",
+            f"- Roles present: {', '.join(fr.get('roles_present') or []) or '—'}",
+            "",
+            "### Evidence gaps",
+            "",
+        ]
+    )
+    gaps = fr.get("evidence_gaps") or []
+    if not gaps:
+        lines.append("_None_")
+    else:
+        for g in gaps[:30]:
+            lines.append(
+                f"- `{g.get('status')}` **{g.get('evidence_kind')}** "
+                f"(rule `{g.get('rule_id')}`) — {g.get('message') or ''}"
+            )
+
+    pa = summary.get("prior_art") or {}
+    lines.extend(
+        [
+            "",
+            "## Prior-art coverage",
+            "",
+            f"- Status: `{pa.get('status')}`",
+            f"- Blocking: {', '.join(pa.get('blocking_codes') or []) or '—'}",
+            f"- Warnings: {', '.join(pa.get('warning_codes') or []) or '—'}",
+            f"- Searched: {', '.join(pa.get('searched_corpora') or []) or '—'}",
+            f"- Unsearched: {', '.join(pa.get('unsearched_corpora') or []) or '—'}",
+            "",
+            "## IDS candidates",
+            "",
+        ]
+    )
+    iq = summary.get("ids_queue") or {}
+    lines.append(
+        f"- Queue ok: `{iq.get('ok')}` — candidates **{iq.get('candidate_count') or 0}** "
+        f"(auto-file blocked)"
+    )
+
+    lines.extend(["", "## Action plan", ""])
+    plan = summary.get("action_plan") or []
+    if not plan:
+        lines.append("_No actions_")
+    else:
+        for i, a in enumerate(plan, 1):
+            lines.append(
+                f"{i}. **{a.get('title')}** (`{a.get('code')}`)\n"
+                f"   `{a.get('command')}`"
+            )
+
+    tips = summary.get("review_tips") or []
+    if tips:
+        lines.extend(["", "## Review tips", ""])
+        for t in tips:
+            lines.append(f"- {t}")
+
+    lines.extend(
+        [
+            "",
+            "## Hard barriers",
+            "",
+            "- Sign / Pay / Submit: **human only** (Patent Center)",
+            "",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 __all__ = [
     "AUDIT_DISCLAIMER",
     "AUDIT_SCHEMA",
@@ -1363,5 +1590,8 @@ __all__ = [
     "build_audit_action_plan",
     "build_ids_queue_from_prior_art_run",
     "inventory_package_dir",
+    "list_compliance_audits",
     "load_prior_art_audit_bundle",
+    "render_audit_markdown",
+    "show_compliance_audit",
 ]
