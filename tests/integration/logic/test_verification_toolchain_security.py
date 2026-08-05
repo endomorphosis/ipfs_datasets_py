@@ -124,9 +124,12 @@ def test_default_registry_lists_every_provider_with_resource_class() -> None:
 def test_required_install_gaps_are_declared() -> None:
     gaps = {gap.gap_id for gap in list_declared_install_gaps()}
     assert InstallGapKind.TLC not in gaps
-    assert InstallGapKind.HYPER_TOOLS in gaps
-    assert InstallGapKind.DATALOG_SECPAL_EXTERNAL in gaps
-    assert InstallGapKind.RUNTIME_MTL_EXTERNAL in gaps
+    # Former hyper/datalog/runtime-mtl gaps closed by reviewed managed pins.
+    assert InstallGapKind.HYPER_TOOLS not in gaps
+    assert InstallGapKind.DATALOG_SECPAL_EXTERNAL not in gaps
+    assert InstallGapKind.RUNTIME_MTL_EXTERNAL not in gaps
+    # Circuit bindings remain a fail-closed non-auto-install gap.
+    assert InstallGapKind.CIRCUIT_WITNESS in gaps
 
     registry = default_registry()
     registry.assert_required_gaps_declared()
@@ -139,14 +142,18 @@ def test_required_install_gaps_are_declared() -> None:
         tlc.pins[0].sha256
         == "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
     )
-    assert get_toolchain("hyperltl").availability is InstallAvailability.DECLARED_GAP
-    assert get_toolchain("autohyper").availability is InstallAvailability.DECLARED_GAP
-    assert get_toolchain("mchyper").availability is InstallAvailability.DECLARED_GAP
-    assert get_toolchain("souffle").availability is InstallAvailability.DECLARED_GAP
-    assert get_toolchain("secpal").availability is InstallAvailability.DECLARED_GAP
+    # Reviewed managed pins (FormalVerificationDeploymentLock@2) — installable.
+    assert get_toolchain("hyperltl").availability is InstallAvailability.MANAGED_PIN
+    assert get_toolchain("autohyper").availability is InstallAvailability.MANAGED_PIN
+    assert get_toolchain("mchyper").availability is InstallAvailability.MANAGED_PIN
+    assert get_toolchain("souffle").availability is InstallAvailability.MANAGED_PIN
+    assert get_toolchain("secpal").availability is InstallAvailability.MANAGED_PIN
     assert (
         get_toolchain("runtime-mtl-external").availability
-        is InstallAvailability.DECLARED_GAP
+        is InstallAvailability.MANAGED_PIN
+    )
+    assert get_toolchain("runtime-mtl-external").installer_entry == (
+        "ensure_runtime_mtl_external"
     )
     # In-process engines remain available without install.
     assert (
@@ -212,9 +219,17 @@ def test_install_requires_explicit_call_and_yes_consent() -> None:
 
 
 def test_declared_gap_and_in_process_providers_refuse_managed_install() -> None:
+    # Circuit bindings remain a true non-auto-install gap.
+    with pytest.raises(ToolchainError, match="declared install gap"):
+        authorize_provider_install("zkp-circuit", yes=True, explicit_call=True)
+    # Former gaps now have reviewed managed installers and authorize cleanly.
     for provider in ("hyperltl", "souffle", "runtime-mtl-external"):
-        with pytest.raises(ToolchainError, match="declared install gap"):
-            authorize_provider_install(provider, yes=True, explicit_call=True)
+        authorize_provider_install(
+            provider,
+            yes=True,
+            explicit_call=True,
+            checksum_verified=True,
+        )
     authorize_provider_install(
         "tlc",
         yes=True,
@@ -578,11 +593,10 @@ def test_registry_to_dict_is_json_friendly_and_complete() -> None:
     assert payload["install_policy"]["requires_explicit_yes"] is True
     assert payload["install_policy"]["forbid_system_package_mutation_in_tests"] is True
     gap_ids = {item["gap_id"] for item in payload["declared_gaps"]}
-    assert {
-        "hyper_tools",
-        "datalog_secpal_external",
-        "runtime_mtl_external",
-    } <= gap_ids
+    assert "circuit_witness" in gap_ids
+    assert "hyper_tools" not in gap_ids
+    assert "datalog_secpal_external" not in gap_ids
+    assert "runtime_mtl_external" not in gap_ids
     assert "tlc" not in gap_ids
     assert len(payload["providers"]) == len(list_toolchains())
 

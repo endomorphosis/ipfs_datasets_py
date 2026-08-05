@@ -18,10 +18,11 @@ semantic probe).  Incomplete rollback or identity evidence cannot certify or
 promote capability/semantic authority; failed publication keeps prior installs.
 
 Environment variables:
-- IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1 enables requested-prover installs for
-  the general solver portfolio. ErgoAI is default-on for first-use / missing
-  managed vendor installs without this flag (package consumers such as
-  SwissKnife); set LAZY_INSTALL_PROVERS=0 or LAZY_INSTALL_ERGOAI=0 to opt out.
+- IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1 enables the full optional portfolio.
+  The reviewed first-use portfolio (Runtime MTL vendor, ATP/SMT, TLA, Tamarin,
+  Soufflé/SecPAL, hyperproperty engines, ErgoAI) is default-on without this
+  flag for package consumers; set LAZY_INSTALL_PROVERS=0 or per-prover
+  LAZY_INSTALL_<PROVER>=0 to opt out.
 - IPFS_DATASETS_PY_LAZY_INSTALL_<PROVER>=0/1 overrides a prover.
 - IPFS_DATASETS_PY_LAZY_INSTALL_STRICT=1 raises on installer failure.
 - IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS=1 permits interactive sudo for Coq.
@@ -187,10 +188,8 @@ _PROVER_EXECUTABLES: dict[str, tuple[str, ...]] = {
 }
 
 # These providers have reviewed family installers in
-# FormalVerificationInstallerRegistry@1.  Their older toolchain descriptors
-# still expose the historical DECLARED_GAP classification for compatibility;
-# an explicit lazy-install request may cross that boundary only through the
-# reviewed registry callable and always requests the real vendor path.
+# FormalVerificationInstallerRegistry@1.  Explicit lazy-install requests
+# always use the real vendor path (never hermetic shadow/shim substitutes).
 _REVIEWED_EXTERNAL_INSTALLERS = frozenset(
     {
         "hyperltl",
@@ -200,6 +199,31 @@ _REVIEWED_EXTERNAL_INSTALLERS = frozenset(
         "secpal",
         "runtime-mtl-external",
         "ergoai",
+        "temurin-jdk",
+    }
+)
+
+# First-use portfolio: install automatically when a package consumer needs the
+# executable and it is missing. Large reconstruction kernels stay opt-in unless
+# an execution path passes allow_automatic=True.
+_DEFAULT_ON_FIRST_USE_INSTALLERS = frozenset(
+    {
+        "ergoai",
+        "runtime-mtl-external",
+        "z3",
+        "cvc5",
+        "vampire",
+        "eprover",
+        "tlc",
+        "apalache",
+        "proverif",
+        "tamarin",
+        "maude",
+        "souffle",
+        "secpal",
+        "hyperltl",
+        "autohyper",
+        "mchyper",
         "temurin-jdk",
     }
 )
@@ -1021,8 +1045,27 @@ def _common_bin_dirs() -> list[Path]:
     ]
 
 
+def _is_hermetic_shadow_path(path: Path) -> bool:
+    """Return True when a path is under a hermetic-shadow probe tree."""
+
+    try:
+        parts = {part.lower() for part in path.resolve().parts}
+    except OSError:
+        parts = {part.lower() for part in path.parts}
+    return (
+        "hermetic-shadow-probe" in parts
+        or "hermetic-only" in parts
+        or "hermetic-parity" in parts
+    )
+
+
 def find_executable(command: str) -> str | None:
-    """Find a usable prover executable, preferring managed and explicit paths."""
+    """Find a usable prover executable, preferring managed vendor paths.
+
+    Hermetic shadow / parity shims never outrank a managed vendor launcher.
+    When only a hermetic path is visible, it is ignored so first-use install
+    can materialize the real vendor tool.
+    """
 
     command = str(command or "").strip()
     if not command:
@@ -1051,6 +1094,7 @@ def find_executable(command: str) -> str | None:
         candidates.extend(directory / command for directory in directories[:-1])
 
     seen: set[str] = set()
+    hermetic_fallback: str | None = None
     for candidate in candidates:
         try:
             resolved = str(candidate.resolve())
@@ -1073,10 +1117,16 @@ def find_executable(command: str) -> str | None:
                     f"{probe.stdout}\n{probe.stderr}".lower()
                 ):
                     continue
+            if _is_hermetic_shadow_path(candidate):
+                # Keep as last-resort only for tools that are intentionally
+                # hermetic; first-use install prefers real vendors.
+                if hermetic_fallback is None:
+                    hermetic_fallback = str(candidate)
+                continue
             return str(candidate)
         except OSError:
             continue
-    return None
+    return hermetic_fallback
 
 
 def import_time_install_forbidden() -> bool:
@@ -1089,6 +1139,8 @@ def declared_install_gap_providers() -> frozenset[str]:
     """Return provider ids that are explicit install gaps in the toolchain registry.
 
     Lazy install must refuse these rather than invent an unmanaged download.
+    Reviewed managed pins (including Runtime MTL vendor and hyperproperty
+    engines) are **not** gaps and may install through the registry callable.
     """
 
     try:
@@ -1097,17 +1149,10 @@ def declared_install_gap_providers() -> frozenset[str]:
             default_registry,
         )
     except Exception:
-        # Static fallback keeps the guard active if the registry is unavailable.
+        # Static fallback: only deployment-bound circuit material remains a
+        # hard gap when the registry module is unavailable.
         return frozenset(
             {
-                "tlc",
-                "hyperltl",
-                "autohyper",
-                "mchyper",
-                "souffle",
-                "secpal",
-                "runtime-mtl-external",
-                "runtime_mtl_external",
                 "zkp-circuit",
                 "zkp_circuit",
             }
@@ -1206,11 +1251,12 @@ def _emit(event: ProverInstallEvent, progress: ProgressCallback | None) -> None:
 def prover_lazy_install_enabled(prover_name: str) -> bool:
     """Return True when lazy installation is enabled for a specific prover.
 
-    ErgoAI defaults to enabled for package-consumer first use (missing managed
-    vendor only) so hosts that import this package through another product do
-    not need ``IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1``. Global or per-prover
-    ``=0`` still opts out. Other native solvers remain opt-in unless the global
-    lazy-install flag is set; Coq/Isabelle stay conservative even then.
+    The reviewed first-use portfolio (ErgoAI, Runtime MTL vendor, ATP/SMT,
+    TLA, Tamarin stack, Soufflé/SecPAL, hyperproperty engines) defaults on so
+    package consumers get real managed tools without setting
+    ``IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1``. Global or per-prover ``=0``
+    still opts out. Large reconstruction kernels (Coq/Isabelle/Lean) remain
+    opt-in unless an execution path passes ``allow_automatic=True``.
     """
 
     prover = normalize_prover_name(prover_name)
@@ -1230,10 +1276,9 @@ def prover_lazy_install_enabled(prover_name: str) -> bool:
     if _explicitly_disabled():
         return False
 
-    # ErgoAI: default-on without the global portfolio flag so dependent
-    # packages (SwissKnife, etc.) get a real managed vendor on first use when
-    # the binary is missing. Hermetic advisor shims never satisfy this path.
-    if prover == "ergoai":
+    # Reviewed portfolio: default-on without the global flag so dependent
+    # packages get real managed vendors on first use when missing.
+    if prover in _DEFAULT_ON_FIRST_USE_INSTALLERS:
         return True
 
     if not lazy_installs_enabled():
@@ -1242,7 +1287,7 @@ def prover_lazy_install_enabled(prover_name: str) -> bool:
     # Reconstruction kernels are large/slow, so ordinary optional bridge use
     # stays opt-in. An execution path that explicitly requests the kernel uses
     # allow_automatic=True and still receives visible progress.
-    if prover in {"coq", "isabelle"}:
+    if prover in {"coq", "isabelle", "lean"}:
         return False
 
     return True
@@ -1661,6 +1706,45 @@ def ensure_managed_ergoai_if_missing(
     )
 
 
+def default_first_use_prover_portfolio() -> tuple[str, ...]:
+    """Return prover ids that auto-install on first use when missing."""
+
+    return tuple(sorted(_DEFAULT_ON_FIRST_USE_INSTALLERS))
+
+
+def ensure_default_prover_portfolio(
+    *,
+    reason: str = "default theorem-prover portfolio for package consumers",
+    progress: ProgressCallback | None = None,
+    strict: bool | None = None,
+    include_kernels: bool = False,
+) -> dict[str, str | None]:
+    """Ensure the default managed prover portfolio is installed when missing.
+
+    Installs each default-on first-use tool (including Runtime MTL vendor and
+    ATP/TLA/Tamarin/Soufflé/SecPAL/hyperproperty engines). Large reconstruction
+    kernels (Coq/Isabelle/Lean) are included only when ``include_kernels=True``.
+
+    Returns a mapping of prover id → absolute executable path or ``None`` when
+    install/probe failed. Explicit ``LAZY_INSTALL_PROVERS=0`` still opts out.
+    """
+
+    portfolio = list(default_first_use_prover_portfolio())
+    if include_kernels:
+        for kernel in ("lean", "coq", "isabelle"):
+            if kernel not in portfolio:
+                portfolio.append(kernel)
+    results: dict[str, str | None] = {}
+    for prover in portfolio:
+        results[prover] = ensure_prover_executable(
+            prover,
+            reason=reason,
+            progress=progress,
+            strict=strict,
+        )
+    return results
+
+
 def reset_lazy_install_attempts() -> None:
     """Clear the per-process lazy-install attempt cache."""
 
@@ -1674,6 +1758,8 @@ __all__ = [
     "find_executable",
     "ensure_prover_executable",
     "ensure_managed_ergoai_if_missing",
+    "ensure_default_prover_portfolio",
+    "default_first_use_prover_portfolio",
     "lazy_install_prover",
     "lazy_install_strict",
     "lazy_installs_enabled",
