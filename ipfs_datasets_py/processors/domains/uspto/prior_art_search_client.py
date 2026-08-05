@@ -998,11 +998,15 @@ def search_prior_art(
     foreign_hits_path: str | Path | None = None,
     foreign_snapshot_path: str | Path | None = None,
     foreign_licensed: bool = True,
+    live_foreign: bool = False,
     enable_npl: bool = False,
     npl_catalog_path: str | Path | None = None,
     npl_licensed: bool = False,
+    live_npl: bool = False,
+    npl_providers: Sequence[str] = ("openalex", "crossref"),
     citation_graph_path: str | Path | None = None,
     family_graph_path: str | Path | None = None,
+    max_live_results: int = 10,
     # Post-search artifacts
     build_report: bool = True,
     build_pps_checklist: bool = True,
@@ -1060,9 +1064,9 @@ def search_prior_art(
         plan = PriorArtSearchPlan.from_dict(plan_result["plan"])
 
     want_foreign = bool(
-        enable_foreign or foreign_hits_path or foreign_snapshot_path
+        enable_foreign or foreign_hits_path or foreign_snapshot_path or live_foreign
     )
-    want_npl = bool(enable_npl or npl_catalog_path)
+    want_npl = bool(enable_npl or npl_catalog_path or live_npl)
     want_citation = bool(citation_graph_path or citation_seeds)
     want_family = bool(family_graph_path or family_seeds)
 
@@ -1071,11 +1075,15 @@ def search_prior_art(
         foreign_hits_path=foreign_hits_path,
         foreign_snapshot_path=foreign_snapshot_path,
         foreign_licensed=foreign_licensed,
+        live_foreign=live_foreign,
         enable_npl=want_npl,
         npl_catalog_path=npl_catalog_path,
         npl_licensed=npl_licensed,
+        live_npl=live_npl,
+        npl_providers=npl_providers,
         citation_graph_path=citation_graph_path,
         family_graph_path=family_graph_path,
+        max_live_results=max_live_results,
     )
 
     plan = augment_plan_for_coverage(
@@ -1180,6 +1188,20 @@ def search_prior_art(
             plan, application_number=app, run_id=rid
         )
         paths["pps_checklist"] = str(persist_pps_checklist(pps, run_dir))
+
+    # Lexical distinguishability matrix (never patentability)
+    try:
+        from ipfs_datasets_py.processors.domains.uspto.prior_art_operator_extensions import (
+            build_distinguishability_matrix,
+        )
+
+        matrix = build_distinguishability_matrix(plan, journal, chart)
+        assert_no_patentability_conclusions(matrix)
+        paths["distinguishability_matrix"] = str(
+            _write_json(run_dir / "distinguishability_matrix.json", matrix)
+        )
+    except Exception as exc:  # noqa: BLE001
+        paths["distinguishability_matrix_error"] = f"{type(exc).__name__}:{exc}"
 
     if auto_acknowledge and acknowledger_name and build_report:
         from ipfs_datasets_py.processors.domains.uspto.prior_art_operator_extensions import (

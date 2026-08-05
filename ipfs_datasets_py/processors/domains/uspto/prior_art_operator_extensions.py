@@ -316,13 +316,22 @@ def build_coverage_adapter_registry(
     foreign_hits_path: str | Path | None = None,
     foreign_snapshot_path: str | Path | None = None,
     foreign_licensed: bool = True,
+    live_foreign: bool = False,
     enable_npl: bool = False,
     npl_catalog_path: str | Path | None = None,
     npl_licensed: bool = False,
+    live_npl: bool = False,
+    npl_providers: Sequence[str] = ("openalex", "crossref"),
     citation_graph_path: str | Path | None = None,
     family_graph_path: str | Path | None = None,
+    max_live_results: int = 10,
 ) -> tuple[Any, dict[str, Any]]:
-    """Build PriorArtAdapterRegistry + status metadata for operator search."""
+    """Build PriorArtAdapterRegistry + status metadata for operator search.
+
+    Live backends:
+    * ``live_foreign`` → EPO OPS (env ``EPO_OPS_KEY`` + ``EPO_OPS_SECRET``)
+    * ``live_npl`` → OpenAlex + Crossref public metadata APIs
+    """
     from ipfs_datasets_py.processors.domains.patent.prior_art_adapters import (
         CitationExpansionAdapter,
         FamilyExpansionAdapter,
@@ -340,56 +349,102 @@ def build_coverage_adapter_registry(
     }
 
     foreign_adapter = None
-    if enable_foreign or foreign_hits_path or foreign_snapshot_path:
+    if enable_foreign or foreign_hits_path or foreign_snapshot_path or live_foreign:
         hits: list[Any] = []
+        search_fn = None
+        backends: list[str] = []
         if foreign_hits_path:
             hits.extend(load_foreign_hits(foreign_hits_path))
-            status["foreign"]["backend"] = "hits_file"
+            backends.append("hits_file")
             status["foreign"]["hit_count"] = len(hits)
         if foreign_snapshot_path:
             snap_hits = foreign_hits_from_snapshot(foreign_snapshot_path)
             hits.extend(snap_hits)
-            status["foreign"]["backend"] = (
-                "hits_file+snapshot" if foreign_hits_path else "snapshot"
-            )
+            backends.append("snapshot")
             status["foreign"]["hit_count"] = len(hits)
-        if not hits:
-            status["foreign"]["backend"] = "named_gap_no_backend"
+        if live_foreign:
+            from ipfs_datasets_py.processors.domains.uspto.providers.epo_ops_client import (
+                build_epo_foreign_search_fn,
+                has_epo_ops_credentials,
+            )
+
+            if has_epo_ops_credentials():
+                search_fn = build_epo_foreign_search_fn(max_results=max_live_results)
+                backends.append("epo_ops_live")
+            else:
+                backends.append("epo_ops_missing_credentials")
+                status["foreign"]["warning"] = (
+                    "live_foreign requested but EPO_OPS_KEY/EPO_OPS_SECRET unset; "
+                    "register at https://developers.epo.org/"
+                )
+        if not hits and search_fn is None:
+            backends.append("named_gap_no_backend")
+        status["foreign"]["backend"] = "+".join(backends) if backends else None
         foreign_adapter = ForeignPatentAdapter(
             hits=hits,
+            search_fn=search_fn,
             licensed=bool(foreign_licensed),
             accessible=True,
             default_rights_status=RightsStatus.PUBLIC,
+            adapter_name=(
+                "foreign_patent_epo_ops.v1" if search_fn is not None else "foreign_patent_metadata.v1"
+            ),
         )
         status["foreign"]["enabled"] = True
         status["foreign"]["adapter_name"] = foreign_adapter.identity.adapter_name
         status["foreign"]["licensed"] = bool(foreign_licensed)
+        status["foreign"]["live"] = bool(search_fn is not None)
 
     npl_adapter = None
-    if enable_npl or npl_catalog_path:
+    if enable_npl or npl_catalog_path or live_npl:
         records: list[Any] = []
+        search_fn = None
+        backends_npl: list[str] = []
         if npl_catalog_path:
             records = load_npl_records(npl_catalog_path)
-            status["npl"]["backend"] = "catalog_file"
+            backends_npl.append("catalog_file")
             status["npl"]["record_count"] = len(records)
-        else:
-            status["npl"]["backend"] = "named_gap_no_backend"
-        # licensed=True only when operator asserts license AND catalog present
-        # (or explicit licensed flag with empty → still fail as unlicensed gap)
+        if live_npl:
+            from ipfs_datasets_py.processors.domains.uspto.providers.npl_public_clients import (
+                build_npl_public_search_fn,
+            )
+
+            search_fn = build_npl_public_search_fn(
+                providers=tuple(npl_providers or ("openalex", "crossref")),
+                max_results=max_live_results,
+                licensed=True,  # public metadata rights
+            )
+            backends_npl.append("openalex+crossref_live")
+        if not records and search_fn is None:
+            backends_npl.append("named_gap_no_backend")
+        status["npl"]["backend"] = "+".join(backends_npl) if backends_npl else None
+        # Live public metadata counts as licensed for adapter run; catalog may differ
+        is_licensed = bool(
+            (npl_licensed and records) or (live_npl and search_fn is not None)
+        )
         npl_adapter = NplAdapter(
             records=records,
-            licensed=bool(npl_licensed and records),
+            search_fn=search_fn,
+            licensed=is_licensed,
             accessible=True,
             default_rights_status=(
-                RightsStatus.LICENSED
-                if npl_licensed and records
-                else RightsStatus.UNLICENSED
+                RightsStatus.PUBLIC
+                if live_npl
+                else (
+                    RightsStatus.LICENSED
+                    if npl_licensed and records
+                    else RightsStatus.UNLICENSED
+                )
+            ),
+            adapter_name=(
+                "npl_public_metadata.v1" if search_fn is not None else "npl_metadata.v1"
             ),
         )
         status["npl"]["enabled"] = True
         status["npl"]["adapter_name"] = npl_adapter.identity.adapter_name
-        status["npl"]["licensed"] = bool(npl_licensed and records)
-        if npl_licensed and not records:
+        status["npl"]["licensed"] = is_licensed
+        status["npl"]["live"] = bool(search_fn is not None)
+        if npl_licensed and not records and not live_npl:
             status["npl"]["warning"] = (
                 "npl_licensed set but catalog empty/missing; corpus remains gap"
             )
@@ -1017,13 +1072,227 @@ def acknowledge_prior_art_run(
     return payload
 
 
+# ---------------------------------------------------------------------------
+# Distinguishability matrix (overlap candidates — never patentability)
+# ---------------------------------------------------------------------------
+
+
+_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9\-/]{2,}")
+_STOP = frozenset(
+    {
+        "the",
+        "and",
+        "for",
+        "with",
+        "from",
+        "that",
+        "this",
+        "method",
+        "system",
+        "device",
+        "comprising",
+        "including",
+        "wherein",
+        "claim",
+        "said",
+    }
+)
+
+
+def _tokens(text: str) -> set[str]:
+    return {
+        t.lower()
+        for t in _TOKEN_RE.findall(str(text or ""))
+        if t.lower() not in _STOP
+    }
+
+
+def build_distinguishability_matrix(
+    plan: Any,
+    journal: Any | None = None,
+    chart: Any | None = None,
+    *,
+    max_docs: int = 12,
+) -> dict[str, Any]:
+    """Build a limitation × document token-overlap matrix for human drafting.
+
+    Cells report **candidate lexical overlap only**. They do not mean a document
+    teaches, anticipates, or renders obvious any claim element.
+    """
+    # Collect documents from chart entries or journal hits
+    docs: dict[str, dict[str, Any]] = {}
+    if chart is not None:
+        for entry in chart.entries or ():
+            did = entry.document_id
+            docs.setdefault(
+                did,
+                {
+                    "document_id": did,
+                    "excerpts": [],
+                    "ranks": [],
+                    "scores": [],
+                },
+            )
+            if entry.passage_excerpt:
+                docs[did]["excerpts"].append(entry.passage_excerpt)
+            docs[did]["ranks"].append(int(entry.rank))
+            docs[did]["scores"].append(float(entry.score))
+    if journal is not None:
+        for rec in journal.records or ():
+            for hit in rec.hits or ():
+                did = hit.document_id
+                docs.setdefault(
+                    did,
+                    {
+                        "document_id": did,
+                        "excerpts": [],
+                        "ranks": [],
+                        "scores": [],
+                    },
+                )
+                if hit.passage_excerpt:
+                    docs[did]["excerpts"].append(hit.passage_excerpt)
+                docs[did]["ranks"].append(int(hit.rank))
+                docs[did]["scores"].append(float(hit.score))
+                title = (hit.metadata or {}).get("title")
+                if title:
+                    docs[did]["excerpts"].append(str(title))
+
+    # Rank docs by best score
+    ranked_docs = sorted(
+        docs.values(),
+        key=lambda d: max(d["scores"] or [0.0]),
+        reverse=True,
+    )[: int(max_docs)]
+
+    limitations = list(plan.limitations or ())[:32]
+    cells: list[dict[str, Any]] = []
+    for lim in limitations:
+        lim_toks = _tokens(lim.text)
+        for doc in ranked_docs:
+            doc_text = " ".join(doc["excerpts"]) or doc["document_id"]
+            doc_toks = _tokens(doc_text)
+            if not lim_toks:
+                overlap = 0.0
+                shared: list[str] = []
+            else:
+                shared = sorted(lim_toks & doc_toks)
+                overlap = round(len(shared) / max(len(lim_toks), 1), 4)
+            missing = sorted(lim_toks - doc_toks)[:12]
+            cells.append(
+                {
+                    "limitation_id": lim.limitation_id,
+                    "claim_number": lim.claim_number,
+                    "document_id": doc["document_id"],
+                    "lexical_overlap": overlap,
+                    "shared_tokens": shared[:12],
+                    "limitation_tokens_absent_from_excerpt": missing,
+                    "review_label": "candidate_overlap_only",
+                    "not_a_determination": (
+                        "Overlap is lexical only. Does not teach, anticipate, "
+                        "or render obvious any element."
+                    ),
+                }
+            )
+
+    # Suggest distinguishability drafting anchors: low-overlap limitations
+    drafting_hints: list[dict[str, Any]] = []
+    for lim in limitations:
+        lim_cells = [c for c in cells if c["limitation_id"] == lim.limitation_id]
+        if not lim_cells:
+            continue
+        max_ov = max(c["lexical_overlap"] for c in lim_cells)
+        # Tokens absent across all compared docs
+        absent_all = set(_tokens(lim.text))
+        for c in lim_cells:
+            absent_all &= set(c["limitation_tokens_absent_from_excerpt"])
+        drafting_hints.append(
+            {
+                "limitation_id": lim.limitation_id,
+                "claim_number": lim.claim_number,
+                "candidate_text": str(lim.text)[:240],
+                "max_lexical_overlap_vs_hits": max_ov,
+                "tokens_absent_from_all_compared_excerpts": sorted(absent_all)[:16],
+                "drafting_note": (
+                    "Consider emphasizing elements with low lexical overlap "
+                    "or tokens absent from candidate hit excerpts when drafting "
+                    "remarks. Human legal judgment required."
+                ),
+            }
+        )
+
+    return {
+        "schema": "patlaw-distinguishability-matrix-v1",
+        "subject_id": plan.subject_id,
+        "plan_id": plan.plan_id,
+        "limitation_count": len(limitations),
+        "document_count": len(ranked_docs),
+        "documents": [
+            {
+                "document_id": d["document_id"],
+                "best_rank": min(d["ranks"]) if d["ranks"] else None,
+                "best_score": max(d["scores"]) if d["scores"] else None,
+                "excerpt_preview": " ".join(d["excerpts"])[:300],
+            }
+            for d in ranked_docs
+        ],
+        "cells": cells,
+        "drafting_hints": drafting_hints,
+        "purpose": (
+            "Candidate lexical overlap matrix for human distinguishability "
+            "drafting. Not a novelty, obviousness, or patentability determination."
+        ),
+        "disclaimer": PRIOR_ART_DISCLAIMER_SHORT,
+        "generated_at_utc": utc_now_iso(),
+    }
+
+
+def build_and_persist_distinguishability_matrix(
+    run_dir: str | Path,
+) -> dict[str, Any]:
+    """Load run artifacts and write distinguishability_matrix.json."""
+    from ipfs_datasets_py.processors.domains.patent.prior_art import (
+        ClaimChart,
+        PriorArtSearchPlan,
+        assert_no_patentability_conclusions,
+    )
+    from ipfs_datasets_py.processors.domains.patent.search_journal import (
+        SearchJournal,
+    )
+
+    run_path = Path(run_dir).expanduser().resolve()
+    plan = PriorArtSearchPlan.from_dict(_read_json(run_path / "prior_art_plan.json"))
+    journal = None
+    chart = None
+    if (run_path / "search_journal.json").is_file():
+        journal = SearchJournal.from_dict(_read_json(run_path / "search_journal.json"))
+    if (run_path / "claim_chart.json").is_file():
+        chart = ClaimChart.from_dict(_read_json(run_path / "claim_chart.json"))
+    matrix = build_distinguishability_matrix(plan, journal, chart)
+    assert_no_patentability_conclusions(matrix)
+    path = _write_json(run_path / "distinguishability_matrix.json", matrix)
+    return {
+        "schema": PRIOR_ART_CLIENT_SCHEMA,
+        "ok": True,
+        "run_dir": str(run_path),
+        "matrix_path": str(path),
+        "limitation_count": matrix["limitation_count"],
+        "document_count": matrix["document_count"],
+        "cell_count": len(matrix["cells"]),
+        "disclaimer": PRIOR_ART_DISCLAIMER_SHORT,
+        "generated_at_utc": utc_now_iso(),
+    }
+
+
 __all__ = [
     "EXTENSIONS_SCHEMA",
     "PPS_DISCLAIMER",
     "PPS_PUBLIC_URL",
     "acknowledge_prior_art_run",
     "augment_plan_for_coverage",
+    "build_and_persist_distinguishability_matrix",
     "build_coverage_adapter_registry",
+    "build_distinguishability_matrix",
     "build_human_coverage_acknowledgment",
     "build_operator_prior_art_report",
     "build_operator_rule_checklist",

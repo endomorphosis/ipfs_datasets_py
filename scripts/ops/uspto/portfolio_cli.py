@@ -1058,19 +1058,30 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
             if use_odp:
                 _ensure_env_key()
             has_us = use_odp or bool(local_snap)
+            live_foreign = bool(getattr(args, "live_foreign", False))
+            live_npl = bool(getattr(args, "live_npl", False))
             has_coverage = bool(
                 getattr(args, "enable_foreign", False)
                 or foreign_hits
                 or foreign_snap
+                or live_foreign
                 or getattr(args, "enable_npl", False)
                 or npl_catalog
+                or live_npl
             )
             if not has_us and not has_coverage:
                 raise PriorArtSearchClientError(
                     "pass --odp and/or --local-snapshot "
-                    "(and optionally --foreign-hits / --npl-catalog)",
+                    "(and optionally --foreign-hits / --live-foreign / --npl-catalog / --live-npl)",
                     code="no_search_backend",
                 )
+            npl_providers = [
+                p.strip()
+                for p in str(getattr(args, "npl_providers", "") or "openalex,crossref").split(
+                    ","
+                )
+                if p.strip()
+            ]
             result = search_prior_art(
                 application_number=str(args.application_number),
                 state_root=state,
@@ -1089,16 +1100,20 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
                 if getattr(args, "max_queries", None) is not None
                 else None,
                 enable_foreign=bool(getattr(args, "enable_foreign", False))
-                or bool(foreign_hits or foreign_snap),
+                or bool(foreign_hits or foreign_snap or live_foreign),
                 foreign_hits_path=foreign_hits or None,
                 foreign_snapshot_path=foreign_snap or None,
                 foreign_licensed=not bool(getattr(args, "foreign_unlicensed", False)),
+                live_foreign=live_foreign,
                 enable_npl=bool(getattr(args, "enable_npl", False))
-                or bool(npl_catalog),
+                or bool(npl_catalog or live_npl),
                 npl_catalog_path=npl_catalog or None,
                 npl_licensed=bool(getattr(args, "npl_licensed", False)),
+                live_npl=live_npl,
+                npl_providers=tuple(npl_providers),
                 citation_graph_path=citation_graph or None,
                 family_graph_path=family_graph or None,
+                max_live_results=int(getattr(args, "max_live_results", 10) or 10),
                 build_report=not bool(getattr(args, "no_report", False)),
                 build_pps_checklist=not bool(getattr(args, "no_pps_checklist", False)),
                 auto_acknowledge=bool(getattr(args, "auto_acknowledge", False)),
@@ -1258,6 +1273,41 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
             print(json.dumps(result, indent=2, default=str))
             return 0 if result.get("ok") else 1
 
+        if action == "distinguish-matrix":
+            from ipfs_datasets_py.processors.domains.uspto.prior_art_operator_extensions import (
+                build_and_persist_distinguishability_matrix,
+            )
+
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            result = build_and_persist_distinguishability_matrix(run_dir)
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "pps-assist":
+            helper = Path(__file__).resolve().parent / "attended_pps_assist.py"
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            cmd = [
+                sys.executable,
+                str(helper),
+                "--run-dir",
+                str(run_dir),
+                "--json",
+            ]
+            if args.application_number:
+                cmd.extend(
+                    ["--application-number", str(args.application_number)]
+                )
+            if getattr(args, "state_root", None):
+                cmd.extend(["--state-root", str(args.state_root)])
+            if bool(getattr(args, "no_browser", False)):
+                cmd.append("--no-browser")
+            if bool(getattr(args, "headless", False)):
+                cmd.append("--headless")
+            watch = getattr(args, "watch_seconds", None)
+            if watch is not None:
+                cmd.extend(["--watch-seconds", str(watch)])
+            return subprocess.call(cmd)
+
         print(
             json.dumps(
                 {
@@ -1272,7 +1322,9 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
                         "pps-checklist",
                         "pps-record",
                         "pps-show",
+                        "pps-assist",
                         "acknowledge",
+                        "distinguish-matrix",
                     ],
                 },
                 indent=2,
@@ -1853,7 +1905,9 @@ def build_parser() -> argparse.ArgumentParser:
             "pps-checklist",
             "pps-record",
             "pps-show",
+            "pps-assist",
             "acknowledge",
+            "distinguish-matrix",
         ),
         help="prior-art workflow action",
     )
@@ -1942,6 +1996,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Mark foreign adapter unlicensed (corpus stays named gap)",
     )
     pa.add_argument(
+        "--live-foreign",
+        action="store_true",
+        help=(
+            "With search: live EPO OPS foreign search "
+            "(needs EPO_OPS_KEY + EPO_OPS_SECRET from developers.epo.org)"
+        ),
+    )
+    pa.add_argument(
         "--enable-npl",
         action="store_true",
         help="With search: register NPL adapter (needs --npl-catalog for real hits)",
@@ -1955,6 +2017,41 @@ def build_parser() -> argparse.ArgumentParser:
         "--npl-licensed",
         action="store_true",
         help="Assert NPL catalog is licensed for this operator (still no body redistrib without rights)",
+    )
+    pa.add_argument(
+        "--live-npl",
+        action="store_true",
+        help=(
+            "With search: live public NPL metadata via OpenAlex + Crossref "
+            "(optional OPENALEX_API_KEY / CROSSREF_MAILTO)"
+        ),
+    )
+    pa.add_argument(
+        "--npl-providers",
+        default="openalex,crossref",
+        help="With --live-npl: comma list of providers (default openalex,crossref)",
+    )
+    pa.add_argument(
+        "--max-live-results",
+        type=int,
+        default=10,
+        help="With live foreign/NPL: max hits per query (default 10)",
+    )
+    pa.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="With pps-assist: checklist only (no Playwright)",
+    )
+    pa.add_argument(
+        "--headless",
+        action="store_true",
+        help="With pps-assist: headless browser (landing page only)",
+    )
+    pa.add_argument(
+        "--watch-seconds",
+        type=float,
+        default=300.0,
+        help="With pps-assist: seconds to keep browser open (default 300)",
     )
     pa.add_argument(
         "--citation-graph",

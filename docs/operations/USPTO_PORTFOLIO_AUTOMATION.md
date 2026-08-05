@@ -284,6 +284,15 @@ python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
   --citation-seeds US10123456B2 \
   --max-queries 20
 
+# Live foreign (EPO OPS) + live public NPL metadata (OpenAlex/Crossref)
+# Register EPO app at https://developers.epo.org/ → EPO_OPS_KEY + EPO_OPS_SECRET
+# Optional: OPENALEX_API_KEY, CROSSREF_MAILTO
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --odp --live-foreign --live-npl \
+  --max-queries 8 --max-live-results 10
+
 # List / show runs
 python3 scripts/ops/uspto/portfolio_cli.py prior-art list \
   --application-number 18654466
@@ -293,12 +302,23 @@ python3 scripts/ops/uspto/portfolio_cli.py prior-art show \
 # Patent Public Search human verification (never scraped/automated)
 python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-checklist \
   --application-number 18654466 --run-id run-…
-# Open https://ppubs.uspto.gov/pubwebapp/ and run each query interactively, then:
+# Attended assist: open PPS landing page + print pending queries (YOU search)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-assist \
+  --application-number 18654466 --run-id run-… \
+  --watch-seconds 300
+# Or checklist only:
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-assist \
+  --application-number 18654466 --run-id run-… --no-browser
+# After interactive PPS, record counts:
 python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-record \
   --application-number 18654466 --run-id run-… \
   --query-id q-kw-1 --human-result-count 12 \
   --acknowledger "operator:you" --note "spot-checked top hits"
 python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-show \
+  --application-number 18654466 --run-id run-…
+
+# Lexical distinguishability matrix (overlap candidates — not patentability)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art distinguish-matrix \
   --application-number 18654466 --run-id run-…
 
 # Human coverage acknowledgment + rule preflight checklist
@@ -323,14 +343,18 @@ python3 scripts/ops/uspto/portfolio_cli.py prior-art attach-revision \
 | --- | --- |
 | `--foreign-hits` | JSON/JSONL list of `{document_id, title?, country?, source_cid?}` (EP/WO/…) |
 | `--foreign-snapshot` | Patent snapshot JSON converted to foreign hits |
+| `--live-foreign` | EPO OPS live search (`EPO_OPS_KEY` + `EPO_OPS_SECRET`) |
 | `--npl-catalog` | `{document_id, title?, identifier?, rights_status, body_text?, rights_approval_id?}` |
 | `--npl-licensed` | Operator asserts catalog is licensed for this use (body text still rights-gated) |
+| `--live-npl` | OpenAlex + Crossref public **metadata** search (optional `OPENALEX_API_KEY`, `CROSSREF_MAILTO`) |
 | `--citation-graph` | `{citing_id, cited_id, direction}` edges |
 | `--family-graph` | `{document_id, relation, related_to}` members |
 
-Without a real foreign/NPL backend, those corpora stay **visible named gaps** (or explicit adapter failure). Unlicensed NPL body text is never retained.
+Without a real foreign/NPL backend, those corpora stay **visible named gaps** (or explicit adapter failure). Unlicensed NPL body text is never retained. Live NPL clients return **titles/DOIs only** (no full-text bodies).
 
-Patent Public Search is **human-only**: the checklist copies queries for interactive PPS; there is no PPS scrape or API claim.
+Patent Public Search is **human-only**: `pps-assist` may open the PPS landing page and print queries; it never auto-fills search, never scrapes results, and never claims PPS is an API.
+
+**Still out of scope (by design):** automated patentability / novelty / obviousness determinations. Use `distinguish-matrix` for lexical drafting aids only.
 
 Artifacts land under:
 
@@ -344,6 +368,7 @@ Artifacts land under:
 | `claim_chart.json` | Source-linked limitation ↔ hit map (candidates only) |
 | `distinguishability_summary.json` | Review tips + top candidate hits (no conclusions) |
 | `prior_art_report.json` | Combined plan + logs + chart for preflight |
+| `distinguishability_matrix.json` | Limitation × doc lexical overlap (drafting aid only) |
 | `pps_verification_checklist.json` | Human PPS interactive verification items |
 | `human_coverage_acknowledgment.json` | Operator coverage-scope acknowledgment |
 | `prior_art_rule_checklist.json` | Preflight readiness (still not patentability) |
@@ -353,6 +378,9 @@ Libraries:
 
 * `ipfs_datasets_py/processors/domains/uspto/prior_art_search_client.py`
 * `ipfs_datasets_py/processors/domains/uspto/prior_art_operator_extensions.py`
+* `ipfs_datasets_py/processors/domains/uspto/providers/epo_ops_client.py`
+* `ipfs_datasets_py/processors/domains/uspto/providers/npl_public_clients.py`
+* `scripts/ops/uspto/attended_pps_assist.py`
 
 ## Revise a submission (deficiency letter / office action)
 
