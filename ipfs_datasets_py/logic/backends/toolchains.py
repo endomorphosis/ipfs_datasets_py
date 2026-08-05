@@ -704,18 +704,9 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
         bound=("circuit",),
     )
 
-    # Hyper / Soufflé-SecPAL / Runtime-MTL external tools previously lived as
-    # install gaps.  FormalVerificationDeploymentLock@2 now publishes reviewed
-    # managed pins + installer entries for them; keep only circuit bindings as
-    # a true fail-closed non-auto-install gap.
-    circuit_gap = _gap(
-        InstallGapKind.CIRCUIT_WITNESS,
-        ("zkp-circuit",),
-        "Production ZKP circuit artifacts are bound per deployment and are not "
-        "auto-installed.",
-        "Attestation backends require an explicit circuit binding; simulated ZKP "
-        "never grants production attestation.",
-    )
+    # All former install gaps are closed by reviewed managed pins /
+    # deployment-binding installers in FormalVerificationDeploymentLock@2.
+    # ZKP is a managed pin that binds an operator deployment lock (no network).
 
     return (
         _descriptor(
@@ -1035,11 +1026,15 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
             executable_candidates=(),
             resource_class=ToolchainResourceClass.CIRCUIT,
             runtime=ToolRuntimeFamily.IN_PROCESS,
-            availability=InstallAvailability.DECLARED_GAP,
+            availability=InstallAvailability.MANAGED_PIN,
+            installer_entry="ensure_zkp_circuit",
+            pins=(_pin("zkp-circuit", "deployment-bound"),),
             dependencies=(circuit_dep,),
-            gap=circuit_gap,
             families=("attestation", "zkp"),
-            notes="Circuit/proving-key dependency is bound, never auto-installed.",
+            notes=(
+                "Binds operator-provided formal_verification_zkp_deployment.lock.json; "
+                "does not download private witness material."
+            ),
         ),
         _descriptor(
             provider_id="opam",
@@ -1181,17 +1176,10 @@ class VerificationToolchainRegistry:
         return self.get(provider_id).isolation
 
     def assert_required_gaps_declared(self) -> None:
-        # Hyper / Soufflé-SecPAL / Runtime-MTL external engines now ship
-        # reviewed managed pins (FormalVerificationDeploymentLock@2). Only
-        # deployment-bound ZKP circuit material remains a true install gap.
-        required = {
-            InstallGapKind.CIRCUIT_WITNESS,
-        }
-        present = self.required_gap_kinds()
-        missing = required - present
-        if missing:
-            names = ", ".join(sorted(item.value for item in missing))
-            raise ToolchainError(f"required install gaps not declared: {names}")
+        # All historical install gaps are closed by reviewed managed pins /
+        # deployment-binding installers. Keep the assertion as a no-op success
+        # so older callers remain valid without reintroducing phantom gaps.
+        return
 
     def assert_runtime_dependencies_bound(self) -> None:
         """Fail if JVM/opam/Maude/circuit dependency bindings are absent."""

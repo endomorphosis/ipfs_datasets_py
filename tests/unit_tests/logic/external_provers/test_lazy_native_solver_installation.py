@@ -418,11 +418,11 @@ def test_ergoai_default_enabled_without_portfolio_opt_in(monkeypatch) -> None:
 
     assert lazy_installer.lazy_installs_enabled() is False
     assert lazy_installer.prover_lazy_install_enabled("ergoai") is True
-    # Z3 is now in the default first-use portfolio (package consumers).
+    # Full first-use portfolio (including kernels) is default-on for packages.
     assert lazy_installer.prover_lazy_install_enabled("z3") is True
     assert lazy_installer.prover_lazy_install_enabled("runtime-mtl-external") is True
-    # Large kernels remain opt-in without the global portfolio flag.
-    assert lazy_installer.prover_lazy_install_enabled("coq") is False
+    assert lazy_installer.prover_lazy_install_enabled("coq") is True
+    assert lazy_installer.prover_lazy_install_enabled("isabelle") is True
 
     monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", "0")
     assert lazy_installer.prover_lazy_install_enabled("ergoai") is False
@@ -440,7 +440,9 @@ def test_default_prover_portfolio_includes_runtime_mtl_and_atp(monkeypatch) -> N
     assert "vampire" in portfolio
     assert "tlc" in portfolio
     assert "souffle" in portfolio
-    assert "coq" not in portfolio
+    assert "coq" in portfolio
+    assert "isabelle" in portfolio
+    assert "lean" in portfolio
 
 
 def test_ensure_prover_rejects_hermetic_shim_and_installs_vendor(monkeypatch) -> None:

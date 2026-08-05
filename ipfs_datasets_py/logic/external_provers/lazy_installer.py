@@ -204,8 +204,8 @@ _REVIEWED_EXTERNAL_INSTALLERS = frozenset(
 )
 
 # First-use portfolio: install automatically when a package consumer needs the
-# executable and it is missing. Large reconstruction kernels stay opt-in unless
-# an execution path passes allow_automatic=True.
+# executable and it is missing (including reconstruction kernels so theorem
+# provers run end-to-end after package install).
 _DEFAULT_ON_FIRST_USE_INSTALLERS = frozenset(
     {
         "ergoai",
@@ -225,6 +225,9 @@ _DEFAULT_ON_FIRST_USE_INSTALLERS = frozenset(
         "autohyper",
         "mchyper",
         "temurin-jdk",
+        "lean",
+        "coq",
+        "isabelle",
     }
 )
 
@@ -1149,14 +1152,8 @@ def declared_install_gap_providers() -> frozenset[str]:
             default_registry,
         )
     except Exception:
-        # Static fallback: only deployment-bound circuit material remains a
-        # hard gap when the registry module is unavailable.
-        return frozenset(
-            {
-                "zkp-circuit",
-                "zkp_circuit",
-            }
-        )
+        # Registry unavailable: no static hard gaps (lock-aligned managed pins).
+        return frozenset()
     gaps: set[str] = set()
     for descriptor in default_registry().descriptors:
         if descriptor.availability is InstallAvailability.DECLARED_GAP:
@@ -1252,11 +1249,11 @@ def prover_lazy_install_enabled(prover_name: str) -> bool:
     """Return True when lazy installation is enabled for a specific prover.
 
     The reviewed first-use portfolio (ErgoAI, Runtime MTL vendor, ATP/SMT,
-    TLA, Tamarin stack, Soufflé/SecPAL, hyperproperty engines) defaults on so
-    package consumers get real managed tools without setting
+    TLA, Tamarin stack, Soufflé/SecPAL, hyperproperty engines, and
+    reconstruction kernels Lean/Coq/Isabelle) defaults on so package consumers
+    get real managed tools without setting
     ``IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1``. Global or per-prover ``=0``
-    still opts out. Large reconstruction kernels (Coq/Isabelle/Lean) remain
-    opt-in unless an execution path passes ``allow_automatic=True``.
+    still opts out.
     """
 
     prover = normalize_prover_name(prover_name)
@@ -1282,12 +1279,6 @@ def prover_lazy_install_enabled(prover_name: str) -> bool:
         return True
 
     if not lazy_installs_enabled():
-        return False
-
-    # Reconstruction kernels are large/slow, so ordinary optional bridge use
-    # stays opt-in. An execution path that explicitly requests the kernel uses
-    # allow_automatic=True and still receives visible progress.
-    if prover in {"coq", "isabelle", "lean"}:
         return False
 
     return True
@@ -1717,23 +1708,21 @@ def ensure_default_prover_portfolio(
     reason: str = "default theorem-prover portfolio for package consumers",
     progress: ProgressCallback | None = None,
     strict: bool | None = None,
-    include_kernels: bool = False,
+    include_kernels: bool = True,
 ) -> dict[str, str | None]:
     """Ensure the default managed prover portfolio is installed when missing.
 
-    Installs each default-on first-use tool (including Runtime MTL vendor and
-    ATP/TLA/Tamarin/Soufflé/SecPAL/hyperproperty engines). Large reconstruction
-    kernels (Coq/Isabelle/Lean) are included only when ``include_kernels=True``.
+    Installs each default-on first-use tool (Runtime MTL vendor, ATP/SMT, TLA,
+    Tamarin, Soufflé/SecPAL, hyperproperty engines, and reconstruction kernels).
+    Pass ``include_kernels=False`` to skip Lean/Coq/Isabelle.
 
     Returns a mapping of prover id → absolute executable path or ``None`` when
     install/probe failed. Explicit ``LAZY_INSTALL_PROVERS=0`` still opts out.
     """
 
     portfolio = list(default_first_use_prover_portfolio())
-    if include_kernels:
-        for kernel in ("lean", "coq", "isabelle"):
-            if kernel not in portfolio:
-                portfolio.append(kernel)
+    if not include_kernels:
+        portfolio = [p for p in portfolio if p not in {"lean", "coq", "isabelle"}]
     results: dict[str, str | None] = {}
     for prover in portfolio:
         results[prover] = ensure_prover_executable(
