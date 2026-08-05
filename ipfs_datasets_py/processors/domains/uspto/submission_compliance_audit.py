@@ -700,6 +700,363 @@ def audit_mpep_authority_surface(
 
 
 # ---------------------------------------------------------------------------
+# Action plan + IDS candidates from prior-art runs
+# ---------------------------------------------------------------------------
+
+
+def build_audit_action_plan(
+    summary: Mapping[str, Any],
+    *,
+    application_number: str,
+    revision_id: str | None = None,
+    prior_art_run_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Translate audit findings into ordered operator next steps (CLI hints)."""
+    app = application_number
+    rev = revision_id or ""
+    run = prior_art_run_id or (summary.get("prior_art_bundle") or {}).get("run_id") or ""
+    actions: list[dict[str, Any]] = []
+
+    prior = summary.get("prior_art") or {}
+    filing = summary.get("filing_rules") or {}
+    bundle = summary.get("prior_art_bundle") or {}
+
+    if not bundle.get("present") or "prior_art_run_missing" in (
+        prior.get("blocking_codes") or []
+    ):
+        actions.append(
+            {
+                "priority": 1,
+                "code": "run_prior_art_search",
+                "title": "Run public prior-art search",
+                "command": (
+                    f"portfolio_cli prior-art search --application-number {app} "
+                    "--claims-file <claims.json> --odp --max-queries 8"
+                ),
+            }
+        )
+    else:
+        if "foreign_patent_gap" in (prior.get("warning_codes") or []):
+            actions.append(
+                {
+                    "priority": 2,
+                    "code": "cover_foreign_patents",
+                    "title": "Search or document foreign-patent coverage gap",
+                    "command": (
+                        f"portfolio_cli prior-art search --application-number {app} "
+                        "--claims-file <claims.json> --odp --live-foreign --max-queries 6"
+                    ),
+                }
+            )
+        if "npl_gap" in (prior.get("warning_codes") or []):
+            actions.append(
+                {
+                    "priority": 2,
+                    "code": "cover_npl",
+                    "title": "Search or document NPL coverage gap",
+                    "command": (
+                        f"portfolio_cli prior-art search --application-number {app} "
+                        "--claims-file <claims.json> --live-npl --max-queries 6"
+                    ),
+                }
+            )
+        if "pps_verification_incomplete" in (prior.get("warning_codes") or []) or (
+            bundle.get("pps_complete") is False
+        ):
+            actions.append(
+                {
+                    "priority": 3,
+                    "code": "complete_pps_verification",
+                    "title": "Complete Patent Public Search human verification",
+                    "command": (
+                        f"portfolio_cli prior-art pps-assist --application-number {app} "
+                        f"--run-id {run}"
+                        if run
+                        else "portfolio_cli prior-art pps-assist --run-dir <run_dir>"
+                    ),
+                }
+            )
+        if "human_coverage_ack_missing" in (prior.get("warning_codes") or []):
+            actions.append(
+                {
+                    "priority": 3,
+                    "code": "acknowledge_prior_art_coverage",
+                    "title": "Record human prior-art coverage acknowledgment",
+                    "command": (
+                        f"portfolio_cli prior-art acknowledge --application-number {app} "
+                        f"--run-id {run} --acknowledger operator:you"
+                        if run
+                        else "portfolio_cli prior-art acknowledge --run-dir <run_dir> "
+                        "--acknowledger operator:you"
+                    ),
+                }
+            )
+        if run:
+            actions.append(
+                {
+                    "priority": 4,
+                    "code": "build_ids_queue",
+                    "title": "Build IDS candidate queue from prior-art hits (human review)",
+                    "command": (
+                        f"portfolio_cli prior-art ids-queue --application-number {app} "
+                        f"--run-id {run}"
+                    ),
+                }
+            )
+
+    for gap in filing.get("evidence_gaps") or []:
+        if gap.get("status") != "missing":
+            continue
+        kind = gap.get("evidence_kind")
+        roles = gap.get("expected_roles") or []
+        role = roles[0] if roles else "other"
+        if rev:
+            cmd = (
+                f"portfolio_cli revise attach --revision-id {rev} "
+                f"--file <{kind}.pdf> --role {role}"
+            )
+        else:
+            cmd = f"Add package file for evidence '{kind}' (role {role})"
+        actions.append(
+            {
+                "priority": 1,
+                "code": f"attach_{kind}",
+                "title": f"Attach missing package evidence: {kind}",
+                "command": cmd,
+                "rule_id": gap.get("rule_id"),
+            }
+        )
+
+    if rev:
+        actions.append(
+            {
+                "priority": 5,
+                "code": "re_audit",
+                "title": "Re-run compliance audit after fixes",
+                "command": f"portfolio_cli revise audit --revision-id {rev}",
+            }
+        )
+    else:
+        actions.append(
+            {
+                "priority": 5,
+                "code": "re_audit",
+                "title": "Re-run compliance audit after fixes",
+                "command": (
+                    f"portfolio_cli audit-submission --application-number {app}"
+                ),
+            }
+        )
+
+    if rev:
+        actions.append(
+            {
+                "priority": 9,
+                "code": "filing_assist_human",
+                "title": "Attended Patent Center assist (YOU Sign/Pay/Submit)",
+                "command": (
+                    f"portfolio_cli revise filing-assist --revision-id {rev}"
+                ),
+            }
+        )
+
+    actions.sort(key=lambda a: int(a.get("priority") or 99))
+    return actions
+
+
+def build_ids_queue_from_prior_art_run(
+    run_dir: str | Path,
+    *,
+    application_number: str,
+    reviewer_id: str = "operator:local",
+    max_candidates: int = 40,
+    persist: bool = True,
+    state_root: Path | None = None,
+) -> dict[str, Any]:
+    """Build a human IDS review queue from claim-chart / journal hits.
+
+    Never auto-files; all candidates start unreviewed (not IDS-ready).
+    """
+    from ipfs_datasets_py.processors.domains.patent.ids_review_queue import (
+        IdsReferenceCandidate,
+        build_ids_review_queue,
+        content_digest,
+    )
+    from ipfs_datasets_py.processors.domains.patent.retrieval_contracts import (
+        SourceLink,
+        SourceSpan,
+    )
+
+    root = Path(run_dir).expanduser().resolve()
+    if not root.is_dir():
+        raise SubmissionComplianceAuditError(
+            f"prior-art run_dir not found: {root}", code="run_not_found"
+        )
+    app = _normalize_app(application_number)
+    subject_id = f"subject:app-{app}"
+
+    docs: dict[str, dict[str, Any]] = {}
+
+    chart_path = root / "claim_chart.json"
+    if chart_path.is_file():
+        chart = _read_json(chart_path)
+        for entry in chart.get("entries") or []:
+            if not isinstance(entry, Mapping):
+                continue
+            doc_id = str(entry.get("document_id") or "").strip()
+            if not doc_id:
+                continue
+            slot = docs.setdefault(
+                doc_id,
+                {
+                    "document_id": doc_id,
+                    "entry_ids": [],
+                    "source_links": [],
+                    "identifiers": {},
+                    "titles": [],
+                },
+            )
+            eid = str(entry.get("entry_id") or "")
+            if eid:
+                slot["entry_ids"].append(eid)
+            for link in entry.get("source_links") or []:
+                if isinstance(link, Mapping):
+                    slot["source_links"].append(link)
+            if entry.get("passage_excerpt"):
+                slot["titles"].append(str(entry.get("passage_excerpt"))[:200])
+
+    journal_path = root / "search_journal.json"
+    if journal_path.is_file():
+        journal = _read_json(journal_path)
+        for rec in journal.get("records") or []:
+            if not isinstance(rec, Mapping):
+                continue
+            for hit in rec.get("hits") or []:
+                if not isinstance(hit, Mapping):
+                    continue
+                doc_id = str(hit.get("document_id") or "").strip()
+                if not doc_id:
+                    continue
+                slot = docs.setdefault(
+                    doc_id,
+                    {
+                        "document_id": doc_id,
+                        "entry_ids": [],
+                        "source_links": [],
+                        "identifiers": {},
+                        "titles": [],
+                    },
+                )
+                ids = hit.get("identifiers") or {}
+                if isinstance(ids, Mapping):
+                    slot["identifiers"].update(
+                        {str(k): str(v) for k, v in ids.items() if v}
+                    )
+                for link in hit.get("source_links") or []:
+                    if isinstance(link, Mapping):
+                        slot["source_links"].append(link)
+                meta = hit.get("metadata") or {}
+                if isinstance(meta, Mapping) and meta.get("title"):
+                    slot["titles"].append(str(meta["title"])[:200])
+                if hit.get("passage_excerpt"):
+                    slot["titles"].append(str(hit["passage_excerpt"])[:200])
+
+    candidates: list[Any] = []
+    for doc_id, slot in list(docs.items())[: int(max_candidates)]:
+        links_raw = slot["source_links"][:4]
+        links: list[Any] = []
+        for link in links_raw:
+            try:
+                if isinstance(link, Mapping):
+                    # Ensure span for SourceLink contract
+                    d = dict(link)
+                    if not d.get("span"):
+                        d["span"] = {"start": 0, "end": 1, "unit": "char"}
+                    links.append(SourceLink.from_dict(d))
+            except Exception:
+                continue
+        if not links:
+            # Synthetic link so candidate remains source-traceable to the run
+            safe = re.sub(r"[^a-zA-Z0-9]", "", doc_id)[:24] or "doc"
+            links = [
+                SourceLink(
+                    source_cid=f"bafybeigids{safe.lower().ljust(20, 'x')[:28]}",
+                    artifact_id=f"artifact:ids:{safe}"[:200],
+                    span=SourceSpan(start=0, end=1, unit="char"),
+                )
+            ]
+        title = (slot["titles"][0] if slot["titles"] else doc_id)[:200]
+        identifiers = dict(slot["identifiers"])
+        identifiers.setdefault("document_id", doc_id)
+        cand_id = f"ids-cand:{content_digest([doc_id, subject_id])[:16]}"
+        try:
+            candidates.append(
+                IdsReferenceCandidate(
+                    candidate_id=cand_id,
+                    document_id=doc_id,
+                    subject_id=subject_id,
+                    chart_cell_ids=tuple(slot["entry_ids"][:8]),
+                    source_links=tuple(links),
+                    citation_text=title,
+                    identifiers=identifiers,
+                    metadata={
+                        "source": "prior_art_run",
+                        "run_dir": str(root),
+                        "auto_file_blocked": "true",
+                    },
+                )
+            )
+        except Exception:
+            continue
+
+    queue = build_ids_review_queue(
+        subject_id=subject_id,
+        candidates=candidates,
+        chart_id=(
+            _read_json(chart_path).get("chart_id")
+            if chart_path.is_file()
+            else None
+        ),
+        metadata={
+            "application_number": app,
+            "prior_art_run_dir": str(root),
+            "reviewer_id": reviewer_id,
+            "built_at_utc": utc_now_iso(),
+        },
+    )
+    payload = queue.to_dict()
+    out: dict[str, Any] = {
+        "schema": AUDIT_SCHEMA,
+        "ok": True,
+        "application_number": app,
+        "subject_id": subject_id,
+        "queue_id": queue.queue_id,
+        "candidate_count": len(queue.candidates),
+        "auto_file_blocked": True,
+        "ids_ready_count": sum(1 for c in queue.candidates if c.is_ids_ready),
+        "queue": payload,
+        "disclaimer": (
+            "IDS candidates require natural-person relevance and materiality "
+            "review. Never auto-filed. Not a 37 C.F.R. § 1.56 determination."
+        ),
+        "generated_at_utc": utc_now_iso(),
+    }
+    if persist:
+        path = _write_json(root / "ids_review_queue.json", payload)
+        out["paths"] = {"ids_queue": str(path)}
+        # Also under state compliance if state_root given
+        if state_root is not None:
+            dest = (
+                Path(state_root)
+                / "ids_queues"
+                / app
+                / f"{queue.queue_id.replace(':', '_')}.json"
+            )
+            out["paths"]["ids_queue_state"] = str(_write_json(dest, payload))
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Full audit
 # ---------------------------------------------------------------------------
 
@@ -740,6 +1097,7 @@ def audit_submission(
     scenario: str | None = None,
     prosecution_stage: str | None = None,
     with_law_index: bool = False,
+    build_ids_queue: bool = True,
     persist: bool = True,
 ) -> dict[str, Any]:
     """Run a combined MPEP/filing-rule + prior-art compliance audit."""
@@ -904,6 +1262,40 @@ def audit_submission(
         "generated_at_utc": utc_now_iso(),
     }
 
+    # IDS candidate queue from prior-art hits (human review only)
+    ids_info: dict[str, Any] | None = None
+    if build_ids_queue and prior_bundle.get("present") and pa_dir is not None:
+        try:
+            ids_info = build_ids_queue_from_prior_art_run(
+                pa_dir,
+                application_number=app,
+                persist=persist,
+                state_root=root if persist else None,
+            )
+        except Exception as exc:  # noqa: BLE001
+            ids_info = {
+                "ok": False,
+                "error": f"{type(exc).__name__}:{exc}",
+                "candidate_count": 0,
+            }
+    summary["ids_queue"] = {
+        "ok": bool(ids_info and ids_info.get("ok")),
+        "queue_id": (ids_info or {}).get("queue_id"),
+        "candidate_count": (ids_info or {}).get("candidate_count") or 0,
+        "auto_file_blocked": True,
+        "paths": (ids_info or {}).get("paths") or {},
+        "error": (ids_info or {}).get("error"),
+    }
+
+    action_plan = build_audit_action_plan(
+        summary,
+        application_number=app,
+        revision_id=getattr(case, "revision_id", None) if case else revision_id,
+        prior_art_run_id=prior_bundle.get("run_id"),
+    )
+    summary["action_plan"] = action_plan
+    summary["action_plan_count"] = len(action_plan)
+
     audit_id = f"audit:{app}:{utc_now_iso().replace(':', '').replace('-', '')[:15]}"
     paths: dict[str, str] = {}
     if persist:
@@ -918,6 +1310,19 @@ def audit_submission(
         paths["prior_art"] = str(
             _write_json(out_dir / "prior_art_audit.json", prior_audit)
         )
+        paths["action_plan"] = str(
+            _write_json(out_dir / "action_plan.json", {"actions": action_plan})
+        )
+        if ids_info and ids_info.get("ok"):
+            paths["ids_queue"] = str(
+                _write_json(
+                    out_dir / "ids_review_queue.json",
+                    ids_info.get("queue") or {},
+                )
+            )
+            # Keep copy under prior-art run as well (already written by builder)
+            if (ids_info.get("paths") or {}).get("ids_queue"):
+                paths["ids_queue_run"] = ids_info["paths"]["ids_queue"]
         # Attach pointer on revision case when present
         if case is not None and getattr(case, "case_dir", None):
             case_dir = Path(case.case_dir)
@@ -926,6 +1331,8 @@ def audit_submission(
                 "audit_id": audit_id,
                 "audit_path": paths["audit"],
                 "overall_status": overall,
+                "action_plan_count": len(action_plan),
+                "ids_candidate_count": summary["ids_queue"].get("candidate_count"),
                 "attached_at_utc": utc_now_iso(),
                 "disclaimer": AUDIT_DISCLAIMER,
             }
@@ -953,6 +1360,8 @@ __all__ = [
     "audit_mpep_authority_surface",
     "audit_prior_art_compliance",
     "audit_submission",
+    "build_audit_action_plan",
+    "build_ids_queue_from_prior_art_run",
     "inventory_package_dir",
     "load_prior_art_audit_bundle",
 ]

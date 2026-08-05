@@ -798,20 +798,60 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                     "Does not assert novelty; foreign/NPL gaps stay visible."
                 ),
             }
-            result["compliance_audit_hint"] = {
-                "command": (
-                    "portfolio_cli audit-submission "
-                    f"--revision-id {case.revision_id} "
-                    f"--application-number {case.application_number}"
-                ),
-                "or_revise": (
-                    f"portfolio_cli revise audit --revision-id {case.revision_id}"
-                ),
-                "note": (
-                    "Audit package inventory vs MPEP/CFR filing-obligation rules "
-                    "and prior-art coverage (review only)."
-                ),
-            }
+            # Auto MPEP/CFR + prior-art compliance audit (default on)
+            if not bool(getattr(args, "no_audit", False)):
+                try:
+                    from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
+                        audit_submission,
+                    )
+
+                    audit = audit_submission(
+                        revision_id=str(args.revision_id),
+                        state_root=state,
+                        application_type=str(
+                            getattr(args, "application_type", None) or "utility"
+                        ),
+                        with_law_index=bool(getattr(args, "with_law_index", False)),
+                        build_ids_queue=not bool(
+                            getattr(args, "no_ids_queue", False)
+                        ),
+                        persist=True,
+                    )
+                    result["compliance_audit"] = {
+                        "ok": audit.get("ok"),
+                        "audit_id": audit.get("audit_id"),
+                        "overall_status": audit.get("overall_status"),
+                        "paths": audit.get("paths"),
+                        "action_plan": (audit.get("summary") or {}).get(
+                            "action_plan"
+                        ),
+                        "ids_queue": (audit.get("summary") or {}).get("ids_queue"),
+                        "filing_missing_mandatory": (
+                            (audit.get("summary") or {})
+                            .get("filing_rules", {})
+                            .get("missing_mandatory_count")
+                        ),
+                        "prior_art_status": (
+                            (audit.get("summary") or {})
+                            .get("prior_art", {})
+                            .get("status")
+                        ),
+                    }
+                except Exception as exc:  # noqa: BLE001
+                    result["compliance_audit_error"] = (
+                        f"{type(exc).__name__}:{exc}"
+                    )
+            else:
+                result["compliance_audit_hint"] = {
+                    "command": (
+                        "portfolio_cli revise audit "
+                        f"--revision-id {case.revision_id}"
+                    ),
+                    "note": (
+                        "Audit package inventory vs MPEP/CFR filing-obligation "
+                        "rules and prior-art coverage (review only)."
+                    ),
+                }
             print(json.dumps(result, indent=2, default=str))
             return 0 if result.get("ok") else 1
 
@@ -916,9 +956,20 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                     getattr(args, "application_type", None) or "utility"
                 ),
                 with_law_index=bool(getattr(args, "with_law_index", False)),
+                build_ids_queue=not bool(getattr(args, "no_ids_queue", False)),
                 persist=not bool(getattr(args, "no_persist", False)),
             )
-            print(json.dumps(result, indent=2, default=str))
+            out = {
+                "ok": result.get("ok"),
+                "audit_id": result.get("audit_id"),
+                "overall_status": result.get("overall_status"),
+                "paths": result.get("paths"),
+                "action_plan": (result.get("summary") or {}).get("action_plan"),
+                "ids_queue": (result.get("summary") or {}).get("ids_queue"),
+                "summary": result.get("summary"),
+                "disclaimer": result.get("disclaimer"),
+            }
+            print(json.dumps(out, indent=2, default=str))
             return 0 if result.get("ok") else 1
 
         if action == "filing-assist":
@@ -1031,9 +1082,24 @@ def _cmd_audit_submission(args: argparse.Namespace) -> int:
             application_type=str(args.application_type or "utility"),
             scenario=str(args.scenario or "") or None,
             with_law_index=bool(getattr(args, "with_law_index", False)),
+            build_ids_queue=not bool(getattr(args, "no_ids_queue", False)),
             persist=not bool(getattr(args, "no_persist", False)),
         )
-        print(json.dumps(result, indent=2, default=str))
+        # Compact: surface action plan at top level for operators
+        out = {
+            "ok": result.get("ok"),
+            "audit_id": result.get("audit_id"),
+            "application_number": result.get("application_number"),
+            "overall_status": result.get("overall_status"),
+            "paths": result.get("paths"),
+            "action_plan": (result.get("summary") or {}).get("action_plan"),
+            "ids_queue": (result.get("summary") or {}).get("ids_queue"),
+            "summary": result.get("summary"),
+            "disclaimer": result.get("disclaimer"),
+        }
+        if bool(getattr(args, "verbose", False)):
+            out = result
+        print(json.dumps(out, indent=2, default=str))
         return 0 if result.get("ok") else 1
     except SubmissionComplianceAuditError as exc:
         print(
@@ -1362,6 +1428,50 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
             print(json.dumps(result, indent=2, default=str))
             return 0 if result.get("ok") else 1
 
+        if action == "ids-queue":
+            from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
+                build_ids_queue_from_prior_art_run,
+            )
+
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            app = str(args.application_number or "").strip()
+            if not app:
+                # Infer from path …/prior_art/<app>/<run>
+                parts = run_dir.parts
+                if "prior_art" in parts:
+                    i = parts.index("prior_art")
+                    if i + 1 < len(parts):
+                        app = parts[i + 1]
+            if not app:
+                raise PriorArtSearchClientError(
+                    "--application-number required for ids-queue",
+                    code="missing_application_number",
+                )
+            result = build_ids_queue_from_prior_art_run(
+                run_dir,
+                application_number=app,
+                reviewer_id=str(
+                    getattr(args, "acknowledger", None) or "operator:local"
+                ),
+                max_candidates=int(getattr(args, "max_candidates", 40) or 40),
+                persist=True,
+                state_root=state,
+            )
+            # Compact stdout
+            out = {
+                "ok": result.get("ok"),
+                "application_number": result.get("application_number"),
+                "queue_id": result.get("queue_id"),
+                "candidate_count": result.get("candidate_count"),
+                "auto_file_blocked": True,
+                "paths": result.get("paths"),
+                "disclaimer": result.get("disclaimer"),
+            }
+            if bool(getattr(args, "verbose", False)):
+                out["queue"] = result.get("queue")
+            print(json.dumps(out, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
         if action == "pps-assist":
             helper = Path(__file__).resolve().parent / "attended_pps_assist.py"
             run_dir = _resolve_prior_art_run_dir(args, state)
@@ -1404,6 +1514,7 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
                         "pps-assist",
                         "acknowledge",
                         "distinguish-matrix",
+                        "ids-queue",
                     ],
                 },
                 indent=2,
@@ -1988,6 +2099,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="With audit: do not write audit artifacts under state-root",
     )
+    rev.add_argument(
+        "--no-audit",
+        action="store_true",
+        help="With prepare: skip automatic MPEP/prior-art compliance audit",
+    )
+    rev.add_argument(
+        "--no-ids-queue",
+        action="store_true",
+        help="With prepare/audit: do not build IDS candidate queue from prior-art hits",
+    )
     rev.set_defaults(func=_cmd_revise)
 
     pa = sub.add_parser(
@@ -2013,6 +2134,7 @@ def build_parser() -> argparse.ArgumentParser:
             "pps-assist",
             "acknowledge",
             "distinguish-matrix",
+            "ids-queue",
         ),
         help="prior-art workflow action",
     )
@@ -2231,6 +2353,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Include full plan/journal payloads in stdout",
     )
+    pa.add_argument(
+        "--max-candidates",
+        type=int,
+        default=40,
+        help="With ids-queue: max IDS candidates from prior-art hits (default 40)",
+    )
     pa.set_defaults(func=_cmd_prior_art)
 
     audit = sub.add_parser(
@@ -2277,6 +2405,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-persist",
         action="store_true",
         help="Print only; do not write under state-root/compliance_audits/",
+    )
+    audit.add_argument(
+        "--no-ids-queue",
+        action="store_true",
+        help="Do not build IDS candidate queue from prior-art hits",
     )
     audit.set_defaults(func=_cmd_audit_submission)
 

@@ -13,6 +13,8 @@ from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit impor
     audit_filing_rules,
     audit_prior_art_compliance,
     audit_submission,
+    build_audit_action_plan,
+    build_ids_queue_from_prior_art_run,
     inventory_package_dir,
     load_prior_art_audit_bundle,
 )
@@ -118,3 +120,63 @@ def test_full_audit_with_prior_art_run(tmp_path: Path) -> None:
     saved = json.loads(Path(audit["paths"]["audit"]).read_text(encoding="utf-8"))
     assert saved["application_number"] == "18654466"
     assert "review_tips" in saved
+    assert saved.get("action_plan")
+    assert any(a.get("code") == "re_audit" for a in saved["action_plan"])
+    # IDS queue built from prior-art hits
+    assert audit["summary"]["ids_queue"]["ok"] is True
+    assert audit["summary"]["ids_queue"]["candidate_count"] >= 1
+    assert Path(audit["paths"]["ids_queue"]).is_file()
+    ids_path = Path(pa["run_dir"]) / "ids_review_queue.json"
+    assert ids_path.is_file()
+    queue = json.loads(ids_path.read_text(encoding="utf-8"))
+    assert queue.get("auto_file_blocked") is True
+    assert all(not c.get("is_ids_ready") for c in queue.get("candidates") or [])
+
+
+def test_build_ids_queue_and_action_plan(tmp_path: Path) -> None:
+    pa = search_prior_art(
+        application_number="18654466",
+        state_root=tmp_path,
+        claims_text="1. A method comprising encoding claim text.",
+        filing_date="2024-05-03",
+        priority_date="2024-02-13",
+        local_snapshot_path=_snap(tmp_path / "snap2.json"),
+        max_queries=2,
+    )
+    ids = build_ids_queue_from_prior_art_run(
+        pa["run_dir"],
+        application_number="18654466",
+        persist=True,
+        state_root=tmp_path,
+    )
+    assert ids["ok"] is True
+    assert ids["candidate_count"] >= 1
+    assert ids["auto_file_blocked"] is True
+
+    plan = build_audit_action_plan(
+        {
+            "prior_art": {
+                "blocking_codes": [],
+                "warning_codes": ["foreign_patent_gap", "human_coverage_ack_missing"],
+            },
+            "prior_art_bundle": {"present": True, "run_id": pa["run_id"]},
+            "filing_rules": {
+                "evidence_gaps": [
+                    {
+                        "status": "missing",
+                        "evidence_kind": "remarks",
+                        "expected_roles": ["remarks"],
+                        "rule_id": "rule:x",
+                    }
+                ]
+            },
+        },
+        application_number="18654466",
+        revision_id="rev-test",
+        prior_art_run_id=pa["run_id"],
+    )
+    codes = {a["code"] for a in plan}
+    assert "attach_remarks" in codes
+    assert "cover_foreign_patents" in codes
+    assert "acknowledge_prior_art_coverage" in codes
+    assert "re_audit" in codes

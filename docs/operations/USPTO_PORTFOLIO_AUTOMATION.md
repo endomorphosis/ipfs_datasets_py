@@ -270,6 +270,22 @@ python3 scripts/ops/uspto/portfolio_cli.py audit-submission \
 
 Artifacts: `state-root/compliance_audits/<app>/audit_…/submission_compliance_audit.json`
 
+Also produced on audit:
+
+* **`action_plan`** — ordered CLI next steps (attach missing evidence, foreign/NPL
+  search, PPS, acknowledge, re-audit, filing-assist)
+* **`ids_review_queue.json`** — human IDS candidates from prior-art hits
+  (`auto_file_blocked`; never auto-files under 37 C.F.R. § 1.56)
+
+```bash
+# IDS candidates only (from an existing prior-art run)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art ids-queue \
+  --application-number 18654466 --run-id run-…
+
+# prepare auto-runs audit + IDS queue (skip with --no-audit / --no-ids-queue)
+python3 scripts/ops/uspto/portfolio_cli.py revise prepare --revision-id rev-…
+```
+
 Library: `ipfs_datasets_py/processors/domains/uspto/submission_compliance_audit.py`.
 
 ## Prior-art search (claim distinguishability)
