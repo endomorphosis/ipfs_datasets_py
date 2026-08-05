@@ -26,6 +26,10 @@ as a substitute for the official annual package.
    `latest` is rejected on year, package id, and edition fields.
 2. **Full inventory.** Every Title 37 catalog section from PATLAW-180 must appear
    in the inventory. Omission is a failure; missing text is an explicit gap.
+   Dense recipe over-expansions verified absent from the official
+   ``CFR-2024-title37`` annual package are excluded via
+   ``data/release/patent_legal_intelligence/cfr_title37_catalog_phantoms_cfr_2024.json``
+   so permanent false ``not_in_package`` gaps are not forced.
 3. **Text or gap, never silence.** Each inventory row is `presence=present`
    (with content digest when text is bound) or `presence=gap` with a matching
    gap record (`reason`, `stable_id`, optional `granule_id` / note).
