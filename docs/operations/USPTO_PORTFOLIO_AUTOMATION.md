@@ -240,6 +240,21 @@ public U.S. search (local snapshot and/or ODP Patent File Wrapper), and emit a
 content-addressed journal, coverage declaration, and source-linked claim chart
 for **human distinguishability drafting**.
 
+### Public patent search sources (what works)
+
+| Source | Automated? | How |
+| --- | --- | --- |
+| **USPTO Open Data Portal (ODP)** Patent File Wrapper search | **Yes** | `prior-art search --odp` with `USPTO_ODP_API_KEY` |
+| **EPO OPS** (foreign EP/WO/…) | **Yes** | `prior-art search --live-foreign` with `EPO_OPS_KEY`/`EPO_OPS_SECRET` |
+| **OpenAlex / Crossref** (NPL metadata) | **Yes** | `prior-art search --live-npl` |
+| **Local snapshot** of patents you supply | **Yes** | `--local-snapshot` / `--foreign-hits` |
+| **Patent Public Search (PPS)** | **Human only** | `prior-art pps-assist` opens the site; you run queries |
+| **Google Patents** | **Human only** | No official search API. Hit summaries include `human_review_urls.google_patents` deep links for browser review — we do **not** scrape Google |
+| **Legacy PatentsView** `api.patentsview.org` | **No (retired)** | Migrated into USPTO ODP (2026); use `--odp` instead |
+
+USPTO public search for prior art in this tooling is **ODP**, not Google Patents
+and not interactive PPS automation.
+
 Hard rules:
 
 * Never asserts novelty, obviousness, or patentability.

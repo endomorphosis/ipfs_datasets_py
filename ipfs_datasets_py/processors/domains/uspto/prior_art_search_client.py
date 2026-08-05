@@ -715,6 +715,31 @@ def claim_chart_from_journal(
     )
 
 
+def _human_review_urls(document_id: str, identifiers: Mapping[str, Any] | None = None) -> dict[str, str]:
+    """Build human browser URLs for a hit (no scraping — open-in-browser only)."""
+    ids = dict(identifiers or {})
+    raw = str(
+        ids.get("patent_number")
+        or ids.get("publication_number")
+        or ids.get("document_id")
+        or document_id
+        or ""
+    ).strip()
+    # Normalize common patent-like tokens
+    token = re.sub(r"[^A-Za-z0-9]", "", raw).upper()
+    urls: dict[str, str] = {}
+    if not token:
+        return urls
+    # Google Patents accepts many bare publication/patent numbers
+    urls["google_patents"] = f"https://patents.google.com/patent/{token}/en"
+    # USPTO Patent Public Search landing (human interactive; not an API)
+    urls["uspto_ppubs"] = "https://ppubs.uspto.gov/pubwebapp/"
+    # ODP for US application numbers (8 digits) or US patent numbers
+    if token.startswith("US") or re.fullmatch(r"\d{8}", token):
+        urls["uspto_odp_portal"] = "https://data.uspto.gov/"
+    return urls
+
+
 def distinguishability_summary(
     plan: Any,
     journal: Any,
@@ -733,6 +758,7 @@ def distinguishability_summary(
             if doc_id in seen:
                 continue
             seen.add(doc_id)
+            identifiers = dict(getattr(hit, "identifiers", None) or {})
             hit_rows.append(
                 {
                     "document_id": doc_id,
@@ -747,13 +773,14 @@ def distinguishability_summary(
                     "adapter": rec.adapter.adapter_name
                     if getattr(rec, "adapter", None)
                     else None,
-                    "identifiers": dict(getattr(hit, "identifiers", None) or {}),
+                    "identifiers": identifiers,
                     "source_cids": [
                         link.source_cid for link in (hit.source_links or ())
                     ],
                     "passage_excerpt": (getattr(hit, "passage_excerpt", None) or "")[
                         :400
                     ],
+                    "human_review_urls": _human_review_urls(doc_id, identifiers),
                 }
             )
             if len(hit_rows) >= max_hits:
