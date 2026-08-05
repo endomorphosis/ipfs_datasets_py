@@ -272,11 +272,43 @@ python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
   --claims-file ~/drafts/claims.json \
   --odp --max-queries 6 --rank-cutoff 10
 
+# Full coverage: US + foreign hits file + licensed NPL catalog + graphs
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --local-snapshot ~/snapshots/us_public_patents.json \
+  --foreign-hits ~/snapshots/foreign_hits.json \
+  --npl-catalog ~/snapshots/npl_catalog.json --npl-licensed \
+  --citation-graph ~/snapshots/citations.json \
+  --family-graph ~/snapshots/family.json \
+  --citation-seeds US10123456B2 \
+  --max-queries 20
+
 # List / show runs
 python3 scripts/ops/uspto/portfolio_cli.py prior-art list \
   --application-number 18654466
 python3 scripts/ops/uspto/portfolio_cli.py prior-art show \
   --application-number 18654466 --run-id run-…
+
+# Patent Public Search human verification (never scraped/automated)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-checklist \
+  --application-number 18654466 --run-id run-…
+# Open https://ppubs.uspto.gov/pubwebapp/ and run each query interactively, then:
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-record \
+  --application-number 18654466 --run-id run-… \
+  --query-id q-kw-1 --human-result-count 12 \
+  --acknowledger "operator:you" --note "spot-checked top hits"
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-show \
+  --application-number 18654466 --run-id run-…
+
+# Human coverage acknowledgment + rule preflight checklist
+python3 scripts/ops/uspto/portfolio_cli.py prior-art acknowledge \
+  --application-number 18654466 --run-id run-… \
+  --acknowledger "operator:you"
+# Optional: request search-complete claim when report + ack prerequisites hold
+python3 scripts/ops/uspto/portfolio_cli.py prior-art acknowledge \
+  --application-number 18654466 --run-id run-… \
+  --acknowledger "operator:you" --claim-search-complete
 
 # Bind a run into a revision case (pointer under case_dir)
 python3 scripts/ops/uspto/portfolio_cli.py prior-art attach-revision \
@@ -284,6 +316,21 @@ python3 scripts/ops/uspto/portfolio_cli.py prior-art attach-revision \
   --application-number 18654466 \
   --run-id run-…
 ```
+
+### Foreign / NPL / expansion inputs
+
+| Flag | Format |
+| --- | --- |
+| `--foreign-hits` | JSON/JSONL list of `{document_id, title?, country?, source_cid?}` (EP/WO/…) |
+| `--foreign-snapshot` | Patent snapshot JSON converted to foreign hits |
+| `--npl-catalog` | `{document_id, title?, identifier?, rights_status, body_text?, rights_approval_id?}` |
+| `--npl-licensed` | Operator asserts catalog is licensed for this use (body text still rights-gated) |
+| `--citation-graph` | `{citing_id, cited_id, direction}` edges |
+| `--family-graph` | `{document_id, relation, related_to}` members |
+
+Without a real foreign/NPL backend, those corpora stay **visible named gaps** (or explicit adapter failure). Unlicensed NPL body text is never retained.
+
+Patent Public Search is **human-only**: the checklist copies queries for interactive PPS; there is no PPS scrape or API claim.
 
 Artifacts land under:
 
@@ -296,8 +343,16 @@ Artifacts land under:
 | `coverage_declaration.json` | Searched vs unsearched corpora + named gaps |
 | `claim_chart.json` | Source-linked limitation ↔ hit map (candidates only) |
 | `distinguishability_summary.json` | Review tips + top candidate hits (no conclusions) |
+| `prior_art_report.json` | Combined plan + logs + chart for preflight |
+| `pps_verification_checklist.json` | Human PPS interactive verification items |
+| `human_coverage_acknowledgment.json` | Operator coverage-scope acknowledgment |
+| `prior_art_rule_checklist.json` | Preflight readiness (still not patentability) |
+| `adapter_status.json` | Which foreign/NPL/citation/family backends ran |
 
-Library: `ipfs_datasets_py/processors/domains/uspto/prior_art_search_client.py`.
+Libraries:
+
+* `ipfs_datasets_py/processors/domains/uspto/prior_art_search_client.py`
+* `ipfs_datasets_py/processors/domains/uspto/prior_art_operator_extensions.py`
 
 ## Revise a submission (deficiency letter / office action)
 
@@ -440,12 +495,14 @@ receipt-verified), see `PATENT_CENTER_HUMAN_HANDOFF.md`.
 **Allowed:** public ODP discovery/sync; build manifest from local files; import
 authorized exports; attended browser with human login; filing checklist;
 view-only Patent Center navigation; post-submit receipt watch/import;
-public prior-art plan/search journals for human review.
+public prior-art plan/search journals for human review; foreign/NPL named
+adapters with operator-supplied catalogs; human PPS verification recording.
 
-**Forbidden:** unattended Patent Center scrape; storing passwords/MFA; typing
-credentials from env; **sign / pay / final submission automation**; committing
-exports or browser profiles; treating prior-art journals as patentability
-determinations.
+**Forbidden:** unattended Patent Center scrape; **Patent Public Search
+automation/scrape**; storing passwords/MFA; typing credentials from env;
+**sign / pay / final submission automation**; committing exports or browser
+profiles; redistributing unlicensed NPL body text; treating prior-art journals
+as patentability determinations.
 
 ## Policy
 

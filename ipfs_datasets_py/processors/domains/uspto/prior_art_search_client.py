@@ -571,8 +571,9 @@ def build_operator_runtime(
     local_adapter: Any | None = None,
     local_snapshot_path: str | Path | None = None,
     max_odp_pages: int = 1,
+    extra_adapters: Sequence[Any] = (),
 ) -> Any:
-    """Assemble PriorArtSearchRuntime from optional local + ODP adapters."""
+    """Assemble PriorArtSearchRuntime from optional local + ODP + coverage adapters."""
     from ipfs_datasets_py.processors.domains.patent.prior_art_runtime import (
         build_public_prior_art_runtime,
     )
@@ -586,12 +587,17 @@ def build_operator_runtime(
     if odp is None and use_odp:
         odp = build_odp_adapter_live(max_pages=max_odp_pages)
 
-    if local is None and odp is None:
+    if local is None and odp is None and not extra_adapters:
         raise PriorArtSearchClientError(
-            "no search backend: pass --odp and/or --local-snapshot",
+            "no search backend: pass --odp and/or --local-snapshot "
+            "(and/or foreign/NPL coverage adapters)",
             code="no_search_backend",
         )
-    return build_public_prior_art_runtime(local_adapter=local, odp_adapter=odp)
+    return build_public_prior_art_runtime(
+        local_adapter=local,
+        odp_adapter=odp,
+        extra_adapters=tuple(extra_adapters or ()),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -987,19 +993,46 @@ def search_prior_art(
     max_queries: int | None = None,
     run_id: str | None = None,
     plan: Any | None = None,
+    # Extended coverage (foreign / NPL / citation / family)
+    enable_foreign: bool = False,
+    foreign_hits_path: str | Path | None = None,
+    foreign_snapshot_path: str | Path | None = None,
+    foreign_licensed: bool = True,
+    enable_npl: bool = False,
+    npl_catalog_path: str | Path | None = None,
+    npl_licensed: bool = False,
+    citation_graph_path: str | Path | None = None,
+    family_graph_path: str | Path | None = None,
+    # Post-search artifacts
+    build_report: bool = True,
+    build_pps_checklist: bool = True,
+    auto_acknowledge: bool = False,
+    acknowledger_name: str = "",
 ) -> dict[str, Any]:
-    """Plan + execute prior-art search; write journal, coverage, claim chart."""
+    """Plan + execute prior-art search; write journal, coverage, claim chart.
+
+    Extended corpora (foreign/NPL) require named adapters with a real backend
+    (hits file / snapshot / licensed catalog) before they can claim searched.
+    Patent Public Search is never scraped — only a human checklist is emitted.
+    """
     from ipfs_datasets_py.processors.domains.patent.prior_art import (
         assert_no_patentability_conclusions,
     )
     from ipfs_datasets_py.processors.domains.patent.prior_art_coverage import (
-        build_coverage_from_journal,
+        execute_plan_with_coverage,
     )
     from ipfs_datasets_py.processors.domains.patent.prior_art_runtime import (
         public_search_plan_from_prior_art_plan,
     )
     from ipfs_datasets_py.processors.domains.patent.search_journal import (
         SearchDatabase,
+    )
+    from ipfs_datasets_py.processors.domains.uspto.prior_art_operator_extensions import (
+        augment_plan_for_coverage,
+        build_coverage_adapter_registry,
+        build_operator_prior_art_report,
+        build_pps_verification_checklist,
+        persist_pps_checklist,
     )
 
     app = _normalize_app(application_number)
@@ -1026,30 +1059,53 @@ def search_prior_art(
 
         plan = PriorArtSearchPlan.from_dict(plan_result["plan"])
 
-    # Optionally bound query count for live ODP cost control
+    want_foreign = bool(
+        enable_foreign or foreign_hits_path or foreign_snapshot_path
+    )
+    want_npl = bool(enable_npl or npl_catalog_path)
+    want_citation = bool(citation_graph_path or citation_seeds)
+    want_family = bool(family_graph_path or family_seeds)
+
+    registry, adapter_status = build_coverage_adapter_registry(
+        enable_foreign=want_foreign,
+        foreign_hits_path=foreign_hits_path,
+        foreign_snapshot_path=foreign_snapshot_path,
+        foreign_licensed=foreign_licensed,
+        enable_npl=want_npl,
+        npl_catalog_path=npl_catalog_path,
+        npl_licensed=npl_licensed,
+        citation_graph_path=citation_graph_path,
+        family_graph_path=family_graph_path,
+    )
+
+    plan = augment_plan_for_coverage(
+        plan,
+        enable_foreign=want_foreign,
+        enable_npl=want_npl,
+        enable_citation=want_citation,
+        enable_family=want_family,
+        rank_cutoff=rank_cutoff,
+    )
+
+    # Optionally bound query count for live ODP cost control (keep foreign/NPL
+    # tails when present by preferring US queries first then coverage mirrors).
     if max_queries is not None and max_queries > 0 and len(plan.queries) > max_queries:
-        from dataclasses import replace
+        d = plan.to_dict()
+        d["queries"] = [q.to_dict() for q in list(plan.queries)[: int(max_queries)]]
+        from ipfs_datasets_py.processors.domains.patent.prior_art import (
+            PriorArtSearchPlan,
+        )
 
-        # Prefer keyword/limitation queries first
-        kept = list(plan.queries[: int(max_queries)])
-        try:
-            plan = replace(plan, queries=tuple(kept))
-        except Exception:
-            # Frozen dataclass with slots — rebuild via from_dict
-            d = plan.to_dict()
-            d["queries"] = [q.to_dict() for q in kept]
-            from ipfs_datasets_py.processors.domains.patent.prior_art import (
-                PriorArtSearchPlan,
-            )
+        plan = PriorArtSearchPlan.from_dict(d)
 
-            plan = PriorArtSearchPlan.from_dict(d)
-
+    extra = list(registry.as_runtime_adapters().values())
     runtime = build_operator_runtime(
         use_odp=use_odp,
         odp_adapter=odp_adapter,
         local_adapter=local_adapter,
         local_snapshot_path=local_snapshot_path,
         max_odp_pages=max_odp_pages,
+        extra_adapters=extra,
     )
 
     # Prefer ODP database when ODP is active; else local snapshot / US patents
@@ -1062,13 +1118,25 @@ def search_prior_art(
     public_plan = public_search_plan_from_prior_art_plan(
         plan, corpus_cutoff=plan.priority_date, database=database
     )
-    journal = runtime.execute_plan(public_plan)
-    coverage = build_coverage_from_journal(
-        journal,
-        metadata={"operator_client": PRIOR_ART_CLIENT_SCHEMA},
+    journal, coverage = execute_plan_with_coverage(
+        runtime, public_plan, extra_registry=None
     )
+    # extra_registry already registered via runtime.extra_adapters
     chart = claim_chart_from_journal(plan, journal)
     summary = distinguishability_summary(plan, journal, chart, coverage)
+    summary["adapter_status"] = adapter_status
+    summary["searched_corpora"] = [
+        c.value if hasattr(c, "value") else str(c)
+        for c in (getattr(coverage, "searched_corpora", None) or ())
+    ]
+    summary["unsearched_corpora"] = [
+        c.value if hasattr(c, "value") else str(c)
+        for c in (getattr(coverage, "unsearched_corpora", None) or ())
+    ]
+    summary["failed_corpora"] = [
+        c.value if hasattr(c, "value") else str(c)
+        for c in (getattr(coverage, "failed_corpora", None) or ())
+    ]
 
     assert_no_patentability_conclusions(plan.to_dict())
     assert_no_patentability_conclusions(journal.to_dict())
@@ -1093,7 +1161,39 @@ def search_prior_art(
         "summary": str(
             _write_json(run_dir / "distinguishability_summary.json", summary)
         ),
+        "adapter_status": str(
+            _write_json(run_dir / "adapter_status.json", adapter_status)
+        ),
     }
+
+    report_id = None
+    if build_report:
+        report = build_operator_prior_art_report(plan, journal, chart)
+        paths["report"] = str(
+            _write_json(run_dir / "prior_art_report.json", report.to_dict())
+        )
+        report_id = report.report_id
+        assert_no_patentability_conclusions(report.to_dict())
+
+    if build_pps_checklist:
+        pps = build_pps_verification_checklist(
+            plan, application_number=app, run_id=rid
+        )
+        paths["pps_checklist"] = str(persist_pps_checklist(pps, run_dir))
+
+    if auto_acknowledge and acknowledger_name and build_report:
+        from ipfs_datasets_py.processors.domains.uspto.prior_art_operator_extensions import (
+            acknowledge_prior_art_run,
+        )
+
+        ack = acknowledge_prior_art_run(
+            run_dir,
+            acknowledger_name=acknowledger_name,
+            claim_search_complete=False,
+        )
+        paths["human_ack"] = ack.get("acknowledgment_path") or ""
+        paths["rule_checklist"] = ack.get("checklist_path") or ""
+
     manifest = {
         "schema": PRIOR_ART_CLIENT_SCHEMA,
         "run_id": rid,
@@ -1103,9 +1203,14 @@ def search_prior_art(
         "journal_id": journal.journal_id,
         "chart_id": chart.chart_id,
         "coverage_id": coverage.declaration_id,
+        "report_id": report_id,
         "backends": {
             "odp": bool(use_odp or odp_adapter is not None),
             "local_snapshot": bool(local_adapter is not None or local_snapshot_path),
+            "foreign": adapter_status.get("foreign"),
+            "npl": adapter_status.get("npl"),
+            "citation": adapter_status.get("citation"),
+            "family": adapter_status.get("family"),
             "database": database.value
             if hasattr(database, "value")
             else str(database),
@@ -1130,7 +1235,10 @@ def search_prior_art(
         paths=paths,
         summary=summary,
     )
-    return result.to_dict()
+    out = result.to_dict()
+    out["report_id"] = report_id
+    out["adapter_status"] = adapter_status
+    return out
 
 
 def list_prior_art_runs(

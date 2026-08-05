@@ -943,6 +943,34 @@ def _cmd_revise(args: argparse.Namespace) -> int:
         return 2
 
 
+def _resolve_prior_art_run_dir(
+    args: argparse.Namespace, state: Path
+) -> Path:
+    from ipfs_datasets_py.processors.domains.uspto.prior_art_search_client import (
+        PriorArtSearchClientError,
+        prior_art_app_dir,
+    )
+
+    run_dir = str(getattr(args, "run_dir", "") or "").strip()
+    if run_dir:
+        return Path(run_dir).expanduser().resolve()
+    run_id = str(getattr(args, "run_id", "") or "").strip()
+    app = str(getattr(args, "application_number", "") or "").strip()
+    if run_id and app:
+        return prior_art_app_dir(app, state_root=state) / run_id
+    if run_id:
+        base = state / "prior_art"
+        if base.is_dir():
+            for app_dir in base.iterdir():
+                cand = app_dir / run_id
+                if cand.is_dir():
+                    return cand
+    raise PriorArtSearchClientError(
+        "pass --run-dir or --run-id + --application-number",
+        code="missing_run_dir",
+    )
+
+
 def _cmd_prior_art(args: argparse.Namespace) -> int:
     """Plan / search / list public prior art for distinguishability review."""
     from ipfs_datasets_py.processors.domains.uspto.prior_art_search_client import (
@@ -952,6 +980,16 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
         plan_prior_art,
         search_prior_art,
         show_prior_art_run,
+    )
+    from ipfs_datasets_py.processors.domains.uspto.prior_art_operator_extensions import (
+        acknowledge_prior_art_run,
+        build_pps_verification_checklist,
+        persist_pps_checklist,
+        record_pps_verification,
+        show_pps_verification,
+    )
+    from ipfs_datasets_py.processors.domains.patent.prior_art import (
+        PriorArtSearchPlan,
     )
 
     state = _state_root(args)
@@ -1012,11 +1050,25 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
                 )
             use_odp = bool(getattr(args, "odp", False))
             local_snap = str(getattr(args, "local_snapshot", "") or "").strip()
+            foreign_hits = str(getattr(args, "foreign_hits", "") or "").strip()
+            foreign_snap = str(getattr(args, "foreign_snapshot", "") or "").strip()
+            npl_catalog = str(getattr(args, "npl_catalog", "") or "").strip()
+            citation_graph = str(getattr(args, "citation_graph", "") or "").strip()
+            family_graph = str(getattr(args, "family_graph", "") or "").strip()
             if use_odp:
                 _ensure_env_key()
-            if not use_odp and not local_snap:
+            has_us = use_odp or bool(local_snap)
+            has_coverage = bool(
+                getattr(args, "enable_foreign", False)
+                or foreign_hits
+                or foreign_snap
+                or getattr(args, "enable_npl", False)
+                or npl_catalog
+            )
+            if not has_us and not has_coverage:
                 raise PriorArtSearchClientError(
-                    "pass --odp and/or --local-snapshot PATH for search",
+                    "pass --odp and/or --local-snapshot "
+                    "(and optionally --foreign-hits / --npl-catalog)",
                     code="no_search_backend",
                 )
             result = search_prior_art(
@@ -1036,6 +1088,21 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
                 max_queries=int(args.max_queries)
                 if getattr(args, "max_queries", None) is not None
                 else None,
+                enable_foreign=bool(getattr(args, "enable_foreign", False))
+                or bool(foreign_hits or foreign_snap),
+                foreign_hits_path=foreign_hits or None,
+                foreign_snapshot_path=foreign_snap or None,
+                foreign_licensed=not bool(getattr(args, "foreign_unlicensed", False)),
+                enable_npl=bool(getattr(args, "enable_npl", False))
+                or bool(npl_catalog),
+                npl_catalog_path=npl_catalog or None,
+                npl_licensed=bool(getattr(args, "npl_licensed", False)),
+                citation_graph_path=citation_graph or None,
+                family_graph_path=family_graph or None,
+                build_report=not bool(getattr(args, "no_report", False)),
+                build_pps_checklist=not bool(getattr(args, "no_pps_checklist", False)),
+                auto_acknowledge=bool(getattr(args, "auto_acknowledge", False)),
+                acknowledger_name=str(getattr(args, "acknowledger", "") or ""),
             )
             # Compact stdout: summary + paths (not full journal)
             out = {
@@ -1047,6 +1114,8 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
                 "journal_id": result.get("journal_id"),
                 "chart_id": result.get("chart_id"),
                 "coverage_id": result.get("coverage_id"),
+                "report_id": result.get("report_id"),
+                "adapter_status": result.get("adapter_status"),
                 "paths": result.get("paths"),
                 "summary": result.get("summary"),
                 "disclaimer": result.get("disclaimer"),
@@ -1080,27 +1149,111 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
                 raise PriorArtSearchClientError(
                     "--revision-id is required", code="missing_revision_id"
                 )
-            run_dir = str(args.run_dir or "").strip()
-            if not run_dir and args.run_id and args.application_number:
-                from ipfs_datasets_py.processors.domains.uspto.prior_art_search_client import (
-                    prior_art_app_dir,
-                )
-
-                run_dir = str(
-                    prior_art_app_dir(
-                        str(args.application_number), state_root=state
-                    )
-                    / str(args.run_id)
-                )
-            if not run_dir:
-                raise PriorArtSearchClientError(
-                    "pass --run-dir or --run-id + --application-number",
-                    code="missing_run_dir",
-                )
+            run_dir = str(_resolve_prior_art_run_dir(args, state))
             result = attach_prior_art_to_revision(
                 str(args.revision_id),
                 run_dir,
                 state_root=state,
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "pps-checklist":
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            plan_path = run_dir / "prior_art_plan.json"
+            if not plan_path.is_file():
+                raise PriorArtSearchClientError(
+                    f"prior_art_plan.json missing in {run_dir}",
+                    code="plan_missing",
+                )
+            plan = PriorArtSearchPlan.from_dict(
+                json.loads(plan_path.read_text(encoding="utf-8"))
+            )
+            checklist = build_pps_verification_checklist(
+                plan,
+                application_number=str(args.application_number or ""),
+                run_id=run_dir.name,
+            )
+            path = persist_pps_checklist(checklist, run_dir)
+            print(
+                json.dumps(
+                    {
+                        "ok": True,
+                        "pps_checklist_path": str(path),
+                        "pps_url": checklist.get("pps_url"),
+                        "item_count": checklist.get("item_count"),
+                        "instructions": checklist.get("instructions"),
+                        "disclaimer": checklist.get("disclaimer"),
+                    },
+                    indent=2,
+                )
+            )
+            return 0
+
+        if action == "pps-record":
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            verified_by = str(getattr(args, "acknowledger", "") or args.note or "").strip()
+            if not verified_by:
+                verified_by = "operator:local"
+            results_path = str(getattr(args, "pps_results", "") or "").strip()
+            results: list[dict[str, Any]] = []
+            if results_path:
+                raw = json.loads(
+                    Path(results_path).expanduser().read_text(encoding="utf-8")
+                )
+                if isinstance(raw, Mapping) and isinstance(raw.get("results"), list):
+                    results = list(raw["results"])
+                elif isinstance(raw, list):
+                    results = list(raw)
+                else:
+                    raise PriorArtSearchClientError(
+                        "pps results JSON must be a list or {results:[]}",
+                        code="invalid_pps_results",
+                    )
+            elif getattr(args, "query_id", None) and getattr(
+                args, "human_result_count", None
+            ) is not None:
+                results = [
+                    {
+                        "query_id": str(args.query_id),
+                        "human_result_count": int(args.human_result_count),
+                        "human_notes": str(args.note or ""),
+                    }
+                ]
+            else:
+                raise PriorArtSearchClientError(
+                    "pass --pps-results FILE or --query-id + --human-result-count",
+                    code="missing_pps_results",
+                )
+            result = record_pps_verification(
+                run_dir,
+                results=results,
+                verified_by=verified_by,
+                notes=str(args.note or ""),
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "pps-show":
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            result = show_pps_verification(run_dir)
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "acknowledge":
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            name = str(getattr(args, "acknowledger", "") or "").strip()
+            if not name:
+                raise PriorArtSearchClientError(
+                    "--acknowledger is required for acknowledge",
+                    code="missing_acknowledger",
+                )
+            result = acknowledge_prior_art_run(
+                run_dir,
+                acknowledger_name=name,
+                claim_search_complete=bool(
+                    getattr(args, "claim_search_complete", False)
+                ),
             )
             print(json.dumps(result, indent=2, default=str))
             return 0 if result.get("ok") else 1
@@ -1116,6 +1269,10 @@ def _cmd_prior_art(args: argparse.Namespace) -> int:
                         "list",
                         "show",
                         "attach-revision",
+                        "pps-checklist",
+                        "pps-record",
+                        "pps-show",
+                        "acknowledge",
                     ],
                 },
                 indent=2,
@@ -1679,15 +1836,25 @@ def build_parser() -> argparse.ArgumentParser:
     pa = sub.add_parser(
         "prior-art",
         help=(
-            "Prior-art search for claim distinguishability: build reproducible "
-            "plans, run local-snapshot and/or ODP public search, emit journal + "
-            "claim chart + coverage gaps. Never asserts novelty/patentability; "
-            "foreign/NPL remain visible unsearched gaps by default."
+            "Prior-art search for claim distinguishability: plans, ODP/local "
+            "search, foreign/NPL adapters, citation/family expansion, PPS human "
+            "verification checklist, coverage ack. Never asserts novelty/"
+            "patentability; never scrapes Patent Public Search."
         ),
     )
     pa.add_argument(
         "prior_art_action",
-        choices=("plan", "search", "list", "show", "attach-revision"),
+        choices=(
+            "plan",
+            "search",
+            "list",
+            "show",
+            "attach-revision",
+            "pps-checklist",
+            "pps-record",
+            "pps-show",
+            "acknowledge",
+        ),
         help="prior-art workflow action",
     )
     pa.add_argument("--application-number", default="")
@@ -1754,8 +1921,99 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="With search: cap number of plan queries executed (cost control)",
     )
-    pa.add_argument("--run-id", default="", help="With show/attach-revision")
-    pa.add_argument("--run-dir", default="", help="With show/attach-revision")
+    pa.add_argument(
+        "--enable-foreign",
+        action="store_true",
+        help="With search: register foreign-patent adapter (needs hits/snapshot or records named gap)",
+    )
+    pa.add_argument(
+        "--foreign-hits",
+        default="",
+        help="JSON/JSONL of foreign patent hits (EP/WO/… document_id + title)",
+    )
+    pa.add_argument(
+        "--foreign-snapshot",
+        default="",
+        help="Local foreign-patent snapshot JSON converted to hits",
+    )
+    pa.add_argument(
+        "--foreign-unlicensed",
+        action="store_true",
+        help="Mark foreign adapter unlicensed (corpus stays named gap)",
+    )
+    pa.add_argument(
+        "--enable-npl",
+        action="store_true",
+        help="With search: register NPL adapter (needs --npl-catalog for real hits)",
+    )
+    pa.add_argument(
+        "--npl-catalog",
+        default="",
+        help="JSON/JSONL NPL metadata catalog (rights_status required; body text rights-gated)",
+    )
+    pa.add_argument(
+        "--npl-licensed",
+        action="store_true",
+        help="Assert NPL catalog is licensed for this operator (still no body redistrib without rights)",
+    )
+    pa.add_argument(
+        "--citation-graph",
+        default="",
+        help="JSON/JSONL citation edges {citing_id,cited_id,direction}",
+    )
+    pa.add_argument(
+        "--family-graph",
+        default="",
+        help="JSON/JSONL family members {document_id,relation,related_to}",
+    )
+    pa.add_argument(
+        "--no-report",
+        action="store_true",
+        help="With search: skip writing prior_art_report.json",
+    )
+    pa.add_argument(
+        "--no-pps-checklist",
+        action="store_true",
+        help="With search: skip Patent Public Search human checklist",
+    )
+    pa.add_argument(
+        "--auto-acknowledge",
+        action="store_true",
+        help="With search: write human coverage ack (requires --acknowledger)",
+    )
+    pa.add_argument(
+        "--acknowledger",
+        default="",
+        help="Human name for acknowledge / pps-record / auto-acknowledge",
+    )
+    pa.add_argument(
+        "--claim-search-complete",
+        action="store_true",
+        help="With acknowledge: request prior_art_search_complete if prerequisites hold",
+    )
+    pa.add_argument(
+        "--pps-results",
+        default="",
+        help="With pps-record: JSON file of [{query_id, human_result_count, human_notes?}]",
+    )
+    pa.add_argument(
+        "--query-id",
+        default="",
+        help="With pps-record: single query_id to update",
+    )
+    pa.add_argument(
+        "--human-result-count",
+        type=int,
+        default=None,
+        help="With pps-record + --query-id: hit count observed in PPS",
+    )
+    pa.add_argument(
+        "--note",
+        default="",
+        help="Optional note for pps-record / other actions",
+    )
+    pa.add_argument("--run-id", default="", help="With show/attach-revision/pps-*/acknowledge")
+    pa.add_argument("--run-dir", default="", help="With show/attach-revision/pps-*/acknowledge")
     pa.add_argument(
         "--revision-id",
         default="",
