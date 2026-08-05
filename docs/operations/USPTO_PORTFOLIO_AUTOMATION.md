@@ -244,7 +244,7 @@ for **human distinguishability drafting**.
 
 | Source | Automated? | How |
 | --- | --- | --- |
-| **USPTO Open Data Portal (ODP)** Patent File Wrapper search | **Yes** | `prior-art search --odp` with `USPTO_ODP_API_KEY` |
+| **USPTO Open Data Portal (ODP)** Patent File Wrapper search | **Yes** | `prior-art search --odp` with `USPTO_ODP_API_KEY` (uses nested `pagination`; free-text `q` with keyword AND) |
 | **EPO OPS** (foreign EP/WO/…) | **Yes** | `prior-art search --live-foreign` with `EPO_OPS_KEY`/`EPO_OPS_SECRET` |
 | **OpenAlex / Crossref** (NPL metadata) | **Yes** | `prior-art search --live-npl` |
 | **Local snapshot** of patents you supply | **Yes** | `--local-snapshot` / `--foreign-hits` |
