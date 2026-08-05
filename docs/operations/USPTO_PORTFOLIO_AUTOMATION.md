@@ -233,6 +233,72 @@ Without a `READY` file, a folder imports only after its newest file is stable
 for `--min-stable-seconds` (default 15) so in-progress downloads are not sealed
 early.
 
+## Prior-art search (claim distinguishability)
+
+Use **prior-art** to build a reproducible search plan from claim text, run
+public U.S. search (local snapshot and/or ODP Patent File Wrapper), and emit a
+content-addressed journal, coverage declaration, and source-linked claim chart
+for **human distinguishability drafting**.
+
+Hard rules:
+
+* Never asserts novelty, obviousness, or patentability.
+* Foreign-patent and NPL corpora stay **visible unsearched gaps** unless a
+  licensed named adapter is registered and actually runs (none ship by default).
+* Does not scrape Patent Center, sign, pay, or file.
+* Interactive Patent Public Search verification remains a human step.
+
+```bash
+# Claims file (JSON)
+# { "claims": [ {"claim_number": 1, "claim_text": "A method comprising…"} ] }
+# Filing/priority dates default from export application_data when present.
+
+# Plan only (limitation candidates + queries + foreign/NPL gaps)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art plan \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --classifications G06F16/00
+
+# Search via local public-patent snapshot (offline / deterministic)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --local-snapshot ~/snapshots/us_public_patents.json \
+  --max-queries 8
+
+# Search via live ODP (needs USPTO_ODP_API_KEY)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --odp --max-queries 6 --rank-cutoff 10
+
+# List / show runs
+python3 scripts/ops/uspto/portfolio_cli.py prior-art list \
+  --application-number 18654466
+python3 scripts/ops/uspto/portfolio_cli.py prior-art show \
+  --application-number 18654466 --run-id run-…
+
+# Bind a run into a revision case (pointer under case_dir)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art attach-revision \
+  --revision-id rev-18654466-… \
+  --application-number 18654466 \
+  --run-id run-…
+```
+
+Artifacts land under:
+
+`~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/prior_art/<app>/<run_id>/`
+
+| File | Purpose |
+| --- | --- |
+| `prior_art_plan.json` | PATLAW-094 plan (claims, limitations, queries, gaps) |
+| `search_journal.json` | PATLAW-148 dated query journal (adapters, outcomes, hits) |
+| `coverage_declaration.json` | Searched vs unsearched corpora + named gaps |
+| `claim_chart.json` | Source-linked limitation ↔ hit map (candidates only) |
+| `distinguishability_summary.json` | Review tips + top candidate hits (no conclusions) |
+
+Library: `ipfs_datasets_py/processors/domains/uspto/prior_art_search_client.py`.
+
 ## Revise a submission (deficiency letter / office action)
 
 When USPTO mails a deficiency notice, missing-parts letter, non-compliant
@@ -291,6 +357,16 @@ python3 scripts/ops/uspto/portfolio_cli.py revise guide \
 # Repos: justicedao/patent-legal-{corpus,bm25,vectors,knowledge-graph}
 python3 scripts/ops/uspto/portfolio_cli.py revise search-law \
   --query "37 CFR 1.121 claim amendments status identifiers"
+
+# Prior art for claim distinguishability (see Prior-art search section)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/amended_claims.json \
+  --odp --max-queries 6
+python3 scripts/ops/uspto/portfolio_cli.py prior-art attach-revision \
+  --revision-id rev-18654466-… \
+  --application-number 18654466 \
+  --run-id run-…
 
 # 6) Attended Patent Center assist (YOU still Sign / Pay / Submit)
 python3 scripts/ops/uspto/portfolio_cli.py revise filing-assist \
@@ -363,11 +439,13 @@ receipt-verified), see `PATENT_CENTER_HUMAN_HANDOFF.md`.
 
 **Allowed:** public ODP discovery/sync; build manifest from local files; import
 authorized exports; attended browser with human login; filing checklist;
-view-only Patent Center navigation; post-submit receipt watch/import.
+view-only Patent Center navigation; post-submit receipt watch/import;
+public prior-art plan/search journals for human review.
 
 **Forbidden:** unattended Patent Center scrape; storing passwords/MFA; typing
 credentials from env; **sign / pay / final submission automation**; committing
-exports or browser profiles.
+exports or browser profiles; treating prior-art journals as patentability
+determinations.
 
 ## Policy
 

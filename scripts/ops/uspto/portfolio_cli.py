@@ -15,6 +15,7 @@ Subcommands:
   filing-assist  Attended Patent Center assist (nav + checklist + receipt watch)
   watch-receipts Poll post_submit_receipts/<app>/ after human Submit and import
   revise         Respond to deficiency letters / office actions (scan, open, prepare)
+  prior-art      Plan/search public prior art for claim distinguishability (no novelty conclusions)
   login / login-status / logout
                  Patent Center password+OTP login helper (refs/prompts; no secret echo)
   show           Print seed / last review summary
@@ -776,6 +777,25 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                     }
                 except Exception as exc:  # noqa: BLE001
                     result["law_guide_error"] = f"{type(exc).__name__}:{exc}"
+            # Point operators at prior-art search for claim distinguishability
+            case = load_revision_case(str(args.revision_id), state_root=state)
+            result["prior_art_hint"] = {
+                "command": (
+                    "portfolio_cli prior-art search "
+                    f"--application-number {case.application_number} "
+                    "--claims-file <amended_claims.json> --odp"
+                ),
+                "attach": (
+                    "portfolio_cli prior-art attach-revision "
+                    f"--revision-id {case.revision_id} "
+                    "--run-id <run_id> "
+                    f"--application-number {case.application_number}"
+                ),
+                "note": (
+                    "Plan/search public prior art to draft distinguishing remarks. "
+                    "Does not assert novelty; foreign/NPL gaps stay visible."
+                ),
+            }
             print(json.dumps(result, indent=2, default=str))
             return 0 if result.get("ok") else 1
 
@@ -918,6 +938,197 @@ def _cmd_revise(args: argparse.Namespace) -> int:
     except RevisionError as exc:
         print(
             json.dumps({"ok": False, "code": exc.code, "message": str(exc)}, indent=2),
+            file=sys.stderr,
+        )
+        return 2
+
+
+def _cmd_prior_art(args: argparse.Namespace) -> int:
+    """Plan / search / list public prior art for distinguishability review."""
+    from ipfs_datasets_py.processors.domains.uspto.prior_art_search_client import (
+        PriorArtSearchClientError,
+        attach_prior_art_to_revision,
+        list_prior_art_runs,
+        plan_prior_art,
+        search_prior_art,
+        show_prior_art_run,
+    )
+
+    state = _state_root(args)
+    state.mkdir(parents=True, exist_ok=True)
+    action = str(args.prior_art_action or "").strip()
+    classifications = [
+        c.strip()
+        for c in str(getattr(args, "classifications", "") or "").split(",")
+        if c.strip()
+    ]
+    citation_seeds = [
+        c.strip()
+        for c in str(getattr(args, "citation_seeds", "") or "").split(",")
+        if c.strip()
+    ]
+    family_seeds = [
+        c.strip()
+        for c in str(getattr(args, "family_seeds", "") or "").split(",")
+        if c.strip()
+    ]
+
+    try:
+        if action == "plan":
+            if not args.application_number:
+                raise PriorArtSearchClientError(
+                    "--application-number is required",
+                    code="missing_application_number",
+                )
+            result = plan_prior_art(
+                application_number=str(args.application_number),
+                state_root=state,
+                claims_file=str(args.claims_file or "") or None,
+                claims_text=str(args.claims_text or "") or None,
+                filing_date=str(args.filing_date or "") or None,
+                priority_date=str(args.priority_date or "") or None,
+                classifications=classifications,
+                rank_cutoff=int(args.rank_cutoff or 10),
+                citation_seeds=citation_seeds,
+                family_seeds=family_seeds,
+                persist=not bool(getattr(args, "no_persist", False)),
+            )
+            # Drop full plan body from stdout unless --verbose
+            if not bool(getattr(args, "verbose", False)):
+                result = {
+                    k: v
+                    for k, v in result.items()
+                    if k != "plan"
+                }
+                result["hint"] = "pass --verbose to print full plan JSON"
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "search":
+            if not args.application_number:
+                raise PriorArtSearchClientError(
+                    "--application-number is required",
+                    code="missing_application_number",
+                )
+            use_odp = bool(getattr(args, "odp", False))
+            local_snap = str(getattr(args, "local_snapshot", "") or "").strip()
+            if use_odp:
+                _ensure_env_key()
+            if not use_odp and not local_snap:
+                raise PriorArtSearchClientError(
+                    "pass --odp and/or --local-snapshot PATH for search",
+                    code="no_search_backend",
+                )
+            result = search_prior_art(
+                application_number=str(args.application_number),
+                state_root=state,
+                claims_file=str(args.claims_file or "") or None,
+                claims_text=str(args.claims_text or "") or None,
+                filing_date=str(args.filing_date or "") or None,
+                priority_date=str(args.priority_date or "") or None,
+                classifications=classifications,
+                rank_cutoff=int(args.rank_cutoff or 10),
+                citation_seeds=citation_seeds,
+                family_seeds=family_seeds,
+                use_odp=use_odp,
+                local_snapshot_path=local_snap or None,
+                max_odp_pages=int(getattr(args, "max_odp_pages", 1) or 1),
+                max_queries=int(args.max_queries)
+                if getattr(args, "max_queries", None) is not None
+                else None,
+            )
+            # Compact stdout: summary + paths (not full journal)
+            out = {
+                "ok": result.get("ok"),
+                "run_id": result.get("run_id"),
+                "run_dir": result.get("run_dir"),
+                "application_number": result.get("application_number"),
+                "plan_id": result.get("plan_id"),
+                "journal_id": result.get("journal_id"),
+                "chart_id": result.get("chart_id"),
+                "coverage_id": result.get("coverage_id"),
+                "paths": result.get("paths"),
+                "summary": result.get("summary"),
+                "disclaimer": result.get("disclaimer"),
+            }
+            if bool(getattr(args, "verbose", False)):
+                out = result
+            print(json.dumps(out, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "list":
+            result = list_prior_art_runs(
+                application_number=str(args.application_number or "") or None,
+                state_root=state,
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0
+
+        if action == "show":
+            result = show_prior_art_run(
+                run_id=str(args.run_id or "") or None,
+                application_number=str(args.application_number or "") or None,
+                run_dir=str(args.run_dir or "") or None,
+                state_root=state,
+                include_full=bool(getattr(args, "verbose", False)),
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "attach-revision":
+            if not args.revision_id:
+                raise PriorArtSearchClientError(
+                    "--revision-id is required", code="missing_revision_id"
+                )
+            run_dir = str(args.run_dir or "").strip()
+            if not run_dir and args.run_id and args.application_number:
+                from ipfs_datasets_py.processors.domains.uspto.prior_art_search_client import (
+                    prior_art_app_dir,
+                )
+
+                run_dir = str(
+                    prior_art_app_dir(
+                        str(args.application_number), state_root=state
+                    )
+                    / str(args.run_id)
+                )
+            if not run_dir:
+                raise PriorArtSearchClientError(
+                    "pass --run-dir or --run-id + --application-number",
+                    code="missing_run_dir",
+                )
+            result = attach_prior_art_to_revision(
+                str(args.revision_id),
+                run_dir,
+                state_root=state,
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": f"unknown prior-art action: {action}",
+                    "actions": [
+                        "plan",
+                        "search",
+                        "list",
+                        "show",
+                        "attach-revision",
+                    ],
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+        return 2
+    except PriorArtSearchClientError as exc:
+        print(
+            json.dumps(
+                {"ok": False, "code": getattr(exc, "code", None), "message": str(exc)},
+                indent=2,
+            ),
             file=sys.stderr,
         )
         return 2
@@ -1464,6 +1675,103 @@ def build_parser() -> argparse.ArgumentParser:
         help="With search-law: number of hybrid hits (default 8)",
     )
     rev.set_defaults(func=_cmd_revise)
+
+    pa = sub.add_parser(
+        "prior-art",
+        help=(
+            "Prior-art search for claim distinguishability: build reproducible "
+            "plans, run local-snapshot and/or ODP public search, emit journal + "
+            "claim chart + coverage gaps. Never asserts novelty/patentability; "
+            "foreign/NPL remain visible unsearched gaps by default."
+        ),
+    )
+    pa.add_argument(
+        "prior_art_action",
+        choices=("plan", "search", "list", "show", "attach-revision"),
+        help="prior-art workflow action",
+    )
+    pa.add_argument("--application-number", default="")
+    pa.add_argument(
+        "--claims-file",
+        default="",
+        help="JSON/JSONL/text file of claims (list or {claims:[{claim_number,claim_text}]})",
+    )
+    pa.add_argument(
+        "--claims-text",
+        default="",
+        help="Inline numbered claim text (e.g. '1. A method comprising…')",
+    )
+    pa.add_argument(
+        "--filing-date",
+        default="",
+        help="YYYY-MM-DD (default: from export application_data if present)",
+    )
+    pa.add_argument(
+        "--priority-date",
+        default="",
+        help="YYYY-MM-DD (default: earliest parent continuity or filing date)",
+    )
+    pa.add_argument(
+        "--classifications",
+        default="",
+        help="Comma-separated CPC/IPC codes to seed queries",
+    )
+    pa.add_argument(
+        "--citation-seeds",
+        default="",
+        help="Comma-separated document ids for citation-expansion queries",
+    )
+    pa.add_argument(
+        "--family-seeds",
+        default="",
+        help="Comma-separated document ids for family-expansion queries",
+    )
+    pa.add_argument(
+        "--rank-cutoff",
+        type=int,
+        default=10,
+        help="Max hits kept per query (default 10)",
+    )
+    pa.add_argument(
+        "--odp",
+        action="store_true",
+        help="With search: query USPTO ODP Patent File Wrapper (needs USPTO_ODP_API_KEY)",
+    )
+    pa.add_argument(
+        "--local-snapshot",
+        default="",
+        help="With search: path to local public-patent JSON/JSONL snapshot",
+    )
+    pa.add_argument(
+        "--max-odp-pages",
+        type=int,
+        default=1,
+        help="With --odp: max result pages per query (default 1)",
+    )
+    pa.add_argument(
+        "--max-queries",
+        type=int,
+        default=None,
+        help="With search: cap number of plan queries executed (cost control)",
+    )
+    pa.add_argument("--run-id", default="", help="With show/attach-revision")
+    pa.add_argument("--run-dir", default="", help="With show/attach-revision")
+    pa.add_argument(
+        "--revision-id",
+        default="",
+        help="With attach-revision: bind run into a revision case",
+    )
+    pa.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="With plan: print only, do not write under state-root/prior_art/",
+    )
+    pa.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Include full plan/journal payloads in stdout",
+    )
+    pa.set_defaults(func=_cmd_prior_art)
 
     return p
 
