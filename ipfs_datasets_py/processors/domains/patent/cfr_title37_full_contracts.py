@@ -1559,13 +1559,62 @@ _TITLE37_SECTION_RECIPES: Final[Mapping[str, Sequence[Any]]] = MappingProxyType(
 )
 
 
+def _catalog_phantoms_path() -> Path:
+    """Repo data file of recipe tokens absent from official CFR-2024-title37."""
+
+    # .../ipfs_datasets_py/processors/domains/patent/this_file.py → repo root
+    return (
+        Path(__file__).resolve().parents[4]
+        / "data"
+        / "release"
+        / "patent_legal_intelligence"
+        / "cfr_title37_catalog_phantoms_cfr_2024.json"
+    )
+
+
+def load_title37_catalog_phantoms(*, path: Path | None = None) -> frozenset[str]:
+    """Load catalog tokens verified absent from the 2024 annual package.
+
+    These are dense-recipe over-expansions (never issued / long-removed numbers)
+    that must not force permanent ``not_in_package`` gaps against a real
+    GovInfo annual edition. Withdrawn/removed numbers that still appear in
+    package history remain in the catalog so they can be classified explicitly.
+    """
+
+    target = path or _catalog_phantoms_path()
+    if not target.is_file():
+        return frozenset()
+    try:
+        payload = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return frozenset()
+    raw = payload.get("phantoms") if isinstance(payload, Mapping) else None
+    if not isinstance(raw, list):
+        return frozenset()
+    out: set[str] = set()
+    for item in raw:
+        try:
+            out.add(normalize_section_token(item))
+        except Exception:
+            continue
+    return frozenset(out)
+
+
+TITLE37_CATALOG_PHANTOMS_CFR_2024: Final[frozenset[str]] = (
+    load_title37_catalog_phantoms()
+)
+
+
 def _build_title37_section_catalog() -> Mapping[str, tuple[str, ...]]:
     catalog: dict[str, tuple[str, ...]] = {}
+    phantoms = TITLE37_CATALOG_PHANTOMS_CFR_2024
     for part, recipe in _TITLE37_SECTION_RECIPES.items():
         part_key = normalize_part_token(part)
         if part_key not in TITLE37_PART_METADATA:
             raise RuntimeError(f"section recipe for unknown part {part_key!r}")
-        sections = _expand_section_recipe(recipe)
+        sections = tuple(
+            sec for sec in _expand_section_recipe(recipe) if sec not in phantoms
+        )
         if not sections:
             raise RuntimeError(f"empty section recipe for part {part_key!r}")
         catalog[part_key] = sections

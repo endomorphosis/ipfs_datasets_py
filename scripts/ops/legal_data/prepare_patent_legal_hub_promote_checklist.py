@@ -75,6 +75,9 @@ _UNPINNED_REVISION_TOKENS = frozenset(
 _HEX64_RE = re.compile(r"^[0-9a-f]{64}$")
 _HEX40_RE = re.compile(r"^[0-9a-f]{40}$")
 _CID_RE = re.compile(r"^(?:bafy|bagu|Qm)[a-zA-Z0-9]+$")
+# Expanded per-artifact digest maps use repository-relative paths as keys
+# (for example ``artifacts-inventory.json`` or ``indexes/bm25/bm25-postings.jsonl``).
+_ARTIFACT_REL_PATH_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._\-/]*$")
 
 # Keys allowed in the content-free checklist root (and common nested leaves).
 _CONTENT_FREE_KEY_ALLOWLIST = frozenset(
@@ -273,12 +276,45 @@ def _sha256_payload(payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(body).hexdigest()
 
 
+def _is_projection_artifact_path_key(path: str, key_text: str) -> bool:
+    """Allow relative artifact paths under projection_digests.<family>.
+
+    Live pin-verify receipts bind path→sha256 maps. Those path keys are
+    content-free (identifiers only) but are not in the static keyword
+    allowlist. Accept only under projection_digests families, never at the
+    checklist root, and never path traversal or whitespace.
+    """
+
+    parts = path.split(".")
+    # checklist.projection_digests.<family>
+    if len(parts) != 3 or parts[0] != "checklist" or parts[1] != "projection_digests":
+        return False
+    if parts[2] not in {
+        "corpus",
+        "bm25",
+        "vectors",
+        "vector",
+        "knowledge_graph",
+        "graph",
+        "kg",
+    }:
+        return False
+    if not key_text or ".." in key_text.split("/") or key_text.startswith("/"):
+        return False
+    if any(ch.isspace() for ch in key_text):
+        return False
+    return bool(_ARTIFACT_REL_PATH_KEY_RE.fullmatch(key_text))
+
+
 def _assert_content_free_keys(payload: Any, *, path: str = "checklist") -> None:
     if isinstance(payload, Mapping):
         for key, child in payload.items():
             key_text = str(key)
             child_path = f"{path}.{key_text}"
-            if key_text not in _CONTENT_FREE_KEY_ALLOWLIST:
+            if (
+                key_text not in _CONTENT_FREE_KEY_ALLOWLIST
+                and not _is_projection_artifact_path_key(path, key_text)
+            ):
                 raise ContentFreeViolationError(
                     f"non-allowlisted key in content-free checklist: {child_path}"
                 )

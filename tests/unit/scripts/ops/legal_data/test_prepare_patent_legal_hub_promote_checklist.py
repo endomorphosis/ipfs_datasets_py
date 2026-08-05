@@ -379,3 +379,45 @@ def test_vector_alias_normalized_to_vectors() -> None:
     checklist = build_promote_checklist(stage_receipt=stage)
     assert "vectors" in checklist["projection_digests"]
     assert "knowledge_graph" in checklist["projection_digests"]
+
+
+def test_expanded_path_digests_are_content_free() -> None:
+    """Live pin-verify path→sha256 maps must not break checklist allowlist."""
+
+    path_digest = _hex(64, "7")
+    verification = _verification_receipt(
+        projection_digests={
+            "corpus": {
+                "root_cid": CORPUS,
+                "artifacts-inventory.json": path_digest,
+                "indexes/corpus/documents.jsonl": path_digest,
+            },
+            "bm25": {
+                "root_cid": BM25,
+                "indexes/bm25/bm25-postings.jsonl": path_digest,
+            },
+            "vectors": {
+                "root_cid": VECTORS,
+                "indexes/vectors/vectors.jsonl": path_digest,
+            },
+            "knowledge_graph": {
+                "root_cid": GRAPH,
+                "indexes/knowledge_graph/graph.jsonld": path_digest,
+            },
+        }
+    )
+    checklist = build_promote_checklist(
+        stage_receipt=_stage_receipt(),
+        verification_receipt=verification,
+    )
+    assert (
+        checklist["projection_digests"]["corpus"]["artifacts-inventory.json"]
+        == path_digest
+    )
+    assert (
+        checklist["projection_digests"]["bm25"][
+            "indexes/bm25/bm25-postings.jsonl"
+        ]
+        == path_digest
+    )
+    assert checklist["evidence_gaps"] == []

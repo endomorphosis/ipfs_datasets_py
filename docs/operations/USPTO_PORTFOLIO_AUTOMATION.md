@@ -233,6 +233,245 @@ Without a `READY` file, a folder imports only after its newest file is stable
 for `--min-stable-seconds` (default 15) so in-progress downloads are not sealed
 early.
 
+## Submission compliance audit (MPEP / CFR + prior art)
+
+Audit a response package (or revision case) against:
+
+1. **Filing-obligation rule packs** — baseline utility/OA rules cite 37 C.F.R.
+   (e.g. §§ 1.111, 1.121) and related surfaces; required evidence kinds are
+   compared to package files/attachment roles.
+2. **Prior-art coverage** — latest (or selected) `prior-art search` run:
+   report/journal presence, foreign/NPL gaps, PPS verification, human
+   coverage acknowledgment, claim-chart density.
+3. **Authority surface** — local `authority_corpus/` excerpts for cited
+   MPEP/CFR tokens; optional HF hybrid index (`--with-law-index`).
+
+Review only — **not** a completeness certification or legal advice. Never
+Sign / Pay / Submit.
+
+```bash
+# After preparing a revision package + prior-art search:
+python3 scripts/ops/uspto/portfolio_cli.py audit-submission \
+  --application-number 18654466 \
+  --revision-id rev-18654466-… \
+  --package-dir ~/.local/state/.../revisions/cases/18654466/rev-…/response_package
+
+# Or via revise:
+python3 scripts/ops/uspto/portfolio_cli.py revise audit \
+  --revision-id rev-18654466-…
+
+# Bind a specific prior-art run + query public legal index:
+python3 scripts/ops/uspto/portfolio_cli.py audit-submission \
+  --application-number 18654466 \
+  --package-dir ~/drafts/response_package \
+  --prior-art-run-id run-… \
+  --with-law-index
+```
+
+Artifacts: `state-root/compliance_audits/<app>/audit_…/submission_compliance_audit.json`
+
+Also produced on audit:
+
+* **`action_plan`** — ordered CLI next steps (attach missing evidence, foreign/NPL
+  search, PPS, acknowledge, re-audit, filing-assist)
+* **`ids_review_queue.json`** — human IDS candidates from prior-art hits
+  (`auto_file_blocked`; never auto-files under 37 C.F.R. § 1.56)
+
+```bash
+# IDS candidates only (from an existing prior-art run)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art ids-queue \
+  --application-number 18654466 --run-id run-…
+
+# Human IDS review (natural person records judgment — never auto-files)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art ids-list \
+  --application-number 18654466
+python3 scripts/ops/uspto/portfolio_cli.py prior-art ids-review \
+  --application-number 18654466 \
+  --candidate-id ids-cand:… \
+  --relevance relevant --materiality material --promote \
+  --acknowledger "operator:you"
+python3 scripts/ops/uspto/portfolio_cli.py prior-art ids-export \
+  --application-number 18654466
+
+# List / show audits + markdown report
+python3 scripts/ops/uspto/portfolio_cli.py audit-submission --list \
+  --application-number 18654466
+python3 scripts/ops/uspto/portfolio_cli.py audit-submission --show \
+  --application-number 18654466
+
+# prepare auto-runs audit + IDS queue (skip with --no-audit / --no-ids-queue)
+python3 scripts/ops/uspto/portfolio_cli.py revise prepare --revision-id rev-…
+```
+
+Libraries:
+
+* `ipfs_datasets_py/processors/domains/uspto/submission_compliance_audit.py`
+* `ipfs_datasets_py/processors/domains/uspto/ids_review_operator.py`
+
+## Prior-art search (claim distinguishability)
+
+Use **prior-art** to build a reproducible search plan from claim text, run
+public U.S. search (local snapshot and/or ODP Patent File Wrapper), and emit a
+content-addressed journal, coverage declaration, and source-linked claim chart
+for **human distinguishability drafting**.
+
+### Public patent search sources (what works)
+
+| Source | Automated? | How |
+| --- | --- | --- |
+| **USPTO Open Data Portal (ODP)** Patent File Wrapper search | **Yes** | `prior-art search --odp` with `USPTO_ODP_API_KEY` (uses nested `pagination`; free-text `q` with keyword AND) |
+| **EPO OPS** (foreign EP/WO/…) | **Yes** | `prior-art search --live-foreign` with `EPO_OPS_KEY`/`EPO_OPS_SECRET` |
+| **OpenAlex / Crossref** (NPL metadata) | **Yes** | `prior-art search --live-npl` |
+| **Local snapshot** of patents you supply | **Yes** | `--local-snapshot` / `--foreign-hits` |
+| **Patent Public Search (PPS)** | **Human only** | `prior-art pps-assist` opens the site; you run queries |
+| **Google Patents** | **Human only** | No official search API. Hit summaries include `human_review_urls.google_patents` deep links for browser review — we do **not** scrape Google |
+| **Legacy PatentsView** `api.patentsview.org` | **No (retired)** | Migrated into USPTO ODP (2026); use `--odp` instead |
+
+USPTO public search for prior art in this tooling is **ODP**, not Google Patents
+and not interactive PPS automation.
+
+Hard rules:
+
+* Never asserts novelty, obviousness, or patentability.
+* Foreign-patent and NPL corpora stay **visible unsearched gaps** unless a
+  licensed named adapter is registered and actually runs (none ship by default).
+* Does not scrape Patent Center, sign, pay, or file.
+* Interactive Patent Public Search verification remains a human step.
+
+```bash
+# Claims file (JSON)
+# { "claims": [ {"claim_number": 1, "claim_text": "A method comprising…"} ] }
+# Filing/priority dates default from export application_data when present.
+
+# Plan only (limitation candidates + queries + foreign/NPL gaps)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art plan \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --classifications G06F16/00
+
+# Search via local public-patent snapshot (offline / deterministic)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --local-snapshot ~/snapshots/us_public_patents.json \
+  --max-queries 8
+
+# Search via live ODP (needs USPTO_ODP_API_KEY)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --odp --max-queries 6 --rank-cutoff 10
+
+# Full coverage: US + foreign hits file + licensed NPL catalog + graphs
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --local-snapshot ~/snapshots/us_public_patents.json \
+  --foreign-hits ~/snapshots/foreign_hits.json \
+  --npl-catalog ~/snapshots/npl_catalog.json --npl-licensed \
+  --citation-graph ~/snapshots/citations.json \
+  --family-graph ~/snapshots/family.json \
+  --citation-seeds US10123456B2 \
+  --max-queries 20
+
+# Live foreign (EPO OPS) + live public NPL metadata (OpenAlex/Crossref)
+# Register EPO app at https://developers.epo.org/ → EPO_OPS_KEY + EPO_OPS_SECRET
+# Optional: OPENALEX_API_KEY, CROSSREF_MAILTO
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/claims.json \
+  --odp --live-foreign --live-npl \
+  --max-queries 8 --max-live-results 10
+
+# List / show runs
+python3 scripts/ops/uspto/portfolio_cli.py prior-art list \
+  --application-number 18654466
+python3 scripts/ops/uspto/portfolio_cli.py prior-art show \
+  --application-number 18654466 --run-id run-…
+
+# Patent Public Search human verification (never scraped/automated)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-checklist \
+  --application-number 18654466 --run-id run-…
+# Attended assist: open PPS landing page + print pending queries (YOU search)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-assist \
+  --application-number 18654466 --run-id run-… \
+  --watch-seconds 300
+# Or checklist only:
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-assist \
+  --application-number 18654466 --run-id run-… --no-browser
+# After interactive PPS, record counts:
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-record \
+  --application-number 18654466 --run-id run-… \
+  --query-id q-kw-1 --human-result-count 12 \
+  --acknowledger "operator:you" --note "spot-checked top hits"
+python3 scripts/ops/uspto/portfolio_cli.py prior-art pps-show \
+  --application-number 18654466 --run-id run-…
+
+# Lexical distinguishability matrix (overlap candidates — not patentability)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art distinguish-matrix \
+  --application-number 18654466 --run-id run-…
+
+# Human coverage acknowledgment + rule preflight checklist
+python3 scripts/ops/uspto/portfolio_cli.py prior-art acknowledge \
+  --application-number 18654466 --run-id run-… \
+  --acknowledger "operator:you"
+# Optional: request search-complete claim when report + ack prerequisites hold
+python3 scripts/ops/uspto/portfolio_cli.py prior-art acknowledge \
+  --application-number 18654466 --run-id run-… \
+  --acknowledger "operator:you" --claim-search-complete
+
+# Bind a run into a revision case (pointer under case_dir)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art attach-revision \
+  --revision-id rev-18654466-… \
+  --application-number 18654466 \
+  --run-id run-…
+```
+
+### Foreign / NPL / expansion inputs
+
+| Flag | Format |
+| --- | --- |
+| `--foreign-hits` | JSON/JSONL list of `{document_id, title?, country?, source_cid?}` (EP/WO/…) |
+| `--foreign-snapshot` | Patent snapshot JSON converted to foreign hits |
+| `--live-foreign` | EPO OPS live search (`EPO_OPS_KEY` + `EPO_OPS_SECRET`) |
+| `--npl-catalog` | `{document_id, title?, identifier?, rights_status, body_text?, rights_approval_id?}` |
+| `--npl-licensed` | Operator asserts catalog is licensed for this use (body text still rights-gated) |
+| `--live-npl` | OpenAlex + Crossref public **metadata** search (optional `OPENALEX_API_KEY`, `CROSSREF_MAILTO`) |
+| `--citation-graph` | `{citing_id, cited_id, direction}` edges |
+| `--family-graph` | `{document_id, relation, related_to}` members |
+
+Without a real foreign/NPL backend, those corpora stay **visible named gaps** (or explicit adapter failure). Unlicensed NPL body text is never retained. Live NPL clients return **titles/DOIs only** (no full-text bodies).
+
+Patent Public Search is **human-only**: `pps-assist` may open the PPS landing page and print queries; it never auto-fills search, never scrapes results, and never claims PPS is an API.
+
+**Still out of scope (by design):** automated patentability / novelty / obviousness determinations. Use `distinguish-matrix` for lexical drafting aids only.
+
+Artifacts land under:
+
+`~/.local/state/ipfs_datasets_py/patent_portfolio/operator-default/prior_art/<app>/<run_id>/`
+
+| File | Purpose |
+| --- | --- |
+| `prior_art_plan.json` | PATLAW-094 plan (claims, limitations, queries, gaps) |
+| `search_journal.json` | PATLAW-148 dated query journal (adapters, outcomes, hits) |
+| `coverage_declaration.json` | Searched vs unsearched corpora + named gaps |
+| `claim_chart.json` | Source-linked limitation ↔ hit map (candidates only) |
+| `distinguishability_summary.json` | Review tips + top candidate hits (no conclusions) |
+| `prior_art_report.json` | Combined plan + logs + chart for preflight |
+| `distinguishability_matrix.json` | Limitation × doc lexical overlap (drafting aid only) |
+| `pps_verification_checklist.json` | Human PPS interactive verification items |
+| `human_coverage_acknowledgment.json` | Operator coverage-scope acknowledgment |
+| `prior_art_rule_checklist.json` | Preflight readiness (still not patentability) |
+| `adapter_status.json` | Which foreign/NPL/citation/family backends ran |
+
+Libraries:
+
+* `ipfs_datasets_py/processors/domains/uspto/prior_art_search_client.py`
+* `ipfs_datasets_py/processors/domains/uspto/prior_art_operator_extensions.py`
+* `ipfs_datasets_py/processors/domains/uspto/providers/epo_ops_client.py`
+* `ipfs_datasets_py/processors/domains/uspto/providers/npl_public_clients.py`
+* `scripts/ops/uspto/attended_pps_assist.py`
+
 ## Revise a submission (deficiency letter / office action)
 
 When USPTO mails a deficiency notice, missing-parts letter, non-compliant
@@ -291,6 +530,16 @@ python3 scripts/ops/uspto/portfolio_cli.py revise guide \
 # Repos: justicedao/patent-legal-{corpus,bm25,vectors,knowledge-graph}
 python3 scripts/ops/uspto/portfolio_cli.py revise search-law \
   --query "37 CFR 1.121 claim amendments status identifiers"
+
+# Prior art for claim distinguishability (see Prior-art search section)
+python3 scripts/ops/uspto/portfolio_cli.py prior-art search \
+  --application-number 18654466 \
+  --claims-file ~/drafts/amended_claims.json \
+  --odp --max-queries 6
+python3 scripts/ops/uspto/portfolio_cli.py prior-art attach-revision \
+  --revision-id rev-18654466-… \
+  --application-number 18654466 \
+  --run-id run-…
 
 # 6) Attended Patent Center assist (YOU still Sign / Pay / Submit)
 python3 scripts/ops/uspto/portfolio_cli.py revise filing-assist \
@@ -363,11 +612,15 @@ receipt-verified), see `PATENT_CENTER_HUMAN_HANDOFF.md`.
 
 **Allowed:** public ODP discovery/sync; build manifest from local files; import
 authorized exports; attended browser with human login; filing checklist;
-view-only Patent Center navigation; post-submit receipt watch/import.
+view-only Patent Center navigation; post-submit receipt watch/import;
+public prior-art plan/search journals for human review; foreign/NPL named
+adapters with operator-supplied catalogs; human PPS verification recording.
 
-**Forbidden:** unattended Patent Center scrape; storing passwords/MFA; typing
-credentials from env; **sign / pay / final submission automation**; committing
-exports or browser profiles.
+**Forbidden:** unattended Patent Center scrape; **Patent Public Search
+automation/scrape**; storing passwords/MFA; typing credentials from env;
+**sign / pay / final submission automation**; committing exports or browser
+profiles; redistributing unlicensed NPL body text; treating prior-art journals
+as patentability determinations.
 
 ## Policy
 

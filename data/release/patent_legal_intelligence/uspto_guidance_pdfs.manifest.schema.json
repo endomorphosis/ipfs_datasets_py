@@ -1,0 +1,561 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/patent-uspto-guidance-pdfs.manifest.v1.schema.json",
+  "title": "USPTO Guidance PDF Inventory Manifest v1",
+  "description": "Content-addressed inventory for pinned USPTO examination guidance PDFs (PATLAW-184 / PATLAW-G217). Every inventory record binds URI, sha256 of PDF bytes, publication date, cutoff, page metadata, and rights review. Concrete document_id AND version pins are required; the unpinned token 'latest' is forbidden. Guidance never elevates to binding law. Prior superseded editions are retained as evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "interface",
+    "task_id",
+    "goal_id",
+    "producer",
+    "config_id",
+    "code_version",
+    "edition_pin",
+    "inventory",
+    "counts",
+    "inventory_digest_sha256",
+    "package_digest_sha256",
+    "package_root_cid",
+    "authority_tier",
+    "is_binding",
+    "partition",
+    "mode"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "patent.uspto_guidance_pdfs.v1"
+    },
+    "interface": {
+      "const": "UsptoGuidancePdfInventory@1"
+    },
+    "task_id": {
+      "const": "PATLAW-184"
+    },
+    "goal_id": {
+      "const": "PATLAW-G217"
+    },
+    "producer": {
+      "const": "producer:uspto-guidance-pdf-inventory"
+    },
+    "config_id": {
+      "const": "config:uspto-guidance-pdfs/v1"
+    },
+    "code_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "edition_pin": {
+      "$ref": "#/$defs/documentPin",
+      "description": "Concrete inventory-level pin (document_id + version + cutoff). Never 'latest'."
+    },
+    "inventory": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/inventoryEntry"
+      },
+      "description": "Pinned guidance PDF rows. Each binds URI, sha256, publication_date, cutoff, and rights_review."
+    },
+    "counts": {
+      "$ref": "#/$defs/counts"
+    },
+    "inventory_digest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "package_digest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "package_root_cid": {
+      "$ref": "#/$defs/cidV1"
+    },
+    "authority_tier": {
+      "const": "guidance",
+      "description": "Guidance PDF inventory is always guidance; never statute or regulation."
+    },
+    "is_binding": {
+      "const": false,
+      "description": "Guidance never elevates to binding law."
+    },
+    "supersessions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/supersession"
+      },
+      "default": []
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/gap"
+      },
+      "default": []
+    },
+    "partition": {
+      "const": "public",
+      "description": "Public corpus only; private/mixed partitions fail closed."
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["dry_run", "stage", "acquire"]
+    },
+    "staged_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "cidV1": {
+      "type": "string",
+      "pattern": "^b[a-z2-7]{20,}$",
+      "minLength": 21,
+      "maxLength": 256
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "isoDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "nonLatestToken": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "not": {
+        "enum": ["latest", "Latest", "LATEST", "LaTeSt"]
+      },
+      "description": "Concrete identity token; the hard-coded value 'latest' is rejected (Python contracts also reject case-insensitive 'latest')."
+    },
+    "uri": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "pattern": "^(https://|uspto://|ipfs://|hf://)"
+    },
+    "rightsReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "license_expression",
+        "review_status",
+        "reviewed_by",
+        "reviewed_at",
+        "redistribution_allowed"
+      ],
+      "properties": {
+        "license_expression": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "review_status": {
+          "type": "string",
+          "enum": ["reviewed", "unreviewed", "rejected"]
+        },
+        "reviewed_by": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "reviewed_at": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "redistribution_allowed": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2048
+        }
+      },
+      "description": "Human rights/redistribution review. Present inventory rows require reviewed + redistribution_allowed."
+    },
+    "extractionContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "text_sha256",
+        "page_count",
+        "normalization_profile",
+        "extractor_version"
+      ],
+      "properties": {
+        "method": {
+          "$ref": "#/$defs/nonLatestToken",
+          "description": "Pinned extraction method id (never 'latest')."
+        },
+        "text_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of normalized extracted text; deterministic for identical PDF bytes + profile."
+        },
+        "page_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "normalization_profile": {
+          "$ref": "#/$defs/nonLatestToken"
+        },
+        "extractor_version": {
+          "$ref": "#/$defs/nonLatestToken"
+        },
+        "char_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "media_type": {
+          "type": "string",
+          "maxLength": 128,
+          "default": "text/plain"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "documentPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_id", "version", "cutoff"],
+      "properties": {
+        "document_id": {
+          "$ref": "#/$defs/nonLatestToken",
+          "description": "Concrete guidance document id. Required; never 'latest'."
+        },
+        "version": {
+          "$ref": "#/$defs/nonLatestToken",
+          "description": "Concrete version/date pin (e.g. '2024-07-17'). Required; never 'latest'."
+        },
+        "pin_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Stable composite key such as sme-2024-ai-examples-v2024-07-17."
+        },
+        "cutoff": {
+          "$ref": "#/$defs/isoDate",
+          "description": "As-of / cutoff date for the pinned guidance text."
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "default": "uspto"
+        },
+        "publication_date": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "source_url": {
+          "$ref": "#/$defs/uri"
+        },
+        "content_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "retrieved_at": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "inventoryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entry_id",
+        "document_id",
+        "version",
+        "uri",
+        "sha256",
+        "publication_date",
+        "cutoff",
+        "rights_review",
+        "page_count",
+        "status",
+        "authority_tier",
+        "is_binding",
+        "classification"
+      ],
+      "properties": {
+        "entry_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/=+\\-]{0,255}$"
+        },
+        "document_id": {
+          "$ref": "#/$defs/nonLatestToken",
+          "description": "Concrete guidance document id; never 'latest'."
+        },
+        "version": {
+          "$ref": "#/$defs/nonLatestToken",
+          "description": "Concrete version pin; never 'latest'."
+        },
+        "uri": {
+          "$ref": "#/$defs/uri",
+          "description": "Official PDF URI (https:// or equivalent content-address scheme)."
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the PDF bytes."
+        },
+        "publication_date": {
+          "$ref": "#/$defs/isoDate",
+          "description": "Official publication date of this PDF edition."
+        },
+        "cutoff": {
+          "$ref": "#/$defs/isoDate",
+          "description": "As-of / applicability cutoff for this PDF edition."
+        },
+        "rights_review": {
+          "$ref": "#/$defs/rightsReview",
+          "description": "Required rights/redistribution review for public corpus admission."
+        },
+        "page_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "PDF page count; present rows require >= 1."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["present", "gap"]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "media_type": {
+          "type": "string",
+          "const": "application/pdf"
+        },
+        "content_cid": {
+          "$ref": "#/$defs/cidV1"
+        },
+        "classification": {
+          "type": "string",
+          "enum": ["public_official", "public_user"],
+          "description": "Public classification only; private/mixed fail closed."
+        },
+        "authority_tier": {
+          "const": "guidance"
+        },
+        "is_binding": {
+          "const": false
+        },
+        "extraction": {
+          "$ref": "#/$defs/extractionContract"
+        },
+        "gap_reason": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "source_span": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "retrieved_at": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documents_required",
+        "documents_present",
+        "gap_entries",
+        "page_total",
+        "supersession_edges",
+        "with_extraction"
+      ],
+      "properties": {
+        "documents_required": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "documents_present": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "gap_entries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "page_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "supersession_edges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "with_extraction": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "supersession": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "successor_id",
+        "predecessor_id",
+        "relation",
+        "remains_guidance",
+        "elevates_to_law"
+      ],
+      "properties": {
+        "successor_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "predecessor_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "relation": {
+          "type": "string",
+          "enum": [
+            "supersedes",
+            "partially_supersedes",
+            "clarifies",
+            "withdraws",
+            "restores",
+            "updates"
+          ]
+        },
+        "effective_date": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "remains_guidance": {
+          "const": true,
+          "description": "Both endpoints remain guidance-tier; prior editions retained as evidence."
+        },
+        "elevates_to_law": {
+          "const": false,
+          "description": "Supersession never elevates guidance to binding law."
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gap_id",
+        "kind",
+        "document_id",
+        "reason",
+        "authority_tier"
+      ],
+      "properties": {
+        "gap_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "unavailable",
+            "content_changed",
+            "delayed_inventory",
+            "hash_mismatch",
+            "retrieval_failed",
+            "rights_failed",
+            "extraction_failed",
+            "other"
+          ]
+        },
+        "document_id": {
+          "$ref": "#/$defs/nonLatestToken"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "version": {
+          "$ref": "#/$defs/nonLatestToken"
+        },
+        "authority_tier": {
+          "const": "guidance"
+        },
+        "expected_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "observed_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "uri": {
+          "$ref": "#/$defs/uri"
+        },
+        "detected_at": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

@@ -15,6 +15,9 @@ Subcommands:
   filing-assist  Attended Patent Center assist (nav + checklist + receipt watch)
   watch-receipts Poll post_submit_receipts/<app>/ after human Submit and import
   revise         Respond to deficiency letters / office actions (scan, open, prepare)
+  prior-art      Plan/search public prior art for claim distinguishability (no novelty conclusions)
+  audit-submission
+                 Audit package vs MPEP/CFR filing rules + prior-art coverage (review only)
   login / login-status / logout
                  Patent Center password+OTP login helper (refs/prompts; no secret echo)
   show           Print seed / last review summary
@@ -776,6 +779,79 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                     }
                 except Exception as exc:  # noqa: BLE001
                     result["law_guide_error"] = f"{type(exc).__name__}:{exc}"
+            # Point operators at prior-art search for claim distinguishability
+            case = load_revision_case(str(args.revision_id), state_root=state)
+            result["prior_art_hint"] = {
+                "command": (
+                    "portfolio_cli prior-art search "
+                    f"--application-number {case.application_number} "
+                    "--claims-file <amended_claims.json> --odp"
+                ),
+                "attach": (
+                    "portfolio_cli prior-art attach-revision "
+                    f"--revision-id {case.revision_id} "
+                    "--run-id <run_id> "
+                    f"--application-number {case.application_number}"
+                ),
+                "note": (
+                    "Plan/search public prior art to draft distinguishing remarks. "
+                    "Does not assert novelty; foreign/NPL gaps stay visible."
+                ),
+            }
+            # Auto MPEP/CFR + prior-art compliance audit (default on)
+            if not bool(getattr(args, "no_audit", False)):
+                try:
+                    from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
+                        audit_submission,
+                    )
+
+                    audit = audit_submission(
+                        revision_id=str(args.revision_id),
+                        state_root=state,
+                        application_type=str(
+                            getattr(args, "application_type", None) or "utility"
+                        ),
+                        with_law_index=bool(getattr(args, "with_law_index", False)),
+                        build_ids_queue=not bool(
+                            getattr(args, "no_ids_queue", False)
+                        ),
+                        persist=True,
+                    )
+                    result["compliance_audit"] = {
+                        "ok": audit.get("ok"),
+                        "audit_id": audit.get("audit_id"),
+                        "overall_status": audit.get("overall_status"),
+                        "paths": audit.get("paths"),
+                        "action_plan": (audit.get("summary") or {}).get(
+                            "action_plan"
+                        ),
+                        "ids_queue": (audit.get("summary") or {}).get("ids_queue"),
+                        "filing_missing_mandatory": (
+                            (audit.get("summary") or {})
+                            .get("filing_rules", {})
+                            .get("missing_mandatory_count")
+                        ),
+                        "prior_art_status": (
+                            (audit.get("summary") or {})
+                            .get("prior_art", {})
+                            .get("status")
+                        ),
+                    }
+                except Exception as exc:  # noqa: BLE001
+                    result["compliance_audit_error"] = (
+                        f"{type(exc).__name__}:{exc}"
+                    )
+            else:
+                result["compliance_audit_hint"] = {
+                    "command": (
+                        "portfolio_cli revise audit "
+                        f"--revision-id {case.revision_id}"
+                    ),
+                    "note": (
+                        "Audit package inventory vs MPEP/CFR filing-obligation "
+                        "rules and prior-art coverage (review only)."
+                    ),
+                }
             print(json.dumps(result, indent=2, default=str))
             return 0 if result.get("ok") else 1
 
@@ -862,6 +938,40 @@ def _cmd_revise(args: argparse.Namespace) -> int:
             print(json.dumps({"ok": True, "case": case.to_dict()}, indent=2, default=str))
             return 0
 
+        if action == "audit":
+            from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
+                audit_submission,
+            )
+
+            result = audit_submission(
+                revision_id=str(args.revision_id or "") or None,
+                application_number=str(args.application_number or "") or None,
+                state_root=state,
+                package_dir=str(getattr(args, "package_dir", "") or "") or None,
+                prior_art_run_id=str(getattr(args, "prior_art_run_id", "") or "")
+                or None,
+                prior_art_run_dir=str(getattr(args, "prior_art_run_dir", "") or "")
+                or None,
+                application_type=str(
+                    getattr(args, "application_type", None) or "utility"
+                ),
+                with_law_index=bool(getattr(args, "with_law_index", False)),
+                build_ids_queue=not bool(getattr(args, "no_ids_queue", False)),
+                persist=not bool(getattr(args, "no_persist", False)),
+            )
+            out = {
+                "ok": result.get("ok"),
+                "audit_id": result.get("audit_id"),
+                "overall_status": result.get("overall_status"),
+                "paths": result.get("paths"),
+                "action_plan": (result.get("summary") or {}).get("action_plan"),
+                "ids_queue": (result.get("summary") or {}).get("ids_queue"),
+                "summary": result.get("summary"),
+                "disclaimer": result.get("disclaimer"),
+            }
+            print(json.dumps(out, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
         if action == "filing-assist":
             case = load_revision_case(str(args.revision_id), state_root=state)
             # Delegate to filing-assist with response package
@@ -905,6 +1015,7 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                         "guide",
                         "seed-corpus",
                         "search-law",
+                        "audit",
                         "filing-assist",
                         "mark-submitted",
                         "close",
@@ -918,6 +1029,637 @@ def _cmd_revise(args: argparse.Namespace) -> int:
     except RevisionError as exc:
         print(
             json.dumps({"ok": False, "code": exc.code, "message": str(exc)}, indent=2),
+            file=sys.stderr,
+        )
+        return 2
+
+
+def _resolve_prior_art_run_dir(
+    args: argparse.Namespace, state: Path
+) -> Path:
+    from ipfs_datasets_py.processors.domains.uspto.prior_art_search_client import (
+        PriorArtSearchClientError,
+        prior_art_app_dir,
+    )
+
+    run_dir = str(getattr(args, "run_dir", "") or "").strip()
+    if run_dir:
+        return Path(run_dir).expanduser().resolve()
+    run_id = str(getattr(args, "run_id", "") or "").strip()
+    app = str(getattr(args, "application_number", "") or "").strip()
+    if run_id and app:
+        return prior_art_app_dir(app, state_root=state) / run_id
+    if run_id:
+        base = state / "prior_art"
+        if base.is_dir():
+            for app_dir in base.iterdir():
+                cand = app_dir / run_id
+                if cand.is_dir():
+                    return cand
+    raise PriorArtSearchClientError(
+        "pass --run-dir or --run-id + --application-number",
+        code="missing_run_dir",
+    )
+
+
+def _cmd_audit_submission(args: argparse.Namespace) -> int:
+    """Audit package inventory vs filing rules + prior-art coverage."""
+    from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
+        SubmissionComplianceAuditError,
+        audit_submission,
+        list_compliance_audits,
+        show_compliance_audit,
+    )
+
+    state = _state_root(args)
+    state.mkdir(parents=True, exist_ok=True)
+    try:
+        if bool(getattr(args, "list_audits", False)):
+            result = list_compliance_audits(
+                application_number=str(args.application_number or "") or None,
+                state_root=state,
+                limit=int(getattr(args, "limit", 20) or 20),
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0
+
+        if bool(getattr(args, "show_audit", False)):
+            result = show_compliance_audit(
+                application_number=str(args.application_number or "") or None,
+                audit_path=str(getattr(args, "audit_path", "") or "") or None,
+                audit_dir=str(getattr(args, "audit_dir", "") or "") or None,
+                state_root=state,
+                write_markdown=not bool(getattr(args, "no_markdown", False)),
+            )
+            # Compact unless verbose
+            if not bool(getattr(args, "verbose", False)):
+                result = {
+                    k: result.get(k)
+                    for k in (
+                        "ok",
+                        "audit_path",
+                        "markdown_path",
+                        "overall_status",
+                        "application_number",
+                        "revision_id",
+                        "action_plan",
+                        "ids_queue",
+                        "filing_missing_mandatory",
+                        "prior_art_status",
+                        "disclaimer",
+                    )
+                }
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        result = audit_submission(
+            application_number=str(args.application_number or "") or None,
+            revision_id=str(args.revision_id or "") or None,
+            state_root=state,
+            package_dir=str(args.package_dir or "") or None,
+            prior_art_run_dir=str(args.prior_art_run_dir or "") or None,
+            prior_art_run_id=str(args.prior_art_run_id or "") or None,
+            application_type=str(args.application_type or "utility"),
+            scenario=str(args.scenario or "") or None,
+            with_law_index=bool(getattr(args, "with_law_index", False)),
+            build_ids_queue=not bool(getattr(args, "no_ids_queue", False)),
+            persist=not bool(getattr(args, "no_persist", False)),
+        )
+        # Compact: surface action plan at top level for operators
+        out = {
+            "ok": result.get("ok"),
+            "audit_id": result.get("audit_id"),
+            "application_number": result.get("application_number"),
+            "overall_status": result.get("overall_status"),
+            "paths": result.get("paths"),
+            "action_plan": (result.get("summary") or {}).get("action_plan"),
+            "ids_queue": (result.get("summary") or {}).get("ids_queue"),
+            "summary": result.get("summary"),
+            "disclaimer": result.get("disclaimer"),
+        }
+        if bool(getattr(args, "verbose", False)):
+            out = result
+        print(json.dumps(out, indent=2, default=str))
+        return 0 if result.get("ok") else 1
+    except SubmissionComplianceAuditError as exc:
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "code": getattr(exc, "code", None),
+                    "message": str(exc),
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+        return 2
+
+
+def _cmd_prior_art(args: argparse.Namespace) -> int:
+    """Plan / search / list public prior art for distinguishability review."""
+    from ipfs_datasets_py.processors.domains.uspto.prior_art_search_client import (
+        PriorArtSearchClientError,
+        attach_prior_art_to_revision,
+        list_prior_art_runs,
+        plan_prior_art,
+        search_prior_art,
+        show_prior_art_run,
+    )
+    from ipfs_datasets_py.processors.domains.uspto.prior_art_operator_extensions import (
+        acknowledge_prior_art_run,
+        build_pps_verification_checklist,
+        persist_pps_checklist,
+        record_pps_verification,
+        show_pps_verification,
+    )
+    from ipfs_datasets_py.processors.domains.patent.prior_art import (
+        PriorArtSearchPlan,
+    )
+
+    state = _state_root(args)
+    state.mkdir(parents=True, exist_ok=True)
+    action = str(args.prior_art_action or "").strip()
+    classifications = [
+        c.strip()
+        for c in str(getattr(args, "classifications", "") or "").split(",")
+        if c.strip()
+    ]
+    citation_seeds = [
+        c.strip()
+        for c in str(getattr(args, "citation_seeds", "") or "").split(",")
+        if c.strip()
+    ]
+    family_seeds = [
+        c.strip()
+        for c in str(getattr(args, "family_seeds", "") or "").split(",")
+        if c.strip()
+    ]
+
+    try:
+        if action == "plan":
+            if not args.application_number:
+                raise PriorArtSearchClientError(
+                    "--application-number is required",
+                    code="missing_application_number",
+                )
+            result = plan_prior_art(
+                application_number=str(args.application_number),
+                state_root=state,
+                claims_file=str(args.claims_file or "") or None,
+                claims_text=str(args.claims_text or "") or None,
+                filing_date=str(args.filing_date or "") or None,
+                priority_date=str(args.priority_date or "") or None,
+                classifications=classifications,
+                rank_cutoff=int(args.rank_cutoff or 10),
+                citation_seeds=citation_seeds,
+                family_seeds=family_seeds,
+                persist=not bool(getattr(args, "no_persist", False)),
+            )
+            # Drop full plan body from stdout unless --verbose
+            if not bool(getattr(args, "verbose", False)):
+                result = {
+                    k: v
+                    for k, v in result.items()
+                    if k != "plan"
+                }
+                result["hint"] = "pass --verbose to print full plan JSON"
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "search":
+            if not args.application_number:
+                raise PriorArtSearchClientError(
+                    "--application-number is required",
+                    code="missing_application_number",
+                )
+            use_odp = bool(getattr(args, "odp", False))
+            local_snap = str(getattr(args, "local_snapshot", "") or "").strip()
+            foreign_hits = str(getattr(args, "foreign_hits", "") or "").strip()
+            foreign_snap = str(getattr(args, "foreign_snapshot", "") or "").strip()
+            npl_catalog = str(getattr(args, "npl_catalog", "") or "").strip()
+            citation_graph = str(getattr(args, "citation_graph", "") or "").strip()
+            family_graph = str(getattr(args, "family_graph", "") or "").strip()
+            if use_odp:
+                _ensure_env_key()
+            has_us = use_odp or bool(local_snap)
+            live_foreign = bool(getattr(args, "live_foreign", False))
+            live_npl = bool(getattr(args, "live_npl", False))
+            has_coverage = bool(
+                getattr(args, "enable_foreign", False)
+                or foreign_hits
+                or foreign_snap
+                or live_foreign
+                or getattr(args, "enable_npl", False)
+                or npl_catalog
+                or live_npl
+            )
+            if not has_us and not has_coverage:
+                raise PriorArtSearchClientError(
+                    "pass --odp and/or --local-snapshot "
+                    "(and optionally --foreign-hits / --live-foreign / --npl-catalog / --live-npl)",
+                    code="no_search_backend",
+                )
+            npl_providers = [
+                p.strip()
+                for p in str(getattr(args, "npl_providers", "") or "openalex,crossref").split(
+                    ","
+                )
+                if p.strip()
+            ]
+            result = search_prior_art(
+                application_number=str(args.application_number),
+                state_root=state,
+                claims_file=str(args.claims_file or "") or None,
+                claims_text=str(args.claims_text or "") or None,
+                filing_date=str(args.filing_date or "") or None,
+                priority_date=str(args.priority_date or "") or None,
+                classifications=classifications,
+                rank_cutoff=int(args.rank_cutoff or 10),
+                citation_seeds=citation_seeds,
+                family_seeds=family_seeds,
+                use_odp=use_odp,
+                local_snapshot_path=local_snap or None,
+                max_odp_pages=int(getattr(args, "max_odp_pages", 1) or 1),
+                max_queries=int(args.max_queries)
+                if getattr(args, "max_queries", None) is not None
+                else None,
+                enable_foreign=bool(getattr(args, "enable_foreign", False))
+                or bool(foreign_hits or foreign_snap or live_foreign),
+                foreign_hits_path=foreign_hits or None,
+                foreign_snapshot_path=foreign_snap or None,
+                foreign_licensed=not bool(getattr(args, "foreign_unlicensed", False)),
+                live_foreign=live_foreign,
+                enable_npl=bool(getattr(args, "enable_npl", False))
+                or bool(npl_catalog or live_npl),
+                npl_catalog_path=npl_catalog or None,
+                npl_licensed=bool(getattr(args, "npl_licensed", False)),
+                live_npl=live_npl,
+                npl_providers=tuple(npl_providers),
+                citation_graph_path=citation_graph or None,
+                family_graph_path=family_graph or None,
+                max_live_results=int(getattr(args, "max_live_results", 10) or 10),
+                build_report=not bool(getattr(args, "no_report", False)),
+                build_pps_checklist=not bool(getattr(args, "no_pps_checklist", False)),
+                auto_acknowledge=bool(getattr(args, "auto_acknowledge", False)),
+                acknowledger_name=str(getattr(args, "acknowledger", "") or ""),
+            )
+            # Compact stdout: summary + paths (not full journal)
+            out = {
+                "ok": result.get("ok"),
+                "run_id": result.get("run_id"),
+                "run_dir": result.get("run_dir"),
+                "application_number": result.get("application_number"),
+                "plan_id": result.get("plan_id"),
+                "journal_id": result.get("journal_id"),
+                "chart_id": result.get("chart_id"),
+                "coverage_id": result.get("coverage_id"),
+                "report_id": result.get("report_id"),
+                "adapter_status": result.get("adapter_status"),
+                "paths": result.get("paths"),
+                "summary": result.get("summary"),
+                "disclaimer": result.get("disclaimer"),
+            }
+            if bool(getattr(args, "verbose", False)):
+                out = result
+            print(json.dumps(out, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "list":
+            result = list_prior_art_runs(
+                application_number=str(args.application_number or "") or None,
+                state_root=state,
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0
+
+        if action == "show":
+            result = show_prior_art_run(
+                run_id=str(args.run_id or "") or None,
+                application_number=str(args.application_number or "") or None,
+                run_dir=str(args.run_dir or "") or None,
+                state_root=state,
+                include_full=bool(getattr(args, "verbose", False)),
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "attach-revision":
+            if not args.revision_id:
+                raise PriorArtSearchClientError(
+                    "--revision-id is required", code="missing_revision_id"
+                )
+            run_dir = str(_resolve_prior_art_run_dir(args, state))
+            result = attach_prior_art_to_revision(
+                str(args.revision_id),
+                run_dir,
+                state_root=state,
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "pps-checklist":
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            plan_path = run_dir / "prior_art_plan.json"
+            if not plan_path.is_file():
+                raise PriorArtSearchClientError(
+                    f"prior_art_plan.json missing in {run_dir}",
+                    code="plan_missing",
+                )
+            plan = PriorArtSearchPlan.from_dict(
+                json.loads(plan_path.read_text(encoding="utf-8"))
+            )
+            checklist = build_pps_verification_checklist(
+                plan,
+                application_number=str(args.application_number or ""),
+                run_id=run_dir.name,
+            )
+            path = persist_pps_checklist(checklist, run_dir)
+            print(
+                json.dumps(
+                    {
+                        "ok": True,
+                        "pps_checklist_path": str(path),
+                        "pps_url": checklist.get("pps_url"),
+                        "item_count": checklist.get("item_count"),
+                        "instructions": checklist.get("instructions"),
+                        "disclaimer": checklist.get("disclaimer"),
+                    },
+                    indent=2,
+                )
+            )
+            return 0
+
+        if action == "pps-record":
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            verified_by = str(getattr(args, "acknowledger", "") or args.note or "").strip()
+            if not verified_by:
+                verified_by = "operator:local"
+            results_path = str(getattr(args, "pps_results", "") or "").strip()
+            results: list[dict[str, Any]] = []
+            if results_path:
+                raw = json.loads(
+                    Path(results_path).expanduser().read_text(encoding="utf-8")
+                )
+                if isinstance(raw, Mapping) and isinstance(raw.get("results"), list):
+                    results = list(raw["results"])
+                elif isinstance(raw, list):
+                    results = list(raw)
+                else:
+                    raise PriorArtSearchClientError(
+                        "pps results JSON must be a list or {results:[]}",
+                        code="invalid_pps_results",
+                    )
+            elif getattr(args, "query_id", None) and getattr(
+                args, "human_result_count", None
+            ) is not None:
+                results = [
+                    {
+                        "query_id": str(args.query_id),
+                        "human_result_count": int(args.human_result_count),
+                        "human_notes": str(args.note or ""),
+                    }
+                ]
+            else:
+                raise PriorArtSearchClientError(
+                    "pass --pps-results FILE or --query-id + --human-result-count",
+                    code="missing_pps_results",
+                )
+            result = record_pps_verification(
+                run_dir,
+                results=results,
+                verified_by=verified_by,
+                notes=str(args.note or ""),
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "pps-show":
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            result = show_pps_verification(run_dir)
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "acknowledge":
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            name = str(getattr(args, "acknowledger", "") or "").strip()
+            if not name:
+                raise PriorArtSearchClientError(
+                    "--acknowledger is required for acknowledge",
+                    code="missing_acknowledger",
+                )
+            result = acknowledge_prior_art_run(
+                run_dir,
+                acknowledger_name=name,
+                claim_search_complete=bool(
+                    getattr(args, "claim_search_complete", False)
+                ),
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "distinguish-matrix":
+            from ipfs_datasets_py.processors.domains.uspto.prior_art_operator_extensions import (
+                build_and_persist_distinguishability_matrix,
+            )
+
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            result = build_and_persist_distinguishability_matrix(run_dir)
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "ids-queue":
+            from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
+                build_ids_queue_from_prior_art_run,
+            )
+
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            app = str(args.application_number or "").strip()
+            if not app:
+                # Infer from path …/prior_art/<app>/<run>
+                parts = run_dir.parts
+                if "prior_art" in parts:
+                    i = parts.index("prior_art")
+                    if i + 1 < len(parts):
+                        app = parts[i + 1]
+            if not app:
+                raise PriorArtSearchClientError(
+                    "--application-number required for ids-queue",
+                    code="missing_application_number",
+                )
+            result = build_ids_queue_from_prior_art_run(
+                run_dir,
+                application_number=app,
+                reviewer_id=str(
+                    getattr(args, "acknowledger", None) or "operator:local"
+                ),
+                max_candidates=int(getattr(args, "max_candidates", 40) or 40),
+                persist=True,
+                state_root=state,
+            )
+            # Compact stdout
+            out = {
+                "ok": result.get("ok"),
+                "application_number": result.get("application_number"),
+                "queue_id": result.get("queue_id"),
+                "candidate_count": result.get("candidate_count"),
+                "auto_file_blocked": True,
+                "paths": result.get("paths"),
+                "disclaimer": result.get("disclaimer"),
+            }
+            if bool(getattr(args, "verbose", False)):
+                out["queue"] = result.get("queue")
+            print(json.dumps(out, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action in ("ids-list", "ids-review", "ids-export"):
+            from ipfs_datasets_py.processors.domains.uspto.ids_review_operator import (
+                IdsReviewOperatorError,
+                export_ids_ready_checklist,
+                list_ids_candidates,
+                load_ids_queue,
+                resolve_ids_queue_path,
+                review_ids_candidate,
+            )
+
+            try:
+                qpath = resolve_ids_queue_path(
+                    queue_path=str(getattr(args, "queue_path", "") or "") or None,
+                    run_dir=str(args.run_dir or "") or None,
+                    application_number=str(args.application_number or "") or None,
+                    queue_id=str(getattr(args, "queue_id", "") or "") or None,
+                    state_root=state,
+                )
+            except IdsReviewOperatorError as exc:
+                print(
+                    json.dumps(
+                        {
+                            "ok": False,
+                            "code": getattr(exc, "code", None),
+                            "message": str(exc),
+                        },
+                        indent=2,
+                    ),
+                    file=sys.stderr,
+                )
+                return 2
+
+            if action == "ids-list":
+                queue = load_ids_queue(qpath)
+                result = list_ids_candidates(queue)
+                result["queue_path"] = str(qpath)
+                print(json.dumps(result, indent=2, default=str))
+                return 0
+
+            if action == "ids-export":
+                out_path = str(getattr(args, "output", "") or "") or None
+                result = export_ids_ready_checklist(qpath, output_path=out_path)
+                print(json.dumps(result, indent=2, default=str))
+                return 0 if result.get("ok") else 1
+
+            # ids-review
+            cand = str(getattr(args, "candidate_id", "") or "").strip()
+            if not cand:
+                print(
+                    json.dumps(
+                        {
+                            "ok": False,
+                            "error": "ids-review requires --candidate-id",
+                        },
+                        indent=2,
+                    ),
+                    file=sys.stderr,
+                )
+                return 2
+            reviewer = str(
+                getattr(args, "acknowledger", None) or "operator:local"
+            ).strip()
+            try:
+                result = review_ids_candidate(
+                    qpath,
+                    candidate_id=cand,
+                    reviewer_id=reviewer,
+                    relevance=str(getattr(args, "relevance", "") or "") or None,
+                    materiality=str(getattr(args, "materiality", "") or "") or None,
+                    promote=bool(getattr(args, "promote", False)),
+                    reject=bool(getattr(args, "reject", False)),
+                    notes=str(getattr(args, "note", "") or ""),
+                )
+            except IdsReviewOperatorError as exc:
+                print(
+                    json.dumps(
+                        {
+                            "ok": False,
+                            "code": getattr(exc, "code", None),
+                            "message": str(exc),
+                        },
+                        indent=2,
+                    ),
+                    file=sys.stderr,
+                )
+                return 2
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
+        if action == "pps-assist":
+            helper = Path(__file__).resolve().parent / "attended_pps_assist.py"
+            run_dir = _resolve_prior_art_run_dir(args, state)
+            cmd = [
+                sys.executable,
+                str(helper),
+                "--run-dir",
+                str(run_dir),
+                "--json",
+            ]
+            if args.application_number:
+                cmd.extend(
+                    ["--application-number", str(args.application_number)]
+                )
+            if getattr(args, "state_root", None):
+                cmd.extend(["--state-root", str(args.state_root)])
+            if bool(getattr(args, "no_browser", False)):
+                cmd.append("--no-browser")
+            if bool(getattr(args, "headless", False)):
+                cmd.append("--headless")
+            watch = getattr(args, "watch_seconds", None)
+            if watch is not None:
+                cmd.extend(["--watch-seconds", str(watch)])
+            return subprocess.call(cmd)
+
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": f"unknown prior-art action: {action}",
+                    "actions": [
+                        "plan",
+                        "search",
+                        "list",
+                        "show",
+                        "attach-revision",
+                        "pps-checklist",
+                        "pps-record",
+                        "pps-show",
+                        "pps-assist",
+                        "acknowledge",
+                        "distinguish-matrix",
+                        "ids-queue",
+                        "ids-list",
+                        "ids-review",
+                        "ids-export",
+                    ],
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+        return 2
+    except PriorArtSearchClientError as exc:
+        print(
+            json.dumps(
+                {"ok": False, "code": getattr(exc, "code", None), "message": str(exc)},
+                indent=2,
+            ),
             file=sys.stderr,
         )
         return 2
@@ -1382,6 +2124,7 @@ def build_parser() -> argparse.ArgumentParser:
             "guide",
             "seed-corpus",
             "search-law",
+            "audit",
             "filing-assist",
             "mark-submitted",
             "close",
@@ -1463,7 +2206,425 @@ def build_parser() -> argparse.ArgumentParser:
         default=8,
         help="With search-law: number of hybrid hits (default 8)",
     )
+    rev.add_argument(
+        "--package-dir",
+        default="",
+        help="With audit: package directory override",
+    )
+    rev.add_argument(
+        "--prior-art-run-id",
+        default="",
+        help="With audit: bind a specific prior-art run id",
+    )
+    rev.add_argument(
+        "--prior-art-run-dir",
+        default="",
+        help="With audit: bind a specific prior-art run directory",
+    )
+    rev.add_argument(
+        "--with-law-index",
+        action="store_true",
+        help="With audit: query HF patent-legal hybrid index for MPEP/CFR hits",
+    )
+    rev.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="With audit: do not write audit artifacts under state-root",
+    )
+    rev.add_argument(
+        "--no-audit",
+        action="store_true",
+        help="With prepare: skip automatic MPEP/prior-art compliance audit",
+    )
+    rev.add_argument(
+        "--no-ids-queue",
+        action="store_true",
+        help="With prepare/audit: do not build IDS candidate queue from prior-art hits",
+    )
     rev.set_defaults(func=_cmd_revise)
+
+    pa = sub.add_parser(
+        "prior-art",
+        help=(
+            "Prior-art search for claim distinguishability: plans, ODP/local "
+            "search, foreign/NPL adapters, citation/family expansion, PPS human "
+            "verification checklist, coverage ack. Never asserts novelty/"
+            "patentability; never scrapes Patent Public Search."
+        ),
+    )
+    pa.add_argument(
+        "prior_art_action",
+        choices=(
+            "plan",
+            "search",
+            "list",
+            "show",
+            "attach-revision",
+            "pps-checklist",
+            "pps-record",
+            "pps-show",
+            "pps-assist",
+            "acknowledge",
+            "distinguish-matrix",
+            "ids-queue",
+            "ids-list",
+            "ids-review",
+            "ids-export",
+        ),
+        help="prior-art workflow action",
+    )
+    pa.add_argument("--application-number", default="")
+    pa.add_argument(
+        "--claims-file",
+        default="",
+        help="JSON/JSONL/text file of claims (list or {claims:[{claim_number,claim_text}]})",
+    )
+    pa.add_argument(
+        "--claims-text",
+        default="",
+        help="Inline numbered claim text (e.g. '1. A method comprising…')",
+    )
+    pa.add_argument(
+        "--filing-date",
+        default="",
+        help="YYYY-MM-DD (default: from export application_data if present)",
+    )
+    pa.add_argument(
+        "--priority-date",
+        default="",
+        help="YYYY-MM-DD (default: earliest parent continuity or filing date)",
+    )
+    pa.add_argument(
+        "--classifications",
+        default="",
+        help="Comma-separated CPC/IPC codes to seed queries",
+    )
+    pa.add_argument(
+        "--citation-seeds",
+        default="",
+        help="Comma-separated document ids for citation-expansion queries",
+    )
+    pa.add_argument(
+        "--family-seeds",
+        default="",
+        help="Comma-separated document ids for family-expansion queries",
+    )
+    pa.add_argument(
+        "--rank-cutoff",
+        type=int,
+        default=10,
+        help="Max hits kept per query (default 10)",
+    )
+    pa.add_argument(
+        "--odp",
+        action="store_true",
+        help="With search: query USPTO ODP Patent File Wrapper (needs USPTO_ODP_API_KEY)",
+    )
+    pa.add_argument(
+        "--local-snapshot",
+        default="",
+        help="With search: path to local public-patent JSON/JSONL snapshot",
+    )
+    pa.add_argument(
+        "--max-odp-pages",
+        type=int,
+        default=1,
+        help="With --odp: max result pages per query (default 1)",
+    )
+    pa.add_argument(
+        "--max-queries",
+        type=int,
+        default=None,
+        help="With search: cap number of plan queries executed (cost control)",
+    )
+    pa.add_argument(
+        "--enable-foreign",
+        action="store_true",
+        help="With search: register foreign-patent adapter (needs hits/snapshot or records named gap)",
+    )
+    pa.add_argument(
+        "--foreign-hits",
+        default="",
+        help="JSON/JSONL of foreign patent hits (EP/WO/… document_id + title)",
+    )
+    pa.add_argument(
+        "--foreign-snapshot",
+        default="",
+        help="Local foreign-patent snapshot JSON converted to hits",
+    )
+    pa.add_argument(
+        "--foreign-unlicensed",
+        action="store_true",
+        help="Mark foreign adapter unlicensed (corpus stays named gap)",
+    )
+    pa.add_argument(
+        "--live-foreign",
+        action="store_true",
+        help=(
+            "With search: live EPO OPS foreign search "
+            "(needs EPO_OPS_KEY + EPO_OPS_SECRET from developers.epo.org)"
+        ),
+    )
+    pa.add_argument(
+        "--enable-npl",
+        action="store_true",
+        help="With search: register NPL adapter (needs --npl-catalog for real hits)",
+    )
+    pa.add_argument(
+        "--npl-catalog",
+        default="",
+        help="JSON/JSONL NPL metadata catalog (rights_status required; body text rights-gated)",
+    )
+    pa.add_argument(
+        "--npl-licensed",
+        action="store_true",
+        help="Assert NPL catalog is licensed for this operator (still no body redistrib without rights)",
+    )
+    pa.add_argument(
+        "--live-npl",
+        action="store_true",
+        help=(
+            "With search: live public NPL metadata via OpenAlex + Crossref "
+            "(optional OPENALEX_API_KEY / CROSSREF_MAILTO)"
+        ),
+    )
+    pa.add_argument(
+        "--npl-providers",
+        default="openalex,crossref",
+        help="With --live-npl: comma list of providers (default openalex,crossref)",
+    )
+    pa.add_argument(
+        "--max-live-results",
+        type=int,
+        default=10,
+        help="With live foreign/NPL: max hits per query (default 10)",
+    )
+    pa.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="With pps-assist: checklist only (no Playwright)",
+    )
+    pa.add_argument(
+        "--headless",
+        action="store_true",
+        help="With pps-assist: headless browser (landing page only)",
+    )
+    pa.add_argument(
+        "--watch-seconds",
+        type=float,
+        default=300.0,
+        help="With pps-assist: seconds to keep browser open (default 300)",
+    )
+    pa.add_argument(
+        "--citation-graph",
+        default="",
+        help="JSON/JSONL citation edges {citing_id,cited_id,direction}",
+    )
+    pa.add_argument(
+        "--family-graph",
+        default="",
+        help="JSON/JSONL family members {document_id,relation,related_to}",
+    )
+    pa.add_argument(
+        "--no-report",
+        action="store_true",
+        help="With search: skip writing prior_art_report.json",
+    )
+    pa.add_argument(
+        "--no-pps-checklist",
+        action="store_true",
+        help="With search: skip Patent Public Search human checklist",
+    )
+    pa.add_argument(
+        "--auto-acknowledge",
+        action="store_true",
+        help="With search: write human coverage ack (requires --acknowledger)",
+    )
+    pa.add_argument(
+        "--acknowledger",
+        default="",
+        help="Human name for acknowledge / pps-record / auto-acknowledge",
+    )
+    pa.add_argument(
+        "--claim-search-complete",
+        action="store_true",
+        help="With acknowledge: request prior_art_search_complete if prerequisites hold",
+    )
+    pa.add_argument(
+        "--pps-results",
+        default="",
+        help="With pps-record: JSON file of [{query_id, human_result_count, human_notes?}]",
+    )
+    pa.add_argument(
+        "--query-id",
+        default="",
+        help="With pps-record: single query_id to update",
+    )
+    pa.add_argument(
+        "--human-result-count",
+        type=int,
+        default=None,
+        help="With pps-record + --query-id: hit count observed in PPS",
+    )
+    pa.add_argument(
+        "--note",
+        default="",
+        help="Optional note for pps-record / other actions",
+    )
+    pa.add_argument("--run-id", default="", help="With show/attach-revision/pps-*/acknowledge")
+    pa.add_argument("--run-dir", default="", help="With show/attach-revision/pps-*/acknowledge")
+    pa.add_argument(
+        "--revision-id",
+        default="",
+        help="With attach-revision: bind run into a revision case",
+    )
+    pa.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="With plan: print only, do not write under state-root/prior_art/",
+    )
+    pa.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Include full plan/journal payloads in stdout",
+    )
+    pa.add_argument(
+        "--max-candidates",
+        type=int,
+        default=40,
+        help="With ids-queue: max IDS candidates from prior-art hits (default 40)",
+    )
+    pa.add_argument(
+        "--queue-path",
+        default="",
+        help="With ids-list/ids-review/ids-export: path to ids_review_queue.json",
+    )
+    pa.add_argument(
+        "--queue-id",
+        default="",
+        help="With ids-list/ids-review: queue id under state-root/ids_queues/",
+    )
+    pa.add_argument(
+        "--candidate-id",
+        default="",
+        help="With ids-review: candidate id to update",
+    )
+    pa.add_argument(
+        "--relevance",
+        default="",
+        help="With ids-review: relevant|not_relevant|uncertain",
+    )
+    pa.add_argument(
+        "--materiality",
+        default="",
+        help="With ids-review: material|not_material|uncertain",
+    )
+    pa.add_argument(
+        "--promote",
+        action="store_true",
+        help="With ids-review: promote to IDS-ready after relevance+materiality",
+    )
+    pa.add_argument(
+        "--reject",
+        action="store_true",
+        help="With ids-review: reject candidate",
+    )
+    pa.add_argument(
+        "--output",
+        default="",
+        help="With ids-export: output JSON path (markdown written alongside)",
+    )
+    pa.set_defaults(func=_cmd_prior_art)
+
+    audit = sub.add_parser(
+        "audit-submission",
+        help=(
+            "Audit a response package against filing-obligation rules "
+            "(MPEP/CFR pack citations) and prior-art coverage. Review only — "
+            "not legal advice; never Sign/Pay/Submit."
+        ),
+    )
+    audit.add_argument("--application-number", default="")
+    audit.add_argument("--revision-id", default="")
+    audit.add_argument(
+        "--package-dir",
+        default="",
+        help="Response package directory (default: revision package_dir)",
+    )
+    audit.add_argument(
+        "--prior-art-run-id",
+        default="",
+        help="Prior-art run id under state-root/prior_art/<app>/",
+    )
+    audit.add_argument(
+        "--prior-art-run-dir",
+        default="",
+        help="Absolute prior-art run directory",
+    )
+    audit.add_argument(
+        "--application-type",
+        default="utility",
+        help="utility|design|plant (default utility)",
+    )
+    audit.add_argument(
+        "--scenario",
+        default="",
+        help="Filing scenario override (default from revision trigger or office_action_response)",
+    )
+    audit.add_argument(
+        "--with-law-index",
+        action="store_true",
+        help="Also query JusticeDAO HF patent-legal hybrid index for cited MPEP/CFR",
+    )
+    audit.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="Print only; do not write under state-root/compliance_audits/",
+    )
+    audit.add_argument(
+        "--no-ids-queue",
+        action="store_true",
+        help="Do not build IDS candidate queue from prior-art hits",
+    )
+    audit.add_argument(
+        "--list",
+        dest="list_audits",
+        action="store_true",
+        help="List recent compliance audits instead of running a new one",
+    )
+    audit.add_argument(
+        "--show",
+        dest="show_audit",
+        action="store_true",
+        help="Show latest (or specified) audit + write markdown report",
+    )
+    audit.add_argument(
+        "--audit-path",
+        default="",
+        help="With --show: path to submission_compliance_audit.json",
+    )
+    audit.add_argument(
+        "--audit-dir",
+        default="",
+        help="With --show: audit directory containing the JSON",
+    )
+    audit.add_argument(
+        "--limit",
+        type=int,
+        default=20,
+        help="With --list: max audits to return (default 20)",
+    )
+    audit.add_argument(
+        "--no-markdown",
+        action="store_true",
+        help="With --show: skip writing .md report",
+    )
+    audit.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Include full audit/summary payloads in stdout",
+    )
+    audit.set_defaults(func=_cmd_audit_submission)
 
     return p
 
