@@ -233,6 +233,45 @@ Without a `READY` file, a folder imports only after its newest file is stable
 for `--min-stable-seconds` (default 15) so in-progress downloads are not sealed
 early.
 
+## Submission compliance audit (MPEP / CFR + prior art)
+
+Audit a response package (or revision case) against:
+
+1. **Filing-obligation rule packs** — baseline utility/OA rules cite 37 C.F.R.
+   (e.g. §§ 1.111, 1.121) and related surfaces; required evidence kinds are
+   compared to package files/attachment roles.
+2. **Prior-art coverage** — latest (or selected) `prior-art search` run:
+   report/journal presence, foreign/NPL gaps, PPS verification, human
+   coverage acknowledgment, claim-chart density.
+3. **Authority surface** — local `authority_corpus/` excerpts for cited
+   MPEP/CFR tokens; optional HF hybrid index (`--with-law-index`).
+
+Review only — **not** a completeness certification or legal advice. Never
+Sign / Pay / Submit.
+
+```bash
+# After preparing a revision package + prior-art search:
+python3 scripts/ops/uspto/portfolio_cli.py audit-submission \
+  --application-number 18654466 \
+  --revision-id rev-18654466-… \
+  --package-dir ~/.local/state/.../revisions/cases/18654466/rev-…/response_package
+
+# Or via revise:
+python3 scripts/ops/uspto/portfolio_cli.py revise audit \
+  --revision-id rev-18654466-…
+
+# Bind a specific prior-art run + query public legal index:
+python3 scripts/ops/uspto/portfolio_cli.py audit-submission \
+  --application-number 18654466 \
+  --package-dir ~/drafts/response_package \
+  --prior-art-run-id run-… \
+  --with-law-index
+```
+
+Artifacts: `state-root/compliance_audits/<app>/audit_…/submission_compliance_audit.json`
+
+Library: `ipfs_datasets_py/processors/domains/uspto/submission_compliance_audit.py`.
+
 ## Prior-art search (claim distinguishability)
 
 Use **prior-art** to build a reproducible search plan from claim text, run

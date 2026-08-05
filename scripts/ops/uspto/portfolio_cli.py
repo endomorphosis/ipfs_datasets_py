@@ -16,6 +16,8 @@ Subcommands:
   watch-receipts Poll post_submit_receipts/<app>/ after human Submit and import
   revise         Respond to deficiency letters / office actions (scan, open, prepare)
   prior-art      Plan/search public prior art for claim distinguishability (no novelty conclusions)
+  audit-submission
+                 Audit package vs MPEP/CFR filing rules + prior-art coverage (review only)
   login / login-status / logout
                  Patent Center password+OTP login helper (refs/prompts; no secret echo)
   show           Print seed / last review summary
@@ -796,6 +798,20 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                     "Does not assert novelty; foreign/NPL gaps stay visible."
                 ),
             }
+            result["compliance_audit_hint"] = {
+                "command": (
+                    "portfolio_cli audit-submission "
+                    f"--revision-id {case.revision_id} "
+                    f"--application-number {case.application_number}"
+                ),
+                "or_revise": (
+                    f"portfolio_cli revise audit --revision-id {case.revision_id}"
+                ),
+                "note": (
+                    "Audit package inventory vs MPEP/CFR filing-obligation rules "
+                    "and prior-art coverage (review only)."
+                ),
+            }
             print(json.dumps(result, indent=2, default=str))
             return 0 if result.get("ok") else 1
 
@@ -882,6 +898,29 @@ def _cmd_revise(args: argparse.Namespace) -> int:
             print(json.dumps({"ok": True, "case": case.to_dict()}, indent=2, default=str))
             return 0
 
+        if action == "audit":
+            from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
+                audit_submission,
+            )
+
+            result = audit_submission(
+                revision_id=str(args.revision_id or "") or None,
+                application_number=str(args.application_number or "") or None,
+                state_root=state,
+                package_dir=str(getattr(args, "package_dir", "") or "") or None,
+                prior_art_run_id=str(getattr(args, "prior_art_run_id", "") or "")
+                or None,
+                prior_art_run_dir=str(getattr(args, "prior_art_run_dir", "") or "")
+                or None,
+                application_type=str(
+                    getattr(args, "application_type", None) or "utility"
+                ),
+                with_law_index=bool(getattr(args, "with_law_index", False)),
+                persist=not bool(getattr(args, "no_persist", False)),
+            )
+            print(json.dumps(result, indent=2, default=str))
+            return 0 if result.get("ok") else 1
+
         if action == "filing-assist":
             case = load_revision_case(str(args.revision_id), state_root=state)
             # Delegate to filing-assist with response package
@@ -925,6 +964,7 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                         "guide",
                         "seed-corpus",
                         "search-law",
+                        "audit",
                         "filing-assist",
                         "mark-submitted",
                         "close",
@@ -969,6 +1009,45 @@ def _resolve_prior_art_run_dir(
         "pass --run-dir or --run-id + --application-number",
         code="missing_run_dir",
     )
+
+
+def _cmd_audit_submission(args: argparse.Namespace) -> int:
+    """Audit package inventory vs filing rules + prior-art coverage."""
+    from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
+        SubmissionComplianceAuditError,
+        audit_submission,
+    )
+
+    state = _state_root(args)
+    state.mkdir(parents=True, exist_ok=True)
+    try:
+        result = audit_submission(
+            application_number=str(args.application_number or "") or None,
+            revision_id=str(args.revision_id or "") or None,
+            state_root=state,
+            package_dir=str(args.package_dir or "") or None,
+            prior_art_run_dir=str(args.prior_art_run_dir or "") or None,
+            prior_art_run_id=str(args.prior_art_run_id or "") or None,
+            application_type=str(args.application_type or "utility"),
+            scenario=str(args.scenario or "") or None,
+            with_law_index=bool(getattr(args, "with_law_index", False)),
+            persist=not bool(getattr(args, "no_persist", False)),
+        )
+        print(json.dumps(result, indent=2, default=str))
+        return 0 if result.get("ok") else 1
+    except SubmissionComplianceAuditError as exc:
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "code": getattr(exc, "code", None),
+                    "message": str(exc),
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+        return 2
 
 
 def _cmd_prior_art(args: argparse.Namespace) -> int:
@@ -1802,6 +1881,7 @@ def build_parser() -> argparse.ArgumentParser:
             "guide",
             "seed-corpus",
             "search-law",
+            "audit",
             "filing-assist",
             "mark-submitted",
             "close",
@@ -1882,6 +1962,31 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=8,
         help="With search-law: number of hybrid hits (default 8)",
+    )
+    rev.add_argument(
+        "--package-dir",
+        default="",
+        help="With audit: package directory override",
+    )
+    rev.add_argument(
+        "--prior-art-run-id",
+        default="",
+        help="With audit: bind a specific prior-art run id",
+    )
+    rev.add_argument(
+        "--prior-art-run-dir",
+        default="",
+        help="With audit: bind a specific prior-art run directory",
+    )
+    rev.add_argument(
+        "--with-law-index",
+        action="store_true",
+        help="With audit: query HF patent-legal hybrid index for MPEP/CFR hits",
+    )
+    rev.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="With audit: do not write audit artifacts under state-root",
     )
     rev.set_defaults(func=_cmd_revise)
 
@@ -2127,6 +2232,53 @@ def build_parser() -> argparse.ArgumentParser:
         help="Include full plan/journal payloads in stdout",
     )
     pa.set_defaults(func=_cmd_prior_art)
+
+    audit = sub.add_parser(
+        "audit-submission",
+        help=(
+            "Audit a response package against filing-obligation rules "
+            "(MPEP/CFR pack citations) and prior-art coverage. Review only — "
+            "not legal advice; never Sign/Pay/Submit."
+        ),
+    )
+    audit.add_argument("--application-number", default="")
+    audit.add_argument("--revision-id", default="")
+    audit.add_argument(
+        "--package-dir",
+        default="",
+        help="Response package directory (default: revision package_dir)",
+    )
+    audit.add_argument(
+        "--prior-art-run-id",
+        default="",
+        help="Prior-art run id under state-root/prior_art/<app>/",
+    )
+    audit.add_argument(
+        "--prior-art-run-dir",
+        default="",
+        help="Absolute prior-art run directory",
+    )
+    audit.add_argument(
+        "--application-type",
+        default="utility",
+        help="utility|design|plant (default utility)",
+    )
+    audit.add_argument(
+        "--scenario",
+        default="",
+        help="Filing scenario override (default from revision trigger or office_action_response)",
+    )
+    audit.add_argument(
+        "--with-law-index",
+        action="store_true",
+        help="Also query JusticeDAO HF patent-legal hybrid index for cited MPEP/CFR",
+    )
+    audit.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="Print only; do not write under state-root/compliance_audits/",
+    )
+    audit.set_defaults(func=_cmd_audit_submission)
 
     return p
 
