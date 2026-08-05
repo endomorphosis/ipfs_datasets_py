@@ -446,19 +446,23 @@ def load_full_cfr_title37(
     *,
     fixture_path: PathLike | None = None,
     year: str | int | None = None,
+    live: bool = False,
 ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
     """Materialize annual CFR Title 37 docs from PATLAW-181 acquisition.
 
     Returns ``(documents, source_root, full_authority_meta)``.
     eCFR-only payloads are rejected by the acquisition layer.
+    When ``live`` is true, downloads official GovInfo annual volume XML
+    (requires ``year``).
     """
 
     acq = _load_sibling_module("acquire_cfr_title37_full.py")
     result = acq.acquire_cfr_title37_full(
-        fixture_path=fixture_path,
+        fixture_path=None if live else fixture_path,
         year=year,
         stage=False,
         require_full_catalog=True,
+        live=bool(live),
     )
     identity = result.manifest.edition_identity
     binding = result.manifest.package_binding
@@ -539,8 +543,15 @@ def load_full_cfr_title37(
         "gaps": [
             f"present_sections={present_count}",
             f"gap_sections={gap_count}",
-            "bounded CI fixture may materialize a subset of granules; full "
-            "catalog is inventoried with explicit gaps (not eCFR-only)",
+            (
+                "live GovInfo annual volume XML; catalog rows without package "
+                "text are explicit gaps (not eCFR-only)"
+                if str(result.source_kind).endswith("live")
+                else (
+                    "bounded CI fixture may materialize a subset of granules; "
+                    "full catalog is inventoried with explicit gaps (not eCFR-only)"
+                )
+            ),
         ],
         "package_id": package_id,
         "package_digest_sha256": binding.package_digest_sha256,
@@ -1117,13 +1128,16 @@ def build_full_authority_recipe(
     ecfr_as_of: str = "2024-06-01",
     cfr_fixture_path: PathLike | None = None,
     cfr_year: str | int | None = None,
+    live_cfr: bool = False,
     guidance_cutoff: str | None = None,
     assert_complete: bool = True,
 ) -> dict[str, Any]:
     """Build the production recipe with full CFR, MPEP sections, and guidance PDFs.
 
     Offline by default: consumes PATLAW-181/183/185 acquisition fixtures.
-    Live Title 35 / eCFR / chapter MPEP are optional supplements only.
+    With ``live_cfr=True`` (and ``cfr_year``), downloads official GovInfo
+    annual Title 37 volume XML. Live Title 35 / eCFR / chapter MPEP remain
+    optional supplements only.
     """
 
     docs: list[dict[str, Any]] = []
@@ -1132,9 +1146,14 @@ def build_full_authority_recipe(
     fa_sources: dict[str, Any] = {}
 
     print("loading full annual CFR Title 37 (PATLAW-181)…", file=sys.stderr)
+    if live_cfr and (cfr_year is None or not str(cfr_year).strip()):
+        raise FullAuthorityIncompleteError(
+            "live_cfr requires cfr_year (pinned calendar year, never 'latest')"
+        )
     cfr_docs, cfr_root, cfr_meta = load_full_cfr_title37(
-        fixture_path=cfr_fixture_path,
+        fixture_path=None if live_cfr else cfr_fixture_path,
         year=cfr_year,
+        live=bool(live_cfr),
     )
     docs.extend(cfr_docs)
     roots.append(cfr_root)
@@ -1426,6 +1445,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="(full-authority) Pin annual CFR year",
     )
     p.add_argument(
+        "--live-cfr",
+        action="store_true",
+        help=(
+            "(full-authority) Download official GovInfo annual Title 37 volume "
+            "XML (requires --cfr-year; CI stays offline)"
+        ),
+    )
+    p.add_argument(
         "--reject-ecfr-only",
         action="store_true",
         help="Exit non-zero demonstrating eCFR-only cannot complete full authority",
@@ -1489,12 +1516,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             full_authority=False,
         )
     else:
+        if args.live_cfr and args.cfr_fixture is not None:
+            print(
+                "ERROR: --live-cfr is mutually exclusive with --cfr-fixture",
+                file=sys.stderr,
+            )
+            return 2
+        if args.live_cfr and not args.cfr_year:
+            print(
+                "ERROR: --live-cfr requires --cfr-year YYYY",
+                file=sys.stderr,
+            )
+            return 2
         recipe = build_full_authority_recipe(
             include_uscode=args.include_uscode,
             include_ecfr_supplement=args.include_ecfr_supplement,
             ecfr_as_of=args.ecfr_as_of,
             cfr_fixture_path=args.cfr_fixture,
             cfr_year=args.cfr_year,
+            live_cfr=bool(args.live_cfr),
             assert_complete=True,
         )
 

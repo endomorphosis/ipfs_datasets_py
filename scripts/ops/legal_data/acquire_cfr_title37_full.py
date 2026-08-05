@@ -30,10 +30,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+import time
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Final, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Final, Mapping, Optional, Sequence, Union
+from xml.etree import ElementTree as ET
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
@@ -98,9 +104,39 @@ SECTIONS_DIRNAME: Final = "sections"
 DEFAULT_FIXTURE_RELPATH: Final = (
     "tests/fixtures/legal_data/patent_authorities/cfr/cfr_annual_recipe.json"
 )
+# Live package download uses volume-scoped GovInfo package ids
+# (``CFR-YYYY-title37-volN``). Identity remains the unscoped
+# ``CFR-YYYY-title37`` pin from PATLAW-180 contracts.
+GOVINFO_CONTENT_BASE: Final = "https://www.govinfo.gov/content/pkg"
+DEFAULT_HTTP_TIMEOUT_SECONDS: Final = 120.0
+DEFAULT_LIVE_MAX_VOLUMES: Final = 4
+DEFAULT_LIVE_VOLUME_DELAY_SECONDS: Final = 0.25
+_USER_AGENT: Final = (
+    "ipfs-datasets-py-patent-legal-intelligence/1.0 "
+    "(+https://github.com/endomorphosis/ipfs_datasets_py; "
+    "public-domain CFR acquisition)"
+)
+_MONTHS: Final = {
+    "january": 1,
+    "february": 2,
+    "march": 3,
+    "april": 4,
+    "may": 5,
+    "june": 6,
+    "july": 7,
+    "august": 8,
+    "september": 9,
+    "october": 10,
+    "november": 11,
+    "december": 12,
+}
+_SECTION_NUM_RE = re.compile(
+    r"(?P<section>\d+(?:\.\d+)*(?:[A-Za-z]+)?)",
+)
 
 PathLike = Union[str, Path]
 JsonMapping = Mapping[str, Any]
+HttpGetter = Callable[[str, float], bytes]
 
 
 # ---------------------------------------------------------------------------
@@ -528,8 +564,457 @@ def _stage_outputs(
 
 
 # ---------------------------------------------------------------------------
-# Core acquisition
+# Live GovInfo annual package (volume XML)
 # ---------------------------------------------------------------------------
+
+
+def govinfo_volume_package_id(year: str | int, volume: int, *, title: str = DEFAULT_TITLE) -> str:
+    """Return volume-scoped GovInfo package id for annual Title N XML."""
+
+    y = str(year).strip()
+    if not y or y.casefold() == "latest":
+        raise UnpinnedLatestError("live acquisition requires a concrete calendar year")
+    if int(volume) < 1:
+        raise CfrTitle37AcquireError(f"volume must be >= 1, got {volume!r}")
+    return f"CFR-{y}-title{title}-vol{int(volume)}"
+
+
+def govinfo_volume_xml_url(year: str | int, volume: int, *, title: str = DEFAULT_TITLE) -> str:
+    package_id = govinfo_volume_package_id(year, volume, title=title)
+    return f"{GOVINFO_CONTENT_BASE}/{package_id}/xml/{package_id}.xml"
+
+
+def _parse_govinfo_amddate(raw: str) -> str | None:
+    """Parse ``July 1, 2024`` / ISO dates into YYYY-MM-DD."""
+
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    # ISO first
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(text[:10], fmt).date().isoformat()
+        except ValueError:
+            pass
+    m = re.match(
+        r"^(?P<month>[A-Za-z]+)\s+(?P<day>\d{1,2}),\s*(?P<year>\d{4})$",
+        text,
+    )
+    if not m:
+        return None
+    month = _MONTHS.get(m.group("month").casefold())
+    if month is None:
+        return None
+    day = int(m.group("day"))
+    year = int(m.group("year"))
+    try:
+        return datetime(year, month, day).date().isoformat()
+    except ValueError:
+        return None
+
+
+def _looks_like_html(payload: bytes) -> bool:
+    head = payload[:256].lstrip().lower()
+    return head.startswith(b"<!doctype html") or head.startswith(b"<html")
+
+
+def default_http_get(url: str, timeout: float = DEFAULT_HTTP_TIMEOUT_SECONDS) -> bytes:
+    """HTTP GET for live GovInfo package bytes (operator path)."""
+
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": _USER_AGENT,
+            "Accept": "application/xml,text/xml,*/*",
+        },
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            status = int(getattr(response, "status", 200) or 200)
+            if status >= 400:
+                raise LiveAcquisitionUnavailableError(
+                    f"GovInfo GET {url} returned HTTP {status}"
+                )
+            data = response.read()
+    except urllib.error.HTTPError as exc:
+        raise LiveAcquisitionUnavailableError(
+            f"GovInfo GET {url} failed with HTTP {exc.code}"
+        ) from exc
+    except urllib.error.URLError as exc:
+        raise LiveAcquisitionUnavailableError(
+            f"GovInfo GET {url} failed: {exc.reason}"
+        ) from exc
+    except TimeoutError as exc:
+        raise LiveAcquisitionUnavailableError(
+            f"GovInfo GET {url} timed out after {timeout}s"
+        ) from exc
+    if not data:
+        raise LiveAcquisitionUnavailableError(f"GovInfo GET {url} returned empty body")
+    if _looks_like_html(data):
+        raise LiveAcquisitionUnavailableError(
+            f"GovInfo GET {url} returned HTML (package/volume not available as XML)"
+        )
+    return data
+
+
+def _element_local_name(tag: str) -> str:
+    if "}" in tag:
+        return tag.rsplit("}", 1)[-1]
+    return tag
+
+
+def _element_text_content(element: ET.Element) -> str:
+    parts: list[str] = []
+    if element.text and element.text.strip():
+        parts.append(element.text.strip())
+    for child in element:
+        child_text = _element_text_content(child)
+        if child_text:
+            parts.append(child_text)
+        if child.tail and child.tail.strip():
+            parts.append(child.tail.strip())
+    return " ".join(parts)
+
+
+def extract_section_number(sectno_text: str) -> str | None:
+    """Normalize a CFR ``SECTNO`` label to a catalog section token."""
+
+    cleaned = (
+        str(sectno_text or "")
+        .replace("\u2009", " ")
+        .replace("\u00a0", " ")
+        .replace("§", " ")
+        .strip()
+    )
+    if not cleaned:
+        return None
+    # Prefer full token via shared normalizer when possible.
+    try:
+        token = normalize_section_token(cleaned)
+        if token:
+            return token
+    except Exception:
+        pass
+    match = _SECTION_NUM_RE.search(cleaned)
+    if not match:
+        return None
+    return normalize_section_token(match.group("section"))
+
+
+def parse_cfr_volume_xml(xml_bytes: bytes) -> tuple[dict[str, str], dict[str, str]]:
+    """Parse GovInfo annual CFR volume XML into section texts + metadata.
+
+    Returns
+    -------
+    sections:
+        Map of normalized section token -> plain-text body.
+    metadata:
+        Optional keys such as ``amddate_raw`` / ``date_issued``.
+    """
+
+    try:
+        root = ET.fromstring(xml_bytes)
+    except ET.ParseError as exc:
+        raise CfrTitle37AcquireError(f"invalid CFR volume XML: {exc}") from exc
+
+    sections: dict[str, str] = {}
+    metadata: dict[str, str] = {}
+
+    for element in root.iter():
+        name = _element_local_name(element.tag).upper()
+        if name == "AMDDATE" and element.text:
+            metadata["amddate_raw"] = element.text.strip()
+            parsed = _parse_govinfo_amddate(element.text)
+            if parsed:
+                metadata["date_issued"] = parsed
+        if name != "SECTION":
+            continue
+        sectno_text = ""
+        subject = ""
+        for child in element:
+            child_name = _element_local_name(child.tag).upper()
+            if child_name == "SECTNO":
+                sectno_text = _element_text_content(child)
+            elif child_name == "SUBJECT":
+                subject = _element_text_content(child)
+        section = extract_section_number(sectno_text)
+        if not section:
+            continue
+        body = _element_text_content(element).strip()
+        if subject and body and not body.lower().startswith(subject.lower()[:20]):
+            body = f"{subject}\n\n{body}".strip()
+        elif subject and not body:
+            body = subject
+        if not body:
+            continue
+        # Prefer the longest body if a section appears more than once.
+        previous = sections.get(section)
+        if previous is None or len(body) > len(previous):
+            sections[section] = body
+
+    if not sections:
+        raise CfrTitle37AcquireError(
+            "CFR volume XML contained no parseable SECTION/SECTNO entries"
+        )
+    return sections, metadata
+
+
+def download_govinfo_title37_volumes(
+    year: str | int,
+    *,
+    title: str = DEFAULT_TITLE,
+    max_volumes: int = DEFAULT_LIVE_MAX_VOLUMES,
+    timeout: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
+    delay_seconds: float = DEFAULT_LIVE_VOLUME_DELAY_SECONDS,
+    http_get: HttpGetter | None = None,
+) -> list[dict[str, Any]]:
+    """Download successive annual Title 37 volume XMLs until unavailable.
+
+    Volume 1 is required. Subsequent volumes are optional; HTML/404 ends the
+    scan. Returns a list of dicts with volume metadata and raw bytes.
+    """
+
+    getter = http_get or default_http_get
+    volumes: list[dict[str, Any]] = []
+    for volume in range(1, int(max_volumes) + 1):
+        url = govinfo_volume_xml_url(year, volume, title=title)
+        if volume > 1 and delay_seconds > 0:
+            time.sleep(delay_seconds)
+        try:
+            payload = getter(url, timeout)
+        except LiveAcquisitionUnavailableError:
+            if volume == 1:
+                raise
+            break
+        if not payload or _looks_like_html(payload):
+            if volume == 1:
+                raise LiveAcquisitionUnavailableError(
+                    f"GovInfo GET {url} returned HTML or empty body "
+                    "(package/volume not available as XML)"
+                )
+            break
+        digest = content_sha256(payload)
+        volumes.append(
+            {
+                "volume": volume,
+                "package_id": govinfo_volume_package_id(year, volume, title=title),
+                "source_url": url,
+                "content_sha256": digest,
+                "byte_size": len(payload),
+                "payload": payload,
+            }
+        )
+    if not volumes:
+        raise LiveAcquisitionUnavailableError(
+            f"no GovInfo volume XML available for CFR-{year}-title{title}"
+        )
+    return volumes
+
+
+def acquire_from_govinfo_live(
+    *,
+    year: str | int,
+    mode: MaterializationMode | str = MaterializationMode.ACQUIRE,
+    output_dir: PathLike | None = None,
+    stage: bool = False,
+    require_full_catalog: bool = True,
+    notes: str = "",
+    max_volumes: int = DEFAULT_LIVE_MAX_VOLUMES,
+    timeout: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
+    delay_seconds: float = DEFAULT_LIVE_VOLUME_DELAY_SECONDS,
+    http_get: HttpGetter | None = None,
+) -> CfrTitle37AcquisitionResult:
+    """Acquire full Title 37 inventory from live GovInfo annual volume XML.
+
+    Downloads ``CFR-YYYY-title37-volN`` XML packages, parses every SECTION into
+    plain text, maps present granules onto the full PATLAW-180 catalog, and
+    records explicit gaps for catalog rows without package text.
+    """
+
+    identity = EditionIdentity.for_year(year)
+    volumes = download_govinfo_title37_volumes(
+        identity.year,
+        title=identity.title,
+        max_volumes=max_volumes,
+        timeout=timeout,
+        delay_seconds=delay_seconds,
+        http_get=http_get,
+    )
+
+    section_texts: dict[str, str] = {}
+    date_issued = identity.date_issued
+    for volume in volumes:
+        parsed_sections, metadata = parse_cfr_volume_xml(volume["payload"])
+        if metadata.get("date_issued") and not date_issued:
+            date_issued = metadata["date_issued"]
+        for section, text in parsed_sections.items():
+            previous = section_texts.get(section)
+            if previous is None or len(text) > len(previous):
+                section_texts[section] = text
+
+    # Restrict presence to the Title 37 catalog; extras stay out of inventory.
+    catalog_sections = {
+        normalize_section_token(sec)
+        for part in TITLE37_PARTS
+        for sec in TITLE37_SECTION_CATALOG[part]
+    }
+    section_texts = {
+        sec: text
+        for sec, text in section_texts.items()
+        if sec in catalog_sections and text.strip()
+    }
+    if not section_texts:
+        raise LiveAcquisitionUnavailableError(
+            "live GovInfo volumes parsed but no catalog sections were present"
+        )
+
+    section_digests = {
+        sec: content_sha256(text) for sec, text in section_texts.items()
+    }
+    section_urls = {
+        sec: (
+            f"{GOVINFO_CONTENT_BASE}/{identity.package_id}/xml/"
+            f"{_govinfo_granule_id(package_id=identity.package_id, part=sec.split('.', 1)[0], section=sec)}.xml"
+        )
+        for sec in section_texts
+    }
+
+    # Primary package digest binds the concatenation of volume digests so the
+    # multi-volume annual materialization remains content-addressed even when
+    # the unscoped package_id has no direct XML URL.
+    volume_digest_material = "\n".join(
+        f"{item['package_id']}:{item['content_sha256']}" for item in volumes
+    ).encode("utf-8")
+    package_digest = content_sha256(volume_digest_material)
+    # Prefer vol1 content hash as xml_sha256 (actual annual XML artifact).
+    xml_sha = str(volumes[0]["content_sha256"])
+    package_cid = cid_for_sha256(package_digest)
+    source_url = str(volumes[0]["source_url"])
+
+    # Refresh edition identity with concrete date_issued when discovered.
+    if date_issued and date_issued != identity.date_issued:
+        identity = EditionIdentity(
+            year=identity.year,
+            package_id=identity.package_id,
+            title=identity.title,
+            edition=identity.edition,
+            provider=identity.provider,
+            collection=identity.collection,
+            date_issued=date_issued,
+            volume=identity.volume,
+            authority_tier=identity.authority_tier,
+        )
+
+    inventory = _build_inventory_with_texts(
+        identity,
+        section_digests=section_digests,
+        section_urls=section_urls,
+    )
+    gaps = _gap_records_for(
+        inventory,
+        reason=GapReason.NOT_IN_PACKAGE,
+        note=(
+            "Section inventoried without text in live GovInfo annual volume "
+            "XML materialization"
+        ),
+    )
+    binding = PackageBinding(
+        package_id=identity.package_id,
+        package_digest_sha256=package_digest,
+        package_root_cid=package_cid,
+        xml_sha256=xml_sha,
+        inventory_digest_sha256=content_digest_of(
+            [e.to_dict() for e in inventory]
+        ),
+        source_url=source_url,
+    )
+
+    mode_value = (
+        mode
+        if isinstance(mode, MaterializationMode)
+        else MaterializationMode(str(mode).strip().lower())
+    )
+    manifest = CfrTitle37FullManifest(
+        edition_identity=identity,
+        inventory=inventory,
+        package_binding=binding,
+        gaps=gaps,
+        mode=mode_value,
+        current_through=identity.date_issued,
+        notes=notes
+        or (
+            f"Full annual Title 37 acquisition for {identity.package_id} from "
+            f"live GovInfo volume XML "
+            f"({', '.join(item['package_id'] for item in volumes)}); "
+            f"official-base package pin (not eCFR). "
+            f"Present granules={len(section_texts)}; gaps={len(gaps)}."
+        ),
+    )
+    if require_full_catalog:
+        manifest.assert_full_catalog_coverage()
+    validate_manifest(manifest, require_full_catalog=require_full_catalog)
+
+    package_meta: dict[str, Any] = {
+        "package_id": identity.package_id,
+        "year": identity.year,
+        "title": identity.title,
+        "provider": identity.provider,
+        "authority_tier": identity.authority_tier,
+        "package_digest_sha256": package_digest,
+        "package_root_cid": package_cid,
+        "source_url": binding.source_url,
+        "source_kind": "govinfo-annual-live",
+        "volume_count": len(volumes),
+        "volumes": [
+            {
+                "volume": item["volume"],
+                "package_id": item["package_id"],
+                "source_url": item["source_url"],
+                "content_sha256": item["content_sha256"],
+                "byte_size": item["byte_size"],
+            }
+            for item in volumes
+        ],
+        "section_granules_present": sorted(section_texts.keys()),
+        "xml_sha256": xml_sha,
+        "date_issued": identity.date_issued,
+    }
+
+    out_path = Path(output_dir) if output_dir is not None else None
+    receipt = _build_receipt(
+        manifest=manifest,
+        source_kind="govinfo-annual-live",
+        fixture_path=None,
+        output_dir=out_path if stage else None,
+        present_with_text=len(section_texts),
+        gap_count=len(gaps),
+        notes=manifest.notes,
+    )
+    receipt["live_network"] = True
+    receipt["volume_count"] = len(volumes)
+    receipt["volumes"] = package_meta["volumes"]
+
+    if stage:
+        if out_path is None:
+            raise CfrTitle37AcquireError("--output-dir is required when staging")
+        _stage_outputs(
+            output_dir=out_path,
+            manifest=manifest,
+            receipt=receipt,
+            section_texts=section_texts,
+            package_meta=package_meta,
+        )
+
+    return CfrTitle37AcquisitionResult(
+        manifest=manifest,
+        receipt=receipt,
+        section_texts=section_texts,
+        source_kind="govinfo-annual-live",
+        fixture_path=None,
+        output_dir=out_path if stage else None,
+        package_meta=package_meta,
+    )
 
 
 def acquire_from_govinfo_fixture(
@@ -706,6 +1191,10 @@ def acquire_cfr_title37_full(
     require_full_catalog: bool = True,
     notes: str = "",
     ecfr_only: bool = False,
+    max_volumes: int = DEFAULT_LIVE_MAX_VOLUMES,
+    timeout: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
+    delay_seconds: float = DEFAULT_LIVE_VOLUME_DELAY_SECONDS,
+    http_get: HttpGetter | None = None,
 ) -> CfrTitle37AcquisitionResult:
     """Acquire the full annual CFR Title 37 package for a pinned edition.
 
@@ -732,10 +1221,22 @@ def acquire_cfr_title37_full(
         )
 
     if live:
-        raise LiveAcquisitionUnavailableError(
-            "live GovInfo Title 37 full-package download is not enabled in this "
-            "operator surface; use --default-fixture / --fixture (offline) or "
-            "extend with a receipt-bound live client under operator control"
+        if year is None or not str(year).strip():
+            raise MissingEditionIdentityError(
+                "live GovInfo acquisition requires an explicit --year pin "
+                "(never 'latest')"
+            )
+        return acquire_from_govinfo_live(
+            year=year,
+            mode=mode,
+            output_dir=output_dir,
+            stage=stage,
+            require_full_catalog=require_full_catalog,
+            notes=notes,
+            max_volumes=max_volumes,
+            timeout=timeout,
+            delay_seconds=delay_seconds,
+            http_get=http_get,
         )
 
     result = acquire_from_govinfo_fixture(
@@ -792,7 +1293,7 @@ def _parser() -> argparse.ArgumentParser:
             "eCFR-only crawls are rejected."
         )
     )
-    input_group = parser.add_mutually_exclusive_group(required=True)
+    input_group = parser.add_mutually_exclusive_group(required=False)
     input_group.add_argument(
         "--default-fixture",
         action="store_true",
@@ -823,7 +1324,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--year",
         default=None,
-        help="Pinned calendar year (must match fixture package year when set)",
+        help=(
+            "Pinned calendar year (required with --live; must match fixture "
+            "package year when offline)"
+        ),
     )
     parser.add_argument(
         "--output-dir",
@@ -849,9 +1353,30 @@ def _parser() -> argparse.ArgumentParser:
         "--live",
         action="store_true",
         help=(
-            "Request live GovInfo acquisition (fails closed when unavailable; "
-            "CI must use fixtures)"
+            "Download official annual Title 37 volume XML from GovInfo "
+            "(requires --year; CI stays on fixtures)"
         ),
+    )
+    parser.add_argument(
+        "--live-max-volumes",
+        type=int,
+        default=DEFAULT_LIVE_MAX_VOLUMES,
+        help=(
+            "Maximum annual volume packages to probe under --live "
+            f"(default {DEFAULT_LIVE_MAX_VOLUMES})"
+        ),
+    )
+    parser.add_argument(
+        "--live-timeout-seconds",
+        type=float,
+        default=DEFAULT_HTTP_TIMEOUT_SECONDS,
+        help="HTTP timeout per volume download under --live",
+    )
+    parser.add_argument(
+        "--live-delay-seconds",
+        type=float,
+        default=DEFAULT_LIVE_VOLUME_DELAY_SECONDS,
+        help="Polite delay between live volume downloads",
     )
     parser.add_argument(
         "--print-manifest",
@@ -952,48 +1477,78 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"inventory_digest_sha256: {manifest.inventory_digest_sha256}")
         return 0
 
-    if args.live:
-        print(
-            "ERROR: live GovInfo full Title 37 acquisition is not enabled; "
-            "use --default-fixture or --fixture",
-            file=sys.stderr,
-        )
-        return 2
-
     if args.stage and args.output_dir is None:
         parser.error("--output-dir is required when --stage is set")
 
-    fixture: Path | None
-    if args.default_fixture:
-        fixture = default_fixture_path()
+    if args.live:
+        if not args.year:
+            parser.error("--live requires --year YYYY (never 'latest')")
+        if args.default_fixture or args.fixture is not None:
+            # Live path ignores fixtures; fail loud so operators do not mix modes.
+            parser.error("--live is mutually exclusive with --default-fixture/--fixture")
+        try:
+            result = acquire_from_govinfo_live(
+                year=args.year,
+                mode=args.mode,
+                output_dir=args.output_dir,
+                stage=bool(args.stage),
+                require_full_catalog=True,
+                notes=args.notes or "",
+                max_volumes=int(args.live_max_volumes),
+                timeout=float(args.live_timeout_seconds),
+                delay_seconds=float(args.live_delay_seconds),
+            )
+        except LiveAcquisitionUnavailableError as exc:
+            print(f"ERROR: live acquisition unavailable: {exc}", file=sys.stderr)
+            return 2
+        except UnpinnedLatestError as exc:
+            print(f"ERROR: unpinned latest rejected: {exc}", file=sys.stderr)
+            return 2
+        except (
+            CfrTitle37FullError,
+            CfrTitle37AcquireError,
+            FileNotFoundError,
+            ValueError,
+        ) as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
     else:
-        fixture = args.fixture
+        if not args.default_fixture and args.fixture is None:
+            parser.error(
+                "one of --default-fixture / --fixture / --live / "
+                "--validate-manifest / --reject-ecfr-only is required"
+            )
+        fixture: Path | None
+        if args.default_fixture:
+            fixture = default_fixture_path()
+        else:
+            fixture = args.fixture
 
-    try:
-        result = acquire_cfr_title37_full(
-            year=args.year,
-            fixture_path=fixture,
-            output_dir=args.output_dir,
-            stage=bool(args.stage),
-            mode=args.mode,
-            live=False,
-            notes=args.notes or "",
-        )
-    except EcfrOnlyAcquisitionError as exc:
-        print(f"ERROR: eCFR-only rejected: {exc}", file=sys.stderr)
-        return 2
-    except UnpinnedLatestError as exc:
-        print(f"ERROR: unpinned latest rejected: {exc}", file=sys.stderr)
-        return 2
-    except (
-        CfrTitle37FullError,
-        CfrTitle37AcquireError,
-        MissingPackageError,
-        FileNotFoundError,
-        ValueError,
-    ) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 2
+        try:
+            result = acquire_cfr_title37_full(
+                year=args.year,
+                fixture_path=fixture,
+                output_dir=args.output_dir,
+                stage=bool(args.stage),
+                mode=args.mode,
+                live=False,
+                notes=args.notes or "",
+            )
+        except EcfrOnlyAcquisitionError as exc:
+            print(f"ERROR: eCFR-only rejected: {exc}", file=sys.stderr)
+            return 2
+        except UnpinnedLatestError as exc:
+            print(f"ERROR: unpinned latest rejected: {exc}", file=sys.stderr)
+            return 2
+        except (
+            CfrTitle37FullError,
+            CfrTitle37AcquireError,
+            MissingPackageError,
+            FileNotFoundError,
+            ValueError,
+        ) as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
 
     if not args.no_print_summary:
         _print_summary(result)

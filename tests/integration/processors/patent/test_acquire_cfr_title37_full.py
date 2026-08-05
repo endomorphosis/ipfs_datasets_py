@@ -260,9 +260,34 @@ def test_year_mismatch_against_fixture_is_rejected(acquire_mod) -> None:
     assert "2020" in str(excinfo.value) or "year" in str(excinfo.value).lower()
 
 
-def test_live_mode_fails_closed_without_network_client(acquire_mod) -> None:
-    with pytest.raises(acquire_mod.LiveAcquisitionUnavailableError):
+def test_live_mode_requires_year_pin(acquire_mod) -> None:
+    with pytest.raises(acquire_mod.MissingEditionIdentityError):
         acquire_mod.acquire_cfr_title37_full(live=True)
+
+
+def test_live_mode_with_fake_http_succeeds(acquire_mod) -> None:
+    xml = (
+        '<?xml version="1.0"?><CFRDOC><AMDDATE>July 1, 2024</AMDDATE>'
+        "<SECTION><SECTNO>§\u20091.56</SECTNO>"
+        "<SUBJECT>Duty to disclose</SUBJECT>"
+        "<P>Candor and good faith in dealing with the Office are required.</P>"
+        "</SECTION></CFRDOC>"
+    ).encode("utf-8")
+
+    def fake_get(url: str, timeout: float) -> bytes:
+        if "vol1" in url:
+            return xml
+        raise acquire_mod.LiveAcquisitionUnavailableError("no more volumes")
+
+    result = acquire_mod.acquire_cfr_title37_full(
+        live=True,
+        year=2024,
+        http_get=fake_get,
+        delay_seconds=0.0,
+    )
+    assert result.source_kind == "govinfo-annual-live"
+    assert result.manifest.counts.present_sections >= 1
+    assert "1.56" in result.section_texts
 
 
 # ---------------------------------------------------------------------------
@@ -343,9 +368,16 @@ def test_cli_default_fixture_stage_and_validate(
     assert "manifest_ok: true" in captured.out
 
 
-def test_cli_live_exits_nonzero(acquire_mod) -> None:
-    code = acquire_mod.main(["--default-fixture", "--live"])
-    assert code == 2
+def test_cli_live_without_year_exits_nonzero(acquire_mod) -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        acquire_mod.main(["--live"])
+    assert excinfo.value.code == 2
+
+
+def test_cli_live_mutually_exclusive_with_fixture(acquire_mod) -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        acquire_mod.main(["--default-fixture", "--live", "--year", "2024"])
+    assert excinfo.value.code == 2
 
 
 def test_cid_for_sha256_is_stable(acquire_mod) -> None:

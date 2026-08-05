@@ -119,13 +119,33 @@ python scripts/ops/legal_data/acquire_cfr_title37_full.py --reject-ecfr-only
 # exits non-zero; prints ecfr_only_rejected
 ```
 
-### Live GovInfo (not enabled for unattended CI)
+### Live GovInfo annual volume XML (operator path)
+
+Downloads official `CFR-YYYY-title37-volN` XML from GovInfo, parses every
+`SECTION` into text, maps present granules onto the full PATLAW-180 catalog,
+and records explicit gaps for catalog rows without package text. Identity
+remains the unscoped pin `CFR-YYYY-title37` (not eCFR).
 
 ```bash
 python scripts/ops/legal_data/acquire_cfr_title37_full.py \
-  --default-fixture \
-  --live
-# fails closed: use fixtures offline; live full-package download is operator-gated
+  --live \
+  --year 2024 \
+  --stage \
+  --output-dir /var/tmp/cfr-title37-full-2024-live
+```
+
+Requires network. CI stays on `--default-fixture`. Mutually exclusive with
+`--default-fixture` / `--fixture`.
+
+Full-authority production recipe live CFR:
+
+```bash
+python scripts/ops/legal_data/build_public_legal_production_recipe.py \
+  --output /var/tmp/patlaw-fa-live-cfr-recipe.json \
+  --live-cfr \
+  --cfr-year 2024 \
+  --include-uscode \
+  --include-ecfr-supplement
 ```
 
 ## Flags
@@ -134,13 +154,16 @@ python scripts/ops/legal_data/acquire_cfr_title37_full.py \
 | --- | --- |
 | `--default-fixture` | Use the repository bounded official annual Title 37 fixture |
 | `--fixture PATH` | Explicit GovInfo annual fixture recipe JSON |
-| `--year YYYY` | Require fixture package year to match the pin |
+| `--year YYYY` | Pin calendar year (required with `--live`) |
 | `--stage` | Write manifest, receipt, package meta, and section texts |
 | `--output-dir PATH` | Staging root (required with `--stage`) |
 | `--mode acquire\|stage\|dry_run` | Materialization mode recorded on the inventory manifest |
 | `--validate-manifest PATH` | Validate an existing full inventory manifest |
 | `--reject-ecfr-only` | Fail-closed demo that eCFR-only cannot complete the task |
-| `--live` | Request live acquisition (currently fails closed) |
+| `--live` | Download GovInfo annual volume XML (requires `--year`) |
+| `--live-max-volumes N` | Max volume packages to probe (default 4) |
+| `--live-timeout-seconds S` | HTTP timeout per volume |
+| `--live-delay-seconds S` | Polite delay between volume downloads |
 | `--print-manifest` | Emit inventory manifest JSON on stdout |
 | `--print-receipt` | Emit acquisition receipt JSON on stdout |
 | `--no-print-summary` | Suppress human-readable summary lines |
