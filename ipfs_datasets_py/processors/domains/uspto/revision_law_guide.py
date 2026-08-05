@@ -485,6 +485,52 @@ def build_revision_law_guide(
         for c in all_cites[:30]
     ]
 
+    # Hybrid BM25 + vector + knowledge-graph retrieval from JusticeDAO Hub indexes
+    # (PATLAW public legal index track: justicedao/patent-legal-*).
+    hybrid_retrieval: dict[str, Any] = {"ok": False, "hits": []}
+    try:
+        from ipfs_datasets_py.processors.domains.uspto.public_legal_index_client import (
+            retrieve_for_revision_case,
+        )
+
+        hybrid_retrieval = retrieve_for_revision_case(case, top_k=6)
+        # Prefer Hub hybrid excerpts when local authority corpus miss
+        if hybrid_retrieval.get("ok"):
+            for hit in hybrid_retrieval.get("hits") or []:
+                cite = str(hit.get("citation") or hit.get("document_id") or "")
+                if not cite or not hit.get("excerpt"):
+                    continue
+                # Skip if we already have a local corpus hit for same citation key
+                already = any(
+                    a.get("found")
+                    and (
+                        cite.lower() in str(a.get("citation") or "").lower()
+                        or str(a.get("citation") or "").lower() in cite.lower()
+                    )
+                    for a in authority_excerpts
+                )
+                if already:
+                    continue
+                authority_excerpts.append(
+                    {
+                        "citation": cite,
+                        "found": True,
+                        "path": f"hf://justicedao/patent-legal-corpus#{hit.get('document_id')}",
+                        "excerpt": hit.get("excerpt"),
+                        "excerpt_len": len(str(hit.get("excerpt") or "")),
+                        "source": "public_legal_hybrid_index",
+                        "score": hit.get("score"),
+                        "document_id": hit.get("document_id"),
+                        "families": hit.get("family"),
+                    }
+                )
+    except Exception as exc:  # noqa: BLE001
+        hybrid_retrieval = {
+            "ok": False,
+            "error": f"{type(exc).__name__}:{exc}",
+            "hits": [],
+        }
+
     attached_roles = {a.role for a in case.attachments}
     evidence = _evidence_gaps(matched, attached_roles)
 
@@ -561,6 +607,7 @@ def build_revision_law_guide(
         "authority_found_count": sum(
             1 for a in authority_excerpts if a.get("found")
         ),
+        "hybrid_retrieval": hybrid_retrieval,
         "package_evidence": {
             "attached_roles": sorted(attached_roles),
             "checks": evidence,
