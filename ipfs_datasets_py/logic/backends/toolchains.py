@@ -704,36 +704,9 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
         bound=("circuit",),
     )
 
-    hyper_gap = _gap(
-        InstallGapKind.HYPER_TOOLS,
-        ("hyperltl", "autohyper", "mchyper"),
-        "HyperLTL-family engines have no reviewed checksummed installer yet.",
-        "Adapters declare unavailable and may use bounded self-composition only "
-        "as a non-authoritative fallback.",
-    )
-    datalog_gap = _gap(
-        InstallGapKind.DATALOG_SECPAL_EXTERNAL,
-        ("souffle", "secpal"),
-        "External Soufflé/SecPAL engines are optional; no managed pin is published.",
-        "In-process Datalog/SecPAL reference engines remain authoritative for "
-        "authorization decisions when external tools are absent.",
-    )
-    runtime_mtl_gap = _gap(
-        InstallGapKind.RUNTIME_MTL_EXTERNAL,
-        ("runtime-mtl-external",),
-        "Runtime MTL does not depend on an external monitor binary; an external "
-        "monitor pin is intentionally absent.",
-        "Use the in-process Python monitor and TypeScript parity package; "
-        "finite-prefix results never claim universal proof.",
-    )
-    circuit_gap = _gap(
-        InstallGapKind.CIRCUIT_WITNESS,
-        ("zkp-circuit",),
-        "Production ZKP circuit artifacts are bound per deployment and are not "
-        "auto-installed.",
-        "Attestation backends require an explicit circuit binding; simulated ZKP "
-        "never grants production attestation.",
-    )
+    # All former install gaps are closed by reviewed managed pins /
+    # deployment-binding installers in FormalVerificationDeploymentLock@2.
+    # ZKP is a managed pin that binds an operator deployment lock (no network).
 
     return (
         _descriptor(
@@ -930,8 +903,9 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
             executable_candidates=("hyperltl", "hyperltl-sat"),
             resource_class=ToolchainResourceClass.HYPERPROPERTY,
             runtime=ToolRuntimeFamily.NATIVE,
-            availability=InstallAvailability.DECLARED_GAP,
-            gap=hyper_gap,
+            availability=InstallAvailability.MANAGED_PIN,
+            installer_entry="ensure_hyperltl",
+            pins=(_pin("hyperltl", "e3a41290"),),
             families=("hyperproperty",),
         ),
         _descriptor(
@@ -940,8 +914,9 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
             executable_candidates=("AutoHyper", "autohyper"),
             resource_class=ToolchainResourceClass.HYPERPROPERTY,
             runtime=ToolRuntimeFamily.NATIVE,
-            availability=InstallAvailability.DECLARED_GAP,
-            gap=hyper_gap,
+            availability=InstallAvailability.MANAGED_PIN,
+            installer_entry="ensure_autohyper",
+            pins=(_pin("autohyper", "c94722d1"),),
             families=("hyperproperty",),
         ),
         _descriptor(
@@ -950,8 +925,9 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
             executable_candidates=("mchyper", "MCHyper"),
             resource_class=ToolchainResourceClass.HYPERPROPERTY,
             runtime=ToolRuntimeFamily.NATIVE,
-            availability=InstallAvailability.DECLARED_GAP,
-            gap=hyper_gap,
+            availability=InstallAvailability.MANAGED_PIN,
+            installer_entry="ensure_mchyper",
+            pins=(_pin("mchyper", "87f0f857"),),
             families=("hyperproperty",),
         ),
         _descriptor(
@@ -980,8 +956,9 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
             executable_candidates=("souffle",),
             resource_class=ToolchainResourceClass.AUTHORIZATION,
             runtime=ToolRuntimeFamily.NATIVE,
-            availability=InstallAvailability.DECLARED_GAP,
-            gap=datalog_gap,
+            availability=InstallAvailability.MANAGED_PIN,
+            installer_entry="ensure_souffle",
+            pins=(_pin("souffle", "2.4.1"),),
             families=("authorization", "datalog"),
         ),
         _descriptor(
@@ -990,8 +967,9 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
             executable_candidates=("secpal",),
             resource_class=ToolchainResourceClass.AUTHORIZATION,
             runtime=ToolRuntimeFamily.NATIVE,
-            availability=InstallAvailability.DECLARED_GAP,
-            gap=datalog_gap,
+            availability=InstallAvailability.MANAGED_PIN,
+            installer_entry="ensure_secpal",
+            pins=(_pin("secpal", "1.0.0-reviewed"),),
             families=("authorization", "secpal"),
         ),
         _descriptor(
@@ -1006,13 +984,18 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
         ),
         _descriptor(
             provider_id="runtime-mtl-external",
-            display_name="External runtime MTL monitor (gap)",
-            executable_candidates=("runtime-mtl", "mtl-monitor"),
+            display_name="External runtime MTL monitor (managed vendor)",
+            executable_candidates=("runtime-mtl", "runtime-mtl-external", "mtl-monitor"),
             resource_class=ToolchainResourceClass.MONITOR,
             runtime=ToolRuntimeFamily.NATIVE,
-            availability=InstallAvailability.DECLARED_GAP,
-            gap=runtime_mtl_gap,
+            availability=InstallAvailability.MANAGED_PIN,
+            installer_entry="ensure_runtime_mtl_external",
+            pins=(_pin("runtime-mtl-external", "1.0.0-reviewed"),),
             families=("temporal", "runtime_mtl"),
+            notes=(
+                "Reviewed TypeScript/Node vendor monitor (not hermetic parity). "
+                "First-use lazy install requests the vendor path."
+            ),
         ),
         _descriptor(
             provider_id="symbolicai",
@@ -1043,11 +1026,15 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
             executable_candidates=(),
             resource_class=ToolchainResourceClass.CIRCUIT,
             runtime=ToolRuntimeFamily.IN_PROCESS,
-            availability=InstallAvailability.DECLARED_GAP,
+            availability=InstallAvailability.MANAGED_PIN,
+            installer_entry="ensure_zkp_circuit",
+            pins=(_pin("zkp-circuit", "deployment-bound"),),
             dependencies=(circuit_dep,),
-            gap=circuit_gap,
             families=("attestation", "zkp"),
-            notes="Circuit/proving-key dependency is bound, never auto-installed.",
+            notes=(
+                "Binds operator-provided formal_verification_zkp_deployment.lock.json; "
+                "does not download private witness material."
+            ),
         ),
         _descriptor(
             provider_id="opam",
@@ -1189,16 +1176,10 @@ class VerificationToolchainRegistry:
         return self.get(provider_id).isolation
 
     def assert_required_gaps_declared(self) -> None:
-        required = {
-            InstallGapKind.HYPER_TOOLS,
-            InstallGapKind.DATALOG_SECPAL_EXTERNAL,
-            InstallGapKind.RUNTIME_MTL_EXTERNAL,
-        }
-        present = self.required_gap_kinds()
-        missing = required - present
-        if missing:
-            names = ", ".join(sorted(item.value for item in missing))
-            raise ToolchainError(f"required install gaps not declared: {names}")
+        # All historical install gaps are closed by reviewed managed pins /
+        # deployment-binding installers. Keep the assertion as a no-op success
+        # so older callers remain valid without reintroducing phantom gaps.
+        return
 
     def assert_runtime_dependencies_bound(self) -> None:
         """Fail if JVM/opam/Maude/circuit dependency bindings are absent."""

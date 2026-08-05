@@ -418,13 +418,31 @@ def test_ergoai_default_enabled_without_portfolio_opt_in(monkeypatch) -> None:
 
     assert lazy_installer.lazy_installs_enabled() is False
     assert lazy_installer.prover_lazy_install_enabled("ergoai") is True
-    assert lazy_installer.prover_lazy_install_enabled("z3") is False
+    # Full first-use portfolio (including kernels) is default-on for packages.
+    assert lazy_installer.prover_lazy_install_enabled("z3") is True
+    assert lazy_installer.prover_lazy_install_enabled("runtime-mtl-external") is True
+    assert lazy_installer.prover_lazy_install_enabled("coq") is True
+    assert lazy_installer.prover_lazy_install_enabled("isabelle") is True
 
     monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", "0")
     assert lazy_installer.prover_lazy_install_enabled("ergoai") is False
+    assert lazy_installer.prover_lazy_install_enabled("runtime-mtl-external") is False
     monkeypatch.delenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", raising=False)
     monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI", "0")
     assert lazy_installer.prover_lazy_install_enabled("ergoai") is False
+
+
+def test_default_prover_portfolio_includes_runtime_mtl_and_atp(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    portfolio = set(lazy_installer.default_first_use_prover_portfolio())
+    assert "runtime-mtl-external" in portfolio
+    assert "vampire" in portfolio
+    assert "tlc" in portfolio
+    assert "souffle" in portfolio
+    assert "coq" in portfolio
+    assert "isabelle" in portfolio
+    assert "lean" in portfolio
 
 
 def test_ensure_prover_rejects_hermetic_shim_and_installs_vendor(monkeypatch) -> None:
