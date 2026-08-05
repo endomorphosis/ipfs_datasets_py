@@ -479,10 +479,16 @@ def load_full_cfr_title37(
         text = result.section_texts.get(sec) or result.section_texts.get(
             sec.replace("-", ".")
         )
-        if not text or len(text.strip()) < 20:
+        text_stripped = (text or "").strip()
+        is_reserved_stub = "[reserved]" in text_stripped.casefold()
+        if not text_stripped or (len(text_stripped) < 20 and not is_reserved_stub):
             # Inventory marked present but body missing — skip document row;
-            # gap accounting remains on the acquisition receipt.
+            # gap accounting remains on the acquisition receipt. Reserved TOC
+            # stubs may be short but are still first-class package text.
             continue
+        if is_reserved_stub and len(text_stripped) < 20:
+            # Normalize short reserved markers for the shared min-length contract.
+            text = f"37 C.F.R. § {sec} [Reserved] ({identity.year} annual package)"
         uri = entry.source_url or (
             f"https://www.govinfo.gov/content/pkg/{package_id}/xml/"
             f"{package_id}-part{entry.part}-sec{sec.replace('.', '-')}.xml"
@@ -493,7 +499,12 @@ def load_full_cfr_title37(
                 family="cfr",
                 source_root_id=source_root_id,
                 citation=entry.citation or f"37 C.F.R. § {sec} ({identity.year} annual)",
-                title=(entry.heading or f"37 C.F.R. § {sec}")[:500],
+                title=(
+                    "[Reserved] "
+                    if is_reserved_stub
+                    else ""
+                )
+                + (entry.heading or f"37 C.F.R. § {sec}")[:500],
                 section_id=sec,
                 text=text,
                 authority_kind="regulation",
@@ -502,6 +513,7 @@ def load_full_cfr_title37(
                 source_revision=source_revision,
                 source_id=f"govinfo/cfr/title37/{sec}",
                 effective_start=current_through,
+                min_text_len=10 if is_reserved_stub else 20,
                 metadata={
                     "stable_id": entry.stable_id,
                     "part": entry.part,
@@ -510,6 +522,7 @@ def load_full_cfr_title37(
                     "authority_tier": identity.authority_tier,
                     "full_authority": True,
                     "source_kind": result.source_kind,
+                    "reserved": is_reserved_stub,
                 },
             )
         )

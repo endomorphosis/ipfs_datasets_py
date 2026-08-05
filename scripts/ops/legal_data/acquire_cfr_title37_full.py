@@ -544,13 +544,61 @@ def _gap_records_for(
     *,
     reason: GapReason = GapReason.NOT_IN_PACKAGE,
     note: str = "",
+    reason_by_section: Mapping[str, GapReason] | None = None,
+    note_by_section: Mapping[str, str] | None = None,
 ) -> tuple[GapRecord, ...]:
     default_note = note or (
         "Section inventoried without acquired annual package text "
         "(bounded fixture granule missing or not-in-package)"
     )
-    return build_gap_records_for_inventory(
-        inventory, reason=reason, note=default_note
+    if not reason_by_section and not note_by_section:
+        return build_gap_records_for_inventory(
+            inventory, reason=reason, note=default_note
+        )
+    records: list[GapRecord] = []
+    for entry in inventory:
+        if entry.presence is not SectionPresence.GAP:
+            continue
+        gap_reason = (reason_by_section or {}).get(entry.section, reason)
+        gap_note = (note_by_section or {}).get(entry.section, default_note)
+        records.append(
+            GapRecord(
+                section=entry.section,
+                part=entry.part,
+                reason=gap_reason,
+                stable_id=entry.stable_id,
+                granule_id=entry.granule_id,
+                note=gap_note,
+            )
+        )
+    return tuple(records)
+
+
+def _classify_live_gap(
+    section: str,
+    *,
+    reserved_sections: set[str],
+    withdrawn_sections: set[str],
+) -> tuple[GapReason, str]:
+    if section in withdrawn_sections:
+        return (
+            GapReason.WITHDRAWN,
+            (
+                f"Section {section} marked Removed in GovInfo annual package "
+                "history for this edition"
+            ),
+        )
+    if section in reserved_sections:
+        return (
+            GapReason.RESERVED,
+            f"Section {section} is reserved in the annual package materialization",
+        )
+    return (
+        GapReason.NOT_IN_PACKAGE,
+        (
+            f"Section {section} is in the Title 37 catalog but has no SECTION body "
+            "or reserved TOC row in the live GovInfo annual volume XML"
+        ),
     )
 
 
@@ -806,21 +854,73 @@ def expand_section_range_token(token: str) -> list[str]:
     return expanded or [normalized]
 
 
+def _is_reserved_label(text: str) -> bool:
+    return "[reserved]" in str(text or "").casefold()
+
+
+def extract_withdrawn_sections_from_xml(xml_text: str) -> set[str]:
+    """Extract section tokens marked Removed in annual package history tables."""
+
+    withdrawn: set[str] = set()
+    # Examples: "360.5 Removed", "401.7 Removed", "360.23 Removed; new section..."
+    for match in re.finditer(
+        r"(?P<section>\d+(?:\.\d+)*)\s*[\u2002\u2003\u00a0\s]*Removed\b",
+        xml_text,
+    ):
+        try:
+            withdrawn.add(normalize_section_token(match.group("section")))
+        except Exception:
+            continue
+    return withdrawn
+
+
+def _ingest_section_body(
+    *,
+    sections: dict[str, str],
+    direct_sections: set[str],
+    reserved_sections: set[str],
+    section_token: str,
+    body: str,
+    from_range: bool,
+) -> None:
+    if not body:
+        return
+    expanded_tokens = expand_section_range_token(section_token)
+    is_range = len(expanded_tokens) > 1 or (
+        len(expanded_tokens) == 1 and "-" in expanded_tokens[0]
+    )
+    if _is_reserved_label(body):
+        for token in expanded_tokens:
+            if "-" not in token:
+                reserved_sections.add(token)
+    if not is_range and len(expanded_tokens) == 1 and "-" not in expanded_tokens[0]:
+        if not from_range:
+            direct_sections.add(expanded_tokens[0])
+    for expanded in expanded_tokens:
+        previous = sections.get(expanded)
+        if previous is None or len(body) > len(previous):
+            sections[expanded] = body
+
+
 def parse_cfr_volume_xml(
     xml_bytes: bytes,
-) -> tuple[dict[str, str], dict[str, str], set[str]]:
+) -> tuple[dict[str, str], dict[str, str], set[str], set[str], set[str]]:
     """Parse GovInfo annual CFR volume XML into section texts + metadata.
 
     Returns
     -------
     sections:
         Map of normalized section token -> plain-text body (includes leaves
-        expanded from reserved-range SECTNO labels).
+        expanded from reserved-range SECTNO labels and TOC reserved rows).
     metadata:
         Optional keys such as ``amddate_raw`` / ``date_issued``.
     direct_sections:
         Section tokens that appeared as standalone SECTNO labels (not only
         via range expansion). Used for edition-specific inventory extras.
+    reserved_sections:
+        Tokens known reserved from SECTION bodies or CONTENTS TOC rows.
+    withdrawn_sections:
+        Tokens marked Removed in package history tables.
     """
 
     try:
@@ -831,6 +931,24 @@ def parse_cfr_volume_xml(
     sections: dict[str, str] = {}
     metadata: dict[str, str] = {}
     direct_sections: set[str] = set()
+    reserved_sections: set[str] = set()
+    xml_text = xml_bytes.decode("utf-8", errors="replace")
+    withdrawn_sections = extract_withdrawn_sections_from_xml(xml_text)
+
+    parent: dict[ET.Element, ET.Element] = {}
+    for node in root.iter():
+        for child in node:
+            parent[child] = node
+
+    def _under_contents(element: ET.Element) -> bool:
+        cur: ET.Element | None = element
+        for _ in range(12):
+            if cur is None:
+                return False
+            if _element_local_name(cur.tag).upper() == "CONTENTS":
+                return True
+            cur = parent.get(cur)
+        return False
 
     for element in root.iter():
         name = _element_local_name(element.tag).upper()
@@ -859,20 +977,64 @@ def parse_cfr_volume_xml(
             body = subject
         if not body:
             continue
-        # Fan out reserved-range labels onto every catalog leaf they cover.
-        expanded_tokens = expand_section_range_token(section)
-        if len(expanded_tokens) == 1 and "-" not in expanded_tokens[0]:
-            direct_sections.add(expanded_tokens[0])
-        for expanded in expanded_tokens:
-            previous = sections.get(expanded)
-            if previous is None or len(body) > len(previous):
-                sections[expanded] = body
+        _ingest_section_body(
+            sections=sections,
+            direct_sections=direct_sections,
+            reserved_sections=reserved_sections,
+            section_token=section,
+            body=body,
+            from_range=False,
+        )
+
+    # CONTENTS / TOC rows often list reserved numbers without a full SECTION body.
+    for element in root.iter():
+        if _element_local_name(element.tag).upper() != "SECTNO":
+            continue
+        if not _under_contents(element):
+            continue
+        sectno_text = _element_text_content(element)
+        section = extract_section_number(sectno_text)
+        if not section:
+            continue
+        # SUBJECT is typically the next sibling under SUBJGRP / CONTENTS blocks.
+        subject = ""
+        parent_el = parent.get(element)
+        if parent_el is not None:
+            children = list(parent_el)
+            for index, child in enumerate(children):
+                if child is element and index + 1 < len(children):
+                    nxt = children[index + 1]
+                    if _element_local_name(nxt.tag).upper() == "SUBJECT":
+                        subject = _element_text_content(nxt)
+                    break
+        if not subject:
+            continue
+        # Prefer full SECTION body when already present.
+        if any(
+            token in sections and not _is_reserved_label(sections[token])
+            for token in expand_section_range_token(section)
+        ):
+            continue
+        body = subject if _is_reserved_label(subject) else f"{subject}"
+        # Prefix reserved TOC rows so document emission has stable text.
+        if _is_reserved_label(subject):
+            body = f"{sectno_text.strip()} {subject.strip()}".strip()
+        _ingest_section_body(
+            sections=sections,
+            direct_sections=direct_sections,
+            reserved_sections=reserved_sections,
+            section_token=section,
+            body=body,
+            from_range=False,
+        )
 
     if not sections:
         raise CfrTitle37AcquireError(
             "CFR volume XML contained no parseable SECTION/SECTNO entries"
         )
-    return sections, metadata, direct_sections
+    metadata["reserved_section_count"] = str(len(reserved_sections))
+    metadata["withdrawn_section_count"] = str(len(withdrawn_sections))
+    return sections, metadata, direct_sections, reserved_sections, withdrawn_sections
 
 
 def download_govinfo_title37_volumes(
@@ -959,14 +1121,22 @@ def acquire_from_govinfo_live(
 
     section_texts: dict[str, str] = {}
     direct_sections: set[str] = set()
+    reserved_sections: set[str] = set()
+    withdrawn_sections: set[str] = set()
     date_issued = identity.date_issued
     for volume in volumes:
-        parsed_sections, metadata, volume_direct = parse_cfr_volume_xml(
-            volume["payload"]
-        )
+        (
+            parsed_sections,
+            metadata,
+            volume_direct,
+            volume_reserved,
+            volume_withdrawn,
+        ) = parse_cfr_volume_xml(volume["payload"])
         if metadata.get("date_issued") and not date_issued:
             date_issued = metadata["date_issued"]
         direct_sections.update(volume_direct)
+        reserved_sections.update(volume_reserved)
+        withdrawn_sections.update(volume_withdrawn)
         for section, text in parsed_sections.items():
             previous = section_texts.get(section)
             if previous is None or len(text) > len(previous):
@@ -1037,13 +1207,23 @@ def acquire_from_govinfo_live(
         section_urls=section_urls,
         include_edition_extras=True,
     )
+    reason_by_section: dict[str, GapReason] = {}
+    note_by_section: dict[str, str] = {}
+    for entry in inventory:
+        if entry.presence is not SectionPresence.GAP:
+            continue
+        reason, note = _classify_live_gap(
+            entry.section,
+            reserved_sections=reserved_sections,
+            withdrawn_sections=withdrawn_sections,
+        )
+        reason_by_section[entry.section] = reason
+        note_by_section[entry.section] = note
     gaps = _gap_records_for(
         inventory,
         reason=GapReason.NOT_IN_PACKAGE,
-        note=(
-            "Section inventoried without text in live GovInfo annual volume "
-            "XML materialization"
-        ),
+        reason_by_section=reason_by_section,
+        note_by_section=note_by_section,
     )
     binding = PackageBinding(
         package_id=identity.package_id,
@@ -1105,6 +1285,13 @@ def acquire_from_govinfo_live(
         "section_granules_present": sorted(section_texts.keys()),
         "xml_sha256": xml_sha,
         "date_issued": identity.date_issued,
+        "reserved_section_count": len(reserved_sections),
+        "withdrawn_sections_detected": sorted(withdrawn_sections),
+        "gap_reason_counts": {
+            reason.value: sum(1 for g in gaps if g.reason is reason)
+            for reason in GapReason
+            if any(g.reason is reason for g in gaps)
+        },
     }
 
     out_path = Path(output_dir) if output_dir is not None else None

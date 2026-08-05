@@ -52,9 +52,11 @@ def test_parse_cfr_volume_xml_extracts_sections_and_date(acq) -> None:
         ("1.56", "Duty to disclose", "Material information must be disclosed."),
         ("1.97", "Filing of IDS", "An information disclosure statement may be filed."),
     )
-    sections, metadata, direct = acq.parse_cfr_volume_xml(xml)
+    sections, metadata, direct, reserved, withdrawn = acq.parse_cfr_volume_xml(xml)
     assert set(sections) == {"1.56", "1.97"}
     assert direct == {"1.56", "1.97"}
+    assert reserved == set()
+    assert withdrawn == set()
     assert "disclosed" in sections["1.56"]
     assert metadata["date_issued"] == "2024-07-01"
     assert "July 1, 2024" in metadata["amddate_raw"]
@@ -92,12 +94,37 @@ def test_parse_reserved_range_sectno_marks_each_catalog_leaf(acq) -> None:
         "<P>Candor and good faith are required in dealing with the Office.</P>"
         "</SECTION></CFRDOC>"
     ).encode("utf-8")
-    sections, _meta, direct = acq.parse_cfr_volume_xml(xml)
+    sections, _meta, direct, reserved, _withdrawn = acq.parse_cfr_volume_xml(xml)
     assert set(sections) >= {"1.106", "1.107", "1.108", "1.56"}
     assert "Reserved" in sections["1.107"]
     # Range leaves are expansions; only standalone SECTNO is direct.
     assert "1.56" in direct
     assert "1.107" not in direct
+    assert {"1.106", "1.107", "1.108"} <= reserved
+
+
+def test_parse_contents_toc_reserved_row(acq) -> None:
+    xml = (
+        '<?xml version="1.0"?><CFRDOC><AMDDATE>July 1, 2024</AMDDATE>'
+        "<TITLE><CHAPTER><PART><CONTENTS><SUBJGRP>"
+        "<SECTNO>2.187</SECTNO><SUBJECT>[Reserved]</SUBJECT>"
+        "</SUBJGRP></CONTENTS></PART></CHAPTER></TITLE>"
+        "<SECTION><SECTNO>§\u20091.56</SECTNO>"
+        "<SUBJECT>Duty to disclose</SUBJECT>"
+        "<P>Candor and good faith are required in dealing with the Office.</P>"
+        "</SECTION></CFRDOC>"
+    ).encode("utf-8")
+    sections, _meta, direct, reserved, _withdrawn = acq.parse_cfr_volume_xml(xml)
+    assert "2.187" in sections
+    assert "2.187" in direct
+    assert "2.187" in reserved
+    assert "Reserved" in sections["2.187"]
+
+
+def test_extract_withdrawn_sections_from_history(acq) -> None:
+    text = "360.5\u2003Removed\n401.7 Removed; see other\n1.56 Duty to disclose"
+    withdrawn = acq.extract_withdrawn_sections_from_xml(text)
+    assert withdrawn == {"360.5", "401.7"}
 
 
 def test_live_acquisition_with_fake_http_maps_catalog_presence(acq, tmp_path: Path) -> None:
