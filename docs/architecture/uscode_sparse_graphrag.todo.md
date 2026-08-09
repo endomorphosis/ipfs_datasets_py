@@ -459,7 +459,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Row conservation/uniqueness holds; each centroid has at most 8,192 rows and two shards; each shard has at most 4,096; ordering and deterministic seed behavior are proven.
 
 ## USCIR-019 Bind US Code vectors to centroid and direct-CID routes
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
