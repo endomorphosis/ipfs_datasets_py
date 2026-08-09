@@ -683,7 +683,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Hybrid explanations preserve component scores, graph walks enforce all budgets, off-centroid frontier vectors are selectively fetched, and similarity edges are never presented as legal authority.
 
 ## USCIR-028 Expose the direct-Hugging-Face query CLI
-- Status: todo
+- Status: completed
+- Operator resolution: CLI+guide+tests; pytest and --help passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
