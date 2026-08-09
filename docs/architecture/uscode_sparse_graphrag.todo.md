@@ -658,7 +658,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: BM25 uses only term-range routes, vectors use only centroid routes plus exact scoring, mutable/mismatched model space fails, and trace fixtures prove sparse I/O.
 
 ## USCIR-027 Implement legal hybrid and embedding-guided graph queries
-- Status: todo
+- Status: completed
+- Operator resolution: harvested_from_in_progress_worktree; pytest 20 passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
