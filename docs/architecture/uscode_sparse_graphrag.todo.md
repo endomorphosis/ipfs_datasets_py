@@ -267,7 +267,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Mutable revisions, traversal paths, symlinks, digest drift, oversized artifacts, schema mismatch, cache collision, and credential leakage fail closed.
 
 ## USCIR-011 Add direct CID-to-corpus and CID-to-vector locators
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
