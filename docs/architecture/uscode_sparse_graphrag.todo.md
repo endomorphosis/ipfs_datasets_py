@@ -411,7 +411,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Exact scoring parity is within declared tolerance, test split is reported once, all routed terms are covered, and default parameters have an evidence receipt.
 
 ## USCIR-017 Implement pinned legal embedding generation
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
