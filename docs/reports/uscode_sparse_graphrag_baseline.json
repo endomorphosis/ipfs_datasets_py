@@ -1,0 +1,377 @@
+{
+  "acceptance": {
+    "all_expected_outputs_accounted": true,
+    "bm25_documents": 60068,
+    "canonical_cids": 60068,
+    "corpus_rows": 60077,
+    "kg_entities": 180257,
+    "kg_relationships": 120136,
+    "pinned_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "recovery_rows": 9,
+    "titles": 53,
+    "vectors": 185563
+  },
+  "artifacts": [
+    {
+      "blocking_issues": [
+        "60068 canonical rows plus 9 recovery rows without CIDs",
+        "single row group exceeds the 4,096-row physical shard bound"
+      ],
+      "identity": {
+        "canonical_rows_with_cid": 60068,
+        "durable_key": "ipfs_cid",
+        "positional_identity_used": false,
+        "recovery_rows_without_cid": 9
+      },
+      "media_type": "application/vnd.apache.parquet",
+      "path": "uscode_parquet/laws.parquet",
+      "row_count": 60077,
+      "row_groups": 1,
+      "schema_notes": [
+        "legacy monolith corpus table",
+        "mixes canonical rows with heterogeneous recovery JSON rows",
+        "primary key candidate ipfs_cid present only on canonical rows"
+      ],
+      "size_bytes": 392482816
+    },
+    {
+      "blocking_issues": [
+        "no release/control-plane contract"
+      ],
+      "identity": {
+        "durable_key": "ipfs_cid",
+        "row_count_matches_canonical": true
+      },
+      "media_type": "application/vnd.apache.parquet",
+      "path": "uscode_parquet/cid_index.parquet",
+      "row_count": 60068,
+      "row_groups": 1,
+      "schema_notes": [
+        "CID lookup/index table for canonical corpus rows"
+      ],
+      "size_bytes": 6396314
+    },
+    {
+      "blocking_issues": [
+        "document term arrays, not a sorted inverted index",
+        "single row group exceeds the 4,096-row physical shard bound"
+      ],
+      "identity": {
+        "join_key": "ipfs_cid",
+        "join_kind": "canonical_cid",
+        "row_count_matches_canonical": true
+      },
+      "media_type": "application/vnd.apache.parquet",
+      "path": "uscode_parquet/laws_bm25.parquet",
+      "row_count": 60068,
+      "row_groups": 1,
+      "schema_notes": [
+        "per-document term-frequency arrays",
+        "parameters k1=1.5, b=0.75",
+        "no tokenizer identity, title/body field separation, or term-range routing"
+      ],
+      "size_bytes": 209295770
+    },
+    {
+      "blocking_issues": [
+        "positional row-N identity rather than content-addressed join",
+        "unknown embedding model/revision",
+        "single row group exceeds the 4,096-row physical shard bound"
+      ],
+      "identity": {
+        "durable_cid_join": false,
+        "join_key": "positional_row_index",
+        "join_kind": "legacy_positional",
+        "trusted_for_migration": false
+      },
+      "media_type": "application/vnd.apache.parquet",
+      "path": "uscode_parquet/laws_embeddings.parquet",
+      "row_count": 185563,
+      "row_groups": 1,
+      "schema_notes": [
+        "384-dimensional vectors",
+        "1–454 chunks per document",
+        "model and revision not recorded",
+        "normalization policy absent"
+      ],
+      "size_bytes": 147534643
+    },
+    {
+      "blocking_issues": [
+        "only title/document/section structure; citation graph evidence unused"
+      ],
+      "identity": {
+        "ontology": "generic-legal-document-kg-v1"
+      },
+      "media_type": "application/vnd.apache.parquet",
+      "path": "uscode_parquet/laws_knowledge_graph_entities.parquet",
+      "row_count": 180257,
+      "row_groups": 1,
+      "schema_notes": [
+        "entity types limited to title/document/section structure",
+        "entity_type_counts: document=60068, legal_document=60068, section=60068, usc_title=53"
+      ],
+      "size_bytes": 10171187
+    },
+    {
+      "blocking_issues": [
+        "citation, amendment, transfer, and provenance edges absent"
+      ],
+      "identity": {
+        "ontology": "generic-legal-document-kg-v1"
+      },
+      "media_type": "application/vnd.apache.parquet",
+      "path": "uscode_parquet/laws_knowledge_graph_relationships.parquet",
+      "row_count": 120136,
+      "row_groups": 1,
+      "schema_notes": [
+        "relationship types limited to IN_TITLE and HAS_SECTION",
+        "relationship_type_counts: HAS_SECTION=60068, IN_TITLE=60068"
+      ],
+      "size_bytes": 11324621
+    }
+  ],
+  "baseline_date": "2026-08-09",
+  "blocking_issues": [
+    "legacy monolith artifacts exceed the 4,096-row physical shard bound",
+    "nine recovery rows lack CIDs and contaminate the default corpus view",
+    "embedding identity is positional and model/revision is unknown",
+    "BM25 is document term arrays without term-range routing",
+    "knowledge graph omits citation and provenance structure",
+    "Dataset Viewer validity fails due to heterogeneous recovery files"
+  ],
+  "citations": {
+    "note": "Existing rows expose U.S.C. citations, public-law references, chapter information, subsections, and legislative history that the current graph does not use.",
+    "public_law_occurrences": 234393,
+    "usc_citation_occurrences": 105055,
+    "used_by_current_knowledge_graph": false
+  },
+  "code_version": "1",
+  "counts": {
+    "bm25_documents": 60068,
+    "canonical_cids": 60068,
+    "corpus_rows": 60077,
+    "kg_entities": 180257,
+    "kg_relationships": 120136,
+    "recovery_rows": 9,
+    "repository_files": 556,
+    "titles": 53,
+    "vectors": 185563
+  },
+  "dataset": {
+    "file_count": 556,
+    "has_dataset_card_configurations": false,
+    "has_readme": false,
+    "repo_id": "justicedao/ipfs_uscode",
+    "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "revision_pinned": true,
+    "size_bytes": 1094219366,
+    "size_gib_approx": 1.019,
+    "unpinned_tokens_forbidden": [
+      "main",
+      "master",
+      "latest",
+      "HEAD"
+    ]
+  },
+  "goal_id": "USCIR-G010",
+  "identity_anomalies": [
+    {
+      "code": "RECOVERY_ROWS_WITHOUT_CID",
+      "count": 9,
+      "detail": "9 heterogeneous recovery rows in laws.parquet lack canonical CIDs and must be quarantined from search configs",
+      "severity": "blocking"
+    },
+    {
+      "code": "POSITIONAL_EMBEDDING_JOIN",
+      "count": 185563,
+      "detail": "laws_embeddings.parquet joins by positional row-N identity; vectors are not trusted for migration without recomputation",
+      "severity": "blocking"
+    },
+    {
+      "code": "UNKNOWN_EMBEDDING_MODEL",
+      "count": 185563,
+      "detail": "embedding model and revision are absent from the release",
+      "severity": "blocking"
+    },
+    {
+      "code": "DATE_MODIFIED_NOT_CURRENTNESS",
+      "count": 60068,
+      "detail": "every canonical date_modified value is 2024 even though the repository was modified in 2026; publication time is not a legal-currentness claim",
+      "severity": "informational"
+    }
+  ],
+  "legacy_joins": {
+    "corpus_to_bm25": {
+      "key": "ipfs_cid",
+      "left": "uscode_parquet/laws.parquet",
+      "left_canonical_rows": 60068,
+      "right": "uscode_parquet/laws_bm25.parquet",
+      "right_rows": 60068,
+      "status": "aligned_on_canonical_cids"
+    },
+    "corpus_to_cid_index": {
+      "key": "ipfs_cid",
+      "left": "uscode_parquet/laws.parquet",
+      "left_canonical_rows": 60068,
+      "right": "uscode_parquet/cid_index.parquet",
+      "right_rows": 60068,
+      "status": "aligned_on_canonical_cids"
+    },
+    "corpus_to_embeddings": {
+      "key": "positional_row_index",
+      "left": "uscode_parquet/laws.parquet",
+      "left_rows": 60077,
+      "right": "uscode_parquet/laws_embeddings.parquet",
+      "right_rows": 185563,
+      "status": "legacy_positional_untrusted",
+      "trusted_for_migration": false
+    }
+  },
+  "mode": "fixture",
+  "network_required": false,
+  "producer": "audit_uscode_hf_baseline.py",
+  "program_id": "uscode-sparse-graphrag-v1",
+  "row_groups": {
+    "cid_index.parquet": 1,
+    "laws.parquet": 1,
+    "laws_bm25.parquet": 1,
+    "laws_embeddings.parquet": 1,
+    "laws_knowledge_graph_entities.parquet": 1,
+    "laws_knowledge_graph_relationships.parquet": 1,
+    "legacy_monoliths_exceed_target": true,
+    "maximum_rows_per_physical_shard_target": 4096
+  },
+  "schema": "ipfs_datasets_py/uscode-sparse-graphrag-baseline@1",
+  "schema_version": "1",
+  "schemas": {
+    "bm25": {
+      "b": 0.75,
+      "k1": 1.5,
+      "layout": "per_document_term_arrays",
+      "path": "uscode_parquet/laws_bm25.parquet",
+      "row_count": 60068,
+      "sorted_inverted_index": false,
+      "term_range_routing": false,
+      "tokenizer_identity": null
+    },
+    "cid_index": {
+      "path": "uscode_parquet/cid_index.parquet",
+      "row_count": 60068
+    },
+    "corpus": {
+      "canonical_cid_field": "ipfs_cid",
+      "heterogeneous_recovery_rows_present": true,
+      "path": "uscode_parquet/laws.parquet",
+      "row_count": 60077
+    },
+    "knowledge_graph": {
+      "entities_path": "uscode_parquet/laws_knowledge_graph_entities.parquet",
+      "entity_count": 180257,
+      "entity_types": [
+        "document",
+        "legal_document",
+        "section",
+        "usc_title"
+      ],
+      "relationship_count": 120136,
+      "relationship_types": [
+        "IN_TITLE",
+        "HAS_SECTION"
+      ],
+      "relationships_path": "uscode_parquet/laws_knowledge_graph_relationships.parquet"
+    },
+    "vectors": {
+      "chunks_per_document_max": 454,
+      "chunks_per_document_min": 1,
+      "dimension": 384,
+      "identity": "positional_row_n",
+      "model": null,
+      "model_revision": null,
+      "path": "uscode_parquet/laws_embeddings.parquet",
+      "row_count": 185563
+    }
+  },
+  "sizes": {
+    "artifacts_bytes": {
+      "uscode_parquet/cid_index.parquet": 6396314,
+      "uscode_parquet/laws.parquet": 392482816,
+      "uscode_parquet/laws_bm25.parquet": 209295770,
+      "uscode_parquet/laws_embeddings.parquet": 147534643,
+      "uscode_parquet/laws_knowledge_graph_entities.parquet": 10171187,
+      "uscode_parquet/laws_knowledge_graph_relationships.parquet": 11324621
+    },
+    "repository_bytes": 1094219366,
+    "repository_gib_approx": 1.019
+  },
+  "source_of_truth": "Live Hugging Face inventory of justicedao/ipfs_uscode at the pinned revision, sealed into this offline fixture for network-free checks",
+  "task_id": "USCIR-001",
+  "titles": {
+    "count": 53,
+    "date_modified_is_legal_currentness_claim": false,
+    "date_modified_year_on_canonical_rows": 2024,
+    "numbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      54
+    ],
+    "span_note": "Titles 1 through 52 and 54 (Title 53 reserved/unused)"
+  },
+  "viewer": {
+    "dataset_viewer_valid": false,
+    "has_explicit_configurations": false,
+    "reason": "Hugging Face Dataset Viewer cannot consistently infer a schema because heterogeneous recovery JSON is mixed with corpus artifacts",
+    "recovery_contaminates_default_config": true,
+    "required_for_v2": "explicit card configurations with recovery quarantined from the default config"
+  }
+}
