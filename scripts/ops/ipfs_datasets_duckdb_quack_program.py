@@ -163,6 +163,19 @@ BOOTSTRAP_VALIDATOR_ROOT = Path(
         str(EXPECTED_ENV_ROOT.parent / "ipfs-datasets-duckdb-quack-validator"),
     )
 ).resolve()
+TASK_VALIDATION_PYTHON = BOOTSTRAP_VALIDATOR_ROOT / "bin/python"
+TASK_VALIDATION_PYTHON_SHA256 = (
+    "sha256:8b610568a8b2f6fe83d03746b0aac7db229546de5bbbe7bb60469caed72bc55a"
+)
+TASK_VALIDATION_DISPATCH_SHA256 = (
+    "sha256:758ee449765b2bb120d0fe2ce27091df863516cc50c0339f7b8160ba178e3ffb"
+)
+TASK_VALIDATOR_RECEIPT_ID = (
+    "sha256:b0cb231350216a166e798f61c808b27ebb6116faba420f91c7a2a02248b9ed9a"
+)
+TASK_VALIDATOR_CACHE_RECEIPT_ID = (
+    "sha256:1b6b1e8a6ecf352d6602cf52c86d04e4d83f1809b6013e83ac44f841ccd0df6c"
+)
 BOOTSTRAP_BRIDGE_VALIDATION_TESTS = (
     "test/api/test_agent_supervisor_implementation_daemon_runner.py",
     "test/api/test_agent_supervisor_task_source_e2e.py",
@@ -4393,14 +4406,54 @@ def _process_birth_identity(pid: int) -> dict[str, Any] | None:
     }
 
 
+def _task_validation_toolchain_material() -> dict[str, str]:
+    return {
+        "schema": "ipfs_datasets_py/duckdb-quack-task-validation-toolchain@1",
+        "python_path": str(TASK_VALIDATION_PYTHON),
+        "python_sha256": TASK_VALIDATION_PYTHON_SHA256,
+        "dispatch_source_sha256": TASK_VALIDATION_DISPATCH_SHA256,
+        "validator_receipt_id": TASK_VALIDATOR_RECEIPT_ID,
+        "cache_receipt_id": TASK_VALIDATOR_CACHE_RECEIPT_ID,
+        "validator_policy_sha256": BOOTSTRAP_VALIDATOR_SHA256,
+        "validator_lock_sha256": BOOTSTRAP_VALIDATOR_REQUIREMENTS_SHA256,
+    }
+
+
+def _task_validation_toolchain_id() -> str:
+    return (
+        "sha256:"
+        + _sha256_text(_canonical_json(_task_validation_toolchain_material()))
+    )
+
+
+def _task_validation_environment() -> dict[str, str]:
+    return {
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON": str(TASK_VALIDATION_PYTHON),
+        "IPFS_DATASETS_DQK_VALIDATION_TOOLCHAIN_ID": (
+            _task_validation_toolchain_id()
+        ),
+    }
+
+
 def _sealed_python_environment() -> dict[str, str]:
     return {
         **_ACCELERATE_IMPORT_ENVIRONMENT,
+        **_task_validation_environment(),
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONNOUSERSITE": "1",
         "PYTHONPATH": str(ACCELERATE_ROOT.resolve()),
         "PYTHONSAFEPATH": "1",
     }
+
+
+def _runtime_python_environment_key(key: str) -> bool:
+    return bool(
+        key.startswith("PYTHON")
+        or key.startswith("LD_")
+        or key.startswith("IPFS_ACCELERATE_AGENT_VALIDATION_")
+        or key.startswith("IPFS_DATASETS_DQK_VALIDATION_")
+        or key in _ACCELERATE_IMPORT_ENVIRONMENT
+    )
 
 
 def _runtime_python_environment(
@@ -4409,9 +4462,7 @@ def _runtime_python_environment(
     return {
         key: value
         for key, value in environment.items()
-        if key.startswith("PYTHON")
-        or key.startswith("LD_")
-        or key in _ACCELERATE_IMPORT_ENVIRONMENT
+        if _runtime_python_environment_key(key)
     }
 
 
@@ -4426,12 +4477,19 @@ def _process_python_environment(pid: int) -> dict[str, str] | None:
             continue
         key_bytes, value_bytes = item.split(b"=", 1)
         key = key_bytes.decode("utf-8", errors="replace")
-        if (
-            key.startswith("PYTHON")
-            or key.startswith("LD_")
-            or key in _ACCELERATE_IMPORT_ENVIRONMENT
-        ):
+        if _runtime_python_environment_key(key):
             result[key] = value_bytes.decode("utf-8", errors="replace")
+    return result
+
+
+def _scrubbed_sealed_process_environment(
+    environment: Mapping[str, str] | None = None,
+) -> dict[str, str]:
+    result = dict(os.environ if environment is None else environment)
+    for key in tuple(result):
+        if _runtime_python_environment_key(key):
+            result.pop(key)
+    result.update(_sealed_python_environment())
     return result
 
 
@@ -7789,11 +7847,7 @@ def _launch_or_adopt_retry_master(
     pidfile_pid = _read_pid(MASTER_PID)
     if pidfile_pid is not None and _pid_exists(pidfile_pid):
         raise RuntimeError("a foreign live master occupies the canonical PID file")
-    environment = os.environ.copy()
-    for key in tuple(environment):
-        if key.startswith("PYTHON") or key.startswith("LD_"):
-            environment.pop(key)
-    environment.update(_sealed_python_environment())
+    environment = _scrubbed_sealed_process_environment()
     environment.setdefault("IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER", "auto")
     MASTER_ROOT.mkdir(parents=True, exist_ok=True)
     launcher_log = MASTER_ROOT / "launcher.out"
@@ -9025,6 +9079,8 @@ def _sealed_python_dispatch_source(python_paths: Sequence[str]) -> str:
             "for _dqk_name in tuple(os.environ):",
             "    if (_dqk_name.startswith('PYTHON') or "
             "_dqk_name.startswith('LD_') or "
+            "_dqk_name.startswith('IPFS_ACCELERATE_AGENT_VALIDATION_') or "
+            "_dqk_name.startswith('IPFS_DATASETS_DQK_VALIDATION_') or "
             f"_dqk_name in {tuple(_ACCELERATE_IMPORT_ENVIRONMENT)!r}):",
             "        os.environ.pop(_dqk_name, None)",
             "os.environ.update(sealed_environment)",
@@ -9044,6 +9100,7 @@ def _sealed_python_dispatch_source(python_paths: Sequence[str]) -> str:
             "_dqk_environment_lock = policy['_acquire_environment_lifecycle_lock'](exclusive=False)",
             "policy['_local_environment_probe']("
             f"environment_root={str(EXPECTED_ENV_ROOT)!r}, sealed_site_roots=[{site_root!r}])",
+            "policy['_install_task_validation_runtime_adapter']()",
             "if len(args) >= 2 and args[0] == '--dqk-manual-module':",
             "    module = args[1]",
             f"    assert module in {manual_modules!r}, 'manual verifier module is not allowlisted'",
@@ -10689,6 +10746,8 @@ def _validator_subprocess_environment() -> dict[str, str]:
             or key.startswith("LD_")
             or key.startswith("COV_CORE_")
             or key.startswith("COVERAGE_")
+            or key.startswith("IPFS_ACCELERATE_AGENT_VALIDATION_")
+            or key.startswith("IPFS_DATASETS_DQK_VALIDATION_")
         ):
             environment.pop(key)
     environment.update(
@@ -10812,6 +10871,155 @@ def _validate_bootstrap_validator_cache_receipt(
     return True, str(payload.get("receipt_id") or "")
 
 
+def _task_validation_python_attestation() -> dict[str, Any]:
+    """Re-derive the one validation interpreter admitted to DQK workers.
+
+    The generic accelerator runtime correctly rejects executables below a
+    user-writable ancestor.  DQK has a stronger, program-specific boundary:
+    every sealed supervisor process retains the shared environment lifecycle
+    lock, while the exclusive provisioner publishes an exact wrapper and five
+    hash-locked wheels.  Re-read both artifacts without following symlinks and
+    bind the wrapper bytes before installing the in-process adapter.
+    """
+
+    import stat
+
+    wrapper_raw = _read_nofollow_bounded_file(
+        TASK_VALIDATION_PYTHON,
+        max_bytes=256 * 1024,
+    )
+    try:
+        wrapper_metadata = TASK_VALIDATION_PYTHON.lstat()
+    except OSError as exc:
+        raise RuntimeError("task-validation Python metadata is unavailable") from exc
+    wrapper_sha256 = f"sha256:{hashlib.sha256(wrapper_raw).hexdigest()}"
+    validator_policy_raw = _read_nofollow_bounded_file(
+        BOOTSTRAP_VALIDATOR,
+        max_bytes=2 * 1024 * 1024,
+    )
+    validator_lock_raw = _read_nofollow_bounded_file(
+        BOOTSTRAP_VALIDATOR_REQUIREMENTS,
+        max_bytes=256 * 1024,
+    )
+    if (
+        not stat.S_ISREG(wrapper_metadata.st_mode)
+        or TASK_VALIDATION_PYTHON.is_symlink()
+        or wrapper_metadata.st_uid != os.geteuid()
+        or stat.S_IMODE(wrapper_metadata.st_mode) != 0o500
+        or wrapper_sha256 != TASK_VALIDATION_PYTHON_SHA256
+        or f"sha256:{hashlib.sha256(validator_policy_raw).hexdigest()}"
+        != BOOTSTRAP_VALIDATOR_SHA256
+        or f"sha256:{hashlib.sha256(validator_lock_raw).hexdigest()}"
+        != BOOTSTRAP_VALIDATOR_REQUIREMENTS_SHA256
+    ):
+        raise RuntimeError("task-validation Python attestation mismatch")
+
+    cache_raw = _read_nofollow_bounded_file(
+        BOOTSTRAP_VALIDATOR_ROOT / "wheel-cache-receipt.json",
+        max_bytes=512 * 1024,
+    )
+    cache_receipt = _strict_json_object(
+        cache_raw.decode("utf-8", errors="strict"),
+        noun="task-validation wheel-cache receipt",
+    )
+    cache_valid, cache_detail = _validate_bootstrap_validator_cache_receipt(
+        cache_receipt,
+        verify_files=True,
+    )
+    if (
+        not cache_valid
+        or cache_receipt.get("receipt_id") != TASK_VALIDATOR_CACHE_RECEIPT_ID
+    ):
+        raise RuntimeError(
+            "task-validation wheel cache is not admitted: " + cache_detail
+        )
+    return {
+        "path": str(TASK_VALIDATION_PYTHON),
+        "sha256": wrapper_sha256,
+        "dispatch_source_sha256": TASK_VALIDATION_DISPATCH_SHA256,
+        "size": wrapper_metadata.st_size,
+        "mode": stat.S_IMODE(wrapper_metadata.st_mode),
+        "validator_receipt_id": TASK_VALIDATOR_RECEIPT_ID,
+        "cache_receipt_id": TASK_VALIDATOR_CACHE_RECEIPT_ID,
+        "toolchain_id": _task_validation_toolchain_id(),
+    }
+
+
+def _install_task_validation_runtime_adapter() -> None:
+    """Admit only the receipt-bound DQK pytest wrapper in this process."""
+
+    attestation = _task_validation_python_attestation()
+    if (
+        os.environ.get("IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON")
+        != str(TASK_VALIDATION_PYTHON)
+        or os.environ.get("IPFS_DATASETS_DQK_VALIDATION_TOOLCHAIN_ID")
+        != attestation["toolchain_id"]
+    ):
+        raise RuntimeError("task-validation environment binding mismatch")
+    module = _accelerate_module(
+        "ipfs_accelerate_py.agent_supervisor.validation_runtime",
+        "ipfs_accelerate_py.agent_supervisor.validation_runtime",
+    )
+    current = module.validation_python_executable
+    if getattr(current, "__dqk_task_validator_adapter__", False):
+        if getattr(current, "__dqk_task_validator_sha256__", "") != attestation[
+            "sha256"
+        ]:
+            raise RuntimeError("task-validation adapter identity changed")
+        return
+
+    original_file_identity = module._file_identity
+    wrapper = TASK_VALIDATION_PYTHON
+
+    def validation_python_executable(
+        environment: Mapping[str, object] | None = None,
+    ) -> str:
+        source = os.environ if environment is None else environment
+        if (
+            str(source.get("IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON") or "")
+            != str(wrapper)
+            or os.environ.get("IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON")
+            != str(wrapper)
+        ):
+            raise module.ValidationRuntimeError(
+                "DQK task validation lost its sealed interpreter binding"
+            )
+        current_attestation = _task_validation_python_attestation()
+        if current_attestation != attestation:
+            raise module.ValidationRuntimeError(
+                "DQK task-validation interpreter changed after admission"
+            )
+        return str(wrapper)
+
+    validation_python_executable.__dqk_task_validator_adapter__ = True
+    validation_python_executable.__dqk_task_validator_sha256__ = attestation[
+        "sha256"
+    ]
+
+    def file_identity(path: Path) -> dict[str, object]:
+        try:
+            selected = Path(path).absolute()
+        except (OSError, TypeError, ValueError):
+            selected = Path(path)
+        if selected != wrapper.absolute():
+            return original_file_identity(path)
+        current_attestation = _task_validation_python_attestation()
+        if current_attestation != attestation:
+            raise module.ValidationRuntimeError(
+                "DQK task-validation interpreter changed after admission"
+            )
+        return {
+            "path": str(wrapper),
+            "sha256": str(attestation["sha256"]).removeprefix("sha256:"),
+            "size": attestation["size"],
+            "mode": attestation["mode"],
+        }
+
+    file_identity.__dqk_task_validator_adapter__ = True
+    module.validation_python_executable = validation_python_executable
+    module._file_identity = file_identity
+
+
 def _validate_bootstrap_validator_receipt(
     receipt: Any,
     *,
@@ -10838,6 +11046,7 @@ def _validate_bootstrap_validator_receipt(
         else None
     )
     artifacts = receipt.get("validation_artifacts")
+    subprocess_wrapper = receipt.get("subprocess_wrapper")
     pytest_args = invocation.get("pytest_args") if isinstance(invocation, Mapping) else None
     expected_artifacts = {
         ("parent", BOOTSTRAP_VALIDATOR.relative_to(REPO_ROOT).as_posix()),
@@ -10853,6 +11062,15 @@ def _validate_bootstrap_validator_receipt(
         if isinstance(item, Mapping)
     } if isinstance(artifacts, list) else set()
     allowed_duckdb_hashes = _bootstrap_allowed_wheel_hashes()
+    try:
+        task_validation_attestation = _task_validation_python_attestation()
+    except (RuntimeError, OSError, UnicodeError) as exc:
+        return False, f"task-validation interpreter is not admitted: {exc}"
+    # Do not pin receipt_id to TASK_VALIDATOR_RECEIPT_ID: every successful
+    # bridge run rebinds parent HEAD/tree, so the content-addressed receipt_id
+    # changes. Structural checks below (wrapper attestation, artifacts, lock,
+    # duckdb archive, success status) are the live contract. The constant remains
+    # as toolchain metadata only.
     if (
         before != after
         or not isinstance(parent, Mapping)
@@ -10872,6 +11090,13 @@ def _validate_bootstrap_validator_receipt(
         or base.get("executable") != str(_trusted_base_python_path())
         or not isinstance(archive, Mapping)
         or archive.get("archive_sha256") not in allowed_duckdb_hashes
+        or not isinstance(subprocess_wrapper, Mapping)
+        or subprocess_wrapper.get("path")
+        != task_validation_attestation["path"]
+        or subprocess_wrapper.get("sha256")
+        != task_validation_attestation["sha256"]
+        or subprocess_wrapper.get("dispatch_source_sha256")
+        != task_validation_attestation["dispatch_source_sha256"]
         or observed_artifacts != expected_artifacts
         or any(
             item.get("blob_sha256") != item.get("working_sha256")
@@ -13584,13 +13809,7 @@ def _manual_gate_relaunch_runtime(
         detach=False,
         launch_token=launch_token,
     )
-    environment = {
-        **os.environ,
-        **_sealed_python_environment(),
-    }
-    for key in tuple(environment):
-        if key.startswith("LD_") or (key.startswith("PYTHON") and key not in _sealed_python_environment()):
-            environment.pop(key)
+    environment = _scrubbed_sealed_process_environment()
     MASTER_ROOT.mkdir(parents=True, exist_ok=True)
     marker = _launch_marker()
     launcher_log = MASTER_ROOT / "launcher.out"
@@ -14525,11 +14744,7 @@ def cmd_launch(args: argparse.Namespace) -> int:
     if args.dry_run:
         return 0
     MASTER_ROOT.mkdir(parents=True, exist_ok=True)
-    environment = os.environ.copy()
-    for key in tuple(environment):
-        if key.startswith("PYTHON") or key.startswith("LD_"):
-            environment.pop(key)
-    environment.update(_sealed_python_environment())
+    environment = _scrubbed_sealed_process_environment()
     environment.setdefault("IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER", "auto")
     snapshot = _source().snapshot()
     marker = _launch_marker()

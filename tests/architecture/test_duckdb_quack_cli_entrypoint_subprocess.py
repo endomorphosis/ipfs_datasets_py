@@ -57,6 +57,8 @@ def _write_test_wrapper(
                 "    return _Lock()",
                 "def _local_environment_probe(**_kwargs):",
                 "    return {}",
+                "def _install_task_validation_runtime_adapter():",
+                "    return None",
                 "",
             )
         ),
@@ -75,6 +77,9 @@ def _write_test_wrapper(
     base_python = Path(getattr(sys, "_base_executable", sys.executable)).resolve()
     monkeypatch.setenv("IPFS_DATASETS_DQK_BASE_PYTHON", str(base_python))
     monkeypatch.setattr(program, "EXPECTED_ENV_ROOT", environment_root)
+    validator_root = environment_root.parent / "ipfs-datasets-duckdb-quack-validator"
+    monkeypatch.setattr(program, "BOOTSTRAP_VALIDATOR_ROOT", validator_root)
+    monkeypatch.setattr(program, "TASK_VALIDATION_PYTHON", validator_root / "bin/python")
     monkeypatch.setattr(program, "SEALED_PYTHON_LAUNCHER", launcher)
     monkeypatch.setattr(program, "__file__", str(policy_path))
     monkeypatch.setattr(program, "_sealed_python_paths", lambda: list(python_paths))
