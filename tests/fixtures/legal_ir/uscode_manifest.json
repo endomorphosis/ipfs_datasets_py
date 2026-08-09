@@ -1,0 +1,292 @@
+{
+  "acceptance": {
+    "all_advertised_configs_schema_coherent": true,
+    "default_config_excludes_recovery": true,
+    "every_artifact_descriptor_bound": true,
+    "legacy_files_not_deleted": true,
+    "verbose_lineage_separate_from_control_plane": true
+  },
+  "additive_packaging": true,
+  "baseline_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+  "build_config_cid": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "configs": [
+    {
+      "config_name": "publicus-ir-graphrag/v2",
+      "data_files": [
+        {
+          "path": "data/**/*.parquet",
+          "split": "train"
+        }
+      ],
+      "features": [
+        "entry_cid",
+        "legal_id",
+        "family",
+        "record_json",
+        "record_sha256"
+      ],
+      "is_default": true,
+      "is_legacy": false,
+      "is_recovery": false,
+      "notes": [
+        "Default viewer-safe v2 configuration.",
+        "Excludes recovery JSON and legacy uscode_parquet monoliths."
+      ],
+      "path_prefixes": [
+        "data/corpus/",
+        "data/bm25/",
+        "data/vectors/",
+        "data/graph/",
+        "indexes/"
+      ],
+      "primary_key": "entry_cid"
+    },
+    {
+      "config_name": "legacy-uscode-parquet/v1",
+      "data_files": [
+        {
+          "path": "uscode_parquet/laws.parquet",
+          "split": "train"
+        },
+        {
+          "path": "uscode_parquet/cid_index.parquet",
+          "split": "train"
+        },
+        {
+          "path": "uscode_parquet/laws_bm25.parquet",
+          "split": "train"
+        },
+        {
+          "path": "uscode_parquet/laws_embeddings.parquet",
+          "split": "train"
+        },
+        {
+          "path": "uscode_parquet/laws_knowledge_graph_entities.parquet",
+          "split": "train"
+        },
+        {
+          "path": "uscode_parquet/laws_knowledge_graph_relationships.parquet",
+          "split": "train"
+        }
+      ],
+      "features": [
+        "ipfs_cid",
+        "title",
+        "section",
+        "text"
+      ],
+      "is_default": false,
+      "is_legacy": true,
+      "is_recovery": false,
+      "notes": [
+        "Explicit deprecation-cycle compatibility path.",
+        "Must not be the default Dataset Viewer config.",
+        "Legacy files are retained; packaging never deletes them."
+      ],
+      "path_prefixes": [
+        "uscode_parquet/"
+      ],
+      "primary_key": "ipfs_cid"
+    },
+    {
+      "config_name": "recovery-quarantine/v1",
+      "data_files": [
+        {
+          "path": "recovery/**/*.json",
+          "split": "train"
+        }
+      ],
+      "features": [
+        "recovery_id",
+        "admission_status",
+        "record_json",
+        "record_sha256"
+      ],
+      "is_default": false,
+      "is_legacy": false,
+      "is_recovery": true,
+      "notes": [
+        "Quarantine configuration for heterogeneous recovery JSON.",
+        "Never included in the default config or canonical counts."
+      ],
+      "path_prefixes": [
+        "recovery/"
+      ],
+      "primary_key": "recovery_id"
+    }
+  ],
+  "control_plane": [
+    "manifest.json",
+    "release_metadata.json",
+    "README.md",
+    "dataset_infos.json",
+    "dataset_configs.json",
+    "reports/admission.json",
+    "reports/quality.json",
+    "reports/reproducibility.json"
+  ],
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "dataset_repo_id": "justicedao/ipfs_uscode",
+  "default_config": "publicus-ir-graphrag/v2",
+  "default_excludes_recovery": true,
+  "description": "Compact sealed fixture for the additive US Code Hugging Face release packager (USCIR-031). Documents viewer configs, descriptor-bound artifact inventory recipe, control-plane vs verbose-lineage separation, and the additive/no-delete legacy guarantee. Expand via build_uscode_hf_release(fixture_family_rows()).",
+  "fixture_id": "uscode-hf-release-manifest-v1",
+  "generators": {
+    "family_rows": {
+      "bm25_documents": 2,
+      "bm25_postings": 2,
+      "corpus": 2,
+      "graph_edges": 1,
+      "graph_nodes": 2,
+      "recovery": 1,
+      "vectors": 2
+    },
+    "include_legacy": true,
+    "include_recovery": true
+  },
+  "goal_id": "USCIR-G080",
+  "legacy_files_deleted": false,
+  "lineage_is_control_plane": false,
+  "lineage_report": "reports/lineage.json",
+  "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+  "model_revision": "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3",
+  "notes": "Default config is publicus-ir-graphrag/v2 and excludes recovery JSON. Legacy uscode_parquet/* is retained through an explicit compatibility config. Verbose lineage lives only at reports/lineage.json.",
+  "package_version": "2",
+  "producer": "uscode_hf_release.py",
+  "release_point": "us/pl/118/45",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "release_schema_version": "uscode-sparse-graphrag-release-schema-v2",
+  "sample_artifact_descriptors": [
+    {
+      "family": "corpus",
+      "media_type": "application/vnd.apache.parquet",
+      "relative_path": "data/corpus/part-000000.parquet",
+      "row_count": 2,
+      "schema_id": "uscode-corpus-row/v1",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "size_bytes": 4096
+    },
+    {
+      "family": "bm25_documents",
+      "media_type": "application/vnd.apache.parquet",
+      "relative_path": "data/bm25/documents/part-000000.parquet",
+      "row_count": 2,
+      "schema_id": "uscode-bm25-document/v1",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "size_bytes": 2048
+    },
+    {
+      "family": "bm25_postings",
+      "media_type": "application/vnd.apache.parquet",
+      "relative_path": "data/bm25/postings/part-000000.parquet",
+      "row_count": 2,
+      "schema_id": "uscode-bm25-posting/v1",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "size_bytes": 2048
+    },
+    {
+      "family": "vectors",
+      "media_type": "application/vnd.apache.parquet",
+      "relative_path": "data/vectors/centroid-000-part-000000.parquet",
+      "row_count": 2,
+      "schema_id": "uscode-vector-row/v1",
+      "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "size_bytes": 8192
+    },
+    {
+      "family": "graph_nodes",
+      "media_type": "application/vnd.apache.parquet",
+      "relative_path": "data/graph/nodes/part-000000.parquet",
+      "row_count": 2,
+      "schema_id": "uscode-graph-node/v1",
+      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "size_bytes": 2048
+    },
+    {
+      "family": "graph_edges",
+      "media_type": "application/vnd.apache.parquet",
+      "relative_path": "data/graph/edges/part-000000.parquet",
+      "row_count": 1,
+      "schema_id": "uscode-graph-edge/v1",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "size_bytes": 1024
+    },
+    {
+      "family": "recovery",
+      "media_type": "application/json",
+      "relative_path": "recovery/part-000000.json",
+      "row_count": 1,
+      "schema_id": "uscode-recovery-quarantine/v1",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "size_bytes": 512
+    },
+    {
+      "family": "routing_index",
+      "media_type": "application/vnd.apache.parquet",
+      "relative_path": "indexes/corpus_chunks-000000.parquet",
+      "row_count": 1,
+      "schema_id": "uscode-routing-index/v1",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "size_bytes": 256
+    },
+    {
+      "family": "manifest",
+      "media_type": "application/json",
+      "relative_path": "manifest.json",
+      "row_count": 0,
+      "schema_id": "uscode-sparse-graphrag-release-schema-v2",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "size_bytes": 4096
+    },
+    {
+      "family": "release_metadata",
+      "media_type": "application/json",
+      "relative_path": "release_metadata.json",
+      "row_count": 0,
+      "schema_id": "uscode-sparse-graphrag-release-schema-v2",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "size_bytes": 1024
+    },
+    {
+      "family": "report",
+      "media_type": "application/json",
+      "relative_path": "reports/admission.json",
+      "row_count": 0,
+      "schema_id": "uscode-hf-release/v1",
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "size_bytes": 512
+    },
+    {
+      "family": "report",
+      "media_type": "application/json",
+      "relative_path": "reports/quality.json",
+      "row_count": 0,
+      "schema_id": "uscode-hf-release/v1",
+      "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "size_bytes": 512
+    },
+    {
+      "family": "report",
+      "media_type": "application/json",
+      "relative_path": "reports/lineage.json",
+      "row_count": 0,
+      "schema_id": "uscode-verbose-lineage/v1",
+      "sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+      "size_bytes": 2048
+    },
+    {
+      "family": "receipt",
+      "media_type": "text/markdown; charset=utf-8",
+      "relative_path": "README.md",
+      "row_count": 0,
+      "schema_id": "uscode-hf-release/v1",
+      "sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+      "size_bytes": 4096
+    }
+  ],
+  "schema_version": "uscode-hf-release-manifest-fixture/v1",
+  "task_id": "USCIR-031",
+  "tokenizer_id": "uscode-legal-tokenizer/v1",
+  "vector_space_id": "all-minilm-l6-v2@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d384:pool=mean:norm=l2",
+  "verbose_lineage_path": "reports/lineage.json"
+}
