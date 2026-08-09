@@ -340,7 +340,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Tokenization is locale-independent, bounded, stable across fixtures, reversible enough for explanations, and distinguishes legally meaningful numeric/citation tokens.
 
 ## USCIR-014 Implement the shared sorted BM25 layout
-- Status: todo
+- Status: completed
+- Operator resolution: shared_layout_ported_from_cvefixes_pattern_with_4096_bounds; pytest passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
