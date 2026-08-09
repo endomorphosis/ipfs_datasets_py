@@ -195,7 +195,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: No non-exempt chunk exceeds the selected model limit, exact text reconstruction is tested, boundaries are deterministic, and huge-section behavior is bounded.
 
 ## USCIR-008 Materialize the canonical corpus and recovery quarantine
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
