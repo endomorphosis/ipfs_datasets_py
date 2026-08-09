@@ -559,7 +559,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: No page exceeds 4,096 pointers, forward/inverse adjacency fully reconcile, key ranges are non-overlapping/complete, and dangling/duplicate durable edges fail.
 
 ## USCIR-023 Add the postings-backed lexical graph overlay
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
