@@ -1,0 +1,175 @@
+{
+  "acceptance": {
+    "centroid_routes_bounded": true,
+    "direct_cid_fetch_locates_off_centroid_graph_nodes": true,
+    "every_embedded_chunk_appears_exactly_once": true,
+    "roots_and_revisions_reconcile": true
+  },
+  "assignment": "deterministic_balanced_spherical_kmeans",
+  "bounds": {
+    "default_candidate_centroids": 4,
+    "max_rows_per_physical_shard": 4096,
+    "max_rows_per_vector_centroid": 8192,
+    "max_vector_shards_per_centroid": 2
+  },
+  "cases": [
+    {
+      "case_id": "every-chunk-exactly-once",
+      "expect": {
+        "chunk_count": 8,
+        "unique": true
+      },
+      "kind": "coverage"
+    },
+    {
+      "case_id": "centroid-routes-bounded",
+      "expect": {
+        "max_rows_per_centroid": 4,
+        "max_rows_per_shard": 2,
+        "max_shards_per_centroid": 2
+      },
+      "kind": "bounds"
+    },
+    {
+      "case_id": "direct-cid-off-centroid",
+      "expect": {
+        "candidate_centroids": 1,
+        "off_centroid_min": 1
+      },
+      "kind": "direct_cid"
+    },
+    {
+      "case_id": "roots-revisions-reconcile",
+      "expect": {
+        "reconciled": true
+      },
+      "kind": "reconcile"
+    },
+    {
+      "case_id": "parent-links-present",
+      "expect": {
+        "parent_link_count": 8
+      },
+      "kind": "parent_links"
+    }
+  ],
+  "chunks": [
+    {
+      "chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entry_cid": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "heading": "Inventions patentable",
+      "legal_id": "usc:us:35:101",
+      "section": "101",
+      "text": "Whoever invents or discovers any new and useful process machine manufacture.",
+      "title": "35"
+    },
+    {
+      "chunk_cid": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "entry_cid": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "heading": "Conditions for patentability; non-obvious subject matter",
+      "legal_id": "usc:us:35:103",
+      "section": "103",
+      "text": "A patent may not be obtained if the differences would have been obvious.",
+      "title": "35"
+    },
+    {
+      "chunk_cid": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "entry_cid": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "heading": "Specification",
+      "legal_id": "usc:us:35:112",
+      "section": "112",
+      "text": "The specification shall contain a written description of the invention.",
+      "title": "35"
+    },
+    {
+      "chunk_cid": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "entry_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "heading": "Public information; agency rules, opinions, orders, records",
+      "legal_id": "usc:us:5:552",
+      "section": "552",
+      "text": "Each agency shall make available to the public information as follows.",
+      "title": "5"
+    },
+    {
+      "chunk_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "entry_cid": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "heading": "FOIA exemptions",
+      "legal_id": "usc:us:5:552:b",
+      "section": "552",
+      "text": "This section does not apply to matters that are specifically authorized.",
+      "title": "5"
+    },
+    {
+      "chunk_cid": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "entry_cid": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "heading": "Rule making",
+      "legal_id": "usc:us:5:553",
+      "section": "553",
+      "text": "Agencies shall promulgate rules of procedure and statements of policy.",
+      "title": "5"
+    },
+    {
+      "chunk_cid": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "entry_cid": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "heading": "Judicial exceptions",
+      "legal_id": "usc:us:35:101:note",
+      "section": "101",
+      "text": "Patent eligibility excludes laws of nature natural phenomena and abstract ideas.",
+      "title": "35"
+    },
+    {
+      "chunk_cid": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "entry_cid": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "heading": "Time limits",
+      "legal_id": "usc:us:5:552:a6",
+      "section": "552",
+      "text": "Freedom of information requests shall be processed within twenty days.",
+      "title": "5"
+    }
+  ],
+  "corpus_root_cid": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "default_pin": {
+    "dimension": 384,
+    "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+    "model_revision": "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3",
+    "normalization": "l2",
+    "pooling": "mean",
+    "vector_space_id": "all-minilm-l6-v2@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d384:pool=mean:norm=l2"
+  },
+  "description": "Compact US Code vector-route recipes for USCIR-019. Embeddings are regenerated by the sealed local backend; centroid layout and direct-CID locators are derived deterministically. No bulk embedding golden dumps.",
+  "expected": {
+    "chunk_count": 8,
+    "max_rows_per_centroid": 4,
+    "max_rows_per_shard": 2,
+    "max_shards_per_centroid": 2,
+    "parent_link_count": 8,
+    "primary_key": "chunk_cid",
+    "rows_sorted_by": "cosine_similarity_to_shard_centroid_desc",
+    "seed": 1431520073,
+    "unique_chunk_cids": [
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    ]
+  },
+  "goal_id": "USCIR-G050",
+  "notes": "Recipe form: chunks + bounds + case expectations only. Expand via bind_uscode_vectors_from_chunks() / run_vector_route_case().",
+  "producer": "uscode_vectors.py",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "schema_version": "uscode-vector-routes-v1",
+  "task_id": "USCIR-019",
+  "test_bounds": {
+    "entry_locator_page_size": 4,
+    "kmeans_iterations": 6,
+    "max_rows_per_centroid": 4,
+    "max_rows_per_shard": 2,
+    "max_shards_per_centroid": 2,
+    "seed": 1431520073,
+    "target_rows_per_centroid": 3
+  }
+}
