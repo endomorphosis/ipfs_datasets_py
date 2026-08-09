@@ -708,7 +708,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Help and offline fixture modes run without optional accelerators, secrets never print, invalid/mutable revisions fail, and each command maps exactly to the Python API.
 
 ## USCIR-029 Register the US Code adapter and package API
-- Status: todo
+- Status: completed
+- Operator resolution: facade+adapter+tests; pytest 18 passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
