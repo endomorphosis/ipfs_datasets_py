@@ -1,0 +1,32 @@
+{
+  "accepted": false,
+  "attempt": 1,
+  "changed_paths": [
+    "ipfs_datasets_py/duckdb_control/inventory.py",
+    "tests/unit/duckdb_control/test_inventory.py"
+  ],
+  "completion_authoritative": false,
+  "decision": "guide_rescue",
+  "denied_paths": [],
+  "expected_outputs": [
+    "ipfs_datasets_py/duckdb_control/inventory.py",
+    "tests/unit/duckdb_control/test_inventory.py"
+  ],
+  "failed_commands": [
+    "python -m pytest -q tests/unit/duckdb_control/test_inventory.py"
+  ],
+  "finding_codes": [],
+  "guidance_markdown": "# Implementation failure review\n\n- Decision: `guide_rescue`\n- Reason codes: `validation_command_failed`\n- Finding codes: none\n\n## Follow-up guidance\n\nDo **not** widen scope casually. Stay inside the task contract.\n\n### Declared task outputs (exact edit authority)\n- `ipfs_datasets_py/duckdb_control/inventory.py`\n- `tests/unit/duckdb_control/test_inventory.py`\n\n### Failed validation commands\n- `python -m pytest -q tests/unit/duckdb_control/test_inventory.py`\nRe-run these commands after edits and keep them green before exit.\n\n### Next attempt checklist\n1. Touch only declared Outputs / Predicted files (plus justified companions).\n2. Deliver every listed expected output file.\n3. Keep validation commands passing.\n4. Avoid renames, submodule edits, and undeclared new modules.",
+  "justified_paths": [],
+  "missing_expected_outputs": [],
+  "next_attempt_prompt_addendum": "Prior attempt failure review (guide_rescue; reasons: validation_command_failed). Re-run and fix: python -m pytest -q tests/unit/duckdb_control/test_inventory.py. Stay inside declared Outputs/Predicted files; finish all expected outputs; avoid renames, submodule edits, and undeclared new modules.",
+  "out_of_scope_paths": [],
+  "policy_version": "deterministic-failure-review-v1",
+  "proof_authoritative": false,
+  "reason_codes": [
+    "validation_command_failed"
+  ],
+  "receipt_id": "baguqeera2pljr2kiqmrfowlphwsa2jygbaqsp573q3lum5de3jhsxbqhfkea",
+  "schema": "ipfs_accelerate_py/agent-supervisor/implementation-failure-review@1",
+  "task_id": "DQK-001"
+}
