@@ -235,6 +235,7 @@ EXPECTED_IDLE_SELECTION_REASONS = frozenset(
 _ACCELERATE_IMPORT_ENVIRONMENT = {
     "IPFS_ACCEL_SKIP_CORE": "1",
     "IPFS_ACCEL_IMPORT_EAGER": "0",
+    "IPFS_ACCELERATE_PY_DISABLE_SECRET_MANAGER": "1",
 }
 
 
@@ -3498,6 +3499,342 @@ def _retry_reset_inspection() -> dict[str, Any]:
         "incomplete": [dict(item) for item in incomplete],
         "error": "",
     }
+
+
+def _retry_reset_bootstrap_json_bytes(payload: Mapping[str, Any]) -> bytes:
+    """Encode one retry authority record without floats or non-finite values."""
+
+    return (
+        json.dumps(payload, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    ).encode("utf-8")
+
+
+def _assert_retry_reset_bootstrap_root(
+    source: Any, *, tighten_database_mode: bool = False
+) -> Path:
+    """Return the canonical runtime root after strict owner/mode checks."""
+
+    import stat
+
+    raw_root = RUNTIME_ROOT.absolute()
+    try:
+        root_metadata = raw_root.lstat()
+    except OSError as exc:
+        raise RuntimeError("retry-reset runtime root is unavailable") from exc
+    if (
+        stat.S_ISLNK(root_metadata.st_mode)
+        or not stat.S_ISDIR(root_metadata.st_mode)
+        or root_metadata.st_uid != os.geteuid()
+        or root_metadata.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+        or raw_root.resolve() != raw_root
+    ):
+        raise RuntimeError("retry-reset runtime root is not owner-controlled")
+    expected_database = raw_root / "control.duckdb"
+    source_database = Path(str(source.database_path)).resolve()
+    if DATABASE_PATH.absolute() != expected_database or source_database != expected_database:
+        raise RuntimeError("retry-reset bootstrap database path is not canonical")
+    database_metadata = expected_database.lstat()
+    if (
+        stat.S_ISLNK(database_metadata.st_mode)
+        or not stat.S_ISREG(database_metadata.st_mode)
+        or database_metadata.st_uid != os.geteuid()
+        or database_metadata.st_mode & stat.S_IWOTH
+    ):
+        raise RuntimeError("retry-reset bootstrap database is not owner-controlled")
+    if tighten_database_mode:
+        flags = os.O_RDWR | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(expected_database, flags)
+        try:
+            opened = os.fstat(descriptor)
+            if (
+                (opened.st_dev, opened.st_ino)
+                != (database_metadata.st_dev, database_metadata.st_ino)
+                or not stat.S_ISREG(opened.st_mode)
+                or opened.st_uid != os.geteuid()
+                or opened.st_mode & stat.S_IWOTH
+            ):
+                raise RuntimeError(
+                    "retry-reset bootstrap database changed before mode sealing"
+                )
+            os.fchmod(descriptor, 0o600)
+            os.fsync(descriptor)
+            sealed = os.fstat(descriptor)
+            if stat.S_IMODE(sealed.st_mode) != 0o600:
+                raise RuntimeError("retry-reset bootstrap database mode was not sealed")
+        finally:
+            os.close(descriptor)
+        final = expected_database.lstat()
+        if (
+            (final.st_dev, final.st_ino)
+            != (database_metadata.st_dev, database_metadata.st_ino)
+            or stat.S_IMODE(final.st_mode) != 0o600
+            or final.st_uid != os.geteuid()
+        ):
+            raise RuntimeError("retry-reset bootstrap database changed while sealing")
+    # DuckDB inherits the process umask (commonly producing 0664).  The
+    # lifecycle-lock holder narrows that freshly materialized inode to 0600
+    # before publishing either authority file.
+    return raw_root
+
+
+def _ensure_retry_reset_bootstrap_directory(path: Path, *, parent: Path) -> None:
+    """Create one fixed private directory, or verify its exact authority."""
+
+    import stat
+
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError:
+        path.mkdir(mode=0o700)
+        directory_fd = os.open(parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+        metadata = path.lstat()
+    except OSError as exc:
+        raise RuntimeError("retry-reset bootstrap directory is unavailable") from exc
+    if (
+        stat.S_ISLNK(metadata.st_mode)
+        or not stat.S_ISDIR(metadata.st_mode)
+        or metadata.st_uid != os.geteuid()
+        or stat.S_IMODE(metadata.st_mode) != 0o700
+    ):
+        raise RuntimeError("retry-reset bootstrap directory is not owner-controlled")
+
+
+def _retry_reset_bootstrap_existing_bytes(path: Path, *, noun: str) -> bytes | None:
+    try:
+        path.lstat()
+    except FileNotFoundError:
+        return None
+    except OSError as exc:
+        raise RuntimeError(f"cannot inspect {noun}") from exc
+    return _strict_regular_bytes(
+        path,
+        noun=noun,
+        required_mode=0o600,
+        required_uid=os.geteuid(),
+        forbidden_mode=0o077,
+    )
+
+
+def _durable_create_retry_reset_bootstrap_file(
+    path: Path,
+    expected: bytes,
+    *,
+    noun: str,
+) -> None:
+    """Create exact authority bytes once; never replace an existing inode."""
+
+    existing = _retry_reset_bootstrap_existing_bytes(path, noun=noun)
+    if existing is not None:
+        if existing != expected:
+            raise RuntimeError(f"existing {noun} does not match canonical bootstrap bytes")
+        return
+
+    temporary_path: Path | None = None
+    try:
+        descriptor, raw_temporary_path = tempfile.mkstemp(
+            prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+        )
+        temporary_path = Path(raw_temporary_path)
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(expected)
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            os.link(temporary_path, path, follow_symlinks=False)
+        except FileExistsError as exc:
+            raced = _retry_reset_bootstrap_existing_bytes(path, noun=noun)
+            if raced != expected:
+                raise RuntimeError(
+                    f"existing {noun} appeared with non-canonical bootstrap bytes"
+                ) from exc
+        directory_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+    installed = _retry_reset_bootstrap_existing_bytes(path, noun=noun)
+    if installed != expected:
+        raise RuntimeError(f"durable {noun} verification failed")
+
+
+def _retry_reset_bootstrap_authority_material(source: Any) -> dict[str, Any]:
+    """Build the one exact, permanently expired bootstrap trust snapshot."""
+
+    module = _retry_reset_module()
+    authorization_module = _accelerate_module(
+        "ipfs_accelerate_py.agent_supervisor.authorization_logic",
+        "ipfs_accelerate_py.agent_supervisor.authorization_logic",
+    )
+    control_module = _accelerate_module(
+        "ipfs_accelerate_py.agent_supervisor.control_contracts",
+        "ipfs_accelerate_py.agent_supervisor.control_contracts",
+    )
+    snapshot = source.snapshot()
+    repository_root = str(REPO_ROOT.resolve())
+    runtime_root = str(RUNTIME_ROOT.absolute())
+    repository_id = _repository_id()
+    repository_head_tree = _git("rev-parse", "HEAD^{tree}")
+    binding = {
+        "program_id": PROGRAM_ID,
+        "repository_root": repository_root,
+        "runtime_root": runtime_root,
+        "repository_id": repository_id,
+        "repository_head_tree": repository_head_tree,
+        "plan_root_cid": snapshot.plan_root_cid,
+        "task_source_repository_tree_id": snapshot.repository_tree_id,
+        "policy_path": "control/retry-reset-policy.json",
+        "database_path": "control.duckdb",
+        "lanes": [
+            {
+                "state_prefix": "dqk",
+                "state_path": f"state/lane-{index}/dqk_task_state.json",
+                "queue_path": f"state/lane-{index}/task_queue.json",
+            }
+            for index in range(2)
+        ],
+        "lifecycle_owner_paths": ["master/supervisor.pid"],
+    }
+    binding_digest = "sha256:" + _sha256_text(_canonical_json(binding))
+    policy_id = "policy:ipfs-datasets-duckdb-quack-retry-bootstrap"
+    policy_revision = "revision:" + binding_digest
+    effect_id = "effect:retry-reset-bootstrap-authority:" + binding_digest
+    caller = "owner:ipfs-datasets-duckdb-quack-bootstrap"
+    lease_id = "lease:ipfs-datasets-duckdb-quack-bootstrap"
+    decision = control_module.AuthorizationDecision(
+        verdict="permit",
+        operation="retry",
+        granted_authority="mutation",
+        repository_root=repository_root,
+        state_root=runtime_root,
+        repository_id=repository_id,
+        tree_id=repository_head_tree,
+        objective_id=ROOT_GOAL_CID,
+        objective_revision=snapshot.plan_root_cid,
+        policy_id=policy_id,
+        policy_revision=policy_revision,
+        caller=caller,
+        lease_id=lease_id,
+        fencing_epoch=1,
+        authorized_effect_ids=(effect_id,),
+        grant_ids=(module.RETRY_RESET_GRANT,),
+        evaluated_at_ms=0,
+        expires_at_ms=1,
+    )
+    policy = authorization_module.ControlMutationPolicy(
+        policy_id=policy_id,
+        policy_revision=policy_revision,
+        permits=(decision,),
+        current_tree_ids={repository_id: repository_head_tree},
+        current_objective_revisions={ROOT_GOAL_CID: snapshot.plan_root_cid},
+        active_lease_fences={lease_id: 1},
+    )
+    policy_bytes = _retry_reset_bootstrap_json_bytes(module._policy_payload(policy))
+    policy_digest = "sha256:" + hashlib.sha256(policy_bytes).hexdigest()
+    owner = module.RetryResetOwnerConfig(
+        repository_root=repository_root,
+        repository_id=repository_id,
+        database_path="control.duckdb",
+        task_source_repository_tree_id=snapshot.repository_tree_id,
+        policy_path="control/retry-reset-policy.json",
+        policy_digest=policy_digest,
+        lanes=tuple(
+            module.LaneBinding(
+                item["state_prefix"], item["state_path"], item["queue_path"]
+            )
+            for item in binding["lanes"]
+        ),
+        lifecycle_owner_paths=("master/supervisor.pid",),
+    )
+    owner_bytes = _retry_reset_bootstrap_json_bytes(owner.to_dict())
+    return {
+        "module": module,
+        "policy": policy,
+        "owner": owner,
+        "policy_bytes": policy_bytes,
+        "owner_bytes": owner_bytes,
+        "policy_digest": policy_digest,
+        "owner_digest": "sha256:" + hashlib.sha256(owner_bytes).hexdigest(),
+        "binding_digest": binding_digest,
+    }
+
+
+def _install_retry_reset_bootstrap_authority(source: Any) -> dict[str, str]:
+    """Install the canonical inert retry authority under its released lock."""
+
+    runtime_root = _assert_retry_reset_bootstrap_root(source)
+    with _retry_lifecycle_lock_context():
+        runtime_root = _assert_retry_reset_bootstrap_root(source)
+        material = _retry_reset_bootstrap_authority_material(source)
+        module = material["module"]
+        owner_path = runtime_root / module.RETRY_RESET_OWNER_FILE
+        policy_path = runtime_root / "control/retry-reset-policy.json"
+        existing_owner = _retry_reset_bootstrap_existing_bytes(
+            owner_path, noun="retry-reset owner configuration"
+        )
+        try:
+            policy_parent_metadata = policy_path.parent.lstat()
+        except FileNotFoundError:
+            existing_policy = None
+        else:
+            import stat
+
+            if (
+                stat.S_ISLNK(policy_parent_metadata.st_mode)
+                or not stat.S_ISDIR(policy_parent_metadata.st_mode)
+            ):
+                raise RuntimeError("retry-reset bootstrap policy parent is unsafe")
+            existing_policy = _retry_reset_bootstrap_existing_bytes(
+                policy_path, noun="retry-reset bootstrap policy"
+            )
+        if existing_owner is not None and existing_policy is None:
+            raise RuntimeError(
+                "retry-reset owner exists without its policy; refusing reconstruction"
+            )
+        if existing_owner is not None and existing_owner != material["owner_bytes"]:
+            raise RuntimeError("existing retry-reset owner does not match bootstrap authority")
+        if existing_policy is not None and existing_policy != material["policy_bytes"]:
+            raise RuntimeError("existing retry-reset policy does not match bootstrap authority")
+
+        runtime_root = _assert_retry_reset_bootstrap_root(
+            source, tighten_database_mode=True
+        )
+        _ensure_retry_reset_bootstrap_directory(
+            policy_path.parent, parent=runtime_root
+        )
+        # This order is the supported crash boundary: a matching orphan policy
+        # is replayable, while an owner can never point at an absent policy.
+        _durable_create_retry_reset_bootstrap_file(
+            policy_path,
+            material["policy_bytes"],
+            noun="retry-reset bootstrap policy",
+        )
+        _durable_create_retry_reset_bootstrap_file(
+            owner_path,
+            material["owner_bytes"],
+            noun="retry-reset owner configuration",
+        )
+
+        owner = module._load_owner_config(runtime_root)
+        loaded_policy = module._load_policy(
+            policy_path, expected_digest=owner.policy_digest
+        )
+        if owner != material["owner"] or loaded_policy != material["policy"]:
+            raise RuntimeError("installed retry-reset authority did not round-trip exactly")
+        return {
+            "owner_path": str(owner_path),
+            "owner_digest": str(material["owner_digest"]),
+            "policy_path": str(policy_path),
+            "policy_digest": str(material["policy_digest"]),
+            "binding_digest": str(material["binding_digest"]),
+        }
 
 
 def _all_rows(source: Any, table: str) -> list[dict[str, Any]]:
@@ -10320,7 +10657,28 @@ def cmd_bootstrap(args: argparse.Namespace) -> int:
         expected_absent=bool(args.expected_absent),
     )
     integrity = source.validate_integrity()
-    print(_canonical_json({"receipt": dict(receipt), "integrity": integrity.valid, "database": str(DATABASE_PATH)}))
+    if not integrity.valid:
+        raise RuntimeError("materialized DuckDB control database failed integrity validation")
+    retry_reset_authority = _install_retry_reset_bootstrap_authority(source)
+    retry_reset_inspection = _retry_reset_inspection()
+    if not retry_reset_inspection["ok"]:
+        raise RuntimeError(
+            "installed retry-reset authority failed closed inspection: "
+            + (
+                str(retry_reset_inspection["error"])
+                or _canonical_json(retry_reset_inspection["incomplete"])
+            )
+        )
+    print(
+        _canonical_json(
+            {
+                "receipt": dict(receipt),
+                "integrity": True,
+                "database": str(DATABASE_PATH),
+                "retry_reset_authority": retry_reset_authority,
+            }
+        )
+    )
     return 0
 
 

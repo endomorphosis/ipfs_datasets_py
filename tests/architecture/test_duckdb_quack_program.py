@@ -123,6 +123,26 @@ def task_source(tmp_path: Path):
     return source
 
 
+def _retry_bootstrap_source(
+    monkeypatch: pytest.MonkeyPatch,
+    runtime_root: Path,
+):
+    DuckDBTaskSource, _providers = program._accelerate_imports()
+    runtime_root.mkdir(mode=0o700, parents=True)
+    database_path = runtime_root / "control.duckdb"
+    monkeypatch.setattr(program, "RUNTIME_ROOT", runtime_root)
+    monkeypatch.setattr(program, "DATABASE_PATH", database_path)
+    monkeypatch.setattr(program, "STATE_ROOT", runtime_root / "state")
+    source = DuckDBTaskSource(database_path)
+    source.materialize(
+        program.formal_source("tree:git:retry-bootstrap-test"),
+        repository_tree_id="tree:git:retry-bootstrap-test",
+        expected_absent=True,
+    )
+    assert source.validate_integrity().valid
+    return source
+
+
 def test_program_is_acyclic_and_materializes_losslessly(task_source) -> None:
     program.validate_program()
 
@@ -274,6 +294,294 @@ def test_retry_reset_inspection_binds_the_whole_runtime_root(
         "error": "",
     }
     assert observed == [runtime]
+
+
+def test_retry_reset_bootstrap_authority_is_exact_inert_and_idempotent(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    runtime = tmp_path / "generation"
+    source = _retry_bootstrap_source(monkeypatch, runtime)
+
+    first = program._install_retry_reset_bootstrap_authority(source)
+    owner_path = Path(first["owner_path"])
+    policy_path = Path(first["policy_path"])
+    policy_before = policy_path.stat()
+    owner_before = owner_path.stat()
+    second = program._install_retry_reset_bootstrap_authority(source)
+
+    assert second == first
+    assert policy_path.stat().st_ino == policy_before.st_ino
+    assert policy_path.stat().st_mtime_ns == policy_before.st_mtime_ns
+    assert owner_path.stat().st_ino == owner_before.st_ino
+    assert owner_path.stat().st_mtime_ns == owner_before.st_mtime_ns
+    assert policy_path.stat().st_mode & 0o777 == 0o600
+    assert owner_path.stat().st_mode & 0o777 == 0o600
+    assert source.database_path.stat().st_mode & 0o777 == 0o600
+    assert policy_path.parent.stat().st_mode & 0o777 == 0o700
+    assert policy_path.stat().st_uid == owner_path.stat().st_uid == os.geteuid()
+    assert first["policy_digest"] == (
+        "sha256:" + hashlib.sha256(policy_path.read_bytes()).hexdigest()
+    )
+    assert first["owner_digest"] == (
+        "sha256:" + hashlib.sha256(owner_path.read_bytes()).hexdigest()
+    )
+
+    module = program._retry_reset_module()
+    owner = module._load_owner_config(runtime)
+    policy = module._load_policy(policy_path, expected_digest=owner.policy_digest)
+    assert owner.repository_root == str(program.REPO_ROOT.resolve())
+    assert owner.repository_id == program._repository_id()
+    assert owner.database_path == "control.duckdb"
+    assert owner.task_source_repository_tree_id == source.snapshot().repository_tree_id
+    assert owner.policy_path == "control/retry-reset-policy.json"
+    assert owner.lifecycle_owner_paths == ("master/supervisor.pid",)
+    assert [
+        (lane.state_prefix, lane.state_path, lane.queue_path)
+        for lane in owner.lanes
+    ] == [
+        ("dqk", "state/lane-0/dqk_task_state.json", "state/lane-0/task_queue.json"),
+        ("dqk", "state/lane-1/dqk_task_state.json", "state/lane-1/task_queue.json"),
+    ]
+    assert len(policy.permits) == 1
+    permit = policy.permits[0]
+    assert (permit.evaluated_at_ms, permit.expires_at_ms) == (0, 1)
+    assert permit.operation.value == "retry"
+    assert permit.repository_root == str(program.REPO_ROOT.resolve())
+    assert permit.state_root == str(runtime)
+
+    control_module = program._accelerate_module(
+        "ipfs_accelerate_py.agent_supervisor.control_contracts",
+        "ipfs_accelerate_py.agent_supervisor.control_contracts",
+    )
+    authorization_module = program._accelerate_module(
+        "ipfs_accelerate_py.agent_supervisor.authorization_logic",
+        "ipfs_accelerate_py.agent_supervisor.authorization_logic",
+    )
+    effect = control_module.ExpectedEffect(
+        effect_id=permit.authorized_effect_ids[0],
+        kind="write_state",
+        resource="retry-reset-bootstrap-authority",
+        paths=("control/retry-reset-policy.json", module.RETRY_RESET_OWNER_FILE),
+    )
+    request = control_module.OperationRequest(
+        operation=permit.operation,
+        repository_root=permit.repository_root,
+        state_root=permit.state_root,
+        repository_id=permit.repository_id,
+        tree_id=permit.tree_id,
+        objective_id=permit.objective_id,
+        objective_revision=permit.objective_revision,
+        policy_id=permit.policy_id,
+        policy_revision=permit.policy_revision,
+        caller=permit.caller,
+        expected_effects=(effect,),
+        idempotency=control_module.IdempotencyKey(
+            key="retry-reset-bootstrap-expired-proof",
+            operation=permit.operation,
+            caller=permit.caller,
+            repository_id=permit.repository_id,
+            objective_id=permit.objective_id,
+        ),
+        authorization=permit,
+        lease_id=permit.lease_id,
+        fencing_epoch=permit.fencing_epoch,
+    )
+    with pytest.raises(Exception, match="permit decision has expired"):
+        authorization_module.ControlMutationAuthorizer(policy).validate(request)
+    assert program._retry_reset_inspection() == {
+        "ok": True,
+        "incomplete": [],
+        "error": "",
+    }
+    assert source.validate_integrity().valid
+    assert source.snapshot().repository_tree_id == owner.task_source_repository_tree_id
+
+    # Replay the sole supported publication crash: policy durable, owner absent.
+    owner_path.unlink()
+    replayed = program._install_retry_reset_bootstrap_authority(source)
+    assert replayed == first
+    assert policy_path.stat().st_ino == policy_before.st_ino
+    assert owner_path.is_file() and not owner_path.is_symlink()
+
+
+def test_retry_reset_bootstrap_refuses_mismatch_and_symlink_without_replacement(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    mismatch_runtime = tmp_path / "mismatch"
+    source = _retry_bootstrap_source(monkeypatch, mismatch_runtime)
+    receipt = program._install_retry_reset_bootstrap_authority(source)
+    owner_path = Path(receipt["owner_path"])
+    foreign_owner = b"{}\n"
+    owner_path.write_bytes(foreign_owner)
+    owner_path.chmod(0o600)
+
+    with pytest.raises(RuntimeError, match="owner does not match bootstrap authority"):
+        program._install_retry_reset_bootstrap_authority(source)
+    assert owner_path.read_bytes() == foreign_owner
+
+    symlink_runtime = tmp_path / "symlink"
+    symlink_source = _retry_bootstrap_source(monkeypatch, symlink_runtime)
+    control_root = symlink_runtime / "control"
+    control_root.mkdir(mode=0o700)
+    outside = tmp_path / "outside-policy.json"
+    outside.write_text("outside\n", encoding="utf-8")
+    policy_path = control_root / "retry-reset-policy.json"
+    policy_path.symlink_to(outside)
+    database_mode_before = symlink_source.database_path.stat().st_mode & 0o777
+
+    with pytest.raises(RuntimeError, match="bounded regular file"):
+        program._install_retry_reset_bootstrap_authority(symlink_source)
+    assert policy_path.is_symlink()
+    assert outside.read_text(encoding="utf-8") == "outside\n"
+    assert not (symlink_runtime / "duckdb-retry-reset-owner.json").exists()
+    assert symlink_source.database_path.stat().st_mode & 0o777 == database_mode_before
+
+    mode_runtime = tmp_path / "unsafe-mode"
+    mode_source = _retry_bootstrap_source(monkeypatch, mode_runtime)
+    mode_receipt = program._install_retry_reset_bootstrap_authority(mode_source)
+    unsafe_policy = Path(mode_receipt["policy_path"])
+    unsafe_policy.chmod(0o640)
+    with pytest.raises(RuntimeError, match="unsafe permissions"):
+        program._install_retry_reset_bootstrap_authority(mode_source)
+    assert unsafe_policy.stat().st_mode & 0o777 == 0o640
+
+
+def test_cmd_bootstrap_fails_integrity_before_authority_or_success_output(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    class InvalidSource:
+        def __init__(self, path: Path):
+            self.database_path = path
+
+        def materialize(self, *_args, **_kwargs):
+            return {"receipt_id": "invalid-materialization"}
+
+        def validate_integrity(self):
+            return SimpleNamespace(valid=False)
+
+    monkeypatch.setattr(
+        program, "_accelerate_imports", lambda: (InvalidSource, (lambda: False,))
+    )
+    monkeypatch.setattr(program, "DATABASE_PATH", tmp_path / "control.duckdb")
+    monkeypatch.setattr(program, "_repository_tree_id", lambda: "tree:invalid")
+    monkeypatch.setattr(
+        program,
+        "_install_retry_reset_bootstrap_authority",
+        lambda _source: pytest.fail("invalid database must not install retry authority"),
+    )
+
+    with pytest.raises(RuntimeError, match="failed integrity validation"):
+        program.cmd_bootstrap(SimpleNamespace(expected_absent=True))
+    captured = capsys.readouterr()
+    assert captured.out == ""
+
+
+def test_cmd_bootstrap_requires_clean_retry_inspection_before_output(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    calls: list[str] = []
+
+    class ValidSource:
+        def __init__(self, path: Path):
+            self.database_path = path
+
+        def materialize(self, *_args, **_kwargs):
+            calls.append("materialize")
+            return {"receipt_id": "valid-materialization"}
+
+        def validate_integrity(self):
+            calls.append("integrity")
+            return SimpleNamespace(valid=True)
+
+    monkeypatch.setattr(
+        program, "_accelerate_imports", lambda: (ValidSource, (lambda: False,))
+    )
+    monkeypatch.setattr(program, "DATABASE_PATH", tmp_path / "control.duckdb")
+    monkeypatch.setattr(program, "_repository_tree_id", lambda: "tree:valid")
+
+    monkeypatch.setattr(
+        program,
+        "_install_retry_reset_bootstrap_authority",
+        lambda _source: (_ for _ in ()).throw(RuntimeError("install refused")),
+    )
+    with pytest.raises(RuntimeError, match="install refused"):
+        program.cmd_bootstrap(SimpleNamespace(expected_absent=True))
+    assert capsys.readouterr().out == ""
+
+    monkeypatch.setattr(
+        program,
+        "_install_retry_reset_bootstrap_authority",
+        lambda _source: calls.append("install") or {"owner_digest": "sha256:owner"},
+    )
+    calls.clear()
+    monkeypatch.setattr(
+        program,
+        "_retry_reset_inspection",
+        lambda: calls.append("inspect")
+        or {"ok": False, "incomplete": [], "error": "owner mismatch"},
+    )
+    with pytest.raises(RuntimeError, match="owner mismatch"):
+        program.cmd_bootstrap(SimpleNamespace(expected_absent=True))
+    assert calls == ["materialize", "integrity", "install", "inspect"]
+    assert capsys.readouterr().out == ""
+
+    calls.clear()
+    monkeypatch.setattr(
+        program,
+        "_retry_reset_inspection",
+        lambda: calls.append("inspect") or {"ok": True, "incomplete": [], "error": ""},
+    )
+
+    assert program.cmd_bootstrap(SimpleNamespace(expected_absent=True)) == 0
+    assert calls == ["materialize", "integrity", "install", "inspect"]
+    output = json.loads(capsys.readouterr().out)
+    assert output["integrity"] is True
+    assert output["retry_reset_authority"] == {"owner_digest": "sha256:owner"}
+
+
+def test_accelerate_import_environment_seals_secret_manager_and_stays_quiet(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    key = "IPFS_ACCELERATE_PY_DISABLE_SECRET_MANAGER"
+    monkeypatch.setenv(key, "0")
+    assert program._sealed_python_environment()[key] == "1"
+
+    dispatch = program._sealed_python_dispatch_source(
+        ("/sealed/python.zip", "/sealed/stdlib", "/sealed/dynload", "/sealed/site")
+    )
+    environment_prefix = dispatch.split("args = sys.argv[1:]", 1)[0]
+    wrapper_probe = program.subprocess.run(
+        [
+            str(program._trusted_base_python_path()),
+            "-I",
+            "-B",
+            "-S",
+            "-c",
+            environment_prefix + f"print(os.environ[{key!r}])\n",
+        ],
+        env={key: "0"},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert wrapper_probe.returncode == 0
+    assert wrapper_probe.stdout == "1\n"
+    assert wrapper_probe.stderr == ""
+
+    _source_class, provider_probes = program._accelerate_imports()
+    for probe in provider_probes:
+        probe()
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+    assert os.environ[key] == "1"
 
 
 def test_markdown_and_json_are_deterministic_database_exports(task_source) -> None:
