@@ -483,7 +483,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Every embedded chunk appears exactly once, direct CID fetch locates off-centroid graph nodes, centroid routes are bounded, and all roots/revisions reconcile.
 
 ## USCIR-020 Measure exhaustive vector recall and choose probe defaults
-- Status: todo
+- Status: completed
+- Operator resolution: operator_rescue_merged_after_max_attempts; validation pytest+fixture-check passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
@@ -507,7 +508,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Default probe count and fallback policy are evidence-backed, the test split is not tuned, and no production-searchable claim exists below the declared recall gate.
 
 ## USCIR-021 Define and project the legal ontology and citations
-- Status: todo
+- Status: completed
+- Operator resolution: operator_rescue_merged_after_max_attempts; trailing section punctuation fix; pytest passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
@@ -988,7 +990,10 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 
 ## USCIR-041 Resolve 2 preflight-conflicting backlogged worktree merges
 
-- Status: blocked
+- Status: completed
+- Operator resolution: discarded_superseded_preflight_conflict_worktrees
+- Operator receipt: workspace/agent-supervisor/uscode-sparse-graphrag/state/discovery/2026-08-09-uscir-041-operator-discard-receipt.md
+- Resolution note: USCIR-018/019 already merged on feature tip; alternate rescue drafts archived via tags and discarded worktrees
 - Completion: manual
 - Is schedulable: false
 - Review only: true
