@@ -1004,10 +1004,32 @@ def _install_accelerator_validation_adapter(config: Mapping[str, Any]) -> None:
     )
     module_path = Path(str(module.__file__)).resolve(strict=True)
     accelerate_root = Path(str(config["accelerate_root"])).resolve(strict=True)
+    admitted_runtime = (
+        accelerate_root
+        / "ipfs_accelerate_py"
+        / "agent_supervisor"
+        / "validation_runtime.py"
+    ).resolve()
     try:
         module_path.relative_to(accelerate_root)
     except ValueError as exc:
-        raise RuntimeError("validation-runtime adapter resolved from a foreign checkout") from exc
+        # Nested agent worktrees embed their own accelerate checkout under the
+        # parent repository.  Admit only the same package-relative module and
+        # only when its bytes match the sealed accelerate root.
+        expected_suffix = Path(
+            "ipfs_accelerate_py/agent_supervisor/validation_runtime.py"
+        )
+        if not str(module_path).endswith(str(expected_suffix)):
+            raise RuntimeError(
+                "validation-runtime adapter resolved from a foreign checkout"
+            ) from exc
+        if (
+            not admitted_runtime.is_file()
+            or _sha256_file(module_path) != _sha256_file(admitted_runtime)
+        ):
+            raise RuntimeError(
+                "nested validation-runtime bytes differ from admitted accelerate"
+            ) from exc
     wrapper = Path(str(config["subprocess_wrapper"])).resolve(strict=True)
     _regular_file(wrapper, noun="sealed nested-validation wrapper")
     expected_sha256 = str(config.get("subprocess_wrapper_sha256") or "")
