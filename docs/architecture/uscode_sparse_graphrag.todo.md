@@ -389,7 +389,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Every admitted corpus chunk has one BM25 document row, source/corpus roots reconcile, field scores are explainable, and legacy k1/b differences are explicit.
 
 ## USCIR-016 Differentially validate and tune sparse retrieval
-- Status: todo
+- Status: completed
+- Operator resolution: rescued_after_protected_path_interrupt; OOV routing fix; pytest+cli check passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
