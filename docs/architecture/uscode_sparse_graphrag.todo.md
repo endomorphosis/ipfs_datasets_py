@@ -99,7 +99,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Suite covers Titles 5, 11, 17, 18, 26, 28, 31, 35, 42, and 47 with train/dev/test partitions and stable CIDs or legal IDs.
 
 ## USCIR-004 Implement the all-title official-source authority contract
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
