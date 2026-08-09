@@ -315,6 +315,18 @@ assert all('foreign-poison' not in value for value in sys.path)
         "-S",
     ]
     assert receipt["output"]["returncode"] == 0
+    assert receipt["output"]["bounds"]["timeout_seconds"] == "900.000"
+
+    def assert_formal_json(value: object) -> None:
+        assert not isinstance(value, float)
+        if isinstance(value, dict):
+            for nested in value.values():
+                assert_formal_json(nested)
+        elif isinstance(value, list):
+            for nested in value:
+                assert_formal_json(nested)
+
+    assert_formal_json(receipt)
     assert {item["repository_role"] for item in receipt["validation_artifacts"]} == {
         "parent",
         "accelerator",

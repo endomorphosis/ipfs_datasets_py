@@ -1295,7 +1295,11 @@ def run_validation(
                 "stdout": stdout_limit,
                 "stderr": stderr_limit,
                 "combined": combined_limit,
-                "timeout_seconds": timeout_seconds,
+                # The receipt is later embedded in a DuckDB task-source CAS
+                # receipt whose formal canonical JSON contract rejects binary
+                # floating-point values. Keep the operator-facing unit while
+                # encoding the bounded timeout as exact decimal text.
+                "timeout_seconds": f"{timeout_seconds:.3f}",
             },
         },
         "repository_after": repository_after,
