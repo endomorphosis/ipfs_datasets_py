@@ -147,7 +147,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Fixture acquisition is deterministic, title completeness is explicit, resume does not redownload verified packages, and every accepted package binds checksum and release point.
 
 ## USCIR-006 Repair canonical section and edition identity
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
