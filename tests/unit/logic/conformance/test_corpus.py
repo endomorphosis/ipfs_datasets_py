@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from ipfs_datasets_py.logic.conformance.corpus import (
     DEFAULT_MANIFEST_PATH,
     DEFAULT_MAX_PAYLOAD_BYTES,

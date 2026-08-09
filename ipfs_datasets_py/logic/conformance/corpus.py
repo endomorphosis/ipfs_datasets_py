@@ -23,7 +23,7 @@ import json
 import re
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path, PurePosixPath
 from typing import Any, Final
 
@@ -100,7 +100,7 @@ class CorpusIntegrityError(CorpusError):
     """Raised when a corpus fails integrity or safety checks."""
 
 
-class FixtureKind(str, Enum):
+class FixtureKind(StrEnum):
     """Closed vocabulary of corpus fixture kinds (LFP-002)."""
 
     POSITIVE = "positive"
@@ -113,7 +113,7 @@ class FixtureKind(str, Enum):
     TRACE = "trace"
 
 
-class ExpectedDisposition(str, Enum):
+class ExpectedDisposition(StrEnum):
     """Expected parser/pipeline disposition for a fixture."""
 
     ACCEPT = "accept"
@@ -124,7 +124,7 @@ class ExpectedDisposition(str, Enum):
     ERROR = "error"
 
 
-class LabelDisposition(str, Enum):
+class LabelDisposition(StrEnum):
     """How an observed family label relates to the baseline registry."""
 
     CANONICAL = "canonical"
@@ -217,7 +217,11 @@ def _require_fixture_id(value: Any, field_name: str = "fixture_id") -> str:
     return text
 
 
-def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
+def _parse_enum(
+    value: Any,
+    enum_cls: type[StrEnum],
+    field_name: str,
+) -> StrEnum:
     if isinstance(value, enum_cls):
         return value
     try:
