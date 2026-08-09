@@ -123,7 +123,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Policy distinguishes proposed latest from approved exact release point, records per-title provenance, rejects unapproved mixed vintages, and supports deterministic resume receipts.
 
 ## USCIR-005 Implement the exact all-title release catalog
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
