@@ -533,7 +533,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Legal and similarity semantics are disjoint, unresolved citations are preserved honestly, source spans are bound, and fixture graph paths match the sealed expectations.
 
 ## USCIR-022 Implement shared graph and bounded adjacency layouts
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
