@@ -174,6 +174,83 @@ def test_bootstrap_bridge_contract_includes_merge_crash_evidence() -> None:
     assert "test/api/test_agent_supervisor_duckdb_task_source.py" in argv
 
 
+def test_bootstrap_identity_uses_canonical_fallback(task_source) -> None:
+    snapshot = task_source.snapshot()
+    identity = program._repository_task_source_identity(task_source, snapshot)
+
+    assert not hasattr(task_source, "identity")
+    assert identity["source_kind"] == "duckdb"
+    assert identity["source_id"] == snapshot.projection_cid
+    assert identity["root_id"] == snapshot.plan_root_cid
+    assert identity["identity_id"].startswith("task-source:sha256:")
+
+
+def test_bootstrap_ack_uses_canonical_identity_fallback(
+    task_source,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    validator_receipt = {"receipt_id": "sha256:" + "7" * 64}
+
+    def fake_git(*args: str) -> str:
+        if "status" in args:
+            return ""
+        if args[-1] == "HEAD^{tree}":
+            return "8" * 40
+        if args[-1] == "HEAD":
+            return (
+                program.REQUIRED_ACCELERATE_BRIDGE_COMMIT
+                if "-C" in args
+                else "9" * 40
+            )
+        raise AssertionError(args)
+
+    def fake_run(argv, **_kwargs):
+        if tuple(argv[:3]) == ("git", "merge-base", "--is-ancestor"):
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        assert tuple(argv) == ("sealed-validator",)
+        return SimpleNamespace(returncode=0, stdout="{}\n", stderr="")
+
+    monkeypatch.setattr(program, "_source", lambda: task_source)
+    monkeypatch.setattr(program, "_git", fake_git)
+    monkeypatch.setattr(
+        program,
+        "_head_gitlink_commit",
+        lambda _path: program.REQUIRED_ACCELERATE_BRIDGE_COMMIT,
+    )
+    monkeypatch.setattr(program, "_bootstrap_bridge_validation_argv", lambda: ("sealed-validator",))
+    monkeypatch.setattr(program, "_validator_subprocess_environment", lambda: {})
+    monkeypatch.setattr(program.subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        program,
+        "_strict_validator_stdout",
+        lambda _stdout, _stderr, *, noun: validator_receipt,
+    )
+    monkeypatch.setattr(
+        program,
+        "_validate_bootstrap_validator_receipt",
+        lambda _receipt, *, require_current_checkout: (True, "ok"),
+    )
+
+    assert program.cmd_ack_bootstrap(SimpleNamespace()) == 0
+    completed = task_source.get_task(program.BOOTSTRAP_TASK_ID)
+    assert completed is not None and completed.status == "completed"
+    _snapshot, tables, _counts = program._consistent_rows(
+        task_source,
+        ("task_events",),
+    )
+    receipt = program._latest_status_receipt(
+        tables["task_events"],
+        task_cid=completed.task_cid,
+        status="completed",
+    )
+    assert receipt is not None
+    assert isinstance(receipt["validation"]["duration_seconds"], str)
+    assert receipt["task_source_identity_id"] == program._repository_task_source_identity(
+        task_source,
+        task_source.snapshot(),
+    )["identity_id"]
+
+
 def test_retry_reset_inspection_binds_the_whole_runtime_root(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

@@ -9760,7 +9760,7 @@ def preflight_checks(*, require_clean: bool = True) -> list[dict[str, Any]]:
                 and bootstrap_receipt.get("task_cid")
                 == str(bootstrap["task_cid"])
                 and bootstrap_receipt.get("task_source_identity_id")
-                == source.identity.identity_id
+                == _repository_task_source_identity(source, snapshot)["identity_id"]
                 and bootstrap_receipt.get("plan_root_cid")
                 == snapshot.plan_root_cid
                 and bootstrap_receipt.get("repository_tree_id")
@@ -10395,7 +10395,9 @@ def cmd_ack_bootstrap(args: argparse.Namespace) -> int:
         )
     submodule_tree = _git("-C", "ipfs_accelerate_py", "rev-parse", "HEAD^{tree}")
     snapshot = source.snapshot()
-    task_source_identity_id = source.identity.identity_id
+    task_source_identity_id = _repository_task_source_identity(source, snapshot)[
+        "identity_id"
+    ]
     if already_completed:
         _event_snapshot, event_tables, _event_counts = _consistent_rows(
             source,
@@ -10518,7 +10520,10 @@ def cmd_ack_bootstrap(args: argparse.Namespace) -> int:
             "output_sha256": f"sha256:{hashlib.sha256(output.encode('utf-8')).hexdigest()}",
             "validator_receipt_id": validator_receipt["receipt_id"],
             "validator_receipt": validator_receipt,
-            "duration_seconds": round(time.monotonic() - started, 3),
+            # DuckDB task-source receipts use the formal canonical JSON
+            # contract, which deliberately rejects binary floating-point
+            # values. Preserve the bounded timing observation as decimal text.
+            "duration_seconds": f"{time.monotonic() - started:.3f}",
             "completed_at": datetime.now(timezone.utc).isoformat(),
         },
     }
