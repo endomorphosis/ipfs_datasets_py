@@ -20,6 +20,61 @@ VERIFIER_PATH = (
 )
 
 
+def _prefer_sealed_accelerate_checkout() -> None:
+    """Bind the sealed validator's accelerator checkout in nested worktrees.
+
+    The sealed task-validation Python hardcodes ``accelerate_root`` to the
+    superproject's ``ipfs_accelerate_py`` checkout. Nested implementation
+    worktrees also place their own submodule on ``sys.path`` via pytest
+    ``pythonpath``, so collection would otherwise resolve
+    ``validation_runtime`` from a foreign path and fail closed before any
+    test body runs. Prefer the non-local sealed checkout when both are
+    visible; no-op when already running from the superproject.
+    """
+
+    local_accelerate = (REPO_ROOT / "ipfs_accelerate_py").resolve()
+    accelerate_paths: list[Path] = []
+    for entry in sys.path:
+        try:
+            path = Path(entry).resolve()
+        except OSError:
+            continue
+        runtime = (
+            path
+            / "ipfs_accelerate_py"
+            / "agent_supervisor"
+            / "validation_runtime.py"
+        )
+        if runtime.is_file() and path not in accelerate_paths:
+            accelerate_paths.append(path)
+    if not accelerate_paths:
+        return
+    preferred = next(
+        (path for path in accelerate_paths if path != local_accelerate),
+        accelerate_paths[0],
+    )
+    if preferred == local_accelerate:
+        return
+
+    rebuilt: list[str] = [str(preferred)]
+    for entry in sys.path:
+        try:
+            path = Path(entry).resolve()
+        except OSError:
+            rebuilt.append(entry)
+            continue
+        if path in {local_accelerate, preferred}:
+            continue
+        rebuilt.append(entry)
+    sys.path[:] = rebuilt
+    for name in list(sys.modules):
+        if name == "ipfs_accelerate_py" or name.startswith("ipfs_accelerate_py."):
+            del sys.modules[name]
+
+
+_prefer_sealed_accelerate_checkout()
+
+
 def _load_verifier() -> ModuleType:
     """Load the verifier script without requiring a package __init__."""
 
@@ -265,6 +320,35 @@ def test_missing_machine_readable_identity_fails_closed(
     )
     assert result.returncode != 0
     assert result.stderr.strip()
+
+
+def test_missing_canonical_query_result_identity_fails_closed(
+    accelerate_root: Path,
+    accelerate_identity: tuple[str, str],
+    tmp_path: Path,
+) -> None:
+    commit, tree = accelerate_identity
+    receipt = _valid_receipt(commit, tree)
+    query = dict(receipt["canonical_query"])
+    del query["result_identity"]
+    receipt["canonical_query"] = query
+    receipt.pop("signature", None)
+    receipt.pop("receipt_cid", None)
+    receipt = verifier.seal_receipt(receipt)
+    path = _write_receipt(tmp_path / "no-result-identity.json", receipt)
+    result = _run_cli(
+        "--receipt",
+        str(path),
+        "--accelerate-root",
+        str(accelerate_root),
+        "--json",
+    )
+    assert result.returncode != 0
+    assert (
+        "identity" in result.stderr.lower()
+        or "canonical" in result.stderr.lower()
+        or "result" in result.stderr.lower()
+    )
 
 
 def test_stale_accelerator_commit_is_rejected(
