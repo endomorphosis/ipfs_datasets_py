@@ -803,6 +803,87 @@ def test_accelerate_import_environment_seals_secret_manager_and_stays_quiet(
     assert os.environ[key] == "1"
 
 
+def test_task_validation_toolchain_is_content_bound_and_scrubs_host_overrides(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    attestation = program._task_validation_python_attestation()
+    sealed = program._sealed_python_environment()
+    toolchain_id = program._task_validation_toolchain_id()
+    assert attestation == {
+        "path": str(program.TASK_VALIDATION_PYTHON),
+        "sha256": program.TASK_VALIDATION_PYTHON_SHA256,
+        "dispatch_source_sha256": program.TASK_VALIDATION_DISPATCH_SHA256,
+        "size": program.TASK_VALIDATION_PYTHON.stat().st_size,
+        "mode": 0o500,
+        "validator_receipt_id": program.TASK_VALIDATOR_RECEIPT_ID,
+        "cache_receipt_id": program.TASK_VALIDATOR_CACHE_RECEIPT_ID,
+        "toolchain_id": toolchain_id,
+    }
+    assert sealed["IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON"] == str(
+        program.TASK_VALIDATION_PYTHON
+    )
+    assert sealed["IPFS_DATASETS_DQK_VALIDATION_TOOLCHAIN_ID"] == toolchain_id
+
+    hostile = {
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON": "/tmp/foreign-python",
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": str(tmp_path),
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PATH": str(tmp_path),
+        "IPFS_DATASETS_DQK_VALIDATION_TOOLCHAIN_ID": "sha256:" + "0" * 64,
+        "PYTHONPATH": str(tmp_path),
+        "LD_PRELOAD": str(tmp_path / "foreign.so"),
+        "RETAINED": "yes",
+    }
+    scrubbed = program._scrubbed_sealed_process_environment(hostile)
+    assert scrubbed["RETAINED"] == "yes"
+    assert program._runtime_python_environment(scrubbed) == sealed
+    assert not any(
+        key in scrubbed
+        for key in (
+            "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH",
+            "IPFS_ACCELERATE_AGENT_VALIDATION_PATH",
+            "LD_PRELOAD",
+        )
+    )
+
+    for key, value in sealed.items():
+        monkeypatch.setenv(key, value)
+    runtime = program._accelerate_module(
+        "ipfs_accelerate_py.agent_supervisor.validation_runtime",
+        "ipfs_accelerate_py.agent_supervisor.validation_runtime",
+    )
+    original_python = runtime.validation_python_executable
+    original_identity = runtime._file_identity
+    try:
+        program._install_task_validation_runtime_adapter()
+        environment = runtime.build_validation_environment(os.environ)
+        assert environment["IPFS_ACCELERATE_VALIDATION_PYTHON_EXECUTABLE"] == str(
+            program.TASK_VALIDATION_PYTHON
+        )
+        probe = program.subprocess.run(
+            runtime.validation_shell_command("python -m pytest --version"),
+            cwd=program.REPO_ROOT,
+            env=environment,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+        assert probe.returncode == 0, probe.stdout + probe.stderr
+        assert "pytest 9.0.3" in probe.stdout
+    finally:
+        runtime.validation_python_executable = original_python
+        runtime._file_identity = original_identity
+
+    monkeypatch.setattr(
+        program,
+        "TASK_VALIDATION_PYTHON_SHA256",
+        "sha256:" + "0" * 64,
+    )
+    with pytest.raises(RuntimeError, match="attestation mismatch"):
+        program._task_validation_python_attestation()
+
+
 def test_markdown_and_json_are_deterministic_database_exports(task_source) -> None:
     first_markdown = program.render_markdown(task_source)
     second_markdown = program.render_markdown(task_source)
@@ -2234,6 +2315,14 @@ def test_master_identity_rejects_pid_reuse(
     process_environment = {
         **program._sealed_python_environment(),
         "LD_PRELOAD": "/tmp/foreign-loader.so",
+    }
+    assert program._master_process_status(pid) == (
+        False,
+        "master_python_environment_is_not_sealed",
+    )
+    process_environment = {
+        **program._sealed_python_environment(),
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": "/tmp/foreign-validation",
     }
     assert program._master_process_status(pid) == (
         False,
