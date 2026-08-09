@@ -243,7 +243,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Writers enforce 4,096 rows/pointers, stable tie-breakers, confined paths, row/byte/hash descriptors, cleanup on failure, and deterministic fixture output.
 
 ## USCIR-010 Harden the immutable Hugging Face resolver and cache
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
