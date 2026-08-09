@@ -1,0 +1,18 @@
+{
+  "acceptance": {
+    "posting_pointers_bounded": true,
+    "sharded_scores_match_reference": true,
+    "term_shards_bounded": true,
+    "terms_globally_ordered": true
+  },
+  "default_b": 0.75,
+  "default_k1": 1.2,
+  "goal_id": "USCIR-G040",
+  "layout_schema_version": "hf-graphrag-bm25-layout/v1",
+  "maximum_posting_pointers_per_row": 4096,
+  "maximum_rows_per_physical_shard": 4096,
+  "maximum_terms_per_shard": 4096,
+  "schema_version": "hf-graphrag-bm25-fixture/v1",
+  "task_id": "USCIR-014",
+  "tokenizer_id": "hf-graphrag-bm25-tokens/v1"
+}
