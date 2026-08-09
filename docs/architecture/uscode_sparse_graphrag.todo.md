@@ -171,7 +171,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: All 1,798 known truncated-ID collision rows remain distinguishable, Unicode section fixtures parse fully, and duplicate primary keys fail validation.
 
 ## USCIR-007 Implement structure-aware legal text chunking
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
