@@ -636,10 +636,16 @@ class LogicNode:
         elif kind is NodeKind.EXTENSION:
             if self.extension is None:
                 raise AstError("extension node requires an extension payload")
-            if self.symbol or self.binders:
-                raise AstError("extension node takes no symbol or binders")
+            if self.symbol:
+                raise AstError("extension node takes no symbol")
+            # Binders are admitted when a schema-governed extension declares
+            # binder positions (validated by ExtensionSchemaRegistry@1).
             # Children live on the extension payload; arguments optional sugar.
-            object.__setattr__(self, "sort", BOOL_SORT)
+            if self.sort is None:
+                object.__setattr__(self, "sort", BOOL_SORT)
+            elif self.sort.is_bool is False and self.sort is not None:
+                # Non-Bool result sorts are reserved for term-category extensions.
+                pass
         else:
             raise AstError(f"unhandled node kind {kind!r}")
 
@@ -710,6 +716,13 @@ class LogicNode:
             value_free = self.arguments[0]._free_vars(bound=bound)
             body_free = self.arguments[1]._free_vars(bound=bound | {binder.name})
             return value_free | body_free
+        if kind is NodeKind.EXTENSION or kind == NodeKind.EXTENSION.value:
+            # Schema-governed binders scope over extension children.
+            child_bound = bound | {binder.name for binder in self.binders}
+            free: set[str] = set()
+            for child in self.children():
+                free |= child._free_vars(bound=child_bound)
+            return free
         free = set()
         for child in self.children():
             free |= child._free_vars(bound=bound)
@@ -961,8 +974,16 @@ def mk_extension(
     payload_schema: str,
     payload: Mapping[str, Any],
     children: Sequence[LogicNode] = (),
+    binders: Sequence[Binder] = (),
+    sort: LogicSort | None = None,
     range: SourceRange | None = None,
 ) -> LogicNode:
+    """Build an extension node.
+
+    *binders* and non-Bool *sort* are reserved for schema-governed extension
+    kinds registered with ``ExtensionSchemaRegistry@1``.
+    """
+
     extension = LogicExtensionNode(
         node_id=f"{node_id}:ext",
         family=family,
@@ -977,7 +998,8 @@ def mk_extension(
         node_id=node_id,
         kind=NodeKind.EXTENSION,
         extension=extension,
-        sort=BOOL_SORT,
+        binders=tuple(binders),
+        sort=BOOL_SORT if sort is None else sort,
         range=range,
     )
 
@@ -989,10 +1011,15 @@ def mk_extension(
 
 @dataclass(frozen=True, slots=True)
 class ElaborationContext:
-    """Local binder environment layered over a signature."""
+    """Local binder environment layered over a signature.
+
+    Optional ``extension_registry`` enables schema-governed validation of
+    ``LogicExtensionNode`` payloads during elaboration (LFP2-006).
+    """
 
     signature: LogicSignature
     locals: Mapping[str, LogicSort] = field(default_factory=dict)
+    extension_registry: Any | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.signature, LogicSignature):
@@ -1012,7 +1039,11 @@ class ElaborationContext:
                 # Shadowing is allowed; innermost wins.
                 pass
             merged[binder.name] = binder.sort
-        return ElaborationContext(signature=self.signature, locals=merged)
+        return ElaborationContext(
+            signature=self.signature,
+            locals=merged,
+            extension_registry=self.extension_registry,
+        )
 
     def lookup_var(self, name: str) -> LogicSort | None:
         return self.locals.get(name)
@@ -1249,11 +1280,33 @@ def elaborate_node(
     if kind is NodeKind.EXTENSION:
         if node.extension is None:
             raise AstError("extension node missing payload during elaboration")
-        # Extension children are elaborated; family/profile/features already
-        # validated at construction.
-        elaborated_children = tuple(
-            elaborate_node(child, context) for child in node.extension.children
+        # Extension binders extend the local environment for children.
+        child_context = (
+            context.extend(node.binders) if node.binders else context
         )
+        elaborated_children = tuple(
+            elaborate_node(child, child_context)
+            for child in node.extension.children
+        )
+        # Schema-governed path: validate payload/children/binders and apply
+        # registered sort + payload codec when a registry is bound.
+        registry = context.extension_registry
+        if registry is not None:
+            elaborate_extension = getattr(registry, "elaborate_extension", None)
+            if elaborate_extension is None:
+                raise AstError(
+                    "extension_registry must provide elaborate_extension"
+                )
+            try:
+                return elaborate_extension(
+                    node, elaborated_children=elaborated_children
+                )
+            except Exception as error:
+                # Preserve AstError identity for callers; wrap others.
+                if isinstance(error, AstError):
+                    raise
+                raise AstError(str(error)) from error
+
         extension = LogicExtensionNode(
             node_id=node.extension.node_id,
             family=node.extension.family,
@@ -1265,11 +1318,13 @@ def elaborate_node(
             range=node.extension.range,
             metadata=_thaw_mapping(node.extension.metadata),
         )
+        result_sort = node.sort if node.sort is not None else BOOL_SORT
         return LogicNode(
             node_id=node.node_id,
             kind=NodeKind.EXTENSION,
             extension=extension,
-            sort=BOOL_SORT,
+            binders=node.binders,
+            sort=result_sort,
             range=node.range,
             metadata=_thaw_mapping(node.metadata),
         )
@@ -1282,10 +1337,19 @@ def elaborate(
     signature: LogicSignature,
     *,
     locals: Mapping[str, LogicSort] | None = None,
+    extension_registry: Any | None = None,
 ) -> LogicNode:
-    """Elaborate *node* against *signature*; fail closed on sort/arity errors."""
+    """Elaborate *node* against *signature*; fail closed on sort/arity errors.
 
-    context = ElaborationContext(signature=signature, locals=dict(locals or {}))
+    When *extension_registry* is provided, extension nodes are validated and
+    sort-annotated through ``ExtensionSchemaRegistry@1``.
+    """
+
+    context = ElaborationContext(
+        signature=signature,
+        locals=dict(locals or {}),
+        extension_registry=extension_registry,
+    )
     return elaborate_node(node, context)
 
 

@@ -81,6 +81,7 @@ CODE_ARITY_MISMATCH: Final = "elaboration.arity_mismatch"
 CODE_KIND_MISMATCH: Final = "elaboration.kind_mismatch"
 CODE_TYPECHECK_FAILED: Final = "elaboration.typecheck_failed"
 CODE_NOT_BACKEND_READY: Final = "elaboration.not_backend_ready"
+CODE_EXTENSION_FAILED: Final = "elaboration.extension_failed"
 
 _NARY_CONNECTIVES: Final[frozenset[NodeKind]] = frozenset(
     {NodeKind.AND, NodeKind.OR}
@@ -1357,12 +1358,16 @@ class LogicElaborator:
     """Signature-bound elaborator with typecheck, overload, and normalize.
 
     Interface: ``LogicElaborator@1``.
+
+    Optional ``extension_registry`` (``ExtensionSchemaRegistry@1``) validates
+    schema-governed extension nodes during elaboration.
     """
 
     signature: LogicSignature | None = None
     overloads: tuple[OverloadSet, ...] = ()
     normalizer: LogicNormalizer | None = None
     algebra: LogicExpressionAlgebra | None = None
+    extension_registry: Any | None = None
     elaborator_id: str = "elaborator:default"
     metadata: Mapping[str, Any] = field(default_factory=dict)
     schema_version: str = ELABORATOR_SCHEMA_VERSION
@@ -1426,6 +1431,27 @@ class LogicElaborator:
     def normalize_expression(self, node: LogicNode) -> LogicNode:
         return self._normalizer().normalize(node)
 
+    def _collect_extension_diagnostics(
+        self, node: LogicNode
+    ) -> tuple[SyntaxDiagnostic, ...]:
+        """Validate extension nodes against the bound schema registry."""
+
+        registry = self.extension_registry
+        if registry is None:
+            return ()
+        validate = getattr(registry, "validate_extension", None)
+        if validate is None:
+            return ()
+        diagnostics: list[SyntaxDiagnostic] = []
+        for item in node.walk():
+            if item.kind is NodeKind.EXTENSION or item.kind == NodeKind.EXTENSION.value:
+                report = validate(item)
+                if not report.ok:
+                    diagnostics.extend(report.diagnostics)
+        if len(diagnostics) > MAX_DIAGNOSTICS:
+            return tuple(diagnostics[:MAX_DIAGNOSTICS])
+        return tuple(diagnostics)
+
     def elaborate(
         self,
         node: LogicNode,
@@ -1439,7 +1465,9 @@ class LogicElaborator:
         """Elaborate *node* into a gated :class:`ElaborationResult`.
 
         Unresolved overloads and unknown symbols yield a non-backend-ready
-        result rather than a silent success.
+        result rather than a silent success.  When an extension registry is
+        bound, unknown or malformed extension payloads produce stable
+        diagnostics and never become backend-ready.
         """
 
         if not isinstance(node, LogicNode):
@@ -1461,6 +1489,18 @@ class LogicElaborator:
                 assumptions=tuple(assumptions),
             )
 
+        extension_diagnostics = self._collect_extension_diagnostics(node)
+        if extension_diagnostics:
+            return ElaborationResult(
+                result_id=result_id,
+                status=ElaborationStatus.FAILED,
+                root=None,
+                signature=sig,
+                symbol_table=sig.symbol_map(),
+                assumptions=tuple(assumptions),
+                diagnostics=extension_diagnostics,
+            )
+
         report = self.typecheck(node, signature=sig, locals=locals)
         if not report.ok or report.root is None:
             status = (
@@ -1480,7 +1520,34 @@ class LogicElaborator:
                 diagnostics=report.diagnostics,
             )
 
+        # Re-elaborate through the registry so payload codecs and result sorts
+        # from ExtensionSchemaRegistry@1 are applied.  Use report.root so any
+        # overload rewrites from typecheck are preserved.
         typed_root = report.root
+        if self.extension_registry is not None:
+            try:
+                typed_root = elaborate(
+                    report.root,
+                    sig,
+                    locals=locals,
+                    extension_registry=self.extension_registry,
+                )
+            except (AstError, SignatureError) as error:
+                diagnostic = _diagnostic(
+                    "diag:elab:extension",
+                    CODE_EXTENSION_FAILED,
+                    str(error),
+                )
+                return ElaborationResult(
+                    result_id=result_id,
+                    status=ElaborationStatus.FAILED,
+                    root=None,
+                    signature=sig,
+                    symbol_table=sig.symbol_map(),
+                    assumptions=tuple(assumptions),
+                    diagnostics=(*report.diagnostics, diagnostic),
+                )
+
         normalized = (
             self.normalize_expression(typed_root) if normalize_result else typed_root
         )
@@ -1521,6 +1588,49 @@ class LogicElaborator:
             unknown_symbols=(),
             assumptions=tuple(assumptions),
             diagnostics=report.diagnostics,
+        )
+
+    def elaborate_artifact(
+        self,
+        node: LogicNode,
+        *,
+        parse_artifact: Any,
+        artifact_id: str = "elab-art:1",
+        signature: LogicSignature | None = None,
+        expression_id: str = "expr:elaborated",
+        locals: Mapping[str, LogicSort] | None = None,
+        assumptions: Sequence[str] = (),
+        normalize_result: bool = True,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> Any:
+        """Elaborate *node* into an ``ElaborationArtifact@2`` with parse lineage.
+
+        Imports :mod:`artifacts_v2` lazily so the elaborator remains usable
+        without the v2 artifact module in constrained contexts.
+        """
+
+        from ipfs_datasets_py.logic.syntax_core.artifacts_v2 import (
+            ElaborationArtifactV2,
+            ParseArtifactV2,
+        )
+
+        if not isinstance(parse_artifact, ParseArtifactV2):
+            raise ElaborationError(
+                "elaborate_artifact requires a ParseArtifactV2 for lineage"
+            )
+        result = self.elaborate(
+            node,
+            signature=signature,
+            expression_id=expression_id,
+            locals=locals,
+            assumptions=assumptions,
+            normalize_result=normalize_result,
+        )
+        return ElaborationArtifactV2.from_elaboration_result(
+            result,
+            artifact_id=artifact_id,
+            parse_artifact=parse_artifact,
+            metadata=metadata,
         )
 
     def elaborate_to_backend(
@@ -1592,6 +1702,7 @@ def elaborate_expression(
 __all__ = [
     "CODE_AMBIGUOUS_OVERLOAD",
     "CODE_ARITY_MISMATCH",
+    "CODE_EXTENSION_FAILED",
     "CODE_KIND_MISMATCH",
     "CODE_NOT_BACKEND_READY",
     "CODE_SORT_MISMATCH",

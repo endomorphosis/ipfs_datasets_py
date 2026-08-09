@@ -19,6 +19,7 @@ from typing import Any, ClassVar, Final
 
 from ipfs_datasets_py.logic.syntax_core.ast import (
     AstError,
+    LogicExtensionNode,
     LogicNode,
     TypedExpression,
 )
@@ -71,6 +72,21 @@ SUPPORTED_ELABORATION_RESULT_VERSIONS: Final[frozenset[str]] = frozenset(
         "syntax-elaboration-result/v1",
     }
 )
+SUPPORTED_PARSE_ARTIFACT_V2_VERSIONS: Final[frozenset[str]] = frozenset(
+    {
+        "syntax-parse-artifact/v2",
+    }
+)
+SUPPORTED_ELABORATION_ARTIFACT_V2_VERSIONS: Final[frozenset[str]] = frozenset(
+    {
+        "syntax-elaboration-artifact/v2",
+    }
+)
+SUPPORTED_LOGIC_EXTENSION_NODE_VERSIONS: Final[frozenset[str]] = frozenset(
+    {
+        "syntax-logic-extension-node/v1",
+    }
+)
 SUPPORTED_ENVELOPE_VERSIONS: Final[frozenset[str]] = frozenset(
     {
         CODED_ENVELOPE_SCHEMA_VERSION,
@@ -89,6 +105,9 @@ class CodecKind(str, Enum):
     LOGIC_NODE = "logic_node"
     SIGNATURE = "signature"
     ELABORATION_RESULT = "elaboration_result"
+    PARSE_ARTIFACT_V2 = "parse_artifact_v2"
+    ELABORATION_ARTIFACT_V2 = "elaboration_artifact_v2"
+    LOGIC_EXTENSION_NODE = "logic_extension_node"
 
 
 # ---------------------------------------------------------------------------
@@ -190,10 +209,14 @@ class TypedLogicCodec:
     """Deterministic typed-logic codec with explicit migration gates.
 
     Interface: ``TypedLogicCodec@1``.
+
+    Optional ``extension_registry`` applies registered payload codecs when
+    encoding/decoding ``LogicExtensionNode`` payloads (LFP2-006).
     """
 
     codec_id: str = "codec:typed-logic"
     strict_digests: bool = True
+    extension_registry: Any | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
     schema_version: str = CODEC_SCHEMA_VERSION
 
@@ -288,17 +311,107 @@ class TypedLogicCodec:
             payload=payload,
         )
 
+    def encode_parse_artifact_v2(self, artifact: object) -> CodecEnvelope:
+        from ipfs_datasets_py.logic.syntax_core.artifacts_v2 import (
+            ParseArtifactV2,
+        )
+
+        if not isinstance(artifact, ParseArtifactV2):
+            raise CodecError(
+                "encode_parse_artifact_v2 requires a ParseArtifactV2"
+            )
+        payload = artifact.to_dict()
+        schema_version = str(
+            payload.get("schema_version") or artifact.schema_version
+        )
+        self._require_version(
+            schema_version,
+            SUPPORTED_PARSE_ARTIFACT_V2_VERSIONS,
+            "ParseArtifactV2",
+        )
+        return CodecEnvelope(
+            kind=CodecKind.PARSE_ARTIFACT_V2,
+            schema_version=schema_version,
+            payload=payload,
+        )
+
+    def encode_elaboration_artifact_v2(self, artifact: object) -> CodecEnvelope:
+        from ipfs_datasets_py.logic.syntax_core.artifacts_v2 import (
+            ElaborationArtifactV2,
+        )
+
+        if not isinstance(artifact, ElaborationArtifactV2):
+            raise CodecError(
+                "encode_elaboration_artifact_v2 requires an ElaborationArtifactV2"
+            )
+        payload = artifact.to_dict()
+        schema_version = str(
+            payload.get("schema_version") or artifact.schema_version
+        )
+        self._require_version(
+            schema_version,
+            SUPPORTED_ELABORATION_ARTIFACT_V2_VERSIONS,
+            "ElaborationArtifactV2",
+        )
+        return CodecEnvelope(
+            kind=CodecKind.ELABORATION_ARTIFACT_V2,
+            schema_version=schema_version,
+            payload=payload,
+        )
+
+    def encode_extension_node(
+        self, extension: LogicExtensionNode
+    ) -> CodecEnvelope:
+        if not isinstance(extension, LogicExtensionNode):
+            raise CodecError(
+                "encode_extension_node requires a LogicExtensionNode"
+            )
+        payload = extension.to_dict()
+        # Apply registered payload codec when available.
+        if self.extension_registry is not None:
+            try:
+                encoded = self.extension_registry.encode_extension_payload(
+                    extension
+                )
+            except Exception as error:
+                raise CodecError(
+                    f"extension payload encode failed: {error}"
+                ) from error
+            payload = dict(payload)
+            payload["payload"] = encoded
+        schema_version = str(
+            payload.get("schema_version") or extension.schema_version
+        )
+        self._require_version(
+            schema_version,
+            SUPPORTED_LOGIC_EXTENSION_NODE_VERSIONS,
+            "LogicExtensionNode",
+        )
+        return CodecEnvelope(
+            kind=CodecKind.LOGIC_EXTENSION_NODE,
+            schema_version=schema_version,
+            payload=payload,
+        )
+
     def encode(self, value: object) -> CodecEnvelope:
         """Encode a supported typed-logic value into a :class:`CodecEnvelope`."""
 
         if isinstance(value, TypedExpression):
             return self.encode_typed_expression(value)
+        if isinstance(value, LogicExtensionNode):
+            return self.encode_extension_node(value)
         if isinstance(value, LogicNode):
             return self.encode_node(value)
         if isinstance(value, LogicSignature):
             return self.encode_signature(value)
         if isinstance(value, ElaborationResult):
             return self.encode_elaboration_result(value)
+        # Lazy type checks for v2 artifacts to avoid hard import cycles.
+        type_name = type(value).__name__
+        if type_name == "ParseArtifactV2":
+            return self.encode_parse_artifact_v2(value)
+        if type_name == "ElaborationArtifactV2":
+            return self.encode_elaboration_artifact_v2(value)
         raise CodecError(
             f"unsupported encode value type {type(value).__name__}"
         )
@@ -355,6 +468,21 @@ class TypedLogicCodec:
             or kind == CodecKind.ELABORATION_RESULT.value
         ):
             return self._decode_elaboration_result(migrated)
+        if (
+            kind is CodecKind.PARSE_ARTIFACT_V2
+            or kind == CodecKind.PARSE_ARTIFACT_V2.value
+        ):
+            return self._decode_parse_artifact_v2(migrated)
+        if (
+            kind is CodecKind.ELABORATION_ARTIFACT_V2
+            or kind == CodecKind.ELABORATION_ARTIFACT_V2.value
+        ):
+            return self._decode_elaboration_artifact_v2(migrated)
+        if (
+            kind is CodecKind.LOGIC_EXTENSION_NODE
+            or kind == CodecKind.LOGIC_EXTENSION_NODE.value
+        ):
+            return self._decode_extension_node(migrated)
         raise CodecError(f"unsupported codec kind {kind!r}")
 
     def decode_typed_expression(
@@ -441,6 +569,12 @@ class TypedLogicCodec:
             return SUPPORTED_SIGNATURE_VERSIONS
         if kind is CodecKind.ELABORATION_RESULT:
             return SUPPORTED_ELABORATION_RESULT_VERSIONS
+        if kind is CodecKind.PARSE_ARTIFACT_V2:
+            return SUPPORTED_PARSE_ARTIFACT_V2_VERSIONS
+        if kind is CodecKind.ELABORATION_ARTIFACT_V2:
+            return SUPPORTED_ELABORATION_ARTIFACT_V2_VERSIONS
+        if kind is CodecKind.LOGIC_EXTENSION_NODE:
+            return SUPPORTED_LOGIC_EXTENSION_NODE_VERSIONS
         raise CodecError(f"unsupported kind {kind!r}")
 
     def _require_version(
@@ -528,6 +662,104 @@ class TypedLogicCodec:
                 )
         return result
 
+    def _decode_parse_artifact_v2(self, payload: Mapping[str, Any]) -> object:
+        from ipfs_datasets_py.logic.syntax_core.artifacts_v2 import (
+            ArtifactV2Error,
+            ParseArtifactV2,
+        )
+
+        schema_version = str(
+            payload.get("schema_version") or "syntax-parse-artifact/v2"
+        )
+        self._require_version(
+            schema_version,
+            SUPPORTED_PARSE_ARTIFACT_V2_VERSIONS,
+            "ParseArtifactV2",
+        )
+        cleaned = dict(payload)
+        try:
+            artifact = ParseArtifactV2.from_dict(cleaned)
+        except (ArtifactV2Error, SyntaxContractError, AstError) as error:
+            raise CodecError(
+                f"parse artifact v2 decode failed: {error}"
+            ) from error
+        if self.strict_digests and payload.get("content_digest"):
+            if artifact.content_digest != payload["content_digest"]:
+                raise CodecError(
+                    "decoded ParseArtifactV2 content_digest mismatch"
+                )
+        return artifact
+
+    def _decode_elaboration_artifact_v2(
+        self, payload: Mapping[str, Any]
+    ) -> object:
+        from ipfs_datasets_py.logic.syntax_core.artifacts_v2 import (
+            ArtifactV2Error,
+            ElaborationArtifactV2,
+        )
+
+        schema_version = str(
+            payload.get("schema_version") or "syntax-elaboration-artifact/v2"
+        )
+        self._require_version(
+            schema_version,
+            SUPPORTED_ELABORATION_ARTIFACT_V2_VERSIONS,
+            "ElaborationArtifactV2",
+        )
+        cleaned = dict(payload)
+        cleaned.pop("backend_ready", None)
+        try:
+            artifact = ElaborationArtifactV2.from_dict(cleaned)
+        except (
+            ArtifactV2Error,
+            ElaborationError,
+            SyntaxContractError,
+            AstError,
+            SignatureError,
+        ) as error:
+            raise CodecError(
+                f"elaboration artifact v2 decode failed: {error}"
+            ) from error
+        if self.strict_digests and payload.get("content_digest"):
+            if artifact.content_digest != payload["content_digest"]:
+                raise CodecError(
+                    "decoded ElaborationArtifactV2 content_digest mismatch"
+                )
+        return artifact
+
+    def _decode_extension_node(
+        self, payload: Mapping[str, Any]
+    ) -> LogicExtensionNode:
+        schema_version = str(
+            payload.get("schema_version") or "syntax-logic-extension-node/v1"
+        )
+        self._require_version(
+            schema_version,
+            SUPPORTED_LOGIC_EXTENSION_NODE_VERSIONS,
+            "LogicExtensionNode",
+        )
+        data = dict(payload)
+        if self.extension_registry is not None:
+            try:
+                schema = str(data.get("payload_schema") or "")
+                raw_payload = _require_mapping(
+                    data.get("payload") or {}, "payload"
+                )
+                decoded = self.extension_registry.decode_extension_payload(
+                    schema, raw_payload
+                )
+                data["payload"] = decoded
+            except Exception as error:
+                raise CodecError(
+                    f"extension payload decode failed: {error}"
+                ) from error
+        try:
+            return LogicExtensionNode.from_dict(data)
+        except (AstError, SyntaxContractError) as error:
+            raise CodecError(
+                f"logic extension node decode failed: {error}"
+            ) from error
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "codec_id": self.codec_id,
@@ -581,9 +813,12 @@ __all__ = [
     "CODEC_MODULE_VERSION",
     "CODEC_SCHEMA_VERSION",
     "DEFAULT_CODEC",
+    "SUPPORTED_ELABORATION_ARTIFACT_V2_VERSIONS",
     "SUPPORTED_ELABORATION_RESULT_VERSIONS",
     "SUPPORTED_ENVELOPE_VERSIONS",
+    "SUPPORTED_LOGIC_EXTENSION_NODE_VERSIONS",
     "SUPPORTED_LOGIC_NODE_VERSIONS",
+    "SUPPORTED_PARSE_ARTIFACT_V2_VERSIONS",
     "SUPPORTED_SIGNATURE_VERSIONS",
     "SUPPORTED_TYPED_EXPRESSION_VERSIONS",
     "TYPED_LOGIC_CODEC_INTERFACE",
