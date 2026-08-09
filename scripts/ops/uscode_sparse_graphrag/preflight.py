@@ -111,8 +111,13 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
     if plan.get("environment") != expected_environment:
         errors.append("launch plan ordered-provider environment does not match the sealed contract")
     argv = [str(item) for item in plan.get("argv", [])]
-    for token in ("--implement", "--implementation-supervisor-strict-task-sharding", "--exit-when-all-tracks-terminal"):
-        if token not in argv:
+    required_tokens = {
+        "--implement": {"--implement", "--common-arg=--implement"},
+        "--implementation-supervisor-strict-task-sharding": {"--implementation-supervisor-strict-task-sharding"},
+        "--exit-when-all-tracks-terminal": {"--exit-when-all-tracks-terminal"},
+    }
+    for token, spellings in required_tokens.items():
+        if not any(spelling in argv for spelling in spellings):
             errors.append(f"launch plan is missing {token}")
     if plan.get("lanes") != 4 or plan.get("strict_task_sharding") is not True:
         errors.append("launch plan is not a four-lane strict shard")
