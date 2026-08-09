@@ -1,0 +1,118 @@
+{
+  "acceptance": {
+    "admitted_rows_have_complete_identity_provenance": true,
+    "baseline_recovery_row_count": 9,
+    "every_baseline_row_has_exactly_one_disposition": true,
+    "recovery_rows_cannot_enter_corpus_bm25_vector_graph": true
+  },
+  "baseline_counts": {
+    "canonical_cids": 60068,
+    "corpus_rows": 60077,
+    "recovery_rows": 9,
+    "titles": 53
+  },
+  "baseline_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+  "corpus_schema_version": "uscode-corpus-v1",
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "dataset_repo_id": "justicedao/ipfs_uscode",
+  "description": "Compact admission ledger recipe for the canonical US Code corpus materializer. Expands to a representative sample covering every disposition; sealed baseline totals remain authoritative for full-scale acceptance. Recovery rows are quarantined and excluded from corpus/BM25/vector/graph counts.",
+  "generators": {
+    "baseline_sample": {
+      "admitted": 5,
+      "excluded": 1,
+      "recovery": 9,
+      "replaced": 1
+    }
+  },
+  "goal_id": "USCIR-G020",
+  "notes": "Compact sealed sample for USCIR-008. Full baseline scale is 60077 rows = 60068 canonical + 9 recovery. Canonical corpus projection with recovery quarantine. Acquisition timestamps are not legal-currentness claims.",
+  "producer": "uscode_corpus.py",
+  "recovery_excluded_from_families": [
+    "bm25",
+    "bm25_documents",
+    "bm25_postings",
+    "corpus",
+    "graph",
+    "graph_adjacency_in",
+    "graph_adjacency_out",
+    "graph_edges",
+    "graph_nodes",
+    "vector",
+    "vectors"
+  ],
+  "release_point": "us/pl/118/45",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "release_schema_version": "uscode-sparse-graphrag-release-schema-v2",
+  "sample_disposition_counts": {
+    "admitted": 5,
+    "excluded": 1,
+    "quarantined": 9,
+    "replaced": 1
+  },
+  "sample_family_counts": {
+    "bm25": 5,
+    "corpus": 5,
+    "graph": 5,
+    "recovery": 9,
+    "vector": 5
+  },
+  "sample_ledger_row_count": 16,
+  "schema_version": "uscode-admission-ledger-v1",
+  "seed_recovery_recipes": [
+    {
+      "notes": "Heterogeneous recovery JSON without CID; original path /var/cache/legal-ir/recovery/1.json",
+      "recovery_id": "recovery-workflow-01",
+      "row_id": "recovery-src-01",
+      "source_path": "/home/operator/workspaces/uscode-recovery/raw/job-1/dump.json"
+    },
+    {
+      "notes": "Heterogeneous recovery JSON without CID; original path /var/cache/legal-ir/recovery/2.json",
+      "recovery_id": "recovery-workflow-02",
+      "row_id": "recovery-src-02",
+      "source_path": "/home/operator/workspaces/uscode-recovery/raw/job-2/dump.json"
+    },
+    {
+      "notes": "Heterogeneous recovery JSON without CID; original path /var/cache/legal-ir/recovery/3.json",
+      "recovery_id": "recovery-workflow-03",
+      "row_id": "recovery-src-03",
+      "source_path": "/home/operator/workspaces/uscode-recovery/raw/job-3/dump.json"
+    },
+    {
+      "notes": "Heterogeneous recovery JSON without CID; original path /var/cache/legal-ir/recovery/4.json",
+      "recovery_id": "recovery-workflow-04",
+      "row_id": "recovery-src-04",
+      "source_path": "/home/operator/workspaces/uscode-recovery/raw/job-4/dump.json"
+    },
+    {
+      "notes": "Heterogeneous recovery JSON without CID; original path /var/cache/legal-ir/recovery/5.json",
+      "recovery_id": "recovery-workflow-05",
+      "row_id": "recovery-src-05",
+      "source_path": "/home/operator/workspaces/uscode-recovery/raw/job-5/dump.json"
+    },
+    {
+      "notes": "Heterogeneous recovery JSON without CID; original path /var/cache/legal-ir/recovery/6.json",
+      "recovery_id": "recovery-workflow-06",
+      "row_id": "recovery-src-06",
+      "source_path": "/home/operator/workspaces/uscode-recovery/raw/job-6/dump.json"
+    },
+    {
+      "notes": "Heterogeneous recovery JSON without CID; original path /var/cache/legal-ir/recovery/7.json",
+      "recovery_id": "recovery-workflow-07",
+      "row_id": "recovery-src-07",
+      "source_path": "/home/operator/workspaces/uscode-recovery/raw/job-7/dump.json"
+    },
+    {
+      "notes": "Heterogeneous recovery JSON without CID; original path /var/cache/legal-ir/recovery/8.json",
+      "recovery_id": "recovery-workflow-08",
+      "row_id": "recovery-src-08",
+      "source_path": "/home/operator/workspaces/uscode-recovery/raw/job-8/dump.json"
+    },
+    {
+      "notes": "Heterogeneous recovery JSON without CID; original path /var/cache/legal-ir/recovery/9.json",
+      "recovery_id": "recovery-workflow-09",
+      "row_id": "recovery-src-09",
+      "source_path": "/home/operator/workspaces/uscode-recovery/raw/job-9/dump.json"
+    }
+  ],
+  "task_id": "USCIR-008"
+}
