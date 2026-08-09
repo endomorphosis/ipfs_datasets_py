@@ -51,7 +51,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Frozen report accounts for 60,077 corpus rows, 60,068 canonical CIDs, 9 recovery rows, 185,563 vectors, legacy BM25/KG counts, 53 titles, and exact pinned revision.
 
 ## USCIR-002 Specify the v2 schema and identity ADR
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
