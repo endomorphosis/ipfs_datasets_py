@@ -4,6 +4,11 @@
 discovery, compilation, checking, monitoring, portfolio planning, counterexample
 explanation, receipt validation, advisor proposals, and receipt attestation.
 
+``VerificationAPI@2`` / ``CanonicalLogicDiscovery@1`` (LFP-044) add dual-read /
+one-write migration: legacy aliases resolve with typed diagnostics, discovery
+exposes separate family/profile/property/view/notation/provider/encoding/lane/
+evidence namespaces, and writers emit only canonical labels.
+
 ``install_provider`` (FVT-G216 / FVT-087) is the sole public mutation boundary
 for reviewed prover installation.  It binds to ``LogicVerificationLazyInstaller@1``
 and resolves registry-selected family plugins for SMT, ATP, state models,
@@ -51,6 +56,12 @@ LOGIC_VERIFICATION_FEATURE_SCHEMA: Final = "logic-verification-feature/v1"
 LOGIC_VERIFICATION_PROVIDER_SCHEMA: Final = "logic-verification-provider/v1"
 LOGIC_VERIFICATION_CACHE_SCHEMA: Final = "logic-verification-cache-provenance/v1"
 LOGIC_VERIFICATION_REQUEST_SCHEMA: Final = "logic-verification-request/v1"
+# LFP-044 / public dual-read one-write migration surface (additive).
+VERIFICATION_API_V2_INTERFACE: Final = "VerificationAPI@2"
+CANONICAL_LOGIC_DISCOVERY_INTERFACE: Final = "CanonicalLogicDiscovery@1"
+CANONICAL_LOGIC_DISCOVERY_VERSION: Final = "1.0.0"
+CANONICAL_LOGIC_DISCOVERY_SCHEMA: Final = "canonical-logic-discovery/v1"
+LOGIC_MIGRATION_ARTIFACT_SCHEMA: Final = "logic-migration-artifact/v1"
 # FVT-G227 / public provider + installer role closure surface.
 LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE: Final = (
     "LogicVerificationProviderRoleClosure@1"
@@ -95,6 +106,43 @@ STABLE_OPERATIONS: Final[tuple[str, ...]] = (
     "advise",
     "probe_provider",
     "install_provider",
+)
+
+# LFP-044 additive discovery / migration operations (VerificationAPI@2).
+# Not merged into STABLE_OPERATIONS so LogicVerificationAPI@1 MCP parity stays intact.
+MIGRATION_OPERATIONS: Final[tuple[str, ...]] = (
+    "list_namespaces",
+    "list_namespace_identities",
+    "dual_read_label",
+    "canonical_write_label",
+    "migrate_artifact",
+    "inspect_translation_loss",
+    "inspect_provider_authority",
+)
+
+# Artifact keys that may carry dual-read labels during migration.
+_MIGRATION_LABEL_FIELDS: Final[tuple[tuple[str, str], ...]] = (
+    ("family_id", "family"),
+    ("logic_family", "family"),
+    ("family", "family"),
+    ("profile_id", "profile"),
+    ("profile", "profile"),
+    ("property_id", "property"),
+    ("property", "property"),
+    ("view_id", "view"),
+    ("view_role", "view"),
+    ("view", "view"),
+    ("notation_id", "notation"),
+    ("notation", "notation"),
+    ("encoding_id", "encoding"),
+    ("encoding", "encoding"),
+    ("provider_id", "provider"),
+    ("provider", "provider"),
+    ("lane_id", "lane"),
+    ("lane", "lane"),
+    ("evidence_id", "evidence"),
+    ("evidence_kind", "evidence"),
+    ("evidence", "evidence"),
 )
 
 # Additive GoalTacticianAPI@1 operations (FVT-G050).  Not merged into
@@ -482,6 +530,227 @@ def _response(
     )
 
 
+# Private channel markers stripped by the local counterexample fallback when the
+# supervisor normalizer (ipfs_accelerate_py) is unavailable.  Keep aligned with
+# PublicCounterexampleBoundary@1 / formal_counterexamples private-key policy.
+_LOCAL_CEX_PRIVATE_KEY_MARKERS: Final[tuple[str, ...]] = (
+    "hidden_witness",
+    "private_witness",
+    "private_inputs",
+    "private_input",
+    "private_premise",
+    "private_key",
+    "credential",
+    "password",
+    "passwd",
+    "secret",
+    "access_token",
+    "refresh_token",
+    "session_token",
+    "api_key",
+    "authorization",
+    "cookie",
+    "stdout",
+    "stderr",
+    "raw_output",
+    "prover_output",
+    "provider_output",
+    "source_excerpt",
+    "source_code",
+    "source_text",
+    "file_content",
+    "repository_source",
+    "transcript",
+    "full_trace",
+    "full_model",
+    "proof_text",
+    "command_output",
+)
+
+_LOCAL_CEX_KIND_ALIASES: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "model": "smt_model",
+        "smt": "smt_model",
+        "unsat": "smt_unsat_core",
+        "unsat_core": "smt_unsat_core",
+    }
+)
+
+
+def _local_cex_key_is_private(key: str) -> bool:
+    normalized = str(key).strip().lower().replace("-", "_")
+    if not normalized:
+        return True
+    if normalized in {"raw", "raw_data", "source", "witness"}:
+        return True
+    return any(
+        marker == normalized or marker in normalized
+        for marker in _LOCAL_CEX_PRIVATE_KEY_MARKERS
+    )
+
+
+def _local_cex_sanitize(value: Any, *, depth: int = 0) -> Any:
+    """Bounded JSON-safe public projection used by the local fallback only."""
+
+    if depth > 6:
+        return "<omitted>"
+    if value is None or isinstance(value, (bool, int)):
+        return value
+    if isinstance(value, float):
+        return format(value, ".17g") if value == value and abs(value) != float("inf") else "<non-finite-number>"
+    if isinstance(value, str):
+        return value if len(value) <= 512 else value[:511] + "…"
+    if isinstance(value, Mapping):
+        cleaned: dict[str, Any] = {}
+        for raw_key, child in value.items():
+            key = str(raw_key)
+            if _local_cex_key_is_private(key):
+                continue
+            cleaned[key] = _local_cex_sanitize(child, depth=depth + 1)
+        return cleaned
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray, memoryview)
+    ):
+        return [_local_cex_sanitize(item, depth=depth + 1) for item in list(value)[:64]]
+    return str(value)[:512]
+
+
+def _local_counterexample_projection(
+    witness: Any,
+    *,
+    violated_property: str = "",
+    assumption_ids: Sequence[str] = (),
+    finite_bounds: Mapping[str, Any] | None = None,
+) -> tuple[dict[str, Any], tuple[str, ...], dict[str, Any], tuple[dict[str, Any], ...]] | None:
+    """Secret-safe local projection when the supervisor normalizer is unavailable.
+
+    Returns ``(result, assumptions, bounds, witnesses)`` or ``None`` when the
+    witness cannot be projected locally (callers must keep fail-closed INVALID).
+    """
+
+    raw: dict[str, Any]
+    if isinstance(witness, Mapping):
+        raw = dict(witness)
+    elif hasattr(witness, "to_dict") and callable(witness.to_dict):
+        converted = witness.to_dict()
+        if not isinstance(converted, Mapping):
+            return None
+        raw = dict(converted)
+    else:
+        return None
+
+    # Drop private top-level channels before reading public fields.
+    public_raw = {
+        key: value
+        for key, value in raw.items()
+        if not _local_cex_key_is_private(str(key))
+    }
+
+    model_source = public_raw.get("model")
+    if model_source is None:
+        model_source = public_raw.get("assignments")
+    if model_source is None:
+        model_source = public_raw.get("assignment")
+    if model_source is None and isinstance(public_raw.get("payload"), Mapping):
+        payload = public_raw["payload"]
+        model_source = (
+            payload.get("assignments")
+            or payload.get("model")
+            or payload.get("steps")
+        )
+
+    if not isinstance(model_source, Mapping):
+        # Accept empty model only when the caller still supplied a kind/summary.
+        if model_source is not None:
+            return None
+        # No model/assignments — cannot satisfy the stable API model projection.
+        if not any(
+            key in public_raw
+            for key in ("kind", "summary", "violated_property", "property_id")
+        ):
+            return None
+        public_model: dict[str, Any] = {}
+    else:
+        public_model = _local_cex_sanitize(model_source)
+        if not isinstance(public_model, dict):
+            return None
+
+    kind_raw = str(public_raw.get("kind") or public_raw.get("counterexample_kind") or "smt_model")
+    kind = _LOCAL_CEX_KIND_ALIASES.get(kind_raw.strip().lower(), kind_raw.strip().lower())
+    if not kind:
+        kind = "smt_model"
+
+    prop = (
+        violated_property
+        or str(public_raw.get("violated_property") or "")
+        or str(public_raw.get("property_id") or "")
+        or "unknown-obligation"
+    )
+    summary = str(
+        public_raw.get("summary")
+        or f"SMT model falsifies {prop}."
+    )
+    try:
+        assumptions = _string_tuple(
+            assumption_ids
+            if assumption_ids
+            else public_raw.get("assumption_ids")
+            or public_raw.get("assumptions")
+            or (),
+            "assumptions",
+        )
+    except VerificationAPIError:
+        assumptions = ()
+    bounds_raw = finite_bounds
+    if bounds_raw is None:
+        candidate = public_raw.get("finite_bounds") or public_raw.get("bounds") or {}
+        bounds_raw = candidate if isinstance(candidate, Mapping) else {}
+    bounds = _local_cex_sanitize(dict(bounds_raw))
+    if not isinstance(bounds, dict):
+        bounds = {}
+
+    tool_id = str(
+        public_raw.get("tool_id")
+        or public_raw.get("provider_id")
+        or public_raw.get("prover_id")
+        or ""
+    )
+    result = {
+        "kind": kind,
+        "model": public_model,
+        "summary": summary,
+        "violated_property": prop,
+        "property_id": prop,
+        "payload": {"assignments": public_model} if public_model else {},
+        "assumptions": list(assumptions),
+        "assumption_ids": list(assumptions),
+        "bounds": bounds,
+        "finite_bounds": bounds,
+        "authority": VerificationAuthority.BOUNDED.value,
+        "tool_id": tool_id,
+        "contains_private_material": False,
+        "contains_raw_prover_output": False,
+        "contains_source": False,
+        "redacted": True,
+        "minimized": True,
+        "local_fallback": True,
+        "boundary": "local-counterexample-fallback@1",
+    }
+    # Strip residual raw channels if a caller smuggled them under public keys.
+    result.pop("raw", None)
+    witness_slot = {
+        "kind": kind,
+        "property_id": prop,
+        "summary": summary,
+        "payload": dict(result["payload"]),
+        "assumptions": list(assumptions),
+        "bounds": dict(bounds),
+        "authority": VerificationAuthority.BOUNDED.value,
+        "contains_private_material": False,
+    }
+    return result, assumptions, bounds, (witness_slot,)
+
+
 def _lazy_family_registry():
     from ipfs_datasets_py.logic.families.registry import DEFAULT_REGISTRY
 
@@ -498,6 +767,311 @@ def _lazy_declared_backends():
     from ipfs_datasets_py.logic.backends.registry import declared_backend_catalog
 
     return declared_backend_catalog()
+
+
+def _lazy_alias_registry():
+    from ipfs_datasets_py.logic.families.aliases import BASELINE_ALIAS_REGISTRY
+
+    return BASELINE_ALIAS_REGISTRY
+
+
+def _lazy_namespaces():
+    from ipfs_datasets_py.logic.families.namespaces import BASELINE_NAMESPACES
+
+    return BASELINE_NAMESPACES
+
+
+def _lazy_namespace_kind():
+    from ipfs_datasets_py.logic.families.namespaces import NamespaceKind
+
+    return NamespaceKind
+
+
+@dataclass(frozen=True, slots=True)
+class CanonicalLogicDiscovery:
+    """``CanonicalLogicDiscovery@1`` dual-read / one-write public discovery.
+
+    Discovery is purely declarative: it never probes the environment, opens
+    network sockets, or mutates the filesystem.  Dual-read accepts reviewed
+    legacy aliases with typed diagnostics; canonical writes emit only
+    registered namespace values.
+    """
+
+    interface: str = CANONICAL_LOGIC_DISCOVERY_INTERFACE
+    version: str = CANONICAL_LOGIC_DISCOVERY_VERSION
+    schema_version: str = CANONICAL_LOGIC_DISCOVERY_SCHEMA
+
+    def list_namespaces(self) -> tuple[dict[str, Any], ...]:
+        """Return the closed set of typed identity namespaces."""
+
+        NamespaceKind = _lazy_namespace_kind()
+        return tuple(
+            {
+                "namespace": kind.value,
+                "role": kind.value,
+            }
+            for kind in NamespaceKind
+        )
+
+    def list_identities(
+        self,
+        namespace: str | None = None,
+    ) -> tuple[dict[str, Any], ...]:
+        """List canonical identities, optionally filtered by *namespace*."""
+
+        catalog = _lazy_namespaces()
+        identities = catalog.identities(namespace) if namespace else catalog.identities()
+        return tuple(identity.to_dict() for identity in identities)
+
+    def dual_read(
+        self,
+        namespace: str,
+        label: str,
+    ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+        """Dual-read *label* in *namespace*; return identity payload + diagnostic."""
+
+        registry = _lazy_alias_registry()
+        diagnostic = registry.diagnose(namespace, label)
+        payload = diagnostic.to_dict()
+        if not diagnostic.ok or diagnostic.resolved is None:
+            return None, payload
+        # Successful dual-read never returns a legacy surface form as the write value.
+        return diagnostic.resolved.to_dict(), payload
+
+    def dual_read_or_raise(
+        self,
+        namespace: str,
+        label: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Dual-read that raises on unknown / wrong-namespace labels."""
+
+        registry = _lazy_alias_registry()
+        identity, diagnostic = registry.read(namespace, label)
+        return identity.to_dict(), diagnostic.to_dict()
+
+    def canonical_write(
+        self,
+        namespace: str,
+        label: str,
+    ) -> dict[str, Any]:
+        """One-write: emit only the canonical registered identity for *label*."""
+
+        registry = _lazy_alias_registry()
+        written = registry.write(
+            registry.canonicalize(namespace, label),
+            namespace=namespace,
+        )
+        return written.to_dict()
+
+    def is_canonical(self, namespace: str, label: str) -> bool:
+        """Return whether *label* is already the canonical id in *namespace*."""
+
+        return _lazy_alias_registry().is_canonical(namespace, label)
+
+    def migrate_artifact(
+        self,
+        artifact: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Migrate a legacy artifact payload to canonical labels only.
+
+        Accepted legacy aliases are dual-read with diagnostics.  Free-form or
+        wrong-namespace labels fail closed.  The returned artifact never
+        re-emits legacy surface forms for rewritten fields.
+        """
+
+        if not isinstance(artifact, Mapping):
+            raise VerificationAPIError("artifact must be a mapping")
+
+        migrated: dict[str, Any] = dict(artifact)
+        diagnostics: list[dict[str, Any]] = []
+        rewrites: list[dict[str, Any]] = []
+        registry = _lazy_alias_registry()
+
+        for field_name, namespace in _MIGRATION_LABEL_FIELDS:
+            if field_name not in artifact:
+                continue
+            raw = artifact[field_name]
+            if raw is None or raw == "":
+                continue
+            if not isinstance(raw, str):
+                raise VerificationAPIError(
+                    f"artifact field {field_name!r} must be a string label"
+                )
+            diagnostic = registry.diagnose(namespace, raw)
+            diagnostics.append(diagnostic.to_dict())
+            if not diagnostic.ok or diagnostic.resolved is None:
+                code = diagnostic.error_code or "rejected"
+                raise VerificationAPIError(
+                    f"cannot migrate {field_name}={raw!r}: {code}: {diagnostic.message}"
+                )
+            canonical = diagnostic.resolved.value
+            if raw != canonical:
+                rewrites.append(
+                    {
+                        "field": field_name,
+                        "namespace": namespace,
+                        "observed": raw,
+                        "canonical": canonical,
+                        "disposition": diagnostic.disposition.value,
+                    }
+                )
+            migrated[field_name] = canonical
+
+        # Nested translation receipts (if present) are dual-read for family labels.
+        translations = migrated.get("translations")
+        if isinstance(translations, Sequence) and not isinstance(
+            translations, (str, bytes, bytearray)
+        ):
+            rewritten_translations: list[Any] = []
+            for index, item in enumerate(translations):
+                if not isinstance(item, Mapping):
+                    rewritten_translations.append(item)
+                    continue
+                nested = self.migrate_artifact(item)
+                diagnostics.extend(nested.get("migration_diagnostics", ()))
+                rewrites.extend(
+                    {
+                        **rewrite,
+                        "field": f"translations[{index}].{rewrite['field']}",
+                    }
+                    for rewrite in nested.get("migration_rewrites", ())
+                )
+                cleaned = {
+                    key: value
+                    for key, value in nested.items()
+                    if key
+                    not in {
+                        "migration_diagnostics",
+                        "migration_rewrites",
+                        "interface",
+                        "schema_version",
+                        "canonical_only",
+                    }
+                }
+                rewritten_translations.append(cleaned)
+            migrated["translations"] = rewritten_translations
+
+        migrated["interface"] = CANONICAL_LOGIC_DISCOVERY_INTERFACE
+        migrated["schema_version"] = LOGIC_MIGRATION_ARTIFACT_SCHEMA
+        migrated["canonical_only"] = True
+        migrated["migration_diagnostics"] = diagnostics
+        migrated["migration_rewrites"] = rewrites
+        return migrated
+
+    def inspect_translation_loss(
+        self,
+        translation: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Expose translation-loss / preservation fields without backend heuristics."""
+
+        payload = dict(translation or {})
+        # Accept both TranslationContract@2 style and legacy boolean loss flags.
+        loss_flag = payload.get("loss")
+        if isinstance(loss_flag, bool):
+            loss_explicit = loss_flag
+            loss_kind = "boolean_legacy_flag"
+        else:
+            loss_explicit = bool(
+                payload.get("unsupported_nodes")
+                or payload.get("approximated_nodes")
+                or payload.get("dropped_nodes")
+                or payload.get("synthesized_nodes")
+            )
+            loss_kind = "structured" if loss_explicit or payload else "absent"
+
+        preservation = (
+            payload.get("preservation_relation")
+            or payload.get("preservation")
+            or payload.get("relation")
+            or "unspecified"
+        )
+        authority_ceiling = (
+            payload.get("authority_ceiling")
+            or payload.get("max_authority")
+            or payload.get("evidence_authority")
+            or "none"
+        )
+        return {
+            "has_loss": loss_explicit,
+            "loss_kind": loss_kind,
+            "preservation_relation": str(preservation),
+            "authority_ceiling": str(authority_ceiling),
+            "unsupported_nodes": list(payload.get("unsupported_nodes") or ()),
+            "approximated_nodes": list(payload.get("approximated_nodes") or ()),
+            "dropped_nodes": list(payload.get("dropped_nodes") or ()),
+            "synthesized_nodes": list(payload.get("synthesized_nodes") or ()),
+            "assumptions": list(payload.get("assumptions") or ()),
+            "proof_safe": payload.get("proof_safe"),
+            "counterexample_safe": payload.get("counterexample_safe"),
+            "schema_version": str(
+                payload.get("schema_version") or "translation-loss-inspection/v1"
+            ),
+            "interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+        }
+
+    def inspect_provider_authority(
+        self,
+        provider_id: str,
+        *,
+        capabilities: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Expose provider authority ceiling without backend-specific heuristics."""
+
+        provider_id = _text(provider_id, "provider_id")
+        caps = dict(capabilities or {})
+        role = build_provider_role_descriptor(provider_id)
+        authority = (
+            caps.get("authority_ceiling")
+            or caps.get("max_authority")
+            or (role or {}).get("authority_ceiling")
+            or (role or {}).get("semantic_authority")
+            or "declarative"
+        )
+        availability = (
+            caps.get("availability")
+            or (role or {}).get("availability")
+            or FeatureAvailability.DECLARED.value
+        )
+        return {
+            "provider_id": provider_id,
+            "authority_ceiling": str(authority),
+            "availability": str(availability),
+            "public_role": (role or {}).get("public_role", "unknown"),
+            "is_live_verification_provider": bool(
+                (role or {}).get("is_live_verification_provider", False)
+            ),
+            "provider_role": role,
+            "capabilities": caps,
+            "interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+            "schema_version": "provider-authority-inspection/v1",
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        namespaces = self.list_namespaces()
+        by_namespace = {
+            item["namespace"]: self.list_identities(item["namespace"])
+            for item in namespaces
+        }
+        return {
+            "interface": self.interface,
+            "namespaces": list(namespaces),
+            "identities": by_namespace,
+            "operations": list(MIGRATION_OPERATIONS),
+            "schema_version": self.schema_version,
+            "version": self.version,
+        }
+
+
+_DEFAULT_DISCOVERY: CanonicalLogicDiscovery | None = None
+
+
+def get_canonical_discovery(*, reset: bool = False) -> CanonicalLogicDiscovery:
+    """Return the process-local :class:`CanonicalLogicDiscovery` facade."""
+
+    global _DEFAULT_DISCOVERY
+    if reset or _DEFAULT_DISCOVERY is None:
+        _DEFAULT_DISCOVERY = CanonicalLogicDiscovery()
+    return _DEFAULT_DISCOVERY
 
 
 def list_stable_features() -> tuple[FeatureDescriptor, ...]:
@@ -1139,14 +1713,37 @@ class LogicVerificationAPI:
     # ── Discovery (side-effect free) ──────────────────────────────────────
 
     def list_logic_families(self) -> VerificationResponse:
-        """Return the declarative logic-family catalog."""
+        """Return the declarative logic-family catalog.
+
+        Family entries always use canonical ``family_id`` values.  Legacy
+        aliases are never written into discovery payloads; callers dual-read
+        aliases via :meth:`dual_read_label`.
+        """
 
         registry = _lazy_family_registry()
+        discovery = self.canonical_discovery()
         families = []
         for family_id in sorted(registry.families):
             descriptor = registry.family(family_id)
-            payload = descriptor.to_dict() if hasattr(descriptor, "to_dict") else {"family_id": family_id}
+            payload = (
+                descriptor.to_dict()
+                if hasattr(descriptor, "to_dict")
+                else {"family_id": family_id}
+            )
+            # Enforce canonical-only family ids on the public discovery surface.
+            raw_id = str(payload.get("family_id", family_id))
+            try:
+                written = discovery.canonical_write("family", raw_id)
+                payload["family_id"] = written["value"]
+                payload["namespace"] = "family"
+            except Exception:
+                payload["family_id"] = raw_id
+                payload["namespace"] = "family"
             families.append(payload)
+        namespace_summary = {
+            item["namespace"]: len(discovery.list_identities(item["namespace"]))
+            for item in discovery.list_namespaces()
+        }
         return _response(
             "list_logic_families",
             VerificationStatus.DECLARATIVE,
@@ -1156,6 +1753,9 @@ class LogicVerificationAPI:
                 "count": len(families),
                 "registry_version": getattr(registry, "version", ""),
                 "schema_version": getattr(registry, "schema_version", ""),
+                "canonical_discovery": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+                "verification_api": VERIFICATION_API_V2_INTERFACE,
+                "namespace_counts": namespace_summary,
             },
             cache=_empty_cache(source="family_registry"),
         )
@@ -1164,7 +1764,11 @@ class LogicVerificationAPI:
         """Return declared providers/backends without availability probes."""
 
         catalog = _lazy_declared_backends()
-        providers = [item if isinstance(item, dict) else item.to_dict() for item in catalog]
+        # Copy entries so discovery normalization never mutates shared catalogs.
+        providers = [
+            dict(item) if isinstance(item, dict) else dict(item.to_dict())
+            for item in catalog
+        ]
         # Taxonomy-level provider capabilities (may be empty).
         family_registry = _lazy_family_registry()
         taxonomy_caps = family_registry.provider_capabilities
@@ -1193,7 +1797,7 @@ class LogicVerificationAPI:
                 provider_descriptor as _production_authorization_descriptor,
             )
 
-            production_entry = _production_authorization_descriptor()
+            production_entry = dict(_production_authorization_descriptor())
             if not any(
                 str(item.get("provider_id", "")) == PRODUCTION_AUTHORIZATION_PROVIDER_ID
                 for item in providers
@@ -1214,6 +1818,13 @@ class LogicVerificationAPI:
                     "interface": PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE,
                 }
             )
+        # Discovery is purely declarative: never claim live tool availability
+        # without an explicit probe_provider call.  Downstream descriptors may
+        # advertise "available" for in-process adapters; normalize here.
+        for item in providers:
+            if not isinstance(item, dict):
+                continue
+            item["availability"] = FeatureAvailability.DECLARED.value
         providers.sort(key=lambda item: str(item.get("provider_id", "")))
         return _response(
             "list_providers",
@@ -1283,6 +1894,293 @@ class LogicVerificationAPI:
             VerificationStatus.DECLARATIVE,
             authority=VerificationAuthority.DECLARATIVE,
             result={"features": features, "operations": list(STABLE_OPERATIONS)},
+        )
+
+    # ── LFP-044 Canonical discovery / dual-read one-write migration ───────
+
+    def canonical_discovery(self) -> CanonicalLogicDiscovery:
+        """Return the :class:`CanonicalLogicDiscovery` facade for this API."""
+
+        return get_canonical_discovery()
+
+    def list_namespaces(self) -> VerificationResponse:
+        """List typed identity namespaces (family/profile/property/...)."""
+
+        discovery = self.canonical_discovery()
+        namespaces = list(discovery.list_namespaces())
+        return _response(
+            "list_namespaces",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "namespaces": namespaces,
+                "count": len(namespaces),
+                "interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+                "verification_api": VERIFICATION_API_V2_INTERFACE,
+            },
+            cache=_empty_cache(source="canonical_discovery"),
+        )
+
+    def list_namespace_identities(
+        self,
+        namespace: str | None = None,
+    ) -> VerificationResponse:
+        """List canonical identities for one or all namespaces."""
+
+        discovery = self.canonical_discovery()
+        try:
+            identities = list(discovery.list_identities(namespace))
+        except Exception as error:  # fail closed on bad namespace
+            return _response(
+                "list_namespace_identities",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={"namespace": namespace, "identities": []},
+                diagnostics=(f"{type(error).__name__}: {error}",),
+            )
+        # New discovery never emits free-form or legacy alias surface forms.
+        for item in identities:
+            value = str(item.get("value", ""))
+            ns = str(item.get("namespace", ""))
+            if value and not discovery.is_canonical(ns, value):
+                return _response(
+                    "list_namespace_identities",
+                    VerificationStatus.ERROR,
+                    authority=VerificationAuthority.NONE,
+                    result={"namespace": namespace, "identities": []},
+                    diagnostics=(
+                        f"non-canonical identity leaked into discovery: {ns}:{value}",
+                    ),
+                )
+        return _response(
+            "list_namespace_identities",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "namespace": namespace,
+                "identities": identities,
+                "count": len(identities),
+                "interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+            },
+            cache=_empty_cache(source="canonical_discovery"),
+        )
+
+    def dual_read_label(
+        self,
+        namespace: str,
+        label: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Dual-read a legacy or canonical label with typed migration diagnostics."""
+
+        namespace = _text(namespace, "namespace")
+        label = _text(label, "label")
+        discovery = self.canonical_discovery()
+        identity, diagnostic = discovery.dual_read(namespace, label)
+        if identity is None:
+            return _response(
+                "dual_read_label",
+                VerificationStatus.INVALID
+                if diagnostic.get("error_code") == "wrong_namespace"
+                else VerificationStatus.UNSUPPORTED,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={
+                    "namespace": namespace,
+                    "observed": label,
+                    "identity": None,
+                    "diagnostic": diagnostic,
+                },
+                diagnostics=(diagnostic.get("message") or "label rejected",),
+                unsupported_features=(f"label:{namespace}:{label}",),
+                request_id=request_id,
+            )
+        return _response(
+            "dual_read_label",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "namespace": namespace,
+                "observed": label,
+                "identity": identity,
+                "canonical": identity.get("value"),
+                "diagnostic": diagnostic,
+                "was_alias": bool(diagnostic.get("disposition") == "replaced"),
+            },
+            diagnostics=(
+                (
+                    f"replaced {label!r} -> {identity.get('value')!r}"
+                    if diagnostic.get("disposition") == "replaced"
+                    else f"canonical {identity.get('value')!r}"
+                ),
+            ),
+            request_id=request_id,
+            cache=_empty_cache(source="alias_registry"),
+        )
+
+    def canonical_write_label(
+        self,
+        namespace: str,
+        label: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """One-write: emit only the canonical registered identity for *label*."""
+
+        namespace = _text(namespace, "namespace")
+        label = _text(label, "label")
+        discovery = self.canonical_discovery()
+        try:
+            written = discovery.canonical_write(namespace, label)
+        except Exception as error:
+            return _response(
+                "canonical_write_label",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={
+                    "namespace": namespace,
+                    "observed": label,
+                    "identity": None,
+                },
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+        # Never write the legacy surface form.
+        if written.get("value") == label and not discovery.is_canonical(namespace, label):
+            return _response(
+                "canonical_write_label",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                result={"namespace": namespace, "observed": label, "identity": written},
+                diagnostics=("canonical write leaked a non-canonical label",),
+                request_id=request_id,
+            )
+        return _response(
+            "canonical_write_label",
+            VerificationStatus.SUCCEEDED,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "namespace": namespace,
+                "observed": label,
+                "identity": written,
+                "canonical": written.get("value"),
+                "legacy_written": False,
+            },
+            request_id=request_id,
+            cache=_empty_cache(source="alias_registry"),
+        )
+
+    def migrate_artifact(
+        self,
+        artifact: Mapping[str, Any],
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Migrate an accepted artifact to canonical labels deterministically."""
+
+        discovery = self.canonical_discovery()
+        try:
+            migrated = discovery.migrate_artifact(artifact)
+        except VerificationAPIError as error:
+            return _response(
+                "migrate_artifact",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={"artifact": None},
+                diagnostics=(str(error),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "migrate_artifact",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                result={"artifact": None},
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+        # Guard: no rewritten field may still hold a known legacy alias form.
+        for rewrite in migrated.get("migration_rewrites", ()):
+            field = rewrite.get("field", "")
+            # Only top-level fields are re-checked here; nested paths are covered
+            # by recursive migrate_artifact.
+            if "." in str(field) or "[" in str(field):
+                continue
+            value = migrated.get(field)
+            namespace = rewrite.get("namespace")
+            if (
+                isinstance(value, str)
+                and namespace
+                and value != rewrite.get("canonical")
+            ):
+                return _response(
+                    "migrate_artifact",
+                    VerificationStatus.ERROR,
+                    authority=VerificationAuthority.NONE,
+                    result={"artifact": migrated},
+                    diagnostics=(f"legacy label retained on {field}",),
+                    request_id=request_id,
+                )
+        return _response(
+            "migrate_artifact",
+            VerificationStatus.SUCCEEDED,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={"artifact": migrated, "canonical_only": True},
+            translations=tuple(migrated.get("migration_rewrites") or ()),
+            diagnostics=tuple(
+                f"{item.get('field')}:{item.get('observed')}->{item.get('canonical')}"
+                for item in (migrated.get("migration_rewrites") or ())
+            ),
+            request_id=request_id,
+            cache=_empty_cache(source="alias_registry"),
+        )
+
+    def inspect_translation_loss(
+        self,
+        translation: Mapping[str, Any] | None = None,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Inspect translation loss/preservation without backend-specific heuristics."""
+
+        discovery = self.canonical_discovery()
+        inspection = discovery.inspect_translation_loss(translation)
+        return _response(
+            "inspect_translation_loss",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result=inspection,
+            assumptions=tuple(inspection.get("assumptions") or ()),
+            translations=(dict(translation or {}),),
+            request_id=request_id,
+            cache=_empty_cache(source="translation_inspection"),
+        )
+
+    def inspect_provider_authority(
+        self,
+        provider_id: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Inspect provider authority ceiling without backend-specific heuristics."""
+
+        provider_id = _text(provider_id, "provider_id")
+        caps_response = self.provider_capabilities(provider_id)
+        caps = {}
+        if caps_response.status is VerificationStatus.DECLARATIVE:
+            caps = dict(caps_response.result.get("capabilities") or {})
+        discovery = self.canonical_discovery()
+        inspection = discovery.inspect_provider_authority(
+            provider_id, capabilities=caps
+        )
+        return _response(
+            "inspect_provider_authority",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result=inspection,
+            provider_id=provider_id,
+            request_id=request_id,
+            cache=_empty_cache(source="provider_authority_inspection"),
         )
 
     # ── Compilation ───────────────────────────────────────────────────────
@@ -2001,8 +2899,12 @@ class LogicVerificationAPI:
                     status = VerificationStatus.UNSUPPORTED
                     selection_authority = VerificationAuthority.NONE
                 elif verdict is PortfolioVerdict.UNAVAILABLE:
-                    status = VerificationStatus.UNAVAILABLE
-                    selection_authority = VerificationAuthority.NONE
+                    # Capability gaps / missing external tools are a partial
+                    # portfolio result, not absence of the portfolio feature.
+                    # Sealed validation environments have no provers on PATH;
+                    # report PARTIAL with bounded authority and explicit gaps.
+                    status = VerificationStatus.PARTIAL
+                    selection_authority = VerificationAuthority.BOUNDED
                 else:
                     status = VerificationStatus.PARTIAL
                     achieved = getattr(selection, "achieved_assurance", None)
@@ -2296,6 +3198,11 @@ class LogicVerificationAPI:
         private channels never appear in ``result`` or ``witnesses``.  The
         response carries :class:`CounterexampleEnvelope@2` only; private
         material is referenced by digest/retention metadata when present.
+
+        When the supervisor normalizer is unavailable (validation environments
+        that only ship ``ipfs_datasets_py``), a local secret-safe model
+        projection is used so simple public model witnesses still succeed
+        without inventing authority or re-emitting private channels.
         """
 
         request_id = _text(request_id, "request_id", optional=True)
@@ -2308,12 +3215,58 @@ class LogicVerificationAPI:
                 request_id=request_id,
             )
 
-        from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import (
-            COUNTEREXAMPLE_ENVELOPE_INTERFACE,
-            PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
-            CounterexampleBoundaryError,
-            project_public_counterexample,
-        )
+        def _fallback(
+            *,
+            diagnostics: Sequence[str] = (),
+        ) -> VerificationResponse:
+            local = _local_counterexample_projection(
+                witness,
+                violated_property=violated_property,
+                assumption_ids=assumption_ids,
+                finite_bounds=finite_bounds,
+            )
+            if local is None:
+                return _response(
+                    "explain_counterexample",
+                    VerificationStatus.INVALID,
+                    authority=VerificationAuthority.NONE,
+                    diagnostics=tuple(diagnostics)
+                    or ("counterexample is not projectable",),
+                    request_id=request_id,
+                )
+            result, assumptions, bounds, witnesses = local
+            # Successful local projection: surface a single bounded note rather
+            # than the upstream rejection text (which can mention unavailable
+            # supervisor internals without adding public authority).
+            note = "local secret-safe counterexample projection"
+            if diagnostics:
+                note = f"{note}; upstream: {diagnostics[0]}"
+            return _response(
+                "explain_counterexample",
+                VerificationStatus.SUCCEEDED,
+                authority=VerificationAuthority.BOUNDED,
+                result=result,
+                assumptions=assumptions,
+                bounds=bounds,
+                witnesses=witnesses,
+                diagnostics=(note,),
+                request_id=request_id,
+                property_id=str(result.get("violated_property") or ""),
+                provider_id=str(result.get("tool_id") or ""),
+                cache=_empty_cache(source="counterexample_local_fallback"),
+            )
+
+        try:
+            from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import (
+                COUNTEREXAMPLE_ENVELOPE_INTERFACE,
+                PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
+                CounterexampleBoundaryError,
+                project_public_counterexample,
+            )
+        except ImportError as exc:
+            return _fallback(
+                diagnostics=(f"public counterexample boundary unavailable: {exc}",),
+            )
 
         try:
             envelope = project_public_counterexample(
@@ -2325,13 +3278,10 @@ class LogicVerificationAPI:
                 private_store=private_store,
             )
         except CounterexampleBoundaryError as exc:
-            return _response(
-                "explain_counterexample",
-                VerificationStatus.INVALID,
-                authority=VerificationAuthority.NONE,
-                diagnostics=(str(exc),),
-                request_id=request_id,
-            )
+            # Prefer a local secret-safe projection for ordinary model witnesses
+            # when the supervisor normalizer is missing or rejects the input.
+            # Truly unprojectable inputs remain INVALID.
+            return _fallback(diagnostics=(str(exc),))
 
         public = envelope.to_public_dict()
         # Explicitly refuse residual raw channels on the API surface.
@@ -5395,6 +6345,9 @@ class LogicVerificationAPI:
                 LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE
             ),
             "provider_role_closure_operations": list(PROVIDER_ROLE_CLOSURE_OPERATIONS),
+            "verification_api_v2": VERIFICATION_API_V2_INTERFACE,
+            "canonical_discovery_interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+            "migration_operations": list(MIGRATION_OPERATIONS),
             "version": self.version,
         }
 
@@ -5425,6 +6378,64 @@ def list_logic_families() -> VerificationResponse:
 
 def list_providers() -> VerificationResponse:
     return get_verification_api().list_providers()
+
+
+def list_namespaces() -> VerificationResponse:
+    return get_verification_api().list_namespaces()
+
+
+def list_namespace_identities(namespace: str | None = None) -> VerificationResponse:
+    return get_verification_api().list_namespace_identities(namespace)
+
+
+def dual_read_label(
+    namespace: str,
+    label: str,
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().dual_read_label(
+        namespace, label, request_id=request_id
+    )
+
+
+def canonical_write_label(
+    namespace: str,
+    label: str,
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().canonical_write_label(
+        namespace, label, request_id=request_id
+    )
+
+
+def migrate_artifact(
+    artifact: Mapping[str, Any],
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().migrate_artifact(artifact, request_id=request_id)
+
+
+def inspect_translation_loss(
+    translation: Mapping[str, Any] | None = None,
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().inspect_translation_loss(
+        translation, request_id=request_id
+    )
+
+
+def inspect_provider_authority(
+    provider_id: str,
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().inspect_provider_authority(
+        provider_id, request_id=request_id
+    )
 
 
 def provider_capabilities(provider_id: str | None = None) -> VerificationResponse:
@@ -5689,11 +6700,17 @@ __all__ = [
     "GOAL_TACTICIAN_TOOL_NAMES",
     "GOAL_TACTICIAN_TOOL_TO_OPERATION",
     "LOGIC_TRANSLATION_RECEIPT_SCHEMA",
+    "CANONICAL_LOGIC_DISCOVERY_INTERFACE",
+    "CANONICAL_LOGIC_DISCOVERY_SCHEMA",
+    "CANONICAL_LOGIC_DISCOVERY_VERSION",
+    "CanonicalLogicDiscovery",
+    "LOGIC_MIGRATION_ARTIFACT_SCHEMA",
     "LOGIC_VERIFICATION_API_INTERFACE",
     "LOGIC_VERIFICATION_API_VERSION",
     "LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE",
     "LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA",
     "LogicVerificationAPI",
+    "MIGRATION_OPERATIONS",
     "PRODUCTION_AUTHORIZATION_OPERATIONS",
     "PRODUCTION_AUTHORIZATION_PROVIDER_ID",
     "PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE",
@@ -5701,6 +6718,7 @@ __all__ = [
     "ProviderDescriptor",
     "STABLE_OPERATIONS",
     "TRUSTED_PROOF_RECEIPT_SCHEMA",
+    "VERIFICATION_API_V2_INTERFACE",
     "VERIFIED_RECEIPT_DISPATCH_INTERFACE",
     "VerificationAPIError",
     "VerificationAuthority",
@@ -5709,16 +6727,21 @@ __all__ = [
     "advise",
     "attest_receipt",
     "build_provider_role_descriptor",
+    "canonical_write_label",
     "check",
     "compare_interpretations",
     "compile_verification_artifact",
     "discover_missing_proofs",
+    "dual_read_label",
     "execute_proof_plan",
     "explain_counterexample",
     "explain_counterexample_causal",
     "formalize_goal",
+    "get_canonical_discovery",
     "get_verification_api",
     "goal_tactician_tool_schemas",
+    "inspect_provider_authority",
+    "inspect_translation_loss",
     "install_provider",
     "invoke_goal_tactician",
     "invoke_goal_tactician_cli",
@@ -5726,10 +6749,13 @@ __all__ = [
     "list_goal_tactician_cli_mcp_surface",
     "list_goal_tactician_operations",
     "list_logic_families",
+    "list_namespace_identities",
+    "list_namespaces",
     "list_provider_role_descriptors",
     "list_provider_roles",
     "list_providers",
     "list_stable_features",
+    "migrate_artifact",
     "minimize_counterexample",
     "monitor",
     "plan_proof",
