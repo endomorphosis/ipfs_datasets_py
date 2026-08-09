@@ -219,7 +219,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Every baseline row has exactly one disposition; admitted rows have complete identity/provenance; the nine recovery records cannot enter corpus, BM25, vector, or graph counts.
 
 ## USCIR-009 Implement shared bounded artifact schemas and writers
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
