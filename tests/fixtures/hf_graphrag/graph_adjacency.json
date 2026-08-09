@@ -1,0 +1,94 @@
+{
+  "schema_version": "hf-graphrag-graph-adjacency-fixture/v1",
+  "task_id": "USCIR-022",
+  "goal_id": "USCIR-G060",
+  "description": "Compact deterministic recipes for USCIR-022 shared graph and bounded adjacency layout unit tests. Nodes/edges are regenerated from the recipe; structural expectations (paging, inverse reconciliation, key ranges) are derived deterministically at test time (no bulk golden adjacency dumps).",
+  "bounds": {
+    "max_adjacency_pointers_per_row": 4096,
+    "max_adjacency_pointers_per_shard": 8192,
+    "max_rows_per_physical_shard": 4096
+  },
+  "test_bounds": {
+    "max_pointers_per_page": 2,
+    "max_pointers_per_shard": 4,
+    "max_rows_per_shard": 2
+  },
+  "recipe": {
+    "nodes": [
+      {"label": "A", "node_cid": "node-a", "node_type": "SECTION"},
+      {"label": "B", "node_cid": "node-b", "node_type": "SECTION"},
+      {"label": "C", "node_cid": "node-c", "node_type": "SECTION"},
+      {"label": "D", "node_cid": "node-d", "node_type": "NOTE"},
+      {"label": "E", "node_cid": "node-e", "node_type": "SECTION"}
+    ],
+    "edges": [
+      {
+        "edge_cid": "edge-a-b",
+        "edge_type": "CONTAINS",
+        "score": 0.9,
+        "source_node_cid": "node-a",
+        "target_node_cid": "node-b"
+      },
+      {
+        "edge_cid": "edge-a-c",
+        "edge_type": "CONTAINS",
+        "score": 0.8,
+        "source_node_cid": "node-a",
+        "target_node_cid": "node-c"
+      },
+      {
+        "edge_cid": "edge-a-d",
+        "edge_type": "CITES",
+        "score": 0.7,
+        "source_node_cid": "node-a",
+        "target_node_cid": "node-d"
+      },
+      {
+        "edge_cid": "edge-b-c",
+        "edge_type": "CITES",
+        "score": 0.5,
+        "source_node_cid": "node-b",
+        "target_node_cid": "node-c"
+      },
+      {
+        "edge_cid": "edge-c-d",
+        "edge_type": "RELATED_TO",
+        "score": null,
+        "source_node_cid": "node-c",
+        "target_node_cid": "node-d"
+      },
+      {
+        "edge_cid": "edge-d-a",
+        "edge_type": "DERIVED_FROM",
+        "score": 0.1,
+        "source_node_cid": "node-d",
+        "target_node_cid": "node-a"
+      }
+    ]
+  },
+  "expected": {
+    "adjacency_sorted_by": "node_cid_asc_score_desc_nulls_last_edge_type_neighbor_edge_cid",
+    "edge_count": 6,
+    "edges_sorted_by": "edge_cid_asc",
+    "max_pointers_per_page": 2,
+    "max_pointers_per_shard": 4,
+    "max_rows_per_shard": 2,
+    "node_count": 5,
+    "nodes_sorted_by": "node_cid_asc",
+    "unique_edge_cids": [
+      "edge-a-b",
+      "edge-a-c",
+      "edge-a-d",
+      "edge-b-c",
+      "edge-c-d",
+      "edge-d-a"
+    ],
+    "unique_node_cids": [
+      "node-a",
+      "node-b",
+      "node-c",
+      "node-d",
+      "node-e"
+    ]
+  }
+}
