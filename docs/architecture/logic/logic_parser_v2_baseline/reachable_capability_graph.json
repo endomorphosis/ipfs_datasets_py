@@ -1,0 +1,62 @@
+{
+  "schema_version": "logic-reachable-capability-graph/v1",
+  "interface": "ReachableCapabilityGraph@1",
+  "version": "1.0.0",
+  "description": "Sparse reachable domain-view-family/profile-translation-provider capability graph. Admitted routes are explainable; unreachable cells are excluded with typed reasons; Cartesian unsupported cells are not work.",
+  "notes": "Sparse projection of LogicCapabilityMatrix@1. Every admitted route carries a structured explanation; every unreachable cell carries a typed exclusion reason.",
+  "materialization": "ipfs_datasets_py.logic.conformance.reachable_graph:build_default_graph",
+  "task_id": "LFP2-003",
+  "goal_id": "LFP2-G010",
+  "program_id": "ipfs-datasets-logic-family-parser-v2",
+  "required_evidence_dimensions": [
+    "domain",
+    "view",
+    "family",
+    "profile",
+    "translation",
+    "provider",
+    "evidence",
+    "reachability"
+  ],
+  "lifecycle_stages": [
+    "declared",
+    "parsed",
+    "elaborated",
+    "translatable",
+    "compilable",
+    "executable",
+    "replayed",
+    "independently_validated"
+  ],
+  "admitted_support_statuses": [
+    "advisory",
+    "approximate",
+    "bounded",
+    "native",
+    "translated"
+  ],
+  "acceptance": {
+    "admitted_routes_explainable": true,
+    "unreachable_cells_typed_exclusion": true,
+    "unsupported_cartesian_cells_are_not_work": true
+  },
+  "metadata": {
+    "objective_id": "LFP2-003",
+    "goal_id": "LFP2-G010",
+    "program_id": "ipfs-datasets-logic-family-parser-v2",
+    "sparsity_policy": "Only native/translated/approximate/bounded/advisory cells are admitted as routes. Unsupported, unknown, and declaration-only coordinates are typed exclusions and are not work items.",
+    "work_policy": "Work eligibility is limited to admitted incomplete routes (unimplemented or translated). Full Cartesian unsupported cells never become work.",
+    "availability_policy": "Graph materialization never probes the environment. Availability is inherited declaration posture only.",
+    "authority_policy": "Authority ceilings are inherited from the matrix support route and never promote advisory/candidate evidence to kernel authority.",
+    "evidence_subset": [
+      "domain",
+      "view",
+      "family",
+      "profile",
+      "translation",
+      "provider",
+      "evidence",
+      "reachability"
+    ]
+  }
+}
