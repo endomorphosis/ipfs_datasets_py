@@ -1,0 +1,1255 @@
+{
+  "schema_version": "uscode-sparse-gold-v1",
+  "fixture_id": "uscode-sparse-gold-v1",
+  "task_id": "USCIR-003",
+  "goal_id": "USCIR-G010",
+  "program_id": "uscode-sparse-graphrag-v1",
+  "description": "Sealed legal retrieval and graph gold set for the U.S. Code sparse GraphRAG program. Labels freeze exact-section, semantic/synonym, cross-title, citation-path, historical/version ambiguity, time-sensitive, abstention, and graph-path expectations before tuning.",
+  "release_authority": {
+    "release_point": "us/pl/118/45",
+    "edition": "olrc-us-pl-118-45",
+    "provider": "olrc_house",
+    "pinned_corpus_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "role": "approved_exact"
+  },
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source. Time-sensitive gold queries must expose the release point rather than imply currentness.",
+  "required_titles": ["5", "11", "17", "18", "26", "28", "31", "35", "42", "47"],
+  "partitions": ["train", "dev", "test"],
+  "partition_policy": {
+    "train": "Development examples for qualitative inspection and non-reporting iteration only; not used for final sealed metrics.",
+    "dev": "Hyperparameter, fusion-weight, and probe-count selection. Metrics may guide tuning but are not the final reported numbers.",
+    "test": "Sealed evaluation split. Tunable weights selected on dev are reported once on this split; no post-hoc label edits for score chasing."
+  },
+  "label_kinds": [
+    "exact_section",
+    "relevant_subsection",
+    "supporting_citation_path",
+    "authoritative_source_evidence",
+    "known_ambiguity",
+    "abstention",
+    "time_sensitive"
+  ],
+  "query_kinds": [
+    "exact_citation",
+    "synonym",
+    "cross_title",
+    "historical_version",
+    "graph_path",
+    "time_sensitive",
+    "semantic",
+    "subsection"
+  ],
+  "grades": ["exact", "relevant", "ambiguous", "abstain_candidate", "not_relevant"],
+  "identity_contract": {
+    "legal_id_format": "usc:{jurisdiction}:{title}:{section}[;qualifiers]",
+    "entry_cid_role": "retrieval primary key for the sealed gold document stub",
+    "source_cid_role": "content address of normalized source evidence stub",
+    "entry_cid_algorithm": "sealed synthetic CIDv1-style token unique per legal_id; prefix bafkrei; immutable for this fixture schema revision",
+    "source_cid_algorithm": "sealed synthetic CIDv1-style token unique per legal_id; prefix bafkreis; immutable for this fixture schema revision",
+    "stability_rule": "legal_id is citation-oriented and independent of content version; entry_cid and source_cid are stable fixture identities sealed with this schema revision and must not change without a new fixture schema revision."
+  },
+  "documents": [
+    {
+      "document_id": "doc:5-552",
+      "legal_id": "usc:us:5:552",
+      "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+      "source_cid": "bafkreis8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+      "title": "5",
+      "section": "552",
+      "subsection": null,
+      "chapter": "5",
+      "canonical_citation": "5 U.S.C. § 552",
+      "heading": "Public information; agency rules, opinions, orders, records, and proceedings",
+      "topic": "foia",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Freedom of Information Act core disclosure provision."
+    },
+    {
+      "document_id": "doc:5-552-a",
+      "legal_id": "usc:us:5:552;subsection=a",
+      "entry_cid": "bafkreie5sub552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+      "source_cid": "bafkreis5sub552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+      "title": "5",
+      "section": "552",
+      "subsection": "a",
+      "chapter": "5",
+      "canonical_citation": "5 U.S.C. § 552(a)",
+      "heading": "FOIA request procedures",
+      "topic": "foia_subsection",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Subsection-scoped FOIA request procedures for chunk-level labels."
+    },
+    {
+      "document_id": "doc:5-552a",
+      "legal_id": "usc:us:5:552a",
+      "entry_cid": "bafkreie5usc552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+      "source_cid": "bafkreis5usc552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+      "title": "5",
+      "section": "552a",
+      "subsection": null,
+      "chapter": "5",
+      "canonical_citation": "5 U.S.C. § 552a",
+      "heading": "Records maintained on individuals",
+      "topic": "privacy_act",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Privacy Act of 1974."
+    },
+    {
+      "document_id": "doc:11-362",
+      "legal_id": "usc:us:11:362",
+      "entry_cid": "bafkreie11usc3620d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "source_cid": "bafkreis11usc3620d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "title": "11",
+      "section": "362",
+      "subsection": null,
+      "chapter": "3",
+      "canonical_citation": "11 U.S.C. § 362",
+      "heading": "Automatic stay",
+      "topic": "automatic_stay",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Bankruptcy automatic stay."
+    },
+    {
+      "document_id": "doc:17-107",
+      "legal_id": "usc:us:17:107",
+      "entry_cid": "bafkreie17usc1070d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "source_cid": "bafkreis17usc1070d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "title": "17",
+      "section": "107",
+      "subsection": null,
+      "chapter": "1",
+      "canonical_citation": "17 U.S.C. § 107",
+      "heading": "Limitations on exclusive rights: Fair use",
+      "topic": "fair_use",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Copyright fair use factors."
+    },
+    {
+      "document_id": "doc:18-1030",
+      "legal_id": "usc:us:18:1030",
+      "entry_cid": "bafkreie18usc10300d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "source_cid": "bafkreis18usc10300d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "title": "18",
+      "section": "1030",
+      "subsection": null,
+      "chapter": "47",
+      "canonical_citation": "18 U.S.C. § 1030",
+      "heading": "Fraud and related activity in connection with computers",
+      "topic": "cfaa",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Computer Fraud and Abuse Act."
+    },
+    {
+      "document_id": "doc:26-61",
+      "legal_id": "usc:us:26:61",
+      "entry_cid": "bafkreie26usc0610d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "source_cid": "bafkreis26usc0610d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "title": "26",
+      "section": "61",
+      "subsection": null,
+      "chapter": "1",
+      "canonical_citation": "26 U.S.C. § 61",
+      "heading": "Gross income defined",
+      "topic": "gross_income",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Internal Revenue Code gross income definition."
+    },
+    {
+      "document_id": "doc:26-501",
+      "legal_id": "usc:us:26:501",
+      "entry_cid": "bafkreie26usc5010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "source_cid": "bafkreis26usc5010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "title": "26",
+      "section": "501",
+      "subsection": null,
+      "chapter": "1",
+      "canonical_citation": "26 U.S.C. § 501",
+      "heading": "Exemption from tax on corporations, certain trusts, etc.",
+      "topic": "tax_exempt",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Includes § 501(c)(3) charitable exemption framework."
+    },
+    {
+      "document_id": "doc:28-1331",
+      "legal_id": "usc:us:28:1331",
+      "entry_cid": "bafkreie28usc13310d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "source_cid": "bafkreis28usc13310d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "title": "28",
+      "section": "1331",
+      "subsection": null,
+      "chapter": "85",
+      "canonical_citation": "28 U.S.C. § 1331",
+      "heading": "Federal question",
+      "topic": "federal_question",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Original jurisdiction of district courts."
+    },
+    {
+      "document_id": "doc:28-1367",
+      "legal_id": "usc:us:28:1367",
+      "entry_cid": "bafkreie28usc13670d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "source_cid": "bafkreis28usc13670d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "title": "28",
+      "section": "1367",
+      "subsection": null,
+      "chapter": "85",
+      "canonical_citation": "28 U.S.C. § 1367",
+      "heading": "Supplemental jurisdiction",
+      "topic": "supplemental_jurisdiction",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Supplemental jurisdiction over related claims."
+    },
+    {
+      "document_id": "doc:28-1441",
+      "legal_id": "usc:us:28:1441",
+      "entry_cid": "bafkreie28usc14410d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "source_cid": "bafkreis28usc14410d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "title": "28",
+      "section": "1441",
+      "subsection": null,
+      "chapter": "89",
+      "canonical_citation": "28 U.S.C. § 1441",
+      "heading": "Removal of civil actions",
+      "topic": "removal",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Defendant removal of civil actions from state court."
+    },
+    {
+      "document_id": "doc:31-3729",
+      "legal_id": "usc:us:31:3729",
+      "entry_cid": "bafkreie31usc37290d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "source_cid": "bafkreis31usc37290d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "title": "31",
+      "section": "3729",
+      "subsection": null,
+      "chapter": "37",
+      "canonical_citation": "31 U.S.C. § 3729",
+      "heading": "False claims",
+      "topic": "false_claims_act",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "False Claims Act liability provision."
+    },
+    {
+      "document_id": "doc:35-101",
+      "legal_id": "usc:us:35:101",
+      "entry_cid": "bafkreie35usc1010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "source_cid": "bafkreis35usc1010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "title": "35",
+      "section": "101",
+      "subsection": null,
+      "chapter": "10",
+      "canonical_citation": "35 U.S.C. § 101",
+      "heading": "Inventions patentable",
+      "topic": "patent_eligibility",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Patent subject-matter eligibility."
+    },
+    {
+      "document_id": "doc:35-103",
+      "legal_id": "usc:us:35:103",
+      "entry_cid": "bafkreie35usc1030d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "source_cid": "bafkreis35usc1030d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "title": "35",
+      "section": "103",
+      "subsection": null,
+      "chapter": "10",
+      "canonical_citation": "35 U.S.C. § 103",
+      "heading": "Conditions for patentability; non-obvious subject matter",
+      "topic": "obviousness",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Non-obviousness requirement."
+    },
+    {
+      "document_id": "doc:35-112",
+      "legal_id": "usc:us:35:112",
+      "entry_cid": "bafkreie35usc1120d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "source_cid": "bafkreis35usc1120d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "title": "35",
+      "section": "112",
+      "subsection": null,
+      "chapter": "11",
+      "canonical_citation": "35 U.S.C. § 112",
+      "heading": "Specification",
+      "topic": "specification",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Written description, enablement, and claims."
+    },
+    {
+      "document_id": "doc:42-1983",
+      "legal_id": "usc:us:42:1983",
+      "entry_cid": "bafkreie42usc19830d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "source_cid": "bafkreis42usc19830d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "title": "42",
+      "section": "1983",
+      "subsection": null,
+      "chapter": "21",
+      "canonical_citation": "42 U.S.C. § 1983",
+      "heading": "Civil action for deprivation of rights",
+      "topic": "civil_rights",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Section 1983 civil-rights cause of action."
+    },
+    {
+      "document_id": "doc:42-12101",
+      "legal_id": "usc:us:42:12101",
+      "entry_cid": "bafkreie42usc121010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2",
+      "source_cid": "bafkreis42usc121010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2",
+      "title": "42",
+      "section": "12101",
+      "subsection": null,
+      "chapter": "126",
+      "canonical_citation": "42 U.S.C. § 12101",
+      "heading": "Findings and purpose",
+      "topic": "ada",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Americans with Disabilities Act findings and purpose."
+    },
+    {
+      "document_id": "doc:47-230",
+      "legal_id": "usc:us:47:230",
+      "entry_cid": "bafkreie47usc2300d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "source_cid": "bafkreis47usc2300d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "title": "47",
+      "section": "230",
+      "subsection": null,
+      "chapter": "5",
+      "canonical_citation": "47 U.S.C. § 230",
+      "heading": "Protection for private blocking and screening of offensive material",
+      "topic": "section_230",
+      "release_point": "us/pl/118/45",
+      "edition": "olrc-us-pl-118-45",
+      "notes": "Communications Decency Act § 230 platform immunity."
+    }
+  ],
+  "queries": [
+    {
+      "query_id": "q-train-5-foia-exact",
+      "partition": "train",
+      "query_kind": "exact_citation",
+      "primary_title": "5",
+      "query_text": "5 U.S.C. § 552",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-train-5-foia-synonym",
+      "partition": "train",
+      "query_kind": "synonym",
+      "primary_title": "5",
+      "query_text": "Freedom of Information Act agency records disclosure",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-train-11-automatic-stay",
+      "partition": "train",
+      "query_kind": "semantic",
+      "primary_title": "11",
+      "query_text": "bankruptcy petition automatic stay of collection actions",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-train-17-fair-use",
+      "partition": "train",
+      "query_kind": "exact_citation",
+      "primary_title": "17",
+      "query_text": "17 USC 107 fair use",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-train-28-federal-question",
+      "partition": "train",
+      "query_kind": "exact_citation",
+      "primary_title": "28",
+      "query_text": "28 U.S.C. § 1331 federal question jurisdiction",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-train-35-eligibility",
+      "partition": "train",
+      "query_kind": "semantic",
+      "primary_title": "35",
+      "query_text": "what subject matter is eligible for a patent",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-train-31-fca",
+      "partition": "train",
+      "query_kind": "synonym",
+      "primary_title": "31",
+      "query_text": "False Claims Act qui tam liability for false claims",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-train-42-1983",
+      "partition": "train",
+      "query_kind": "exact_citation",
+      "primary_title": "42",
+      "query_text": "42 U.S.C. § 1983 civil action for deprivation of rights",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-train-47-230-synonym",
+      "partition": "train",
+      "query_kind": "synonym",
+      "primary_title": "47",
+      "query_text": "Section 230 platform immunity for third-party content",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-train-5-subsection-chunk",
+      "partition": "train",
+      "query_kind": "subsection",
+      "primary_title": "5",
+      "query_text": "FOIA request procedures under 5 U.S.C. § 552(a)",
+      "expectation": "relevant_subsection",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-dev-28-supplemental",
+      "partition": "dev",
+      "query_kind": "exact_citation",
+      "primary_title": "28",
+      "query_text": "28 U.S.C. § 1367 supplemental jurisdiction",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-dev-28-removal",
+      "partition": "dev",
+      "query_kind": "semantic",
+      "primary_title": "28",
+      "query_text": "removing a civil action from state court to federal district court",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-dev-35-obviousness",
+      "partition": "dev",
+      "query_kind": "exact_citation",
+      "primary_title": "35",
+      "query_text": "35 U.S.C. § 103 nonobviousness",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-dev-35-specification",
+      "partition": "dev",
+      "query_kind": "semantic",
+      "primary_title": "35",
+      "query_text": "patent written description enablement and claim definiteness",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-dev-18-cfaa",
+      "partition": "dev",
+      "query_kind": "exact_citation",
+      "primary_title": "18",
+      "query_text": "18 U.S.C. § 1030 unauthorized computer access",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-dev-26-gross-income",
+      "partition": "dev",
+      "query_kind": "synonym",
+      "primary_title": "26",
+      "query_text": "definition of gross income under the Internal Revenue Code",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-dev-42-ada",
+      "partition": "dev",
+      "query_kind": "semantic",
+      "primary_title": "42",
+      "query_text": "Americans with Disabilities Act findings and purpose",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-dev-cross-title-jurisdiction",
+      "partition": "dev",
+      "query_kind": "cross_title",
+      "primary_title": "28",
+      "query_text": "federal civil rights claim jurisdiction and removal from state court",
+      "expectation": "supporting_citation_path",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-dev-time-sensitive-release",
+      "partition": "dev",
+      "query_kind": "time_sensitive",
+      "primary_title": "5",
+      "query_text": "current FOIA exemption text as of today",
+      "expectation": "time_sensitive",
+      "must_expose_release_point": true,
+      "abstain_if_unscoped": true,
+      "notes": "Systems must surface release_point/edition rather than implying the text is current as of wall-clock time."
+    },
+    {
+      "query_id": "q-test-5-privacy-act",
+      "partition": "test",
+      "query_kind": "exact_citation",
+      "primary_title": "5",
+      "query_text": "5 U.S.C. § 552a Privacy Act systems of records",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-test-11-stay-citation",
+      "partition": "test",
+      "query_kind": "exact_citation",
+      "primary_title": "11",
+      "query_text": "11 U.S.C. § 362",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-test-17-fair-use-synonym",
+      "partition": "test",
+      "query_kind": "synonym",
+      "primary_title": "17",
+      "query_text": "copyright fair use for criticism commentary teaching scholarship research",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-test-26-501c3",
+      "partition": "test",
+      "query_kind": "semantic",
+      "primary_title": "26",
+      "query_text": "tax exempt status for charitable organizations under 501(c)(3)",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-test-31-fca-exact",
+      "partition": "test",
+      "query_kind": "exact_citation",
+      "primary_title": "31",
+      "query_text": "31 U.S.C. § 3729",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-test-35-patentability-graph",
+      "partition": "test",
+      "query_kind": "graph_path",
+      "primary_title": "35",
+      "query_text": "patentability requirements eligibility obviousness and specification",
+      "expectation": "supporting_citation_path",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-test-42-civil-rights-synonym",
+      "partition": "test",
+      "query_kind": "synonym",
+      "primary_title": "42",
+      "query_text": "lawsuit against state actor for constitutional rights violation under color of law",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-test-47-230-exact",
+      "partition": "test",
+      "query_kind": "exact_citation",
+      "primary_title": "47",
+      "query_text": "47 U.S.C. § 230",
+      "expectation": "exact_section",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-test-cross-title-foia-privacy",
+      "partition": "test",
+      "query_kind": "cross_title",
+      "primary_title": "5",
+      "query_text": "agency disclosure obligations under FOIA and Privacy Act records systems",
+      "expectation": "supporting_citation_path",
+      "must_expose_release_point": false,
+      "abstain_if_unscoped": false,
+      "notes": ""
+    },
+    {
+      "query_id": "q-test-historical-version-ambiguity",
+      "partition": "test",
+      "query_kind": "historical_version",
+      "primary_title": "35",
+      "query_text": "pre-AIA obviousness standard for patents filed before March 2013",
+      "expectation": "known_ambiguity",
+      "must_expose_release_point": true,
+      "abstain_if_unscoped": true,
+      "notes": "Historical/version questions must not silently treat the sealed OLRC release as the historical statute of interest."
+    },
+    {
+      "query_id": "q-test-abstain-current-law-advice",
+      "partition": "test",
+      "query_kind": "time_sensitive",
+      "primary_title": "28",
+      "query_text": "what is the currently effective removal statute for my case filed today",
+      "expectation": "abstention",
+      "must_expose_release_point": true,
+      "abstain_if_unscoped": true,
+      "notes": "Abstention expectation: research-aid systems must not present sealed release text as individualized current legal advice."
+    }
+  ],
+  "judgments": [
+    {
+      "query_id": "q-train-5-foia-exact",
+      "document_id": "doc:5-552",
+      "legal_id": "usc:us:5:552",
+      "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Exact FOIA section citation"
+    },
+    {
+      "query_id": "q-train-5-foia-exact",
+      "document_id": "doc:5-552-a",
+      "legal_id": "usc:us:5:552;subsection=a",
+      "entry_cid": "bafkreie5sub552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+      "grade": "relevant",
+      "label_kind": "relevant_subsection",
+      "rank_ceiling": 5,
+      "notes": "FOIA subsection is relevant support"
+    },
+    {
+      "query_id": "q-train-5-foia-synonym",
+      "document_id": "doc:5-552",
+      "legal_id": "usc:us:5:552",
+      "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "FOIA synonym should retrieve § 552"
+    },
+    {
+      "query_id": "q-train-11-automatic-stay",
+      "document_id": "doc:11-362",
+      "legal_id": "usc:us:11:362",
+      "entry_cid": "bafkreie11usc3620d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "Automatic stay is 11 U.S.C. § 362"
+    },
+    {
+      "query_id": "q-train-17-fair-use",
+      "document_id": "doc:17-107",
+      "legal_id": "usc:us:17:107",
+      "entry_cid": "bafkreie17usc1070d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Fair use statute"
+    },
+    {
+      "query_id": "q-train-28-federal-question",
+      "document_id": "doc:28-1331",
+      "legal_id": "usc:us:28:1331",
+      "entry_cid": "bafkreie28usc13310d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Federal-question jurisdiction"
+    },
+    {
+      "query_id": "q-train-28-federal-question",
+      "document_id": "doc:28-1367",
+      "legal_id": "usc:us:28:1367",
+      "entry_cid": "bafkreie28usc13670d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "relevant",
+      "label_kind": "supporting_citation_path",
+      "rank_ceiling": 10,
+      "notes": "Supplemental jurisdiction often co-occurs with federal-question analysis"
+    },
+    {
+      "query_id": "q-train-35-eligibility",
+      "document_id": "doc:35-101",
+      "legal_id": "usc:us:35:101",
+      "entry_cid": "bafkreie35usc1010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "Patent eligibility under § 101"
+    },
+    {
+      "query_id": "q-train-35-eligibility",
+      "document_id": "doc:35-112",
+      "legal_id": "usc:us:35:112",
+      "entry_cid": "bafkreie35usc1120d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "relevant",
+      "label_kind": "supporting_citation_path",
+      "rank_ceiling": 10,
+      "notes": "Specification requirements are related but not the primary eligibility hit"
+    },
+    {
+      "query_id": "q-train-31-fca",
+      "document_id": "doc:31-3729",
+      "legal_id": "usc:us:31:3729",
+      "entry_cid": "bafkreie31usc37290d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "FCA liability provision"
+    },
+    {
+      "query_id": "q-train-42-1983",
+      "document_id": "doc:42-1983",
+      "legal_id": "usc:us:42:1983",
+      "entry_cid": "bafkreie42usc19830d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Section 1983 civil rights action"
+    },
+    {
+      "query_id": "q-train-47-230-synonym",
+      "document_id": "doc:47-230",
+      "legal_id": "usc:us:47:230",
+      "entry_cid": "bafkreie47usc2300d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "Section 230 of the Communications Act"
+    },
+    {
+      "query_id": "q-train-5-subsection-chunk",
+      "document_id": "doc:5-552-a",
+      "legal_id": "usc:us:5:552;subsection=a",
+      "entry_cid": "bafkreie5sub552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+      "grade": "exact",
+      "label_kind": "relevant_subsection",
+      "rank_ceiling": 1,
+      "notes": "Subsection-scoped FOIA procedures chunk"
+    },
+    {
+      "query_id": "q-train-5-subsection-chunk",
+      "document_id": "doc:5-552",
+      "legal_id": "usc:us:5:552",
+      "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+      "grade": "relevant",
+      "label_kind": "exact_section",
+      "rank_ceiling": 5,
+      "notes": "Parent section remains relevant"
+    },
+    {
+      "query_id": "q-dev-28-supplemental",
+      "document_id": "doc:28-1367",
+      "legal_id": "usc:us:28:1367",
+      "entry_cid": "bafkreie28usc13670d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Supplemental jurisdiction"
+    },
+    {
+      "query_id": "q-dev-28-supplemental",
+      "document_id": "doc:28-1331",
+      "legal_id": "usc:us:28:1331",
+      "entry_cid": "bafkreie28usc13310d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "relevant",
+      "label_kind": "supporting_citation_path",
+      "rank_ceiling": 10,
+      "notes": "Federal-question often anchors supplemental claims"
+    },
+    {
+      "query_id": "q-dev-28-removal",
+      "document_id": "doc:28-1441",
+      "legal_id": "usc:us:28:1441",
+      "entry_cid": "bafkreie28usc14410d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "Removal of civil actions"
+    },
+    {
+      "query_id": "q-dev-35-obviousness",
+      "document_id": "doc:35-103",
+      "legal_id": "usc:us:35:103",
+      "entry_cid": "bafkreie35usc1030d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Obviousness statute"
+    },
+    {
+      "query_id": "q-dev-35-obviousness",
+      "document_id": "doc:35-101",
+      "legal_id": "usc:us:35:101",
+      "entry_cid": "bafkreie35usc1010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "relevant",
+      "label_kind": "supporting_citation_path",
+      "rank_ceiling": 10,
+      "notes": "Eligibility is adjacent patentability doctrine"
+    },
+    {
+      "query_id": "q-dev-35-specification",
+      "document_id": "doc:35-112",
+      "legal_id": "usc:us:35:112",
+      "entry_cid": "bafkreie35usc1120d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "Specification requirements"
+    },
+    {
+      "query_id": "q-dev-18-cfaa",
+      "document_id": "doc:18-1030",
+      "legal_id": "usc:us:18:1030",
+      "entry_cid": "bafkreie18usc10300d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Computer Fraud and Abuse Act"
+    },
+    {
+      "query_id": "q-dev-26-gross-income",
+      "document_id": "doc:26-61",
+      "legal_id": "usc:us:26:61",
+      "entry_cid": "bafkreie26usc0610d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "Gross income defined"
+    },
+    {
+      "query_id": "q-dev-42-ada",
+      "document_id": "doc:42-12101",
+      "legal_id": "usc:us:42:12101",
+      "entry_cid": "bafkreie42usc121010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "ADA findings provision"
+    },
+    {
+      "query_id": "q-dev-cross-title-jurisdiction",
+      "document_id": "doc:42-1983",
+      "legal_id": "usc:us:42:1983",
+      "entry_cid": "bafkreie42usc19830d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 5,
+      "notes": "Civil rights cause of action"
+    },
+    {
+      "query_id": "q-dev-cross-title-jurisdiction",
+      "document_id": "doc:28-1331",
+      "legal_id": "usc:us:28:1331",
+      "entry_cid": "bafkreie28usc13310d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "relevant",
+      "label_kind": "supporting_citation_path",
+      "rank_ceiling": 5,
+      "notes": "Federal-question jurisdiction"
+    },
+    {
+      "query_id": "q-dev-cross-title-jurisdiction",
+      "document_id": "doc:28-1441",
+      "legal_id": "usc:us:28:1441",
+      "entry_cid": "bafkreie28usc14410d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "relevant",
+      "label_kind": "supporting_citation_path",
+      "rank_ceiling": 5,
+      "notes": "Removal path"
+    },
+    {
+      "query_id": "q-dev-time-sensitive-release",
+      "document_id": "doc:5-552",
+      "legal_id": "usc:us:5:552",
+      "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+      "grade": "relevant",
+      "label_kind": "time_sensitive",
+      "rank_ceiling": 5,
+      "notes": "May retrieve FOIA only when release point is exposed; must not imply wall-clock currentness"
+    },
+    {
+      "query_id": "q-test-5-privacy-act",
+      "document_id": "doc:5-552a",
+      "legal_id": "usc:us:5:552a",
+      "entry_cid": "bafkreie5usc552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Privacy Act"
+    },
+    {
+      "query_id": "q-test-11-stay-citation",
+      "document_id": "doc:11-362",
+      "legal_id": "usc:us:11:362",
+      "entry_cid": "bafkreie11usc3620d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Automatic stay exact citation"
+    },
+    {
+      "query_id": "q-test-17-fair-use-synonym",
+      "document_id": "doc:17-107",
+      "legal_id": "usc:us:17:107",
+      "entry_cid": "bafkreie17usc1070d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "Fair use synonym retrieval"
+    },
+    {
+      "query_id": "q-test-26-501c3",
+      "document_id": "doc:26-501",
+      "legal_id": "usc:us:26:501",
+      "entry_cid": "bafkreie26usc5010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "Tax-exempt organization statute"
+    },
+    {
+      "query_id": "q-test-31-fca-exact",
+      "document_id": "doc:31-3729",
+      "legal_id": "usc:us:31:3729",
+      "entry_cid": "bafkreie31usc37290d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "False Claims Act exact citation"
+    },
+    {
+      "query_id": "q-test-35-patentability-graph",
+      "document_id": "doc:35-101",
+      "legal_id": "usc:us:35:101",
+      "entry_cid": "bafkreie35usc1010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 5,
+      "notes": "Eligibility"
+    },
+    {
+      "query_id": "q-test-35-patentability-graph",
+      "document_id": "doc:35-103",
+      "legal_id": "usc:us:35:103",
+      "entry_cid": "bafkreie35usc1030d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 5,
+      "notes": "Obviousness"
+    },
+    {
+      "query_id": "q-test-35-patentability-graph",
+      "document_id": "doc:35-112",
+      "legal_id": "usc:us:35:112",
+      "entry_cid": "bafkreie35usc1120d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 5,
+      "notes": "Specification"
+    },
+    {
+      "query_id": "q-test-42-civil-rights-synonym",
+      "document_id": "doc:42-1983",
+      "legal_id": "usc:us:42:1983",
+      "entry_cid": "bafkreie42usc19830d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 3,
+      "notes": "§ 1983 synonym path"
+    },
+    {
+      "query_id": "q-test-47-230-exact",
+      "document_id": "doc:47-230",
+      "legal_id": "usc:us:47:230",
+      "entry_cid": "bafkreie47usc2300d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 1,
+      "notes": "Section 230 exact citation"
+    },
+    {
+      "query_id": "q-test-cross-title-foia-privacy",
+      "document_id": "doc:5-552",
+      "legal_id": "usc:us:5:552",
+      "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 5,
+      "notes": "FOIA disclosure"
+    },
+    {
+      "query_id": "q-test-cross-title-foia-privacy",
+      "document_id": "doc:5-552a",
+      "legal_id": "usc:us:5:552a",
+      "entry_cid": "bafkreie5usc552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+      "grade": "exact",
+      "label_kind": "exact_section",
+      "rank_ceiling": 5,
+      "notes": "Privacy Act records"
+    },
+    {
+      "query_id": "q-test-historical-version-ambiguity",
+      "document_id": "doc:35-103",
+      "legal_id": "usc:us:35:103",
+      "entry_cid": "bafkreie35usc1030d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+      "grade": "ambiguous",
+      "label_kind": "known_ambiguity",
+      "notes": "Historical version ambiguity: sealed release may not equal pre-AIA text; expose edition/release"
+    },
+    {
+      "query_id": "q-test-abstain-current-law-advice",
+      "document_id": "doc:28-1441",
+      "legal_id": "usc:us:28:1441",
+      "entry_cid": "bafkreie28usc14410d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+      "grade": "abstain_candidate",
+      "label_kind": "abstention",
+      "notes": "Time-sensitive case-specific advice requires release exposure and may require abstention"
+    }
+  ],
+  "graph_paths": [
+    {
+      "path_id": "path-dev-civil-rights-jurisdiction",
+      "query_id": "q-dev-cross-title-jurisdiction",
+      "partition": "dev",
+      "nodes": ["doc:42-1983", "doc:28-1331", "doc:28-1441"],
+      "node_refs": [
+        {
+          "document_id": "doc:42-1983",
+          "legal_id": "usc:us:42:1983",
+          "entry_cid": "bafkreie42usc19830d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+          "source_cid": "bafkreis42usc19830d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+          "canonical_citation": "42 U.S.C. § 1983"
+        },
+        {
+          "document_id": "doc:28-1331",
+          "legal_id": "usc:us:28:1331",
+          "entry_cid": "bafkreie28usc13310d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+          "source_cid": "bafkreis28usc13310d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+          "canonical_citation": "28 U.S.C. § 1331"
+        },
+        {
+          "document_id": "doc:28-1441",
+          "legal_id": "usc:us:28:1441",
+          "entry_cid": "bafkreie28usc14410d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+          "source_cid": "bafkreis28usc14410d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5",
+          "canonical_citation": "28 U.S.C. § 1441"
+        }
+      ],
+      "edges": [
+        {
+          "source": "doc:42-1983",
+          "target": "doc:28-1331",
+          "relation": "invokes_jurisdiction",
+          "notes": "§ 1983 claims often invoke federal-question jurisdiction"
+        },
+        {
+          "source": "doc:28-1331",
+          "target": "doc:28-1441",
+          "relation": "supports_removal",
+          "notes": "Federal-question presence supports removal analysis"
+        }
+      ]
+    },
+    {
+      "path_id": "path-test-patentability-trio",
+      "query_id": "q-test-35-patentability-graph",
+      "partition": "test",
+      "nodes": ["doc:35-101", "doc:35-103", "doc:35-112"],
+      "node_refs": [
+        {
+          "document_id": "doc:35-101",
+          "legal_id": "usc:us:35:101",
+          "entry_cid": "bafkreie35usc1010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "source_cid": "bafkreis35usc1010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "canonical_citation": "35 U.S.C. § 101"
+        },
+        {
+          "document_id": "doc:35-103",
+          "legal_id": "usc:us:35:103",
+          "entry_cid": "bafkreie35usc1030d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "source_cid": "bafkreis35usc1030d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "canonical_citation": "35 U.S.C. § 103"
+        },
+        {
+          "document_id": "doc:35-112",
+          "legal_id": "usc:us:35:112",
+          "entry_cid": "bafkreie35usc1120d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "source_cid": "bafkreis35usc1120d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "canonical_citation": "35 U.S.C. § 112"
+        }
+      ],
+      "edges": [
+        {
+          "source": "doc:35-101",
+          "target": "doc:35-103",
+          "relation": "related_patentability_condition",
+          "notes": "Eligibility and non-obviousness are co-required patentability conditions"
+        },
+        {
+          "source": "doc:35-101",
+          "target": "doc:35-112",
+          "relation": "related_patentability_condition",
+          "notes": "Eligible inventions must still satisfy specification requirements"
+        }
+      ]
+    },
+    {
+      "path_id": "path-test-foia-privacy",
+      "query_id": "q-test-cross-title-foia-privacy",
+      "partition": "test",
+      "nodes": ["doc:5-552", "doc:5-552a"],
+      "node_refs": [
+        {
+          "document_id": "doc:5-552",
+          "legal_id": "usc:us:5:552",
+          "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+          "source_cid": "bafkreis8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+          "canonical_citation": "5 U.S.C. § 552"
+        },
+        {
+          "document_id": "doc:5-552a",
+          "legal_id": "usc:us:5:552a",
+          "entry_cid": "bafkreie5usc552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+          "source_cid": "bafkreis5usc552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+          "canonical_citation": "5 U.S.C. § 552a"
+        }
+      ],
+      "edges": [
+        {
+          "source": "doc:5-552",
+          "target": "doc:5-552a",
+          "relation": "related_information_statute",
+          "notes": "FOIA and Privacy Act jointly govern agency information practices"
+        }
+      ]
+    }
+  ],
+  "partition_index": {
+    "train": [
+      "q-train-5-foia-exact",
+      "q-train-5-foia-synonym",
+      "q-train-11-automatic-stay",
+      "q-train-17-fair-use",
+      "q-train-28-federal-question",
+      "q-train-35-eligibility",
+      "q-train-31-fca",
+      "q-train-42-1983",
+      "q-train-47-230-synonym",
+      "q-train-5-subsection-chunk"
+    ],
+    "dev": [
+      "q-dev-28-supplemental",
+      "q-dev-28-removal",
+      "q-dev-35-obviousness",
+      "q-dev-35-specification",
+      "q-dev-18-cfaa",
+      "q-dev-26-gross-income",
+      "q-dev-42-ada",
+      "q-dev-cross-title-jurisdiction",
+      "q-dev-time-sensitive-release"
+    ],
+    "test": [
+      "q-test-5-privacy-act",
+      "q-test-11-stay-citation",
+      "q-test-17-fair-use-synonym",
+      "q-test-26-501c3",
+      "q-test-31-fca-exact",
+      "q-test-35-patentability-graph",
+      "q-test-42-civil-rights-synonym",
+      "q-test-47-230-exact",
+      "q-test-cross-title-foia-privacy",
+      "q-test-historical-version-ambiguity",
+      "q-test-abstain-current-law-advice"
+    ]
+  },
+  "counts": {
+    "documents": 18,
+    "queries": 30,
+    "judgments": 41,
+    "graph_paths": 3,
+    "titles": 10,
+    "partition_query_counts": {
+      "train": 10,
+      "dev": 9,
+      "test": 11
+    }
+  },
+  "negative_controls_fixture": "uscode_sparse_negative_controls.json",
+  "rationale_report": "docs/reports/uscode_goldset_rationale.md",
+  "frozen": true,
+  "ground_truth_policy": "human_reviewed_official_citation_grounding_no_model_labels"
+}

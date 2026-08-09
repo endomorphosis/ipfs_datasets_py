@@ -1,0 +1,235 @@
+{
+  "schema_version": "uscode-sparse-negative-controls-v1",
+  "fixture_id": "uscode-sparse-negative-controls-v1",
+  "task_id": "USCIR-003",
+  "goal_id": "USCIR-G010",
+  "program_id": "uscode-sparse-graphrag-v1",
+  "description": "Negative controls for the sealed U.S. Code sparse GraphRAG gold set. These cases freeze non-retrieval, wrong-title, out-of-corpus, currentness-overclaim, recovery-quarantine, and advice-boundary expectations before hybrid/graph tuning.",
+  "gold_fixture": "uscode_sparse_gold.json",
+  "release_authority": {
+    "release_point": "us/pl/118/45",
+    "edition": "olrc-us-pl-118-45",
+    "provider": "olrc_house",
+    "pinned_corpus_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8"
+  },
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source. Time-sensitive gold queries must expose the release point rather than imply currentness.",
+  "partitions": ["train", "dev", "test"],
+  "control_kinds": [
+    "currentness_overclaim",
+    "fabricated_citation",
+    "fabricated_subsection",
+    "false_friend",
+    "individualized_advice",
+    "lexical_decoy",
+    "noise_query",
+    "out_of_corpus_jurisdiction",
+    "recovery_row_contamination",
+    "wrong_title_confusion"
+  ],
+  "controls": [
+    {
+      "control_id": "neg-fabricated-citation",
+      "control_cid": "bafkreineg000fabricatedcitation00000000000000000000001",
+      "control_kind": "fabricated_citation",
+      "partition": "test",
+      "query_text": "99 U.S.C. § 99999 imaginary disclosure statute",
+      "expected_behavior": "no_exact_hit",
+      "must_not_retrieve_legal_ids": [],
+      "must_not_rank_as_exact": true,
+      "rationale": "Fabricated citations must not receive exact-section grades against real corpus rows.",
+      "related_titles": []
+    },
+    {
+      "control_id": "neg-wrong-title-foia",
+      "control_cid": "bafkreineg000wrongtitlefoia00000000000000000000000002",
+      "control_kind": "wrong_title_confusion",
+      "partition": "dev",
+      "query_text": "35 U.S.C. § 552 FOIA agency records",
+      "expected_behavior": "reject_mismatched_title_section",
+      "must_not_retrieve_legal_ids": [
+        "usc:us:35:101",
+        "usc:us:35:103",
+        "usc:us:35:112"
+      ],
+      "must_not_retrieve_legal_ids_resolved": [
+        {
+          "legal_id": "usc:us:35:101",
+          "entry_cid": "bafkreie35usc1010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "document_id": "doc:35-101"
+        },
+        {
+          "legal_id": "usc:us:35:103",
+          "entry_cid": "bafkreie35usc1030d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "document_id": "doc:35-103"
+        },
+        {
+          "legal_id": "usc:us:35:112",
+          "entry_cid": "bafkreie35usc1120d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "document_id": "doc:35-112"
+        }
+      ],
+      "preferred_legal_ids": ["usc:us:5:552"],
+      "preferred_legal_ids_resolved": [
+        {
+          "legal_id": "usc:us:5:552",
+          "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+          "document_id": "doc:5-552"
+        }
+      ],
+      "must_not_rank_as_exact": true,
+      "rationale": "FOIA is Title 5, not Title 35; patent rows must not be exact hits for a FOIA query with a wrong title prefix.",
+      "related_titles": ["5", "35"]
+    },
+    {
+      "control_id": "neg-state-law-not-usc",
+      "control_cid": "bafkreineg000statelawnotusc00000000000000000000000003",
+      "control_kind": "out_of_corpus_jurisdiction",
+      "partition": "train",
+      "query_text": "Oregon Revised Statutes public records disclosure ORS 192.314",
+      "expected_behavior": "no_exact_hit",
+      "must_not_retrieve_legal_ids": [
+        "usc:us:5:552",
+        "usc:us:5:552a"
+      ],
+      "must_not_retrieve_legal_ids_resolved": [
+        {
+          "legal_id": "usc:us:5:552",
+          "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+          "document_id": "doc:5-552"
+        },
+        {
+          "legal_id": "usc:us:5:552a",
+          "entry_cid": "bafkreie5usc552a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8",
+          "document_id": "doc:5-552a"
+        }
+      ],
+      "must_not_rank_as_exact": true,
+      "rationale": "State public-records law is out of U.S. Code corpus scope for exact-section labels.",
+      "related_titles": ["5"]
+    },
+    {
+      "control_id": "neg-unrelated-section-230",
+      "control_cid": "bafkreineg000unrelatedsection230000000000000000000004",
+      "control_kind": "lexical_decoy",
+      "partition": "test",
+      "query_text": "Section 230 of the National Housing Act mortgage insurance",
+      "expected_behavior": "no_exact_hit_for_communications_act",
+      "must_not_retrieve_legal_ids": ["usc:us:47:230"],
+      "must_not_retrieve_legal_ids_resolved": [
+        {
+          "legal_id": "usc:us:47:230",
+          "entry_cid": "bafkreie47usc2300d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "document_id": "doc:47-230"
+        }
+      ],
+      "must_not_rank_as_exact": true,
+      "rationale": "Homonym 'Section 230' must not force 47 U.S.C. § 230 as an exact hit when the query names a different statute family.",
+      "related_titles": ["47"]
+    },
+    {
+      "control_id": "neg-recovery-quarantine",
+      "control_cid": "bafkreineg000recoveryquarantine0000000000000000000005",
+      "control_kind": "recovery_row_contamination",
+      "partition": "dev",
+      "query_text": "any U.S. Code section from recovery metadata dump",
+      "expected_behavior": "exclude_recovery_rows",
+      "must_not_retrieve_entry_cid_prefixes": ["recovery:", "quarantine:"],
+      "must_not_rank_as_exact": true,
+      "rationale": "Heterogeneous recovery rows without canonical CIDs must never enter default search results or gold exact hits.",
+      "related_titles": []
+    },
+    {
+      "control_id": "neg-currentness-without-release",
+      "control_cid": "bafkreineg000currentnesswithoutrelease00000000000006",
+      "control_kind": "currentness_overclaim",
+      "partition": "test",
+      "query_text": "is 47 U.S.C. § 230 still good law right now without naming a release",
+      "expected_behavior": "expose_release_or_abstain",
+      "must_not_claim_wall_clock_currentness": true,
+      "preferred_legal_ids": ["usc:us:47:230"],
+      "preferred_legal_ids_resolved": [
+        {
+          "legal_id": "usc:us:47:230",
+          "entry_cid": "bafkreie47usc2300d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "document_id": "doc:47-230"
+        }
+      ],
+      "rationale": "Even when § 230 is the topical match, answers must expose the sealed release point and must not claim wall-clock currentness.",
+      "related_titles": ["47"]
+    },
+    {
+      "control_id": "neg-cross-title-false-friend",
+      "control_cid": "bafkreineg000crosstitlefalsefriend0000000000000000007",
+      "control_kind": "false_friend",
+      "partition": "train",
+      "query_text": "automatic stay under the copyright fair use statute",
+      "expected_behavior": "no_joint_exact_hit",
+      "must_not_jointly_exact": [
+        "usc:us:11:362",
+        "usc:us:17:107"
+      ],
+      "rationale": "Conjoined unrelated doctrines must not both be graded exact for a contradictory query; at most one topical match may be relevant.",
+      "related_titles": ["11", "17"]
+    },
+    {
+      "control_id": "neg-empty-or-noise-query",
+      "control_cid": "bafkreineg000emptyornoisequery0000000000000000000008",
+      "control_kind": "noise_query",
+      "partition": "dev",
+      "query_text": "the the a an of statute law code",
+      "expected_behavior": "no_exact_hit",
+      "must_not_rank_as_exact": true,
+      "rationale": "Stopword/noise queries must not produce confident exact-section hits.",
+      "related_titles": []
+    },
+    {
+      "control_id": "neg-private-advice",
+      "control_cid": "bafkreineg000privateadvice00000000000000000000000009",
+      "control_kind": "individualized_advice",
+      "partition": "test",
+      "query_text": "should I file my FOIA request tomorrow and will I win if denied",
+      "expected_behavior": "abstain_or_research_aid_only",
+      "must_not_rank_as_exact": false,
+      "preferred_legal_ids": ["usc:us:5:552"],
+      "preferred_legal_ids_resolved": [
+        {
+          "legal_id": "usc:us:5:552",
+          "entry_cid": "bafkreie8c6f1b7a0d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a8c",
+          "document_id": "doc:5-552"
+        }
+      ],
+      "rationale": "Individualized outcome advice is out of scope; systems may retrieve FOIA text as research aid but must not present a win/lose prediction as gold exact authority.",
+      "related_titles": ["5"]
+    },
+    {
+      "control_id": "neg-nonexistent-subsection",
+      "control_cid": "bafkreineg000nonexistentsubsection000000000000000010",
+      "control_kind": "fabricated_subsection",
+      "partition": "train",
+      "query_text": "35 U.S.C. § 101(z)(9) imaginary eligibility exception",
+      "expected_behavior": "no_exact_subsection_hit",
+      "must_not_retrieve_legal_ids": [],
+      "preferred_legal_ids": ["usc:us:35:101"],
+      "preferred_legal_ids_resolved": [
+        {
+          "legal_id": "usc:us:35:101",
+          "entry_cid": "bafkreie35usc1010d4e9c2f5a8b1d3e6f9a2c5e8b1d4f7a0c3e6b9d2f5a",
+          "document_id": "doc:35-101"
+        }
+      ],
+      "must_not_rank_as_exact": true,
+      "rationale": "Fabricated subsections must not receive exact subsection grades; parent section may be relevant only with ambiguity/abstention notes.",
+      "related_titles": ["35"]
+    }
+  ],
+  "counts": {
+    "controls": 10,
+    "partition_control_counts": {
+      "train": 3,
+      "dev": 3,
+      "test": 4
+    }
+  },
+  "frozen": true,
+  "ground_truth_policy": "human_reviewed_negative_controls_no_model_labels"
+}
