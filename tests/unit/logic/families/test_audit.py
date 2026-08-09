@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.logic.families.audit import (
     AUDIT_INTERFACE,
     AUDIT_SCHEMA_VERSION,

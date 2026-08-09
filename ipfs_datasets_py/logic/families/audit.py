@@ -12,7 +12,7 @@ import json
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
 
@@ -59,7 +59,7 @@ _FAMILY_CONTEXT_KEYS: Final[frozenset[str]] = frozenset(
 )
 
 
-class FamilyLabelKind(str, Enum):
+class FamilyLabelKind(StrEnum):
     """Namespace role of an observed family-like label."""
 
     CANONICAL_FAMILY = "canonical_family"
@@ -74,7 +74,7 @@ class FamilyLabelKind(str, Enum):
     UNKNOWN = "unknown"
 
 
-class DriftSeverity(str, Enum):
+class DriftSeverity(StrEnum):
     """How seriously a non-canonical label should be treated."""
 
     NONE = "none"
@@ -761,7 +761,7 @@ def _scan_python_source(
                 for literal in _extract_string_constants(node.value):
                     add(literal, getattr(node, "lineno", None), name)
         elif isinstance(node, ast.Dict):
-            for key_node, value_node in zip(node.keys, node.values):
+            for key_node, value_node in zip(node.keys, node.values, strict=True):
                 key_name = _context_name(key_node)
                 if key_name in _FAMILY_CONTEXT_KEYS:
                     for literal in _extract_string_constants(value_node):
