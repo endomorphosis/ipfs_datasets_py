@@ -3509,6 +3509,46 @@ def _retry_reset_bootstrap_json_bytes(payload: Mapping[str, Any]) -> bytes:
     ).encode("utf-8")
 
 
+def _prepare_retry_reset_bootstrap_runtime_root() -> Path:
+    """Create one private runtime root before DuckDB can create its database."""
+
+    import stat
+
+    raw_root = RUNTIME_ROOT.absolute()
+    expected_database = raw_root / "control.duckdb"
+    if DATABASE_PATH.absolute() != expected_database:
+        raise RuntimeError("bootstrap database path is not canonical")
+    parent = raw_root.parent
+    try:
+        parent_metadata = parent.lstat()
+    except OSError as exc:
+        raise RuntimeError("bootstrap runtime parent is unavailable") from exc
+    if (
+        stat.S_ISLNK(parent_metadata.st_mode)
+        or not stat.S_ISDIR(parent_metadata.st_mode)
+        or parent_metadata.st_uid != os.geteuid()
+        or parent.resolve() != parent
+    ):
+        raise RuntimeError("bootstrap runtime parent is not owner-controlled")
+    try:
+        os.mkdir(raw_root, mode=0o700)
+    except FileExistsError:
+        pass
+    try:
+        metadata = raw_root.lstat()
+    except OSError as exc:
+        raise RuntimeError("bootstrap runtime root is unavailable") from exc
+    if (
+        stat.S_ISLNK(metadata.st_mode)
+        or not stat.S_ISDIR(metadata.st_mode)
+        or metadata.st_uid != os.geteuid()
+        or stat.S_IMODE(metadata.st_mode) != 0o700
+        or raw_root.resolve() != raw_root
+    ):
+        raise RuntimeError("bootstrap runtime root is not private and owner-controlled")
+    return raw_root
+
+
 def _assert_retry_reset_bootstrap_root(
     source: Any, *, tighten_database_mode: bool = False
 ) -> Path:
@@ -10865,6 +10905,7 @@ def _validate_bootstrap_validator_receipt(
 
 
 def cmd_bootstrap(args: argparse.Namespace) -> int:
+    _prepare_retry_reset_bootstrap_runtime_root()
     DuckDBTaskSource, _providers = _accelerate_imports()
     repository_tree = _repository_tree_id()
     source = DuckDBTaskSource(DATABASE_PATH)

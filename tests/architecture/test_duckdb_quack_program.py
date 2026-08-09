@@ -557,7 +557,9 @@ def test_cmd_bootstrap_fails_integrity_before_authority_or_success_output(
     monkeypatch.setattr(
         program, "_accelerate_imports", lambda: (InvalidSource, (lambda: False,))
     )
-    monkeypatch.setattr(program, "DATABASE_PATH", tmp_path / "control.duckdb")
+    runtime_root = tmp_path / "runtime"
+    monkeypatch.setattr(program, "RUNTIME_ROOT", runtime_root)
+    monkeypatch.setattr(program, "DATABASE_PATH", runtime_root / "control.duckdb")
     monkeypatch.setattr(program, "_repository_tree_id", lambda: "tree:invalid")
     monkeypatch.setattr(
         program,
@@ -569,6 +571,130 @@ def test_cmd_bootstrap_fails_integrity_before_authority_or_success_output(
         program.cmd_bootstrap(SimpleNamespace(expected_absent=True))
     captured = capsys.readouterr()
     assert captured.out == ""
+    assert runtime_root.stat().st_mode & 0o777 == 0o700
+
+
+def test_cmd_bootstrap_refuses_an_unsafe_preexisting_runtime_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    runtime_root = tmp_path / "runtime"
+    runtime_root.mkdir(mode=0o775)
+    monkeypatch.setattr(program, "RUNTIME_ROOT", runtime_root)
+    monkeypatch.setattr(program, "DATABASE_PATH", runtime_root / "control.duckdb")
+    monkeypatch.setattr(
+        program,
+        "_accelerate_imports",
+        lambda: pytest.fail("unsafe runtime root must fail before DuckDB import"),
+    )
+
+    with pytest.raises(RuntimeError, match="not private and owner-controlled"):
+        program.cmd_bootstrap(SimpleNamespace(expected_absent=True))
+
+    assert not (runtime_root / "control.duckdb").exists()
+
+
+@pytest.mark.parametrize("database_kind", ("wrong-name", "outside"))
+def test_cmd_bootstrap_refuses_noncanonical_database_path_without_mutation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    database_kind: str,
+) -> None:
+    runtime_root = tmp_path / "runtime"
+    database_path = (
+        runtime_root / "other.duckdb"
+        if database_kind == "wrong-name"
+        else tmp_path / "outside" / "control.duckdb"
+    )
+    monkeypatch.setattr(program, "RUNTIME_ROOT", runtime_root)
+    monkeypatch.setattr(program, "DATABASE_PATH", database_path)
+    monkeypatch.setattr(
+        program,
+        "_accelerate_imports",
+        lambda: pytest.fail("noncanonical database path must fail before import"),
+    )
+
+    with pytest.raises(RuntimeError, match="database path is not canonical"):
+        program.cmd_bootstrap(SimpleNamespace(expected_absent=True))
+
+    assert not runtime_root.exists()
+    assert not database_path.exists()
+
+
+def test_cmd_bootstrap_refuses_symlinked_runtime_ancestor_without_mutation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    target_parent = tmp_path / "target-parent"
+    target_parent.mkdir()
+    linked_parent = tmp_path / "linked-parent"
+    linked_parent.symlink_to(target_parent, target_is_directory=True)
+    runtime_root = linked_parent / "runtime"
+    monkeypatch.setattr(program, "RUNTIME_ROOT", runtime_root)
+    monkeypatch.setattr(program, "DATABASE_PATH", runtime_root / "control.duckdb")
+    monkeypatch.setattr(
+        program,
+        "_accelerate_imports",
+        lambda: pytest.fail("symlinked runtime parent must fail before import"),
+    )
+
+    with pytest.raises(RuntimeError, match="runtime parent is not owner-controlled"):
+        program.cmd_bootstrap(SimpleNamespace(expected_absent=True))
+
+    assert linked_parent.is_symlink()
+    assert not (target_parent / "runtime").exists()
+
+
+@pytest.mark.parametrize("root_kind", ("symlink", "file"))
+def test_cmd_bootstrap_refuses_non_directory_runtime_root_without_replacement(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    root_kind: str,
+) -> None:
+    runtime_root = tmp_path / "runtime"
+    if root_kind == "symlink":
+        target = tmp_path / "target"
+        target.mkdir()
+        runtime_root.symlink_to(target, target_is_directory=True)
+    else:
+        runtime_root.write_text("preserve\n", encoding="utf-8")
+    monkeypatch.setattr(program, "RUNTIME_ROOT", runtime_root)
+    monkeypatch.setattr(program, "DATABASE_PATH", runtime_root / "control.duckdb")
+    monkeypatch.setattr(
+        program,
+        "_accelerate_imports",
+        lambda: pytest.fail("invalid runtime root must fail before import"),
+    )
+
+    with pytest.raises(RuntimeError, match="runtime root is not private"):
+        program.cmd_bootstrap(SimpleNamespace(expected_absent=True))
+
+    if root_kind == "symlink":
+        assert runtime_root.is_symlink()
+        assert not (tmp_path / "target" / "control.duckdb").exists()
+    else:
+        assert runtime_root.read_text(encoding="utf-8") == "preserve\n"
+
+
+def test_cmd_bootstrap_refuses_foreign_runtime_parent_without_mutation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    runtime_root = tmp_path / "runtime"
+    monkeypatch.setattr(program, "RUNTIME_ROOT", runtime_root)
+    monkeypatch.setattr(program, "DATABASE_PATH", runtime_root / "control.duckdb")
+    owner_uid = os.geteuid()
+    monkeypatch.setattr(program.os, "geteuid", lambda: owner_uid + 1)
+    monkeypatch.setattr(
+        program,
+        "_accelerate_imports",
+        lambda: pytest.fail("foreign runtime parent must fail before import"),
+    )
+
+    with pytest.raises(RuntimeError, match="runtime parent is not owner-controlled"):
+        program.cmd_bootstrap(SimpleNamespace(expected_absent=True))
+
+    assert not runtime_root.exists()
 
 
 def test_cmd_bootstrap_requires_clean_retry_inspection_before_output(
@@ -593,7 +719,9 @@ def test_cmd_bootstrap_requires_clean_retry_inspection_before_output(
     monkeypatch.setattr(
         program, "_accelerate_imports", lambda: (ValidSource, (lambda: False,))
     )
-    monkeypatch.setattr(program, "DATABASE_PATH", tmp_path / "control.duckdb")
+    runtime_root = tmp_path / "runtime"
+    monkeypatch.setattr(program, "RUNTIME_ROOT", runtime_root)
+    monkeypatch.setattr(program, "DATABASE_PATH", runtime_root / "control.duckdb")
     monkeypatch.setattr(program, "_repository_tree_id", lambda: "tree:valid")
 
     monkeypatch.setattr(
