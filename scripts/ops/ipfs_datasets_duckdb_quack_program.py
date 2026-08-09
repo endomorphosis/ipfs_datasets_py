@@ -3711,7 +3711,8 @@ def render_markdown(source: Any) -> str:
                 f"- Status/revision: `{task['status']}` / `{task['revision']}`",
                 f"- Goal: `{task['goal_id']}`; priority: `{task['priority']}`; track: `{task['track']}`",
                 "- Depends on: " + (", ".join(f"`{item}`" for item in task["depends_on"]) or "none"),
-                "- Outputs: " + ", ".join(f"`{item}`" for item in outputs),
+                "- Outputs: "
+                + (", ".join(f"`{item}`" for item in outputs) or "none"),
                 "",
                 str(task["objective"]),
                 "",

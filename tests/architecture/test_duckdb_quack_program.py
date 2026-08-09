@@ -297,6 +297,8 @@ def test_markdown_and_json_are_deterministic_database_exports(task_source) -> No
     assert "DQK-101" in first_markdown
     assert "DQK-102" in first_markdown
     assert "DQK-103" in first_markdown
+    assert "- Outputs: none" in first_markdown
+    assert all(line == line.rstrip() for line in first_markdown.splitlines())
     assert "Owned Parquet in lifecycle-managed object / filesystem storage" in first_markdown
     assert "Owned Parquet in object / IPFS-addressed storage" not in first_markdown
     assert "DQK-055" in first_markdown
