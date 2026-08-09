@@ -27,7 +27,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Validator reports valid, all control files are tracked, and the sealed scheduler preflight accepts the board.
 
 ## USCIR-001 Freeze the pinned US Code baseline audit
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
