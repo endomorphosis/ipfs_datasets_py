@@ -315,7 +315,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Fixtures exercise artifact families, 4,096 bounds, immutable resolution, vector-space IDs, and graph variations; incompatible assumptions raise typed errors.
 
 ## USCIR-013 Implement the versioned legal BM25 tokenizer
-- Status: todo
+- Status: completed
+- Operator resolution: rescued_from_dirty_worktree_with_canonicalization_fixes; pytest passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
