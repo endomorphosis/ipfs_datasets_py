@@ -15,7 +15,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python scripts/validate_uscode_sparse_graphrag_board.py --check-all
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: control-plane
-- Parallel lane: 0
+- Parallel lane: 2
 - Resource class: control-plane
 - Token class: medium
 - Estimated tokens: 12000
@@ -39,7 +39,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/scripts/test_audit_uscode_hf_baseline.py -q; python scripts/ops/legal_data/audit_uscode_hf_baseline.py --fixture-only --check
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: foundation-contracts
-- Parallel lane: 1
+- Parallel lane: 3
 - Resource class: cpu-small
 - Token class: medium
 - Estimated tokens: 14000
@@ -63,7 +63,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/logic/legal_ir/test_uscode_release_schema.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: foundation-contracts
-- Parallel lane: 2
+- Parallel lane: 0
 - Resource class: cpu-small
 - Token class: large
 - Estimated tokens: 18000
@@ -135,7 +135,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_scrapers/test_uscode_release_catalog.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: legal-corpus
-- Parallel lane: 1
+- Parallel lane: 0
 - Resource class: network-bounded
 - Token class: large
 - Estimated tokens: 20000
@@ -153,7 +153,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Review only: false
 - Priority: P0
 - Track: corpus
-- Depends on: USCIR-002, USCIR-004
+- Depends on: USCIR-000
 - Goal id: USCIR-G020
 - Outputs: ipfs_datasets_py/processors/legal_data/uscode_identity.py, tests/unit/processors/legal_data/test_uscode_identity.py, tests/fixtures/legal_ir/uscode_identity_collisions.json
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_identity.py -q
@@ -166,7 +166,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Predicted files: ipfs_datasets_py/processors/legal_data/uscode_identity.py, tests/unit/processors/legal_data/test_uscode_identity.py, tests/fixtures/legal_ir/uscode_identity_collisions.json
 - Allow concurrent with: USCIR-005, USCIR-007, USCIR-009, USCIR-010, USCIR-013
 - Conflict policy: owns identity parser/normalizer and collision fixture; legacy parser integration waits for USCIR-029
-- Preconditions: Schema defines stable legal ID separately from content CID and release-local row index.
+- Preconditions: The sealed plan defines stable legal ID separately from content CID and release-local row index; USCIR-002 later verifies the shared release schema against this file-disjoint identity module.
 - Effects: Handles Unicode en/em dashes, appendix/note/granule/edition identity, canonical citation text, and deterministic chunk parent identity.
 - Acceptance: All 1,798 known truncated-ID collision rows remain distinguishable, Unicode section fixtures parse fully, and duplicate primary keys fail validation.
 
@@ -177,20 +177,20 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Review only: false
 - Priority: P0
 - Track: corpus
-- Depends on: USCIR-002, USCIR-003
+- Depends on: USCIR-000
 - Goal id: USCIR-G020
 - Outputs: ipfs_datasets_py/processors/legal_data/uscode_chunker.py, tests/unit/processors/legal_data/test_uscode_chunker.py, tests/fixtures/legal_ir/uscode_chunk_boundaries.json
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_chunker.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: legal-corpus
-- Parallel lane: 3
+- Parallel lane: 1
 - Resource class: cpu-small
 - Token class: large
 - Estimated tokens: 18000
 - Predicted files: ipfs_datasets_py/processors/legal_data/uscode_chunker.py, tests/unit/processors/legal_data/test_uscode_chunker.py, tests/fixtures/legal_ir/uscode_chunk_boundaries.json
 - Allow concurrent with: USCIR-005, USCIR-006, USCIR-009, USCIR-010, USCIR-013
 - Conflict policy: owns semantic segmentation only; physical sharding belongs to USCIR-009
-- Preconditions: Model token ceiling is an explicit argument; 4,096-row storage limit is not reused as an implicit token limit.
+- Preconditions: The sealed plan requires a model token ceiling as an explicit argument; 4,096-row storage limit is not reused as an implicit token limit, and USCIR-003 later evaluates the chunker against the sealed gold set.
 - Effects: Splits oversized provisions on subsection/paragraph boundaries with stable text/token offsets, controlled overlap, parent paths, and deterministic CIDs.
 - Acceptance: No non-exempt chunk exceeds the selected model limit, exact text reconstruction is tested, boundaries are deterministic, and huge-section behavior is bounded.
 
@@ -207,7 +207,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_corpus.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: legal-corpus
-- Parallel lane: 0
+- Parallel lane: 3
 - Resource class: memory-medium
 - Token class: large
 - Estimated tokens: 22000
@@ -231,7 +231,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_artifacts.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: shared-hf-graphrag
-- Parallel lane: 1
+- Parallel lane: 3
 - Resource class: cpu-small
 - Token class: large
 - Estimated tokens: 22000
@@ -255,7 +255,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_resolver.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: shared-hf-graphrag
-- Parallel lane: 2
+- Parallel lane: 1
 - Resource class: network-bounded
 - Token class: large
 - Estimated tokens: 22000
@@ -303,7 +303,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_reference_compatibility.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: shared-hf-graphrag
-- Parallel lane: 0
+- Parallel lane: 3
 - Resource class: cpu-small
 - Token class: medium
 - Estimated tokens: 14000
@@ -327,7 +327,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_tokenizer.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: sparse-index
-- Parallel lane: 1
+- Parallel lane: 3
 - Resource class: cpu-small
 - Token class: medium
 - Estimated tokens: 14000
@@ -351,7 +351,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_bm25.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: sparse-index
-- Parallel lane: 2
+- Parallel lane: 3
 - Resource class: memory-medium
 - Token class: large
 - Estimated tokens: 22000
@@ -375,7 +375,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_bm25.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: sparse-index
-- Parallel lane: 3
+- Parallel lane: 0
 - Resource class: memory-large
 - Token class: large
 - Estimated tokens: 22000
@@ -447,7 +447,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_vectors.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: vector-index
-- Parallel lane: 2
+- Parallel lane: 3
 - Resource class: memory-large
 - Token class: large
 - Estimated tokens: 26000
@@ -471,7 +471,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_vectors.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: vector-index
-- Parallel lane: 3
+- Parallel lane: 1
 - Resource class: memory-large
 - Token class: large
 - Estimated tokens: 22000
@@ -495,7 +495,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/integration/legal_data/test_uscode_vector_recall.py -q; python scripts/ops/legal_data/evaluate_uscode_vectors.py --fixture-only --check
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: vector-index
-- Parallel lane: 0
+- Parallel lane: 2
 - Resource class: accelerator-optional
 - Token class: medium
 - Estimated tokens: 16000
@@ -519,7 +519,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_graph.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: legal-graph
-- Parallel lane: 1
+- Parallel lane: 3
 - Resource class: memory-medium
 - Token class: large
 - Estimated tokens: 24000
@@ -543,7 +543,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_graph.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: legal-graph
-- Parallel lane: 2
+- Parallel lane: 3
 - Resource class: memory-large
 - Token class: large
 - Estimated tokens: 24000
@@ -567,7 +567,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_lexical_graph.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: legal-graph
-- Parallel lane: 3
+- Parallel lane: 2
 - Resource class: memory-large
 - Token class: large
 - Estimated tokens: 22000
@@ -591,7 +591,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/integration/legal_data/test_uscode_graph_integrity.py -q; python scripts/ops/legal_data/evaluate_uscode_graph.py --fixture-only --check
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: legal-graph
-- Parallel lane: 0
+- Parallel lane: 2
 - Resource class: cpu-large
 - Token class: medium
 - Estimated tokens: 16000
@@ -639,7 +639,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_remote_search.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: remote-query
-- Parallel lane: 2
+- Parallel lane: 1
 - Resource class: network-bounded
 - Token class: large
 - Estimated tokens: 22000
@@ -663,7 +663,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_query.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: remote-query
-- Parallel lane: 3
+- Parallel lane: 0
 - Resource class: network-bounded
 - Token class: large
 - Estimated tokens: 26000
@@ -735,7 +735,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_build.py -q; python scripts/ops/legal_data/build_uscode_sparse_graphrag.py --help
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: release-builder
-- Parallel lane: 2
+- Parallel lane: 0
 - Resource class: memory-large
 - Token class: large
 - Estimated tokens: 26000
@@ -759,7 +759,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_hf_release.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: release-builder
-- Parallel lane: 3
+- Parallel lane: 0
 - Resource class: memory-medium
 - Token class: large
 - Estimated tokens: 26000
@@ -783,7 +783,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/scripts/test_stage_uscode_sparse_graphrag.py -q; python scripts/ops/legal_data/stage_uscode_sparse_graphrag.py --fixture-only --dry-run
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: release-builder
-- Parallel lane: 0
+- Parallel lane: 3
 - Resource class: network-bounded
 - Token class: medium
 - Estimated tokens: 16000
@@ -807,7 +807,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/integration/legal_data/test_uscode_sparse_graphrag.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: evaluation
-- Parallel lane: 1
+- Parallel lane: 0
 - Resource class: cpu-large
 - Token class: large
 - Estimated tokens: 22000
@@ -831,7 +831,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/security/test_uscode_hf_release.py -q
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: evaluation
-- Parallel lane: 2
+- Parallel lane: 1
 - Resource class: cpu-medium
 - Token class: large
 - Estimated tokens: 20000
@@ -855,7 +855,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/scripts/test_evaluate_uscode_sparse_graphrag.py -q; python scripts/ops/legal_data/evaluate_uscode_sparse_graphrag.py --fixture-only --check
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: evaluation
-- Parallel lane: 3
+- Parallel lane: 2
 - Resource class: accelerator-optional
 - Token class: large
 - Estimated tokens: 24000
@@ -879,7 +879,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/integration/legal_data/test_uscode_hf_remote.py -q; python scripts/ops/legal_data/canary_uscode_hf_release.py --fixture-only --check
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: evaluation
-- Parallel lane: 0
+- Parallel lane: 3
 - Resource class: network-bounded
 - Token class: medium
 - Estimated tokens: 18000
@@ -951,7 +951,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/scripts/test_rehearse_uscode_release_handoff.py -q; python scripts/ops/legal_data/rehearse_uscode_release_handoff.py --fixture-only --dry-run
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: rollout
-- Parallel lane: 3
+- Parallel lane: 0
 - Resource class: network-bounded
 - Token class: medium
 - Estimated tokens: 16000
@@ -975,7 +975,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Validation: python -m pytest tests/unit/scripts/test_check_uscode_publication_seal.py -q; python scripts/ops/legal_data/check_uscode_publication_seal.py --seal docs/reports/uscode_publication_seal.json --allow-pending
 - Board namespace: uscode-sparse-graphrag-v1
 - Bundle: rollout
-- Parallel lane: 0
+- Parallel lane: 3
 - Resource class: control-plane
 - Token class: medium
 - Estimated tokens: 14000

@@ -1,31 +1,31 @@
 {
   "schema": "ipfs_datasets_py/uscode-sparse-graphrag-lane-matrix@1",
   "board_namespace": "uscode-sparse-graphrag-v1",
-  "shard_rule": "numeric_task_id_modulo_4",
+  "shard_rule": "int(sha256(full_task_id)[0:8],16)_modulo_4",
   "lanes": [
     {
       "index": 0,
-      "task_suffixes": [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40],
-      "initial_task": "USCIR-004",
-      "focus": ["source authority", "corpus admission", "component evaluation", "CLI", "staging", "canary", "publication gate"]
+      "task_ids": ["USCIR-002", "USCIR-004", "USCIR-005", "USCIR-015", "USCIR-016", "USCIR-027", "USCIR-028", "USCIR-030", "USCIR-031", "USCIR-033", "USCIR-039"],
+      "initial_task_ids": ["USCIR-002", "USCIR-004"],
+      "focus": ["schema", "source authority", "acquisition", "BM25", "legal query", "build and release", "local E2E", "handoff"]
     },
     {
       "index": 1,
-      "task_suffixes": [1, 5, 9, 13, 17, 21, 25, 29, 33, 37],
-      "initial_task": "USCIR-001",
-      "focus": ["baseline", "acquisition", "writers", "tokenizer", "embeddings", "ontology", "query engine", "package adapter", "E2E", "runbook"]
+      "task_ids": ["USCIR-007", "USCIR-010", "USCIR-017", "USCIR-019", "USCIR-025", "USCIR-026", "USCIR-029", "USCIR-034", "USCIR-037"],
+      "initial_task_ids": ["USCIR-007"],
+      "focus": ["chunking", "resolver", "embeddings", "vector binding", "query engine", "adapter", "security", "runbook"]
     },
     {
       "index": 2,
-      "task_suffixes": [2, 6, 10, 14, 18, 22, 26, 30, 34, 38],
-      "initial_task": "USCIR-002",
-      "focus": ["schema", "identity", "resolver", "BM25 layout", "vector layout", "graph layout", "remote search", "orchestration", "security", "candidate receipt"]
+      "task_ids": ["USCIR-000", "USCIR-006", "USCIR-020", "USCIR-023", "USCIR-024", "USCIR-035", "USCIR-038"],
+      "initial_task_ids": ["USCIR-006"],
+      "focus": ["identity", "vector evaluation", "lexical graph", "graph assurance", "combined evaluation", "candidate receipt"]
     },
     {
       "index": 3,
-      "task_suffixes": [3, 7, 11, 15, 19, 23, 27, 31, 35, 39],
-      "initial_task": "USCIR-003",
-      "focus": ["gold set", "chunking", "locators", "legal BM25", "legal vectors", "lexical graph", "legal query", "release packaging", "evaluation", "handoff"]
+      "task_ids": ["USCIR-001", "USCIR-003", "USCIR-008", "USCIR-009", "USCIR-011", "USCIR-012", "USCIR-013", "USCIR-014", "USCIR-018", "USCIR-021", "USCIR-022", "USCIR-032", "USCIR-036", "USCIR-040"],
+      "initial_task_ids": ["USCIR-001", "USCIR-003"],
+      "focus": ["baseline", "gold set", "corpus", "shared writers and locators", "BM25/vector/graph layouts", "staging", "remote canary", "publication gate"]
     }
   ],
   "protected_control_plane": true,

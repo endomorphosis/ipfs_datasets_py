@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -16,7 +17,14 @@ TASK_PREFIX = "USCIR-"
 GOAL_PREFIX = "USCIR-G"
 BOARD_NAMESPACE = "uscode-sparse-graphrag-v1"
 EXPECTED_TASK_IDS = [f"{TASK_PREFIX}{index:03d}" for index in range(41)]
-EXPECTED_INITIAL_READY = [f"{TASK_PREFIX}{index:03d}" for index in range(1, 5)]
+EXPECTED_INITIAL_READY = [
+    "USCIR-001",
+    "USCIR-002",
+    "USCIR-003",
+    "USCIR-004",
+    "USCIR-006",
+    "USCIR-007",
+]
 REQUIRED_TASK_FIELDS = {
     "status",
     "completion",
@@ -199,9 +207,9 @@ def validate(root: Path) -> dict[str, Any]:
             lane = int(str(task.get("parallel_lane", "")))
         except ValueError:
             lane = -1
-        expected_lane = int(task_id[-3:]) % 4
+        expected_lane = int(hashlib.sha256(task_id.encode("utf-8")).hexdigest()[:8], 16) % 4
         if lane != expected_lane:
-            errors.append(f"{task_id}: lane {lane} must equal numeric ID modulo four ({expected_lane})")
+            errors.append(f"{task_id}: lane {lane} must equal the supervisor full-ID hash shard ({expected_lane})")
         try:
             if int(str(task.get("estimated_tokens", "0"))) <= 0:
                 raise ValueError
@@ -344,7 +352,11 @@ def validate(root: Path) -> dict[str, Any]:
         "completed_task_ids": sorted(completed),
         "ready_task_ids": ready,
         "lane_task_counts": {
-            str(lane): sum(1 for task_id in tasks if int(task_id[-3:]) % 4 == lane)
+            str(lane): sum(
+                1
+                for task_id in tasks
+                if int(hashlib.sha256(task_id.encode("utf-8")).hexdigest()[:8], 16) % 4 == lane
+            )
             for lane in range(4)
         },
     }

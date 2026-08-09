@@ -238,16 +238,16 @@ The machine-readable objective heap is in `uscode_sparse_graphrag.objectives.md`
 | `USCIR-G090` | Prove quality, security, performance, and remote behavior | `USCIR-033`–`036` |
 | `USCIR-G100` | Stage, document, canary, and manually seal publication | `USCIR-037`–`040` |
 
-Strict lane ownership is `numeric task id modulo 4`:
+Strict lane ownership is `int(SHA256(full task ID)[0:8], 16) modulo 4`, matching the current supervisor implementation. It deliberately does not use numeric suffix modulo because sequential boards can otherwise concentrate work on one lane. The first six file-disjoint tasks are ready so every hash lane begins with useful work:
 
 | Lane | Initial task | Continuing specialty |
 |---:|---|---|
-| 0 | `USCIR-004` source authority contract | acquisition, release manifest, rollout |
-| 1 | `USCIR-001` frozen baseline | corpus, BM25, package integration |
-| 2 | `USCIR-002` shared schema ADR | shared layouts, graph, quality evaluation |
-| 3 | `USCIR-003` retrieval gold set | vector/query, security, canary |
+| 0 | `USCIR-002` schema/identity contract (`USCIR-004` is also ready) | schema, source policy, builders, rollout |
+| 1 | `USCIR-007` structure-aware chunker | acquisition, resolver, embeddings, query/API integration |
+| 2 | `USCIR-006` canonical legal identity | vector/graph assurance, security, candidate receipt |
+| 3 | `USCIR-001` frozen baseline (`USCIR-003` is also ready) | corpus, BM25/vector/graph layouts, query/release evaluation |
 
-The first four tasks are file-disjoint and ready immediately. Cross-lane dependencies are explicit. Shared exports and package registries are touched only by late integration tasks after their producer tasks are complete. Publication is a review-only terminal task and is not schedulable by implementation agents.
+The first six tasks are file-disjoint and ready immediately; lanes 0 and 3 each queue two while lanes 1 and 2 each start one. Cross-lane dependencies are explicit. Shared exports and package registries are touched only by late integration tasks after their producer tasks are complete. The terminal task assembles a complete human publication-seal request but cannot authorize or execute public mutation.
 
 ## 6. Delivery stages and gates
 

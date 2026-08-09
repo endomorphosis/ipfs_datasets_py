@@ -27,7 +27,9 @@
       "USCIR-001",
       "USCIR-002",
       "USCIR-003",
-      "USCIR-004"
+      "USCIR-004",
+      "USCIR-006",
+      "USCIR-007"
     ],
     "blocked_task_ids": [],
     "terminal_task_id": "USCIR-040",
@@ -85,36 +87,38 @@
       "name": "uscir-lane-0",
       "strict_shard_remainder": 0,
       "initial_task_ids": [
+        "USCIR-002",
         "USCIR-004"
       ],
-      "initial_focus": "official-source-and-release-contract"
+      "initial_focus": "schema-and-official-source-contract"
     },
     {
       "index": 1,
       "name": "uscir-lane-1",
       "strict_shard_remainder": 1,
       "initial_task_ids": [
-        "USCIR-001"
+        "USCIR-007"
       ],
-      "initial_focus": "pinned-baseline-and-corpus"
+      "initial_focus": "structure-aware-legal-chunking"
     },
     {
       "index": 2,
       "name": "uscir-lane-2",
       "strict_shard_remainder": 2,
       "initial_task_ids": [
-        "USCIR-002"
+        "USCIR-006"
       ],
-      "initial_focus": "schema-and-shared-layouts"
+      "initial_focus": "canonical-legal-identity"
     },
     {
       "index": 3,
       "name": "uscir-lane-3",
       "strict_shard_remainder": 3,
       "initial_task_ids": [
+        "USCIR-001",
         "USCIR-003"
       ],
-      "initial_focus": "goldset-and-query-assurance"
+      "initial_focus": "pinned-baseline-and-goldset"
     }
   ],
   "task_groups": {

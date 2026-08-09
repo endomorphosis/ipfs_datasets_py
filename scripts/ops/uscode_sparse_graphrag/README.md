@@ -42,7 +42,7 @@ scripts/ops/uscode_sparse_graphrag/status.sh
 scripts/ops/uscode_sparse_graphrag/status.sh --json --observe-seconds 20
 ```
 
-Exit status is zero only for `starting`, `healthy`, or cryptographically/current-board-proven `completed`. Health requires exact process identity and ownership, fresh supervisor heartbeats, no duplicate/orphan process, no protected-path incident, no blocked work, bounded active worker/log age, and no ready-without-worker stall. The observed form takes two samples and rejects healthy lanes whose heartbeat and durable progress both remain unchanged.
+Exit status is zero only for `starting`, `healthy`, or cryptographically/current-board-proven `completed`. Health requires exact process identity and ownership, fresh supervisor heartbeats, no duplicate/orphan process, no protected-path incident, no blocked work, bounded active worker/log age, and no ready-without-worker stall. Host-native workers are bound by process ancestry; isolated Grok/Codex workers behind a container shim are bound to the exact active task worktree recorded by the lane. The observed form takes two samples and rejects healthy lanes whose heartbeat and durable progress both remain unchanged.
 
 Do not infer health from a PID alone. Do not manually start another copy when preflight reports an existing namespace. Reconcile incidents from the state/log receipts before any cleanup, and never delete a runtime tree while a matching process is live.
 

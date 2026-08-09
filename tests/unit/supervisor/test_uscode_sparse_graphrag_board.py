@@ -33,7 +33,7 @@ def test_declared_board_validator_accepts_control_plane() -> None:
         "completed": 1,
         "goals": 11,
         "outputs": 126,
-        "ready": 4,
+        "ready": 6,
         "tasks": 41,
     }
     assert report["ready_task_ids"] == [
@@ -41,6 +41,8 @@ def test_declared_board_validator_accepts_control_plane() -> None:
         "USCIR-002",
         "USCIR-003",
         "USCIR-004",
+        "USCIR-006",
+        "USCIR-007",
     ]
 
 

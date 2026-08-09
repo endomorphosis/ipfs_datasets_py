@@ -311,6 +311,11 @@ def _lane_sample(
     active_task = _string(task, "active_task_id")
     active_phase = _string(task, "active_phase")
     implementation_in_progress = task.get("implementation_in_progress") is True
+    active_worktree = _string(
+        task,
+        "active_worktree_path",
+        "last_implementation_worktree_path",
+    )
     if blocked:
         reasons.append(f"{blocked} blocked task(s)")
     worker_pids: list[int] = []
@@ -319,8 +324,23 @@ def _lane_sample(
             worker_pids.append(int(value))
         except (TypeError, ValueError):
             pass
-    live_workers = [pid for pid in worker_pids if _alive(pid)]
-    declared_workers = max(len(worker_pids), _int(task, "active_worker_count"), _int(status, "active_worker_count"))
+    provider_workers = [
+        process["pid"]
+        for process in processes
+        if active_worktree
+        and _arg_value(process["argv"], "--cwd") == active_worktree
+        and any("grok" in Path(token).name or "codex" in Path(token).name for token in process["argv"][:2])
+    ]
+    live_workers = sorted({
+        *[pid for pid in worker_pids if _alive(pid)],
+        *[pid for pid in provider_workers if _alive(pid)],
+    })
+    declared_workers = max(
+        len(worker_pids),
+        len(provider_workers),
+        _int(task, "active_worker_count"),
+        _int(status, "active_worker_count"),
+    )
     if declared_workers and not live_workers and active_task and not starting:
         reasons.append("active task declares workers but no worker PID is alive")
 
@@ -405,6 +425,7 @@ def _lane_sample(
             "external_reserved_count": external,
             "active_task_id": active_task,
             "active_phase": active_phase,
+            "active_worktree": active_worktree,
             "active_age_seconds": active_age,
             "implementation_in_progress": implementation_in_progress,
             "selection_idle_reason": idle_reason,
@@ -412,7 +433,7 @@ def _lane_sample(
             "progress_age_seconds": progress_age,
             "progress_signature": _progress_signature(task),
         },
-        "workers": {"declared": declared_workers, "pids": worker_pids, "live_pids": live_workers, "active_log": str(active_log) if active_log else "", "active_log_age_seconds": active_log_age},
+        "workers": {"declared": declared_workers, "pids": worker_pids, "provider_pids": provider_workers, "live_pids": live_workers, "active_log": str(active_log) if active_log else "", "active_log_age_seconds": active_log_age},
     }
 
 
@@ -470,9 +491,15 @@ def sample(repo_root: Path, config_path: Path) -> dict[str, Any]:
         joined = "\0".join(process["argv"])
         if config["board_namespace"] in joined or runtime_text in joined:
             scoped.append(process)
+    recognized_provider_pids = {
+        pid
+        for lane in lanes
+        for pid in lane["workers"]["provider_pids"]
+    }
     unowned = [
         process for process in scoped
-        if not master_pid or not _pid_descends_from(process["pid"], master_pid)
+        if process["pid"] not in recognized_provider_pids
+        and (not master_pid or not _pid_descends_from(process["pid"], master_pid))
     ]
     if master_pid:
         unowned = [process for process in unowned if process["pid"] != master_pid]
