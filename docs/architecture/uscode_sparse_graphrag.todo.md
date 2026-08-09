@@ -1,0 +1,987 @@
+# US Code Sparse GraphRAG Supervisor Task Board
+
+This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical line per field. Numeric task IDs are strictly sharded modulo four.
+
+## USCIR-000 Ratify and seal the execution board
+- Status: completed
+- Completion: evidence
+- Is schedulable: false
+- Review only: true
+- Priority: P0
+- Track: program
+- Depends on:
+- Goal id: USCIR-G000
+- Outputs: docs/architecture/USCODE_SPARSE_GRAPHRAG_PLAN.md, docs/architecture/uscode_sparse_graphrag.objectives.md, docs/architecture/uscode_sparse_graphrag.todo.md
+- Validation: python scripts/validate_uscode_sparse_graphrag_board.py --check-all
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: control-plane
+- Parallel lane: 0
+- Resource class: control-plane
+- Token class: medium
+- Estimated tokens: 12000
+- Predicted files: docs/architecture/USCODE_SPARSE_GRAPHRAG_PLAN.md, docs/architecture/uscode_sparse_graphrag.objectives.md, docs/architecture/uscode_sparse_graphrag.todo.md
+- Allow concurrent with: none
+- Conflict policy: protected completed control-plane task; implementation agents must not edit these files
+- Preconditions: Live Hugging Face evidence and prior-pipeline archaeology are recorded.
+- Effects: Freezes scope, terminology, authority, dependencies, file ownership, and release gates.
+- Acceptance: Validator reports valid, all control files are tracked, and the sealed scheduler preflight accepts the board.
+
+## USCIR-001 Freeze the pinned US Code baseline audit
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: foundation
+- Depends on: USCIR-000
+- Goal id: USCIR-G010
+- Outputs: scripts/ops/legal_data/audit_uscode_hf_baseline.py, docs/reports/uscode_sparse_graphrag_baseline.json, tests/unit/scripts/test_audit_uscode_hf_baseline.py
+- Validation: python -m pytest tests/unit/scripts/test_audit_uscode_hf_baseline.py -q; python scripts/ops/legal_data/audit_uscode_hf_baseline.py --fixture-only --check
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: foundation-contracts
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 14000
+- Predicted files: scripts/ops/legal_data/audit_uscode_hf_baseline.py, docs/reports/uscode_sparse_graphrag_baseline.json, tests/unit/scripts/test_audit_uscode_hf_baseline.py
+- Allow concurrent with: USCIR-002, USCIR-003, USCIR-004
+- Conflict policy: owns only the baseline audit script, frozen report, and its test
+- Preconditions: Baseline revision is `75cfc5982dc3a6808614cd4eb9b4238f8f9308b8`; tests cannot require network.
+- Effects: Makes counts, schemas, row groups, identity anomalies, legacy joins, citations, sizes, and viewer validity machine-checkable.
+- Acceptance: Frozen report accounts for 60,077 corpus rows, 60,068 canonical CIDs, 9 recovery rows, 185,563 vectors, legacy BM25/KG counts, 53 titles, and exact pinned revision.
+
+## USCIR-002 Specify the v2 schema and identity ADR
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: foundation
+- Depends on: USCIR-000
+- Goal id: USCIR-G010
+- Outputs: docs/architecture/uscode_sparse_graphrag_schema.md, ipfs_datasets_py/processors/legal_data/uscode_release_schema.py, tests/unit/logic/legal_ir/test_uscode_release_schema.py
+- Validation: python -m pytest tests/unit/logic/legal_ir/test_uscode_release_schema.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: foundation-contracts
+- Parallel lane: 2
+- Resource class: cpu-small
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: docs/architecture/uscode_sparse_graphrag_schema.md, ipfs_datasets_py/processors/legal_data/uscode_release_schema.py, tests/unit/logic/legal_ir/test_uscode_release_schema.py
+- Allow concurrent with: USCIR-001, USCIR-003, USCIR-004
+- Conflict policy: owns versioned release dataclasses/schema and schema ADR; no registry edits
+- Preconditions: Plan decisions for legal ID, entry CID, 4,096 physical bounds, and vector-space identity are authoritative.
+- Effects: Defines corpus, posting, vector, centroid, graph, adjacency, locator, manifest, receipt, and recovery records.
+- Acceptance: Schema rejects positional durable identity, mutable model/release references, ambiguous 4,096 fields, absolute artifact paths, invalid digests, and missing admission/provenance fields.
+
+## USCIR-003 Seal the legal retrieval and graph gold set
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: foundation
+- Depends on: USCIR-000
+- Goal id: USCIR-G010
+- Outputs: tests/fixtures/legal_ir/uscode_sparse_gold.json, tests/fixtures/legal_ir/uscode_sparse_negative_controls.json, docs/reports/uscode_goldset_rationale.md, tests/unit/logic/legal_ir/test_uscode_goldset.py
+- Validation: python -m pytest tests/unit/logic/legal_ir/test_uscode_goldset.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: foundation-contracts
+- Parallel lane: 3
+- Resource class: cpu-small
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: tests/fixtures/legal_ir/uscode_sparse_gold.json, tests/fixtures/legal_ir/uscode_sparse_negative_controls.json, docs/reports/uscode_goldset_rationale.md, tests/unit/logic/legal_ir/test_uscode_goldset.py
+- Allow concurrent with: USCIR-001, USCIR-002, USCIR-004
+- Conflict policy: owns sealed relevance fixtures and rationale only
+- Preconditions: Labels are grounded in the pinned corpus and official source citations; no generated relevance label is treated as authoritative without review evidence.
+- Effects: Freezes exact-section, semantic, citation-path, time-ambiguity, abstention, and negative-control expectations before tuning.
+- Acceptance: Suite covers Titles 5, 11, 17, 18, 26, 28, 31, 35, 42, and 47 with train/dev/test partitions and stable CIDs or legal IDs.
+
+## USCIR-004 Implement the all-title official-source authority contract
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: foundation
+- Depends on: USCIR-000
+- Goal id: USCIR-G010
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_source_policy.py, tests/unit/processors/test_uscode_source_policy.py, tests/fixtures/legal_ir/uscode_release_receipts.json
+- Validation: python -m pytest tests/unit/processors/test_uscode_source_policy.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: foundation-contracts
+- Parallel lane: 0
+- Resource class: cpu-small
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_source_policy.py, tests/unit/processors/test_uscode_source_policy.py, tests/fixtures/legal_ir/uscode_release_receipts.json
+- Allow concurrent with: USCIR-001, USCIR-002, USCIR-003
+- Conflict policy: owns source admission policy and receipt fixtures; reuses but does not edit Title 35 processor
+- Preconditions: OLRC/GovInfo and House release-point roles are documented; unknown or mixed vintages fail closed.
+- Effects: Generalizes exact release, checksum, exclusion, receipt, and currentness-disclaimer contracts to 53 titles.
+- Acceptance: Policy distinguishes proposed latest from approved exact release point, records per-title provenance, rejects unapproved mixed vintages, and supports deterministic resume receipts.
+
+## USCIR-005 Implement the exact all-title release catalog
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: corpus
+- Depends on: USCIR-001, USCIR-004
+- Goal id: USCIR-G020
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/uscode_release_catalog.py, tests/unit/processors/legal_scrapers/test_uscode_release_catalog.py, tests/fixtures/legal_ir/uscode_release_catalog.json
+- Validation: python -m pytest tests/unit/processors/legal_scrapers/test_uscode_release_catalog.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: legal-corpus
+- Parallel lane: 1
+- Resource class: network-bounded
+- Token class: large
+- Estimated tokens: 20000
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/uscode_release_catalog.py, tests/unit/processors/legal_scrapers/test_uscode_release_catalog.py, tests/fixtures/legal_ir/uscode_release_catalog.json
+- Allow concurrent with: USCIR-006, USCIR-007, USCIR-009, USCIR-010, USCIR-013
+- Conflict policy: adds an exact-release catalog module and fixtures; does not rewrite the legacy scraper entry point
+- Preconditions: USCIR-004 source policy is available; unit tests use recorded fixtures and network is opt-in.
+- Effects: Resolves one approved release, enumerates all expected title packages, checkpoints receipts, and reports missing/excluded packages.
+- Acceptance: Fixture acquisition is deterministic, title completeness is explicit, resume does not redownload verified packages, and every accepted package binds checksum and release point.
+
+## USCIR-006 Repair canonical section and edition identity
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: corpus
+- Depends on: USCIR-002, USCIR-004
+- Goal id: USCIR-G020
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_identity.py, tests/unit/processors/legal_data/test_uscode_identity.py, tests/fixtures/legal_ir/uscode_identity_collisions.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_identity.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: legal-corpus
+- Parallel lane: 2
+- Resource class: cpu-small
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_identity.py, tests/unit/processors/legal_data/test_uscode_identity.py, tests/fixtures/legal_ir/uscode_identity_collisions.json
+- Allow concurrent with: USCIR-005, USCIR-007, USCIR-009, USCIR-010, USCIR-013
+- Conflict policy: owns identity parser/normalizer and collision fixture; legacy parser integration waits for USCIR-029
+- Preconditions: Schema defines stable legal ID separately from content CID and release-local row index.
+- Effects: Handles Unicode en/em dashes, appendix/note/granule/edition identity, canonical citation text, and deterministic chunk parent identity.
+- Acceptance: All 1,798 known truncated-ID collision rows remain distinguishable, Unicode section fixtures parse fully, and duplicate primary keys fail validation.
+
+## USCIR-007 Implement structure-aware legal text chunking
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: corpus
+- Depends on: USCIR-002, USCIR-003
+- Goal id: USCIR-G020
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_chunker.py, tests/unit/processors/legal_data/test_uscode_chunker.py, tests/fixtures/legal_ir/uscode_chunk_boundaries.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_chunker.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: legal-corpus
+- Parallel lane: 3
+- Resource class: cpu-small
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_chunker.py, tests/unit/processors/legal_data/test_uscode_chunker.py, tests/fixtures/legal_ir/uscode_chunk_boundaries.json
+- Allow concurrent with: USCIR-005, USCIR-006, USCIR-009, USCIR-010, USCIR-013
+- Conflict policy: owns semantic segmentation only; physical sharding belongs to USCIR-009
+- Preconditions: Model token ceiling is an explicit argument; 4,096-row storage limit is not reused as an implicit token limit.
+- Effects: Splits oversized provisions on subsection/paragraph boundaries with stable text/token offsets, controlled overlap, parent paths, and deterministic CIDs.
+- Acceptance: No non-exempt chunk exceeds the selected model limit, exact text reconstruction is tested, boundaries are deterministic, and huge-section behavior is bounded.
+
+## USCIR-008 Materialize the canonical corpus and recovery quarantine
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: corpus
+- Depends on: USCIR-001, USCIR-005, USCIR-006, USCIR-007
+- Goal id: USCIR-G020
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_corpus.py, tests/unit/processors/legal_data/test_uscode_corpus.py, tests/fixtures/legal_ir/uscode_admission_ledger.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_corpus.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: legal-corpus
+- Parallel lane: 0
+- Resource class: memory-medium
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_corpus.py, tests/unit/processors/legal_data/test_uscode_corpus.py, tests/fixtures/legal_ir/uscode_admission_ledger.json
+- Allow concurrent with: USCIR-009, USCIR-010, USCIR-013
+- Conflict policy: owns the legal corpus projection and ledger; artifact encoding belongs to shared layout tasks
+- Preconditions: Exact release catalog, canonical identity, and chunking contracts pass their unit suites.
+- Effects: Streams normalized laws into canonical retrieval rows, scrubs local paths, records source/proof lineage, and separates recovery/workflow data.
+- Acceptance: Every baseline row has exactly one disposition; admitted rows have complete identity/provenance; the nine recovery records cannot enter corpus, BM25, vector, or graph counts.
+
+## USCIR-009 Implement shared bounded artifact schemas and writers
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: platform
+- Depends on: USCIR-002
+- Goal id: USCIR-G030
+- Outputs: ipfs_datasets_py/retrieval/hf_graphrag/schema.py, ipfs_datasets_py/retrieval/hf_graphrag/artifacts.py, tests/unit/retrieval/hf_graphrag/test_artifacts.py
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_artifacts.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: shared-hf-graphrag
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/retrieval/hf_graphrag/schema.py, ipfs_datasets_py/retrieval/hf_graphrag/artifacts.py, tests/unit/retrieval/hf_graphrag/test_artifacts.py
+- Allow concurrent with: USCIR-005, USCIR-006, USCIR-007, USCIR-010, USCIR-013
+- Conflict policy: owns shared schemas and streaming writer; no domain adapter or package export changes
+- Preconditions: USCIR-002 defines release-level identity and descriptor contracts.
+- Effects: Adds deterministic sort/shard/write helpers, descriptors, bounded Parquet row groups, atomic local staging, and compact-index schemas.
+- Acceptance: Writers enforce 4,096 rows/pointers, stable tie-breakers, confined paths, row/byte/hash descriptors, cleanup on failure, and deterministic fixture output.
+
+## USCIR-010 Harden the immutable Hugging Face resolver and cache
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: platform
+- Depends on: USCIR-001, USCIR-002
+- Goal id: USCIR-G030
+- Outputs: ipfs_datasets_py/retrieval/hf_graphrag/resolver.py, tests/unit/retrieval/hf_graphrag/test_resolver.py, tests/fixtures/hf_graphrag/malicious_manifests.json
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_resolver.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: shared-hf-graphrag
+- Parallel lane: 2
+- Resource class: network-bounded
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/retrieval/hf_graphrag/resolver.py, tests/unit/retrieval/hf_graphrag/test_resolver.py, tests/fixtures/hf_graphrag/malicious_manifests.json
+- Allow concurrent with: USCIR-005, USCIR-006, USCIR-007, USCIR-009, USCIR-013
+- Conflict policy: owns resolver/cache security only; query scoring belongs to USCIR-025
+- Preconditions: Unit tests use a fake Hub transport; credentials are never required for tests.
+- Effects: Resolves immutable 40-hex revisions, verifies paths/sizes/digests/row counts before use, scopes cache by revision, and records safe fetch traces.
+- Acceptance: Mutable revisions, traversal paths, symlinks, digest drift, oversized artifacts, schema mismatch, cache collision, and credential leakage fail closed.
+
+## USCIR-011 Add direct CID-to-corpus and CID-to-vector locators
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: platform
+- Depends on: USCIR-008, USCIR-009
+- Goal id: USCIR-G030
+- Outputs: ipfs_datasets_py/retrieval/hf_graphrag/locators.py, tests/unit/retrieval/hf_graphrag/test_locators.py, tests/fixtures/hf_graphrag/locator_rows.json
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_locators.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: shared-hf-graphrag
+- Parallel lane: 3
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 14000
+- Predicted files: ipfs_datasets_py/retrieval/hf_graphrag/locators.py, tests/unit/retrieval/hf_graphrag/test_locators.py, tests/fixtures/hf_graphrag/locator_rows.json
+- Allow concurrent with: USCIR-010, USCIR-013, USCIR-014
+- Conflict policy: owns compact key-to-shard locators; vector clustering code only consumes the interface
+- Preconditions: Canonical corpus identity and shared shard descriptors are stable.
+- Effects: Enables final-hit hydration and off-centroid graph-frontier embedding fetch by inclusive CID ranges and bounded locator pages.
+- Acceptance: Lookup fetches only the containing artifact/page, rejects overlapping/gapped ranges, handles missing keys explicitly, and is deterministic.
+
+## USCIR-012 Prove shared-substrate compatibility with reference layouts
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: platform
+- Depends on: USCIR-009, USCIR-010, USCIR-011
+- Goal id: USCIR-G030
+- Outputs: tests/unit/retrieval/hf_graphrag/test_reference_compatibility.py, tests/fixtures/hf_graphrag/reference_manifests.json, docs/reports/hf_graphrag_compatibility.md
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_reference_compatibility.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: shared-hf-graphrag
+- Parallel lane: 0
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 14000
+- Predicted files: tests/unit/retrieval/hf_graphrag/test_reference_compatibility.py, tests/fixtures/hf_graphrag/reference_manifests.json, docs/reports/hf_graphrag_compatibility.md
+- Allow concurrent with: USCIR-013, USCIR-014, USCIR-017
+- Conflict policy: test/report task; it may not modify reference domain implementations
+- Preconditions: Shared writer, resolver, and locators are complete; reference manifests are pinned fixtures.
+- Effects: Proves intentional compatibility and documents differences from patent, CVEfixes, and SkillCenter without making their vector spaces interchangeable.
+- Acceptance: Fixtures exercise artifact families, 4,096 bounds, immutable resolution, vector-space IDs, and graph variations; incompatible assumptions raise typed errors.
+
+## USCIR-013 Implement the versioned legal BM25 tokenizer
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: bm25
+- Depends on: USCIR-002, USCIR-003
+- Goal id: USCIR-G040
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_tokenizer.py, tests/unit/processors/legal_data/test_uscode_tokenizer.py, tests/fixtures/legal_ir/uscode_tokenization.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_tokenizer.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: sparse-index
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 14000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_tokenizer.py, tests/unit/processors/legal_data/test_uscode_tokenizer.py, tests/fixtures/legal_ir/uscode_tokenization.json
+- Allow concurrent with: USCIR-005, USCIR-006, USCIR-007, USCIR-009, USCIR-010
+- Conflict policy: owns tokenizer/version fixture only
+- Preconditions: Gold queries include citations, section symbols, punctuation, hyphen/dash variants, abbreviations, and Unicode controls.
+- Effects: Defines deterministic NFKC/case-folding, legal citation token handling, stopword policy, positions, and tokenizer identity.
+- Acceptance: Tokenization is locale-independent, bounded, stable across fixtures, reversible enough for explanations, and distinguishes legally meaningful numeric/citation tokens.
+
+## USCIR-014 Implement the shared sorted BM25 layout
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: bm25
+- Depends on: USCIR-009, USCIR-013
+- Goal id: USCIR-G040
+- Outputs: ipfs_datasets_py/retrieval/hf_graphrag/bm25.py, tests/unit/retrieval/hf_graphrag/test_bm25.py, tests/fixtures/hf_graphrag/bm25_reference.json
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_bm25.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: sparse-index
+- Parallel lane: 2
+- Resource class: memory-medium
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/retrieval/hf_graphrag/bm25.py, tests/unit/retrieval/hf_graphrag/test_bm25.py, tests/fixtures/hf_graphrag/bm25_reference.json
+- Allow concurrent with: USCIR-011, USCIR-013, USCIR-017
+- Conflict policy: owns generic BM25 documents/postings/routing implementation; legal field projection belongs to USCIR-015
+- Preconditions: Shared artifact writer and tokenizer token-stream contract pass.
+- Effects: Streams field statistics, lexicographically sorted terms, bounded posting arrays, term-range indexes, scoring, and explain traces.
+- Acceptance: Terms and postings are globally ordered and complete, no cell exceeds 4,096 pointers, no term shard exceeds 4,096 rows, and sharded scores match the reference formula.
+
+## USCIR-015 Build the US Code field-weighted BM25 release
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: bm25
+- Depends on: USCIR-008, USCIR-013, USCIR-014
+- Goal id: USCIR-G040
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_bm25.py, tests/unit/processors/legal_data/test_uscode_bm25.py, tests/fixtures/legal_ir/uscode_bm25_expected.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_bm25.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: sparse-index
+- Parallel lane: 3
+- Resource class: memory-large
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_bm25.py, tests/unit/processors/legal_data/test_uscode_bm25.py, tests/fixtures/legal_ir/uscode_bm25_expected.json
+- Allow concurrent with: USCIR-012, USCIR-017, USCIR-018
+- Conflict policy: owns legal field projection and BM25 builder adapter; no graph edge materialization
+- Preconditions: Canonical corpus, tokenizer, and shared BM25 layout are available.
+- Effects: Indexes citation, title, heading, hierarchy, body, and note fields with declared weights and filters; binds index root to corpus root.
+- Acceptance: Every admitted corpus chunk has one BM25 document row, source/corpus roots reconcile, field scores are explainable, and legacy k1/b differences are explicit.
+
+## USCIR-016 Differentially validate and tune sparse retrieval
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: bm25
+- Depends on: USCIR-003, USCIR-015
+- Goal id: USCIR-G040
+- Outputs: scripts/ops/legal_data/evaluate_uscode_bm25.py, docs/reports/uscode_bm25_evaluation.json, tests/integration/legal_data/test_uscode_bm25_differential.py
+- Validation: python -m pytest tests/integration/legal_data/test_uscode_bm25_differential.py -q; python scripts/ops/legal_data/evaluate_uscode_bm25.py --fixture-only --check
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: sparse-index
+- Parallel lane: 0
+- Resource class: cpu-large
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/evaluate_uscode_bm25.py, docs/reports/uscode_bm25_evaluation.json, tests/integration/legal_data/test_uscode_bm25_differential.py
+- Allow concurrent with: USCIR-017, USCIR-018, USCIR-021
+- Conflict policy: evaluation/report task; it cannot mutate tokenizer or production weights without a recorded configuration update
+- Preconditions: Gold set is sealed and legal BM25 builder passes unit tests.
+- Effects: Compares unsharded versus routed scores, measures relevance and shard I/O, and selects field/BM25 defaults on the development split.
+- Acceptance: Exact scoring parity is within declared tolerance, test split is reported once, all routed terms are covered, and default parameters have an evidence receipt.
+
+## USCIR-017 Implement pinned legal embedding generation
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: vectors
+- Depends on: USCIR-007, USCIR-009
+- Goal id: USCIR-G050
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_embeddings.py, tests/unit/processors/legal_data/test_uscode_embeddings.py, tests/fixtures/legal_ir/uscode_embedding_contract.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_embeddings.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: vector-index
+- Parallel lane: 1
+- Resource class: accelerator-optional
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_embeddings.py, tests/unit/processors/legal_data/test_uscode_embeddings.py, tests/fixtures/legal_ir/uscode_embedding_contract.json
+- Allow concurrent with: USCIR-012, USCIR-014, USCIR-016, USCIR-021
+- Conflict policy: owns legal model/input projection; clustering and artifact layout belong to USCIR-018
+- Preconditions: Model ID, immutable model revision, license, maximum tokens, pooling, normalization, and input fields are configuration-bound.
+- Effects: Streams reproducible normalized embeddings keyed by canonical chunk CID with input hashes, batching, checkpoints, missing-vector diagnostics, and CPU fallback.
+- Acceptance: Unknown/mutable/placeholder model references fail closed, output keys exactly match admitted chunks, dimensions/norms are validated, and legacy positional vectors are never promoted.
+
+## USCIR-018 Implement deterministic centroid-routed vector shards
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: vectors
+- Depends on: USCIR-009, USCIR-017
+- Goal id: USCIR-G050
+- Outputs: ipfs_datasets_py/retrieval/hf_graphrag/vectors.py, tests/unit/retrieval/hf_graphrag/test_vectors.py, tests/fixtures/hf_graphrag/vector_clusters.json
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_vectors.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: vector-index
+- Parallel lane: 2
+- Resource class: memory-large
+- Token class: large
+- Estimated tokens: 26000
+- Predicted files: ipfs_datasets_py/retrieval/hf_graphrag/vectors.py, tests/unit/retrieval/hf_graphrag/test_vectors.py, tests/fixtures/hf_graphrag/vector_clusters.json
+- Allow concurrent with: USCIR-015, USCIR-016, USCIR-021
+- Conflict policy: owns domain-neutral normalized vector clustering, sorting, and routing layout
+- Preconditions: Shared writer and embedding iterator contracts are stable.
+- Effects: Applies deterministic balanced spherical k-means, recursively splits oversized groups, emits normalized centroids and cosine-sorted 4,096-row shards.
+- Acceptance: Row conservation/uniqueness holds; each centroid has at most 8,192 rows and two shards; each shard has at most 4,096; ordering and deterministic seed behavior are proven.
+
+## USCIR-019 Bind US Code vectors to centroid and direct-CID routes
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: vectors
+- Depends on: USCIR-008, USCIR-011, USCIR-017, USCIR-018
+- Goal id: USCIR-G050
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_vectors.py, tests/unit/processors/legal_data/test_uscode_vectors.py, tests/fixtures/legal_ir/uscode_vector_routes.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_vectors.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: vector-index
+- Parallel lane: 3
+- Resource class: memory-large
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_vectors.py, tests/unit/processors/legal_data/test_uscode_vectors.py, tests/fixtures/legal_ir/uscode_vector_routes.json
+- Allow concurrent with: USCIR-016, USCIR-021, USCIR-022
+- Conflict policy: owns legal vector release adapter and vector locator rows
+- Preconditions: Canonical corpus, embeddings, generic vector layout, and locator interface pass.
+- Effects: Produces centroid routing metadata, entry-CID vector locators, corpus parent links, model/config CIDs, and manifest-ready descriptors.
+- Acceptance: Every embedded chunk appears exactly once, direct CID fetch locates off-centroid graph nodes, centroid routes are bounded, and all roots/revisions reconcile.
+
+## USCIR-020 Measure exhaustive vector recall and choose probe defaults
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: vectors
+- Depends on: USCIR-003, USCIR-019
+- Goal id: USCIR-G050
+- Outputs: scripts/ops/legal_data/evaluate_uscode_vectors.py, docs/reports/uscode_vector_evaluation.json, tests/integration/legal_data/test_uscode_vector_recall.py
+- Validation: python -m pytest tests/integration/legal_data/test_uscode_vector_recall.py -q; python scripts/ops/legal_data/evaluate_uscode_vectors.py --fixture-only --check
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: vector-index
+- Parallel lane: 0
+- Resource class: accelerator-optional
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/evaluate_uscode_vectors.py, docs/reports/uscode_vector_evaluation.json, tests/integration/legal_data/test_uscode_vector_recall.py
+- Allow concurrent with: USCIR-021, USCIR-022, USCIR-025
+- Conflict policy: evaluation/report task; production probe default changes require a recorded config receipt
+- Preconditions: Sealed gold queries and complete vector fixture are available.
+- Effects: Compares centroid-routed versus exhaustive cosine results across probe counts and reports recall, latency, bytes, cluster balance, radius, and failure modes.
+- Acceptance: Default probe count and fallback policy are evidence-backed, the test split is not tuned, and no production-searchable claim exists below the declared recall gate.
+
+## USCIR-021 Define and project the legal ontology and citations
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: graph
+- Depends on: USCIR-003, USCIR-006, USCIR-008
+- Goal id: USCIR-G060
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_graph.py, tests/unit/processors/legal_data/test_uscode_graph.py, tests/fixtures/legal_ir/uscode_graph_expected.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_graph.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: legal-graph
+- Parallel lane: 1
+- Resource class: memory-medium
+- Token class: large
+- Estimated tokens: 24000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_graph.py, tests/unit/processors/legal_data/test_uscode_graph.py, tests/fixtures/legal_ir/uscode_graph_expected.json
+- Allow concurrent with: USCIR-016, USCIR-017, USCIR-018, USCIR-020
+- Conflict policy: owns legal ontology, citation resolution, and evidence projection; generic graph encoding belongs to USCIR-022
+- Preconditions: Canonical legal identity and corpus admission are stable.
+- Effects: Emits deterministic structural, citation, public-law, amendment/repeal/transfer, version, source, and unresolved-reference nodes/edges with evidence spans.
+- Acceptance: Legal and similarity semantics are disjoint, unresolved citations are preserved honestly, source spans are bound, and fixture graph paths match the sealed expectations.
+
+## USCIR-022 Implement shared graph and bounded adjacency layouts
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: graph
+- Depends on: USCIR-009, USCIR-021
+- Goal id: USCIR-G060
+- Outputs: ipfs_datasets_py/retrieval/hf_graphrag/graph.py, tests/unit/retrieval/hf_graphrag/test_graph.py, tests/fixtures/hf_graphrag/graph_adjacency.json
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_graph.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: legal-graph
+- Parallel lane: 2
+- Resource class: memory-large
+- Token class: large
+- Estimated tokens: 24000
+- Predicted files: ipfs_datasets_py/retrieval/hf_graphrag/graph.py, tests/unit/retrieval/hf_graphrag/test_graph.py, tests/fixtures/hf_graphrag/graph_adjacency.json
+- Allow concurrent with: USCIR-019, USCIR-020, USCIR-025
+- Conflict policy: owns domain-neutral node/edge sort, sharding, bidirectional adjacency, and routing indexes
+- Preconditions: Shared writer and legal graph iterators are available.
+- Effects: Exports deterministic nodes/edges, incoming/outgoing paged adjacency, key-range locators, score/priority order, and graph descriptors.
+- Acceptance: No page exceeds 4,096 pointers, forward/inverse adjacency fully reconcile, key ranges are non-overlapping/complete, and dangling/duplicate durable edges fail.
+
+## USCIR-023 Add the postings-backed lexical graph overlay
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: graph
+- Depends on: USCIR-015, USCIR-021, USCIR-022
+- Goal id: USCIR-G060
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_lexical_graph.py, tests/unit/processors/legal_data/test_uscode_lexical_graph.py, tests/fixtures/legal_ir/uscode_bm25_neighbors.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_lexical_graph.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: legal-graph
+- Parallel lane: 3
+- Resource class: memory-large
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_lexical_graph.py, tests/unit/processors/legal_data/test_uscode_lexical_graph.py, tests/fixtures/legal_ir/uscode_bm25_neighbors.json
+- Allow concurrent with: USCIR-020, USCIR-025, USCIR-026
+- Conflict policy: owns lexical overlay/projection; cannot label BM25 similarity as legal citation or authority
+- Preconditions: BM25 postings and legal graph layout are stable.
+- Effects: Exposes virtual term-document traversal through postings and optionally emits deterministic bounded top-K `BM25_NEIGHBOR_OF` edges with scores/config CIDs.
+- Acceptance: Overlay matches BM25 vocabulary/postings, avoids full 13.6M durable lexical-edge expansion by default, neighbor caps are enforced, and edge semantics are explicitly non-authoritative.
+
+## USCIR-024 Reconcile legal graph integrity and coverage
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: graph
+- Depends on: USCIR-003, USCIR-021, USCIR-022, USCIR-023
+- Goal id: USCIR-G060
+- Outputs: scripts/ops/legal_data/evaluate_uscode_graph.py, docs/reports/uscode_graph_evaluation.json, tests/integration/legal_data/test_uscode_graph_integrity.py
+- Validation: python -m pytest tests/integration/legal_data/test_uscode_graph_integrity.py -q; python scripts/ops/legal_data/evaluate_uscode_graph.py --fixture-only --check
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: legal-graph
+- Parallel lane: 0
+- Resource class: cpu-large
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/evaluate_uscode_graph.py, docs/reports/uscode_graph_evaluation.json, tests/integration/legal_data/test_uscode_graph_integrity.py
+- Allow concurrent with: USCIR-025, USCIR-026, USCIR-029
+- Conflict policy: graph assurance task; cannot silently repair graph output during validation
+- Preconditions: Legal graph, shared layout, lexical overlay, and sealed path labels are complete.
+- Effects: Audits node/edge counts, source evidence, citation resolution, unresolved rates, adjacency inversion, lexical parity, duplicate/dangling IDs, and expected paths.
+- Acceptance: Zero unexplained dangling/duplicate durable graph records, 100% adjacency reconciliation, all expected paths pass, and unresolved/error coverage is reported rather than discarded.
+
+## USCIR-025 Implement the bounded remote query engine
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: query
+- Depends on: USCIR-010, USCIR-012, USCIR-014, USCIR-018, USCIR-022
+- Goal id: USCIR-G070
+- Outputs: ipfs_datasets_py/retrieval/hf_graphrag/query.py, tests/unit/retrieval/hf_graphrag/test_query.py, tests/fixtures/hf_graphrag/query_fetch_traces.json
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_query.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: remote-query
+- Parallel lane: 1
+- Resource class: network-bounded
+- Token class: large
+- Estimated tokens: 26000
+- Predicted files: ipfs_datasets_py/retrieval/hf_graphrag/query.py, tests/unit/retrieval/hf_graphrag/test_query.py, tests/fixtures/hf_graphrag/query_fetch_traces.json
+- Allow concurrent with: USCIR-020, USCIR-022, USCIR-024
+- Conflict policy: owns generic query orchestration, budgets, result/explain/fetch-trace contracts; domain weighting belongs to USCIR-027
+- Preconditions: Resolver, reference compatibility, BM25/vector/graph layouts, and fake Hub transport pass.
+- Effects: Routes BM25 terms, scores centroids, exact-scores selected vector shards, hydrates final corpus hits, fetches bounded adjacency, caches verified artifacts, and emits typed partial results.
+- Acceptance: Every file fetch is route-justified and descriptor-verified, limits cover bytes/shards/rows/nodes/edges/depth/time, offline replay is stable, and budget exhaustion is explicit.
+
+## USCIR-026 Add direct remote BM25 and vector search modes
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: query
+- Depends on: USCIR-015, USCIR-019, USCIR-025
+- Goal id: USCIR-G070
+- Outputs: ipfs_datasets_py/retrieval/hf_graphrag/remote_search.py, tests/unit/retrieval/hf_graphrag/test_remote_search.py, tests/fixtures/hf_graphrag/remote_search_results.json
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_remote_search.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: remote-query
+- Parallel lane: 2
+- Resource class: network-bounded
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/retrieval/hf_graphrag/remote_search.py, tests/unit/retrieval/hf_graphrag/test_remote_search.py, tests/fixtures/hf_graphrag/remote_search_results.json
+- Allow concurrent with: USCIR-023, USCIR-024, USCIR-025
+- Conflict policy: owns generic BM25/vector public modes and ranking normalization; no legal graph semantics
+- Preconditions: Legal BM25/vector release adapters and generic query engine are complete.
+- Effects: Provides `bm25_search` and `vector_search`, filters, exact model-space query embedding hook, stable ranking tie-breaks, explanations, and selective hydration.
+- Acceptance: BM25 uses only term-range routes, vectors use only centroid routes plus exact scoring, mutable/mismatched model space fails, and trace fixtures prove sparse I/O.
+
+## USCIR-027 Implement legal hybrid and embedding-guided graph queries
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: query
+- Depends on: USCIR-020, USCIR-023, USCIR-024, USCIR-025, USCIR-026
+- Goal id: USCIR-G070
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_query.py, tests/unit/processors/legal_data/test_uscode_query.py, tests/fixtures/legal_ir/uscode_query_expected.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_query.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: remote-query
+- Parallel lane: 3
+- Resource class: network-bounded
+- Token class: large
+- Estimated tokens: 26000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_query.py, tests/unit/processors/legal_data/test_uscode_query.py, tests/fixtures/legal_ir/uscode_query_expected.json
+- Allow concurrent with: USCIR-028, USCIR-029
+- Conflict policy: owns US Code filters/fusion/graph-walk policy; generic remote mechanics remain in shared modules
+- Preconditions: Vector evaluation default, lexical overlay, graph integrity, and remote search modes are complete.
+- Effects: Adds weighted and reciprocal-rank fusion, citation/title/version filters, neighbors, bounded walk, and semantic-beam walk using direct CID-to-vector routes for frontier nodes.
+- Acceptance: Hybrid explanations preserve component scores, graph walks enforce all budgets, off-centroid frontier vectors are selectively fetched, and similarity edges are never presented as legal authority.
+
+## USCIR-028 Expose the direct-Hugging-Face query CLI
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: query
+- Depends on: USCIR-027
+- Goal id: USCIR-G070
+- Outputs: scripts/ops/legal_data/query_uscode_hf.py, tests/unit/scripts/test_query_uscode_hf.py, docs/guides/USCODE_SPARSE_QUERY_CLI.md
+- Validation: python -m pytest tests/unit/scripts/test_query_uscode_hf.py -q; python scripts/ops/legal_data/query_uscode_hf.py --help
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: remote-query
+- Parallel lane: 0
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/query_uscode_hf.py, tests/unit/scripts/test_query_uscode_hf.py, docs/guides/USCODE_SPARSE_QUERY_CLI.md
+- Allow concurrent with: USCIR-029, USCIR-030
+- Conflict policy: owns CLI and CLI guide; package exports belong to USCIR-029
+- Preconditions: Legal query API is stable and fake Hub fixtures cover all modes.
+- Effects: Exposes pinned repo/revision/cache/budget/filter/output options and six subcommands with JSON fetch traces and human-readable summaries.
+- Acceptance: Help and offline fixture modes run without optional accelerators, secrets never print, invalid/mutable revisions fail, and each command maps exactly to the Python API.
+
+## USCIR-029 Register the US Code adapter and package API
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: integration
+- Depends on: USCIR-012, USCIR-016, USCIR-020, USCIR-024, USCIR-028
+- Goal id: USCIR-G080
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_sparse_graphrag.py, ipfs_datasets_py/knowledge_graphs/adapters/uscode.py, tests/unit/processors/legal_data/test_uscode_sparse_graphrag.py, tests/integration/knowledge_graphs/corpora/test_uscode.py
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_sparse_graphrag.py tests/integration/knowledge_graphs/corpora/test_uscode.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: release-builder
+- Parallel lane: 1
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_sparse_graphrag.py, ipfs_datasets_py/knowledge_graphs/adapters/uscode.py, tests/unit/processors/legal_data/test_uscode_sparse_graphrag.py, tests/integration/knowledge_graphs/corpora/test_uscode.py
+- Allow concurrent with: USCIR-028
+- Conflict policy: serialized integration owner for public adapter/API; minimal existing registry edits must be isolated in its commit and rebased after all producer tasks
+- Preconditions: Shared substrate and corpus/BM25/vector/graph/query assurance tasks pass.
+- Effects: Provides a cohesive legal build/query facade, reconciles existing US Code registry path/CID disagreement, and registers differential/release-gate capability without changing reference-domain behavior.
+- Acceptance: Package imports are lazy/optional-dependency safe, old callers have an explicit compatibility path, adapter roots reconcile, and integration fixtures pass.
+
+## USCIR-030 Implement resumable full and delta build orchestration
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: integration
+- Depends on: USCIR-008, USCIR-015, USCIR-019, USCIR-023, USCIR-029
+- Goal id: USCIR-G080
+- Outputs: scripts/ops/legal_data/build_uscode_sparse_graphrag.py, ipfs_datasets_py/processors/legal_data/uscode_build.py, tests/unit/processors/legal_data/test_uscode_build.py
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_build.py -q; python scripts/ops/legal_data/build_uscode_sparse_graphrag.py --help
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: release-builder
+- Parallel lane: 2
+- Resource class: memory-large
+- Token class: large
+- Estimated tokens: 26000
+- Predicted files: scripts/ops/legal_data/build_uscode_sparse_graphrag.py, ipfs_datasets_py/processors/legal_data/uscode_build.py, tests/unit/processors/legal_data/test_uscode_build.py
+- Allow concurrent with: USCIR-028
+- Conflict policy: owns orchestration/checkpoints; delegates all artifact semantics to producer modules
+- Preconditions: All artifact builders and integrated facade are complete.
+- Effects: Builds by title/artifact family with atomic checkpoints, resumable receipts, deterministic configuration, full/delta planning, resource limits, and validation-only mode.
+- Acceptance: Interrupted fixture build resumes without duplicating verified work, stale/config-mismatched checkpoints fail, global BM25/cluster rebuild decisions are explicit, and no partial output can be sealed.
+
+## USCIR-031 Build the additive Hugging Face release and dataset card
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: integration
+- Depends on: USCIR-010, USCIR-030
+- Goal id: USCIR-G080
+- Outputs: ipfs_datasets_py/processors/legal_data/uscode_hf_release.py, tests/unit/processors/legal_data/test_uscode_hf_release.py, tests/fixtures/legal_ir/uscode_manifest.json, tests/fixtures/legal_ir/uscode_dataset_card.md
+- Validation: python -m pytest tests/unit/processors/legal_data/test_uscode_hf_release.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: release-builder
+- Parallel lane: 3
+- Resource class: memory-medium
+- Token class: large
+- Estimated tokens: 26000
+- Predicted files: ipfs_datasets_py/processors/legal_data/uscode_hf_release.py, tests/unit/processors/legal_data/test_uscode_hf_release.py, tests/fixtures/legal_ir/uscode_manifest.json, tests/fixtures/legal_ir/uscode_dataset_card.md
+- Allow concurrent with: USCIR-032
+- Conflict policy: owns manifest/card/config/release packaging only; never performs remote publication
+- Preconditions: Resumable build produces a validated local artifact tree.
+- Effects: Emits compact manifest/release metadata, explicit viewer configs, legacy compatibility configs, recovery quarantine config, descriptors, admission/quality/lineage reports, and an immutable candidate root.
+- Acceptance: Default config excludes recovery JSON, all advertised configs are schema coherent, every artifact is descriptor-bound, verbose lineage is separate from control plane, and legacy files are not deleted.
+
+## USCIR-032 Implement safe candidate staging and dry-run packaging
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: integration
+- Depends on: USCIR-031
+- Goal id: USCIR-G080
+- Outputs: scripts/ops/legal_data/stage_uscode_sparse_graphrag.py, tests/unit/scripts/test_stage_uscode_sparse_graphrag.py, tests/fixtures/legal_ir/uscode_stage_plan.json
+- Validation: python -m pytest tests/unit/scripts/test_stage_uscode_sparse_graphrag.py -q; python scripts/ops/legal_data/stage_uscode_sparse_graphrag.py --fixture-only --dry-run
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: release-builder
+- Parallel lane: 0
+- Resource class: network-bounded
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/stage_uscode_sparse_graphrag.py, tests/unit/scripts/test_stage_uscode_sparse_graphrag.py, tests/fixtures/legal_ir/uscode_stage_plan.json
+- Allow concurrent with: USCIR-033, USCIR-034
+- Conflict policy: owns staging planner; remote mutation requires explicit staging authorization and cannot target the public production revision by default
+- Preconditions: Release packager yields a fully validated candidate and manifest digest.
+- Effects: Plans add-only uploads to an explicitly named staging target/branch, rejects production targets without a separate seal, supports no-network dry run, and produces redacted receipts.
+- Acceptance: Fixture dry run is deterministic, target/revision/manifest are explicit, deletion/force/visibility changes are impossible, credentials remain environment-only, and no mutation occurs without opt-in authorization.
+
+## USCIR-033 Prove the complete local pipeline end to end
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: assurance
+- Depends on: USCIR-028, USCIR-032
+- Goal id: USCIR-G090
+- Outputs: tests/integration/legal_data/test_uscode_sparse_graphrag.py, tests/fixtures/legal_ir/uscode_e2e_release/, docs/reports/uscode_e2e_local.json
+- Validation: python -m pytest tests/integration/legal_data/test_uscode_sparse_graphrag.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: evaluation
+- Parallel lane: 1
+- Resource class: cpu-large
+- Token class: large
+- Estimated tokens: 22000
+- Predicted files: tests/integration/legal_data/test_uscode_sparse_graphrag.py, tests/fixtures/legal_ir/uscode_e2e_release/, docs/reports/uscode_e2e_local.json
+- Allow concurrent with: USCIR-034
+- Conflict policy: owns a small complete release fixture and local E2E receipt; production modules are read-only to this task
+- Preconditions: CLI, release packager, and staging dry-run planner pass.
+- Effects: Builds every family, validates manifest, resolves locally, exercises six query modes, checks sparse routes, and performs offline replay.
+- Acceptance: Fixture build is deterministic, all root/count joins reconcile, expected results/paths pass, and fetch traces show only routed shards plus final corpus hydration.
+
+## USCIR-034 Add release tamper, resource, and cache security tests
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: assurance
+- Depends on: USCIR-010, USCIR-031
+- Goal id: USCIR-G090
+- Outputs: tests/security/test_uscode_hf_release.py, tests/fixtures/legal_ir/uscode_tamper_cases.json, docs/reports/uscode_release_security.json
+- Validation: python -m pytest tests/security/test_uscode_hf_release.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: evaluation
+- Parallel lane: 2
+- Resource class: cpu-medium
+- Token class: large
+- Estimated tokens: 20000
+- Predicted files: tests/security/test_uscode_hf_release.py, tests/fixtures/legal_ir/uscode_tamper_cases.json, docs/reports/uscode_release_security.json
+- Allow concurrent with: USCIR-032, USCIR-033
+- Conflict policy: assurance-only task; malicious fixtures are confined and never passed to live Hub operations
+- Preconditions: Resolver and release manifest/card implementation are complete.
+- Effects: Tests traversal/absolute/symlink paths, digest/size/row/schema drift, mutable revision, decompression/row limits, cache poisoning, token redaction, and manifest lineage bounds.
+- Acceptance: Every tamper case fails closed with a typed error before unsafe parsing/use, no secret/local absolute path leaks, and valid fixtures remain accepted.
+
+## USCIR-035 Run legal relevance, recall, graph, and I/O evaluation
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: assurance
+- Depends on: USCIR-016, USCIR-020, USCIR-024, USCIR-027, USCIR-033
+- Goal id: USCIR-G090
+- Outputs: scripts/ops/legal_data/evaluate_uscode_sparse_graphrag.py, docs/reports/uscode_sparse_graphrag_evaluation.json, tests/unit/scripts/test_evaluate_uscode_sparse_graphrag.py
+- Validation: python -m pytest tests/unit/scripts/test_evaluate_uscode_sparse_graphrag.py -q; python scripts/ops/legal_data/evaluate_uscode_sparse_graphrag.py --fixture-only --check
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: evaluation
+- Parallel lane: 3
+- Resource class: accelerator-optional
+- Token class: large
+- Estimated tokens: 24000
+- Predicted files: scripts/ops/legal_data/evaluate_uscode_sparse_graphrag.py, docs/reports/uscode_sparse_graphrag_evaluation.json, tests/unit/scripts/test_evaluate_uscode_sparse_graphrag.py
+- Allow concurrent with: USCIR-034
+- Conflict policy: sealed evaluation task; it records configurations and cannot tune on the test split
+- Preconditions: Component evaluations, semantic graph query, and local E2E receipt exist.
+- Effects: Measures Recall/MRR/nDCG, exact-citation success, exhaustive dense recall, graph-path success, abstention, bytes/shards/cache, p50/p95 latency, memory, build throughput, and budget exhaustion.
+- Acceptance: Both component and fused baselines are reported, chosen defaults are declared, regressions/exceptions are explicit, reference hardware/network are recorded, and no unsupported production claim is made.
+
+## USCIR-036 Implement the pinned staged-remote canary and viewer checks
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: assurance
+- Depends on: USCIR-032, USCIR-034, USCIR-035
+- Goal id: USCIR-G090
+- Outputs: tests/integration/legal_data/test_uscode_hf_remote.py, scripts/ops/legal_data/canary_uscode_hf_release.py, tests/fixtures/legal_ir/uscode_remote_canary.json
+- Validation: python -m pytest tests/integration/legal_data/test_uscode_hf_remote.py -q; python scripts/ops/legal_data/canary_uscode_hf_release.py --fixture-only --check
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: evaluation
+- Parallel lane: 0
+- Resource class: network-bounded
+- Token class: medium
+- Estimated tokens: 18000
+- Predicted files: tests/integration/legal_data/test_uscode_hf_remote.py, scripts/ops/legal_data/canary_uscode_hf_release.py, tests/fixtures/legal_ir/uscode_remote_canary.json
+- Allow concurrent with: USCIR-037
+- Conflict policy: network tests are marked opt-in and require an immutable staging revision; default validation uses a fake Hub fixture
+- Preconditions: Security and evaluation gates pass; a remote canary is read-only and must never infer a mutable revision.
+- Effects: Redownloads control indexes and selected shards, verifies Dataset Viewer configs, runs sparse queries twice for cache/offline parity, and records immutable revision/fetch trace.
+- Acceptance: Fixture canary always passes offline; when staging coordinates are explicitly provided the same checks pass remotely at a 40-hex revision with bounded downloads and viewer-valid configs.
+
+## USCIR-037 Document migration, operations, rollback, and legal caveats
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: release
+- Depends on: USCIR-032, USCIR-033, USCIR-034
+- Goal id: USCIR-G100
+- Outputs: docs/guides/USCODE_SPARSE_GRAPHRAG_RUNBOOK.md, docs/guides/USCODE_SPARSE_GRAPHRAG_MIGRATION.md, tests/unit/docs/test_uscode_sparse_runbook.py
+- Validation: python -m pytest tests/unit/docs/test_uscode_sparse_runbook.py -q
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: rollout
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: large
+- Estimated tokens: 18000
+- Predicted files: docs/guides/USCODE_SPARSE_GRAPHRAG_RUNBOOK.md, docs/guides/USCODE_SPARSE_GRAPHRAG_MIGRATION.md, tests/unit/docs/test_uscode_sparse_runbook.py
+- Allow concurrent with: USCIR-036
+- Conflict policy: documentation task; commands are tested against fixture/dry-run modes and cannot contain credentials
+- Preconditions: Local E2E, staging plan, and security behavior are stable.
+- Effects: Documents build/query/update/recovery, resource sizing, exact release provenance, legacy configs, client migration, failure triage, rollback rehearsal, and research-aid caveat.
+- Acceptance: A new operator can build and query fixtures, diagnose sparse fetches, rehearse rollback, and distinguish publication date from legal currentness using tested commands.
+
+## USCIR-038 Produce and verify the release-candidate receipt
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: release
+- Depends on: USCIR-035, USCIR-036, USCIR-037
+- Goal id: USCIR-G100
+- Outputs: scripts/ops/legal_data/verify_uscode_release_candidate.py, docs/reports/uscode_release_candidate.json, tests/unit/scripts/test_verify_uscode_release_candidate.py
+- Validation: python -m pytest tests/unit/scripts/test_verify_uscode_release_candidate.py -q; python scripts/ops/legal_data/verify_uscode_release_candidate.py --receipt docs/reports/uscode_release_candidate.json --fixture-only
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: rollout
+- Parallel lane: 2
+- Resource class: cpu-medium
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/verify_uscode_release_candidate.py, docs/reports/uscode_release_candidate.json, tests/unit/scripts/test_verify_uscode_release_candidate.py
+- Allow concurrent with: none
+- Conflict policy: owns candidate evidence/verification; cannot manufacture missing producer receipts
+- Preconditions: Evaluation, security, canary, runbook, and rollback evidence exist.
+- Effects: Binds source release point, dataset revision or local candidate root, manifest/config/code/model digests, counts, evaluation, security, determinism, viewer, canary, rollback, and exception dispositions.
+- Acceptance: Verifier fails on any missing/mismatched/stale input, receipt contains no secret/path leak, and a valid fixture candidate is independently reproducible.
+
+## USCIR-039 Rehearse immutable staging and rollback handoff
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: release
+- Depends on: USCIR-038
+- Goal id: USCIR-G100
+- Outputs: scripts/ops/legal_data/rehearse_uscode_release_handoff.py, docs/reports/uscode_staging_canary.json, tests/unit/scripts/test_rehearse_uscode_release_handoff.py
+- Validation: python -m pytest tests/unit/scripts/test_rehearse_uscode_release_handoff.py -q; python scripts/ops/legal_data/rehearse_uscode_release_handoff.py --fixture-only --dry-run
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: rollout
+- Parallel lane: 3
+- Resource class: network-bounded
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: scripts/ops/legal_data/rehearse_uscode_release_handoff.py, docs/reports/uscode_staging_canary.json, tests/unit/scripts/test_rehearse_uscode_release_handoff.py
+- Allow concurrent with: none
+- Conflict policy: dry-run/local rehearsal is mandatory; remote staging is optional and requires explicit non-production authorization; no public mutation
+- Preconditions: A verified release-candidate receipt names exact candidate and rollback roots.
+- Effects: Rehearses add-only upload planning, immutable redownload, sparse canary, compatibility mapping switch, and restoration to the prior mapping using fixture/local Hub simulation.
+- Acceptance: Rehearsal proves both promotion and rollback without deletion; optional real staging evidence is recorded when authorized, while absent staging credentials produce a typed pending-external field rather than blocking local completion.
+
+## USCIR-040 Assemble the human publication-seal request and stop at the gate
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: release
+- Depends on: USCIR-039
+- Goal id: USCIR-G100
+- Outputs: docs/reports/uscode_publication_seal.json, scripts/ops/legal_data/check_uscode_publication_seal.py, tests/unit/scripts/test_check_uscode_publication_seal.py
+- Validation: python -m pytest tests/unit/scripts/test_check_uscode_publication_seal.py -q; python scripts/ops/legal_data/check_uscode_publication_seal.py --seal docs/reports/uscode_publication_seal.json --allow-pending
+- Board namespace: uscode-sparse-graphrag-v1
+- Bundle: rollout
+- Parallel lane: 0
+- Resource class: control-plane
+- Token class: medium
+- Estimated tokens: 14000
+- Predicted files: docs/reports/uscode_publication_seal.json, scripts/ops/legal_data/check_uscode_publication_seal.py, tests/unit/scripts/test_check_uscode_publication_seal.py
+- Allow concurrent with: none
+- Conflict policy: terminal evidence task may only assemble and validate a pending seal request; agents cannot self-authorize or publish
+- Preconditions: Candidate receipt and staging/rollback handoff are complete.
+- Effects: Produces the exact production repo/branch, immutable candidate revision, manifest and validation digests, legacy/rollback mapping, requested mutations, approver fields, and pending/approved state.
+- Acceptance: Pending seal validates as a complete authorization request, approved seal requires an external human identity/signature and exact digests, no token is present, and the implementation supervisor terminates without mutating the public dataset.

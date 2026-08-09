@@ -1,0 +1,25 @@
+{
+  "schema": "ipfs_datasets_py/uscode-sparse-graphrag-release-policy@1",
+  "dataset_repo_id": "justicedao/ipfs_uscode",
+  "baseline_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+  "release_mode": "additive",
+  "maximum_rows_per_physical_shard": 4096,
+  "maximum_posting_pointers_per_row": 4096,
+  "maximum_adjacency_pointers_per_row": 4096,
+  "maximum_rows_per_vector_centroid": 8192,
+  "maximum_vector_shards_per_centroid": 2,
+  "default_candidate_centroids_subject_to_evaluation": 4,
+  "sparse_route": "lexicographic_bm25_term_ranges",
+  "dense_route": "normalized_embedding_centroids",
+  "lexical_graph_default": "virtual_term_document_edges_plus_bounded_bm25_neighbors",
+  "immutable_hub_revision_required_for_query": true,
+  "descriptor_verification_required_before_parse": true,
+  "legacy_artifact_deletion_allowed": false,
+  "recovery_records_allowed_in_default_config": false,
+  "live_publication": {
+    "autonomous_agent_allowed": false,
+    "human_seal_required": true,
+    "staging_redownload_canary_required": true,
+    "rollback_rehearsal_required": true
+  }
+}
