@@ -1,0 +1,84 @@
+{
+  "acceptance": {
+    "edge_semantics_explicitly_non_authoritative": true,
+    "full_term_document_expansion_disabled_by_default": true,
+    "neighbor_caps_enforced": true,
+    "overlay_matches_bm25_vocabulary_postings": true
+  },
+  "cases": [
+    {
+      "case_id": "vocabulary-postings-parity",
+      "expect": {
+        "document_count": 5,
+        "vocabulary_matches_bm25": true
+      },
+      "kind": "parity"
+    },
+    {
+      "case_id": "virtual-term-document-traversal",
+      "expect": {
+        "min_postings": 1,
+        "term": "patent"
+      },
+      "kind": "virtual_traversal"
+    },
+    {
+      "case_id": "bounded-neighbors",
+      "expect": {
+        "max_neighbors_per_source": 8,
+        "neighbor_k": 8
+      },
+      "kind": "neighbor_cap"
+    },
+    {
+      "case_id": "no-full-expansion-by-default",
+      "expect": {
+        "durable_term_document_edges": 0,
+        "legacy_pair_count": 13602252,
+        "virtual_traversal_only": true
+      },
+      "kind": "no_full_expansion"
+    },
+    {
+      "case_id": "non-authoritative-semantics",
+      "expect": {
+        "authority": "non_authoritative",
+        "edge_type": "BM25_NEIGHBOR_OF",
+        "proof_authority": false
+      },
+      "kind": "non_authoritative"
+    },
+    {
+      "case_id": "neighbor-scores-and-config-cid",
+      "expect": {
+        "min_neighbor_edges": 1,
+        "require_config_cid": true,
+        "require_positive_scores": true
+      },
+      "kind": "neighbor_scores"
+    }
+  ],
+  "default_parameters": {
+    "b": 0.75,
+    "k1": 1.2,
+    "max_neighbors_per_document": 8,
+    "mode": "virtual_term_document_edges_plus_bounded_bm25_neighbors",
+    "neighbor_k": 8,
+    "tokenizer_id": "uscode-bm25-tokenizer/v1"
+  },
+  "edge_semantics": {
+    "authority": "non_authoritative",
+    "edge_class": "similarity",
+    "legal_authority": false,
+    "notes": "BM25 lexical edges are retrieval hints only. They must never be labeled as legal citation, authority, amendment, or proof.",
+    "proof_authority": false,
+    "retrieval_hint": true
+  },
+  "goal_id": "USCIR-G060",
+  "legacy_document_term_pair_count": 13602252,
+  "primary_key": "entry_cid",
+  "producer": "uscode_lexical_graph.py",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "schema_version": "uscode-bm25-neighbors-v1",
+  "task_id": "USCIR-023"
+}
