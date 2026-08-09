@@ -453,6 +453,177 @@ def test_missing_signature_is_rejected(
     assert result.returncode != 0
 
 
+def test_unsigned_cutover_is_rejected(
+    accelerate_root: Path,
+    accelerate_identity: tuple[str, str],
+    tmp_path: Path,
+) -> None:
+    """Acceptance: an unsigned cutover receipt fails closed."""
+
+    commit, tree = accelerate_identity
+    issued, expires = _fresh_window()
+    cutover = verifier.build_cutover_receipt(
+        accelerator_commit=commit,
+        accelerator_tree=tree,
+        store_generation="generation:dqk-057-test",
+        schema_checksum="sha256:" + "11" * 32,
+        quack_profile="quack-profile:1.5.5-loopback",
+        decision_cid="decision:cutover-unsigned",
+        issued_at=issued,
+        expires_at=expires,
+    )
+    del cutover["signature"]
+    receipt = verifier.build_release_receipt(
+        accelerator_commit=commit,
+        accelerator_tree=tree,
+        store_generation="generation:dqk-057-test",
+        schema_checksum="sha256:" + "11" * 32,
+        quack_profile="quack-profile:1.5.5-loopback",
+        decision_cid="decision:dqk-057-test",
+        issued_at=issued,
+        expires_at=expires,
+        cutover=cutover,
+    )
+    path = _write_receipt(tmp_path / "unsigned-cutover.json", receipt)
+    result = _run_cli(
+        "--receipt",
+        str(path),
+        "--accelerate-root",
+        str(accelerate_root),
+        "--json",
+    )
+    assert result.returncode != 0
+    assert (
+        "unsigned" in result.stderr.lower()
+        or "signature" in result.stderr.lower()
+        or "cutover" in result.stderr.lower()
+    )
+
+
+def test_expired_cutover_is_rejected(
+    accelerate_root: Path,
+    accelerate_identity: tuple[str, str],
+    tmp_path: Path,
+) -> None:
+    """Acceptance: an expired cutover receipt fails closed even if release is live."""
+
+    commit, tree = accelerate_identity
+    issued, expires = _fresh_window()
+    cutover = verifier.build_cutover_receipt(
+        accelerator_commit=commit,
+        accelerator_tree=tree,
+        store_generation="generation:dqk-057-test",
+        schema_checksum="sha256:" + "11" * 32,
+        quack_profile="quack-profile:1.5.5-loopback",
+        decision_cid="decision:cutover-expired",
+        issued_at=datetime(2020, 1, 1, tzinfo=timezone.utc),
+        expires_at=datetime(2020, 1, 2, tzinfo=timezone.utc),
+    )
+    receipt = verifier.build_release_receipt(
+        accelerator_commit=commit,
+        accelerator_tree=tree,
+        store_generation="generation:dqk-057-test",
+        schema_checksum="sha256:" + "11" * 32,
+        quack_profile="quack-profile:1.5.5-loopback",
+        decision_cid="decision:dqk-057-test",
+        issued_at=issued,
+        expires_at=expires,
+        cutover=cutover,
+    )
+    path = _write_receipt(tmp_path / "expired-cutover.json", receipt)
+    result = _run_cli(
+        "--receipt",
+        str(path),
+        "--accelerate-root",
+        str(accelerate_root),
+        "--json",
+    )
+    assert result.returncode != 0
+    assert "expired" in result.stderr.lower() or "cutover" in result.stderr.lower()
+
+
+def test_cutover_issued_after_expires_is_rejected(
+    accelerate_root: Path,
+    accelerate_identity: tuple[str, str],
+    tmp_path: Path,
+) -> None:
+    """Cutover issued_at after expires_at fails closed (parity with release)."""
+
+    commit, tree = accelerate_identity
+    issued, expires = _fresh_window()
+    cutover = verifier.build_cutover_receipt(
+        accelerator_commit=commit,
+        accelerator_tree=tree,
+        store_generation="generation:dqk-057-test",
+        schema_checksum="sha256:" + "11" * 32,
+        quack_profile="quack-profile:1.5.5-loopback",
+        decision_cid="decision:cutover-ordering",
+        issued_at=expires + timedelta(hours=1),
+        expires_at=expires,
+    )
+    receipt = verifier.build_release_receipt(
+        accelerator_commit=commit,
+        accelerator_tree=tree,
+        store_generation="generation:dqk-057-test",
+        schema_checksum="sha256:" + "11" * 32,
+        quack_profile="quack-profile:1.5.5-loopback",
+        decision_cid="decision:dqk-057-test",
+        issued_at=issued,
+        expires_at=expires,
+        cutover=cutover,
+    )
+    path = _write_receipt(tmp_path / "cutover-ordering.json", receipt)
+    result = _run_cli(
+        "--receipt",
+        str(path),
+        "--accelerate-root",
+        str(accelerate_root),
+        "--json",
+    )
+    assert result.returncode != 0
+    assert (
+        "issued_at" in result.stderr.lower()
+        or "expires" in result.stderr.lower()
+        or "cutover" in result.stderr.lower()
+    )
+
+
+def test_verification_object_exposes_gate_cas_fields(
+    accelerate_root: Path,
+    accelerate_identity: tuple[str, str],
+    tmp_path: Path,
+) -> None:
+    """Success emission must include every string field the gate CAS binds."""
+
+    commit, tree = accelerate_identity
+    receipt = _valid_receipt(commit, tree)
+    path = _write_receipt(tmp_path / "gate-fields.json", receipt)
+    result = _run_cli(
+        "--receipt",
+        str(path),
+        "--accelerate-root",
+        str(accelerate_root),
+        "--json",
+    )
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    required = (
+        "accelerator_commit",
+        "accelerator_tree",
+        "release_receipt_cid",
+        "cutover_receipt_cid",
+        "store_generation",
+        "schema_checksum",
+        "quack_profile",
+        "decision_cid",
+        "expires_at",
+    )
+    assert payload["schema"] == verifier.VERIFICATION_SCHEMA
+    assert payload["accepted"] is True
+    for field in required:
+        assert isinstance(payload.get(field), str) and payload[field].strip()
+
+
 def test_unaccepted_cutover_is_rejected(
     accelerate_root: Path,
     accelerate_identity: tuple[str, str],

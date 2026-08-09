@@ -432,10 +432,14 @@ def _validate_cutover_receipt(
         cutover.get("quack_profile"), field="cutover.quack_profile"
     )
     _bounded_text(cutover.get("decision_cid"), field="cutover.decision_cid")
-    _parse_aware_datetime(cutover.get("issued_at"), field="cutover.issued_at")
+    issued_at = _parse_aware_datetime(
+        cutover.get("issued_at"), field="cutover.issued_at"
+    )
     expires_at = _parse_aware_datetime(
         cutover.get("expires_at"), field="cutover.expires_at"
     )
+    if issued_at > expires_at:
+        raise VerificationError("cutover receipt issued_at is after expires_at")
     if expires_at <= now:
         raise VerificationError("cutover receipt is expired")
 
@@ -543,6 +547,20 @@ def _validate_release_receipt(
     return dict(release)
 
 
+# Fields the gate CAS binds as nonempty strings on a successful verification.
+_VERIFICATION_REQUIRED_STRING_FIELDS: Final[tuple[str, ...]] = (
+    "accelerator_commit",
+    "accelerator_tree",
+    "release_receipt_cid",
+    "cutover_receipt_cid",
+    "store_generation",
+    "schema_checksum",
+    "quack_profile",
+    "decision_cid",
+    "expires_at",
+)
+
+
 def build_verification(
     release: Mapping[str, Any],
     *,
@@ -550,7 +568,7 @@ def build_verification(
 ) -> dict[str, Any]:
     """Build the strict typed verification object consumed by the gate CAS."""
 
-    return {
+    verification: dict[str, Any] = {
         "schema": VERIFICATION_SCHEMA,
         "accepted": True,
         "accelerator_commit": str(release["accelerator_commit"]).lower(),
@@ -563,6 +581,13 @@ def build_verification(
         "decision_cid": str(release["decision_cid"]),
         "expires_at": str(release["expires_at"]),
     }
+    for field in _VERIFICATION_REQUIRED_STRING_FIELDS:
+        value = verification.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise VerificationError(
+                f"verification object is missing required field {field}"
+            )
+    return verification
 
 
 def verify_release_receipt(
@@ -812,6 +837,17 @@ def self_check() -> dict[str, Any]:
     verification = build_verification(receipt, cutover=receipt["cutover"])
     if verification["schema"] != VERIFICATION_SCHEMA or verification["accepted"] is not True:
         raise VerificationError("self-check verification object is malformed")
+    missing_fields = [
+        field
+        for field in _VERIFICATION_REQUIRED_STRING_FIELDS
+        if not isinstance(verification.get(field), str)
+        or not str(verification.get(field) or "").strip()
+    ]
+    if missing_fields:
+        raise VerificationError(
+            "self-check verification object missing gate fields: "
+            + ",".join(missing_fields)
+        )
     return {
         "schema": "ipfs_accelerate_py/agent-supervisor/duckdb-quack-release-verifier-check@1",
         "ok": True,
@@ -820,6 +856,7 @@ def self_check() -> dict[str, Any]:
         "cutover_receipt_schema": CUTOVER_RECEIPT_SCHEMA,
         "program_id": PROGRAM_ID,
         "signature_algorithm": SIGNATURE_ALGORITHM,
+        "verification_required_fields": list(_VERIFICATION_REQUIRED_STRING_FIELDS),
     }
 
 
