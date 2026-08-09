@@ -365,7 +365,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Terms and postings are globally ordered and complete, no cell exceeds 4,096 pointers, no term shard exceeds 4,096 rows, and sharded scores match the reference formula.
 
 ## USCIR-015 Build the US Code field-weighted BM25 release
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
