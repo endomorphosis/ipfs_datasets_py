@@ -1,0 +1,111 @@
+{
+  "acceptance": {
+    "every_admitted_chunk_has_one_bm25_document": true,
+    "field_scores_are_explainable": true,
+    "legacy_k1_b_differences_are_explicit": true,
+    "source_corpus_roots_reconcile": true
+  },
+  "cases": [
+    {
+      "case_id": "one-document-per-admitted-chunk",
+      "expect": {
+        "admitted_count": 5,
+        "document_count": 5,
+        "unique_entry_cids": true
+      },
+      "kind": "coverage"
+    },
+    {
+      "case_id": "roots-reconcile",
+      "expect": {
+        "reconciled": true
+      },
+      "kind": "reconcile"
+    },
+    {
+      "case_id": "field-score-explanation",
+      "expect": {
+        "min_field_contributions": 1,
+        "query": "freedom of information agency records",
+        "top_legal_id_prefix": "usc:us:5:552"
+      },
+      "kind": "explain"
+    },
+    {
+      "case_id": "title-filter",
+      "expect": {
+        "filter": {
+          "title": "35"
+        },
+        "query": "patent invention",
+        "result_titles_only": "35"
+      },
+      "kind": "filter"
+    },
+    {
+      "case_id": "legacy-parameter-delta",
+      "expect": {
+        "evaluation_k1": 1.2,
+        "k1_changed": true,
+        "legacy_k1": 1.5
+      },
+      "kind": "legacy_delta"
+    },
+    {
+      "case_id": "quarantine-excluded",
+      "expect": {
+        "excluded_documents": 0,
+        "recovery_documents": 0
+      },
+      "kind": "quarantine"
+    }
+  ],
+  "default_parameters": {
+    "b": 0.75,
+    "field_weights": {
+      "body": 1.0,
+      "citation": 8.0,
+      "heading": 4.0,
+      "hierarchy": 3.0,
+      "note": 0.5,
+      "title": 5.0
+    },
+    "k1": 1.2,
+    "tokenizer_id": "uscode-bm25-tokenizer/v1"
+  },
+  "field_order": [
+    "citation",
+    "title",
+    "heading",
+    "hierarchy",
+    "body",
+    "note"
+  ],
+  "goal_id": "USCIR-G040",
+  "legacy_parameter_delta": {
+    "b": {
+      "changed": false,
+      "delta": 0.0,
+      "evaluation_default": 0.75,
+      "legacy": 0.75
+    },
+    "k1": {
+      "changed": true,
+      "delta": -0.3,
+      "evaluation_default": 1.2,
+      "legacy": 1.5
+    },
+    "legacy_field_separation": false,
+    "legacy_tokenizer_identity": null,
+    "notes": "Legacy US Code BM25 used k1=1.5 with a single unweighted term array and no tokenizer identity. Evaluation defaults use k1=1.2, explicit multi-field weights, and the sealed legal tokenizer.",
+    "shared_layout_defaults": {
+      "b": 0.75,
+      "k1": 1.2
+    }
+  },
+  "primary_key": "entry_cid",
+  "producer": "uscode_bm25.py",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "schema_version": "uscode-bm25-expected-v1",
+  "task_id": "USCIR-015"
+}
