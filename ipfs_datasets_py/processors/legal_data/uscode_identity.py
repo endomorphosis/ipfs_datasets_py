@@ -182,9 +182,14 @@ def _normalize_section_core(raw: str) -> str:
 
     text = normalize_dash_chars(raw).strip()
     text = text.lstrip("§").strip()
+    # Sentence punctuation trailing a citation section is not part of the token
+    # (e.g. "35 U.S.C. § 102." -> "102"). Internal dots like "1.56" are kept.
+    text = text.rstrip(".,;:")
     # Drop whitespace around hyphens inside ranges: "1001 - 1003" -> "1001-1003".
     text = re.sub(r"\s*-\s*", "-", text)
     text = re.sub(r"\s+", "", text)
+    # Re-strip after whitespace collapse in case of "102 ."
+    text = text.rstrip(".,;:")
     if not text:
         raise IdentityParseError("section must be non-empty")
 

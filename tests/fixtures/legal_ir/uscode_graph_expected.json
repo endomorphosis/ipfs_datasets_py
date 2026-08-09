@@ -1,0 +1,221 @@
+{
+  "acceptance": {
+    "fixture_graph_paths_match": true,
+    "legal_and_similarity_semantics_disjoint": true,
+    "source_spans_are_bound": true,
+    "unresolved_citations_preserved_honestly": true
+  },
+  "citation_parser_version": "uscode-citation-parser/v1",
+  "description": "Compact legal graph expected-path recipe for USCIR-021. Cases exercise structural, citation, public-law, amendment/transfer, version, source, and unresolved-reference projection. Similarity edges are present but non-authoritative and disjoint from legal semantics. Expand via run_fixture_case(); do not store bulk node/edge golden dumps.",
+  "expected_paths": [
+    {
+      "edge_types": [
+        "CONTAINS",
+        "CONTAINS"
+      ],
+      "path_id": "title-contains-chapter-contains-section",
+      "source_key": "title:35",
+      "target_key": "section:usc:us:35:101"
+    },
+    {
+      "edge_types": [
+        "CITES"
+      ],
+      "path_id": "section-cites-section",
+      "source_key": "section:usc:us:35:101",
+      "target_key": "section:usc:us:35:102"
+    },
+    {
+      "edge_types": [
+        "CODIFIES"
+      ],
+      "path_id": "public-law-codifies-section",
+      "source_key": "public_law:pl:us:112:29",
+      "target_key": "section:usc:us:35:101"
+    },
+    {
+      "edge_types": [
+        "AMENDS"
+      ],
+      "path_id": "section-amends-section",
+      "source_key": "section:usc:us:35:103",
+      "target_key": "section:usc:us:35:102"
+    },
+    {
+      "edge_types": [
+        "TRANSFERS"
+      ],
+      "path_id": "section-transfers-section",
+      "source_key": "section:usc:us:28:1331",
+      "target_key": "section:usc:us:28:1367"
+    },
+    {
+      "edge_types": [
+        "HAS_SOURCE"
+      ],
+      "path_id": "section-has-source",
+      "source_key": "section:usc:us:5:552",
+      "target_key": "source:sha256:2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    {
+      "edge_types": [
+        "HAS_VERSION"
+      ],
+      "path_id": "section-has-version",
+      "source_key": "section:usc:us:35:101",
+      "target_key": "version:usc:us:35:101:olrc-us-pl-118-45"
+    },
+    {
+      "edge_types": [
+        "CITES"
+      ],
+      "path_id": "cross-title-foia-privacy-citation",
+      "source_key": "section:usc:us:5:552",
+      "target_key": "section:usc:us:5:552a"
+    },
+    {
+      "edge_types": [
+        "CITES"
+      ],
+      "path_id": "federal-question-cites-supplemental",
+      "source_key": "section:usc:us:28:1331",
+      "target_key": "section:usc:us:28:1367"
+    },
+    {
+      "edge_types": [
+        "CITES"
+      ],
+      "path_id": "patentability-citation-chain",
+      "source_key": "section:usc:us:35:101",
+      "target_key": "section:usc:us:35:103"
+    }
+  ],
+  "goal_id": "USCIR-G060",
+  "notes": "Recipe form: seed records + expected path predicates. Full graph is projected deterministically by uscode_graph.project_uscode_graph.",
+  "ontology_version": "uscode-graph-ontology/v1",
+  "producer": "uscode_graph.py",
+  "projection_expectations": {
+    "legal_edge_count_min": 15,
+    "min_nodes": 20,
+    "similarity_edge_count": 1,
+    "unresolved_count_min": 1
+  },
+  "records": [
+    {
+      "amends": [],
+      "chapter": "10",
+      "edition": "olrc-us-pl-118-45",
+      "entry_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "heading": "Inventions patentable",
+      "legal_id": "usc:us:35:101",
+      "public_laws": [
+        "Pub. L. 112-29"
+      ],
+      "release_point": "us/pl/118/45",
+      "section": "101",
+      "source_cid": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "text": "Whoever invents or discovers any new and useful process, machine, manufacture, or composition of matter may obtain a patent therefor, subject to the conditions and requirements of this title. See also 35 U.S.C. § 102 and 35 U.S.C. § 103. Codified from Pub. L. 112-29. See also 99 U.S.C. § 9999.",
+      "title": "35",
+      "version_id": "olrc-us-pl-118-45"
+    },
+    {
+      "chapter": "10",
+      "edition": "olrc-us-pl-118-45",
+      "entry_cid": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "heading": "Conditions for patentability; novelty",
+      "legal_id": "usc:us:35:102",
+      "release_point": "us/pl/118/45",
+      "section": "102",
+      "source_cid": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "text": "A person shall be entitled to a patent unless the claimed invention was patented or described. Cross-reference 35 U.S.C. § 101. Derived from 125 Stat. 284.",
+      "title": "35",
+      "version_id": "olrc-us-pl-118-45"
+    },
+    {
+      "amends": [
+        "usc:us:35:102"
+      ],
+      "chapter": "10",
+      "entry_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "heading": "Conditions for patentability; non-obvious subject matter",
+      "legal_id": "usc:us:35:103",
+      "release_point": "us/pl/118/45",
+      "section": "103",
+      "source_cid": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "text": "A patent for a claimed invention may not be obtained if the differences would have been obvious. See 35 U.S.C. § 102.",
+      "title": "35",
+      "version_id": "olrc-us-pl-118-45"
+    },
+    {
+      "chapter": "5",
+      "entry_cid": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "heading": "Public information; agency rules, opinions, orders, records, and proceedings",
+      "legal_id": "usc:us:5:552",
+      "release_point": "us/pl/118/45",
+      "section": "552",
+      "source_cid": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "text": "Each agency shall make available to the public information. Related privacy obligations appear at 5 U.S.C. § 552a. Pub. L. 89-487.",
+      "title": "5",
+      "version_id": "olrc-us-pl-118-45"
+    },
+    {
+      "chapter": "5",
+      "entry_cid": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "heading": "Records maintained on individuals",
+      "legal_id": "usc:us:5:552a",
+      "release_point": "us/pl/118/45",
+      "section": "552a",
+      "source_cid": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "text": "No agency shall disclose any record except pursuant to a written request. See FOIA procedures in 5 U.S.C. § 552.",
+      "title": "5",
+      "version_id": "olrc-us-pl-118-45"
+    },
+    {
+      "chapter": "85",
+      "entry_cid": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "heading": "Federal question",
+      "legal_id": "usc:us:28:1331",
+      "release_point": "us/pl/118/45",
+      "section": "1331",
+      "source_cid": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+      "text": "The district courts shall have original jurisdiction of all civil actions arising under the Constitution, laws, or treaties of the United States. Supplemental jurisdiction is addressed in 28 U.S.C. § 1367. This section transfers related matters formerly under 28 U.S.C. § 41.",
+      "title": "28",
+      "transfers": [
+        "usc:us:28:1367"
+      ],
+      "version_id": "olrc-us-pl-118-45"
+    },
+    {
+      "chapter": "85",
+      "entry_cid": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "heading": "Supplemental jurisdiction",
+      "legal_id": "usc:us:28:1367",
+      "release_point": "us/pl/118/45",
+      "section": "1367",
+      "source_cid": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+      "text": "Except as provided in subsections (b) and (c) or as expressly provided otherwise by Federal statute, in any civil action of which the district courts have original jurisdiction under 28 U.S.C. § 1331, the district courts shall have supplemental jurisdiction.",
+      "title": "28",
+      "version_id": "olrc-us-pl-118-45"
+    }
+  ],
+  "release_profile": "publicus-ir-graphrag/v2",
+  "schema_version": "uscode-graph-expected-v1",
+  "similarity_neighbors": [
+    {
+      "config_cid": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+      "edge_type": "BM25_NEIGHBOR_OF",
+      "metric": "bm25",
+      "score": 12.5,
+      "source_legal_id": "usc:us:35:101",
+      "target_legal_id": "usc:us:35:103"
+    }
+  ],
+  "task_id": "USCIR-021",
+  "unresolved_expectations": {
+    "must_not_invent_target_legal_id": true,
+    "must_preserve_parser_version": true,
+    "must_preserve_source_text": true,
+    "resolution_status": "unresolved",
+    "sample_mention_substring": "99 U.S.C. § 9999"
+  }
+}
