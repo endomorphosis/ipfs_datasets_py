@@ -75,7 +75,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Schema rejects positional durable identity, mutable model/release references, ambiguous 4,096 fields, absolute artifact paths, invalid digests, and missing admission/provenance fields.
 
 ## USCIR-003 Seal the legal retrieval and graph gold set
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
