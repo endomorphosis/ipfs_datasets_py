@@ -583,7 +583,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Overlay matches BM25 vocabulary/postings, avoids full 13.6M durable lexical-edge expansion by default, neighbor caps are enforced, and edge semantics are explicitly non-authoritative.
 
 ## USCIR-024 Reconcile legal graph integrity and coverage
-- Status: todo
+- Status: completed
+- Operator resolution: operator_rescue; fix zero-or integrity check bug; pytest+cli check passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
@@ -607,7 +608,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Zero unexplained dangling/duplicate durable graph records, 100% adjacency reconciliation, all expected paths pass, and unresolved/error coverage is reported rather than discarded.
 
 ## USCIR-025 Implement the bounded remote query engine
-- Status: todo
+- Status: completed
+- Operator resolution: operator_rescue from attempt-3 worktree; replay fingerprint + test fixes; pytest passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
