@@ -830,7 +830,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Fixture build is deterministic, all root/count joins reconcile, expected results/paths pass, and fetch traces show only routed shards plus final corpus hydration.
 
 ## USCIR-034 Add release tamper, resource, and cache security tests
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
