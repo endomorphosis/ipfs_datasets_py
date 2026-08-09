@@ -1,0 +1,144 @@
+{
+  "acceptance": {
+    "bm25_term_range_only": true,
+    "mutable_mismatched_model_space_fails": true,
+    "sparse_io_trace_proven": true,
+    "vectors_centroid_plus_exact_score": true
+  },
+  "bounds": {
+    "default_candidate_centroids": 4,
+    "default_top_k": 10,
+    "max_top_k": 1000
+  },
+  "cases": [
+    {
+      "expected_data_plane_paths": [
+        "data/bm25/postings/part-000000.parquet",
+        "data/corpus/part-000000.parquet"
+      ],
+      "expected_families": [
+        "control_plane",
+        "routing_index",
+        "bm25_postings",
+        "corpus"
+      ],
+      "expected_reasons": [
+        "manifest",
+        "routing_index",
+        "term_range",
+        "hydrate_hit"
+      ],
+      "expected_top_entry_cid": "entry-a",
+      "forbidden_families": [
+        "vectors"
+      ],
+      "forbidden_paths": [
+        "data/bm25/postings/part-000001.parquet"
+      ],
+      "id": "bm25_term_range_sparse_io",
+      "mode": "bm25",
+      "query": "foia agency",
+      "top_k": 3
+    },
+    {
+      "candidate_centroids": 1,
+      "expected_data_plane_paths": [
+        "data/vectors/centroid-000000-part-000000.parquet",
+        "data/corpus/part-000000.parquet"
+      ],
+      "expected_families": [
+        "control_plane",
+        "routing_index",
+        "vectors",
+        "corpus"
+      ],
+      "expected_reasons": [
+        "manifest",
+        "routing_index",
+        "exact_vector_score",
+        "hydrate_hit"
+      ],
+      "expected_top_entry_cid": "entry-a",
+      "forbidden_families": [
+        "bm25_postings"
+      ],
+      "forbidden_paths": [
+        "data/vectors/centroid-000001-part-000000.parquet"
+      ],
+      "id": "vector_centroid_exact_sparse_io",
+      "mode": "vector",
+      "query": "near entry-a",
+      "query_vector": [
+        1.0,
+        0.0
+      ],
+      "top_k": 2
+    },
+    {
+      "expected_error": "mutable_model_space",
+      "id": "mutable_model_space_fails",
+      "mode": "vector",
+      "mutate_manifest": {
+        "vector.model_revision": "latest"
+      },
+      "query_vector": [
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "expected_error": "model_space_mismatch",
+      "id": "mismatched_model_space_fails",
+      "mode": "vector",
+      "query_model_space": {
+        "dimension": 2,
+        "model_id": "fixture-other-model",
+        "model_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "normalization": "l2",
+        "vector_space_id": "other@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:d2:norm=l2"
+      },
+      "query_vector": [
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "expected_order": [
+        "entry-a",
+        "entry-b"
+      ],
+      "filter_entry_cid": "entry-a",
+      "id": "bm25_filter_and_stable_rank",
+      "mode": "bm25",
+      "query": "agency",
+      "top_k": 5
+    }
+  ],
+  "description": "Compact deterministic recipes for USCIR-026 direct remote BM25 and vector search unit tests.  A miniature offline release is regenerated at test time; sparse I/O, model-space fail-closed behavior, filters, and stable ranking are asserted without bulk golden dumps.",
+  "goal_id": "USCIR-G070",
+  "remote_search_schema_version": "hf-graphrag-remote-search/v1",
+  "route_families": [
+    "bm25_postings",
+    "control_plane",
+    "corpus",
+    "graph_adjacency",
+    "graph_edges",
+    "graph_nodes",
+    "routing_index",
+    "vectors"
+  ],
+  "route_reasons": [
+    "adjacency_range",
+    "centroid_probe",
+    "control_plane",
+    "exact_vector_score",
+    "graph_node",
+    "hydrate_hit",
+    "manifest",
+    "replay",
+    "routing_index",
+    "term_range"
+  ],
+  "schema_version": "hf-graphrag-remote-search-results/v1",
+  "task_id": "USCIR-026"
+}
