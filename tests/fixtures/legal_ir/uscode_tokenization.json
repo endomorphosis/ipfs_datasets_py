@@ -1,0 +1,198 @@
+{
+  "acceptance": {
+    "bounded": true,
+    "distinguishes_legal_numeric_citation_tokens": true,
+    "locale_independent": true,
+    "reversible_for_explanations": true,
+    "stable_across_fixtures": true
+  },
+  "cases": [
+    {
+      "case_id": "usc-citation-dotted",
+      "expect": {
+        "deterministic": true,
+        "must_contain_kinds": [
+          "citation"
+        ],
+        "must_contain_term_substrings": [
+          "5_u.s.c.",
+          "552"
+        ],
+        "must_not_split_citation": true,
+        "reversible_offsets": true
+      },
+      "text": "Public records under 5 U.S.C. § 552 must be disclosed."
+    },
+    {
+      "case_id": "usc-citation-compact",
+      "expect": {
+        "must_contain_kinds": [
+          "citation"
+        ],
+        "must_contain_term_substrings": [
+          "17_u.s.c.",
+          "107"
+        ],
+        "must_not_split_citation": true,
+        "reversible_offsets": true
+      },
+      "text": "17 USC 107 fair use factors"
+    },
+    {
+      "case_id": "section-symbol-and-range",
+      "expect": {
+        "dash_normalized": true,
+        "must_contain_kinds": [
+          "section_symbol"
+        ],
+        "must_contain_term_substrings": [
+          "§_552(a)",
+          "§_106-107"
+        ],
+        "reversible_offsets": true
+      },
+      "text": "See § 552(a) and §§ 106–107 for related rights."
+    },
+    {
+      "case_id": "section-abbrev",
+      "expect": {
+        "must_contain_kinds": [
+          "section_ref"
+        ],
+        "must_contain_term_substrings": [
+          "section_230"
+        ],
+        "reversible_offsets": true
+      },
+      "text": "Section 230 platform immunity for third-party content"
+    },
+    {
+      "case_id": "numeric-section-token",
+      "expect": {
+        "distinguishes_numbers": true,
+        "must_contain_kinds": [
+          "number",
+          "section_ref"
+        ],
+        "must_contain_terms": [
+          "1983",
+          "12101a",
+          "section_552a"
+        ],
+        "reversible_offsets": true
+      },
+      "text": "Title 42 identifiers include 1983 and 12101a plus section 552a."
+    },
+    {
+      "case_id": "stopwords-dropped-for-index",
+      "drop_stopwords": true,
+      "expect": {
+        "must_contain_terms": [
+          "agency",
+          "shall",
+          "make",
+          "available",
+          "public",
+          "information"
+        ],
+        "must_not_contain_terms": [
+          "the",
+          "to"
+        ],
+        "stopwords_absent": true
+      },
+      "text": "The agency shall make available to the public the information."
+    },
+    {
+      "case_id": "stopwords-kept-for-explain",
+      "drop_stopwords": false,
+      "expect": {
+        "must_contain_kinds": [
+          "stopword"
+        ],
+        "must_contain_terms": [
+          "the",
+          "agency",
+          "shall",
+          "disclose"
+        ],
+        "reversible_offsets": true
+      },
+      "text": "The agency shall disclose."
+    },
+    {
+      "case_id": "unicode-controls-and-dashes",
+      "expect": {
+        "controls_stripped": true,
+        "dash_normalized": true,
+        "deterministic": true,
+        "must_contain_kinds": [
+          "citation"
+        ],
+        "reversible_offsets": true
+      },
+      "text": "Range 1001–1003 under 18 U.S.C. § 1001—note\twith\u0007noise"
+    },
+    {
+      "case_id": "paren-markers",
+      "expect": {
+        "must_contain_kinds": [
+          "paren_marker"
+        ],
+        "must_contain_terms": [
+          "(a)",
+          "(1)",
+          "(iv)"
+        ],
+        "reversible_offsets": true
+      },
+      "text": "(a) Each agency shall publish; (1) descriptions; (iv) further detail."
+    },
+    {
+      "case_id": "casefold-locale-independent",
+      "expect": {
+        "casefold_stable": true,
+        "deterministic": true,
+        "locale_independent": true,
+        "must_contain_term_substrings": [
+          "freedom",
+          "information",
+          "act",
+          "5_u.s.c."
+        ]
+      },
+      "text": "FREEDOM of Information ACT records under 5 U.S.C. § 552"
+    },
+    {
+      "case_id": "bounded-token-stream",
+      "config_overrides": {
+        "max_tokens": 16
+      },
+      "expect": {
+        "bounded": true,
+        "max_indexable": 16,
+        "truncated": true
+      },
+      "text_recipe": {
+        "kind": "repeat_word",
+        "repeat": 50,
+        "word": "provision "
+      }
+    },
+    {
+      "case_id": "empty-and-whitespace",
+      "expect": {
+        "empty": true,
+        "token_count": 0
+      },
+      "text": "   \n\t  "
+    }
+  ],
+  "description": "Compact recipe for versioned legal BM25 tokenization. Each case supplies source text; expected terms/kinds are derived by the sealed tokenizer or asserted via compact expect rules rather than bulk per-token golden dumps.",
+  "goal_id": "USCIR-G040",
+  "schema_version": "uscode-tokenization-v1",
+  "stopword_policy_id": "uscode-legal-stopwords/v1",
+  "task_id": "USCIR-013",
+  "tokenizer_id": "uscode-bm25-tokenizer/v1",
+  "tokenizer_version": "v1"
+}
