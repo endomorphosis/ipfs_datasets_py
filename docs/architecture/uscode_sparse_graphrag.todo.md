@@ -633,7 +633,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Every file fetch is route-justified and descriptor-verified, limits cover bytes/shards/rows/nodes/edges/depth/time, offline replay is stable, and budget exhaustion is explicit.
 
 ## USCIR-026 Add direct remote BM25 and vector search modes
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
