@@ -733,7 +733,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Package imports are lazy/optional-dependency safe, old callers have an explicit compatibility path, adapter roots reconcile, and integration fixtures pass.
 
 ## USCIR-030 Implement resumable full and delta build orchestration
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
