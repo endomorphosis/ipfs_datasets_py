@@ -183,7 +183,7 @@ def test_bootstrap_bridge_contract_includes_merge_crash_evidence() -> None:
     argv = program._bootstrap_bridge_validation_argv()
 
     assert program.REQUIRED_ACCELERATE_BRIDGE_COMMIT == (
-        "0c6ad4efbabebd97e888502846ef5bb1cb7c7ae2"
+        "83cb0cdabb581a547ffb9f74119cef0bb431fc24"
     )
     assert "ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/merge_train.py" in outputs
     assert (
@@ -208,13 +208,15 @@ def test_bootstrap_identity_uses_canonical_fallback(task_source) -> None:
 def test_bootstrap_ack_uses_canonical_identity_fallback(
     task_source,
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     validator_receipt = {"receipt_id": "sha256:" + "7" * 64}
+    real_subprocess_run = program.subprocess.run
 
     def fake_git(*args: str) -> str:
         if "status" in args:
             return ""
-        if args[-1] == "HEAD^{tree}":
+        if args[-1].endswith("^{tree}"):
             return "8" * 40
         if args[-1] == "HEAD":
             return (
@@ -269,6 +271,95 @@ def test_bootstrap_ack_uses_canonical_identity_fallback(
         task_source,
         task_source.snapshot(),
     )["identity_id"]
+
+    monkeypatch.setattr(program, "DATABASE_PATH", task_source.database_path)
+    monkeypatch.setattr(program, "STATE_ROOT", tmp_path / "state")
+    monkeypatch.setattr(program, "WORKTREE_ROOT", tmp_path / "worktrees")
+    monkeypatch.setattr(program, "MERGE_QUEUE_ROOT", tmp_path / "merge-queue")
+    monkeypatch.setattr(program, "MASTER_ROOT", tmp_path / "master")
+    monkeypatch.setattr(program, "MASTER_LOG", tmp_path / "master/supervisor.log")
+    monkeypatch.setattr(program, "MASTER_PID", tmp_path / "master/supervisor.pid")
+
+    command = program.supervisor_command(
+        lanes=1,
+        duration_seconds=60,
+        detach=False,
+    )
+    from ipfs_accelerate_py.agent_supervisor.multi_supervisor_runner import (
+        build_arg_parser,
+        common_args_from_parsed_args,
+        tracks_from_parsed_args,
+    )
+    from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon import (
+        PortalImplementationDaemon,
+        parse_args as parse_daemon_args,
+    )
+    from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_supervisor import (
+        PortalImplementationSupervisor,
+        parse_args as parse_supervisor_args,
+        supervisor_config_from_args,
+    )
+
+    runner_args = build_arg_parser().parse_args(command[3:])
+    common = common_args_from_parsed_args(runner_args)
+    track = tracks_from_parsed_args(runner_args)[0]
+    supervisor_args = parse_supervisor_args([*common, *track.extra_args])
+    config = supervisor_config_from_args(
+        supervisor_args,
+        repo_root=program.REPO_ROOT,
+    )
+    daemon_command = PortalImplementationSupervisor(config)._build_daemon_command()
+    daemon_args = parse_daemon_args(daemon_command[3:])
+    assert daemon_args.assume_completed_task_id == []
+    assert len(daemon_args.duckdb_bootstrap_completion_evidence_id) == 1
+    bootstrap_evidence_id = (
+        daemon_args.duckdb_bootstrap_completion_evidence_id[0]
+    )
+    assert bootstrap_evidence_id.startswith("baguqeera")
+    monkeypatch.setattr(program.subprocess, "run", real_subprocess_run)
+
+    live_daemon = PortalImplementationDaemon(
+        todo_path=daemon_args.todo_path,
+        task_source=daemon_args.todo_path,
+        task_source_kind=daemon_args.task_source_kind,
+        expected_task_source_root_id=daemon_args.expected_task_source_root,
+        expected_task_source_repository_root_id=(
+            daemon_args.expected_task_source_repository_root
+        ),
+        state_path=tmp_path / "live-state.json",
+        strategy_path=tmp_path / "live-strategy.json",
+        events_path=tmp_path / "live-events.jsonl",
+        repo_root=program.REPO_ROOT,
+        duckdb_bootstrap_completion_evidence_id=bootstrap_evidence_id,
+        worktree_pool_enabled=False,
+    )
+    loaded = live_daemon._load_tasks()
+    assert next(
+        task for task in loaded if task.task_id == program.BOOTSTRAP_TASK_ID
+    ).status == "completed"
+
+    current_bootstrap = task_source.get_task(program.BOOTSTRAP_TASK_ID)
+    assert current_bootstrap is not None
+    reopened = task_source.compare_and_set_status(
+        program.BOOTSTRAP_TASK_ID,
+        expected_revision=current_bootstrap.revision,
+        status="ready",
+        receipt={"fixture": "reopen after the prior valid completion"},
+    )
+    forged_current_receipt = deepcopy(receipt)
+    forged_current_receipt["required_bridge_commit"] = "0" * 40
+    task_source.compare_and_set_status(
+        program.BOOTSTRAP_TASK_ID,
+        expected_revision=reopened.task.revision,
+        status="completed",
+        receipt=forged_current_receipt,
+    )
+    with pytest.raises(RuntimeError, match="cannot trust completed DQK-007"):
+        program.supervisor_command(
+            lanes=1,
+            duration_seconds=60,
+            detach=False,
+        )
 
 
 def test_retry_reset_inspection_binds_the_whole_runtime_root(
@@ -1413,6 +1504,11 @@ def test_launcher_binds_duckdb_roots_and_disables_markdown_mutators(
     assert "--common-arg=--no-dependency-guardrail" in command
     assert "--common-arg=--no-reconciliation-guardrail" in command
     assert "--common-arg=--no-objective-task-janitor" in command
+    assert "--common-arg=--assume-completed-task-id" not in command
+    assert (
+        "--common-arg=--duckdb-bootstrap-completion-evidence-id"
+        not in command
+    )
     assert "--implementation-supervisor-defaults" not in command
     assert command[-1] == "--detach"
 
@@ -1449,6 +1545,8 @@ def test_launcher_binds_duckdb_roots_and_disables_markdown_mutators(
             daemon_args.expected_task_source_repository_root
             == snapshot.repository_tree_id
         )
+        assert daemon_args.assume_completed_task_id == []
+        assert daemon_args.duckdb_bootstrap_completion_evidence_id == []
         expected_slice = {
             str(task["task_id"])
             for task in program.TASKS
@@ -1963,7 +2061,7 @@ def test_master_identity_rejects_pid_reuse(
         "argv": argv,
     }
     stored = {
-        "schema": "ipfs_datasets_py/duckdb-quack-master-identity@2",
+        "schema": "ipfs_datasets_py/duckdb-quack-master-identity@3",
         "program_id": program.PROGRAM_ID,
         "repository_root": str(program.REPO_ROOT),
         "master_root": str(master_root),
@@ -1981,6 +2079,7 @@ def test_master_identity_rejects_pid_reuse(
         "execution_slice_task_count": len(execution_slice),
         "authorization_held_set_sha256": hold["held_set_sha256"],
         "authorization_held_task_count": len(hold["held_task_aliases"]),
+        "bootstrap_completion_evidence_id": "",
         "python_environment_sha256": (
             "sha256:"
             + program._sha256_text(

@@ -446,7 +446,7 @@ def real_execution_intent_boundary(
         assert actual_master is not None
         assert os.getsid(master.pid) == master.pid
         stored_master = {
-            "schema": "ipfs_datasets_py/duckdb-quack-master-identity@2",
+            "schema": "ipfs_datasets_py/duckdb-quack-master-identity@3",
             "program_id": program.PROGRAM_ID,
             "repository_root": str(repository),
             "master_root": str(master_root.resolve()),
@@ -457,6 +457,7 @@ def real_execution_intent_boundary(
             "execution_slice_task_count": 1,
             "authorization_held_set_sha256": digest,
             "authorization_held_task_count": 0,
+            "bootstrap_completion_evidence_id": "",
             "lane_count": 1,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "python_environment_sha256": digest,

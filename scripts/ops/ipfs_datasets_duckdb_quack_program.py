@@ -212,7 +212,7 @@ MANUAL_GATE_AUTHORITY_EFFECT_IDS = {
     task_id: f"authority:manual-gate:{task_id.lower()}"
     for task_id in MANUAL_GATE_TASK_IDS
 }
-REQUIRED_ACCELERATE_BRIDGE_COMMIT = "0c6ad4efbabebd97e888502846ef5bb1cb7c7ae2"
+REQUIRED_ACCELERATE_BRIDGE_COMMIT = "83cb0cdabb581a547ffb9f74119cef0bb431fc24"
 REQUIRED_DUCKDB_VERSION = (1, 5, 5)
 MINIMUM_QUACK_VERSION = (1, 5, 3)
 EXPORT_TABLES = (
@@ -3920,6 +3920,221 @@ def _latest_status_receipt(
     return None
 
 
+def _bootstrap_completion_evidence_from_tables(
+    source: Any,
+    snapshot: Any,
+    tasks: Sequence[Mapping[str, Any]],
+    task_events: Sequence[Mapping[str, Any]],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    formal_contracts = _accelerate_module(
+        "ipfs_accelerate_py.agent_supervisor.proof.formal_verification_contracts",
+        "ipfs_accelerate_py.agent_supervisor.formal_verification_contracts",
+    )
+    bootstrap_rows = [
+        row
+        for row in tasks
+        if str(row.get("task_alias") or "") == BOOTSTRAP_TASK_ID
+    ]
+    if len(bootstrap_rows) != 1:
+        raise RuntimeError(f"expected exactly one {BOOTSTRAP_TASK_ID} task row")
+    task = bootstrap_rows[0]
+    task_cid = str(task.get("task_cid") or "")
+    task_revision = task.get("revision")
+    if (
+        isinstance(task_revision, bool)
+        or not isinstance(task_revision, int)
+        or task_revision < 2
+        or str(task.get("status") or "") != "completed"
+    ):
+        raise RuntimeError("bootstrap completion task row is not current")
+    candidates: list[dict[str, Any]] = []
+    for row in task_events:
+        if (
+            str(row.get("task_cid") or "") != task_cid
+            or str(row.get("event_type") or "") != "status_changed"
+        ):
+            continue
+        body_json = row.get("body_json")
+        body = _strict_json_object(
+            body_json,
+            noun=f"bootstrap event {row.get('event_cid') or '?'}",
+        )
+        if body.get("status") != "completed" or _safe_int(
+            body.get("task_revision"), 0
+        ) != task_revision:
+            continue
+        canonical_body_bytes = formal_contracts.canonical_json_bytes(body)
+        if body_json.encode("utf-8") != canonical_body_bytes:
+            raise RuntimeError("bootstrap completion event bytes are noncanonical")
+        recomputed_event_cid = str(formal_contracts.content_identity(body))
+        if str(row.get("event_cid") or "") != recomputed_event_cid:
+            raise RuntimeError("bootstrap completion event CID is forged")
+        candidates.append(
+            {
+                "event_cid": recomputed_event_cid,
+                "sequence": row.get("sequence"),
+                "revision": row.get("revision"),
+                "task_cid": task_cid,
+                "event_type": "status_changed",
+                "body": body,
+            }
+        )
+    if len(candidates) != 1:
+        raise RuntimeError(
+            "bootstrap completion event is missing, duplicated, or stale"
+        )
+    module = _accelerate_module(
+        "ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon",
+        "ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon",
+    )
+    evidence = module.duckdb_bootstrap_completion_evidence(
+        task_id=BOOTSTRAP_TASK_ID,
+        task_cid=task_cid,
+        task_status="completed",
+        task_revision=task_revision,
+        event=candidates[0],
+        task_source_identity=_repository_task_source_identity(source, snapshot),
+    )
+    if set(evidence) != {
+        "schema",
+        "task_id",
+        "task_cid",
+        "task_source_identity_id",
+        "event_cid",
+        "task_source_receipt_id",
+        "evidence_id",
+    }:
+        raise RuntimeError("bootstrap completion evidence shape is unsupported")
+    receipt = candidates[0]["body"].get("receipt")
+    if not isinstance(receipt, Mapping):
+        raise RuntimeError("bootstrap completion receipt is not an object")
+    return evidence, dict(receipt)
+
+
+def _bootstrap_bridge_receipt_contract(
+    source: Any,
+    snapshot: Any,
+    tasks: Sequence[Mapping[str, Any]],
+    task_events: Sequence[Mapping[str, Any]],
+) -> tuple[bool, str, str]:
+    """Authenticate the sole completion that launch may explicitly trust."""
+
+    bootstrap_rows = [
+        row
+        for row in tasks
+        if str(row.get("task_alias") or "") == BOOTSTRAP_TASK_ID
+    ]
+    if len(bootstrap_rows) != 1:
+        return False, f"expected exactly one {BOOTSTRAP_TASK_ID} task row", ""
+    bootstrap = bootstrap_rows[0]
+    task_cid = str(bootstrap.get("task_cid") or "")
+    status = str(bootstrap.get("status") or "")
+    try:
+        completion_evidence, receipt = _bootstrap_completion_evidence_from_tables(
+            source,
+            snapshot,
+            tasks,
+            task_events,
+        )
+    except (RuntimeError, TypeError, ValueError) as exc:
+        return False, f"{BOOTSTRAP_TASK_ID} completion evidence invalid: {exc}", ""
+    detail_prefix = (
+        f"{BOOTSTRAP_TASK_ID} status={status}; "
+        f"typed_receipt={bool(receipt)}; "
+        f"submodule_commit={str((receipt or {}).get('submodule_commit') or 'missing')}"
+    )
+    validation = (
+        receipt.get("validation") if isinstance(receipt, Mapping) else None
+    )
+    validator_receipt = (
+        validation.get("validator_receipt")
+        if isinstance(validation, Mapping)
+        else None
+    )
+    validator_valid, validator_detail = _validate_bootstrap_validator_receipt(
+        validator_receipt,
+        require_current_checkout=False,
+    )
+    submodule_commit = str((receipt or {}).get("submodule_commit") or "")
+    submodule_tree = str((receipt or {}).get("submodule_tree") or "")
+    superproject_commit = str(
+        (receipt or {}).get("superproject_commit") or ""
+    )
+    superproject_tree = str((receipt or {}).get("superproject_tree") or "")
+    valid = bool(
+        status == "completed"
+        and receipt
+        and receipt.get("schema")
+        == "ipfs_datasets_py/duckdb-quack-bootstrap-receipt@1"
+        and receipt.get("kind") == "bootstrap_implementation_receipt"
+        and receipt.get("required_bridge_commit")
+        == REQUIRED_ACCELERATE_BRIDGE_COMMIT
+        and receipt.get("task_cid") == task_cid
+        and receipt.get("task_source_identity_id")
+        == _repository_task_source_identity(source, snapshot)["identity_id"]
+        and receipt.get("plan_root_cid") == snapshot.plan_root_cid
+        and receipt.get("repository_tree_id") == snapshot.repository_tree_id
+        and isinstance(validation, Mapping)
+        and validation.get("argv") == list(_bootstrap_bridge_validation_argv())
+        and _safe_int(validation.get("exit_status"), -1) == 0
+        and validator_valid
+        and validation.get("validator_receipt_id")
+        == validator_receipt.get("receipt_id")
+        and re.fullmatch(
+            r"sha256:[0-9a-f]{64}",
+            str(validation.get("output_sha256") or ""),
+        )
+        is not None
+        and submodule_commit
+        and submodule_tree
+        and superproject_commit
+        and superproject_tree
+    )
+    if not valid:
+        suffix = "" if validator_valid else f"; validator={validator_detail}"
+        return False, detail_prefix + suffix, ""
+    ancestry_checks = (
+        (submodule_commit, "HEAD", ACCELERATE_ROOT),
+        (superproject_commit, "HEAD", REPO_ROOT),
+        (
+            REQUIRED_ACCELERATE_BRIDGE_COMMIT,
+            submodule_commit,
+            ACCELERATE_ROOT,
+        ),
+    )
+    for ancestor, descendant, cwd in ancestry_checks:
+        if subprocess.run(
+            ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+        ).returncode != 0:
+            return False, detail_prefix + "; receipt Git ancestry is stale", ""
+    try:
+        tree_valid = bool(
+            _git(
+                "-C",
+                "ipfs_accelerate_py",
+                "rev-parse",
+                f"{submodule_commit}^{{tree}}",
+            )
+            == submodule_tree
+            and _git("rev-parse", f"{superproject_commit}^{{tree}}")
+            == superproject_tree
+        )
+    except RuntimeError as exc:
+        return (
+            False,
+            detail_prefix + f"; receipt tree lookup failed: {exc}",
+            "",
+        )
+    if not tree_valid:
+        return False, detail_prefix + "; receipt Git tree identity mismatch", ""
+    evidence_id = str(completion_evidence["evidence_id"])
+    return True, detail_prefix + f"; evidence_id={evidence_id}", evidence_id
+
+
 def render_markdown(source: Any) -> str:
     projection = database_projection(source)
     goals = projection["tables"]["goals"]
@@ -4122,6 +4337,8 @@ def _process_birth_identity(pid: int) -> dict[str, Any] | None:
         command_bytes = Path(f"/proc/{pid}/cmdline").read_bytes()
     except (OSError, IndexError, ValueError):
         return None
+    if not boot_id or not command_bytes:
+        return None
     argv = tuple(
         item.decode("utf-8", errors="replace")
         for item in command_bytes.split(b"\0")
@@ -4254,6 +4471,30 @@ def _master_execution_slice(argv: Sequence[str]) -> tuple[str, ...]:
     return tuple(aliases)
 
 
+def _master_single_common_arg_value(
+    argv: Sequence[str],
+    option: str,
+) -> str:
+    """Extract one runner-forwarded value while rejecting duplicate authority."""
+
+    marker = f"--common-arg={option}"
+    prefix = "--common-arg="
+    if any(str(item).startswith(marker + "=") for item in argv):
+        raise RuntimeError(f"master common option {option} uses an unsupported form")
+    indexes = [index for index, item in enumerate(argv) if item == marker]
+    if not indexes:
+        return ""
+    if len(indexes) != 1 or indexes[0] + 1 >= len(argv):
+        raise RuntimeError(f"master common option {option} is duplicated or incomplete")
+    raw = str(argv[indexes[0] + 1])
+    if not raw.startswith(prefix):
+        raise RuntimeError(f"master common option {option} has no forwarded value")
+    value = raw[len(prefix) :].strip()
+    if not value or value.startswith("--"):
+        raise RuntimeError(f"master common option {option} value is invalid")
+    return value
+
+
 def _execution_slice_digest(
     *,
     plan_root_cid: str,
@@ -4366,6 +4607,13 @@ def _master_process_status(
     )
     if logical_argv is None:
         return False, "pid_command_does_not_match_program_master"
+    try:
+        actual_bootstrap_evidence_id = _master_single_common_arg_value(
+            logical_argv,
+            "--duckdb-bootstrap-completion-evidence-id",
+        )
+    except RuntimeError:
+        return False, "master_bootstrap_completion_evidence_is_duplicated"
     python_environment = _process_python_environment(pid)
     if python_environment != _sealed_python_environment():
         return False, "master_python_environment_is_not_sealed"
@@ -4385,7 +4633,7 @@ def _master_process_status(
     ):
         return False, "master_python_environment_receipt_mismatch"
     expected_bindings = {
-        "schema": "ipfs_datasets_py/duckdb-quack-master-identity@2",
+        "schema": "ipfs_datasets_py/duckdb-quack-master-identity@3",
         "program_id": PROGRAM_ID,
         "repository_root": str(REPO_ROOT),
         "master_root": str(MASTER_ROOT),
@@ -4414,6 +4662,12 @@ def _master_process_status(
         if selected_source is None:
             raise RuntimeError("manual-gate authority source is unavailable")
         held_snapshot, hold_projection = _manual_gate_hold_projection(selected_source)
+        (
+            _launch_snapshot,
+            _launch_slice,
+            _launch_slice_digest,
+            expected_bootstrap_evidence_id,
+        ) = _task_source_launch_contract(selected_source)
         if (
             held_snapshot.plan_root_cid != str(stored.get("plan_root_cid") or "")
             or held_snapshot.repository_tree_id
@@ -4436,6 +4690,9 @@ def _master_process_status(
         != hold_projection["held_set_sha256"]
         or _safe_int(stored.get("authorization_held_task_count"), -1)
         != len(hold_projection["held_task_aliases"])
+        or stored.get("bootstrap_completion_evidence_id")
+        != expected_bootstrap_evidence_id
+        or actual_bootstrap_evidence_id != expected_bootstrap_evidence_id
     ):
         return False, "stored_master_execution_slice_mismatch"
     return True, "bound_process_live"
@@ -4454,7 +4711,20 @@ def _write_master_identity(pid: int, snapshot: Any) -> None:
     if actual_argv is None:
         raise RuntimeError("master process does not have the sealed launch argv")
     execution_slice = _master_execution_slice(actual_argv)
-    held_snapshot, hold_projection = _manual_gate_hold_projection(_source())
+    source = _source()
+    held_snapshot, hold_projection = _manual_gate_hold_projection(source)
+    (
+        _launch_snapshot,
+        _launch_slice,
+        _launch_slice_digest,
+        expected_bootstrap_evidence_id,
+    ) = _task_source_launch_contract(source)
+    actual_bootstrap_evidence_id = _master_single_common_arg_value(
+        actual_argv,
+        "--duckdb-bootstrap-completion-evidence-id",
+    )
+    if actual_bootstrap_evidence_id != expected_bootstrap_evidence_id:
+        raise RuntimeError("master bootstrap completion evidence changed at launch")
     if (
         held_snapshot.plan_root_cid != snapshot.plan_root_cid
         or held_snapshot.repository_tree_id != snapshot.repository_tree_id
@@ -4468,7 +4738,7 @@ def _write_master_identity(pid: int, snapshot: Any) -> None:
         held_set_sha256=hold_projection["held_set_sha256"],
     )
     payload = {
-        "schema": "ipfs_datasets_py/duckdb-quack-master-identity@2",
+        "schema": "ipfs_datasets_py/duckdb-quack-master-identity@3",
         "program_id": PROGRAM_ID,
         "repository_root": str(REPO_ROOT),
         "master_root": str(MASTER_ROOT),
@@ -4481,6 +4751,7 @@ def _write_master_identity(pid: int, snapshot: Any) -> None:
         "authorization_held_task_count": len(
             hold_projection["held_task_aliases"]
         ),
+        "bootstrap_completion_evidence_id": expected_bootstrap_evidence_id,
         "lane_count": _safe_int(
             _option_value(
                 actual_argv,
@@ -6090,6 +6361,12 @@ def _retry_lifecycle_authority(
 
     source = _source()
     snapshot = source.snapshot()
+    (
+        _retry_launch_snapshot,
+        _retry_execution_slice,
+        _retry_execution_slice_digest,
+        bootstrap_completion_evidence_id,
+    ) = _task_source_launch_contract(source)
     if (
         snapshot.plan_root_cid != binding.plan_root_cid
         or snapshot.repository_tree_id
@@ -6131,13 +6408,14 @@ def _retry_lifecycle_authority(
         noun="stored master process-birth identity",
     )
     expected_master_fields = {
-        "schema": "ipfs_datasets_py/duckdb-quack-master-identity@2",
+        "schema": "ipfs_datasets_py/duckdb-quack-master-identity@3",
         "program_id": PROGRAM_ID,
         "repository_root": str(REPO_ROOT.resolve()),
         "master_root": str(MASTER_ROOT.resolve()),
         "master_pid_path": str(MASTER_PID.resolve()),
         "plan_root_cid": snapshot.plan_root_cid,
         "repository_tree_id": snapshot.repository_tree_id,
+        "bootstrap_completion_evidence_id": bootstrap_completion_evidence_id,
     }
     if any(stored_master.get(key) != value for key, value in expected_master_fields.items()):
         raise RuntimeError("stored master identity has stale program/plan bindings")
@@ -9494,6 +9772,27 @@ def task_status(source: Any) -> dict[str, Any]:
     )
     tasks = tables["tasks"]
     dependencies = tables["task_dependencies"]
+    bootstrap_row = next(
+        (
+            row
+            for row in tasks
+            if str(row.get("task_alias") or "") == BOOTSTRAP_TASK_ID
+        ),
+        None,
+    )
+    bootstrap_completion_evidence_id = ""
+    if bootstrap_row is not None and str(bootstrap_row.get("status") or "") == "completed":
+        bootstrap_evidence, _bootstrap_receipt = (
+            _bootstrap_completion_evidence_from_tables(
+                source,
+                snapshot,
+                tasks,
+                tables["task_events"],
+            )
+        )
+        bootstrap_completion_evidence_id = str(
+            bootstrap_evidence["evidence_id"]
+        )
     hold_projection = _manual_gate_hold_projection_from_tables(
         snapshot,
         tasks,
@@ -9698,6 +9997,11 @@ def task_status(source: Any) -> dict[str, Any]:
                     daemon_argv, "--expected-task-source-repository-root"
                 )
                 == snapshot.repository_tree_id
+                and _option_value(
+                    daemon_argv,
+                    "--duckdb-bootstrap-completion-evidence-id",
+                )
+                == bootstrap_completion_evidence_id
                 and _option_value(daemon_argv, "--state-dir")
                 == str(status_path.parent)
             )
@@ -10052,109 +10356,22 @@ def preflight_checks(*, require_clean: bool = True) -> list[dict[str, Any]]:
                     f"digest={hold_projection['held_set_sha256']}"
                 ),
             )
-            bootstrap = next(
-                row for row in projected["tasks"] if row["task_alias"] == BOOTSTRAP_TASK_ID
-            )
-            bootstrap_receipt = _latest_status_receipt(
-                projected["task_events"],
-                task_cid=str(bootstrap["task_cid"]),
-                status="completed",
-            )
-            receipt_validation = (
-                (bootstrap_receipt or {}).get("validation")
-                if isinstance(bootstrap_receipt, Mapping)
-                else None
-            )
-            receipt_validator = (
-                receipt_validation.get("validator_receipt")
-                if isinstance(receipt_validation, Mapping)
-                else None
-            )
-            receipt_validator_valid, _receipt_validator_detail = (
-                _validate_bootstrap_validator_receipt(
-                    receipt_validator,
-                    require_current_checkout=False,
+            (
+                bridge_receipt_valid,
+                bridge_receipt_detail,
+                _bridge_evidence_id,
+            ) = (
+                _bootstrap_bridge_receipt_contract(
+                    source,
+                    snapshot,
+                    projected["tasks"],
+                    projected["task_events"],
                 )
             )
-            receipt_commit = str(
-                (bootstrap_receipt or {}).get("submodule_commit") or ""
-            )
-            receipt_submodule_tree = str(
-                (bootstrap_receipt or {}).get("submodule_tree") or ""
-            )
-            receipt_superproject_commit = str(
-                (bootstrap_receipt or {}).get("superproject_commit") or ""
-            )
-            receipt_superproject_tree = str(
-                (bootstrap_receipt or {}).get("superproject_tree") or ""
-            )
-            bridge_receipt_valid = bool(
-                str(bootstrap["status"]) == "completed"
-                and bootstrap_receipt
-                and bootstrap_receipt.get("schema")
-                == "ipfs_datasets_py/duckdb-quack-bootstrap-receipt@1"
-                and bootstrap_receipt.get("required_bridge_commit")
-                == REQUIRED_ACCELERATE_BRIDGE_COMMIT
-                and bootstrap_receipt.get("task_cid")
-                == str(bootstrap["task_cid"])
-                and bootstrap_receipt.get("task_source_identity_id")
-                == _repository_task_source_identity(source, snapshot)["identity_id"]
-                and bootstrap_receipt.get("plan_root_cid")
-                == snapshot.plan_root_cid
-                and bootstrap_receipt.get("repository_tree_id")
-                == snapshot.repository_tree_id
-                and isinstance(receipt_validation, Mapping)
-                and receipt_validation.get("argv")
-                == list(_bootstrap_bridge_validation_argv())
-                and _safe_int(receipt_validation.get("exit_status"), -1) == 0
-                and receipt_validator_valid
-                and receipt_validation.get("validator_receipt_id")
-                == receipt_validator.get("receipt_id")
-                and re.fullmatch(
-                    r"sha256:[0-9a-f]{64}",
-                    str(receipt_validation.get("output_sha256") or ""),
-                )
-                is not None
-                and receipt_commit
-                and receipt_submodule_tree
-                and receipt_superproject_commit
-                and receipt_superproject_tree
-            )
-            if bridge_receipt_valid:
-                for commit, cwd in (
-                    (receipt_commit, ACCELERATE_ROOT),
-                    (receipt_superproject_commit, REPO_ROOT),
-                ):
-                    bridge_receipt_valid = bool(
-                        bridge_receipt_valid
-                        and subprocess.run(
-                            ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
-                            cwd=cwd,
-                            text=True,
-                            capture_output=True,
-                            check=False,
-                        ).returncode
-                        == 0
-                    )
-            if bridge_receipt_valid:
-                bridge_receipt_valid = bool(
-                    _git(
-                        "-C",
-                        "ipfs_accelerate_py",
-                        "rev-parse",
-                        f"{receipt_commit}^{{tree}}",
-                    )
-                    == receipt_submodule_tree
-                    and _git(
-                        "rev-parse",
-                        f"{receipt_superproject_commit}^{{tree}}",
-                    )
-                    == receipt_superproject_tree
-                )
             add(
                 "bootstrap_bridge_receipt",
                 bridge_receipt_valid,
-                f"{BOOTSTRAP_TASK_ID} status={bootstrap['status']}; typed_receipt={bool(bootstrap_receipt)}; submodule_commit={receipt_commit or 'missing'}",
+                bridge_receipt_detail,
             )
             ready = source.ready_tasks(limit=1000)
             add("ready_work", bool(ready.tasks), f"ready={len(ready.tasks)}", required=False)
@@ -13150,8 +13367,9 @@ def _start_manual_gate_checkout_custodian(
     identity_deadline = time.monotonic() + 2.0
     while time.monotonic() < identity_deadline and process.poll() is None:
         identity = _process_birth_identity(process.pid)
-        if identity is not None:
+        if identity is not None and tuple(identity.get("argv") or ()) == command:
             break
+        identity = None
         time.sleep(0.01)
     if identity is None:
         if process.poll() is None:
@@ -13271,7 +13489,9 @@ def _ensure_manual_gate_effect_custody(
 def _manual_gate_relaunch_runtime(
     journal: Mapping[str, Any], source: Any
 ) -> dict[str, Any]:
-    snapshot, execution_slice, slice_digest = _task_source_launch_contract(source)
+    snapshot, execution_slice, slice_digest, _bootstrap_evidence_id = (
+        _task_source_launch_contract(source)
+    )
     if not execution_slice:
         return {
             "kind": "no-runnable-descendants",
@@ -13831,7 +14051,7 @@ def _task_source_roots(source: Any) -> tuple[str, str]:
 
 def _task_source_launch_contract(
     source: Any,
-) -> tuple[Any, tuple[str, ...], str]:
+) -> tuple[Any, tuple[str, ...], str, str]:
     """Read one immutable generation and derive its bounded execution slice.
 
     The seed ``TASKS`` tuple only bootstraps generation zero.  After a governed
@@ -13859,6 +14079,33 @@ def _task_source_launch_contract(
         seen_aliases.add(alias)
         if bool(body.get("is_schedulable", True)):
             aliases.append(alias)
+    bootstrap = next(
+        (
+            row
+            for row in rows
+            if str(row.get("task_alias") or "") == BOOTSTRAP_TASK_ID
+        ),
+        None,
+    )
+    bootstrap_completion_evidence_id = ""
+    if bootstrap is not None and str(bootstrap.get("status") or "") == "completed":
+        (
+            bridge_receipt_valid,
+            bridge_receipt_detail,
+            bootstrap_completion_evidence_id,
+        ) = (
+            _bootstrap_bridge_receipt_contract(
+                source,
+                snapshot,
+                rows,
+                tuple(projection.tables.get("task_events") or ()),
+            )
+        )
+        if not bridge_receipt_valid:
+            raise RuntimeError(
+                f"cannot trust completed {BOOTSTRAP_TASK_ID} at launch: "
+                + bridge_receipt_detail
+            )
     hold_projection = _manual_gate_hold_projection_from_tables(
         snapshot,
         rows,
@@ -13881,7 +14128,7 @@ def _task_source_launch_contract(
         held_task_aliases=hold_projection["held_task_aliases"],
         held_set_sha256=hold_projection["held_set_sha256"],
     )
-    return snapshot, tuple(aliases), digest
+    return snapshot, tuple(aliases), digest, bootstrap_completion_evidence_id
 
 
 def cmd_smoke(args: argparse.Namespace) -> int:
@@ -13915,6 +14162,21 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     runner_args = build_arg_parser().parse_args(command[3:])
     common = common_args_from_parsed_args(runner_args)
     rendered_children: list[list[str]] = []
+    completed_bootstrap = any(
+        str(row.get("task_alias") or "") == BOOTSTRAP_TASK_ID
+        and str(row.get("status") or "") == "completed"
+        for row in projection.tables.get("tasks") or ()
+    )
+    expected_bootstrap_evidence_id = ""
+    if completed_bootstrap:
+        _valid, _detail, expected_bootstrap_evidence_id = (
+            _bootstrap_bridge_receipt_contract(
+                source,
+                projection.snapshot,
+                tuple(projection.tables.get("tasks") or ()),
+                tuple(projection.tables.get("task_events") or ()),
+            )
+        )
     for track in tracks_from_parsed_args(runner_args):
         supervisor_args = parse_supervisor_args([*common, *track.extra_args])
         config = supervisor_config_from_args(supervisor_args, repo_root=REPO_ROOT)
@@ -13924,6 +14186,13 @@ def cmd_smoke(args: argparse.Namespace) -> int:
             daemon_args.task_source_kind != "duckdb"
             or daemon_args.expected_task_source_root != plan_root
             or daemon_args.expected_task_source_repository_root != repository_root
+            or daemon_args.assume_completed_task_id
+            or daemon_args.duckdb_bootstrap_completion_evidence_id
+            != (
+                [expected_bootstrap_evidence_id]
+                if expected_bootstrap_evidence_id
+                else []
+            )
             or MANUAL_GATE_TASK_IDS.intersection(
                 daemon_args.execution_slice_task_id
             )
@@ -13966,9 +14235,12 @@ def supervisor_command(
     launch_token: str = "",
 ) -> list[str]:
     source = _source()
-    launch_snapshot, execution_slice, _slice_digest = _task_source_launch_contract(
-        source
-    )
+    (
+        launch_snapshot,
+        execution_slice,
+        _slice_digest,
+        bootstrap_completion_evidence_id,
+    ) = _task_source_launch_contract(source)
     plan_root = str(launch_snapshot.plan_root_cid)
     repository_root = str(launch_snapshot.repository_tree_id)
     entry = ACCELERATE_ROOT / "scripts/ops/agent_supervisor/implementation_supervisor_entry.py"
@@ -14026,6 +14298,13 @@ def supervisor_command(
     ]
     for protected_path in _implementation_protected_paths():
         common_args.extend(["--implementation-protected-path", protected_path])
+    if bootstrap_completion_evidence_id:
+        common_args.extend(
+            [
+                "--duckdb-bootstrap-completion-evidence-id",
+                bootstrap_completion_evidence_id,
+            ]
+        )
     for task_alias in execution_slice:
         common_args.extend(["--execution-slice-task-id", task_alias])
     if launch_token and re.fullmatch(r"[0-9a-f]{32}", launch_token) is None:

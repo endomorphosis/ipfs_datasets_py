@@ -1047,8 +1047,22 @@ def test_checkout_lease_relaunch_custodian_remains_native_daemon_visible(
     )
 
 
+def test_process_birth_identity_rejects_transient_empty_cmdline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cmdline_path = Path(f"/proc/{os.getpid()}/cmdline")
+    read_bytes = Path.read_bytes
+
+    def transient_read_bytes(path: Path) -> bytes:
+        return b"" if path == cmdline_path else read_bytes(path)
+
+    monkeypatch.setattr(Path, "read_bytes", transient_read_bytes)
+    assert program._process_birth_identity(os.getpid()) is None
+
+
 def test_program_checkout_custodian_covers_master_launch_window(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     parent, accelerator, _old, _new, _protected = _nested_gitlink_repositories(
         tmp_path
@@ -1060,6 +1074,37 @@ def test_program_checkout_custodian_covers_master_launch_window(
         operation_id=operation_id,
         checkout_module=checkout_module,
     )
+    canonical_command = (
+        str(program._trusted_base_python_path()),
+        "-I",
+        "-B",
+        "-S",
+        "-c",
+        "import os,signal; signal.signal(signal.SIGTERM, lambda *_: os._exit(0)); signal.pause()",
+        "dqk-manual-gate-checkout-custodian",
+    )
+    process_birth_identity = program._process_birth_identity
+    transient_identity_offered = False
+
+    def process_birth_identity_with_transient_cmdline(
+        pid: int,
+    ) -> dict[str, Any] | None:
+        nonlocal transient_identity_offered
+        identity = process_birth_identity(pid)
+        if identity is not None and not transient_identity_offered:
+            transient_identity_offered = True
+            return {
+                **identity,
+                "cmdline_sha256": "sha256:" + hashlib.sha256(b"").hexdigest(),
+                "argv": (),
+            }
+        return identity
+
+    monkeypatch.setattr(
+        program,
+        "_process_birth_identity",
+        process_birth_identity_with_transient_cmdline,
+    )
     process, identity, bound_records = program._start_manual_gate_checkout_custodian(
         {
             "gate_task_id": program.RELEASE_GATE_TASK_ID,
@@ -1068,6 +1113,8 @@ def test_program_checkout_custodian_covers_master_launch_window(
     )
     assert process is not None
     assert identity is not None
+    assert transient_identity_offered
+    assert tuple(identity["argv"]) == canonical_command
     bound = tuple(
         program.manual_gate_authority._read_lease(Path(record["lock_path"]))
         for record in bound_records
