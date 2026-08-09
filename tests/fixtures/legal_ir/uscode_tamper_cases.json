@@ -1,0 +1,444 @@
+{
+  "schema_version": "uscode-tamper-cases/v1",
+  "task_id": "USCIR-034",
+  "goal_id": "USCIR-G090",
+  "description": "Compact adversarial recipes for US Code HF release packaging and immutable resolver fail-closed gates. Cases never target live Hub mutation.",
+  "categories": [
+    "traversal_path",
+    "absolute_path",
+    "symlink",
+    "digest_drift",
+    "size_drift",
+    "row_drift",
+    "schema_drift",
+    "mutable_revision",
+    "decompression_limit",
+    "row_limit",
+    "cache_poisoning",
+    "token_redaction",
+    "manifest_lineage_bounds"
+  ],
+  "surfaces": [
+    "path",
+    "revision",
+    "release_artifact",
+    "release_config",
+    "resolver",
+    "cache",
+    "token",
+    "lineage",
+    "resource"
+  ],
+  "error_types": [
+    "ArtifactPathError",
+    "CacheCollisionError",
+    "CredentialLeakageError",
+    "DigestDriftError",
+    "HuggingFaceReleaseError",
+    "MutableReferenceError",
+    "MutableRevisionError",
+    "OversizedArtifactError",
+    "PhysicalBoundError",
+    "SchemaMismatchError",
+    "SymlinkRejectedError",
+    "UnsafePathError",
+    "UscodeHFReleaseConfigError",
+    "UscodeHFReleaseError",
+    "UscodeHFReleaseIntegrityError",
+    "UscodeHFReleaseSafetyError"
+  ],
+  "cases": [
+    {
+      "id": "traversal_parent_segments",
+      "category": "traversal_path",
+      "surface": "path",
+      "description": "Parent-directory traversal is rejected before path use.",
+      "relative_path": "../secrets/token",
+      "expect_error": "ArtifactPathError",
+      "match": "\\.|\\.\\.|segment"
+    },
+    {
+      "id": "traversal_embedded_dotdot",
+      "category": "traversal_path",
+      "surface": "path",
+      "description": "Embedded .. segments fail closed.",
+      "relative_path": "data/../../etc/passwd",
+      "expect_error": "ArtifactPathError",
+      "match": "\\.|segment|relative"
+    },
+    {
+      "id": "traversal_backslash_escape",
+      "category": "traversal_path",
+      "surface": "path",
+      "description": "Windows separators and escape sequences are rejected.",
+      "relative_path": "data\\..\\secret",
+      "expect_error": "ArtifactPathError",
+      "match": "POSIX|separator"
+    },
+    {
+      "id": "traversal_dot_segment",
+      "category": "traversal_path",
+      "surface": "path",
+      "description": "Embedded '.' segments are rejected as non-normalized.",
+      "relative_path": "data/./corpus.parquet",
+      "expect_error": "ArtifactPathError",
+      "match": "normalized|segment|\\."
+    },
+    {
+      "id": "traversal_resolver_escape",
+      "category": "traversal_path",
+      "surface": "resolver",
+      "description": "Resolver rejects traversal before fetch.",
+      "relative_path": "../escape.parquet",
+      "expect_error": "UnsafePathError",
+      "match": "relative|\\.|unsafe|segment"
+    },
+    {
+      "id": "absolute_posix_etc",
+      "category": "absolute_path",
+      "surface": "path",
+      "description": "Absolute POSIX paths fail closed.",
+      "relative_path": "/etc/passwd",
+      "expect_error": "ArtifactPathError",
+      "match": "relative|absolute"
+    },
+    {
+      "id": "absolute_home_ssh",
+      "category": "absolute_path",
+      "surface": "path",
+      "description": "Home-relative absolute paths fail closed.",
+      "relative_path": "~/.ssh/id_rsa",
+      "expect_error": "ArtifactPathError",
+      "match": "relative|absolute"
+    },
+    {
+      "id": "absolute_unc_share",
+      "category": "absolute_path",
+      "surface": "path",
+      "description": "UNC-style absolute paths fail closed.",
+      "relative_path": "//server/share/file",
+      "expect_error": "ArtifactPathError",
+      "match": "UNC|relative|absolute|normalized"
+    },
+    {
+      "id": "absolute_viewer_config_path",
+      "category": "absolute_path",
+      "surface": "release_config",
+      "description": "Viewer data_files absolute paths fail closed before packaging.",
+      "config_path": "/tmp/evil.parquet",
+      "expect_error": "UscodeHFReleaseConfigError",
+      "match": "unsafe|path"
+    },
+    {
+      "id": "symlink_transport",
+      "category": "symlink",
+      "surface": "resolver",
+      "description": "Symlinked release artifacts fail closed before use.",
+      "relative_path": "data/corpus/part-000000.parquet",
+      "transport_failure": "symlink",
+      "expect_error": "SymlinkRejectedError",
+      "match": "symlink"
+    },
+    {
+      "id": "symlink_on_disk_verify",
+      "category": "symlink",
+      "surface": "resolver",
+      "description": "Descriptor verification rejects on-disk symlinks before parse.",
+      "relative_path": "indexes/routing.parquet",
+      "expect_error": "SymlinkRejectedError",
+      "match": "symlink",
+      "operation": "verify_descriptor_symlink"
+    },
+    {
+      "id": "digest_drift_sha256",
+      "category": "digest_drift",
+      "surface": "resolver",
+      "description": "On-disk bytes that disagree with descriptor sha256 fail closed before parse.",
+      "relative_path": "manifest.json",
+      "content": "{\"schema_version\":\"publicus-ir-graphrag/v2\",\"primary_key\":\"entry_cid\"}",
+      "descriptor": {
+        "relative_path": "manifest.json",
+        "size_bytes": 64,
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "schema_id": "publicus-ir-graphrag/v2"
+      },
+      "expect_error": "DigestDriftError",
+      "match": "digest|size|sha256"
+    },
+    {
+      "id": "digest_drift_release_artifact",
+      "category": "digest_drift",
+      "surface": "release_artifact",
+      "description": "ReleaseArtifact rejects mismatched declared sha256 before use.",
+      "relative_path": "reports/quality.json",
+      "content": "{\"ok\":true}",
+      "declared_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "expect_error": "UscodeHFReleaseIntegrityError",
+      "match": "sha256|mismatch"
+    },
+    {
+      "id": "size_drift_descriptor",
+      "category": "size_drift",
+      "surface": "resolver",
+      "description": "Matching digest claim with wrong size still fails closed.",
+      "relative_path": "indexes/corpus_chunks.parquet",
+      "content_hex": "50415231",
+      "descriptor": {
+        "relative_path": "indexes/corpus_chunks.parquet",
+        "size_bytes": 999,
+        "sha256": "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592",
+        "schema_id": "hf-graphrag-release/v1"
+      },
+      "expect_error": "DigestDriftError",
+      "match": "digest|size"
+    },
+    {
+      "id": "row_drift_physical_bound",
+      "category": "row_drift",
+      "surface": "release_artifact",
+      "description": "Data-family row_count above 4096 fails closed before packaging.",
+      "relative_path": "data/corpus/part-000000.parquet",
+      "content": "PAR1-placeholder-not-parsed",
+      "family": "corpus",
+      "row_count": 4097,
+      "expect_error": "UscodeHFReleaseIntegrityError",
+      "match": "row_count|physical|4096|bound"
+    },
+    {
+      "id": "row_drift_descriptor_bound",
+      "category": "row_drift",
+      "surface": "resource",
+      "description": "Physical row validator rejects oversized shard claims.",
+      "row_count": 5000,
+      "expect_error": "PhysicalBoundError",
+      "match": "bound|4096|exceeds"
+    },
+    {
+      "id": "schema_drift_unknown_manifest",
+      "category": "schema_drift",
+      "surface": "resolver",
+      "description": "Unknown release schema_version fails closed before use.",
+      "relative_path": "manifest.json",
+      "content": "{\"schema_version\":\"evil-release/v0\",\"primary_key\":\"entry_cid\"}",
+      "operation": "load_manifest",
+      "expect_error": "SchemaMismatchError",
+      "match": "unsupported release schema|schema"
+    },
+    {
+      "id": "schema_drift_wrong_primary_key",
+      "category": "schema_drift",
+      "surface": "resolver",
+      "description": "Positional primary keys are rejected.",
+      "relative_path": "manifest.json",
+      "content": "{\"schema_version\":\"publicus-ir-graphrag/v2\",\"primary_key\":\"row-N\"}",
+      "operation": "load_manifest",
+      "expect_error": "SchemaMismatchError",
+      "match": "primary_key"
+    },
+    {
+      "id": "schema_drift_two_defaults",
+      "category": "schema_drift",
+      "surface": "release_config",
+      "description": "Two default viewer configs fail schema coherence.",
+      "operation": "two_defaults",
+      "expect_error": "UscodeHFReleaseConfigError",
+      "match": "default|unique|config"
+    },
+    {
+      "id": "schema_drift_recovery_on_default",
+      "category": "schema_drift",
+      "surface": "release_config",
+      "description": "Default config advertising recovery paths fails closed.",
+      "operation": "default_recovery_path",
+      "expect_error": "UscodeHFReleaseSafetyError",
+      "match": "recovery"
+    },
+    {
+      "id": "mutable_revision_main",
+      "category": "mutable_revision",
+      "surface": "revision",
+      "description": "Branch name main is not an immutable Hub pin.",
+      "revision": "main",
+      "expect_error": "MutableRevisionError",
+      "match": "immutable"
+    },
+    {
+      "id": "mutable_revision_latest",
+      "category": "mutable_revision",
+      "surface": "revision",
+      "description": "Floating latest tag is rejected.",
+      "revision": "latest",
+      "expect_error": "MutableRevisionError",
+      "match": "immutable"
+    },
+    {
+      "id": "mutable_revision_schema_require",
+      "category": "mutable_revision",
+      "surface": "revision",
+      "description": "Schema require_immutable_revision rejects HEAD.",
+      "revision": "HEAD",
+      "operation": "schema_require",
+      "expect_error": "MutableReferenceError",
+      "match": "immutable|mutable"
+    },
+    {
+      "id": "mutable_revision_release_builder",
+      "category": "mutable_revision",
+      "surface": "revision",
+      "description": "Release builder rejects mutable source_revision before packaging.",
+      "revision": "main",
+      "operation": "release_builder",
+      "expect_error": "MutableReferenceError",
+      "match": "immutable|mutable"
+    },
+    {
+      "id": "decompression_oversized_descriptor",
+      "category": "decompression_limit",
+      "surface": "resource",
+      "description": "Oversized descriptor is rejected before fetch/parse (resource bound).",
+      "relative_path": "data/vectors/part-000000.parquet",
+      "max_artifact_bytes": 1024,
+      "descriptor": {
+        "relative_path": "data/vectors/part-000000.parquet",
+        "size_bytes": 2048,
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "row_count": 1,
+        "schema_id": "hf-graphrag-release/v1"
+      },
+      "expect_error": "OversizedArtifactError",
+      "match": "max_artifact_bytes|exceeds"
+    },
+    {
+      "id": "decompression_fetched_bytes",
+      "category": "decompression_limit",
+      "surface": "resource",
+      "description": "Fetched bytes exceeding budget fail closed before unsafe parse.",
+      "relative_path": "data/big.bin",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxXXXXXXXXXXXXXXXXXXXX",
+      "max_artifact_bytes": 50,
+      "expect_error": "OversizedArtifactError",
+      "match": "max_artifact_bytes|exceeds"
+    },
+    {
+      "id": "row_limit_descriptor",
+      "category": "row_limit",
+      "surface": "resource",
+      "description": "Descriptor row_count above physical 4096 bound fails closed.",
+      "relative_path": "data/corpus/part-000001.parquet",
+      "max_rows_per_artifact": 4096,
+      "descriptor": {
+        "relative_path": "data/corpus/part-000001.parquet",
+        "size_bytes": 16,
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "row_count": 4097,
+        "schema_id": "hf-graphrag-release/v1"
+      },
+      "expect_error": "OversizedArtifactError",
+      "match": "row_count|exceeds"
+    },
+    {
+      "id": "row_limit_builder_shard",
+      "category": "row_limit",
+      "surface": "resource",
+      "description": "Builder max_rows_per_shard above physical bound fails closed.",
+      "max_rows_per_shard": 5000,
+      "expect_error": "UscodeHFReleaseError",
+      "match": "max_rows_per_shard|4096"
+    },
+    {
+      "id": "cache_poison_alias_digest",
+      "category": "cache_poisoning",
+      "surface": "cache",
+      "description": "Reusing a revision-scoped alias for different content fails closed.",
+      "relative_path": "indexes/bm25_keyword_shards.parquet",
+      "content_a": "alpha-bytes-for-shard-a",
+      "content_b": "beta-bytes-for-shard-b-different",
+      "expect_error": "CacheCollisionError",
+      "match": "collision|alias"
+    },
+    {
+      "id": "token_redaction_fetch_trace",
+      "category": "token_redaction",
+      "surface": "token",
+      "description": "Hub tokens must never appear in fetch traces or resolver repr.",
+      "token": "hf_thisIsAFakeTokenValueForLeakTests034",
+      "relative_path": "manifest.json",
+      "content": "{\"schema_version\":\"publicus-ir-graphrag/v2\",\"primary_key\":\"entry_cid\"}",
+      "expect_error": null,
+      "assert_absent_from_trace": [
+        "hf_thisIsAFakeTokenValueForLeakTests034",
+        "\"token\"",
+        "authorization"
+      ]
+    },
+    {
+      "id": "token_redaction_poisoned_schema_id",
+      "category": "token_redaction",
+      "surface": "token",
+      "description": "Fetch trace rejects credential-like fields injected into records.",
+      "token_like_schema_id": "hf_thisIsAFakeTokenValueForLeakTests034",
+      "operation": "poison_fetch_log",
+      "expect_error": "CredentialLeakageError",
+      "match": "credential"
+    },
+    {
+      "id": "lineage_absolute_local_path",
+      "category": "manifest_lineage_bounds",
+      "surface": "lineage",
+      "description": "Absolute local paths in identity surfaces fail closed.",
+      "payload": {
+        "source_uri": "/home/operator/secrets/uscode-cache/title5.xml",
+        "schema_version": "uscode-verbose-lineage/v1"
+      },
+      "expect_error": "HuggingFaceReleaseError",
+      "match": "identity contamination|local_path"
+    },
+    {
+      "id": "lineage_file_uri",
+      "category": "manifest_lineage_bounds",
+      "surface": "lineage",
+      "description": "file:// URIs are treated as local-path contamination.",
+      "payload": {
+        "path": "file:///tmp/uscode-private/receipt.json"
+      },
+      "expect_error": "HuggingFaceReleaseError",
+      "match": "identity contamination|local_path"
+    },
+    {
+      "id": "lineage_control_plane_contamination",
+      "category": "manifest_lineage_bounds",
+      "surface": "lineage",
+      "description": "Verbose lineage rows must not embed into control-plane reports.",
+      "operation": "control_plane_lineage_rows",
+      "expect_error": "UscodeHFReleaseIntegrityError",
+      "match": "lineage|control-plane|control_plane"
+    },
+    {
+      "id": "lineage_recovery_on_default_artifact",
+      "category": "manifest_lineage_bounds",
+      "surface": "lineage",
+      "description": "Recovery artifacts bound to default config fail validation.",
+      "operation": "recovery_default_bind",
+      "expect_error": "UscodeHFReleaseSafetyError",
+      "match": "recovery"
+    }
+  ],
+  "valid_fixture": {
+    "description": "Sealed packaging fixture must remain accepted after the tamper suite.",
+    "manifest_path": "tests/fixtures/legal_ir/uscode_manifest.json",
+    "dataset_card_path": "tests/fixtures/legal_ir/uscode_dataset_card.md",
+    "acceptance": {
+      "default_config_excludes_recovery": true,
+      "all_advertised_configs_schema_coherent": true,
+      "every_artifact_descriptor_bound": true,
+      "verbose_lineage_separate_from_control_plane": true,
+      "legacy_files_not_deleted": true
+    }
+  },
+  "acceptance": {
+    "every_tamper_case_fails_closed": true,
+    "typed_errors_before_unsafe_parsing_or_use": true,
+    "no_secret_or_local_absolute_path_leaks": true,
+    "valid_fixtures_remain_accepted": true
+  }
+}
