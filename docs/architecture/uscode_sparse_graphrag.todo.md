@@ -291,7 +291,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Lookup fetches only the containing artifact/page, rejects overlapping/gapped ranges, handles missing keys explicitly, and is deterministic.
 
 ## USCIR-012 Prove shared-substrate compatibility with reference layouts
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
