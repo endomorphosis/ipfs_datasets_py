@@ -757,7 +757,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Interrupted fixture build resumes without duplicating verified work, stale/config-mismatched checkpoints fail, global BM25/cluster rebuild decisions are explicit, and no partial output can be sealed.
 
 ## USCIR-031 Build the additive Hugging Face release and dataset card
-- Status: todo
+- Status: completed
+- Operator resolution: hf_release+fixtures+tests; pytest 19 passed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
