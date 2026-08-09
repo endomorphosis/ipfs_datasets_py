@@ -1,0 +1,95 @@
+{
+  "schema_version": "hf-graphrag-locator-fixture/v1",
+  "description": "Deterministic CID-to-corpus and CID-to-vector locator rows for USCIR-011 unit tests. Keys are opaque sorted entry_cid tokens.",
+  "entry_cids": [
+    "entry-cid-0001",
+    "entry-cid-0002",
+    "entry-cid-0003",
+    "entry-cid-0004",
+    "entry-cid-0005",
+    "entry-cid-0006"
+  ],
+  "expected": {
+    "corpus_shard_count": 3,
+    "hydrate_entry_cid_0003": {
+      "corpus_paths": ["data/corpus/part-000001.parquet"],
+      "vector_paths": ["data/vectors/part-000000.parquet"]
+    },
+    "missing_key": "entry-cid-9999",
+    "vector_shard_count": 2
+  },
+  "corpus_rows": [
+    {
+      "first_key": "entry-cid-0001",
+      "kind": "corpus",
+      "last_key": "entry-cid-0002",
+      "page_index": 0,
+      "relative_path": "data/corpus/part-000000.parquet",
+      "row_count": 2,
+      "schema_version": "hf-graphrag-locator/v1",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "shard_id": 0,
+      "size_bytes": 256,
+      "start_document_index": 0,
+      "end_document_index": 1
+    },
+    {
+      "first_key": "entry-cid-0003",
+      "kind": "corpus",
+      "last_key": "entry-cid-0004",
+      "page_index": 0,
+      "relative_path": "data/corpus/part-000001.parquet",
+      "row_count": 2,
+      "schema_version": "hf-graphrag-locator/v1",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "shard_id": 1,
+      "size_bytes": 256,
+      "start_document_index": 2,
+      "end_document_index": 3
+    },
+    {
+      "first_key": "entry-cid-0005",
+      "kind": "corpus",
+      "last_key": "entry-cid-0006",
+      "page_index": 0,
+      "relative_path": "data/corpus/part-000002.parquet",
+      "row_count": 2,
+      "schema_version": "hf-graphrag-locator/v1",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "shard_id": 2,
+      "size_bytes": 256,
+      "start_document_index": 4,
+      "end_document_index": 5
+    }
+  ],
+  "vector_rows": [
+    {
+      "first_key": "entry-cid-0001",
+      "kind": "vectors",
+      "last_key": "entry-cid-0003",
+      "page_index": 0,
+      "relative_path": "data/vectors/part-000000.parquet",
+      "row_count": 3,
+      "schema_version": "hf-graphrag-locator/v1",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "shard_id": 0,
+      "size_bytes": 512,
+      "start_document_index": 0,
+      "end_document_index": 2
+    },
+    {
+      "first_key": "entry-cid-0004",
+      "kind": "vectors",
+      "last_key": "entry-cid-0006",
+      "page_index": 0,
+      "relative_path": "data/vectors/part-000001.parquet",
+      "row_count": 3,
+      "schema_version": "hf-graphrag-locator/v1",
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "shard_id": 1,
+      "size_bytes": 512,
+      "start_document_index": 3,
+      "end_document_index": 5
+    }
+  ]
+}
