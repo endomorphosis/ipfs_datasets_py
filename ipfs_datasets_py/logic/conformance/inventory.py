@@ -16,11 +16,11 @@ import ast
 import hashlib
 import json
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path, PurePosixPath
-from typing import Any, Final, Iterator
+from typing import Any, Final
 
 LOGIC_SURFACE_INVENTORY_INTERFACE: Final = "LogicSurfaceInventory@1"
 LOGIC_SURFACE_INVENTORY_SCHEMA_VERSION: Final = "logic-surface-inventory/v1"
@@ -127,7 +127,7 @@ _EXPRESSION_PARAM_RE = re.compile(
 )
 
 
-class SurfaceKind(str, Enum):
+class SurfaceKind(StrEnum):
     """Role of one inventoried logic surface."""
 
     PARSER = "parser"
@@ -142,7 +142,7 @@ class SurfaceKind(str, Enum):
     FORMULA_BOUNDARY = "formula_boundary"
 
 
-class FormulaBoundaryKind(str, Enum):
+class FormulaBoundaryKind(StrEnum):
     """How an untyped formula payload is admitted."""
 
     RAW_STRING = "raw_string"
@@ -381,7 +381,7 @@ class LogicSurfaceInventory:
         }
 
     @classmethod
-    def from_dict(cls, value: Mapping[str, Any]) -> "LogicSurfaceInventory":
+    def from_dict(cls, value: Mapping[str, Any]) -> LogicSurfaceInventory:
         if not isinstance(value, Mapping):
             raise InventoryError("inventory payload must be a mapping")
         surfaces_raw = value.get("surfaces", ())
@@ -1341,7 +1341,7 @@ def _identifier(value: object, field_name: str) -> str:
     return text
 
 
-def _enum(value: object, enum_type: type[Enum], field_name: str) -> Any:
+def _enum(value: object, enum_type: type[StrEnum], field_name: str) -> Any:
     try:
         return value if isinstance(value, enum_type) else enum_type(str(value))
     except (TypeError, ValueError) as error:

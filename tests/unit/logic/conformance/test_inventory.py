@@ -6,17 +6,16 @@ import os
 from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.logic.conformance.inventory import (
     DEFAULT_LOGIC_RELATIVE_ROOTS,
+    LOGIC_SURFACE_INVENTORY_INTERFACE,
+    LOGIC_SURFACE_INVENTORY_SCHEMA_VERSION,
+    REQUIRED_EVIDENCE_FAMILIES,
     FormulaBoundaryKind,
     InventoryError,
     InventoryIncompleteError,
-    LOGIC_SURFACE_INVENTORY_INTERFACE,
-    LOGIC_SURFACE_INVENTORY_SCHEMA_VERSION,
     LogicSurfaceInventory,
     LogicSurfaceRecord,
-    REQUIRED_EVIDENCE_FAMILIES,
     SurfaceInventoryPolicy,
     SurfaceKind,
     assert_inventory_complete,
