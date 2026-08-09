@@ -1,0 +1,267 @@
+{
+  "description": "Compact recipe for the 1,798 known truncated-ID collision rows. Dash-range pairs share a naive-truncated section token but remain distinguishable under repaired legal_id construction. Qualifier rows exercise appendix/note/granule/edition disambiguation. Unicode fixtures prove en/em dash and related section tokens parse fully.",
+  "expected_row_count": 1798,
+  "generators": [
+    {
+      "count": 856,
+      "dash_chars": [
+        "–",
+        "—",
+        "−"
+      ],
+      "kind": "truncated_dash_pairs",
+      "section_base_start": 100
+    },
+    {
+      "count": 60,
+      "kind": "qualifier_disambiguation",
+      "section_base_start": 5000
+    },
+    {
+      "count": 18,
+      "kind": "unicode_section_variants",
+      "samples": [
+        {
+          "expected_section": "61-64",
+          "section": "61–64",
+          "title": "26"
+        },
+        {
+          "expected_section": "401-(a)",
+          "section": "401—(a)",
+          "title": "26"
+        },
+        {
+          "expected_section": "2000e-2",
+          "section": "§ 2000e–2",
+          "title": "42"
+        },
+        {
+          "expected_section": "78j-1",
+          "section": "78j–1",
+          "title": "15"
+        },
+        {
+          "expected_section": "1841-(c)",
+          "section": "1841–(c)",
+          "title": "12"
+        },
+        {
+          "expected_section": "3729-3731",
+          "section": "3729—3731",
+          "title": "31"
+        },
+        {
+          "expected_section": "552a-(b)",
+          "section": "552a–(b)",
+          "title": "5"
+        },
+        {
+          "expected_section": "102-(b)",
+          "section": "102—(b)",
+          "title": "35"
+        },
+        {
+          "expected_section": "106A-106B",
+          "section": "106A–106B",
+          "title": "17"
+        },
+        {
+          "expected_section": "362-(a)",
+          "section": "362–(a)",
+          "title": "11"
+        },
+        {
+          "expected_section": "230-(c)",
+          "section": "230—(c)",
+          "title": "47"
+        },
+        {
+          "expected_section": "1030-(a)",
+          "section": "1030–(a)",
+          "title": "18"
+        },
+        {
+          "expected_section": "1332-(a)",
+          "section": "1332—(a)",
+          "title": "28"
+        },
+        {
+          "expected_section": "501-(c)(3)",
+          "section": "501–(c)(3)",
+          "title": "26"
+        },
+        {
+          "expected_section": "12101-12117",
+          "section": "12101—12117",
+          "title": "42"
+        },
+        {
+          "expected_section": "701-706",
+          "section": "701–706",
+          "title": "5"
+        },
+        {
+          "expected_section": "271-(e)",
+          "section": "271—(e)",
+          "title": "35"
+        },
+        {
+          "expected_section": "2510-2522",
+          "section": "2510–2522",
+          "title": "18"
+        }
+      ]
+    }
+  ],
+  "schema_version": "uscode-identity-collisions-v1",
+  "seed_rows": [
+    {
+      "collision_family": "seed-en-dash",
+      "kind": "section",
+      "row_id": "seed-en-dash-bare",
+      "section": "2001",
+      "source_section": "2001",
+      "title": "26"
+    },
+    {
+      "collision_family": "seed-en-dash",
+      "kind": "section",
+      "row_id": "seed-en-dash-range",
+      "section": "2001–2003",
+      "source_section": "2001–2003",
+      "title": "26"
+    },
+    {
+      "collision_family": "seed-em-dash",
+      "kind": "section",
+      "row_id": "seed-em-dash-bare",
+      "section": "3001",
+      "source_section": "3001",
+      "title": "18"
+    },
+    {
+      "collision_family": "seed-em-dash",
+      "kind": "section",
+      "row_id": "seed-em-dash-range",
+      "section": "3001—3010",
+      "source_section": "3001—3010",
+      "title": "18"
+    },
+    {
+      "collision_family": "seed-appendix",
+      "kind": "section",
+      "row_id": "seed-appendix-main",
+      "section": "1291",
+      "source_section": "1291",
+      "title": "28"
+    },
+    {
+      "appendix": "A",
+      "collision_family": "seed-appendix",
+      "kind": "appendix",
+      "row_id": "seed-appendix-a",
+      "section": "1291",
+      "source_section": "1291",
+      "title": "28"
+    },
+    {
+      "collision_family": "seed-appendix",
+      "edition": "olrc-us-pl-118-45",
+      "kind": "note",
+      "note": "historical",
+      "row_id": "seed-note",
+      "section": "1291",
+      "source_section": "1291",
+      "title": "28"
+    },
+    {
+      "collision_family": "seed-appendix",
+      "edition": "govinfo-2023-title28",
+      "granule": "USC-prelim-title28-section1291",
+      "kind": "section",
+      "row_id": "seed-granule",
+      "section": "1291",
+      "source_section": "1291",
+      "title": "28"
+    }
+  ],
+  "title_cycle": [
+    "5",
+    "11",
+    "17",
+    "18",
+    "26",
+    "28",
+    "31",
+    "35",
+    "42",
+    "47"
+  ],
+  "unicode_section_fixtures": [
+    {
+      "expected_section": "1001-1003",
+      "label": "en-dash range",
+      "section": "1001–1003",
+      "title": "26"
+    },
+    {
+      "expected_section": "1001-1003",
+      "label": "em-dash range",
+      "section": "1001—1003",
+      "title": "26"
+    },
+    {
+      "expected_section": "1961-1968",
+      "label": "minus-sign range",
+      "section": "1961−1968",
+      "title": "18"
+    },
+    {
+      "expected_section": "1983",
+      "label": "section symbol",
+      "section": "§ 1983",
+      "title": "42"
+    },
+    {
+      "expected_section": "122",
+      "label": "full citation",
+      "section": "35 U.S.C. § 122",
+      "title": "35"
+    },
+    {
+      "expected_section": "101-a",
+      "label": "non-breaking hyphen lettered tail",
+      "section": "101‑a",
+      "title": "11"
+    },
+    {
+      "expected_section": "552(a)-(e)",
+      "label": "parenthetical en-dash range",
+      "section": "552(a)–(e)",
+      "title": "5"
+    },
+    {
+      "appendix": "A",
+      "expected_section": "1331",
+      "label": "appendix-qualified",
+      "section": "1331",
+      "title": "28"
+    },
+    {
+      "edition": "olrc-us-pl-118-45",
+      "expected_section": "107",
+      "label": "note+edition",
+      "note": "editorial",
+      "section": "107",
+      "title": "17"
+    },
+    {
+      "expected_section": "230",
+      "granule": "USC-prelim-title47-section230",
+      "label": "granule-qualified",
+      "section": "230",
+      "title": "47"
+    }
+  ]
+}
