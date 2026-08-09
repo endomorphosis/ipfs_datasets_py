@@ -1,0 +1,546 @@
+{
+  "acceptance": {
+    "adjacency_reconciliation_rate": 1.0,
+    "all_expected_paths_pass": true,
+    "error_coverage_reported": true,
+    "fixture_graph_paths_match": true,
+    "full_adjacency_reconciliation": true,
+    "legal_similarity_semantics_disjoint": true,
+    "lexical_parity_ok": true,
+    "source_evidence_bound": true,
+    "unresolved_coverage_reported": true,
+    "zero_unexplained_dangling_records": true,
+    "zero_unexplained_duplicate_records": true
+  },
+  "adjacency": {
+    "edge_count": 53,
+    "errors": [],
+    "extra_in_count": 0,
+    "extra_out_count": 0,
+    "in_adjacency_edge_count": 53,
+    "in_adjacency_page_count": 34,
+    "in_adjacency_shard_count": 8,
+    "layout_bounds": {
+      "max_pointers_per_page": 4,
+      "max_pointers_per_shard": 8,
+      "max_rows_per_shard": 8
+    },
+    "missing_in": [],
+    "missing_in_count": 0,
+    "missing_out": [],
+    "missing_out_count": 0,
+    "node_count": 34,
+    "out_adjacency_edge_count": 53,
+    "out_adjacency_page_count": 21,
+    "out_adjacency_shard_count": 9,
+    "physical_bounds_policy": {
+      "max_adjacency_pointers_per_row": 4096,
+      "max_adjacency_pointers_per_shard": 8192,
+      "max_rows_per_physical_shard": 4096
+    },
+    "reconciled": true,
+    "reconciliation_rate": 1.0
+  },
+  "citation_resolution": {
+    "citation_parser_version": "uscode-citation-parser/v1",
+    "discarded": false,
+    "honesty_errors": [],
+    "honesty_ok": true,
+    "reported": true,
+    "resolved_citation_edge_count": 8,
+    "samples": [
+      {
+        "kind": "node",
+        "mention_text": "28 U.S.C. \u00a7 41",
+        "node_cid": "sha256:333d638333bb21cbcd7465e6e7a0e09c5c30494518e881a84a6b4f4e6e25f0a2",
+        "node_key": "unresolved:usc:28:41:973a4ed78dd0bbc2",
+        "parser_version": "uscode-citation-parser/v1",
+        "resolution_status": "unresolved"
+      },
+      {
+        "kind": "node",
+        "mention_text": "99 U.S.C. \u00a7 9999",
+        "node_cid": "sha256:229b1ae5a2e6e4907fede03188cbc1dac0932598ba5fd2b029ec49b8e9cdea67",
+        "node_key": "unresolved:usc:99:9999:ad233b94a8da46ff",
+        "parser_version": "uscode-citation-parser/v1",
+        "resolution_status": "unresolved"
+      },
+      {
+        "edge_cid": "sha256:55be72306eb6904ba7a8ac083befea2fa43d75a90c27b4088a272e95200f2b83",
+        "edge_type": "CITES_UNRESOLVED",
+        "kind": "edge",
+        "resolution_status": "unresolved",
+        "source_span_text": "99 U.S.C. \u00a7 9999"
+      },
+      {
+        "edge_cid": "sha256:292abcb729875ae7b0ba8611834a0caf3b03ce8ed88bb40397dce0d65f305a0b",
+        "edge_type": "CITES_UNRESOLVED",
+        "kind": "edge",
+        "resolution_status": "unresolved",
+        "source_span_text": "28 U.S.C. \u00a7 41"
+      }
+    ],
+    "total_citation_edge_count": 10,
+    "unresolved_edge_count": 2,
+    "unresolved_node_count": 2,
+    "unresolved_rate": 0.2
+  },
+  "code_version": "1",
+  "error_coverage": {
+    "discarded": false,
+    "error_count": 0,
+    "errors": [],
+    "reported": true
+  },
+  "evaluation_cid": "sha256:4f633197e7b0a89faa3d582496ed48057f9cea7bed6f35e1121d74b65c77b11d",
+  "fixtures": {
+    "adjacency": {
+      "path": "tests/fixtures/hf_graphrag/graph_adjacency.json",
+      "schema_version": "hf-graphrag-graph-adjacency-fixture/v1",
+      "task_id": "USCIR-022"
+    },
+    "graph": {
+      "ontology_version": "uscode-graph-ontology/v1",
+      "path": "tests/fixtures/legal_ir/uscode_graph_expected.json",
+      "schema_version": "uscode-graph-expected-v1",
+      "task_id": "USCIR-021"
+    },
+    "lexical": {
+      "path": "tests/fixtures/legal_ir/uscode_bm25_neighbors.json",
+      "schema_version": "uscode-bm25-neighbors-v1",
+      "task_id": "USCIR-023"
+    }
+  },
+  "goal_id": "USCIR-G060",
+  "graph_fixture_outcome": {
+    "legal_edge_count": 52,
+    "node_count": 34,
+    "ok": true,
+    "similarity_edge_count": 1,
+    "unresolved_count": 2,
+    "unresolved_ok": true
+  },
+  "graph_schema_version": "uscode-graph-v1",
+  "integrity": {
+    "dangling_edge_count": 0,
+    "dangling_edges": [],
+    "duplicate_edge_cid_count": 0,
+    "duplicate_edge_cids": [],
+    "duplicate_node_cid_count": 0,
+    "duplicate_node_cids": [],
+    "explained_unresolved_node_count": 2,
+    "unexplained_dangling_count": 0,
+    "unexplained_duplicate_count": 0,
+    "zero_unexplained_dangling": true,
+    "zero_unexplained_duplicates": true
+  },
+  "lexical_parity": {
+    "all_cases_ok": true,
+    "authority": "non_authoritative",
+    "case_count": 6,
+    "cases": [
+      {
+        "case_id": "vocabulary-postings-parity",
+        "kind": "parity",
+        "ok": true
+      },
+      {
+        "case_id": "virtual-term-document-traversal",
+        "kind": "virtual_traversal",
+        "ok": true
+      },
+      {
+        "case_id": "bounded-neighbors",
+        "kind": "neighbor_cap",
+        "ok": true
+      },
+      {
+        "case_id": "no-full-expansion-by-default",
+        "kind": "no_full_expansion",
+        "ok": true
+      },
+      {
+        "case_id": "non-authoritative-semantics",
+        "kind": "non_authoritative",
+        "ok": true
+      },
+      {
+        "case_id": "neighbor-scores-and-config-cid",
+        "kind": "neighbor_scores",
+        "ok": true
+      }
+    ],
+    "errors": [],
+    "failed_cases": [],
+    "fixture_path": "tests/fixtures/legal_ir/uscode_bm25_neighbors.json",
+    "fixture_schema_version": "uscode-bm25-neighbors-v1",
+    "fixture_task_id": "USCIR-023",
+    "parity_ok": true
+  },
+  "ok": true,
+  "ontology_version": "uscode-graph-ontology/v1",
+  "paths": {
+    "all_pass": true,
+    "expected_count": 10,
+    "failed": [],
+    "failed_count": 0,
+    "matched_count": 10,
+    "matches": [
+      {
+        "edge_types": [
+          "CONTAINS",
+          "CONTAINS"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:28bff98bad1389f04c2e453479cab4c1007dedf6b790fae7d46711c1a8a3f405",
+            "sha256:1a8e21d91b69c5db3ccad64f16313dce5261a65d0eccd4126bf900c23e7b6b07"
+          ],
+          "edge_types": [
+            "CONTAINS",
+            "CONTAINS"
+          ],
+          "node_keys": [
+            "title:35",
+            "chapter:35:10",
+            "section:usc:us:35:101"
+          ],
+          "path_kind": "legal",
+          "source_key": "title:35",
+          "target_key": "section:usc:us:35:101"
+        },
+        "source_key": "title:35",
+        "target_key": "section:usc:us:35:101"
+      },
+      {
+        "edge_types": [
+          "CITES"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:fa863892630eba6117a2c5bb50bfed0eca6705888da8c02d13db4452e74960c3"
+          ],
+          "edge_types": [
+            "CITES"
+          ],
+          "node_keys": [
+            "section:usc:us:35:101",
+            "section:usc:us:35:102"
+          ],
+          "path_kind": "legal",
+          "source_key": "section:usc:us:35:101",
+          "target_key": "section:usc:us:35:102"
+        },
+        "source_key": "section:usc:us:35:101",
+        "target_key": "section:usc:us:35:102"
+      },
+      {
+        "edge_types": [
+          "CODIFIES"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:b0384f91eb396f2fa551eb6fc66cdce6c4aafcef64b71bef62ba968055afb881"
+          ],
+          "edge_types": [
+            "CODIFIES"
+          ],
+          "node_keys": [
+            "public_law:pl:us:112:29",
+            "section:usc:us:35:101"
+          ],
+          "path_kind": "legal",
+          "source_key": "public_law:pl:us:112:29",
+          "target_key": "section:usc:us:35:101"
+        },
+        "source_key": "public_law:pl:us:112:29",
+        "target_key": "section:usc:us:35:101"
+      },
+      {
+        "edge_types": [
+          "AMENDS"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:85ee3a3578b19aa7609b835bd333bc4ed927c70f174039d52a0fddb4300fe0bb"
+          ],
+          "edge_types": [
+            "AMENDS"
+          ],
+          "node_keys": [
+            "section:usc:us:35:103",
+            "section:usc:us:35:102"
+          ],
+          "path_kind": "legal",
+          "source_key": "section:usc:us:35:103",
+          "target_key": "section:usc:us:35:102"
+        },
+        "source_key": "section:usc:us:35:103",
+        "target_key": "section:usc:us:35:102"
+      },
+      {
+        "edge_types": [
+          "TRANSFERS"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:7e7aec24a35c052e2ce0824aee97d82b1ad9ad4b8d61615f2d16cdd800b7bfa8"
+          ],
+          "edge_types": [
+            "TRANSFERS"
+          ],
+          "node_keys": [
+            "section:usc:us:28:1331",
+            "section:usc:us:28:1367"
+          ],
+          "path_kind": "legal",
+          "source_key": "section:usc:us:28:1331",
+          "target_key": "section:usc:us:28:1367"
+        },
+        "source_key": "section:usc:us:28:1331",
+        "target_key": "section:usc:us:28:1367"
+      },
+      {
+        "edge_types": [
+          "HAS_SOURCE"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:084e65af9addde0402fb6a314702143fc8956d2fc790cd21392c2e856318dced"
+          ],
+          "edge_types": [
+            "HAS_SOURCE"
+          ],
+          "node_keys": [
+            "section:usc:us:5:552",
+            "source:sha256:2222222222222222222222222222222222222222222222222222222222222222"
+          ],
+          "path_kind": "legal",
+          "source_key": "section:usc:us:5:552",
+          "target_key": "source:sha256:2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        "source_key": "section:usc:us:5:552",
+        "target_key": "source:sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      {
+        "edge_types": [
+          "HAS_VERSION"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:f486a1a494ba6da4ad37f49f19ba7dd40aac3c57c34403481e3c29cf3b7e79ea"
+          ],
+          "edge_types": [
+            "HAS_VERSION"
+          ],
+          "node_keys": [
+            "section:usc:us:35:101",
+            "version:usc:us:35:101:olrc-us-pl-118-45"
+          ],
+          "path_kind": "legal",
+          "source_key": "section:usc:us:35:101",
+          "target_key": "version:usc:us:35:101:olrc-us-pl-118-45"
+        },
+        "source_key": "section:usc:us:35:101",
+        "target_key": "version:usc:us:35:101:olrc-us-pl-118-45"
+      },
+      {
+        "edge_types": [
+          "CITES"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:12c418ec9598186e06d5b7f6dbb676a0cf9dd08b89eed230138b7933c6b6f7f2"
+          ],
+          "edge_types": [
+            "CITES"
+          ],
+          "node_keys": [
+            "section:usc:us:5:552",
+            "section:usc:us:5:552a"
+          ],
+          "path_kind": "legal",
+          "source_key": "section:usc:us:5:552",
+          "target_key": "section:usc:us:5:552a"
+        },
+        "source_key": "section:usc:us:5:552",
+        "target_key": "section:usc:us:5:552a"
+      },
+      {
+        "edge_types": [
+          "CITES"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:8433d06e213702b7b67ad28665370fb8c5b36cd41b230f651802275b47a130b1"
+          ],
+          "edge_types": [
+            "CITES"
+          ],
+          "node_keys": [
+            "section:usc:us:28:1331",
+            "section:usc:us:28:1367"
+          ],
+          "path_kind": "legal",
+          "source_key": "section:usc:us:28:1331",
+          "target_key": "section:usc:us:28:1367"
+        },
+        "source_key": "section:usc:us:28:1331",
+        "target_key": "section:usc:us:28:1367"
+      },
+      {
+        "edge_types": [
+          "CITES"
+        ],
+        "matched": true,
+        "matched_path": {
+          "edge_cids": [
+            "sha256:46160384a67c733aa48b2374b4192c589901ea05cad0a90407d47c1cd0b60a3c"
+          ],
+          "edge_types": [
+            "CITES"
+          ],
+          "node_keys": [
+            "section:usc:us:35:101",
+            "section:usc:us:35:103"
+          ],
+          "path_kind": "legal",
+          "source_key": "section:usc:us:35:101",
+          "target_key": "section:usc:us:35:103"
+        },
+        "source_key": "section:usc:us:35:101",
+        "target_key": "section:usc:us:35:103"
+      }
+    ]
+  },
+  "producer": "evaluate_uscode_graph.py",
+  "program_id": "uscode-sparse-graphrag-v1",
+  "projection": {
+    "citation_parser_version": "uscode-citation-parser/v1",
+    "edge_count": 53,
+    "edge_type_counts": {
+      "AMENDS": 1,
+      "BM25_NEIGHBOR_OF": 1,
+      "CITES": 8,
+      "CITES_UNRESOLVED": 2,
+      "CODIFIES": 3,
+      "CONTAINS": 13,
+      "DERIVED_FROM": 3,
+      "HAS_SOURCE": 14,
+      "HAS_VERSION": 7,
+      "TRANSFERS": 1
+    },
+    "graph_cid": "sha256:de37b23ace1e92c7fd134cc5f50ec9ad9c17645033dabbc8d2d9aa462ffc8759",
+    "legal_edge_count": 52,
+    "node_count": 34,
+    "node_type_counts": {
+      "chapter": 3,
+      "code": 1,
+      "public_law": 2,
+      "release_point": 1,
+      "section": 7,
+      "source_package": 7,
+      "statutes_at_large": 1,
+      "title": 3,
+      "unresolved_citation": 2,
+      "version": 7
+    },
+    "ontology_version": "uscode-graph-ontology/v1",
+    "schema_version": "uscode-graph-v1",
+    "similarity_edge_count": 1,
+    "unresolved_count": 2
+  },
+  "release_profile": "publicus-ir-graphrag/v2",
+  "schema_version": "ipfs_datasets_py/uscode-graph-evaluation@1",
+  "semantics": {
+    "collisions": [],
+    "disjoint": true,
+    "legal_edge_count": 52,
+    "legal_edge_types": [
+      "AMENDS",
+      "CITES",
+      "CITES_UNRESOLVED",
+      "CODIFIES",
+      "CONTAINS",
+      "DERIVED_FROM",
+      "HAS_SOURCE",
+      "HAS_VERSION",
+      "TRANSFERS"
+    ],
+    "similarity_edge_count": 1,
+    "similarity_edge_types": [
+      "BM25_NEIGHBOR_OF"
+    ]
+  },
+  "shared_adjacency_fixture": {
+    "edge_count": 6,
+    "errors": [],
+    "fixture_path": "tests/fixtures/hf_graphrag/graph_adjacency.json",
+    "fixture_schema_version": "hf-graphrag-graph-adjacency-fixture/v1",
+    "fixture_task_id": "USCIR-022",
+    "node_count": 5,
+    "ok": true,
+    "reconciliation_rate": 1.0
+  },
+  "source_evidence": {
+    "empty_text_count": 0,
+    "empty_text_edge_cids": [],
+    "inverted_span_count": 0,
+    "inverted_span_edge_cids": [],
+    "missing_span_count": 0,
+    "missing_span_edge_cids": [],
+    "source_evidence_bound": true,
+    "span_bound_count": 18,
+    "span_required_count": 18
+  },
+  "task_id": "USCIR-024",
+  "unresolved_coverage": {
+    "discarded": false,
+    "honesty_ok": true,
+    "reported": true,
+    "samples": [
+      {
+        "kind": "node",
+        "mention_text": "28 U.S.C. \u00a7 41",
+        "node_cid": "sha256:333d638333bb21cbcd7465e6e7a0e09c5c30494518e881a84a6b4f4e6e25f0a2",
+        "node_key": "unresolved:usc:28:41:973a4ed78dd0bbc2",
+        "parser_version": "uscode-citation-parser/v1",
+        "resolution_status": "unresolved"
+      },
+      {
+        "kind": "node",
+        "mention_text": "99 U.S.C. \u00a7 9999",
+        "node_cid": "sha256:229b1ae5a2e6e4907fede03188cbc1dac0932598ba5fd2b029ec49b8e9cdea67",
+        "node_key": "unresolved:usc:99:9999:ad233b94a8da46ff",
+        "parser_version": "uscode-citation-parser/v1",
+        "resolution_status": "unresolved"
+      },
+      {
+        "edge_cid": "sha256:55be72306eb6904ba7a8ac083befea2fa43d75a90c27b4088a272e95200f2b83",
+        "edge_type": "CITES_UNRESOLVED",
+        "kind": "edge",
+        "resolution_status": "unresolved",
+        "source_span_text": "99 U.S.C. \u00a7 9999"
+      },
+      {
+        "edge_cid": "sha256:292abcb729875ae7b0ba8611834a0caf3b03ce8ed88bb40397dce0d65f305a0b",
+        "edge_type": "CITES_UNRESOLVED",
+        "kind": "edge",
+        "resolution_status": "unresolved",
+        "source_span_text": "28 U.S.C. \u00a7 41"
+      }
+    ],
+    "unresolved_edge_count": 2,
+    "unresolved_node_count": 2,
+    "unresolved_rate": 0.2
+  }
+}

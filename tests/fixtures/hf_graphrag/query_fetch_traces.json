@@ -1,0 +1,118 @@
+{
+  "acceptance": {
+    "budget_exhaustion_explicit": true,
+    "descriptor_verified": true,
+    "limits_cover": [
+      "bytes",
+      "shards",
+      "rows",
+      "nodes",
+      "edges",
+      "depth",
+      "time"
+    ],
+    "offline_replay_stable": true,
+    "route_justified": true
+  },
+  "bounds": {
+    "default_candidate_centroids": 4,
+    "default_max_bytes": 67108864,
+    "default_max_depth": 8,
+    "default_max_edges": 4096,
+    "default_max_nodes": 1024,
+    "default_max_rows": 65536,
+    "default_max_shards": 64,
+    "default_max_time_ms": 30000,
+    "max_rows_per_physical_shard": 4096
+  },
+  "budget_dimensions": [
+    "bytes",
+    "shards",
+    "rows",
+    "nodes",
+    "edges",
+    "depth",
+    "time"
+  ],
+  "cases": [
+    {
+      "expected_families": [
+        "control_plane",
+        "routing_index",
+        "bm25_postings",
+        "corpus"
+      ],
+      "expected_reasons": [
+        "manifest",
+        "routing_index",
+        "term_range",
+        "hydrate_hit"
+      ],
+      "id": "bm25_term_route",
+      "mode": "bm25",
+      "query": "foia agency",
+      "top_k": 3
+    },
+    {
+      "candidate_centroids": 1,
+      "expected_families": [
+        "control_plane",
+        "routing_index",
+        "vectors",
+        "corpus"
+      ],
+      "expected_reasons": [
+        "manifest",
+        "routing_index",
+        "exact_vector_score",
+        "hydrate_hit"
+      ],
+      "id": "vector_centroid_route",
+      "mode": "vector",
+      "top_k": 2
+    },
+    {
+      "direction": "out",
+      "expected_stop_reason": "nodes",
+      "id": "graph_walk_budget_nodes",
+      "max_depth": 3,
+      "max_nodes": 2,
+      "mode": "graph_walk",
+      "start_node_cid": "node-a"
+    },
+    {
+      "expected_stop_reason": "shards",
+      "id": "bm25_budget_shards",
+      "max_shards": 2,
+      "mode": "bm25",
+      "query": "foia agency privacy"
+    }
+  ],
+  "description": "Compact deterministic recipes for USCIR-025 bounded remote query engine unit tests.  A miniature offline release is regenerated at test time; expected route families/reasons and budget stop semantics are asserted without bulk golden dumps.",
+  "goal_id": "USCIR-G070",
+  "query_engine_schema_version": "hf-graphrag-query-engine/v1",
+  "route_families": [
+    "bm25_postings",
+    "control_plane",
+    "corpus",
+    "graph_adjacency",
+    "graph_edges",
+    "graph_nodes",
+    "routing_index",
+    "vectors"
+  ],
+  "route_reasons": [
+    "adjacency_range",
+    "centroid_probe",
+    "control_plane",
+    "exact_vector_score",
+    "graph_node",
+    "hydrate_hit",
+    "manifest",
+    "replay",
+    "routing_index",
+    "term_range"
+  ],
+  "schema_version": "hf-graphrag-query-fetch-traces/v1",
+  "task_id": "USCIR-025"
+}
