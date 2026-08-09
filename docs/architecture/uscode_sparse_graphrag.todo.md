@@ -435,7 +435,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Unknown/mutable/placeholder model references fail closed, output keys exactly match admitted chunks, dimensions/norms are validated, and legacy positional vectors are never promoted.
 
 ## USCIR-018 Implement deterministic centroid-routed vector shards
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
