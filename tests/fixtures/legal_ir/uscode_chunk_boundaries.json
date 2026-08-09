@@ -1,0 +1,107 @@
+{
+  "cases": [
+    {
+      "case_id": "short-whole-section",
+      "expect": {
+        "exact_reconstruction": true,
+        "max_chunks": 1,
+        "min_chunks": 1,
+        "split_modes": [
+          "whole"
+        ]
+      },
+      "heading": "Inventions patentable",
+      "model_token_limit": 128,
+      "overlap_tokens": 0,
+      "section": "101",
+      "text": "Whoever invents or discovers any new and useful process, machine, manufacture, or composition of matter, or any new and useful improvement thereof, may obtain a patent therefor, subject to the conditions and requirements of this title.",
+      "title": "35"
+    },
+    {
+      "case_id": "subsection-structure",
+      "expect": {
+        "exact_reconstruction": true,
+        "min_chunks": 2,
+        "parent_path_prefixes": [
+          [
+            "title:5",
+            "section:552"
+          ]
+        ],
+        "require_structure_split": true
+      },
+      "heading": "Public information; agency rules, opinions, orders, records, and proceedings",
+      "model_token_limit": 64,
+      "overlap_tokens": 8,
+      "section": "552",
+      "text": "Each agency shall make available to the public information as follows:\n(a) Each agency shall separately state and currently publish in the Federal Register for the guidance of the public—\n(1) descriptions of its central and field organization; and\n(2) statements of the general course and method by which its functions are channeled and determined.\n(b) This section does not apply to matters that are—\n(1) specifically authorized under criteria established by an Executive order to be kept secret in the interest of national defense; or\n(2) related solely to the internal personnel rules and practices of an agency.",
+      "title": "5"
+    },
+    {
+      "case_id": "hard-split-no-markers",
+      "expect": {
+        "exact_reconstruction": true,
+        "min_chunks": 4,
+        "require_hard_or_sentence": true
+      },
+      "heading": "Statements or entries generally",
+      "model_token_limit": 16,
+      "overlap_tokens": 4,
+      "section": "1001",
+      "text": "Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word.",
+      "title": "18"
+    },
+    {
+      "case_id": "huge-section-bounded",
+      "expect": {
+        "all_within_limit": true,
+        "bounded": true,
+        "exact_reconstruction": false,
+        "max_chunks": 8
+      },
+      "heading": "Exemption from tax on corporations",
+      "max_chunks_per_section": 8,
+      "model_token_limit": 20,
+      "overlap_tokens": 2,
+      "section": "501",
+      "text_recipe": {
+        "kind": "repeat_sentence",
+        "repeat": 200,
+        "sentence": "(a) An organization described in subsection (c) or (d) shall be exempt. "
+      },
+      "title": "26"
+    },
+    {
+      "case_id": "deterministic-boundaries",
+      "expect": {
+        "all_within_limit": true,
+        "deterministic": true,
+        "exact_reconstruction": true
+      },
+      "heading": "Civil action for deprivation of rights",
+      "model_token_limit": 40,
+      "overlap_tokens": 5,
+      "section": "1983",
+      "text": "Every person who, under color of any statute, ordinance, regulation, custom, or usage, of any State or Territory or the District of Columbia, subjects, or causes to be subjected, any citizen of the United States or other person within the jurisdiction thereof to the deprivation of any rights, privileges, or immunities secured by the Constitution and laws, shall be liable to the party injured in an action at law, suit in equity, or other proper proceeding for redress, except that in any action brought against a judicial officer for an act or omission taken in such officer's judicial capacity, injunctive relief shall not be granted unless a declaratory decree was violated or declaratory relief was unavailable.",
+      "title": "42"
+    },
+    {
+      "case_id": "nested-paragraph-path",
+      "expect": {
+        "exact_reconstruction": true,
+        "min_chunks": 1,
+        "require_parent_paths": true
+      },
+      "heading": "Limitations on exclusive rights: Fair use",
+      "model_token_limit": 48,
+      "overlap_tokens": 4,
+      "section": "107",
+      "text": "Notwithstanding the provisions of sections 106 and 106A, the fair use of a copyrighted work is not an infringement of copyright.\n(a) In determining whether the use made of a work in any particular case is a fair use the factors to be considered shall include—\n(1) the purpose and character of the use, including whether such use is of a commercial nature or is for nonprofit educational purposes;\n(2) the nature of the copyrighted work;\n(3) the amount and substantiality of the portion used; and\n(4) the effect of the use upon the potential market for or value of the copyrighted work.\n(b) The fact that a work is unpublished shall not itself bar a finding of fair use if such finding is made upon consideration of all the above factors.",
+      "title": "17"
+    }
+  ],
+  "description": "Compact recipe for structure-aware US Code chunk boundary cases. Each case supplies source text and chunking parameters; expected boundaries are derived deterministically by the chunker rather than stored as bulk per-chunk envelopes.",
+  "physical_row_limit": 4096,
+  "schema_version": "uscode-chunk-boundaries-v1",
+  "tokenizer_id": "uscode-whitespace-v1"
+}
