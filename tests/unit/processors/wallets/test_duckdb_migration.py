@@ -304,30 +304,50 @@ def test_bound_extension_fields_limits() -> None:
 
 
 def test_import_payload_json_parquet_roundtrip(tmp_path: Path) -> None:
-    pytest.importorskip("pyarrow")
-    import pyarrow as pa
-    import pyarrow.parquet as pq
+    """Opaque payload_json Parquet → validated rows → typed partitions.
+
+    Uses DuckDB to materialize the legacy opaque column so the round-trip
+    runs without pyarrow (CI bootstrap only guarantees duckdb).
+    """
+
+    duckdb = pytest.importorskip("duckdb")
 
     payloads = [
         {"wallet_id": "w1", "chain": "eth", "balance": 3, "record_type": "wallet"},
         {"wallet_id": "w2", "chain": "btc", "balance": 4, "record_type": "wallet"},
         "not-an-object",
     ]
-    table = pa.table(
-        {
-            "record_id": ["w1", "w2", "bad"],
-            "record_type": ["wallet", "wallet", "wallet"],
-            "finality": ["unknown", "unknown", "unknown"],
-            "sequence": [1, 2, 3],
-            "payload_json": [
-                json.dumps(payloads[0]),
-                json.dumps(payloads[1]),
-                json.dumps(payloads[2]),
-            ],
-        }
-    )
     path = tmp_path / "opaque.parquet"
-    pq.write_table(table, path)
+    con = duckdb.connect()
+    try:
+        con.execute(
+            """
+            CREATE TABLE opaque (
+                record_id VARCHAR,
+                record_type VARCHAR,
+                finality VARCHAR,
+                sequence BIGINT,
+                payload_json VARCHAR
+            )
+            """
+        )
+        for index, payload in enumerate(payloads, start=1):
+            record_id = payload["wallet_id"] if isinstance(payload, dict) else "bad"
+            con.execute(
+                "INSERT INTO opaque VALUES (?, ?, ?, ?, ?)",
+                [
+                    record_id,
+                    "wallet",
+                    "unknown",
+                    index,
+                    json.dumps(payload),
+                ],
+            )
+        con.execute(
+            f"COPY opaque TO '{path.as_posix()}' (FORMAT PARQUET)"
+        )
+    finally:
+        con.close()
 
     report = import_payload_json_parquet(path)
     assert report.source_kind == "payload_json_parquet"
@@ -343,6 +363,21 @@ def test_import_payload_json_parquet_roundtrip(tmp_path: Path) -> None:
     assert manifest.authoritative is False
     for col in ("chain", "wallet_id", "record_type"):
         assert col in TYPED_EXPORT_COLUMNS
+
+    # Typed parquet must not reintroduce opaque payload_json authority.
+    typed_part = next(out.rglob("part.parquet"))
+    con = duckdb.connect()
+    try:
+        cols = [
+            row[0]
+            for row in con.execute(
+                "DESCRIBE SELECT * FROM read_parquet(?)", [str(typed_part)]
+            ).fetchall()
+        ]
+    finally:
+        con.close()
+    assert "payload_json" not in cols
+    assert "chain" in cols
 
 
 def test_invalid_balance_rejected(tmp_path: Path) -> None:
