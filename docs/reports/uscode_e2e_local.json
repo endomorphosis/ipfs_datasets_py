@@ -1,0 +1,422 @@
+{
+  "acceptance": {
+    "all_root_count_joins_reconcile": true,
+    "expected_results_paths_pass": true,
+    "fetch_traces_routed_shards_plus_corpus_hydration_only": true,
+    "fixture_build_deterministic": true,
+    "local_resolve_only": true,
+    "manifest_validated": true,
+    "offline_replay_stable": true,
+    "six_query_modes_exercised": true
+  },
+  "case_receipts": [
+    {
+      "case_id": "bm25_foia_agency",
+      "complete": true,
+      "edge_count": 0,
+      "mode": "bm25",
+      "ordered_result_cids": [
+        "entry-a",
+        "entry-b"
+      ],
+      "replay_fingerprint": "6c103067e0d0b32dbc69166a7db1e57399194ecfe7c594ee0d5d28ceb9c0c51b",
+      "result_count": 2,
+      "sparse": {
+        "data_plane_families": [
+          "bm25_postings",
+          "corpus"
+        ],
+        "data_plane_paths": [
+          "data/bm25/postings/part-000000.parquet",
+          "data/corpus/part-000000.parquet"
+        ],
+        "data_plane_reasons": [
+          "hydrate_hit",
+          "term_range"
+        ],
+        "file_count": 5,
+        "sparse_io": {
+          "data_plane_paths": [
+            "data/bm25/postings/part-000000.parquet",
+            "data/corpus/part-000000.parquet"
+          ],
+          "families": [
+            "bm25_postings",
+            "control_plane",
+            "corpus",
+            "routing_index"
+          ],
+          "file_count": 5,
+          "paths": [
+            "data/bm25/postings/part-000000.parquet",
+            "data/corpus/part-000000.parquet",
+            "indexes/bm25_keyword_shards.parquet",
+            "indexes/corpus_chunks.parquet",
+            "manifest.json"
+          ],
+          "reasons": [
+            "hydrate_hit",
+            "manifest",
+            "routing_index",
+            "term_range"
+          ],
+          "total_file_bytes": 17512
+        }
+      },
+      "stop_reason": null,
+      "trace_paths": [
+        "data/bm25/postings/part-000000.parquet",
+        "data/corpus/part-000000.parquet",
+        "indexes/bm25_keyword_shards.parquet",
+        "indexes/corpus_chunks.parquet",
+        "manifest.json"
+      ]
+    },
+    {
+      "case_id": "vector_centroid_0",
+      "complete": true,
+      "edge_count": 0,
+      "mode": "vector",
+      "ordered_result_cids": [
+        "entry-a"
+      ],
+      "replay_fingerprint": "8a7dd1690c5a5e56459728ab5a2edc08a1834a1d270840a4d0f9e6bcae041374",
+      "result_count": 1,
+      "sparse": {
+        "data_plane_families": [
+          "corpus",
+          "vectors"
+        ],
+        "data_plane_paths": [
+          "data/corpus/part-000000.parquet",
+          "data/vectors/centroid-000000-part-000000.parquet"
+        ],
+        "data_plane_reasons": [
+          "exact_vector_score",
+          "hydrate_hit"
+        ],
+        "file_count": 3,
+        "sparse_io": {
+          "data_plane_paths": [
+            "data/corpus/part-000000.parquet",
+            "data/vectors/centroid-000000-part-000000.parquet"
+          ],
+          "families": [
+            "corpus",
+            "routing_index",
+            "vectors"
+          ],
+          "file_count": 3,
+          "paths": [
+            "data/corpus/part-000000.parquet",
+            "data/vectors/centroid-000000-part-000000.parquet",
+            "indexes/vector_chunks.parquet"
+          ],
+          "reasons": [
+            "exact_vector_score",
+            "hydrate_hit",
+            "routing_index"
+          ],
+          "total_file_bytes": 12631
+        }
+      },
+      "stop_reason": null,
+      "trace_paths": [
+        "data/corpus/part-000000.parquet",
+        "data/vectors/centroid-000000-part-000000.parquet",
+        "indexes/vector_chunks.parquet"
+      ]
+    },
+    {
+      "case_id": "hybrid_weighted",
+      "complete": true,
+      "edge_count": 0,
+      "mode": "hybrid",
+      "ordered_result_cids": [
+        "entry-a",
+        "entry-c",
+        "entry-b"
+      ],
+      "replay_fingerprint": "156099d07864ea9cc21cf97f7235dd605bcebca5918e5c33084b3445029c6adc",
+      "result_count": 3,
+      "sparse": {
+        "data_plane_families": [
+          "bm25_postings",
+          "corpus",
+          "vectors"
+        ],
+        "data_plane_paths": [
+          "data/bm25/postings/part-000000.parquet",
+          "data/corpus/part-000000.parquet",
+          "data/vectors/centroid-000000-part-000000.parquet",
+          "data/vectors/centroid-000001-part-000000.parquet"
+        ],
+        "data_plane_reasons": [
+          "exact_vector_score",
+          "hydrate_hit",
+          "term_range"
+        ],
+        "file_count": 5,
+        "sparse_io": {
+          "data_plane_paths": [
+            "data/bm25/postings/part-000000.parquet",
+            "data/corpus/part-000000.parquet",
+            "data/vectors/centroid-000000-part-000000.parquet",
+            "data/vectors/centroid-000001-part-000000.parquet"
+          ],
+          "families": [
+            "bm25_postings",
+            "corpus",
+            "vectors"
+          ],
+          "file_count": 5,
+          "paths": [
+            "data/bm25/postings/part-000000.parquet",
+            "data/corpus/part-000000.parquet",
+            "data/vectors/centroid-000000-part-000000.parquet",
+            "data/vectors/centroid-000001-part-000000.parquet"
+          ],
+          "reasons": [
+            "exact_vector_score",
+            "hydrate_hit",
+            "term_range"
+          ],
+          "total_file_bytes": 13736
+        }
+      },
+      "stop_reason": null,
+      "trace_paths": [
+        "data/bm25/postings/part-000000.parquet",
+        "data/corpus/part-000000.parquet",
+        "data/vectors/centroid-000000-part-000000.parquet",
+        "data/vectors/centroid-000001-part-000000.parquet"
+      ]
+    },
+    {
+      "case_id": "neighbors_entry_a",
+      "complete": true,
+      "edge_count": 2,
+      "mode": "neighbors",
+      "ordered_result_cids": [
+        "entry-b"
+      ],
+      "replay_fingerprint": "fd77af28275e68a33deb193f499eeaeb878c34a7cc1b4bfbd70527e32ae6360b",
+      "result_count": 1,
+      "sparse": {
+        "data_plane_families": [
+          "graph_adjacency"
+        ],
+        "data_plane_paths": [
+          "data/graph/adjacency/out/part-000000.parquet"
+        ],
+        "data_plane_reasons": [
+          "adjacency_range"
+        ],
+        "file_count": 2,
+        "sparse_io": {
+          "data_plane_paths": [],
+          "families": [
+            "graph_adjacency",
+            "routing_index"
+          ],
+          "file_count": 2,
+          "paths": [
+            "data/graph/adjacency/out/part-000000.parquet",
+            "indexes/graph_out_adjacency.parquet"
+          ],
+          "reasons": [
+            "adjacency_range",
+            "routing_index"
+          ],
+          "total_file_bytes": 6043
+        }
+      },
+      "stop_reason": null,
+      "trace_paths": [
+        "data/graph/adjacency/out/part-000000.parquet",
+        "indexes/graph_out_adjacency.parquet"
+      ]
+    },
+    {
+      "case_id": "graph_walk_entry_a",
+      "complete": false,
+      "edge_count": 3,
+      "mode": "graph_walk",
+      "ordered_result_cids": [
+        "entry-a",
+        "entry-b",
+        "entry-c"
+      ],
+      "replay_fingerprint": "07dd4998e9a7632542ce0b58c05214357edf7966135323715ba20d1f9ac94015",
+      "result_count": 3,
+      "sparse": {
+        "data_plane_families": [
+          "graph_adjacency"
+        ],
+        "data_plane_paths": [
+          "data/graph/adjacency/out/part-000000.parquet"
+        ],
+        "data_plane_reasons": [
+          "adjacency_range"
+        ],
+        "file_count": 2,
+        "sparse_io": {
+          "data_plane_paths": [],
+          "families": [
+            "graph_adjacency"
+          ],
+          "file_count": 2,
+          "paths": [
+            "data/graph/adjacency/out/part-000000.parquet"
+          ],
+          "reasons": [
+            "adjacency_range"
+          ],
+          "total_file_bytes": 3542
+        }
+      },
+      "stop_reason": "depth",
+      "trace_paths": [
+        "data/graph/adjacency/out/part-000000.parquet"
+      ]
+    },
+    {
+      "case_id": "semantic_graph_walk_entry_a",
+      "complete": false,
+      "edge_count": 3,
+      "mode": "semantic_graph_walk",
+      "ordered_result_cids": [
+        "entry-a",
+        "entry-b",
+        "entry-c"
+      ],
+      "replay_fingerprint": "e1a0a312b204d4fb56db833ef7b16a4ac7f72a472266741d51667159f93fb791",
+      "result_count": 3,
+      "sparse": {
+        "data_plane_families": [
+          "graph_adjacency",
+          "vectors"
+        ],
+        "data_plane_paths": [
+          "data/graph/adjacency/out/part-000000.parquet",
+          "data/vectors/centroid-000000-part-000000.parquet",
+          "data/vectors/centroid-000001-part-000000.parquet"
+        ],
+        "data_plane_reasons": [
+          "adjacency_range",
+          "exact_vector_score"
+        ],
+        "file_count": 5,
+        "sparse_io": {
+          "data_plane_paths": [
+            "data/vectors/centroid-000000-part-000000.parquet",
+            "data/vectors/centroid-000001-part-000000.parquet"
+          ],
+          "families": [
+            "graph_adjacency",
+            "vectors"
+          ],
+          "file_count": 5,
+          "paths": [
+            "data/graph/adjacency/out/part-000000.parquet",
+            "data/vectors/centroid-000000-part-000000.parquet",
+            "data/vectors/centroid-000001-part-000000.parquet"
+          ],
+          "reasons": [
+            "adjacency_range",
+            "exact_vector_score"
+          ],
+          "total_file_bytes": 9375
+        }
+      },
+      "stop_reason": "depth",
+      "trace_paths": [
+        "data/graph/adjacency/out/part-000000.parquet",
+        "data/vectors/centroid-000000-part-000000.parquet",
+        "data/vectors/centroid-000001-part-000000.parquet"
+      ]
+    }
+  ],
+  "code_version": "1",
+  "depends_on": [
+    "USCIR-028",
+    "USCIR-032"
+  ],
+  "evaluation_cid": "f75adbbba92410d024df4fd04833c4a1e4f7b3763429476436c25ddf60a72c57",
+  "fixture": {
+    "directory": "tests/fixtures/legal_ir/uscode_e2e_release/",
+    "expected": "tests/fixtures/legal_ir/uscode_e2e_release/expected.json",
+    "recipe": "tests/fixtures/legal_ir/uscode_e2e_release/recipe.json",
+    "release_file_count": 11,
+    "release_fingerprint": "672a750849b2d42e2c4eae1acf412e159efd4ba1af6545e27a6d9517ae3ac53e",
+    "release_paths": [
+      "data/bm25/postings/part-000000.parquet",
+      "data/bm25/postings/part-000001.parquet",
+      "data/corpus/part-000000.parquet",
+      "data/graph/adjacency/out/part-000000.parquet",
+      "data/vectors/centroid-000000-part-000000.parquet",
+      "data/vectors/centroid-000001-part-000000.parquet",
+      "indexes/bm25_keyword_shards.parquet",
+      "indexes/corpus_chunks.parquet",
+      "indexes/graph_out_adjacency.parquet",
+      "indexes/vector_chunks.parquet",
+      "manifest.json"
+    ]
+  },
+  "goal_id": "USCIR-G090",
+  "ok": true,
+  "packaging": {
+    "acceptance": {
+      "all_advertised_configs_schema_coherent": true,
+      "default_config_excludes_recovery": true,
+      "every_artifact_descriptor_bound": true,
+      "legacy_files_not_deleted": true,
+      "verbose_lineage_separate_from_control_plane": true
+    },
+    "artifact_count": 23,
+    "families_built": [
+      "bm25_documents",
+      "bm25_postings",
+      "corpus",
+      "graph_edges",
+      "graph_nodes",
+      "manifest",
+      "recovery",
+      "report",
+      "vectors"
+    ],
+    "manifest_digest": "a1e1bef09f85a67e6f653f43ea5007bb4cf75fcc71686c9f74c15c7c99816444",
+    "release_root_cid": "bafkreid4wn7mqws4eh7va3deareqidfvxpdalc7joafuzt4fes7h46tuce",
+    "valid": true
+  },
+  "producer": "test_uscode_sparse_graphrag.py",
+  "query_modes_exercised": [
+    "bm25",
+    "graph_walk",
+    "hybrid",
+    "neighbors",
+    "semantic_graph_walk",
+    "vector"
+  ],
+  "release_profile": "publicus-ir-graphrag/v2",
+  "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+  "root_count_joins": {
+    "bm25_document_count": 2,
+    "bm25_root_cid": "bafkreibscwnnq5vx4gw3sgaap2nhdzyltvhmrzynnseci4rgacwfld2kr4",
+    "corpus_root_cid": "bafkreidecgyeoqkgz4rlcn5vvzw33ka5yipkdpvpcaiswbd6jhz2hjebdm",
+    "corpus_row_count": 3,
+    "families_present": [
+      "bm25",
+      "graph",
+      "vector"
+    ],
+    "graph_edge_count": 3,
+    "graph_node_count": 3,
+    "graph_root_cid": "bafkreia246efmivueclmj63kdslzqjzu4vhp3cdgfknfbyhoo47fkxbz2m",
+    "reconciled": true,
+    "vector_root_cid": "bafkreid6jlnflclf5qyw7bnhkgfxrdnrxlcgc3kvmo5v2ktyn7vs64tvee",
+    "vector_row_count": 3
+  },
+  "schema_version": "uscode-e2e-local-report/v1",
+  "task_id": "USCIR-033"
+}

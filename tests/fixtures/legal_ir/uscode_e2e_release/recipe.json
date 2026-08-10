@@ -1,0 +1,255 @@
+{
+  "schema_version": "uscode-e2e-release-recipe/v1",
+  "task_id": "USCIR-033",
+  "goal_id": "USCIR-G090",
+  "description": "Compact deterministic recipe for the local end-to-end US Code sparse GraphRAG pipeline. Materializes a miniature offline release at test time; does not re-emit bulk golden dumps.",
+  "dataset_repo_id": "justicedao/ipfs_uscode",
+  "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "release_point": "usc-2024-main-20240920",
+  "primary_key": "entry_cid",
+  "determinism_seed": 20260330,
+  "model": {
+    "model_id": "fixture-unit-v1",
+    "model_revision": "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3",
+    "dimension": 2,
+    "normalization": "l2",
+    "vector_space_id": "fixture-unit-v1@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d2:norm=l2"
+  },
+  "bm25": {
+    "average_document_length": 11.0,
+    "b": 0.75,
+    "body_weight": 1.0,
+    "k1": 1.2,
+    "title_weight": 5.0,
+    "tokenizer": "hf-graphrag-bm25-tokens/v1"
+  },
+  "families": {
+    "corpus": [
+      {
+        "chapter": "5",
+        "citation": "5 U.S.C. § 552",
+        "document_index": 0,
+        "entry_cid": "entry-a",
+        "legal_id": "usc:us:5:552",
+        "release_point": "2024-01",
+        "section": "552",
+        "source": "uscode",
+        "text": "FOIA agency records",
+        "title": "5",
+        "version": "2024"
+      },
+      {
+        "chapter": "5",
+        "citation": "5 U.S.C. § 552a",
+        "document_index": 1,
+        "entry_cid": "entry-b",
+        "legal_id": "usc:us:5:552a",
+        "release_point": "2024-01",
+        "section": "552a",
+        "source": "uscode",
+        "text": "Privacy Act agency disclosure",
+        "title": "5",
+        "version": "2024"
+      },
+      {
+        "chapter": "35",
+        "citation": "35 U.S.C. § 101",
+        "document_index": 2,
+        "entry_cid": "entry-c",
+        "legal_id": "usc:us:35:101",
+        "release_point": "2024-01",
+        "section": "101",
+        "source": "uscode",
+        "text": "Patentable inventions",
+        "title": "35",
+        "version": "2023"
+      }
+    ],
+    "bm25_postings": {
+      "part-000000": [
+        {
+          "body_frequencies": [1, 1],
+          "document_indices": [0, 1],
+          "document_lengths": [10, 12],
+          "entry_cids": ["entry-a", "entry-b"],
+          "idf": 1.5,
+          "term": "agency",
+          "title_frequencies": [1, 0]
+        },
+        {
+          "body_frequencies": [2],
+          "document_indices": [0],
+          "document_lengths": [10],
+          "entry_cids": ["entry-a"],
+          "idf": 2.0,
+          "term": "foia",
+          "title_frequencies": [1]
+        }
+      ],
+      "part-000001": [
+        {
+          "body_frequencies": [1],
+          "document_indices": [1],
+          "document_lengths": [12],
+          "entry_cids": ["entry-b"],
+          "idf": 1.2,
+          "term": "privacy",
+          "title_frequencies": [1]
+        }
+      ]
+    },
+    "vectors": {
+      "centroid-000000-part-000000": [
+        {
+          "chunk_in_cluster": 0,
+          "cluster_id": 0,
+          "document_index": 0,
+          "embedding": [1.0, 0.0],
+          "entry_cid": "entry-a"
+        }
+      ],
+      "centroid-000001-part-000000": [
+        {
+          "chunk_in_cluster": 0,
+          "cluster_id": 1,
+          "document_index": 1,
+          "embedding": [-1.0, 0.0],
+          "entry_cid": "entry-b"
+        },
+        {
+          "chunk_in_cluster": 1,
+          "cluster_id": 1,
+          "document_index": 2,
+          "embedding": [-0.8, 0.2],
+          "entry_cid": "entry-c"
+        }
+      ]
+    },
+    "graph_adjacency_out": [
+      {
+        "edge_cid": "edge-a-b-contains",
+        "edge_type": "CONTAINS",
+        "neighbor_cid": "entry-b",
+        "node_cid": "entry-a",
+        "score": 0.9
+      },
+      {
+        "edge_cid": "edge-a-b-neighbor",
+        "edge_type": "BM25_NEIGHBOR_OF",
+        "neighbor_cid": "entry-b",
+        "node_cid": "entry-a",
+        "score": 0.7
+      },
+      {
+        "edge_cid": "edge-b-c-cites",
+        "edge_type": "CITES",
+        "neighbor_cid": "entry-c",
+        "node_cid": "entry-b",
+        "score": 0.5
+      }
+    ],
+    "graph_nodes": [
+      {"entry_cid": "entry-a", "legal_id": "usc:us:5:552", "node_type": "section"},
+      {"entry_cid": "entry-b", "legal_id": "usc:us:5:552a", "node_type": "section"},
+      {"entry_cid": "entry-c", "legal_id": "usc:us:35:101", "node_type": "section"}
+    ]
+  },
+  "routing": {
+    "bm25_keyword_shards": [
+      {
+        "first_key": "agency",
+        "kind": "bm25_postings",
+        "last_key": "foia",
+        "relative_path": "data/bm25/postings/part-000000.parquet",
+        "shard_id": 0
+      },
+      {
+        "first_key": "privacy",
+        "kind": "bm25_postings",
+        "last_key": "privacy",
+        "relative_path": "data/bm25/postings/part-000001.parquet",
+        "shard_id": 1
+      }
+    ],
+    "corpus_chunks": [
+      {
+        "end_document_index": 2,
+        "first_key": "entry-a",
+        "kind": "corpus",
+        "last_key": "entry-c",
+        "relative_path": "data/corpus/part-000000.parquet",
+        "shard_id": 0,
+        "start_document_index": 0
+      }
+    ],
+    "vector_chunks": [
+      {
+        "centroid": [1.0, 0.0],
+        "centroid_max_score": 1.0,
+        "centroid_min_score": 1.0,
+        "centroid_shard_count": 1,
+        "chunk_in_cluster": 0,
+        "cluster_id": 0,
+        "dimension": 2,
+        "first_key": "entry-a",
+        "kind": "vectors",
+        "last_key": "entry-a",
+        "relative_path": "data/vectors/centroid-000000-part-000000.parquet",
+        "shard_centroid": [1.0, 0.0],
+        "shard_id": 0
+      },
+      {
+        "centroid": [-1.0, 0.0],
+        "centroid_max_score": 1.0,
+        "centroid_min_score": 0.8,
+        "centroid_shard_count": 1,
+        "chunk_in_cluster": 0,
+        "cluster_id": 1,
+        "dimension": 2,
+        "first_key": "entry-b",
+        "kind": "vectors",
+        "last_key": "entry-c",
+        "relative_path": "data/vectors/centroid-000001-part-000000.parquet",
+        "shard_centroid": [-0.9, 0.1],
+        "shard_id": 1
+      }
+    ],
+    "graph_out_adjacency": [
+      {
+        "first_key": "entry-a",
+        "kind": "graph_adjacency_out",
+        "last_key": "entry-c",
+        "relative_path": "data/graph/adjacency/out/part-000000.parquet",
+        "shard_id": 0
+      }
+    ]
+  },
+  "family_counts": {
+    "corpus": 3,
+    "bm25_postings_terms": 3,
+    "bm25_documents": 2,
+    "vectors": 3,
+    "graph_nodes": 3,
+    "graph_edges": 3
+  },
+  "layout_paths": {
+    "corpus": ["data/corpus/part-000000.parquet"],
+    "bm25_postings": [
+      "data/bm25/postings/part-000000.parquet",
+      "data/bm25/postings/part-000001.parquet"
+    ],
+    "vectors": [
+      "data/vectors/centroid-000000-part-000000.parquet",
+      "data/vectors/centroid-000001-part-000000.parquet"
+    ],
+    "graph_adjacency_out": ["data/graph/adjacency/out/part-000000.parquet"],
+    "indexes": [
+      "indexes/bm25_keyword_shards.parquet",
+      "indexes/corpus_chunks.parquet",
+      "indexes/vector_chunks.parquet",
+      "indexes/graph_out_adjacency.parquet"
+    ],
+    "control_plane": ["manifest.json"]
+  }
+}
