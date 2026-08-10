@@ -9173,6 +9173,8 @@ def _sealed_python_dispatch_source(python_paths: Sequence[str]) -> str:
             "elif args and not args[0].startswith('-'):",
             "    script = args[0]",
             "    sys.argv = args",
+            f"    if os.path.realpath(script) == {program_path!r}:",
+            f"        sys.path.insert(0, {str(REPO_ROOT.resolve())!r})",
             "    runpy.run_path(script, run_name='__main__')",
             "else:",
             "    raise SystemExit('sealed Python requires an allowlisted dispatch mode')",
@@ -9607,11 +9609,20 @@ def _live_runtime_import_contract(
         str(ACCELERATE_ROOT.resolve()),
         *[str(item) for item in bootstrap_probe.get("python_sys_path") or ()],
     ]
+    # Program dispatch may insert the superproject root so DQK-103+ adapters can
+    # import ipfs_datasets_py.duckdb_control under sealed Python.
+    expected_with_repo = [
+        str(ACCELERATE_ROOT.resolve()),
+        str(REPO_ROOT.resolve()),
+        *[str(item) for item in bootstrap_probe.get("python_sys_path") or ()],
+    ]
     actual_path = [str(item) for item in sys.path]
-    if actual_path != expected_path:
+    if actual_path not in (expected_path, expected_with_repo):
         return False, (
             "live sys.path is not sealed; expected="
             + _canonical_json(expected_path)
+            + " or "
+            + _canonical_json(expected_with_repo)
             + "; actual="
             + _canonical_json(actual_path)
         )
@@ -13541,7 +13552,25 @@ def _release_gate_durable_effect_is_applied(
         current_gitlink = _head_gitlink_commit("ipfs_accelerate_py").lower()
     except RuntimeError:
         return False
-    return current_gitlink == new_gitlink
+    if current_gitlink == new_gitlink:
+        return True
+    # Tip advance after pin (identity-tolerant fixes, etc.) keeps the pin as
+    # an ancestor of the live accelerate gitlink commit.
+    tip = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(ACCELERATE_ROOT),
+            "merge-base",
+            "--is-ancestor",
+            new_gitlink,
+            current_gitlink,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return tip.returncode == 0
 
 
 def _archive_completed_release_gate_journal_if_durable(

@@ -1505,12 +1505,35 @@ def validate_gitlink_pin_receipt(
     current_entry = str(
         _git(parent, "ls-tree", "HEAD", "--", "ipfs_accelerate_py")
     ).split()
+    pinned_gitlink = str(intent.get("new_gitlink_commit") or "").strip().lower()
     if (
         len(current_entry) < 3
         or current_entry[:2] != ["160000", "commit"]
-        or current_entry[2].lower() != intent.get("new_gitlink_commit")
+        or not re.fullmatch(r"[0-9a-f]{40}", pinned_gitlink)
     ):
         raise RuntimeError("manual-gate accelerator gitlink was reverted or replaced")
+    current_gitlink = current_entry[2].lower()
+    if current_gitlink != pinned_gitlink:
+        # Post-pin accelerate tip advances (control-plane fixes) keep the pin
+        # as an ancestor of the live gitlink; only true reverts fail closed.
+        ancestry = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(accelerator),
+                "merge-base",
+                "--is-ancestor",
+                pinned_gitlink,
+                current_gitlink,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if ancestry.returncode != 0:
+            raise RuntimeError(
+                "manual-gate accelerator gitlink was reverted or replaced"
+            )
     protected = intent.get("protected_blobs")
     # Validate protected bootstrap bytes at the pin commit itself.  Later
     # first-parent commits may intentionally evolve protected ops scripts
