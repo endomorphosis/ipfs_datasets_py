@@ -63,7 +63,14 @@ class IowaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        if self._full_corpus_enabled() and max_statutes is None:
+        full_corpus = self._full_corpus_enabled()
+        allow_justia = str(
+            os.getenv("IOWA_ALLOW_JUSTIA_FALLBACK")
+            or os.getenv("STATE_SCRAPER_IA_ALLOW_JUSTIA_FALLBACK")
+            or ""
+        ).strip().lower() in {"1", "true", "yes", "on"}
+
+        if full_corpus and max_statutes is None:
             official_sections = await self._scrape_official_iowa_sections(code_name)
             accept_min = max(
                 1,
@@ -86,10 +93,18 @@ class IowaScraper(BaseStateScraper):
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
 
+        # Bounded probes prefer official HTML section seeds with real full text.
+        if max_statutes is not None:
+            direct_sections = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
+            if direct_sections:
+                return direct_sections[:return_threshold]
+
         live_stubs = await self._scrape_live_code_stubs(code_name, max_statutes=max(10, return_threshold))
 
         archival_limit = max(10, return_threshold)
-        if self._full_corpus_enabled() and max_statutes is None:
+        if full_corpus and max_statutes is None:
             archival_limit = min(
                 archival_limit,
                 int(os.getenv("IOWA_ARCHIVAL_STUB_LIMIT", "5000") or "5000"),
@@ -109,7 +124,7 @@ class IowaScraper(BaseStateScraper):
 
         _merge(live_stubs)
         _merge(archival_stubs)
-        if self._full_corpus_enabled() and max_statutes is None:
+        if full_corpus and max_statutes is None:
             accept_min = max(1, int(os.getenv("IOWA_FULL_CORPUS_ACCEPT_MIN", "500") or "500"))
             if len(merged) >= accept_min:
                 self.logger.info(
@@ -120,7 +135,7 @@ class IowaScraper(BaseStateScraper):
         if len(merged) >= return_threshold:
             return merged
 
-        if not self._full_corpus_enabled():
+        if not full_corpus:
             direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct_sections:
                 return direct_sections[:return_threshold]
@@ -129,9 +144,14 @@ class IowaScraper(BaseStateScraper):
             code_url,
             f"{self.get_base_url()}/docs/code//",
             f"{self.get_base_url()}/docs/code/",
-            "https://law.justia.com/codes/iowa/",
-            "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/iowa/",
         ]
+        if allow_justia or not full_corpus:
+            candidate_urls.extend(
+                [
+                    "https://law.justia.com/codes/iowa/",
+                    "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/iowa/",
+                ]
+            )
 
         seen = set()
         best_statutes: List[NormalizedStatute] = list(merged)
@@ -141,6 +161,12 @@ class IowaScraper(BaseStateScraper):
             seen.add(candidate)
 
             statutes = await self._generic_scrape(code_name, candidate, "Iowa Code", max_sections=max(10, return_threshold))
+            if full_corpus and not allow_justia:
+                statutes = [
+                    row
+                    for row in statutes
+                    if "justia.com" not in str(getattr(row, "source_url", "") or "").lower()
+                ]
             _merge(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
@@ -151,6 +177,19 @@ class IowaScraper(BaseStateScraper):
 
         if len(merged) > len(best_statutes):
             best_statutes = list(merged)
+
+        if full_corpus and not allow_justia:
+            official_only = [
+                row
+                for row in best_statutes
+                if "justia.com" not in str(getattr(row, "source_url", "") or "").lower()
+            ]
+            if not official_only:
+                self.logger.warning(
+                    "Iowa full-corpus crawl found no official legis.iowa.gov rows; refusing Justia-only admission"
+                )
+                return []
+            return official_only
 
         return best_statutes
 

@@ -1,0 +1,358 @@
+{
+  "acceptance": {
+    "closed_frontier": true,
+    "exact_source_authority": true,
+    "failed_final_zero": true,
+    "non_placeholder_full_text": true,
+    "reconciled_counts_hashes": true,
+    "replay_evidence": true
+  },
+  "cohort": "D",
+  "goal_id": "LCR-G021",
+  "jurisdiction_receipts": {
+    "IA": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "section-1.1",
+        "last_hierarchy_unit": "section-1.2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:ca5eac481638c73ef165fbe84c0f1257c35852726b4c3386617b7a6f1b8ed95a",
+        "min_full_text_chars": 571,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.legis.iowa.gov/docs/code/1.1.html",
+          "https://www.legis.iowa.gov/docs/code/1.2.html"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ia:1.1",
+          "ia:1.2"
+        ],
+        "derived_keys": [
+          "ia:1.1",
+          "ia:1.2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "IA",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:ca5eac481638c73ef165fbe84c0f1257c35852726b4c3386617b7a6f1b8ed95a",
+        "first_frontier_digest": "sha256:cdd75e7754d44c823fd8b0345f15b739ba41c4e422882abef4ee925291f56abe",
+        "second_frontier_digest": "sha256:cdd75e7754d44c823fd8b0345f15b739ba41c4e422882abef4ee925291f56abe"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.legis.iowa.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "IL": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "chapter-720/act-5/section-1-1",
+        "last_hierarchy_unit": "chapter-720/act-5/section-1-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:733a2c4ada13c981d13f15875724f286d3fa8db0c5bd3631b9c2cb7c8d5ad9c9",
+        "min_full_text_chars": 186,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.ilga.gov/legislation/ILCS/details?ActID=1876&ChapterID=53&SeqStart=&ChapAct=FullText",
+          "https://www.ilga.gov/legislation/ILCS/details?ActID=1876&ChapterID=53&SeqStart=&ChapAct=FullText"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "il:5/1-1",
+          "il:5/1-2"
+        ],
+        "derived_keys": [
+          "il:5/1-1",
+          "il:5/1-2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "IL",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:733a2c4ada13c981d13f15875724f286d3fa8db0c5bd3631b9c2cb7c8d5ad9c9",
+        "first_frontier_digest": "sha256:2a7534317ea43491da689180b2483a24ca133331f4d78f6252ff9fcb9b992858",
+        "second_frontier_digest": "sha256:2a7534317ea43491da689180b2483a24ca133331f4d78f6252ff9fcb9b992858"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.ilga.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "IN": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-6/article-1.1/chapter-15",
+        "last_hierarchy_unit": "title-32/article-28/chapter-3",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:0d5479d657722b2b9227338612e2f682b592d70b28293a7c74a1c8be6b2d6e46",
+        "min_full_text_chars": 1420,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "http://web.archive.org/web/20170215063144/http://iga.in.gov/static-documents/0/0/5/2/005284ae/TITLE6_AR1.1_ch15.pdf",
+          "http://web.archive.org/web/20170127104730/http://iga.in.gov/static-documents/0/0/b/3/00b3e7df/TITLE32_AR28_ch3.pdf"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "in:tit. 6, art. 1.1, ch. 15",
+          "in:tit. 32, art. 28, ch. 3"
+        ],
+        "derived_keys": [
+          "in:tit. 6, art. 1.1, ch. 15",
+          "in:tit. 32, art. 28, ch. 3"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "IN",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:0d5479d657722b2b9227338612e2f682b592d70b28293a7c74a1c8be6b2d6e46",
+        "first_frontier_digest": "sha256:01069acab03e1af8fcd83dc9b055926054d750dd4e88ba0b90494d0fb8a5aa6c",
+        "second_frontier_digest": "sha256:01069acab03e1af8fcd83dc9b055926054d750dd4e88ba0b90494d0fb8a5aa6c"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "iga.in.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "KS": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "chapter-21/article-51/section-21-5101",
+        "last_hierarchy_unit": "chapter-21/article-51/section-21-5102",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:3274cfba46d2e247964b8d5183d0ca3794661b9ac8eed1f608acd9c6df2c566a",
+        "min_full_text_chars": 159,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.kslegislature.gov/laws/021_000_0000_chapter/021_051_0000_article/021_051_0101_section/021_051_0101_k/",
+          "https://www.kslegislature.gov/laws/021_000_0000_chapter/021_051_0000_article/021_051_0102_section/021_051_0102_k/"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ks:21-5101",
+          "ks:21-5102"
+        ],
+        "derived_keys": [
+          "ks:21-5101",
+          "ks:21-5102"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "KS",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:3274cfba46d2e247964b8d5183d0ca3794661b9ac8eed1f608acd9c6df2c566a",
+        "first_frontier_digest": "sha256:8282b3e53c439694874ae30a0c281ac14be4275d46d29eea218dbc61ae22404a",
+        "second_frontier_digest": "sha256:8282b3e53c439694874ae30a0c281ac14be4275d46d29eea218dbc61ae22404a"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.kslegislature.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "official_domains": {
+    "IA": "www.legis.iowa.gov",
+    "IL": "www.ilga.gov",
+    "IN": "iga.in.gov",
+    "KS": "www.kslegislature.gov"
+  },
+  "production_upload": false,
+  "program_id": "legal-corpora-reindex-v1",
+  "receipt_schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-receipt@1",
+  "repair_work": [],
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-d-report@1",
+  "shared_combined_write": false,
+  "state_results": {
+    "IA": {
+      "content_digest": "sha256:ca5eac481638c73ef165fbe84c0f1257c35852726b4c3386617b7a6f1b8ed95a",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.legis.iowa.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "IL": {
+      "content_digest": "sha256:733a2c4ada13c981d13f15875724f286d3fa8db0c5bd3631b9c2cb7c8d5ad9c9",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.ilga.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "IN": {
+      "content_digest": "sha256:0d5479d657722b2b9227338612e2f682b592d70b28293a7c74a1c8be6b2d6e46",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "iga.in.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "KS": {
+      "content_digest": "sha256:3274cfba46d2e247964b8d5183d0ca3794661b9ac8eed1f608acd9c6df2c566a",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.kslegislature.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "states": [
+    "IL",
+    "IN",
+    "IA",
+    "KS"
+  ],
+  "status": "success",
+  "statutes_sample_counts": {
+    "IA": 2,
+    "IL": 2,
+    "IN": 2,
+    "KS": 2
+  },
+  "task_id": "LCR-012"
+}
