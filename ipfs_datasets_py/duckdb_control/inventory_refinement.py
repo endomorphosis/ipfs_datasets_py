@@ -34,6 +34,7 @@ import argparse
 import hashlib
 import hmac
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass, field
@@ -1479,14 +1480,35 @@ def verify_receipt(
 
 
 def load_receipt(path: str | Path) -> dict[str, Any]:
-    """Load a refinement receipt JSON file with bounded size."""
+    """Load a refinement receipt JSON file with bounded size.
+
+    Regular files must not be symlinks.  The sealed manual-gate owner may pass a
+    Linux ``/proc/self/fd/<n>`` (or ``/proc/<pid>/fd/<n>``) handle that appears
+    as a symlink but is a sealed memfd; those paths are read by open/read only.
+    """
 
     target = Path(path)
-    if target.is_symlink():
+    path_text = str(target)
+    sealed_fd = bool(
+        re.fullmatch(r"/proc/(?:self|\d+)/fd/\d+", path_text)
+    )
+    if target.is_symlink() and not sealed_fd:
         raise InventoryRefinementError("receipt path must not be a symlink")
-    if not target.is_file():
+    if not sealed_fd and not target.is_file():
         raise InventoryRefinementError(f"receipt path is not a file: {target}")
-    raw = target.read_bytes()
+    try:
+        # Open without following arbitrary user-controlled symlink chains for
+        # ordinary paths; sealed proc-fd handles are the only symlink exception.
+        flags = os.O_RDONLY
+        if not sealed_fd:
+            flags |= getattr(os, "O_NOFOLLOW", 0)
+        fd = os.open(path_text, flags)
+    except OSError as exc:
+        raise InventoryRefinementError(f"receipt path is not readable: {exc}") from exc
+    try:
+        raw = os.read(fd, _MAX_RECEIPT_BYTES + 1)
+    finally:
+        os.close(fd)
     if len(raw) > _MAX_RECEIPT_BYTES:
         raise InventoryRefinementError(
             f"receipt exceeds {_MAX_RECEIPT_BYTES}-byte bound"
