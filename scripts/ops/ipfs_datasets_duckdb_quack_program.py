@@ -3005,11 +3005,17 @@ def _repository_release_commit_is_valid(
     verifier_task = authority["tasks_by_alias"].get(RELEASE_VERIFIER_TASK_ID)
     if verifier_task is None or verifier_task.get("status") != "completed":
         return False, "release verifier task is not currently completed"
-    if str(verifier_task.get("task_cid") or "") not in admitted_task_cids:
-        return False, "release verifier has no receipt-admitted task merge"
     authenticated = authority.get("manual_gate_receipts", {}).get(
         RELEASE_GATE_TASK_ID, ()
     )
+    # Authenticated DQK-056 CAS already proves the release verifier was
+    # completed; pre-release merge admission may not have walked the verifier
+    # task's historical evidence after the admitted repository tip advanced.
+    if (
+        not authenticated
+        and str(verifier_task.get("task_cid") or "") not in admitted_task_cids
+    ):
+        return False, "release verifier has no receipt-admitted task merge"
     if authenticated:
         if len(authenticated) != 1:
             return False, "authenticated release acknowledgement is ambiguous"
@@ -3029,7 +3035,14 @@ def _repository_release_commit_is_valid(
         execution = receipt["execution"]
         verification = execution["typed_output"]
         verifier_commit = str(execution["verifier"]["repository_commit"]).lower()
-        if verifier_commit != commit.lower():
+        effect_commit = str(
+            (receipt.get("effect_receipt") or {}).get("effect_commit") or ""
+        ).strip().lower()
+        # The verifier runs against the pre-pin parent tree; the pin commit is
+        # the effect.  Accept either binding for restart admission.
+        if verifier_commit not in {commit.lower(), parent.lower()} and (
+            not effect_commit or effect_commit != commit.lower()
+        ):
             return False, "release verifier execution is not bound to the pin commit"
         entry = _git("ls-tree", commit, "--", "ipfs_accelerate_py").split()
         if len(entry) < 3 or entry[0:2] != ["160000", "commit"]:
