@@ -1,0 +1,932 @@
+{
+  "acceptance": {
+    "abstention_honesty": true,
+    "all_expected_outputs_required": true,
+    "budget_exhaustion_fail_closed": true,
+    "chosen_defaults_declared": true,
+    "component_and_fused_baselines_reported": true,
+    "dense_recall_gate": 0.95,
+    "fused_recall_gate": 0.75,
+    "graph_path_success": true,
+    "no_unapproved_regression": true,
+    "no_unsupported_production_claim": true,
+    "production_searchable": false,
+    "reference_hardware_network_recorded": true,
+    "regressions_and_exceptions_explicit": true,
+    "test_split_not_tuned": true,
+    "test_split_reported_once": true
+  },
+  "abstention": {
+    "all_honest": true,
+    "case_count": 3,
+    "cases": [
+      {
+        "abstain": true,
+        "expectation": "time_sensitive",
+        "exposed_release_point": "us/pl/118/45",
+        "honesty_ok": true,
+        "must_expose_release_point": true,
+        "partition": "dev",
+        "query_id": "q-dev-time-sensitive-release",
+        "query_kind": "time_sensitive"
+      },
+      {
+        "abstain": true,
+        "expectation": "known_ambiguity",
+        "exposed_release_point": "us/pl/118/45",
+        "honesty_ok": true,
+        "must_expose_release_point": true,
+        "partition": "test",
+        "query_id": "q-test-historical-version-ambiguity",
+        "query_kind": "historical_version"
+      },
+      {
+        "abstain": true,
+        "expectation": "abstention",
+        "exposed_release_point": "us/pl/118/45",
+        "honesty_ok": true,
+        "must_expose_release_point": true,
+        "partition": "test",
+        "query_id": "q-test-abstain-current-law-advice",
+        "query_kind": "time_sensitive"
+      }
+    ],
+    "honesty_ok_count": 3,
+    "honesty_rate": 1.0,
+    "policy": "Non-retrieval queries must abstain from currentness claims and expose the sealed release point when required. This fixture evaluation does not emit live legal advice."
+  },
+  "budget_exhaustion": {
+    "all_exhaustion_stops": true,
+    "policy": "budget_exhaustion_fail_closed",
+    "scenarios": [
+      {
+        "exhausted": true,
+        "fail_closed": true,
+        "limit": 4096,
+        "scenario_id": "bytes_budget",
+        "stop_reason": "bytes",
+        "usage": 8192
+      },
+      {
+        "exhausted": true,
+        "fail_closed": true,
+        "limit": 2,
+        "scenario_id": "shards_budget",
+        "stop_reason": "shards",
+        "usage": 4
+      },
+      {
+        "exhausted": true,
+        "fail_closed": true,
+        "limit": 2,
+        "scenario_id": "depth_budget",
+        "stop_reason": "depth",
+        "usage": 3
+      },
+      {
+        "exhausted": false,
+        "fail_closed": true,
+        "limit": 10000,
+        "scenario_id": "within_budget",
+        "stop_reason": null,
+        "usage": 1200
+      }
+    ]
+  },
+  "chosen_defaults": {
+    "bm25": {
+      "candidate_id": "plan_default_k1_1_2",
+      "evidence_partition": "dev",
+      "parameters": {
+        "b": 0.75,
+        "field_weights": {
+          "body": 1.0,
+          "citation": 8.0,
+          "heading": 4.0,
+          "hierarchy": 3.0,
+          "note": 0.5,
+          "title": 5.0
+        },
+        "k1": 1.2,
+        "tokenizer_id": "uscode-bm25-tokenizer/v1"
+      },
+      "selection_reason": "no candidate met recall gate, scoring parity, and term coverage on dev; retaining plan_default_k1_1_2 for diagnostics only",
+      "source": "USCIR-016"
+    },
+    "fusion": {
+      "candidate_id": "plan_default_weighted_0_5_0_5",
+      "config": {
+        "bm25_weight": 0.5,
+        "method": "weighted",
+        "rrf_k": 60,
+        "vector_weight": 0.5
+      },
+      "config_digest": "PLACEHOLDER_WILL_BE_REGENERATED_BY_FIXTURE_CHECK",
+      "evidence_partition": "dev",
+      "is_plan_default": true,
+      "selection_reason": "plan default plan_default_weighted_0_5_0_5 meets fused recall gate 0.75 on dev; retained",
+      "source": "USCIR-035"
+    },
+    "graph": {
+      "adjacency_reconciliation_requires": 1.0,
+      "path_success_requires": "all_expected_paths_pass",
+      "source": "USCIR-024"
+    },
+    "vector": {
+      "default_probe_centroids": 4,
+      "embedding_backend": "local_deterministic_projection",
+      "embedding_note": "Fixture vectors use the local deterministic projection for offline parity; production MiniLM identity is declared by the vector evaluation report and release manifest.",
+      "evidence_partition": "dev",
+      "historical_plan_default": 4,
+      "selection_reason": "historical default probe=4 meets recall gate 0.95 on dev; retained as production default",
+      "source": "USCIR-020"
+    }
+  },
+  "code_version": "1",
+  "component_baselines": {
+    "bm25": {
+      "acceptance": {
+        "all_routed_terms_covered": true,
+        "default_parameters_have_evidence_receipt": true,
+        "exact_scoring_parity_within_tolerance": true,
+        "production_searchable": false,
+        "recall_gate": 0.75,
+        "score_tolerance": 1e-09,
+        "test_split_not_tuned": true,
+        "test_split_reported_once": true
+      },
+      "available": true,
+      "default_candidate_id": "plan_default_k1_1_2",
+      "default_parameters": {
+        "b": 0.75,
+        "field_weights": {
+          "body": 1.0,
+          "citation": 8.0,
+          "heading": 4.0,
+          "hierarchy": 3.0,
+          "note": 0.5,
+          "title": 5.0
+        },
+        "k1": 1.2,
+        "tokenizer_id": "uscode-bm25-tokenizer/v1"
+      },
+      "evidence_partition": "dev",
+      "production_claim": "NO production-searchable claim: measured relevance, scoring parity, or term coverage failed the sealed gates (recall>=0.75, |\u0394score|<=1e-09)",
+      "production_searchable": false,
+      "report_path": "docs/reports/uscode_bm25_evaluation.json",
+      "schema_version": "ipfs_datasets_py/uscode-bm25-evaluation@1",
+      "selection_reason": "no candidate met recall gate, scoring parity, and term coverage on dev; retaining plan_default_k1_1_2 for diagnostics only",
+      "task_id": "USCIR-016",
+      "test_metrics": {
+        "bytes_fetched": {
+          "mean": 544.0,
+          "p50": 480.0,
+          "p95": 1065.6
+        },
+        "latency_ms": {
+          "mean": 0.171111,
+          "p50": 0.16,
+          "p95": 0.326
+        },
+        "mean_reciprocal_rank": 1.0,
+        "meets_recall_gate": true,
+        "relevance_recall_at_1": 0.87037,
+        "relevance_recall_at_10": 1.0,
+        "relevance_recall_at_5": 1.0,
+        "shards_fetched": {
+          "mean": 2.888889,
+          "p50": 3.0,
+          "p95": 5.2
+        }
+      }
+    },
+    "e2e_local": {
+      "acceptance": {
+        "all_root_count_joins_reconcile": true,
+        "expected_results_paths_pass": true,
+        "fetch_traces_routed_shards_plus_corpus_hydration_only": true,
+        "fixture_build_deterministic": true,
+        "local_resolve_only": true,
+        "manifest_validated": true,
+        "offline_replay_stable": true,
+        "six_query_modes_exercised": true
+      },
+      "available": true,
+      "case_count": 6,
+      "local_resolve_only": true,
+      "modes_exercised": [
+        "bm25",
+        "graph_walk",
+        "hybrid",
+        "neighbors",
+        "semantic_graph_walk",
+        "vector"
+      ],
+      "report_path": "docs/reports/uscode_e2e_local.json",
+      "task_id": "USCIR-033",
+      "total_sparse_io_bytes": 0
+    },
+    "graph": {
+      "acceptance": {
+        "adjacency_reconciliation_rate": 1.0,
+        "all_expected_paths_pass": true,
+        "error_coverage_reported": true,
+        "fixture_graph_paths_match": true,
+        "full_adjacency_reconciliation": true,
+        "legal_similarity_semantics_disjoint": true,
+        "lexical_parity_ok": true,
+        "source_evidence_bound": true,
+        "unresolved_coverage_reported": true,
+        "zero_unexplained_dangling_records": true,
+        "zero_unexplained_duplicate_records": true
+      },
+      "adjacency_reconciliation_rate": 1.0,
+      "available": true,
+      "expected_path_count": 10,
+      "failed_path_count": 0,
+      "graph_path_success_rate": 1.0,
+      "matched_path_count": 10,
+      "ok": true,
+      "report_path": "docs/reports/uscode_graph_evaluation.json",
+      "schema_version": "uscode-graph-v1",
+      "task_id": "USCIR-024",
+      "zero_unexplained_dangling": true,
+      "zero_unexplained_duplicates": true
+    },
+    "vector": {
+      "acceptance": {
+        "default_probe_evidence_backed": true,
+        "fallback_policy_evidence_backed": true,
+        "no_production_claim_below_recall_gate": true,
+        "production_searchable": true,
+        "recall_gate": 0.95,
+        "test_split_not_tuned": true,
+        "test_split_reported_once": true
+      },
+      "available": true,
+      "default_probe_centroids": 4,
+      "evidence_partition": "dev",
+      "fallback_policy": {
+        "default_probe_centroids": 4,
+        "name": "escalate_probe_then_exhaustive",
+        "policy_version": "uscode-vector-fallback/v1"
+      },
+      "production_claim": "centroid-routed dense search may be labeled production-searchable at probe=4",
+      "production_searchable": true,
+      "report_path": "docs/reports/uscode_vector_evaluation.json",
+      "schema_version": "ipfs_datasets_py/uscode-vector-evaluation@1",
+      "selection_reason": "historical default probe=4 meets recall gate 0.95 on dev; retained as production default",
+      "task_id": "USCIR-020",
+      "test_metrics": {
+        "bytes_fetched": {
+          "mean": 25536.0,
+          "p50": 25536.0,
+          "p95": 25536.0
+        },
+        "latency_ms": {
+          "mean": 0.32,
+          "p50": 0.32,
+          "p95": 0.32
+        },
+        "meets_recall_gate": true,
+        "recall_at_1": 1.0,
+        "recall_at_10": 0.8,
+        "recall_at_5": 0.925,
+        "shards_fetched": {
+          "mean": 4.0,
+          "p50": 4.0,
+          "p95": 4.0
+        }
+      }
+    }
+  },
+  "corpus": {
+    "bm25_terms_per_shard": 4,
+    "cluster_count": 6,
+    "dimension": 384,
+    "document_count": 18,
+    "fixture_layout_bounds": {
+      "kmeans_iterations": 6,
+      "max_rows_per_centroid": 6,
+      "max_rows_per_shard": 3,
+      "max_shards_per_centroid": 2,
+      "seed": 1431520073,
+      "target_rows_per_centroid": 3
+    },
+    "shard_count": 6,
+    "term_count": 185,
+    "tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "vector_count": 18
+  },
+  "dense_agreement": {
+    "dev": {
+      "meets_recall_gate": true,
+      "primary_metric": "recall_at_1",
+      "primary_metric_value": 1.0,
+      "probe_centroids": 4,
+      "query_count": 8,
+      "recall_at_1": 1.0,
+      "recall_at_10": 1.0,
+      "recall_at_5": 1.0,
+      "recall_gate": 0.95
+    },
+    "test": {
+      "meets_recall_gate": true,
+      "primary_metric": "recall_at_1",
+      "primary_metric_value": 1.0,
+      "probe_centroids": 4,
+      "query_count": 9,
+      "recall_at_1": 1.0,
+      "recall_at_10": 1.0,
+      "recall_at_5": 1.0,
+      "recall_gate": 0.95
+    }
+  },
+  "evaluation": {
+    "dense_recall_gate": 0.95,
+    "fused_recall_gate": 0.75,
+    "inspection_partition": "train",
+    "partitions": {
+      "dev": {
+        "bm25": {
+          "bytes_fetched": {
+            "mean": 726.0,
+            "p50": 744.0,
+            "p95": 1164.0
+          },
+          "docs_scored": {
+            "mean": 2.625,
+            "p50": 2.0,
+            "p95": 5.65
+          },
+          "exact_citation_query_count": 3,
+          "exact_citation_success_rate": 1.0,
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.2325,
+            "p50": 0.24,
+            "p95": 0.3755
+          },
+          "mean_reciprocal_rank": 0.916667,
+          "meets_recall_gate": false,
+          "mode": "bm25",
+          "ndcg_at_1": 0.666667,
+          "ndcg_at_10": 0.9,
+          "ndcg_at_5": 0.9,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.666667,
+          "queries_with_relevant_labels": 8,
+          "query_count": 8,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.666667,
+          "relevance_recall_at_10": 0.9375,
+          "relevance_recall_at_5": 0.9375,
+          "shards_fetched": {
+            "mean": 4.125,
+            "p50": 4.5,
+            "p95": 6.65
+          }
+        },
+        "fusion_candidates": [
+          {
+            "bm25_weight": 0.5,
+            "candidate_id": "plan_default_weighted_0_5_0_5",
+            "config_digest": "PLACEHOLDER_WILL_BE_REGENERATED_BY_FIXTURE_CHECK",
+            "is_plan_default": true,
+            "mean_reciprocal_rank": 0.916667,
+            "meets_recall_gate": true,
+            "method": "weighted",
+            "ndcg_at_10": 0.95,
+            "primary_metric_value": 0.75,
+            "relevance_recall_at_1": 0.75,
+            "rrf_k": 60,
+            "vector_weight": 0.5
+          }
+        ],
+        "fused": {
+          "bm25_weight": 0.5,
+          "bytes_fetched": {
+            "mean": 26000.0,
+            "p50": 26000.0,
+            "p95": 27000.0
+          },
+          "candidate_id": "plan_default_weighted_0_5_0_5",
+          "config_digest": "PLACEHOLDER_WILL_BE_REGENERATED_BY_FIXTURE_CHECK",
+          "docs_scored": {
+            "mean": 15.0,
+            "p50": 15.0,
+            "p95": 18.0
+          },
+          "exact_citation_query_count": 3,
+          "exact_citation_success_rate": 1.0,
+          "failure_modes": {},
+          "is_plan_default": true,
+          "latency_ms": {
+            "mean": 0.55,
+            "p50": 0.55,
+            "p95": 0.7
+          },
+          "mean_reciprocal_rank": 0.95,
+          "meets_recall_gate": true,
+          "method": "weighted",
+          "mode": "hybrid",
+          "ndcg_at_1": 0.75,
+          "ndcg_at_10": 0.95,
+          "ndcg_at_5": 0.95,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.75,
+          "queries_with_relevant_labels": 8,
+          "query_count": 8,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.75,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "rrf_k": 60,
+          "shards_fetched": {
+            "mean": 8.0,
+            "p50": 8.0,
+            "p95": 10.0
+          },
+          "vector_weight": 0.5
+        },
+        "gold_query_count": 8,
+        "role": "fusion_selection_only",
+        "tuned": true,
+        "vector": {
+          "bytes_fetched": {
+            "mean": 25536.0,
+            "p50": 25536.0,
+            "p95": 25536.0
+          },
+          "docs_scored": {
+            "mean": 12.0,
+            "p50": 12.0,
+            "p95": 12.0
+          },
+          "exact_citation_query_count": 3,
+          "exact_citation_success_rate": 0.333333,
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.32,
+            "p50": 0.32,
+            "p95": 0.32
+          },
+          "mean_reciprocal_rank": 0.5,
+          "meets_recall_gate": false,
+          "mode": "vector",
+          "ndcg_at_1": 0.25,
+          "ndcg_at_10": 0.5,
+          "ndcg_at_5": 0.45,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.25,
+          "queries_with_relevant_labels": 8,
+          "query_count": 8,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.25,
+          "relevance_recall_at_10": 0.5,
+          "relevance_recall_at_5": 0.45,
+          "shards_fetched": {
+            "mean": 4.0,
+            "p50": 4.0,
+            "p95": 4.0
+          }
+        }
+      },
+      "test": {
+        "bm25": {
+          "bytes_fetched": {
+            "mean": 544.0,
+            "p50": 480.0,
+            "p95": 1065.6
+          },
+          "docs_scored": {
+            "mean": 2.666667,
+            "p50": 1.0,
+            "p95": 6.6
+          },
+          "exact_citation_query_count": 5,
+          "exact_citation_success_rate": 1.0,
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.171111,
+            "p50": 0.16,
+            "p95": 0.326
+          },
+          "mean_reciprocal_rank": 1.0,
+          "meets_recall_gate": true,
+          "mode": "bm25",
+          "ndcg_at_1": 0.87037,
+          "ndcg_at_10": 1.0,
+          "ndcg_at_5": 1.0,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.87037,
+          "queries_with_relevant_labels": 9,
+          "query_count": 9,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.87037,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_fetched": {
+            "mean": 2.888889,
+            "p50": 3.0,
+            "p95": 5.2
+          }
+        },
+        "fused": {
+          "bytes_fetched": {
+            "mean": 26000.0,
+            "p50": 26000.0,
+            "p95": 27000.0
+          },
+          "docs_scored": {
+            "mean": 15.0,
+            "p50": 15.0,
+            "p95": 18.0
+          },
+          "exact_citation_query_count": 5,
+          "exact_citation_success_rate": 1.0,
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.55,
+            "p50": 0.55,
+            "p95": 0.7
+          },
+          "mean_reciprocal_rank": 1.0,
+          "meets_recall_gate": true,
+          "mode": "hybrid",
+          "ndcg_at_1": 0.9,
+          "ndcg_at_10": 1.0,
+          "ndcg_at_5": 1.0,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.9,
+          "queries_with_relevant_labels": 9,
+          "query_count": 9,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.9,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_fetched": {
+            "mean": 8.0,
+            "p50": 8.0,
+            "p95": 10.0
+          }
+        },
+        "gold_query_count": 9,
+        "graph_path_queries": {
+          "bytes_fetched": {
+            "mean": 26000.0,
+            "p50": 26000.0,
+            "p95": 26000.0
+          },
+          "docs_scored": {
+            "mean": 15.0,
+            "p50": 15.0,
+            "p95": 15.0
+          },
+          "exact_citation_query_count": 0,
+          "exact_citation_success_rate": 0.0,
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.55,
+            "p50": 0.55,
+            "p95": 0.55
+          },
+          "mean_reciprocal_rank": 1.0,
+          "meets_recall_gate": true,
+          "mode": "hybrid_graph_path",
+          "ndcg_at_1": 1.0,
+          "ndcg_at_10": 1.0,
+          "ndcg_at_5": 1.0,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 2,
+          "query_count": 2,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 1.0,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_fetched": {
+            "mean": 8.0,
+            "p50": 8.0,
+            "p95": 8.0
+          }
+        },
+        "report_count": 1,
+        "role": "sealed_one_shot_report",
+        "tuned": false,
+        "vector": {
+          "bytes_fetched": {
+            "mean": 25536.0,
+            "p50": 25536.0,
+            "p95": 25536.0
+          },
+          "docs_scored": {
+            "mean": 12.0,
+            "p50": 12.0,
+            "p95": 12.0
+          },
+          "exact_citation_query_count": 5,
+          "exact_citation_success_rate": 0.4,
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.32,
+            "p50": 0.32,
+            "p95": 0.32
+          },
+          "mean_reciprocal_rank": 0.55,
+          "meets_recall_gate": false,
+          "mode": "vector",
+          "ndcg_at_1": 0.3,
+          "ndcg_at_10": 0.55,
+          "ndcg_at_5": 0.5,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.3,
+          "queries_with_relevant_labels": 9,
+          "query_count": 9,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.3,
+          "relevance_recall_at_10": 0.55,
+          "relevance_recall_at_5": 0.5,
+          "shards_fetched": {
+            "mean": 4.0,
+            "p50": 4.0,
+            "p95": 4.0
+          }
+        }
+      },
+      "train": {
+        "fused": {
+          "bytes_fetched": {
+            "mean": 26000.0,
+            "p50": 26000.0,
+            "p95": 27000.0
+          },
+          "docs_scored": {
+            "mean": 15.0,
+            "p50": 15.0,
+            "p95": 18.0
+          },
+          "exact_citation_query_count": 4,
+          "exact_citation_success_rate": 1.0,
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.55,
+            "p50": 0.55,
+            "p95": 0.7
+          },
+          "mean_reciprocal_rank": 0.95,
+          "meets_recall_gate": true,
+          "mode": "hybrid",
+          "ndcg_at_1": 0.8,
+          "ndcg_at_10": 0.95,
+          "ndcg_at_5": 0.95,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.8,
+          "queries_with_relevant_labels": 10,
+          "query_count": 10,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.8,
+          "relevance_recall_at_10": 0.95,
+          "relevance_recall_at_5": 0.95,
+          "shards_fetched": {
+            "mean": 8.0,
+            "p50": 8.0,
+            "p95": 10.0
+          }
+        },
+        "gold_query_count": 10,
+        "role": "inspection_only_not_reported_as_gate",
+        "tuned": false
+      }
+    },
+    "primary_top_k": 1,
+    "report_partition": "test",
+    "selection_partition": "dev",
+    "top_k_values": [
+      1,
+      5,
+      10
+    ]
+  },
+  "evaluation_cid": "sha256:PLACEHOLDER_WILL_BE_REGENERATED_BY_FIXTURE_CHECK",
+  "fusion_selection": {
+    "candidate_id": "plan_default_weighted_0_5_0_5",
+    "config": {
+      "bm25_weight": 0.5,
+      "method": "weighted",
+      "rrf_k": 60,
+      "vector_weight": 0.5
+    },
+    "config_digest": "PLACEHOLDER_WILL_BE_REGENERATED_BY_FIXTURE_CHECK",
+    "evidence_partition": "dev",
+    "is_plan_default": true,
+    "meets_recall_gate": true,
+    "production_searchable": false,
+    "qualifying_candidates": [
+      "plan_default_weighted_0_5_0_5"
+    ],
+    "reason": "plan default plan_default_weighted_0_5_0_5 meets fused recall gate 0.75 on dev; retained",
+    "selection_metric": "relevance_recall_at_1",
+    "selection_value": 0.75
+  },
+  "goal_id": "USCIR-G090",
+  "graph_path": {
+    "from_component_report": {
+      "available": true,
+      "expected_count": 10,
+      "matched_count": 10,
+      "ok": true,
+      "success_rate": 1.0
+    },
+    "live_hybrid_supporting_path_queries": {
+      "bytes_fetched": {
+        "mean": 26000.0,
+        "p50": 26000.0,
+        "p95": 26000.0
+      },
+      "docs_scored": {
+        "mean": 15.0,
+        "p50": 15.0,
+        "p95": 15.0
+      },
+      "exact_citation_query_count": 0,
+      "exact_citation_success_rate": 0.0,
+      "failure_modes": {},
+      "latency_ms": {
+        "mean": 0.55,
+        "p50": 0.55,
+        "p95": 0.55
+      },
+      "mean_reciprocal_rank": 1.0,
+      "meets_recall_gate": true,
+      "mode": "hybrid_graph_path",
+      "ndcg_at_1": 1.0,
+      "ndcg_at_10": 1.0,
+      "ndcg_at_5": 1.0,
+      "primary_metric": "relevance_recall_at_1",
+      "primary_metric_value": 1.0,
+      "queries_with_relevant_labels": 2,
+      "query_count": 2,
+      "recall_gate": 0.75,
+      "relevance_recall_at_1": 1.0,
+      "relevance_recall_at_10": 1.0,
+      "relevance_recall_at_5": 1.0,
+      "shards_fetched": {
+        "mean": 8.0,
+        "p50": 8.0,
+        "p95": 8.0
+      }
+    }
+  },
+  "host_snapshot": {
+    "machine": "aarch64",
+    "processor": "unknown",
+    "python_version": "3.12.0",
+    "role": "evaluation_host_snapshot_not_sla",
+    "system": "Linux"
+  },
+  "io": {
+    "bm25_test": {
+      "bytes_fetched": {
+        "mean": 544.0,
+        "p50": 480.0,
+        "p95": 1065.6
+      },
+      "latency_ms": {
+        "mean": 0.171111,
+        "p50": 0.16,
+        "p95": 0.326
+      },
+      "shards_fetched": {
+        "mean": 2.888889,
+        "p50": 3.0,
+        "p95": 5.2
+      }
+    },
+    "cache_hit_ratio": 0.0,
+    "e2e_sparse_bytes": 0,
+    "fused_test": {
+      "bytes_fetched": {
+        "mean": 26000.0,
+        "p50": 26000.0,
+        "p95": 27000.0
+      },
+      "docs_scored": {
+        "mean": 15.0,
+        "p50": 15.0,
+        "p95": 18.0
+      },
+      "latency_ms": {
+        "mean": 0.55,
+        "p50": 0.55,
+        "p95": 0.7
+      },
+      "shards_fetched": {
+        "mean": 8.0,
+        "p50": 8.0,
+        "p95": 10.0
+      }
+    },
+    "model": "deterministic_fixture_io/v1",
+    "notes": "I/O and latency use a deterministic synthetic model so sealed reports are wall-clock independent. Remote Hub bytes are not measured in this offline gate.",
+    "vector_test": {
+      "bytes_fetched": {
+        "mean": 25536.0,
+        "p50": 25536.0,
+        "p95": 25536.0
+      },
+      "latency_ms": {
+        "mean": 0.32,
+        "p50": 0.32,
+        "p95": 0.32
+      },
+      "shards_fetched": {
+        "mean": 4.0,
+        "p50": 4.0,
+        "p95": 4.0
+      }
+    }
+  },
+  "producer": "evaluate_uscode_sparse_graphrag.py",
+  "production_claim": {
+    "abstention_honesty": true,
+    "claim": "NO production-searchable claim: bm25 component not production-searchable. Fixture evaluation is diagnostic evidence only.",
+    "component_bm25_production_searchable": false,
+    "component_vector_production_searchable": true,
+    "declared_dense_recall_gate": 0.95,
+    "declared_fused_recall_gate": 0.75,
+    "default_fusion_candidate_id": "plan_default_weighted_0_5_0_5",
+    "default_probe_centroids": 4,
+    "dense_agreement_meets_gate": true,
+    "fused_dev_meets_gate": true,
+    "fused_test_meets_gate": true,
+    "graph_paths_ok": true,
+    "no_unapproved_regression": true,
+    "production_searchable": false,
+    "requires": [
+      "component_baselines_available",
+      "bm25_production_searchable",
+      "vector_production_searchable",
+      "fused_dev_meets_recall_gate",
+      "fused_test_meets_recall_gate",
+      "dense_exhaustive_agreement_meets_gate",
+      "no_unapproved_regression",
+      "abstention_honesty",
+      "graph_paths_ok"
+    ],
+    "test_fused_relevance_recall_at_primary_k": 0.9
+  },
+  "program_id": "uscode-sparse-graphrag-v1",
+  "reference_hardware": {
+    "architecture": "x86_64",
+    "cpu_cores_logical": 8,
+    "cpu_model": "reference-generic-8vCPU",
+    "memory_gib": 32,
+    "notes": "Sealed offline evaluation uses a deterministic synthetic cost model; numbers are comparable across commits on this fixture, not absolute production SLAs for arbitrary hardware.",
+    "os_family": "linux",
+    "python_target": "python3.12",
+    "storage": "nvme-ssd"
+  },
+  "reference_network": {
+    "assumed_bandwidth_mbps": 100.0,
+    "assumed_rtt_ms": 20.0,
+    "hub_access": "disabled_in_fixture_gate",
+    "mode": "fixture_offline",
+    "network_required": false,
+    "notes": "USCIR-035 fixture evaluation never contacts the network. Remote latency/byte budgets for live Hub access are deferred to the staged canary (USCIR-036) and must not be inferred from this report."
+  },
+  "regressions": {
+    "bm25_primary": 0.87037,
+    "delta_vs_stronger": 0.02963,
+    "delta_vs_weaker": 0.6,
+    "exceptions": [
+      {
+        "approved": true,
+        "bm25_primary": 0.87037,
+        "detail": "Fixture dense vectors use the local deterministic projection (not the production MiniLM model). Lower vector-only relevance on citation queries is expected and is not a production MiniLM claim.",
+        "kind": "vector_relevance_lags_bm25_on_fixture_projection",
+        "vector_primary": 0.3
+      }
+    ],
+    "fused_primary": 0.9,
+    "no_unapproved_regression": true,
+    "regressed_vs_stronger_component": false,
+    "regressed_vs_weaker_component": false,
+    "regression_tolerance": 0.02,
+    "stronger_component_primary": 0.87037,
+    "vector_primary": 0.3,
+    "weaker_component_primary": 0.3
+  },
+  "release_profile": "publicus-ir-graphrag/v2",
+  "resources": {
+    "build_estimated_seconds": 0.0144,
+    "build_throughput_rows_per_second": 2500.0,
+    "cache_hit_ratio": 0.0,
+    "model": "deterministic_fixture_resource_model/v1",
+    "notes": "Peak memory and build throughput are synthetic fixture estimates for regression tracking; they are not measured OS samples.",
+    "peak_memory_bytes": 81152,
+    "peak_memory_mib": 0.077393
+  },
+  "schema_version": "ipfs_datasets_py/uscode-sparse-graphrag-evaluation@1",
+  "task_id": "USCIR-035"
+}
