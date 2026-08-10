@@ -59,6 +59,8 @@ __all__ = [
     "quack_maturity_status",
     "require_capability",
     "resolve_transport",
+    "safe_fallback_modes",
+    "version_policy_snapshot",
     "versions_match_exact",
 ]
 
@@ -313,6 +315,53 @@ class VersionPolicy:
 DEFAULT_VERSION_POLICY: Final[VersionPolicy] = VersionPolicy()
 
 
+def version_policy_snapshot(
+    policy: VersionPolicy | None = None,
+) -> Mapping[str, Any]:
+    """Return an immutable, content-ready snapshot of the dependency policy.
+
+    Downstream gates (inventory, transport, DuckLake) bind to this snapshot so
+    promotion decisions cite the exact DuckDB/Quack/VSS/protocol pins rather
+    than re-deriving them.  The mapping is read-only and JSON-friendly.
+    """
+
+    active = policy or DEFAULT_VERSION_POLICY
+    maturity = quack_maturity_status(active)
+    return MappingProxyType(
+        {
+            "schema": CAPABILITY_PROBE_SCHEMA,
+            "policy": dict(active.as_mapping()),
+            "quack_maturity": maturity.value,
+            "quack_beta": maturity is QuackMaturity.BETA,
+            "quack_status_reason": active.quack_status_reason,
+            "fallbacks": dict(safe_fallback_modes()),
+            "fail_closed_on_mismatch": True,
+            "import_time_requirements": (),
+            "optional_feature_gates": (
+                FeatureName.QUACK.value,
+                FeatureName.VSS.value,
+            ),
+        }
+    )
+
+
+def safe_fallback_modes() -> Mapping[str, str]:
+    """Document the safe fallback for each optional capability.
+
+    Quack mismatches refuse remote transport (fail closed) and use local SQL.
+    VSS mismatches/absence keep exact FLOAT[N] search as rebuildable fallback.
+    """
+
+    return MappingProxyType(
+        {
+            FeatureName.QUACK.value: TransportMode.LOCAL.value,
+            FeatureName.VSS.value: "exact_search",
+            CapabilityKind.PROTOCOL.value: TransportMode.LOCAL.value,
+            CapabilityKind.DUCKDB_RUNTIME.value: "unavailable",
+        }
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class ComponentVersions:
     """Observed client / server / extension / protocol versions.
@@ -328,6 +377,7 @@ class ComponentVersions:
     quack_extension_source: str | None = None
     vss_extension: str | None = None
     vss_extension_build: str | None = None
+    vss_extension_source: str | None = None
     client_protocol: int | None = None
     server_protocol: int | None = None
 
@@ -340,6 +390,7 @@ class ComponentVersions:
             "quack_extension_source",
             "vss_extension",
             "vss_extension_build",
+            "vss_extension_source",
         ):
             value = getattr(self, name)
             if value is not None and not isinstance(value, str):
@@ -364,6 +415,7 @@ class ComponentVersions:
                 "quack_extension_source": self.quack_extension_source,
                 "vss_extension": self.vss_extension,
                 "vss_extension_build": self.vss_extension_build,
+                "vss_extension_source": self.vss_extension_source,
                 "client_protocol": self.client_protocol,
                 "server_protocol": self.server_protocol,
             }
@@ -637,16 +689,22 @@ def assert_versions_compatible(
             )
         expected_vss_build = active.vss_extension_build
         observed_vss_build = versions.vss_extension_build
+        vss_source = versions.vss_extension_source or active.vss_extension_source
         if observed_vss_build is None:
             observed_vss_build = _normalize_build_id(
                 name=active.vss_extension_name,
                 version=versions.vss_extension,
-                source=active.vss_extension_source,
+                source=vss_source,
             )
         if observed_vss_build != expected_vss_build:
             problems.append(
                 f"VSS extension build mismatch: observed={observed_vss_build!r} "
                 f"required={expected_vss_build!r}"
+            )
+        if vss_source != active.vss_extension_source:
+            problems.append(
+                f"VSS extension source mismatch: observed={vss_source!r} "
+                f"required={active.vss_extension_source!r}"
             )
 
     client_proto = versions.client_protocol
@@ -966,6 +1024,9 @@ def observe_local_duckdb_versions(
             ),
             vss_extension=vss_version,
             vss_extension_build=vss_build,
+            vss_extension_source=(
+                PINNED_VSS_EXTENSION_SOURCE if vss_version else None
+            ),
             client_protocol=None,
             server_protocol=None,
         )
@@ -1161,6 +1222,7 @@ def _record_vss_index(
     identity_base: dict[str, Any] = {
         "required_build": policy.vss_extension_build,
         "required_version": format_version(policy.vss_extension_version),
+        "source": policy.vss_extension_source,
         "fallback": "exact_search",
         "identity_authority": False,
     }
@@ -1211,8 +1273,10 @@ def _record_vss_index(
             or _normalize_build_id(
                 name=policy.vss_extension_name,
                 version=versions.vss_extension,
-                source=policy.vss_extension_source,
+                source=versions.vss_extension_source or policy.vss_extension_source,
             ),
+            "observed_source": versions.vss_extension_source
+            or policy.vss_extension_source,
         },
         reason="VSS extension is available as rebuildable derived acceleration only",
         required=False,
@@ -1325,6 +1389,7 @@ def probe_capabilities(
             quack_extension_source=observed.quack_extension_source,
             vss_extension=observed.vss_extension,
             vss_extension_build=observed.vss_extension_build,
+            vss_extension_source=observed.vss_extension_source,
             client_protocol=active_request.client_protocol
             if active_request.client_protocol is not None
             else observed.client_protocol,
@@ -1343,6 +1408,7 @@ def probe_capabilities(
                 quack_extension_source=observed.quack_extension_source,
                 vss_extension=observed.vss_extension,
                 vss_extension_build=observed.vss_extension_build,
+                vss_extension_source=observed.vss_extension_source,
                 client_protocol=(
                     active_request.client_protocol
                     if active_request.client_protocol is not None
@@ -1366,6 +1432,7 @@ def probe_capabilities(
                 quack_extension_source=observed.quack_extension_source,
                 vss_extension=observed.vss_extension,
                 vss_extension_build=observed.vss_extension_build,
+                vss_extension_source=observed.vss_extension_source,
                 client_protocol=(
                     active_request.client_protocol
                     if active_request.client_protocol is not None

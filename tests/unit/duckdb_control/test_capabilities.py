@@ -90,6 +90,7 @@ def _pinned_ok(**overrides: object) -> caps.ComponentVersions:
         "quack_extension_source": "core",
         "vss_extension": caps.format_version(caps.PINNED_VSS_EXTENSION_VERSION),
         "vss_extension_build": caps.PINNED_VSS_EXTENSION_BUILD,
+        "vss_extension_source": "core",
         "client_protocol": caps.DEFAULT_QUACK_PROTOCOL_VERSION,
         "server_protocol": caps.DEFAULT_QUACK_PROTOCOL_VERSION,
     }
@@ -255,6 +256,41 @@ def test_vss_extension_mismatch_fails_closed() -> None:
     )
     with pytest.raises(caps.VersionMismatchError, match="VSS extension"):
         caps.assert_versions_compatible(versions, require_vss_extension=True)
+
+
+def test_vss_extension_source_mismatch_fails_closed() -> None:
+    versions = _pinned_ok(
+        vss_extension="1.5.5",
+        vss_extension_build="vss@1.5.5+community",
+        vss_extension_source="community",
+    )
+    with pytest.raises(caps.VersionMismatchError, match="VSS extension source"):
+        caps.assert_versions_compatible(versions, require_vss_extension=True)
+
+
+def test_version_policy_snapshot_is_immutable_and_explicit() -> None:
+    snapshot = caps.version_policy_snapshot()
+    assert snapshot["policy"]["duckdb_version"] == "1.5.5"
+    assert snapshot["policy"]["quack_extension_build"] == caps.PINNED_QUACK_EXTENSION_BUILD
+    assert snapshot["policy"]["vss_extension_build"] == caps.PINNED_VSS_EXTENSION_BUILD
+    assert snapshot["quack_beta"] is True
+    assert snapshot["quack_maturity"] == "beta"
+    assert snapshot["fail_closed_on_mismatch"] is True
+    assert snapshot["import_time_requirements"] == ()
+    assert "quack" in snapshot["optional_feature_gates"]
+    assert "vss" in snapshot["optional_feature_gates"]
+    assert snapshot["fallbacks"]["quack"] == "local"
+    assert snapshot["fallbacks"]["vss"] == "exact_search"
+    with pytest.raises(TypeError):
+        snapshot["quack_beta"] = False  # type: ignore[index]
+
+
+def test_safe_fallback_modes_document_local_and_exact_search() -> None:
+    modes = caps.safe_fallback_modes()
+    assert modes[caps.FeatureName.QUACK.value] == caps.TransportMode.LOCAL.value
+    assert modes[caps.FeatureName.VSS.value] == "exact_search"
+    with pytest.raises(TypeError):
+        modes["quack"] = "remote"  # type: ignore[index]
 
 
 # ---------------------------------------------------------------------------
@@ -571,3 +607,21 @@ def test_missing_duckdb_does_not_silently_enable_quack() -> None:
     assert result.transport.mode is caps.TransportMode.LOCAL
     assert result.transport.local_fallback_available is False
     assert result.feature_gates["quack"].enabled is False
+
+
+def test_probe_vss_source_mismatch_fails_closed_with_exact_search_fallback() -> None:
+    result = caps.probe_capabilities(
+        caps.ProbeRequest(enable_quack=False, enable_vss=True),
+        versions=_pinned_ok(
+            vss_extension="1.5.5",
+            vss_extension_build="vss@1.5.5+community",
+            vss_extension_source="community",
+        ),
+    )
+    assert result.ok is False
+    assert result.capabilities["vss_index"].status is caps.CapabilityStatus.MISMATCH
+    gate = result.feature_gates["vss"]
+    assert gate.state is caps.FeatureGateState.MISMATCH
+    assert gate.fallback is None  # mismatch fails closed; no silent enable
+    # Exact-search remains the documented safe alternative when not mismatched-enabled.
+    assert caps.safe_fallback_modes()["vss"] == "exact_search"
