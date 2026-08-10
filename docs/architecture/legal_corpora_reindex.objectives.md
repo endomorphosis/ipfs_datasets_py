@@ -381,3 +381,22 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: publish_federal_register check_public legal_corpora rollback status objective refill
 - Parallel lane: 1,2,3
 - Conflict policy: Federal publication has one mutation owner; all later composition, verification, rollback, and terminal work is dependency-ordered and read-only.
+
+## LCR-G141 Prove source rights and redistribution admissibility before publication
+- Status: active
+- Parent: LCR-G010
+- Fib priority: 1
+- Track: source-rights-assurance
+- Priority: P0
+- Bundle: source-rights-assurance
+- Goal: Prove that every source and content scope admitted to either public corpus may be redistributed under an explicit, current, evidence-backed policy.
+- Evidence: Exact-source rights catalog, observed terms and robots digests, attribution and scope decisions, quarantine dispositions, and a content-addressed cross-corpus compliance receipt.
+- Outputs: data/legal/legal_source_rights_catalog.json, docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_legal_source_rights_policy.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py -q; python scripts/ops/legal_data/audit_legal_source_rights.py --require-live-source-evidence --check
+- Acceptance: Both target candidates contain only source/content scopes with current allowed evidence, required attribution/notices, and receipt-bound card/manifest metadata; unknown, prohibited, stale, or unreviewed proprietary material is quarantined and every staging/main mutation fails closed without the exact receipt.
+- Gap task: LCR-077
+- Refinement: Split uncertain findings by source and content scope, then add separate evidence-research or release-binding tasks without weakening the cross-corpus deny-on-unknown rule.
+- Embedding query: state statutes Federal Register source rights license terms redistribution attribution government edicts annotations database robots
+- AST query: legal_source_rights publication_gate release_schema dataset_card manifest compliance receipt
+- Parallel lane: 1,2
+- Conflict policy: Contract, live evidence, and release integration are dependency ordered; source-specific research may run in parallel but one receipt assembler owns the final catalog.

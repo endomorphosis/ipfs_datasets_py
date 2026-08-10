@@ -197,7 +197,7 @@ SEALED_TASK_CONTRACTS = {
     "LCR-029": _task_contract("Cluster and package deterministic centroid-routed vectors", "LCR-G040", "LCR-026, LCR-028"),
     "LCR-030": _task_contract("Project the multi-jurisdiction legal and provenance graph", "LCR-G040", "LCR-024, LCR-026"),
     "LCR-031": _task_contract("Build bounded two-way adjacency and the postings-backed lexical overlay", "LCR-G040", "LCR-026, LCR-027, LCR-030"),
-    "LCR-032": _task_contract("Assemble the descriptor-complete additive release and Viewer configs", "LCR-G040", "LCR-027, LCR-029, LCR-031"),
+    "LCR-032": _task_contract("Assemble the descriptor-complete additive release and Viewer configs", "LCR-G040", "LCR-027, LCR-029, LCR-031, LCR-079"),
     "LCR-033": _task_contract("Implement the bounded immutable-Hub state-law query engine", "LCR-G050", "LCR-032"),
     "LCR-034": _task_contract("Expose direct state-law query CLI and package API", "LCR-G050", "LCR-033"),
     "LCR-035": _task_contract("Seal a jurisdiction-diverse retrieval and graph gold set", "LCR-G060", "LCR-023, LCR-024"),
@@ -227,7 +227,7 @@ SEALED_TASK_CONTRACTS = {
     "LCR-059": _task_contract("Implement bounded immutable-Hub Federal Register queries", "LCR-G120", "LCR-056, LCR-057, LCR-058, LCR-076"),
     "LCR-060": _task_contract("Expose Federal Register direct-query package API and CLI", "LCR-G120", "LCR-059"),
     "LCR-061": _task_contract("Implement streaming full and delta Federal Register build orchestration", "LCR-G130", "LCR-056, LCR-057, LCR-058, LCR-076"),
-    "LCR-062": _task_contract("Assemble the descriptor-complete Federal Register release and dataset card", "LCR-G130", "LCR-050, LCR-061"),
+    "LCR-062": _task_contract("Assemble the descriptor-complete Federal Register release and dataset card", "LCR-G130", "LCR-050, LCR-061, LCR-079"),
     "LCR-063": _task_contract("Evaluate Federal Register relevance, recall, graph, security, and determinism", "LCR-G130", "LCR-051, LCR-059, LCR-062"),
     "LCR-064": _task_contract("Upload, redownload, and canary the immutable Federal Register staging candidate", "LCR-G130", "LCR-063, LCR-070, LCR-071, LCR-074"),
     "LCR-065": _task_contract("Authorize and execute the additive Federal Register public upload", "LCR-G140", "LCR-064, LCR-073, LCR-074"),
@@ -322,6 +322,33 @@ CONTROLLED_RESEAL_TASK_CONTRACTS = {
         "40505c24b7bc558d15f587eec87cb50f785003913ec6ebe84c29d5c71b3b8463",
         "monitored-precedent-gap-refill",
     ),
+    "LCR-077": _controlled_reseal_task_contract(
+        "Define the source-rights and redistribution admission contract",
+        "LCR-G141",
+        "LCR-002, LCR-048",
+        "ipfs_datasets_py/processors/legal_data/legal_source_rights_policy.py, scripts/ops/legal_data/audit_legal_source_rights.py, data/legal/legal_source_rights_catalog.schema.json, tests/fixtures/legal_ir/legal_source_rights_catalog.json, tests/unit/processors/legal_data/test_legal_source_rights_policy.py",
+        "python -m pytest tests/unit/processors/legal_data/test_legal_source_rights_policy.py -q; python scripts/ops/legal_data/audit_legal_source_rights.py --fixture-only --check",
+        "25b1a5372b6aceab87e99670d7a3a7e9279cf5aed4639d165a3b2b350d9d3279",
+        "monitored-safety-gap-refill",
+    ),
+    "LCR-078": _controlled_reseal_task_contract(
+        "Produce and seal the live legal-source rights compliance receipt",
+        "LCR-G141",
+        "LCR-002, LCR-048, LCR-077",
+        "data/legal/legal_source_rights_catalog.json, docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+        "python scripts/ops/legal_data/audit_legal_source_rights.py --require-live-source-evidence --check",
+        "2fae89ff94b0e98bf041c53acabe3349021c3a3854e617a0748fd326578d2270",
+        "monitored-safety-gap-refill",
+    ),
+    "LCR-079": _controlled_reseal_task_contract(
+        "Bind source-rights evidence into both release schemas and the mutation gate",
+        "LCR-G141",
+        "LCR-004, LCR-050, LCR-074, LCR-078",
+        "ipfs_datasets_py/processors/legal_data/state_laws_release_schema.py, tests/unit/processors/legal_data/test_state_laws_release_schema.py, ipfs_datasets_py/processors/legal_data/federal_register_release_schema.py, tests/unit/processors/legal_data/test_federal_register_release_schema.py, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_gate.py, tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py, tests/fixtures/legal_ir/legal_source_rights_publication_gate.json",
+        "python -m pytest tests/unit/processors/legal_data/test_state_laws_release_schema.py tests/unit/processors/legal_data/test_federal_register_release_schema.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py -q",
+        "a3a921dc779a755f6306cb939b2a155837e171b45bbedd22dfde45da6e1cf8e3",
+        "monitored-safety-gap-refill",
+    ),
 }
 
 PHASE_GENERATED_WORK_GOAL_ROOTS = {
@@ -399,6 +426,15 @@ SEALED_GOAL_CONTRACTS = {
     "LCR-G120": _goal_contract("Build and query Federal Register sparse, dense, and graph families", "LCR-G000", "LCR-G110", "LCR-056"),
     "LCR-G130": _goal_contract("Build, evaluate, stage, and canary the exact Federal Register release", "LCR-G000", "LCR-G100, LCR-G110, LCR-G120", "LCR-061"),
     "LCR-G140": _goal_contract("Publish Federal Register and seal dual-release operations evidence", "LCR-G000", "LCR-G090, LCR-G130", "LCR-065"),
+}
+
+CONTROLLED_RESEAL_GOAL_CONTRACTS = {
+    "LCR-G141": _goal_contract(
+        "Prove source rights and redistribution admissibility before publication",
+        "LCR-G010",
+        "",
+        "LCR-077",
+    ),
 }
 
 JURISDICTIONS = frozenset(
@@ -854,6 +890,12 @@ def _validate_config(
             "exact_jurisdiction_count_required": 51,
             "district_of_columbia_required": True,
             "official_source_and_per_jurisdiction_receipts_required": True,
+            "source_rights_compliance_required": True,
+            "source_rights_compliance_receipt": (
+                "docs/reports/legal_corpora_reindex/"
+                "legal_source_rights_compliance.json"
+            ),
+            "unknown_or_prohibited_source_rights_allowed": False,
             "filename_or_nonzero_row_count_proves_completeness": False,
             "publication_authorization_recorded": True,
             "publication_authorized_datasets": list(TARGET_DATASETS),
@@ -1015,6 +1057,30 @@ def _validate_bundle_policies(
                 errors.append(
                     f"release policy federal_register_contract.{field} must be {expected!r}"
                 )
+    source_rights = release_policy.get("source_rights_contract")
+    if not isinstance(source_rights, Mapping):
+        errors.append("release policy source_rights_contract must be an object")
+    else:
+        source_rights_contract = {
+            "required_for_every_admitted_source_and_content_scope": True,
+            "government_text_must_be_distinguished_from_annotations_layout_editorial_and_database_content": True,
+            "terms_url_observed_at_and_digest_required": True,
+            "attribution_notice_and_redistribution_decision_required": True,
+            "robots_and_access_evidence_required": True,
+            "spdx_or_license_ref_required": True,
+            "unknown_or_prohibited_allowed_in_default_release": False,
+            "compliance_receipt_path": (
+                "docs/reports/legal_corpora_reindex/"
+                "legal_source_rights_compliance.json"
+            ),
+            "compliance_receipt_digest_bound_to_manifest_and_card": True,
+        }
+        for field, expected in source_rights_contract.items():
+            if source_rights.get(field) != expected:
+                errors.append(
+                    f"release policy source_rights_contract.{field} must be "
+                    f"{expected!r}"
+                )
     release_bounds = {
         "maximum_rows_per_physical_shard": 4096,
         "maximum_posting_pointers_per_row": 4096,
@@ -1074,7 +1140,7 @@ def _validate_bundle_policies(
     else:
         prepublication_contract = {
             "evidence_registry_task_ids": [
-                f"LCR-{number:03d}" for number in range(70, 77)
+                f"LCR-{number:03d}" for number in range(70, 80)
             ],
             "evidence_registry_receipts": [
                 "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -1082,6 +1148,7 @@ def _validate_bundle_policies(
                 "docs/reports/legal_corpora_reindex/state_prepublication_seal.json",
                 "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
                 "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
+                "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
             ],
             "registry_fields_are_non_authorizing": True,
             "applies_to_dataset_repo_ids": list(TARGET_DATASETS),
@@ -1089,6 +1156,12 @@ def _validate_bundle_policies(
             "authenticated_live_hub_snapshot_required": True,
             "local_salvage_inventory_required": True,
             "receipt_content_digests_required": True,
+            "source_rights_compliance_receipt_required": True,
+            "source_rights_unknown_or_prohibited_allowed": False,
+            "source_rights_receipt_path": (
+                "docs/reports/legal_corpora_reindex/"
+                "legal_source_rights_compliance.json"
+            ),
             "publication_gate_module": (
                 "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate"
             ),
@@ -1108,12 +1181,18 @@ def _validate_bundle_policies(
             "state_staging": {
                 "dataset_repo_id": "justicedao/ipfs_state_laws",
                 "authorized_operation": "additive_staging_upload",
-                "required_task_ids": ["LCR-039", "LCR-070", "LCR-074"],
+                "required_task_ids": [
+                    "LCR-039",
+                    "LCR-070",
+                    "LCR-074",
+                    "LCR-079",
+                ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
                     "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
                     "docs/reports/legal_corpora_reindex/local_e2e.json",
                     "docs/reports/legal_corpora_reindex/release_candidate.json",
+                    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
                 ],
                 "prepublication_seal_required": False,
                 "generated_work_goal_roots": list(
@@ -1128,6 +1207,7 @@ def _validate_bundle_policies(
                     "LCR-070",
                     "LCR-072",
                     "LCR-074",
+                    "LCR-079",
                 ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -1137,6 +1217,7 @@ def _validate_bundle_policies(
                     "docs/reports/legal_corpora_reindex/staging_upload.json",
                     "docs/reports/legal_corpora_reindex/staging_canary.json",
                     "docs/reports/legal_corpora_reindex/state_prepublication_seal.json",
+                    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
                 ],
                 "prepublication_seal_required": True,
                 "generated_work_goal_roots": list(
@@ -1153,6 +1234,7 @@ def _validate_bundle_policies(
                     "LCR-074",
                     "LCR-075",
                     "LCR-076",
+                    "LCR-079",
                 ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -1162,6 +1244,7 @@ def _validate_bundle_policies(
                     "docs/reports/legal_corpora_reindex/federal_evaluation.json",
                     "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
                     "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
+                    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
                 ],
                 "prepublication_seal_required": False,
                 "generated_work_goal_roots": list(
@@ -1179,6 +1262,7 @@ def _validate_bundle_policies(
                     "LCR-074",
                     "LCR-075",
                     "LCR-076",
+                    "LCR-079",
                 ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -1190,6 +1274,7 @@ def _validate_bundle_policies(
                     "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
                     "docs/reports/legal_corpora_reindex/federal_staging_canary.json",
                     "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
+                    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
                 ],
                 "prepublication_seal_required": True,
                 "generated_work_goal_roots": list(
@@ -1403,6 +1488,24 @@ def validate(root: Path) -> dict[str, Any]:
                 errors.append(f"{goal_id}: sealed goal dependency contract changed")
             if goal.get("gap_task") != expected_gap:
                 errors.append(f"{goal_id}: sealed Gap task must be {expected_gap}")
+        elif goal_id in CONTROLLED_RESEAL_GOAL_CONTRACTS:
+            title, expected_parents, expected_dependencies, expected_gap = (
+                CONTROLLED_RESEAL_GOAL_CONTRACTS[goal_id]
+            )
+            if goal.get("title") != title:
+                errors.append(f"{goal_id}: controlled-reseal title mismatch")
+            if tuple(parents) != expected_parents:
+                errors.append(
+                    f"{goal_id}: controlled-reseal parent contract changed"
+                )
+            if tuple(dependencies) != expected_dependencies:
+                errors.append(
+                    f"{goal_id}: controlled-reseal goal dependency contract changed"
+                )
+            if goal.get("gap_task") != expected_gap:
+                errors.append(
+                    f"{goal_id}: controlled-reseal Gap task must be {expected_gap}"
+                )
 
     found_goal_cycle = _cycle(goal_graph)
     if found_goal_cycle:
@@ -1619,7 +1722,7 @@ def validate(root: Path) -> dict[str, Any]:
 
     required_terminal_ancestry = [
         *[f"LCR-{number:03d}" for number in range(69)],
-        *[f"LCR-{number:03d}" for number in range(70, 77)],
+        *[f"LCR-{number:03d}" for number in range(70, 80)],
     ]
     for task_id in required_terminal_ancestry:
         if task_id not in tasks:

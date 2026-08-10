@@ -51,7 +51,7 @@ def _append_valid_refill(root: Path) -> None:
         objectives.read_text(encoding="utf-8").rstrip()
         + """
 
-## LCR-G141 Repair a newly observed cohort evidence gap
+## LCR-G142 Repair a newly observed cohort evidence gap
 - Status: active
 - Parent: LCR-G024
 - Fib priority: 2
@@ -60,8 +60,8 @@ def _append_valid_refill(root: Path) -> None:
 - Bundle: cohort-gap-repair
 - Goal: Repair one current-tree acquisition contradiction without weakening the exact-51 contract.
 - Evidence: A replacement jurisdiction receipt and reconciliation proof bound to the discovering evidence.
-- Outputs: docs/reports/legal_corpora_reindex/refill/lcr-077-repair.json
-- Validation: test -f docs/reports/legal_corpora_reindex/refill/lcr-077-repair.json
+- Outputs: docs/reports/legal_corpora_reindex/refill/lcr-080-repair.json
+- Validation: test -f docs/reports/legal_corpora_reindex/refill/lcr-080-repair.json
 - Acceptance: The replacement receipt closes the observed gap and preserves the full jurisdiction cohort.
 - Refinement depth: 3
 - Embedding query: state laws cohort acquisition gap replacement receipt
@@ -77,22 +77,22 @@ def _append_valid_refill(root: Path) -> None:
         taskboard.read_text(encoding="utf-8").rstrip()
         + """
 
-## LCR-077 Repair the discovered cohort evidence gap
+## LCR-080 Repair the discovered cohort evidence gap
 - Status: todo
 - Completion: manual
 - Priority: P0
 - Track: acquisition-repair
 - Depends on: LCR-000
-- Goal id: LCR-G141
-- Outputs: docs/reports/legal_corpora_reindex/refill/lcr-077-repair.json
-- Validation: test -f docs/reports/legal_corpora_reindex/refill/lcr-077-repair.json
+- Goal id: LCR-G142
+- Outputs: docs/reports/legal_corpora_reindex/refill/lcr-080-repair.json
+- Validation: test -f docs/reports/legal_corpora_reindex/refill/lcr-080-repair.json
 - Board namespace: legal-corpora-reindex-v1
 - Bundle: cohort-gap-repair
 - Parallel lane: cohort-gap-repair
 - Resource class: cpu-small
 - Token class: medium
 - Estimated tokens: 0
-- Predicted files: docs/reports/legal_corpora_reindex/refill/lcr-077-repair.json
+- Predicted files: docs/reports/legal_corpora_reindex/refill/lcr-080-repair.json
 - Allow concurrent with:
 - Conflict policy: Owns only its replacement evidence; aggregate coverage remains dependency ordered.
 - Preconditions: A content-addressed cohort finding names the failed acceptance evidence.
@@ -111,15 +111,20 @@ def test_declared_board_validator_accepts_control_plane() -> None:
     counts = report["counts"]
     assert counts["sealed_tasks"] == 70
     assert counts["sealed_goals"] == 19
-    assert counts["tasks"] >= 77
-    assert counts["continuation_tasks"] >= 7
-    assert counts["goals"] >= 19
+    assert counts["tasks"] >= 80
+    assert counts["continuation_tasks"] >= 10
+    assert counts["goals"] >= 20
     assert counts["jurisdictions"] == 51
     assert counts["blocked"] == 0
-    required_continuations = {f"LCR-{number:03d}" for number in range(70, 77)}
+    required_continuations = {f"LCR-{number:03d}" for number in range(70, 80)}
     assert required_continuations <= set(
         report["current_projection"]["continuation_task_ids"]
     )
+    rights_tasks = {"LCR-077", "LCR-078", "LCR-079"}
+    phase_blockers = report["current_projection"][
+        "publication_blocking_generated_task_ids_by_phase"
+    ]
+    assert all(rights_tasks <= set(task_ids) for task_ids in phase_blockers.values())
     assert sum(report["lane_task_counts"].values()) == counts["tasks"]
 
 
@@ -144,16 +149,16 @@ def test_refill_goal_and_task_are_admitted_and_projection_is_recomputed(
         report["counts"]["continuation_goals"]
         == baseline["counts"]["continuation_goals"] + 1
     )
-    assert "LCR-077" in report["current_projection"]["continuation_task_ids"]
-    assert "LCR-G141" in report["current_projection"]["continuation_goal_ids"]
-    assert "LCR-077" in report["current_projection"]["ready_task_ids"]
+    assert "LCR-080" in report["current_projection"]["continuation_task_ids"]
+    assert "LCR-G142" in report["current_projection"]["continuation_goal_ids"]
+    assert "LCR-080" in report["current_projection"]["ready_task_ids"]
     blockers = report["current_projection"][
         "publication_blocking_generated_task_ids_by_phase"
     ]
-    assert "LCR-077" in blockers["state_staging"]
-    assert "LCR-077" in blockers["state_main"]
-    assert "LCR-077" not in blockers["federal_staging"]
-    assert "LCR-077" not in blockers["federal_main"]
+    assert "LCR-080" in blockers["state_staging"]
+    assert "LCR-080" in blockers["state_main"]
+    assert "LCR-080" not in blockers["federal_staging"]
+    assert "LCR-080" not in blockers["federal_main"]
     assert report["sealed_initial_projection"]["ready_task_ids"] == [
         "LCR-001",
         "LCR-002",
@@ -176,7 +181,7 @@ def test_native_refill_semantic_lane_and_optional_metadata_are_admitted(tmp_path
     result, report = _run_validator(root)
     assert result.returncode == 0, report
     assert report["valid"] is True
-    assert "LCR-077" in report["current_projection"]["continuation_task_ids"]
+    assert "LCR-080" in report["current_projection"]["continuation_task_ids"]
 
 
 def test_shared_publication_gate_refill_blocks_every_mutation_phase(
@@ -198,7 +203,7 @@ def test_shared_publication_gate_refill_blocks_every_mutation_phase(
     blockers = report["current_projection"][
         "publication_blocking_generated_task_ids_by_phase"
     ]
-    assert all("LCR-077" in task_ids for task_ids in blockers.values())
+    assert all("LCR-080" in task_ids for task_ids in blockers.values())
 
 
 def test_cohort_partition_and_refill_policy_drift_are_rejected(tmp_path: Path) -> None:
@@ -290,3 +295,66 @@ def test_phase_gate_and_dynamic_generated_work_guard_drift_are_rejected(
     assert result.returncode == 1
     assert any("phase_requirements" in error for error in report["errors"])
     assert any("generated_work_guard" in error for error in report["errors"])
+
+
+def test_source_rights_goal_task_and_publication_contract_cannot_be_detached(
+    tmp_path: Path,
+) -> None:
+    root = _copy_control_plane(tmp_path / "repo")
+
+    objectives = root / "docs/architecture/legal_corpora_reindex.objectives.md"
+    objectives.write_text(
+        objectives.read_text(encoding="utf-8").replace(
+            "## LCR-G141 Prove source rights and redistribution admissibility before publication\n"
+            "- Status: active\n"
+            "- Parent: LCR-G010",
+            "## LCR-G141 Prove source rights and redistribution admissibility before publication\n"
+            "- Status: active\n"
+            "- Parent: LCR-G000",
+        ),
+        encoding="utf-8",
+    )
+
+    taskboard = root / "docs/architecture/legal_corpora_reindex.todo.md"
+    taskboard.write_text(
+        taskboard.read_text(encoding="utf-8").replace(
+            "- Acceptance: Fixtures distinguish statutory or Federal government text from site presentation, annotations, editorial enhancements, and databases; malformed, stale, unknown, prohibited, scope-mismatched, or unsupported evidence fails closed and no dataset-card label alone proves admissibility.",
+            "- Acceptance: A dataset-card label is enough.",
+        ),
+        encoding="utf-8",
+    )
+
+    config_path = root / "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["authority_policy"]["unknown_or_prohibited_source_rights_allowed"] = True
+    config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+
+    policy_path = (
+        root
+        / "data/agent_supervisor/legal_corpora_reindex/bundles/release_policy.json"
+    )
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    policy["source_rights_contract"][
+        "unknown_or_prohibited_allowed_in_default_release"
+    ] = True
+    policy["prepublication_evidence_contract"]["phase_requirements"][
+        "federal_main"
+    ]["required_task_ids"].remove("LCR-079")
+    policy_path.write_text(json.dumps(policy, indent=2) + "\n", encoding="utf-8")
+
+    result, report = _run_validator(root)
+    assert result.returncode == 1
+    assert any(
+        "LCR-G141: controlled-reseal parent contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
+        "LCR-077: controlled-reseal acceptance contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
+        "unknown_or_prohibited_source_rights_allowed" in error
+        for error in report["errors"]
+    )
+    assert any("source_rights_contract" in error for error in report["errors"])
+    assert any("phase_requirements" in error for error in report["errors"])

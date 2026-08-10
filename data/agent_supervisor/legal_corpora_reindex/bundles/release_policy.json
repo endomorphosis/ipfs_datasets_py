@@ -36,6 +36,17 @@
     "failed_final_documents_allowed_for_publication": false,
     "legacy_delta_start_inclusive": "2026-03-03"
   },
+  "source_rights_contract": {
+    "required_for_every_admitted_source_and_content_scope": true,
+    "government_text_must_be_distinguished_from_annotations_layout_editorial_and_database_content": true,
+    "terms_url_observed_at_and_digest_required": true,
+    "attribution_notice_and_redistribution_decision_required": true,
+    "robots_and_access_evidence_required": true,
+    "spdx_or_license_ref_required": true,
+    "unknown_or_prohibited_allowed_in_default_release": false,
+    "compliance_receipt_path": "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+    "compliance_receipt_digest_bound_to_manifest_and_card": true
+  },
   "maximum_rows_per_physical_shard": 4096,
   "maximum_posting_pointers_per_row": 4096,
   "maximum_adjacency_pointers_per_row": 4096,
@@ -100,17 +111,21 @@
             "LCR-070",
             "LCR-071",
             "LCR-072",
-      "LCR-073",
-      "LCR-074",
+            "LCR-073",
+            "LCR-074",
             "LCR-075",
-            "LCR-076"
+            "LCR-076",
+            "LCR-077",
+            "LCR-078",
+            "LCR-079"
         ],
         "evidence_registry_receipts": [
             "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
             "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
       "docs/reports/legal_corpora_reindex/state_prepublication_seal.json",
             "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
-            "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json"
+            "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
+            "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
         ],
         "registry_fields_are_non_authorizing": true,
         "applies_to_dataset_repo_ids": [
@@ -121,6 +136,9 @@
     "authenticated_live_hub_snapshot_required": true,
     "local_salvage_inventory_required": true,
     "receipt_content_digests_required": true,
+        "source_rights_compliance_receipt_required": true,
+        "source_rights_unknown_or_prohibited_allowed": false,
+        "source_rights_receipt_path": "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
         "publication_gate_module": "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate",
         "required_task_ancestor_closure_must_be_completed": true,
         "phase_requirements": {
@@ -130,13 +148,15 @@
                 "required_task_ids": [
                     "LCR-039",
                     "LCR-070",
-                    "LCR-074"
+                    "LCR-074",
+                    "LCR-079"
                 ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
                     "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
                     "docs/reports/legal_corpora_reindex/local_e2e.json",
-                    "docs/reports/legal_corpora_reindex/release_candidate.json"
+                    "docs/reports/legal_corpora_reindex/release_candidate.json",
+                    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
                 ],
                 "prepublication_seal_required": false,
                 "generated_work_goal_roots": [
@@ -157,7 +177,8 @@
                     "LCR-041",
                     "LCR-070",
                     "LCR-072",
-                    "LCR-074"
+                    "LCR-074",
+                    "LCR-079"
                 ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -166,7 +187,8 @@
                     "docs/reports/legal_corpora_reindex/release_candidate.json",
                     "docs/reports/legal_corpora_reindex/staging_upload.json",
                     "docs/reports/legal_corpora_reindex/staging_canary.json",
-                    "docs/reports/legal_corpora_reindex/state_prepublication_seal.json"
+                    "docs/reports/legal_corpora_reindex/state_prepublication_seal.json",
+                    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
                 ],
                 "prepublication_seal_required": true,
                 "generated_work_goal_roots": [
@@ -189,7 +211,8 @@
                     "LCR-071",
                     "LCR-074",
                     "LCR-075",
-                    "LCR-076"
+                    "LCR-076",
+                    "LCR-079"
                 ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -198,7 +221,8 @@
                     "docs/reports/legal_corpora_reindex/federal_candidate.json",
                     "docs/reports/legal_corpora_reindex/federal_evaluation.json",
                     "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
-                    "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json"
+                    "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
+                    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
                 ],
                 "prepublication_seal_required": false,
                 "generated_work_goal_roots": [
@@ -220,7 +244,8 @@
                     "LCR-073",
                     "LCR-074",
                     "LCR-075",
-                    "LCR-076"
+                    "LCR-076",
+                    "LCR-079"
                 ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -231,7 +256,8 @@
                     "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
                     "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
                     "docs/reports/legal_corpora_reindex/federal_staging_canary.json",
-                    "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json"
+                    "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
+                    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
                 ],
                 "prepublication_seal_required": true,
                 "generated_work_goal_roots": [
