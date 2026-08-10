@@ -1,0 +1,60 @@
+# ipfs_datasets_py/duckdb-quack-environment-lock@1
+#
+# Hash-locked candidate execution environment for DQK-082.
+# Scope: CPython 3.12 binary wheels on Linux aarch64 (linux_arm64) or
+# x86_64 (linux_amd64), plus explicit Quack / DuckLake / httpfs extension
+# profiles for DuckDB 1.5.5.  Completing this lock does not activate a
+# supervisor generation; DQK-103 consumes the candidate-environment receipt.
+#
+# POLICY
+# duckdb_version=1.5.5
+# python_package=duckdb
+# requires_hashes=true
+# binary_only=true
+# dependencies_disabled=true
+# autoinstall_known_extensions=false
+# autoload_known_extensions=false
+# ducklake_automatic_migration=false
+# attestation_scope=candidate-duckdb-quack-ducklake-runtime
+#
+# EXTENSION_PROFILE quack
+# name=quack
+# version=1.5.5
+# source=core
+# build=quack@1.5.5+core
+# load_order=2
+# repository=http://extensions.duckdb.org
+# artifact linux_arm64 sha256:41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08 filename=quack.duckdb_extension
+# artifact linux_amd64 sha256:aa0155c452a882eb8912d59589626a5156ab92a8e80952371b78e26e1cf07168 filename=quack.duckdb_extension
+#
+# EXTENSION_PROFILE ducklake
+# name=ducklake
+# version=1.5.5
+# source=core
+# build=ducklake@1.5.5+core
+# load_order=3
+# repository=http://extensions.duckdb.org
+# artifact linux_arm64 sha256:d0b57c8e261b89a1ae367c7224f0857cfde72ab6cf2609f188e0de9b897b1088 filename=ducklake.duckdb_extension
+# artifact linux_amd64 sha256:e51bf9e8d933d0e83780ae096455501b542cf962569a2ce5613532d702c08302 filename=ducklake.duckdb_extension
+#
+# EXTENSION_PROFILE httpfs
+# name=httpfs
+# version=1.5.5
+# source=core
+# build=httpfs@1.5.5+core
+# load_order=1
+# repository=http://extensions.duckdb.org
+# artifact linux_arm64 sha256:eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9 filename=httpfs.duckdb_extension
+# artifact linux_amd64 sha256:887c392b1e49128d11667c81e3698d8b00dfdeb456771acf66d05a0f74f7b7d8 filename=httpfs.duckdb_extension
+#
+# DOCKER_IMAGE probe alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#
+# DISK_MINIMA
+# workspace_bytes=2147483648
+# image_bytes=2147483648
+# volume_bytes=1073741824
+#
+# --- pip requirements (require-hashes, binary-only, no transitive deps) ---
+duckdb==1.5.5 \
+    --hash=sha256:f316eae2323d9a851883fdf2dee91c1f9efe251ab33e14a2272f82a913422ed6 \
+    --hash=sha256:7a6d2d11859d82a936ebdcb30ce3d8a1cbb3e990bff05c12abb9b54c44fa7bd1
