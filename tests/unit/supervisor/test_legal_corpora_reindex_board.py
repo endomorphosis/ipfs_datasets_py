@@ -276,6 +276,64 @@ def test_controlled_reseal_task_contract_drift_is_rejected(tmp_path: Path) -> No
     )
 
 
+def test_exact_51_mutation_boundary_contract_drift_is_rejected(
+    tmp_path: Path,
+) -> None:
+    root = _copy_control_plane(tmp_path / "repo")
+    objectives = root / "docs/architecture/legal_corpora_reindex.objectives.md"
+    goal_text = objectives.read_text(encoding="utf-8")
+    goal_output = (
+        "docs/reports/legal_corpora_reindex/"
+        "hugging_face_mutation_path_audit.json"
+    )
+    assert goal_output in goal_text
+    assert (
+        "one authorization can never cover a different payload or later write"
+        in goal_text
+    )
+    goal_text = goal_text.replace(
+        goal_output,
+        "docs/reports/legal_corpora_reindex/weakened_mutation_audit.json",
+        1,
+    ).replace(
+        "one authorization can never cover a different payload or later write",
+        "one authorization may cover later writes",
+        1,
+    )
+    objectives.write_text(goal_text, encoding="utf-8")
+
+    taskboard = root / "docs/architecture/legal_corpora_reindex.todo.md"
+    task_text = taskboard.read_text(encoding="utf-8")
+    task_acceptance = (
+        "A gate decision or capability for one operation cannot authorize a "
+        "different payload or a later write in a multi-call callback."
+    )
+    assert task_acceptance in task_text
+    taskboard.write_text(
+        task_text.replace(
+            task_acceptance,
+            "A gate decision may authorize every later write.",
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    result, report = _run_validator(root)
+    assert result.returncode == 1
+    assert any(
+        "LCR-G146: controlled-reseal output contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
+        "LCR-G146: controlled-reseal acceptance contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
+        "LCR-084: controlled-reseal acceptance contract changed" in error
+        for error in report["errors"]
+    )
+
+
 def test_phase_gate_and_dynamic_generated_work_guard_drift_are_rejected(
     tmp_path: Path,
 ) -> None:

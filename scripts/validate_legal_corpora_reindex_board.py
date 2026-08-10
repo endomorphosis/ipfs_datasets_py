@@ -349,6 +349,15 @@ CONTROLLED_RESEAL_TASK_CONTRACTS = {
         "a3a921dc779a755f6306cb939b2a155837e171b45bbedd22dfde45da6e1cf8e3",
         "monitored-safety-gap-refill",
     ),
+    "LCR-084": _controlled_reseal_task_contract(
+        "Invalidate synthetic state-scrape success and reseal exact-51 candidate evidence",
+        "LCR-G146",
+        "LCR-023, LCR-039, LCR-081, LCR-083",
+        "scripts/ops/legal_data/audit_state_laws_full_scrape_acceptance.py, data/legal/state_laws_full_scrape_acceptance.schema.json, docs/reports/legal_corpora_reindex/full_scrape_acceptance.json, scripts/ops/legal_data/build_state_laws_hf_release.py, docs/reports/legal_corpora_reindex/release_candidate.json, ipfs_datasets_py/processors/legal_data/state_laws_release_schema.py, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_gate.py, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_runtime.py, tests/fixtures/legal_ir/legal_corpora_publication_gate.json, tests/unit/scripts/test_audit_state_laws_full_scrape_acceptance.py, tests/integration/legal_data/test_state_laws_full_scrape_acceptance_fail_closed.py, tests/unit/scripts/test_build_state_laws_hf_release.py, tests/unit/processors/legal_data/test_state_laws_release_schema.py, tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py, tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py, ipfs_datasets_py/huggingface/protected_repo_guard.py, scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py, data/legal/legal_corpora_hugging_face_mutation_path_audit.schema.json, docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json, scripts/ops/legal_data/refresh_state_laws_corpus.py, scripts/ops/legal_data/rebuild_state_laws_metadata_from_existing_embeddings.py, scripts/repair/publish_parquet_to_hf.py, ipfs_datasets_py/processors/legal_data/legal_source_recovery.py, ipfs_datasets_py/processors/legal_data/legal_source_recovery_promotion.py, ipfs_datasets_py/processors/legal_scrapers/justicedao_dataset_inventory.py, ipfs_datasets_py/processors/legal_scrapers/legal_scraper_daemon.py, ipfs_datasets_py/processors/legal_scrapers/huggingface_pipeline_engine.py, ipfs_datasets_py/processors/legal_scrapers/municipal_law_database_scrapers/hugging_face_pipeline.py, scripts/ops/legal_data/merge_state_admin_recovered_rows.py, ipfs_datasets_py/huggingface/publisher.py, ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/upload.py, ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py, scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py, scripts/ops/security_ir/publish_cvefixes_security_ir.py, tests/unit/processors/legal_data/test_legal_corpora_protected_repo_mutations.py, tests/unit/scripts/test_audit_legal_corpora_hugging_face_mutation_paths.py",
+        "python -m pytest tests/unit/scripts/test_audit_state_laws_full_scrape_acceptance.py tests/integration/legal_data/test_state_laws_full_scrape_acceptance_fail_closed.py tests/unit/scripts/test_build_state_laws_hf_release.py tests/unit/processors/legal_data/test_state_laws_release_schema.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py tests/unit/processors/legal_data/test_legal_corpora_protected_repo_mutations.py tests/unit/scripts/test_audit_legal_corpora_hugging_face_mutation_paths.py tests/unit/legal_scrapers/test_refresh_state_laws_corpus.py tests/unit/legal_scrapers/test_legal_source_recovery.py tests/unit/legal_scrapers/test_legal_source_recovery_promotion.py tests/unit/legal_scrapers/test_justicedao_dataset_inventory.py tests/unit/legal_scrapers/test_legal_scraper_daemon.py tests/unit/legal_scrapers/test_merge_state_admin_recovered_rows.py tests/mcp/unit/test_hf_pipeline_engine.py tests/unit/huggingface/test_generic_publisher.py tests/unit/logic/security_ir/cvefixes/test_publish_command.py tests/unit/test_netherlands_laws_pipeline.py tests/unit/processors/patent/test_hf_release_v2.py -q; python scripts/ops/legal_data/audit_state_laws_full_scrape_acceptance.py --require-live-official --require-jurisdictions 51 --require-production-candidate --check; python scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py --protected-repo justicedao/ipfs_state_laws --protected-repo justicedao/ipfs_federal_register --require-runtime ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime --check",
+        "0011a27a611b040e4d019a40f8898212127c273fcf13d00211b18359a0526567",
+        "monitored-state-full-live-acceptance-hardening",
+    ),
 }
 
 PHASE_GENERATED_WORK_GOAL_ROOTS = {
@@ -435,6 +444,28 @@ CONTROLLED_RESEAL_GOAL_CONTRACTS = {
         "",
         "LCR-077",
     ),
+    "LCR-G146": _goal_contract(
+        "Prove exact-51 live state-scrape completeness is candidate-bound",
+        "LCR-G080",
+        "LCR-G024, LCR-G143, LCR-G145",
+        "LCR-084",
+    ),
+}
+
+CONTROLLED_RESEAL_GOAL_OUTPUT_CONTRACTS = {
+    "LCR-G146": tuple(
+        item.strip()
+        for item in "data/legal/state_laws_full_scrape_acceptance.schema.json, docs/reports/legal_corpora_reindex/full_scrape_acceptance.json, docs/reports/legal_corpora_reindex/release_candidate.json, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_runtime.py, ipfs_datasets_py/huggingface/protected_repo_guard.py, scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py, data/legal/legal_corpora_hugging_face_mutation_path_audit.schema.json, docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json".split(",")
+        if item.strip()
+    ),
+}
+
+CONTROLLED_RESEAL_GOAL_VALIDATION_CONTRACTS = {
+    "LCR-G146": "python -m pytest tests/unit/scripts/test_audit_state_laws_full_scrape_acceptance.py tests/integration/legal_data/test_state_laws_full_scrape_acceptance_fail_closed.py tests/unit/scripts/test_build_state_laws_hf_release.py tests/unit/processors/legal_data/test_state_laws_release_schema.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py tests/unit/processors/legal_data/test_legal_corpora_protected_repo_mutations.py tests/unit/scripts/test_audit_legal_corpora_hugging_face_mutation_paths.py tests/unit/legal_scrapers/test_refresh_state_laws_corpus.py tests/unit/legal_scrapers/test_legal_source_recovery.py tests/unit/legal_scrapers/test_legal_source_recovery_promotion.py tests/unit/legal_scrapers/test_justicedao_dataset_inventory.py tests/unit/legal_scrapers/test_legal_scraper_daemon.py tests/unit/legal_scrapers/test_merge_state_admin_recovered_rows.py tests/mcp/unit/test_hf_pipeline_engine.py tests/unit/huggingface/test_generic_publisher.py tests/unit/logic/security_ir/cvefixes/test_publish_command.py tests/unit/test_netherlands_laws_pipeline.py tests/unit/processors/patent/test_hf_release_v2.py -q; python scripts/ops/legal_data/audit_state_laws_full_scrape_acceptance.py --require-live-official --require-jurisdictions 51 --require-production-candidate --check; python scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py --protected-repo justicedao/ipfs_state_laws --protected-repo justicedao/ipfs_federal_register --require-runtime ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime --check",
+}
+
+CONTROLLED_RESEAL_GOAL_ACCEPTANCE_SHA256 = {
+    "LCR-G146": "e55934f638ffebe6efa496cd533559c8ae2eb83f35cbea713f6d673a17b01ceb",
 }
 
 JURISDICTIONS = frozenset(
@@ -1194,6 +1225,7 @@ def _validate_bundle_policies(
                     "docs/reports/legal_corpora_reindex/local_e2e.json",
                     "docs/reports/legal_corpora_reindex/release_candidate.json",
                     "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+                    "docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json",
                 ],
                 "prepublication_seal_required": False,
                 "generated_work_goal_roots": list(
@@ -1220,6 +1252,7 @@ def _validate_bundle_policies(
                     "docs/reports/legal_corpora_reindex/staging_canary.json",
                     "docs/reports/legal_corpora_reindex/state_prepublication_seal.json",
                     "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+                    "docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json",
                 ],
                 "prepublication_seal_required": True,
                 "generated_work_goal_roots": list(
@@ -1248,6 +1281,7 @@ def _validate_bundle_policies(
                     "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
                     "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
                     "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+                    "docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json",
                 ],
                 "prepublication_seal_required": False,
                 "generated_work_goal_roots": list(
@@ -1279,6 +1313,7 @@ def _validate_bundle_policies(
                     "docs/reports/legal_corpora_reindex/federal_staging_canary.json",
                     "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
                     "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+                    "docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json",
                 ],
                 "prepublication_seal_required": True,
                 "generated_work_goal_roots": list(
@@ -1510,6 +1545,32 @@ def validate(root: Path) -> dict[str, Any]:
                 errors.append(
                     f"{goal_id}: controlled-reseal Gap task must be {expected_gap}"
                 )
+            expected_outputs = CONTROLLED_RESEAL_GOAL_OUTPUT_CONTRACTS.get(goal_id)
+            if expected_outputs is not None and tuple(outputs) != expected_outputs:
+                errors.append(
+                    f"{goal_id}: controlled-reseal output contract changed"
+                )
+            expected_validation = CONTROLLED_RESEAL_GOAL_VALIDATION_CONTRACTS.get(
+                goal_id
+            )
+            if (
+                expected_validation is not None
+                and goal.get("validation") != expected_validation
+            ):
+                errors.append(
+                    f"{goal_id}: controlled-reseal validation contract changed"
+                )
+            expected_acceptance_sha256 = (
+                CONTROLLED_RESEAL_GOAL_ACCEPTANCE_SHA256.get(goal_id)
+            )
+            if expected_acceptance_sha256 is not None:
+                acceptance_sha256 = hashlib.sha256(
+                    str(goal.get("acceptance") or "").encode("utf-8")
+                ).hexdigest()
+                if acceptance_sha256 != expected_acceptance_sha256:
+                    errors.append(
+                        f"{goal_id}: controlled-reseal acceptance contract changed"
+                    )
 
     found_goal_cycle = _cycle(goal_graph)
     if found_goal_cycle:

@@ -387,6 +387,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "docs/reports/legal_corpora_reindex/local_e2e.json",
                 "docs/reports/legal_corpora_reindex/release_candidate.json",
                 "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+                "docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json",
             ),
             prepublication_seal_required=False,
             generated_work_goal_roots=(
@@ -422,6 +423,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "docs/reports/legal_corpora_reindex/staging_canary.json",
                 "docs/reports/legal_corpora_reindex/state_prepublication_seal.json",
                 "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+                "docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json",
             ),
             prepublication_seal_required=True,
             generated_work_goal_roots=(
@@ -459,6 +461,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
                 "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
                 "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+                "docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json",
             ),
             prepublication_seal_required=False,
             generated_work_goal_roots=(
@@ -497,6 +500,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "docs/reports/legal_corpora_reindex/federal_staging_canary.json",
                 "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
                 "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+                "docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json",
             ),
             prepublication_seal_required=True,
             generated_work_goal_roots=(
