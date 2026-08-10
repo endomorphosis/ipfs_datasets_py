@@ -466,6 +466,43 @@ def test_partial_multi_batch_commit_recovery_is_idempotent(
     assert len(ids) == 3
 
 
+def test_partial_row_promotion_recovery_does_not_skip_or_duplicate(
+    store: DuckDBWalletStore,
+    chain: ChainRef,
+    provenance: Provenance,
+    context: OperationContext,
+) -> None:
+    """Crash mid-finalize after some PKs are durable must finish once only."""
+
+    blocks = [
+        _block(chain, provenance, sequence=i, block_hash=f"0xp{i:02x}")
+        for i in range(1, 6)
+    ]
+    _run(store.write(RecordBatch(records=tuple(blocks)), context=context))
+    # Promote a small prefix of staged rows (dimension + early fact rows).
+    # Shared dimension keys mean durable_staged_matches can exceed newly_promoted.
+    partial = store.simulate_partial_commit_promotion(promote_count=3)
+    assert partial["promoted"] == 3
+    assert partial["remaining"] > 0
+    # At most a proper subset of blocks is durable before recover.
+    pre = store.count_records("blocks")
+    assert pre < 5
+
+    recovered = store.recover()
+    assert recovered["recovered_commits"] == 1
+    assert recovered["partial_promotions_recovered"] == 1
+    assert store.count_records("blocks") == 5
+
+    # Recover again: no new promotions, no duplicates.
+    recovered_again = store.recover()
+    assert recovered_again["recovered_commits"] == 0
+    assert store.count_records("blocks") == 5
+    ids = {r["record_id"] for r in store.list_records("blocks")}
+    assert len(ids) == 5
+    for block in blocks:
+        assert block.record_id in ids
+
+
 # ---------------------------------------------------------------------------
 # Acceptance: checkpoint CAS rejects stale ingesters
 # ---------------------------------------------------------------------------
@@ -752,6 +789,172 @@ def test_identical_reorg_id_is_idempotent_not_overwrite(
     assert first["reorg_id"] == second["reorg_id"]
     assert len(store.list_reorgs()) == 1
     assert store.stats()["reorgs"] == 1
+
+
+def test_apply_reorg_rollback_retains_history_and_cas_rewinds(
+    store: DuckDBWalletStore,
+    chain: ChainRef,
+    provenance: Provenance,
+    identity: CheckpointIdentity,
+    context: OperationContext,
+) -> None:
+    """Reorg rollback/replay: history retained; tip rewinds only on matching CAS."""
+
+    blocks = [
+        _block(chain, provenance, sequence=1, block_hash="0x01"),
+        _block(chain, provenance, sequence=2, block_hash="0x02", parent_hash="0x01"),
+        _block(chain, provenance, sequence=3, block_hash="0x03", parent_hash="0x02"),
+    ]
+    _run(store.write(RecordBatch(records=tuple(blocks)), context=context))
+    _run(store.commit(None, context=context))
+
+    tip = build_checkpoint(
+        identity,
+        sequence=3,
+        block_hash="0x03",
+        safety_depth=12,
+        prior_history=(HashAnchor(1, "0x01"), HashAnchor(2, "0x02")),
+    )
+    assert _run(
+        store.compare_and_set(
+            identity.key,
+            expected_revision=None,
+            checkpoint=tip,
+            context=context,
+        )
+    )
+
+    rewound = build_checkpoint(
+        identity,
+        sequence=2,
+        block_hash="0x02",
+        safety_depth=12,
+        prior_history=(HashAnchor(1, "0x01"),),
+        revision=new_revision(),
+    )
+    decision = ReorgDecision(
+        kind=ReorgKind.SHALLOW,
+        checkpoint_anchor=HashAnchor(3, "0x03"),
+        observed_anchor=HashAnchor(3, "0x03alt"),
+        common_ancestor=HashAnchor(2, "0x02"),
+        orphaned_anchors=(HashAnchor(3, "0x03"),),
+        corrections=(
+            OrphanCorrection(
+                record_id=blocks[2].record_id,
+                prior_finality=Finality.OBSERVED,
+                new_finality=Finality.ORPHANED,
+                orphaned_anchor=HashAnchor(3, "0x03"),
+                ancestor_anchor=HashAnchor(2, "0x02"),
+                tombstone=True,
+            ),
+        ),
+        rewind_sequence=2,
+        review_required=False,
+        reason="rollback shallow reorg",
+    )
+
+    # Stale CAS: reorg history must still be retained (not overwritten/lost).
+    stale = _run(
+        store.apply_reorg_rollback(
+            decision,
+            chain=chain,
+            provenance=provenance,
+            identity=identity,
+            rewound=rewound,
+            expected_revision="rev:stale",
+            context=context,
+            reorg_id="reorg:rollback-1",
+        )
+    )
+    assert stale["checkpoint_advanced"] is False
+    assert stale["reorg_history_count"] == 1
+    assert len(store.list_reorgs()) == 1
+    loaded = _run(store.load(identity.key, context=context))
+    assert loaded is not None
+    assert loaded.revision == tip.revision
+
+    # Matching CAS advances tip; history still retained (same reorg_id).
+    success = _run(
+        store.apply_reorg_rollback(
+            decision,
+            chain=chain,
+            provenance=provenance,
+            identity=identity,
+            rewound=rewound,
+            expected_revision=tip.revision,
+            context=context,
+            reorg_id="reorg:rollback-1",
+        )
+    )
+    assert success["checkpoint_advanced"] is True
+    assert success["reorg_history_count"] == 1  # not duplicated
+    loaded2 = _run(store.load(identity.key, context=context))
+    assert loaded2 is not None
+    assert loaded2.anchor.sequence == 2
+    assert loaded2.revision == rewound.revision
+    # Prior tips remain in append-only history.
+    assert len(store.checkpoint_history(identity.key)) == 2
+    fact = store.get_record(blocks[2].record_id)
+    assert fact is not None
+    assert fact["finality"] == Finality.ORPHANED.value
+    assert store.stats()["reorg_rollbacks"] == 1
+
+
+def test_replay_reorg_corrections_after_deferred_facts(
+    store: DuckDBWalletStore,
+    chain: ChainRef,
+    provenance: Provenance,
+    context: OperationContext,
+) -> None:
+    """Corrections for not-yet-durable facts can be replayed without reorg rewrite."""
+
+    block = _block(chain, provenance, sequence=7, block_hash="0x07")
+    decision = ReorgDecision(
+        kind=ReorgKind.SHALLOW,
+        checkpoint_anchor=HashAnchor(7, "0x07"),
+        observed_anchor=HashAnchor(7, "0x07alt"),
+        common_ancestor=HashAnchor(6, "0x06"),
+        orphaned_anchors=(HashAnchor(7, "0x07"),),
+        corrections=(
+            OrphanCorrection(
+                record_id=block.record_id,
+                prior_finality=Finality.OBSERVED,
+                new_finality=Finality.ORPHANED,
+                orphaned_anchor=HashAnchor(7, "0x07"),
+                ancestor_anchor=HashAnchor(6, "0x06"),
+                tombstone=True,
+            ),
+        ),
+        rewind_sequence=6,
+        review_required=False,
+        reason="deferred correction replay",
+    )
+    # Record reorg before the block is durable — correction is deferred.
+    row = store.record_reorg(
+        decision,
+        chain=chain,
+        provenance=provenance,
+        reorg_id="reorg:deferred-1",
+    )
+    assert len(store.list_reorgs()) == 1
+    assert store.get_record(block.record_id) is None
+
+    _run(store.write(RecordBatch(records=(block,)), context=context))
+    _run(store.commit(None, context=context))
+    assert store.get_record(block.record_id) is not None
+
+    applied = store.replay_reorg_corrections(
+        decision,
+        chain_ref_id=chain.chain_ref_id,
+        source_id=str(row["source_id"]),
+    )
+    assert len(applied) == 1
+    fact = store.get_record(block.record_id)
+    assert fact is not None
+    assert fact["finality"] == Finality.ORPHANED.value
+    # Reorg history still a single retained row (never rewritten).
+    assert len(store.list_reorgs()) == 1
+    assert store.list_reorgs()[0]["reorg_id"] == "reorg:deferred-1"
 
 
 def test_checkpoint_history_retained_across_cas(

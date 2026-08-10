@@ -141,7 +141,8 @@ CREATE TABLE IF NOT EXISTS _wallet_stage_batches (
     out_of_order_count INTEGER NOT NULL,
     byte_count INTEGER NOT NULL,
     created_at VARCHAR NOT NULL,
-    schema_version VARCHAR NOT NULL
+    schema_version VARCHAR NOT NULL,
+    idempotency_key VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS _wallet_stage_rows (
@@ -386,9 +387,11 @@ class DuckDBWalletStore:
             "cas_rejects": 0,
             "finality_transitions": 0,
             "reorgs": 0,
+            "reorg_rollbacks": 0,
             "recoveries": 0,
             "recovered_commits": 0,
             "recovered_aborts": 0,
+            "partial_promotions_recovered": 0,
         }
 
         if connection is not None:
@@ -480,6 +483,20 @@ class DuckDBWalletStore:
             body = statement.strip()
             if body:
                 connection.execute(body)
+        # Best-effort additive migration for stores created before idempotency_key.
+        try:
+            connection.execute(
+                "ALTER TABLE _wallet_stage_batches ADD COLUMN IF NOT EXISTS "
+                "idempotency_key VARCHAR"
+            )
+        except Exception:
+            # Drivers without IF NOT EXISTS: ignore when the column already exists.
+            try:
+                connection.execute(
+                    "ALTER TABLE _wallet_stage_batches ADD COLUMN idempotency_key VARCHAR"
+                )
+            except Exception:
+                pass
 
     def _hydrate_from_connection(self) -> None:
         """Load durable state from an existing DuckDB connection into memory.
@@ -567,6 +584,12 @@ class DuckDBWalletStore:
                         (str(table_name), str(row_pk), _json_loads(str(row_json)))
                     )
                 status = StageBatchStatus(str(row["status"]))
+                raw_idem = row.get("idempotency_key")
+                idem_key = (
+                    str(raw_idem)
+                    if isinstance(raw_idem, str) and raw_idem.strip()
+                    else None
+                )
                 self._stage_batches[batch_id] = _StageBatch(
                     batch_id=batch_id,
                     scope=str(row["scope"]),
@@ -582,6 +605,7 @@ class DuckDBWalletStore:
                     ],
                     rows=rows,
                     created_at=str(row["created_at"]),
+                    idempotency_key=idem_key,
                 )
                 # COMMITTING stages are not open for new writes but must remain
                 # visible so recover() can finalize them after process restart.
@@ -706,15 +730,20 @@ class DuckDBWalletStore:
         * ``open`` stages that were never committed are **aborted** (no durable
           ledger mutation).
         * ``committing`` stages are **completed** idempotently (INSERT-OR-IGNORE
-          by primary key), so a crash mid-commit cannot skip remaining rows or
-          create duplicates on replay.
+          by primary key), so a crash mid-commit — including after a *partial*
+          row promotion — cannot skip remaining rows or create duplicates on
+          replay.
         """
 
         with self._lock:
             recovered_commits = 0
             recovered_aborts = 0
+            partial_promotions = 0
             for batch_id, batch in list(self._stage_batches.items()):
                 if batch.status is StageBatchStatus.COMMITTING:
+                    already = self._count_promoted_rows_locked(batch)
+                    if 0 < already < len(batch.rows):
+                        partial_promotions += 1
                     self._finalize_commit_locked(batch)
                     recovered_commits += 1
                 elif batch.status is StageBatchStatus.OPEN:
@@ -732,12 +761,23 @@ class DuckDBWalletStore:
             self._stats["recoveries"] += 1
             self._stats["recovered_commits"] += recovered_commits
             self._stats["recovered_aborts"] += recovered_aborts
+            self._stats["partial_promotions_recovered"] += partial_promotions
             return MappingProxyType(
                 {
                     "recovered_commits": recovered_commits,
                     "recovered_aborts": recovered_aborts,
+                    "partial_promotions_recovered": partial_promotions,
                 }
             )
+
+    def _count_promoted_rows_locked(self, batch: _StageBatch) -> int:
+        """How many staged rows already exist as durable primary keys."""
+
+        promoted = 0
+        for table_name, pk, _row in batch.rows:
+            if pk in self._tables.get(table_name, {}):
+                promoted += 1
+        return promoted
 
     # -- DatasetSink: write / commit / abort --------------------------------
 
@@ -930,11 +970,14 @@ class DuckDBWalletStore:
                 if self._stage_batches.get(bid)
                 and self._stage_batches[bid].status is StageBatchStatus.OPEN
             ]
-            # Mark committing before any durable promotion.
+            # Durability fence: mark every open stage COMMITTING and flush that
+            # status before promoting any ledger row.  Crash after this point
+            # is recovered by recover() with INSERT-OR-IGNORE semantics.
             for bid in open_ids:
                 batch = self._stage_batches[bid]
                 batch.status = StageBatchStatus.COMMITTING
                 self._persist_stage_status(batch)
+            self._flush_connection()
 
             for bid in open_ids:
                 self._finalize_commit_locked(self._stage_batches[bid])
@@ -981,7 +1024,12 @@ class DuckDBWalletStore:
             )
 
     def _finalize_commit_locked(self, batch: _StageBatch) -> None:
-        """Promote staged rows with INSERT-OR-IGNORE primary-key semantics."""
+        """Promote staged rows with INSERT-OR-IGNORE primary-key semantics.
+
+        Safe under partial prior promotion: each primary key is checked before
+        insert, so recover() after a mid-batch crash neither skips remaining
+        rows nor duplicates already-durable ones.
+        """
 
         if batch.status is StageBatchStatus.COMMITTED:
             return
@@ -990,14 +1038,18 @@ class DuckDBWalletStore:
             if pk in bucket:
                 # Idempotent: never duplicate; keep first durable row unless
                 # this is a finality update on a fact table (handled separately).
+                if table_name in _LEDGER_FACT_TABLES:
+                    self._seen_record_ids.add(pk)
                 continue
             stored = dict(row)
             bucket[pk] = stored
             self._persist_catalog_row(table_name, stored)
             if table_name in _LEDGER_FACT_TABLES:
                 self._seen_record_ids.add(pk)
+        # Only flip status after every staged row has been considered.
         batch.status = StageBatchStatus.COMMITTED
         self._persist_stage_status(batch)
+        self._flush_connection()
         if batch.idempotency_key is not None:
             receipt = StageBatchReceipt(
                 batch_id=batch.batch_id,
@@ -1097,6 +1149,7 @@ class DuckDBWalletStore:
             current = self._checkpoint_heads.get(store_key)
             current_revision = None if current is None else current.record.revision
             if current_revision != expected_revision:
+                # Fail closed without mutating tip, history, or catalog.
                 self._stats["cas_rejects"] += 1
                 return False
             if current is not None and not current.record.identity.compatible_with(
@@ -1112,15 +1165,16 @@ class DuckDBWalletStore:
             )
             stored = checkpoint.with_history_limit(self._history_limit)
             now = _utc_now_str()
+            # History first (append-only), then head tip — never erase prior tips.
+            self._append_checkpoint_history(store_key, stored, now)
+            self._upsert_checkpoint_catalog(stored, observed_at=now)
             self._checkpoint_heads[store_key] = _CheckpointHead(
                 scope_key=store_key,
                 record=stored,
                 updated_at=now,
             )
-            # Append-only catalog + internal history (never delete prior tips).
-            self._append_checkpoint_history(store_key, stored, now)
-            self._upsert_checkpoint_catalog(stored, observed_at=now)
             self._persist_checkpoint_head(store_key, stored, now)
+            self._flush_connection()
             self._cas_successes += 1
             self._stats["cas_successes"] += 1
             return True
@@ -1371,24 +1425,142 @@ class DuckDBWalletStore:
             self._stats["reorgs"] += 1
 
             if apply_corrections and decision.corrections:
-                source_id = str(row["source_id"])
-                for correction in decision.corrections:
-                    try:
-                        self.apply_finality_transition(
-                            record_id=correction.record_id,
-                            target=correction.new_finality,
-                            chain_ref_id=chain.chain_ref_id,
-                            source_id=source_id,
-                            orphaned_anchor=correction.orphaned_anchor,
-                            ancestor_anchor=correction.ancestor_anchor,
-                            tombstone=correction.tombstone,
-                            observed_at=str(row["observed_at"]),
-                        )
-                    except DuckDBWalletStoreError:
-                        # Correction for a record not yet durable: keep reorg row;
-                        # callers may replay after commit.
-                        continue
+                self._apply_reorg_corrections_locked(
+                    decision,
+                    chain_ref_id=chain.chain_ref_id,
+                    source_id=str(row["source_id"]),
+                    observed_at=str(row["observed_at"]),
+                )
             return dict(row)
+
+    def _apply_reorg_corrections_locked(
+        self,
+        decision: ReorgDecision,
+        *,
+        chain_ref_id: str,
+        source_id: str,
+        observed_at: str,
+    ) -> list[dict[str, Any]]:
+        """Apply orphan corrections without mutating reorg history rows.
+
+        Missing durable facts are skipped so callers can replay after the
+        corrected records become available.
+        """
+
+        applied: list[dict[str, Any]] = []
+        for correction in decision.corrections:
+            try:
+                applied.append(
+                    self.apply_finality_transition(
+                        record_id=correction.record_id,
+                        target=correction.new_finality,
+                        chain_ref_id=chain_ref_id,
+                        source_id=source_id,
+                        orphaned_anchor=correction.orphaned_anchor,
+                        ancestor_anchor=correction.ancestor_anchor,
+                        tombstone=correction.tombstone,
+                        observed_at=observed_at,
+                    )
+                )
+            except DuckDBWalletStoreError:
+                continue
+            except InvalidRequestError:
+                # Illegal transitions or already-applied finality: keep reorg row.
+                continue
+        return applied
+
+    async def apply_reorg_rollback(
+        self,
+        decision: ReorgDecision,
+        *,
+        chain: object,
+        provenance: object,
+        identity: CheckpointIdentity,
+        rewound: CheckpointRecord,
+        expected_revision: str,
+        context: OperationContext,
+        reorg_id: str | None = None,
+        apply_corrections: bool = True,
+    ) -> Mapping[str, Any]:
+        """Record reorg history, apply orphan corrections, and CAS-rewind tip.
+
+        Reorg rows are always retained (never overwritten).  Checkpoint tip
+        movement is gated by CAS: a stale *expected_revision* leaves history
+        intact and returns ``checkpoint_advanced=False`` so the ingester can
+        reload and retry without losing reorg evidence.
+        """
+
+        from .models import ChainRef, Provenance
+
+        context.check_active()
+        if not isinstance(decision, ReorgDecision):
+            raise InvalidRequestError("decision must be a ReorgDecision")
+        if not isinstance(chain, ChainRef):
+            raise InvalidRequestError("chain must be a ChainRef")
+        if not isinstance(provenance, Provenance):
+            raise InvalidRequestError("provenance must be a Provenance")
+        if not isinstance(identity, CheckpointIdentity):
+            raise InvalidRequestError("identity must be a CheckpointIdentity")
+        if not isinstance(rewound, CheckpointRecord):
+            raise CheckpointError("rewound must be a CheckpointRecord")
+        if not rewound.identity.compatible_with(identity):
+            raise CheckpointError("rewound checkpoint identity mismatch")
+
+        reorg_row = self.record_reorg(
+            decision,
+            chain=chain,
+            provenance=provenance,
+            reorg_id=reorg_id,
+            apply_corrections=apply_corrections,
+        )
+        advanced = await self.replace_after_rewind(
+            identity,
+            expected_revision=expected_revision,
+            rewound=rewound,
+            context=context,
+        )
+        with self._lock:
+            if advanced:
+                self._stats["reorg_rollbacks"] += 1
+            history_count = len(self._tables["reorgs"])
+        return MappingProxyType(
+            {
+                "reorg_id": str(reorg_row["reorg_id"]),
+                "reorg_row": dict(reorg_row),
+                "checkpoint_advanced": bool(advanced),
+                "reorg_history_count": history_count,
+                "expected_revision": expected_revision,
+            }
+        )
+
+    def replay_reorg_corrections(
+        self,
+        decision: ReorgDecision,
+        *,
+        chain_ref_id: str,
+        source_id: str,
+        observed_at: str | None = None,
+    ) -> tuple[dict[str, Any], ...]:
+        """Replay orphan corrections without rewriting reorg history.
+
+        Used when corrections were deferred because ledger facts were not yet
+        durable at :meth:`record_reorg` time.  Idempotent relative to the
+        finality state machine and append-only transition log.
+        """
+
+        if not isinstance(decision, ReorgDecision):
+            raise InvalidRequestError("decision must be a ReorgDecision")
+        _required_str(chain_ref_id, "chain_ref_id")
+        _required_str(source_id, "source_id")
+        when = observed_at or _utc_now_str()
+        with self._lock:
+            applied = self._apply_reorg_corrections_locked(
+                decision,
+                chain_ref_id=chain_ref_id,
+                source_id=source_id,
+                observed_at=when,
+            )
+            return tuple(applied)
 
     def list_reorgs(
         self, *, chain_ref_id: str | None = None
@@ -1533,7 +1705,78 @@ class DuckDBWalletStore:
                 batch.status = StageBatchStatus.COMMITTING
                 self._persist_stage_status(batch)
                 marked.append(bid)
+            self._flush_connection()
             return marked
+
+    def simulate_partial_commit_promotion(self, *, promote_count: int) -> Mapping[str, Any]:
+        """Test helper: fence COMMITTING then promote only *promote_count* rows.
+
+        Models a crash mid-finalize after some primary keys are durable but the
+        batch status is still ``committing``.  :meth:`recover` must finish the
+        remaining rows without skip or duplicate.
+        """
+
+        if isinstance(promote_count, bool) or not isinstance(promote_count, int):
+            raise InvalidRequestError("promote_count must be an integer")
+        if promote_count < 0:
+            raise InvalidRequestError("promote_count must be non-negative")
+
+        with self._lock:
+            open_ids = [
+                bid
+                for bid in self._open_batch_ids
+                if self._stage_batches.get(bid)
+                and self._stage_batches[bid].status is StageBatchStatus.OPEN
+            ]
+            if not open_ids:
+                return MappingProxyType(
+                    {
+                        "batch_ids": [],
+                        "promoted": 0,
+                        "remaining": 0,
+                    }
+                )
+            for bid in open_ids:
+                batch = self._stage_batches[bid]
+                batch.status = StageBatchStatus.COMMITTING
+                self._persist_stage_status(batch)
+            self._flush_connection()
+
+            newly_promoted = 0
+            total_rows = 0
+            done = False
+            for bid in open_ids:
+                batch = self._stage_batches[bid]
+                total_rows += len(batch.rows)
+                if done:
+                    continue
+                for table_name, pk, row in batch.rows:
+                    if newly_promoted >= promote_count:
+                        done = True
+                        break
+                    bucket = self._tables.setdefault(table_name, {})
+                    if pk in bucket:
+                        # Already durable (shared dimension keys etc.).
+                        continue
+                    stored = dict(row)
+                    bucket[pk] = stored
+                    self._persist_catalog_row(table_name, stored)
+                    if table_name in _LEDGER_FACT_TABLES:
+                        self._seen_record_ids.add(pk)
+                    newly_promoted += 1
+            durable_matches = sum(
+                self._count_promoted_rows_locked(self._stage_batches[bid])
+                for bid in open_ids
+            )
+            self._flush_connection()
+            return MappingProxyType(
+                {
+                    "batch_ids": list(open_ids),
+                    "promoted": newly_promoted,
+                    "durable_staged_matches": durable_matches,
+                    "remaining": max(0, total_rows - durable_matches),
+                }
+            )
 
     def simulate_crash_drop_open_stages_from_memory(self) -> list[str]:
         """Test helper: drop in-memory stage state after durable persistence.
@@ -1594,6 +1837,26 @@ class DuckDBWalletStore:
 
     # -- persistence adapters (optional DuckDB) -----------------------------
 
+    def _flush_connection(self) -> None:
+        """Best-effort durability barrier after fence writes.
+
+        Pure-Python authority is already process-local; when a DuckDB connection
+        is bound we force a checkpoint so COMMITTING status / partial rows are
+        visible to a restarted process before further mutation.
+        """
+
+        conn = self._connection
+        if conn is None:
+            return
+        for method_name in ("commit", "checkpoint", "flush"):
+            method = getattr(conn, method_name, None)
+            if callable(method):
+                try:
+                    method()
+                    return
+                except Exception:
+                    continue
+
     def _persist_catalog_row(self, table: str, row: Mapping[str, Any]) -> None:
         conn = self._connection
         if conn is None:
@@ -1629,7 +1892,8 @@ class DuckDBWalletStore:
             "INSERT OR REPLACE INTO _wallet_stage_batches "
             "(batch_id, scope, status, write_id, content_digest, accepted_count, "
             "duplicate_count, out_of_order_count, byte_count, created_at, "
-            "schema_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "schema_version, idempotency_key) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 batch.batch_id,
                 batch.scope,
@@ -1642,6 +1906,7 @@ class DuckDBWalletStore:
                 batch.byte_count,
                 batch.created_at,
                 STAGE_SCHEMA_VERSION,
+                batch.idempotency_key,
             ],
         )
         for table_name, pk, row in batch.rows:
