@@ -14637,7 +14637,9 @@ def _retire_manual_gate_checkout_custodian(
         return
     pid = _safe_int(identity.get("pid"))
     if pid < 1:
-        raise RuntimeError("manual-gate checkout custodian PID is invalid")
+        # Refinement/runtime gates may store an empty custodian mapping when no
+        # DQK-056 checkout leases were acquired; treat that as already retired.
+        return
     actual = _process_birth_identity(pid)
     if actual is None:
         _MANUAL_GATE_CUSTODIAN_PROCESSES.pop(pid, None)
