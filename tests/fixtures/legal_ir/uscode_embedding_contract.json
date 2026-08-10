@@ -51,7 +51,7 @@
       "case_id": "reject-placeholder-model-id",
       "config_overrides": {
         "model_id": "unknown",
-        "model_revision": "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3"
+        "model_revision": "17e1f347d17fe144873b1201da91788898c639cd"
       },
       "expect": {
         "error": "unpinned_model"
@@ -140,8 +140,8 @@
       "kind": "device_fallback"
     },
     {
-      "case_id": "dimension-mismatch-from-embedder-fails",
       "bad_dimension": 16,
+      "case_id": "dimension-mismatch-from-embedder-fails",
       "chunks": [
         {
           "chunk_cid": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -160,14 +160,14 @@
     "input_fields": [
       "text"
     ],
-    "license": "apache-2.0",
-    "max_tokens": 256,
-    "model_id": "sentence-transformers/all-MiniLM-L6-v2",
-    "model_revision": "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3",
+    "license": "mit",
+    "max_tokens": 512,
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
     "normalization": "l2",
     "pooling": "mean",
     "provider": "local",
-    "vector_space_id": "all-minilm-l6-v2@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d384:pool=mean:norm=l2"
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
   },
   "description": "Compact embedding contract recipe for USCIR-017. Cases exercise fail-closed model pins, exact chunk-CID key matching, dimension and L2-norm validation, and permanent rejection of legacy positional vector promotion. Vectors are produced by the sealed deterministic local backend (no model download).",
   "goal_id": "USCIR-G050",

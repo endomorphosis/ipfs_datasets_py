@@ -457,7 +457,9 @@ def select_device(
     if is_available(req):
         return req, False
     if fallback is DeviceFallbackPolicy.FALLBACK_CPU:
-        return DEFAULT_DEVICE, True
+        # Always fall back to host CPU, never re-request DEFAULT_DEVICE when
+        # that default is itself a GPU accelerator (e.g. production "cuda").
+        return "cpu", True
     if fallback is DeviceFallbackPolicy.BLOCK:
         raise HardwareUnavailableError(
             f"requested device {req!r} is unavailable and fallback policy is block"
