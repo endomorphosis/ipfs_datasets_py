@@ -853,12 +853,20 @@ def load_and_verify(
     """Load a receipt file and verify it against the accelerator checkout."""
 
     path = Path(receipt_path)
-    if path.is_symlink():
+    # The DQK-056 manual-gate lifecycle seals the receipt into a memfd and
+    # publishes it only as /proc/self/fd/<n>.  That path is always a procfs
+    # symlink; allow it while still rejecting operator-controlled symlinks.
+    sealed_memfd = re.fullmatch(r"/proc/self/fd/\d+", str(path)) is not None
+    if path.is_symlink() and not sealed_memfd:
         raise VerificationError("receipt path must not be a symlink")
-    if not path.is_file():
+    if not sealed_memfd and not path.is_file():
         raise VerificationError("receipt path is not a regular file")
     try:
-        raw = path.read_bytes()
+        if sealed_memfd:
+            with open(path, "rb") as handle:
+                raw = handle.read(_MAX_RECEIPT_BYTES + 1)
+        else:
+            raw = path.read_bytes()
     except OSError as exc:
         raise VerificationError(f"receipt path is unreadable: {exc}") from exc
     if len(raw) > _MAX_RECEIPT_BYTES:
