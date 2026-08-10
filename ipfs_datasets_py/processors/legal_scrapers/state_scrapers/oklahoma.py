@@ -78,10 +78,20 @@ class OklahomaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._bounded_return_threshold(160)
+        # Full-corpus uses a large practical ceiling so discovery is not
+        # silently truncated to the historical sample default of 160.
+        # Bounded probes honor max_statutes / STATE_SCRAPER_MAX_STATUTES.
         if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+            return_threshold = max(1, int(max_statutes))
+            unbounded_full = False
+        elif self._full_corpus_enabled():
+            return_threshold = 1000000
+            unbounded_full = True
+        else:
+            return_threshold = self._bounded_return_threshold(160)
+            unbounded_full = False
 
+        # Seed recovery is for bounded probes only — never sole full-corpus path.
         if not self._full_corpus_enabled() and max_statutes is None:
             direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct:
@@ -91,7 +101,7 @@ class OklahomaScraper(BaseStateScraper):
         seed_statutes = checkpoint.load(
             default_state_name=self.state_name,
             default_code_name=code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=max(10, min(return_threshold, 1000000)),
         )
         # Bootstrap with a tiny direct OSCN sample even in full-corpus mode so
         # long candidate-discovery phases still show early real progress.
@@ -115,31 +125,49 @@ class OklahomaScraper(BaseStateScraper):
                 len(direct_seed),
                 len(direct_seed),
             )
-        best_archival: List[NormalizedStatute] = []
+        best_official: List[NormalizedStatute] = []
         for attempt in range(3):
             archival = await self._scrape_oscn_documents(
                 code_name=code_name,
                 max_statutes=max(10, return_threshold),
-                seed_statutes=seed_statutes if attempt == 0 else best_archival,
+                seed_statutes=seed_statutes if attempt == 0 else best_official,
                 checkpoint=checkpoint,
             )
-            if len(archival) > len(best_archival):
-                best_archival = archival
-            if best_archival:
+            if len(archival) > len(best_official):
+                best_official = archival
+            if best_official:
                 self.logger.info(
-                    "Oklahoma OSCN archival fallback: scraped %s sections on attempt %s",
-                    len(best_archival),
+                    "Oklahoma OSCN official path: scraped %s sections on attempt %s",
+                    len(best_official),
                     attempt + 1,
                 )
+                # Bounded probes may return early; full-corpus continues retries
+                # then prefers the official OSCN set over secondary mirrors.
                 if not self._full_corpus_enabled() or max_statutes is not None:
-                    return best_archival
+                    return best_official
             await asyncio.sleep(0.4 * (attempt + 1))
 
-        # If OSCN blocks automated access, use a broader fallback index to avoid zero-state output.
-        fallback_urls = [
-            code_url,
-            "https://law.justia.com/codes/oklahoma/",
-        ]
+        if best_official:
+            return list(best_official) if unbounded_full else best_official[:return_threshold]
+
+        # Official OSCN only for recovery of zero-state probes. Justia is never
+        # a sole full-corpus admission path (secondary host; quarantine-only).
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "Oklahoma full-corpus run found zero official OSCN statutes; "
+                "refusing secondary Justia sole-admission fallback"
+            )
+            return []
+
+        fallback_urls = [code_url]
+        allow_justia = str(os.getenv("STATE_SCRAPER_OK_ALLOW_JUSTIA_FALLBACK", "") or "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if allow_justia:
+            fallback_urls.append("https://law.justia.com/codes/oklahoma/")
         best: List[NormalizedStatute] = []
         for candidate in fallback_urls:
             try:
@@ -153,10 +181,7 @@ class OklahomaScraper(BaseStateScraper):
                 statutes = []
             if len(statutes) > len(best):
                 best = statutes
-
-        if len(best) > len(best_archival):
-            return best
-        return list(best_archival)
+        return best
 
     async def _scrape_direct_seed_sections(
         self,
