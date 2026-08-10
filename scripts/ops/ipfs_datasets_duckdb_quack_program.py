@@ -11594,6 +11594,164 @@ def _manual_gate_verifier_attestation(task_id: str) -> dict[str, Any]:
     }
 
 
+class _ReleaseGateAuthorityAdapter:
+    """Independent signed-decision verifier for DQK-056 release receipts.
+
+    Re-derives the content-bound DQP-039/DQP-038 digests using the committed
+    release verifier module without trusting the verifier subprocess alone.
+    Uses only hashlib/hmac compare paths (no general-purpose crypto package).
+    """
+
+    PROOF_SCHEMA = "ipfs_datasets_py/duckdb-quack-release-independent-signature-proof@1"
+
+    @staticmethod
+    def _load_release_verifier() -> Any:
+        verifier_path = (
+            REPO_ROOT / "scripts/validation/validate_accelerate_duckdb_quack_release.py"
+        )
+        if not verifier_path.is_file() or verifier_path.is_symlink():
+            raise RuntimeError("release verifier module is unavailable")
+        module_name = "_dqk_release_gate_authority_verifier"
+        spec = importlib.util.spec_from_file_location(module_name, verifier_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("release verifier module cannot be loaded")
+        module = importlib.util.module_from_spec(spec)
+        # Keep the module isolated from the caller's import state.
+        sys.modules[module_name] = module
+        try:
+            spec.loader.exec_module(module)
+        except Exception as exc:
+            sys.modules.pop(module_name, None)
+            raise RuntimeError(
+                f"release verifier module failed to load: {type(exc).__name__}: {exc}"
+            ) from exc
+        return module
+
+    def _independent_verification(
+        self,
+        *,
+        raw_input: bytes,
+        now: datetime | None = None,
+    ) -> dict[str, Any]:
+        if not isinstance(raw_input, (bytes, bytearray, memoryview)):
+            raise RuntimeError("release gate input must be exact bytes")
+        payload = bytes(raw_input)
+        if not payload or len(payload) > 2 * 1024 * 1024:
+            raise RuntimeError("release gate input size is out of bounds")
+        module = self._load_release_verifier()
+        try:
+            verification = module.verify_release_receipt(
+                payload,
+                accelerate_root=ACCELERATE_ROOT,
+                now=now,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"independent release receipt verification failed: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+        if not isinstance(verification, Mapping) or verification.get("accepted") is not True:
+            raise RuntimeError("independent release verification did not accept the receipt")
+        required = (
+            "schema",
+            "accelerator_commit",
+            "accelerator_tree",
+            "release_receipt_cid",
+            "cutover_receipt_cid",
+            "store_generation",
+            "schema_checksum",
+            "quack_profile",
+            "decision_cid",
+            "expires_at",
+        )
+        if any(
+            not isinstance(verification.get(field), str)
+            or not str(verification.get(field) or "").strip()
+            for field in required
+        ):
+            raise RuntimeError("independent release verification is missing identity fields")
+        return dict(verification)
+
+    def preflight(self, **kwargs: Any) -> dict[str, Any]:
+        task_id = str(kwargs.get("task_id") or "")
+        if task_id != RELEASE_GATE_TASK_ID:
+            raise RuntimeError("release adapter cannot preflight a foreign gate")
+        raw_input = kwargs.get("raw_input")
+        verification = self._independent_verification(raw_input=raw_input)
+        return {
+            "schema": self.PROOF_SCHEMA,
+            "gate_task_id": RELEASE_GATE_TASK_ID,
+            "decision_id": str(verification["decision_cid"]),
+            "release_receipt_cid": str(verification["release_receipt_cid"]),
+            "cutover_receipt_cid": str(verification["cutover_receipt_cid"]),
+            "accelerator_commit": str(verification["accelerator_commit"]),
+            "accelerator_tree": str(verification["accelerator_tree"]),
+            "store_generation": str(verification["store_generation"]),
+            "schema_checksum": str(verification["schema_checksum"]),
+            "quack_profile": str(verification["quack_profile"]),
+            "expires_at": str(verification["expires_at"]),
+            "signed_input_sha256": "sha256:" + hashlib.sha256(bytes(raw_input)).hexdigest(),
+            "verification_schema": str(verification["schema"]),
+        }
+
+    def verify_execution(self, **kwargs: Any) -> dict[str, Any]:
+        task_id = str(kwargs.get("task_id") or "")
+        if task_id != RELEASE_GATE_TASK_ID:
+            raise RuntimeError("release adapter cannot verify a foreign gate")
+        raw_input = kwargs.get("raw_input")
+        typed_output = kwargs.get("typed_output")
+        if not isinstance(typed_output, Mapping):
+            raise RuntimeError("release gate typed output is missing")
+        execution_time = kwargs.get("execution_time")
+        now = execution_time if isinstance(execution_time, datetime) else None
+        verification = self._independent_verification(raw_input=raw_input, now=now)
+        proof = self.preflight(
+            task_id=task_id,
+            raw_input=raw_input,
+            snapshot=kwargs.get("snapshot"),
+            verifier_attestation=kwargs.get("verifier_attestation"),
+        )
+        # Typed verifier output must restate the independently verified identities.
+        for field in (
+            "accelerator_commit",
+            "accelerator_tree",
+            "release_receipt_cid",
+            "cutover_receipt_cid",
+            "store_generation",
+            "schema_checksum",
+            "quack_profile",
+            "decision_cid",
+        ):
+            if typed_output.get(field) != verification.get(field):
+                raise RuntimeError(
+                    f"release gate typed output field {field} differs from independent proof"
+                )
+        if typed_output.get("decision_cid") != proof["decision_id"]:
+            raise RuntimeError("release gate typed output is detached from signed decision")
+        if typed_output.get("accepted") is not True:
+            raise RuntimeError("release gate typed output is not accepted")
+        decision_preflight = kwargs.get("decision_preflight")
+        if isinstance(decision_preflight, Mapping):
+            for field in (
+                "decision_id",
+                "release_receipt_cid",
+                "cutover_receipt_cid",
+                "accelerator_commit",
+                "accelerator_tree",
+                "signed_input_sha256",
+            ):
+                if decision_preflight.get(field) != proof.get(field):
+                    raise RuntimeError(
+                        f"release gate preflight field {field} drifted before execution"
+                    )
+        return {
+            **proof,
+            "typed_output_sha256": "sha256:"
+            + hashlib.sha256(_canonical_json(dict(typed_output)).encode("utf-8")).hexdigest(),
+            "historical": bool(kwargs.get("historical")),
+        }
+
+
 def _manual_gate_task_authority_adapter(task_id: str) -> Any:
     """Return a task-owned signed-decision verifier, once its task ships it.
 
@@ -11604,6 +11762,8 @@ def _manual_gate_task_authority_adapter(task_id: str) -> Any:
     decision from the immutable input/output blobs.
     """
 
+    if task_id == RELEASE_GATE_TASK_ID:
+        return _ReleaseGateAuthorityAdapter()
     if task_id in {PROMOTION_GATE_TASK_ID, RUNTIME_ACTIVATION_GATE_TASK_ID}:
         raise RuntimeError(
             f"manual_gate_effect_adapter_not_materialized:{task_id}"
