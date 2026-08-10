@@ -58,18 +58,21 @@ GOAL_ID: Final = "USCIR-G050"
 RELEASE_PROFILE: Final = "publicus-ir-graphrag/v2"
 
 # Default production pin (immutable revision; never "latest").
-DEFAULT_MODEL_ID: Final = "sentence-transformers/all-MiniLM-L6-v2"
-DEFAULT_MODEL_REVISION: Final = "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3"
-DEFAULT_MODEL_LICENSE: Final = "apache-2.0"
+# Production US Code sparse GraphRAG uses GTE-small on CUDA when available.
+DEFAULT_MODEL_ID: Final = "thenlper/gte-small"
+DEFAULT_MODEL_REVISION: Final = "17e1f347d17fe144873b1201da91788898c639cd"
+DEFAULT_MODEL_LICENSE: Final = "mit"
 DEFAULT_DIMENSION: Final = 384
-DEFAULT_MAX_TOKENS: Final = 256
+DEFAULT_MAX_TOKENS: Final = 512
 DEFAULT_POOLING: Final = "mean"
 DEFAULT_NORMALIZATION: Final = "l2"
 DEFAULT_INPUT_FIELDS: Final = ("text",)
+# Offline unit/sealed tests use the deterministic projection backend.
+# Production full builds set backend="sentence_transformers" + device="cuda".
 DEFAULT_BACKEND: Final = "local_deterministic_projection"
 DEFAULT_PROVIDER: Final = "local"
-DEFAULT_DEVICE: Final = "cpu"
-DEFAULT_BATCH_SIZE: Final = 32
+DEFAULT_DEVICE: Final = "cuda"
+DEFAULT_BATCH_SIZE: Final = 64
 MAX_BATCH_SIZE: Final = 512
 MAX_CHUNKS_PER_CALL: Final = 100_000
 NORM_TOLERANCE: Final = 1e-5
@@ -1175,15 +1178,69 @@ def deterministic_project(
     return vectors
 
 
-def _default_embedder(config: UscodeEmbeddingConfig) -> EmbeddingFunction:
+def _sentence_transformers_embedder(
+    config: UscodeEmbeddingConfig,
+) -> EmbeddingFunction:
+    """Load the pinned model via sentence-transformers on the configured device."""
+
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError as exc:  # pragma: no cover
+        raise HardwareUnavailableError(
+            "sentence-transformers is required for production GTE embeddings; "
+            "install sentence-transformers or inject an embedder"
+        ) from exc
+
+    device, _fallback = select_device(
+        config.device,
+        fallback=config.device_fallback,
+    )
+    model = SentenceTransformer(
+        config.model_id,
+        revision=config.model_revision,
+        device=device,
+    )
+
     def _embed(texts: Sequence[str]) -> list[list[float]]:
-        return deterministic_project(
-            texts,
-            dimension=config.dimension,
-            normalize=config.normalization == "l2",
+        # truncate to the pin's max_tokens window when the backend supports it
+        vectors = model.encode(
+            list(texts),
+            batch_size=config.batch_size,
+            show_progress_bar=False,
+            convert_to_numpy=True,
+            normalize_embeddings=config.normalization == "l2",
         )
+        return [list(map(float, row)) for row in vectors]
 
     return _embed
+
+
+def _default_embedder(config: UscodeEmbeddingConfig) -> EmbeddingFunction:
+    """Select the embedder for *config*.
+
+    Production pins (``sentence_transformers`` / huggingface provider) load the
+    immutable model revision on CUDA when available. Unit-test / offline pins
+    that explicitly request the deterministic backend stay offline.
+    """
+
+    backend = str(config.backend or "").strip().lower()
+    if backend in {
+        "local_deterministic_projection",
+        "deterministic",
+        "hashed",
+        "offline",
+        "fixture",
+    }:
+        def _embed(texts: Sequence[str]) -> list[list[float]]:
+            return deterministic_project(
+                texts,
+                dimension=config.dimension,
+                normalize=config.normalization == "l2",
+            )
+
+        return _embed
+
+    return _sentence_transformers_embedder(config)
 
 
 # ---------------------------------------------------------------------------

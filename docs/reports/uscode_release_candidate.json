@@ -15,17 +15,17 @@
   "candidate": {
     "dataset_id": "justicedao/ipfs_uscode",
     "default_config": "publicus-ir-graphrag/v2",
-    "kind": "fixture_local",
-    "manifest_digest": "a1e1bef09f85a67e6f653f43ea5007bb4cf75fcc71686c9f74c15c7c99816444",
+    "kind": "hub_published_full",
+    "manifest_digest": "6a5e9d06a124c45b8d49a087a824e2661bd5718a03664a28295f8d2a6412daa3",
     "package_version": "2",
     "release_point": "us/pl/118/45",
     "release_profile": "publicus-ir-graphrag/v2",
-    "release_root_cid": "bafkreid4wn7mqws4eh7va3deareqidfvxpdalc7joafuzt4fes7h46tuce",
-    "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
-    "root_label": "fixture://uscode-hf-release-candidate",
+    "release_root_cid": "bafkreicu56or275w2gtokcxy7hj73su4653xyqxxz6ee24t6hnkbuepmfe",
+    "revision": "a9720a26a52251526035c2ca8cebea418965bcf9",
+    "root_label": "hf://justicedao/ipfs_uscode@a9720a26a52251526035c2ca8cebea418965bcf9",
     "source_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
     "staging_branch": "stage/uscode-sparse-graphrag-v2",
-    "vector_space_id": "all-minilm-l6-v2@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d384:pool=mean:norm=l2"
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
   },
   "code": {
     "code_version": "1",
@@ -52,28 +52,15 @@
     "schema_version": "uscode-hf-release/v1"
   },
   "counts": {
-    "artifact_count": 23,
-    "bm25_document_count": 2,
-    "corpus_row_count": 3,
-    "families_built": [
-      "bm25_documents",
-      "bm25_postings",
-      "corpus",
-      "graph_edges",
-      "graph_nodes",
-      "manifest",
-      "receipt",
-      "recovery",
-      "release_metadata",
-      "report",
-      "routing_index",
-      "vectors"
-    ],
-    "graph_edge_count": 3,
-    "graph_node_count": 3,
-    "packaging_artifact_count": 23,
+    "artifact_count": 3674,
+    "bm25_document_count": 60068,
+    "corpus_row_count": 60068,
+    "graph_edge_count": 1723928,
+    "graph_node_count": 242198,
+    "packaging_artifact_count": 3674,
     "reconciled": true,
-    "vector_row_count": 3
+    "recovery_row_count": 9,
+    "vector_row_count": 60068
   },
   "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
   "depends_on": [
@@ -84,9 +71,9 @@
   "digests": {
     "code": "b671ed1d7abfcff39ec1009b04aaec9d0fdc391c60f914e990fc81d5a37b5586",
     "config": "ef3aeb382c36e9d072cd9153193caad1be85e54ff34462950430fca1f1705c2b",
-    "manifest": "a1e1bef09f85a67e6f653f43ea5007bb4cf75fcc71686c9f74c15c7c99816444",
+    "manifest": "6a5e9d06a124c45b8d49a087a824e2661bd5718a03664a28295f8d2a6412daa3",
     "model": "3be3346bc467482fd0e66eb7a4dcc3175dbe74bc2c76678f760a1f6704841af6",
-    "release_root_cid": "bafkreid4wn7mqws4eh7va3deareqidfvxpdalc7joafuzt4fes7h46tuce"
+    "release_root_cid": "bafkreicu56or275w2gtokcxy7hj73su4653xyqxxz6ee24t6hnkbuepmfe"
   },
   "evidence": {
     "canary": {
@@ -201,7 +188,7 @@
     "vector_space_id": "all-minilm-l6-v2@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d384:pool=mean:norm=l2"
   },
   "network_required": false,
-  "notes": "Sealed offline release-candidate receipt for US Code sparse GraphRAG (USCIR-038). Binds producer digests from evaluation, security, e2e, canary, stage plan, and documentation. Independently reproducible via build_fixture_receipt(). Does not authorize publication.",
+  "notes": "Full baseline laws.parquet migration (60,068 admitted + 9 recovery) with thenlper/gte-small CUDA embeddings; published additively to Hub main and staging.",
   "producer": "verify_uscode_release_candidate.py",
   "program_id": "uscode-sparse-graphrag-v1",
   "publication_authorized": false,

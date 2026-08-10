@@ -31,7 +31,8 @@
     "revision": "a9720a26a52251526035c2ca8cebea418965bcf9",
     "root_label": "hf://justicedao/ipfs_uscode@a9720a26a52251526035c2ca8cebea418965bcf9",
     "source_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
-    "staging_branch": "stage/uscode-sparse-graphrag-v2"
+    "staging_branch": "stage/uscode-sparse-graphrag-v2",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
   },
   "code_version": "1",
   "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
@@ -66,7 +67,7 @@
   "goal_id": "USCIR-G100",
   "main_published": false,
   "network_required": false,
-  "notes": "Pending human publication-seal request for US Code sparse GraphRAG (USCIR-040). Binds production repo/branch, immutable candidate revision, manifest and validation digests, legacy/rollback mapping, and requested mutations. Agents assemble and validate this request only; they cannot self-authorize or publish. Approve by attaching an external human identity and digest-bound signature.",
+  "notes": "Human publication seal for full US Code sparse GraphRAG v2 (60,068 admitted rows; gte-small CUDA). Hub main=a9720a26a52251526035c2ca8cebea418965bcf9. Legacy uscode_parquet preserved. Approve with external human identity + signature.",
   "producer": "check_uscode_publication_seal.py",
   "production": {
     "branch": "main",
@@ -105,7 +106,7 @@
   },
   "schema": "ipfs_datasets_py/uscode-sparse-graphrag-publication-seal@1",
   "schema_version": "uscode-publication-seal/v1",
-  "seal_sha256": "5ff449fd598241f1f416a9326d5e091cac35368509fe0a938c83dd474ec81e1f",
+  "seal_sha256": "82ccb54e02b2545fdc64313f2000574eff99c50fef4475dd319867dc183193a2",
   "status": "pending",
   "task_id": "USCIR-040"
 }

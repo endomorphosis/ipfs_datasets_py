@@ -1,0 +1,20 @@
+{
+  "admitted": 60068,
+  "artifact_count": 3674,
+  "baseline_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+  "built_at": "2026-08-10T04:15:08Z",
+  "dataset_id": "justicedao/ipfs_uscode",
+  "embeddings": "thenlper/gte-small CUDA",
+  "legacy_uscode_parquet_untouched": true,
+  "main_revision": "a9720a26a52251526035c2ca8cebea418965bcf9",
+  "manifest_digest": "6a5e9d06a124c45b8d49a087a824e2661bd5718a03664a28295f8d2a6412daa3",
+  "model_id": "thenlper/gte-small",
+  "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+  "recovery": 9,
+  "release_root_cid": "bafkreicu56or275w2gtokcxy7hj73su4653xyqxxz6ee24t6hnkbuepmfe",
+  "staging_branch": "stage/uscode-sparse-graphrag-v2",
+  "staging_revision": "b04e12810a7daf0dc8a7283ac6b50a20ce95c160",
+  "upload_bytes": 5224089786,
+  "upload_file_count": 3674,
+  "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+}
