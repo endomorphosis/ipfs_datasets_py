@@ -258,6 +258,16 @@ ipfs-netherlands-laws = "ipfs_datasets_py.processors.legal_scrapers.netherlands_
 ipfs-datasets-sms-bridge = "ipfs_datasets_py.messaging.sms_bridge:main"
 ipfs-datasets-install-provers = "ipfs_datasets_py.logic.integration.bridges.prover_installer:main"
 
+# DQK-046 / DQK-002: package metadata agreement on the pinned DuckDB window.
+# Runtime dependencies are dynamic from setup.py; this tool table is the
+# static declaration that must match requirements.txt, setup.py, and
+# __pyproject.toml (see authority_transition.verify_package_metadata_agreement).
+[tool.ipfs_datasets.duckdb]
+pinned_version = "1.5.5"
+compatibility_window = ">=1.5.5,<1.6.0"
+compatibility_spec = "duckdb>=1.5.5,<1.6.0"
+claims_cross_filesystem_atomicity = false
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
