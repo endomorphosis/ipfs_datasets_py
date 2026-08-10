@@ -1,6 +1,6 @@
-"""Safe MCP/CLI query and export endpoints over the allowlisted registry (DQK-043).
+"""Safe MCP/CLI query and export endpoints over the allowlisted registry.
 
-Integrates the DQK-041 query-template registry with datasets MCP tools for:
+DQK-043 — control-plane DuckDB query tools:
 
 * ``query`` — execute an allowlisted template under tenant/snapshot policy
 * ``explain`` — describe a prepared invocation without exposing raw SQL
@@ -10,13 +10,26 @@ Integrates the DQK-041 query-template registry with datasets MCP tools for:
 * ``page`` — bounded pagination over a completed result set
 * ``list_templates`` — enumerate allowlisted template ids
 
+DQK-093 — DuckLake query/export tools (template registry + DQK-104 gateway):
+
+* ``ducklake_discover_catalogs`` / ``ducklake_discover_datasets``
+* ``ducklake_select_snapshot`` — snapshot / time-travel selection
+* ``ducklake_explain`` / ``ducklake_query`` / ``ducklake_export``
+* ``ducklake_cancel`` / ``ducklake_status`` / ``ducklake_page``
+* ``ducklake_list_templates``
+
 Security properties
 -------------------
 * Callers **cannot bypass** the query registry: raw SQL arguments, SQL-shaped
   parameter keys, and unregistered template ids fail closed.
+* Catalog-management calls use DQK-104; query/export use bounded snapshot-bound
+  workers or the sanitized publication plane.
 * Cancellation and bounded pagination are first-class (hard page-size caps,
   handle-bound page tokens).
-* Public errors never leak secrets, raw SQL, tokens, or filesystem paths.
+* Public errors never leak secrets, raw SQL, tokens, catalog credentials,
+  encryption keys, Quack tokens, or unrestricted object URIs.
+* Untrusted remote access remains a typed broker or sanitized publication
+  operation rather than direct authority-catalog Quack access.
 * Every successful operation binds a snapshot identity and capability pin
   summary so callers are tied to the control-plane version policy.
 
@@ -66,6 +79,8 @@ from ipfs_datasets_py.duckdb_control.quack_security import (
 __all__ = [
     "QUERY_TOOLS_SCHEMA",
     "QUERY_TOOLS_IMPLEMENTATION_GENERATION",
+    "DUCKLAKE_TOOLS_SCHEMA",
+    "DUCKLAKE_TOOLS_IMPLEMENTATION_GENERATION",
     "DEFAULT_PAGE_SIZE",
     "MAX_PAGE_SIZE",
     "MAX_HANDLES",
@@ -82,6 +97,19 @@ __all__ = [
     "duckdb_query_cancel",
     "duckdb_query_page",
     "duckdb_list_templates",
+    # DQK-093 DuckLake surface
+    "get_default_ducklake_api",
+    "set_default_ducklake_api",
+    "ducklake_discover_catalogs",
+    "ducklake_discover_datasets",
+    "ducklake_select_snapshot",
+    "ducklake_list_templates",
+    "ducklake_explain",
+    "ducklake_query",
+    "ducklake_export",
+    "ducklake_query_status",
+    "ducklake_query_cancel",
+    "ducklake_query_page",
 ]
 
 
@@ -94,6 +122,12 @@ QUERY_TOOLS_SCHEMA: Final[str] = (
 )
 QUERY_TOOLS_IMPLEMENTATION_GENERATION: Final[str] = (
     "dqk-043-lane3-attempt1-20260810"
+)
+DUCKLAKE_TOOLS_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/mcp-ducklake-query-tools@1"
+)
+DUCKLAKE_TOOLS_IMPLEMENTATION_GENERATION: Final[str] = (
+    "dqk-093-ducklake-query-export-mcp-20260810"
 )
 
 DEFAULT_PAGE_SIZE: Final[int] = 100
@@ -1408,3 +1442,314 @@ def duckdb_list_templates(
         return gw.list_templates(trust=trust, **kwargs)
 
     return _ok_or_error(_run)
+
+
+# ---------------------------------------------------------------------------
+# DQK-093 DuckLake MCP tools (template registry + DQK-104 catalog gateway)
+# ---------------------------------------------------------------------------
+
+
+def _load_ducklake_api():
+    """Lazy import to keep control-plane tool import free of lake deps when unused."""
+
+    from ipfs_datasets_py.ducklake import api as lake_api
+
+    return lake_api
+
+
+_DEFAULT_DUCKLAKE_API: Any = None
+_DEFAULT_DUCKLAKE_API_LOCK = threading.Lock()
+
+
+def get_default_ducklake_api() -> Any:
+    """Return the process-local DuckLake query API (created on first use)."""
+
+    global _DEFAULT_DUCKLAKE_API
+    with _DEFAULT_DUCKLAKE_API_LOCK:
+        if _DEFAULT_DUCKLAKE_API is None:
+            lake_api = _load_ducklake_api()
+            _DEFAULT_DUCKLAKE_API = lake_api.open_default_api()
+        return _DEFAULT_DUCKLAKE_API
+
+
+def set_default_ducklake_api(api: Any | None) -> None:
+    """Inject or clear the process-local DuckLake query API (tests)."""
+
+    global _DEFAULT_DUCKLAKE_API
+    with _DEFAULT_DUCKLAKE_API_LOCK:
+        _DEFAULT_DUCKLAKE_API = api
+
+
+def _ducklake_ok_or_error(fn: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    lake_api = _load_ducklake_api()
+    try:
+        return fn()
+    except lake_api.DuckLakeAPIError as exc:
+        return lake_api.sanitize_public_error(exc)
+    except qr.QueryRegistryError as exc:
+        return lake_api.sanitize_public_error(exc)
+    except QueryToolsError as exc:
+        return sanitize_public_error(exc)
+    except Exception as exc:  # pragma: no cover - defensive
+        return lake_api.sanitize_public_error(exc)
+
+
+def ducklake_discover_catalogs(
+    *,
+    tenant_id: str | None = None,
+    trust: str = "untrusted",
+    max_rows: int | None = None,
+    sql: str | None = None,
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: discover sanitized DuckLake catalogs (no credentials/tokens)."""
+
+    gateway = api or get_default_ducklake_api()
+
+    def _run() -> dict[str, Any]:
+        return gateway.discover_catalogs(
+            tenant_id=tenant_id,
+            trust=trust,
+            max_rows=max_rows,
+            sql=sql,
+            **kwargs,
+        )
+
+    return _ducklake_ok_or_error(_run)
+
+
+def ducklake_discover_datasets(
+    *,
+    catalog_id: str | None = None,
+    tenant_id: str | None = None,
+    namespace: str = "main",
+    schema_name: str = "main",
+    trust: str = "untrusted",
+    max_rows: int | None = None,
+    sql: str | None = None,
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: discover datasets via DQK-104 templates or publication plane."""
+
+    gateway = api or get_default_ducklake_api()
+
+    def _run() -> dict[str, Any]:
+        return gateway.discover_datasets(
+            catalog_id=catalog_id,
+            tenant_id=tenant_id,
+            namespace=namespace,
+            schema_name=schema_name,
+            trust=trust,
+            max_rows=max_rows,
+            sql=sql,
+            **kwargs,
+        )
+
+    return _ducklake_ok_or_error(_run)
+
+
+def ducklake_select_snapshot(
+    *,
+    catalog_id: str | None = None,
+    snapshot_version: int | None = None,
+    tenant_id: str | None = None,
+    trust: str = "untrusted",
+    time_travel: bool = False,
+    logical_query_id: str | None = None,
+    sql: str | None = None,
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: select a bounded snapshot / time-travel target."""
+
+    gateway = api or get_default_ducklake_api()
+
+    def _run() -> dict[str, Any]:
+        return gateway.select_snapshot(
+            catalog_id=catalog_id,
+            snapshot_version=snapshot_version,
+            tenant_id=tenant_id,
+            trust=trust,
+            time_travel=time_travel,
+            logical_query_id=logical_query_id,
+            sql=sql,
+            **kwargs,
+        )
+
+    return _ducklake_ok_or_error(_run)
+
+
+def ducklake_list_templates(
+    *,
+    trust: str = "untrusted",
+    include_catalog_templates: bool = True,
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: list allowlisted DuckLake query + catalog templates."""
+
+    gateway = api or get_default_ducklake_api()
+
+    def _run() -> dict[str, Any]:
+        return gateway.list_templates(
+            trust=trust,
+            include_catalog_templates=include_catalog_templates,
+            **kwargs,
+        )
+
+    return _ducklake_ok_or_error(_run)
+
+
+def ducklake_explain(
+    template_id: str | None = None,
+    parameters: Mapping[str, Any] | None = None,
+    *,
+    params: Mapping[str, Any] | None = None,
+    snapshot_id: SnapshotId | str | Mapping[str, Any] | None = None,
+    tenant_id: str | None = None,
+    trust: str = "untrusted",
+    sql: str | None = None,
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: explain a DuckLake template without exposing SQL."""
+
+    gateway = api or get_default_ducklake_api()
+    bound = params if params is not None else parameters
+
+    def _run() -> dict[str, Any]:
+        return gateway.explain(
+            template_id,
+            bound,
+            snapshot_id=snapshot_id,
+            tenant_id=tenant_id,
+            trust=trust,
+            sql=sql,
+            **kwargs,
+        )
+
+    return _ducklake_ok_or_error(_run)
+
+
+def ducklake_query(
+    template_id: str | None = None,
+    parameters: Mapping[str, Any] | None = None,
+    *,
+    params: Mapping[str, Any] | None = None,
+    snapshot_id: SnapshotId | str | Mapping[str, Any] | None = None,
+    tenant_id: str | None = None,
+    trust: str = "untrusted",
+    page_size: int | None = None,
+    catalog_id: str | None = None,
+    sql: str | None = None,
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: bounded DuckLake aggregate/query via allowlisted templates."""
+
+    gateway = api or get_default_ducklake_api()
+    bound = params if params is not None else parameters
+
+    def _run() -> dict[str, Any]:
+        return gateway.query(
+            template_id,
+            bound,
+            snapshot_id=snapshot_id,
+            tenant_id=tenant_id,
+            trust=trust,
+            page_size=page_size,
+            catalog_id=catalog_id,
+            sql=sql,
+            **kwargs,
+        )
+
+    return _ducklake_ok_or_error(_run)
+
+
+def ducklake_export(
+    template_id: str | None = None,
+    parameters: Mapping[str, Any] | None = None,
+    *,
+    params: Mapping[str, Any] | None = None,
+    snapshot_id: SnapshotId | str | Mapping[str, Any] | None = None,
+    tenant_id: str | None = None,
+    trust: str = "untrusted",
+    format: str = "json",
+    location_hint: str = "exports/ducklake/",
+    catalog_id: str | None = None,
+    sql: str | None = None,
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: deterministic DuckLake export (digests only; no payload/SQL)."""
+
+    gateway = api or get_default_ducklake_api()
+    bound = params if params is not None else parameters
+
+    def _run() -> dict[str, Any]:
+        return gateway.export(
+            template_id,
+            bound,
+            snapshot_id=snapshot_id,
+            tenant_id=tenant_id,
+            trust=trust,
+            format=format,
+            location_hint=location_hint,
+            catalog_id=catalog_id,
+            sql=sql,
+            **kwargs,
+        )
+
+    return _ducklake_ok_or_error(_run)
+
+
+def ducklake_query_status(
+    handle_id: str | None = None,
+    *,
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: status of a DuckLake query/export handle."""
+
+    gateway = api or get_default_ducklake_api()
+
+    def _run() -> dict[str, Any]:
+        return gateway.status(handle_id, **kwargs)
+
+    return _ducklake_ok_or_error(_run)
+
+
+def ducklake_query_cancel(
+    handle_id: str | None = None,
+    *,
+    reason: str = "cancelled",
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: cancel a DuckLake query handle (idempotent)."""
+
+    gateway = api or get_default_ducklake_api()
+
+    def _run() -> dict[str, Any]:
+        return gateway.cancel(handle_id, reason=reason, **kwargs)
+
+    return _ducklake_ok_or_error(_run)
+
+
+def ducklake_query_page(
+    handle_id: str | None = None,
+    page_token: str | None = None,
+    *,
+    api: Any | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """MCP tool: fetch the next bounded page for a DuckLake query handle."""
+
+    gateway = api or get_default_ducklake_api()
+
+    def _run() -> dict[str, Any]:
+        return gateway.page(handle_id, page_token, **kwargs)
+
+    return _ducklake_ok_or_error(_run)
