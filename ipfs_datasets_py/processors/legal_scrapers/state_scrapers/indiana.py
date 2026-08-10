@@ -98,7 +98,9 @@ class IndianaScraper(BaseStateScraper):
             max_statutes=int(target_statutes),
         )
         self._mark_skip_hydrate_for_archived_justia_records(resumed)
-        if target_statutes < 30 and max_statutes is None:
+        # Prefer stable official archived chapter PDFs for small probes and
+        # uncapped runs before heavier download-bundle / Justia recovery.
+        if target_statutes < 30:
             seed_pdfs = await self._scrape_seed_archive_pdfs(
                 code_name=code_name,
                 max_statutes=target_statutes,
@@ -145,7 +147,17 @@ class IndianaScraper(BaseStateScraper):
         archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=max(10, target_statutes))
         justia_titles: List[NormalizedStatute] = []
         title_page_statutes: List[NormalizedStatute] = []
-        justia_enabled = full_corpus or bounded_probe or self._env_flag("INDIANA_JUSTIA_ENABLE")
+        allow_justia = self._env_flag("INDIANA_ALLOW_JUSTIA_FALLBACK") or self._env_flag(
+            "STATE_SCRAPER_IN_ALLOW_JUSTIA_FALLBACK"
+        )
+        # Full-corpus keeps Justia opt-in only; bounded probes may use it as
+        # last-resort recovery when official IGA archives are unavailable.
+        if full_corpus:
+            justia_enabled = allow_justia or self._env_flag("INDIANA_JUSTIA_ENABLE")
+        else:
+            justia_enabled = (
+                bounded_probe or self._env_flag("INDIANA_JUSTIA_ENABLE")
+            ) and not self._env_flag("INDIANA_JUSTIA_DISABLE")
         title_pages_enabled = full_corpus or bounded_probe or self._env_flag("INDIANA_ARCHIVED_TITLE_PAGES_ENABLE")
         if justia_enabled:
             justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=max(10, target_statutes))
@@ -179,11 +191,33 @@ class IndianaScraper(BaseStateScraper):
                 max(0, len(merged) - len(substantive)),
             )
 
-        if substantive and (not full_corpus or len(substantive) >= min_full_corpus_records):
-            self.logger.info(f"Indiana archival fallback: Scraped {len(substantive)} sections")
-            return substantive
+        official = [statute for statute in substantive if self._is_official_indiana_source(statute)]
+        if official and (not full_corpus or len(official) >= min_full_corpus_records):
+            self.logger.info("Indiana official/archive crawl: Scraped %s sections", len(official))
+            return official
 
-        if full_corpus and substantive:
+        if full_corpus and not allow_justia and not official:
+            self.logger.warning(
+                "Indiana full-corpus crawl found no official IGA rows; refusing Justia-only admission"
+            )
+            if not self._env_flag("INDIANA_GENERIC_FALLBACK"):
+                return []
+
+        if substantive and (not full_corpus or len(substantive) >= min_full_corpus_records):
+            # Bounded probes may still accept mixed recovery rows; full corpus
+            # only reaches here when Justia fallback is explicitly allowed.
+            if full_corpus and not allow_justia and not official:
+                pass
+            else:
+                self.logger.info(f"Indiana archival fallback: Scraped {len(substantive)} sections")
+                return substantive if not official else official
+
+        if full_corpus and official:
+            self.logger.warning(
+                "Indiana official recovery found only %s sections in full-corpus mode; trying generic recovery before accepting partial corpus",
+                len(official),
+            )
+        elif full_corpus and substantive:
             self.logger.warning(
                 "Indiana archive/title recovery found only %s sections in full-corpus mode; trying generic recovery before accepting partial corpus",
                 len(substantive),
@@ -193,7 +227,11 @@ class IndianaScraper(BaseStateScraper):
             generic = await self._generic_scrape(code_name, code_url, "Ind. Code")
             _merge(generic)
             substantive = [statute for statute in merged if self._is_substantive_indiana_record(statute)]
-            if substantive:
+            official = [statute for statute in substantive if self._is_official_indiana_source(statute)]
+            if official:
+                self.logger.info(f"Indiana recovery fallback: Scraped {len(official)} official sections")
+                return official
+            if substantive and (allow_justia or not full_corpus):
                 self.logger.info(f"Indiana recovery fallback: Scraped {len(substantive)} sections")
                 return substantive
 
@@ -1085,9 +1123,28 @@ class IndianaScraper(BaseStateScraper):
             return False
         if source_kind == "official_indiana_archived_chapter_pdf":
             return True
+        if source_kind == "official_indiana_code_download_bundle":
+            return True
         if self._looks_like_indiana_section_number(section_number):
             return True
         if self._contains_statute_signals(full_text) and not self._looks_like_shallow_stub_text(full_text):
+            return True
+        return False
+
+    def _is_official_indiana_source(self, statute: NormalizedStatute) -> bool:
+        """True when the row is attributable to official IGA (live or archived)."""
+        if not isinstance(statute, NormalizedStatute):
+            return False
+        structured = statute.structured_data if isinstance(statute.structured_data, dict) else {}
+        source_kind = str(structured.get("source_kind") or "").strip().lower()
+        source_url = str(statute.source_url or "").strip().lower()
+        if "justia" in source_kind or "justia.com" in source_url:
+            return False
+        if source_kind.startswith("official_indiana"):
+            return True
+        if "iga.in.gov" in source_url:
+            return True
+        if "web.archive.org" in source_url and "iga.in.gov" in source_url:
             return True
         return False
 
