@@ -11863,6 +11863,9 @@ class _RuntimeActivationGateAuthorityAdapter:
         if not ENVIRONMENT_RECEIPT.is_file() or ENVIRONMENT_RECEIPT.is_symlink():
             raise RuntimeError("sealed environment receipt is unavailable")
         environment_receipt = _read_json_object(ENVIRONMENT_RECEIPT)
+        repo_root = str(REPO_ROOT)
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
         from ipfs_datasets_py.duckdb_control.generation_rollover import (
             verify_runtime_activation_permit,
         )
