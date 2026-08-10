@@ -1512,8 +1512,14 @@ def validate_gitlink_pin_receipt(
     ):
         raise RuntimeError("manual-gate accelerator gitlink was reverted or replaced")
     protected = intent.get("protected_blobs")
+    # Validate protected bootstrap bytes at the pin commit itself.  Later
+    # first-parent commits may intentionally evolve protected ops scripts
+    # without undoing the accelerator pin admission.
+    pin_commit = str(receipt.get("effect_commit") or "").strip().lower()
+    if re.fullmatch(r"[0-9a-f]{40}", pin_commit) is None:
+        pin_commit = str(_git(parent, "rev-parse", "HEAD")).lower()
     if not isinstance(protected, Mapping) or not protected or any(
-        str(_git(parent, "rev-parse", f"HEAD:{path}")).lower() != blob
+        str(_git(parent, "rev-parse", f"{pin_commit}:{path}")).lower() != str(blob).lower()
         for path, blob in protected.items()
     ):
         raise RuntimeError("manual-gate protected bootstrap artifacts changed after pin")
