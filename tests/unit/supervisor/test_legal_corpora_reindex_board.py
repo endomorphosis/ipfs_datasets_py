@@ -120,11 +120,17 @@ def test_declared_board_validator_accepts_control_plane() -> None:
     assert required_continuations <= set(
         report["current_projection"]["continuation_task_ids"]
     )
-    rights_tasks = {"LCR-077", "LCR-078", "LCR-079"}
+    completed_tasks = set(report["current_projection"]["completed_task_ids"])
+    publication_safety_tasks = {
+        f"LCR-{number:03d}" for number in range(77, 84)
+    } - completed_tasks
     phase_blockers = report["current_projection"][
         "publication_blocking_generated_task_ids_by_phase"
     ]
-    assert all(rights_tasks <= set(task_ids) for task_ids in phase_blockers.values())
+    assert all(
+        publication_safety_tasks <= set(task_ids)
+        for task_ids in phase_blockers.values()
+    )
     assert sum(report["lane_task_counts"].values()) == counts["tasks"]
 
 

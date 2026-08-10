@@ -334,7 +334,7 @@ CONTROLLED_RESEAL_TASK_CONTRACTS = {
     "LCR-078": _controlled_reseal_task_contract(
         "Produce and seal the live legal-source rights compliance receipt",
         "LCR-G141",
-        "LCR-002, LCR-048, LCR-077",
+        "LCR-002, LCR-048, LCR-077, LCR-082",
         "data/legal/legal_source_rights_catalog.json, docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
         "python scripts/ops/legal_data/audit_legal_source_rights.py --require-live-source-evidence --check",
         "2fae89ff94b0e98bf041c53acabe3349021c3a3854e617a0748fd326578d2270",
