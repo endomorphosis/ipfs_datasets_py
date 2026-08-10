@@ -17,13 +17,20 @@ DuckDB is used for:
 - Time-series metrics
 """
 
+from __future__ import annotations
+
+
 import os
 import logging
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from contextlib import asynccontextmanager
 import sqlite3
-import anyio
+
+try:
+    import anyio
+except ImportError:  # sealed DQK validator wheels omit anyio
+    anyio = None  # type: ignore[assignment]
 
 try:
     import duckdb
