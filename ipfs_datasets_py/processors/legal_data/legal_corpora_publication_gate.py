@@ -374,7 +374,13 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
         PublicationPhase.STATE_STAGING.value: _phase_contract(
             dataset_repo_id=STATE_DATASET_REPO_ID,
             authorized_operation="additive_staging_upload",
-            required_task_ids=("LCR-039", "LCR-070", "LCR-074", "LCR-079"),
+            required_task_ids=(
+                "LCR-039",
+                "LCR-070",
+                "LCR-074",
+                "LCR-079",
+                "LCR-084",
+            ),
             required_receipts=(
                 "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
                 "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
@@ -405,6 +411,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-072",
                 "LCR-074",
                 "LCR-079",
+                "LCR-084",
             ),
             required_receipts=(
                 "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -441,6 +448,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-075",
                 "LCR-076",
                 "LCR-079",
+                "LCR-084",
             ),
             required_receipts=(
                 "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -476,6 +484,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-075",
                 "LCR-076",
                 "LCR-079",
+                "LCR-084",
             ),
             required_receipts=(
                 "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",

@@ -479,3 +479,23 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: audit_legal_source_rights release_schema legal_corpora_publication_gate legal_corpora_publication_runtime
 - Parallel lane: 1
 - Conflict policy: Final ordered successor of the rights evidence, rights integration, authority runtime, and hardening tasks; one task owns the resealed cross-corpus receipt and gate bindings.
+
+## LCR-G146 Prove exact-51 live state-scrape completeness is candidate-bound
+- Status: active
+- Parent: LCR-G080
+- Depends on: LCR-G024, LCR-G143, LCR-G145
+- Fib priority: 1
+- Track: state-full-live-acceptance-hardening
+- Priority: P0
+- Bundle: state-full-live-acceptance-hardening
+- Goal: Replace self-asserted cohort closure with fresh official-source evidence for every state and DC and bind that evidence exactly to the state release candidate and every publication decision.
+- Evidence: Fresh HTTPS response hashes and exhaustive frontier, page, and bundle observations, per-jurisdiction attempts and checkpoints, exact 51 source-item, row, key, and content digests, disposition arithmetic, candidate-shard reconciliation, live-baseline comparison, and zero-callback denial traces.
+- Outputs: data/legal/state_laws_full_scrape_acceptance.schema.json, docs/reports/legal_corpora_reindex/full_scrape_acceptance.json, docs/reports/legal_corpora_reindex/release_candidate.json
+- Validation: python -m pytest tests/unit/scripts/test_audit_state_laws_full_scrape_acceptance.py tests/integration/legal_data/test_state_laws_full_scrape_acceptance_fail_closed.py tests/unit/processors/legal_data/test_state_laws_release_schema.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py -q; python scripts/ops/legal_data/audit_state_laws_full_scrape_acceptance.py --require-live-official --require-jurisdictions 51 --require-production-candidate --check
+- Acceptance: No fixture, injected transport, static test HTML, sample count, caller-declared frontier, or status and digest-only receipt can authorize. Success freshly exhausts every official frontier, reconciles all 51 source items, rows, logical keys, content hashes, attempts, checkpoints, exclusions, quarantines, and failures, and binds the exact admitted shard counts, keys, digests, and deduped union to the exact release manifest; unexplained underfill against either observed official inventory or the authenticated live baseline fails, including the two-row cohort F and I evidence.
+- Gap task: LCR-084
+- Refinement: Generate one jurisdiction repair task per failed authority or frontier, then split by code family, title, bundle, or pagination boundary; never weaken live observation or candidate equality.
+- Embedding query: exact 51 state statute live official scrape frontier response hash candidate shard count key digest underfill
+- AST query: certify_state_laws_full_scrape full_scrape_acceptance release_candidate publication_gate
+- Parallel lane: 1
+- Conflict policy: Ordered successor of LCR-023, LCR-039, LCR-081, and LCR-083; it is the final writer of the state full-scrape receipt, state candidate binding, and shared gate and runtime before publication and performs no Hub mutation.

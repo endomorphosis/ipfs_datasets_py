@@ -65,7 +65,7 @@
     "state_staging": {
       "dataset_repo_id": "justicedao/ipfs_state_laws",
       "authorized_operation": "additive_staging_upload",
-      "required_task_ids": ["LCR-039", "LCR-070", "LCR-074", "LCR-079"],
+      "required_task_ids": ["LCR-039", "LCR-070", "LCR-074", "LCR-079", "LCR-084"],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
         "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
@@ -84,7 +84,7 @@
     "state_main": {
       "dataset_repo_id": "justicedao/ipfs_state_laws",
       "authorized_operation": "additive_main_upload",
-      "required_task_ids": ["LCR-041", "LCR-070", "LCR-072", "LCR-074", "LCR-079"],
+      "required_task_ids": ["LCR-041", "LCR-070", "LCR-072", "LCR-074", "LCR-079", "LCR-084"],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
         "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
@@ -107,7 +107,7 @@
       "dataset_repo_id": "justicedao/ipfs_federal_register",
       "authorized_operation": "additive_staging_upload",
       "required_task_ids": [
-        "LCR-063", "LCR-070", "LCR-071", "LCR-074", "LCR-075", "LCR-076", "LCR-079"
+        "LCR-063", "LCR-070", "LCR-071", "LCR-074", "LCR-075", "LCR-076", "LCR-079", "LCR-084"
       ],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -131,7 +131,7 @@
       "authorized_operation": "additive_main_upload",
       "required_task_ids": [
         "LCR-064", "LCR-070", "LCR-071", "LCR-073",
-        "LCR-074", "LCR-075", "LCR-076", "LCR-079"
+        "LCR-074", "LCR-075", "LCR-076", "LCR-079", "LCR-084"
       ],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",

@@ -164,6 +164,10 @@ def test_phase_requirements_match_release_policy_contract() -> None:
         "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json"
         in federal_main["required_receipts"]
     )
+    assert all(
+        "LCR-084" in contract["required_task_ids"]
+        for contract in PHASE_REQUIREMENTS.values()
+    )
 
     assert GENERATED_WORK_GUARD["task_number_floor"] == 77
     assert GENERATED_WORK_GUARD["deny_nonterminal_matching_generated_work"] is True

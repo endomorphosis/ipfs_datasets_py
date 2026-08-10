@@ -51,7 +51,7 @@ def _append_valid_refill(root: Path) -> None:
         objectives.read_text(encoding="utf-8").rstrip()
         + """
 
-## LCR-G146 Repair a newly observed cohort evidence gap
+## LCR-G147 Repair a newly observed cohort evidence gap
 - Status: active
 - Parent: LCR-G024
 - Fib priority: 2
@@ -60,8 +60,8 @@ def _append_valid_refill(root: Path) -> None:
 - Bundle: cohort-gap-repair
 - Goal: Repair one current-tree acquisition contradiction without weakening the exact-51 contract.
 - Evidence: A replacement jurisdiction receipt and reconciliation proof bound to the discovering evidence.
-- Outputs: docs/reports/legal_corpora_reindex/refill/lcr-084-repair.json
-- Validation: test -f docs/reports/legal_corpora_reindex/refill/lcr-084-repair.json
+- Outputs: docs/reports/legal_corpora_reindex/refill/lcr-085-repair.json
+- Validation: test -f docs/reports/legal_corpora_reindex/refill/lcr-085-repair.json
 - Acceptance: The replacement receipt closes the observed gap and preserves the full jurisdiction cohort.
 - Refinement depth: 3
 - Embedding query: state laws cohort acquisition gap replacement receipt
@@ -77,22 +77,22 @@ def _append_valid_refill(root: Path) -> None:
         taskboard.read_text(encoding="utf-8").rstrip()
         + """
 
-## LCR-084 Repair the discovered cohort evidence gap
+## LCR-085 Repair the discovered cohort evidence gap
 - Status: todo
 - Completion: manual
 - Priority: P0
 - Track: acquisition-repair
 - Depends on: LCR-000
-- Goal id: LCR-G146
-- Outputs: docs/reports/legal_corpora_reindex/refill/lcr-084-repair.json
-- Validation: test -f docs/reports/legal_corpora_reindex/refill/lcr-084-repair.json
+- Goal id: LCR-G147
+- Outputs: docs/reports/legal_corpora_reindex/refill/lcr-085-repair.json
+- Validation: test -f docs/reports/legal_corpora_reindex/refill/lcr-085-repair.json
 - Board namespace: legal-corpora-reindex-v1
 - Bundle: cohort-gap-repair
 - Parallel lane: cohort-gap-repair
 - Resource class: cpu-small
 - Token class: medium
 - Estimated tokens: 0
-- Predicted files: docs/reports/legal_corpora_reindex/refill/lcr-084-repair.json
+- Predicted files: docs/reports/legal_corpora_reindex/refill/lcr-085-repair.json
 - Allow concurrent with:
 - Conflict policy: Owns only its replacement evidence; aggregate coverage remains dependency ordered.
 - Preconditions: A content-addressed cohort finding names the failed acceptance evidence.
@@ -122,7 +122,7 @@ def test_declared_board_validator_accepts_control_plane() -> None:
     )
     completed_tasks = set(report["current_projection"]["completed_task_ids"])
     publication_safety_tasks = {
-        f"LCR-{number:03d}" for number in range(77, 84)
+        f"LCR-{number:03d}" for number in range(77, 85)
     } - completed_tasks
     phase_blockers = report["current_projection"][
         "publication_blocking_generated_task_ids_by_phase"
@@ -155,16 +155,16 @@ def test_refill_goal_and_task_are_admitted_and_projection_is_recomputed(
         report["counts"]["continuation_goals"]
         == baseline["counts"]["continuation_goals"] + 1
     )
-    assert "LCR-084" in report["current_projection"]["continuation_task_ids"]
-    assert "LCR-G146" in report["current_projection"]["continuation_goal_ids"]
-    assert "LCR-084" in report["current_projection"]["ready_task_ids"]
+    assert "LCR-085" in report["current_projection"]["continuation_task_ids"]
+    assert "LCR-G147" in report["current_projection"]["continuation_goal_ids"]
+    assert "LCR-085" in report["current_projection"]["ready_task_ids"]
     blockers = report["current_projection"][
         "publication_blocking_generated_task_ids_by_phase"
     ]
-    assert "LCR-084" in blockers["state_staging"]
-    assert "LCR-084" in blockers["state_main"]
-    assert "LCR-084" not in blockers["federal_staging"]
-    assert "LCR-084" not in blockers["federal_main"]
+    assert "LCR-085" in blockers["state_staging"]
+    assert "LCR-085" in blockers["state_main"]
+    assert "LCR-085" not in blockers["federal_staging"]
+    assert "LCR-085" not in blockers["federal_main"]
     assert report["sealed_initial_projection"]["ready_task_ids"] == [
         "LCR-001",
         "LCR-002",
@@ -187,7 +187,7 @@ def test_native_refill_semantic_lane_and_optional_metadata_are_admitted(tmp_path
     result, report = _run_validator(root)
     assert result.returncode == 0, report
     assert report["valid"] is True
-    assert "LCR-084" in report["current_projection"]["continuation_task_ids"]
+    assert "LCR-085" in report["current_projection"]["continuation_task_ids"]
 
 
 def test_shared_publication_gate_refill_blocks_every_mutation_phase(
@@ -209,7 +209,7 @@ def test_shared_publication_gate_refill_blocks_every_mutation_phase(
     blockers = report["current_projection"][
         "publication_blocking_generated_task_ids_by_phase"
     ]
-    assert all("LCR-084" in task_ids for task_ids in blockers.values())
+    assert all("LCR-085" in task_ids for task_ids in blockers.values())
 
 
 def test_cohort_partition_and_refill_policy_drift_are_rejected(tmp_path: Path) -> None:
