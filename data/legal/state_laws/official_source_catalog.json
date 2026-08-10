@@ -1,0 +1,1452 @@
+{
+  "schema_version": "state-laws-official-source-catalog-v1",
+  "task_id": "LCR-002",
+  "description": "Authoritative official-source catalog for the exact 51-jurisdiction set (50 postal state codes + DC). Secondary commercial mirrors are quarantine-only and never sole admission paths.",
+  "jurisdiction_count": 51,
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "jurisdictions": [
+    {
+      "postal_code": "AK",
+      "name": "Alaska",
+      "code_families": [
+        {
+          "code_family_id": "alaska-statutes",
+          "display_name": "Alaska Statutes",
+          "citation_prefix": "Alaska Stat.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "basis_statutes_fetch"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ak-akleg-basis",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "alaska_legislature",
+          "base_url": "https://www.akleg.gov",
+          "entry_url": "https://www.akleg.gov/basis/statutes.asp",
+          "allowed_domains": ["www.akleg.gov", "akleg.gov", "www.legis.state.ak.us", "legis.state.ak.us"],
+          "discovery_mode": "api",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "Alaska Legislature BASIS statutes endpoint"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "AL",
+      "name": "Alabama",
+      "code_families": [
+        {
+          "code_family_id": "code-of-alabama",
+          "display_name": "Code of Alabama",
+          "citation_prefix": "Ala. Code",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "alison_graphql_and_html_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "al-alison-code",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "alabama_legislature_alison",
+          "base_url": "https://alison.legislature.state.al.us",
+          "entry_url": "https://alison.legislature.state.al.us/code-of-alabama",
+          "allowed_domains": ["alison.legislature.state.al.us"],
+          "discovery_mode": "api",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "ALISON Code of Alabama portal and GraphQL API"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "AR",
+      "name": "Arkansas",
+      "code_families": [
+        {
+          "code_family_id": "arkansas-code",
+          "display_name": "Arkansas Code",
+          "citation_prefix": "Ark. Code Ann.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "html_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ar-arkleg",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "arkansas_legislature",
+          "base_url": "https://www.arkleg.state.ar.us",
+          "entry_url": "https://www.arkleg.state.ar.us/",
+          "allowed_domains": ["www.arkleg.state.ar.us", "arkleg.state.ar.us"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "AZ",
+      "name": "Arizona",
+      "code_families": [
+        {
+          "code_family_id": "arizona-revised-statutes",
+          "display_name": "Arizona Revised Statutes",
+          "citation_prefix": "Ariz. Rev. Stat.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "title_index"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "az-azleg-ars",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "arizona_legislature",
+          "base_url": "https://www.azleg.gov",
+          "entry_url": "https://www.azleg.gov/arsDetail/?title=1",
+          "allowed_domains": ["www.azleg.gov", "azleg.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "CA",
+      "name": "California",
+      "code_families": [
+        {
+          "code_family_id": "california-codes",
+          "display_name": "California Codes",
+          "citation_prefix": "Cal.",
+          "hierarchy": ["code", "title", "division", "part", "chapter", "article", "section"],
+          "bundle_discovery": "leginfo_code_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ca-leginfo",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "california_legislative_information",
+          "base_url": "https://leginfo.legislature.ca.gov",
+          "entry_url": "https://leginfo.legislature.ca.gov/faces/codes.xhtml",
+          "allowed_domains": ["leginfo.legislature.ca.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "California Legislative Information multi-code corpus"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "CO",
+      "name": "Colorado",
+      "code_families": [
+        {
+          "code_family_id": "colorado-revised-statutes",
+          "display_name": "Colorado Revised Statutes",
+          "citation_prefix": "Colo. Rev. Stat.",
+          "hierarchy": ["title", "article", "section"],
+          "bundle_discovery": "publication_search_pdf"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "co-leg-crs",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "colorado_general_assembly",
+          "base_url": "https://leg.colorado.gov",
+          "entry_url": "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs",
+          "allowed_domains": ["leg.colorado.gov", "content.leg.colorado.gov"],
+          "discovery_mode": "bundle",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "CT",
+      "name": "Connecticut",
+      "code_families": [
+        {
+          "code_family_id": "connecticut-general-statutes",
+          "display_name": "Connecticut General Statutes",
+          "citation_prefix": "Conn. Gen. Stat.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "title_chapter_html"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ct-cga-titles",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "connecticut_general_assembly",
+          "base_url": "https://www.cga.ct.gov",
+          "entry_url": "https://www.cga.ct.gov/current/pub/titles.htm",
+          "allowed_domains": ["www.cga.ct.gov", "cga.ct.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "Path segment /current/ is the official CGS publication tree, not a mutable git pin"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "DC",
+      "name": "District of Columbia",
+      "code_families": [
+        {
+          "code_family_id": "dc-official-code",
+          "display_name": "District of Columbia Official Code",
+          "citation_prefix": "D.C. Code",
+          "hierarchy": ["title", "chapter", "subchapter", "section"],
+          "bundle_discovery": "council_code_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "dc-council-code",
+          "role": "dc_council",
+          "authority_class": "official",
+          "provider": "dc_council",
+          "base_url": "https://code.dccouncil.gov",
+          "entry_url": "https://code.dccouncil.gov/us/dc/council/code",
+          "allowed_domains": ["code.dccouncil.gov", "code.dccouncil.us"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "DC Council official code host"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "DE",
+      "name": "Delaware",
+      "code_families": [
+        {
+          "code_family_id": "delaware-code",
+          "display_name": "Delaware Code",
+          "citation_prefix": "Del. Code Ann.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "html_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "de-delcode",
+          "role": "official_code_publisher",
+          "authority_class": "official",
+          "provider": "delaware_code_online",
+          "base_url": "https://delcode.delaware.gov",
+          "entry_url": "https://delcode.delaware.gov/index.html",
+          "allowed_domains": ["delcode.delaware.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "FL",
+      "name": "Florida",
+      "code_families": [
+        {
+          "code_family_id": "florida-statutes",
+          "display_name": "Florida Statutes",
+          "citation_prefix": "Fla. Stat.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "title_chapter_index"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "fl-leg-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "florida_legislature",
+          "base_url": "http://www.leg.state.fl.us",
+          "entry_url": "http://www.leg.state.fl.us/Statutes/",
+          "allowed_domains": ["www.leg.state.fl.us", "leg.state.fl.us"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "GA",
+      "name": "Georgia",
+      "code_families": [
+        {
+          "code_family_id": "official-code-of-georgia",
+          "display_name": "Official Code of Georgia Annotated",
+          "citation_prefix": "Ga. Code Ann.",
+          "hierarchy": ["title", "chapter", "article", "section"],
+          "bundle_discovery": "legislature_laws_index"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ga-legis-laws",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "georgia_general_assembly",
+          "base_url": "https://www.legis.ga.gov",
+          "entry_url": "https://www.legis.ga.gov/legislation/laws.html",
+          "allowed_domains": ["www.legis.ga.gov", "legis.ga.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "Official legislature portal; commercial annotated mirrors are secondary"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "HI",
+      "name": "Hawaii",
+      "code_families": [
+        {
+          "code_family_id": "hawaii-revised-statutes",
+          "display_name": "Hawaii Revised Statutes",
+          "citation_prefix": "Haw. Rev. Stat.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "hrscurrent_html"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "hi-capitol-hrs",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "hawaii_state_legislature",
+          "base_url": "https://www.capitol.hawaii.gov",
+          "entry_url": "https://www.capitol.hawaii.gov/hrscurrent/",
+          "allowed_domains": ["www.capitol.hawaii.gov", "capitol.hawaii.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "IA",
+      "name": "Iowa",
+      "code_families": [
+        {
+          "code_family_id": "iowa-code",
+          "display_name": "Iowa Code",
+          "citation_prefix": "Iowa Code",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "html_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ia-legis",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "iowa_legislature",
+          "base_url": "https://www.legis.iowa.gov",
+          "entry_url": "https://www.legis.iowa.gov/law/statutory",
+          "allowed_domains": ["www.legis.iowa.gov", "legis.iowa.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "ID",
+      "name": "Idaho",
+      "code_families": [
+        {
+          "code_family_id": "idaho-statutes",
+          "display_name": "Idaho Statutes",
+          "citation_prefix": "Idaho Code",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "idstat_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "id-legislature-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "idaho_legislature",
+          "base_url": "https://legislature.idaho.gov",
+          "entry_url": "https://legislature.idaho.gov/statutesrules/idstat/",
+          "allowed_domains": ["legislature.idaho.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "IL",
+      "name": "Illinois",
+      "code_families": [
+        {
+          "code_family_id": "illinois-compiled-statutes",
+          "display_name": "Illinois Compiled Statutes",
+          "citation_prefix": "Ill. Comp. Stat.",
+          "hierarchy": ["chapter", "act", "section"],
+          "bundle_discovery": "ilcs_chapters"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "il-ilga-ilcs",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "illinois_general_assembly",
+          "base_url": "https://www.ilga.gov",
+          "entry_url": "https://www.ilga.gov/Legislation/ILCS/Chapters",
+          "allowed_domains": ["www.ilga.gov", "ilga.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "IN",
+      "name": "Indiana",
+      "code_families": [
+        {
+          "code_family_id": "indiana-code",
+          "display_name": "Indiana Code",
+          "citation_prefix": "Ind. Code",
+          "hierarchy": ["title", "article", "chapter", "section"],
+          "bundle_discovery": "titles_index"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "in-iga-code",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "indiana_general_assembly",
+          "base_url": "https://iga.in.gov",
+          "entry_url": "https://iga.in.gov/legislative/laws/2024/ic/titles/",
+          "allowed_domains": ["iga.in.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "KS",
+      "name": "Kansas",
+      "code_families": [
+        {
+          "code_family_id": "kansas-statutes",
+          "display_name": "Kansas Statutes",
+          "citation_prefix": "Kan. Stat. Ann.",
+          "hierarchy": ["chapter", "article", "section"],
+          "bundle_discovery": "laws_chapter_index"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ks-legislature-laws",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "kansas_legislature",
+          "base_url": "https://www.kslegislature.gov",
+          "entry_url": "https://www.kslegislature.gov/laws/",
+          "allowed_domains": ["www.kslegislature.gov", "kslegislature.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "KY",
+      "name": "Kentucky",
+      "code_families": [
+        {
+          "code_family_id": "kentucky-revised-statutes",
+          "display_name": "Kentucky Revised Statutes",
+          "citation_prefix": "Ky. Rev. Stat.",
+          "hierarchy": ["chapter", "section"],
+          "bundle_discovery": "krs_chapter_section"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ky-apps-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "kentucky_legislature",
+          "base_url": "https://apps.legislature.ky.gov",
+          "entry_url": "https://apps.legislature.ky.gov/law/statutes/",
+          "allowed_domains": ["apps.legislature.ky.gov", "legislature.ky.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "LA",
+      "name": "Louisiana",
+      "code_families": [
+        {
+          "code_family_id": "louisiana-revised-statutes",
+          "display_name": "Louisiana Revised Statutes",
+          "citation_prefix": "La. Rev. Stat.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "laws_aspx_index"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "la-legis-laws",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "louisiana_legislature",
+          "base_url": "https://legis.la.gov",
+          "entry_url": "https://legis.la.gov/legis/Laws.aspx",
+          "allowed_domains": ["legis.la.gov", "www.legis.la.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "MA",
+      "name": "Massachusetts",
+      "code_families": [
+        {
+          "code_family_id": "massachusetts-general-laws",
+          "display_name": "Massachusetts General Laws",
+          "citation_prefix": "Mass. Gen. Laws",
+          "hierarchy": ["part", "title", "chapter", "section"],
+          "bundle_discovery": "general_laws_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ma-malegislature-mgl",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "massachusetts_general_court",
+          "base_url": "https://malegislature.gov",
+          "entry_url": "https://malegislature.gov/Laws/GeneralLaws",
+          "allowed_domains": ["malegislature.gov", "www.malegislature.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "MD",
+      "name": "Maryland",
+      "code_families": [
+        {
+          "code_family_id": "maryland-code",
+          "display_name": "Maryland Code",
+          "citation_prefix": "Md. Code Ann.",
+          "hierarchy": ["article", "section"],
+          "bundle_discovery": "statutes_portal"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "md-mga-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "maryland_general_assembly",
+          "base_url": "https://mgaleg.maryland.gov",
+          "entry_url": "https://mgaleg.maryland.gov/mgawebsite/Laws/Statutes",
+          "allowed_domains": ["mgaleg.maryland.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "ME",
+      "name": "Maine",
+      "code_families": [
+        {
+          "code_family_id": "maine-revised-statutes",
+          "display_name": "Maine Revised Statutes",
+          "citation_prefix": "Me. Rev. Stat.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "statutes_html"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "me-legislature",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "maine_legislature",
+          "base_url": "https://legislature.maine.gov",
+          "entry_url": "https://legislature.maine.gov/statutes/",
+          "allowed_domains": ["legislature.maine.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "MI",
+      "name": "Michigan",
+      "code_families": [
+        {
+          "code_family_id": "michigan-compiled-laws",
+          "display_name": "Michigan Compiled Laws",
+          "citation_prefix": "Mich. Comp. Laws",
+          "hierarchy": ["chapter", "section"],
+          "bundle_discovery": "chapter_index"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "mi-legislature-mcl",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "michigan_legislature",
+          "base_url": "https://www.legislature.mi.gov",
+          "entry_url": "https://www.legislature.mi.gov/Laws/ChapterIndex",
+          "allowed_domains": ["www.legislature.mi.gov", "legislature.mi.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "MN",
+      "name": "Minnesota",
+      "code_families": [
+        {
+          "code_family_id": "minnesota-statutes",
+          "display_name": "Minnesota Statutes",
+          "citation_prefix": "Minn. Stat.",
+          "hierarchy": ["chapter", "section"],
+          "bundle_discovery": "revisor_statutes"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "mn-revisor-statutes",
+          "role": "official_reviser",
+          "authority_class": "official",
+          "provider": "minnesota_revisor_of_statutes",
+          "base_url": "https://www.revisor.mn.gov",
+          "entry_url": "https://www.revisor.mn.gov/statutes/",
+          "allowed_domains": ["www.revisor.mn.gov", "revisor.mn.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "MO",
+      "name": "Missouri",
+      "code_families": [
+        {
+          "code_family_id": "missouri-revised-statutes",
+          "display_name": "Missouri Revised Statutes",
+          "citation_prefix": "Mo. Rev. Stat.",
+          "hierarchy": ["chapter", "section"],
+          "bundle_discovery": "revisor_home"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "mo-revisor",
+          "role": "official_reviser",
+          "authority_class": "official",
+          "provider": "missouri_revisor_of_statutes",
+          "base_url": "https://revisor.mo.gov",
+          "entry_url": "https://revisor.mo.gov/main/Home.aspx",
+          "allowed_domains": ["revisor.mo.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "MS",
+      "name": "Mississippi",
+      "code_families": [
+        {
+          "code_family_id": "mississippi-code",
+          "display_name": "Mississippi Code",
+          "citation_prefix": "Miss. Code Ann.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "legislature_legislation_index"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ms-legislature",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "mississippi_legislature",
+          "base_url": "https://www.legislature.ms.gov",
+          "entry_url": "https://www.legislature.ms.gov/legislation/",
+          "allowed_domains": [
+            "www.legislature.ms.gov",
+            "legislature.ms.gov",
+            "billstatus.ls.state.ms.us",
+            "www.ls.state.ms.us"
+          ],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "Justia mirrors are secondary and cannot authorize admission"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "MT",
+      "name": "Montana",
+      "code_families": [
+        {
+          "code_family_id": "montana-code-annotated",
+          "display_name": "Montana Code Annotated",
+          "citation_prefix": "Mont. Code Ann.",
+          "hierarchy": ["title", "chapter", "part", "section"],
+          "bundle_discovery": "mca_html"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "mt-leg-mca",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "montana_legislature",
+          "base_url": "https://leg.mt.gov",
+          "entry_url": "https://leg.mt.gov/bills/mca/index.html",
+          "allowed_domains": ["leg.mt.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "NC",
+      "name": "North Carolina",
+      "code_families": [
+        {
+          "code_family_id": "north-carolina-general-statutes",
+          "display_name": "North Carolina General Statutes",
+          "citation_prefix": "N.C. Gen. Stat.",
+          "hierarchy": ["chapter", "article", "section"],
+          "bundle_discovery": "general_statutes_portal"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "nc-ncleg-gs",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "north_carolina_general_assembly",
+          "base_url": "https://www.ncleg.gov",
+          "entry_url": "https://www.ncleg.gov/Laws/GeneralStatutes",
+          "allowed_domains": ["www.ncleg.gov", "ncleg.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "ND",
+      "name": "North Dakota",
+      "code_families": [
+        {
+          "code_family_id": "north-dakota-century-code",
+          "display_name": "North Dakota Century Code",
+          "citation_prefix": "N.D. Cent. Code",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "html_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "nd-legis",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "north_dakota_legislative_branch",
+          "base_url": "https://www.legis.nd.gov",
+          "entry_url": "https://www.legis.nd.gov/general-information/north-dakota-century-code",
+          "allowed_domains": ["www.legis.nd.gov", "legis.nd.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "NE",
+      "name": "Nebraska",
+      "code_families": [
+        {
+          "code_family_id": "nebraska-revised-statutes",
+          "display_name": "Nebraska Revised Statutes",
+          "citation_prefix": "Neb. Rev. Stat.",
+          "hierarchy": ["chapter", "section"],
+          "bundle_discovery": "browse_statutes"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ne-legislature-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "nebraska_legislature",
+          "base_url": "https://nebraskalegislature.gov",
+          "entry_url": "https://nebraskalegislature.gov/laws/browse-statutes.php",
+          "allowed_domains": ["nebraskalegislature.gov", "www.nebraskalegislature.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "NH",
+      "name": "New Hampshire",
+      "code_families": [
+        {
+          "code_family_id": "new-hampshire-revised-statutes",
+          "display_name": "New Hampshire Revised Statutes Annotated",
+          "citation_prefix": "N.H. Rev. Stat. Ann.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "rsa_html_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "nh-gencourt-rsa",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "new_hampshire_general_court",
+          "base_url": "https://www.gencourt.state.nh.us",
+          "entry_url": "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
+          "allowed_domains": ["www.gencourt.state.nh.us", "gencourt.state.nh.us"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "NJ",
+      "name": "New Jersey",
+      "code_families": [
+        {
+          "code_family_id": "new-jersey-statutes",
+          "display_name": "New Jersey Statutes",
+          "citation_prefix": "N.J. Stat. Ann.",
+          "hierarchy": ["title", "section"],
+          "bundle_discovery": "lis_gateway"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "nj-lis-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "new_jersey_legislature",
+          "base_url": "https://www.njleg.state.nj.us",
+          "entry_url": "https://lis.njleg.state.nj.us/nxt/gateway.dll/statutes/1?f=templates&fn=default.htm&vid=Publish:10.1048/Enu",
+          "allowed_domains": ["www.njleg.state.nj.us", "njleg.state.nj.us", "lis.njleg.state.nj.us"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "NM",
+      "name": "New Mexico",
+      "code_families": [
+        {
+          "code_family_id": "new-mexico-statutes-annotated",
+          "display_name": "New Mexico Statutes Annotated",
+          "citation_prefix": "N.M. Stat. Ann.",
+          "hierarchy": ["chapter", "article", "section"],
+          "bundle_discovery": "nmonesource_compiler"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "nm-nmonesource",
+          "role": "official_code_publisher",
+          "authority_class": "official",
+          "provider": "new_mexico_compilation_commission",
+          "base_url": "https://nmonesource.com",
+          "entry_url": "https://nmonesource.com/nmos/nmsa/en/nav_date.do",
+          "allowed_domains": ["nmonesource.com", "www.nmonesource.com", "www.nmlegis.gov", "nmlegis.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "NMOneSource is the official Compilation Commission publication of NMSA"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "NV",
+      "name": "Nevada",
+      "code_families": [
+        {
+          "code_family_id": "nevada-revised-statutes",
+          "display_name": "Nevada Revised Statutes",
+          "citation_prefix": "Nev. Rev. Stat.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "nrs_chapter_html"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "nv-leg-nrs",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "nevada_legislature",
+          "base_url": "https://www.leg.state.nv.us",
+          "entry_url": "https://www.leg.state.nv.us/NRS/",
+          "allowed_domains": ["www.leg.state.nv.us", "leg.state.nv.us"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "NY",
+      "name": "New York",
+      "code_families": [
+        {
+          "code_family_id": "new-york-consolidated-laws",
+          "display_name": "New York Consolidated Laws",
+          "citation_prefix": "N.Y.",
+          "hierarchy": ["law", "article", "section"],
+          "bundle_discovery": "senate_legislation_laws"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ny-senate-laws",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "new_york_state_senate",
+          "base_url": "https://www.nysenate.gov",
+          "entry_url": "https://www.nysenate.gov/legislation/laws",
+          "allowed_domains": ["www.nysenate.gov", "nysenate.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "OH",
+      "name": "Ohio",
+      "code_families": [
+        {
+          "code_family_id": "ohio-revised-code",
+          "display_name": "Ohio Revised Code",
+          "citation_prefix": "Ohio Rev. Code",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "orc_html"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "oh-codes-orc",
+          "role": "official_code_publisher",
+          "authority_class": "official",
+          "provider": "ohio_legislative_service_commission",
+          "base_url": "https://codes.ohio.gov",
+          "entry_url": "https://codes.ohio.gov/ohio-revised-code",
+          "allowed_domains": ["codes.ohio.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "OK",
+      "name": "Oklahoma",
+      "code_families": [
+        {
+          "code_family_id": "oklahoma-statutes",
+          "display_name": "Oklahoma Statutes",
+          "citation_prefix": "Okla. Stat.",
+          "hierarchy": ["title", "section"],
+          "bundle_discovery": "oscn_deliver_document"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ok-oscn-statutes",
+          "role": "official_code_publisher",
+          "authority_class": "official",
+          "provider": "oklahoma_state_courts_network",
+          "base_url": "https://www.oscn.net",
+          "entry_url": "https://www.oscn.net/applications/oscn/index.asp?level=1&ftdb=STOKST",
+          "allowed_domains": ["www.oscn.net", "oscn.net", "www.oklegislature.gov", "oklegislature.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "OSCN publishes the official Oklahoma Statutes database"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "OR",
+      "name": "Oregon",
+      "code_families": [
+        {
+          "code_family_id": "oregon-revised-statutes",
+          "display_name": "Oregon Revised Statutes",
+          "citation_prefix": "Or. Rev. Stat.",
+          "hierarchy": ["volume", "chapter", "section"],
+          "bundle_discovery": "ors_chapter_html"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "or-legislature-ors",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "oregon_legislature",
+          "base_url": "https://www.oregonlegislature.gov",
+          "entry_url": "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx",
+          "allowed_domains": ["www.oregonlegislature.gov", "oregonlegislature.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "PA",
+      "name": "Pennsylvania",
+      "code_families": [
+        {
+          "code_family_id": "pennsylvania-consolidated-statutes",
+          "display_name": "Pennsylvania Consolidated Statutes",
+          "citation_prefix": "Pa. Cons. Stat.",
+          "hierarchy": ["title", "part", "chapter", "section"],
+          "bundle_discovery": "consolidated_statutes_portal"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "pa-palegis-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "pennsylvania_general_assembly",
+          "base_url": "https://www.palegis.us",
+          "entry_url": "https://www.palegis.us/statutes/consolidated",
+          "allowed_domains": ["www.palegis.us", "palegis.us", "www.legis.state.pa.us", "legis.state.pa.us"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "RI",
+      "name": "Rhode Island",
+      "code_families": [
+        {
+          "code_family_id": "rhode-island-general-laws",
+          "display_name": "Rhode Island General Laws",
+          "citation_prefix": "R.I. Gen. Laws",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "title_index_html"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ri-webserver-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "rhode_island_general_assembly",
+          "base_url": "https://webserver.rilegislature.gov",
+          "entry_url": "https://webserver.rilegislature.gov/Statutes/TITLE1/INDEX.HTM",
+          "allowed_domains": ["webserver.rilegislature.gov", "www.rilegislature.gov", "rilegislature.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "SC",
+      "name": "South Carolina",
+      "code_families": [
+        {
+          "code_family_id": "south-carolina-code-of-laws",
+          "display_name": "South Carolina Code of Laws",
+          "citation_prefix": "S.C. Code Ann.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "statute_master"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "sc-statehouse-code",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "south_carolina_legislature",
+          "base_url": "https://www.scstatehouse.gov",
+          "entry_url": "https://www.scstatehouse.gov/code/statmast.php",
+          "allowed_domains": ["www.scstatehouse.gov", "scstatehouse.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "SD",
+      "name": "South Dakota",
+      "code_families": [
+        {
+          "code_family_id": "south-dakota-codified-laws",
+          "display_name": "South Dakota Codified Laws",
+          "citation_prefix": "S.D. Codified Laws",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "html_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "sd-legislature",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "south_dakota_legislature",
+          "base_url": "https://sdlegislature.gov",
+          "entry_url": "https://sdlegislature.gov/Statutes",
+          "allowed_domains": ["sdlegislature.gov", "www.sdlegislature.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "TN",
+      "name": "Tennessee",
+      "code_families": [
+        {
+          "code_family_id": "tennessee-code-annotated",
+          "display_name": "Tennessee Code Annotated",
+          "citation_prefix": "Tenn. Code Ann.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "general_assembly_portal"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "tn-tga",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "tennessee_general_assembly",
+          "base_url": "https://www.tn.gov",
+          "entry_url": "https://www.tn.gov/tga",
+          "allowed_domains": ["www.tn.gov", "tn.gov", "www.capitol.tn.gov", "capitol.tn.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "Justia TCA mirrors are secondary and cannot authorize admission"
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "TX",
+      "name": "Texas",
+      "code_families": [
+        {
+          "code_family_id": "texas-statutes",
+          "display_name": "Texas Statutes",
+          "citation_prefix": "Tex.",
+          "hierarchy": ["code", "title", "chapter", "section"],
+          "bundle_discovery": "html_and_zip_bundle"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "tx-capitol-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "texas_legislature",
+          "base_url": "https://statutes.capitol.texas.gov",
+          "entry_url": "https://statutes.capitol.texas.gov/",
+          "allowed_domains": ["statutes.capitol.texas.gov", "tcss.legis.texas.gov"],
+          "discovery_mode": "mixed",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "UT",
+      "name": "Utah",
+      "code_families": [
+        {
+          "code_family_id": "utah-code",
+          "display_name": "Utah Code",
+          "citation_prefix": "Utah Code",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "html_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "ut-le-code",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "utah_state_legislature",
+          "base_url": "https://le.utah.gov",
+          "entry_url": "https://le.utah.gov/xcode/code.html",
+          "allowed_domains": ["le.utah.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "VA",
+      "name": "Virginia",
+      "code_families": [
+        {
+          "code_family_id": "code-of-virginia",
+          "display_name": "Code of Virginia",
+          "citation_prefix": "Va. Code Ann.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "lis_vacode"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "va-lis-code",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "virginia_legislative_information_system",
+          "base_url": "https://law.lis.virginia.gov",
+          "entry_url": "https://law.lis.virginia.gov/vacode/",
+          "allowed_domains": ["law.lis.virginia.gov", "lis.virginia.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "VT",
+      "name": "Vermont",
+      "code_families": [
+        {
+          "code_family_id": "vermont-statutes",
+          "display_name": "Vermont Statutes Annotated",
+          "citation_prefix": "Vt. Stat. Ann.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "html_toc"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "vt-legislature",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "vermont_general_assembly",
+          "base_url": "https://legislature.vermont.gov",
+          "entry_url": "https://legislature.vermont.gov/statutes/",
+          "allowed_domains": ["legislature.vermont.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "WA",
+      "name": "Washington",
+      "code_families": [
+        {
+          "code_family_id": "revised-code-of-washington",
+          "display_name": "Revised Code of Washington",
+          "citation_prefix": "Wash. Rev. Code",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "rcw_cite_index"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "wa-leg-rcw",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "washington_state_legislature",
+          "base_url": "https://app.leg.wa.gov",
+          "entry_url": "https://app.leg.wa.gov/RCW/",
+          "allowed_domains": ["app.leg.wa.gov", "leg.wa.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "WI",
+      "name": "Wisconsin",
+      "code_families": [
+        {
+          "code_family_id": "wisconsin-statutes",
+          "display_name": "Wisconsin Statutes",
+          "citation_prefix": "Wis. Stat.",
+          "hierarchy": ["chapter", "section"],
+          "bundle_discovery": "docs_statutes"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "wi-docs-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "wisconsin_legislature",
+          "base_url": "https://docs.legis.wisconsin.gov",
+          "entry_url": "https://docs.legis.wisconsin.gov/statutes/statutes",
+          "allowed_domains": ["docs.legis.wisconsin.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "WV",
+      "name": "West Virginia",
+      "code_families": [
+        {
+          "code_family_id": "west-virginia-code",
+          "display_name": "West Virginia Code",
+          "citation_prefix": "W. Va. Code",
+          "hierarchy": ["chapter", "article", "section"],
+          "bundle_discovery": "code_html"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "wv-code",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "west_virginia_legislature",
+          "base_url": "https://code.wvlegislature.gov",
+          "entry_url": "https://code.wvlegislature.gov/",
+          "allowed_domains": ["code.wvlegislature.gov"],
+          "discovery_mode": "hierarchy",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    },
+    {
+      "postal_code": "WY",
+      "name": "Wyoming",
+      "code_families": [
+        {
+          "code_family_id": "wyoming-statutes",
+          "display_name": "Wyoming Statutes",
+          "citation_prefix": "Wyo. Stat.",
+          "hierarchy": ["title", "chapter", "section"],
+          "bundle_discovery": "statutes_download"
+        }
+      ],
+      "acquisition_paths": [
+        {
+          "path_id": "wy-wyoleg-statutes",
+          "role": "official_legislature",
+          "authority_class": "official",
+          "provider": "wyoming_legislature",
+          "base_url": "https://www.wyoleg.gov",
+          "entry_url": "https://www.wyoleg.gov/stateStatutes/StatutesDownload",
+          "allowed_domains": ["www.wyoleg.gov", "wyoleg.gov"],
+          "discovery_mode": "bundle",
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+        }
+      ],
+      "domain_constraints": {"forbid_secondary_hosts": true},
+      "authority_exceptions": []
+    }
+  ]
+}
