@@ -9,7 +9,7 @@ import threading
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import inspect
 import time
-from typing import Callable, Dict, List, Optional, Any, Mapping
+from typing import Callable, Dict, List, Optional, Any, Mapping, Sequence
 from datetime import datetime, timezone
 import json
 import os
@@ -649,6 +649,45 @@ US_STATES = {
     "WI": "Wisconsin", "WY": "Wyoming", "DC": "District of Columbia"
 }
 
+CANONICAL_PRODUCTION_JURISDICTIONS = frozenset(US_STATES.keys())
+EXPECTED_PRODUCTION_JURISDICTION_COUNT = 51
+
+
+class SubsetReleaseError(ValueError):
+    """Raised when a production release path is asked to accept a subset corpus."""
+
+
+def reject_subset_release(
+    states: Sequence[str],
+    *,
+    context: str = "state_laws_scraper production release",
+) -> List[str]:
+    """Fail closed unless ``states`` is exactly the sealed 51-jurisdiction set.
+
+    A nonzero, error-free requested subset must never authorize a production
+    full-corpus release (LCR-007).
+    """
+    normalized: List[str] = []
+    seen = set()
+    for item in states:
+        code = str(item or "").strip().upper()
+        if not code or code in seen:
+            continue
+        normalized.append(code)
+        seen.add(code)
+    observed = set(normalized)
+    if observed != CANONICAL_PRODUCTION_JURISDICTIONS:
+        missing = sorted(CANONICAL_PRODUCTION_JURISDICTIONS - observed)
+        extra = sorted(observed - CANONICAL_PRODUCTION_JURISDICTIONS)
+        raise SubsetReleaseError(
+            f"subset release rejected for {context}: "
+            f"count={len(observed)} (expected {EXPECTED_PRODUCTION_JURISDICTION_COUNT}); "
+            f"missing={missing}; extra={extra}"
+        )
+    if "DC" not in observed:
+        raise SubsetReleaseError(f"subset release rejected for {context}: DC is required")
+    return normalized
+
 
 def _get_justia_state_slug(state_code: str) -> str:
     """Build the Justia state slug from canonical state name."""
@@ -1092,11 +1131,27 @@ async def scrape_state_laws(
         
         logger.info(f"Completed state laws scraping: {statutes_count} statutes in {elapsed_time:.2f}s using {scraper_info}")
         
+        coverage_summary = metadata.get("coverage_summary") or {}
+        requested_closed = bool(coverage_summary.get("full_coverage"))
+        full_corpus = bool(coverage_summary.get("full_corpus_coverage"))
+        # LCR-007: partial_success must never promote to production full-corpus success.
+        if errors or warnings or not requested_closed:
+            run_status = "partial_success"
+        elif full_corpus:
+            run_status = "success"
+        else:
+            # Requested subset closed cleanly — success for the request only,
+            # never a production full-corpus claim.
+            run_status = "success"
+            metadata["production_release_eligible"] = False
+            metadata["coverage_claim"] = "requested_scope_only"
+
         return {
-            "status": "success" if (not errors and not warnings) else "partial_success",
+            "status": run_status,
             "data": scraped_statutes,
             "metadata": metadata,
             "output_format": output_format,
+            "production_release_eligible": bool(full_corpus),
         }
         
     except Exception as e:
@@ -2152,10 +2207,19 @@ def _compute_coverage_summary(
     scraped_statutes: List[Dict[str, Any]],
     errors: List[str],
 ) -> Dict[str, Any]:
+    """Summarize scrape coverage for the *requested* state set.
+
+    LCR-007: a nonzero, error-free requested subset is **not** full-corpus
+    coverage. ``full_coverage`` means the requested scope closed without gaps;
+    ``full_corpus_coverage`` is true only for the exact 51-jurisdiction set
+    (50 states + DC) with no gaps. Partial success must never promote to a
+    production full-corpus claim.
+    """
     states_targeted = len(selected_states)
     present_states = set()
     zero_states: List[str] = []
     error_states: List[str] = []
+    selected_normalized = [str(code).upper() for code in selected_states]
 
     for block in scraped_statutes:
         if not isinstance(block, dict):
@@ -2171,8 +2235,17 @@ def _compute_coverage_summary(
         if block.get("error"):
             error_states.append(state_code)
 
-    missing_states = [code for code in selected_states if code not in present_states]
+    missing_states = [code for code in selected_normalized if code not in present_states]
     coverage_gap_states = sorted(set(zero_states + error_states + missing_states))
+    requested_closed = len(coverage_gap_states) == 0 and not errors
+
+    canonical_set = frozenset(US_STATES.keys())
+    selected_set = set(selected_normalized)
+    is_exact_51 = selected_set == canonical_set and len(selected_set) == len(US_STATES)
+    includes_dc = "DC" in selected_set
+    # Requested-scope success only — never imply production full-corpus coverage
+    # for a subset or a 50-state run without DC.
+    full_corpus_coverage = bool(requested_closed and is_exact_51 and includes_dc)
 
     return {
         "states_targeted": states_targeted,
@@ -2182,7 +2255,13 @@ def _compute_coverage_summary(
         "error_states": sorted(set(error_states)),
         "missing_states": missing_states,
         "coverage_gap_states": coverage_gap_states,
-        "full_coverage": len(coverage_gap_states) == 0 and not errors,
+        # Backward-compatible: full_coverage == requested scope closed.
+        "full_coverage": requested_closed,
+        "coverage_scope": "full_corpus" if is_exact_51 else "requested_scope",
+        "full_corpus_coverage": full_corpus_coverage,
+        "exact_51_jurisdiction_set": is_exact_51,
+        "includes_dc": includes_dc,
+        "production_release_eligible": full_corpus_coverage,
     }
 
 
