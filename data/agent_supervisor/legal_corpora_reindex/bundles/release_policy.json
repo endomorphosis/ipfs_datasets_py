@@ -1,0 +1,98 @@
+{
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-release-policy@1",
+  "dataset_repo_ids": [
+    "justicedao/ipfs_state_laws",
+    "justicedao/ipfs_federal_register"
+  ],
+  "baseline_revisions": {
+    "justicedao/ipfs_state_laws": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+    "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa"
+  },
+  "release_mode": "additive",
+  "jurisdiction_contract": {
+    "required_count": 51,
+    "required_codes": [
+      "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+      "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+      "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+      "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+      "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+      "DC"
+    ],
+    "extra_codes_allowed": false,
+    "official_source_receipt_required_per_jurisdiction": true,
+    "closed_frontier_required_per_jurisdiction": true,
+    "aggregate_and_per_jurisdiction_reconciliation_required": true,
+    "failed_final_source_units_allowed_for_publication": false
+  },
+  "federal_register_contract": {
+    "official_inventory_source": "FederalRegister.gov API",
+    "official_full_text_sources": ["FederalRegister.gov", "GovInfo"],
+    "immutable_utc_observation_cutoff_required": true,
+    "nonoverlapping_date_partition_and_page_closure_required": true,
+    "official_total_and_unique_document_number_reconciliation_required": true,
+    "typed_body_text_disposition_required_per_document": true,
+    "metadata_or_abstract_may_claim_full_text": false,
+    "failed_final_documents_allowed_for_publication": false,
+    "legacy_delta_start_inclusive": "2026-03-03"
+  },
+  "maximum_rows_per_physical_shard": 4096,
+  "maximum_posting_pointers_per_row": 4096,
+  "maximum_adjacency_pointers_per_row": 4096,
+  "maximum_rows_per_vector_centroid": 8192,
+  "maximum_vector_shards_per_centroid": 2,
+  "default_candidate_centroids_subject_to_evaluation": 4,
+  "sparse_route": "lexicographic_bm25_term_ranges",
+  "dense_route": "normalized_embedding_centroids",
+  "lexical_graph_default": "virtual_term_document_edges_plus_bounded_bm25_neighbors",
+  "required_semantic_families": [
+    "corpus",
+    "bm25_documents",
+    "bm25_postings",
+    "vectors",
+    "vector_centroid_routes",
+    "graph_nodes",
+    "graph_edges",
+    "graph_adjacency_out",
+    "graph_adjacency_in",
+    "locators",
+    "recovery_quarantine"
+  ],
+  "lineage_layout": "normalized_deduplicated_bounded_shards",
+  "streaming_checkpointed_build_required": true,
+  "immutable_hub_revision_required_for_query": true,
+  "descriptor_verification_required_before_parse": true,
+  "legacy_artifact_deletion_allowed": false,
+  "legacy_viewer_compatibility_required": true,
+  "recovery_records_allowed_in_default_config": false,
+  "publication_authorization": {
+    "status": "recorded",
+    "recorded_on": "2026-08-10",
+    "authorized_dataset_repo_ids": [
+      "justicedao/ipfs_state_laws",
+      "justicedao/ipfs_federal_register"
+    ],
+    "authorized_operations": [
+      "additive_staging_upload",
+      "additive_main_upload"
+    ],
+    "manifest_bound_prepublication_seal_required": true,
+    "additional_human_approval_required": false,
+    "alternate_dataset_targets_allowed": false,
+    "deletion_allowed": false,
+    "force_push_allowed": false,
+    "history_rewrite_allowed": false,
+    "visibility_change_allowed": false
+  },
+  "live_publication": {
+    "authorized_supervisor_allowed": true,
+    "human_seal_required": false,
+    "manifest_bound_prepublication_seal_required": true,
+    "staging_target_must_be_explicit": true,
+    "staging_redownload_canary_required": true,
+    "staging_and_main_manifest_identity_required": true,
+    "public_immutable_redownload_canary_required": true,
+    "rollback_rehearsal_required": true,
+    "previous_public_pin_must_be_preserved": true
+  }
+}
