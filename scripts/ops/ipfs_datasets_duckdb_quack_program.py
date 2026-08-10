@@ -13471,11 +13471,11 @@ def _validate_manual_gate_cas_receipt(
                 else:
                     release_error = "manual-gate lifecycle has not reached RELEASED"
             if not released_ok:
-                # Crash recovery: the DQK-056 gitlink pin can complete (and the
-                # CAS event can be durable) while the local journal is still
-                # mid-flight.  Admit the gate when the effect commit and pin are
-                # already first-parent history of HEAD.
-                if not _release_gate_durable_effect_is_applied(
+                # Crash recovery: the DQK-056 gitlink pin (or DQK-103 activation
+                # effect commit) can complete while the local journal is still
+                # mid-flight.  Admit the gate when the durable effect is already
+                # first-parent history of HEAD.
+                if not _manual_gate_durable_effect_is_applied(
                     task_id=task_id,
                     effect_receipt=effect_receipt,
                 ):
@@ -13483,6 +13483,33 @@ def _validate_manual_gate_cas_receipt(
         return True, f"authenticated_execution={execution['execution_id']}"
     except (KeyError, TypeError, ValueError, RuntimeError) as exc:
         return False, f"{type(exc).__name__}: {exc}"
+
+
+def _manual_gate_durable_effect_is_applied(
+    *,
+    task_id: str,
+    effect_receipt: Mapping[str, Any],
+) -> bool:
+    """Return True when a completed gate's durable effect is on the target branch."""
+
+    if task_id == RUNTIME_ACTIVATION_GATE_TASK_ID and isinstance(
+        effect_receipt, Mapping
+    ):
+        effect_commit = str(effect_receipt.get("effect_commit") or "").strip().lower()
+        if re.fullmatch(r"[0-9a-f]{40}", effect_commit) is None:
+            return False
+        ancestry = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", effect_commit, "HEAD"],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        return ancestry.returncode == 0
+    return _release_gate_durable_effect_is_applied(
+        task_id=task_id,
+        effect_receipt=effect_receipt,
+    )
 
 
 def _release_gate_durable_effect_is_applied(
@@ -13521,19 +13548,21 @@ def _archive_completed_release_gate_journal_if_durable(
     journal: Mapping[str, Any],
     path: Path,
 ) -> bool:
-    """Archive a mid-flight DQK-056 journal once its pin is durable on HEAD.
+    """Archive a mid-flight gate journal once its durable effect is on HEAD.
 
     Returns True when the journal was archived and should no longer block launch.
+    Covers DQK-056 (gitlink pin) and DQK-103 (runtime-activation effect commit).
     """
 
-    if str(journal.get("gate_task_id") or "") != RELEASE_GATE_TASK_ID:
+    gate_task_id = str(journal.get("gate_task_id") or "")
+    if gate_task_id not in {RELEASE_GATE_TASK_ID, RUNTIME_ACTIVATION_GATE_TASK_ID}:
         return False
     if str(journal.get("phase") or "") == "RELEASED":
         return False
     source = _source(require=False)
     if source is None:
         return False
-    gate = source.get_task(RELEASE_GATE_TASK_ID)
+    gate = source.get_task(gate_task_id)
     if gate is None or str(gate.status) != "completed":
         return False
     try:
@@ -13545,8 +13574,8 @@ def _archive_completed_release_gate_journal_if_durable(
     effect = receipt.get("effect_receipt")
     if not isinstance(effect, Mapping):
         return False
-    if not _release_gate_durable_effect_is_applied(
-        task_id=RELEASE_GATE_TASK_ID,
+    if not _manual_gate_durable_effect_is_applied(
+        task_id=gate_task_id,
         effect_receipt=effect,
     ):
         return False
