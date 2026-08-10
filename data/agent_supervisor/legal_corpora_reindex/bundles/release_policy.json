@@ -95,57 +95,168 @@
     "rollback_rehearsal_required": true,
     "previous_public_pin_must_be_preserved": true
   },
-  "prepublication_evidence_contract": {
-    "required_task_ids": [
-      "LCR-070",
-      "LCR-071",
-      "LCR-072",
+    "prepublication_evidence_contract": {
+        "evidence_registry_task_ids": [
+            "LCR-070",
+            "LCR-071",
+            "LCR-072",
       "LCR-073",
       "LCR-074",
-      "LCR-075",
-      "LCR-076"
-    ],
-    "required_receipts": [
-      "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
-      "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
+            "LCR-075",
+            "LCR-076"
+        ],
+        "evidence_registry_receipts": [
+            "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
+            "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
       "docs/reports/legal_corpora_reindex/state_prepublication_seal.json",
-      "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
-      "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json"
-    ],
-    "applies_to_dataset_repo_ids": [
-      "justicedao/ipfs_state_laws",
-      "justicedao/ipfs_federal_register"
+            "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
+            "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json"
+        ],
+        "registry_fields_are_non_authorizing": true,
+        "applies_to_dataset_repo_ids": [
+            "justicedao/ipfs_state_laws",
+            "justicedao/ipfs_federal_register"
     ],
     "fixture_only_evidence_allowed": false,
     "authenticated_live_hub_snapshot_required": true,
     "local_salvage_inventory_required": true,
     "receipt_content_digests_required": true,
-    "publication_gate_module": "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate",
-    "required_before_state_staging_task_ids": [
-      "LCR-070",
-      "LCR-074"
-    ],
-    "required_before_state_main_task_ids": [
-      "LCR-070",
-      "LCR-072",
-      "LCR-074"
-    ],
-    "required_before_federal_staging_task_ids": [
-      "LCR-070",
-      "LCR-071",
-      "LCR-074",
-      "LCR-075",
-      "LCR-076"
-    ],
-    "required_before_federal_main_task_ids": [
-      "LCR-070",
-      "LCR-071",
-      "LCR-073",
-      "LCR-074",
-      "LCR-075",
-      "LCR-076"
-    ],
-    "uploader_must_invoke_gate_before_first_network_mutation": true,
-    "prepublication_seal_must_precede_main_mutation": true
-  }
+        "publication_gate_module": "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate",
+        "required_task_ancestor_closure_must_be_completed": true,
+        "phase_requirements": {
+            "state_staging": {
+                "dataset_repo_id": "justicedao/ipfs_state_laws",
+                "authorized_operation": "additive_staging_upload",
+                "required_task_ids": [
+                    "LCR-039",
+                    "LCR-070",
+                    "LCR-074"
+                ],
+                "required_receipts": [
+                    "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
+                    "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
+                    "docs/reports/legal_corpora_reindex/local_e2e.json",
+                    "docs/reports/legal_corpora_reindex/release_candidate.json"
+                ],
+                "prepublication_seal_required": false,
+                "generated_work_goal_roots": [
+                    "LCR-G010",
+                    "LCR-G020",
+                    "LCR-G030",
+                    "LCR-G040",
+                    "LCR-G050",
+                    "LCR-G060",
+                    "LCR-G070",
+                    "LCR-G080"
+                ]
+            },
+            "state_main": {
+                "dataset_repo_id": "justicedao/ipfs_state_laws",
+                "authorized_operation": "additive_main_upload",
+                "required_task_ids": [
+                    "LCR-041",
+                    "LCR-070",
+                    "LCR-072",
+                    "LCR-074"
+                ],
+                "required_receipts": [
+                    "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
+                    "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
+                    "docs/reports/legal_corpora_reindex/local_e2e.json",
+                    "docs/reports/legal_corpora_reindex/release_candidate.json",
+                    "docs/reports/legal_corpora_reindex/staging_upload.json",
+                    "docs/reports/legal_corpora_reindex/staging_canary.json",
+                    "docs/reports/legal_corpora_reindex/state_prepublication_seal.json"
+                ],
+                "prepublication_seal_required": true,
+                "generated_work_goal_roots": [
+                    "LCR-G010",
+                    "LCR-G020",
+                    "LCR-G030",
+                    "LCR-G040",
+                    "LCR-G050",
+                    "LCR-G060",
+                    "LCR-G070",
+                    "LCR-G080"
+                ]
+            },
+            "federal_staging": {
+                "dataset_repo_id": "justicedao/ipfs_federal_register",
+                "authorized_operation": "additive_staging_upload",
+                "required_task_ids": [
+                    "LCR-063",
+                    "LCR-070",
+                    "LCR-071",
+                    "LCR-074",
+                    "LCR-075",
+                    "LCR-076"
+                ],
+                "required_receipts": [
+                    "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
+                    "docs/reports/legal_corpora_reindex/federal_inventory.json",
+                    "docs/reports/legal_corpora_reindex/federal_fulltext_coverage.json",
+                    "docs/reports/legal_corpora_reindex/federal_candidate.json",
+                    "docs/reports/legal_corpora_reindex/federal_evaluation.json",
+                    "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
+                    "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json"
+                ],
+                "prepublication_seal_required": false,
+                "generated_work_goal_roots": [
+                    "LCR-G010",
+                    "LCR-G080",
+                    "LCR-G100",
+                    "LCR-G110",
+                    "LCR-G120",
+                    "LCR-G130"
+                ]
+            },
+            "federal_main": {
+                "dataset_repo_id": "justicedao/ipfs_federal_register",
+                "authorized_operation": "additive_main_upload",
+                "required_task_ids": [
+                    "LCR-064",
+                    "LCR-070",
+                    "LCR-071",
+                    "LCR-073",
+                    "LCR-074",
+                    "LCR-075",
+                    "LCR-076"
+                ],
+                "required_receipts": [
+                    "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
+                    "docs/reports/legal_corpora_reindex/federal_inventory.json",
+                    "docs/reports/legal_corpora_reindex/federal_fulltext_coverage.json",
+                    "docs/reports/legal_corpora_reindex/federal_candidate.json",
+                    "docs/reports/legal_corpora_reindex/federal_evaluation.json",
+                    "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
+                    "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
+                    "docs/reports/legal_corpora_reindex/federal_staging_canary.json",
+                    "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json"
+                ],
+                "prepublication_seal_required": true,
+                "generated_work_goal_roots": [
+                    "LCR-G010",
+                    "LCR-G080",
+                    "LCR-G100",
+                    "LCR-G110",
+                    "LCR-G120",
+                    "LCR-G130",
+                    "LCR-G140"
+                ]
+            }
+        },
+        "generated_work_guard": {
+            "task_number_floor": 77,
+            "terminal_statuses": [
+                "completed"
+            ],
+            "scope_rule": "task_goal_parent_lineage_intersects_phase_goal_roots",
+            "deny_nonterminal_matching_generated_work": true,
+            "unscoped_or_unknown_goal_lineage_denies_every_phase": true,
+            "review_only_or_unschedulable_exemption_allowed": false
+        },
+        "uploader_must_invoke_gate_before_first_network_mutation": true,
+        "prepublication_seal_must_precede_main_mutation": true,
+        "prepublication_seal_is_not_required_for_staging": true
+    }
 }

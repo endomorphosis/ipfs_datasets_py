@@ -147,6 +147,13 @@ def test_refill_goal_and_task_are_admitted_and_projection_is_recomputed(
     assert "LCR-077" in report["current_projection"]["continuation_task_ids"]
     assert "LCR-G141" in report["current_projection"]["continuation_goal_ids"]
     assert "LCR-077" in report["current_projection"]["ready_task_ids"]
+    blockers = report["current_projection"][
+        "publication_blocking_generated_task_ids_by_phase"
+    ]
+    assert "LCR-077" in blockers["state_staging"]
+    assert "LCR-077" in blockers["state_main"]
+    assert "LCR-077" not in blockers["federal_staging"]
+    assert "LCR-077" not in blockers["federal_main"]
     assert report["sealed_initial_projection"]["ready_task_ids"] == [
         "LCR-001",
         "LCR-002",
@@ -172,6 +179,28 @@ def test_native_refill_semantic_lane_and_optional_metadata_are_admitted(tmp_path
     assert "LCR-077" in report["current_projection"]["continuation_task_ids"]
 
 
+def test_shared_publication_gate_refill_blocks_every_mutation_phase(
+    tmp_path: Path,
+) -> None:
+    root = _copy_control_plane(tmp_path / "repo")
+    _append_valid_refill(root)
+    objectives = root / "docs/architecture/legal_corpora_reindex.objectives.md"
+    objectives.write_text(
+        objectives.read_text(encoding="utf-8").replace(
+            "- Parent: LCR-G024\n- Fib priority: 2\n- Track: acquisition-repair",
+            "- Parent: LCR-G080\n- Fib priority: 2\n- Track: acquisition-repair",
+        ),
+        encoding="utf-8",
+    )
+
+    result, report = _run_validator(root)
+    assert result.returncode == 0, report
+    blockers = report["current_projection"][
+        "publication_blocking_generated_task_ids_by_phase"
+    ]
+    assert all("LCR-077" in task_ids for task_ids in blockers.values())
+
+
 def test_cohort_partition_and_refill_policy_drift_are_rejected(tmp_path: Path) -> None:
     root = _copy_control_plane(tmp_path / "repo")
     taskboard = root / "docs/architecture/legal_corpora_reindex.todo.md"
@@ -195,3 +224,69 @@ def test_cohort_partition_and_refill_policy_drift_are_rejected(tmp_path: Path) -
     assert any("cohort M must be ['WI', 'WY', 'DC']" in error for error in report["errors"])
     assert any("objective_refill_enabled must be true" in error for error in report["errors"])
     assert any("generated_task_number_floor must be 70" in error for error in report["errors"])
+
+
+def test_controlled_reseal_task_contract_drift_is_rejected(tmp_path: Path) -> None:
+    root = _copy_control_plane(tmp_path / "repo")
+    taskboard = root / "docs/architecture/legal_corpora_reindex.todo.md"
+    text = taskboard.read_text(encoding="utf-8")
+    text = text.replace(
+        "## LCR-071 Run the complete live Federal Register production pipeline end to end",
+        "## LCR-071 Run a weakened Federal Register sample",
+    )
+    text = text.replace(
+        "- Depends on: LCR-060, LCR-062, LCR-063, LCR-070, LCR-075, LCR-076",
+        "- Depends on: LCR-060",
+    )
+    text = text.replace(
+        "scripts/ops/legal_data/run_federal_register_full_release_acceptance.py, tests/integration/legal_data/test_federal_register_full_release_acceptance.py, docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
+        "docs/reports/legal_corpora_reindex/weakened.json",
+    )
+    text = text.replace(
+        "- Acceptance: No fixture-only, sampled, capped, metadata-as-body, future-dated, failed-final, stale-success, or partial-checkpoint path can satisfy the receipt; it binds actual cutoff/observation times, official totals, unique document numbers, per-source attempt exhaustion, full-text dispositions, model/revision, family/key parity, resource usage, artifact digests, and successful local queries before any Federal staging mutation.",
+        "- Acceptance: A sample exists.",
+    )
+    taskboard.write_text(text, encoding="utf-8")
+
+    result, report = _run_validator(root)
+    assert result.returncode == 1
+    assert any("LCR-071: controlled-reseal title mismatch" in error for error in report["errors"])
+    assert any(
+        "LCR-071: controlled-reseal dependency contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
+        "LCR-071: controlled-reseal output contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
+        "LCR-071: controlled-reseal acceptance contract changed" in error
+        for error in report["errors"]
+    )
+
+
+def test_phase_gate_and_dynamic_generated_work_guard_drift_are_rejected(
+    tmp_path: Path,
+) -> None:
+    root = _copy_control_plane(tmp_path / "repo")
+    policy_path = (
+        root
+        / "data/agent_supervisor/legal_corpora_reindex/bundles/release_policy.json"
+    )
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    contract = policy["prepublication_evidence_contract"]
+    contract["phase_requirements"]["state_staging"][
+        "prepublication_seal_required"
+    ] = True
+    contract["phase_requirements"]["state_staging"]["required_task_ids"].remove(
+        "LCR-039"
+    )
+    contract["generated_work_guard"][
+        "deny_nonterminal_matching_generated_work"
+    ] = False
+    policy_path.write_text(json.dumps(policy, indent=2) + "\n", encoding="utf-8")
+
+    result, report = _run_validator(root)
+    assert result.returncode == 1
+    assert any("phase_requirements" in error for error in report["errors"])
+    assert any("generated_work_guard" in error for error in report["errors"])
