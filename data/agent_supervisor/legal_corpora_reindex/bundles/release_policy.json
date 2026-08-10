@@ -94,5 +94,21 @@
     "public_immutable_redownload_canary_required": true,
     "rollback_rehearsal_required": true,
     "previous_public_pin_must_be_preserved": true
+  },
+  "prepublication_evidence_contract": {
+    "required_task_ids": [
+      "LCR-070"
+    ],
+    "required_receipts": [
+      "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json"
+    ],
+    "applies_to_dataset_repo_ids": [
+      "justicedao/ipfs_state_laws",
+      "justicedao/ipfs_federal_register"
+    ],
+    "fixture_only_evidence_allowed": false,
+    "authenticated_live_hub_snapshot_required": true,
+    "local_salvage_inventory_required": true,
+    "receipt_content_digests_required": true
   }
 }
