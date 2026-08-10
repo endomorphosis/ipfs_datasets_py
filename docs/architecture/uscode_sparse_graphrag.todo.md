@@ -878,7 +878,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Both component and fused baselines are reported, chosen defaults are declared, regressions/exceptions are explicit, reference hardware/network are recorded, and no unsupported production claim is made.
 
 ## USCIR-036 Implement the pinned staged-remote canary and viewer checks
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
