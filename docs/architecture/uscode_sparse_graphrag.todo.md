@@ -782,7 +782,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Default config excludes recovery JSON, all advertised configs are schema coherent, every artifact is descriptor-bound, verbose lineage is separate from control plane, and legacy files are not deleted.
 
 ## USCIR-032 Implement safe candidate staging and dry-run packaging
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
