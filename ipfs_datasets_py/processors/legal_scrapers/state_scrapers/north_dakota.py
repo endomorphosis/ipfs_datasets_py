@@ -70,17 +70,27 @@ class NorthDakotaScraper(BaseStateScraper):
 
         best: List[NormalizedStatute] = []
         seen = set()
-        return_threshold = self._bounded_return_threshold(160)
+        # Full-corpus uses a large practical ceiling so PDF discovery is not
+        # silently truncated to the historical sample default of 160.
+        # Bounded probes honor max_statutes / STATE_SCRAPER_MAX_STATUTES.
         if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+            return_threshold = max(1, int(max_statutes))
+            unbounded = False
+        elif self._full_corpus_enabled():
+            return_threshold = 1000000
+            unbounded = True
+        else:
+            return_threshold = self._bounded_return_threshold(160)
+            unbounded = False
 
         official_pdf_statutes = await self._scrape_official_index_pdfs(
             code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=None if unbounded else max(10, return_threshold),
         )
         if official_pdf_statutes:
-            return official_pdf_statutes[:return_threshold]
+            return official_pdf_statutes if unbounded else official_pdf_statutes[:return_threshold]
 
+        # Seed PDFs are for bounded probes only — never sole full-corpus path.
         if not self._full_corpus_enabled():
             direct_pdf_statutes = await self._scrape_seed_cencode_pdfs(code_name, max_statutes=return_threshold)
             if direct_pdf_statutes:
@@ -94,26 +104,36 @@ class NorthDakotaScraper(BaseStateScraper):
             statutes = self._filter_non_code_results(statutes)
             if len(statutes) > len(best):
                 best = statutes
-            if len(best) >= return_threshold:
+            if not unbounded and len(best) >= return_threshold:
                 return best
 
-        if len(best) >= return_threshold:
+        if not unbounded and len(best) >= return_threshold:
             return best
 
-        pdf_statutes = await self._scrape_cencode_pdfs(code_name, max_statutes=max(10, return_threshold))
+        pdf_statutes = await self._scrape_cencode_pdfs(
+            code_name,
+            max_statutes=None if unbounded else max(10, return_threshold),
+        )
         if pdf_statutes:
             return pdf_statutes
         return best
 
-    async def _scrape_official_index_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
-        discovered = await self._discover_official_cencode_pdfs(limit=max(200, max_statutes * 6))
+    async def _scrape_official_index_pdfs(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        # Full-corpus discovery should not be capped at a small sample of PDFs.
+        discovery_limit = 100000 if limit is None else max(200, int(limit) * 6)
+        discovered = await self._discover_official_cencode_pdfs(limit=discovery_limit)
         if not discovered:
             return []
 
         statutes: List[NormalizedStatute] = []
         seen = set()
         for pdf_url in discovered:
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
             base_pdf_url = pdf_url.split("#", 1)[0]
             if base_pdf_url in seen:
@@ -182,18 +202,25 @@ class NorthDakotaScraper(BaseStateScraper):
             )
         return out
 
-    async def _scrape_cencode_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_cencode_pdfs(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Discover and emit Century Code chapter PDF links from legislative homepage."""
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        discovery_limit = 100000 if limit is None else max(600, int(limit) * 6)
+
         statutes: List[NormalizedStatute] = []
         seen = set()
         candidate_links = []
 
-        official_modern_links = await self._discover_official_cencode_pdfs(limit=max(600, max_statutes * 6))
+        official_modern_links = await self._discover_official_cencode_pdfs(limit=discovery_limit)
         candidate_links.extend(official_modern_links)
 
         for homepage in [f"{self.get_base_url()}/cencode/", "https://www.ndlegis.gov/cencode/", f"{self.get_base_url()}/"]:
@@ -209,11 +236,11 @@ class NorthDakotaScraper(BaseStateScraper):
                 if href:
                     candidate_links.append(urljoin(homepage, href))
 
-        discovered = await self._discover_archived_cencode_pdfs(limit=max(600, max_statutes * 6))
+        discovered = await self._discover_archived_cencode_pdfs(limit=discovery_limit)
         candidate_links.extend(discovered)
 
         for href in candidate_links:
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
             if not href:
                 continue

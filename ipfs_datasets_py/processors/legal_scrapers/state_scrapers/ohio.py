@@ -50,20 +50,22 @@ class OhioScraper(BaseStateScraper):
                 seen_keys.add(key)
                 merged.append(row)
 
+        # Seed/direct recovery is for bounded probes only — never sole full-corpus path.
         if not self._full_corpus_enabled() or max_statutes is not None:
-            direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
+            direct_limit = limit if limit is not None else 160
+            direct = await self._scrape_direct_sections(code_name, max_statutes=direct_limit)
             if direct:
                 _merge(direct)
 
         official = await self._scrape_official_title_chapter_section_tree(
             code_name,
-            max_statutes=max(10, int(limit or 10)),
+            max_statutes=limit,
         )
         if official:
-            return official[: int(limit or len(official))]
+            return official if limit is None else official[: int(limit)]
 
         if merged:
-            return merged[: int(limit or len(merged))]
+            return merged if limit is None else merged[: int(limit)]
         max_sections = limit if limit is not None else 1000000
         return await self._generic_scrape(
             code_name,
@@ -75,12 +77,14 @@ class OhioScraper(BaseStateScraper):
     async def _scrape_official_title_chapter_section_tree(
         self,
         code_name: str,
-        max_statutes: int,
+        max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
 
         root_payload = await self._fetch_page_content_with_archival_fallback(
             f"{self.get_base_url()}/ohio-revised-code",
@@ -104,9 +108,10 @@ class OhioScraper(BaseStateScraper):
 
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
-        max_section_links = max_statutes * 5
+        # Bound section-link exploration when sampling; unbounded in full-corpus mode.
+        max_section_links = (limit * 5) if limit is not None else None
         for title_url in title_urls:
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
             title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=20)
             if not title_payload:
@@ -125,7 +130,9 @@ class OhioScraper(BaseStateScraper):
                 chapter_urls.append(abs_url)
 
             for chapter_url in chapter_urls:
-                if len(statutes) >= max_statutes or len(seen_sections) >= max_section_links:
+                if limit is not None and len(statutes) >= limit:
+                    break
+                if max_section_links is not None and len(seen_sections) >= max_section_links:
                     break
                 chapter_payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
                 if not chapter_payload:
@@ -142,7 +149,7 @@ class OhioScraper(BaseStateScraper):
                     statute = await self._build_official_section_statute(code_name, abs_url)
                     if statute is not None:
                         statutes.append(statute)
-                        if len(statutes) >= max_statutes:
+                        if limit is not None and len(statutes) >= limit:
                             break
         return statutes
 
