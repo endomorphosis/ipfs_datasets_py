@@ -349,6 +349,15 @@ CONTROLLED_RESEAL_TASK_CONTRACTS = {
         "a3a921dc779a755f6306cb939b2a155837e171b45bbedd22dfde45da6e1cf8e3",
         "monitored-safety-gap-refill",
     ),
+    "LCR-082": _controlled_reseal_task_contract(
+        "Harden source-rights identity, access, operation, and freshness gates",
+        "LCR-G144",
+        "LCR-077",
+        "ipfs_datasets_py/processors/legal_data/legal_source_rights_policy.py, scripts/ops/legal_data/audit_legal_source_rights.py, data/legal/spdx_license_registry.json, data/legal/legal_source_rights_catalog.schema.json, tests/fixtures/legal_ir/legal_source_rights_catalog.json, tests/unit/processors/legal_data/test_legal_source_rights_policy.py, tests/unit/processors/legal_data/test_legal_source_rights_policy_fail_closed.py",
+        "python -m pytest tests/unit/processors/legal_data/test_legal_source_rights_policy.py tests/unit/processors/legal_data/test_legal_source_rights_policy_fail_closed.py -q; python scripts/ops/legal_data/audit_legal_source_rights.py --fixture-only --check",
+        "6f06aeb495b416e27db0c4991f6a3d1e103eaf8279209f064a8b5f507b1b2366",
+        "monitored-live-evidence-audit-hardening",
+    ),
     "LCR-084": _controlled_reseal_task_contract(
         "Invalidate synthetic state-scrape success and reseal exact-51 candidate evidence",
         "LCR-G146",
@@ -367,6 +376,11 @@ CONTROLLED_RESEAL_TASK_CONTRACTS = {
         "abf29ad68f4aa92815e15e1df8ec977d0ae2f3fa8ebfae3831deb6f83e085577",
         "monitored-federal-fulltext-fail-closed-repair",
     ),
+}
+
+CONTROLLED_RESEAL_TASK_EFFECTS_SHA256 = {
+    "LCR-082": "4b702a182ba8074cfdec1118c363f2dc0618e0df8eb38e1b07eb5ed15eeae3e9",
+    "LCR-085": "3e0b718495a9041af9ce2e13714f8f1a4806ba7e7eddb186b4c7df782c2ddbbf",
 }
 
 PHASE_GENERATED_WORK_GOAL_ROOTS = {
@@ -453,6 +467,12 @@ CONTROLLED_RESEAL_GOAL_CONTRACTS = {
         "",
         "LCR-077",
     ),
+    "LCR-G144": _goal_contract(
+        "Make source-rights admission evaluator-complete and time-trusted",
+        "LCR-G010",
+        "LCR-G141",
+        "LCR-082",
+    ),
     "LCR-G146": _goal_contract(
         "Prove exact-51 live state-scrape completeness is candidate-bound",
         "LCR-G080",
@@ -468,6 +488,11 @@ CONTROLLED_RESEAL_GOAL_CONTRACTS = {
 }
 
 CONTROLLED_RESEAL_GOAL_OUTPUT_CONTRACTS = {
+    "LCR-G144": tuple(
+        item.strip()
+        for item in "data/legal/spdx_license_registry.json, data/legal/legal_source_rights_catalog.schema.json, tests/fixtures/legal_ir/legal_source_rights_catalog.json".split(",")
+        if item.strip()
+    ),
     "LCR-G146": tuple(
         item.strip()
         for item in "data/legal/state_laws_full_scrape_acceptance.schema.json, docs/reports/legal_corpora_reindex/full_scrape_acceptance.json, docs/reports/legal_corpora_reindex/release_candidate.json, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_runtime.py, ipfs_datasets_py/huggingface/protected_repo_guard.py, scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py, data/legal/legal_corpora_hugging_face_mutation_path_audit.schema.json, docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json".split(",")
@@ -481,11 +506,13 @@ CONTROLLED_RESEAL_GOAL_OUTPUT_CONTRACTS = {
 }
 
 CONTROLLED_RESEAL_GOAL_VALIDATION_CONTRACTS = {
+    "LCR-G144": "python -m pytest tests/unit/processors/legal_data/test_legal_source_rights_policy.py tests/unit/processors/legal_data/test_legal_source_rights_policy_fail_closed.py -q; python scripts/ops/legal_data/audit_legal_source_rights.py --fixture-only --check",
     "LCR-G146": "python -m pytest tests/unit/scripts/test_audit_state_laws_full_scrape_acceptance.py tests/integration/legal_data/test_state_laws_full_scrape_acceptance_fail_closed.py tests/unit/scripts/test_build_state_laws_hf_release.py tests/unit/processors/legal_data/test_state_laws_release_schema.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py tests/unit/processors/legal_data/test_legal_corpora_protected_repo_mutations.py tests/unit/scripts/test_audit_legal_corpora_hugging_face_mutation_paths.py tests/unit/legal_scrapers/test_refresh_state_laws_corpus.py tests/unit/legal_scrapers/test_legal_source_recovery.py tests/unit/legal_scrapers/test_legal_source_recovery_promotion.py tests/unit/legal_scrapers/test_justicedao_dataset_inventory.py tests/unit/legal_scrapers/test_legal_scraper_daemon.py tests/unit/legal_scrapers/test_merge_state_admin_recovered_rows.py tests/mcp/unit/test_hf_pipeline_engine.py tests/unit/huggingface/test_generic_publisher.py tests/unit/logic/security_ir/cvefixes/test_publish_command.py tests/unit/test_netherlands_laws_pipeline.py tests/unit/processors/patent/test_hf_release_v2.py -q; python scripts/ops/legal_data/audit_state_laws_full_scrape_acceptance.py --require-live-official --require-jurisdictions 51 --require-production-candidate --check; python scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py --protected-repo justicedao/ipfs_state_laws --protected-repo justicedao/ipfs_federal_register --require-runtime ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime --check",
     "LCR-G147": "python -m pytest tests/unit/processors/legal_data/test_federal_register_fulltext_gate.py tests/unit/processors/legal_data/test_federal_register_fulltext_gate_fail_closed.py -q",
 }
 
 CONTROLLED_RESEAL_GOAL_ACCEPTANCE_SHA256 = {
+    "LCR-G144": "1bdbbfbcac43046257841819403f7b60a19b7c8dff8fbfc9dcbdae9299093023",
     "LCR-G146": "e55934f638ffebe6efa496cd533559c8ae2eb83f35cbea713f6d673a17b01ceb",
     "LCR-G147": "d24874e31322ca5d6f94d0c1ce18a0340c2bb72e8b11303a4ade1852725013ae",
 }
@@ -1783,6 +1810,17 @@ def validate(root: Path) -> dict[str, Any]:
                     errors.append(
                         f"{task_id}: controlled-reseal acceptance contract changed"
                     )
+                expected_effects_sha256 = CONTROLLED_RESEAL_TASK_EFFECTS_SHA256.get(
+                    task_id
+                )
+                if expected_effects_sha256 is not None:
+                    effects_sha256 = hashlib.sha256(
+                        str(task.get("effects") or "").encode("utf-8")
+                    ).hexdigest()
+                    if effects_sha256 != expected_effects_sha256:
+                        errors.append(
+                            f"{task_id}: controlled-reseal effects contract changed"
+                        )
                 if generated_by != expected_generated_by:
                     errors.append(
                         f"{task_id}: controlled-reseal Generated by must remain "

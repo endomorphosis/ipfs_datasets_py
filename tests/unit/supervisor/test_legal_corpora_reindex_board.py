@@ -357,9 +357,15 @@ def test_federal_fulltext_repair_cannot_be_bypassed_or_detached(
     taskboard = root / "docs/architecture/legal_corpora_reindex.todo.md"
     task_text = taskboard.read_text(encoding="utf-8")
     assert "fixture mode cannot authorize" in task_text
+    effects_clause = "fixed zero-skew policy"
+    assert effects_clause in task_text
     task_text = task_text.replace(
         "fixture mode cannot authorize",
         "fixture mode may authorize",
+        1,
+    ).replace(
+        effects_clause,
+        "caller-adjustable skew policy",
         1,
     ).replace(
         "- Depends on: LCR-048, LCR-049, LCR-075, LCR-085",
@@ -389,10 +395,68 @@ def test_federal_fulltext_repair_cannot_be_bypassed_or_detached(
         for error in report["errors"]
     )
     assert any(
+        "LCR-085: controlled-reseal effects contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
         "LCR-052: sealed dependency contract changed" in error
         for error in report["errors"]
     )
     assert any("phase_requirements" in error for error in report["errors"])
+
+
+def test_source_rights_hardening_cannot_default_identity_or_self_assert_proof(
+    tmp_path: Path,
+) -> None:
+    root = _copy_control_plane(tmp_path / "repo")
+    objectives = root / "docs/architecture/legal_corpora_reindex.objectives.md"
+    goal_text = objectives.read_text(encoding="utf-8")
+    goal_clause = "missing or defaulted identity"
+    assert goal_clause in goal_text
+    objectives.write_text(
+        goal_text.replace(goal_clause, "defaulted identity may authorize", 1),
+        encoding="utf-8",
+    )
+
+    taskboard = root / "docs/architecture/legal_corpora_reindex.todo.md"
+    task_text = taskboard.read_text(encoding="utf-8")
+    task_clause = "deletes each field separately and together"
+    effects_clause = "fixed maximum age of 90 days"
+    assert task_clause in task_text
+    assert effects_clause in task_text
+    task_text = task_text.replace(
+        task_clause,
+        "permits identity fields to be omitted together",
+        1,
+    ).replace(
+        effects_clause,
+        "caller-selected evidence age",
+        1,
+    ).replace(
+        "- Depends on: LCR-002, LCR-048, LCR-077, LCR-082",
+        "- Depends on: LCR-002, LCR-048, LCR-077",
+        1,
+    )
+    taskboard.write_text(task_text, encoding="utf-8")
+
+    result, report = _run_validator(root)
+    assert result.returncode == 1
+    assert any(
+        "LCR-G144: controlled-reseal acceptance contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
+        "LCR-082: controlled-reseal acceptance contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
+        "LCR-082: controlled-reseal effects contract changed" in error
+        for error in report["errors"]
+    )
+    assert any(
+        "LCR-078: controlled-reseal dependency contract changed" in error
+        for error in report["errors"]
+    )
 
 
 def test_phase_gate_and_dynamic_generated_work_guard_drift_are_rejected(
