@@ -13827,6 +13827,19 @@ def _manual_gate_durable_effect_is_applied(
             text=True,
         )
         return ancestry.returncode == 0
+    if task_id == REFINEMENT_GATE_TASK_ID and isinstance(effect_receipt, Mapping):
+        # Unchanged-generation refinement is durable once the CAS event stores
+        # a content-bound rollover binding.  Mid-flight journals can remain at
+        # CAS_COMMITTED/RELAUNCHED while a concurrent master relaunch races.
+        if effect_receipt.get("generation_changed") is True:
+            return False
+        schema = str(effect_receipt.get("schema") or "")
+        binding_id = str(effect_receipt.get("binding_id") or "")
+        return (
+            schema == manual_gate_authority.ROLLOVER_BINDING_SCHEMA
+            and re.fullmatch(r"sha256:[0-9a-f]{64}", binding_id) is not None
+            and effect_receipt.get("generation_changed") is False
+        )
     return _release_gate_durable_effect_is_applied(
         task_id=task_id,
         effect_receipt=effect_receipt,
@@ -13894,7 +13907,11 @@ def _archive_completed_release_gate_journal_if_durable(
     """
 
     gate_task_id = str(journal.get("gate_task_id") or "")
-    if gate_task_id not in {RELEASE_GATE_TASK_ID, RUNTIME_ACTIVATION_GATE_TASK_ID}:
+    if gate_task_id not in {
+        RELEASE_GATE_TASK_ID,
+        RUNTIME_ACTIVATION_GATE_TASK_ID,
+        REFINEMENT_GATE_TASK_ID,
+    }:
         return False
     if str(journal.get("phase") or "") == "RELEASED":
         return False
