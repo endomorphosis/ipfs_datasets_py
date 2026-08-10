@@ -1797,6 +1797,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="expected repository tree id binding",
     )
     verify.add_argument(
+        "--repository-tree",
+        type=str,
+        default="",
+        help="alias for --repository-tree-id (manual-gate argv compatibility)",
+    )
+    verify.add_argument(
         "--inventory-snapshot-cid",
         type=str,
         default="",
@@ -1813,6 +1819,15 @@ def build_parser() -> argparse.ArgumentParser:
         type=str,
         default="",
         help="expected accepted plan root CID binding",
+    )
+    verify.add_argument(
+        "--plan-root",
+        type=str,
+        default="",
+        help=(
+            "alias that sets both active and accepted plan root expectations "
+            "when those flags are omitted (manual-gate argv compatibility)"
+        ),
     )
     verify.add_argument(
         "--check",
@@ -1866,12 +1881,24 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "--receipt is required unless --check is set"
                 )
             receipt = load_receipt(args.receipt)
+            plan_root = str(getattr(args, "plan_root", "") or "").strip()
+            expected_tree = (
+                str(args.repository_tree_id or "").strip()
+                or str(getattr(args, "repository_tree", "") or "").strip()
+                or None
+            )
+            expected_active = (
+                str(args.active_plan_root_cid or "").strip() or plan_root or None
+            )
+            expected_accepted = (
+                str(args.accepted_plan_root_cid or "").strip() or plan_root or None
+            )
             verification = verify_receipt(
                 receipt,
-                expected_repository_tree_id=args.repository_tree_id or None,
+                expected_repository_tree_id=expected_tree,
                 expected_inventory_snapshot_cid=args.inventory_snapshot_cid or None,
-                expected_active_plan_root_cid=args.active_plan_root_cid or None,
-                expected_accepted_plan_root_cid=args.accepted_plan_root_cid or None,
+                expected_active_plan_root_cid=expected_active,
+                expected_accepted_plan_root_cid=expected_accepted,
             )
             _emit(verification, as_json=as_json or True)
             return 0

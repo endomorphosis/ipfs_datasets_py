@@ -11888,6 +11888,215 @@ class _ReleaseGateAuthorityAdapter:
         }
 
 
+class _RefinementGateAuthorityAdapter:
+    """Independent signed-decision verifier for DQK-081 refinement receipts.
+
+    Re-derives the content-bound inventory-refinement approval receipt using the
+    committed inventory_refinement module (hash/hmac only) so the verifier
+    subprocess is never the sole source of trust.
+    """
+
+    PROOF_SCHEMA = (
+        "ipfs_datasets_py/duckdb-quack-refinement-independent-signature-proof@1"
+    )
+
+    @staticmethod
+    def _load_refinement_module() -> Any:
+        module_path = (
+            REPO_ROOT / "ipfs_datasets_py/duckdb_control/inventory_refinement.py"
+        )
+        if not module_path.is_file() or module_path.is_symlink():
+            raise RuntimeError("inventory-refinement verifier module is unavailable")
+        module_name = "_dqk_refinement_gate_authority_verifier"
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("inventory-refinement verifier module cannot be loaded")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        try:
+            # Ensure sibling duckdb_control imports resolve under sealed Python.
+            package_root = str(REPO_ROOT.resolve())
+            if package_root not in sys.path:
+                sys.path.insert(0, package_root)
+            spec.loader.exec_module(module)
+        except Exception as exc:
+            sys.modules.pop(module_name, None)
+            raise RuntimeError(
+                "inventory-refinement verifier module failed to load: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+        return module
+
+    def _independent_verification(
+        self,
+        *,
+        raw_input: bytes,
+        snapshot: Any | None = None,
+        now: datetime | None = None,
+    ) -> dict[str, Any]:
+        if not isinstance(raw_input, (bytes, bytearray, memoryview)):
+            raise RuntimeError("refinement gate input must be exact bytes")
+        payload = bytes(raw_input)
+        if not payload or len(payload) > 2 * 1024 * 1024:
+            raise RuntimeError("refinement gate input size is out of bounds")
+        try:
+            receipt = json.loads(payload.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise RuntimeError(
+                f"refinement receipt is not valid UTF-8 JSON: {exc}"
+            ) from exc
+        if not isinstance(receipt, Mapping):
+            raise RuntimeError("refinement receipt must be a JSON object")
+        module = self._load_refinement_module()
+        expected_tree = (
+            str(snapshot.repository_tree_id)
+            if snapshot is not None
+            else None
+        )
+        expected_plan = (
+            str(snapshot.plan_root_cid) if snapshot is not None else None
+        )
+        try:
+            verification = module.verify_receipt(
+                receipt,
+                expected_repository_tree_id=expected_tree,
+                expected_active_plan_root_cid=expected_plan,
+                expected_accepted_plan_root_cid=expected_plan,
+                now=now,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "independent inventory-refinement verification failed: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+        if (
+            not isinstance(verification, Mapping)
+            or verification.get("accepted") is not True
+        ):
+            raise RuntimeError(
+                "independent inventory-refinement verification did not accept the receipt"
+            )
+        required = (
+            "schema",
+            "inventory_snapshot_cid",
+            "accepted_plan_root_cid",
+            "active_plan_root_cid",
+            "decision_cid",
+            "authorization_cid",
+            "repository_tree_id",
+            "expires_at",
+        )
+        if any(
+            not isinstance(verification.get(field), str)
+            or not str(verification.get(field) or "").strip()
+            for field in required
+        ):
+            raise RuntimeError(
+                "independent inventory-refinement verification is missing identity fields"
+            )
+        if not isinstance(verification.get("unresolved_gap_count"), int) or isinstance(
+            verification.get("unresolved_gap_count"), bool
+        ):
+            raise RuntimeError(
+                "independent inventory-refinement verification has invalid gap count"
+            )
+        return dict(verification)
+
+    def preflight(self, **kwargs: Any) -> dict[str, Any]:
+        task_id = str(kwargs.get("task_id") or "")
+        if task_id != REFINEMENT_GATE_TASK_ID:
+            raise RuntimeError("refinement adapter cannot preflight a foreign gate")
+        raw_input = kwargs.get("raw_input")
+        snapshot = kwargs.get("snapshot")
+        verification = self._independent_verification(
+            raw_input=raw_input,
+            snapshot=snapshot,
+        )
+        return {
+            "schema": self.PROOF_SCHEMA,
+            "gate_task_id": REFINEMENT_GATE_TASK_ID,
+            "decision_id": str(verification["decision_cid"]),
+            "inventory_snapshot_cid": str(verification["inventory_snapshot_cid"]),
+            "accepted_plan_root_cid": str(verification["accepted_plan_root_cid"]),
+            "active_plan_root_cid": str(verification["active_plan_root_cid"]),
+            "authorization_cid": str(verification["authorization_cid"]),
+            "repository_tree_id": str(verification["repository_tree_id"]),
+            "unresolved_gap_count": int(verification["unresolved_gap_count"]),
+            "generation_changed": bool(verification.get("generation_changed")),
+            "expires_at": str(verification["expires_at"]),
+            "signed_input_sha256": "sha256:"
+            + hashlib.sha256(bytes(raw_input)).hexdigest(),
+            "verification_schema": str(verification["schema"]),
+        }
+
+    def verify_execution(self, **kwargs: Any) -> dict[str, Any]:
+        task_id = str(kwargs.get("task_id") or "")
+        if task_id != REFINEMENT_GATE_TASK_ID:
+            raise RuntimeError("refinement adapter cannot verify a foreign gate")
+        raw_input = kwargs.get("raw_input")
+        typed_output = kwargs.get("typed_output")
+        snapshot = kwargs.get("snapshot")
+        if not isinstance(typed_output, Mapping):
+            raise RuntimeError("refinement gate typed output is missing")
+        execution_time = kwargs.get("execution_time")
+        now = execution_time if isinstance(execution_time, datetime) else None
+        verification = self._independent_verification(
+            raw_input=raw_input,
+            snapshot=snapshot,
+            now=now,
+        )
+        proof = self.preflight(
+            task_id=task_id,
+            raw_input=raw_input,
+            snapshot=snapshot,
+            verifier_attestation=kwargs.get("verifier_attestation"),
+        )
+        for field in (
+            "inventory_snapshot_cid",
+            "accepted_plan_root_cid",
+            "active_plan_root_cid",
+            "decision_cid",
+            "authorization_cid",
+            "repository_tree_id",
+        ):
+            if typed_output.get(field) != verification.get(field):
+                raise RuntimeError(
+                    f"refinement gate typed output field {field} differs from independent proof"
+                )
+        if int(typed_output.get("unresolved_gap_count", -1)) != int(
+            verification.get("unresolved_gap_count", -2)
+        ):
+            raise RuntimeError(
+                "refinement gate typed output gap count differs from independent proof"
+            )
+        if typed_output.get("accepted") is not True:
+            raise RuntimeError("refinement gate typed output is not accepted")
+        if typed_output.get("decision_cid") != proof["decision_id"]:
+            raise RuntimeError(
+                "refinement gate typed output is detached from signed decision"
+            )
+        decision_preflight = kwargs.get("decision_preflight")
+        if isinstance(decision_preflight, Mapping):
+            for field in (
+                "decision_id",
+                "inventory_snapshot_cid",
+                "authorization_cid",
+                "accepted_plan_root_cid",
+                "signed_input_sha256",
+            ):
+                if decision_preflight.get(field) != proof.get(field):
+                    raise RuntimeError(
+                        f"refinement gate preflight field {field} drifted before execution"
+                    )
+        return {
+            **proof,
+            "typed_output_sha256": "sha256:"
+            + hashlib.sha256(
+                _canonical_json(dict(typed_output)).encode("utf-8")
+            ).hexdigest(),
+        }
+
+
 class _RuntimeActivationGateAuthorityAdapter:
     """Independent verifier for DQK-103 runtime-activation permits.
 
@@ -12039,6 +12248,8 @@ def _manual_gate_task_authority_adapter(task_id: str) -> Any:
 
     if task_id == RELEASE_GATE_TASK_ID:
         return _ReleaseGateAuthorityAdapter()
+    if task_id == REFINEMENT_GATE_TASK_ID:
+        return _RefinementGateAuthorityAdapter()
     if task_id == RUNTIME_ACTIVATION_GATE_TASK_ID:
         return _RuntimeActivationGateAuthorityAdapter()
     if task_id == PROMOTION_GATE_TASK_ID:
