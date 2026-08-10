@@ -1,0 +1,351 @@
+{
+  "schema_version": "legal-source-rights-catalog-v1",
+  "task_id": "LCR-077",
+  "goal_id": "LCR-G141",
+  "evidence_mode": "fixture",
+  "producer": "tests/fixtures/legal_ir/legal_source_rights_catalog.json",
+  "sealed_at": "2026-08-10T11:00:00Z",
+  "policy_schema_version": "legal-source-rights-policy-v1",
+  "authorizing_for_publication": false,
+  "target_dataset_repo_ids": [
+    "justicedao/ipfs_state_laws",
+    "justicedao/ipfs_federal_register"
+  ],
+  "description": "Sealed LCR-077 fixture catalog. Distinguishes statutory and Federal government text from site presentation, annotations, editorial enhancements, and database content. Fixture-only; non-authorizing for publication. Dataset-card labels alone never prove admissibility.",
+  "currentness_disclaimer": "Terms, robots, and rights observation timestamps record when evidence was captured; they are not a claim that the underlying law is legally current as of wall-clock time. Fixture-only success is non-authorizing for publication. Source authority is not redistribution authority.",
+  "records": [
+    {
+      "record_id": "or-statutes-statutory-text",
+      "source_id": "or-oregon-legislature-ors",
+      "corpus_family": "state_laws",
+      "dataset_repo_id": "justicedao/ipfs_state_laws",
+      "content_scope": "statutory_text",
+      "rights_disposition": "allowed",
+      "license_spdx": "LicenseRef-OR-Government-Edicts",
+      "legal_basis": "government_edicts_doctrine",
+      "terms": {
+        "terms_url": "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx",
+        "observed_at": "2026-08-01T10:00:00Z",
+        "digest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "robots": {
+        "robots_url": "https://www.oregonlegislature.gov/robots.txt",
+        "observed_at": "2026-08-01T10:05:00Z",
+        "digest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "access_disposition": "allowed"
+      },
+      "permissions": {
+        "redistribution": true,
+        "derivatives": true,
+        "archive": true
+      },
+      "attribution_notice": "Oregon Revised Statutes statutory text; source: Oregon State Legislature. Not a substitute for the official code.",
+      "review_status": "reviewed",
+      "reviewed_at": "2026-08-05T12:00:00Z",
+      "sealed_at": "2026-08-10T11:00:00Z",
+      "source_url": "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx",
+      "jurisdiction_or_authority": "OR",
+      "license_ref": {
+        "definition_url": "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx",
+        "text_digest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "dataset_card_label": "other",
+      "card_label_is_not_authority": true,
+      "notes": "Admissible statutory text only; annotations and site chrome are separate scopes."
+    },
+    {
+      "record_id": "fr-govinfo-federal-text",
+      "source_id": "fr-govinfo-federal-register",
+      "corpus_family": "federal_register",
+      "dataset_repo_id": "justicedao/ipfs_federal_register",
+      "content_scope": "federal_government_text",
+      "rights_disposition": "allowed",
+      "license_spdx": "CC0-1.0",
+      "legal_basis": "us_government_work",
+      "terms": {
+        "terms_url": "https://www.govinfo.gov/about/policies",
+        "observed_at": "2026-08-02T09:00:00Z",
+        "digest_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      },
+      "robots": {
+        "robots_url": "https://www.govinfo.gov/robots.txt",
+        "observed_at": "2026-08-02T09:05:00Z",
+        "digest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "access_disposition": "allowed"
+      },
+      "permissions": {
+        "redistribution": true,
+        "derivatives": true,
+        "archive": true
+      },
+      "attribution_notice": "U.S. Federal Register document text via GovInfo; U.S. government work. Not a substitute for the official Federal Register.",
+      "review_status": "reviewed",
+      "reviewed_at": "2026-08-06T14:00:00Z",
+      "sealed_at": "2026-08-10T11:00:00Z",
+      "source_url": "https://www.govinfo.gov/app/collection/fr",
+      "jurisdiction_or_authority": "US-FR",
+      "dataset_card_label": "other",
+      "card_label_is_not_authority": true,
+      "notes": "Federal government document text only; site presentation and editorial matter are separate scopes."
+    },
+    {
+      "record_id": "or-statutes-site-presentation",
+      "source_id": "or-oregon-legislature-ors",
+      "corpus_family": "state_laws",
+      "dataset_repo_id": "justicedao/ipfs_state_laws",
+      "content_scope": "site_presentation",
+      "rights_disposition": "prohibited",
+      "license_spdx": "LicenseRef-OR-Site-Presentation-Reserved",
+      "legal_basis": "proprietary",
+      "terms": {
+        "terms_url": "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx",
+        "observed_at": "2026-08-01T10:00:00Z",
+        "digest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "robots": {
+        "robots_url": "https://www.oregonlegislature.gov/robots.txt",
+        "observed_at": "2026-08-01T10:05:00Z",
+        "digest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "access_disposition": "allowed"
+      },
+      "permissions": {
+        "redistribution": false,
+        "derivatives": false,
+        "archive": false
+      },
+      "attribution_notice": "Oregon Legislature site chrome, navigation, logos, and layout are not statutory text.",
+      "review_status": "reviewed",
+      "reviewed_at": "2026-08-05T12:00:00Z",
+      "sealed_at": "2026-08-10T11:00:00Z",
+      "source_url": "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx",
+      "jurisdiction_or_authority": "OR",
+      "license_ref": {
+        "definition_url": "https://www.oregonlegislature.gov/",
+        "text_digest_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "card_label_is_not_authority": true,
+      "notes": "Site presentation is quarantined from the default release."
+    },
+    {
+      "record_id": "or-statutes-annotations",
+      "source_id": "or-oregon-legislature-ors",
+      "corpus_family": "state_laws",
+      "dataset_repo_id": "justicedao/ipfs_state_laws",
+      "content_scope": "annotations",
+      "rights_disposition": "prohibited",
+      "license_spdx": "LicenseRef-Third-Party-Annotations",
+      "legal_basis": "proprietary",
+      "terms": {
+        "terms_url": "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx",
+        "observed_at": "2026-08-01T10:00:00Z",
+        "digest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "robots": {
+        "robots_url": "https://www.oregonlegislature.gov/robots.txt",
+        "observed_at": "2026-08-01T10:05:00Z",
+        "digest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "access_disposition": "allowed"
+      },
+      "permissions": {
+        "redistribution": false,
+        "derivatives": false,
+        "archive": false
+      },
+      "attribution_notice": "Third-party or publisher annotations are not the government edict and are not admitted.",
+      "review_status": "reviewed",
+      "reviewed_at": "2026-08-05T12:00:00Z",
+      "sealed_at": "2026-08-10T11:00:00Z",
+      "source_url": "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx",
+      "jurisdiction_or_authority": "OR",
+      "license_ref": {
+        "definition_url": "https://www.oregonlegislature.gov/",
+        "text_digest_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "card_label_is_not_authority": true,
+      "notes": "Annotations are prohibited in the default release."
+    },
+    {
+      "record_id": "fr-site-editorial-enhancements",
+      "source_id": "fr-federalregister-gov",
+      "corpus_family": "federal_register",
+      "dataset_repo_id": "justicedao/ipfs_federal_register",
+      "content_scope": "editorial_enhancements",
+      "rights_disposition": "prohibited",
+      "license_spdx": "LicenseRef-FR-Editorial-Reserved",
+      "legal_basis": "proprietary",
+      "terms": {
+        "terms_url": "https://www.federalregister.gov/reader-aids/government-policy-and-ofr-procedures/about-this-site",
+        "observed_at": "2026-08-02T09:10:00Z",
+        "digest_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "robots": {
+        "robots_url": "https://www.federalregister.gov/robots.txt",
+        "observed_at": "2026-08-02T09:15:00Z",
+        "digest_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "access_disposition": "allowed"
+      },
+      "permissions": {
+        "redistribution": false,
+        "derivatives": false,
+        "archive": false
+      },
+      "attribution_notice": "FederalRegister.gov editorial enhancements and reader aids are not the government document text.",
+      "review_status": "reviewed",
+      "reviewed_at": "2026-08-06T14:00:00Z",
+      "sealed_at": "2026-08-10T11:00:00Z",
+      "source_url": "https://www.federalregister.gov/",
+      "jurisdiction_or_authority": "US-FR",
+      "license_ref": {
+        "definition_url": "https://www.federalregister.gov/reader-aids/government-policy-and-ofr-procedures/about-this-site",
+        "text_digest_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+      },
+      "card_label_is_not_authority": true,
+      "notes": "Editorial enhancements are prohibited in the default release."
+    },
+    {
+      "record_id": "fr-api-database-content",
+      "source_id": "fr-federalregister-api",
+      "corpus_family": "federal_register",
+      "dataset_repo_id": "justicedao/ipfs_federal_register",
+      "content_scope": "database_content",
+      "rights_disposition": "quarantined",
+      "license_spdx": "LicenseRef-FR-Database-Selection",
+      "legal_basis": "not_applicable",
+      "terms": {
+        "terms_url": "https://www.federalregister.gov/reader-aids/government-policy-and-ofr-procedures/about-this-site",
+        "observed_at": "2026-08-02T09:10:00Z",
+        "digest_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "robots": {
+        "robots_url": "https://www.federalregister.gov/robots.txt",
+        "observed_at": "2026-08-02T09:15:00Z",
+        "digest_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "access_disposition": "allowed"
+      },
+      "permissions": {
+        "redistribution": false,
+        "derivatives": false,
+        "archive": true
+      },
+      "attribution_notice": "Database selection, arrangement, and index presentation are not the government document text.",
+      "review_status": "reviewed",
+      "reviewed_at": "2026-08-06T14:00:00Z",
+      "sealed_at": "2026-08-10T11:00:00Z",
+      "source_url": "https://www.federalregister.gov/api/v1/documents.json",
+      "jurisdiction_or_authority": "US-FR",
+      "license_ref": {
+        "definition_url": "https://www.federalregister.gov/reader-aids/government-policy-and-ofr-procedures/about-this-site",
+        "text_digest_sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+      },
+      "card_label_is_not_authority": true,
+      "notes": "Database content is quarantined from the default release."
+    },
+    {
+      "record_id": "unknown-secondary-mirror",
+      "source_id": "secondary-mirror-example",
+      "corpus_family": "state_laws",
+      "dataset_repo_id": "justicedao/ipfs_state_laws",
+      "content_scope": "statutory_text",
+      "rights_disposition": "unknown",
+      "license_spdx": "LicenseRef-Unknown-Secondary",
+      "legal_basis": "unknown",
+      "terms": {
+        "terms_url": "https://example.invalid/terms",
+        "observed_at": "2026-08-01T08:00:00Z",
+        "digest_sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      },
+      "robots": {
+        "robots_url": "https://example.invalid/robots.txt",
+        "observed_at": "2026-08-01T08:05:00Z",
+        "digest_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+        "access_disposition": "unknown"
+      },
+      "permissions": {
+        "redistribution": false,
+        "derivatives": false,
+        "archive": false
+      },
+      "attribution_notice": "Secondary mirror with unknown rights; deny-on-unknown.",
+      "review_status": "unreviewed",
+      "reviewed_at": "2026-08-01T08:10:00Z",
+      "sealed_at": "2026-08-10T11:00:00Z",
+      "source_url": "https://example.invalid/statutes",
+      "jurisdiction_or_authority": "XX",
+      "license_ref": {
+        "definition_url": "https://example.invalid/license",
+        "text_digest_sha256": "8888888888888888888888888888888888888888888888888888888888888888"
+      },
+      "card_label_is_not_authority": true,
+      "notes": "Unknown disposition fails closed even when content_scope is statutory_text."
+    },
+    {
+      "record_id": "stale-evidence-example",
+      "source_id": "stale-source-example",
+      "corpus_family": "state_laws",
+      "dataset_repo_id": "justicedao/ipfs_state_laws",
+      "content_scope": "statutory_text",
+      "rights_disposition": "allowed",
+      "license_spdx": "CC0-1.0",
+      "legal_basis": "public_domain",
+      "terms": {
+        "terms_url": "https://example.invalid/stale-terms",
+        "observed_at": "2025-01-01T00:00:00Z",
+        "digest_sha256": "9999999999999999999999999999999999999999999999999999999999999999"
+      },
+      "robots": {
+        "robots_url": "https://example.invalid/stale-robots.txt",
+        "observed_at": "2025-01-01T00:05:00Z",
+        "digest_sha256": "abababababababababababababababababababababababababababababababab",
+        "access_disposition": "allowed"
+      },
+      "permissions": {
+        "redistribution": true,
+        "derivatives": true,
+        "archive": true
+      },
+      "attribution_notice": "Stale evidence example; observation timestamps exceed max age.",
+      "review_status": "reviewed",
+      "reviewed_at": "2025-01-02T00:00:00Z",
+      "sealed_at": "2026-08-10T11:00:00Z",
+      "source_url": "https://example.invalid/stale-statutes",
+      "jurisdiction_or_authority": "STALE",
+      "card_label_is_not_authority": true,
+      "notes": "Stale terms/robots/review evidence fails closed under the fixture verifier clock."
+    },
+    {
+      "record_id": "card-label-only-not-authority",
+      "source_id": "card-label-example",
+      "corpus_family": "federal_register",
+      "dataset_repo_id": "justicedao/ipfs_federal_register",
+      "content_scope": "federal_government_text",
+      "rights_disposition": "allowed",
+      "license_spdx": "CC0-1.0",
+      "legal_basis": "us_government_work",
+      "terms": {
+        "terms_url": "https://www.govinfo.gov/about/policies",
+        "observed_at": "2026-08-02T09:00:00Z",
+        "digest_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      },
+      "robots": {
+        "robots_url": "https://www.govinfo.gov/robots.txt",
+        "observed_at": "2026-08-02T09:05:00Z",
+        "digest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "access_disposition": "allowed"
+      },
+      "permissions": {
+        "redistribution": true,
+        "derivatives": true,
+        "archive": true
+      },
+      "attribution_notice": "Illustrates that a mirrored dataset-card label of 'other' is non-authorizing metadata only.",
+      "review_status": "reviewed",
+      "reviewed_at": "2026-08-06T14:00:00Z",
+      "sealed_at": "2026-08-10T11:00:00Z",
+      "source_url": "https://www.govinfo.gov/app/collection/fr",
+      "jurisdiction_or_authority": "US-FR",
+      "dataset_card_label": "other",
+      "card_label_is_not_authority": true,
+      "notes": "Admissible only because full terms/robots/SPDX/permissions evidence is present; the card label alone would not admit."
+    }
+  ]
+}

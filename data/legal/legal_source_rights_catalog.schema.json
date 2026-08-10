@@ -1,0 +1,305 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/legal-source-rights-catalog.v1.schema.json",
+  "title": "Legal Source Rights Catalog v1 (LCR-077)",
+  "description": "Per-source and per-content-scope redistribution rights catalog. Distinguishes statutory/Federal government text from site presentation, annotations, editorial enhancements, and database content. Dataset-card license labels alone never prove admissibility. Unknown, prohibited, stale, unreviewed, scope-mismatched, or unsupported evidence fails closed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "goal_id",
+    "evidence_mode",
+    "producer",
+    "sealed_at",
+    "policy_schema_version",
+    "authorizing_for_publication",
+    "target_dataset_repo_ids",
+    "records"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "legal-source-rights-catalog-v1"
+    },
+    "task_id": {
+      "const": "LCR-077"
+    },
+    "goal_id": {
+      "const": "LCR-G141"
+    },
+    "evidence_mode": {
+      "type": "string",
+      "enum": ["fixture", "live"]
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "sealed_at": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "policy_schema_version": {
+      "const": "legal-source-rights-policy-v1"
+    },
+    "authorizing_for_publication": {
+      "type": "boolean",
+      "description": "Must be false for fixture mode. Live mode may set true only after LCR-078 seals current source evidence."
+    },
+    "target_dataset_repo_ids": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "justicedao/ipfs_state_laws",
+          "justicedao/ipfs_federal_register"
+        ]
+      }
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "currentness_disclaimer": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "catalog_digest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/sourceRightsRecord"
+      }
+    }
+  },
+  "$defs": {
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "httpUrl": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 2048,
+      "pattern": "^https?://[^\\s]+$"
+    },
+    "spdxOrLicenseRef": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 160,
+      "description": "Exact SPDX short-form identifier or LicenseRef-* custom identifier. Dataset-card labels such as 'other' are rejected by the policy evaluator.",
+      "pattern": "^(CC0-1\\.0|CC-BY-4\\.0|CC-BY-SA-4\\.0|MIT|Apache-2\\.0|BSD-2-Clause|BSD-3-Clause|GPL-3\\.0-only|GPL-3\\.0-or-later|LGPL-3\\.0-only|LicenseRef-[A-Za-z0-9][A-Za-z0-9._+\\-]{0,127})$"
+    },
+    "termsEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["terms_url", "observed_at", "digest_sha256"],
+      "properties": {
+        "terms_url": { "$ref": "#/$defs/httpUrl" },
+        "observed_at": { "$ref": "#/$defs/utcTimestamp" },
+        "digest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "robotsEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "robots_url",
+        "observed_at",
+        "digest_sha256",
+        "access_disposition"
+      ],
+      "properties": {
+        "robots_url": { "$ref": "#/$defs/httpUrl" },
+        "observed_at": { "$ref": "#/$defs/utcTimestamp" },
+        "digest_sha256": { "$ref": "#/$defs/sha256" },
+        "access_disposition": {
+          "type": "string",
+          "enum": ["allowed", "conditional", "denied", "unknown", "unavailable"]
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["redistribution", "derivatives", "archive"],
+      "properties": {
+        "redistribution": { "type": "boolean" },
+        "derivatives": { "type": "boolean" },
+        "archive": { "type": "boolean" }
+      }
+    },
+    "licenseRefDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definition_url", "text_digest_sha256"],
+      "properties": {
+        "definition_url": { "$ref": "#/$defs/httpUrl" },
+        "text_digest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "sourceRightsRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id",
+        "source_id",
+        "corpus_family",
+        "dataset_repo_id",
+        "content_scope",
+        "rights_disposition",
+        "license_spdx",
+        "legal_basis",
+        "terms",
+        "robots",
+        "permissions",
+        "attribution_notice",
+        "review_status",
+        "reviewed_at",
+        "sealed_at",
+        "source_url",
+        "jurisdiction_or_authority",
+        "card_label_is_not_authority"
+      ],
+      "properties": {
+        "record_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$"
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$"
+        },
+        "corpus_family": {
+          "type": "string",
+          "enum": ["state_laws", "federal_register"]
+        },
+        "dataset_repo_id": {
+          "type": "string",
+          "enum": [
+            "justicedao/ipfs_state_laws",
+            "justicedao/ipfs_federal_register"
+          ]
+        },
+        "content_scope": {
+          "type": "string",
+          "enum": [
+            "statutory_text",
+            "federal_government_text",
+            "site_presentation",
+            "annotations",
+            "editorial_enhancements",
+            "database_content"
+          ],
+          "description": "Must distinguish government/statutory text from site presentation, annotations, editorial enhancements, and database content."
+        },
+        "rights_disposition": {
+          "type": "string",
+          "enum": [
+            "allowed",
+            "conditional",
+            "prohibited",
+            "unknown",
+            "unsupported",
+            "quarantined"
+          ]
+        },
+        "license_spdx": {
+          "$ref": "#/$defs/spdxOrLicenseRef"
+        },
+        "legal_basis": {
+          "type": "string",
+          "enum": [
+            "us_government_work",
+            "government_edicts_doctrine",
+            "public_domain",
+            "explicit_license",
+            "statutory_permission",
+            "unknown",
+            "proprietary",
+            "not_applicable"
+          ]
+        },
+        "terms": {
+          "$ref": "#/$defs/termsEvidence"
+        },
+        "robots": {
+          "$ref": "#/$defs/robotsEvidence"
+        },
+        "permissions": {
+          "$ref": "#/$defs/permissions"
+        },
+        "attribution_notice": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "review_status": {
+          "type": "string",
+          "enum": ["reviewed", "unreviewed", "rejected", "expired"]
+        },
+        "reviewed_at": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "sealed_at": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "source_url": {
+          "$ref": "#/$defs/httpUrl"
+        },
+        "jurisdiction_or_authority": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "license_ref": {
+          "$ref": "#/$defs/licenseRefDefinition"
+        },
+        "dataset_card_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Optional mirrored card label for audit only; never authorizes admission."
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "card_label_is_not_authority": {
+          "const": true,
+          "description": "Hard fence: dataset-card license labels never prove redistribution admissibility."
+        }
+      }
+    }
+  }
+}
