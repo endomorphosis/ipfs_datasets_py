@@ -53,9 +53,50 @@ STATE_CODES_50: List[str] = [
     "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
 ]
 
+# Exact production jurisdiction set: 50 postal codes + DC (LCR-007).
+STATE_CODES_51: List[str] = list(STATE_CODES_50) + ["DC"]
+CANONICAL_PRODUCTION_JURISDICTIONS = frozenset(STATE_CODES_51)
+EXPECTED_PRODUCTION_JURISDICTION_COUNT = 51
+
 _CORPUS = get_canonical_legal_corpus("state_laws")
 _COMPLETED_STATES_SCHEMA = "ipfs_datasets_py.state_laws_refresh.completed_states.v1"
 _REGISTRY_RECORDABLE_STATE_STATUSES = {"success", "zero_statutes"}
+
+
+class SubsetReleaseError(ValueError):
+    """Raised when a production release path is asked to publish a subset corpus."""
+
+
+def reject_subset_release(
+    states: Sequence[str],
+    *,
+    context: str = "production release",
+) -> List[str]:
+    """Fail closed unless ``states`` is exactly the sealed 51-jurisdiction set.
+
+    Legacy production entry points must never promote a requested-scope subset
+    (including the historical 50-state ``all`` without DC) to a combined release.
+    """
+    normalized: List[str] = []
+    seen = set()
+    for item in states:
+        code = str(item or "").strip().upper()
+        if not code or code in seen:
+            continue
+        normalized.append(code)
+        seen.add(code)
+    observed = set(normalized)
+    if observed != CANONICAL_PRODUCTION_JURISDICTIONS:
+        missing = sorted(CANONICAL_PRODUCTION_JURISDICTIONS - observed)
+        extra = sorted(observed - CANONICAL_PRODUCTION_JURISDICTIONS)
+        raise SubsetReleaseError(
+            f"subset release rejected for {context}: "
+            f"count={len(observed)} (expected {EXPECTED_PRODUCTION_JURISDICTION_COUNT}); "
+            f"missing={missing}; extra={extra}"
+        )
+    if "DC" not in observed:
+        raise SubsetReleaseError(f"subset release rejected for {context}: DC is required")
+    return normalized
 
 
 def _complete_state_statuses() -> set[str]:
@@ -527,13 +568,18 @@ def _eligible_timeout_recovery_states(
     return deduped
 
 
-def _normalize_states(value: str, *, include_dc: bool = False) -> List[str]:
+def _normalize_states(value: str, *, include_dc: bool = True) -> List[str]:
+    """Normalize a states token.
+
+    Production ``all`` is exactly 51 jurisdictions (50 states + DC). The legacy
+    50-only ``all`` with opt-in DC is removed (LCR-007). Explicit subset lists
+    remain allowed for non-release operations; production publish/combined paths
+    call :func:`reject_subset_release`.
+    """
     raw = str(value or "all").strip()
     if not raw or raw.lower() == "all":
-        states = list(STATE_CODES_50)
-        if include_dc:
-            states.append("DC")
-        return states
+        # DC is always part of the canonical ``all`` set.
+        return list(STATE_CODES_51)
 
     states: List[str] = []
     for item in raw.split(","):
@@ -542,8 +588,7 @@ def _normalize_states(value: str, *, include_dc: bool = False) -> List[str]:
             continue
         if code not in US_STATES:
             raise ValueError(f"Unknown state code: {code}")
-        if code == "DC" and not include_dc:
-            raise ValueError("DC requested but --include-dc was not set")
+        # DC no longer requires --include-dc; flag retained for CLI compatibility.
         states.append(code)
 
     deduped: List[str] = []
@@ -611,23 +656,79 @@ def jsonld_payload_to_canonical_row(payload: Mapping[str, Any], *, state_code: s
     }
 
 
-def _row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
-    for field in ("ipfs_cid", "source_id", "identifier", "source_url"):
+def _logical_row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
+    """Stable logical identity (not content CID).
+
+    CID-first merge was a production hazard: content edits under the same
+    citation created duplicate logical rows. Logical-key merge keeps one
+    *current* row per citation and records prior content CIDs as history.
+    """
+    state = str(row.get("state_code") or row.get("jurisdiction") or "").strip().upper()
+    for field in (
+        "legal_id",
+        "identifier",
+        "legislationIdentifier",
+        "section_number",
+        "sectionNumber",
+        "source_id",
+        "source_url",
+        "sourceUrl",
+    ):
         value = str(row.get(field) or "").strip()
         if value:
-            return (field, value)
-    return ("row", json.dumps(dict(row), ensure_ascii=True, sort_keys=True, default=str))
+            return ("logical", state, field, value)
+    # Last resort: content cid (only when no logical identity exists).
+    cid = str(row.get("ipfs_cid") or row.get("entry_cid") or "").strip()
+    if cid:
+        return ("cid", state, cid)
+    return ("row", state, json.dumps(dict(row), ensure_ascii=True, sort_keys=True, default=str))
 
 
-def merge_canonical_rows(existing_rows: Sequence[Mapping[str, Any]], new_rows: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
-    """Merge rows by stable identity, preferring the refreshed scraped row."""
+def _row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
+    """Backward-compatible alias used by tests; prefers logical identity."""
+    return _logical_row_key(row)
+
+
+def merge_canonical_rows(
+    existing_rows: Sequence[Mapping[str, Any]],
+    new_rows: Sequence[Mapping[str, Any]],
+    *,
+    retain_history: bool = True,
+) -> List[Dict[str, Any]]:
+    """Merge rows by logical identity, preferring the refreshed scraped row.
+
+    When content CID changes under the same logical key, the prior CID is
+    recorded on ``logical_history`` of the current row (current/history handling).
+    """
     merged: Dict[tuple[str, ...], Dict[str, Any]] = {}
     order: List[tuple[str, ...]] = []
     for row in list(existing_rows) + list(new_rows):
         normalized = dict(row)
-        key = _row_key(normalized)
+        key = _logical_row_key(normalized)
         if key not in merged:
             order.append(key)
+            merged[key] = normalized
+            continue
+        prior = merged[key]
+        prior_cid = str(prior.get("ipfs_cid") or prior.get("entry_cid") or "").strip()
+        new_cid = str(normalized.get("ipfs_cid") or normalized.get("entry_cid") or "").strip()
+        if retain_history and prior_cid and new_cid and prior_cid != new_cid:
+            history = list(prior.get("logical_history") or [])
+            if isinstance(normalized.get("logical_history"), list):
+                history.extend(list(normalized.get("logical_history") or []))
+            history.append({"ipfs_cid": prior_cid, "replaced": True})
+            # Deduplicate history cids while preserving order.
+            seen_cids = set()
+            deduped_history = []
+            for item in history:
+                cid = str((item or {}).get("ipfs_cid") or "").strip()
+                if not cid or cid in seen_cids or cid == new_cid:
+                    continue
+                seen_cids.add(cid)
+                deduped_history.append({"ipfs_cid": cid, "replaced": True})
+            normalized = dict(normalized)
+            normalized["logical_history"] = deduped_history
+            normalized["logical_key"] = ":".join(str(p) for p in key)
         merged[key] = normalized
     return [merged[key] for key in order]
 
@@ -982,8 +1083,29 @@ def build_state_laws_parquet_artifacts(
 
     combined_rows = merge_canonical_rows([], combined_rows)
     combined_path = parquet_dir / _CORPUS.combined_parquet_filename
-    if combined_rows:
+    state_set = {str(s).strip().upper() for s in states}
+    is_exact_production_set = state_set == CANONICAL_PRODUCTION_JURISDICTIONS
+    combined_written = False
+    # Never overwrite a shared combined parquet from a subset scrape (LCR-007).
+    if combined_rows and is_exact_production_set:
         _write_parquet_rows(combined_rows, combined_path)
+        combined_written = True
+    elif combined_rows and not is_exact_production_set:
+        # Isolated non-production builds may still emit a *local* combined only
+        # when the caller opts in via env; default is skip (fail-closed).
+        if str(os.getenv("STATE_LAWS_ALLOW_SUBSET_COMBINED", "")).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            subset_combined = parquet_dir / "state_laws_subset_combined.parquet"
+            _write_parquet_rows(combined_rows, subset_combined)
+            combined_path = subset_combined
+            combined_written = True
+        else:
+            combined_path = parquet_dir / "state_laws_subset_combined.skipped"
+            combined_rows = []
 
     manifest = {
         "status": "success",
@@ -995,6 +1117,9 @@ def build_state_laws_parquet_artifacts(
         "parquet_dir": str(parquet_dir),
         "combined_parquet_path": str(combined_path),
         "combined_row_count": len(combined_rows),
+        "combined_written": bool(combined_written),
+        "exact_production_jurisdiction_set": bool(is_exact_production_set),
+        "shared_combined_overwrite": bool(combined_written and is_exact_production_set),
         "merge_existing_local": bool(merge_existing_local),
         "merge_hf_existing": bool(merge_hf_existing),
         "state_reports": state_reports,
@@ -1616,27 +1741,66 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     is_complete = not scrape_gaps and not build_gaps
 
     publish_result: Dict[str, Any] | None = None
-    if args.publish_to_hf and (is_complete or bool(args.allow_incomplete_publish)):
-        publish_result = _publish_parquet_dir(
-            parquet_dir=parquet_dir,
-            repo_id=repo_id,
-            token=hf_token,
-            create_repo=bool(args.create_repo),
-            verify=bool(args.verify),
-            commit_message=str(args.commit_message or "Refresh canonical state laws corpus"),
-        )
-    elif args.publish_to_hf:
-        publish_result = {
-            "status": "skipped",
-            "reason": "final_combined_publish_waits_for_complete_corpus",
-            "detail": "Per-state startup sync and incremental completed-state publishes do not require complete all-state coverage.",
-        }
+    production_set_ok = set(requested_states) == CANONICAL_PRODUCTION_JURISDICTIONS
+    if args.publish_to_hf:
+        # Production final publish requires the exact 51-set (including DC).
+        # Requested-scope completeness is not sufficient (LCR-007).
+        if not production_set_ok:
+            publish_result = {
+                "status": "rejected",
+                "reason": "subset_release_rejected",
+                "detail": (
+                    "final combined production publish requires the exact "
+                    f"{EXPECTED_PRODUCTION_JURISDICTION_COUNT}-jurisdiction set including DC; "
+                    f"requested={len(requested_states)}"
+                ),
+                "requested_states": list(requested_states),
+            }
+        elif not is_complete and not bool(args.allow_incomplete_publish):
+            publish_result = {
+                "status": "skipped",
+                "reason": "final_combined_publish_waits_for_complete_corpus",
+                "detail": "Per-state startup sync and incremental completed-state publishes do not require complete all-state coverage.",
+            }
+        elif not is_complete and bool(args.allow_incomplete_publish):
+            # Even with the flag, never promote a partial corpus to production.
+            publish_result = {
+                "status": "rejected",
+                "reason": "partial_success_promotion_rejected",
+                "detail": "allow_incomplete_publish cannot authorize a production combined release",
+                "scrape_gap_states": list(scrape_gaps),
+                "build_gap_states": list(build_gaps),
+            }
+        else:
+            # Exact 51 and complete — still enforce the gate explicitly.
+            try:
+                reject_subset_release(requested_states, context="refresh_state_laws_corpus publish")
+            except SubsetReleaseError as exc:
+                publish_result = {
+                    "status": "rejected",
+                    "reason": "subset_release_rejected",
+                    "detail": str(exc),
+                }
+            else:
+                publish_result = _publish_parquet_dir(
+                    parquet_dir=parquet_dir,
+                    repo_id=repo_id,
+                    token=hf_token,
+                    create_repo=bool(args.create_repo),
+                    verify=bool(args.verify),
+                    commit_message=str(args.commit_message or "Refresh canonical state laws corpus"),
+                )
 
-    progress_state["status"] = "success" if is_complete else "partial_success"
+    # Partial runs stay partial; never promote to production success.
+    run_status = "success" if (is_complete and production_set_ok) else "partial_success"
+    if is_complete and not production_set_ok:
+        run_status = "partial_success"
+    progress_state["status"] = run_status
     progress_state["finished_at"] = _utc_now_iso()
     progress_state["scrape_gap_states"] = list(scrape_gaps)
     progress_state["build_gap_states"] = list(build_gaps)
-    progress_state["is_complete"] = bool(is_complete)
+    progress_state["is_complete"] = bool(is_complete and production_set_ok)
+    progress_state["exact_production_jurisdiction_set"] = bool(production_set_ok)
     _recompute_progress_counts()
     _write_progress_state()
     _write_completed_states_registry_snapshot()
@@ -1648,7 +1812,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     )
 
     return {
-        "status": "success" if is_complete else "partial_success",
+        "status": run_status,
         "plan": plan,
         "scrape": scrape_result,
         "build": build_result,
@@ -1683,8 +1847,16 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Refresh and publish the canonical state-laws corpus")
-    parser.add_argument("--states", default="all", help="Comma-separated state codes, or all")
-    parser.add_argument("--include-dc", action="store_true", help="Include District of Columbia when --states=all")
+    parser.add_argument(
+        "--states",
+        default="all",
+        help="Comma-separated state codes, or all (exactly 51 jurisdictions including DC)",
+    )
+    parser.add_argument(
+        "--include-dc",
+        action="store_true",
+        help="Deprecated no-op: DC is always included in --states=all (LCR-007)",
+    )
     parser.add_argument("--output-root", default="", help="Corpus output root; defaults to ~/.ipfs_datasets/state_laws")
     parser.add_argument("--jsonld-dir", default="", help="Override source JSON-LD directory")
     parser.add_argument("--parquet-dir", default="", help="Override destination parquet directory")
