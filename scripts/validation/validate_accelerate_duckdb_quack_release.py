@@ -638,12 +638,31 @@ def _validate_cutover_receipt(
     return dict(cutover)
 
 
+def _pin_is_ancestor_of_checkout(
+    accelerate_root: Path,
+    *,
+    pin_commit: str,
+    checkout_commit: str,
+) -> bool:
+    """True when the release pin remains first-parent-reachable from checkout."""
+
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", pin_commit, checkout_commit],
+        cwd=accelerate_root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return result.returncode == 0
+
+
 def _validate_release_receipt(
     release: Mapping[str, Any],
     *,
     accelerate_commit: str,
     accelerate_tree: str,
     now: datetime,
+    accelerate_root: Path | None = None,
 ) -> dict[str, Any]:
     _reject_process_status(release, noun="release receipt")
     if release.get("schema") != RELEASE_RECEIPT_SCHEMA:
@@ -670,13 +689,31 @@ def _validate_release_receipt(
     tree = _require_git_oid(
         release.get("accelerator_tree"), field="release.accelerator_tree"
     )
-    if not hmac.compare_digest(commit, accelerate_commit):
+    # Exact HEAD match is preferred.  After DQK-056 the accelerate checkout may
+    # advance with control-plane fixes while the durable pin remains an ancestor
+    # of HEAD; restart authentication accepts that tip advance when the pin
+    # tree still matches the receipt.
+    if hmac.compare_digest(commit, accelerate_commit):
+        if not hmac.compare_digest(tree, accelerate_tree):
+            raise VerificationError(
+                "release receipt accelerator_tree is stale for --accelerate-root"
+            )
+    elif (
+        accelerate_root is not None
+        and _pin_is_ancestor_of_checkout(
+            accelerate_root,
+            pin_commit=commit,
+            checkout_commit=accelerate_commit,
+        )
+    ):
+        pin_tree = _git(accelerate_root, "rev-parse", f"{commit}^{{tree}}").lower()
+        if not hmac.compare_digest(tree, pin_tree):
+            raise VerificationError(
+                "release receipt accelerator_tree does not match the pin commit"
+            )
+    else:
         raise VerificationError(
             "release receipt accelerator_commit is stale for --accelerate-root"
-        )
-    if not hmac.compare_digest(tree, accelerate_tree):
-        raise VerificationError(
-            "release receipt accelerator_tree is stale for --accelerate-root"
         )
 
     _bounded_text(release.get("store_generation"), field="release.store_generation")
@@ -837,6 +874,7 @@ def verify_release_receipt(
         accelerate_commit=accelerate_commit,
         accelerate_tree=accelerate_tree,
         now=clock,
+        accelerate_root=root,
     )
     cutover = validated["cutover"]
     if not isinstance(cutover, Mapping):
