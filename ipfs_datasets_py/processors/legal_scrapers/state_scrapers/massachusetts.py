@@ -81,22 +81,26 @@ class MassachusettsScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
-        return_threshold = self._bounded_return_threshold(160)
-        if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        probe_threshold = limit if limit is not None else self._bounded_return_threshold(160)
 
         if not self._full_corpus_enabled() or max_statutes is not None:
-            direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            direct_sections = await self._scrape_direct_seed_sections(
+                code_name,
+                max_statutes=max(1, int(probe_threshold)),
+            )
             if direct_sections:
                 _merge(direct_sections)
 
         official_statutes = await self._scrape_official_general_laws_tree(
             code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=limit,
         )
         if official_statutes:
-            return official_statutes[:return_threshold]
+            return official_statutes if limit is None else official_statutes[: int(limit)]
 
+        generic_cap = limit if limit is not None else max(10, int(probe_threshold))
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -106,20 +110,26 @@ class MassachusettsScraper(BaseStateScraper):
                 code_name,
                 candidate,
                 "Mass. Gen. Laws",
-                max_sections=max(10, return_threshold),
+                max_sections=max(10, int(generic_cap)),
             )
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
-            if len(merged) >= return_threshold:
-                return merged
+            if limit is not None and len(merged) >= int(limit):
+                return merged[: int(limit)]
 
-        return merged
+        return merged if limit is None else merged[: int(limit)]
 
-    async def _scrape_official_general_laws_tree(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_official_general_laws_tree(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
 
         root_html = await self._request_text_direct(f"{self.get_base_url()}/Laws/GeneralLaws", timeout=20)
         if not root_html:
@@ -141,11 +151,15 @@ class MassachusettsScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
         for part_url in part_links:
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
-            section_links = await self._discover_section_links_from_part(part_url, max_sections=max_statutes * 4)
+            section_budget = (limit * 4) if limit is not None else 1000000
+            section_links = await self._discover_section_links_from_part(
+                part_url,
+                max_sections=max(1, int(section_budget)),
+            )
             for section_url in section_links:
-                if len(statutes) >= max_statutes:
+                if limit is not None and len(statutes) >= limit:
                     break
                 if section_url in seen_sections:
                     continue
@@ -248,8 +262,12 @@ class MassachusettsScraper(BaseStateScraper):
         if len(body) < 80:
             return None
 
-        chapter_match = self._MA_CHAPTER_NUMBER_RE.search(section_url)
-        section_match = self._MA_SECTION_NUMBER_RE.search(section_url)
+        chapter_match = re.search(r"/Chapter(?P<chapter>[a-z0-9.]+)", section_url, re.IGNORECASE)
+        section_match = re.search(r"/Section(?P<section>[a-z0-9.]+)", section_url, re.IGNORECASE)
+        if chapter_match is None:
+            chapter_match = self._MA_CHAPTER_NUMBER_RE.search(section_url)
+        if section_match is None:
+            section_match = self._MA_SECTION_NUMBER_RE.search(section_url)
         chapter_number = chapter_match.group("chapter") if chapter_match else ""
         section_number = section_match.group("section") if section_match else ""
         statute_id = f"{code_name} ch. {chapter_number} § {section_number}".strip()
