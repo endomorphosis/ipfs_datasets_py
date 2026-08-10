@@ -420,3 +420,62 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: legal_corpora_publication_gate authorize_and_mutate taskboard release_policy receipt manifest credential seal uploader
 - Parallel lane: 1
 - Conflict policy: Ordered repair of the shared publication gate; it owns the canonical runtime adapter and tests, performs no Hub mutation, and leaves downstream uploader scripts and protected control-plane files to their existing owners.
+
+## LCR-G143 Prove complete authenticated live baseline provenance
+- Status: active
+- Parent: LCR-G010
+- Fib priority: 1
+- Track: foundation-baseline-provenance-hardening
+- Priority: P0
+- Bundle: foundation-baseline-provenance-hardening
+- Goal: Replace partial, sample-based, or self-asserted baseline observations with one current authenticated receipt whose complete remote, Viewer, Parquet, local-salvage, and digest evidence fails closed before either corpus can be published.
+- Evidence: Authenticated identity and API response hashes, exact pinned commits, exhaustion-proved recursive remote inventories with per-entry metadata, state and Federal Viewer and config response hashes, all 51 state Parquet hashes and counts including DC, Federal Parquet hash and count, complete configured salvage dispositions, and recursively verified canonical receipt digests.
+- Outputs: data/legal/legal_corpora_live_baseline_receipt.schema.json, docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json
+- Validation: python -m pytest tests/unit/scripts/test_audit_legal_corpora_live_baseline.py tests/integration/legal_data/test_audit_legal_corpora_live_baseline_fail_closed.py -q; python scripts/ops/legal_data/audit_legal_corpora_live_baseline.py --require-live-hub --require-local-salvage-inventory --check
+- Acceptance: No constant, fixture, injected transport, inventory sample, missing or read-failed file, unavailable or unhashed Viewer response, all-missing salvage set, unchecked mismatch, stale receipt, or syntactic-only digest can authorize; the on-disk receipt exists and exactly binds independently recomputed current evidence at both pins.
+- Gap task: LCR-081
+- Refinement: Split only a separately evidenced Hub-pagination, Viewer-protocol, Parquet-scale, or salvage-containment defect; never weaken live mode or substitute a fixture.
+- Embedding query: authenticated Hugging Face exact revision complete recursive inventory Viewer config Parquet row count local salvage canonical digest fail closed
+- AST query: audit_legal_corpora_live_baseline list_repo_tree datasets_server parquet salvage validate receipt_sha256
+- Parallel lane: 3
+- Conflict policy: Strict ordered successor to LCR-070 and sole owner of its verifier, schema, tests, and receipt while hardening; no overlap with LCR-070 or any other receipt writer.
+
+## LCR-G144 Make source-rights admission evaluator-complete and time-trusted
+- Status: active
+- Parent: LCR-G010
+- Depends on: LCR-G141
+- Fib priority: 1
+- Track: source-rights-contract-hardening
+- Priority: P0
+- Bundle: source-rights-contract-hardening
+- Goal: Ensure every rights API path uses one deny-on-unknown evaluator backed by canonical license identity, explicit robots and access disposition, required transformation and archive permissions, exact producer identity, and a trusted freshness clock.
+- Evidence: Versioned SPDX registry digest and LicenseRef definitions, exhaustive mutated-record denial matrix, robots, derivative and archive, identity, temporal-order tests, admitted-record and evaluator parity, and a fixture audit receipt.
+- Outputs: data/legal/spdx_license_registry.json, data/legal/legal_source_rights_catalog.schema.json, tests/fixtures/legal_ir/legal_source_rights_catalog.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_legal_source_rights_policy.py tests/unit/processors/legal_data/test_legal_source_rights_policy_fail_closed.py -q; python scripts/ops/legal_data/audit_legal_source_rights.py --fixture-only --check
+- Acceptance: No regex-shaped invented license, undefined LicenseRef, denied, unknown, or unavailable robots disposition, missing derivative or archive permission, unsafe convenience selector, wrong task, goal, or mode identity, self-chosen future seal, stale evidence or review, or impossible review chronology can admit a scope.
+- Gap task: LCR-082
+- Refinement: Split only registry-refresh or source-specific policy semantics; every selector and caller must retain evaluator parity and trusted-time denial.
+- Embedding query: canonical SPDX LicenseRef robots disposition derivatives archive rights admitted records evaluator parity task identity trusted freshness
+- AST query: legal_source_rights_policy normalize_spdx LicenseRef robots evaluate_scope_rights admitted_records sealed_at reviewed_at
+- Parallel lane: 2
+- Conflict policy: Strict ordered successor to LCR-077 and sole owner of the rights contract, schema, audit, and fixtures during hardening; live catalog generation remains ordered after it.
+
+## LCR-G145 Reseal live source rights and publication authority after hardening
+- Status: active
+- Parent: LCR-G080
+- Depends on: LCR-G142, LCR-G144
+- Fib priority: 1
+- Track: source-rights-authority-reseal
+- Priority: P0
+- Bundle: source-rights-authority-reseal
+- Goal: Regenerate live cross-corpus rights evidence under the hardened evaluator and make it the sole rights basis for both release schemas and the canonical pre-mutation runtime.
+- Evidence: Fresh source and terms observations, evaluator-complete catalog and compliance digests, schema and manifest bindings, four-phase canonical authority tests, environment principal proof, and zero-callback denial traces.
+- Outputs: data/legal/legal_source_rights_catalog.json, docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_runtime.py
+- Validation: python scripts/ops/legal_data/audit_legal_source_rights.py --require-live-source-evidence --check; python -m pytest tests/unit/processors/legal_data/test_state_laws_release_schema.py tests/unit/processors/legal_data/test_federal_register_release_schema.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py -q
+- Acceptance: Every pre-hardening receipt and decision is invalidated; both corpus manifests and cards bind the fresh evaluator-admitted receipt; and every staging or main mutation remains denied until the exact current receipt, task closure, manifest, principal, and phase-correct seal pass immediately before callback.
+- Gap task: LCR-083
+- Refinement: Split only a source-specific live evidence defect or a phase-specific binding defect, and keep the final cross-corpus receipt and runtime serialization ordered.
+- Embedding query: reseal live legal source rights compliance release schema manifest canonical publication authority runtime
+- AST query: audit_legal_source_rights release_schema legal_corpora_publication_gate legal_corpora_publication_runtime
+- Parallel lane: 1
+- Conflict policy: Final ordered successor of the rights evidence, rights integration, authority runtime, and hardening tasks; one task owns the resealed cross-corpus receipt and gate bindings.
