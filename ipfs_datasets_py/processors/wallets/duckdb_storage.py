@@ -392,6 +392,7 @@ class DuckDBWalletStore:
             "recovered_commits": 0,
             "recovered_aborts": 0,
             "partial_promotions_recovered": 0,
+            "idempotency_invalidations": 0,
         }
 
         if connection is not None:
@@ -728,11 +729,13 @@ class DuckDBWalletStore:
         """Complete or abort incomplete stages so ledger rows are never skipped/duped.
 
         * ``open`` stages that were never committed are **aborted** (no durable
-          ledger mutation).
+          ledger mutation).  Their batch idempotency keys are **invalidated** so
+          a resumed pipeline can re-stage the same pages instead of replaying a
+          stale receipt that would skip ledger records.
         * ``committing`` stages are **completed** idempotently (INSERT-OR-IGNORE
           by primary key), so a crash mid-commit — including after a *partial*
           row promotion — cannot skip remaining rows or create duplicates on
-          replay.
+          replay.  Idempotency receipts for those stages stay active (committed).
         """
 
         with self._lock:
@@ -747,9 +750,7 @@ class DuckDBWalletStore:
                     self._finalize_commit_locked(batch)
                     recovered_commits += 1
                 elif batch.status is StageBatchStatus.OPEN:
-                    self._discard_staged_identities_locked(batch)
-                    batch.status = StageBatchStatus.ABORTED
-                    self._persist_stage_status(batch)
+                    self._abort_stage_locked(batch)
                     recovered_aborts += 1
             # Drop recovered ids from the open queue (committed or aborted).
             self._open_batch_ids = [
@@ -779,6 +780,52 @@ class DuckDBWalletStore:
                 promoted += 1
         return promoted
 
+    def _abort_stage_locked(self, batch: _StageBatch) -> None:
+        """Abort one stage and invalidate its batch idempotency key.
+
+        Invalidation is required so crash recovery cannot leave a stale
+        receipt that makes a later write return success without staging
+        (which would skip ledger records on resume).
+        """
+
+        self._discard_staged_identities_locked(batch)
+        batch.status = StageBatchStatus.ABORTED
+        self._persist_stage_status(batch)
+        if batch.idempotency_key is not None:
+            self._clear_idempotency_locked(batch.idempotency_key)
+
+    def _clear_idempotency_locked(self, key: str) -> None:
+        """Drop a batch idempotency mapping from memory and durable storage."""
+
+        if key in self._idempotency:
+            del self._idempotency[key]
+            self._stats["idempotency_invalidations"] += 1
+        self._delete_idempotency(key)
+
+    def _idempotency_receipt_is_active_locked(
+        self, receipt: StageBatchReceipt
+    ) -> bool:
+        """True when replaying *receipt* is safe (will not skip durable work).
+
+        Active receipts are those whose stage is still open/committing, or
+        already committed (or whose accepted ledger ids are durable after a
+        process boundary).  Aborted or orphaned receipts must not short-circuit
+        write(), or crash recovery would skip re-ingest.
+        """
+
+        stage = self._stage_batches.get(receipt.batch_id)
+        if stage is not None:
+            return stage.status is not StageBatchStatus.ABORTED
+        if receipt.status is StageBatchStatus.COMMITTED:
+            return True
+        # Receipt survived without a stage object (e.g. partial hydrate): only
+        # treat as active when every accepted ledger identity is already durable.
+        if receipt.record_ids and all(
+            rid in self._seen_record_ids for rid in receipt.record_ids
+        ):
+            return True
+        return False
+
     # -- DatasetSink: write / commit / abort --------------------------------
 
     def reset_for_resume(self) -> None:
@@ -796,8 +843,11 @@ class DuckDBWalletStore:
     ) -> BatchWriteReceipt:
         """Stage one bounded batch with record_id deduplication.
 
-        Replaying the same *idempotency_key* (or identical content digest under
-        the same key) returns the original receipt without staging duplicates.
+        Replaying the same *idempotency_key* with the same content digest returns
+        the original receipt without staging duplicates **only when that receipt
+        is still active** (open, committing, or committed).  Keys bound to
+        aborted stages are invalidated on abort/recover so resume re-stages
+        instead of skipping ledger records.
         """
 
         context.check_active()
@@ -820,7 +870,10 @@ class DuckDBWalletStore:
                         raise DatasetSinkError(
                             "idempotency key reused with different batch content"
                         )
-                    return existing.to_write_receipt()
+                    if self._idempotency_receipt_is_active_locked(existing):
+                        return existing.to_write_receipt()
+                    # Stale aborted/orphaned receipt: clear and re-stage below.
+                    self._clear_idempotency_locked(key)
 
             accepted: list[str] = []
             staged_rows: list[tuple[str, str, dict[str, Any]]] = []
@@ -1082,7 +1135,12 @@ class DuckDBWalletStore:
                 self._seen_record_ids.discard(record_id)
 
     async def abort(self, *, context: OperationContext) -> None:
-        """Discard uncommitted open stages without inventing a sink commit."""
+        """Discard uncommitted open stages without inventing a sink commit.
+
+        Batch idempotency keys for aborted stages are invalidated so a later
+        :meth:`reset_for_resume` + write with the same key re-stages content
+        instead of replaying a receipt that no longer maps to durable rows.
+        """
 
         _ = context  # abort must succeed even under cancellation
         with self._lock:
@@ -1091,9 +1149,7 @@ class DuckDBWalletStore:
                 if batch is None:
                     continue
                 if batch.status is StageBatchStatus.OPEN:
-                    self._discard_staged_identities_locked(batch)
-                    batch.status = StageBatchStatus.ABORTED
-                    self._persist_stage_status(batch)
+                    self._abort_stage_locked(batch)
             self._open_batch_ids.clear()
             self._aborted = True
             self._stats["aborts"] += 1
@@ -1957,6 +2013,21 @@ class DuckDBWalletStore:
                 _utc_now_str(),
             ],
         )
+
+    def _delete_idempotency(self, key: str) -> None:
+        """Remove a durable batch-idempotency row (best-effort)."""
+
+        conn = self._connection
+        if conn is None:
+            return
+        try:
+            conn.execute(
+                "DELETE FROM _wallet_batch_idempotency WHERE idempotency_key = ?",
+                [key],
+            )
+        except Exception:
+            # Table may be absent before first install_schema; ignore.
+            pass
 
     def _persist_commit(self, row: Mapping[str, Any]) -> None:
         conn = self._connection

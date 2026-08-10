@@ -503,6 +503,149 @@ def test_partial_row_promotion_recovery_does_not_skip_or_duplicate(
         assert block.record_id in ids
 
 
+def test_recover_aborts_invalidate_idempotency_so_resume_does_not_skip(
+    store: DuckDBWalletStore,
+    chain: ChainRef,
+    provenance: Provenance,
+    context: OperationContext,
+) -> None:
+    """Crash before commit must not leave a stale idempotency receipt.
+
+    If recover aborted an open stage but kept the page key, a resumed write
+    would return success without staging — skipping ledger records.  Keys for
+    aborted stages must be invalidated so the same page re-stages once.
+    """
+
+    block = _block(chain, provenance, sequence=21, block_hash="0x15")
+    first = _run(
+        store.write(
+            RecordBatch(records=(block,)),
+            context=context,
+            idempotency_key="page-21",
+        )
+    )
+    assert first.accepted_count == 1
+    assert store.open_stage_count() == 1
+
+    recovered = store.recover()
+    assert recovered["recovered_aborts"] == 1
+    assert store.count_records("blocks") == 0
+    assert store.stats()["idempotency_invalidations"] >= 1
+
+    # Resume with the same page key must re-stage (not skip via stale receipt).
+    store.reset_for_resume()
+    second = _run(
+        store.write(
+            RecordBatch(records=(block,)),
+            context=context,
+            idempotency_key="page-21",
+        )
+    )
+    assert second.accepted_count == 1
+    assert second.write_id != first.write_id
+    _run(store.commit(None, context=context))
+    assert store.count_records("blocks") == 1
+    assert store.get_record(block.record_id) is not None
+
+    # After durable commit, the same key is truly idempotent (no duplicate).
+    third = _run(
+        store.write(
+            RecordBatch(records=(block,)),
+            context=context,
+            idempotency_key="page-21",
+        )
+    )
+    assert third.accepted_count == 1  # receipt replay of committed batch
+    assert third.write_id == second.write_id
+    _run(store.commit(None, context=context))
+    assert store.count_records("blocks") == 1
+
+
+def test_explicit_abort_invalidates_idempotency_key(
+    store: DuckDBWalletStore,
+    chain: ChainRef,
+    provenance: Provenance,
+    context: OperationContext,
+) -> None:
+    block = _block(chain, provenance, sequence=22, block_hash="0x16")
+    _run(
+        store.write(
+            RecordBatch(records=(block,)),
+            context=context,
+            idempotency_key="page-abort-22",
+        )
+    )
+    _run(store.abort(context=context))
+    assert store.count_records("blocks") == 0
+    assert store.stats()["idempotency_invalidations"] >= 1
+
+    store.reset_for_resume()
+    receipt = _run(
+        store.write(
+            RecordBatch(records=(block,)),
+            context=context,
+            idempotency_key="page-abort-22",
+        )
+    )
+    assert receipt.accepted_count == 1
+    _run(store.commit(None, context=context))
+    assert store.count_records("blocks") == 1
+
+
+def test_process_restart_open_idempotent_page_does_not_skip(
+    chain: ChainRef,
+    provenance: Provenance,
+    context: OperationContext,
+) -> None:
+    """Durable authority + recover must re-allow aborted page keys after restart."""
+
+    duckdb = pytest.importorskip("duckdb")
+    conn = duckdb.connect(":memory:")
+    store = open_wallet_store(connection=conn, scope="wallet:idem-restart")
+    blocks = [
+        _block(chain, provenance, sequence=i, block_hash=f"0xid{i:02x}")
+        for i in (1, 2)
+    ]
+    _run(
+        store.write(
+            RecordBatch(records=tuple(blocks)),
+            context=context,
+            idempotency_key="restart-page-1",
+        )
+    )
+    assert store.count_records("blocks") == 0
+    # Crash while still OPEN (not fenced for commit).
+    store.simulate_crash_drop_open_stages_from_memory()
+
+    restarted = open_wallet_store(connection=conn, scope="wallet:idem-restart")
+    # Open stage aborted; no durable rows.
+    assert restarted.count_records("blocks") == 0
+
+    # Same idempotency key must re-stage after abort recovery (no skip).
+    again = _run(
+        restarted.write(
+            RecordBatch(records=tuple(blocks)),
+            context=context,
+            idempotency_key="restart-page-1",
+        )
+    )
+    assert again.accepted_count == 2
+    _run(restarted.commit(None, context=context))
+    assert restarted.count_records("blocks") == 2
+    # True idempotent replay after commit.
+    replay = _run(
+        restarted.write(
+            RecordBatch(records=tuple(blocks)),
+            context=context,
+            idempotency_key="restart-page-1",
+        )
+    )
+    assert replay.write_id == again.write_id
+    _run(restarted.commit(None, context=context))
+    assert restarted.count_records("blocks") == 2
+    conn.close()
+
+
 # ---------------------------------------------------------------------------
 # Acceptance: checkpoint CAS rejects stale ingesters
 # ---------------------------------------------------------------------------
