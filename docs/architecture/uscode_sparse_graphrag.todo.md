@@ -950,7 +950,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Verifier fails on any missing/mismatched/stale input, receipt contains no secret/path leak, and a valid fixture candidate is independently reproducible.
 
 ## USCIR-039 Rehearse immutable staging and rollback handoff
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
