@@ -974,7 +974,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Rehearsal proves both promotion and rollback without deletion; optional real staging evidence is recorded when authorized, while absent staging credentials produce a typed pending-external field rather than blocking local completion.
 
 ## USCIR-040 Assemble the human publication-seal request and stop at the gate
-- Status: todo
+- Status: completed
+- Operator resolution: seal+checker+tests; pytest 28 passed; CLI --allow-pending ok
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
