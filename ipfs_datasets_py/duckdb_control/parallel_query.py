@@ -1,14 +1,26 @@
-"""Cross-domain parallel query scheduler with control-plane capacity (DQK-042).
+"""Cross-domain parallel query scheduler with control-plane capacity (DQK-042/092).
 
 Runs independent graph / vector / proof / AST / wallet subqueries concurrently,
 propagates deadlines and cancellation, joins bounded results, and reserves
 control-plane capacity so lease heartbeats are not starved under analytical load.
+
+DQK-092 extends the broker for lake shard subplans: per-catalog connection,
+row, byte, memory, time, spill, and cancellation budgets; isolated worker
+connections (no shared mutable handles); and capacity isolation so a slow or
+failed catalog owner cannot starve supervisor heartbeats or unrelated shards.
 
 Acceptance (DQK-042)
 --------------------
 * Independent subqueries actually overlap
 * Partial timeout/failure is typed
 * Lease heartbeat p99 stays within SLO under benchmark load
+
+Acceptance (DQK-092 broker surface)
+----------------------------------
+* Per-catalog connection / memory / spill budgets with backpressure
+* Independent catalog workers never share mutable connections
+* Reserved control-plane capacity remains available under analytical fan-out
+* Deadlines and cancellation propagate to every worker
 
 Architecture notes
 ------------------
@@ -20,6 +32,8 @@ Architecture notes
   receive opaque strings as the only signal.
 * Join is row-bounded and domain-tagged; unbounded cartesian products are
   refused.
+* Catalog connection pools bound concurrent attachments per catalog identity;
+  distinct catalogs execute concurrently under independent slots.
 
 Importing this module is inert: no DuckDB, network, or filesystem I/O.
 """
@@ -66,7 +80,11 @@ __all__ = [
     "DEFAULT_HEARTBEAT_P99_SLO_MS",
     "DEFAULT_RESERVED_CONTROL_PLANE_MS",
     "DEFAULT_RESERVED_CONTROL_PLANE_SLOTS",
+    "DEFAULT_MAX_MEMORY_BYTES",
+    "DEFAULT_MAX_SPILL_BYTES",
+    "DEFAULT_MAX_CONNECTIONS_PER_CATALOG",
     "CROSS_DOMAIN_SET",
+    "CatalogConnectionPool",
     "ControlPlaneCapacity",
     "FailureKind",
     "HeartbeatSample",
@@ -82,6 +100,7 @@ __all__ = [
     "ParallelQueryResult",
     "ParallelQueryScheduler",
     "PartialFailurePolicy",
+    "ResourceUse",
     "SubqueryContext",
     "SubqueryDomain",
     "SubqueryOutcome",
@@ -90,6 +109,7 @@ __all__ = [
     "SubqueryStatus",
     "TypedPartialFailure",
     "compute_overlap_evidence",
+    "compute_shard_overlap_evidence",
     "intervals_overlap",
     "join_bounded_results",
     "open_default_scheduler",
@@ -108,7 +128,7 @@ PARALLEL_RECEIPT_SCHEMA: Final[str] = (
     "ipfs_datasets_py/duckdb-control-parallel-receipt@1"
 )
 PARALLEL_QUERY_IMPLEMENTATION_GENERATION: Final[str] = (
-    "dqk-042-lane2-attempt1-20260810"
+    "dqk-042-dqk-092-parallel-broker-20260810"
 )
 
 DEFAULT_RESERVED_CONTROL_PLANE_MS: Final[int] = 250
@@ -119,6 +139,9 @@ DEFAULT_MAX_DURATION_MS: Final[int] = 10_000
 DEFAULT_MAX_ROWS_PER_SUBQUERY: Final[int] = 5_000
 DEFAULT_MAX_TOTAL_ROWS: Final[int] = 20_000
 DEFAULT_MAX_BYTES: Final[int] = 16 * 1024 * 1024
+DEFAULT_MAX_MEMORY_BYTES: Final[int] = 64 * 1024 * 1024
+DEFAULT_MAX_SPILL_BYTES: Final[int] = 128 * 1024 * 1024
+DEFAULT_MAX_CONNECTIONS_PER_CATALOG: Final[int] = 1
 DEFAULT_HEARTBEAT_INTERVAL_MS: Final[int] = 10
 DEFAULT_TOTAL_SLOTS: Final[int] = 8
 
@@ -126,6 +149,9 @@ MAX_WORKERS_HARD: Final[int] = 64
 MAX_DURATION_MS_HARD: Final[int] = 600_000
 MAX_ROWS_HARD: Final[int] = 1_000_000
 MAX_BYTES_HARD: Final[int] = 256 * 1024 * 1024
+MAX_MEMORY_HARD: Final[int] = 8 * 1024 * 1024 * 1024
+MAX_SPILL_HARD: Final[int] = 16 * 1024 * 1024 * 1024
+MAX_CONNECTIONS_PER_CATALOG_HARD: Final[int] = 64
 MAX_SUBQUERIES_HARD: Final[int] = 64
 
 
@@ -321,6 +347,174 @@ class ControlPlaneCapacity:
             }
 
 
+class CatalogConnectionPool:
+    """Per-catalog connection slots that never share mutable handles.
+
+    Independent catalog shards acquire concurrent connections. Workers on the
+    same catalog are back-pressured by ``max_connections_per_catalog``. Every
+    acquire returns a unique connection identity so lake workers can prove they
+    did not reuse a peer's mutable attachment.
+    """
+
+    __slots__ = (
+        "max_connections_per_catalog",
+        "_semaphores",
+        "_in_use",
+        "_owners",
+        "_lock",
+        "_wait_ms",
+        "_total_acquires",
+    )
+
+    def __init__(
+        self,
+        *,
+        max_connections_per_catalog: int = DEFAULT_MAX_CONNECTIONS_PER_CATALOG,
+    ) -> None:
+        if (
+            not isinstance(max_connections_per_catalog, int)
+            or isinstance(max_connections_per_catalog, bool)
+            or max_connections_per_catalog < 1
+            or max_connections_per_catalog > MAX_CONNECTIONS_PER_CATALOG_HARD
+        ):
+            raise ParallelQueryError(
+                "CAPACITY",
+                f"max_connections_per_catalog out of range: "
+                f"{max_connections_per_catalog!r}",
+            )
+        self.max_connections_per_catalog = max_connections_per_catalog
+        self._semaphores: dict[str, threading.Semaphore] = {}
+        self._in_use: dict[str, int] = {}
+        # connection_id -> catalog_id (proves exclusive ownership)
+        self._owners: dict[str, str] = {}
+        self._lock = threading.Lock()
+        self._wait_ms: list[float] = []
+        self._total_acquires = 0
+
+    def _semaphore_for(self, catalog_id: str) -> threading.Semaphore:
+        cid = str(catalog_id or "").strip() or "__default__"
+        with self._lock:
+            sem = self._semaphores.get(cid)
+            if sem is None:
+                sem = threading.Semaphore(self.max_connections_per_catalog)
+                self._semaphores[cid] = sem
+                self._in_use.setdefault(cid, 0)
+            return sem
+
+    def acquire(
+        self,
+        catalog_id: str,
+        *,
+        timeout: float | None = None,
+        owner_token: str = "",
+    ) -> str | None:
+        """Acquire an exclusive connection slot for ``catalog_id``.
+
+        Returns a unique connection identity on success, or ``None`` on timeout.
+        """
+
+        cid = str(catalog_id or "").strip() or "__default__"
+        sem = self._semaphore_for(cid)
+        started = time.monotonic()
+        ok = sem.acquire(timeout=timeout if timeout is not None else None)
+        waited = (time.monotonic() - started) * 1000.0
+        with self._lock:
+            self._wait_ms.append(waited)
+            if not ok:
+                return None
+            self._in_use[cid] = self._in_use.get(cid, 0) + 1
+            self._total_acquires += 1
+            conn_id = (
+                f"conn-{cid}-{self._total_acquires:08d}-"
+                f"{uuid.uuid4().hex[:12]}"
+            )
+            if owner_token:
+                conn_id = f"{conn_id}:{owner_token[:32]}"
+            self._owners[conn_id] = cid
+            return conn_id
+
+    def release(self, catalog_id: str, connection_id: str) -> None:
+        cid = str(catalog_id or "").strip() or "__default__"
+        with self._lock:
+            owner = self._owners.pop(connection_id, None)
+            if owner is not None and owner != cid:
+                # Defensive: still release the semaphore for the true owner.
+                cid = owner
+            if self._in_use.get(cid, 0) > 0:
+                self._in_use[cid] -= 1
+        sem = self._semaphore_for(cid)
+        sem.release()
+
+    def connection_owner(self, connection_id: str) -> str | None:
+        with self._lock:
+            return self._owners.get(connection_id)
+
+    def in_use(self, catalog_id: str) -> int:
+        cid = str(catalog_id or "").strip() or "__default__"
+        with self._lock:
+            return int(self._in_use.get(cid, 0))
+
+    def active_connection_ids(self) -> tuple[str, ...]:
+        with self._lock:
+            return tuple(sorted(self._owners))
+
+    def snapshot(self) -> dict[str, Any]:
+        with self._lock:
+            return {
+                "max_connections_per_catalog": self.max_connections_per_catalog,
+                "catalogs": {
+                    cid: {
+                        "in_use": self._in_use.get(cid, 0),
+                        "connections": sorted(
+                            c for c, o in self._owners.items() if o == cid
+                        ),
+                    }
+                    for cid in sorted(
+                        set(self._semaphores) | set(self._in_use) | set(self._owners.values())
+                    )
+                },
+                "total_acquires": self._total_acquires,
+                "active_connections": len(self._owners),
+                "wait_samples": len(self._wait_ms),
+                "wait_p99_ms": percentile(self._wait_ms, 99.0) if self._wait_ms else 0.0,
+            }
+
+
+@dataclass(frozen=True, slots=True)
+class ResourceUse:
+    """Measured resource consumption for one worker or the joined plan."""
+
+    rows: int = 0
+    bytes: int = 0
+    memory_bytes: int = 0
+    spill_bytes: int = 0
+    duration_ms: float = 0.0
+    connections: int = 0
+    renewals: int = 0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "rows": int(self.rows),
+            "bytes": int(self.bytes),
+            "memory_bytes": int(self.memory_bytes),
+            "spill_bytes": int(self.spill_bytes),
+            "duration_ms": float(self.duration_ms),
+            "connections": int(self.connections),
+            "renewals": int(self.renewals),
+        }
+
+    def merge(self, other: "ResourceUse") -> "ResourceUse":
+        return ResourceUse(
+            rows=self.rows + other.rows,
+            bytes=self.bytes + other.bytes,
+            memory_bytes=max(self.memory_bytes, other.memory_bytes),
+            spill_bytes=self.spill_bytes + other.spill_bytes,
+            duration_ms=max(self.duration_ms, other.duration_ms),
+            connections=self.connections + other.connections,
+            renewals=self.renewals + other.renewals,
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class ParallelQueryBudget:
     """Hard caps plus reserved control-plane capacity for a parallel plan.
@@ -329,6 +523,9 @@ class ParallelQueryBudget:
     Effective analytical wall-clock is::
 
         max(1, max_duration_ms - reserved_control_plane_ms)
+
+    Per-catalog connection / memory / spill caps (DQK-092) bound lake workers
+    without borrowing reserved control-plane capacity.
     """
 
     max_workers: int = DEFAULT_MAX_WORKERS
@@ -336,6 +533,9 @@ class ParallelQueryBudget:
     max_rows_per_subquery: int = DEFAULT_MAX_ROWS_PER_SUBQUERY
     max_total_rows: int = DEFAULT_MAX_TOTAL_ROWS
     max_bytes: int = DEFAULT_MAX_BYTES
+    max_memory_bytes: int = DEFAULT_MAX_MEMORY_BYTES
+    max_spill_bytes: int = DEFAULT_MAX_SPILL_BYTES
+    max_connections_per_catalog: int = DEFAULT_MAX_CONNECTIONS_PER_CATALOG
     reserved_control_plane_ms: int = DEFAULT_RESERVED_CONTROL_PLANE_MS
     reserved_control_plane_slots: int = DEFAULT_RESERVED_CONTROL_PLANE_SLOTS
     total_slots: int = DEFAULT_TOTAL_SLOTS
@@ -349,6 +549,14 @@ class ParallelQueryBudget:
             ("max_rows_per_subquery", self.max_rows_per_subquery, 1, MAX_ROWS_HARD),
             ("max_total_rows", self.max_total_rows, 1, MAX_ROWS_HARD),
             ("max_bytes", self.max_bytes, 1, MAX_BYTES_HARD),
+            ("max_memory_bytes", self.max_memory_bytes, 1, MAX_MEMORY_HARD),
+            ("max_spill_bytes", self.max_spill_bytes, 0, MAX_SPILL_HARD),
+            (
+                "max_connections_per_catalog",
+                self.max_connections_per_catalog,
+                1,
+                MAX_CONNECTIONS_PER_CATALOG_HARD,
+            ),
             ("reserved_control_plane_ms", self.reserved_control_plane_ms, 0, MAX_DURATION_MS_HARD),
             ("reserved_control_plane_slots", self.reserved_control_plane_slots, 1, 256),
             ("total_slots", self.total_slots, 2, 1024),
@@ -408,6 +616,9 @@ class ParallelQueryBudget:
             "max_rows_per_subquery": self.max_rows_per_subquery,
             "max_total_rows": self.max_total_rows,
             "max_bytes": self.max_bytes,
+            "max_memory_bytes": self.max_memory_bytes,
+            "max_spill_bytes": self.max_spill_bytes,
+            "max_connections_per_catalog": self.max_connections_per_catalog,
             "reserved_control_plane_ms": self.reserved_control_plane_ms,
             "reserved_control_plane_slots": self.reserved_control_plane_slots,
             "total_slots": self.total_slots,
@@ -634,16 +845,29 @@ class TypedPartialFailure:
 
 
 class SubqueryContext:
-    """Per-worker execution context with deadline and cancellation checks."""
+    """Per-worker execution context with deadline and cancellation checks.
+
+    Lake workers (DQK-092) additionally observe catalog identity, exclusive
+    connection identity, memory/spill caps, and optional close-before-release
+    hooks so cancellation never leaves a renewable stale attachment.
+    """
 
     __slots__ = (
         "subquery_id",
         "domain",
         "budget",
+        "catalog_id",
+        "connection_id",
         "_cancel",
         "_deadline_monotonic",
         "_started_monotonic",
         "_max_rows",
+        "_memory_bytes",
+        "_spill_bytes",
+        "_on_cancel_close",
+        "_closed",
+        "_renewals",
+        "_lock",
     )
 
     def __init__(
@@ -655,18 +879,41 @@ class SubqueryContext:
         cancel: RegistryCancellationToken | None,
         deadline_monotonic: float,
         max_rows: int,
+        catalog_id: str = "",
+        connection_id: str = "",
+        on_cancel_close: Callable[[], None] | None = None,
     ) -> None:
         self.subquery_id = subquery_id
         self.domain = domain
         self.budget = budget
+        self.catalog_id = str(catalog_id or "")
+        self.connection_id = str(connection_id or "")
         self._cancel = cancel
         self._deadline_monotonic = float(deadline_monotonic)
         self._started_monotonic = time.monotonic()
         self._max_rows = int(max_rows)
+        self._memory_bytes = 0
+        self._spill_bytes = 0
+        self._on_cancel_close = on_cancel_close
+        self._closed = False
+        self._renewals = 0
+        self._lock = threading.Lock()
 
     @property
     def max_rows(self) -> int:
         return self._max_rows
+
+    @property
+    def max_memory_bytes(self) -> int:
+        return int(self.budget.max_memory_bytes)
+
+    @property
+    def max_spill_bytes(self) -> int:
+        return int(self.budget.max_spill_bytes)
+
+    @property
+    def max_bytes(self) -> int:
+        return int(self.budget.max_bytes)
 
     @property
     def is_cancelled(self) -> bool:
@@ -678,19 +925,86 @@ class SubqueryContext:
             return ""
         return self._cancel.reason or "cancelled"
 
+    @property
+    def renewals(self) -> int:
+        return self._renewals
+
+    @property
+    def memory_bytes(self) -> int:
+        return self._memory_bytes
+
+    @property
+    def spill_bytes(self) -> int:
+        return self._spill_bytes
+
+    @property
+    def readers_closed(self) -> bool:
+        return self._closed
+
     def remaining_ms(self) -> float:
         return max(0.0, (self._deadline_monotonic - time.monotonic()) * 1000.0)
 
     def elapsed_ms(self) -> float:
         return max(0.0, (time.monotonic() - self._started_monotonic) * 1000.0)
 
+    def record_renewal(self) -> int:
+        with self._lock:
+            self._renewals += 1
+            return self._renewals
+
+    def record_memory(self, bytes_used: int) -> None:
+        used = max(0, int(bytes_used))
+        with self._lock:
+            self._memory_bytes = max(self._memory_bytes, used)
+        if used > self.budget.max_memory_bytes:
+            raise QueryBudgetExceeded("memory", self.budget.max_memory_bytes)
+
+    def record_spill(self, bytes_used: int) -> None:
+        used = max(0, int(bytes_used))
+        with self._lock:
+            self._spill_bytes += used
+            total = self._spill_bytes
+        if total > self.budget.max_spill_bytes:
+            raise QueryBudgetExceeded("spill", self.budget.max_spill_bytes)
+
+    def close_readers(self) -> None:
+        """Close remote readers/attachments before lease release (cancel path)."""
+
+        with self._lock:
+            if self._closed:
+                return
+            self._closed = True
+            hook = self._on_cancel_close
+        if hook is not None:
+            hook()
+
+    def set_close_hook(self, hook: Callable[[], None] | None) -> None:
+        self._on_cancel_close = hook
+
     def check(self) -> None:
-        """Raise typed errors when cancelled or past the analytical deadline."""
+        """Raise typed errors when cancelled or past the analytical deadline.
+
+        On cancellation, readers are closed before the exception propagates so
+        lake workers never release a lease while attachments remain open.
+        """
 
         if self._cancel is not None and self._cancel.is_cancelled:
+            self.close_readers()
             raise QueryCancelled(self._cancel.reason or "cancelled")
         if time.monotonic() >= self._deadline_monotonic:
+            self.close_readers()
             raise QueryBudgetExceeded("time", self.budget.analytical_time_ms)
+
+    def resource_use(self, *, rows: int = 0, bytes_: int = 0) -> ResourceUse:
+        return ResourceUse(
+            rows=int(rows),
+            bytes=int(bytes_),
+            memory_bytes=self._memory_bytes,
+            spill_bytes=self._spill_bytes,
+            duration_ms=self.elapsed_ms(),
+            connections=1 if self.connection_id else 0,
+            renewals=self._renewals,
+        )
 
 
 class SubqueryRunner(Protocol):
@@ -701,12 +1015,13 @@ class SubqueryRunner(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class SubquerySpec:
-    """One independent graph/vector/proof/AST/wallet subquery."""
+    """One independent graph/vector/proof/AST/wallet (or lake-shard) subquery."""
 
     subquery_id: str
     domain: SubqueryDomain
     runner: SubqueryRunner
     max_rows: int | None = None
+    catalog_id: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -735,15 +1050,19 @@ class SubquerySpec:
                 raise ParallelQueryError(
                     "SPEC", f"max_rows out of range: {self.max_rows!r}"
                 )
-        object.__setattr__(
-            self, "metadata", MappingProxyType(dict(self.metadata or {}))
-        )
+        cid = str(self.catalog_id or "").strip()
+        object.__setattr__(self, "catalog_id", cid)
+        meta = dict(self.metadata or {})
+        if cid and "catalog_id" not in meta:
+            meta["catalog_id"] = cid
+        object.__setattr__(self, "metadata", MappingProxyType(meta))
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "subquery_id": self.subquery_id,
             "domain": self.domain.value,
             "max_rows": self.max_rows,
+            "catalog_id": self.catalog_id,
             "metadata": dict(self.metadata),
         }
 
@@ -825,11 +1144,20 @@ class SubqueryOutcome:
     duration_ms: float
     failure: TypedPartialFailure | None = None
     row_bytes: int = 0
+    catalog_id: str = ""
+    connection_id: str = ""
+    resource_use: ResourceUse | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "rows", tuple(self.rows))
         if self.duration_ms < 0:
             object.__setattr__(self, "duration_ms", 0.0)
+        object.__setattr__(self, "catalog_id", str(self.catalog_id or ""))
+        object.__setattr__(self, "connection_id", str(self.connection_id or ""))
+        if self.resource_use is not None and not isinstance(
+            self.resource_use, ResourceUse
+        ):
+            raise ParallelQueryError("OUTCOME", "resource_use must be ResourceUse")
 
     @property
     def succeeded(self) -> bool:
@@ -845,6 +1173,11 @@ class SubqueryOutcome:
             "finished_monotonic": self.finished_monotonic,
             "duration_ms": self.duration_ms,
             "row_bytes": self.row_bytes,
+            "catalog_id": self.catalog_id,
+            "connection_id": self.connection_id,
+            "resource_use": (
+                self.resource_use.to_dict() if self.resource_use is not None else None
+            ),
             "failure": self.failure.to_dict() if self.failure is not None else None,
         }
 
@@ -941,6 +1274,76 @@ def compute_overlap_evidence(
     )
 
 
+def compute_shard_overlap_evidence(
+    outcomes: Sequence[SubqueryOutcome],
+) -> dict[str, Any]:
+    """Overlap evidence keyed by catalog/shard identity (DQK-092).
+
+    Independent catalog shards must overlap without sharing connection
+    identities. Same-catalog workers are permitted only when the connection
+    pool serializes them under ``max_connections_per_catalog``.
+    """
+
+    intervals = [
+        (
+            o.subquery_id,
+            o.catalog_id or str(o.domain.value),
+            o.connection_id,
+            float(o.started_monotonic),
+            float(o.finished_monotonic),
+        )
+        for o in outcomes
+        if o.status != SubqueryStatus.SKIPPED
+    ]
+    pairs: list[tuple[str, str]] = []
+    shard_hits: set[str] = set()
+    shared_connections: list[tuple[str, str, str]] = []
+    for i, (aid, acat, aconn, a0, a1) in enumerate(intervals):
+        for bid, bcat, bconn, b0, b1 in intervals[i + 1 :]:
+            if not intervals_overlap(a0, a1, b0, b1):
+                continue
+            ordered = tuple(sorted((aid, bid)))
+            pairs.append((ordered[0], ordered[1]))  # type: ignore[arg-type]
+            if acat != bcat:
+                shard_hits.add(acat)
+                shard_hits.add(bcat)
+            if aconn and bconn and aconn == bconn:
+                shared_connections.append((aid, bid, aconn))
+
+    events: list[tuple[float, int]] = []
+    for _, _, _, start, end in intervals:
+        events.append((start, +1))
+        events.append((end, -1))
+    events.sort(key=lambda item: (item[0], -item[1]))
+    current = 0
+    max_conc = 0
+    for _, delta in events:
+        current += delta
+        if current > max_conc:
+            max_conc = current
+
+    connection_ids = [c for _, _, c, _, _ in intervals if c]
+    return {
+        "concurrent_pairs": [list(p) for p in pairs],
+        "max_concurrency": max_conc,
+        "shards_that_overlapped": sorted(shard_hits),
+        "independent_shards_overlapped": len(shard_hits) >= 2,
+        "shared_mutable_connections": shared_connections,
+        "no_shared_mutable_connections": len(shared_connections) == 0,
+        "distinct_connection_ids": len(set(connection_ids)),
+        "sample_intervals": [
+            {
+                "subquery_id": sid,
+                "catalog_id": cat,
+                "connection_id": conn,
+                "started_monotonic": start,
+                "finished_monotonic": end,
+            }
+            for sid, cat, conn, start, end in intervals
+        ],
+    }
+
+
 def join_bounded_results(
     outcomes: Sequence[SubqueryOutcome],
     *,
@@ -1034,6 +1437,11 @@ class ParallelQueryReceipt:
     duration_ms: float
     created_at: str
     implementation_generation: str = PARALLEL_QUERY_IMPLEMENTATION_GENERATION
+    resource_use: Mapping[str, Any] = field(default_factory=dict)
+    shard_overlap: Mapping[str, Any] = field(default_factory=dict)
+    catalog_capacity: Mapping[str, Any] = field(default_factory=dict)
+    partial_failure_policy: str = ""
+    result_digest: str = ""
 
     @property
     def identity_id(self) -> str:
@@ -1067,6 +1475,11 @@ class ParallelQueryReceipt:
             "duration_ms": self.duration_ms,
             "created_at": self.created_at,
             "implementation_generation": self.implementation_generation,
+            "resource_use": dict(self.resource_use or {}),
+            "shard_overlap": dict(self.shard_overlap or {}),
+            "catalog_capacity": dict(self.catalog_capacity or {}),
+            "partial_failure_policy": self.partial_failure_policy,
+            "result_digest": self.result_digest,
         }
         return content_identity(payload)
 
@@ -1088,6 +1501,11 @@ class ParallelQueryReceipt:
             "duration_ms": self.duration_ms,
             "created_at": self.created_at,
             "implementation_generation": self.implementation_generation,
+            "resource_use": dict(self.resource_use or {}),
+            "shard_overlap": dict(self.shard_overlap or {}),
+            "catalog_capacity": dict(self.catalog_capacity or {}),
+            "partial_failure_policy": self.partial_failure_policy,
+            "result_digest": self.result_digest,
             "identity_id": self.identity_id,
         }
 
@@ -1216,19 +1634,22 @@ class ParallelQueryScheduler:
     1. Reserves control-plane capacity for lease heartbeats.
     2. Starts a lease-heartbeat monitor on reserved slots.
     3. Executes independent domain runners under a shared deadline + cancel token.
-    4. Joins bounded domain-tagged results.
-    5. Emits typed partial failures and a deterministic receipt.
+    4. Bounds per-catalog connection fan-out (DQK-092) without sharing handles.
+    5. Joins bounded domain-tagged results.
+    6. Emits typed partial failures and a deterministic receipt.
     """
 
     def __init__(
         self,
         *,
         capacity: ControlPlaneCapacity | None = None,
+        catalog_pool: CatalogConnectionPool | None = None,
         clock: Callable[[], float] | None = None,
         wall_clock: Callable[[], str] | None = None,
         heartbeat_work_ms: float = 0.2,
     ) -> None:
         self._capacity = capacity
+        self._catalog_pool = catalog_pool
         self._clock = clock or time.monotonic
         self._wall_clock = wall_clock or _utc_now
         self._heartbeat_work_ms = float(heartbeat_work_ms)
@@ -1237,6 +1658,10 @@ class ParallelQueryScheduler:
     @property
     def capacity(self) -> ControlPlaneCapacity | None:
         return self._capacity
+
+    @property
+    def catalog_pool(self) -> CatalogConnectionPool | None:
+        return self._catalog_pool
 
     def run(
         self,
@@ -1257,9 +1682,12 @@ class ParallelQueryScheduler:
             total_slots=budget.total_slots,
             reserved_control_plane_slots=budget.reserved_control_plane_slots,
         )
+        catalog_pool = self._catalog_pool or CatalogConnectionPool(
+            max_connections_per_catalog=budget.max_connections_per_catalog,
+        )
 
         if cancellation is not None and cancellation.is_cancelled:
-            return self._cancelled_before_start(plan, started, capacity)
+            return self._cancelled_before_start(plan, started, capacity, catalog_pool)
 
         analytical_deadline = started + (budget.analytical_time_ms / 1000.0)
         if deadline_monotonic is not None:
@@ -1293,6 +1721,7 @@ class ParallelQueryScheduler:
                         spec=spec,
                         budget=budget,
                         capacity=capacity,
+                        catalog_pool=catalog_pool,
                         cancel=cancel,
                         deadline_monotonic=analytical_deadline,
                         fail_fast=fail_fast_triggered,
@@ -1330,6 +1759,7 @@ class ParallelQueryScheduler:
                                 finished_monotonic=now,
                                 duration_ms=0.0,
                                 failure=failure,
+                                catalog_id=spec.catalog_id,
                             )
                         outcomes.append(outcome)
                         if (
@@ -1372,6 +1802,7 @@ class ParallelQueryScheduler:
                                 finished_monotonic=now,
                                 duration_ms=0.0,
                                 failure=failure,
+                                catalog_id=spec.catalog_id,
                             )
                         )
         finally:
@@ -1419,6 +1850,7 @@ class ParallelQueryScheduler:
             partials.append(join_failure)
 
         overlap = compute_overlap_evidence(ordered)
+        shard_overlap = compute_shard_overlap_evidence(ordered)
         finished = self._clock()
         duration_ms = max(0.0, (finished - started) * 1000.0)
         status = self._overall_status(
@@ -1431,6 +1863,29 @@ class ParallelQueryScheduler:
         snapshot_identity: str | None = None
         if plan.snapshot is not None:
             snapshot_identity = plan.snapshot.identity_id
+
+        resource = ResourceUse(duration_ms=duration_ms)
+        for outcome in ordered:
+            if outcome.resource_use is not None:
+                resource = resource.merge(outcome.resource_use)
+            else:
+                resource = resource.merge(
+                    ResourceUse(
+                        rows=len(outcome.rows),
+                        bytes=outcome.row_bytes,
+                        duration_ms=outcome.duration_ms,
+                        connections=1 if outcome.connection_id else 0,
+                    )
+                )
+
+        result_digest = content_identity(
+            {
+                "plan_id": plan.plan_id,
+                "rows": [dict(r) for r in joined_rows],
+                "status": status,
+                "partial_failures": [f.to_dict() for f in partials],
+            }
+        )
 
         receipt = ParallelQueryReceipt(
             schema=PARALLEL_RECEIPT_SCHEMA,
@@ -1450,6 +1905,11 @@ class ParallelQueryScheduler:
             created_at=normalize_timestamp(self._wall_clock())
             if callable(self._wall_clock)
             else _utc_now(),
+            resource_use=MappingProxyType(resource.to_dict()),
+            shard_overlap=MappingProxyType(shard_overlap),
+            catalog_capacity=MappingProxyType(catalog_pool.snapshot()),
+            partial_failure_policy=plan.partial_failure_policy.value,
+            result_digest=result_digest,
         )
 
         return ParallelQueryResult(
@@ -1467,12 +1927,16 @@ class ParallelQueryScheduler:
         spec: SubquerySpec,
         budget: ParallelQueryBudget,
         capacity: ControlPlaneCapacity,
+        catalog_pool: CatalogConnectionPool,
         cancel: RegistryCancellationToken,
         deadline_monotonic: float,
         fail_fast: threading.Event,
         policy: PartialFailurePolicy,
     ) -> SubqueryOutcome:
         started = self._clock()
+        catalog_id = spec.catalog_id or str(spec.metadata.get("catalog_id") or "")
+        connection_id = ""
+        catalog_acquired = False
 
         if cancel.is_cancelled or fail_fast.is_set():
             failure = TypedPartialFailure(
@@ -1491,6 +1955,7 @@ class ParallelQueryScheduler:
                 finished_monotonic=finished,
                 duration_ms=max(0.0, (finished - started) * 1000.0),
                 failure=failure,
+                catalog_id=catalog_id,
             )
 
         remaining = max(0.0, deadline_monotonic - self._clock())
@@ -1521,110 +1986,177 @@ class ParallelQueryScheduler:
                 finished_monotonic=finished,
                 duration_ms=max(0.0, (finished - started) * 1000.0),
                 failure=failure,
+                catalog_id=catalog_id,
             )
-
-        max_rows = (
-            int(spec.max_rows)
-            if spec.max_rows is not None
-            else int(budget.max_rows_per_subquery)
-        )
-        context = SubqueryContext(
-            subquery_id=spec.subquery_id,
-            domain=spec.domain,
-            budget=budget,
-            cancel=cancel,
-            deadline_monotonic=deadline_monotonic,
-            max_rows=max_rows,
-        )
 
         try:
-            context.check()
-            raw_rows = spec.runner(context)
-            if raw_rows is None:
-                raw_rows = ()
-            if not isinstance(raw_rows, Sequence) or isinstance(raw_rows, (str, bytes)):
-                raise ParallelQueryError(
-                    "EXEC",
-                    "subquery runner must return a sequence of row mappings",
-                )
-
-            projected: list[Mapping[str, Any]] = []
-            total_bytes = 0
-            truncated = False
-            for row in raw_rows:
-                context.check()
-                if fail_fast.is_set() or cancel.is_cancelled:
-                    raise QueryCancelled(cancel.reason or "cancelled")
-                if not isinstance(row, Mapping):
-                    raise ParallelQueryError("EXEC", "row must be a mapping")
-                if len(projected) >= max_rows:
-                    truncated = True
-                    break
-                row_bytes = _estimate_row_bytes(row)
-                if total_bytes + row_bytes > budget.max_bytes:
-                    truncated = True
-                    break
-                total_bytes += row_bytes
-                projected.append(MappingProxyType(dict(row)))
-
-            finished = self._clock()
-            status = (
-                SubqueryStatus.TRUNCATED if truncated else SubqueryStatus.SUCCEEDED
+            # Per-catalog connection slot (distinct catalogs never contend).
+            pool_key = catalog_id or f"__domain__:{spec.domain.value}:{spec.subquery_id}"
+            remaining = max(0.0, deadline_monotonic - self._clock())
+            connection_id_or_none = catalog_pool.acquire(
+                pool_key,
+                timeout=remaining,
+                owner_token=spec.subquery_id,
             )
-            return SubqueryOutcome(
+            if connection_id_or_none is None:
+                finished = self._clock()
+                if self._clock() >= deadline_monotonic:
+                    kind = FailureKind.DEADLINE_EXCEEDED
+                    status = SubqueryStatus.TIMEOUT
+                    message = (
+                        "analytical deadline exceeded while waiting for "
+                        "per-catalog connection capacity"
+                    )
+                else:
+                    kind = FailureKind.CAPACITY_DENIED
+                    status = SubqueryStatus.CAPACITY_DENIED
+                    message = (
+                        f"per-catalog connection capacity denied for {pool_key!r}"
+                    )
+                failure = TypedPartialFailure(
+                    kind=kind,
+                    domain=spec.domain,
+                    subquery_id=spec.subquery_id,
+                    message=message,
+                    details={"catalog_id": catalog_id or pool_key},
+                )
+                return SubqueryOutcome(
+                    subquery_id=spec.subquery_id,
+                    domain=spec.domain,
+                    status=status,
+                    rows=(),
+                    started_monotonic=started,
+                    finished_monotonic=finished,
+                    duration_ms=max(0.0, (finished - started) * 1000.0),
+                    failure=failure,
+                    catalog_id=catalog_id,
+                )
+            connection_id = connection_id_or_none
+            catalog_acquired = True
+
+            max_rows = (
+                int(spec.max_rows)
+                if spec.max_rows is not None
+                else int(budget.max_rows_per_subquery)
+            )
+            context = SubqueryContext(
                 subquery_id=spec.subquery_id,
                 domain=spec.domain,
-                status=status,
-                rows=tuple(projected),
-                started_monotonic=started,
-                finished_monotonic=finished,
-                duration_ms=max(0.0, (finished - started) * 1000.0),
-                failure=None,
-                row_bytes=total_bytes,
+                budget=budget,
+                cancel=cancel,
+                deadline_monotonic=deadline_monotonic,
+                max_rows=max_rows,
+                catalog_id=catalog_id,
+                connection_id=connection_id,
             )
-        except BaseException as exc:  # noqa: BLE001 — mapped to typed failure
-            finished = self._clock()
-            # Deadline race: map budget/time errors that happen near deadline.
-            if (
-                isinstance(exc, QueryBudgetExceeded)
-                and getattr(exc, "kind", "") == "time"
-            ) or (
-                not isinstance(exc, QueryCancelled)
-                and self._clock() >= deadline_monotonic
-                and not isinstance(exc, ParallelQueryError)
-            ):
-                if isinstance(exc, QueryBudgetExceeded):
+
+            try:
+                context.check()
+                raw_rows = spec.runner(context)
+                if raw_rows is None:
+                    raw_rows = ()
+                if not isinstance(raw_rows, Sequence) or isinstance(
+                    raw_rows, (str, bytes)
+                ):
+                    raise ParallelQueryError(
+                        "EXEC",
+                        "subquery runner must return a sequence of row mappings",
+                    )
+
+                projected: list[Mapping[str, Any]] = []
+                total_bytes = 0
+                truncated = False
+                for row in raw_rows:
+                    context.check()
+                    if fail_fast.is_set() or cancel.is_cancelled:
+                        raise QueryCancelled(cancel.reason or "cancelled")
+                    if not isinstance(row, Mapping):
+                        raise ParallelQueryError("EXEC", "row must be a mapping")
+                    if len(projected) >= max_rows:
+                        truncated = True
+                        break
+                    row_bytes = _estimate_row_bytes(row)
+                    if total_bytes + row_bytes > budget.max_bytes:
+                        truncated = True
+                        break
+                    # Memory budget tracks materialization peak (row bag size).
+                    context.record_memory(total_bytes + row_bytes)
+                    total_bytes += row_bytes
+                    projected.append(MappingProxyType(dict(row)))
+
+                finished = self._clock()
+                status = (
+                    SubqueryStatus.TRUNCATED if truncated else SubqueryStatus.SUCCEEDED
+                )
+                use = context.resource_use(rows=len(projected), bytes_=total_bytes)
+                return SubqueryOutcome(
+                    subquery_id=spec.subquery_id,
+                    domain=spec.domain,
+                    status=status,
+                    rows=tuple(projected),
+                    started_monotonic=started,
+                    finished_monotonic=finished,
+                    duration_ms=max(0.0, (finished - started) * 1000.0),
+                    failure=None,
+                    row_bytes=total_bytes,
+                    catalog_id=catalog_id,
+                    connection_id=connection_id,
+                    resource_use=use,
+                )
+            except BaseException as exc:  # noqa: BLE001 — mapped to typed failure
+                # Ensure readers close on any failure path before slot release.
+                context.close_readers()
+                finished = self._clock()
+                # Deadline race: map budget/time errors that happen near deadline.
+                if (
+                    isinstance(exc, QueryBudgetExceeded)
+                    and getattr(exc, "kind", "") == "time"
+                ) or (
+                    not isinstance(exc, QueryCancelled)
+                    and self._clock() >= deadline_monotonic
+                    and not isinstance(exc, ParallelQueryError)
+                ):
+                    if isinstance(exc, QueryBudgetExceeded):
+                        status, failure = _map_exception_to_failure(
+                            subquery_id=spec.subquery_id,
+                            domain=spec.domain,
+                            exc=exc,
+                        )
+                    else:
+                        status = SubqueryStatus.TIMEOUT
+                        failure = TypedPartialFailure(
+                            kind=FailureKind.TIMEOUT,
+                            domain=spec.domain,
+                            subquery_id=spec.subquery_id,
+                            message="analytical deadline exceeded during execution",
+                            details={"exception_type": type(exc).__name__},
+                        )
+                else:
                     status, failure = _map_exception_to_failure(
                         subquery_id=spec.subquery_id,
                         domain=spec.domain,
                         exc=exc,
                     )
-                else:
-                    status = SubqueryStatus.TIMEOUT
-                    failure = TypedPartialFailure(
-                        kind=FailureKind.TIMEOUT,
-                        domain=spec.domain,
-                        subquery_id=spec.subquery_id,
-                        message="analytical deadline exceeded during execution",
-                        details={"exception_type": type(exc).__name__},
-                    )
-            else:
-                status, failure = _map_exception_to_failure(
+                use = context.resource_use(rows=0, bytes_=0)
+                return SubqueryOutcome(
                     subquery_id=spec.subquery_id,
                     domain=spec.domain,
-                    exc=exc,
+                    status=status,
+                    rows=(),
+                    started_monotonic=started,
+                    finished_monotonic=finished,
+                    duration_ms=max(0.0, (finished - started) * 1000.0),
+                    failure=failure,
+                    catalog_id=catalog_id,
+                    connection_id=connection_id,
+                    resource_use=use,
                 )
-            return SubqueryOutcome(
-                subquery_id=spec.subquery_id,
-                domain=spec.domain,
-                status=status,
-                rows=(),
-                started_monotonic=started,
-                finished_monotonic=finished,
-                duration_ms=max(0.0, (finished - started) * 1000.0),
-                failure=failure,
-            )
         finally:
+            if catalog_acquired and connection_id:
+                catalog_pool.release(
+                    catalog_id or f"__domain__:{spec.domain.value}:{spec.subquery_id}",
+                    connection_id,
+                )
             capacity.release_analytical()
 
     def _overall_status(
@@ -1669,6 +2201,7 @@ class ParallelQueryScheduler:
         plan: ParallelQueryPlan,
         started: float,
         capacity: ControlPlaneCapacity,
+        catalog_pool: CatalogConnectionPool | None = None,
     ) -> ParallelQueryResult:
         outcomes = []
         partials = []
@@ -1690,10 +2223,12 @@ class ParallelQueryScheduler:
                     finished_monotonic=started,
                     duration_ms=0.0,
                     failure=failure,
+                    catalog_id=spec.catalog_id,
                 )
             )
         ordered = tuple(outcomes)
         overlap = compute_overlap_evidence(ordered)
+        shard_overlap = compute_shard_overlap_evidence(ordered)
         heartbeat = HeartbeatStats(
             count=0,
             p50_ms=0.0,
@@ -1704,6 +2239,9 @@ class ParallelQueryScheduler:
             slo_ms=plan.budget.heartbeat_p99_slo_ms,
             within_slo=True,
             samples=(),
+        )
+        pool = catalog_pool or CatalogConnectionPool(
+            max_connections_per_catalog=plan.budget.max_connections_per_catalog
         )
         receipt = ParallelQueryReceipt(
             schema=PARALLEL_RECEIPT_SCHEMA,
@@ -1723,6 +2261,13 @@ class ParallelQueryScheduler:
             joined_truncated=False,
             duration_ms=0.0,
             created_at=_utc_now(),
+            resource_use=MappingProxyType(ResourceUse().to_dict()),
+            shard_overlap=MappingProxyType(shard_overlap),
+            catalog_capacity=MappingProxyType(pool.snapshot()),
+            partial_failure_policy=plan.partial_failure_policy.value,
+            result_digest=content_identity(
+                {"plan_id": plan.plan_id, "status": "cancelled", "rows": []}
+            ),
         )
         return ParallelQueryResult(
             rows=(),
@@ -1738,6 +2283,7 @@ def open_default_scheduler(
     *,
     total_slots: int = DEFAULT_TOTAL_SLOTS,
     reserved_control_plane_slots: int = DEFAULT_RESERVED_CONTROL_PLANE_SLOTS,
+    max_connections_per_catalog: int = DEFAULT_MAX_CONNECTIONS_PER_CATALOG,
 ) -> ParallelQueryScheduler:
     """Construct a scheduler with an explicit capacity pool."""
 
@@ -1745,4 +2291,7 @@ def open_default_scheduler(
         total_slots=total_slots,
         reserved_control_plane_slots=reserved_control_plane_slots,
     )
-    return ParallelQueryScheduler(capacity=capacity)
+    catalog_pool = CatalogConnectionPool(
+        max_connections_per_catalog=max_connections_per_catalog
+    )
+    return ParallelQueryScheduler(capacity=capacity, catalog_pool=catalog_pool)
