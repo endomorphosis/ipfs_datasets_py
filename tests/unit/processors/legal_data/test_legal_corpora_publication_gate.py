@@ -168,6 +168,10 @@ def test_phase_requirements_match_release_policy_contract() -> None:
         "LCR-084" in contract["required_task_ids"]
         for contract in PHASE_REQUIREMENTS.values()
     )
+    assert "LCR-085" in PHASE_REQUIREMENTS["federal_staging"]["required_task_ids"]
+    assert "LCR-085" in PHASE_REQUIREMENTS["federal_main"]["required_task_ids"]
+    assert "LCR-085" not in PHASE_REQUIREMENTS["state_staging"]["required_task_ids"]
+    assert "LCR-085" not in PHASE_REQUIREMENTS["state_main"]["required_task_ids"]
     mutation_path_audit = (
         "docs/reports/legal_corpora_reindex/"
         "hugging_face_mutation_path_audit.json"

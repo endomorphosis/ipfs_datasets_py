@@ -173,6 +173,12 @@ The root goal is `LCR-G000`. Its child goals and subgoals are:
 | `LCR-G130` | Federal Register build orchestration, release packaging, evaluation, and staging canary | `LCR-061`–`064` |
 | `LCR-G140` | Authorized Federal Register publication, dual-release verification, and final evidence | `LCR-065`–`069` |
 | `LCR-G141` | Source rights, terms, attribution, redistribution admissibility, and fail-closed release binding | `LCR-077`–`079` |
+| `LCR-G142` | Canonical live-evidence publication authority | `LCR-080` |
+| `LCR-G143` | Complete authenticated live baseline provenance | `LCR-081` |
+| `LCR-G144` | Evaluator-complete, time-trusted source-rights admission | `LCR-082` |
+| `LCR-G145` | Resealed live source rights and publication authority | `LCR-083` |
+| `LCR-G146` | Candidate-bound exact-51 live state scrape and protected-Hub mutation closure | `LCR-084` |
+| `LCR-G147` | Complete, content-bound, verifier-time-trusted Federal full-text exhaustion | `LCR-085` |
 
 The 51 jurisdictions are partitioned into file-disjoint scrape cohorts:
 
@@ -225,7 +231,7 @@ The board validator is refill-aware: it seals the initial `LCR-000`–`LCR-069` 
 
 ### 6.1 Monitored hardening continuations and controlled reseal
 
-The first live monitoring epoch exposed evidence gaps that the sealed launch projection could not safely defer until post-publication. The operator monitor therefore admitted `LCR-070`–`LCR-076` and deliberately resealed only the affected waiting dependencies. These tasks are required ancestors of `LCR-069`; later generic refills remain valid without rewriting the initial population.
+Successive live monitoring epochs exposed evidence gaps that the sealed launch projection could not safely defer until post-publication. The operator monitor therefore admitted `LCR-070`–`LCR-085` and deliberately resealed only the affected waiting dependencies. These tasks remain publication blockers through explicit phase requirements or goal-parent lineage; later generic refills remain valid without rewriting the initial population.
 
 | Task | Fail-closed purpose | Gated descendants |
 |---|---|---|
@@ -239,6 +245,12 @@ The first live monitoring epoch exposed evidence gaps that the sealed launch pro
 | `LCR-077` | Define a source/content-scope rights schema and deny-on-unknown redistribution policy instead of copying the US Code card's generic `license: other`. | Both release contracts |
 | `LCR-078` | Produce a current, source-by-source rights/terms/robots/attribution catalog and content-addressed compliance receipt for both corpora. | Both staging and main upload paths |
 | `LCR-079` | Bind the exact compliance receipt into both release schemas, candidate manifests/cards, and the shared pre-mutation gate. | Both staging and main upload paths |
+| `LCR-080` | Replace caller-asserted publication authority with a canonical runtime that independently derives and rechecks repository, task, receipt, manifest, principal, and seal evidence immediately before mutation. | Both staging and main upload paths |
+| `LCR-081` | Reobserve complete authenticated Hub inventories, Viewer responses, Parquet counts/hashes, and local salvage evidence; reject sampled, missing, stale, or synthetic baseline success. | Both staging and main upload paths |
+| `LCR-082` | Make every rights selector use the same canonical-license, robots/access, derivative/archive, identity, and trusted-time evaluator. | Both staging and main upload paths |
+| `LCR-083` | Regenerate live source-rights evidence after hardening and reseal both schemas and the canonical mutation runtime to its exact digest. | Both staging and main upload paths |
+| `LCR-084` | Reobserve every state/DC official frontier, bind exact-51 rows/keys/content to the candidate, and route every protected-Hub operation through one payload-bound runtime. | All four protected-repository mutation phases |
+| `LCR-085` | Replace the merged Federal full-text fail-open with an exact authority-by-format ledger, verified body-byte binding, v2 identity, and explicit zero-skew verifier time. | Federal acquisition, staging, and main upload paths |
 
 The controlled reseal also makes `LCR-058` depend on Federal BM25, attaches `LCR-060` to the full-live publication ancestry, requires the two seal receipts before either main-branch mutation, and makes both release-card assemblers depend on the source-rights gate. Source authority is not redistribution authority: each admitted source/content scope must distinguish government text from annotations, editorial matter, layout, and database presentation; record current terms/robots/attribution evidence and a legal basis; quarantine unknown or prohibited scopes; and bind the resulting receipt digest into cards, manifests, schemas, and every pre-mutation decision. Staging and main authorization are separate contracts: staging requires its complete candidate/live-evidence receipt set but cannot require the post-canary main seal; main requires the immutable staging canary plus its corpus-specific prepublication seal. Registry lists are informational unions and never authorize a mutation. For each phase, the gate verifies the full dependency ancestry of its named predecessors and denies while any nonterminal task numbered `LCR-077` or later belongs to that phase's goal-parent lineage; unknown or unscoped generated lineage denies every phase. The validator rejects any regression in the exact controlled-reseal titles, goals, dependencies, outputs, validation/acceptance contracts, required receipt paths, phase-specific gate sets, dynamic-refill policy, or terminal ancestry.
 

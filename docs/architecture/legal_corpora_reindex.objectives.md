@@ -499,3 +499,23 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: certify_state_laws_full_scrape full_scrape_acceptance release_candidate publication_gate
 - Parallel lane: 1
 - Conflict policy: Ordered successor of LCR-023, LCR-039, LCR-081, and LCR-083; it is the final writer of the state full-scrape receipt, state candidate binding, shared gate and runtime, and protected-repository mutation inventory before publication and performs no Hub mutation.
+
+## LCR-G147 Make Federal full-text exhaustion complete, content-bound, and verifier-time-trusted
+- Status: active
+- Parent: LCR-G110
+- Depends on: LCR-G100
+- Fib priority: 1
+- Track: federal-fulltext-fail-closed-repair
+- Priority: P0
+- Bundle: federal-fulltext-fail-closed-repair
+- Goal: Replace the merged LCR-075 fail-open semantics with one evaluator that proves the complete LCR-049-derived official authority and format frontier, binds every admitted document to the exact verified body bytes, and uses an explicit trusted verifier clock and exact receipt identity.
+- Evidence: Exhaustive per-document authority and format ledger mutation matrix, exact response, content, and admitted-body hash bindings, exact schema, producer, task, goal, and mode tests, zero-future-skew chronology tests, public-helper parity, and regression probes for every demonstrated LCR-075 exploit.
+- Outputs: ipfs_datasets_py/processors/legal_data/federal_register_fulltext_gate.py, tests/unit/processors/legal_data/test_federal_register_fulltext_gate.py, tests/unit/processors/legal_data/test_federal_register_fulltext_gate_fail_closed.py, tests/fixtures/legal_ir/federal_register_fulltext_attempt_receipts.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_federal_register_fulltext_gate.py tests/unit/processors/legal_data/test_federal_register_fulltext_gate_fail_closed.py -q
+- Acceptance: No failed, skipped, transport-blocked, anti-bot, navigation, error-page, unsupported-format, parse-failed, hashless, partial- or extra-frontier, response-only, content-only, identity-mismatched, self-timed, future-timed, or admitted-body-digest-mismatched attempt can prove exhaustion or admission. Every public selector has exact evaluator parity, and only a complete exact LCR-049-derived frontier whose usable official body is fetched, response- and content-hash verified, parsed, and byte-bound through a digest independently recomputed from the admitted bytes or immutable artifact-byte stream, or whose every applicable alternative has cryptographically evidenced authoritative absence, can pass. Authorizing identity is exactly schema `federal-register-fulltext-gate-v2`, producer `federal_register_fulltext_gate.py@2`, program `legal-corpora-reindex-v1`, task `LCR-085`, goal `LCR-G147`, and mode `live`; the v2 fixture schema and fixture mode are structurally non-authorizing.
+- Gap task: LCR-085
+- Refinement: Split only authority or format-specific acquisition defects; do not convert availability, parser, transport, or retry failures into evidence of absence and do not weaken identity, hash, chronology, or public-helper parity.
+- Embedding query: Federal Register full text authority format exhaustion content hash admitted bytes trusted verifier clock fail closed
+- AST query: federal_register_fulltext_gate attempt proves_no_usable_body assert_fulltext_admission content_sha256 verifier_now
+- Parallel lane: 1
+- Conflict policy: Strict ordered successor and exclusive writer for every LCR-075 output; downstream acquisition and Federal staging and publication remain blocked until repaired evidence is regenerated, and this task performs no Hub mutation.

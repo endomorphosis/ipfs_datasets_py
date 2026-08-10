@@ -217,7 +217,7 @@ SEALED_TASK_CONTRACTS = {
     "LCR-049": _task_contract("Define the cutoff-bound official Federal Register completeness oracle", "LCR-G100", "LCR-000"),
     "LCR-050": _task_contract("Specify Federal Register v2 identity, admission, and release schemas", "LCR-G100", "LCR-000"),
     "LCR-051": _task_contract("Seal a temporally and agency-diverse Federal Register gold set", "LCR-G100", "LCR-000"),
-    "LCR-052": _task_contract("Inventory and acquire the complete official cutoff-bound register", "LCR-G110", "LCR-048, LCR-049, LCR-075"),
+    "LCR-052": _task_contract("Inventory and acquire the complete official cutoff-bound register", "LCR-G110", "LCR-048, LCR-049, LCR-075, LCR-085"),
     "LCR-053": _task_contract("Acquire official body text and classify every missing-body disposition", "LCR-G110", "LCR-049, LCR-052"),
     "LCR-054": _task_contract("Normalize canonical Federal Register identity and provenance", "LCR-G110", "LCR-050, LCR-052"),
     "LCR-055": _task_contract("Materialize canonical Federal Register corpus, chunks, and recovery", "LCR-G110", "LCR-053, LCR-054"),
@@ -271,7 +271,7 @@ CONTROLLED_RESEAL_TASK_CONTRACTS = {
     "LCR-071": _controlled_reseal_task_contract(
         "Run the complete live Federal Register production pipeline end to end",
         "LCR-G130",
-        "LCR-060, LCR-062, LCR-063, LCR-070, LCR-075, LCR-076",
+        "LCR-060, LCR-062, LCR-063, LCR-070, LCR-075, LCR-076, LCR-085",
         "scripts/ops/legal_data/run_federal_register_full_release_acceptance.py, tests/integration/legal_data/test_federal_register_full_release_acceptance.py, docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
         "python -m pytest tests/integration/legal_data/test_federal_register_full_release_acceptance.py -q; python scripts/ops/legal_data/run_federal_register_full_release_acceptance.py --full --require-live-official --require-production-candidate --check",
         "805f03d1a858ef3d5954acf3988c20db30fe2b6b6eeae1a73e32302bd1c55b22",
@@ -357,6 +357,15 @@ CONTROLLED_RESEAL_TASK_CONTRACTS = {
         "python -m pytest tests/unit/scripts/test_audit_state_laws_full_scrape_acceptance.py tests/integration/legal_data/test_state_laws_full_scrape_acceptance_fail_closed.py tests/unit/scripts/test_build_state_laws_hf_release.py tests/unit/processors/legal_data/test_state_laws_release_schema.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py tests/unit/processors/legal_data/test_legal_corpora_protected_repo_mutations.py tests/unit/scripts/test_audit_legal_corpora_hugging_face_mutation_paths.py tests/unit/legal_scrapers/test_refresh_state_laws_corpus.py tests/unit/legal_scrapers/test_legal_source_recovery.py tests/unit/legal_scrapers/test_legal_source_recovery_promotion.py tests/unit/legal_scrapers/test_justicedao_dataset_inventory.py tests/unit/legal_scrapers/test_legal_scraper_daemon.py tests/unit/legal_scrapers/test_merge_state_admin_recovered_rows.py tests/mcp/unit/test_hf_pipeline_engine.py tests/unit/huggingface/test_generic_publisher.py tests/unit/logic/security_ir/cvefixes/test_publish_command.py tests/unit/test_netherlands_laws_pipeline.py tests/unit/processors/patent/test_hf_release_v2.py -q; python scripts/ops/legal_data/audit_state_laws_full_scrape_acceptance.py --require-live-official --require-jurisdictions 51 --require-production-candidate --check; python scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py --protected-repo justicedao/ipfs_state_laws --protected-repo justicedao/ipfs_federal_register --require-runtime ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime --check",
         "0011a27a611b040e4d019a40f8898212127c273fcf13d00211b18359a0526567",
         "monitored-state-full-live-acceptance-hardening",
+    ),
+    "LCR-085": _controlled_reseal_task_contract(
+        "Repair Federal full-text exhaustion, byte binding, identity, and verifier time",
+        "LCR-G147",
+        "LCR-049, LCR-075",
+        "ipfs_datasets_py/processors/legal_data/federal_register_fulltext_gate.py, tests/unit/processors/legal_data/test_federal_register_fulltext_gate.py, tests/unit/processors/legal_data/test_federal_register_fulltext_gate_fail_closed.py, tests/fixtures/legal_ir/federal_register_fulltext_attempt_receipts.json",
+        "python -m pytest tests/unit/processors/legal_data/test_federal_register_fulltext_gate.py tests/unit/processors/legal_data/test_federal_register_fulltext_gate_fail_closed.py -q",
+        "8e36fec3787d2f00ca0d681ea2ceed100d535e8498c585e32373b7a8ffb6612a",
+        "monitored-federal-fulltext-fail-closed-repair",
     ),
 }
 
@@ -450,6 +459,12 @@ CONTROLLED_RESEAL_GOAL_CONTRACTS = {
         "LCR-G024, LCR-G143, LCR-G145",
         "LCR-084",
     ),
+    "LCR-G147": _goal_contract(
+        "Make Federal full-text exhaustion complete, content-bound, and verifier-time-trusted",
+        "LCR-G110",
+        "LCR-G100",
+        "LCR-085",
+    ),
 }
 
 CONTROLLED_RESEAL_GOAL_OUTPUT_CONTRACTS = {
@@ -458,14 +473,21 @@ CONTROLLED_RESEAL_GOAL_OUTPUT_CONTRACTS = {
         for item in "data/legal/state_laws_full_scrape_acceptance.schema.json, docs/reports/legal_corpora_reindex/full_scrape_acceptance.json, docs/reports/legal_corpora_reindex/release_candidate.json, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_runtime.py, ipfs_datasets_py/huggingface/protected_repo_guard.py, scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py, data/legal/legal_corpora_hugging_face_mutation_path_audit.schema.json, docs/reports/legal_corpora_reindex/hugging_face_mutation_path_audit.json".split(",")
         if item.strip()
     ),
+    "LCR-G147": tuple(
+        item.strip()
+        for item in "ipfs_datasets_py/processors/legal_data/federal_register_fulltext_gate.py, tests/unit/processors/legal_data/test_federal_register_fulltext_gate.py, tests/unit/processors/legal_data/test_federal_register_fulltext_gate_fail_closed.py, tests/fixtures/legal_ir/federal_register_fulltext_attempt_receipts.json".split(",")
+        if item.strip()
+    ),
 }
 
 CONTROLLED_RESEAL_GOAL_VALIDATION_CONTRACTS = {
     "LCR-G146": "python -m pytest tests/unit/scripts/test_audit_state_laws_full_scrape_acceptance.py tests/integration/legal_data/test_state_laws_full_scrape_acceptance_fail_closed.py tests/unit/scripts/test_build_state_laws_hf_release.py tests/unit/processors/legal_data/test_state_laws_release_schema.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py tests/unit/processors/legal_data/test_legal_corpora_protected_repo_mutations.py tests/unit/scripts/test_audit_legal_corpora_hugging_face_mutation_paths.py tests/unit/legal_scrapers/test_refresh_state_laws_corpus.py tests/unit/legal_scrapers/test_legal_source_recovery.py tests/unit/legal_scrapers/test_legal_source_recovery_promotion.py tests/unit/legal_scrapers/test_justicedao_dataset_inventory.py tests/unit/legal_scrapers/test_legal_scraper_daemon.py tests/unit/legal_scrapers/test_merge_state_admin_recovered_rows.py tests/mcp/unit/test_hf_pipeline_engine.py tests/unit/huggingface/test_generic_publisher.py tests/unit/logic/security_ir/cvefixes/test_publish_command.py tests/unit/test_netherlands_laws_pipeline.py tests/unit/processors/patent/test_hf_release_v2.py -q; python scripts/ops/legal_data/audit_state_laws_full_scrape_acceptance.py --require-live-official --require-jurisdictions 51 --require-production-candidate --check; python scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py --protected-repo justicedao/ipfs_state_laws --protected-repo justicedao/ipfs_federal_register --require-runtime ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime --check",
+    "LCR-G147": "python -m pytest tests/unit/processors/legal_data/test_federal_register_fulltext_gate.py tests/unit/processors/legal_data/test_federal_register_fulltext_gate_fail_closed.py -q",
 }
 
 CONTROLLED_RESEAL_GOAL_ACCEPTANCE_SHA256 = {
     "LCR-G146": "e55934f638ffebe6efa496cd533559c8ae2eb83f35cbea713f6d673a17b01ceb",
+    "LCR-G147": "59ff99ac97bd10564b23c9d1003218dd786154fe09236076af03b63ee9816272",
 }
 
 JURISDICTIONS = frozenset(
@@ -1271,6 +1293,7 @@ def _validate_bundle_policies(
                     "LCR-076",
                     "LCR-079",
                     "LCR-084",
+                    "LCR-085",
                 ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -1301,6 +1324,7 @@ def _validate_bundle_policies(
                     "LCR-076",
                     "LCR-079",
                     "LCR-084",
+                    "LCR-085",
                 ],
                 "required_receipts": [
                     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",

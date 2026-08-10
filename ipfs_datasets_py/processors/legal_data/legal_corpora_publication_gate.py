@@ -451,6 +451,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-076",
                 "LCR-079",
                 "LCR-084",
+                "LCR-085",
             ),
             required_receipts=(
                 "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -488,6 +489,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-076",
                 "LCR-079",
                 "LCR-084",
+                "LCR-085",
             ),
             required_receipts=(
                 "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",

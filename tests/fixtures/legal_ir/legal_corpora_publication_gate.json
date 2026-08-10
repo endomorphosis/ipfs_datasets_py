@@ -109,7 +109,7 @@
       "dataset_repo_id": "justicedao/ipfs_federal_register",
       "authorized_operation": "additive_staging_upload",
       "required_task_ids": [
-        "LCR-063", "LCR-070", "LCR-071", "LCR-074", "LCR-075", "LCR-076", "LCR-079", "LCR-084"
+        "LCR-063", "LCR-070", "LCR-071", "LCR-074", "LCR-075", "LCR-076", "LCR-079", "LCR-084", "LCR-085"
       ],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -134,7 +134,7 @@
       "authorized_operation": "additive_main_upload",
       "required_task_ids": [
         "LCR-064", "LCR-070", "LCR-071", "LCR-073",
-        "LCR-074", "LCR-075", "LCR-076", "LCR-079", "LCR-084"
+        "LCR-074", "LCR-075", "LCR-076", "LCR-079", "LCR-084", "LCR-085"
       ],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
