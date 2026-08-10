@@ -222,6 +222,24 @@ For a nonterminal idle board, the response order is: inspect evidence and depend
 
 The board validator is refill-aware: it seals the initial `LCR-000`–`LCR-069` population and invariants while accepting the native objective- and codebase-refill record shapes emitted by the pinned supervisor. For generated work it derives the authoritative hash lane, tolerates renderer-specific optional metadata, and still enforces namespace, safe outputs, valid references, acyclic dependencies, and ordered output ownership. It recomputes the live DAG/projection instead of requiring the launch-time ready set forever, so legitimate refill does not make restart preflight impossible. Refill mutation is lease-serialized, bounded by configured timeouts and findings limits, and triggered before complete drain; completion reconciliation remains enabled so liveness cannot substitute for goal evidence.
 
+### 6.1 Monitored hardening continuations and controlled reseal
+
+The first live monitoring epoch exposed evidence gaps that the sealed launch projection could not safely defer until post-publication. The operator monitor therefore admitted `LCR-070`–`LCR-076` and deliberately resealed only the affected waiting dependencies. These tasks are required ancestors of `LCR-069`; later generic refills remain valid without rewriting the initial population.
+
+| Task | Fail-closed purpose | Gated descendants |
+|---|---|---|
+| `LCR-070` | Replace self-consistent baseline constants with authenticated live Hub responses, hashes, exact revisions, complete remote inventories, Viewer evidence, and local salvage inventory. | State and Federal staging |
+| `LCR-071` | Execute one authenticated, non-fixture Federal inventory/full-text/corpus/index/graph/package/evaluation/API-CLI production run. | Federal staging |
+| `LCR-072` | Bind the exact state candidate, immutable staging SHA, operation set, identity, previous pin, and manifest in a no-mutation seal created before main upload. | State public upload |
+| `LCR-073` | Bind the corresponding Federal candidate and staging evidence in a no-mutation seal created before main upload. | Federal public upload |
+| `LCR-074` | Provide the reusable phase- and target-specific policy gate every uploader must invoke before its first network mutation. | Both staging and main upload paths |
+| `LCR-075` | Require per-document/per-authority full-text attempt, response-hash, retry, exhaustion, typed-disposition, and real-time cutoff/seal evidence. | Federal inventory and full-text acquisition |
+| `LCR-076` | Reconcile BM25-derived lexical neighbors, graph edges, bounded outgoing/incoming adjacency, and key/locator parity. | Federal query and build orchestration |
+
+The controlled reseal also makes `LCR-058` depend on Federal BM25, attaches `LCR-060` to the full-live publication ancestry, and requires the two seal receipts before either main-branch mutation. The validator rejects any regression in these exact dependencies, required receipt paths, phase-specific gate sets, or terminal ancestry.
+
+Control-plane changes are never applied silently during active implementation snapshots. A protected-path fence must latch, the master must stop, worktrees and incident evidence must be preserved, the changed commits must be explicitly approved through the proof-checked clearance command, and clean preflight must pass before a fresh launch. This procedure was exercised during the first monitoring epoch rather than bypassing the fence.
+
 ## 7. Publication authorization and safe upload
 
 This plan records the 2026-08-10 operator request to upload both completed datasets as authorization to perform additive updates to exactly `justicedao/ipfs_state_laws` and `justicedao/ipfs_federal_register`. It does not authorize deletion, force-push, history rewrite, visibility change, credential rotation, or publication to another repository.

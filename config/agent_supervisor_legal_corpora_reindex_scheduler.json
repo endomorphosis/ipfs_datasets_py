@@ -56,7 +56,7 @@
   "codebase_refill_enabled": true,
   "refill_policy": {
     "initial_population_is_sealed": true,
-    "next_generated_task_number": 70,
+    "generated_task_number_floor": 70,
     "generated_tasks_must_use_next_numeric_id": true,
     "generated_goals_and_tasks_must_preserve_metadata_contract": true,
     "generated_work_must_bind_discovery_evidence": true,

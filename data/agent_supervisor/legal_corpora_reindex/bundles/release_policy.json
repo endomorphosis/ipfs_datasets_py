@@ -97,10 +97,20 @@
   },
   "prepublication_evidence_contract": {
     "required_task_ids": [
-      "LCR-070"
+      "LCR-070",
+      "LCR-071",
+      "LCR-072",
+      "LCR-073",
+      "LCR-074",
+      "LCR-075",
+      "LCR-076"
     ],
     "required_receipts": [
-      "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json"
+      "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
+      "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
+      "docs/reports/legal_corpora_reindex/state_prepublication_seal.json",
+      "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
+      "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json"
     ],
     "applies_to_dataset_repo_ids": [
       "justicedao/ipfs_state_laws",
@@ -109,6 +119,33 @@
     "fixture_only_evidence_allowed": false,
     "authenticated_live_hub_snapshot_required": true,
     "local_salvage_inventory_required": true,
-    "receipt_content_digests_required": true
+    "receipt_content_digests_required": true,
+    "publication_gate_module": "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate",
+    "required_before_state_staging_task_ids": [
+      "LCR-070",
+      "LCR-074"
+    ],
+    "required_before_state_main_task_ids": [
+      "LCR-070",
+      "LCR-072",
+      "LCR-074"
+    ],
+    "required_before_federal_staging_task_ids": [
+      "LCR-070",
+      "LCR-071",
+      "LCR-074",
+      "LCR-075",
+      "LCR-076"
+    ],
+    "required_before_federal_main_task_ids": [
+      "LCR-070",
+      "LCR-071",
+      "LCR-073",
+      "LCR-074",
+      "LCR-075",
+      "LCR-076"
+    ],
+    "uploader_must_invoke_gate_before_first_network_mutation": true,
+    "prepublication_seal_must_precede_main_mutation": true
   }
 }

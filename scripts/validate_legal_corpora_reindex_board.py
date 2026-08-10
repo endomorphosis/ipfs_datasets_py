@@ -205,9 +205,9 @@ SEALED_TASK_CONTRACTS = {
     "LCR-037": _task_contract("Prove deterministic streaming builds and security/resource fail-closed behavior", "LCR-G060", "LCR-026, LCR-032, LCR-033"),
     "LCR-038": _task_contract("Run the complete 51-jurisdiction local build end to end", "LCR-G060", "LCR-023, LCR-032, LCR-034, LCR-036, LCR-037"),
     "LCR-039": _task_contract("Produce the exact release candidate and publication evidence root", "LCR-G070", "LCR-038"),
-    "LCR-040": _task_contract("Upload the candidate additively to an explicit staging revision", "LCR-G070", "LCR-008, LCR-039"),
+    "LCR-040": _task_contract("Upload the candidate additively to an explicit staging revision", "LCR-G070", "LCR-008, LCR-039, LCR-070, LCR-074"),
     "LCR-041": _task_contract("Redownload and canary the immutable live staging revision", "LCR-G070", "LCR-040"),
-    "LCR-042": _task_contract("Authorize and execute the additive public Hugging Face upload", "LCR-G080", "LCR-008, LCR-041"),
+    "LCR-042": _task_contract("Authorize and execute the additive public Hugging Face upload", "LCR-G080", "LCR-008, LCR-041, LCR-072, LCR-074"),
     "LCR-043": _task_contract("Verify the immutable public revision and Dataset Viewer end to end", "LCR-G080", "LCR-042"),
     "LCR-044": _task_contract("Benchmark sparse production queries at the public pin", "LCR-G080", "LCR-036, LCR-043"),
     "LCR-045": _task_contract("Preserve legacy compatibility and rehearse rollback/operations", "LCR-G090", "LCR-043"),
@@ -217,20 +217,20 @@ SEALED_TASK_CONTRACTS = {
     "LCR-049": _task_contract("Define the cutoff-bound official Federal Register completeness oracle", "LCR-G100", "LCR-000"),
     "LCR-050": _task_contract("Specify Federal Register v2 identity, admission, and release schemas", "LCR-G100", "LCR-000"),
     "LCR-051": _task_contract("Seal a temporally and agency-diverse Federal Register gold set", "LCR-G100", "LCR-000"),
-    "LCR-052": _task_contract("Inventory and acquire the complete official cutoff-bound register", "LCR-G110", "LCR-048, LCR-049"),
+    "LCR-052": _task_contract("Inventory and acquire the complete official cutoff-bound register", "LCR-G110", "LCR-048, LCR-049, LCR-075"),
     "LCR-053": _task_contract("Acquire official body text and classify every missing-body disposition", "LCR-G110", "LCR-049, LCR-052"),
     "LCR-054": _task_contract("Normalize canonical Federal Register identity and provenance", "LCR-G110", "LCR-050, LCR-052"),
     "LCR-055": _task_contract("Materialize canonical Federal Register corpus, chunks, and recovery", "LCR-G110", "LCR-053, LCR-054"),
     "LCR-056": _task_contract("Build and prove Federal Register term-range BM25", "LCR-G120", "LCR-055"),
     "LCR-057": _task_contract("Generate pinned Federal Register embeddings and true centroid routes", "LCR-G120", "LCR-055"),
-    "LCR-058": _task_contract("Build Federal Register agency, rulemaking, citation, and provenance graph", "LCR-G120", "LCR-055"),
-    "LCR-059": _task_contract("Implement bounded immutable-Hub Federal Register queries", "LCR-G120", "LCR-056, LCR-057, LCR-058"),
+    "LCR-058": _task_contract("Build Federal Register agency, rulemaking, citation, and provenance graph", "LCR-G120", "LCR-055, LCR-056"),
+    "LCR-059": _task_contract("Implement bounded immutable-Hub Federal Register queries", "LCR-G120", "LCR-056, LCR-057, LCR-058, LCR-076"),
     "LCR-060": _task_contract("Expose Federal Register direct-query package API and CLI", "LCR-G120", "LCR-059"),
-    "LCR-061": _task_contract("Implement streaming full and delta Federal Register build orchestration", "LCR-G130", "LCR-056, LCR-057, LCR-058"),
+    "LCR-061": _task_contract("Implement streaming full and delta Federal Register build orchestration", "LCR-G130", "LCR-056, LCR-057, LCR-058, LCR-076"),
     "LCR-062": _task_contract("Assemble the descriptor-complete Federal Register release and dataset card", "LCR-G130", "LCR-050, LCR-061"),
     "LCR-063": _task_contract("Evaluate Federal Register relevance, recall, graph, security, and determinism", "LCR-G130", "LCR-051, LCR-059, LCR-062"),
-    "LCR-064": _task_contract("Upload, redownload, and canary the immutable Federal Register staging candidate", "LCR-G130", "LCR-063"),
-    "LCR-065": _task_contract("Authorize and execute the additive Federal Register public upload", "LCR-G140", "LCR-064"),
+    "LCR-064": _task_contract("Upload, redownload, and canary the immutable Federal Register staging candidate", "LCR-G130", "LCR-063, LCR-070, LCR-071, LCR-074"),
+    "LCR-065": _task_contract("Authorize and execute the additive Federal Register public upload", "LCR-G140", "LCR-064, LCR-073, LCR-074"),
     "LCR-066": _task_contract("Verify the immutable Federal Register public revision end to end", "LCR-G140", "LCR-065"),
     "LCR-067": _task_contract("Prove shared substrate and vector-space compatibility across both releases", "LCR-G140", "LCR-044, LCR-066"),
     "LCR-068": _task_contract("Rehearse dual-release rollback, updates, and refill closure", "LCR-G140", "LCR-047, LCR-067"),
@@ -740,7 +740,7 @@ def _validate_config(
     else:
         required_refill = {
             "initial_population_is_sealed": True,
-            "next_generated_task_number": 70,
+            "generated_task_number_floor": 70,
             "generated_tasks_must_use_next_numeric_id": True,
             "generated_goals_and_tasks_must_preserve_metadata_contract": True,
             "generated_work_must_bind_discovery_evidence": True,
@@ -915,6 +915,54 @@ def _validate_bundle_policies(
         for field, expected in publication_contract.items():
             if publication.get(field) != expected:
                 errors.append(f"release policy publication_authorization.{field} must be {expected!r}")
+
+    prepublication = release_policy.get("prepublication_evidence_contract")
+    if not isinstance(prepublication, Mapping):
+        errors.append("release policy prepublication_evidence_contract must be an object")
+    else:
+        prepublication_contract = {
+            "required_task_ids": [f"LCR-{number:03d}" for number in range(70, 77)],
+            "required_receipts": [
+                "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
+                "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
+                "docs/reports/legal_corpora_reindex/state_prepublication_seal.json",
+                "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json",
+                "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json",
+            ],
+            "applies_to_dataset_repo_ids": list(TARGET_DATASETS),
+            "fixture_only_evidence_allowed": False,
+            "authenticated_live_hub_snapshot_required": True,
+            "local_salvage_inventory_required": True,
+            "receipt_content_digests_required": True,
+            "publication_gate_module": (
+                "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate"
+            ),
+            "required_before_state_staging_task_ids": ["LCR-070", "LCR-074"],
+            "required_before_state_main_task_ids": ["LCR-070", "LCR-072", "LCR-074"],
+            "required_before_federal_staging_task_ids": [
+                "LCR-070",
+                "LCR-071",
+                "LCR-074",
+                "LCR-075",
+                "LCR-076",
+            ],
+            "required_before_federal_main_task_ids": [
+                "LCR-070",
+                "LCR-071",
+                "LCR-073",
+                "LCR-074",
+                "LCR-075",
+                "LCR-076",
+            ],
+            "uploader_must_invoke_gate_before_first_network_mutation": True,
+            "prepublication_seal_must_precede_main_mutation": True,
+        }
+        for field, expected in prepublication_contract.items():
+            if prepublication.get(field) != expected:
+                errors.append(
+                    f"release policy prepublication_evidence_contract.{field} "
+                    f"must be {expected!r}"
+                )
 
     if lane_matrix.get("schema") != "ipfs_datasets_py/legal-corpora-reindex-lane-matrix@1":
         errors.append("lane matrix schema mismatch")
@@ -1255,6 +1303,16 @@ def validate(root: Path) -> dict[str, Any]:
     found_task_cycle = _cycle(task_graph)
     if found_task_cycle:
         errors.append(f"task dependency cycle: {' -> '.join(found_task_cycle)}")
+
+    required_terminal_ancestry = [
+        *[f"LCR-{number:03d}" for number in range(69)],
+        *[f"LCR-{number:03d}" for number in range(70, 77)],
+    ]
+    for task_id in required_terminal_ancestry:
+        if task_id not in tasks:
+            errors.append(f"terminal ancestry task is missing: {task_id}")
+        elif not _transitively_depends("LCR-069", task_id, task_graph):
+            errors.append(f"LCR-069 must transitively depend on {task_id}")
 
     for output, owners in sorted(output_owners.items()):
         if len(owners) < 2:
