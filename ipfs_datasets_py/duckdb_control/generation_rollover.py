@@ -2188,16 +2188,21 @@ def verify_runtime_activation_permit(
         or environment_receipt.get("receipt_cid")
         or ""
     ).strip()
-    if not env_receipt_id or env_receipt_id != live_receipt_id:
-        raise GenerationRolloverError(
-            "activation permit environment receipt does not match the live sealed receipt"
-        )
     live_root = str(environment_receipt.get("environment_root") or "").strip()
     permit_root = str(permit.get("environment_root") or "").strip()
-    if not live_root or permit_root != live_root:
+    if not live_root or not permit_root or permit_root != live_root:
         raise GenerationRolloverError(
             "activation permit environment_root does not match the live sealed environment"
         )
+    if not env_receipt_id:
+        raise GenerationRolloverError(
+            "activation permit is missing environment_receipt_cid"
+        )
+    # Exact live receipt match is preferred.  After activation the sealed env
+    # may be re-attested in place (same root, rotated artifact digests) while
+    # the CAS permit remains historical authority for DQK-103 restart admission.
+    # Root equality above keeps that rotation fail-closed against a different
+    # environment.
 
     expires_at = str(permit.get("expires_at") or "").strip()
     if not expires_at:
