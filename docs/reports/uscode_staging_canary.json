@@ -1,0 +1,167 @@
+{
+  "acceptance": {
+    "add_only_upload_planned": true,
+    "compatibility_mapping_switch_ok": true,
+    "immutable_redownload_ok": true,
+    "local_completion_not_blocked_by_missing_credentials": true,
+    "no_deletion": true,
+    "no_secret_or_path_leak": true,
+    "prior_mapping_restored": true,
+    "promotion_rehearsed": true,
+    "real_staging_typed": true,
+    "release_candidate_bound": true,
+    "rollback_rehearsed": true,
+    "sparse_canary_ok": true
+  },
+  "canary": {
+    "default_config": "publicus-ir-graphrag/v2",
+    "immutable_redownload": true,
+    "mode": "fixture",
+    "network_invoked": false,
+    "network_required": false,
+    "ok": true,
+    "path": "tests/fixtures/legal_ir/uscode_remote_canary.json",
+    "sparse_canary": true,
+    "staging_branch": "stage/uscode-sparse-graphrag-v2",
+    "staging_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "target_repo": "justicedao/ipfs_uscode"
+  },
+  "candidate": {
+    "dataset_id": "justicedao/ipfs_uscode",
+    "default_config": "publicus-ir-graphrag/v2",
+    "kind": "fixture_local",
+    "manifest_digest": "a1e1bef09f85a67e6f653f43ea5007bb4cf75fcc71686c9f74c15c7c99816444",
+    "package_version": "2",
+    "release_point": "us/pl/118/45",
+    "release_profile": "publicus-ir-graphrag/v2",
+    "release_root_cid": "bafkreid4wn7mqws4eh7va3deareqidfvxpdalc7joafuzt4fes7h46tuce",
+    "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "root_label": "fixture://uscode-hf-release-candidate",
+    "source_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "staging_branch": "stage/uscode-sparse-graphrag-v2"
+  },
+  "code_version": "1",
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "depends_on": [
+    "USCIR-038"
+  ],
+  "digest_sealed": false,
+  "dry_run": true,
+  "fixture_id": "uscode-staging-canary-v1",
+  "generators": {
+    "canary": "rehearse_sparse_canary()",
+    "handoff": "build_fixture_handoff()",
+    "promotion": "rehearse_promotion()",
+    "rollback": "rehearse_rollback()",
+    "stage_plan": "rehearse_stage_plan()"
+  },
+  "goal_id": "USCIR-G100",
+  "mapping_switch": {
+    "from": {
+      "default_config": "publicus-ir-graphrag/v2",
+      "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8"
+    },
+    "no_deletion": true,
+    "restore_rehearsed": true,
+    "switch_rehearsed": true
+  },
+  "network_required": false,
+  "notes": "Compact sealed recipe for immutable staging/rollback handoff canary (USCIR-039). Expand via build_fixture_handoff(). Proves promotion and rollback without deletion; absent staging credentials yield a typed pending_external field and never block local completion. Does not authorize publication.",
+  "producer": "rehearse_uscode_release_handoff.py",
+  "program_id": "uscode-sparse-graphrag-v1",
+  "promotion": {
+    "advertised_mapping": {
+      "advertised_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+      "dataset_id": "justicedao/ipfs_uscode",
+      "default_config": "publicus-ir-graphrag/v2",
+      "manifest_digest": "a1e1bef09f85a67e6f653f43ea5007bb4cf75fcc71686c9f74c15c7c99816444",
+      "release_root_cid": "bafkreid4wn7mqws4eh7va3deareqidfvxpdalc7joafuzt4fes7h46tuce",
+      "staging_branch": "stage/uscode-sparse-graphrag-v2"
+    },
+    "candidate_tree_retained": true,
+    "deletion_performed": false,
+    "force_push_performed": false,
+    "legacy_files_deleted": false,
+    "ok": true,
+    "path": "promotion",
+    "publication_authorized": false,
+    "status": "rehearsed",
+    "visibility_changed": false
+  },
+  "publication_authorized": false,
+  "real_staging": {
+    "authorized": false,
+    "blocks_local_completion": false,
+    "kind": "pending_external",
+    "main_published": false,
+    "mutation_executed": false,
+    "reason": "real staging credentials absent or not authorized; local fixture rehearsal completed without blocking",
+    "remote_write_contacted": false,
+    "staging_branch": "stage/uscode-sparse-graphrag-v2",
+    "status": "pending_external",
+    "target_repo": "justicedao/ipfs_uscode"
+  },
+  "release_candidate": {
+    "path": "docs/reports/uscode_release_candidate.json",
+    "receipt_sha256": "1dcd8f8795d1aa6098a09ff2ce48556a349ecd312567dd9f1a7bd4790e91a893",
+    "rollback_default_config": "publicus-ir-graphrag/v2",
+    "rollback_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "task_id": "USCIR-038"
+  },
+  "release_point": "us/pl/118/45",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "rollback": {
+    "candidate_tree_retained": true,
+    "deletion_performed": false,
+    "force_push_performed": false,
+    "legacy_files_deleted": false,
+    "ok": true,
+    "path": "rollback",
+    "policy": "Re-advertise the prior immutable revision and default config without deleting the failed candidate tree or legacy files.",
+    "prior_advertised_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "prior_default_config": "publicus-ir-graphrag/v2",
+    "restored_mapping": {
+      "advertised_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+      "dataset_id": "justicedao/ipfs_uscode",
+      "default_config": "publicus-ir-graphrag/v2",
+      "staging_branch_retained": true
+    },
+    "staging_branch_retained": true,
+    "status": "rehearsed",
+    "visibility_changed": false
+  },
+  "schema": "ipfs_datasets_py/uscode-sparse-graphrag-staging-canary@1",
+  "schema_version": "uscode-staging-canary/v1",
+  "stage_plan": {
+    "base_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "dry_run": true,
+    "forbidden_operations": [
+      "change_visibility",
+      "delete",
+      "delete_file",
+      "delete_folder",
+      "direct_main_upload",
+      "force",
+      "force-push",
+      "force_push",
+      "make_private",
+      "make_unlisted",
+      "overwrite_history",
+      "promote_production",
+      "rotate_credentials",
+      "set_private",
+      "set_unlisted",
+      "visibility_change"
+    ],
+    "legacy_files_deleted": false,
+    "ok": true,
+    "operations": [
+      "add_only_upload"
+    ],
+    "path": "tests/fixtures/legal_ir/uscode_stage_plan.json",
+    "staging_branch": "stage/uscode-sparse-graphrag-v2",
+    "target_repo": "justicedao/ipfs_uscode",
+    "visibility_change_allowed": false
+  },
+  "task_id": "USCIR-039"
+}
