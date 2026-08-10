@@ -1059,7 +1059,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 
 ## USCIR-043 Resolve dirty main checkout blocking 6 worktree merges
 
-- Status: blocked
+- Status: completed
 - Completion: manual
 - Is schedulable: false
 - Review only: true
