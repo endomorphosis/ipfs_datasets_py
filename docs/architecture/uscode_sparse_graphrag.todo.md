@@ -902,7 +902,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Fixture canary always passes offline; when staging coordinates are explicitly provided the same checks pass remotely at a 40-hex revision with bounded downloads and viewer-valid configs.
 
 ## USCIR-037 Document migration, operations, rollback, and legal caveats
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
