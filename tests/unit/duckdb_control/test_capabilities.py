@@ -1,9 +1,10 @@
-"""Unit tests for DuckDB/Quack/VSS capability policy and probes (DQK-002).
+"""Hermetic unit tests for the DQK-002 DuckDB/Quack/VSS capability policy.
 
-All probes are fully injected.  These tests never import the optional
-``duckdb`` package, never load Quack or VSS extensions, and never open
-network sockets — exercising fail-closed version policy, explicit Quack
-beta status, and optional feature gates in isolation.
+All probes use full dependency injection. The suite never imports optional
+``duckdb``, never LOADs Quack or VSS, and never opens network sockets. It
+covers fail-closed version/protocol mismatches, explicit Quack beta status,
+optional feature gates with local and exact-search fallbacks, and import-time
+inertness of the capabilities module.
 """
 
 from __future__ import annotations
@@ -71,9 +72,8 @@ import pytest
 from ipfs_datasets_py.duckdb_control import capabilities as caps
 
 
-
 # ---------------------------------------------------------------------------
-# Helpers
+# Factories
 # ---------------------------------------------------------------------------
 
 
@@ -82,7 +82,7 @@ def _versions(**kwargs: object) -> caps.ComponentVersions:
 
 
 def _pinned_ok(**overrides: object) -> caps.ComponentVersions:
-    base = {
+    payload = {
         "client_duckdb": caps.REQUIRED_DUCKDB_VERSION_TEXT,
         "server_duckdb": caps.REQUIRED_DUCKDB_VERSION_TEXT,
         "quack_extension": caps.format_version(caps.PINNED_QUACK_EXTENSION_VERSION),
@@ -93,8 +93,8 @@ def _pinned_ok(**overrides: object) -> caps.ComponentVersions:
         "client_protocol": caps.DEFAULT_QUACK_PROTOCOL_VERSION,
         "server_protocol": caps.DEFAULT_QUACK_PROTOCOL_VERSION,
     }
-    base.update(overrides)
-    return _versions(**base)
+    payload.update(overrides)
+    return _versions(**payload)
 
 
 # ---------------------------------------------------------------------------
@@ -116,19 +116,16 @@ def test_capability_module_import_is_side_effect_free(
             raise AssertionError(f"import of {name!r} is forbidden at module import")
         return real_import(name, globals, locals, fromlist, level)
 
-    # Drop cached module so re-import exercises the top-level body.
     sys.modules.pop("ipfs_datasets_py.duckdb_control.capabilities", None)
     monkeypatch.setattr(builtins, "__import__", guarded_import)
     reloaded = importlib.import_module("ipfs_datasets_py.duckdb_control.capabilities")
     assert reloaded.REQUIRED_DUCKDB_VERSION == (1, 5, 5)
     assert reloaded.QUACK_BETA is True
-    # Restore a normal reference for subsequent tests.
     sys.modules["ipfs_datasets_py.duckdb_control.capabilities"] = reloaded
     monkeypatch.setattr(builtins, "__import__", real_import)
 
 
 def test_module_does_not_require_duckdb_at_import() -> None:
-    assert "duckdb" not in sys.modules or True  # may be present from other tests
     # Public policy constants are usable without duckdb installed.
     assert caps.REQUIRED_DUCKDB_VERSION_TEXT == "1.5.5"
     assert caps.PINNED_QUACK_EXTENSION_BUILD == "quack@1.5.5+core"
@@ -207,11 +204,6 @@ def test_server_version_mismatch_fails_closed() -> None:
 
 
 def test_client_server_skew_fails_closed() -> None:
-    versions = _versions(
-        client_duckdb="1.5.5",
-        server_duckdb="1.5.5",  # same pin text
-    )
-    # Force skew via different observed strings that parse equal... use real skew:
     versions = _versions(client_duckdb="1.5.5", server_duckdb="1.5.4")
     with pytest.raises(caps.VersionMismatchError, match="server DuckDB version mismatch"):
         caps.assert_versions_compatible(versions, require_server=True)
@@ -303,12 +295,10 @@ def test_probe_enables_quack_and_vss_when_versions_match() -> None:
     assert result.feature_gates["quack"].beta is True
     assert result.transport.mode is caps.TransportMode.QUACK_REMOTE
     assert result.transport.quack_available is True
-    # Quack beta is explicit on the capability identity.
     quack_identity = dict(result.capabilities["quack_transport"].identity)
     assert quack_identity["beta"] is True
     assert quack_identity["maturity"] == "beta"
     assert quack_identity["required_build"] == "quack@1.5.5+core"
-    # VSS is never identity authority.
     vss_identity = dict(result.capabilities["vss_index"].identity)
     assert vss_identity["identity_authority"] is False
     assert vss_identity["fallback"] == "exact_search"
@@ -351,7 +341,6 @@ def test_probe_version_mismatch_fails_closed_and_refuses_remote() -> None:
     assert result.fail_closed is True
     assert result.capabilities["duckdb_runtime"].status is caps.CapabilityStatus.MISMATCH
     assert any("DuckDB" in item for item in result.mismatches)
-    # Remote transport must not be selected under fail-closed mismatch.
     assert result.transport.mode is caps.TransportMode.LOCAL
     assert result.transport.quack_available is False
 
@@ -394,9 +383,7 @@ def test_probe_client_server_duckdb_mismatch_fails_closed() -> None:
 
 
 def test_require_capability_raises_when_unavailable() -> None:
-    result = caps.probe_capabilities(
-        versions=_versions(),  # no duckdb at all
-    )
+    result = caps.probe_capabilities(versions=_versions())
     assert result.ok is False
     with pytest.raises(caps.CapabilityUnavailableError, match="not installed"):
         caps.require_capability(result, "duckdb_runtime")
@@ -416,17 +403,13 @@ def test_require_capability_returns_available_record() -> None:
 
 
 def test_quack_and_vss_are_optional_feature_gates_not_import_requirements() -> None:
-    # Default probe request leaves both optional features off.
-    result = caps.probe_capabilities(
-        versions=_versions(client_duckdb="1.5.5"),
-    )
+    result = caps.probe_capabilities(versions=_versions(client_duckdb="1.5.5"))
     assert "quack" in result.feature_gates
     assert "vss" in result.feature_gates
     assert result.feature_gates["quack"].requested is False
     assert result.feature_gates["vss"].requested is False
     assert result.feature_gates["quack"].enabled is False
     assert result.feature_gates["vss"].enabled is False
-    # Capability kinds exist but are DISABLED, not required.
     assert result.capabilities["quack_transport"].required is False
     assert result.capabilities["vss_index"].required is False
     assert result.capabilities["duckdb_runtime"].required is True
@@ -492,7 +475,6 @@ def test_probe_result_as_mapping_is_json_friendly() -> None:
     assert mapping["feature_gates"]["quack"]["beta"] is True
     assert mapping["transport"]["mode"] == "quack_remote"
     assert isinstance(mapping["mismatches"], list)
-    # Nested structures should be plain dicts / lists for serialization.
     assert isinstance(mapping["capabilities"], dict)
     assert isinstance(mapping["capabilities"]["duckdb_runtime"], dict)
 
@@ -571,3 +553,62 @@ def test_missing_duckdb_does_not_silently_enable_quack() -> None:
     assert result.transport.mode is caps.TransportMode.LOCAL
     assert result.transport.local_fallback_available is False
     assert result.feature_gates["quack"].enabled is False
+
+
+def test_component_versions_with_overrides_merges_request_fields() -> None:
+    """Request-level server/protocol fields fill gaps without clobbering pins."""
+
+    base = _versions(client_duckdb="1.5.5")
+    merged = base.with_overrides(
+        server_duckdb="1.5.5",
+        client_protocol=1,
+        server_protocol=1,
+    )
+    assert merged.client_duckdb == "1.5.5"
+    assert merged.server_duckdb == "1.5.5"
+    assert merged.client_protocol == 1
+    assert merged.server_protocol == 1
+
+    result = caps.probe_capabilities(
+        caps.ProbeRequest(
+            enable_quack=False,
+            server_duckdb="1.5.5",
+            client_protocol=1,
+            server_protocol=1,
+            require_protocol=True,
+        ),
+        versions=_versions(client_duckdb="1.5.5"),
+    )
+    assert result.ok is True
+    assert result.versions.server_duckdb == "1.5.5"
+    assert result.capabilities["protocol"].status is caps.CapabilityStatus.AVAILABLE
+
+
+def test_policy_pin_summary_exposes_generation() -> None:
+    summary = caps.policy_pin_summary()
+    assert summary["duckdb"] == "1.5.5"
+    assert summary["quack_build"] == caps.PINNED_QUACK_EXTENSION_BUILD
+    assert summary["vss_build"] == caps.PINNED_VSS_EXTENSION_BUILD
+    assert summary["quack_beta"] is True
+    assert 1 in summary["protocols"]
+    assert "dqk-002" in str(summary["generation"])
+
+
+def test_probe_mapping_carries_implementation_generation() -> None:
+    result = caps.probe_capabilities(
+        caps.ProbeRequest(),
+        versions=_pinned_ok(),
+    )
+    payload = dict(result.as_mapping())
+    assert "implementation_generation" in payload
+    assert payload["implementation_generation"].startswith("dqk-002")
+
+
+def test_assert_versions_compatible_accepts_missing_optional_extensions() -> None:
+    """Optional extensions are not required unless the caller demands them."""
+
+    versions = _versions(
+        client_duckdb=caps.REQUIRED_DUCKDB_VERSION_TEXT,
+        server_duckdb=caps.REQUIRED_DUCKDB_VERSION_TEXT,
+    )
+    caps.assert_versions_compatible(versions)  # must not raise
