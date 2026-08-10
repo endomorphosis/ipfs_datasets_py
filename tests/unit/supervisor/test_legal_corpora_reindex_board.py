@@ -345,7 +345,9 @@ def test_federal_fulltext_repair_cannot_be_bypassed_or_detached(
     root = _copy_control_plane(tmp_path / "repo")
     objectives = root / "docs/architecture/legal_corpora_reindex.objectives.md"
     goal_text = objectives.read_text(encoding="utf-8")
-    goal_clause = "the v2 fixture schema and fixture mode are structurally non-authorizing"
+    goal_clause = (
+        "no default, alias, coercion, v1 value, or v2 fixture mode can authorize"
+    )
     assert goal_clause in goal_text
     objectives.write_text(
         goal_text.replace(goal_clause, "fixture evidence may authorize", 1),

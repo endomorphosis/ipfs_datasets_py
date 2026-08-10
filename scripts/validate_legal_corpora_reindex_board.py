@@ -364,7 +364,7 @@ CONTROLLED_RESEAL_TASK_CONTRACTS = {
         "LCR-049, LCR-075",
         "ipfs_datasets_py/processors/legal_data/federal_register_fulltext_gate.py, tests/unit/processors/legal_data/test_federal_register_fulltext_gate.py, tests/unit/processors/legal_data/test_federal_register_fulltext_gate_fail_closed.py, tests/fixtures/legal_ir/federal_register_fulltext_attempt_receipts.json",
         "python -m pytest tests/unit/processors/legal_data/test_federal_register_fulltext_gate.py tests/unit/processors/legal_data/test_federal_register_fulltext_gate_fail_closed.py -q",
-        "8e36fec3787d2f00ca0d681ea2ceed100d535e8498c585e32373b7a8ffb6612a",
+        "abf29ad68f4aa92815e15e1df8ec977d0ae2f3fa8ebfae3831deb6f83e085577",
         "monitored-federal-fulltext-fail-closed-repair",
     ),
 }
@@ -487,7 +487,7 @@ CONTROLLED_RESEAL_GOAL_VALIDATION_CONTRACTS = {
 
 CONTROLLED_RESEAL_GOAL_ACCEPTANCE_SHA256 = {
     "LCR-G146": "e55934f638ffebe6efa496cd533559c8ae2eb83f35cbea713f6d673a17b01ceb",
-    "LCR-G147": "59ff99ac97bd10564b23c9d1003218dd786154fe09236076af03b63ee9816272",
+    "LCR-G147": "d24874e31322ca5d6f94d0c1ce18a0340c2bb72e8b11303a4ade1852725013ae",
 }
 
 JURISDICTIONS = frozenset(
