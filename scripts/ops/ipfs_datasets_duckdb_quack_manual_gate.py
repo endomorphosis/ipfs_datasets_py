@@ -1546,14 +1546,24 @@ def validate_gitlink_pin_receipt(
         for path, blob in protected.items()
     ):
         raise RuntimeError("manual-gate protected bootstrap artifacts changed after pin")
-    if (
-        str(_git(accelerator, "rev-parse", "HEAD")).lower()
-        != intent.get("new_gitlink_commit")
-        or str(_git(accelerator, "rev-parse", "HEAD^{tree}")).lower()
-        != intent.get("new_gitlink_tree")
-        or str(_git(accelerator, "status", "--porcelain=v1", "--untracked-files=all"))
-        or str(_git(parent, "status", "--porcelain=v1", "--untracked-files=all"))
-    ):
+    # Working trees must stay clean. Exact HEAD/tree equality against the pin is
+    # only required when the live gitlink still equals the pin; after an admitted
+    # tip advance the accelerate checkout tracks the live gitlink instead.
+    parent_dirty = str(
+        _git(parent, "status", "--porcelain=v1", "--untracked-files=all")
+    )
+    accelerator_dirty = str(
+        _git(accelerator, "status", "--porcelain=v1", "--untracked-files=all")
+    )
+    if parent_dirty or accelerator_dirty:
+        raise RuntimeError("manual-gate pinned checkouts are not exact and clean")
+    accelerator_head = str(_git(accelerator, "rev-parse", "HEAD")).lower()
+    accelerator_tree = str(_git(accelerator, "rev-parse", "HEAD^{tree}")).lower()
+    pinned_tree = str(intent.get("new_gitlink_tree") or "").strip().lower()
+    if current_gitlink == pinned_gitlink:
+        if accelerator_head != pinned_gitlink or accelerator_tree != pinned_tree:
+            raise RuntimeError("manual-gate pinned checkouts are not exact and clean")
+    elif accelerator_head != current_gitlink:
         raise RuntimeError("manual-gate pinned checkouts are not exact and clean")
 
 
