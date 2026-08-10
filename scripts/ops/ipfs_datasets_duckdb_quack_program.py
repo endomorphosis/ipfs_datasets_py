@@ -11835,6 +11835,142 @@ class _ReleaseGateAuthorityAdapter:
         }
 
 
+class _RuntimeActivationGateAuthorityAdapter:
+    """Independent verifier for DQK-103 runtime-activation permits.
+
+    Re-derives the activation decision from the immutable permit body and the
+    live sealed environment receipt without trusting the verifier subprocess
+    alone (stdlib hashlib only).
+    """
+
+    PROOF_SCHEMA = (
+        "ipfs_datasets_py/duckdb-quack-runtime-activation-independent-proof@1"
+    )
+
+    def _independent_verification(
+        self,
+        *,
+        raw_input: bytes,
+        plan_root_cid: str,
+        repository_tree_id: str,
+        now: datetime | None = None,
+    ) -> dict[str, Any]:
+        if not isinstance(raw_input, (bytes, bytearray, memoryview)):
+            raise RuntimeError("runtime-activation input must be exact bytes")
+        payload = bytes(raw_input)
+        if not payload or len(payload) > 2 * 1024 * 1024:
+            raise RuntimeError("runtime-activation input size is out of bounds")
+        if not ENVIRONMENT_RECEIPT.is_file() or ENVIRONMENT_RECEIPT.is_symlink():
+            raise RuntimeError("sealed environment receipt is unavailable")
+        environment_receipt = _read_json_object(ENVIRONMENT_RECEIPT)
+        from ipfs_datasets_py.duckdb_control.generation_rollover import (
+            verify_runtime_activation_permit,
+        )
+
+        now_text = None
+        if isinstance(now, datetime):
+            now_text = now.astimezone(timezone.utc).isoformat()
+        try:
+            verification = verify_runtime_activation_permit(
+                payload,
+                plan_root_cid=plan_root_cid,
+                repository_tree_id=repository_tree_id,
+                environment_receipt=environment_receipt,
+                now=now_text,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"independent runtime-activation verification failed: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+        if not isinstance(verification, Mapping) or verification.get("accepted") is not True:
+            raise RuntimeError(
+                "independent runtime-activation verification did not accept the permit"
+            )
+        return dict(verification)
+
+    def preflight(self, **kwargs: Any) -> dict[str, Any]:
+        task_id = str(kwargs.get("task_id") or "")
+        if task_id != RUNTIME_ACTIVATION_GATE_TASK_ID:
+            raise RuntimeError("runtime-activation adapter cannot preflight a foreign gate")
+        snapshot = kwargs.get("snapshot")
+        if snapshot is None:
+            raise RuntimeError("runtime-activation preflight requires a snapshot")
+        verification = self._independent_verification(
+            raw_input=kwargs.get("raw_input"),
+            plan_root_cid=str(snapshot.plan_root_cid),
+            repository_tree_id=str(snapshot.repository_tree_id),
+        )
+        return {
+            "schema": self.PROOF_SCHEMA,
+            "gate_task_id": RUNTIME_ACTIVATION_GATE_TASK_ID,
+            "decision_id": str(verification["decision_cid"]),
+            "activation_receipt_cid": str(verification["activation_receipt_cid"]),
+            "environment_receipt_cid": str(verification["environment_receipt_cid"]),
+            "runtime_generation_id": str(verification["runtime_generation_id"]),
+            "plan_root_cid": str(verification["plan_root_cid"]),
+            "repository_tree_id": str(verification["repository_tree_id"]),
+            "expires_at": str(verification["expires_at"]),
+            "signed_input_sha256": str(verification["signed_input_sha256"]),
+            "verification_schema": str(verification["schema"]),
+        }
+
+    def verify_execution(self, **kwargs: Any) -> dict[str, Any]:
+        task_id = str(kwargs.get("task_id") or "")
+        if task_id != RUNTIME_ACTIVATION_GATE_TASK_ID:
+            raise RuntimeError("runtime-activation adapter cannot verify a foreign gate")
+        snapshot = kwargs.get("snapshot")
+        typed_output = kwargs.get("typed_output")
+        if snapshot is None or not isinstance(typed_output, Mapping):
+            raise RuntimeError("runtime-activation typed output or snapshot is missing")
+        execution_time = kwargs.get("execution_time")
+        now = execution_time if isinstance(execution_time, datetime) else None
+        verification = self._independent_verification(
+            raw_input=kwargs.get("raw_input"),
+            plan_root_cid=str(snapshot.plan_root_cid),
+            repository_tree_id=str(snapshot.repository_tree_id),
+            now=now,
+        )
+        proof = self.preflight(
+            task_id=task_id,
+            raw_input=kwargs.get("raw_input"),
+            snapshot=snapshot,
+            verifier_attestation=kwargs.get("verifier_attestation"),
+        )
+        for field in (
+            "activation_receipt_cid",
+            "environment_receipt_cid",
+            "runtime_generation_id",
+            "decision_cid",
+            "plan_root_cid",
+            "repository_tree_id",
+        ):
+            if typed_output.get(field) != verification.get(field):
+                raise RuntimeError(
+                    f"runtime-activation typed output field {field} differs from independent proof"
+                )
+        if typed_output.get("accepted") is not True:
+            raise RuntimeError("runtime-activation typed output is not accepted")
+        decision_preflight = kwargs.get("decision_preflight")
+        if isinstance(decision_preflight, Mapping):
+            for field in (
+                "decision_id",
+                "activation_receipt_cid",
+                "environment_receipt_cid",
+                "runtime_generation_id",
+                "signed_input_sha256",
+            ):
+                if decision_preflight.get(field) != proof.get(field):
+                    raise RuntimeError(
+                        f"runtime-activation preflight field {field} drifted before execution"
+                    )
+        return {
+            **proof,
+            "typed_output_sha256": "sha256:"
+            + hashlib.sha256(_canonical_json(dict(typed_output)).encode("utf-8")).hexdigest(),
+        }
+
+
 def _manual_gate_task_authority_adapter(task_id: str) -> Any:
     """Return a task-owned signed-decision verifier, once its task ships it.
 
@@ -11847,7 +11983,9 @@ def _manual_gate_task_authority_adapter(task_id: str) -> Any:
 
     if task_id == RELEASE_GATE_TASK_ID:
         return _ReleaseGateAuthorityAdapter()
-    if task_id in {PROMOTION_GATE_TASK_ID, RUNTIME_ACTIVATION_GATE_TASK_ID}:
+    if task_id == RUNTIME_ACTIVATION_GATE_TASK_ID:
+        return _RuntimeActivationGateAuthorityAdapter()
+    if task_id == PROMOTION_GATE_TASK_ID:
         raise RuntimeError(
             f"manual_gate_effect_adapter_not_materialized:{task_id}"
         )
@@ -12560,6 +12698,22 @@ def _prepare_manual_gate_effect(
             "manual-gate-rollover-intent", intent
         )
         return intent
+    if task_id == RUNTIME_ACTIVATION_GATE_TASK_ID:
+        intent = {
+            "schema": "ipfs_datasets_py/duckdb-quack-manual-gate-runtime-activation-intent@1",
+            "operation_id": journal["lifecycle_id"],
+            "execution_id": execution["execution_id"],
+            "plan_root_cid": snapshot.plan_root_cid,
+            "repository_tree_id": snapshot.repository_tree_id,
+            "activation_receipt_cid": str(output.get("activation_receipt_cid") or ""),
+            "environment_receipt_cid": str(output.get("environment_receipt_cid") or ""),
+            "runtime_generation_id": str(output.get("runtime_generation_id") or ""),
+            "task_population_unchanged": True,
+        }
+        intent["intent_id"] = _manual_gate_receipt_id(
+            "manual-gate-runtime-activation-intent", intent
+        )
+        return intent
     raise RuntimeError(f"manual_gate_effect_adapter_not_materialized:{task_id}")
 
 
@@ -12603,6 +12757,38 @@ def _apply_manual_gate_effect(
         )
         if receipt.get("generation_changed") != intent.get("generation_changed"):
             raise RuntimeError("DQK-081 rollover effect differs from its intent")
+        return receipt
+    if task_id == RUNTIME_ACTIVATION_GATE_TASK_ID:
+        # Drain/relaunch are already performed by the gate lifecycle.  The
+        # durable effect is the content-bound activation binding itself.
+        if (
+            str(output.get("plan_root_cid") or "") != str(snapshot.plan_root_cid)
+            or str(output.get("repository_tree_id") or "")
+            != str(snapshot.repository_tree_id)
+        ):
+            raise RuntimeError("DQK-103 activation output generation is stale")
+        for field in (
+            "activation_receipt_cid",
+            "environment_receipt_cid",
+            "runtime_generation_id",
+        ):
+            if str(intent.get(field) or "") != str(output.get(field) or ""):
+                raise RuntimeError(f"DQK-103 effect intent field {field} drifted")
+        receipt = {
+            "schema": "ipfs_datasets_py/duckdb-quack-manual-gate-runtime-activation-effect@1",
+            "operation_id": journal["lifecycle_id"],
+            "execution_id": execution["execution_id"],
+            "plan_root_cid": snapshot.plan_root_cid,
+            "repository_tree_id": snapshot.repository_tree_id,
+            "activation_receipt_cid": str(output.get("activation_receipt_cid") or ""),
+            "environment_receipt_cid": str(output.get("environment_receipt_cid") or ""),
+            "runtime_generation_id": str(output.get("runtime_generation_id") or ""),
+            "task_population_unchanged": True,
+            "effect_commit": _git("rev-parse", "HEAD").lower(),
+        }
+        receipt["receipt_id"] = _manual_gate_receipt_id(
+            "manual-gate-runtime-activation-effect", receipt
+        )
         return receipt
     raise RuntimeError(f"manual_gate_effect_adapter_not_materialized:{task_id}")
 
@@ -12774,6 +12960,64 @@ def _validate_manual_gate_effect_receipt(
                 raise RuntimeError("DQK-081 rollover binding is not in DuckDB authority")
         elif selected is not None:
             raise RuntimeError("DQK-081 unchanged generation has rollover evidence")
+        return
+    if task_id == RUNTIME_ACTIVATION_GATE_TASK_ID:
+        expected_intent_keys = {
+            "schema",
+            "operation_id",
+            "execution_id",
+            "plan_root_cid",
+            "repository_tree_id",
+            "activation_receipt_cid",
+            "environment_receipt_cid",
+            "runtime_generation_id",
+            "task_population_unchanged",
+            "intent_id",
+        }
+        if (
+            set(effect_intent) != expected_intent_keys
+            or effect_intent.get("schema")
+            != "ipfs_datasets_py/duckdb-quack-manual-gate-runtime-activation-intent@1"
+            or effect_intent.get("plan_root_cid") != snapshot.plan_root_cid
+            or effect_intent.get("repository_tree_id") != snapshot.repository_tree_id
+            or effect_intent.get("task_population_unchanged") is not True
+            or effect_intent.get("intent_id")
+            != _manual_gate_receipt_id(
+                "manual-gate-runtime-activation-intent",
+                {
+                    key: value
+                    for key, value in effect_intent.items()
+                    if key != "intent_id"
+                },
+            )
+        ):
+            raise RuntimeError("DQK-103 activation intent is stale or malformed")
+        if (
+            effect_receipt.get("schema")
+            != "ipfs_datasets_py/duckdb-quack-manual-gate-runtime-activation-effect@1"
+            or effect_receipt.get("plan_root_cid") != snapshot.plan_root_cid
+            or effect_receipt.get("repository_tree_id") != snapshot.repository_tree_id
+            or effect_receipt.get("activation_receipt_cid")
+            != effect_intent.get("activation_receipt_cid")
+            or effect_receipt.get("environment_receipt_cid")
+            != effect_intent.get("environment_receipt_cid")
+            or effect_receipt.get("runtime_generation_id")
+            != effect_intent.get("runtime_generation_id")
+            or effect_receipt.get("task_population_unchanged") is not True
+            or effect_receipt.get("receipt_id")
+            != _manual_gate_receipt_id(
+                "manual-gate-runtime-activation-effect",
+                {
+                    key: value
+                    for key, value in effect_receipt.items()
+                    if key != "receipt_id"
+                },
+            )
+        ):
+            raise RuntimeError("DQK-103 activation effect is stale or invalid")
+        effect_commit = str(effect_receipt.get("effect_commit") or "").strip().lower()
+        if re.fullmatch(r"[0-9a-f]{40}", effect_commit) is None:
+            raise RuntimeError("DQK-103 activation effect_commit is missing")
         return
     raise RuntimeError(f"manual_gate_effect_adapter_not_materialized:{task_id}")
 

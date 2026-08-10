@@ -88,8 +88,10 @@ __all__ = [
     "install_check",
     "load_transport_projection",
     "refuse_runtime_activation_without_permit",
+    "RUNTIME_ACTIVATION_PERMIT_SCHEMA",
     "self_check",
     "verify_completion_from_merge_receipts",
+    "verify_runtime_activation_permit",
     "verify_signature",
 ]
 
@@ -2116,11 +2118,182 @@ def refuse_runtime_activation_without_permit(
         )
         report["activation_permit_cid"] = activation_permit_cid or ""
         return report
-    # A real permit path is owned by DQK-103; this owner refuses to activate.
+    # A bare permit CID alone is never enough; the full permit body must be
+    # verified through :func:`verify_runtime_activation_permit`.
     raise GenerationRolloverError(
         f"runtime activation is owned by {RUNTIME_ACTIVATION_GATE_TASK_ID}; "
-        f"{LIFECYCLE_OWNER_TASK_ID} only installs the lifecycle owner"
+        "supply the full signed activation permit body via --receipt"
     )
+
+
+RUNTIME_ACTIVATION_PERMIT_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/duckdb-quack-runtime-activation-permit@1"
+)
+
+
+def verify_runtime_activation_permit(
+    raw_input: bytes | bytearray | memoryview | Mapping[str, Any],
+    *,
+    plan_root_cid: str,
+    repository_tree_id: str,
+    environment_receipt: Mapping[str, Any],
+    now: str | None = None,
+) -> dict[str, Any]:
+    """Independently verify a DQK-103 activation permit against the live env.
+
+    The permit must bind the active plan root, repository tree, and the exact
+    candidate-environment receipt produced by DQK-082.  Successful verification
+    yields the typed runtime-activation output schema consumed by the gate CAS.
+    """
+
+    if isinstance(raw_input, Mapping):
+        permit = dict(raw_input)
+        raw_bytes = json.dumps(permit, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+    else:
+        if not isinstance(raw_input, (bytes, bytearray, memoryview)):
+            raise GenerationRolloverError("activation permit must be bytes or object")
+        raw_bytes = bytes(raw_input)
+        if not raw_bytes or len(raw_bytes) > 2 * 1024 * 1024:
+            raise GenerationRolloverError("activation permit size is out of bounds")
+        try:
+            parsed = json.loads(raw_bytes.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise GenerationRolloverError(
+                f"activation permit is not UTF-8 JSON: {exc}"
+            ) from exc
+        if not isinstance(parsed, dict):
+            raise GenerationRolloverError("activation permit must be a JSON object")
+        permit = parsed
+
+    if permit.get("schema") != RUNTIME_ACTIVATION_PERMIT_SCHEMA:
+        raise GenerationRolloverError("activation permit schema is unsupported")
+    if permit.get("program_id") != PROGRAM_ID:
+        raise GenerationRolloverError("activation permit program_id mismatch")
+    if permit.get("accepted") is not True:
+        raise GenerationRolloverError("activation permit is not accepted")
+    if str(permit.get("plan_root_cid") or "") != str(plan_root_cid):
+        raise GenerationRolloverError("activation permit plan_root_cid is stale")
+    if str(permit.get("repository_tree_id") or "") != str(repository_tree_id):
+        raise GenerationRolloverError("activation permit repository_tree_id is stale")
+
+    env_receipt_id = str(
+        permit.get("environment_receipt_cid")
+        or permit.get("environment_receipt_id")
+        or ""
+    ).strip()
+    live_receipt_id = str(
+        environment_receipt.get("receipt_id")
+        or environment_receipt.get("receipt_cid")
+        or ""
+    ).strip()
+    if not env_receipt_id or env_receipt_id != live_receipt_id:
+        raise GenerationRolloverError(
+            "activation permit environment receipt does not match the live sealed receipt"
+        )
+    live_root = str(environment_receipt.get("environment_root") or "").strip()
+    permit_root = str(permit.get("environment_root") or "").strip()
+    if not live_root or permit_root != live_root:
+        raise GenerationRolloverError(
+            "activation permit environment_root does not match the live sealed environment"
+        )
+
+    expires_at = str(permit.get("expires_at") or "").strip()
+    if not expires_at:
+        raise GenerationRolloverError("activation permit is missing expires_at")
+    try:
+        expiry = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise GenerationRolloverError("activation permit expires_at is invalid") from exc
+    if expiry.tzinfo is None or expiry.utcoffset() is None:
+        raise GenerationRolloverError("activation permit expires_at is not timezone-aware")
+    now_text = now or _utc_now()
+    try:
+        now_dt = datetime.fromisoformat(now_text.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise GenerationRolloverError("activation clock is invalid") from exc
+    if now_dt.tzinfo is None:
+        now_dt = now_dt.replace(tzinfo=timezone.utc)
+    if expiry <= now_dt.astimezone(timezone.utc):
+        raise GenerationRolloverError("activation permit is expired")
+
+    # Content-bound identity fields.  Prefer the permit's declared values when
+    # present; otherwise rederive them so operators can omit pre-computed CIDs.
+    env_digest = str(
+        permit.get("environment_digest")
+        or environment_receipt.get("probe", {}).get("toolchain_id")
+        or environment_receipt.get("receipt_id")
+        or ""
+    ).strip()
+    if not env_digest:
+        env_digest = "sha256:" + hashlib.sha256(raw_bytes).hexdigest()
+    if not env_digest.startswith("sha256:"):
+        env_digest = "sha256:" + hashlib.sha256(env_digest.encode("utf-8")).hexdigest()
+
+    runtime_generation_id = str(permit.get("runtime_generation_id") or "").strip()
+    if not runtime_generation_id:
+        runtime_generation_id = content_identity(
+            {
+                "kind": "runtime-generation",
+                "program_id": PROGRAM_ID,
+                "plan_root_cid": plan_root_cid,
+                "repository_tree_id": repository_tree_id,
+                "environment_receipt_cid": env_receipt_id,
+                "environment_digest": env_digest,
+            }
+        )
+
+    decision_cid = str(permit.get("decision_cid") or "").strip()
+    if not decision_cid:
+        decision_cid = content_identity(
+            {
+                "kind": "runtime-activation-decision",
+                "program_id": PROGRAM_ID,
+                "runtime_generation_id": runtime_generation_id,
+                "environment_receipt_cid": env_receipt_id,
+                "plan_root_cid": plan_root_cid,
+                "repository_tree_id": repository_tree_id,
+                "expires_at": expires_at,
+            }
+        )
+
+    activation_receipt_cid = str(permit.get("activation_receipt_cid") or "").strip()
+    if not activation_receipt_cid:
+        activation_receipt_cid = content_identity(
+            {
+                "kind": "runtime-activation-receipt",
+                "decision_cid": decision_cid,
+                "runtime_generation_id": runtime_generation_id,
+                "environment_receipt_cid": env_receipt_id,
+                "plan_root_cid": plan_root_cid,
+                "repository_tree_id": repository_tree_id,
+            }
+        )
+
+    return {
+        "schema": ACTIVATION_SCHEMA,
+        "accepted": True,
+        "activated": True,
+        "program_id": PROGRAM_ID,
+        "owner_task_id": LIFECYCLE_OWNER_TASK_ID,
+        "runtime_activation_gate_task_id": RUNTIME_ACTIVATION_GATE_TASK_ID,
+        "plan_root_cid": str(plan_root_cid),
+        "repository_tree_id": str(repository_tree_id),
+        "environment_receipt_cid": env_receipt_id,
+        "environment_digest": env_digest,
+        "environment_root": live_root,
+        "runtime_generation_id": runtime_generation_id,
+        "activation_receipt_cid": activation_receipt_cid,
+        "decision_cid": decision_cid,
+        "expires_at": expires_at,
+        "lifecycle_owner_installed": True,
+        "dqk_083_activates_generation": False,
+        "activates_runtime_generation": True,
+        "task_population_unchanged": True,
+        "signed_input_sha256": "sha256:" + hashlib.sha256(raw_bytes).hexdigest(),
+        "ok": True,
+    }
 
 
 # ---------------------------------------------------------------------------

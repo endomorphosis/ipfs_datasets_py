@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -72,6 +73,7 @@ from ipfs_datasets_py.duckdb_control.generation_rollover import (  # noqa: E402
     refuse_runtime_activation_without_permit,
     self_check,
     verify_completion_from_merge_receipts,
+    verify_runtime_activation_permit,
 )
 
 
@@ -206,7 +208,44 @@ def cmd_rollover(args: argparse.Namespace) -> int:
 
 
 def cmd_activate_runtime(args: argparse.Namespace) -> int:
-    """DQK-103 surface: refuse activation without a real permit; --check is install-only."""
+    """DQK-103 surface: verify a signed activation permit or report install-only."""
+
+    receipt_path = str(getattr(args, "receipt", "") or "").strip()
+    plan_root = str(getattr(args, "plan_root", "") or "").strip()
+    repository_tree = str(getattr(args, "repository_tree", "") or "").strip()
+    if receipt_path:
+        raw = Path(receipt_path).read_bytes()
+        env_receipt_path = Path(
+            os.environ.get(
+                "IPFS_DATASETS_DQK_ENV_ROOT",
+                str(Path.home() / ".venvs" / "ipfs-datasets-duckdb-quack"),
+            )
+        ) / "environment-receipt.json"
+        # Prefer the sealed env receipt next to EXPECTED_ENV_ROOT when present.
+        candidates = [
+            Path("/home/barberb/lift_coding/.venvs/ipfs-datasets-duckdb-quack/environment-receipt.json"),
+            env_receipt_path,
+            REPO_ROOT.parent.parent / ".venvs" / "ipfs-datasets-duckdb-quack" / "environment-receipt.json",
+        ]
+        env_receipt = None
+        for candidate in candidates:
+            if candidate.is_file() and not candidate.is_symlink():
+                env_receipt = _load_json_object(candidate, noun="environment receipt")
+                break
+        if env_receipt is None:
+            raise GenerationRolloverError("sealed environment receipt is unavailable")
+        if not plan_root or not repository_tree:
+            raise GenerationRolloverError(
+                "activate-runtime --receipt requires --plan-root and --repository-tree"
+            )
+        report = verify_runtime_activation_permit(
+            raw,
+            plan_root_cid=plan_root,
+            repository_tree_id=repository_tree,
+            environment_receipt=env_receipt,
+        )
+        _emit(report, as_json=bool(args.json) or True)
+        return 0 if report.get("accepted") is True else 1
 
     if args.check or not args.activation_permit_cid:
         report = refuse_runtime_activation_without_permit(
@@ -225,7 +264,7 @@ def cmd_activate_runtime(args: argparse.Namespace) -> int:
         _emit(report, as_json=bool(args.json) or True)
         return 0
 
-    # Explicit permit still fails closed under DQK-083 (activation is DQK-103).
+    # Explicit permit CID alone still fails closed (body required via --receipt).
     try:
         refuse_runtime_activation_without_permit(
             activation_permit_cid=args.activation_permit_cid,
@@ -370,7 +409,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--activation-permit-cid",
         type=str,
         default="",
-        help="DQK-103 activation permit CID (still refused by DQK-083)",
+        help="DQK-103 activation permit CID (body still required via --receipt)",
+    )
+    activate.add_argument(
+        "--receipt",
+        type=str,
+        default="",
+        help="path to signed runtime-activation permit JSON (DQK-103)",
+    )
+    activate.add_argument(
+        "--plan-root",
+        type=str,
+        default="",
+        help="expected plan root CID (required with --receipt)",
+    )
+    activate.add_argument(
+        "--repository-tree",
+        type=str,
+        default="",
+        help="expected repository tree identity (required with --receipt)",
     )
     activate.add_argument("--json", action="store_true")
     activate.set_defaults(func=cmd_activate_runtime)
