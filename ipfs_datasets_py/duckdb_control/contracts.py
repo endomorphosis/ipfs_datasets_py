@@ -27,7 +27,6 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from types import MappingProxyType
 from typing import Any, ClassVar, Final, Mapping, Sequence
 
 __all__ = [
@@ -48,6 +47,7 @@ __all__ = [
     "canonical_json_bytes",
     "content_identity",
     "normalize_timestamp",
+    "parse_cid",
     "parse_content_reference",
     "parse_schema_id",
     "parse_snapshot_id",
@@ -269,7 +269,7 @@ def parse_schema_id(value: str) -> str:
 
 @dataclass(frozen=True)
 class SchemaId:
-    SCHEMA: ClassVar[str] = SCHEMA_ID_SCHEMA 
+    SCHEMA: ClassVar[str] = SCHEMA_ID_SCHEMA
     value: str
 
     def __post_init__(self) -> None:
@@ -294,7 +294,7 @@ def parse_snapshot_id(value: str) -> str:
 class SnapshotId:
     """Database snapshot identity (generation digest or safe token)."""
 
-    SCHEMA: ClassVar[str] = SNAPSHOT_ID_SCHEMA 
+    SCHEMA: ClassVar[str] = SNAPSHOT_ID_SCHEMA
     value: str
     store_generation: int = 0
     schema_checksum: str = ""
@@ -331,7 +331,7 @@ class SnapshotId:
 class IdempotencyKey:
     """Caller-supplied idempotency key; exact bytes identity."""
 
-    SCHEMA: ClassVar[str] = IDEMPOTENCY_KEY_SCHEMA 
+    SCHEMA: ClassVar[str] = IDEMPOTENCY_KEY_SCHEMA
     key: str
     scope: str = "default"
 
@@ -370,7 +370,7 @@ class IdempotencyKey:
 # ---------------------------------------------------------------------------
 
 
-def _parse_cid(value: str) -> str:
+def parse_cid(value: str) -> str:
     text = value.strip()
     if _CID_V0.fullmatch(text) or _CID_V1.fullmatch(text):
         return text
@@ -396,7 +396,7 @@ class ContentReference:
     identity; optional location hints are non-authoritative.
     """
 
-    SCHEMA: ClassVar[str] = CONTENT_REF_SCHEMA 
+    SCHEMA: ClassVar[str] = CONTENT_REF_SCHEMA
 
     media_type: ContentMediaType
     content_id: str
@@ -414,7 +414,7 @@ class ContentReference:
                     f"unsupported content media type: {self.media_type!r}"
                 ) from exc
         object.__setattr__(self, "media_type", media)
-        object.__setattr__(self, "content_id", _parse_cid(str(self.content_id)))
+        object.__setattr__(self, "content_id", parse_cid(str(self.content_id)))
         if not isinstance(self.byte_size, int) or isinstance(self.byte_size, bool):
             raise ContractError("byte_size must be an integer")
         if self.byte_size < 0:
@@ -514,7 +514,7 @@ class ContentReference:
 class ExportReceipt:
     """Receipt for a deterministic export render."""
 
-    SCHEMA: ClassVar[str] = EXPORT_RECEIPT_SCHEMA 
+    SCHEMA: ClassVar[str] = EXPORT_RECEIPT_SCHEMA
 
     export_id: str
     snapshot: SnapshotId
@@ -538,6 +538,10 @@ class ExportReceipt:
         )
         if not isinstance(self.renderer_version, str) or not self.renderer_version.strip():
             raise ContractError("renderer_version is required")
+        renderer = self.renderer_version.strip()
+        if _SAFE_TOKEN.fullmatch(renderer) is None:
+            raise ContractError("renderer_version is not a safe token")
+        object.__setattr__(self, "renderer_version", renderer)
         if not self.non_authoritative:
             raise ContractError(
                 "export receipts must declare non_authoritative=true"
@@ -557,11 +561,13 @@ class ExportReceipt:
 
     @property
     def identity_id(self) -> str:
+        # Bind content by its storage-neutral identity only — location hints
+        # and other non-authoritative transport fields must not drift the id.
         return content_identity(
             {
                 "export_id": self.export_id,
                 "snapshot": self.snapshot.to_dict(),
-                "content": self.content.to_dict(),
+                "content_identity_id": self.content.identity_id,
                 "created_at": self.created_at,
                 "renderer_version": self.renderer_version,
                 "non_authoritative": True,
