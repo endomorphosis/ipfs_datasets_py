@@ -1,0 +1,231 @@
+{
+  "acceptance": {
+    "all_inputs_present": true,
+    "canary_gate_pass": true,
+    "determinism_gate_pass": true,
+    "digests_bound": true,
+    "evaluation_gate_pass": true,
+    "fixture_independently_reproducible": true,
+    "no_secret_or_path_leak": true,
+    "publication_not_authorized": true,
+    "rollback_target_named": true,
+    "security_gate_pass": true,
+    "viewer_gate_pass": true
+  },
+  "candidate": {
+    "dataset_id": "justicedao/ipfs_uscode",
+    "default_config": "publicus-ir-graphrag/v2",
+    "kind": "fixture_local",
+    "manifest_digest": "a1e1bef09f85a67e6f653f43ea5007bb4cf75fcc71686c9f74c15c7c99816444",
+    "package_version": "2",
+    "release_point": "us/pl/118/45",
+    "release_profile": "publicus-ir-graphrag/v2",
+    "release_root_cid": "bafkreid4wn7mqws4eh7va3deareqidfvxpdalc7joafuzt4fes7h46tuce",
+    "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "root_label": "fixture://uscode-hf-release-candidate",
+    "source_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "staging_branch": "stage/uscode-sparse-graphrag-v2",
+    "vector_space_id": "all-minilm-l6-v2@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d384:pool=mean:norm=l2"
+  },
+  "code": {
+    "code_version": "1",
+    "digest": "b671ed1d7abfcff39ec1009b04aaec9d0fdc391c60f914e990fc81d5a37b5586",
+    "modules": [
+      "ipfs_datasets_py.processors.legal_data.uscode_hf_release",
+      "ipfs_datasets_py.processors.legal_data.uscode_release_schema",
+      "ipfs_datasets_py.processors.legal_data.uscode_embeddings",
+      "scripts.ops.legal_data.verify_uscode_release_candidate"
+    ],
+    "producer": "verify_uscode_release_candidate.py",
+    "program_id": "uscode-sparse-graphrag-v1",
+    "task_id": "USCIR-038"
+  },
+  "code_version": "1",
+  "config": {
+    "build_config_cid": "bffb35c73eceb046bab4210952128ba62d0de882dea0e02fe04247ba18797407",
+    "default_config": "publicus-ir-graphrag/v2",
+    "digest": "ef3aeb382c36e9d072cd9153193caad1be85e54ff34462950430fca1f1705c2b",
+    "fusion_candidate_id": "rrf_k_60",
+    "fusion_config_digest": "f4eb16a6e18eb575254686e6bd3ad65e1635ab9727c60d2b03870d4d32820372",
+    "package_version": "2",
+    "release_profile": "publicus-ir-graphrag/v2",
+    "schema_version": "uscode-hf-release/v1"
+  },
+  "counts": {
+    "artifact_count": 23,
+    "bm25_document_count": 2,
+    "corpus_row_count": 3,
+    "families_built": [
+      "bm25_documents",
+      "bm25_postings",
+      "corpus",
+      "graph_edges",
+      "graph_nodes",
+      "manifest",
+      "receipt",
+      "recovery",
+      "release_metadata",
+      "report",
+      "routing_index",
+      "vectors"
+    ],
+    "graph_edge_count": 3,
+    "graph_node_count": 3,
+    "packaging_artifact_count": 23,
+    "reconciled": true,
+    "vector_row_count": 3
+  },
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "depends_on": [
+    "USCIR-035",
+    "USCIR-036",
+    "USCIR-037"
+  ],
+  "digests": {
+    "code": "b671ed1d7abfcff39ec1009b04aaec9d0fdc391c60f914e990fc81d5a37b5586",
+    "config": "ef3aeb382c36e9d072cd9153193caad1be85e54ff34462950430fca1f1705c2b",
+    "manifest": "a1e1bef09f85a67e6f653f43ea5007bb4cf75fcc71686c9f74c15c7c99816444",
+    "model": "3be3346bc467482fd0e66eb7a4dcc3175dbe74bc2c76678f760a1f6704841af6",
+    "release_root_cid": "bafkreid4wn7mqws4eh7va3deareqidfvxpdalc7joafuzt4fes7h46tuce"
+  },
+  "evidence": {
+    "canary": {
+      "key": "canary",
+      "network_required": false,
+      "ok": true,
+      "path": "tests/fixtures/legal_ir/uscode_remote_canary.json",
+      "sha256": "3f44719ed882d2ec280121bd98eed513b0bcd0bf0bd1d521e910cc5d5fe40db7",
+      "staging_branch": "stage/uscode-sparse-graphrag-v2",
+      "staging_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+      "target_repo": "justicedao/ipfs_uscode",
+      "task_id": "USCIR-036"
+    },
+    "determinism": {
+      "e2e_recipe_path": "tests/fixtures/legal_ir/uscode_e2e_release/recipe.json",
+      "e2e_recipe_sha256": "fe17ce32faed4ce979dcdeec6ea8292a58ee3afe3640f0533dfb3dd60e8a418b",
+      "fixture_build_deterministic": true,
+      "key": "determinism",
+      "offline_replay_stable": true,
+      "ok": true,
+      "source": "docs/reports/uscode_e2e_local.json"
+    },
+    "e2e": {
+      "key": "e2e",
+      "manifest_digest": "a1e1bef09f85a67e6f653f43ea5007bb4cf75fcc71686c9f74c15c7c99816444",
+      "ok": true,
+      "path": "docs/reports/uscode_e2e_local.json",
+      "release_root_cid": "bafkreid4wn7mqws4eh7va3deareqidfvxpdalc7joafuzt4fes7h46tuce",
+      "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+      "sha256": "3c4246391fb962e7986079ce6011354142c1d0921289bf6d24b9cceb01a8405e",
+      "task_id": "USCIR-033"
+    },
+    "evaluation": {
+      "evaluation_cid": "sha256:b9623d3977f7e1257540c33eb1016b2cd608e2a32fc71eabc7d34524461a7f8a",
+      "fusion_candidate_id": "rrf_k_60",
+      "fusion_config_digest": "f4eb16a6e18eb575254686e6bd3ad65e1635ab9727c60d2b03870d4d32820372",
+      "key": "evaluation",
+      "ok": true,
+      "path": "docs/reports/uscode_sparse_graphrag_evaluation.json",
+      "production_searchable": false,
+      "sha256": "6146eb9e9494c1505e2ccdea1b8b96dca585d2b60ecd6494a300d0cd369691e5",
+      "task_id": "USCIR-035"
+    },
+    "migration": {
+      "key": "migration",
+      "ok": true,
+      "path": "docs/guides/USCODE_SPARSE_GRAPHRAG_MIGRATION.md",
+      "sha256": "b0375efc115724544e213863b8c68eb7d6abac7ffa70b971a1ef7a53c2581d87",
+      "task_id": "USCIR-037"
+    },
+    "runbook": {
+      "key": "runbook",
+      "ok": true,
+      "path": "docs/guides/USCODE_SPARSE_GRAPHRAG_RUNBOOK.md",
+      "sha256": "fc66f3b81da11bcf2d77cc70bb64ae490fd3537954d86614b9696d3a64b0855d",
+      "task_id": "USCIR-037"
+    },
+    "security": {
+      "case_count": 35,
+      "key": "security",
+      "ok": true,
+      "path": "docs/reports/uscode_release_security.json",
+      "schema_version": "uscode-release-security/v1",
+      "sha256": "adae382af3defa8a5bdacd4ee3f5ecf08ee454989ad548dee7356206e6d737da",
+      "task_id": "USCIR-034"
+    },
+    "stage_plan": {
+      "base_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+      "key": "stage_plan",
+      "ok": true,
+      "path": "tests/fixtures/legal_ir/uscode_stage_plan.json",
+      "release_point": "us/pl/118/45",
+      "sha256": "d7be45cb67f24baf99458da2cd76117e5d10da315da850ccbe4383d11d0c78ce",
+      "staging_branch": "stage/uscode-sparse-graphrag-v2",
+      "target_repo": "justicedao/ipfs_uscode",
+      "task_id": "USCIR-032"
+    },
+    "viewer": {
+      "default_config": "publicus-ir-graphrag/v2",
+      "default_excludes_legacy_monoliths": true,
+      "default_excludes_recovery": true,
+      "exactly_one_default": true,
+      "key": "viewer",
+      "ok": true,
+      "required_config_names": [
+        "publicus-ir-graphrag/v2",
+        "legacy-uscode-parquet/v1",
+        "recovery-quarantine/v1"
+      ],
+      "schema_coherent": true,
+      "source": "tests/fixtures/legal_ir/uscode_remote_canary.json"
+    }
+  },
+  "exception_dispositions": [
+    {
+      "approved": true,
+      "detail": "NO production-searchable claim: bm25 component not production-searchable. Fixture evaluation is diagnostic evidence only.",
+      "kind": "production_searchable_disposition",
+      "production_searchable": false,
+      "source": "evaluation.production_claim"
+    }
+  ],
+  "fixture_id": "uscode-release-candidate-v1",
+  "goal_id": "USCIR-G100",
+  "model": {
+    "digest": "3be3346bc467482fd0e66eb7a4dcc3175dbe74bc2c76678f760a1f6704841af6",
+    "dimension": 384,
+    "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+    "model_revision": "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3",
+    "normalization": "l2",
+    "pooling": "mean",
+    "vector_space_id": "all-minilm-l6-v2@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d384:pool=mean:norm=l2"
+  },
+  "network_required": false,
+  "notes": "Sealed offline release-candidate receipt for US Code sparse GraphRAG (USCIR-038). Binds producer digests from evaluation, security, e2e, canary, stage plan, and documentation. Independently reproducible via build_fixture_receipt(). Does not authorize publication.",
+  "producer": "verify_uscode_release_candidate.py",
+  "program_id": "uscode-sparse-graphrag-v1",
+  "publication_authorized": false,
+  "receipt_sha256": "1dcd8f8795d1aa6098a09ff2ce48556a349ecd312567dd9f1a7bd4790e91a893",
+  "release_point": "us/pl/118/45",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "rollback": {
+    "dataset_id": "justicedao/ipfs_uscode",
+    "default_config": "publicus-ir-graphrag/v2",
+    "legacy_files_deleted": false,
+    "policy": "Re-advertise the prior immutable revision and default config without deleting the failed candidate tree or legacy files.",
+    "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "staging_branch_retained": true
+  },
+  "schema": "ipfs_datasets_py/uscode-sparse-graphrag-release-candidate@1",
+  "schema_version": "uscode-release-candidate/v1",
+  "task_id": "USCIR-038",
+  "viewer_live": {
+    "config_names": [
+      "publicus-ir-graphrag/v2",
+      "legacy-uscode-parquet/v1",
+      "recovery-quarantine/v1"
+    ],
+    "default_config": "publicus-ir-graphrag/v2",
+    "ok": true
+  }
+}
