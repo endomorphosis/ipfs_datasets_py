@@ -806,7 +806,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Fixture dry run is deterministic, target/revision/manifest are explicit, deletion/force/visibility changes are impossible, credentials remain environment-only, and no mutation occurs without opt-in authorization.
 
 ## USCIR-033 Prove the complete local pipeline end to end
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
