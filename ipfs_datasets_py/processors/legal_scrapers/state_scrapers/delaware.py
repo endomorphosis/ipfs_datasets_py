@@ -247,7 +247,13 @@ class DelawareScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes else None
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=None)
+        if limit is None and max_statutes is not None:
+            try:
+                limit = max(1, int(max_statutes))
+            except Exception:
+                limit = None
         statutes: List[NormalizedStatute] = []
         title_links = await self._discover_title_links()
         if not title_links and self._DE_CHAPTER_URL_RE.search(str(code_url or "")):

@@ -38,18 +38,20 @@ class ColoradoScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Colorado's legislative website.
-        
-        Args:
-            code_name: Name of the code to scrape
-            code_url: URL of the code
-            
-        Returns:
-            List of NormalizedStatute objects
+
+        Full-corpus mode with ``max_statutes=None`` remains uncapped against the
+        official CRS publication search (content.leg.colorado.gov). Secondary
+        generic recovery is intentionally skipped so partial/secondary sources
+        cannot sole-admit a sealed full-corpus run.
         """
-        statutes = await self._scrape_crs_pdfs(code_name, max_statutes=max_statutes)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        statutes = await self._scrape_crs_pdfs(code_name, max_statutes=limit)
         if statutes:
-            return statutes
-        self.logger.warning("Colorado CRS direct PDF scrape returned no usable statutes; skipping generic recovery fallback")
+            return statutes if limit is None else statutes[: int(limit)]
+        self.logger.warning(
+            "Colorado CRS direct PDF scrape returned no usable statutes; "
+            "skipping generic recovery fallback"
+        )
         return []
 
     async def _scrape_crs_pdfs(
@@ -112,6 +114,7 @@ class ColoradoScraper(BaseStateScraper):
             )
             statute.structured_data = {
                 "source_kind": source_kind,
+                "discovery_method": "official_crs_publication_search",
                 "detail_url": detail_url or None,
                 "pdf_url": pdf_url or None,
                 "skip_hydrate": True,
