@@ -1,0 +1,337 @@
+{
+  "acceptance": {
+    "all_expected_outputs_accounted": true,
+    "cid_overlap_count": 0,
+    "ia_only_canonical": true,
+    "jurisdictions": 51,
+    "missing_summaries": [
+      "CA",
+      "DC"
+    ],
+    "per_state_total_rows": 212103,
+    "pinned_revision": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+    "repository_files": 2116,
+    "stale_51_state_embeddings": true,
+    "state_summaries_present": 49,
+    "truncation_examples": {
+      "GA": 2,
+      "HI": 4,
+      "IN": 4,
+      "MS": 1,
+      "WA": 1,
+      "WV": 1
+    },
+    "viewer_canonical_label": "IA",
+    "viewer_canonical_rows": 47204,
+    "viewer_embedding_jurisdictions": 51,
+    "viewer_embedding_rows": 17338,
+    "zero_cid_overlap": true
+  },
+  "baseline_date": "2026-08-10",
+  "blocking_issues": [
+    "Viewer canonical config is IA-only and not a 51-jurisdiction corpus",
+    "Viewer embeddings are a stale sparse sample with zero CID overlap",
+    "per-state Parquet total is 212103 with obvious truncations",
+    "state summaries missing for CA, DC",
+    "README claims 20514 rows, conflicting with Viewer and per-state totals",
+    "manifest.json embeds absolute local paths and old sampled counts",
+    "completed-state registry covers 47 jurisdictions and promotes truncated success flags",
+    "refresh/coverage/scraper paths treat filename presence as completion"
+  ],
+  "cid_overlap": {
+    "canonical_vs_embeddings": 0,
+    "detail": "Viewer embedding config has zero CID overlap with the canonical config",
+    "zero_overlap": true
+  },
+  "code_hazards": [
+    {
+      "hazard": "defines `all` as 50 states with DC opt-in; merges by content CID before logical identity; rebuilds combined Parquet from the requested subset; permits upload using requested-scope is_complete",
+      "path": "scripts/ops/legal_data/refresh_state_laws_corpus.py"
+    },
+    {
+      "hazard": "defaults to a one-row coverage threshold",
+      "path": "scripts/ops/legal_data/check_state_law_coverage.py"
+    },
+    {
+      "hazard": "omits DC from gap reporting",
+      "path": "scripts/ops/legal_data/report_state_law_corpus_gaps.py"
+    },
+    {
+      "hazard": "treats a nonzero, error-free requested subset as full coverage",
+      "path": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
+    }
+  ],
+  "code_version": "1",
+  "completed_state_registry": {
+    "jurisdiction_count": 47,
+    "marks_truncated_as_success": true,
+    "note": "repo-tracked completed-state registry has only 47 jurisdictions and marks obviously truncated results as success",
+    "truncation_examples": {
+      "CO": 5,
+      "GA": 2,
+      "LA": 4,
+      "MA": 14,
+      "NJ": 1
+    }
+  },
+  "counts": {
+    "cid_overlap_canonical_vs_embeddings": 0,
+    "jurisdictions": 51,
+    "per_state_canonical_total_rows": 212103,
+    "readme_claimed_canonical_rows": 20514,
+    "registry_jurisdictions": 47,
+    "repository_files": 2116,
+    "state_parquet_filenames": 51,
+    "state_summaries_missing": 2,
+    "state_summaries_present": 49,
+    "viewer_canonical_rows": 47204,
+    "viewer_embedding_jurisdictions": 51,
+    "viewer_embedding_rows": 17338
+  },
+  "dataset": {
+    "file_count": 2116,
+    "has_readme": true,
+    "last_modified": "2026-05-31",
+    "readme_claimed_canonical_rows": 20514,
+    "repo_id": "justicedao/ipfs_state_laws",
+    "revision": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+    "revision_pinned": true,
+    "unpinned_tokens_forbidden": [
+      "main",
+      "master",
+      "latest",
+      "HEAD"
+    ]
+  },
+  "evidence_role": "Existing remote artifacts are evidence inputs only. They may seed differential audits, but no prior row or success flag is admitted without the new provenance and completeness gates.",
+  "goal_id": "LCR-G010",
+  "identity_anomalies": [
+    {
+      "code": "IA_ONLY_CANONICAL_VIEWER",
+      "count": 47204,
+      "detail": "Viewer canonical config is entirely labeled IA (47204 rows)",
+      "severity": "blocking"
+    },
+    {
+      "code": "STALE_51_STATE_EMBEDDINGS",
+      "count": 17338,
+      "detail": "Viewer embedding config has 17338 rows over 51 jurisdictions with sparse per-jurisdiction coverage and represents an older sample",
+      "severity": "blocking"
+    },
+    {
+      "code": "ZERO_CID_OVERLAP",
+      "count": 0,
+      "detail": "embedding config has zero CID overlap with the canonical config; vectors cannot join the corpus by content address",
+      "severity": "blocking"
+    },
+    {
+      "code": "PER_STATE_TRUNCATION",
+      "count": 6,
+      "detail": "remote per-jurisdiction files include obvious truncations: GA=2, HI=4, IN=4, MS=1, WA=1, WV=1",
+      "severity": "blocking"
+    },
+    {
+      "code": "MISSING_STATE_SUMMARIES",
+      "count": 2,
+      "detail": "state summaries absent for: CA, DC",
+      "severity": "blocking"
+    },
+    {
+      "code": "README_ROW_COUNT_CONFLICT",
+      "count": 20514,
+      "detail": "README claims 20514 canonical rows, which conflicts with Viewer (47204) and per-state total (212103)",
+      "severity": "blocking"
+    },
+    {
+      "code": "REGISTRY_FALSE_SUCCESS",
+      "count": 47,
+      "detail": "completed-state registry marks truncated scrapes as success and covers only 47 jurisdictions",
+      "severity": "blocking"
+    },
+    {
+      "code": "MANIFEST_LOCAL_PATHS",
+      "count": 1,
+      "detail": "manifest.json contains absolute local paths and old sampled counts",
+      "severity": "blocking"
+    }
+  ],
+  "jurisdictions": {
+    "codes": [
+      "AL",
+      "AK",
+      "AZ",
+      "AR",
+      "CA",
+      "CO",
+      "CT",
+      "DE",
+      "DC",
+      "FL",
+      "GA",
+      "HI",
+      "ID",
+      "IL",
+      "IN",
+      "IA",
+      "KS",
+      "KY",
+      "LA",
+      "ME",
+      "MD",
+      "MA",
+      "MI",
+      "MN",
+      "MS",
+      "MO",
+      "MT",
+      "NE",
+      "NV",
+      "NH",
+      "NJ",
+      "NM",
+      "NY",
+      "NC",
+      "ND",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VT",
+      "VA",
+      "WA",
+      "WV",
+      "WI",
+      "WY"
+    ],
+    "count": 51,
+    "includes_dc": true,
+    "span_note": "Exact 50 U.S. states plus the District of Columbia"
+  },
+  "local_salvage": {
+    "admitted_without_new_gates": false,
+    "note": "a recoverable prior three-shard run under the local legal-scraper workspace reports much larger 51-jurisdiction outputs; it is comparison/salvage evidence only until the new provenance and frontier gates validate it",
+    "recoverable_prior_three_shard_run": true,
+    "role": "comparison_and_salvage_evidence_only"
+  },
+  "manifest": {
+    "contains_absolute_local_paths": true,
+    "contains_old_sampled_counts": true,
+    "path": "manifest.json",
+    "trusted_for_migration": false
+  },
+  "mode": "fixture",
+  "network_required": false,
+  "per_state_files": {
+    "derived_index_drift": true,
+    "filename_count": 51,
+    "filename_pattern": "STATE-XX.parquet",
+    "filenames": [
+      "STATE-AL.parquet",
+      "STATE-AK.parquet",
+      "STATE-AZ.parquet",
+      "STATE-AR.parquet",
+      "STATE-CA.parquet",
+      "STATE-CO.parquet",
+      "STATE-CT.parquet",
+      "STATE-DE.parquet",
+      "STATE-DC.parquet",
+      "STATE-FL.parquet",
+      "STATE-GA.parquet",
+      "STATE-HI.parquet",
+      "STATE-ID.parquet",
+      "STATE-IL.parquet",
+      "STATE-IN.parquet",
+      "STATE-IA.parquet",
+      "STATE-KS.parquet",
+      "STATE-KY.parquet",
+      "STATE-LA.parquet",
+      "STATE-ME.parquet",
+      "STATE-MD.parquet",
+      "STATE-MA.parquet",
+      "STATE-MI.parquet",
+      "STATE-MN.parquet",
+      "STATE-MS.parquet",
+      "STATE-MO.parquet",
+      "STATE-MT.parquet",
+      "STATE-NE.parquet",
+      "STATE-NV.parquet",
+      "STATE-NH.parquet",
+      "STATE-NJ.parquet",
+      "STATE-NM.parquet",
+      "STATE-NY.parquet",
+      "STATE-NC.parquet",
+      "STATE-ND.parquet",
+      "STATE-OH.parquet",
+      "STATE-OK.parquet",
+      "STATE-OR.parquet",
+      "STATE-PA.parquet",
+      "STATE-RI.parquet",
+      "STATE-SC.parquet",
+      "STATE-SD.parquet",
+      "STATE-TN.parquet",
+      "STATE-TX.parquet",
+      "STATE-UT.parquet",
+      "STATE-VT.parquet",
+      "STATE-VA.parquet",
+      "STATE-WA.parquet",
+      "STATE-WV.parquet",
+      "STATE-WI.parquet",
+      "STATE-WY.parquet"
+    ],
+    "includes_dc": true,
+    "logical_identifier_duplication": true,
+    "note": "The 51 remote per-jurisdiction canonical files total 212103 rows but include obvious truncations and identity/index drift",
+    "total_rows": 212103,
+    "truncation_examples": {
+      "GA": 2,
+      "HI": 4,
+      "IN": 4,
+      "MS": 1,
+      "WA": 1,
+      "WV": 1
+    }
+  },
+  "producer": "audit_state_laws_hf_baseline.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-baseline@1",
+  "schema_version": "1",
+  "source_of_truth": "Live Hugging Face inventory of justicedao/ipfs_state_laws at the pinned revision, sealed into this offline fixture for network-free checks",
+  "summaries": {
+    "missing": [
+      "CA",
+      "DC"
+    ],
+    "missing_count": 2,
+    "note": "only 49 state summaries; CA and DC summaries are absent",
+    "present_count": 49
+  },
+  "task_id": "LCR-001",
+  "unsuitable_as_source_of_truth": true,
+  "viewer": {
+    "canonical_config": {
+      "all_rows_labeled_ia": true,
+      "ia_only": true,
+      "jurisdiction_labels": [
+        "IA"
+      ],
+      "note": "Hugging Face Viewer canonical config has 47204 rows, all labeled IA",
+      "row_count": 47204
+    },
+    "dataset_viewer_valid": false,
+    "embedding_config": {
+      "jurisdiction_count": 51,
+      "note": "Viewer embedding config has 17338 rows over 51 jurisdictions; most jurisdictions have only 1\u2013104 rows and represent an older sample",
+      "row_count": 17338,
+      "rows_per_jurisdiction_max": 104,
+      "rows_per_jurisdiction_min": 1,
+      "stale_sample": true
+    },
+    "reason": "canonical config is IA-only and conflicts with per-state Parquet totals, README claims, and embedding sample"
+  }
+}
