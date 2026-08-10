@@ -107,6 +107,31 @@ def test_report_interface_and_content_addressing() -> None:
     assert set(wire["evidence_subset"]) >= set(REQUIRED_EVIDENCE_SUBSET)
 
 
+def test_report_identity_is_stable_across_ambient_home(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("HOME", "/tmp/ambient-home-a")
+    first_observation = run_pinned_process_probe(candidates=("true", "echo"))
+    first = build_logic_evidence_replay_report()
+
+    monkeypatch.setenv("HOME", "/tmp/ambient-home-b")
+    second_observation = run_pinned_process_probe(candidates=("true", "echo"))
+    second = build_logic_evidence_replay_report()
+
+    expected_environment_digest = environment_digest(
+        {
+            "HOME": "/nonexistent/ipfs-datasets-logic-replay",
+            "LANG": "C",
+            "LC_ALL": "C",
+            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin",
+        }
+    )
+    assert first_observation["environment_digest"] == expected_environment_digest
+    assert second_observation["environment_digest"] == expected_environment_digest
+    assert first.content_id == second.content_id
+    assert first.to_json() == second.to_json()
+
+
 def test_required_evidence_subset_complete() -> None:
     report = build_logic_evidence_replay_report()
     for required in (

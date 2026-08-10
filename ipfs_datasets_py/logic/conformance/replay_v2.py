@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import shutil
 import subprocess
 from collections.abc import Mapping, Sequence
@@ -65,6 +64,7 @@ MODULE_VERSION: Final = "1.0.0"
 
 # Authoritative validation PATH (fail-closed). Matches sealed validation env.
 _VALIDATION_PATH: Final = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+_VALIDATION_HOME: Final = "/nonexistent/ipfs-datasets-logic-replay"
 
 REQUIRED_EVIDENCE_SUBSET: Final[tuple[str, ...]] = (
     "differential",
@@ -1240,7 +1240,7 @@ def _validation_environment(
         "PATH": _VALIDATION_PATH,
         "LANG": "C",
         "LC_ALL": "C",
-        "HOME": os.environ.get("HOME", "/tmp"),
+        "HOME": _VALIDATION_HOME,
     }
     if extra:
         env.update({str(k): str(v) for k, v in extra.items()})
