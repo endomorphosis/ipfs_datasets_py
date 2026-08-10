@@ -197,6 +197,9 @@ DEFAULT_MARKDOWN_EXPORT = (
 DEFAULT_JSON_EXPORT = RUNTIME_ROOT / "exports/ipfs_datasets_duckdb_quack_plan.json"
 PROGRAM_SCHEMA = "ipfs_datasets_py/duckdb-quack-migration-program@1"
 PROGRAM_ID = "ipfs-datasets-duckdb-quack-v1"
+# Concurrent implementation lanes (each lane = one implementer + shard).
+# Raised from 2 once host capacity and merge serialization were proven.
+MAX_IMPLEMENTATION_LANES = 4
 BOARD_NAMESPACE = "ipfs-datasets-duckdb-quack"
 TARGET_BRANCH = "feat/duckdb-quack-control-plane"
 ROOT_GOAL_ID = "DQK-G000"
@@ -4640,7 +4643,7 @@ def _actual_master_command_matches(identity: Mapping[str, Any]) -> bool:
         )
     except (TypeError, ValueError):
         return False
-    if not duration_seconds > 0 or not 1 <= lanes <= 2:
+    if not duration_seconds > 0 or not 1 <= lanes <= MAX_IMPLEMENTATION_LANES:
         return False
     detach_count = argv.count("--detach")
     if detach_count > 1:
@@ -6519,7 +6522,7 @@ def _retry_lifecycle_authority(
         raise RuntimeError("stored master identity has stale program/plan bindings")
     master_pid = _safe_int(stored_master.get("pid"))
     lane_count = _safe_int(stored_master.get("lane_count"))
-    if not 1 <= lane_count <= 2:
+    if not 1 <= lane_count <= MAX_IMPLEMENTATION_LANES:
         raise RuntimeError("stored master lane count is invalid")
     pidfile_pid = _read_pid(MASTER_PID)
     if pidfile_pid not in {None, master_pid}:
@@ -13800,8 +13803,8 @@ def _manual_gate_relaunch_runtime(
     if foreign:
         raise RuntimeError("a foreign program master remains before manual-gate relaunch")
     lanes = _safe_int((old_master or {}).get("lane_count"), 2) if isinstance(old_master, Mapping) else 2
-    if not 1 <= lanes <= 2:
-        lanes = 2
+    if not 1 <= lanes <= MAX_IMPLEMENTATION_LANES:
+        lanes = min(2, MAX_IMPLEMENTATION_LANES)
     launch_token = os.urandom(16).hex()
     command = supervisor_command(
         lanes=lanes,
@@ -15472,8 +15475,10 @@ def cmd_watch(args: argparse.Namespace) -> int:
 
 def _lane_count(value: str) -> int:
     parsed = int(value)
-    if not 1 <= parsed <= 2:
-        raise argparse.ArgumentTypeError("lanes must be between 1 and the safe cap 2")
+    if not 1 <= parsed <= MAX_IMPLEMENTATION_LANES:
+        raise argparse.ArgumentTypeError(
+            f"lanes must be between 1 and the safe cap {MAX_IMPLEMENTATION_LANES}"
+        )
     return parsed
 
 
@@ -15587,7 +15592,7 @@ def build_parser() -> argparse.ArgumentParser:
     smoke.set_defaults(handler=cmd_smoke)
 
     launch = subparsers.add_parser("launch", help="launch isolated sharded implementation supervisors")
-    launch.add_argument("--lanes", type=_lane_count, default=2)
+    launch.add_argument("--lanes", type=_lane_count, default=MAX_IMPLEMENTATION_LANES)
     launch.add_argument("--duration-seconds", type=_duration_seconds, default=float("inf"))
     launch.add_argument("--dry-run", action="store_true")
     launch.add_argument("--foreground", action="store_true")
