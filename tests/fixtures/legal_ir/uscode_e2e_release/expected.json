@@ -1,0 +1,116 @@
+{
+  "schema_version": "uscode-e2e-expected/v1",
+  "task_id": "USCIR-033",
+  "goal_id": "USCIR-G090",
+  "description": "Expected results, paths, and sparse-route contracts for the local end-to-end pipeline.",
+  "query_modes": [
+    "bm25",
+    "vector",
+    "hybrid",
+    "neighbors",
+    "graph_walk",
+    "semantic_graph_walk"
+  ],
+  "acceptance": {
+    "fixture_build_deterministic": true,
+    "all_root_count_joins_reconcile": true,
+    "expected_results_paths_pass": true,
+    "fetch_traces_routed_shards_plus_corpus_hydration_only": true,
+    "offline_replay_stable": true,
+    "six_query_modes_exercised": true,
+    "manifest_validated": true,
+    "local_resolve_only": true
+  },
+  "cases": [
+    {
+      "id": "bm25_foia_agency",
+      "mode": "bm25",
+      "query": "foia agency",
+      "top_k": 2,
+      "hydrate": true,
+      "expected_top_entry_cid": "entry-a",
+      "expected_min_results": 1,
+      "allowed_data_plane_families": ["bm25_postings", "corpus"],
+      "allowed_data_plane_reasons": ["term_range", "hydrate_hit"],
+      "forbidden_data_plane_families": ["vectors"],
+      "expected_posting_paths": ["data/bm25/postings/part-000000.parquet"],
+      "forbidden_posting_paths": ["data/bm25/postings/part-000001.parquet"],
+      "require_corpus_hydration": true
+    },
+    {
+      "id": "vector_centroid_0",
+      "mode": "vector",
+      "query": "foia",
+      "query_vector": [1.0, 0.0],
+      "top_k": 2,
+      "candidate_centroids": 1,
+      "hydrate": true,
+      "expected_top_entry_cid": "entry-a",
+      "expected_min_results": 1,
+      "allowed_data_plane_families": ["vectors", "corpus"],
+      "allowed_data_plane_reasons": ["exact_vector_score", "hydrate_hit"],
+      "forbidden_data_plane_families": ["bm25_postings"],
+      "expected_vector_paths": ["data/vectors/centroid-000000-part-000000.parquet"],
+      "forbidden_vector_paths": ["data/vectors/centroid-000001-part-000000.parquet"],
+      "require_corpus_hydration": true
+    },
+    {
+      "id": "hybrid_weighted",
+      "mode": "hybrid",
+      "query": "foia agency",
+      "query_vector": [1.0, 0.0],
+      "top_k": 3,
+      "fusion": {
+        "method": "weighted",
+        "bm25_weight": 0.5,
+        "vector_weight": 0.5
+      },
+      "expected_top_entry_cid": "entry-a",
+      "expected_min_results": 1,
+      "expected_component_score_keys": ["bm25", "vector"],
+      "require_corpus_hydration": true
+    },
+    {
+      "id": "neighbors_entry_a",
+      "mode": "neighbors",
+      "start_node_cid": "entry-a",
+      "direction": "out",
+      "limit": 10,
+      "expected_min_edges": 1,
+      "expected_neighbor_cids": ["entry-b"]
+    },
+    {
+      "id": "graph_walk_entry_a",
+      "mode": "graph_walk",
+      "start_node_cid": "entry-a",
+      "max_depth": 2,
+      "max_nodes": 8,
+      "max_edges": 16,
+      "expected_min_results": 1
+    },
+    {
+      "id": "semantic_graph_walk_entry_a",
+      "mode": "semantic_graph_walk",
+      "query": "foia",
+      "query_vector": [1.0, 0.0],
+      "start_node_cid": "entry-a",
+      "max_depth": 2,
+      "expected_min_results": 1
+    }
+  ],
+  "root_count_joins": {
+    "corpus_row_count": 3,
+    "bm25_document_count": 2,
+    "vector_row_count": 3,
+    "graph_node_count": 3,
+    "graph_edge_count": 3,
+    "require_equal_admitted_counts": true
+  },
+  "control_plane_reasons": [
+    "manifest",
+    "routing_index",
+    "control_plane",
+    "hydrate_hit",
+    "replay"
+  ]
+}
