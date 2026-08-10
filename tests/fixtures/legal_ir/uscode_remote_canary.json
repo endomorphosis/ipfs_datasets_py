@@ -1,0 +1,86 @@
+{
+  "acceptance": {
+    "bounded_downloads": true,
+    "cache_offline_parity": true,
+    "fixture_canary_offline": true,
+    "immutable_revision_required": true,
+    "never_infer_mutable_revision": true,
+    "read_only": true,
+    "remote_opt_in_only": true,
+    "viewer_configs_valid": true
+  },
+  "budgets": {
+    "max_bytes": 5000000,
+    "max_control_index_bytes": 2000000,
+    "max_selected_shard_bytes": 3000000,
+    "max_shards": 16,
+    "max_query_bytes": 4000000,
+    "max_query_shards": 12
+  },
+  "code_version": "1",
+  "control_indexes": [
+    "manifest.json",
+    "indexes/bm25_keyword_shards.parquet",
+    "indexes/corpus_chunks.parquet",
+    "indexes/vector_chunks.parquet",
+    "indexes/graph_out_adjacency.parquet"
+  ],
+  "default_config": "publicus-ir-graphrag/v2",
+  "digest_sealed": false,
+  "fixture_id": "uscode-remote-canary-v1",
+  "generators": {
+    "canary": "run_fixture_canary()",
+    "check": "check_canary_fixture()",
+    "release_recipe": "tests/fixtures/legal_ir/uscode_e2e_release/recipe.json",
+    "viewer": "advertised_viewer_configs()"
+  },
+  "goal_id": "USCIR-G090",
+  "network_required": false,
+  "notes": "Compact sealed recipe for the pinned staged-remote canary and Dataset Viewer checks (USCIR-036). Default validation is offline against a fake Hub fixture. Remote mode is opt-in and requires explicit staging coordinates (repo_id + immutable 40-hex revision). Expand via canary_uscode_hf_release.py.",
+  "producer": "canary_uscode_hf_release.py",
+  "program_id": "uscode-sparse-graphrag-v1",
+  "queries": [
+    {
+      "expected_min_results": 1,
+      "expected_top_entry_cid": "entry-a",
+      "id": "bm25_agency",
+      "mode": "bm25",
+      "query": "agency",
+      "runs": 2,
+      "top_k": 3
+    },
+    {
+      "expected_min_results": 1,
+      "expected_top_entry_cid": "entry-a",
+      "id": "bm25_foia",
+      "mode": "bm25",
+      "query": "foia",
+      "runs": 2,
+      "top_k": 2
+    }
+  ],
+  "release_point": "usc-2024-main-20240920",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "schema": "ipfs_datasets_py/uscode-sparse-graphrag-remote-canary@1",
+  "selected_shards": [
+    "data/bm25/postings/part-000000.parquet",
+    "data/corpus/part-000000.parquet",
+    "data/vectors/centroid-000000-part-000000.parquet"
+  ],
+  "staging_branch": "stage/uscode-sparse-graphrag-v2",
+  "staging_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+  "target_repo": "justicedao/ipfs_uscode",
+  "task_id": "USCIR-036",
+  "viewer": {
+    "default_config": "publicus-ir-graphrag/v2",
+    "default_excludes_recovery": true,
+    "default_excludes_legacy_monoliths": true,
+    "exactly_one_default": true,
+    "required_config_names": [
+      "publicus-ir-graphrag/v2",
+      "legacy-uscode-parquet/v1",
+      "recovery-quarantine/v1"
+    ],
+    "schema_coherent": true
+  }
+}
