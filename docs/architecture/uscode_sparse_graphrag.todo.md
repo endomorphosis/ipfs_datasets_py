@@ -854,7 +854,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: Every tamper case fails closed with a typed error before unsafe parsing/use, no secret/local absolute path leaks, and valid fixtures remain accepted.
 
 ## USCIR-035 Run legal relevance, recall, graph, and I/O evaluation
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
