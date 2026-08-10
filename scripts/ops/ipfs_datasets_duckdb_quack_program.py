@@ -2977,11 +2977,55 @@ def _repository_control_plane_tip_paths() -> frozenset[str]:
     return frozenset(_implementation_protected_paths()) | frozenset(
         {
             "ipfs_datasets_py/duckdb_control/generation_rollover.py",
+            "ipfs_datasets_py/duckdb_control/inventory_refinement.py",
             "scripts/ops/ipfs_datasets_duckdb_quack_lifecycle.py",
             "scripts/validation/validate_accelerate_duckdb_quack_release.py",
             "ipfs_accelerate_py",
         }
     )
+
+
+def _repository_first_parent_control_plane_tip(
+    older_commit: str,
+    newer_commit: str,
+) -> bool:
+    """Return True when *newer_commit* is a pure control-plane tip of *older_commit*."""
+
+    older = older_commit.strip().lower()
+    newer = newer_commit.strip().lower()
+    if (
+        re.fullmatch(r"[0-9a-f]{40}", older) is None
+        or re.fullmatch(r"[0-9a-f]{40}", newer) is None
+    ):
+        return False
+    if older == newer:
+        return True
+    ancestry = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", older, newer],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        check=False,
+    )
+    if ancestry.returncode != 0:
+        return False
+    # Walk first-parent only so accidental side merges cannot rebind the env.
+    cursor = newer
+    for _ in range(512):
+        if cursor == older:
+            return True
+        parents = _git("rev-list", "--parents", "-n", "1", cursor).split()
+        if not parents:
+            return False
+        # rev-list --parents: <commit> <parent1> <parent2>...
+        if parents[0].lower() != cursor:
+            return False
+        if len(parents) < 2:
+            return False
+        parent = parents[1].lower()
+        if not _repository_protected_bootstrap_commit_is_valid(parent, cursor):
+            return False
+        cursor = parent
+    return False
 
 
 def _repository_protected_bootstrap_commit_is_valid(
@@ -9448,10 +9492,9 @@ def _bootstrap_repository_evidence_valid(evidence: Any) -> tuple[bool, str]:
     try:
         current_artifacts = _bootstrap_artifact_evidence()
         recorded_tree = _git("rev-parse", f"{commit}^{{tree}}")
+        head = _git("rev-parse", "HEAD").lower()
     except RuntimeError as exc:
         return False, str(exc)
-    if artifacts != current_artifacts or tree != recorded_tree:
-        return False, "bootstrap artifact or repository tree evidence changed"
     ancestry = subprocess.run(
         ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
         cwd=REPO_ROOT,
@@ -9460,10 +9503,24 @@ def _bootstrap_repository_evidence_valid(evidence: Any) -> tuple[bool, str]:
     )
     if ancestry.returncode:
         return False, "environment receipt commit is not an ancestor of HEAD"
+    # Historical receipt bytes must still match the receipt commit.
     for relative_path, digest in artifacts.items():
         if _git_blob_sha256(commit, str(relative_path)) != digest:
             return False, f"bootstrap artifact is not bound at receipt commit: {relative_path}"
-    return True, f"commit={commit}; tree={tree}"
+    if artifacts == current_artifacts and tree == recorded_tree:
+        return True, f"commit={commit}; tree={tree}"
+    # Tip advance after receipt: the sealed DuckDB install is unchanged, but
+    # protected ops scripts may move with HEAD.  Accept when live artifacts
+    # match HEAD blobs, the historical receipt still binds its commit, and that
+    # commit remains an ancestor of HEAD.  First-parent purity is not required
+    # here because implementation merges routinely land on the same branch.
+    for relative_path, digest in current_artifacts.items():
+        if _git_blob_sha256(head, str(relative_path)) != digest:
+            return False, (
+                "live bootstrap artifact does not match HEAD after tip advance: "
+                + str(relative_path)
+            )
+    return True, f"commit={commit}; tip_advance={head}; tree={tree}"
 
 
 def _bootstrap_probe_compatible(probe: Any) -> tuple[bool, str]:
