@@ -926,7 +926,7 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 - Acceptance: A new operator can build and query fixtures, diagnose sparse fetches, rehearse rollback, and distinguish publication date from legal currentness using tested commands.
 
 ## USCIR-038 Produce and verify the release-candidate receipt
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
