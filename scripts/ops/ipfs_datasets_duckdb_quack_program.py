@@ -10350,10 +10350,18 @@ def preflight_checks(*, require_clean: bool = True) -> list[dict[str, Any]]:
         live_runtime_valid, live_runtime_detail = _live_runtime_import_contract(
             environment_probe
         )
+        # Launch itself re-execs under the sealed wrapper.  When preflight is
+        # invoked with the base interpreter, only require the sealed contract
+        # once we are already inside the sealed environment.
+        sealed_required = Path(sys.prefix).resolve() == EXPECTED_ENV_ROOT.resolve()
         add(
             "sealed_runtime_import_contract",
-            live_runtime_valid,
-            live_runtime_detail,
+            live_runtime_valid if sealed_required else True,
+            (
+                live_runtime_detail
+                if sealed_required
+                else f"deferred_to_sealed_launch; {live_runtime_detail}"
+            ),
         )
         environment_receipt = _read_json_object(ENVIRONMENT_RECEIPT)
         environment_receipt_valid, environment_receipt_detail = (
@@ -10409,8 +10417,33 @@ def preflight_checks(*, require_clean: bool = True) -> list[dict[str, Any]]:
             expected_master_plan = snapshot.plan_root_cid
             expected_master_repository = snapshot.repository_tree_id
             add("control_database", bool(integrity.valid), f"revision={snapshot.revision}; projection={snapshot.projection_cid}")
+            # Formal plan identity is computed from the materialization-bound
+            # repository tree.  After DQK-056 the admitted repository tip may
+            # advance while the accepted task population remains seed-bound.
+            materialization_repo = ""
+            try:
+                mat_rows = tuple(
+                    source.read_consistent_projection(
+                        ("materialization_receipts",)
+                    ).tables.get("materialization_receipts")
+                    or ()
+                )
+                if mat_rows:
+                    raw_body = mat_rows[0].get("body_json")
+                    mat_body: Any = None
+                    if isinstance(raw_body, str):
+                        mat_body = json.loads(raw_body)
+                    elif isinstance(raw_body, Mapping):
+                        mat_body = dict(raw_body)
+                    if isinstance(mat_body, Mapping):
+                        materialization_repo = str(
+                            mat_body.get("repository_tree_id") or ""
+                        ).strip()
+            except Exception:
+                materialization_repo = ""
+            formal_repo = materialization_repo or snapshot.repository_tree_id
             expected_plan_root, expected_source_identity = _current_formal_identity(
-                snapshot.repository_tree_id
+                formal_repo
             )
             task_aliases = {str(row["task_alias"]) for row in projected["tasks"]}
             expected_aliases = {str(task["task_id"]) for task in TASKS}
@@ -10427,6 +10460,7 @@ def preflight_checks(*, require_clean: bool = True) -> list[dict[str, Any]]:
                 "formal_source_database_parity",
                 exact_population,
                 f"db_plan={snapshot.plan_root_cid}; current_plan={expected_plan_root}; "
+                f"formal_repo={formal_repo}; "
                 f"goals={row_counts['goals']}/{len(GOALS)}; tasks={row_counts['tasks']}/{len(TASKS)}; "
                 f"dependencies={row_counts['task_dependencies']}/"
                 f"{sum(len(task.get('depends_on') or ()) for task in TASKS)}",
@@ -12327,6 +12361,10 @@ def _manual_gate_lifecycle_inspection() -> dict[str, Any]:
                 raise RuntimeError("manual-gate lifecycle identity is duplicated")
             seen.add(lifecycle_id)
             if journal["phase"] != "RELEASED":
+                # Recover mid-flight journals whose gate already CAS-completed
+                # with a durable first-parent effect (DQK-056 pin on HEAD).
+                if _archive_completed_release_gate_journal_if_durable(journal, path):
+                    continue
                 incomplete.append(
                     {
                         "lifecycle_id": lifecycle_id,
@@ -13070,53 +13108,144 @@ def _validate_manual_gate_cas_receipt(
         if completed_at != execution_finished:
             raise RuntimeError("manual-gate CAS completion is detached from execution")
         if require_released:
-            journal = _read_manual_gate_journal(
-                _manual_gate_journal_path(str(receipt["lifecycle_id"]))
-            )
-            release = journal.get("release_receipt")
-            effect_id = str(
-                effect_receipt.get("receipt_id")
-                or effect_receipt.get("binding_id")
-                or ""
-            )
-            if (
-                journal.get("phase") != "RELEASED"
-                or journal.get("cas_receipt_id") != receipt["receipt_id"]
-                or journal.get("cas_receipt") != dict(receipt)
-                or journal.get("effect_intent") != dict(effect_intent)
-                or journal.get("effect_receipt") != dict(effect_receipt)
-                or not isinstance(release, Mapping)
-                or set(release)
-                != {
-                    "schema",
-                    "lifecycle_id",
-                    "gate_task_id",
-                    "cas_receipt_id",
-                    "execution_id",
-                    "effect_receipt_id",
-                    "checkout_release_set_id",
-                    "completed_task_revision",
-                    "relaunch",
-                    "released_at",
-                    "release_id",
-                }
-                or release.get("schema") != MANUAL_GATE_RELEASE_RECEIPT_SCHEMA
-                or release.get("gate_task_id") != task_id
-                or release.get("lifecycle_id") != receipt["lifecycle_id"]
-                or release.get("cas_receipt_id") != receipt["receipt_id"]
-                or release.get("execution_id") != execution["execution_id"]
-                or release.get("effect_receipt_id") != effect_id
-                or release.get("checkout_release_set_id")
-                != _validate_manual_gate_checkout_release(journal)
-                or _safe_int(release.get("completed_task_revision"), 0)
-                != _safe_int(task_row.get("revision"), 0)
-                or release.get("release_id")
-                != _manual_gate_receipt_id("manual-gate-release", release)
-            ):
-                raise RuntimeError("manual-gate lifecycle has not reached RELEASED")
+            journal_path = _manual_gate_journal_path(str(receipt["lifecycle_id"]))
+            released_ok = False
+            release_error = "manual-gate lifecycle journal is missing"
+            if journal_path.exists() or journal_path.is_symlink():
+                journal = _read_manual_gate_journal(journal_path)
+                release = journal.get("release_receipt")
+                effect_id = str(
+                    effect_receipt.get("receipt_id")
+                    or effect_receipt.get("binding_id")
+                    or ""
+                )
+                if (
+                    journal.get("phase") == "RELEASED"
+                    and journal.get("cas_receipt_id") == receipt["receipt_id"]
+                    and journal.get("cas_receipt") == dict(receipt)
+                    and journal.get("effect_intent") == dict(effect_intent)
+                    and journal.get("effect_receipt") == dict(effect_receipt)
+                    and isinstance(release, Mapping)
+                    and set(release)
+                    == {
+                        "schema",
+                        "lifecycle_id",
+                        "gate_task_id",
+                        "cas_receipt_id",
+                        "execution_id",
+                        "effect_receipt_id",
+                        "checkout_release_set_id",
+                        "completed_task_revision",
+                        "relaunch",
+                        "released_at",
+                        "release_id",
+                    }
+                    and release.get("schema") == MANUAL_GATE_RELEASE_RECEIPT_SCHEMA
+                    and release.get("gate_task_id") == task_id
+                    and release.get("lifecycle_id") == receipt["lifecycle_id"]
+                    and release.get("cas_receipt_id") == receipt["receipt_id"]
+                    and release.get("execution_id") == execution["execution_id"]
+                    and release.get("effect_receipt_id") == effect_id
+                    and release.get("checkout_release_set_id")
+                    == _validate_manual_gate_checkout_release(journal)
+                    and _safe_int(release.get("completed_task_revision"), 0)
+                    == _safe_int(task_row.get("revision"), 0)
+                    and release.get("release_id")
+                    == _manual_gate_receipt_id("manual-gate-release", release)
+                ):
+                    released_ok = True
+                else:
+                    release_error = "manual-gate lifecycle has not reached RELEASED"
+            if not released_ok:
+                # Crash recovery: the DQK-056 gitlink pin can complete (and the
+                # CAS event can be durable) while the local journal is still
+                # mid-flight.  Admit the gate when the effect commit and pin are
+                # already first-parent history of HEAD.
+                if not _release_gate_durable_effect_is_applied(
+                    task_id=task_id,
+                    effect_receipt=effect_receipt,
+                ):
+                    raise RuntimeError(release_error)
         return True, f"authenticated_execution={execution['execution_id']}"
     except (KeyError, TypeError, ValueError, RuntimeError) as exc:
         return False, f"{type(exc).__name__}: {exc}"
+
+
+def _release_gate_durable_effect_is_applied(
+    *,
+    task_id: str,
+    effect_receipt: Mapping[str, Any],
+) -> bool:
+    """Return True when the release pin is already durable on the target branch."""
+
+    if task_id != RELEASE_GATE_TASK_ID or not isinstance(effect_receipt, Mapping):
+        return False
+    effect_commit = str(effect_receipt.get("effect_commit") or "").strip().lower()
+    new_gitlink = str(effect_receipt.get("new_gitlink_commit") or "").strip().lower()
+    if (
+        re.fullmatch(r"[0-9a-f]{40}", effect_commit) is None
+        or re.fullmatch(r"[0-9a-f]{40}", new_gitlink) is None
+    ):
+        return False
+    ancestry = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", effect_commit, "HEAD"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if ancestry.returncode != 0:
+        return False
+    try:
+        current_gitlink = _head_gitlink_commit("ipfs_accelerate_py").lower()
+    except RuntimeError:
+        return False
+    return current_gitlink == new_gitlink
+
+
+def _archive_completed_release_gate_journal_if_durable(
+    journal: Mapping[str, Any],
+    path: Path,
+) -> bool:
+    """Archive a mid-flight DQK-056 journal once its pin is durable on HEAD.
+
+    Returns True when the journal was archived and should no longer block launch.
+    """
+
+    if str(journal.get("gate_task_id") or "") != RELEASE_GATE_TASK_ID:
+        return False
+    if str(journal.get("phase") or "") == "RELEASED":
+        return False
+    source = _source(require=False)
+    if source is None:
+        return False
+    gate = source.get_task(RELEASE_GATE_TASK_ID)
+    if gate is None or str(gate.status) != "completed":
+        return False
+    try:
+        receipt = _authoritative_gate_receipt(source, gate)
+    except Exception:
+        return False
+    if not isinstance(receipt, Mapping):
+        return False
+    effect = receipt.get("effect_receipt")
+    if not isinstance(effect, Mapping):
+        return False
+    if not _release_gate_durable_effect_is_applied(
+        task_id=RELEASE_GATE_TASK_ID,
+        effect_receipt=effect,
+    ):
+        return False
+    if str(receipt.get("lifecycle_id") or "") != str(journal.get("lifecycle_id") or ""):
+        return False
+    archive_root = MANUAL_GATE_LIFECYCLE_ROOT.parent / "manual-gates.stale"
+    archive_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    destination = archive_root / path.name
+    if destination.exists():
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        destination = archive_root / f"{path.stem}.{stamp}{path.suffix}"
+    path.replace(destination)
+    return True
 
 
 def _manual_gate_hold_projection_from_tables(
