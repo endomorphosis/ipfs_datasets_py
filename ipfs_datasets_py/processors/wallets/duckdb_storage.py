@@ -482,11 +482,20 @@ class DuckDBWalletStore:
                 connection.execute(body)
 
     def _hydrate_from_connection(self) -> None:
-        """Load durable state from an existing DuckDB connection into memory."""
+        """Load durable state from an existing DuckDB connection into memory.
+
+        When a connection is present, internal control tables and the wallet
+        catalog are the **authoritative** staging/checkpoint store.  Process
+        restart is modeled by constructing a new :class:`DuckDBWalletStore` on
+        the same connection: hydrate reloads every durable row, then
+        :meth:`recover` completes or aborts incomplete stages so ledger facts
+        are never skipped or duplicated.
+        """
 
         conn = self._connection
         if conn is None:
             return
+        max_sequence: int | None = None
         for table in WALLET_CATALOG_TABLES:
             try:
                 result = conn.execute(f"SELECT * FROM {table}").fetchall()
@@ -502,34 +511,47 @@ class DuckDBWalletStore:
                     bucket[key] = row
                     if table in _LEDGER_FACT_TABLES:
                         self._seen_record_ids.add(key)
+                    seq = row.get("sequence")
+                    if isinstance(seq, int) and not isinstance(seq, bool):
+                        if max_sequence is None or seq > max_sequence:
+                            max_sequence = seq
+        if max_sequence is not None:
+            self._last_sequence = max_sequence
         try:
             heads = conn.execute(
                 "SELECT * FROM _wallet_checkpoint_heads"
             ).fetchall()
+        except Exception:
+            # Heads table may be absent on first open before DDL; recover empty.
+            heads = None
+        if heads is not None:
             columns = [d[0] for d in conn.description]
             for values in heads:
                 row = dict(zip(columns, values))
+                # Reconstruction errors are fatal: durable authority must load.
                 record = self._checkpoint_from_head_row(row)
-                self._checkpoint_heads[row["scope_key"]] = _CheckpointHead(
-                    scope_key=row["scope_key"],
+                self._checkpoint_heads[str(row["scope_key"])] = _CheckpointHead(
+                    scope_key=str(row["scope_key"]),
                     record=record,
                     updated_at=str(row["updated_at"]),
                 )
-        except Exception:
-            pass
         try:
             history = conn.execute(
                 "SELECT * FROM _wallet_checkpoint_history ORDER BY recorded_at"
             ).fetchall()
+        except Exception:
+            history = None
+        if history is not None:
             columns = [d[0] for d in conn.description]
             for values in history:
                 self._checkpoint_history.append(dict(zip(columns, values)))
-        except Exception:
-            pass
         try:
             stages = conn.execute(
                 "SELECT * FROM _wallet_stage_batches"
             ).fetchall()
+        except Exception:
+            stages = None
+        if stages is not None:
             columns = [d[0] for d in conn.description]
             for values in stages:
                 row = dict(zip(columns, values))
@@ -544,10 +566,11 @@ class DuckDBWalletStore:
                     rows.append(
                         (str(table_name), str(row_pk), _json_loads(str(row_json)))
                     )
+                status = StageBatchStatus(str(row["status"]))
                 self._stage_batches[batch_id] = _StageBatch(
                     batch_id=batch_id,
                     scope=str(row["scope"]),
-                    status=StageBatchStatus(str(row["status"])),
+                    status=status,
                     write_id=str(row["write_id"]),
                     content_digest=str(row["content_digest"]),
                     accepted_count=int(row["accepted_count"]),
@@ -560,22 +583,26 @@ class DuckDBWalletStore:
                     rows=rows,
                     created_at=str(row["created_at"]),
                 )
-                if StageBatchStatus(str(row["status"])) is StageBatchStatus.OPEN:
+                # COMMITTING stages are not open for new writes but must remain
+                # visible so recover() can finalize them after process restart.
+                if status is StageBatchStatus.OPEN:
                     self._open_batch_ids.append(batch_id)
-        except Exception:
-            pass
         try:
             commits = conn.execute("SELECT * FROM _wallet_commits").fetchall()
+        except Exception:
+            commits = None
+        if commits is not None:
             columns = [d[0] for d in conn.description]
             for values in commits:
                 row = dict(zip(columns, values))
                 self._commits[str(row["commit_id"])] = row
-        except Exception:
-            pass
         try:
             idem = conn.execute(
                 "SELECT * FROM _wallet_batch_idempotency"
             ).fetchall()
+        except Exception:
+            idem = None
+        if idem is not None:
             columns = [d[0] for d in conn.description]
             for values in idem:
                 row = dict(zip(columns, values))
@@ -612,32 +639,46 @@ class DuckDBWalletStore:
                         record_ids=tuple(payload.get("record_ids") or ()),
                     )
                 self._idempotency[str(row["idempotency_key"])] = receipt
-        except Exception:
-            pass
 
     @staticmethod
     def _checkpoint_from_head_row(row: Mapping[str, Any]) -> CheckpointRecord:
+        """Rebuild a :class:`CheckpointRecord` from a durable head row.
+
+        Identity JSON uses the serialized ChainRef shape (``chain_namespace``),
+        not the Python constructor keyword (``namespace``).
+        """
+
         identity_payload = _json_loads(str(row["identity_json"]))
         from .models import ChainRef
 
-        chain_data = identity_payload["chain"]
+        if not isinstance(identity_payload, Mapping):
+            raise DuckDBWalletStoreError("checkpoint head identity_json is malformed")
+        chain_data = identity_payload.get("chain")
+        if not isinstance(chain_data, Mapping):
+            raise DuckDBWalletStoreError("checkpoint head identity missing chain")
+        namespace = chain_data.get("chain_namespace") or chain_data.get("namespace")
+        if not isinstance(namespace, str) or not namespace.strip():
+            raise DuckDBWalletStoreError("checkpoint head chain namespace missing")
         chain = ChainRef(
-            namespace=chain_data["namespace"],
-            network=chain_data["network"],
-            chain_id=chain_data["chain_id"],
-            genesis_hash=chain_data["genesis_hash"],
+            namespace=namespace,
+            network=str(chain_data["network"]),
+            chain_id=str(chain_data["chain_id"]),
+            genesis_hash=str(chain_data["genesis_hash"]),
         )
         identity = CheckpointIdentity(
             chain=chain,
-            provider=identity_payload["provider"],
-            scope=identity_payload["scope"],
+            provider=str(identity_payload["provider"]),
+            scope=str(identity_payload["scope"]),
             normalized_schema_major=int(identity_payload["normalized_schema_major"]),
-            normalizer_version=identity_payload["normalizer_version"],
+            normalizer_version=str(identity_payload["normalizer_version"]),
         )
         history_payload = _json_loads(str(row["history_json"]))
+        if not isinstance(history_payload, list):
+            history_payload = []
         history = tuple(
             HashAnchor(int(item["sequence"]), str(item["block_hash"]))
             for item in history_payload
+            if isinstance(item, Mapping)
         )
         metadata = _json_loads(str(row.get("metadata_json") or "{}"))
         continuation = row.get("continuation_token")
@@ -779,11 +820,8 @@ class DuckDBWalletStore:
 
                 accepted.append(record_id)
                 local_seen.add(record_id)
-                if sequence is not None:
-                    if self._last_sequence is None or sequence > self._last_sequence:
-                        # Sequence tracking for out-of-order accounting only;
-                        # durable advance happens at commit.
-                        pass
+                # Working-set sequence tip advances here for out-of-order
+                # accounting; durable facts only land on commit/recover.
 
             write_id = f"write:{uuid4().hex}"
             batch_id = f"batch:{uuid4().hex}"
@@ -1404,12 +1442,17 @@ class DuckDBWalletStore:
             raise InvalidRequestError("chain must be a ChainRef")
         if not isinstance(provenance, Provenance):
             raise InvalidRequestError("provenance must be a Provenance")
-        # Fail closed if caller smuggled raw bytes into the ref surface.
-        for forbidden in ("body", "payload", "ciphertext", "raw"):
-            if hasattr(ref, forbidden) and getattr(ref, forbidden) not in (None,):
-                # RawPayloadRef has no body field; defensive for subclasses.
-                if forbidden == "body" and not hasattr(RawPayloadRef, "body"):
-                    pass
+        # Fail closed if caller smuggled raw payload bytes into the ref surface.
+        for forbidden in ("body", "payload", "ciphertext", "raw", "raw_payload"):
+            if not hasattr(ref, forbidden):
+                continue
+            value = getattr(ref, forbidden)
+            if value is None or value == b"" or value == "":
+                continue
+            raise InvalidRequestError(
+                f"encrypted/raw refs must not carry payload field {forbidden!r}; "
+                "store CID/digest only"
+            )
         with self._lock:
             row = project_encrypted_object_ref_row(
                 ref,
@@ -1492,20 +1535,62 @@ class DuckDBWalletStore:
                 marked.append(bid)
             return marked
 
-    def simulate_crash_drop_open_stages_from_memory(self) -> None:
-        """Test helper: drop in-memory open stages after they were persisted.
+    def simulate_crash_drop_open_stages_from_memory(self) -> list[str]:
+        """Test helper: drop in-memory stage state after durable persistence.
 
-        Used with a DuckDB connection to prove recover() reloads and aborts.
-        For pure-Python mode this clears open stages without recovery path.
+        Models process death when a DuckDB connection is the authority: staged
+        batches remain in ``_wallet_stage_*`` tables, but the process-local
+        working set is wiped.  Callers should construct a new store on the same
+        connection (or re-hydrate) so :meth:`recover` reloads and aborts open
+        stages / finalizes committing ones without skip or duplicate.
+
+        Returns the batch ids that were dropped from memory.
         """
 
         with self._lock:
-            for bid in list(self._open_batch_ids):
-                batch = self._stage_batches.get(bid)
-                if batch is not None and batch.status is StageBatchStatus.OPEN:
-                    # Leave them marked open for recover() to abort.
-                    pass
-            # Intentionally leave _stage_batches intact so recover can act.
+            dropped = [
+                bid
+                for bid, batch in self._stage_batches.items()
+                if batch.status
+                in (StageBatchStatus.OPEN, StageBatchStatus.COMMITTING)
+            ]
+            # Wipe process-local stage authority only; durable tables retain rows.
+            self._stage_batches.clear()
+            self._open_batch_ids.clear()
+            return dropped
+
+    def rehydrate_from_connection(self) -> Mapping[str, int]:
+        """Reload authoritative state from the bound DuckDB connection and recover.
+
+        Used after :meth:`simulate_crash_drop_open_stages_from_memory` or any
+        event that invalidates the process-local working set.  No-op when no
+        connection is bound (pure-Python authority is already process-local).
+        """
+
+        with self._lock:
+            if self._connection is None:
+                return MappingProxyType(
+                    {"recovered_commits": 0, "recovered_aborts": 0, "rehydrated": 0}
+                )
+            # Reset working set; durable tables remain the source of truth.
+            self._tables = {name: {} for name in WALLET_CATALOG_TABLES}
+            self._stage_batches.clear()
+            self._open_batch_ids.clear()
+            self._idempotency.clear()
+            self._checkpoint_heads.clear()
+            self._checkpoint_history.clear()
+            self._commits.clear()
+            self._seen_record_ids.clear()
+            self._last_sequence = None
+            self._hydrate_from_connection()
+        recovered = self.recover()
+        return MappingProxyType(
+            {
+                "recovered_commits": int(recovered["recovered_commits"]),
+                "recovered_aborts": int(recovered["recovered_aborts"]),
+                "rehydrated": 1,
+            }
+        )
 
     # -- persistence adapters (optional DuckDB) -----------------------------
 
