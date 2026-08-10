@@ -2971,26 +2971,68 @@ def _repository_pending_tip_is_valid(
         return False, f"{request_id or '?'}: {exc}"
 
 
+def _repository_control_plane_tip_paths() -> frozenset[str]:
+    """Paths allowed to evolve on first-parent tip after authenticated DQK-056."""
+
+    return frozenset(_implementation_protected_paths()) | frozenset(
+        {
+            "ipfs_datasets_py/duckdb_control/generation_rollover.py",
+            "scripts/ops/ipfs_datasets_duckdb_quack_lifecycle.py",
+            "scripts/validation/validate_accelerate_duckdb_quack_release.py",
+            "ipfs_accelerate_py",
+        }
+    )
+
+
 def _repository_protected_bootstrap_commit_is_valid(
     parent: str,
     commit: str,
 ) -> bool:
-    """Return True when a linear commit only evolves protected bootstrap paths."""
+    """Return True when a linear commit only evolves control-plane tip paths.
+
+    After the authenticated DQK-056 pin, first-parent commits may evolve
+    implementation-protected bootstrap artifacts and the small DQK-103 control
+    plane surface without undoing the release pin.  The accelerate gitlink may
+    tip-advance when the previous pin remains an ancestor of the new gitlink.
+    """
 
     changed = set(_git_changed_paths(parent, commit))
     if not changed:
         return False
-    protected = set(_implementation_protected_paths())
-    if not changed.issubset(protected):
+    allowed = _repository_control_plane_tip_paths()
+    if not changed.issubset(allowed):
         return False
-    # The accelerator gitlink must remain exactly the previously admitted pin.
     before = _git("ls-tree", parent, "--", "ipfs_accelerate_py").split()
     after = _git("ls-tree", commit, "--", "ipfs_accelerate_py").split()
-    return (
-        len(before) >= 3
-        and len(after) >= 3
-        and before[:3] == after[:3]
+    if len(before) < 3 or len(after) < 3:
+        return False
+    if before[:3] == after[:3]:
+        return True
+    # Gitlink tip advance after pin: previous gitlink must remain an ancestor of
+    # the new accelerate commit.
+    if before[:2] != ["160000", "commit"] or after[:2] != ["160000", "commit"]:
+        return False
+    old_gitlink = before[2].lower()
+    new_gitlink = after[2].lower()
+    if not re.fullmatch(r"[0-9a-f]{40}", old_gitlink) or not re.fullmatch(
+        r"[0-9a-f]{40}", new_gitlink
+    ):
+        return False
+    ancestry = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(ACCELERATE_ROOT),
+            "merge-base",
+            "--is-ancestor",
+            old_gitlink,
+            new_gitlink,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
     )
+    return ancestry.returncode == 0
 
 
 def _repository_release_commit_is_valid(
