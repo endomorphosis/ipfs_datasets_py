@@ -11748,7 +11748,6 @@ class _ReleaseGateAuthorityAdapter:
             **proof,
             "typed_output_sha256": "sha256:"
             + hashlib.sha256(_canonical_json(dict(typed_output)).encode("utf-8")).hexdigest(),
-            "historical": bool(kwargs.get("historical")),
         }
 
 
