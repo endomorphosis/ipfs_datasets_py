@@ -400,3 +400,23 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: legal_source_rights publication_gate release_schema dataset_card manifest compliance receipt
 - Parallel lane: 1,2
 - Conflict policy: Contract, live evidence, and release integration are dependency ordered; source-specific research may run in parallel but one receipt assembler owns the final catalog.
+
+## LCR-G142 Bind legal-corpora publication authority to canonical live evidence
+- Status: active
+- Parent: LCR-G080
+- Depends on: LCR-G141
+- Fib priority: 1
+- Track: publication-authority-repair
+- Priority: P0
+- Bundle: publication-authority-repair
+- Goal: Replace caller-asserted publication authority with a fail-closed runtime that derives repository, task ancestry, receipts, manifest, commit, credential principal, and seal evidence from canonical live sources before either legal-corpora dataset can be mutated.
+- Evidence: Four-phase denial and authorization tests against temporary clean Git repositories, independently recomputed receipt and manifest digests, environment-credential identity probes, seal-time bindings, and callback traces proving zero network mutations on every denial or evidence race.
+- Outputs: ipfs_datasets_py/processors/legal_data/legal_corpora_publication_gate.py, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_runtime.py, tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py, tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py, tests/fixtures/legal_ir/legal_corpora_publication_gate.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py -q; python scripts/validate_legal_corpora_reindex_board.py --check-all
+- Acceptance: State and Federal staging and main authorization can only be constructed from one clean exact Git HEAD and fixed repository-relative control and evidence paths; caller-supplied status, ancestry, receipt, digest, commit, credential, or seal assertions cannot authorize. Every required receipt and manifest is schema-validated and independently rehashed, the environment token's verified principal has write authority for the exact target, main seals explicitly predate mutation and bind every authority input, and one callback-owning runtime rechecks evidence immediately before invoking the upload exactly once.
+- Gap task: LCR-080
+- Refinement: Split only schema-specific receipt-digest or uploader-adapter defects discovered by the four-phase integration matrix; do not restore caller authority or weaken any mutation phase.
+- Embedding query: legal corpora publication gate canonical taskboard receipt digest exact git commit environment credential identity prepublication seal callback
+- AST query: legal_corpora_publication_gate authorize_and_mutate taskboard release_policy receipt manifest credential seal uploader
+- Parallel lane: 1
+- Conflict policy: Ordered repair of the shared publication gate; it owns the canonical runtime adapter and tests, performs no Hub mutation, and leaves downstream uploader scripts and protected control-plane files to their existing owners.
