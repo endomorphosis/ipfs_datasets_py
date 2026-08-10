@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -36,18 +37,25 @@ from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
 from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
     LOGIC_CLAIM_RUNTIME_AUDIT_INTERFACE,
     LOGIC_CLAIM_RUNTIME_AUDIT_REPORT_SCHEMA,
-    PROGRAM_ID as CLAIM_PROGRAM_ID,
-    TASK_ID as CLAIM_TASK_ID,
     ClaimLifecycleStage,
     ClaimRuntimeAuditError,
     LogicClaimRuntimeAuditReport,
     assert_audit_acceptance,
-    build_default_audit,
-    default_baseline_path as claim_baseline_path,
     default_datasets_repo_root,
-    ensure_baseline_seal as ensure_claim_baseline_seal,
     lifecycle_rank,
     load_audit_baseline,
+)
+from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
+    PROGRAM_ID as CLAIM_PROGRAM_ID,
+)
+from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
+    TASK_ID as CLAIM_TASK_ID,
+)
+from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
+    default_baseline_path as claim_baseline_path,
+)
+from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
+    ensure_baseline_seal as ensure_claim_baseline_seal,
 )
 from ipfs_datasets_py.logic.conformance.corpus_v2 import (
     LOGIC_CONFORMANCE_CORPUS_INTERFACE,
@@ -68,8 +76,10 @@ from ipfs_datasets_py.logic.conformance.raw_boundary_inventory import (
     RAW_LOGIC_BOUNDARY_INVENTORY_SCHEMA_VERSION,
     RawBoundaryInventoryError,
     curated_raw_boundary_inventory,
-    default_baseline_report_path as boundary_baseline_path,
     load_raw_boundary_inventory,
+)
+from ipfs_datasets_py.logic.conformance.raw_boundary_inventory import (
+    default_baseline_report_path as boundary_baseline_path,
 )
 from ipfs_datasets_py.logic.conformance.reachable_graph import (
     GOAL_ID as GRAPH_GOAL_ID,
@@ -83,14 +93,18 @@ from ipfs_datasets_py.logic.conformance.reachable_graph import (
 from ipfs_datasets_py.logic.conformance.reachable_graph import (
     REACHABLE_CAPABILITY_GRAPH_INTERFACE,
     REACHABLE_CAPABILITY_GRAPH_SCHEMA,
-    TASK_ID as GRAPH_TASK_ID,
     ReachableCapabilityGraph,
     ReachableCapabilityGraphError,
     SupportStatus,
     assert_graph_acceptance,
     build_default_graph,
-    default_baseline_path as graph_baseline_path,
     load_graph_baseline,
+)
+from ipfs_datasets_py.logic.conformance.reachable_graph import (
+    TASK_ID as GRAPH_TASK_ID,
+)
+from ipfs_datasets_py.logic.conformance.reachable_graph import (
+    default_baseline_path as graph_baseline_path,
 )
 
 # ---------------------------------------------------------------------------
@@ -800,36 +814,10 @@ def load_claim_artifact(
             live = ensure_claim_baseline_seal(path, datasets_root=datasets_root)
             assert_audit_acceptance(live)
         except ClaimRuntimeAuditError as exc:
-            # Fall back to structural identity when absolute tree_root or
-            # non-semantic seal fields differ across checkouts.
-            try:
-                live = build_default_audit(root=datasets_root)
-                assert_audit_acceptance(live)
-            except ClaimRuntimeAuditError as inner:
-                raise BaselineV2Error(
-                    f"claim_runtime_audit live materialization failure: {inner}"
-                ) from inner
-            live_ids = [item.claim_id for item in live.claims]
-            sealed_ids = [item.claim_id for item in sealed.claims]
-            if live_ids != sealed_ids:
-                raise BaselineV2Error(
-                    "claim_runtime_audit digest/content drift against live audit "
-                    f"(claim_id set disagrees): sealed={exc}"
-                ) from exc
-            if live.summary()["claim_count"] != sealed.summary()["claim_count"]:
-                raise BaselineV2Error(
-                    "claim_runtime_audit summary drift against live audit"
-                ) from exc
-            if live.summary()["gap_count"] != sealed.summary()["gap_count"]:
-                raise BaselineV2Error(
-                    "claim_runtime_audit gap_count drift against live audit"
-                ) from exc
-            if live.summary()["lifecycle_histogram"] != sealed.summary().get(
-                "lifecycle_histogram", live.summary()["lifecycle_histogram"]
-            ):
-                raise BaselineV2Error(
-                    "claim_runtime_audit lifecycle_histogram drift against live audit"
-                ) from exc
+            raise BaselineV2Error(
+                "claim_runtime_audit drift against exact live materialization: "
+                f"{exc}"
+            ) from exc
     return sealed, payload
 
 
@@ -1056,7 +1044,7 @@ def join_baseline_v2(
                 f"goal={goal!r} program={program!r}"
             )
 
-    claim_digest = claim_payload.get("content_digest") or claim_report.content_digest()
+    claim_digest = claim_payload["content_digest"]
     boundary_digest = boundary_report.get("content_digest")
     graph_digest = graph_payload.get("content_digest") or graph.content_digest()
     corpus_digest = corpus.content_digest()
@@ -1198,6 +1186,14 @@ def to_baseline_join_seal_dict(
     materialization is the authority for gap rows and digests.
     """
 
+    if receipt is None:
+        raise BaselineV2Error(
+            "a validated full baseline join receipt is required to build a compact seal"
+        )
+    if is_compact_baseline_join_seal(receipt):
+        raise BaselineV2Error("cannot compact an already compact baseline join seal")
+    validate_baseline_join(receipt)
+
     lifecycle = build_capability_lifecycle()
     validate_capability_lifecycle(lifecycle)
     seal: dict[str, Any] = {
@@ -1250,19 +1246,16 @@ def to_baseline_join_seal_dict(
             ),
         },
     }
-    if receipt is not None:
-        summary = receipt.get("gap_summary")
-        if isinstance(summary, Mapping):
-            seal["gap_summary"] = {
-                "gap_count": summary.get("gap_count"),
-                "owner_histogram": dict(summary.get("owner_histogram") or {}),
-                "source_histogram": dict(summary.get("source_histogram") or {}),
-                "unique_owners": list(summary.get("unique_owners") or []),
-                "each_gap_has_one_owner": True,
-                "each_gap_has_evidence_obligation": True,
-            }
-        if receipt.get("content_digest"):
-            seal["joined_content_digest"] = receipt.get("content_digest")
+    summary = _require_mapping(receipt.get("gap_summary"), "receipt.gap_summary")
+    seal["gap_summary"] = {
+        "gap_count": summary.get("gap_count"),
+        "owner_histogram": dict(summary.get("owner_histogram") or {}),
+        "source_histogram": dict(summary.get("source_histogram") or {}),
+        "unique_owners": list(summary.get("unique_owners") or []),
+        "each_gap_has_one_owner": True,
+        "each_gap_has_evidence_obligation": True,
+    }
+    seal["joined_content_digest"] = receipt["content_digest"]
     return seal
 
 
@@ -1302,6 +1295,10 @@ def validate_baseline_join(receipt: Mapping[str, Any]) -> None:
         raise BaselineV2Error(
             f"baseline_join program_id drift: {payload.get('program_id')!r}"
         )
+    if payload.get("version") != BASELINE_REPORT_VERSION:
+        raise BaselineV2Error(
+            f"baseline_join version drift: {payload.get('version')!r}"
+        )
 
     lifecycle = _require_mapping(
         payload.get("capability_lifecycle"), "receipt.capability_lifecycle"
@@ -1309,22 +1306,33 @@ def validate_baseline_join(receipt: Mapping[str, Any]) -> None:
     validate_capability_lifecycle(lifecycle)
 
     source = _require_mapping(payload.get("source_identity"), "receipt.source_identity")
-    if source.get("program_id") != PROGRAM_ID:
-        raise BaselineV2Error("source_identity.program_id drift")
-    if source.get("goal_id") != SOURCE_GOAL_ID:
-        raise BaselineV2Error("source_identity.goal_id drift")
-    if source.get("consistent") is not True:
-        raise BaselineV2Error("source_identity must be consistent")
+    expected_source_identity = {
+        "program_id": PROGRAM_ID,
+        "goal_id": SOURCE_GOAL_ID,
+        "tasks": {
+            "claim_runtime_audit": CLAIM_TASK_ID,
+            "raw_boundary_inventory": BOUNDARY_TASK_ID,
+            "reachable_capability_graph": GRAPH_TASK_ID,
+            "conformance_corpus": "LFP2-004",
+        },
+        "join_task_id": TASK_ID,
+        "join_goal_id": GOAL_ID,
+        "consistent": True,
+    }
+    if source != expected_source_identity:
+        raise BaselineV2Error("source_identity drifted from the canonical task binding")
 
     acceptance = _require_mapping(payload.get("acceptance"), "receipt.acceptance")
-    for flag in (
+    acceptance_flags = (
         "conflicting_claims_fail_closed",
         "each_reachable_gap_has_one_owner",
         "each_reachable_gap_has_evidence_obligation",
         "lifecycle_stages_not_conflated",
         "authority_distinct_from_lifecycle",
         "source_identity_consistent",
-    ):
+        "unsupported_cartesian_cells_are_not_work",
+    )
+    for flag in acceptance_flags:
         if acceptance.get(flag) is not True:
             raise BaselineV2Error(f"acceptance flag {flag!r} must be true")
 
@@ -1332,6 +1340,94 @@ def validate_baseline_join(receipt: Mapping[str, Any]) -> None:
     if is_compact_baseline_join_seal(payload):
         if list(payload.get("lifecycle_stages") or ()) != list(LIFECYCLE_STAGES):
             raise BaselineV2Error("compact seal lifecycle_stages vocabulary drift")
+        if lifecycle != build_capability_lifecycle():
+            raise BaselineV2Error("compact seal capability_lifecycle drift")
+        if acceptance != {flag: True for flag in acceptance_flags}:
+            raise BaselineV2Error("compact seal acceptance contract drift")
+
+        expected_interfaces = {
+            "claim_runtime_audit": LOGIC_CLAIM_RUNTIME_AUDIT_INTERFACE,
+            "raw_boundary_inventory": RAW_LOGIC_BOUNDARY_INVENTORY_INTERFACE,
+            "reachable_capability_graph": REACHABLE_CAPABILITY_GRAPH_INTERFACE,
+            "conformance_corpus": LOGIC_CONFORMANCE_CORPUS_INTERFACE,
+        }
+        interfaces = _require_mapping(
+            payload.get("artifact_interfaces"), "receipt.artifact_interfaces"
+        )
+        if interfaces != expected_interfaces:
+            raise BaselineV2Error("compact seal artifact_interfaces drift")
+
+        expected_roots = {
+            "datasets_root": "ipfs_datasets_py",
+            "baseline_directory": (
+                "docs/architecture/logic/logic_parser_v2_baseline"
+            ),
+        }
+        roots = _require_mapping(payload.get("roots"), "receipt.roots")
+        if roots != expected_roots:
+            raise BaselineV2Error("compact seal roots drift")
+
+        joined_digest = payload.get("joined_content_digest")
+        if not isinstance(joined_digest, str) or not re.fullmatch(
+            r"sha256:[0-9a-f]{64}", joined_digest
+        ):
+            raise BaselineV2Error(
+                "compact seal joined_content_digest must be a bound sha256 digest"
+            )
+
+        summary = _require_mapping(payload.get("gap_summary"), "receipt.gap_summary")
+        expected_summary_fields = {
+            "gap_count",
+            "owner_histogram",
+            "source_histogram",
+            "unique_owners",
+            "each_gap_has_one_owner",
+            "each_gap_has_evidence_obligation",
+        }
+        if set(summary) != expected_summary_fields:
+            raise BaselineV2Error(
+                "compact seal gap_summary must contain the complete bound summary"
+            )
+        gap_count = summary.get("gap_count")
+        if type(gap_count) is not int or gap_count < 0:
+            raise BaselineV2Error("compact seal gap_summary.gap_count is invalid")
+
+        histograms: dict[str, dict[str, Any]] = {}
+        for field_name in ("owner_histogram", "source_histogram"):
+            histogram = _require_mapping(
+                summary.get(field_name), f"receipt.gap_summary.{field_name}"
+            )
+            if any(
+                not isinstance(key, str)
+                or not key
+                or type(count) is not int
+                or count < 0
+                for key, count in histogram.items()
+            ):
+                raise BaselineV2Error(
+                    f"compact seal gap_summary.{field_name} is invalid"
+                )
+            if sum(histogram.values()) != gap_count:
+                raise BaselineV2Error(
+                    f"compact seal gap_summary.{field_name} does not total gap_count"
+                )
+            histograms[field_name] = histogram
+
+        unique_owners = summary.get("unique_owners")
+        if (
+            not isinstance(unique_owners, list)
+            or any(not isinstance(owner, str) or not owner for owner in unique_owners)
+            or unique_owners != sorted(histograms["owner_histogram"])
+        ):
+            raise BaselineV2Error("compact seal gap_summary.unique_owners is invalid")
+        if summary.get("each_gap_has_one_owner") is not True:
+            raise BaselineV2Error(
+                "compact seal gap_summary.each_gap_has_one_owner must be true"
+            )
+        if summary.get("each_gap_has_evidence_obligation") is not True:
+            raise BaselineV2Error(
+                "compact seal gap_summary.each_gap_has_evidence_obligation must be true"
+            )
         return
 
     artifacts = _require_mapping(payload.get("artifacts"), "receipt.artifacts")
@@ -1373,6 +1469,24 @@ def validate_baseline_join(receipt: Mapping[str, Any]) -> None:
         )
 
 
+def _assert_compact_seal_matches_live(
+    payload: Mapping[str, Any], live: Mapping[str, Any]
+) -> None:
+    """Require a compact seal to equal the seal derived from the live join."""
+
+    expected = to_baseline_join_seal_dict(live)
+    if dict(payload) != expected:
+        differing_fields = sorted(
+            key
+            for key in set(payload) | set(expected)
+            if payload.get(key) != expected.get(key)
+        )
+        raise BaselineV2Error(
+            "compact baseline join seal drifted from exact live materialization; "
+            f"differing fields={differing_fields}"
+        )
+
+
 def default_baseline_join_path(*, datasets_root: str | Path | None = None) -> Path:
     """Resolve the sealed baseline join path."""
 
@@ -1408,9 +1522,7 @@ def write_baseline_join(
     """Atomically write the baseline join receipt (full or compact seal)."""
 
     if compact:
-        body: Mapping[str, Any] = to_baseline_join_seal_dict(
-            receipt if "gaps" in receipt else None
-        )
+        body: Mapping[str, Any] = to_baseline_join_seal_dict(receipt)
     else:
         body = receipt
     validate_baseline_join(body)
@@ -1445,29 +1557,7 @@ def load_baseline_join(
         )
         live = join_baseline_v2(datasets_root=root, verify_live=verify_live)
         validate_baseline_join(live)
-        # When the compact seal carries a joined digest, require exact match.
-        sealed_digest = payload.get("joined_content_digest")
-        if sealed_digest not in (None, "") and sealed_digest != live.get(
-            "content_digest"
-        ):
-            raise BaselineV2Error(
-                "compact seal joined_content_digest disagrees with live join"
-            )
-        sealed_summary = payload.get("gap_summary")
-        if isinstance(sealed_summary, Mapping):
-            live_summary = live.get("gap_summary") or {}
-            for key in (
-                "gap_count",
-                "owner_histogram",
-                "source_histogram",
-                "unique_owners",
-            ):
-                if key in sealed_summary and sealed_summary[key] != live_summary.get(
-                    key
-                ):
-                    raise BaselineV2Error(
-                        f"compact seal gap_summary.{key} disagrees with live join"
-                    )
+        _assert_compact_seal_matches_live(payload, live)
         return live
     return payload
 
@@ -1495,38 +1585,7 @@ def ensure_baseline_join_seal(
     payload = _load_json(target)
     validate_baseline_join(payload)
     if is_compact_baseline_join_seal(payload):
-        for key in (
-            "interface",
-            "schema_version",
-            "task_id",
-            "goal_id",
-            "program_id",
-            "version",
-        ):
-            if payload.get(key) != live.get(key):
-                raise BaselineV2Error(
-                    f"baseline join field {key!r} drifted from live materialization"
-                )
-        if payload.get("materialization") != MATERIALIZATION_TARGET:
-            raise BaselineV2Error("baseline join materialization drifted")
-        if list(payload.get("lifecycle_stages") or ()) != list(LIFECYCLE_STAGES):
-            raise BaselineV2Error("compact seal lifecycle_stages drift")
-        sealed_digest = payload.get("joined_content_digest")
-        if sealed_digest not in (None, "") and sealed_digest != live.get(
-            "content_digest"
-        ):
-            raise BaselineV2Error(
-                "baseline join content_digest drifted from live materialization"
-            )
-        sealed_summary = payload.get("gap_summary")
-        if isinstance(sealed_summary, Mapping):
-            if sealed_summary.get("gap_count") not in (
-                None,
-                live["gap_summary"]["gap_count"],
-            ):
-                raise BaselineV2Error(
-                    "baseline join gap_summary drifted from live materialization"
-                )
+        _assert_compact_seal_matches_live(payload, live)
         return live
 
     sealed = payload

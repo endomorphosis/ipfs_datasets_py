@@ -1,23 +1,37 @@
 {
   "canonical_family_ids": [
+    "argumentation",
     "authorization",
     "concurrency",
     "cryptographic_protocol",
     "datalog",
     "dcec",
+    "defeasible_logic",
     "deontic",
+    "dependent_type",
+    "description_logic",
+    "doxastic",
+    "epistemic",
     "event_calculus",
+    "finite_field_constraint",
     "first_order",
     "frame_logic",
+    "fuzzy_weighted",
     "higher_order",
     "horn_chc",
     "hyperproperty",
+    "intention_agency",
     "modal",
     "mu_calculus",
+    "nonmonotonic_logic",
+    "probabilistic",
     "program",
     "propositional",
     "refinement",
+    "relevance_paraconsistent",
     "separation_logic",
+    "session_process",
+    "situation_calculus",
     "tdfol",
     "temporal",
     "transition_system"
@@ -42,12 +56,30 @@
       "severity": "none"
     },
     {
+      "canonical_family_id": null,
+      "is_semantic_family": false,
+      "kind": "unknown",
+      "normalized": "agency",
+      "notes": "unregistered family-like label",
+      "observed": "agency",
+      "severity": "warning"
+    },
+    {
       "canonical_family_id": "transition_system",
       "is_semantic_family": false,
       "kind": "provider",
       "normalized": "apalache",
       "notes": "Apalache provider",
       "observed": "apalache",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "argumentation",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "argumentation",
+      "notes": "exact canonical family identifier",
+      "observed": "argumentation",
       "severity": "none"
     },
     {
@@ -83,8 +115,26 @@
       "kind": "canonical_family",
       "normalized": "authorization",
       "notes": "exact canonical family identifier",
+      "observed": "Authorization",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "authorization",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "authorization",
+      "notes": "exact canonical family identifier",
       "observed": "authorization",
       "severity": "none"
+    },
+    {
+      "canonical_family_id": "intention_agency",
+      "is_semantic_family": true,
+      "kind": "alias",
+      "normalized": "bdi",
+      "notes": "alias of canonical family intention_agency",
+      "observed": "bdi",
+      "severity": "info"
     },
     {
       "canonical_family_id": "propositional",
@@ -123,12 +173,30 @@
       "severity": "info"
     },
     {
+      "canonical_family_id": "horn_chc",
+      "is_semantic_family": true,
+      "kind": "alias",
+      "normalized": "chc",
+      "notes": "alias of canonical family horn_chc",
+      "observed": "chc",
+      "severity": "info"
+    },
+    {
       "canonical_family_id": null,
       "is_semantic_family": false,
       "kind": "evidence_kind",
       "normalized": "checked_proof",
       "notes": "evidence kind",
       "observed": "checked_proof",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "concurrency",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "concurrency",
+      "notes": "exact canonical family identifier",
+      "observed": "Concurrency",
       "severity": "none"
     },
     {
@@ -245,6 +313,15 @@
       "kind": "canonical_family",
       "normalized": "dcec",
       "notes": "exact canonical family identifier",
+      "observed": "DCEC",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "dcec",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "dcec",
+      "notes": "exact canonical family identifier",
       "observed": "dcec",
       "severity": "none"
     },
@@ -255,6 +332,24 @@
       "normalized": "declaration",
       "notes": "evidence kind",
       "observed": "declaration",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "defeasible_logic",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "defeasible_logic",
+      "notes": "exact canonical family identifier",
+      "observed": "defeasible_logic",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "deontic",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "deontic",
+      "notes": "exact canonical family identifier",
+      "observed": "Deontic",
       "severity": "none"
     },
     {
@@ -285,6 +380,24 @@
       "severity": "none"
     },
     {
+      "canonical_family_id": "description_logic",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "description_logic",
+      "notes": "exact canonical family identifier",
+      "observed": "description_logic",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "doxastic",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "doxastic",
+      "notes": "exact canonical family identifier",
+      "observed": "doxastic",
+      "severity": "none"
+    },
+    {
       "canonical_family_id": "program",
       "is_semantic_family": false,
       "kind": "view",
@@ -310,6 +423,24 @@
       "notes": "provider tool name",
       "observed": "e",
       "severity": "none"
+    },
+    {
+      "canonical_family_id": "epistemic",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "epistemic",
+      "notes": "exact canonical family identifier",
+      "observed": "epistemic",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": null,
+      "is_semantic_family": false,
+      "kind": "unknown",
+      "normalized": "epistemic_temporal",
+      "notes": "unregistered family-like label",
+      "observed": "epistemic_temporal",
+      "severity": "warning"
     },
     {
       "canonical_family_id": null,
@@ -447,12 +578,30 @@
       "severity": "warning"
     },
     {
+      "canonical_family_id": "finite_field_constraint",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "finite_field_constraint",
+      "notes": "exact canonical family identifier",
+      "observed": "finite_field_constraint",
+      "severity": "none"
+    },
+    {
       "canonical_family_id": "first_order",
       "is_semantic_family": false,
       "kind": "profile",
       "normalized": "finite_fragment",
       "notes": "bounded finite first-order fragment",
       "observed": "finite_fragment",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "first_order",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "first_order",
+      "notes": "exact canonical family identifier",
+      "observed": "First-order",
       "severity": "none"
     },
     {
@@ -519,6 +668,15 @@
       "severity": "none"
     },
     {
+      "canonical_family_id": "fuzzy_weighted",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "fuzzy_weighted",
+      "notes": "exact canonical family identifier",
+      "observed": "fuzzy_weighted",
+      "severity": "none"
+    },
+    {
       "canonical_family_id": null,
       "is_semantic_family": false,
       "kind": "view",
@@ -543,6 +701,15 @@
       "normalized": "heap",
       "notes": "registry fragment/profile heap",
       "observed": "heap",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "higher_order",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "higher_order",
+      "notes": "exact canonical family identifier",
+      "observed": "Higher-order",
       "severity": "none"
     },
     {
@@ -650,6 +817,15 @@
       "kind": "canonical_family",
       "normalized": "hyperproperty",
       "notes": "exact canonical family identifier",
+      "observed": "Hyperproperty",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "hyperproperty",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "hyperproperty",
+      "notes": "exact canonical family identifier",
       "observed": "hyperproperty",
       "severity": "none"
     },
@@ -669,6 +845,24 @@
       "normalized": "intent",
       "notes": "domain IR label",
       "observed": "intent",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": null,
+      "is_semantic_family": false,
+      "kind": "unknown",
+      "normalized": "intention",
+      "notes": "unregistered family-like label",
+      "observed": "intention",
+      "severity": "warning"
+    },
+    {
+      "canonical_family_id": "intention_agency",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "intention_agency",
+      "notes": "exact canonical family identifier",
+      "observed": "intention_agency",
       "severity": "none"
     },
     {
@@ -755,6 +949,15 @@
     {
       "canonical_family_id": null,
       "is_semantic_family": false,
+      "kind": "unknown",
+      "normalized": "linear",
+      "notes": "unregistered family-like label",
+      "observed": "linear",
+      "severity": "warning"
+    },
+    {
+      "canonical_family_id": null,
+      "is_semantic_family": false,
       "kind": "profile",
       "normalized": "linear_time",
       "notes": "registry fragment/profile linear_time",
@@ -778,6 +981,15 @@
       "notes": "alias of canonical family temporal",
       "observed": "LTL",
       "severity": "info"
+    },
+    {
+      "canonical_family_id": "modal",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "modal",
+      "notes": "exact canonical family identifier",
+      "observed": "Modal",
+      "severity": "none"
     },
     {
       "canonical_family_id": "modal",
@@ -821,6 +1033,15 @@
       "kind": "canonical_family",
       "normalized": "mu_calculus",
       "notes": "exact canonical family identifier",
+      "observed": "Mu-calculus",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "mu_calculus",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "mu_calculus",
+      "notes": "exact canonical family identifier",
       "observed": "mu_calculus",
       "severity": "none"
     },
@@ -831,6 +1052,15 @@
       "normalized": "noninterference",
       "notes": "property under hyperproperty",
       "observed": "noninterference",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "nonmonotonic_logic",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "nonmonotonic_logic",
+      "notes": "exact canonical family identifier",
+      "observed": "nonmonotonic_logic",
       "severity": "none"
     },
     {
@@ -897,12 +1127,39 @@
       "severity": "info"
     },
     {
+      "canonical_family_id": "probabilistic",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "probabilistic",
+      "notes": "exact canonical family identifier",
+      "observed": "probabilistic",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": null,
+      "is_semantic_family": false,
+      "kind": "unknown",
+      "normalized": "process",
+      "notes": "unregistered family-like label",
+      "observed": "process",
+      "severity": "warning"
+    },
+    {
       "canonical_family_id": "authorization",
       "is_semantic_family": false,
       "kind": "provider",
       "normalized": "production_authorization",
       "notes": "project-owned authorization provider alias",
       "observed": "production-authorization",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "program",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "program",
+      "notes": "exact canonical family identifier",
+      "observed": "Program",
       "severity": "none"
     },
     {
@@ -938,6 +1195,15 @@
       "kind": "canonical_family",
       "normalized": "propositional",
       "notes": "exact canonical family identifier",
+      "observed": "Propositional",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "propositional",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "propositional",
+      "notes": "exact canonical family identifier",
       "observed": "propositional",
       "severity": "none"
     },
@@ -958,6 +1224,15 @@
       "notes": "protocol profile/lane over cryptographic_protocol",
       "observed": "protocol",
       "severity": "none"
+    },
+    {
+      "canonical_family_id": null,
+      "is_semantic_family": false,
+      "kind": "unknown",
+      "normalized": "protocol_family",
+      "notes": "unregistered family-like label",
+      "observed": "protocol_family",
+      "severity": "warning"
     },
     {
       "canonical_family_id": "cryptographic_protocol",
@@ -1028,7 +1303,34 @@
       "kind": "canonical_family",
       "normalized": "refinement",
       "notes": "exact canonical family identifier",
+      "observed": "Refinement",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "refinement",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "refinement",
+      "notes": "exact canonical family identifier",
       "observed": "refinement",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": null,
+      "is_semantic_family": false,
+      "kind": "unknown",
+      "normalized": "relational_refinement",
+      "notes": "unregistered family-like label",
+      "observed": "relational_refinement",
+      "severity": "warning"
+    },
+    {
+      "canonical_family_id": "relevance_paraconsistent",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "relevance_paraconsistent",
+      "notes": "exact canonical family identifier",
+      "observed": "relevance_paraconsistent",
       "severity": "none"
     },
     {
@@ -1142,6 +1444,15 @@
     {
       "canonical_family_id": null,
       "is_semantic_family": false,
+      "kind": "unknown",
+      "normalized": "secpal_family",
+      "notes": "unregistered family-like label",
+      "observed": "secpal_family",
+      "severity": "warning"
+    },
+    {
+      "canonical_family_id": null,
+      "is_semantic_family": false,
       "kind": "property",
       "normalized": "secrecy",
       "notes": "property kind",
@@ -1187,10 +1498,37 @@
     {
       "canonical_family_id": null,
       "is_semantic_family": false,
+      "kind": "profile",
+      "normalized": "session",
+      "notes": "registry fragment/profile session",
+      "observed": "session",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "session_process",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "session_process",
+      "notes": "exact canonical family identifier",
+      "observed": "session_process",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": null,
+      "is_semantic_family": false,
       "kind": "view",
       "normalized": "shared",
       "notes": "shared domain view label",
       "observed": "shared",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "situation_calculus",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "situation_calculus",
+      "notes": "exact canonical family identifier",
+      "observed": "situation_calculus",
       "severity": "none"
     },
     {
@@ -1344,6 +1682,15 @@
       "normalized": "tdfol",
       "notes": "exact canonical family identifier",
       "observed": "tdfol",
+      "severity": "none"
+    },
+    {
+      "canonical_family_id": "temporal",
+      "is_semantic_family": true,
+      "kind": "canonical_family",
+      "normalized": "temporal",
+      "notes": "exact canonical family identifier",
+      "observed": "Temporal",
       "severity": "none"
     },
     {
@@ -1583,6 +1930,17 @@
   ],
   "drift": [
     {
+      "canonical_family_id": "intention_agency",
+      "kind": "alias",
+      "normalized": "bdi",
+      "notes": "alias of canonical family intention_agency",
+      "observed": "bdi",
+      "severity": "info",
+      "sources": [
+        "logic/families/profile_catalog_v3.py"
+      ]
+    },
+    {
       "canonical_family_id": "propositional",
       "kind": "alias",
       "normalized": "boolean_logic",
@@ -1601,7 +1959,20 @@
       "observed": "CHC",
       "severity": "info",
       "sources": [
-        "default_registry"
+        "default_registry",
+        "logic/families/namespaces.py"
+      ]
+    },
+    {
+      "canonical_family_id": "horn_chc",
+      "kind": "alias",
+      "normalized": "chc",
+      "notes": "alias of canonical family horn_chc",
+      "observed": "chc",
+      "severity": "info",
+      "sources": [
+        "default_registry",
+        "logic/families/namespaces.py"
       ]
     },
     {
@@ -1673,7 +2044,8 @@
       "sources": [
         "default_registry",
         "logic/backends/registry.py",
-        "logic/crypto_ir/formalization/obligations.py"
+        "logic/crypto_ir/formalization/obligations.py",
+        "logic/families/namespaces.py"
       ]
     },
     {
@@ -1686,7 +2058,8 @@
       "sources": [
         "default_registry",
         "logic/backends/registry.py",
-        "logic/crypto_ir/formalization/obligations.py"
+        "logic/crypto_ir/formalization/obligations.py",
+        "logic/families/namespaces.py"
       ]
     },
     {
@@ -1787,7 +2160,8 @@
       "observed": "predicate_logic",
       "severity": "info",
       "sources": [
-        "default_registry"
+        "default_registry",
+        "logic/families/namespaces.py"
       ]
     },
     {
@@ -1834,7 +2208,9 @@
       "sources": [
         "default_registry",
         "logic/backends/registry.py",
-        "logic/backends/tla/runners.py"
+        "logic/backends/tla/execution_v2.py",
+        "logic/backends/tla/runners.py",
+        "logic/families/namespaces.py"
       ]
     },
     {
@@ -2138,6 +2514,7 @@
       "severity": "none",
       "sources": [
         "known_drift_catalog",
+        "logic/backends/protocol/execution_v2.py",
         "logic/backends/protocol/proverif.py"
       ]
     },
@@ -2214,6 +2591,7 @@
       "severity": "none",
       "sources": [
         "known_drift_catalog",
+        "logic/backends/protocol/execution_v2.py",
         "logic/backends/protocol/tamarin.py"
       ]
     },
@@ -2260,7 +2638,8 @@
       "observed": "dependent_type",
       "severity": "none",
       "sources": [
-        "known_drift_catalog"
+        "known_drift_catalog",
+        "logic/families/registry.py"
       ]
     },
     {
@@ -2321,7 +2700,8 @@
       "severity": "none",
       "sources": [
         "default_registry",
-        "known_drift_catalog"
+        "known_drift_catalog",
+        "logic/families/namespaces.py"
       ]
     },
     {
@@ -2333,7 +2713,8 @@
       "severity": "none",
       "sources": [
         "default_registry",
-        "known_drift_catalog"
+        "known_drift_catalog",
+        "logic/families/namespaces.py"
       ]
     },
     {
@@ -2509,6 +2890,17 @@
       "sources": [
         "known_drift_catalog",
         "logic/backends/secpal_style_authorization.py"
+      ]
+    },
+    {
+      "canonical_family_id": null,
+      "kind": "profile",
+      "normalized": "session",
+      "notes": "registry fragment/profile session",
+      "observed": "session",
+      "severity": "none",
+      "sources": [
+        "logic/families/profile_catalog_v3.py"
       ]
     },
     {
@@ -3011,6 +3403,28 @@
     {
       "canonical_family_id": null,
       "kind": "unknown",
+      "normalized": "agency",
+      "notes": "unregistered family-like label",
+      "observed": "agency",
+      "severity": "warning",
+      "sources": [
+        "logic/families/profile_catalog_v3.py"
+      ]
+    },
+    {
+      "canonical_family_id": null,
+      "kind": "unknown",
+      "normalized": "epistemic_temporal",
+      "notes": "unregistered family-like label",
+      "observed": "epistemic_temporal",
+      "severity": "warning",
+      "sources": [
+        "logic/families/profile_catalog_v3.py"
+      ]
+    },
+    {
+      "canonical_family_id": null,
+      "kind": "unknown",
       "normalized": "family_ambiguous_license",
       "notes": "unregistered family-like label",
       "observed": "family:ambiguous-license",
@@ -3138,6 +3552,72 @@
       "severity": "warning",
       "sources": [
         "logic/security_ir/solidity_cpt_top10/evaluation.py"
+      ]
+    },
+    {
+      "canonical_family_id": null,
+      "kind": "unknown",
+      "normalized": "intention",
+      "notes": "unregistered family-like label",
+      "observed": "intention",
+      "severity": "warning",
+      "sources": [
+        "logic/families/profile_catalog_v3.py"
+      ]
+    },
+    {
+      "canonical_family_id": null,
+      "kind": "unknown",
+      "normalized": "linear",
+      "notes": "unregistered family-like label",
+      "observed": "linear",
+      "severity": "warning",
+      "sources": [
+        "logic/families/profile_catalog_v3.py"
+      ]
+    },
+    {
+      "canonical_family_id": null,
+      "kind": "unknown",
+      "normalized": "process",
+      "notes": "unregistered family-like label",
+      "observed": "process",
+      "severity": "warning",
+      "sources": [
+        "logic/families/profile_catalog_v3.py"
+      ]
+    },
+    {
+      "canonical_family_id": null,
+      "kind": "unknown",
+      "normalized": "protocol_family",
+      "notes": "unregistered family-like label",
+      "observed": "protocol_family",
+      "severity": "warning",
+      "sources": [
+        "logic/families/namespaces.py"
+      ]
+    },
+    {
+      "canonical_family_id": null,
+      "kind": "unknown",
+      "normalized": "relational_refinement",
+      "notes": "unregistered family-like label",
+      "observed": "relational_refinement",
+      "severity": "warning",
+      "sources": [
+        "logic/families/profile_catalog_v3.py"
+      ]
+    },
+    {
+      "canonical_family_id": null,
+      "kind": "unknown",
+      "normalized": "secpal_family",
+      "notes": "unregistered family-like label",
+      "observed": "secpal_family",
+      "severity": "warning",
+      "sources": [
+        "logic/families/namespaces.py"
       ]
     },
     {
@@ -4222,6 +4702,27 @@
     {
       "context": "source_format",
       "label": "pv",
+      "line": 277,
+      "root": "logic/backends",
+      "source": "logic/backends/protocol/execution_v2.py"
+    },
+    {
+      "context": "source_format",
+      "label": "spthy",
+      "line": 291,
+      "root": "logic/backends",
+      "source": "logic/backends/protocol/execution_v2.py"
+    },
+    {
+      "context": "logic_family",
+      "label": "cryptographic_protocol",
+      "line": 2269,
+      "root": "logic/backends",
+      "source": "logic/backends/protocol/execution_v2.py"
+    },
+    {
+      "context": "source_format",
+      "label": "pv",
       "line": 281,
       "root": "logic/backends",
       "source": "logic/backends/protocol/proverif.py"
@@ -5270,6 +5771,13 @@
       "source": "logic/backends/secpal_style_authorization.py"
     },
     {
+      "context": "logic_family",
+      "label": "state_transition",
+      "line": 2770,
+      "root": "logic/backends",
+      "source": "logic/backends/tla/execution_v2.py"
+    },
+    {
       "context": "logic_families",
       "label": "software_verification",
       "line": 658,
@@ -6033,6 +6541,76 @@
       "source": "logic/backends/z3/compiler.py"
     },
     {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 363,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 417,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 471,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 526,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "cryptographic_protocol",
+      "line": 580,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 635,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 689,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "cryptographic_protocol",
+      "line": 743,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 803,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "hyperproperty",
+      "line": 861,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/logic_slice_v2.py"
+    },
+    {
       "context": "enum:LogicFamily",
       "label": "smt_lib",
       "line": 56,
@@ -6124,163 +6702,709 @@
       "source": "logic/crypto_ir/formalization/portfolio.py"
     },
     {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 790,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 841,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 887,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 933,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "cryptographic_protocol",
+      "line": 977,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 1023,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 1068,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "cryptographic_protocol",
+      "line": 1112,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 1158,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "hyperproperty",
+      "line": 1205,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 1538,
+      "root": "logic/crypto_ir",
+      "source": "logic/crypto_ir/formalization/typed_adapter.py"
+    },
+    {
+      "context": "families",
+      "label": "Authorization",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Concurrency",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "DCEC",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Datalog",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Deontic",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "First-order",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Higher-order",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Hyperproperty",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Modal",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Mu-calculus",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Program",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Propositional",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Refinement",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "Temporal",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "authorization",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "chc",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "concurrency",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "cryptographic_protocol",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "datalog",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "dcec",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "deontic",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "event_calculus",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "first_order",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "fol",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "frame_logic",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "higher_order",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "horn",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "horn_chc",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "hyperproperty",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "modal",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "mu_calculus",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "predicate_logic",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "program",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "propositional",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "protocol_family",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "refinement",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "secpal_family",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "separation_logic",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "state_transition",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "tdfol",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "temporal",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "families",
+      "label": "transition_system",
+      "line": 804,
+      "root": "logic/families",
+      "source": "logic/families/namespaces.py"
+    },
+    {
+      "context": "family",
+      "label": "bdi",
+      "line": 649,
+      "root": "logic/families",
+      "source": "logic/families/profile_catalog_v3.py"
+    },
+    {
+      "context": "family",
+      "label": "epistemic_temporal",
+      "line": 657,
+      "root": "logic/families",
+      "source": "logic/families/profile_catalog_v3.py"
+    },
+    {
+      "context": "family",
+      "label": "agency",
+      "line": 665,
+      "root": "logic/families",
+      "source": "logic/families/profile_catalog_v3.py"
+    },
+    {
+      "context": "family",
+      "label": "intention",
+      "line": 673,
+      "root": "logic/families",
+      "source": "logic/families/profile_catalog_v3.py"
+    },
+    {
+      "context": "family",
+      "label": "linear",
+      "line": 785,
+      "root": "logic/families",
+      "source": "logic/families/profile_catalog_v3.py"
+    },
+    {
+      "context": "family",
+      "label": "session",
+      "line": 793,
+      "root": "logic/families",
+      "source": "logic/families/profile_catalog_v3.py"
+    },
+    {
+      "context": "family",
+      "label": "process",
+      "line": 801,
+      "root": "logic/families",
+      "source": "logic/families/profile_catalog_v3.py"
+    },
+    {
+      "context": "family",
+      "label": "relational_refinement",
+      "line": 809,
+      "root": "logic/families",
+      "source": "logic/families/profile_catalog_v3.py"
+    },
+    {
+      "context": "family_id",
+      "label": "tdfol",
+      "line": 1424,
+      "root": "logic/families",
+      "source": "logic/families/profiles.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 1479,
+      "root": "logic/families",
+      "source": "logic/families/profiles.py"
+    },
+    {
+      "context": "family_id",
+      "label": "dcec",
+      "line": 1557,
+      "root": "logic/families",
+      "source": "logic/families/profiles.py"
+    },
+    {
       "context": "_family",
       "label": "authorization",
-      "line": 1001,
+      "line": 1068,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "concurrency",
-      "line": 1009,
+      "line": 1076,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "cryptographic_protocol",
-      "line": 1016,
+      "line": 1083,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "Datalog",
-      "line": 1024,
+      "line": 1091,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "datalog",
-      "line": 1024,
+      "line": 1091,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "dcec",
-      "line": 1031,
+      "line": 1098,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "deontic",
-      "line": 1038,
+      "line": 1105,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "event_calculus",
-      "line": 1045,
+      "line": 1112,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "first_order",
-      "line": 1052,
+      "line": 1119,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "frame_logic",
-      "line": 1066,
+      "line": 1133,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "higher_order",
-      "line": 1074,
-      "root": "logic/families",
-      "source": "logic/families/registry.py"
-    },
-    {
-      "context": "_family",
-      "label": "horn_chc",
-      "line": 1082,
-      "root": "logic/families",
-      "source": "logic/families/registry.py"
-    },
-    {
-      "context": "_family",
-      "label": "hyperproperty",
-      "line": 1096,
-      "root": "logic/families",
-      "source": "logic/families/registry.py"
-    },
-    {
-      "context": "_family",
-      "label": "modal",
-      "line": 1104,
-      "root": "logic/families",
-      "source": "logic/families/registry.py"
-    },
-    {
-      "context": "_family",
-      "label": "mu_calculus",
-      "line": 1111,
-      "root": "logic/families",
-      "source": "logic/families/registry.py"
-    },
-    {
-      "context": "_family",
-      "label": "program",
-      "line": 1118,
-      "root": "logic/families",
-      "source": "logic/families/registry.py"
-    },
-    {
-      "context": "_family",
-      "label": "propositional",
-      "line": 1126,
-      "root": "logic/families",
-      "source": "logic/families/registry.py"
-    },
-    {
-      "context": "_family",
-      "label": "refinement",
-      "line": 1134,
-      "root": "logic/families",
-      "source": "logic/families/registry.py"
-    },
-    {
-      "context": "_family",
-      "label": "separation_logic",
       "line": 1141,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
-      "label": "tdfol",
+      "label": "horn_chc",
       "line": 1149,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
+      "label": "hyperproperty",
+      "line": 1163,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "modal",
+      "line": 1171,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "mu_calculus",
+      "line": 1178,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "program",
+      "line": 1185,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "propositional",
+      "line": 1193,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "refinement",
+      "line": 1201,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "separation_logic",
+      "line": 1208,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "tdfol",
+      "line": 1216,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
       "label": "temporal",
-      "line": 1162,
+      "line": 1229,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "_family",
       "label": "transition_system",
-      "line": 1182,
+      "line": 1249,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "epistemic",
+      "line": 1258,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "doxastic",
+      "line": 1266,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "intention_agency",
+      "line": 1274,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "session_process",
+      "line": 1282,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "dependent_type",
+      "line": 1291,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "description_logic",
+      "line": 1299,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "defeasible_logic",
+      "line": 1307,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "nonmonotonic_logic",
+      "line": 1314,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "argumentation",
+      "line": 1321,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "situation_calculus",
+      "line": 1328,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "probabilistic",
+      "line": 1335,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "fuzzy_weighted",
+      "line": 1342,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "relevance_paraconsistent",
+      "line": 1349,
+      "root": "logic/families",
+      "source": "logic/families/registry.py"
+    },
+    {
+      "context": "_family",
+      "label": "finite_field_constraint",
+      "line": 1356,
       "root": "logic/families",
       "source": "logic/families/registry.py"
     },
     {
       "context": "logic_family",
       "label": "unspecified",
-      "line": 1193,
+      "line": 1351,
       "root": "logic/formalization",
       "source": "logic/formalization/constraint_contracts.py"
     },
@@ -6383,6 +7507,83 @@
       "source": "logic/intent_ir/formalize/compiler.py"
     },
     {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 400,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "program",
+      "line": 439,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 478,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "intention_agency",
+      "line": 524,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 567,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 607,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 651,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "deontic",
+      "line": 698,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 745,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 787,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "program",
+      "line": 831,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/logic_slice_v2.py"
+    },
+    {
       "context": "logic_family",
       "label": "first_order_temporal",
       "line": 771,
@@ -6411,11 +7612,214 @@
       "source": "logic/intent_ir/formalize/obligations.py"
     },
     {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 672,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 702,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "intention_agency",
+      "line": 734,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "intention_agency",
+      "line": 763,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "deontic",
+      "line": 795,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "program",
+      "line": 830,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 865,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 897,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 936,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 969,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 1093,
+      "root": "logic/intent_ir",
+      "source": "logic/intent_ir/formalize/typed_compiler.py"
+    },
+    {
       "context": "logic_family",
       "label": "deontic",
       "line": 2745,
       "root": "logic/legal_ir",
       "source": "logic/legal_ir/constraint_query.py"
+    },
+    {
+      "context": "family",
+      "label": "deontic",
+      "line": 1118,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family",
+      "label": "deontic",
+      "line": 1142,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family",
+      "label": "event_calculus",
+      "line": 1166,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family",
+      "label": "authorization",
+      "line": 1190,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family",
+      "label": "deontic",
+      "line": 1214,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family",
+      "label": "deontic",
+      "line": 1238,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family",
+      "label": "authorization",
+      "line": 1262,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "deontic",
+      "line": 505,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "deontic",
+      "line": 537,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "deontic",
+      "line": 554,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "tdfol",
+      "line": 579,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 609,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "event_calculus",
+      "line": 625,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "frame_logic",
+      "line": 655,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 684,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "argumentation",
+      "line": 715,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "description_logic",
+      "line": 740,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "defeasible_logic",
+      "line": 756,
+      "root": "logic/legal_ir",
+      "source": "logic/legal_ir/typed_adapter.py"
     },
     {
       "context": "logic_family",
@@ -6486,6 +7890,181 @@
       "line": 709,
       "root": "logic/security_ir",
       "source": "logic/security_ir/formalization_adapter.py"
+    },
+    {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 655,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 685,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "deontic",
+      "line": 716,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 746,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 778,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 808,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "horn_chc",
+      "line": 842,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "cryptographic_protocol",
+      "line": 871,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "hyperproperty",
+      "line": 904,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "hyperproperty",
+      "line": 931,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "separation_logic",
+      "line": 964,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "concurrency",
+      "line": 993,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 1022,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 1139,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 1159,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "hyperproperty",
+      "line": 1397,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/formalization_adapter_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 290,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 329,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "first_order",
+      "line": 369,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 401,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 437,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "cryptographic_protocol",
+      "line": 473,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "hyperproperty",
+      "line": 515,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "separation_logic",
+      "line": 561,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/logic_slice_v2.py"
+    },
+    {
+      "context": "family_id",
+      "label": "concurrency",
+      "line": 593,
+      "root": "logic/security_ir",
+      "source": "logic/security_ir/logic_slice_v2.py"
     },
     {
       "context": "source_family_id",
@@ -6656,6 +8235,104 @@
       "source": "logic/software_verification/source_adapters.py"
     },
     {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 240,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "transition_system",
+      "line": 249,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "program",
+      "line": 261,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "program",
+      "line": 269,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "program",
+      "line": 277,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 290,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "temporal",
+      "line": 298,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "authorization",
+      "line": 306,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "cryptographic_protocol",
+      "line": 317,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "hyperproperty",
+      "line": 328,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "separation_logic",
+      "line": 339,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "separation_logic",
+      "line": 347,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "concurrency",
+      "line": 358,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
+      "context": "family_id",
+      "label": "refinement",
+      "line": 369,
+      "root": "logic/software_verification",
+      "source": "logic/software_verification/syntax_bridge.py"
+    },
+    {
       "context": "logic_family",
       "label": "finite_fragment",
       "line": 534,
@@ -6748,6 +8425,13 @@
     },
     {
       "context": "family_id",
+      "label": "argumentation",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
       "label": "authorization",
       "line": null,
       "root": "registry",
@@ -6804,7 +8488,28 @@
     },
     {
       "context": "family_id",
+      "label": "defeasible_logic",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
       "label": "deontic",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
+      "label": "description_logic",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
+      "label": "doxastic",
       "line": null,
       "root": "registry",
       "source": "default_registry"
@@ -6818,7 +8523,21 @@
     },
     {
       "context": "family_id",
+      "label": "epistemic",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
       "label": "event_calculus",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
+      "label": "finite_field_constraint",
       "line": null,
       "root": "registry",
       "source": "default_registry"
@@ -6833,6 +8552,13 @@
     {
       "context": "family_id",
       "label": "frame_logic",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
+      "label": "fuzzy_weighted",
       "line": null,
       "root": "registry",
       "source": "default_registry"
@@ -6880,6 +8606,13 @@
       "source": "default_registry"
     },
     {
+      "context": "family_id",
+      "label": "intention_agency",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
       "context": "alias",
       "label": "kripke_structure",
       "line": null,
@@ -6908,6 +8641,13 @@
       "source": "default_registry"
     },
     {
+      "context": "family_id",
+      "label": "nonmonotonic_logic",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
       "context": "alias",
       "label": "policy_logic",
       "line": null,
@@ -6917,6 +8657,13 @@
     {
       "context": "alias",
       "label": "predicate_logic",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
+      "label": "probabilistic",
       "line": null,
       "root": "registry",
       "source": "default_registry"
@@ -6950,6 +8697,13 @@
       "source": "default_registry"
     },
     {
+      "context": "family_id",
+      "label": "relevance_paraconsistent",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
       "context": "alias",
       "label": "resource_logic",
       "line": null,
@@ -6966,6 +8720,20 @@
     {
       "context": "family_id",
       "label": "separation_logic",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
+      "label": "session_process",
+      "line": null,
+      "root": "registry",
+      "source": "default_registry"
+    },
+    {
+      "context": "family_id",
+      "label": "situation_calculus",
       "line": null,
       "root": "registry",
       "source": "default_registry"
@@ -7026,21 +8794,21 @@
   ],
   "schema_version": "logic-family-audit/v1",
   "summary": {
-    "classification_count": 173,
-    "drift_count": 151,
+    "classification_count": 210,
+    "drift_count": 162,
     "kind_counts": {
-      "alias": 22,
-      "canonical_family": 22,
+      "alias": 24,
+      "canonical_family": 48,
       "evidence_kind": 14,
       "lane": 10,
       "notation": 9,
-      "profile": 26,
+      "profile": 27,
       "property": 14,
       "provider": 24,
-      "unknown": 12,
+      "unknown": 20,
       "view": 20
     },
-    "observation_count": 519,
+    "observation_count": 703,
     "root_count": 8,
     "scanned_roots": [
       "logic/backends",
@@ -7054,6 +8822,6 @@
     ],
     "semantic_family_misuse_count": 0,
     "semantic_family_misuses": [],
-    "unique_label_count": 173
+    "unique_label_count": 210
   }
 }

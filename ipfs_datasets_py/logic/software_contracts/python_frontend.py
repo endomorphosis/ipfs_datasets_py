@@ -17,8 +17,9 @@ import ast
 import builtins
 import sys
 from collections import defaultdict
+from collections.abc import Iterable, Sequence
 from pathlib import Path, PurePosixPath
-from typing import Any, Final, Iterable, Sequence
+from typing import Any, Final
 
 from ipfs_datasets_py.logic.software_contracts.ast_ir import (
     ASTRecord,
@@ -42,12 +43,12 @@ from ipfs_datasets_py.logic.software_contracts.content import (
     cid_for_structured,
 )
 
-
 PYTHON_FRONTEND_VERSION: Final[str] = "1.2.1"
 PYTHON_FRONTEND_NAME: Final[str] = "cpython-ast"
 PYTHON_SOURCE_EXTENSIONS: Final[tuple[str, ...]] = (".py", ".pyi")
 DEFAULT_MAX_SOURCE_BYTES: Final[int] = 8 * 1024 * 1024
 DEFAULT_MAX_AST_NODES: Final[int] = 5_000_000
+DEFAULT_MAX_AST_DEPTH: Final[int] = 400
 _BUILTIN_NAMES: Final[frozenset[str]] = frozenset(dir(builtins))
 _DYNAMIC_CALLS: Final[frozenset[str]] = frozenset(
     {
@@ -149,6 +150,18 @@ def _contains_yield(node: ast.AST) -> bool:
         ):
             continue
         pending.extend(ast.iter_child_nodes(item))
+    return False
+
+
+def _ast_depth_exceeds(node: ast.AST, limit: int) -> bool:
+    """Check the traversal depth iteratively, independent of Python's limit."""
+
+    pending = [(node, 1)]
+    while pending:
+        item, depth = pending.pop()
+        if depth > limit:
+            return True
+        pending.extend((child, depth + 1) for child in ast.iter_child_nodes(item))
     return False
 
 
@@ -494,18 +507,23 @@ class _PythonVisitor(ast.NodeVisitor):
             for item, default in zip(
                 arguments.posonlyargs,
                 positional_defaults[: len(arguments.posonlyargs)],
+                strict=True,
             )
         )
         remaining_defaults = positional_defaults[len(arguments.posonlyargs) :]
         entries.extend(
             (item, "positional_or_named", default)
-            for item, default in zip(arguments.args, remaining_defaults)
+            for item, default in zip(
+                arguments.args, remaining_defaults, strict=True
+            )
         )
         if arguments.vararg is not None:
             entries.append((arguments.vararg, "variadic_positional", None))
         entries.extend(
             (item, "named_only", default)
-            for item, default in zip(arguments.kwonlyargs, arguments.kw_defaults)
+            for item, default in zip(
+                arguments.kwonlyargs, arguments.kw_defaults, strict=True
+            )
         )
         if arguments.kwarg is not None:
             entries.append((arguments.kwarg, "variadic_named", None))
@@ -999,6 +1017,7 @@ class PythonASTExtractor:
         feature_version: tuple[int, int] | None = None,
         max_source_bytes: int = DEFAULT_MAX_SOURCE_BYTES,
         max_ast_nodes: int = DEFAULT_MAX_AST_NODES,
+        max_ast_depth: int = DEFAULT_MAX_AST_DEPTH,
     ) -> None:
         if type(max_source_bytes) is not int or max_source_bytes <= 0:
             raise ValueError("max_source_bytes must be a positive exact integer")
@@ -1010,6 +1029,10 @@ class PythonASTExtractor:
             raise ValueError("max_ast_nodes must be a positive exact integer")
         if max_ast_nodes > DEFAULT_MAX_AST_NODES:
             raise ValueError(f"max_ast_nodes cannot exceed {DEFAULT_MAX_AST_NODES}")
+        if type(max_ast_depth) is not int or max_ast_depth <= 0:
+            raise ValueError("max_ast_depth must be a positive exact integer")
+        if max_ast_depth > DEFAULT_MAX_AST_DEPTH:
+            raise ValueError(f"max_ast_depth cannot exceed {DEFAULT_MAX_AST_DEPTH}")
         if feature_version is not None:
             if (
                 type(feature_version) is not tuple
@@ -1020,6 +1043,7 @@ class PythonASTExtractor:
         self.feature_version = feature_version
         self.max_source_bytes = max_source_bytes
         self.max_ast_nodes = max_ast_nodes
+        self.max_ast_depth = max_ast_depth
 
     @property
     def capability(self) -> FrontendCapability:
@@ -1215,6 +1239,26 @@ class PythonASTExtractor:
                 construct="ast_node_count",
                 reason=f"AST has {node_count} nodes; limit is {self.max_ast_nodes}.",
             )
+        try:
+            depth_exceeded = _ast_depth_exceeds(tree, self.max_ast_depth)
+        except MemoryError:
+            depth_exceeded = True
+        if depth_exceeded:
+            return self._failure_record(
+                source_bytes,
+                source_text,
+                path=path,
+                repository_id=repository_id,
+                revision=revision,
+                repository_tree_cid=repository_tree_cid,
+                module_name=module_name,
+                code="python.resource_limit",
+                construct="frontend_traversal",
+                reason=(
+                    f"AST traversal depth exceeds the deterministic limit of "
+                    f"{self.max_ast_depth}."
+                ),
+            )
 
         normalized_module_name = module_name or _module_name(path)
         visitor = _PythonVisitor(source_map, normalized_module_name)
@@ -1372,6 +1416,7 @@ def build_python_ast_blob_record(
     feature_version: tuple[int, int] | None = None,
     max_source_bytes: int = DEFAULT_MAX_SOURCE_BYTES,
     max_ast_nodes: int = DEFAULT_MAX_AST_NODES,
+    max_ast_depth: int = DEFAULT_MAX_AST_DEPTH,
 ) -> ASTRecord:
     """Compatibility constructor for one normalized Python AST blob record."""
 
@@ -1379,6 +1424,7 @@ def build_python_ast_blob_record(
         feature_version=feature_version,
         max_source_bytes=max_source_bytes,
         max_ast_nodes=max_ast_nodes,
+        max_ast_depth=max_ast_depth,
     ).extract_from_source(
         source,
         path=path,
@@ -1397,6 +1443,7 @@ ASTBlobRecord = ASTRecord
 
 __all__ = [
     "ASTBlobRecord",
+    "DEFAULT_MAX_AST_DEPTH",
     "DEFAULT_MAX_AST_NODES",
     "DEFAULT_MAX_SOURCE_BYTES",
     "PYTHON_FRONTEND_NAME",

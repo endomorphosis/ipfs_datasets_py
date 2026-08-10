@@ -1,12 +1,12 @@
 {
-  "content_digest": "2770e8af7e49d184c94330ff524eb7d125b1bf3c10cf50c0e6b9519f50e83175",
+  "content_digest": "a7a1c7bdb9a5e82eea0b4343f0188b1b18e2262ace8c591da4a99785d6bf0feb",
   "counts_by_kind": {
     "ast": 24,
     "compiler": 92,
-    "formula": 98,
-    "formula_boundary": 108,
+    "formula": 100,
+    "formula_boundary": 110,
     "legacy_duplicate": 2,
-    "parser": 111,
+    "parser": 115,
     "printer": 48,
     "result_decoder": 93,
     "term": 26,
@@ -145,7 +145,7 @@
           "modal"
         ],
         "kind": "formula_boundary",
-        "line": 434,
+        "line": 510,
         "notes": "Field 'expression' admits arbitrary_json formula payloads.",
         "path": "formalization/views.py",
         "qualname": "FormalFormula.expression",
@@ -846,7 +846,7 @@
           "tdfol"
         ],
         "kind": "formula_boundary",
-        "line": 260,
+        "line": 274,
         "notes": "Field 'formula' admits raw_string formula payloads.",
         "path": "TDFOL/performance_profiler.py",
         "qualname": "BenchmarkResult.formula",
@@ -1041,12 +1041,40 @@
           "solver_adapter"
         ],
         "kind": "formula_boundary",
+        "line": 1333,
+        "notes": "Field 'source' admits raw_string formula payloads.",
+        "path": "backends/atp/execution_v2.py",
+        "qualname": "AtpExecutionRequestV2.source",
+        "surface_id": "formula_boundary:backends/atp/execution_v2.py#AtpExecutionRequestV2.source",
+        "symbol": "AtpExecutionRequestV2.source"
+      },
+      {
+        "boundary_kind": "raw_string",
+        "discovery": "ast_scan",
+        "family_hints": [
+          "solver_adapter"
+        ],
+        "kind": "formula_boundary",
         "line": 806,
         "notes": "Field 'formula' admits raw_string formula payloads.",
         "path": "backends/smt/compiler.py",
         "qualname": "SmtNamedAssertion.formula",
         "surface_id": "formula_boundary:backends/smt/compiler.py#SmtNamedAssertion.formula",
         "symbol": "SmtNamedAssertion.formula"
+      },
+      {
+        "boundary_kind": "raw_string",
+        "discovery": "ast_scan",
+        "family_hints": [
+          "solver_adapter"
+        ],
+        "kind": "formula_boundary",
+        "line": 1221,
+        "notes": "Field 'source' admits raw_string formula payloads.",
+        "path": "backends/tla/execution_v2.py",
+        "qualname": "StateCounterexampleBindingV2.source",
+        "surface_id": "formula_boundary:backends/tla/execution_v2.py#StateCounterexampleBindingV2.source",
+        "symbol": "StateCounterexampleBindingV2.source"
       },
       {
         "boundary_kind": "raw_string",
@@ -1194,7 +1222,7 @@
           "modal"
         ],
         "kind": "formula_boundary",
-        "line": 556,
+        "line": 697,
         "notes": "Field 'expression' admits raw_string formula payloads.",
         "path": "formalization/constraint_contracts.py",
         "qualname": "ConstraintStatement.expression",
@@ -1558,7 +1586,7 @@
   "interface": "LogicSurfaceInventory@1",
   "logic_root": "ipfs_datasets_py/logic",
   "policy_profile_id": "logic-surface-inventory-default@1",
-  "scanned_file_count": 314,
+  "scanned_file_count": 320,
   "scanned_files": [
     "CEC/__init__.py",
     "CEC/cec_framework.py",
@@ -1686,11 +1714,15 @@
     "TDFOL/tdfol_prover.py",
     "TDFOL/zkp_integration.py",
     "backends/atp/adapters.py",
+    "backends/atp/execution_v2.py",
     "backends/cvc5/compiler.py",
     "backends/datalog/adapters.py",
+    "backends/datalog/execution_v2.py",
     "backends/smt/compiler.py",
     "backends/smt/differential.py",
+    "backends/smt/execution_v2.py",
     "backends/tla/compiler.py",
+    "backends/tla/execution_v2.py",
     "backends/tla/runners.py",
     "backends/z3/compiler.py",
     "bridge/__init__.py",
@@ -1752,6 +1784,8 @@
     "fol/utils/predicate_extractor.py",
     "formalization/__init__.py",
     "formalization/advisor.py",
+    "formalization/advisor_parser_adapter.py",
+    "formalization/artifacts_v3.py",
     "formalization/autoencoder_advisor.py",
     "formalization/checkpoints.py",
     "formalization/compiler.py",
@@ -1876,7 +1910,7 @@
     "types/translation_types.py"
   ],
   "schema_version": "logic-surface-inventory/v1",
-  "surface_count": 628,
+  "surface_count": 636,
   "surfaces": [
     {
       "discovery": "curated",
@@ -4134,7 +4168,7 @@
         "tdfol"
       ],
       "kind": "formula_boundary",
-      "line": 260,
+      "line": 274,
       "notes": "Field 'formula' admits raw_string formula payloads.",
       "path": "TDFOL/performance_profiler.py",
       "qualname": "BenchmarkResult.formula",
@@ -5038,6 +5072,20 @@
       "symbol": "parse_szs_status"
     },
     {
+      "boundary_kind": "raw_string",
+      "discovery": "ast_scan",
+      "family_hints": [
+        "solver_adapter"
+      ],
+      "kind": "formula_boundary",
+      "line": 1333,
+      "notes": "Field 'source' admits raw_string formula payloads.",
+      "path": "backends/atp/execution_v2.py",
+      "qualname": "AtpExecutionRequestV2.source",
+      "surface_id": "formula_boundary:backends/atp/execution_v2.py#AtpExecutionRequestV2.source",
+      "symbol": "AtpExecutionRequestV2.source"
+    },
+    {
       "discovery": "curated",
       "family_hints": [
         "solver_adapter"
@@ -5737,6 +5785,20 @@
       "qualname": "TLACompiler.compile_state",
       "surface_id": "compiler:backends/tla/compiler.py#TLACompiler.compile_state",
       "symbol": "compile_state"
+    },
+    {
+      "boundary_kind": "raw_string",
+      "discovery": "ast_scan",
+      "family_hints": [
+        "solver_adapter"
+      ],
+      "kind": "formula_boundary",
+      "line": 1221,
+      "notes": "Field 'source' admits raw_string formula payloads.",
+      "path": "backends/tla/execution_v2.py",
+      "qualname": "StateCounterexampleBindingV2.source",
+      "surface_id": "formula_boundary:backends/tla/execution_v2.py#StateCounterexampleBindingV2.source",
+      "symbol": "StateCounterexampleBindingV2.source"
     },
     {
       "boundary_kind": "raw_string",
@@ -7006,6 +7068,66 @@
         "fol",
         "modal"
       ],
+      "kind": "parser",
+      "line": 474,
+      "notes": "",
+      "path": "formalization/advisor_parser_adapter.py",
+      "qualname": "AdvisorCandidateParser.parse",
+      "surface_id": "parser:formalization/advisor_parser_adapter.py#AdvisorCandidateParser.parse",
+      "symbol": "parse"
+    },
+    {
+      "discovery": "ast_scan",
+      "family_hints": [
+        "deontic",
+        "fol",
+        "modal"
+      ],
+      "kind": "parser",
+      "line": 549,
+      "notes": "",
+      "path": "formalization/advisor_parser_adapter.py",
+      "qualname": "AdvisorCandidateParser.parse_symbolicai",
+      "surface_id": "parser:formalization/advisor_parser_adapter.py#AdvisorCandidateParser.parse_symbolicai",
+      "symbol": "parse_symbolicai"
+    },
+    {
+      "discovery": "ast_scan",
+      "family_hints": [
+        "deontic",
+        "fol",
+        "modal"
+      ],
+      "kind": "parser",
+      "line": 398,
+      "notes": "",
+      "path": "formalization/advisor_parser_adapter.py",
+      "qualname": "AdvisorParseResult.parse_ok",
+      "surface_id": "parser:formalization/advisor_parser_adapter.py#AdvisorParseResult.parse_ok",
+      "symbol": "parse_ok"
+    },
+    {
+      "discovery": "ast_scan",
+      "family_hints": [
+        "deontic",
+        "fol",
+        "modal"
+      ],
+      "kind": "parser",
+      "line": 690,
+      "notes": "",
+      "path": "formalization/advisor_parser_adapter.py",
+      "qualname": "parse_advisor_candidate",
+      "surface_id": "parser:formalization/advisor_parser_adapter.py#parse_advisor_candidate",
+      "symbol": "parse_advisor_candidate"
+    },
+    {
+      "discovery": "ast_scan",
+      "family_hints": [
+        "deontic",
+        "fol",
+        "modal"
+      ],
       "kind": "compiler",
       "line": 382,
       "notes": "",
@@ -7023,7 +7145,7 @@
         "modal"
       ],
       "kind": "formula_boundary",
-      "line": 556,
+      "line": 697,
       "notes": "Field 'expression' admits raw_string formula payloads.",
       "path": "formalization/constraint_contracts.py",
       "qualname": "ConstraintStatement.expression",
@@ -7054,7 +7176,7 @@
         "modal"
       ],
       "kind": "formula",
-      "line": 429,
+      "line": 500,
       "notes": "",
       "path": "formalization/views.py",
       "qualname": "FormalFormula",
@@ -7070,12 +7192,42 @@
         "modal"
       ],
       "kind": "formula_boundary",
-      "line": 434,
+      "line": 510,
       "notes": "Field 'expression' admits arbitrary_json formula payloads.",
       "path": "formalization/views.py",
       "qualname": "FormalFormula.expression",
       "surface_id": "formula_boundary:formalization/views.py#FormalFormula.expression",
       "symbol": "FormalFormula.expression"
+    },
+    {
+      "discovery": "ast_scan",
+      "family_hints": [
+        "deontic",
+        "fol",
+        "modal"
+      ],
+      "kind": "formula",
+      "line": 76,
+      "notes": "",
+      "path": "formalization/views.py",
+      "qualname": "coerce_formula_expression",
+      "surface_id": "formula:formalization/views.py#coerce_formula_expression",
+      "symbol": "coerce_formula_expression"
+    },
+    {
+      "discovery": "ast_scan",
+      "family_hints": [
+        "deontic",
+        "fol",
+        "modal"
+      ],
+      "kind": "formula",
+      "line": 105,
+      "notes": "",
+      "path": "formalization/views.py",
+      "qualname": "serialize_formula_expression",
+      "surface_id": "formula:formalization/views.py#serialize_formula_expression",
+      "symbol": "serialize_formula_expression"
     },
     {
       "boundary_kind": "raw_string",

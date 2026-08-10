@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
     AUDIT_REPORT_VERSION,
     DEFAULT_BASELINE_RELATIVE_PATH,
@@ -39,7 +39,6 @@ from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
     is_authority_bearing,
     lifecycle_rank,
     load_audit_baseline,
-    main as claim_runtime_audit_main,
     max_lifecycle,
     metadata_only_cannot_satisfy_execution,
     mocks_cannot_satisfy_execution,
@@ -48,11 +47,13 @@ from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
     render_audit_json,
     write_audit_baseline,
 )
+from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
+    main as claim_runtime_audit_main,
+)
 from ipfs_datasets_py.logic.conformance.matrix import (
     AuthorityCeiling,
     SupportStatus,
 )
-
 
 DATASETS_ROOT = Path(__file__).resolve().parents[4]
 BASELINE_PATH = (
@@ -70,6 +71,19 @@ def _write_tree(root: Path, files: dict[str, str]) -> None:
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
+
+
+def _reseal_baseline_payload(payload: dict[str, object]) -> None:
+    body = dict(payload)
+    body.pop("content_digest", None)
+    encoded = json.dumps(
+        body,
+        ensure_ascii=True,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    payload["content_digest"] = f"sha256:{hashlib.sha256(encoded).hexdigest()}"
 
 
 # ---------------------------------------------------------------------------
@@ -504,6 +518,8 @@ def test_report_round_trip_and_write(tmp_path: Path) -> None:
     assert payload["goal_id"] == GOAL_ID
     assert payload["program_id"] == PROGRAM_ID
     assert payload["required_evidence_surfaces"] == list(REQUIRED_EVIDENCE_SURFACES)
+    assert payload["tree_root"] == "."
+    assert report.tree_root == "."
     assert "content_digest" in payload
     assert loaded.claims
     rendered = render_audit_json(report)
@@ -511,24 +527,52 @@ def test_report_round_trip_and_write(tmp_path: Path) -> None:
     assert json.loads(rendered)["interface"] == LOGIC_CLAIM_RUNTIME_AUDIT_INTERFACE
 
 
-def test_baseline_seal_matches_live_materialization() -> None:
+def test_baseline_render_is_checkout_location_independent(tmp_path: Path) -> None:
+    first_root = tmp_path / "first"
+    second_root = tmp_path / "second"
+    first_root.mkdir()
+    second_root.mkdir()
+
+    first = build_claim_runtime_audit(root=first_root)
+    second = build_claim_runtime_audit(root=second_root)
+
+    assert first.tree_root == second.tree_root == "."
+    assert first.to_dict() == second.to_dict()
+    assert first.content_digest() == second.content_digest()
+
+    _write_tree(
+        second_root,
+        {
+            "ipfs_datasets_py/ipfs_datasets_py/logic/backends/registry.py": (
+                "EXECUTABLE_PROVIDER_IDS = ('z3',)\n"
+            )
+        },
+    )
+    changed = build_claim_runtime_audit(root=second_root)
+    assert changed.content_digest() != first.content_digest()
+
+
+def test_baseline_seal_matches_live_materialization(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     """Materialize, seal, and verify the owned Wave-2 baseline report."""
 
-    # Drop accidental non-output siblings under the baseline directory.
-    stray_readme = BASELINE_PATH.parent / "README.md"
-    if stray_readme.is_file() and stray_readme.stat().st_size == 0:
-        stray_readme.unlink()
+    before = BASELINE_PATH.read_bytes()
+    candidate = tmp_path / "claim_runtime_audit.json"
 
     # CLI entrypoint is the production writer for the declared baseline output.
     exit_code = claim_runtime_audit_main(
-        ["--root", str(DATASETS_ROOT), "--output", str(BASELINE_PATH)]
+        ["--root", str(DATASETS_ROOT), "--output", str(candidate)]
     )
     assert exit_code == 0
-    assert BASELINE_PATH.is_file()
+    assert candidate.read_bytes() == before
+    payload = json.loads(candidate.read_text(encoding="utf-8"))
+    assert payload["content_digest"] in capsys.readouterr().out
 
     live = build_default_audit(root=DATASETS_ROOT)
     assert_audit_acceptance(live)
-    sealed = load_audit_baseline(BASELINE_PATH)
+    sealed = load_audit_baseline(candidate)
     assert sealed.interface == LOGIC_CLAIM_RUNTIME_AUDIT_INTERFACE
     assert [item.claim_id for item in sealed.claims] == [
         item.claim_id for item in live.claims
@@ -536,9 +580,76 @@ def test_baseline_seal_matches_live_materialization() -> None:
     assert sealed.summary()["claim_count"] == live.summary()["claim_count"]
     assert sealed.summary()["gap_count"] == live.summary()["gap_count"]
 
-    # Fail-closed re-seal against the just-written baseline.
+    # Fail-closed re-seal against the checked-in baseline without rewriting it.
     rechecked = ensure_baseline_seal(BASELINE_PATH, datasets_root=DATASETS_ROOT)
     assert rechecked.summary()["claim_count"] == live.summary()["claim_count"]
+    assert BASELINE_PATH.read_bytes() == before
+
+
+def test_baseline_loader_rejects_missing_or_tampered_digest(tmp_path: Path) -> None:
+    report = build_default_audit(root=DATASETS_ROOT)
+    target = tmp_path / "claim_runtime_audit.json"
+    write_audit_baseline(report, target)
+    original = json.loads(target.read_text(encoding="utf-8"))
+
+    missing = dict(original)
+    missing.pop("content_digest")
+    target.write_text(json.dumps(missing) + "\n", encoding="utf-8")
+    with pytest.raises(ClaimRuntimeAuditError, match="content_digest"):
+        load_audit_baseline(target)
+
+    tampered = dict(original)
+    tampered["content_digest"] = "sha256:" + ("0" * 64)
+    target.write_text(json.dumps(tampered) + "\n", encoding="utf-8")
+    with pytest.raises(ClaimRuntimeAuditError, match="content_digest"):
+        load_audit_baseline(target)
+
+
+@pytest.mark.parametrize(
+    ("field_name", "replacement"),
+    (
+        ("task_id", "LFP2-999"),
+        ("goal_id", "LFP2-G999"),
+        ("program_id", "different-program"),
+        ("materialization", "different:materializer"),
+        ("required_evidence_surfaces", []),
+        ("lifecycle_stages", list(reversed(LIFECYCLE_STAGES))),
+        ("tree_root", "/machine-specific/checkout"),
+    ),
+)
+def test_baseline_loader_rejects_resealed_envelope_drift(
+    tmp_path: Path,
+    field_name: str,
+    replacement: object,
+) -> None:
+    payload = build_default_audit(root=DATASETS_ROOT).to_baseline_dict()
+    payload[field_name] = replacement
+    _reseal_baseline_payload(payload)
+    target = tmp_path / "claim_runtime_audit.json"
+    target.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+    with pytest.raises(ClaimRuntimeAuditError, match="envelope"):
+        load_audit_baseline(target)
+
+
+def test_baseline_seal_rejects_resealed_semantic_claim_drift(tmp_path: Path) -> None:
+    payload = build_default_audit(root=DATASETS_ROOT).to_baseline_dict()
+    vampire = next(
+        claim for claim in payload["claims"] if claim["claim_id"] == "provider:vampire"
+    )
+    vampire["support"] = "bounded"
+    vampire["authority_ceiling"] = "advisory"
+    _reseal_baseline_payload(payload)
+    target = tmp_path / "claim_runtime_audit.json"
+    target.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+    sealed = load_audit_baseline(target)
+    sealed_vampire = next(
+        claim for claim in sealed.claims if claim.claim_id == "provider:vampire"
+    )
+    assert sealed_vampire.support == "bounded"
+    with pytest.raises(ClaimRuntimeAuditError, match="exact live materialization"):
+        ensure_baseline_seal(target, datasets_root=DATASETS_ROOT)
 
 
 def test_histogram_covers_lifecycle_vocabulary() -> None:

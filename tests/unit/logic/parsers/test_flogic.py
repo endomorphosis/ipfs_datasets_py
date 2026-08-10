@@ -11,12 +11,16 @@ Evidence subset:
 
 from __future__ import annotations
 
-import pytest
+import os
+import subprocess
+import sys
+from pathlib import Path
 
+import pytest
 from ipfs_datasets_py.logic.backends.results import ResultAuthority, ResultStatus
 from ipfs_datasets_py.logic.backends.toolchain_roles import (
-    ToolRole,
     ToolchainAuthorityCeiling,
+    ToolRole,
     role_can_satisfy_certified_authority,
 )
 from ipfs_datasets_py.logic.parsers.flogic import (
@@ -52,7 +56,6 @@ from ipfs_datasets_py.logic.parsers.flogic import (
     tokenize_flogic,
 )
 from ipfs_datasets_py.logic.syntax_core.contracts import ParseLimits, ParseStatus
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -442,12 +445,49 @@ def test_parser_module_does_not_import_ergoai_runtime() -> None:
     """Importing the frontend must not load the ErgoAI wrapper package."""
 
     import ipfs_datasets_py.logic.parsers.flogic as flogic_mod
-    import sys
 
-    # The parser module itself must not pull the executable wrapper.
-    assert "ipfs_datasets_py.logic.flogic.ergoai_wrapper" not in sys.modules
+    runtime_name = "ipfs_datasets_py.logic.flogic.ergoai_wrapper"
+    parent_had_runtime = runtime_name in sys.modules
+    parent_runtime = sys.modules.get(runtime_name)
+    repo_root = Path(__file__).resolve().parents[4]
+    expected_module_path = (
+        repo_root / "ipfs_datasets_py" / "logic" / "parsers" / "flogic.py"
+    ).resolve()
+    environment = dict(os.environ)
+    environment["PYTHONPATH"] = os.pathsep.join((str(repo_root), str(repo_root.parent)))
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import importlib, pathlib, sys; "
+                f"runtime={runtime_name!r}; "
+                "assert runtime not in sys.modules; "
+                "module=importlib.import_module('ipfs_datasets_py.logic.parsers.flogic'); "
+                "actual=pathlib.Path(module.__file__).resolve(); "
+                "expected=pathlib.Path(sys.argv[1]).resolve(); "
+                "assert actual == expected, (actual, expected); "
+                "assert runtime not in sys.modules"
+            ),
+            str(expected_module_path),
+        ],
+        cwd=repo_root,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+    # A fresh-process check must neither depend on nor mutate the parent
+    # interpreter, where another collected test may legitimately load ErgoAI.
+    assert (runtime_name in sys.modules) is parent_had_runtime
+    if parent_had_runtime:
+        assert sys.modules[runtime_name] is parent_runtime
+
     # And the module source must not reference an ErgoAI install/import path.
-    source = open(flogic_mod.__file__, encoding="utf-8").read()
+    source = Path(flogic_mod.__file__).read_text(encoding="utf-8")
     assert "ergoai_wrapper" not in source
     assert "runErgo" not in source
     assert "subprocess" not in source

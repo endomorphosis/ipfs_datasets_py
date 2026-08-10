@@ -3125,9 +3125,9 @@
     },
     "open_executable_without_gap_count": 0
   },
-  "tree_root": "/home/barberb/lift_coding/.worktrees/logic-family-parser-supervisor-runtime/data/agent_supervisor/ipfs_datasets_logic_family_parser_v2/worktrees/workspace-ddb1775a2944-0da0a46f3bbf/ipfs_datasets_py",
+  "tree_root": ".",
   "version": "1.0.0",
-  "content_digest": "sha256:be3a50ecd4e102adc2522e312770239a3b2cf4b26a73cbe14e3b37d4cbd7f952",
+  "content_digest": "sha256:65e5226d4ec1435a3db418cc31f61ede196b16983a1d756fa8dcf88a49defa97",
   "materialization": "ipfs_datasets_py.logic.conformance.claim_runtime_audit:build_default_audit",
   "task_id": "LFP2-001",
   "goal_id": "LFP2-G010",

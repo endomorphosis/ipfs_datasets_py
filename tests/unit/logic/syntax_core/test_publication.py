@@ -9,7 +9,6 @@ Evidence subset:
 
 from __future__ import annotations
 
-import importlib
 import os
 import subprocess
 import sys
@@ -17,7 +16,6 @@ import textwrap
 from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.logic.parsers import (
     DEFAULT_LAZY_PARSER_PUBLICATION,
     LAZY_PARSER_PUBLICATION_INTERFACE,
@@ -30,16 +28,8 @@ from ipfs_datasets_py.logic.syntax_core import (
     LOGIC_SYNTAX_CORE_VERSION,
 )
 
-
 # tests/unit/logic/syntax_core -> nested ipfs_datasets_py package root
 REPO_ROOT = Path(__file__).resolve().parents[4]
-
-
-def _fresh_modules(*prefixes: str) -> None:
-    for name in list(sys.modules):
-        if any(name == prefix or name.startswith(prefix + ".") for prefix in prefixes):
-            sys.modules.pop(name, None)
-    importlib.invalidate_caches()
 
 
 def test_logic_syntax_core_interface_and_version() -> None:
@@ -48,53 +38,80 @@ def test_logic_syntax_core_interface_and_version() -> None:
 
 
 def test_canonical_export_list_is_complete_and_lazy() -> None:
-    _fresh_modules("ipfs_datasets_py.logic.syntax_core")
-    core = importlib.import_module("ipfs_datasets_py.logic.syntax_core")
-
-    # Cold package import must not eagerly load leaf modules.
-    loaded_leaves = {
-        name
-        for name in sys.modules
-        if name.startswith("ipfs_datasets_py.logic.syntax_core.")
-        and name != "ipfs_datasets_py.logic.syntax_core"
+    parent_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "ipfs_datasets_py.logic.syntax_core"
+        or name.startswith("ipfs_datasets_py.logic.syntax_core.")
     }
-    # __init__ itself may not pull leaves; tolerate none.
-    assert not any(
-        leaf.endswith(suffix)
-        for leaf in loaded_leaves
-        for suffix in (
-            ".elaboration",
-            ".codec",
-            ".lexer",
-            ".algebra",
-            ".registry",
-        )
-    ), sorted(loaded_leaves)
+    script = textwrap.dedent(
+        """
+        import importlib
+        import sys
 
-    exported = set(core.__all__)
-    required = {
-        "LOGIC_SYNTAX_CORE_INTERFACE",
-        "LOGIC_SYNTAX_CORE_VERSION",
-        "SourceDocument",
-        "LogicCST",
-        "TypedExpression",
-        "ParseArtifact",
-        "LogicSignature",
-        "LogicParserRegistry",
-        "ElaborationResult",
-        "TypedLogicCodec",
-        "LogicExpressionAlgebra",
-        "BoundedLexer",
-        "LogicDiagnostic",
-    }
-    missing = sorted(required - exported)
-    assert missing == [], missing
+        core = importlib.import_module("ipfs_datasets_py.logic.syntax_core")
+        loaded_leaves = {
+            name
+            for name in sys.modules
+            if name.startswith("ipfs_datasets_py.logic.syntax_core.")
+            and name != "ipfs_datasets_py.logic.syntax_core"
+        }
+        assert not any(
+            leaf.endswith(suffix)
+            for leaf in loaded_leaves
+            for suffix in (
+                ".elaboration",
+                ".codec",
+                ".lexer",
+                ".algebra",
+                ".registry",
+            )
+        ), sorted(loaded_leaves)
+        required = {
+            "LOGIC_SYNTAX_CORE_INTERFACE",
+            "LOGIC_SYNTAX_CORE_VERSION",
+            "SourceDocument",
+            "LogicCST",
+            "TypedExpression",
+            "ParseArtifact",
+            "LogicSignature",
+            "LogicParserRegistry",
+            "ElaborationResult",
+            "TypedLogicCodec",
+            "LogicExpressionAlgebra",
+            "BoundedLexer",
+            "LogicDiagnostic",
+        }
+        missing = sorted(required - set(core.__all__))
+        assert missing == [], missing
+        assert core.TypedExpression is not None
+        assert core.SourceDocument is not None
+        assert "TypedExpression" in core.__dict__
+        assert "SourceDocument" in core.__dict__
+        print("ok")
+        """
+    )
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONPATH"] = os.pathsep.join(
+        part
+        for part in (str(REPO_ROOT), env.get("PYTHONPATH", ""))
+        if part
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=str(REPO_ROOT),
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
 
-    # Attribute access resolves without error and caches on the package.
-    assert core.TypedExpression is not None
-    assert core.SourceDocument is not None
-    assert "TypedExpression" in core.__dict__
-    assert "SourceDocument" in core.__dict__
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "ok" in completed.stdout
+    for name, module in parent_modules.items():
+        assert sys.modules.get(name) is module
 
 
 def test_lazy_parser_publication_is_inert_and_local() -> None:

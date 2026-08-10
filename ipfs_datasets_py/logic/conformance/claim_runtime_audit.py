@@ -2115,7 +2115,11 @@ def build_claim_runtime_audit(
     return LogicClaimRuntimeAuditReport(
         claims=tuple(claims),
         metadata=metadata,
-        tree_root=str(tree_root),
+        # Evidence rows are repository-relative.  The absolute checkout is not
+        # evidence and would make otherwise identical reports churn in every
+        # supervisor worktree.  ``.`` means the datasets root supplied to this
+        # materializer; the resolved Path above remains the scan boundary.
+        tree_root=".",
         notes=(
             "Current-tree audit only. Live tool availability is out of scope; "
             "executable lifecycle requires non-mock runner source evidence."
@@ -2213,12 +2217,70 @@ def write_audit_baseline(
 
 
 def load_audit_baseline(path: str | Path) -> LogicClaimRuntimeAuditReport:
-    """Load a previously written baseline report."""
+    """Load and validate a previously written baseline report.
+
+    ``LogicClaimRuntimeAuditReport.from_dict`` intentionally accepts the core
+    in-memory report shape, which does not include the durable baseline
+    envelope.  A baseline loader must be stricter: every envelope field and
+    the digest over the complete serialized body are part of the seal.
+    """
 
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(payload, Mapping):
         raise ClaimRuntimeAuditError("baseline must be a JSON object")
-    return LogicClaimRuntimeAuditReport.from_dict(payload)
+
+    expected_envelope = {
+        "interface": LOGIC_CLAIM_RUNTIME_AUDIT_INTERFACE,
+        "schema_version": LOGIC_CLAIM_RUNTIME_AUDIT_REPORT_SCHEMA,
+        "version": AUDIT_REPORT_VERSION,
+        "materialization": MATERIALIZATION_TARGET,
+        "task_id": TASK_ID,
+        "goal_id": GOAL_ID,
+        "program_id": PROGRAM_ID,
+        "required_evidence_surfaces": list(REQUIRED_EVIDENCE_SURFACES),
+        "lifecycle_stages": list(LIFECYCLE_STAGES),
+        "tree_root": ".",
+    }
+    for field_name, expected_value in expected_envelope.items():
+        if payload.get(field_name) != expected_value:
+            raise ClaimRuntimeAuditError(
+                f"baseline envelope field {field_name!r} drifted from the "
+                "canonical contract"
+            )
+
+    sealed_digest = payload.get("content_digest")
+    if not isinstance(sealed_digest, str) or not re.fullmatch(
+        r"sha256:[0-9a-f]{64}", sealed_digest
+    ):
+        raise ClaimRuntimeAuditError(
+            "baseline content_digest must be a sha256-prefixed lowercase digest"
+        )
+    digest_body = dict(payload)
+    digest_body.pop("content_digest", None)
+    try:
+        expected_digest = f"sha256:{_stable_digest(digest_body)}"
+    except (TypeError, ValueError) as exc:
+        raise ClaimRuntimeAuditError(
+            "baseline body is not canonically digestible"
+        ) from exc
+    if sealed_digest != expected_digest:
+        raise ClaimRuntimeAuditError(
+            "baseline content_digest disagrees with canonical baseline body"
+        )
+
+    report = LogicClaimRuntimeAuditReport.from_dict(payload)
+    canonical = report.to_baseline_dict()
+    if dict(payload) != canonical:
+        differing_fields = sorted(
+            key
+            for key in set(payload) | set(canonical)
+            if payload.get(key) != canonical.get(key)
+        )
+        raise ClaimRuntimeAuditError(
+            "baseline is not the canonical serialized report; differing "
+            f"fields={differing_fields}"
+        )
+    return report
 
 
 def ensure_baseline_seal(
@@ -2228,7 +2290,7 @@ def ensure_baseline_seal(
 ) -> LogicClaimRuntimeAuditReport:
     """Re-materialize the audit and verify it matches the sealed baseline.
 
-    Absolute ``tree_root`` may differ across checkouts; claim rows, summary,
+    The logical ``tree_root`` is repository-relative; claim rows, summary,
     schema/interface, and lifecycle histogram must match exactly.
     """
 
@@ -2243,27 +2305,17 @@ def ensure_baseline_seal(
     if not target.is_file():
         raise ClaimRuntimeAuditError(f"baseline missing: {target}")
     sealed = load_audit_baseline(target)
-    if sealed.interface != live.interface:
-        raise ClaimRuntimeAuditError(
-            f"baseline interface drift: {sealed.interface!r} != {live.interface!r}"
+    sealed_payload = sealed.to_baseline_dict()
+    live_payload = live.to_baseline_dict()
+    if sealed_payload != live_payload:
+        differing_fields = sorted(
+            key
+            for key in set(sealed_payload) | set(live_payload)
+            if sealed_payload.get(key) != live_payload.get(key)
         )
-    if sealed.schema_version != live.schema_version:
         raise ClaimRuntimeAuditError(
-            f"baseline schema drift: {sealed.schema_version!r} != {live.schema_version!r}"
-        )
-    if sealed.version != live.version:
-        raise ClaimRuntimeAuditError(
-            f"baseline version drift: {sealed.version!r} != {live.version!r}"
-        )
-    live_claims = [item.to_dict() for item in live.claims]
-    sealed_claims = [item.to_dict() for item in sealed.claims]
-    if live_claims != sealed_claims:
-        raise ClaimRuntimeAuditError(
-            "baseline claim rows drifted from live materialization"
-        )
-    if live.summary() != sealed.summary():
-        raise ClaimRuntimeAuditError(
-            "baseline summary drifted from live materialization"
+            "baseline drifted from exact live materialization; differing "
+            f"fields={differing_fields}"
         )
     return live
 
@@ -2299,9 +2351,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     write_audit_baseline(report, target)
     summary = report.summary()
+    baseline_digest = report.to_baseline_dict()["content_digest"]
     print(
         f"wrote {target} claims={summary['claim_count']} "
-        f"gaps={summary['gap_count']} digest={report.content_digest()}"
+        f"gaps={summary['gap_count']} digest={baseline_digest}"
     )
     return 0
 

@@ -1,7 +1,9 @@
-"""
-Converters subsystem for logic module.
+"""Converters subsystem for the logic integration package.
 
-Provides format conversion and translation utilities.
+The public converter classes stay import-compatible, but are loaded only when
+their attributes are requested.  In particular, importing a lightweight
+converter module must not transitively initialize the optional SymbolicAI
+runtime through :mod:`modal_logic_extension`.
 
 Components:
 - DeonticLogicConverter: Deontic logic converter
@@ -9,23 +11,48 @@ Components:
 - ModalLogicExtension: Modal logic extensions
 """
 
-try:
-    from .deontic_logic_converter import DeonticLogicConverter
-except ImportError:
-    DeonticLogicConverter = None
+from __future__ import annotations
 
-try:
-    from .logic_translation_core import LogicTranslationCore
-except ImportError:
-    LogicTranslationCore = None
+import importlib
+from typing import Any
 
-try:
-    from .modal_logic_extension import ModalLogicExtension
-except ImportError:
-    ModalLogicExtension = None
+_LAZY_EXPORTS = {
+    "DeonticLogicConverter": (
+        ".deontic_logic_converter",
+        "DeonticLogicConverter",
+    ),
+    "LogicTranslationCore": (
+        ".logic_translation_core",
+        "LogicTranslationCore",
+    ),
+    "ModalLogicExtension": (
+        ".modal_logic_extension",
+        "ModalLogicExtension",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    target = _LAZY_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module_name, attribute_name = target
+    try:
+        value = getattr(importlib.import_module(module_name, __name__), attribute_name)
+    except ImportError:
+        # Preserve the historical optional-dependency behavior: the package
+        # export was ``None`` when its implementation could not be imported.
+        value = None
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_LAZY_EXPORTS))
 
 __all__ = [
-    'DeonticLogicConverter',
-    'LogicTranslationCore',
-    'ModalLogicExtension',
+    "DeonticLogicConverter",
+    "LogicTranslationCore",
+    "ModalLogicExtension",
 ]

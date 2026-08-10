@@ -49,16 +49,22 @@ from ipfs_datasets_py.logic.conformance.baseline_v2 import (
     is_compact_baseline_join_seal,
     join_baseline_v2,
     load_baseline_join,
-    main as baseline_v2_main,
+    load_claim_artifact,
     render_baseline_join_json,
     to_baseline_join_seal_dict,
     validate_baseline_join,
     validate_capability_lifecycle,
     write_baseline_join,
 )
+from ipfs_datasets_py.logic.conformance.baseline_v2 import (
+    main as baseline_v2_main,
+)
 from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
     LOGIC_CLAIM_RUNTIME_AUDIT_INTERFACE,
+    LogicClaimRuntimeAuditReport,
     build_default_audit,
+)
+from ipfs_datasets_py.logic.conformance.claim_runtime_audit import (
     default_baseline_path as claim_baseline_path,
 )
 from ipfs_datasets_py.logic.conformance.corpus_v2 import (
@@ -67,11 +73,15 @@ from ipfs_datasets_py.logic.conformance.corpus_v2 import (
 )
 from ipfs_datasets_py.logic.conformance.raw_boundary_inventory import (
     RAW_LOGIC_BOUNDARY_INVENTORY_INTERFACE,
+)
+from ipfs_datasets_py.logic.conformance.raw_boundary_inventory import (
     default_baseline_report_path as boundary_baseline_path,
 )
 from ipfs_datasets_py.logic.conformance.reachable_graph import (
     REACHABLE_CAPABILITY_GRAPH_INTERFACE,
     build_default_graph,
+)
+from ipfs_datasets_py.logic.conformance.reachable_graph import (
     default_baseline_path as graph_baseline_path,
 )
 
@@ -501,15 +511,16 @@ def test_write_and_seal_baseline_join(tmp_path: Path) -> None:
     assert json.loads(rendered)["task_id"] == TASK_ID
 
 
-def test_sealed_baseline_join_matches_live_materialization() -> None:
+def test_sealed_baseline_join_matches_live_materialization(tmp_path: Path) -> None:
     """Materialize, seal, and verify the owned Wave-2 baseline join output."""
 
+    before = JOIN_PATH.read_bytes()
     receipt = join_baseline_v2(datasets_root=DATASETS_ROOT, verify_live=True)
-    # Durable checked-in artifact is the compact seal (graph-style).
-    write_baseline_join(receipt, JOIN_PATH, compact=True)
-    assert JOIN_PATH.is_file()
+    candidate = tmp_path / "baseline_join.json"
+    write_baseline_join(receipt, candidate, compact=True)
+    assert candidate.read_bytes() == before
 
-    on_disk = json.loads(JOIN_PATH.read_text(encoding="utf-8"))
+    on_disk = json.loads(candidate.read_text(encoding="utf-8"))
     assert is_compact_baseline_join_seal(on_disk)
     assert on_disk["interface"] == LOGIC_RUNTIME_BASELINE_INTERFACE
     assert on_disk["task_id"] == TASK_ID
@@ -524,7 +535,7 @@ def test_sealed_baseline_join_matches_live_materialization() -> None:
     assert "artifacts" not in on_disk
 
     # Compact seal re-materializes the full owned gap surface.
-    live = load_baseline_join(JOIN_PATH, datasets_root=DATASETS_ROOT)
+    live = load_baseline_join(candidate, datasets_root=DATASETS_ROOT)
     assert live["content_digest"] == receipt["content_digest"]
     assert live["gap_summary"] == receipt["gap_summary"]
     assert live["gap_summary"]["each_gap_has_one_owner"] is True
@@ -532,9 +543,13 @@ def test_sealed_baseline_join_matches_live_materialization() -> None:
         assert gap["owner"]
         assert gap["evidence_obligation"]
 
-    resealed = ensure_baseline_join_seal(JOIN_PATH, datasets_root=DATASETS_ROOT)
+    resealed = ensure_baseline_join_seal(candidate, datasets_root=DATASETS_ROOT)
     assert resealed["content_digest"] == receipt["content_digest"]
     assert resealed["gap_summary"] == receipt["gap_summary"]
+
+    checked_in = ensure_baseline_join_seal(JOIN_PATH, datasets_root=DATASETS_ROOT)
+    assert checked_in["content_digest"] == receipt["content_digest"]
+    assert JOIN_PATH.read_bytes() == before
 
 
 def test_cli_writes_baseline_join(tmp_path: Path) -> None:
@@ -559,13 +574,103 @@ def test_ensure_baseline_join_seal_detects_drift(tmp_path: Path) -> None:
     payload["joined_content_digest"] = "sha256:" + ("0" * 64)
     target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     with pytest.raises(BaselineV2Error, match="digest|drift"):
+        load_baseline_join(
+            target, datasets_root=DATASETS_ROOT, verify_live=False
+        )
+    with pytest.raises(BaselineV2Error, match="digest|drift"):
         ensure_baseline_join_seal(
             target, datasets_root=DATASETS_ROOT, verify_live=False
         )
 
 
 def test_compact_seal_dict_is_self_validating() -> None:
-    seal = to_baseline_join_seal_dict()
+    with pytest.raises(BaselineV2Error, match="full baseline join receipt"):
+        to_baseline_join_seal_dict()
+
+    receipt = join_baseline_v2(datasets_root=DATASETS_ROOT, verify_live=False)
+    seal = to_baseline_join_seal_dict(receipt)
     validate_baseline_join(seal)
     assert is_compact_baseline_join_seal(seal)
     assert seal["capability_lifecycle"]["stages"] == list(LIFECYCLE_STAGES)
+
+    with pytest.raises(BaselineV2Error, match="already compact"):
+        to_baseline_join_seal_dict(seal)
+
+
+def test_compact_seal_validation_rejects_missing_or_weakened_bindings() -> None:
+    receipt = join_baseline_v2(datasets_root=DATASETS_ROOT, verify_live=False)
+    seal = to_baseline_join_seal_dict(receipt)
+
+    weakened: list[dict[str, Any]] = []
+    missing_digest = copy.deepcopy(seal)
+    missing_digest.pop("joined_content_digest")
+    weakened.append(missing_digest)
+
+    malformed_digest = copy.deepcopy(seal)
+    malformed_digest["joined_content_digest"] = "sha256:invalid"
+    weakened.append(malformed_digest)
+
+    missing_summary = copy.deepcopy(seal)
+    missing_summary.pop("gap_summary")
+    weakened.append(missing_summary)
+
+    incomplete_summary = copy.deepcopy(seal)
+    incomplete_summary["gap_summary"].pop("owner_histogram")
+    weakened.append(incomplete_summary)
+
+    false_summary_acceptance = copy.deepcopy(seal)
+    false_summary_acceptance["gap_summary"]["each_gap_has_one_owner"] = False
+    weakened.append(false_summary_acceptance)
+
+    wrong_histogram = copy.deepcopy(seal)
+    wrong_histogram["gap_summary"]["owner_histogram"]["LFP2-001"] += 1
+    weakened.append(wrong_histogram)
+
+    wrong_source_task = copy.deepcopy(seal)
+    wrong_source_task["source_identity"]["tasks"]["claim_runtime_audit"] = "LFP2-999"
+    weakened.append(wrong_source_task)
+
+    wrong_interface = copy.deepcopy(seal)
+    wrong_interface["artifact_interfaces"]["claim_runtime_audit"] = "Other@1"
+    weakened.append(wrong_interface)
+
+    wrong_root = copy.deepcopy(seal)
+    wrong_root["roots"]["datasets_root"] = "/absolute/checkout"
+    weakened.append(wrong_root)
+
+    false_acceptance = copy.deepcopy(seal)
+    false_acceptance["acceptance"]["unsupported_cartesian_cells_are_not_work"] = False
+    weakened.append(false_acceptance)
+
+    for payload in weakened:
+        with pytest.raises(BaselineV2Error):
+            validate_baseline_join(payload)
+
+
+def test_compact_writer_rejects_an_already_compact_seal(tmp_path: Path) -> None:
+    receipt = join_baseline_v2(datasets_root=DATASETS_ROOT, verify_live=False)
+    seal = to_baseline_join_seal_dict(receipt)
+
+    with pytest.raises(BaselineV2Error, match="already compact"):
+        write_baseline_join(seal, tmp_path / "nested.json", compact=True)
+
+
+def test_claim_artifact_live_verification_rejects_resealed_semantic_drift(
+    tmp_path: Path,
+) -> None:
+    payload = build_default_audit(root=DATASETS_ROOT).to_baseline_dict()
+    vampire = next(
+        claim for claim in payload["claims"] if claim["claim_id"] == "provider:vampire"
+    )
+    vampire["support"] = "bounded"
+    vampire["authority_ceiling"] = "advisory"
+    tampered = LogicClaimRuntimeAuditReport.from_dict(payload).to_baseline_dict()
+    target = tmp_path / "claim_runtime_audit.json"
+    target.write_text(json.dumps(tampered) + "\n", encoding="utf-8")
+
+    with pytest.raises(BaselineV2Error, match="exact live materialization"):
+        load_claim_artifact(
+            target,
+            verify_live=True,
+            datasets_root=DATASETS_ROOT,
+        )

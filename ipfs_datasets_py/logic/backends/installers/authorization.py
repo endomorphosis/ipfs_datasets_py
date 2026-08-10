@@ -118,6 +118,11 @@ GAP_ID: Final = "datalog_secpal_external"
 TOOL_SOUFFLE: Final = "souffle"
 TOOL_SECPAL: Final = "secpal"
 EXTERNAL_TOOLS: Final = (TOOL_SOUFFLE, TOOL_SECPAL)
+# The reviewed deployment matrix intentionally advertises no live SecPAL
+# platform.  Keep the historical x86 intake lane separate from that matrix so
+# callers can distinguish an unavailable authentic artifact from a genuinely
+# unsupported host without promoting either case to executable support.
+SECPAL_NOMINAL_VENDOR_PLATFORMS: Final = frozenset({"linux-x86_64"})
 SECPAL_VENDOR_UNAVAILABLE_REASON: Final = "authentic_vendor_artifact_unavailable"
 SECPAL_OFFICIAL_PROJECT_URL: Final = (
     "https://www.microsoft.com/en-us/research/project/secpal/"
@@ -4133,7 +4138,7 @@ def materialize_vendor_secpal(
         )
     if not tool_supported_on_platform(
         tool_id, host, repo_root=repo_root, lock_path=lock_path
-    ):
+    ) and host not in SECPAL_NOMINAL_VENDOR_PLATFORMS:
         raise AuthorizationInstallerError(
             f"external SecPAL is unsupported on {host!r} under the current "
             "deployment contract (narrow platform exception); independent "
@@ -4417,7 +4422,12 @@ def _ensure_tool(
     platform_supported = tool_supported_on_platform(
         tool_id, host_platform, repo_root=repo_root, lock_path=lock_path
     )
-    if is_vendor and not platform_supported:
+    secpal_nominal_unavailable = (
+        is_vendor
+        and tool_id == TOOL_SECPAL
+        and host_platform in SECPAL_NOMINAL_VENDOR_PLATFORMS
+    )
+    if is_vendor and not platform_supported and not secpal_nominal_unavailable:
         secpal_prerequisites = (
             secpal_vendor_prerequisite_report(
                 repo_root=repo_root,
@@ -5056,6 +5066,7 @@ __all__ = [
     "TOOL_SOUFFLE",
     "TOOL_SECPAL",
     "EXTERNAL_TOOLS",
+    "SECPAL_NOMINAL_VENDOR_PLATFORMS",
     "SECPAL_VENDOR_UNAVAILABLE_REASON",
     "SECPAL_OFFICIAL_PROJECT_URL",
     "SECPAL_OFFICIAL_DOWNLOAD_URL",

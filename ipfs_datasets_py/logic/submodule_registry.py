@@ -940,6 +940,20 @@ def logic_optimizer_target_file_hints() -> dict[str, tuple[str, ...]]:
             "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
         ),
     )
+    _extend_unique(
+        hints.setdefault("modal.autoencoder", []),
+        (
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        ),
+    )
+    _extend_unique(
+        hints.setdefault("codex.program_repair", []),
+        (
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        ),
+    )
 
     return {key: tuple(value) for key, value in sorted(hints.items())}
 

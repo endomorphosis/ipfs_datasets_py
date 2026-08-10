@@ -9,11 +9,13 @@ Acceptance:
 
 from __future__ import annotations
 
-import importlib
+import os
+import subprocess
 import sys
+import textwrap
+from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.logic.families.registry import (
     BASELINE_FAMILY_IDS,
     DEFAULT_REGISTRY,
@@ -36,6 +38,8 @@ from ipfs_datasets_py.logic.syntax_core.registry import (
     LogicParserRegistry,
     ParserKey,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_parser_catalog_interface_identity() -> None:
@@ -221,30 +225,57 @@ def test_catalog_validate_closure_requires_all_modules() -> None:
 def test_catalog_module_does_not_import_family_parser_implementations() -> None:
     """Importing catalog must not eagerly load family frontend modules."""
 
-    prefixes = (
-        "ipfs_datasets_py.logic.parsers.fol",
-        "ipfs_datasets_py.logic.parsers.smtlib",
-        "ipfs_datasets_py.logic.parsers.tptp",
-        "ipfs_datasets_py.logic.parsers.modal",
-        "ipfs_datasets_py.logic.parsers.temporal",
-    )
-    for name in list(sys.modules):
-        if any(name == prefix or name.startswith(prefix + ".") for prefix in prefixes):
-            sys.modules.pop(name, None)
-    importlib.invalidate_caches()
-
-    # Re-import catalog only.
-    sys.modules.pop("ipfs_datasets_py.logic.parsers.catalog", None)
-    catalog_mod = importlib.import_module("ipfs_datasets_py.logic.parsers.catalog")
-    catalog = catalog_mod.build_parser_catalog(validate=True)
-    assert catalog.is_inert() is True
-
-    loaded = {
-        name
-        for name in sys.modules
-        if any(name == prefix or name.startswith(prefix + ".") for prefix in prefixes)
+    parent_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "ipfs_datasets_py.logic.parsers.catalog"
+        or name.startswith("ipfs_datasets_py.logic.parsers.catalog.")
     }
-    assert loaded == set(), sorted(loaded)
+    script = textwrap.dedent(
+        """
+        import importlib
+        import sys
+
+        prefixes = (
+            "ipfs_datasets_py.logic.parsers.fol",
+            "ipfs_datasets_py.logic.parsers.smtlib",
+            "ipfs_datasets_py.logic.parsers.tptp",
+            "ipfs_datasets_py.logic.parsers.modal",
+            "ipfs_datasets_py.logic.parsers.temporal",
+        )
+        catalog_mod = importlib.import_module("ipfs_datasets_py.logic.parsers.catalog")
+        catalog = catalog_mod.build_parser_catalog(validate=True)
+        assert catalog.is_inert() is True
+        loaded = {
+            name
+            for name in sys.modules
+            if any(name == prefix or name.startswith(prefix + ".") for prefix in prefixes)
+        }
+        assert loaded == set(), sorted(loaded)
+        print("ok")
+        """
+    )
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONPATH"] = os.pathsep.join(
+        part
+        for part in (str(REPO_ROOT), env.get("PYTHONPATH", ""))
+        if part
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=str(REPO_ROOT),
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "ok" in completed.stdout
+    for name, module in parent_modules.items():
+        assert sys.modules.get(name) is module
 
 
 def test_default_catalog_round_trip() -> None:

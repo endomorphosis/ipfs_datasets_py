@@ -1,11 +1,12 @@
 import importlib
+import subprocess
 import sys
 import warnings
 from pathlib import Path
 
 
 def test_integration_has_no_logging_basicconfig_calls() -> None:
-    repo_root = Path(__file__).resolve().parents[5]
+    repo_root = Path(__file__).resolve().parents[4]
     integration_dir = repo_root / "ipfs_datasets_py" / "logic" / "integration"
 
     offenders: list[Path] = []
@@ -54,3 +55,30 @@ def test_legal_symbolic_analyzer_import_is_symai_quiet() -> None:
 
     if not symai_was_loaded:
         assert "symai" not in sys.modules, "symai should not be imported at module import time"
+
+
+def test_deontic_logic_core_import_is_symai_quiet_in_fresh_interpreter() -> None:
+    """The converters package boundary must not eagerly load optional runtimes."""
+
+    repo_root = Path(__file__).resolve().parents[4]
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import importlib, sys; "
+                "assert 'symai' not in sys.modules; "
+                "importlib.import_module("
+                "'ipfs_datasets_py.logic.integration.converters.deontic_logic_core'"
+                "); "
+                "assert 'symai' not in sys.modules"
+            ),
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr

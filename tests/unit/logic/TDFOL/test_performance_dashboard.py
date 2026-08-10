@@ -781,9 +781,10 @@ def test_export_json_with_data(dashboard, sample_proof_result, temporal_proof_re
             data = json.load(f)
         
         assert data['metadata']['total_proofs'] == 2
-        assert data['metadata']['total_metrics'] == 3  # 2 from record_proof + 1 custom
+        # Each proof records latency plus a cache hit/miss event.
+        assert data['metadata']['total_metrics'] == 5
         assert len(data['proof_metrics']) == 2
-        assert len(data['timeseries_metrics']) == 3
+        assert len(data['timeseries_metrics']) == 5
         assert 'statistics' in data
         assert 'strategy_comparison' in data
     finally:
