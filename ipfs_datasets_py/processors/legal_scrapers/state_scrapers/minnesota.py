@@ -4,6 +4,7 @@ This module contains the scraper for Minnesota statutes from the official state 
 """
 
 import asyncio
+import os
 from typing import List, Dict
 import re
 import urllib.request
@@ -55,19 +56,25 @@ class MinnesotaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        allow_justia = str(
+            os.getenv("STATE_SCRAPER_MN_ALLOW_JUSTIA_FALLBACK", "0")
+        ).strip().lower() in {"1", "true", "yes", "on"}
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/statutes/cite/609.02",
             f"{self.get_base_url()}/statutes/",
             f"{self.get_base_url()}/statutes/cite/645.44",
-            "https://law.justia.com/codes/minnesota/",
         ]
+        # Secondary Justia mirrors are never sole full-corpus admission unless
+        # explicitly re-enabled; bounded probes may still use them as last resort.
+        if allow_justia or (not self._full_corpus_enabled()):
+            candidate_urls.append("https://law.justia.com/codes/minnesota/")
 
         seen = set()
         merged: List[NormalizedStatute] = []
         merged_keys = set()
         limit = self._effective_scrape_limit(max_statutes, default=420)
-        enough = min(80, limit or 80)
+        enough = min(80, limit or 80) if limit is not None else 80
 
         def _merge(items: List[NormalizedStatute]) -> None:
             for statute in items:
@@ -83,18 +90,29 @@ class MinnesotaScraper(BaseStateScraper):
             direct_seed = await self._build_statute_from_section_page(code_name, code_url)
             if direct_seed is not None:
                 _merge([direct_seed])
-                if len(merged) >= enough:
+                if limit is not None and len(merged) >= enough:
                     return merged
 
-        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=limit or 1000000)
+        chapter_statutes = await self._scrape_chapter_sections(
+            code_name,
+            max_statutes=limit if limit is not None else 1000000,
+        )
         _merge(chapter_statutes)
         if len(merged) >= enough:
-            return merged
+            # Prefer official revisor chapter tree; never sole-admit Justia.
+            if self._full_corpus_enabled() and not allow_justia:
+                merged = [
+                    s for s in merged
+                    if "justia.com" not in str(s.source_url or "").lower()
+                ]
+            return merged if limit is None else merged[: int(limit)]
 
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
             seen.add(candidate)
+            if self._full_corpus_enabled() and "justia.com" in str(candidate).lower() and not allow_justia:
+                continue
 
             if self.has_playwright():
                 try:
@@ -107,19 +125,29 @@ class MinnesotaScraper(BaseStateScraper):
                         timeout=45000,
                     )
                     statutes = self._filter_section_level(statutes)
+                    if self._full_corpus_enabled() and not allow_justia:
+                        statutes = [
+                            s for s in statutes
+                            if "justia.com" not in str(s.source_url or "").lower()
+                        ]
                     _merge(statutes)
-                    if len(merged) >= enough:
+                    if limit is not None and len(merged) >= enough:
                         return merged
                 except Exception:
                     pass
 
             statutes = await self._generic_scrape(code_name, candidate, "Minn. Stat.", max_sections=limit or 1000000)
             statutes = self._filter_section_level(statutes)
+            if self._full_corpus_enabled() and not allow_justia:
+                statutes = [
+                    s for s in statutes
+                    if "justia.com" not in str(s.source_url or "").lower()
+                ]
             _merge(statutes)
-            if len(merged) >= enough:
+            if limit is not None and len(merged) >= enough:
                 return merged
 
-        return merged
+        return merged if limit is None else merged[: int(limit)]
 
     async def _scrape_chapter_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         try:

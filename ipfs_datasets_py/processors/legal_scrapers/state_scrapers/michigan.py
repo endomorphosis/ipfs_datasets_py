@@ -40,22 +40,36 @@ class MichiganScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         official = await self._scrape_official_chapter_index(code_name, max_statutes=limit)
         if official:
-            return official[:limit]
+            return official if limit is None else official[: int(limit)]
 
         if not self._full_corpus_enabled() or max_statutes is not None:
-            direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
+            direct_limit = limit if limit is not None else 160
+            direct = await self._scrape_direct_sections(code_name, max_statutes=direct_limit)
             if direct:
-                return direct
-        return await self._generic_scrape(code_name, code_url, "Mich. Comp. Laws", max_sections=max(10, limit))
+                return direct if limit is None else direct[: int(limit)]
+        generic_cap = limit if limit is not None else 1000000
+        return await self._generic_scrape(
+            code_name,
+            code_url,
+            "Mich. Comp. Laws",
+            max_sections=max(10, int(generic_cap)),
+        )
 
-    async def _scrape_official_chapter_index(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_official_chapter_index(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
 
         index_url = f"{self.get_base_url()}/Laws/ChapterIndex"
         payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=18)
@@ -78,12 +92,12 @@ class MichiganScraper(BaseStateScraper):
         statutes: list[NormalizedStatute] = []
         seen_sections: set[str] = set()
         for chapter_label, chapter_url in chapter_links:
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
             act_url = await self._discover_act_url_from_chapter(chapter_url)
             act_sections = await self._discover_section_urls_from_act(act_url or chapter_url)
             for section_url in act_sections:
-                if len(statutes) >= max_statutes:
+                if limit is not None and len(statutes) >= limit:
                     break
                 statute = await self._build_statute_from_section_page(
                     code_name=code_name,
