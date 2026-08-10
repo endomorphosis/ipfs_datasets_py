@@ -463,7 +463,7 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 ## LCR-G145 Reseal live source rights and publication authority after hardening
 - Status: active
 - Parent: LCR-G080
-- Depends on: LCR-G142, LCR-G144
+- Depends on: LCR-G142, LCR-G143, LCR-G144
 - Fib priority: 1
 - Track: source-rights-authority-reseal
 - Priority: P0

@@ -2084,7 +2084,7 @@ Initial sealed population: `LCR-000` through `LCR-069`. Continuation tasks may b
 - Review only: false
 - Priority: P0
 - Track: source-rights-authority-reseal
-- Depends on: LCR-080, LCR-082
+- Depends on: LCR-080, LCR-081, LCR-082
 - Goal id: LCR-G145
 - Outputs: data/legal/legal_source_rights_catalog.json, docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json, ipfs_datasets_py/processors/legal_data/state_laws_release_schema.py, tests/unit/processors/legal_data/test_state_laws_release_schema.py, ipfs_datasets_py/processors/legal_data/federal_register_release_schema.py, tests/unit/processors/legal_data/test_federal_register_release_schema.py, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_gate.py, ipfs_datasets_py/processors/legal_data/legal_corpora_publication_runtime.py, tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py, tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py, tests/fixtures/legal_ir/legal_source_rights_publication_gate.json
 - Validation: python scripts/ops/legal_data/audit_legal_source_rights.py --require-live-source-evidence --check; python -m pytest tests/unit/processors/legal_data/test_state_laws_release_schema.py tests/unit/processors/legal_data/test_federal_register_release_schema.py tests/unit/processors/legal_data/test_legal_corpora_publication_gate.py tests/unit/processors/legal_data/test_legal_corpora_publication_runtime.py -q
