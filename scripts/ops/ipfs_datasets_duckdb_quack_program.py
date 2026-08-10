@@ -2971,6 +2971,28 @@ def _repository_pending_tip_is_valid(
         return False, f"{request_id or '?'}: {exc}"
 
 
+def _repository_protected_bootstrap_commit_is_valid(
+    parent: str,
+    commit: str,
+) -> bool:
+    """Return True when a linear commit only evolves protected bootstrap paths."""
+
+    changed = set(_git_changed_paths(parent, commit))
+    if not changed:
+        return False
+    protected = set(_implementation_protected_paths())
+    if not changed.issubset(protected):
+        return False
+    # The accelerator gitlink must remain exactly the previously admitted pin.
+    before = _git("ls-tree", parent, "--", "ipfs_accelerate_py").split()
+    after = _git("ls-tree", commit, "--", "ipfs_accelerate_py").split()
+    return (
+        len(before) >= 3
+        and len(after) >= 3
+        and before[:3] == after[:3]
+    )
+
+
 def _repository_release_commit_is_valid(
     commit: str,
     parent: str,
@@ -3193,11 +3215,19 @@ def _repository_binding_is_launch_compatible(
                     authority=authority,
                     admitted_task_cids=admitted_task_cids,
                 )
-                if not release_ok:
-                    return False, f"unadmitted linear commit {descendant}: {release_detail}"
-                admitted_releases += 1
-                previous = descendant
-                continue
+                if release_ok:
+                    admitted_releases += 1
+                    previous = descendant
+                    continue
+                # After the authenticated DQK-056 pin, allow first-parent commits
+                # that only evolve implementation-protected bootstrap artifacts
+                # (ops scripts / locks) without undoing the gitlink pin.
+                if admitted_releases and _repository_protected_bootstrap_commit_is_valid(
+                    previous, descendant
+                ):
+                    previous = descendant
+                    continue
+                return False, f"unadmitted linear commit {descendant}: {release_detail}"
             if len(parents) != 2:
                 return False, f"commit {descendant} is not an exact no-ff task merge"
             if queue_rows is None:
