@@ -2225,18 +2225,27 @@ def verify_runtime_activation_permit(
 
     # Content-bound identity fields.  Prefer the permit's declared values when
     # present; otherwise rederive them so operators can omit pre-computed CIDs.
-    env_digest = str(
-        permit.get("environment_digest")
-        or environment_receipt.get("probe", {}).get("toolchain_id")
-        or environment_receipt.get("receipt_id")
-        or ""
-    ).strip()
+    # Never re-derive historical identity fields from a rotated live env receipt
+    # — restart authentication must recover the same CIDs that CAS sealed.
+    env_digest = str(permit.get("environment_digest") or "").strip()
+    if not env_digest:
+        # Prefer the permit-bound receipt identity so restart authentication
+        # re-derives the same activation CIDs even after live env re-attestation.
+        env_digest = env_receipt_id
+    if not env_digest:
+        env_digest = str(
+            environment_receipt.get("probe", {}).get("toolchain_id")
+            or environment_receipt.get("receipt_id")
+            or ""
+        ).strip()
     if not env_digest:
         env_digest = "sha256:" + hashlib.sha256(raw_bytes).hexdigest()
     if not env_digest.startswith("sha256:"):
         env_digest = "sha256:" + hashlib.sha256(env_digest.encode("utf-8")).hexdigest()
 
     runtime_generation_id = str(permit.get("runtime_generation_id") or "").strip()
+    decision_cid = str(permit.get("decision_cid") or "").strip()
+    activation_receipt_cid = str(permit.get("activation_receipt_cid") or "").strip()
     if not runtime_generation_id:
         runtime_generation_id = content_identity(
             {
@@ -2248,8 +2257,6 @@ def verify_runtime_activation_permit(
                 "environment_digest": env_digest,
             }
         )
-
-    decision_cid = str(permit.get("decision_cid") or "").strip()
     if not decision_cid:
         decision_cid = content_identity(
             {
@@ -2262,8 +2269,6 @@ def verify_runtime_activation_permit(
                 "expires_at": expires_at,
             }
         )
-
-    activation_receipt_cid = str(permit.get("activation_receipt_cid") or "").strip()
     if not activation_receipt_cid:
         activation_receipt_cid = content_identity(
             {
