@@ -978,6 +978,166 @@ def test_optional_duckdb_connection_installs_schema_and_persists(
     conn.close()
 
 
+def test_process_restart_mid_commit_uses_durable_authority_no_skip_or_dup(
+    chain: ChainRef,
+    provenance: Provenance,
+    context: OperationContext,
+) -> None:
+    """Crash mid-commit + new store on same connection: no skip/duplicate.
+
+    Proves staging/checkpoint authority lives in durable DuckDB control tables,
+    not process-local memory alone (acceptance: crash recovery).
+    """
+
+    duckdb = pytest.importorskip("duckdb")
+    conn = duckdb.connect(":memory:")
+    store = open_wallet_store(connection=conn, scope="wallet:restart")
+    blocks = [
+        _block(chain, provenance, sequence=i, block_hash=f"0xr{i:02x}")
+        for i in range(1, 5)
+    ]
+    _run(store.write(RecordBatch(records=tuple(blocks)), context=context))
+    assert store.count_records("blocks") == 0
+    marked = store.simulate_crash_before_commit_finalize()
+    assert marked
+    dropped = store.simulate_crash_drop_open_stages_from_memory()
+    assert dropped
+    assert store.count_records("blocks") == 0
+
+    # Process restart: fresh store hydrates from connection and recovers.
+    restarted = open_wallet_store(connection=conn, scope="wallet:restart")
+    assert restarted.count_records("blocks") == 4
+    durable = conn.execute("SELECT COUNT(*) FROM blocks").fetchone()[0]
+    assert durable == 4
+    # Replay must not invent duplicates.
+    again = _run(
+        restarted.write(RecordBatch(records=tuple(blocks)), context=context)
+    )
+    assert again.accepted_count == 0
+    assert again.duplicate_count == 4
+    _run(restarted.commit(None, context=context))
+    assert restarted.count_records("blocks") == 4
+    conn.close()
+
+
+def test_process_restart_checkpoint_cas_rejects_stale_and_retains_reorg(
+    chain: ChainRef,
+    provenance: Provenance,
+    identity: CheckpointIdentity,
+    context: OperationContext,
+) -> None:
+    """After process restart, CAS still rejects stale tips; reorg rows remain."""
+
+    duckdb = pytest.importorskip("duckdb")
+    conn = duckdb.connect(":memory:")
+    store = open_wallet_store(connection=conn, scope="wallet:cas-reorg")
+    first = build_checkpoint(
+        identity, sequence=10, block_hash="0x0a", safety_depth=12
+    )
+    assert _run(
+        store.compare_and_set(
+            identity.key,
+            expected_revision=None,
+            checkpoint=first,
+            context=context,
+        )
+    )
+    tip_revision = first.revision
+    reorg = ReorgDecision(
+        kind=ReorgKind.SHALLOW,
+        checkpoint_anchor=HashAnchor(10, "0x0a"),
+        observed_anchor=HashAnchor(10, "0x0aalt"),
+        common_ancestor=HashAnchor(9, "0x09"),
+        orphaned_anchors=(HashAnchor(10, "0x0a"),),
+        corrections=(),
+        rewind_sequence=9,
+        review_required=False,
+        reason="shallow reorg retained across restart",
+    )
+    reorg_row = store.record_reorg(reorg, chain=chain, provenance=provenance)
+    reorg_id = reorg_row["reorg_id"]
+
+    # Wipe process-local stage state; durable heads/reorgs remain in DuckDB.
+    store.simulate_crash_drop_open_stages_from_memory()
+    restarted = open_wallet_store(connection=conn, scope="wallet:cas-reorg")
+
+    # Stale ingester still rejected after rehydrate.
+    stale = build_checkpoint(
+        identity,
+        sequence=11,
+        block_hash="0x0b",
+        safety_depth=12,
+        prior_history=first.history,
+    )
+    accepted = _run(
+        restarted.compare_and_set(
+            identity.key,
+            expected_revision="revision:stale-or-wrong",
+            checkpoint=stale,
+            context=context,
+        )
+    )
+    assert accepted is False
+    current = _run(restarted.load(identity.key, context=context))
+    assert current is not None
+    assert current.revision == tip_revision
+    assert current.anchor.sequence == 10
+
+    # Matching CAS advances after restart.
+    next_cp = build_checkpoint(
+        identity,
+        sequence=11,
+        block_hash="0x0b",
+        safety_depth=12,
+        prior_history=current.history,
+    )
+    assert _run(
+        restarted.compare_and_set(
+            identity.key,
+            expected_revision=tip_revision,
+            checkpoint=next_cp,
+            context=context,
+        )
+    )
+    # Reorg history retained (not overwritten by restart).
+    history = restarted.list_reorgs(chain_ref_id=chain.chain_ref_id)
+    assert any(h["reorg_id"] == reorg_id for h in history)
+    assert any(
+        h.get("reason") == "shallow reorg retained across restart" for h in history
+    )
+    conn.close()
+
+
+def test_rehydrate_from_connection_finalizes_committing_batches(
+    chain: ChainRef,
+    provenance: Provenance,
+    context: OperationContext,
+) -> None:
+    """rehydrate_from_connection reloads durable stages and recovers once."""
+
+    duckdb = pytest.importorskip("duckdb")
+    conn = duckdb.connect(":memory:")
+    store = open_wallet_store(connection=conn, scope="wallet:rehydrate")
+    blocks = [
+        _block(chain, provenance, sequence=i, block_hash=f"0xh{i:02x}")
+        for i in (1, 2, 3)
+    ]
+    _run(store.write(RecordBatch(records=tuple(blocks)), context=context))
+    store.simulate_crash_before_commit_finalize()
+    store.simulate_crash_drop_open_stages_from_memory()
+    assert store.count_records("blocks") == 0
+
+    result = store.rehydrate_from_connection()
+    assert result["rehydrated"] == 1
+    assert result["recovered_commits"] == 1
+    assert store.count_records("blocks") == 3
+    # Second rehydrate is a no-op for already-committed stages.
+    again = store.rehydrate_from_connection()
+    assert again["recovered_commits"] == 0
+    assert store.count_records("blocks") == 3
+    conn.close()
+
+
 def test_factory_open_wallet_store() -> None:
     store = open_wallet_store(scope="s")
     assert isinstance(store, DuckDBWalletStore)
