@@ -16,6 +16,13 @@ remain the content authority. Legacy SQLite writes become outbox projections;
 promotion and rollback are CAS-fenced and receipted. Readers bind one branch
 revision for the duration of a promotion window so they never observe split
 brain on branch heads.
+
+DQK-061 removes implicit SQLite fallback and mutable JSON control reads/writes
+from graph producers. After promotion, DuckDB is the sole control-plane
+authority; SQLite and mutable control JSON (``authority.json``, ``index.json``,
+``catalog.sqlite``) are explicit import/export compatibility only. Immutable
+identity-bearing Parquet/IPLD manifests remain content authority. Publication
+exposes only sanitized graph views.
 """
 
 from __future__ import annotations
@@ -83,8 +90,42 @@ GRAPH_AUTHORITY_SCHEMA: str = (
 )
 GRAPH_AUTHORITY_OWNER_TASK: str = "DQK-060"
 
+# DQK-061: DuckDB-only graph control (no implicit SQLite/JSON control I/O).
+GRAPH_DUCKDB_ONLY_DOMAIN: str = GRAPH_SHADOW_DOMAIN
+GRAPH_DUCKDB_ONLY_SCHEMA: str = (
+    "ipfs_datasets_py/knowledge-graphs-duckdb-only-control@1"
+)
+GRAPH_DUCKDB_ONLY_OWNER_TASK: str = "DQK-061"
+GRAPH_PUBLICATION_TYPE: str = "graph_quack_publication_v1"
+GRAPH_PUBLICATION_SCHEMA_VERSION: str = "1"
+
+# Filenames / globs guarded against implicit mutable graph-control I/O.
+_GUARDED_SQLITE_SUFFIXES: tuple[str, ...] = (".sqlite", ".sqlite3", ".db")
+_GUARDED_CONTROL_JSON_NAMES: frozenset[str] = frozenset(
+    {
+        "authority.json",
+        "index.json",
+        "catalog.json",
+        "graphs.json",
+        "branches.json",
+        "control.json",
+        "graph-control.json",
+        "graph_control.json",
+    }
+)
+_GUARDED_SQLITE_BASENAMES: frozenset[str] = frozenset(
+    {
+        "catalog.sqlite",
+        "catalog.sqlite3",
+        "graph_catalog.sqlite",
+        "kg_catalog.sqlite",
+        "graphs.sqlite",
+    }
+)
+
 _process_shadow_lock = threading.RLock()
 _process_shadow_authority: Optional["GraphShadowAuthority"] = None
+_process_filesystem_guard: Optional["GraphLegacyFilesystemGuard"] = None
 
 _SCHEMA_VERSION = 1
 
@@ -2119,6 +2160,1193 @@ class ReaderRevisionBinding:
         }
 
 
+# ---------------------------------------------------------------------------
+# DQK-061: filesystem guards + DuckDB-only catalog facade
+# ---------------------------------------------------------------------------
+
+
+class ImplicitLegacyGraphControlError(RuntimeError):
+    """Raised when normal runtime attempts mutable SQLite/JSON graph-control I/O."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        path: str = "",
+        kind: str = "",
+        operation: str = "write",
+    ) -> None:
+        super().__init__(message)
+        self.path = path
+        self.kind = kind
+        self.operation = operation
+
+
+class GraphLegacyFilesystemGuard:
+    """Blocks implicit SQLite catalog and mutable graph-control JSON I/O (DQK-061).
+
+    Explicit import/export compatibility methods obtain a short-lived permit via
+    :meth:`permit_import` / :meth:`permit_export`. Immutable identity-bearing
+    CID manifests (``meta/<cid>.json`` with a CID stem) are not guarded.
+    """
+
+    def __init__(self, *, allow_legacy_io: bool = True) -> None:
+        self._lock = threading.RLock()
+        self._export_permits: int = 0
+        self._import_permits: int = 0
+        self._allow_legacy_io: bool = bool(allow_legacy_io)
+
+    @property
+    def allow_legacy_io(self) -> bool:
+        with self._lock:
+            return self._allow_legacy_io
+
+    @allow_legacy_io.setter
+    def allow_legacy_io(self, value: bool) -> None:
+        with self._lock:
+            self._allow_legacy_io = bool(value)
+
+    @contextmanager
+    def permit_export(self) -> Iterator[None]:
+        with self._lock:
+            self._export_permits += 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._export_permits = max(0, self._export_permits - 1)
+
+    @contextmanager
+    def permit_import(self) -> Iterator[None]:
+        with self._lock:
+            self._import_permits += 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._import_permits = max(0, self._import_permits - 1)
+
+    def _has_permit(self) -> bool:
+        with self._lock:
+            return self._export_permits > 0 or self._import_permits > 0
+
+    @staticmethod
+    def classify_path(path: Path | str) -> Optional[str]:
+        """Return the guarded kind for *path*, or ``None`` if unguarded."""
+
+        p = Path(path)
+        name = p.name
+        lower = name.lower()
+        if lower in _GUARDED_SQLITE_BASENAMES or lower.endswith(
+            _GUARDED_SQLITE_SUFFIXES
+        ):
+            # DuckDB authority files are not legacy SQLite control.
+            if lower.endswith(".duckdb"):
+                return None
+            if "catalog" in lower or "graph" in lower or lower.endswith(
+                _GUARDED_SQLITE_SUFFIXES
+            ):
+                return "catalog_sqlite"
+        if lower in _GUARDED_CONTROL_JSON_NAMES:
+            return "mutable_control_json"
+        # meta/<cid>.json is identity-bearing (CID stem) — not mutable control.
+        if lower.endswith(".json") and p.parent.name == "meta":
+            stem = p.stem
+            if stem.startswith("bafy") or stem.startswith("Qm") or len(stem) >= 46:
+                return None
+        return None
+
+    def is_guarded_path(self, path: Path | str) -> bool:
+        return self.classify_path(path) is not None
+
+    def assert_allowed(
+        self,
+        path: Path | str,
+        *,
+        kind: Optional[str] = None,
+        operation: str = "write",
+    ) -> None:
+        classified = kind or self.classify_path(path)
+        if classified is None:
+            return
+        with self._lock:
+            allowed = self._allow_legacy_io or self._has_permit()
+        if allowed:
+            return
+        raise ImplicitLegacyGraphControlError(
+            f"implicit {operation} of {classified} blocked after DuckDB-only "
+            f"graph control promotion: {path} (use explicit import/export "
+            f"compatibility methods; owner_task={GRAPH_DUCKDB_ONLY_OWNER_TASK})",
+            path=str(path),
+            kind=classified,
+            operation=operation,
+        )
+
+    def check_path_write(self, path: Path | str, *, kind: str = "") -> None:
+        self.assert_allowed(path, kind=kind or None, operation="write")
+
+    def check_path_read(self, path: Path | str, *, kind: str = "") -> None:
+        self.assert_allowed(path, kind=kind or None, operation="read")
+
+
+def get_graph_filesystem_guard() -> GraphLegacyFilesystemGuard:
+    """Return the process-local legacy graph-control filesystem guard."""
+
+    global _process_filesystem_guard
+    with _process_shadow_lock:
+        if _process_filesystem_guard is None:
+            _process_filesystem_guard = GraphLegacyFilesystemGuard(
+                allow_legacy_io=True
+            )
+        return _process_filesystem_guard
+
+
+def reset_graph_filesystem_guard() -> None:
+    """Drop the process-local filesystem guard (tests)."""
+
+    global _process_filesystem_guard
+    with _process_shadow_lock:
+        _process_filesystem_guard = None
+
+
+def legacy_graph_control_io_allowed() -> bool:
+    """True when SQLite/mutable JSON graph-control I/O is still permitted."""
+
+    auth = _process_shadow_authority
+    if auth is not None and not auth.legacy_io_allowed:
+        guard = get_graph_filesystem_guard()
+        if not guard._has_permit():  # noqa: SLF001
+            return False
+        return True
+    return (
+        get_graph_filesystem_guard().allow_legacy_io
+        or get_graph_filesystem_guard()._has_permit()  # noqa: SLF001
+    )
+
+
+def duckdb_only_graph_control() -> bool:
+    """True when DuckDB is sole graph-control authority (no silent SQLite fallback)."""
+
+    auth = _process_shadow_authority
+    if auth is None or not auth.enabled:
+        return False
+    mode = (auth.mode or "").lower()
+    return mode in {
+        "db-primary",
+        "db_primary",
+        "export-only",
+        "export_only",
+        "duckdb",
+    }
+
+
+def assert_graph_control_path_allowed(
+    path: Path | str,
+    *,
+    kind: Optional[str] = None,
+    operation: str = "write",
+) -> None:
+    """Raise :class:`ImplicitLegacyGraphControlError` if *path* is blocked."""
+
+    get_graph_filesystem_guard().assert_allowed(
+        path, kind=kind, operation=operation
+    )
+
+
+class DuckDBCatalogFacade:
+    """DuckDB-backed catalog implementing the GraphCatalog service surface (DQK-061).
+
+    Used when legacy ``catalog.sqlite`` is absent. Control mutations land only
+    in DuckDB; SQLite import/export is explicit and permit-gated.
+    """
+
+    def __init__(
+        self,
+        path: PathLike,
+        *,
+        shadow_authority: Optional["GraphShadowAuthority"] = None,
+    ) -> None:
+        from ipfs_datasets_py.knowledge_graphs.catalog.duckdb_store import (
+            DuckDBGraphCatalog,
+        )
+
+        self._path = Path(path)
+        if self._path.parent and str(self._path.parent) not in ("", "."):
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+        self._duck = DuckDBGraphCatalog(self._path)
+        self._shadow_authority: Optional["GraphShadowAuthority"] = shadow_authority
+        self._closed = False
+        self._lock = threading.RLock()
+        # Marker so callers can detect duckdb-only catalogs.
+        self.backend_kind: str = "duckdb"
+        self.legacy_sqlite_absent: bool = True
+
+    # -- authority binding --------------------------------------------------
+
+    @property
+    def shadow_authority(self) -> Optional["GraphShadowAuthority"]:
+        return self._shadow_authority
+
+    def attach_shadow_authority(
+        self, authority: Optional["GraphShadowAuthority"]
+    ) -> None:
+        self._shadow_authority = authority
+
+    attach_authority = attach_shadow_authority
+
+    @property
+    def authority(self) -> Optional["GraphShadowAuthority"]:
+        return self._shadow_authority
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+    def close(self) -> None:
+        with self._lock:
+            if self._closed:
+                return
+            try:
+                self._duck.close()
+            finally:
+                self._closed = True
+
+    def __enter__(self) -> "DuckDBCatalogFacade":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+    def _ensure_open(self) -> None:
+        if self._closed:
+            raise CatalogError("STORAGE", "catalog is closed")
+
+    def _notify_shadow(
+        self,
+        operation: str,
+        result: Any,
+        args: tuple[Any, ...],
+        kwargs: Mapping[str, Any],
+    ) -> None:
+        shadow = self._shadow_authority
+        if shadow is None:
+            return
+        try:
+            # DuckDB is already authority; journal without re-mirroring into itself.
+            tenant = args[0] if args else kwargs.get("tenant")
+            graph_id = args[1] if len(args) > 1 else kwargs.get("graph_id")
+            if (not tenant or not graph_id) and result is not None:
+                tenant = getattr(result, "tenant", tenant)
+                graph_id = getattr(result, "graph_id", graph_id)
+            shadow.record_operation(
+                producer="catalog",
+                kind=operation,
+                key=f"graph:{tenant}/{graph_id}",
+                payload={
+                    "operation": operation,
+                    "backend": "duckdb",
+                    "legacy_sqlite_absent": True,
+                    "args_preview": [str(a) for a in args[:4]],
+                },
+                operation_id=new_graph_operation_id(f"catalog.{operation}"),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "duckdb-only catalog journal quarantined op=%s: %s",
+                operation,
+                exc,
+            )
+
+    def _wrap(self, operation: str, fn: Any, *args: Any, **kwargs: Any) -> Any:
+        self._ensure_open()
+        result = fn(*args, **kwargs)
+        self._notify_shadow(operation, result, args, kwargs)
+        return result
+
+    # -- lifecycle API (GraphCatalog-compatible) ----------------------------
+
+    def create_graph(
+        self,
+        tenant: str,
+        graph_id: str,
+        *,
+        branch: str = DEFAULT_BRANCH,
+        storage_profile: Optional[str] = None,
+        graph_kind: Optional[str] = None,
+        pin_root: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
+        metadata: Optional[Mapping[str, Any]] = None,
+    ) -> GraphRecord:
+        profile = require_storage_profile(storage_profile)
+        kind = require_graph_kind(graph_kind)
+        branch = require_slug(branch, field="branch")
+
+        def _do() -> GraphRecord:
+            rec = self._duck.create_graph(
+                tenant,
+                graph_id,
+                storage_profile=profile,
+                graph_kind=kind,
+                default_branch=branch,
+                metadata=metadata,
+                idempotency_key=idempotency_key,
+            )
+            if pin_root:
+                boot = bootstrap_revision_id(tenant, graph_id)
+                try:
+                    self._duck.set_pin_root(
+                        tenant, graph_id, boot, pin_root, pin_kind="revision"
+                    )
+                except Exception:  # noqa: BLE001
+                    pass
+            return rec
+
+        return self._wrap("create_graph", _do)
+
+    def list_graphs(
+        self,
+        tenant: str,
+        *,
+        include_tombstoned: bool = False,
+    ) -> List[GraphRecord]:
+        tenant = require_slug(tenant, field="tenant")
+        self._ensure_open()
+        with self._duck._txn() as conn:  # noqa: SLF001
+            if include_tombstoned:
+                rows = self._duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM graphs WHERE tenant = ? ORDER BY graph_id",
+                    [tenant],
+                )
+            else:
+                rows = self._duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM graphs WHERE tenant = ? AND status = 'active' "
+                    "ORDER BY graph_id",
+                    [tenant],
+                )
+            return [self._duck._graph_from_row(r) for r in rows]  # noqa: SLF001
+
+    def get_graph(
+        self,
+        tenant: str,
+        graph_id: str,
+        *,
+        allow_tombstoned: bool = False,
+    ) -> GraphRecord:
+        tenant = require_slug(tenant, field="tenant")
+        graph_id = require_slug(graph_id, field="graph_id")
+        self._ensure_open()
+        with self._duck._txn() as conn:  # noqa: SLF001
+            row = self._duck._fetchone(  # noqa: SLF001
+                conn,
+                "SELECT * FROM graphs WHERE tenant = ? AND graph_id = ?",
+                [tenant, graph_id],
+            )
+            if row is None:
+                raise CatalogError(
+                    "NOT_FOUND",
+                    "graph not found",
+                    details={"tenant": tenant, "graph_id": graph_id},
+                )
+            if not allow_tombstoned and row["status"] != "active":
+                raise CatalogError(
+                    "NOT_FOUND",
+                    "graph not found",
+                    details={"tenant": tenant, "graph_id": graph_id},
+                )
+            return self._duck._graph_from_row(row)  # noqa: SLF001
+
+    def describe_graph(
+        self,
+        tenant: str,
+        graph_id: str,
+        *,
+        branch: Optional[str] = None,
+        include_tombstoned_branches: bool = False,
+    ) -> GraphDescription:
+        graph = self.get_graph(tenant, graph_id, allow_tombstoned=True)
+        self._ensure_open()
+        with self._duck._txn() as conn:  # noqa: SLF001
+            if branch is not None:
+                branch = require_slug(branch, field="branch")
+                brow = self._duck._fetchone(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM branches WHERE tenant = ? AND graph_id = ? "
+                    "AND branch = ?",
+                    [tenant, graph_id, branch],
+                )
+                if brow is None:
+                    raise CatalogError(
+                        "NOT_FOUND",
+                        "branch not found",
+                        details={
+                            "tenant": tenant,
+                            "graph_id": graph_id,
+                            "branch": branch,
+                        },
+                    )
+                branches = (self._duck._branch_from_row(brow).to_dict(),)  # noqa: SLF001
+                head = (
+                    brow["head_revision"] if brow["status"] == "active" else None
+                )
+            else:
+                if include_tombstoned_branches:
+                    brows = self._duck._fetchall(  # noqa: SLF001
+                        conn,
+                        "SELECT * FROM branches WHERE tenant = ? AND graph_id = ? "
+                        "ORDER BY branch",
+                        [tenant, graph_id],
+                    )
+                else:
+                    brows = self._duck._fetchall(  # noqa: SLF001
+                        conn,
+                        "SELECT * FROM branches WHERE tenant = ? AND graph_id = ? "
+                        "AND status = 'active' ORDER BY branch",
+                        [tenant, graph_id],
+                    )
+                branches = tuple(
+                    self._duck._branch_from_row(r).to_dict() for r in brows  # noqa: SLF001
+                )
+                head = None
+                for r in brows:
+                    if r["branch"] == graph.default_branch and r["status"] == "active":
+                        head = r["head_revision"]
+                        break
+                if head is None:
+                    for r in brows:
+                        if r["status"] == "active":
+                            head = r["head_revision"]
+                            break
+        return GraphDescription(
+            tenant=graph.tenant,
+            graph_id=graph.graph_id,
+            uri=graph.uri,
+            storage_profile=graph.storage_profile,
+            graph_kind=graph.graph_kind,
+            status=graph.status,
+            default_branch=graph.default_branch,
+            head_revision=head,
+            branches=branches,
+            created_at=graph.created_at,
+            updated_at=graph.updated_at,
+            tombstoned_at=graph.tombstoned_at,
+            metadata=graph.metadata,
+        )
+
+    def delete_graph(
+        self,
+        tenant: str,
+        graph_id: str,
+        *,
+        reason: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
+    ) -> TombstoneRecord:
+        tenant = require_slug(tenant, field="tenant")
+        graph_id = require_slug(graph_id, field="graph_id")
+        now = utc_now_iso()
+
+        def _do() -> TombstoneRecord:
+            with self._duck._txn() as conn:  # noqa: SLF001
+                row = self._duck._fetchone(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM graphs WHERE tenant = ? AND graph_id = ?",
+                    [tenant, graph_id],
+                )
+                if row is None:
+                    raise CatalogError(
+                        "NOT_FOUND",
+                        "graph not found",
+                        details={"tenant": tenant, "graph_id": graph_id},
+                    )
+                conn.execute(
+                    "UPDATE graphs SET status = 'tombstoned', "
+                    "updated_at = ?, tombstoned_at = ? "
+                    "WHERE tenant = ? AND graph_id = ?",
+                    [now, now, tenant, graph_id],
+                )
+                conn.execute(
+                    "UPDATE branches SET status = 'tombstoned', "
+                    "updated_at = ?, tombstoned_at = ? "
+                    "WHERE tenant = ? AND graph_id = ? AND status = 'active'",
+                    [now, now, tenant, graph_id],
+                )
+                conn.execute(
+                    "DELETE FROM tombstones WHERE tenant = ? AND graph_id = ? "
+                    "AND kind = 'graph' AND name = ''",
+                    [tenant, graph_id],
+                )
+                conn.execute(
+                    "INSERT INTO tombstones "
+                    "(tenant, graph_id, kind, name, tombstoned_at, reason) "
+                    "VALUES (?, ?, 'graph', '', ?, ?)",
+                    [tenant, graph_id, now, reason],
+                )
+                conn.execute(
+                    "DELETE FROM leases WHERE tenant = ? AND graph_id = ?",
+                    [tenant, graph_id],
+                )
+            return TombstoneRecord(
+                entity_type="graph",
+                tenant=tenant,
+                graph_id=graph_id,
+                tombstoned_at=now,
+                branch=None,
+                reason=reason,
+            )
+
+        return self._wrap("delete_graph", _do)
+
+    def create_branch(
+        self,
+        tenant: str,
+        graph_id: str,
+        branch: str,
+        *,
+        from_revision: Optional[str] = None,
+        from_branch: Optional[str] = None,
+    ) -> BranchRecord:
+        tenant = require_slug(tenant, field="tenant")
+        graph_id = require_slug(graph_id, field="graph_id")
+        branch = require_slug(branch, field="branch")
+        if from_revision is not None and from_branch is not None:
+            raise CatalogError(
+                "INVALID_REQUEST",
+                "from_revision and from_branch are mutually exclusive",
+            )
+
+        def _do() -> BranchRecord:
+            with self._duck._txn() as conn:  # noqa: SLF001
+                grow = self._duck._get_graph_row(conn, tenant, graph_id)  # noqa: SLF001
+                existing = self._duck._fetchone(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM branches WHERE tenant = ? AND graph_id = ? "
+                    "AND branch = ?",
+                    [tenant, graph_id, branch],
+                )
+                if existing is not None and existing["status"] == "active":
+                    raise CatalogError(
+                        "ALREADY_EXISTS",
+                        "branch already exists",
+                        details={
+                            "tenant": tenant,
+                            "graph_id": graph_id,
+                            "branch": branch,
+                        },
+                    )
+                if from_revision is not None:
+                    head = require_revision_id(from_revision, field="from_revision")
+                    self._duck._get_revision_row(conn, tenant, graph_id, head)  # noqa: SLF001
+                elif from_branch is not None:
+                    src = require_slug(from_branch, field="from_branch")
+                    brow = self._duck._get_branch_row(  # noqa: SLF001
+                        conn, tenant, graph_id, src
+                    )
+                    head = brow["head_revision"]
+                else:
+                    brow = self._duck._get_branch_row(  # noqa: SLF001
+                        conn, tenant, graph_id, grow["default_branch"]
+                    )
+                    head = brow["head_revision"]
+                now = utc_now_iso()
+                if existing is not None and existing["status"] == "tombstoned":
+                    conn.execute(
+                        "UPDATE branches SET head_revision = ?, status = 'active', "
+                        "updated_at = ?, tombstoned_at = NULL "
+                        "WHERE tenant = ? AND graph_id = ? AND branch = ?",
+                        [head, now, tenant, graph_id, branch],
+                    )
+                    created = existing["created_at"]
+                else:
+                    conn.execute(
+                        "INSERT INTO branches "
+                        "(tenant, graph_id, branch, head_revision, status, "
+                        "created_at, updated_at, tombstoned_at) "
+                        "VALUES (?, ?, ?, ?, 'active', ?, ?, NULL)",
+                        [tenant, graph_id, branch, head, now, now],
+                    )
+                    created = now
+                conn.execute(
+                    "UPDATE graphs SET updated_at = ? "
+                    "WHERE tenant = ? AND graph_id = ?",
+                    [now, tenant, graph_id],
+                )
+                return BranchRecord(
+                    tenant=tenant,
+                    graph_id=graph_id,
+                    branch=branch,
+                    head_revision=head,
+                    status="active",
+                    created_at=created,
+                    updated_at=now,
+                    tombstoned_at=None,
+                )
+
+        return self._wrap("create_branch", _do)
+
+    def delete_branch(
+        self,
+        tenant: str,
+        graph_id: str,
+        branch: str,
+        *,
+        reason: Optional[str] = None,
+    ) -> TombstoneRecord:
+        tenant = require_slug(tenant, field="tenant")
+        graph_id = require_slug(graph_id, field="graph_id")
+        branch = require_slug(branch, field="branch")
+        now = utc_now_iso()
+
+        def _do() -> TombstoneRecord:
+            with self._duck._txn() as conn:  # noqa: SLF001
+                grow = self._duck._get_graph_row(conn, tenant, graph_id)  # noqa: SLF001
+                if grow["default_branch"] == branch:
+                    raise CatalogError(
+                        "INVALID_REQUEST",
+                        "cannot tombstone the default branch; delete the graph instead",
+                        details={
+                            "tenant": tenant,
+                            "graph_id": graph_id,
+                            "branch": branch,
+                        },
+                    )
+                self._duck._get_branch_row(conn, tenant, graph_id, branch)  # noqa: SLF001
+                conn.execute(
+                    "UPDATE branches SET status = 'tombstoned', "
+                    "updated_at = ?, tombstoned_at = ? "
+                    "WHERE tenant = ? AND graph_id = ? AND branch = ?",
+                    [now, now, tenant, graph_id, branch],
+                )
+                conn.execute(
+                    "DELETE FROM tombstones WHERE tenant = ? AND graph_id = ? "
+                    "AND kind = 'branch' AND name = ?",
+                    [tenant, graph_id, branch],
+                )
+                conn.execute(
+                    "INSERT INTO tombstones "
+                    "(tenant, graph_id, kind, name, tombstoned_at, reason) "
+                    "VALUES (?, ?, 'branch', ?, ?, ?)",
+                    [tenant, graph_id, branch, now, reason],
+                )
+            return TombstoneRecord(
+                entity_type="branch",
+                tenant=tenant,
+                graph_id=graph_id,
+                tombstoned_at=now,
+                branch=branch,
+                reason=reason,
+            )
+
+        return self._wrap("delete_branch", _do)
+
+    def get_branch(
+        self,
+        tenant: str,
+        graph_id: str,
+        branch: str,
+        *,
+        allow_tombstoned: bool = False,
+    ) -> BranchRecord:
+        self._ensure_open()
+        if allow_tombstoned:
+            with self._duck._txn() as conn:  # noqa: SLF001
+                row = self._duck._fetchone(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM branches WHERE tenant = ? AND graph_id = ? "
+                    "AND branch = ?",
+                    [tenant, graph_id, branch],
+                )
+                if row is None:
+                    raise CatalogError(
+                        "NOT_FOUND",
+                        "branch not found",
+                        details={
+                            "tenant": tenant,
+                            "graph_id": graph_id,
+                            "branch": branch,
+                        },
+                    )
+                return self._duck._branch_from_row(row)  # noqa: SLF001
+        return self._duck.get_branch(tenant, graph_id, branch)
+
+    def list_branches(
+        self,
+        tenant: str,
+        graph_id: str,
+        *,
+        include_tombstoned: bool = False,
+    ) -> List[BranchRecord]:
+        self._ensure_open()
+        with self._duck._txn() as conn:  # noqa: SLF001
+            if include_tombstoned:
+                rows = self._duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM branches WHERE tenant = ? AND graph_id = ? "
+                    "ORDER BY branch",
+                    [tenant, graph_id],
+                )
+            else:
+                rows = self._duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM branches WHERE tenant = ? AND graph_id = ? "
+                    "AND status = 'active' ORDER BY branch",
+                    [tenant, graph_id],
+                )
+            return [self._duck._branch_from_row(r) for r in rows]  # noqa: SLF001
+
+    def put_revision(
+        self,
+        tenant: str,
+        graph_id: str,
+        revision_id: str,
+        *,
+        parent_revision: Optional[str] = None,
+        storage_profile: Optional[str] = None,
+        manifest_cid: Optional[str] = None,
+        manifest_json: Optional[str] = None,
+        pin_root: Optional[str] = None,
+        checksum: Optional[str] = None,
+        metadata: Optional[Mapping[str, Any]] = None,
+    ) -> RevisionRecord:
+        profile = require_storage_profile(storage_profile)
+
+        def _do() -> RevisionRecord:
+            rec = self._duck.put_revision(
+                tenant,
+                graph_id,
+                revision_id,
+                parent_revision=parent_revision,
+                storage_profile=profile,
+                manifest_cid=manifest_cid,
+                pin_root=pin_root,
+                checksum=checksum,
+                metadata=metadata,
+            )
+            if manifest_json is not None:
+                with self._duck._txn() as conn:  # noqa: SLF001
+                    conn.execute(
+                        "UPDATE revisions SET manifest_json = ? "
+                        "WHERE tenant = ? AND graph_id = ? AND revision_id = ?",
+                        [manifest_json, tenant, graph_id, revision_id],
+                    )
+            return rec
+
+        return self._wrap("put_revision", _do)
+
+    def get_revision(
+        self, tenant: str, graph_id: str, revision_id: str
+    ) -> RevisionRecord:
+        self._ensure_open()
+        with self._duck._txn() as conn:  # noqa: SLF001
+            row = self._duck._get_revision_row(  # noqa: SLF001
+                conn, tenant, graph_id, revision_id
+            )
+            return self._duck._revision_from_row(row)  # noqa: SLF001
+
+    def list_revisions(
+        self, tenant: str, graph_id: str
+    ) -> List[RevisionRecord]:
+        self._ensure_open()
+        with self._duck._txn() as conn:  # noqa: SLF001
+            rows = self._duck._fetchall(  # noqa: SLF001
+                conn,
+                "SELECT * FROM revisions WHERE tenant = ? AND graph_id = ? "
+                "ORDER BY created_at, revision_id",
+                [tenant, graph_id],
+            )
+            return [self._duck._revision_from_row(r) for r in rows]  # noqa: SLF001
+
+    def cas_set_head(
+        self,
+        tenant: str,
+        graph_id: str,
+        branch: str,
+        *,
+        expected_revision: Optional[str],
+        new_revision: str,
+        lease_id: Optional[str] = None,
+        lease_epoch: Optional[int] = None,
+        pin_root: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
+    ) -> BranchRecord:
+        def _do() -> BranchRecord:
+            return self._duck.cas_set_head(
+                tenant,
+                graph_id,
+                branch,
+                expected_revision=expected_revision,
+                new_revision=new_revision,
+                lease_id=lease_id,
+                lease_epoch=lease_epoch,
+                idempotency_key=idempotency_key,
+            )
+
+        return self._wrap("cas_set_head", _do)
+
+    def acquire_lease(
+        self,
+        tenant: str,
+        graph_id: str,
+        branch: str,
+        *,
+        holder: str,
+        ttl_seconds: float,
+        lease_id: Optional[str] = None,
+    ) -> LeaseRecord:
+        def _do() -> LeaseRecord:
+            return self._duck.acquire_lease(
+                tenant,
+                graph_id,
+                branch,
+                holder=holder,
+                ttl_seconds=ttl_seconds,
+                lease_id=lease_id,
+            )
+
+        return self._wrap("acquire_lease", _do)
+
+    def renew_lease(
+        self,
+        tenant: str,
+        graph_id: str,
+        branch: str,
+        *,
+        lease_id: str,
+        lease_epoch: int,
+        ttl_seconds: float,
+    ) -> LeaseRecord:
+        def _do() -> LeaseRecord:
+            return self._duck.renew_lease(lease_id, ttl_seconds=ttl_seconds)
+
+        return self._wrap("renew_lease", _do)
+
+    def release_lease(
+        self,
+        tenant: str,
+        graph_id: str,
+        branch: str,
+        *,
+        lease_id: str,
+        lease_epoch: int,
+    ) -> None:
+        def _do() -> None:
+            self._duck.release_lease(lease_id)
+
+        self._wrap("release_lease", _do)
+
+    def get_lease(
+        self, tenant: str, graph_id: str, branch: str
+    ) -> Optional[LeaseRecord]:
+        self._ensure_open()
+        with self._duck._txn() as conn:  # noqa: SLF001
+            row = self._duck._fetchone(  # noqa: SLF001
+                conn,
+                "SELECT * FROM leases WHERE tenant = ? AND graph_id = ? AND branch = ?",
+                [tenant, graph_id, branch],
+            )
+            if row is None:
+                return None
+            return LeaseRecord(
+                tenant=row["tenant"],
+                graph_id=row["graph_id"],
+                branch=row["branch"],
+                lease_id=row["lease_id"],
+                holder=row["holder"],
+                epoch=int(row["epoch"]),
+                expires_at=row["expires_at"],
+                created_at=row["created_at"],
+                renewed_at=row["renewed_at"],
+            )
+
+    def set_pin_root(
+        self,
+        tenant: str,
+        graph_id: str,
+        revision_id: str,
+        root_cid: str,
+        *,
+        pin_kind: str = "manifest",
+    ) -> PinRootRecord:
+        def _do() -> PinRootRecord:
+            return self._duck.set_pin_root(
+                tenant,
+                graph_id,
+                revision_id,
+                root_cid,
+                pin_kind=pin_kind,
+            )
+
+        return self._wrap("set_pin_root", _do)
+
+    def list_pin_roots(
+        self, tenant: str, graph_id: str
+    ) -> List[PinRootRecord]:
+        return self._duck.list_pin_roots(tenant, graph_id)
+
+    def list_tombstones(
+        self,
+        tenant: str,
+        graph_id: Optional[str] = None,
+    ) -> List[TombstoneRecord]:
+        self._ensure_open()
+        with self._duck._txn() as conn:  # noqa: SLF001
+            if graph_id is None:
+                rows = self._duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM tombstones WHERE tenant = ? "
+                    "ORDER BY tombstoned_at, kind, name",
+                    [tenant],
+                )
+            else:
+                rows = self._duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM tombstones WHERE tenant = ? AND graph_id = ? "
+                    "ORDER BY tombstoned_at, kind, name",
+                    [tenant, graph_id],
+                )
+            out: List[TombstoneRecord] = []
+            for row in rows:
+                kind = row.get("kind") or row.get("entity_type") or "graph"
+                name = row.get("name") or ""
+                out.append(
+                    TombstoneRecord(
+                        entity_type="branch" if kind == "branch" else "graph",
+                        tenant=row["tenant"],
+                        graph_id=row["graph_id"],
+                        tombstoned_at=row["tombstoned_at"],
+                        branch=name if kind == "branch" and name else None,
+                        reason=row.get("reason"),
+                    )
+                )
+            return out
+
+    def authoritative_branch_head(
+        self, tenant: str, graph_id: str, branch: str = DEFAULT_BRANCH
+    ) -> Optional[str]:
+        shadow = self._shadow_authority
+        if shadow is not None and hasattr(shadow, "authoritative_branch_head"):
+            try:
+                head = shadow.authoritative_branch_head(
+                    tenant, graph_id, branch, catalog=None
+                )
+                if head is not None:
+                    return head
+            except Exception:  # noqa: BLE001
+                pass
+        try:
+            return self.get_branch(tenant, graph_id, branch).head_revision
+        except CatalogError:
+            return None
+
+
+def open_duckdb_catalog(
+    path: PathLike,
+    *,
+    shadow_authority: Optional["GraphShadowAuthority"] = None,
+) -> DuckDBCatalogFacade:
+    """Open a DuckDB-only graph catalog (no SQLite control file)."""
+
+    return DuckDBCatalogFacade(path, shadow_authority=shadow_authority)
+
+
+def export_sqlite_catalog_compat(
+    duck_catalog: "DuckDBCatalogFacade | GraphShadowAuthority",
+    sqlite_path: PathLike,
+    *,
+    tenant: Optional[str] = None,
+) -> Path:
+    """Explicit one-way export of DuckDB control metadata into SQLite.
+
+    Requires an export permit. Never used as runtime authority after DQK-061.
+    """
+
+    path = Path(sqlite_path)
+    guard = get_graph_filesystem_guard()
+    with guard.permit_export():
+        guard.assert_allowed(path, kind="catalog_sqlite", operation="write")
+        dest = GraphCatalog(path)
+        try:
+            if isinstance(duck_catalog, DuckDBCatalogFacade):
+                duck = duck_catalog._duck  # noqa: SLF001
+            elif hasattr(duck_catalog, "duckdb_catalog"):
+                duck = duck_catalog.duckdb_catalog
+            else:
+                raise CatalogError(
+                    "INVALID_REQUEST",
+                    "export requires a DuckDB catalog or GraphShadowAuthority",
+                )
+            if duck is None:
+                raise CatalogError("STORAGE", "DuckDB catalog unavailable for export")
+            with duck._txn() as conn:  # noqa: SLF001
+                if tenant is None:
+                    rows = duck._fetchall(conn, "SELECT * FROM graphs", [])  # noqa: SLF001
+                else:
+                    rows = duck._fetchall(  # noqa: SLF001
+                        conn,
+                        "SELECT * FROM graphs WHERE tenant = ?",
+                        [tenant],
+                    )
+            for grow in rows:
+                t = grow["tenant"]
+                g = grow["graph_id"]
+                try:
+                    dest.create_graph(
+                        t,
+                        g,
+                        branch=grow.get("default_branch") or DEFAULT_BRANCH,
+                        storage_profile=grow.get("storage_profile") or "parquet",
+                        graph_kind=grow.get("graph_kind") or "knowledge_graph",
+                        metadata=json.loads(grow.get("metadata_json") or "{}"),
+                        idempotency_key=f"export:{t}/{g}",
+                    )
+                except CatalogError:
+                    pass
+                with duck._txn() as conn:  # noqa: SLF001
+                    revs = duck._fetchall(  # noqa: SLF001
+                        conn,
+                        "SELECT * FROM revisions WHERE tenant = ? AND graph_id = ?",
+                        [t, g],
+                    )
+                    branches = duck._fetchall(  # noqa: SLF001
+                        conn,
+                        "SELECT * FROM branches WHERE tenant = ? AND graph_id = ?",
+                        [t, g],
+                    )
+                for rev in revs:
+                    try:
+                        dest.put_revision(
+                            t,
+                            g,
+                            rev["revision_id"],
+                            parent_revision=rev.get("parent_revision"),
+                            storage_profile=rev.get("storage_profile") or "parquet",
+                            manifest_cid=rev.get("manifest_cid"),
+                            pin_root=rev.get("pin_root"),
+                            checksum=rev.get("checksum"),
+                            metadata=json.loads(rev.get("metadata_json") or "{}"),
+                        )
+                    except CatalogError:
+                        pass
+                for brow in branches:
+                    bname = brow["branch"]
+                    try:
+                        if bname != (grow.get("default_branch") or DEFAULT_BRANCH):
+                            dest.create_branch(
+                                t, g, bname, from_revision=brow.get("head_revision")
+                            )
+                    except CatalogError:
+                        pass
+                    if brow.get("head_revision"):
+                        try:
+                            lease = dest.acquire_lease(
+                                t,
+                                g,
+                                bname,
+                                holder="export-compat",
+                                ttl_seconds=120.0,
+                            )
+                            dest.cas_set_head(
+                                t,
+                                g,
+                                bname,
+                                expected_revision=dest.get_branch(
+                                    t, g, bname
+                                ).head_revision,
+                                new_revision=brow["head_revision"],
+                                lease_id=lease.lease_id,
+                                lease_epoch=lease.epoch,
+                                idempotency_key=f"export-cas:{t}/{g}/{bname}",
+                            )
+                            dest.release_lease(
+                                t,
+                                g,
+                                bname,
+                                lease_id=lease.lease_id,
+                                lease_epoch=lease.epoch,
+                            )
+                        except CatalogError:
+                            pass
+        finally:
+            dest.close()
+    return path
+
+
+def import_sqlite_catalog_compat(
+    sqlite_path: PathLike,
+    duckdb_path: PathLike,
+    *,
+    authority: Optional["GraphShadowAuthority"] = None,
+) -> DuckDBCatalogFacade:
+    """Explicit one-time import of SQLite control metadata into DuckDB.
+
+    Requires an import permit. SQLite never becomes runtime authority.
+    """
+
+    path = Path(sqlite_path)
+    guard = get_graph_filesystem_guard()
+    with guard.permit_import():
+        guard.assert_allowed(path, kind="catalog_sqlite", operation="read")
+        src = GraphCatalog(path)
+        dest = DuckDBCatalogFacade(duckdb_path, shadow_authority=authority)
+        try:
+            # Import all tenants by scanning SQLite.
+            with src._txn(immediate=False) as conn:  # noqa: SLF001
+                rows = conn.execute(
+                    "SELECT * FROM graphs ORDER BY tenant, graph_id"
+                ).fetchall()
+            for row in rows:
+                t = row["tenant"]
+                g = row["graph_id"]
+                try:
+                    dest.create_graph(
+                        t,
+                        g,
+                        branch=row["default_branch"],
+                        storage_profile=row["storage_profile"],
+                        graph_kind=row["graph_kind"],
+                        metadata=json.loads(row["metadata_json"] or "{}"),
+                        idempotency_key=f"import:{t}/{g}",
+                    )
+                except CatalogError:
+                    pass
+                with src._txn(immediate=False) as conn:  # noqa: SLF001
+                    revs = conn.execute(
+                        "SELECT * FROM revisions WHERE tenant = ? AND graph_id = ?",
+                        (t, g),
+                    ).fetchall()
+                    branches = conn.execute(
+                        "SELECT * FROM branches WHERE tenant = ? AND graph_id = ?",
+                        (t, g),
+                    ).fetchall()
+                for rev in revs:
+                    try:
+                        dest.put_revision(
+                            t,
+                            g,
+                            rev["revision_id"],
+                            parent_revision=rev["parent_revision"],
+                            storage_profile=rev["storage_profile"],
+                            manifest_cid=rev["manifest_cid"],
+                            pin_root=rev["pin_root"],
+                            checksum=rev["checksum"],
+                            metadata=json.loads(rev["metadata_json"] or "{}"),
+                        )
+                    except CatalogError:
+                        pass
+                for brow in branches:
+                    bname = brow["branch"]
+                    try:
+                        if bname != row["default_branch"]:
+                            dest.create_branch(
+                                t, g, bname, from_revision=brow["head_revision"]
+                            )
+                    except CatalogError:
+                        pass
+        finally:
+            src.close()
+        return dest
+
+
 class GraphShadowAuthority:
     """DuckDB shadow / dual / db-primary authority for knowledge-graph producers.
 
@@ -2142,6 +3370,13 @@ class GraphShadowAuthority:
     * Promotion and rollback are CAS-fenced and receipted.
     * Crash recovery redrives the outbox so branch heads and transaction
       control state do not split-brain or lose durable progress.
+
+    DQK-061 (**db-primary** / **export-only**, DuckDB-only control):
+
+    * Implicit SQLite fallback and mutable control JSON I/O are blocked.
+    * SQLite and ``authority.json`` / ``index.json`` remain explicit
+      import/export compatibility only.
+    * Publication exposes sanitized graph views only.
     """
 
     DOMAIN = GRAPH_SHADOW_DOMAIN
@@ -2149,6 +3384,8 @@ class GraphShadowAuthority:
     OWNER_TASK = GRAPH_SHADOW_OWNER_TASK
     AUTHORITY_SCHEMA = GRAPH_AUTHORITY_SCHEMA
     AUTHORITY_OWNER_TASK = GRAPH_AUTHORITY_OWNER_TASK
+    DUCKDB_ONLY_SCHEMA = GRAPH_DUCKDB_ONLY_SCHEMA
+    DUCKDB_ONLY_OWNER_TASK = GRAPH_DUCKDB_ONLY_OWNER_TASK
 
     def __init__(
         self,
@@ -2162,6 +3399,7 @@ class GraphShadowAuthority:
         domain: str = GRAPH_SHADOW_DOMAIN,
         initial_mode: Any = None,
         owner_task: str = GRAPH_SHADOW_OWNER_TASK,
+        allow_legacy_io: Optional[bool] = None,
     ) -> None:
         self._enabled = bool(enabled)
         self._domain = domain
@@ -2174,6 +3412,9 @@ class GraphShadowAuthority:
         self._duck_tx: Any = None
         self._duck_crypto: Any = None
         self._initial_mode = initial_mode
+        self._allow_legacy_io_override = allow_legacy_io
+        self._allow_legacy_io: bool = True
+        self.filesystem_guard = GraphLegacyFilesystemGuard(allow_legacy_io=True)
         self._catalog_path = (
             None
             if duckdb_catalog_path in (None, ":memory:")
@@ -2200,6 +3441,7 @@ class GraphShadowAuthority:
             self._open_stores(duckdb_catalog_path)
             if self._port is None:
                 self._port = self._build_default_port()
+            self._sync_legacy_io_from_mode()
 
     # -- lifecycle ----------------------------------------------------------
 
@@ -2318,10 +3560,56 @@ class GraphShadowAuthority:
         return self.mode == "dual"
 
     @property
+    def is_export_only(self) -> bool:
+        return self.mode == "export-only"
+
+    @property
+    def is_duckdb_only(self) -> bool:
+        """True when DuckDB is sole control authority (DQK-061)."""
+
+        return self.mode in {"db-primary", "export-only"}
+
+    @property
     def promotion_window_active(self) -> bool:
         """True while dual-mode promotion is in progress (readers must bind)."""
 
         return bool(self._promotion_window) or self.mode == "dual"
+
+    def _sync_legacy_io_from_mode(self) -> None:
+        """Derive legacy SQLite/JSON control I/O permission from authority mode."""
+
+        if self._allow_legacy_io_override is not None:
+            allowed = bool(self._allow_legacy_io_override)
+        else:
+            mode = (self.mode or "").lower()
+            # Dual still dual-writes for migration; db-primary/export-only
+            # block implicit SQLite and mutable control JSON (DQK-061).
+            allowed = mode not in {
+                "db-primary",
+                "db_primary",
+                "export-only",
+                "export_only",
+            }
+        self._allow_legacy_io = allowed
+        self.filesystem_guard.allow_legacy_io = allowed
+        try:
+            get_graph_filesystem_guard().allow_legacy_io = allowed
+        except Exception:  # noqa: BLE001
+            pass
+
+    @property
+    def legacy_io_allowed(self) -> bool:
+        """True when implicit SQLite/mutable control JSON I/O is permitted."""
+
+        return bool(self._allow_legacy_io)
+
+    def set_legacy_io_allowed(self, allowed: bool) -> None:
+        """Explicitly allow or deny legacy graph-control file I/O."""
+
+        self._allow_legacy_io_override = bool(allowed)
+        self._allow_legacy_io = bool(allowed)
+        self.filesystem_guard.allow_legacy_io = bool(allowed)
+        get_graph_filesystem_guard().allow_legacy_io = bool(allowed)
 
     def _authority_label(self) -> str:
         """Caller-facing authority label for receipts and tests."""
@@ -2334,6 +3622,106 @@ class GraphShadowAuthority:
         if mode in {"shadow", "legacy", "disabled", "unknown"}:
             return "legacy"
         return mode
+
+    def approved_sanitized_graph_views(
+        self, *, approved_only: bool = True
+    ) -> List[Dict[str, Any]]:
+        """Sanitized graph control views safe for publication (no writer state)."""
+
+        duck = self._duck_catalog
+        if duck is None:
+            return []
+        views: List[Dict[str, Any]] = []
+        try:
+            with duck._txn() as conn:  # noqa: SLF001
+                graphs = duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM graphs WHERE status = 'active' "
+                    "ORDER BY tenant, graph_id",
+                    [],
+                )
+                for grow in graphs:
+                    tenant = grow["tenant"]
+                    graph_id = grow["graph_id"]
+                    branches = duck._fetchall(  # noqa: SLF001
+                        conn,
+                        "SELECT branch, head_revision, status FROM branches "
+                        "WHERE tenant = ? AND graph_id = ? AND status = 'active' "
+                        "ORDER BY branch",
+                        [tenant, graph_id],
+                    )
+                    rev_count_row = duck._fetchone(  # noqa: SLF001
+                        conn,
+                        "SELECT COUNT(*) AS n FROM revisions "
+                        "WHERE tenant = ? AND graph_id = ?",
+                        [tenant, graph_id],
+                    )
+                    pin_count_row = duck._fetchone(  # noqa: SLF001
+                        conn,
+                        "SELECT COUNT(*) AS n FROM pin_roots "
+                        "WHERE tenant = ? AND graph_id = ?",
+                        [tenant, graph_id],
+                    )
+                    head = None
+                    default = grow.get("default_branch") or DEFAULT_BRANCH
+                    for brow in branches:
+                        if brow["branch"] == default:
+                            head = brow.get("head_revision")
+                            break
+                    if head is None and branches:
+                        head = branches[0].get("head_revision")
+                    view = {
+                        "tenant": tenant,
+                        "graph_id": graph_id,
+                        "storage_profile": grow.get("storage_profile"),
+                        "graph_kind": grow.get("graph_kind"),
+                        "status": grow.get("status"),
+                        "default_branch": default,
+                        "head_revision": head,
+                        "branch_count": len(branches),
+                        "revision_count": int(
+                            (rev_count_row or {}).get("n") or 0
+                        ),
+                        "pin_count": int((pin_count_row or {}).get("n") or 0),
+                        # Explicit exclusions for publication safety.
+                        "leases_excluded": True,
+                        "writer_state_excluded": True,
+                        "raw_payloads_excluded": True,
+                        "idempotency_keys_excluded": True,
+                        "tombstones_excluded": True,
+                    }
+                    if approved_only:
+                        # Only active, identity-safe rows reach publication.
+                        if view["status"] != "active":
+                            continue
+                    views.append(view)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("approved_sanitized_graph_views failed: %s", exc)
+            return []
+        return views
+
+    def publication_document(self) -> Dict[str, Any]:
+        """Quack-facing publication: sanitized graph views only (DQK-061)."""
+
+        return {
+            "publication_type": GRAPH_PUBLICATION_TYPE,
+            "schema_version": GRAPH_PUBLICATION_SCHEMA_VERSION,
+            "schema": GRAPH_DUCKDB_ONLY_SCHEMA,
+            "domain": GRAPH_DUCKDB_ONLY_DOMAIN,
+            "owner_task": GRAPH_DUCKDB_ONLY_OWNER_TASK,
+            "authority_mode": self.mode,
+            "authority": self._authority_label(),
+            "approved_sanitized_graph_views": self.approved_sanitized_graph_views(
+                approved_only=True
+            ),
+            "leases_excluded": True,
+            "writer_state_excluded": True,
+            "raw_payloads_excluded": True,
+            "sqlite_authority": False,
+            "mutable_control_json_authority": False,
+            "legacy_io_allowed": self.legacy_io_allowed,
+            "content_authority": "parquet_ipld",
+        }
 
     def close(self) -> None:
         with self._lock:
@@ -3682,6 +5070,8 @@ class GraphShadowAuthority:
             )
             self._decision_receipts.append(receipt)
             self._promotion_window = False
+            # DQK-061: no silent SQLite/JSON control fallback after promotion.
+            self.set_legacy_io_allowed(False)
             return receipt
         sealed = self._port.promote(
             AuthorityMode.DB_PRIMARY,
@@ -3693,6 +5083,65 @@ class GraphShadowAuthority:
         if getattr(sealed, "accepted", False):
             # Promotion complete: readers may unbind, DuckDB is authority.
             self._promotion_window = False
+            self.set_legacy_io_allowed(False)
+        return sealed
+
+    def promote_to_export_only(
+        self,
+        *,
+        parity_key: str = "graphs/*",
+        decision_id: str | None = None,
+        require_parity: bool = True,
+    ) -> Any:
+        """Promote db-primary → export-only (one-way export pipeline, DQK-061)."""
+
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+            DecisionKind,
+            DecisionReceipt,
+        )
+
+        if self._port is None:
+            raise RuntimeError("cannot promote without an authority port")
+        if self._port.mode is AuthorityMode.EXPORT_ONLY:
+            state = self._port.state()
+            receipt = DecisionReceipt(
+                receipt_cid=state.last_decision_receipt_cid or "",
+                kind=DecisionKind.PROMOTE,
+                domain=self._port.domain,
+                from_mode=AuthorityMode.EXPORT_ONLY,
+                to_mode=AuthorityMode.EXPORT_ONLY,
+                expected_cas_revision=state.cas_revision,
+                new_cas_revision=state.cas_revision,
+                fence=state.fence,
+                parity_receipt_cid=state.last_parity_receipt_cid or "",
+                decision_id=decision_id or "already-export-only",
+                accepted=True,
+                reason="already_export_only",
+                created_at=state.updated_at or "",
+                atomic_across_filesystems=False,
+            )
+            self._decision_receipts.append(receipt)
+            self.set_legacy_io_allowed(False)
+            return receipt
+        if self._port.mode is not AuthorityMode.DB_PRIMARY:
+            # Climb the ladder first.
+            self.ensure_duckdb_authority(
+                tenant="system",
+                graph_id="export",
+                decision_id=f"to-db-before-export:{parity_key}",
+            )
+        sealed = self._port.promote(
+            AuthorityMode.EXPORT_ONLY,
+            decision_id=decision_id or f"export-only:{parity_key}",
+            require_parity=require_parity,
+            parity_key=parity_key,
+        )
+        self._decision_receipts.append(sealed)
+        if getattr(sealed, "accepted", False):
+            self._promotion_window = False
+            self.set_legacy_io_allowed(False)
+            self._owner_task = GRAPH_DUCKDB_ONLY_OWNER_TASK
         return sealed
 
     def ensure_duckdb_authority(
@@ -3714,6 +5163,10 @@ class GraphShadowAuthority:
         key = self._graph_key(tenant, graph_id)
         mode = self._port.mode
         if mode is AuthorityMode.DB_PRIMARY:
+            self.set_legacy_io_allowed(False)
+            return None
+        if mode is AuthorityMode.EXPORT_ONLY:
+            self.set_legacy_io_allowed(False)
             return None
         if mode is AuthorityMode.DUAL:
             return self.promote_to_db_primary(
@@ -4209,6 +5662,7 @@ def configure_graph_shadow_authority(
     writer_id: str = "writer:graph-shadow-authority",
     initial_mode: Any = None,
     owner_task: str = GRAPH_SHADOW_OWNER_TASK,
+    allow_legacy_io: Optional[bool] = None,
 ) -> GraphShadowAuthority:
     """Install a process-local graph shadow authority (DQK-059).
 
@@ -4232,8 +5686,10 @@ def configure_graph_shadow_authority(
             writer_id=writer_id,
             initial_mode=initial_mode,
             owner_task=owner_task,
+            allow_legacy_io=allow_legacy_io,
         )
         _process_shadow_authority = auth
+        get_graph_filesystem_guard().allow_legacy_io = auth.legacy_io_allowed
         return auth
 
 
@@ -4246,6 +5702,7 @@ def configure_graph_authority(
     authority_port: Any = None,
     writer_id: str = "writer:graph-authority",
     initial_mode: Any = None,
+    allow_legacy_io: Optional[bool] = None,
 ) -> GraphShadowAuthority:
     """Install dual-mode graph authority for DQK-060 cutover.
 
@@ -4266,6 +5723,42 @@ def configure_graph_authority(
         writer_id=writer_id,
         initial_mode=mode,
         owner_task=GRAPH_AUTHORITY_OWNER_TASK,
+        allow_legacy_io=allow_legacy_io,
+    )
+
+
+def configure_duckdb_only_graph_authority(
+    duckdb_catalog_path: PathLike | None = None,
+    *,
+    duckdb_tx_path: PathLike | None = None,
+    duckdb_crypto_path: PathLike | None = None,
+    enabled: bool = True,
+    authority_port: Any = None,
+    writer_id: str = "writer:graph-duckdb-only",
+    initial_mode: Any = None,
+) -> GraphShadowAuthority:
+    """Install DuckDB-only graph control authority (DQK-061).
+
+    Defaults to :class:`AuthorityMode.DB_PRIMARY` with legacy SQLite/JSON control
+    I/O denied. Use :meth:`GraphShadowAuthority.promote_to_export_only` for the
+    one-way export ladder step.
+    """
+
+    from ipfs_datasets_py.duckdb_control.authority_transition import AuthorityMode
+
+    mode = (
+        initial_mode if initial_mode is not None else AuthorityMode.DB_PRIMARY
+    )
+    return configure_graph_shadow_authority(
+        duckdb_catalog_path,
+        duckdb_tx_path=duckdb_tx_path,
+        duckdb_crypto_path=duckdb_crypto_path,
+        enabled=enabled,
+        authority_port=authority_port,
+        writer_id=writer_id,
+        initial_mode=mode,
+        owner_task=GRAPH_DUCKDB_ONLY_OWNER_TASK,
+        allow_legacy_io=False,
     )
 
 
@@ -4289,6 +5782,7 @@ def reset_graph_shadow_authority() -> None:
             except Exception:  # noqa: BLE001
                 pass
         _process_shadow_authority = None
+    reset_graph_filesystem_guard()
 
 
 def reset_graph_authority() -> None:
@@ -4400,22 +5894,39 @@ __all__ = [
     "GRAPH_AUTHORITY_DOMAIN",
     "GRAPH_AUTHORITY_OWNER_TASK",
     "GRAPH_AUTHORITY_SCHEMA",
+    "GRAPH_DUCKDB_ONLY_DOMAIN",
+    "GRAPH_DUCKDB_ONLY_OWNER_TASK",
+    "GRAPH_DUCKDB_ONLY_SCHEMA",
+    "GRAPH_PUBLICATION_SCHEMA_VERSION",
+    "GRAPH_PUBLICATION_TYPE",
     "GRAPH_SHADOW_DOMAIN",
     "GRAPH_SHADOW_OWNER_TASK",
     "GRAPH_SHADOW_SCHEMA",
+    "DuckDBCatalogFacade",
     "GraphAuthorityCatalog",
     "GraphCatalog",
+    "GraphLegacyFilesystemGuard",
     "GraphMutationReceipt",
     "GraphParityView",
     "GraphShadowAuthority",
+    "ImplicitLegacyGraphControlError",
     "ReaderRevisionBinding",
+    "assert_graph_control_path_allowed",
+    "configure_duckdb_only_graph_authority",
     "configure_graph_authority",
     "configure_graph_shadow_authority",
+    "duckdb_only_graph_control",
+    "export_sqlite_catalog_compat",
     "get_graph_authority",
+    "get_graph_filesystem_guard",
     "get_graph_shadow_authority",
+    "import_sqlite_catalog_compat",
+    "legacy_graph_control_io_allowed",
     "new_graph_operation_id",
     "open_catalog",
+    "open_duckdb_catalog",
     "reset_graph_authority",
+    "reset_graph_filesystem_guard",
     "reset_graph_shadow_authority",
     "safe_dual_catalog_mutation",
     "safe_shadow_catalog_mutation",
