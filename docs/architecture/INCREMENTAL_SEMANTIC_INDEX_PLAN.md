@@ -185,6 +185,22 @@ Authority rules:
     It does not authorize anonymous providers, mocks, simulated output, silent
     fallback, or any change to task dependencies, outputs, validation, or
     acceptance authority.
+15. Repair run v12's first Grok 4.5 ISI-050 candidate made the original
+    41-case protected authority and 63-item focused command green, but
+    independent production-semantics audit stopped it before merge. Its
+    marker-derived temporary used a PID plus process-local counter, so stale
+    candidates were not proactively discovered, an exact PID/counter reuse
+    aborted instead of completing recovery, and noncolliding crash residue
+    could accumulate; its cleanup `OSError` was silently swallowed after
+    publication.
+    Two additional public-entry-point probes now make the protected authority
+    43 cases. On the pinned ISI-049 baseline the 65-item focused command is
+    exactly seven assigned failures and 58 passes; with the separate ISI-043
+    and ISI-044 authorities collected, the broader semantic-index baseline is
+    exactly 39 failures and 127 passes. ISI-050 must recover or safely
+    supersede stale marker-derived temporaries without unbounded residue, and
+    must surface post-publication cleanup failure as `GitSnapshotError` while
+    retaining the already durable winning final marker for successful retry.
 
 ## 3. Proposed package and files
 
@@ -688,7 +704,7 @@ authoritative by itself.
 | ISI-047 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner adversarial tests/fixture | Commit-derived tree, portable clone identity, mode/disposition/exclusion-rooted state, ctime-strength generation fence, collision-free raw/source/artifact keys, and explicit restored-manifest trust boundary | ISI-046 |
 | ISI-048 | P0 | `snapshot.py`, `scanner.py`, optional fixture; protected adversarial test is external authority | Make all 33 protected public probes pass: local unborn identity, precise unborn disposition, same-HEAD status/index fencing, nested raw exclusion roots, and typed corrupt/quiet/warning/decode failures while retaining all 20 green contracts | ISI-047 |
 | ISI-049 | P0 | `snapshot.py`, `scanner.py` only as needed; protected adversarial test is external authority | Keep automatic unborn identity stable across a pre-commit repository move and reject an unborn-to-born transition between identity and snapshot decisions without regressing the prior 55 focused passes | ISI-048 |
-| ISI-050 | P0 | `snapshot.py`, `scanner.py` only as needed; protected 41-case adversarial test is external authority | Atomically publish the local unborn bootstrap token with typed failure cleanup/recovery, concurrent loser reread, file and Git-directory durability, and an explicit-ID no-mutation path | ISI-049 |
+| ISI-050 | P0 | `snapshot.py`, `scanner.py` only as needed; protected 43-case adversarial test is external authority | Atomically publish the local unborn bootstrap token with typed failure cleanup/recovery, concurrent loser reread, cross-process stale-temporary recovery, file and Git-directory durability, and an explicit-ID no-mutation path | ISI-049 |
 | ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture; protected seven-case authority is validation-only | Make the protected 7-case public gate pass while establishing canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-050 |
 | ISI-044 | P0 | `python_analysis.py`, distinct relation-closure tests/fixture; protected seven-case relation authority is validation-only | Make the protected 7-case relation gate pass with exact retained inheritance/composition/schema targets, scope/state effects, bounded calls, and source-bound dynamic/plugin/native confidence | ISI-043 |
 | ISI-045 | P0 | `persistence.py`, persistence tests | Idempotent bounded cleanup of legacy and current root/transition temporary prefixes without disturbing authoritative data | ISI-037 |

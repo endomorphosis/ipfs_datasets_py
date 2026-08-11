@@ -200,6 +200,118 @@ def test_concurrent_unborn_identity_reader_never_observes_partial_publication(
     assert repository_identity(tmp_path) == identities["first"]
 
 
+def test_unborn_restart_cleans_stale_temporary_and_avoids_pid_reuse_collision(
+    tmp_path: Path,
+) -> None:
+    _init(tmp_path)
+    marker = _bootstrap_marker(tmp_path)
+    program = "\n".join(
+        (
+            "import os",
+            "import sys",
+            "from pathlib import Path",
+            "repository = Path(sys.argv[1])",
+            "marker = Path(sys.argv[2])",
+            "stale_candidates = (",
+            "    marker.parent / f'.{marker.name}.tmp-{os.getpid()}-0',",
+            "    marker.parent / f'.{marker.name}.tmp-crashed-writer-7',",
+            ")",
+            "for stale in stale_candidates:",
+            "    descriptor = os.open(stale, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)",
+            "    try:",
+            "        os.write(descriptor, b'partial-crashed-candidate')",
+            "        os.fsync(descriptor)",
+            "    finally:",
+            "        os.close(descriptor)",
+            "from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import GitSnapshotError, repository_identity",
+            "try:",
+            "    first = repository_identity(repository)",
+            "except GitSnapshotError as exc:",
+            "    print(f'typed failure instead of recovery: {exc}', file=sys.stderr)",
+            "    raise SystemExit(31)",
+            "except Exception as exc:",
+            "    print(f'untyped failure instead of recovery: {type(exc).__name__}: {exc}', file=sys.stderr)",
+            "    raise SystemExit(32)",
+            "if not marker.is_file():",
+            "    print('final marker was not published', file=sys.stderr)",
+            "    raise SystemExit(33)",
+            "residue = [str(stale) for stale in stale_candidates if stale.exists()]",
+            "if residue:",
+            "    print(f'stale candidates survived successful recovery: {residue}', file=sys.stderr)",
+            "    raise SystemExit(34)",
+            "if repository_identity(repository) != first:",
+            "    print('recovered identity was unstable', file=sys.stderr)",
+            "    raise SystemExit(35)",
+        )
+    )
+    environment = dict(os.environ)
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+
+    recovered = subprocess.run(
+        [sys.executable, "-B", "-c", program, str(tmp_path), str(marker)],
+        check=False,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=environment,
+        timeout=10,
+    )
+
+    assert recovered.returncode == 0, recovered.stderr.decode("utf-8", "replace")
+    assert marker.is_file()
+    assert repository_identity(tmp_path) == repository_identity(tmp_path)
+
+
+def test_unborn_post_publication_cleanup_failure_is_typed_and_recoverable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    real_unlink = module.os.unlink
+    real_fsync = module.os.fsync
+    cleanup_attempts: list[Path] = []
+    final_was_visible: list[bool] = []
+    final_was_durable: list[bool] = []
+    metadata_directory_synced = False
+
+    def record_sync(descriptor: int) -> None:
+        nonlocal metadata_directory_synced
+        if stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            metadata_directory_synced = True
+        real_fsync(descriptor)
+
+    def fail_candidate_cleanup(path, *args, **kwargs) -> None:
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if candidate.parent == marker.parent and marker.name in candidate.name:
+            cleanup_attempts.append(candidate)
+            final_was_visible.append(marker.is_file())
+            final_was_durable.append(metadata_directory_synced)
+            raise OSError("audit temporary cleanup failure")
+        real_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(module.os, "fsync", record_sync)
+    monkeypatch.setattr(module.os, "unlink", fail_candidate_cleanup)
+    first_error: Exception | None = None
+    try:
+        repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        first_error = exc
+
+    assert cleanup_attempts
+    assert all(final_was_visible)
+    assert all(final_was_durable)
+    assert isinstance(first_error, GitSnapshotError)
+    assert marker.is_file()
+
+    monkeypatch.setattr(module.os, "unlink", real_unlink)
+    recovered = repository_identity(tmp_path)
+    assert repository_identity(tmp_path) == recovered
+    assert all(not candidate.exists() for candidate in cleanup_attempts)
+
+
 def test_unborn_entropy_failure_is_typed_cleans_up_and_recovers(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
