@@ -1335,8 +1335,11 @@ def prepare_gitlink_pin(
 def _gitlink_effect_commit(parent: Path, intent: Mapping[str, Any]) -> str:
     base = str(intent["parent_before"]["head_commit"])
     operation_id = str(intent["operation_id"])
+    # Tip can advance far past the DQK-056 pin while still admitting that
+    # exact first-parent gitlink effect.  Cap high enough for long drain runs
+    # (64 was too small once first-parent distance exceeded the pin).
     commits = str(
-        _git(parent, "rev-list", "--first-parent", "--max-count=64", f"{base}..HEAD")
+        _git(parent, "rev-list", "--first-parent", "--max-count=512", f"{base}..HEAD")
     ).splitlines()
     matches: list[str] = []
     for commit in commits:
