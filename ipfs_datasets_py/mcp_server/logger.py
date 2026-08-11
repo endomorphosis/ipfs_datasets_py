@@ -1,10 +1,23 @@
 """
 Logger configuration for IPFS Datasets MCP server.
+
+DQK-079: mutable file sinks (mcp_server.log / FileHandler) are disabled by
+default. Only ephemeral human-readable console logs remain; DuckDB is the
+progress/completion authority after cutover.
 """
 import logging
 import re
 import sys
 from pathlib import Path
+
+from ipfs_datasets_py.logic.observability.structured_logging import (
+    ObservabilityMutableFileSinkError,
+    assert_mutable_file_sink_allowed,
+    console_grants_completion_authority,
+    console_grants_progress_authority,
+    get_observability_filesystem_guard,
+    sanitize_publication_view,
+)
 
 
 _OPTIONAL_WARNING_PATTERNS = (
@@ -55,23 +68,19 @@ def _install_optional_warning_filter() -> None:
             handler.addFilter(_OPTIONAL_WARNING_FILTER)
 
 
+# Historical path retained for explicit export only — never auto-created (DQK-079).
 mcp_log_path = Path(__file__).parent / "mcp_server.log"
 
-# Configure root logger.
+# Configure root logger with ephemeral console only (no FileHandler / no touch).
 # Under pytest, the root logger is often already configured. In that case,
-# calling basicConfig() is a no-op, but eagerly constructing FileHandler would
-# still open the file and then be garbage-collected, triggering ResourceWarning
-# about an unclosed file. Only create/attach handlers when we will actually
-# configure logging.
+# calling basicConfig() is a no-op.
 _root_logger = logging.getLogger()
 if not _root_logger.handlers:
-    mcp_log_path.touch()  # Create the log file if it doesn't exist
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         handlers=[
-            # logging.StreamHandler(sys.stdout),
-            logging.FileHandler(mcp_log_path, mode="a"),
+            logging.StreamHandler(sys.stderr),
         ],
     )
 
@@ -87,10 +96,26 @@ mcp_logger = logging.getLogger("ipfs_datasets.mcp")
 logger.setLevel(logging.INFO)
 mcp_logger.setLevel(logging.INFO)
 
-# Ensure the log directory exists (legacy file sink remains selected authority
-# under DQK-077 shadow mode).
+# Config directory may exist for other MCP settings; it is not a log authority.
 log_dir = Path.home() / ".ipfs_datasets"
-log_dir.mkdir(exist_ok=True)
+try:
+    log_dir.mkdir(exist_ok=True)
+except OSError:
+    pass
+
+
+def attach_mcp_file_sink(path: Path | str | None = None) -> None:
+    """Attach a mutable MCP file sink only when the writer guard permits it.
+
+    Intended for explicit operator export/debug, not runtime authority.
+    """
+    target = Path(path) if path is not None else mcp_log_path
+    assert_mutable_file_sink_allowed(target, kind="mcp_log", operation="attach")
+    handler = logging.FileHandler(target, mode="a")
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    )
+    logger.addHandler(handler)
 
 
 def log_mcp_event(
@@ -103,14 +128,13 @@ def log_mcp_event(
 ) -> None:
     """Log an MCP server event and project it into DuckDB cutover or shadow.
 
-    Under DQK-078 dual/db-primary cutover, typed DuckDB state is the authority
-    and the legacy ``mcp_server.log`` / stderr stream is a disposable
-    operational projection. Under DQK-077 shadow mode, the legacy file sink
-    remains selected authority while the catalog is a non-authoritative
-    projection with parity receipts.
+    Under DQK-079, console/stderr is an ephemeral disposable projection only
+    and cannot satisfy progress or completion authority. Typed DuckDB state
+    (DQK-078 cutover) is the observability authority. Mutable ``mcp_server.log``
+    is not created or written by default.
     """
 
-    # Always write through the legacy logger first (disposable under cutover).
+    # Ephemeral console projection only (never progress/completion authority).
     logger.log(level, message, extra=attributes if attributes else None)
 
     try:
@@ -151,3 +175,35 @@ def log_mcp_event(
         operation_id=f"op-mcp-{event_id}",
         raw_payload={"message": message, "event_type": event_type, **attributes},
     )
+
+
+def publication_view(
+    message: str = "",
+    *,
+    event_type: str = "mcp.log",
+    **attributes,
+) -> dict:
+    """Sanitized publication view of an MCP log event (no secrets / high-card)."""
+
+    view = sanitize_publication_view(
+        {"message": message, "event_type": event_type, **attributes}
+    )
+    view["console_grants_progress_authority"] = console_grants_progress_authority()
+    view["console_grants_completion_authority"] = console_grants_completion_authority()
+    view["mcp_log_path_authority"] = False
+    return view
+
+
+def export_mcp_log(path: Path | str) -> str:
+    """Explicit deterministic export placeholder for MCP logs (not authority)."""
+
+    target = Path(path)
+    guard = get_observability_filesystem_guard()
+    with guard.permit_export():
+        assert_mutable_file_sink_allowed(target, kind="mcp_log", operation="export")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(
+            "# MCP log export (non-authoritative; owner_task=DQK-079)\n",
+            encoding="utf-8",
+        )
+    return str(target)
