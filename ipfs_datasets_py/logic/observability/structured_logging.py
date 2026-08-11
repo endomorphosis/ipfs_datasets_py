@@ -328,13 +328,19 @@ def _route_structured_event_to_shadow(
     message: str,
     outcome: str = "info",
 ) -> None:
-    """Project structured log events into the typed observability shadow (DQK-077)."""
+    """Project structured log events into DuckDB cutover (DQK-078) or shadow (DQK-077).
+
+    Console/stderr remains a disposable operational projection under cutover;
+    typed DuckDB state is the progress/audit authority when dual or db-primary.
+    """
 
     try:
         from ipfs_datasets_py.duckdb_control.observability_adapters import (
             ObservabilityProducer,
             derive_stable_event_id,
-            record_observability_event,
+        )
+        from ipfs_datasets_py.duckdb_control.observability_cutover import (
+            try_record_observability_event,
         )
     except Exception:
         return
@@ -364,7 +370,7 @@ def _route_structured_event_to_shadow(
     elif level >= logging.WARNING:
         outcome = "info"
 
-    record_observability_event(
+    try_record_observability_event(
         producer=ObservabilityProducer.STRUCTURED_LOGGING,
         action=event_type,
         actor=actor,

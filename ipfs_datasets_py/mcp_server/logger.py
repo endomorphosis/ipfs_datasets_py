@@ -101,22 +101,25 @@ def log_mcp_event(
     actor: str = "mcp_server",
     **attributes,
 ) -> None:
-    """Log an MCP server event and project it into the typed shadow catalog.
+    """Log an MCP server event and project it into DuckDB cutover or shadow.
 
-    The legacy ``mcp_server.log`` file handler remains the selected authority
-    under DQK-077 shadow mode. When the observability shadow repository is
-    configured, a redacted typed audit record is dual-written with a parity
-    receipt and content-addressed evidence blob.
+    Under DQK-078 dual/db-primary cutover, typed DuckDB state is the authority
+    and the legacy ``mcp_server.log`` / stderr stream is a disposable
+    operational projection. Under DQK-077 shadow mode, the legacy file sink
+    remains selected authority while the catalog is a non-authoritative
+    projection with parity receipts.
     """
 
-    # Always write through the legacy logger first.
+    # Always write through the legacy logger first (disposable under cutover).
     logger.log(level, message, extra=attributes if attributes else None)
 
     try:
         from ipfs_datasets_py.duckdb_control.observability_adapters import (
             ObservabilityProducer,
             derive_stable_event_id,
-            record_observability_event,
+        )
+        from ipfs_datasets_py.duckdb_control.observability_cutover import (
+            try_record_observability_event,
         )
     except Exception:
         return
@@ -137,7 +140,7 @@ def log_mcp_event(
     elif "complete" in str(event_type).lower() or "success" in str(event_type).lower():
         outcome = "succeeded"
 
-    record_observability_event(
+    try_record_observability_event(
         producer=ObservabilityProducer.MCP_LOGGER,
         action=event_type,
         actor=actor,

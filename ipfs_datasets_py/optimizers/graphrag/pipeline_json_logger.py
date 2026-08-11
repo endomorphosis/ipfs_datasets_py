@@ -218,13 +218,15 @@ class PipelineJSONLogger:
         payload: Dict[str, Any],
         level: int,
     ) -> None:
-        """Project pipeline JSON logs into the typed shadow catalog (DQK-077)."""
+        """Project pipeline JSON logs into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (
                 ObservabilityProducer,
                 derive_stable_event_id,
-                record_observability_event,
+            )
+            from ipfs_datasets_py.duckdb_control.observability_cutover import (
+                try_record_observability_event,
             )
         except Exception:
             return
@@ -244,7 +246,7 @@ class PipelineJSONLogger:
         elif event_type.endswith(".completed"):
             outcome = "succeeded"
 
-        record_observability_event(
+        try_record_observability_event(
             producer=ObservabilityProducer.PIPELINE_JSON,
             action=event_type,
             actor=str(self.domain or "pipeline"),
