@@ -65,8 +65,17 @@ def _exclusion_raw(exclusions: Iterable[str] | None) -> tuple[bytes, ...]:
     return tuple(sorted(os.fsencode(value) for value in values))
 
 def _ignored_raw(raw: bytes, exclusions: Sequence[bytes]) -> bool:
-    # Exact byte components: ASCII-ignore would make .semantic-index\xff vanish.
-    return any(part in exclusions for part in raw.split(b"/"))
+    # Exclusions may name either one directory component (the built-in
+    # exclusions) or a repository-relative subtree supplied by a caller.
+    # All comparisons stay in the raw-byte domain: an invalid UTF-8 lookalike
+    # must not disappear due to a decoded-string comparison.
+    components = raw.split(b"/")
+    return any(
+        excluded in components
+        or raw == excluded
+        or raw.startswith(excluded + b"/")
+        for excluded in exclusions
+    )
 
 def _git_oid(value: str | None, name: str) -> str | None:
     if value is None: return None
@@ -166,17 +175,41 @@ def _require_git(root: Path, args: Sequence[str], what: str) -> bytes:
 def _ascii_oid(raw: bytes, what: str) -> str:
     try: value = raw.decode("ascii", "strict").strip()
     except UnicodeDecodeError as exc: raise GitSnapshotError(f"git {what} was not ASCII") from exc
-    return _git_oid(value, what) or ""
+    try: return _git_oid(value, what) or ""
+    except SnapshotError as exc: raise GitSnapshotError(f"git {what} was malformed") from exc
 def _git_root(root: Path) -> Path | None:
     result = _git(root, ("rev-parse", "--show-toplevel"))
     if result.returncode:
-        if _not_git(result): return None
+        # A broken .git marker is not permission to silently downgrade to a
+        # filesystem snapshot.  It claims Git authority but cannot establish
+        # it, so surface a typed acquisition failure instead.
+        if _not_git(result) and not os.path.lexists(root / ".git"): return None
         raise GitSnapshotError("git repository discovery failed")
     if result.stderr: raise GitSnapshotError("git repository discovery warned")
     try: text = result.stdout.decode("utf-8", "strict").strip()
     except UnicodeDecodeError as exc: raise GitSnapshotError("git root was not UTF-8") from exc
     if not text: raise GitSnapshotError("git root was empty")
     return Path(text).resolve()
+
+def _unborn_head_ref(root: Path) -> str:
+    """Return a validated symbolic HEAD, rejecting a contradictory born HEAD."""
+    symbolic = _git(root, ("symbolic-ref", "-q", "HEAD"))
+    if symbolic.returncode or symbolic.stderr or not symbolic.stdout.strip():
+        raise GitSnapshotError("git HEAD discovery failed")
+    try:
+        head_ref = symbolic.stdout.decode("ascii", "strict").strip()
+    except UnicodeDecodeError as exc:
+        raise GitSnapshotError("git symbolic HEAD was not ASCII") from exc
+    if not head_ref:
+        raise GitSnapshotError("git symbolic HEAD was empty")
+    # A successful history lookup means the preceding quiet HEAD lookup was
+    # inconsistent, not that this is an unborn repository.
+    history = _git(root, ("rev-list", "--max-count=1", "HEAD"))
+    if history.returncode == 0:
+        raise GitSnapshotError("git HEAD discovery was inconsistent")
+    if history.returncode not in {0, 128}:
+        raise GitSnapshotError("git unborn HEAD verification failed")
+    return head_ref
 
 def repository_identity(repository: str | os.PathLike[str], *, repository_id: str | None = None) -> str:
     if repository_id is not None: return _text(repository_id, "repository_id")
@@ -186,9 +219,10 @@ def repository_identity(repository: str | os.PathLike[str], *, repository_id: st
     if head.returncode:
         # Only rev-parse's documented unborn result is accepted; quiet corrupt
         # refs and warnings are evidence failures, not a filesystem fallback.
-        symbolic = _git(git_root, ("symbolic-ref", "-q", "HEAD"))
-        if head.returncode != 1 or head.stderr or symbolic.returncode or symbolic.stderr or not symbolic.stdout.strip(): raise GitSnapshotError("git HEAD discovery failed")
-        return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "git-unborn", "head_ref": symbolic.stdout.decode("ascii", "strict").strip()})
+        if head.returncode != 1 or head.stderr: raise GitSnapshotError("git HEAD discovery failed")
+        return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "git-unborn", "head_ref": _unborn_head_ref(git_root), "git_dir": str((git_root / ".git").resolve())})
+    if head.stderr: raise GitSnapshotError("git HEAD discovery warned")
+    _ascii_oid(head.stdout, "HEAD")
     roots = _require_git(git_root, ("rev-list", "--max-parents=0", "--reverse", "HEAD"), "root-history").splitlines()
     if not roots: raise GitSnapshotError("git root history was empty")
     try: object_format = _require_git(git_root, ("rev-parse", "--show-object-format"), "object-format").decode("ascii", "strict").strip()
@@ -293,7 +327,9 @@ def _unborn_entry_evidence(item: SnapshotEntry, index: Mapping[bytes, Mapping[st
     raw = bytes.fromhex(item.raw_path_hex or "")
     stages = index.get(raw, {})
     disposition = _disposition(status.get(raw), raw in index, None, stages)
-    if disposition == "untracked":
+    # A wholly empty index is a bootstrap inventory.  Once staged content
+    # exists, retain the meaningful untracked distinction for other paths.
+    if disposition == "untracked" and not index:
         disposition = "unborn"
     return replace(item, git_blob_oid=stages.get("0"), index_blob_oids={key: value for key, value in stages.items() if key in {"1", "2", "3"}}, disposition=disposition if not item.is_opaque else item.disposition)
 
@@ -325,13 +361,14 @@ def snapshot_repository(repository: str | os.PathLike[str], *, repository_id: st
     if git_root is None: return RepositorySnapshot(identity, _filesystem_entries(root, max_file_bytes, max_entries, raw_exclusions), "filesystem", max_file_bytes, max_entries, exclusions=rendered_exclusions)
     head = _git(git_root, ("rev-parse", "--verify", "--quiet", "HEAD"))
     if head.returncode:
-        symbolic = _git(git_root, ("symbolic-ref", "-q", "HEAD"))
-        if head.returncode != 1 or head.stderr or symbolic.returncode or symbolic.stderr or not symbolic.stdout.strip(): raise GitSnapshotError("git HEAD discovery failed")
+        if head.returncode != 1 or head.stderr: raise GitSnapshotError("git HEAD discovery failed")
+        _unborn_head_ref(git_root)
         entries = _filesystem_entries(git_root, max_file_bytes, max_entries, raw_exclusions)
         index = _index_oids(git_root, raw_exclusions)
         status = _status(git_root)
         entries = tuple(_unborn_entry_evidence(item, index, status) for item in entries)
         return RepositorySnapshot(identity, entries, "git-unborn", max_file_bytes, max_entries, exclusions=rendered_exclusions)
+    if head.stderr: raise GitSnapshotError("git HEAD discovery warned")
     commit = _ascii_oid(head.stdout, "HEAD")
     tree = _ascii_oid(_require_git(git_root, ("rev-parse", f"{commit}^{{tree}}"), "commit tree"), "commit tree")
     status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
@@ -351,6 +388,10 @@ def snapshot_repository(repository: str | os.PathLike[str], *, repository_id: st
         entries = tuple(entries_list); mode = "git-working"
     # Fence status/index/blob acquisition against a moving HEAD.  The selected
     # commit remains tied to its own tree even when this reports a race.
+    # The commit alone is insufficient: status and index can change while
+    # HEAD remains fixed.  Re-observe both raw records to close that race.
+    if _status(git_root) != status or _index_oids(git_root, raw_exclusions) != index:
+        raise GitSnapshotError("git working generation changed during snapshot")
     if _ascii_oid(_require_git(git_root, ("rev-parse", "--verify", "HEAD"), "HEAD fence"), "HEAD fence") != commit: raise GitSnapshotError("git generation changed during snapshot")
     return RepositorySnapshot(identity, entries, mode, max_file_bytes, max_entries, tree, commit, rendered_exclusions)
 
