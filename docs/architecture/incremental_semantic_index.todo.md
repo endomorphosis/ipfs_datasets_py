@@ -576,7 +576,7 @@ W14 ISI-040
 
 ## ISI-035 Rebase Python extraction on the established frontend authority
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: extraction-repair
