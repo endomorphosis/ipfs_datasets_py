@@ -189,13 +189,20 @@ class AlertManager:
     
     def save_rules_to_file(self, config_file: Union[str, Path]):
         """
-        Save alert rules to YAML config file.
+        Explicit deterministic export of alert rules to a YAML config file.
+
+        This is configuration export, not alert-state authority. After DQK-079
+        canary cutover it runs under an explicit export permit only.
         
         Args:
             config_file: Path to output YAML file
         """
         try:
             import yaml
+
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                permit_explicit_observability_export,
+            )
             
             config = {
                 'rules': [rule.to_dict() for rule in self.rules.values()]
@@ -203,9 +210,11 @@ class AlertManager:
             
             path = Path(config_file)
             path.parent.mkdir(parents=True, exist_ok=True)
-            
-            with open(path, 'w') as f:
-                yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+            with permit_explicit_observability_export():
+                # explicit_export marker for static/dynamic guards
+                with open(path, 'w') as f:
+                    yaml.dump(config, f, default_flow_style=False, sort_keys=False)
             
             logger.info(f"Saved {len(self.rules)} rules to {config_file}")
         
@@ -213,6 +222,54 @@ class AlertManager:
             logger.error("PyYAML required for saving config files")
         except Exception as e:
             logger.error(f"Error saving rules to file: {e}", exc_info=True)
+
+    def save_alert_state(self, state_file: Union[str, Path]) -> None:
+        """Persist mutable alert suppression state — rejected after DQK-079.
+
+        Alert-state JSON files are no longer an authority. Use DuckDB typed
+        alert events. This method always invokes the dynamic writer guard.
+        """
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            assert_mutable_file_sink_allowed,
+        )
+
+        path = Path(state_file)
+        assert_mutable_file_sink_allowed(path, kind="alert_state")
+        # If an explicit export permit is active, write a sanitized snapshot.
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            sanitized_publication_view,
+        )
+
+        payload = sanitized_publication_view(
+            {
+                "rules": [r.rule_id for r in self.rules.values()],
+                "suppression": self.get_suppression_status(),
+            }
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2, sort_keys=True)
+
+    def export_alert_state(self, state_file: Union[str, Path]) -> None:
+        """Explicit deterministic export of sanitized alert suppression status."""
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            permit_explicit_observability_export,
+            sanitized_publication_view,
+        )
+
+        path = Path(state_file)
+        payload = sanitized_publication_view(
+            {
+                "kind": "alert_state_export",
+                "rule_ids": sorted(self.rules.keys()),
+                "suppression": self.get_suppression_status(),
+            }
+        )
+        with permit_explicit_observability_export():
+            # explicit_export marker for static/dynamic guards
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2, sort_keys=True)
     
     async def evaluate_event(
         self,
@@ -291,9 +348,9 @@ class AlertManager:
         if rule.embed_config:
             embed = self._create_embed(rule, event)
         
-        # Send notification (legacy Discord/file sinks remain authority under
-        # DQK-077 shadow mode; typed observability is a non-authoritative
-        # projection).
+        # Send notification. After DQK-079 canary cutover, DuckDB alert events
+        # are the authority; Discord/console are disposable operational sinks.
+        # Mutable alert-state JSON files are rejected (see save_alert_state).
         try:
             send_result = await self.notifier.send_message(
                 text=message,

@@ -232,19 +232,53 @@ class AuditLogger:
         Args:
             session_id: Unique session identifier. If None, auto-generated.
             output_dir: Directory to write audit files. If None, memory-only.
-            enable_file_logging: Whether to write events to disk (default: True)
+            enable_file_logging: Whether to write events to disk (default: True).
+                After DQK-079 canary cutover this is forced off unless an
+                explicit export permit is active.
             logger: Optional Python logger for debug messages
         """
         self.session_id = session_id or self._generate_session_id()
         self.output_dir: Optional[Path] = Path(output_dir) if output_dir else None
-        self.enable_file_logging = enable_file_logging and (output_dir is not None)
         self._log = logger or logging.getLogger(__name__)
+
+        # DQK-079: disable implicit JSONL file authority after canary.
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                ObservabilityMutableFileSinkError,
+                assert_mutable_file_sink_allowed,
+                legacy_mutable_file_sinks_allowed,
+            )
+        except Exception:
+            ObservabilityMutableFileSinkError = RuntimeError  # type: ignore[misc,assignment]
+            assert_mutable_file_sink_allowed = None  # type: ignore[assignment]
+            legacy_mutable_file_sinks_allowed = lambda: True  # type: ignore[assignment,misc]
+
+        want_files = bool(enable_file_logging and output_dir is not None)
+        if want_files and not legacy_mutable_file_sinks_allowed():
+            # Reject undeclared mutable JSONL sinks; fall back to memory-only.
+            if assert_mutable_file_sink_allowed is not None:
+                try:
+                    assert_mutable_file_sink_allowed(
+                        self.output_dir, kind="graphrag_audit_jsonl"
+                    )
+                except ObservabilityMutableFileSinkError:
+                    want_files = False
+                    self._log.info(
+                        "DQK-079: graphrag audit file logging disabled "
+                        f"(session_id={self.session_id}); DuckDB is authority"
+                    )
+        self.enable_file_logging = want_files
+        self._assert_mutable_file_sink_allowed = assert_mutable_file_sink_allowed
         
         # Event storage
         self.events: List[AuditEvent] = []
         
-        # Create output directory if needed
+        # Create output directory if needed (guarded)
         if self.enable_file_logging and self.output_dir is not None:
+            if assert_mutable_file_sink_allowed is not None:
+                assert_mutable_file_sink_allowed(
+                    self.output_dir, kind="graphrag_audit_jsonl"
+                )
             self.output_dir.mkdir(parents=True, exist_ok=True)
             self._log.info(f"Audit logger initialized: session_id={self.session_id}, output_dir={self.output_dir}")
         else:
@@ -318,10 +352,25 @@ class AuditLogger:
         )
     
     def _write_event_to_file(self, event: AuditEvent) -> None:
-        """Append event to incremental log file (JSONL format)."""
+        """Append event to incremental log file (JSONL format).
+
+        After DQK-079 canary cutover this path is rejected unless an explicit
+        export permit is active; callers should use :meth:`export_json` for
+        deterministic one-shot exports instead of continuous JSONL authority.
+        """
         if self.output_dir is None:
             return
         log_file = self.output_dir / f"audit_{self.session_id}.jsonl"
+
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                assert_mutable_file_sink_allowed,
+            )
+        except Exception:
+            assert_mutable_file_sink_allowed = None  # type: ignore[assignment]
+
+        if assert_mutable_file_sink_allowed is not None:
+            assert_mutable_file_sink_allowed(log_file, kind="graphrag_audit_jsonl")
         
         # Validate output path
         base_dir = Path(log_file).parent if Path(log_file).is_absolute() else None
@@ -582,28 +631,41 @@ class AuditLogger:
     
     def export_json(self, filepath: Union[str, Path], pretty: bool = True) -> None:
         """
-        Export full audit trail to JSON file.
+        Explicit deterministic export of the full audit trail to JSON.
+
+        This is **not** an authority sink: after DQK-079 canary cutover only
+        one-shot exports under an explicit export permit are allowed.
         
         Args:
             filepath: Output file path
             pretty: Whether to pretty-print JSON (default: True)
         """
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            permit_explicit_observability_export,
+            sanitized_publication_view,
+        )
+
         filepath = Path(filepath)
         data = {
             "session_id": self.session_id,
             "event_count": len(self.events),
-            "events": [event.to_dict() for event in self.events],
+            "events": [
+                sanitized_publication_view(event.to_dict())
+                for event in self.events
+            ],
         }
         
         # Validate output path
         base_dir = filepath.parent if filepath.is_absolute() else None
         safe_filepath = validate_output_path(str(filepath), allow_overwrite=True, base_dir=base_dir)
-        
-        with open(safe_filepath, "w", encoding="utf-8") as f:
-            if pretty:
-                json.dump(data, f, indent=2, sort_keys=True)
-            else:
-                json.dump(data, f, separators=(',', ':'), sort_keys=True)
+
+        with permit_explicit_observability_export():
+            # explicit_export marker for static/dynamic guards
+            with open(safe_filepath, "w", encoding="utf-8") as f:
+                if pretty:
+                    json.dump(data, f, indent=2, sort_keys=True)
+                else:
+                    json.dump(data, f, separators=(',', ':'), sort_keys=True)
         
         self._log.info(f"Exported {len(self.events)} events to {filepath}")
     
@@ -721,12 +783,19 @@ class AuditLogger:
 def create_audit_logger(
     output_dir: Union[str, Path] = "./audit_logs",
     session_id: Optional[str] = None,
+    *,
+    enable_file_logging: bool = False,
 ) -> AuditLogger:
-    """Create a new audit logger with default configuration."""
+    """Create a new audit logger with default configuration.
+
+    After DQK-079, default is memory-only (``enable_file_logging=False``).
+    Pass ``enable_file_logging=True`` only when legacy dual/shadow sinks are
+    still admitted; export-only/db-primary modes force memory-only.
+    """
     return AuditLogger(
         session_id=session_id,
         output_dir=output_dir,
-        enable_file_logging=True,
+        enable_file_logging=enable_file_logging,
     )
 
 

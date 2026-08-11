@@ -300,13 +300,41 @@ class AuditLogger:
         except:
             self.client_ip = "127.0.0.1"
 
-    def add_handler(self, handler: AuditHandler) -> None:
+    def add_handler(self, handler: "AuditHandler") -> None:
         """
         Add a handler to the audit logger.
+
+        After DQK-079 canary cutover (``db-primary`` / ``export-only``),
+        handlers that write to undeclared mutable file sinks are rejected.
+        Console / in-memory handlers remain allowed as ephemeral projections.
 
         Args:
             handler: The handler to add
         """
+        # Dynamic writer guard — reject FileAuditHandler / JSONAuditHandler
+        # paths and any handler advertising a file_path after canary.
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                assert_handler_not_undeclared_file_sink,
+                assert_mutable_file_sink_allowed,
+                handler_has_file_path,
+            )
+        except Exception:
+            assert_handler_not_undeclared_file_sink = None  # type: ignore[assignment]
+            assert_mutable_file_sink_allowed = None  # type: ignore[assignment]
+            handler_has_file_path = None  # type: ignore[assignment]
+
+        if assert_handler_not_undeclared_file_sink is not None:
+            assert_handler_not_undeclared_file_sink(handler)
+        if handler_has_file_path is not None and handler_has_file_path(handler):
+            path = (
+                getattr(handler, "file_path", None)
+                or getattr(handler, "baseFilename", None)
+                or "<audit-file-handler>"
+            )
+            if assert_mutable_file_sink_allowed is not None:
+                assert_mutable_file_sink_allowed(path, kind="audit_file_handler")
+
         with self._lock:
             self.handlers.append(handler)
 
@@ -469,14 +497,28 @@ class AuditLogger:
             event.source_module = os.path.basename(frame.filename)
             event.source_function = frame.name
 
-        # Dispatch to handlers. Under DQK-078 dual/db-primary cutover, DuckDB
-        # is the typed observability authority and file/console sinks are
-        # disposable projections. Under DQK-077 shadow mode, legacy file sinks
-        # remain selected authority while the catalog is a non-authoritative
-        # projection.
+        # Dispatch to handlers. Under DQK-079 export-only / db-primary, DuckDB
+        # is sole authority: mutable file sinks are skipped/rejected and console
+        # is an ephemeral human-readable projection only. Under DQK-078 dual
+        # and DQK-077 shadow, legacy file sinks may still dual-write as
+        # disposable projections.
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                handler_has_file_path,
+                legacy_mutable_file_sinks_allowed,
+            )
+        except Exception:
+            handler_has_file_path = lambda _h: False  # type: ignore[assignment,misc]
+            legacy_mutable_file_sinks_allowed = lambda: True  # type: ignore[assignment,misc]
+
+        sinks_ok = legacy_mutable_file_sinks_allowed()
+
         with self._lock:
             for handler in self.handlers:
                 try:
+                    if (not sinks_ok) and handler_has_file_path(handler):
+                        # Skip undeclared mutable file sinks post-canary.
+                        continue
                     handler.handle(event)
                 except Exception as e:
                     logging.error(f"Error in audit handler {handler.name}: {str(e)}")

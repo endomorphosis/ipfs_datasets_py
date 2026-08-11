@@ -17,28 +17,81 @@ audit_logger.setLevel(logging.INFO)
 
 
 class AuditLogger:
-    """Structured audit logger for security events."""
+    """Structured audit logger for security events.
+
+    After DQK-079 canary cutover (``db-primary`` / ``export-only``), mutable
+    file sinks are rejected; only ephemeral console/stderr JSON lines and the
+    DuckDB typed catalog remain. Explicit config may still *request* a path,
+    but construction is guarded and skipped when sinks are disabled.
+    """
     
     def __init__(self, log_path: Optional[str] = None):
         """Initialize audit logger.
         
         Args:
             log_path: Path to audit log file. If None, uses config or stderr.
+                After DQK-079 canary cutover this path is ignored unless an
+                explicit export permit is active; undeclared sinks raise.
         """
         if log_path is None:
-            config = get_config()
-            log_path = config.security.audit_log_path
+            try:
+                config = get_config()
+                log_path = config.security.audit_log_path
+            except Exception:
+                log_path = None
         
-        # Set up file handler if path provided
-        if log_path:
+        # Set up file handler only when mutable file sinks are still allowed
+        # (DQK-079: post-canary export-only/db-primary skips file sinks and
+        # keeps ephemeral console logs only).
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                assert_mutable_file_sink_allowed,
+                legacy_mutable_file_sinks_allowed,
+            )
+        except Exception:
+            assert_mutable_file_sink_allowed = None  # type: ignore[assignment]
+            legacy_mutable_file_sinks_allowed = lambda: True  # type: ignore[assignment,misc]
+
+        if log_path and legacy_mutable_file_sinks_allowed():
             path = Path(log_path)
+            # Guarded open site — static/dynamic markers required.
+            if assert_mutable_file_sink_allowed is not None:
+                assert_mutable_file_sink_allowed(
+                    path, kind="logic_security_audit_file"
+                )
             path.parent.mkdir(parents=True, exist_ok=True)
-            
             handler = logging.FileHandler(path)
             handler.setLevel(logging.INFO)
             formatter = logging.Formatter('%(message)s')
             handler.setFormatter(formatter)
             audit_logger.addHandler(handler)
+        else:
+            # Ephemeral console projection only (never authority).
+            if not any(
+                isinstance(h, logging.StreamHandler)
+                and not isinstance(h, logging.FileHandler)
+                for h in audit_logger.handlers
+            ):
+                stream = logging.StreamHandler()
+                stream.setLevel(logging.INFO)
+                stream.setFormatter(logging.Formatter('%(message)s'))
+                audit_logger.addHandler(stream)
+
+    @staticmethod
+    def attach_file_sink(log_path: str) -> None:
+        """Dynamically attach a mutable file sink (rejected after DQK-079 canary)."""
+
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            assert_mutable_file_sink_allowed,
+        )
+
+        path = Path(log_path)
+        assert_mutable_file_sink_allowed(path, kind="logic_security_audit_file")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        handler = logging.FileHandler(path)
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(logging.Formatter('%(message)s'))
+        audit_logger.addHandler(handler)
     
     @staticmethod
     def log_event(
@@ -70,8 +123,8 @@ class AuditLogger:
         # Add any additional fields
         event.update(kwargs)
         
-        # Log as JSON (legacy file/stderr sink remains authority under DQK-077
-        # shadow mode; typed observability is a non-authoritative projection).
+        # Ephemeral console JSON line (never progress/completion authority).
+        # Under DQK-079 export-only/db-primary, DuckDB is sole authority.
         audit_logger.info(json.dumps(event))
         AuditLogger._route_to_observability_shadow(event)
     

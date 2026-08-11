@@ -1,5 +1,10 @@
 """
 Logger configuration for IPFS Datasets MCP server.
+
+After DQK-079 canary cutover (``db-primary`` / ``export-only``), the legacy
+``mcp_server.log`` FileHandler is not attached. Only ephemeral human-readable
+console/stderr logs remain as disposable projections; typed DuckDB
+observability is the sole progress/audit authority.
 """
 import logging
 import re
@@ -55,27 +60,66 @@ def _install_optional_warning_filter() -> None:
             handler.addFilter(_OPTIONAL_WARNING_FILTER)
 
 
-mcp_log_path = Path(__file__).parent / "mcp_server.log"
+def _legacy_file_sinks_allowed() -> bool:
+    try:
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            legacy_mutable_file_sinks_allowed,
+        )
 
-# Configure root logger.
-# Under pytest, the root logger is often already configured. In that case,
-# calling basicConfig() is a no-op, but eagerly constructing FileHandler would
-# still open the file and then be garbage-collected, triggering ResourceWarning
-# about an unclosed file. Only create/attach handlers when we will actually
-# configure logging.
-_root_logger = logging.getLogger()
-if not _root_logger.handlers:
-    mcp_log_path.touch()  # Create the log file if it doesn't exist
+        return bool(legacy_mutable_file_sinks_allowed())
+    except Exception:
+        return True
+
+
+mcp_log_path = Path(__file__).parent / "mcp_server.log"
+log_dir = Path.home() / ".ipfs_datasets"
+
+
+def _configure_root_logging() -> None:
+    """Configure root logging with console-only sinks after DQK-079 canary.
+
+    FileHandler construction is guarded by
+    :func:`assert_mutable_file_sink_allowed` /
+    :func:`legacy_mutable_file_sinks_allowed`.
+    """
+    _root_logger = logging.getLogger()
+    if _root_logger.handlers:
+        return
+
+    handlers: list[logging.Handler] = []
+    if _legacy_file_sinks_allowed():
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                assert_mutable_file_sink_allowed,
+            )
+
+            assert_mutable_file_sink_allowed(mcp_log_path, kind="mcp_server_log")
+            mcp_log_path.touch()
+            handlers.append(logging.FileHandler(mcp_log_path, mode="a"))
+        except Exception:
+            handlers.append(logging.StreamHandler(sys.stderr))
+    else:
+        handlers.append(logging.StreamHandler(sys.stderr))
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[
-            # logging.StreamHandler(sys.stdout),
-            logging.FileHandler(mcp_log_path, mode="a"),
-        ],
+        handlers=handlers,
     )
 
+
+def _ensure_home_log_dir() -> None:
+    """Create ``~/.ipfs_datasets`` only while legacy file sinks are allowed."""
+    if not _legacy_file_sinks_allowed():
+        return
+    try:
+        log_dir.mkdir(exist_ok=True)
+    except OSError:
+        pass
+
+
+_configure_root_logging()
 _install_optional_warning_filter()
+_ensure_home_log_dir()
 
 # Create logger for this module
 logger = logging.getLogger("ipfs_datasets.mcp_server")
@@ -87,10 +131,20 @@ mcp_logger = logging.getLogger("ipfs_datasets.mcp")
 logger.setLevel(logging.INFO)
 mcp_logger.setLevel(logging.INFO)
 
-# Ensure the log directory exists (legacy file sink remains selected authority
-# under DQK-077 shadow mode).
-log_dir = Path.home() / ".ipfs_datasets"
-log_dir.mkdir(exist_ok=True)
+
+def attach_mcp_file_sink(path: str | Path | None = None) -> None:
+    """Dynamically attach a mutable MCP file sink (rejected after DQK-079 canary)."""
+
+    from ipfs_datasets_py.logic.observability.structured_logging import (
+        assert_handler_not_undeclared_file_sink,
+        assert_mutable_file_sink_allowed,
+    )
+
+    target = Path(path) if path is not None else mcp_log_path
+    assert_mutable_file_sink_allowed(target, kind="mcp_server_log")
+    handler = logging.FileHandler(target, mode="a")
+    assert_handler_not_undeclared_file_sink(handler)
+    logger.addHandler(handler)
 
 
 def log_mcp_event(
@@ -103,14 +157,34 @@ def log_mcp_event(
 ) -> None:
     """Log an MCP server event and project it into DuckDB cutover or shadow.
 
-    Under DQK-078 dual/db-primary cutover, typed DuckDB state is the authority
+    Under DQK-079 export-only / db-primary, typed DuckDB state is the authority
     and the legacy ``mcp_server.log`` / stderr stream is a disposable
-    operational projection. Under DQK-077 shadow mode, the legacy file sink
+    operational projection only. Console lines cannot satisfy progress or
+    completion authority. Under DQK-077 shadow mode, the legacy file sink
     remains selected authority while the catalog is a non-authoritative
     projection with parity receipts.
     """
 
-    # Always write through the legacy logger first (disposable under cutover).
+    try:
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            assert_console_not_progress_or_completion_authority,
+            legacy_mutable_file_sinks_allowed,
+        )
+
+        assert_console_not_progress_or_completion_authority()
+        # Drop any FileHandlers that slipped in after canary cutover.
+        if not legacy_mutable_file_sinks_allowed():
+            for handler in list(getattr(logger, "handlers", []) or []):
+                if isinstance(handler, logging.FileHandler):
+                    try:
+                        logger.removeHandler(handler)
+                        handler.close()
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+
+    # Always write through the ephemeral logger (console under cutover).
     logger.log(level, message, extra=attributes if attributes else None)
 
     try:

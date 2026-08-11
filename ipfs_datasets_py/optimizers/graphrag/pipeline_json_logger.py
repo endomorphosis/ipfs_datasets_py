@@ -205,7 +205,31 @@ class PipelineJSONLogger:
             payload = with_schema(payload)
         
         try:
-            # Legacy logger sink remains selected authority under DQK-077 shadow.
+            # Ephemeral console/stderr JSON line only. After DQK-079 canary
+            # cutover this is never progress/completion authority; DuckDB is.
+            # Reject undeclared file handlers on the underlying logger.
+            try:
+                from ipfs_datasets_py.logic.observability.structured_logging import (
+                    assert_console_not_progress_or_completion_authority,
+                    assert_handler_not_undeclared_file_sink,
+                    legacy_mutable_file_sinks_allowed,
+                )
+
+                assert_console_not_progress_or_completion_authority()
+                if not legacy_mutable_file_sinks_allowed():
+                    for handler in list(getattr(self.logger, "handlers", []) or []):
+                        assert_handler_not_undeclared_file_sink(handler)
+            except Exception as guard_exc:
+                from ipfs_datasets_py.logic.observability.structured_logging import (
+                    ObservabilityMutableFileSinkError,
+                    ObservabilityConsoleAuthorityError,
+                )
+
+                if isinstance(
+                    guard_exc,
+                    (ObservabilityMutableFileSinkError, ObservabilityConsoleAuthorityError),
+                ):
+                    raise
             self.logger.log(level, json.dumps(payload, default=str))
         except (TypeError, ValueError, RuntimeError, OSError) as exc:
             self.logger.debug(f"JSON logging failed: {exc}")

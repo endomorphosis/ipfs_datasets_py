@@ -5,10 +5,11 @@ inconsistencies or missing logging statements. Generates a checklist of
 methods and their logging status.
 """
 
+import json
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 from dataclasses import dataclass, field
 
 from ipfs_datasets_py.optimizers.common.path_validator import validate_input_path
@@ -158,11 +159,23 @@ class LoggingAuditor:
         return self.results
     
     def generate_report(self) -> str:
-        """Generate human-readable audit report.
+        """Generate human-readable audit report (ephemeral console projection).
+
+        The report string is never progress or completion authority under
+        DQK-079; typed DuckDB observability is. Call
+        :meth:`export_report` for an explicit deterministic file export.
         
         Returns:
             Formatted report string
         """
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                assert_console_not_progress_or_completion_authority,
+            )
+
+            assert_console_not_progress_or_completion_authority()
+        except Exception:
+            pass
         self._route_report_to_observability_shadow()
         report_lines = [
             "# Optimizer Module Logging Audit Report",
@@ -286,8 +299,40 @@ class LoggingAuditor:
         )
 
 
+def export_report(
+    report: str,
+    filepath: "str | Path",
+) -> None:
+    """Explicit deterministic export of a logging-audit report to a file.
+
+    Not an authority sink. After DQK-079 canary cutover only permitted under
+    an explicit export permit.
+    """
+    from pathlib import Path as _Path
+
+    from ipfs_datasets_py.logic.observability.structured_logging import (
+        permit_explicit_observability_export,
+        sanitized_publication_view,
+    )
+
+    path = _Path(filepath)
+    # Sanitized summary view (no high-cardinality private payloads).
+    body = report
+    summary = sanitized_publication_view(
+        {"kind": "logging_audit_report", "bytes": len(report.encode("utf-8"))}
+    )
+    with permit_explicit_observability_export():
+        # explicit_export marker for static/dynamic guards
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(body)
+            f.write("\n# publication_summary=")
+            f.write(json.dumps(summary, sort_keys=True))
+            f.write("\n")
+
+
 def main() -> List[LoggingAuditResult]:
-    """Run logging audit and print report."""
+    """Run logging audit and print report to ephemeral console only."""
     auditor = LoggingAuditor()
     auditor.audit_directory()
     report = auditor.generate_report()
