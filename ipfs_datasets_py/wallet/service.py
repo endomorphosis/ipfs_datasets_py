@@ -283,9 +283,16 @@ class DataWalletService:
         self.audit_events: Dict[str, List[AuditEvent]] = {}
         self._principal_secrets: Dict[str, bytes] = {}
         self._mutation_receipts: List[MutationReceipt] = []
+        # Durable dual-mode authority revision (DQK-075). Advanced only by the
+        # repository CAS path so stale in-memory service instances fail closed.
+        self._authority_revisions: Dict[str, int] = {}
 
     def attach_event_port(self, event_port: Optional[WalletDuckDBRepository]) -> None:
-        """Attach or replace the DuckDB shadow event port (DQK-074)."""
+        """Attach or replace the DuckDB event port (shadow dual/db-primary).
+
+        DQK-074 introduced shadow-mode receipts; DQK-075 runs dual mode with
+        DuckDB authoritative for public metadata projections.
+        """
 
         self.event_port = event_port
 
@@ -294,6 +301,73 @@ class DataWalletService:
         """Idempotent mutation receipts emitted while an event port is attached."""
 
         return list(self._mutation_receipts)
+
+    def authority_revision(self, wallet_id: str) -> int:
+        """Return the in-memory authority revision for *wallet_id* (0 if unset)."""
+
+        return int(self._authority_revisions.get(wallet_id, 0))
+
+    def note_authority_revision(self, wallet_id: str, revision: int) -> None:
+        """Record the durable authority revision after load or successful CAS save."""
+
+        self._authority_revisions[wallet_id] = int(revision)
+
+    def verify_audit_chain(self, wallet_id: str) -> Dict[str, Any]:
+        """Verify the wallet audit hash-chain is intact and recomputable.
+
+        Returns a report dict with ``valid`` and tip hashes. Used by dual-mode
+        cutover tests and operational health checks (DQK-075).
+        """
+
+        self._wallet(wallet_id)
+        events = list(self.audit_events.get(wallet_id, []))
+        report: Dict[str, Any] = {
+            "wallet_id": wallet_id,
+            "event_count": len(events),
+            "valid": True,
+            "tip_hash": "0" * 64,
+        }
+        prev = "0" * 64
+        for index, event in enumerate(events):
+            if event.hash_prev != prev:
+                report.update(
+                    {
+                        "valid": False,
+                        "error": "hash_prev mismatch",
+                        "index": index,
+                        "event_id": event.event_id,
+                        "expected_prev": prev,
+                        "actual_prev": event.hash_prev,
+                    }
+                )
+                return report
+            payload = {
+                "event_id": event.event_id,
+                "wallet_id": event.wallet_id,
+                "actor_did": event.actor_did,
+                "action": event.action,
+                "resource": event.resource,
+                "decision": event.decision,
+                "hash_prev": event.hash_prev,
+                "details": event.details or {},
+                "grant_id": event.grant_id,
+            }
+            recomputed = hashlib.sha256(canonical_bytes(payload)).hexdigest()
+            if event.hash_self != recomputed:
+                report.update(
+                    {
+                        "valid": False,
+                        "error": "hash_self mismatch",
+                        "index": index,
+                        "event_id": event.event_id,
+                        "expected_self": recomputed,
+                        "actual_self": event.hash_self,
+                    }
+                )
+                return report
+            prev = event.hash_self
+        report["tip_hash"] = prev
+        return report
 
     def _append_audit(
         self,
@@ -5532,6 +5606,18 @@ class DataWalletService:
     def get_audit_log(self, wallet_id: str) -> List[AuditEvent]:
         self._wallet(wallet_id)
         return list(self.audit_events[wallet_id])
+
+    def public_metadata_projection(self, wallet_id: str) -> Optional[Dict[str, Any]]:
+        """Return the DuckDB-authoritative public metadata projection when available.
+
+        Encrypted content and principal secrets never appear in this surface.
+        """
+
+        self._wallet(wallet_id)
+        if self.event_port is None:
+            return None
+        projection = self.event_port.get_wallet_projection(wallet_id)
+        return dict(projection) if projection is not None else None
 
     def verify_record_storage(
         self,
