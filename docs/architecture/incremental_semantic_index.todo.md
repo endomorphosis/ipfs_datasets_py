@@ -651,7 +651,7 @@ W21 ISI-040
 - Parallel lane: isi-python-inventory-closure
 - Resource class: cpu-large
 - Implementation timeout seconds: 10800
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 52000
 - LLM context budget bytes: 425984
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 6, 7, and 16
@@ -678,7 +678,7 @@ W21 ISI-040
 - Parallel lane: isi-python-relation-closure
 - Resource class: cpu-large
 - Implementation timeout seconds: 10800
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 52000
 - LLM context budget bytes: 425984
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 7, 8, and 16
@@ -840,7 +840,7 @@ W21 ISI-040
 - Parallel lane: isi-snapshot-bootstrap-publication-closure
 - Resource class: cpu-large
 - Implementation timeout seconds: 10800
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 46000
 - LLM context budget bytes: 376832
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 5, 6, 12, 13, and 16
@@ -867,7 +867,7 @@ W21 ISI-040
 - Parallel lane: isi-public-graph-repair
 - Resource class: cpu-large
 - Implementation timeout seconds: 10800
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 50000
 - LLM context budget bytes: 409600
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 6, 8, and 16
@@ -894,7 +894,7 @@ W21 ISI-040
 - Parallel lane: isi-invalidation-repair
 - Resource class: cpu-large
 - Implementation timeout seconds: 10800
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 52000
 - LLM context budget bytes: 425984
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 9 and 16
@@ -921,7 +921,7 @@ W21 ISI-040
 - Parallel lane: isi-release-repair
 - Resource class: cpu-large
 - Implementation timeout seconds: 14400
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 52000
 - LLM context budget bytes: 425984
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 11, 13, 15, and 16
@@ -948,7 +948,7 @@ W21 ISI-040
 - Parallel lane: isi-incremental-repair
 - Resource class: cpu-medium
 - Implementation timeout seconds: 7200
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 36000
 - LLM context budget bytes: 294912
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 6, 11, and 16

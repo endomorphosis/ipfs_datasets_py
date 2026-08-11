@@ -174,6 +174,17 @@ Authority rules:
     It preserves portable born-history identity: automatic identity is stable
     across moves only while the repository is unborn, while exact continuity
     through the first commit requires a caller-supplied `repository_id`.
+14. Repair run v11 remained structurally healthy but all four Codex dispatches
+    for the sole-ready ISI-050 returned an authenticated hard usage-limit
+    result with provider-declared retry at `2026-08-18T00:00:00Z`; no candidate
+    was produced and no task attempt was consumed. To avoid an external-
+    capacity stall, exactly the seven unfinished tasks ISI-050, ISI-043,
+    ISI-044, ISI-036, ISI-038, ISI-039, and ISI-040 use provider role
+    `grok-implement`. That role means authenticated Grok 4.5 is primary and the
+    supervisor may route to Codex only through its typed quota-only fallback.
+    It does not authorize anonymous providers, mocks, simulated output, silent
+    fallback, or any change to task dependencies, outputs, validation, or
+    acceptance authority.
 
 ## 3. Proposed package and files
 

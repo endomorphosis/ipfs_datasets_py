@@ -183,7 +183,7 @@ ISI-G000  Deterministic IncrementalSemanticIndex release
 - Validation: python -m pytest -q tests/unit/logic/software_contracts tests/cli/test_semantic_index_cli.py
 - Acceptance: Public scans are Git/filesystem-snapshot rooted, identity records are self-verifying, real resolved edges drive bounded invalidation, repository roots cannot cross-bind, dynamic behavior is never falsely exact, the CLI observes current truth, and every original mutation case passes without hand-authored dependency edges.
 - Gap task: ISI-033 through ISI-050
-- Refinement: Keep `software_contracts.content`, `repository`, `python_frontend`, `resolver`, and `cache.ImmutableCAS` authoritative; do not broaden into phase-two capsule compilation or an agent harness.
+- Refinement: Keep `software_contracts.content`, `repository`, `python_frontend`, `resolver`, and `cache.ImmutableCAS` authoritative; do not broaden into phase-two capsule compilation or an agent harness. After all four v11 Codex dispatches returned the authenticated hard capacity limit with retry at `2026-08-18T00:00:00Z`, exactly the unfinished ISI-050, ISI-043, ISI-044, ISI-036, ISI-038, ISI-039, and ISI-040 tasks route through `grok-implement`: authenticated Grok 4.5 is primary, and Codex is available only through the supervisor's typed quota-only fallback, never as a mock, simulation, anonymous provider, or silent fallback.
 
 ## ISI-G081 Durable identity contract
 
