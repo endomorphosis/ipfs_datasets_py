@@ -617,10 +617,176 @@ def empty_registry(
     )
 
 
+# ---------------------------------------------------------------------------
+# DQK-068: registry → AST / evidence shadow authority
+# ---------------------------------------------------------------------------
+
+REGISTRY_SHADOW_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contracts.registry-ast-shadow@1"
+)
+REGISTRY_EVIDENCE_EDGE_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contracts.registry-evidence-edge@1"
+)
+REGISTRY_SHADOW_OWNER_TASK: Final[str] = "DQK-068"
+
+
+def registry_evidence_edges(
+    registry: ContractRegistry,
+    *,
+    revision: str | None = None,
+    task_id: str = REGISTRY_SHADOW_OWNER_TASK,
+) -> tuple[dict[str, Any], ...]:
+    """Project reviewed callable contracts into code-evidence edges.
+
+    Each callable becomes a ``defines_symbol`` edge; each effect becomes a
+    ``derived_from`` edge bound to the registry revision.  Edges are
+    content-addressable and ordered for differential parity.
+    """
+
+    if not isinstance(registry, ContractRegistry):
+        raise ContractRegistryError(
+            "registry_evidence_edges requires a ContractRegistry"
+        )
+    rev = revision or registry.revision
+    edges: list[dict[str, Any]] = []
+    for contract in registry:
+        symbol_target = f"symbol:{contract.qualified_name}"
+        edges.append(
+            {
+                "schema": REGISTRY_EVIDENCE_EDGE_SCHEMA,
+                "edge_id": (
+                    f"edge:registry:defines:{registry.registry_id}:"
+                    f"{contract.contract_id}"
+                ),
+                "kind": "defines_symbol",
+                "source": f"registry:{registry.registry_id}",
+                "target": symbol_target,
+                "provenance": "ast",
+                "authoritative": True,
+                "revision": rev,
+                "task_id": task_id,
+                "contract_id": contract.contract_id,
+                "qualified_name": contract.qualified_name,
+                "shape": contract.shape,
+                "registry_cid": registry.cid,
+            }
+        )
+        for effect in contract.effects:
+            edges.append(
+                {
+                    "schema": REGISTRY_EVIDENCE_EDGE_SCHEMA,
+                    "edge_id": (
+                        f"edge:registry:effect:{registry.registry_id}:"
+                        f"{contract.contract_id}:{effect.kind}:{effect.operation}"
+                    ),
+                    "kind": "derived_from",
+                    "source": symbol_target,
+                    "target": f"effect:{effect.kind}:{effect.operation}",
+                    "provenance": "ast",
+                    "authoritative": True,
+                    "revision": rev,
+                    "task_id": task_id,
+                    "contract_id": contract.contract_id,
+                    "effect_kind": effect.kind,
+                    "effect_operation": effect.operation,
+                    "effect_subject": effect.subject,
+                    "registry_cid": registry.cid,
+                }
+            )
+    edges.sort(key=lambda item: str(item["edge_id"]))
+    return tuple(edges)
+
+
+def shadow_publish_registry(
+    registry: ContractRegistry,
+    authority_port: Any,
+    *,
+    revision: str | None = None,
+    task_id: str = REGISTRY_SHADOW_OWNER_TASK,
+    operation_id: str | None = None,
+) -> dict[str, Any]:
+    """Write the registry document and evidence edges through the authority port.
+
+    JSON registry bytes remain the legacy authority payload; DuckDB receives
+    the same document via the shadow outbox, plus per-edge evidence rows.
+    """
+
+    if not isinstance(registry, ContractRegistry):
+        raise ContractRegistryError(
+            "shadow_publish_registry requires a ContractRegistry"
+        )
+    if authority_port is None:
+        raise ContractRegistryError("authority_port is required")
+
+    rev = revision or registry.revision
+    document = registry.to_dict()
+    document_cid = registry.cid
+    dual = {
+        "schema": REGISTRY_SHADOW_SCHEMA,
+        "owner_task_id": task_id,
+        "kind": "contract_registry_shadow",
+        "registry_id": registry.registry_id,
+        "revision": rev,
+        "registry_cid": document_cid,
+        "json_bundle": document,
+        "db_projection": document,
+        "identity": {
+            "registry_id": registry.registry_id,
+            "revision": rev,
+            "registry_cid": document_cid,
+            "owner_goal": registry.owner_goal,
+        },
+    }
+    key = f"registry:{registry.registry_id}:{document_cid}"
+    op = operation_id or f"op:registry:{document_cid}"
+    write = authority_port.write(key, dual, operation_id=op)
+    edges = registry_evidence_edges(
+        registry, revision=rev, task_id=task_id
+    )
+    edge_writes: list[dict[str, Any]] = []
+    for edge in edges:
+        edge_key = f"evidence:{edge['edge_id']}"
+        edge_op = f"op:registry-evidence:{edge['edge_id']}"
+        edge_writes.append(
+            authority_port.write(edge_key, edge, operation_id=edge_op)
+        )
+    parity = authority_port.emit_parity_receipt(key)
+    legacy = authority_port.backend.get_legacy(authority_port.domain, key)
+    db = authority_port.backend.get_db(authority_port.domain, key)
+    identity_match = (
+        isinstance(legacy, Mapping)
+        and isinstance(db, Mapping)
+        and dict(legacy.get("identity") or {})
+        == dict(db.get("identity") or {})
+        and dict(legacy.get("json_bundle") or {})
+        == dict(db.get("db_projection") or {})
+    )
+    return {
+        "ok": bool(write.get("ok", True)),
+        "authority_key": key,
+        "operation_id": write.get("operation_id", op),
+        "registry_cid": document_cid,
+        "evidence_edges": list(edges),
+        "evidence_edge_count": len(edges),
+        "edge_writes": edge_writes,
+        "parity_matched": bool(getattr(parity, "matched", False)),
+        "parity_receipt_cid": getattr(parity, "receipt_cid", ""),
+        "differential_identity_match": identity_match,
+        "matched": bool(getattr(parity, "matched", False) and identity_match),
+        "write_result": write,
+        "atomic_across_filesystems": False,
+    }
+
+
 __all__ = [
     "ContractRegistry",
     "ContractRegistryError",
+    "REGISTRY_EVIDENCE_EDGE_SCHEMA",
     "REGISTRY_SCHEMA",
+    "REGISTRY_SHADOW_OWNER_TASK",
+    "REGISTRY_SHADOW_SCHEMA",
     "detect_callable_conflicts",
     "empty_registry",
+    "registry_evidence_edges",
+    "shadow_publish_registry",
 ]
