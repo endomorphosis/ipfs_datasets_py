@@ -435,7 +435,7 @@ W8  ISI-032
 
 ## ISI-032 Document capsule handoff, import safety, and run regressions
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: closeout
