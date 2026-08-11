@@ -43,12 +43,12 @@ DSS-G000  Python-first semantic-state producer contract
 - Priority: P0
 - Track: contracts
 - Bundle: dss/contracts
-- Goal: Seal the exact final ISI and KSR revisions plus the reviewed MCP++ and accelerate consumer contracts, then define every self-verifying semantic-state payload before algorithms are implemented.
+- Goal: Seal the exact final ISI revision plus final kit `05ba9375923cd5fb52e2c9c18b98b530d57d077f`, MCP++ `dc3164653a48d059ae9812078359daeafb451c07`, and accelerate consumer `bde62375e2eabd1c0f9a50c6672372b1af5616c6`; then define every self-verifying semantic-state value before algorithms are implemented.
 - Evidence: dss/dependency-seal@1, dss/payload-models@1
 - Acceptance criteria: dss/dependency-seal@1; dss/payload-models@1
 - Outputs: docs/architecture/SEMANTIC_STATE_CONTRACT_PLAN.md, docs/architecture/semantic_state_contract.objectives.md, docs/architecture/semantic_state_contract.todo.md, config/semantic_state_contract_dependencies.seal.json, scripts/validate_semantic_state_contract_dependencies.py, tests/unit/logic/software_contracts/semantic_state/test_dependency_seal.py, ipfs_datasets_py/logic/software_contracts/semantic_state/models.py, ipfs_datasets_py/logic/software_contracts/semantic_state/schemas/semantic-state.payload.schema.json
 - Validation: python3.12 scripts/validate_semantic_state_contract_dependencies.py --check config/semantic_state_contract_dependencies.seal.json && python3.12 -m pytest -q tests/unit/logic/software_contracts/semantic_state/test_dependency_seal.py tests/unit/logic/software_contracts/semantic_state/test_models.py tests/unit/logic/software_contracts/semantic_state/test_payload_schema.py
-- Acceptance: Unresolved, forged, dirty, origin-mismatched, unreachable, schema-incompatible, non-Python-3.12, or failing producer authorities are rejected; closed models accept only strict reviewed values and reverify every claimed CID.
+- Acceptance: Unresolved, forged, dirty, wrong-HEAD/non-root, origin-mismatched, schema/API-incompatible, substituted/skipped/timed-out, post-test-mutated, non-Python-3.12, or failing authorities are rejected; `exact_clean_head` makes no remote-ref claim; closed models accept only strict reviewed values and reverify every claimed CID.
 - Gap task: DSS-000, DSS-001
 - Refinement: `software_contracts.content` remains the only content-identity implementation and generic MCP++ records remain external.
 
@@ -66,7 +66,7 @@ DSS-G000  Python-first semantic-state producer contract
 - Acceptance criteria: dss/symbol-merkle@1; dss/capsule@1; dss/source-admission@1
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_state/merkle.py, ipfs_datasets_py/logic/software_contracts/semantic_state/capsules.py, ipfs_datasets_py/logic/software_contracts/semantic_state/freshness.py, ipfs_datasets_py/logic/software_contracts/semantic_state/source.py, tests/unit/logic/software_contracts/semantic_state/test_merkle.py, tests/unit/logic/software_contracts/semantic_state/test_capsules.py, tests/unit/logic/software_contracts/semantic_state/test_freshness.py, tests/unit/logic/software_contracts/semantic_state/test_source.py
 - Validation: python3.12 -m pytest -q tests/unit/logic/software_contracts/semantic_state/test_merkle.py tests/unit/logic/software_contracts/semantic_state/test_capsules.py tests/unit/logic/software_contracts/semantic_state/test_freshness.py tests/unit/logic/software_contracts/semantic_state/test_source.py
-- Acceptance: Recursive calls/inheritance cannot form CID cycles; capsules preserve only producer-authoritative facts; per-symbol relevant binding projections avoid unrelated invalidation; verified previous-bundle reuse equals cold output; heuristic, opaque, stale, unknown, or edited code requires exact producer-bound source.
+- Acceptance: Recursive calls/inheritance cannot form CID cycles; capsules preserve only producer-authoritative facts; `bindings.py` solely computes per-symbol relevant projections; verified previous-bundle reuse equals cold output; heuristic, opaque, stale, unknown, or edited code requires exact producer-bound source.
 - Gap task: DSS-003, DSS-004, DSS-006
 - Refinement: Links point to fact CIDs, not symbol-node/capsule CIDs; source reads never fall back to the ambient filesystem.
 
@@ -84,7 +84,7 @@ DSS-G000  Python-first semantic-state producer contract
 - Acceptance criteria: dss/binding-invalidation@1; dss/test-selection@1; dss/oracle@1
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_state/bindings.py, ipfs_datasets_py/logic/software_contracts/semantic_state/invalidation.py, ipfs_datasets_py/logic/software_contracts/semantic_state/test_selection.py, ipfs_datasets_py/logic/software_contracts/semantic_state/oracle.py, tests/unit/logic/software_contracts/semantic_state/test_bindings.py, tests/unit/logic/software_contracts/semantic_state/test_invalidation.py, tests/unit/logic/software_contracts/semantic_state/test_test_selection.py, tests/unit/logic/software_contracts/semantic_state/test_oracle.py
 - Validation: python3.12 -m pytest -q tests/unit/logic/software_contracts/semantic_state/test_bindings.py tests/unit/logic/software_contracts/semantic_state/test_invalidation.py tests/unit/logic/software_contracts/semantic_state/test_test_selection.py tests/unit/logic/software_contracts/semantic_state/test_oracle.py
-- Acceptance: Binding changes stale the correct derived artifacts without rewriting source; previous/current views retain deleted/renamed dependency truth; every selected test/proof has a bounded reason path; controlled cases have zero false negatives and missed regressions; uncertainty visibly selects full fallback.
+- Acceptance: Binding changes stale the correct derived artifacts without rewriting source; previous/current views retain deleted/renamed dependency truth; every selected test/proof has a bounded reason path; selection metrics compare pytest node IDs while failure fingerprints compare outcomes at the same node; controlled cases have zero false negatives and missed regressions; uncertainty visibly selects full fallback.
 - Gap task: DSS-005, DSS-007, DSS-008
 - Refinement: Selection is a pure datasets result; accelerate executes it and owns the 40-task benchmark rather than reselecting.
 

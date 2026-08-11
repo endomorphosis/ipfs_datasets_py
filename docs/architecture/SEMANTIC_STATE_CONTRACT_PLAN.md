@@ -11,14 +11,18 @@ The dependency gate is intentionally open:
 
 ```text
 FINAL_INCREMENTAL_SEMANTIC_INDEX_COMMIT = UNRESOLVED_FINAL_ISI_COMMIT
-FINAL_KIT_STATE_ROOT_COMMIT             = UNRESOLVED_FINAL_KSR_COMMIT
+FINAL_KIT_STATE_ROOT_COMMIT             = 05ba9375923cd5fb52e2c9c18b98b530d57d077f
+ACCELERATE_CONSUMER_PLAN_COMMIT         = bde62375e2eabd1c0f9a50c6672372b1af5616c6
 ```
 
 `DSS-000` remains `todo` with `Completion: manual`.  No implementation task may
-start until an operator replaces both placeholders with the exact final commits,
-fills every required fingerprint, runs the producer tests through the seal
-validator, commits the sealed control plane, and manually completes `DSS-000`.
-The prepared seal and its test are expected to fail closed until that happens.
+start until an operator replaces the remaining ISI placeholders with the exact
+final commit, tree, schema/extractor values, blobs, and complete authority
+fingerprint; runs every producer test through the seal validator; commits the
+sealed control plane; and manually completes `DSS-000`.  The final ISI must be
+bound through a separate clean `${DSS_ISI_CHECKOUT}`: this phase-two checkout
+cannot equal its phase-one ancestor and must never be used as a self-referential
+pin.  The prepared seal and its test are expected to fail closed until then.
 
 ## 1. Scope and non-goals
 
@@ -91,13 +95,25 @@ The following external revisions were also reviewed as contract inputs:
 - MCP++ Profile A/B/F wire authority:
   `dc3164653a48d059ae9812078359daeafb451c07`;
 - hardened accelerate harness board:
-  `ba260d06572aff62f6ceee444f1b0d5aeb100e87`; and
-- kit durable-root repair work at the preparation-time review point
-  `7b4785abba1b727fd8bdce1444122672520e4fc0`.
+  `bde62375e2eabd1c0f9a50c6672372b1af5616c6`; and
+- final audited kit durable-root authority:
+  `05ba9375923cd5fb52e2c9c18b98b530d57d077f`.
 
-The last kit revision is not a release pin.  KSR closeout remains unresolved and
-must expose the final closed `DurableCoordinationStore` block interface plus
-generation-bearing, verified expected-token root CAS before `DSS-000` closes.
+The kit revision exposes the closed `DurableCoordinationStore` block interface
+plus generation-bearing, verified expected-token root CAS.  The seal binds its
+exact clean HEAD, tree, fixed interface/blob manifest, and focused producer
+tests.  `exact_clean_head` deliberately does not claim that the commit was
+advertised by a remote ref; the configured origin URL is checked separately.
+
+The dependency validator has a closed policy independent of seal-supplied
+choices: every role has an exact required path set, exact argv-only Python 3.12
+test tuple, bounded timeout, and explicit schema/API signature contract.  Its
+fingerprint binds the role, repository, normalized origin, clean-HEAD policy,
+commit, tree, interface contract, blob OIDs, commands, and timeout.  A sealed
+validation cannot omit `--run-tests`; all checkouts are revalidated after tests
+to detect mutation.  Checkout bindings must name canonical worktree roots.
+The local generic-wire prohibition is AST-inspected, including aliases,
+imports, and CID/hash helpers regardless of name order.
 
 ## 3. One owner per authority
 
@@ -165,8 +181,8 @@ The exact `SemanticStateRoot` identity payload is equivalent to:
   "producer": {
     "repository_state_cid": "<final-ISI state CID>",
     "repository_snapshot_cid": "<final-ISI snapshot CID>",
-    "git_commit_oid": "<OID or null>",
-    "git_tree_oid": "<OID or null>",
+    "git_commit_oid_or_null": "<OID or null>",
+    "git_tree_oid_or_null": "<OID or null>",
     "source_manifest_cid": "<final-ISI manifest CID>",
     "semantic_index_schema": "<sealed schema>",
     "extractor_name": "<sealed extractor>",
@@ -255,6 +271,10 @@ The capsule artifact additionally binds:
 - dependency fact/link references and confidence evidence; and
 - a per-symbol `relevant_binding_projection_cid`.
 
+`bindings.py` is the sole owner of `relevant_binding_projection`.  Capsule
+compilation consumes its already-validated projection record; it neither
+rediscovers binding scope nor implements another projection algorithm.
+
 The root binds the complete environment-binding set, but a capsule binds only
 the deterministic projection relevant to that symbol plus genuinely global
 compiler/toolchain contracts.  A known disjoint policy, interface, or lock
@@ -307,7 +327,10 @@ toolchains, and interface descriptors are injected as validated content
 references.  This package never performs a second filesystem discovery pass.
 
 Each `EnvironmentBinding` has a stable binding identity, kind, version CID,
-scope, extraction authority, and confidence.  Required kinds include:
+scope, extraction authority, and confidence.  `models.py` exclusively owns all
+durable value records and enums, including binding projections, freshness,
+selection policy/rules, normalized test outcomes/run facts, and oracle results;
+the later modules own algorithms only.  Required binding kinds include:
 
 - dependency manifest or lockfile;
 - pytest configuration/plugin and proof configuration;
@@ -376,11 +399,15 @@ Oracle comparison is also pure.  Accelerate supplies normalized baseline,
 selected-run, and candidate-full result facts; datasets does not execute pytest.
 The controlled fixtures additionally declare an authored affected-test oracle.
 
-The metrics are:
+Every normalized outcome is keyed by its authoritative pytest node ID and may
+carry a separate normalized failure fingerprint.  Selection membership and
+TP/FN/FP are compared only in the node-ID domain; fingerprints identify whether
+the outcome at a selected node is the same failure, never whether the node was
+selected.  The metrics are:
 
-- `new_regressions`: candidate full-suite fail/error/timeout fingerprints not
-  identically present in the baseline;
-- `missed_regressions`: new regressions absent from selection;
+- `new_regressions`: candidate full-suite node IDs whose fail/error/timeout
+  fingerprint is not identically present for that node in the baseline;
+- `missed_regressions`: those new-regression node IDs absent from selection;
 - fixture `TP = selected intersection authored_oracle`;
 - fixture `FN = authored_oracle minus selected`;
 - fixture `FP = selected minus authored_oracle`;
@@ -522,9 +549,9 @@ root or verification receipt.
 ```text
 D0  DSS-000
 D1  DSS-001 | DSS-002
-D2  DSS-003 | DSS-004 | DSS-005
-D3  DSS-006 | DSS-007
-D4  DSS-008
+D2  DSS-003 | DSS-005
+D3  DSS-004 | DSS-007
+D4  DSS-006 | DSS-008
 D5  DSS-009
 D6  DSS-010
 D7  DSS-011
@@ -537,7 +564,7 @@ DSS-000: -
 DSS-001: DSS-000
 DSS-002: DSS-000
 DSS-003: DSS-001
-DSS-004: DSS-001
+DSS-004: DSS-001, DSS-005
 DSS-005: DSS-001
 DSS-006: DSS-004, DSS-005
 DSS-007: DSS-003, DSS-005

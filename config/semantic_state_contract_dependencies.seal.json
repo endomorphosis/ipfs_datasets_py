@@ -22,21 +22,56 @@
       "role": "accelerate_harness",
       "repository": "endomorphosis/ipfs_accelerate_py",
       "origin": "https://github.com/endomorphosis/ipfs_accelerate_py",
-      "commit": "ba260d06572aff62f6ceee444f1b0d5aeb100e87",
-      "tree": "1b4b97b97689ac5c4c55bbf8435f9c59c6a06229",
-      "interface_fingerprint": "sha256:c6420d2e1c8657d96dc232f75180f217c9ffbd4843273ba93720be22a814a12c",
+      "reachability_policy": "exact_clean_head",
+      "commit": "bde62375e2eabd1c0f9a50c6672372b1af5616c6",
+      "tree": "b4a0f30cd7884db15cdfd74da72127426a833d8a",
+      "interface_fingerprint": "sha256:a55c133d175591a181c961cd39ea120ab98238126fca62ab72c690be143a96fd",
+      "interface_contract": {
+        "contract_name": "SemanticCompressionHarnessConsumerPlan@1",
+        "schema_versions": [
+          [
+            "board_namespace",
+            "semantic-compression-harness-v1"
+          ],
+          [
+            "wire_boundary",
+            "mcp-plus-plus-profiles-a-b-f"
+          ]
+        ],
+        "public_api": [
+          "SemanticCapsuleRef(capsule_cid,semantic_state_root_cid,stable_symbol_id,version_cid,source_cid,confidence,validity_bindings,raw_source_required)",
+          "SemanticStateRootManifest(repository_id,base_tree_cid,candidate_tree_cid,datasets_state_cid,datasets_semantic_state_root_cid,capsule_index_cid,delta_cid,invalidation_cid,obligation_set_cid,test_selection_cid,receipt_index_cid,environment_binding_cids,event_head_cid,versions,acceptance_disposition)",
+          "TestSelectionRef(selection_cid,previous_semantic_state_root_cid_or_null,current_semantic_state_root_cid)"
+        ]
+      },
       "required_blobs": [
         {
           "path": "docs/architecture/SEMANTIC_COMPRESSION_HARNESS_PLAN.md",
-          "oid": "50cce1c1af30addd97b3abed902bfec20d4ecaad"
+          "oid": "a41d1d638a7bf216ba2bdd04eef29580ed6c2947"
         },
         {
           "path": "docs/architecture/semantic_compression_harness.objectives.md",
-          "oid": "23f6673a3caa4a58dc2ddffe7c51ad37ff09ec2f"
+          "oid": "bebeb315bbd476cfc9d40d97fa3644135dcd2bdf"
         },
         {
           "path": "docs/architecture/semantic_compression_harness.todo.md",
-          "oid": "22a8bba54e3dcae91d88eab84b6229146aed63c0"
+          "oid": "2d4540d1b3774f2a8e7463165ac549f788f73760"
+        },
+        {
+          "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/production_context_slice.py",
+          "oid": "d2c302a3cbda44c09382fca2e2a98c0ebe798fce"
+        },
+        {
+          "path": "ipfs_accelerate_py/agent_supervisor/validation/proposal_validation.py",
+          "oid": "e72d3aaa2cedef10ce16b2ad27fe9d663379f5c9"
+        },
+        {
+          "path": "test/api/test_agent_supervisor_production_context_slice.py",
+          "oid": "618cbf85d22f70f7f2f98c9ab5e9b6c8519ddf69"
+        },
+        {
+          "path": "test/api/test_agent_supervisor_proposal_validation.py",
+          "oid": "9d30955307972b8451fa7128dfaf6fc3b2910f82"
         }
       ],
       "required_test_commands": [
@@ -48,27 +83,94 @@
           "test/api/test_agent_supervisor_production_context_slice.py",
           "test/api/test_agent_supervisor_proposal_validation.py"
         ]
-      ]
+      ],
+      "test_timeout_seconds": 900
     },
     {
       "role": "incremental_semantic_index",
       "repository": "endomorphosis/ipfs_datasets_py",
       "origin": "https://github.com/endomorphosis/ipfs_datasets_py",
+      "reachability_policy": "exact_clean_head",
       "commit": "UNRESOLVED_FINAL_ISI_COMMIT",
       "tree": "UNRESOLVED_FINAL_ISI_TREE",
       "interface_fingerprint": "UNRESOLVED_FINAL_ISI_INTERFACE_FINGERPRINT",
+      "interface_contract": {
+        "contract_name": "SemanticCapsuleIndexConsumer@2",
+        "schema_versions": [
+          [
+            "extractor_name",
+            "UNRESOLVED_FINAL_ISI_EXTRACTOR_NAME"
+          ],
+          [
+            "extractor_version",
+            "UNRESOLVED_FINAL_ISI_EXTRACTOR_VERSION"
+          ],
+          [
+            "semantic_index_schema",
+            "UNRESOLVED_FINAL_ISI_SCHEMA"
+          ]
+        ],
+        "public_api": [
+          "SemanticIndexForCapsules.incoming_edges(stable_symbol_id:str)->tuple[DependencyEdge,...]",
+          "SemanticIndexForCapsules.outgoing_edges(stable_symbol_id:str)->tuple[DependencyEdge,...]",
+          "SemanticIndexForCapsules.read_source_blob(source_cid:str)->bytes",
+          "SemanticIndexForCapsules.read_source_span(stable_symbol_id:str)->bytes",
+          "SemanticIndexForCapsules.source_slice(stable_symbol_id:str)->SourceSliceRef",
+          "SemanticIndexForCapsules.state_root_cid:str",
+          "SemanticIndexForCapsules.symbol(stable_symbol_id:str)->SymbolRecord",
+          "calculate_invalidation(previous_state,current_state,delta)->InvalidationPlan",
+          "diff_repository_states(previous_state,current_state)->RepositoryStateDelta",
+          "scan_repository(repo_path,previous_state=None)->RepositoryState"
+        ]
+      },
       "required_blobs": [
         {
           "path": "docs/software_contracts/INCREMENTAL_SEMANTIC_INDEX.md",
           "oid": "UNRESOLVED_FINAL_ISI_DOCUMENTATION_BLOB"
         },
         {
+          "path": "ipfs_datasets_py/logic/software_contracts/content.py",
+          "oid": "UNRESOLVED_FINAL_ISI_CONTENT_AUTHORITY_BLOB"
+        },
+        {
+          "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/__init__.py",
+          "oid": "UNRESOLVED_FINAL_ISI_PUBLIC_EXPORTS_BLOB"
+        },
+        {
+          "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/delta.py",
+          "oid": "UNRESOLVED_FINAL_ISI_DELTA_BLOB"
+        },
+        {
           "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/index.py",
           "oid": "UNRESOLVED_FINAL_ISI_CAPSULE_VIEW_BLOB"
         },
         {
+          "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/invalidation.py",
+          "oid": "UNRESOLVED_FINAL_ISI_INVALIDATION_BLOB"
+        },
+        {
           "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py",
           "oid": "UNRESOLVED_FINAL_ISI_MODELS_BLOB"
+        },
+        {
+          "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py",
+          "oid": "UNRESOLVED_FINAL_ISI_SCANNER_BLOB"
+        },
+        {
+          "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py",
+          "oid": "UNRESOLVED_FINAL_ISI_SNAPSHOT_BLOB"
+        },
+        {
+          "path": "tests/cli/test_semantic_index_cli.py",
+          "oid": "UNRESOLVED_FINAL_ISI_CLI_TEST_BLOB"
+        },
+        {
+          "path": "tests/unit/logic/software_contracts/semantic_index/test_acceptance.py",
+          "oid": "UNRESOLVED_FINAL_ISI_ACCEPTANCE_TEST_BLOB"
+        },
+        {
+          "path": "tests/unit/logic/software_contracts/semantic_index/test_import_safety.py",
+          "oid": "UNRESOLVED_FINAL_ISI_IMPORT_SAFETY_TEST_BLOB"
         }
       ],
       "required_test_commands": [
@@ -80,27 +182,73 @@
           "tests/unit/logic/software_contracts/semantic_index",
           "tests/cli/test_semantic_index_cli.py"
         ]
-      ]
+      ],
+      "test_timeout_seconds": 1800
     },
     {
       "role": "kit_state_roots",
       "repository": "endomorphosis/ipfs_kit_py",
       "origin": "https://github.com/endomorphosis/ipfs_kit_py",
-      "commit": "UNRESOLVED_FINAL_KSR_COMMIT",
-      "tree": "UNRESOLVED_FINAL_KSR_TREE",
-      "interface_fingerprint": "UNRESOLVED_FINAL_KSR_INTERFACE_FINGERPRINT",
+      "reachability_policy": "exact_clean_head",
+      "commit": "05ba9375923cd5fb52e2c9c18b98b530d57d077f",
+      "tree": "a770206fe9e11852a9a230b9ce64d0cce254dd50",
+      "interface_fingerprint": "sha256:e03afb0b7c1e90b4ecd4036d1359383a6c9442917b02504fd420c4e916a9b062",
+      "interface_contract": {
+        "contract_name": "DurableStateRoots@1",
+        "schema_versions": [
+          [
+            "state_root_transition_schema",
+            "mcp++/coordination/state-root-transition@1"
+          ],
+          [
+            "transport_cid_profile",
+            "cidv1-dag-json-sha2-256"
+          ]
+        ],
+        "public_api": [
+          "DurableStateRoots.compare_and_swap_root(namespace:str,expected_revision:int,expected_root_cid:str|None,new_root_cid:str,operation_id:str)->StateRootCASResult",
+          "DurableStateRoots.current_root(namespace:str)->StateRootSnapshot",
+          "DurableStateRoots.get_verified(cid:str)->Mapping[str,Any]",
+          "DurableStateRoots.put_verified(payload:Mapping[str,Any],expected_cid:str,replicate:bool=True)->ArtifactWriteResult",
+          "DurableStateRoots.recover_roots()->StateRootRecoveryReport"
+        ]
+      },
       "required_blobs": [
         {
           "path": "ipfs_kit_py/mcp_server/mcplusplus/coordination_storage.py",
-          "oid": "UNRESOLVED_FINAL_KSR_COORDINATION_STORE_BLOB"
+          "oid": "161c4631881607b4ed7c854f751f9fc3be0cfb45"
         },
         {
           "path": "ipfs_kit_py/mcp_server/mcplusplus/state_root_adapter.py",
-          "oid": "UNRESOLVED_FINAL_KSR_ADAPTER_BLOB"
+          "oid": "70ae494cb1f4faa4deb9fba94bb9f0bdcef9d4c2"
         },
         {
           "path": "ipfs_kit_py/mcp_server/mcplusplus/state_root_contracts.py",
-          "oid": "UNRESOLVED_FINAL_KSR_CONTRACTS_BLOB"
+          "oid": "9299bb10f967ca0d58abe1a78b67455ebb22dcb0"
+        },
+        {
+          "path": "tests/test_coordination_storage.py",
+          "oid": "00d72b9814f98c859cc13fdecf08ad142120df89"
+        },
+        {
+          "path": "tests/test_semantic_state_root_acceptance.py",
+          "oid": "e9c78cdc975808c69f9999449aa837078137f414"
+        },
+        {
+          "path": "tests/test_semantic_state_root_adapter.py",
+          "oid": "7181a2b769e01a2066335e354c6d2f5a1401652d"
+        },
+        {
+          "path": "tests/test_semantic_state_root_cas.py",
+          "oid": "b89e2c178982f651fa9ce2064397a44934fc9d06"
+        },
+        {
+          "path": "tests/test_semantic_state_root_contracts.py",
+          "oid": "32cee4675e1c43982dd6c03527a80cc363b86170"
+        },
+        {
+          "path": "tests/test_semantic_state_root_recovery.py",
+          "oid": "29fb50184e17f9c65145fa3ad0cd133df1126727"
         }
       ],
       "required_test_commands": [
@@ -116,15 +264,40 @@
           "tests/test_semantic_state_root_recovery.py",
           "tests/test_semantic_state_root_acceptance.py"
         ]
-      ]
+      ],
+      "test_timeout_seconds": 1800
     },
     {
       "role": "mcp_plus_plus",
       "repository": "endomorphosis/Mcp-Plus-Plus",
       "origin": "https://github.com/endomorphosis/Mcp-Plus-Plus",
+      "reachability_policy": "exact_clean_head",
       "commit": "dc3164653a48d059ae9812078359daeafb451c07",
       "tree": "6560c3d0c926be12df860afb7d7c82043a1769ba",
-      "interface_fingerprint": "sha256:8613023220433615cb382a8c9c80db821192195b10d865dadfc37ab3be0d0a78",
+      "interface_fingerprint": "sha256:2bdaefa559cf79e1274c7bd05718bf8ec97f28447cbf70074289ca8a1b7d6ad7",
+      "interface_contract": {
+        "contract_name": "McpPlusPlusProfilesABF@dc316465",
+        "schema_versions": [
+          [
+            "profile_a",
+            "interface-description"
+          ],
+          [
+            "profile_b",
+            "cid-native-artifacts"
+          ],
+          [
+            "profile_f",
+            "event-dag-ordering"
+          ]
+        ],
+        "public_api": [
+          "ProfileA.InterfaceDescriptor(application_schema_cid)",
+          "ProfileB.ExecutionEnvelope(payload_or_payload_cid)",
+          "ProfileB.ExecutionReceipt(content_addressed_result)",
+          "ProfileF.DAGEvent(parent_event_cids,payload_cid)"
+        ]
+      },
       "required_blobs": [
         {
           "path": "conformance/vectors/dag_event_epoch.json",
@@ -133,6 +306,10 @@
         {
           "path": "conformance/vectors/execution_receipt.json",
           "oid": "f083861d146c9e864e6fe1f76fc422532d81a74f"
+        },
+        {
+          "path": "docs/spec/cid-native-artifacts.md",
+          "oid": "7571cc156e1019f39461712090c4199d552658ae"
         },
         {
           "path": "docs/spec/event-dag-ordering.md",
@@ -145,6 +322,34 @@
         {
           "path": "docs/spec/mcp-idl.md",
           "oid": "e9a990d295985c16c08e3bd4c967dd7dd170883e"
+        },
+        {
+          "path": "tests-py/integration/test_cid_envelopes.py",
+          "oid": "cb0f883ffa7785fa38ae3f623b2ace42bb2d58aa"
+        },
+        {
+          "path": "tests-py/integration/test_conformance_vectors.py",
+          "oid": "2b7704a2643f4fec9d22c3028f34573658900cb9"
+        },
+        {
+          "path": "tests-py/integration/test_event_dag.py",
+          "oid": "5b5f513ceb207572ee53a3c7adf7f17bb3f81236"
+        },
+        {
+          "path": "tests-py/integration/test_mcp_idl.py",
+          "oid": "1fdfb603de0baf7571b1171b6fd384910b7c1aa9"
+        },
+        {
+          "path": "tests-py/validators/cid_artifacts.py",
+          "oid": "c42c5774f0d923a99cc23d281f7f032bea3ecd87"
+        },
+        {
+          "path": "tests-py/validators/event_dag.py",
+          "oid": "3a2b6a4c9972354f2daa3038d65044873887c3bb"
+        },
+        {
+          "path": "tests-py/validators/mcp_idl.py",
+          "oid": "cf07f40d6bb247952e56eb25037b6f002126e802"
         }
       ],
       "required_test_commands": [
@@ -154,9 +359,12 @@
           "pytest",
           "-q",
           "tests-py/integration/test_mcp_idl.py",
+          "tests-py/integration/test_cid_envelopes.py",
+          "tests-py/integration/test_conformance_vectors.py",
           "tests-py/integration/test_event_dag.py"
         ]
-      ]
+      ],
+      "test_timeout_seconds": 900
     }
   ]
 }

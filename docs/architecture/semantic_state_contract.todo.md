@@ -9,12 +9,16 @@ Protected operator-owned artifacts:
 - `docs/architecture/semantic_state_contract.objectives.md`
 - `docs/architecture/semantic_state_contract.todo.md`
 - `config/semantic_state_contract_dependencies.seal.json`
+- `scripts/validate_semantic_state_contract_dependencies.py`
+- `tests/unit/logic/software_contracts/semantic_state/test_dependency_seal.py`
 
 `DSS-000` is an unresolved manual authority gate. No implementation task is
-eligible until an operator replaces the final ISI and KSR placeholders, records
-their exact commits/trees/interfaces/tests, validates every checkout and
-fingerprint, commits that sealed state, and marks only `DSS-000` completed.
-Workers must never complete or weaken this gate.
+eligible until an operator replaces the remaining final ISI placeholders,
+records its exact commit/tree/schema/extractor/interface/tests, validates every
+checkout and complete authority fingerprint, commits that sealed state, and
+marks only `DSS-000` completed. The final ISI is always supplied through a
+separate clean `${DSS_ISI_CHECKOUT}`; the phase-two checkout is never its own
+phase-one pin. Workers must never complete or weaken this gate.
 
 The package is
 `ipfs_datasets_py.logic.software_contracts.semantic_state`. It consumes the
@@ -30,9 +34,9 @@ accelerate-owned 40-task benchmark.
 ```text
 D0  DSS-000 (manual unresolved dependency seal)
 D1  DSS-001 | DSS-002
-D2  DSS-003 | DSS-004 | DSS-005
-D3  DSS-006 | DSS-007
-D4  DSS-008
+D2  DSS-003 | DSS-005
+D3  DSS-004 | DSS-007
+D4  DSS-006 | DSS-008
 D5  DSS-009
 D6  DSS-010
 D7  DSS-011
@@ -47,7 +51,7 @@ D7  DSS-011
 - Depends on:
 - Goal id: DSS-G010
 - Outputs: docs/architecture/SEMANTIC_STATE_CONTRACT_PLAN.md, docs/architecture/semantic_state_contract.objectives.md, docs/architecture/semantic_state_contract.todo.md, config/semantic_state_contract_dependencies.seal.json, scripts/validate_semantic_state_contract_dependencies.py, tests/unit/logic/software_contracts/semantic_state/test_dependency_seal.py
-- Validation: python3.12 scripts/validate_semantic_state_contract_dependencies.py --check config/semantic_state_contract_dependencies.seal.json --repo incremental_semantic_index=. --repo kit_state_roots=${DSS_KIT_CHECKOUT} --repo mcp_plus_plus=${DSS_MCP_PLUS_PLUS_CHECKOUT} --repo accelerate_harness=${DSS_ACCELERATE_CHECKOUT} --run-tests && python3.12 -m pytest -q tests/unit/logic/software_contracts/semantic_state/test_dependency_seal.py
+- Validation: python3.12 scripts/validate_semantic_state_contract_dependencies.py --check config/semantic_state_contract_dependencies.seal.json --repo incremental_semantic_index=${DSS_ISI_CHECKOUT} --repo kit_state_roots=${DSS_KIT_CHECKOUT} --repo mcp_plus_plus=${DSS_MCP_PLUS_PLUS_CHECKOUT} --repo accelerate_harness=${DSS_ACCELERATE_CHECKOUT} --run-tests && python3.12 -m pytest -q tests/unit/logic/software_contracts/semantic_state/test_dependency_seal.py
 - Board namespace: datasets-semantic-state-v1
 - Bundle: dss/control
 - Parallel lane: dss-control
@@ -57,10 +61,10 @@ D7  DSS-011
 - Context budget tokens: 0
 - Predicted files: docs/architecture/SEMANTIC_STATE_CONTRACT_PLAN.md, docs/architecture/semantic_state_contract.objectives.md, docs/architecture/semantic_state_contract.todo.md, config/semantic_state_contract_dependencies.seal.json, scripts/validate_semantic_state_contract_dependencies.py, tests/unit/logic/software_contracts/semantic_state/test_dependency_seal.py
 - Interfaces: SemanticStateDependencySeal@1
-- Conflict policy: Operator-only. Do not launch workers while either final pin is unresolved; do not let a worker edit protected control files, accept a dirty/origin-mismatched checkout, or replace an exact producer/consumer test with a synthetic probe.
-- Preconditions: Final ISI and KSR repair boards are terminal and independently audited; MCP++ and accelerate control revisions are reachable; Python 3.12 is available.
-- Effects: Replaces both unresolved final pins, seals exact commit/tree/origin/blob manifests and interface fingerprints, records the final semantic-index capsule/source API and KSR verified block/root-CAS API, and proves their producer tests at the pinned trees.
-- Acceptance: The seal validator rejects placeholders, unknown fields, wrong origins, dirty or wrong-HEAD checkouts, unreachable or forged objects, mismatched trees/blobs/fingerprints, missing required tests, a non-3.12 interpreter, or any local MCP++ envelope/CID authority; it accepts only the exact final reviewed authorities.
+- Conflict policy: Operator-only. Do not launch workers while the final ISI pin is unresolved; do not let a worker edit protected control files, bind the phase-two checkout as `${DSS_ISI_CHECKOUT}`, accept a dirty/origin-mismatched/non-root checkout, or replace an exact producer/consumer manifest or test with a synthetic probe.
+- Preconditions: The final ISI repair board is terminal and independently audited; kit `05ba9375923cd5fb52e2c9c18b98b530d57d077f`, MCP++ `dc3164653a48d059ae9812078359daeafb451c07`, and accelerate `bde62375e2eabd1c0f9a50c6672372b1af5616c6` have separate clean checkouts; Python 3.12 is available.
+- Effects: Replaces the remaining ISI placeholders; seals exact clean HEAD/tree/origin, fixed blob/test manifests, bounded test timeouts, explicit schema/API signatures, and complete authority fingerprints; records the final semantic-index capsule/source API and verified kit block/root-CAS API; runs every pinned producer test and rechecks checkout integrity afterward.
+- Acceptance: The seal validator rejects placeholders, unknown fields, wrong origins, dirty/wrong-HEAD/non-root checkouts, missing commit objects, mismatched trees/blobs/complete fingerprints, substituted or skipped tests, timeouts, post-test mutation, a non-3.12 interpreter, or a local MCP++ envelope/CID authority detected through AST inspection. `exact_clean_head` does not overclaim remote-ref advertisement.
 
 ## DSS-001 Define closed semantic-state payload models
 
@@ -82,11 +86,11 @@ D7  DSS-011
 - LLM context budget bytes: 327680
 - Plan context: docs/architecture/SEMANTIC_STATE_CONTRACT_PLAN.md sections 3 through 10
 - Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_state/models.py, ipfs_datasets_py/logic/software_contracts/semantic_state/schemas/semantic-state.payload.schema.json, tests/unit/logic/software_contracts/semantic_state/test_models.py, tests/unit/logic/software_contracts/semantic_state/test_payload_schema.py
-- Predicted symbols: SemanticStateRoot, SemanticStateProducer, SemanticStateBundle, SymbolFactNode, ArtifactFactNode, SemanticLinkNode, SymbolMerkleNode, SemanticCapsule, EnvironmentBinding, SemanticBindingDelta, SemanticInvalidationPlan, TestSelection, TestOracleComparison
+- Predicted symbols: SemanticStateRoot, SemanticStateProducer, SemanticStateBundle, SymbolFactNode, ArtifactFactNode, SemanticLinkNode, SymbolMerkleNode, SemanticCapsule, EnvironmentBinding, EnvironmentBindingSet, RelevantBindingProjection, SemanticBindingDelta, SemanticInvalidationPlan, CapsuleFreshness, VerifiedSourceEvidence, SelectionPolicy, SelectionRule, TestSelection, TestOutcome, TestRunFacts, TestOracleComparison
 - Interfaces: SemanticStatePayloads@1, SemanticStateRoot@1, SemanticStateBundle@1
 - Conflict policy: Use only `software_contracts.content` for canonical bytes/CIDv1. Models are recursively immutable and closed; sorted pair indexes reject duplicate keys. Do not copy MCP++ envelope/event/receipt schemas or place operational transition data in the datasets root.
 - Preconditions: DSS-000 seals exact final producer field names, enum values, schemas, and extractor version.
-- Effects: Defines self-verifying strict-DAG-JSON records for facts, links, nodes, capsules, bindings, freshness, invalidation, selection, oracle facts, the root, and a finite CID-to-bytes bundle.
+- Effects: Exclusively defines every durable value record and enum: facts, links, nodes, capsules, binding sets/projections, freshness/source evidence, invalidation, selection policy/rules/results, normalized node-ID-keyed test outcomes/run facts, oracle results, the root, and a finite CID-to-bytes bundle. Later tasks own algorithms only and import these values.
 - Acceptance: Unknown fields/schema versions and forged CIDs fail closed; stable/version/edge IDs are preserved verbatim from ISI; the root excludes histories, selections, receipts, clocks, local paths, leases, generations, model data, and MCP++ envelope identities.
 
 ## DSS-002 Build the controlled Python selection fixture
@@ -139,8 +143,8 @@ D7  DSS-011
 - Interfaces: SymbolMerkleDag@1
 - Conflict policy: Consume only the sealed resolved ISI view. Links reference fact CIDs and nodes reference link/capsule CIDs; links and capsules never reference symbol-node/capsule CIDs recursively. Do not rescan, parse, resolve, or manufacture targets.
 - Preconditions: Closed models and final ISI view contract exist.
-- Effects: Builds deterministic sorted fact/link/node indexes and an acyclic content-addressed symbol graph while preserving producer spans, relation, extraction method, confidence, extractor version, and unresolved targets.
-- Acceptance: Recursive calls, mutual imports, and inheritance cycles cannot form CID cycles; shuffled input order has no effect; every emitted block and claimed CID reverifies; one semantic symbol mutation changes only its bounded content cone plus indexes/root.
+- Effects: Builds deterministic sorted fact/link/node blocks and indexes while preserving producer spans, relation, extraction method, confidence, extractor version, and unresolved targets. Symbol-node assembly accepts the already-compiled capsule index as an input and never compiles capsules itself.
+- Acceptance: Recursive calls, mutual imports, and inheritance cycles cannot form CID cycles; shuffled input order has no effect; every emitted fact/link/node/index block and claimed CID reverifies; one semantic symbol mutation changes only its bounded fact/link/node/index cone. Final root-cone behavior is proved in DSS-009/DSS-010.
 
 ## DSS-004 Compile deterministic authoritative capsules incrementally
 
@@ -148,7 +152,7 @@ D7  DSS-011
 - Completion: auto
 - Priority: P0
 - Track: capsules
-- Depends on: DSS-001
+- Depends on: DSS-001, DSS-005
 - Goal id: DSS-G020
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_state/capsules.py, tests/unit/logic/software_contracts/semantic_state/test_capsules.py
 - Validation: python3.12 -m pytest -q tests/unit/logic/software_contracts/semantic_state/test_capsules.py
@@ -162,12 +166,12 @@ D7  DSS-011
 - LLM context budget bytes: 344064
 - Plan context: docs/architecture/SEMANTIC_STATE_CONTRACT_PLAN.md sections 5 through 8
 - Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_state/capsules.py, tests/unit/logic/software_contracts/semantic_state/test_capsules.py
-- Predicted symbols: compile_semantic_capsule, compile_semantic_capsules, capsule_source_key, relevant_binding_projection
+- Predicted symbols: compile_semantic_capsule, compile_semantic_capsules, capsule_source_key
 - Interfaces: SemanticCapsuleCompiler@1
-- Conflict policy: Capsules may include only sealed producer-authoritative facts. Docstrings are hints and LLM summaries are separate heuristic annotations excluded from truth. Never raise confidence or use another capsule/node CID as a dependency.
-- Preconditions: Closed capsule/binding records exist.
-- Effects: Compiles capsules keyed by stable ID, version CID, ISI schema, and extractor version and additionally binds capsule compiler/schema, exact source slice, dependency facts/links, and a per-symbol relevant binding projection CID.
-- Acceptance: A verified `previous_bundle` reuses only byte-identical blocks whose complete current inputs reverify; cold and incremental compilation over identical inputs is byte-for-byte/root identical; unrelated scoped bindings do not change a capsule while global/unknown bindings conservatively do.
+- Conflict policy: Capsules may include only sealed producer-authoritative facts. Docstrings are hints and LLM summaries are separate heuristic annotations excluded from truth. Never raise confidence, use another capsule/node CID as a dependency, or reimplement the bindings-owned relevant-projection algorithm.
+- Preconditions: Closed capsule/binding records and the DSS-005 projection algorithm exist.
+- Effects: Compiles capsules keyed by stable ID, version CID, ISI schema, and extractor version and additionally binds capsule compiler/schema, exact source slice, dependency facts/links, and the supplied bindings-owned per-symbol relevant projection CID.
+- Acceptance: A verified `previous_bundle` reuses only byte-identical capsule/index blocks whose complete current inputs reverify; cold and incremental capsule/index compilation over identical inputs is byte-identical; unrelated scoped projections do not change a capsule while global/unknown projections conservatively do. Final root equality is proved in DSS-009/DSS-010.
 
 ## DSS-005 Extend source invalidation with environment bindings
 
@@ -191,7 +195,7 @@ D7  DSS-011
 - Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_state/bindings.py, ipfs_datasets_py/logic/software_contracts/semantic_state/invalidation.py, tests/unit/logic/software_contracts/semantic_state/test_bindings.py, tests/unit/logic/software_contracts/semantic_state/test_invalidation.py
 - Predicted symbols: build_environment_binding_set, relevant_binding_projection, diff_environment_bindings, extend_semantic_invalidation
 - Interfaces: EnvironmentBindingSet@1, SemanticInvalidationPlan@1
-- Conflict policy: Recompute or verify and preserve every ISI delta/obligation before adding environment obligations. Traverse relation-specific directions; do not invent tests, proofs, adapters, receipts, or arbitrary source rewrites.
+- Conflict policy: This module is the sole `relevant_binding_projection` authority. Recompute or verify and preserve every ISI delta/obligation before adding environment obligations. Traverse relation-specific directions; do not invent tests, proofs, adapters, receipts, or arbitrary source rewrites.
 - Preconditions: Closed binding/delta/obligation models and the sealed previous/current ISI APIs exist.
 - Effects: Adds explicit lock/dependency, pytest/proof config, policy/security, interface, generated-input, Python/toolchain, semantic-schema, and compiler invalidation rules with bounded evidence paths and conservative global fallback.
 - Acceptance: Function/signature/effect/exception/schema/fixture facts retain ISI semantics; changed bindings stale every known bound derivative and no known disjoint capsule; dependency/config/policy/interface/generated/toolchain uncertainty remains visible as an obligation/fallback reason.
@@ -216,7 +220,7 @@ D7  DSS-011
 - LLM context budget bytes: 294912
 - Plan context: docs/architecture/SEMANTIC_STATE_CONTRACT_PLAN.md sections 7 and 10
 - Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_state/freshness.py, ipfs_datasets_py/logic/software_contracts/semantic_state/source.py, tests/unit/logic/software_contracts/semantic_state/test_freshness.py, tests/unit/logic/software_contracts/semantic_state/test_source.py
-- Predicted symbols: assess_capsule_freshness, read_required_source, CapsuleFreshness, VerifiedSourceMaterialization
+- Predicted symbols: assess_capsule_freshness, read_required_source
 - Interfaces: CapsuleFreshness@1, ProducerBoundSource@1
 - Conflict policy: Read source only through the sealed tree/snapshot-bound ISI capsule view and reverify raw CID. Never use ambient `Path` fallback, private scanner/visitor state, target imports, or heuristic text as exact source.
 - Preconditions: Capsules and semantic invalidation plans exist; DSS-000 sealed the actual source-view signatures.
@@ -243,7 +247,7 @@ D7  DSS-011
 - LLM context budget bytes: 344064
 - Plan context: docs/architecture/SEMANTIC_STATE_CONTRACT_PLAN.md section 9
 - Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_state/test_selection.py, tests/unit/logic/software_contracts/semantic_state/test_test_selection.py
-- Predicted symbols: SelectionPolicy, SelectionRule, select_tests_and_proofs, shortest_reason_paths
+- Predicted symbols: select_tests_and_proofs, shortest_reason_paths
 - Interfaces: TestSelection@1, ProofSelection@1
 - Conflict policy: Pure graph selection only. Do not import/collect/run tests, guess node IDs, re-resolve edges, or reimplement selection in accelerate. Consume both previous and current `SemanticStateView` so deletion/rename evidence survives.
 - Preconditions: Acyclic graph views and semantic invalidation exist.
@@ -270,11 +274,11 @@ D7  DSS-011
 - LLM context budget bytes: 245760
 - Plan context: docs/architecture/SEMANTIC_STATE_CONTRACT_PLAN.md sections 9 and 13
 - Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_state/oracle.py, tests/unit/logic/software_contracts/semantic_state/test_oracle.py
-- Predicted symbols: TestOutcome, TestRunFacts, compare_test_selection_oracle
+- Predicted symbols: compare_test_selection_oracle
 - Interfaces: TestSelectionOracle@1
 - Conflict policy: This module consumes normalized run facts supplied by accelerate; it never invokes pytest or treats a passing selected run as proof of complete selection. Exclude known baseline failures and report zero denominators as not applicable.
 - Preconditions: Controlled authored oracle and `TestSelection` exist.
-- Effects: Computes new/missed regression fingerprints, TP/FN/FP, precision/recall when defined, selection/execution reductions, changed outcomes, and fallback rate across explicit pass/fail/error/skip/xfail/timeout states.
+- Effects: Computes new regression node IDs by comparing each node's normalized failure fingerprint with its baseline fingerprint, then computes missed-regression node IDs, TP/FN/FP strictly in the pytest-node-ID domain, precision/recall when defined, selection/execution reductions, changed outcomes, and fallback rate across explicit pass/fail/error/skip/xfail/timeout states.
 - Acceptance: Controlled cases have zero false negatives and missed regressions; full-suite fallback is measured; baseline-known failures are not attributed to a candidate; empty oracles never fabricate 100 percent precision/recall.
 
 ## DSS-009 Publish the storage-neutral semantic-state API
@@ -302,7 +306,7 @@ D7  DSS-011
 - Conflict policy: `SemanticStateView/get_block` is read-only and storage-neutral. No put/CAS/WAL/provider/network operation, kit import, scheduler, context pack, receipt, or MCP++ envelope hasher enters this package. Package edits must be narrowly additive.
 - Preconditions: All model/materialization/assurance modules pass.
 - Effects: Publishes a closed API for cold or verified-incremental `previous_bundle` builds, bundle verification, injected-block-reader views, capsules/freshness/source, invalidation, selection, and oracle comparison; packages the schema.
-- Acceptance: A finite in-memory bundle and an injected verified reader yield identical views; every read reverifies CID/schema; missing/corrupt blocks fail typed; the public signature uses `previous_bundle` and previous/current views exactly and has no persistence side effect.
+- Acceptance: A finite in-memory bundle and an injected verified reader yield identical views; every read reverifies CID/schema; missing/corrupt blocks fail typed; the public signature uses `previous_bundle` and previous/current views exactly and has no persistence side effect. Cold and verified-incremental assembly over identical inputs has byte-identical reachable blocks and root CID.
 
 ## DSS-010 Prove the public controlled pipeline and wire boundary
 
@@ -327,7 +331,7 @@ D7  DSS-011
 - Interfaces: SemanticStateControlledAcceptance@1, McpPlusPlusPayloadBoundary@1
 - Conflict policy: End-to-end tests use two real public scans and public diff/invalidation/state APIs; they may not hand-construct edges, mutate a returned state, inspect private visitors, or duplicate fixture/unit expectations. MCP++ remains only the pinned generic Profile A/B/F outer-wire authority.
 - Preconditions: Public semantic-state API and controlled fixture exist.
-- Effects: Proves baseline/current scan to Merkle/capsule/binding/invalidation/selection/oracle behavior, cold versus incremental determinism, deleted/renamed previous/current evidence, bounded unrelated changes, and generic envelope/payload separation.
+- Effects: Proves baseline/current scan to Merkle/capsule/binding/invalidation/selection/oracle behavior, cold versus incremental root/block determinism, bounded root-cone changes, deleted/renamed previous/current evidence, bounded unrelated changes, and generic envelope/payload separation.
 - Acceptance: All controlled mutation/fallback cases pass with zero selection false negatives; identical semantic inputs have identical state roots; opaque behavior requests source/full fallback; datasets defines no interface descriptor, execution envelope/receipt, DAG event, request/attempt/provider field, or envelope CID/hasher.
 
 ## DSS-011 Close documentation, import safety, and regressions
