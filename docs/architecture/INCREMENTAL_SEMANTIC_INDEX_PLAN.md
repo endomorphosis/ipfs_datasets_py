@@ -5,6 +5,7 @@ Reviewed repository: `endomorphosis/ipfs_datasets_py`
 Reviewed commit: `a2f5400b7cb89c8481819379a1b7b9959fe81d45`  
 Reviewed tree: `7dde1f0a86e64576ac316c674c1b4a0995da909c`  
 Post-implementation audit baseline: `dd23a2197e900c2916aab1c4c60077f2bcfdd6e9`
+Identity false-green audit baseline: `2f96cc5a02aa1a7d37aae3a2ee93105870bebc55`
 Plan date: 2026-08-11  
 Supervisor task prefix: `ISI-`
 
@@ -88,6 +89,13 @@ Authority rules:
    `python_frontend` facts, and clean Git blobs are reread from the worktree.
    ISI-033 through ISI-040 below are therefore release gates, not optional
    enhancements.
+6. ISI-033 merged at completion marker
+   `2f96cc5a02aa1a7d37aae3a2ee93105870bebc55`, but independent audit found
+   that its focused tests false-greened an optional normalized projection,
+   mutable signature/annotation inputs, non-finite legal literal rejection,
+   and unchanged v1 schema constants. ISI-041 preserves the completed evidence
+   and is the mandatory v2 identity-closure gate before snapshot, extraction,
+   or persistence repair may proceed.
 
 ## 3. Proposed package and files
 
@@ -364,7 +372,7 @@ W5  ISI-020
 W6  ISI-023
 W7  ISI-030 | ISI-031
 W8  ISI-032
-W9  ISI-033
+W9  ISI-033 -> ISI-041
 W10 ISI-034 | ISI-035 | ISI-037
 W11 ISI-036
 W12 ISI-038
@@ -376,8 +384,8 @@ Tasks in each parallel wave own disjoint modules and tests. Integration tasks
 depend on their inputs. Supervisor workers must honor `Outputs`, `Predicted
 files`, and `Conflict policy`; plan/objective/taskboard files are read-only
 protected control inputs. Phase-two capsule or coding-agent work must not treat
-the semantic state as authoritative until ISI-033 through ISI-039 pass. ISI-040
-is the final incremental-performance and watcher hardening wave.
+the semantic state as authoritative until ISI-041 and ISI-034 through ISI-039
+pass. ISI-040 is the final incremental-performance and watcher hardening wave.
 
 ## 13. Validation and acceptance
 
@@ -509,10 +517,11 @@ are functional and soundness gaps rather than cosmetic cleanup:
 
 | Task | Priority | Production boundary | Required proof | Depends on |
 | --- | --- | --- | --- | --- |
-| ISI-033 | P0 | `models.py`, `identity.py` | Total literal canonicalization, self-verifying/deeply immutable durable identity records, repository membership, ordered decorators, and aggregate legal bindings | ISI-032 |
-| ISI-034 | P0 | `snapshot.py`, `scanner.py` | Git-object bytes remain canonical for clean inputs; tree/commit/snapshot identity is state-rooted; races and unreadable inputs are explicit | ISI-033 |
-| ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-033 |
-| ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-033 |
+| ISI-033 | P0 | `models.py`, `identity.py` | Initial tagged literals, stable-ID checks, ordered decorators, and aggregate scaffolding; completed evidence is retained but not sufficient for release | ISI-032 |
+| ISI-041 | P0 | `models.py`, `identity.py` | V2 mandatory recomputable projection, every persisted/frozen version input, explicit legacy boundary, and injective signed finite/infinite literal components | ISI-033 |
+| ISI-034 | P0 | `snapshot.py`, `scanner.py` | Git-object bytes remain canonical for clean inputs; tree/commit/snapshot identity is state-rooted; races and unreadable inputs are explicit | ISI-041 |
+| ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-041 |
+| ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-041 |
 | ISI-036 | P0 | `pytest_analysis.py`, `scanner.py`, `symbol_graph.py`, `index.py` | One Python/pytest identity and version, a resolved public state, and real test/fixture/config edges | ISI-034, ISI-035 |
 | ISI-038 | P0 | `delta.py`, `invalidation.py`, `explain.py` | Recomputed deltas, edge-aware facets and rule direction, bounded real invalidation, retrievable raw-source evidence | ISI-036, ISI-037 |
 | ISI-039 | P0 | CLI, acceptance fixtures/tests, public contract documentation | All original cases through public APIs; no hand-made graph; fresh and non-self-indexing CLI; exact capsule consumer surface | ISI-038 |
@@ -528,11 +537,16 @@ subgoal hierarchy is in
 
 The repair program must keep the strict DAG-JSON authority unchanged and encode
 otherwise-illegal AST literal values through a tagged canonical projection
-(for example hexadecimal float components and byte hex), not by teaching the
-CID authority to accept non-DAG-JSON values. It must prove at least:
+(for example hexadecimal finite/infinite float components and byte hex), not by
+teaching the CID authority to accept non-DAG-JSON values. V2 durable records
+must persist and freeze every version-CID input, require the normalized
+projection on deserialize/recompute, and expose any v1 compatibility only as a
+typed migration/rejection boundary. It must prove at least:
 
 1. scanning legal float/bytes/complex/Ellipsis literals, repeated decorators,
-   overload declarations, and property getter/setter/deleter sets never fails;
+   overload declarations, and property getter/setter/deleter sets never fails,
+   including overflow literals whose AST values contain positive/negative
+   infinity;
 2. two signatures whose string defaults differ only by internal whitespace do
    not collapse to the same signature projection;
 3. a clean Git repository with a smudge filter is scanned from the indexed Git

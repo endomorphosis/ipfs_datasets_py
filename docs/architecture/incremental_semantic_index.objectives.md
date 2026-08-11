@@ -38,7 +38,7 @@ ISI-G000  Deterministic IncrementalSemanticIndex release
 - Outputs: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md, docs/architecture/incremental_semantic_index.objectives.md, docs/architecture/incremental_semantic_index.todo.md
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index tests/cli/test_semantic_index_cli.py
 - Acceptance: Stable and version identities, graph, deltas, invalidation, persistence, explanations, watcher, API, CLI, and all required mutation fixtures pass without importing target repositories or requiring a daemon.
-- Gap task: ISI-000 through ISI-040
+- Gap task: ISI-000 through ISI-041
 - Refinement: Extend `logic/software_contracts`; do not create another analyzer platform or content-identity authority.
 
 ## ISI-G010 Closed models and dual content identities
@@ -177,12 +177,12 @@ ISI-G000  Deterministic IncrementalSemanticIndex release
 - Track: contract-repair
 - Bundle: isi/audited-release
 - Goal: Close the concrete functional, identity, graph, persistence, invalidation, and CLI gaps found by the read-only audit of `dd23a2197e900c2916aab1c4c60077f2bcfdd6e9` before any capsule or coding-agent consumer treats the state as authoritative.
-- Evidence: isi/identity-repair@1, isi/snapshot-authority@1, isi/extraction-authority@1, isi/public-graph@1, isi/root-binding@1, isi/invalidation-e2e@1, isi/release-requalification@1
-- Acceptance criteria: isi/identity-repair@1; isi/snapshot-authority@1; isi/extraction-authority@1; isi/public-graph@1; isi/root-binding@1; isi/invalidation-e2e@1; isi/release-requalification@1
+- Evidence: isi/identity-repair@1, isi/identity-closure@2, isi/snapshot-authority@1, isi/extraction-authority@1, isi/public-graph@1, isi/root-binding@1, isi/invalidation-e2e@1, isi/release-requalification@1
+- Acceptance criteria: isi/identity-repair@1; isi/identity-closure@2; isi/snapshot-authority@1; isi/extraction-authority@1; isi/public-graph@1; isi/root-binding@1; isi/invalidation-e2e@1; isi/release-requalification@1
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index, ipfs_datasets_py/cli/semantic_index_cli.py, tests/unit/logic/software_contracts/semantic_index, tests/fixtures/software_contracts/incremental_semantic_index, tests/cli/test_semantic_index_cli.py, docs/software_contracts/INCREMENTAL_SEMANTIC_INDEX.md
 - Validation: python -m pytest -q tests/unit/logic/software_contracts tests/cli/test_semantic_index_cli.py
 - Acceptance: Public scans are Git/filesystem-snapshot rooted, identity records are self-verifying, real resolved edges drive bounded invalidation, repository roots cannot cross-bind, dynamic behavior is never falsely exact, the CLI observes current truth, and every original mutation case passes without hand-authored dependency edges.
-- Gap task: ISI-033 through ISI-040
+- Gap task: ISI-033 through ISI-041
 - Refinement: Keep `software_contracts.content`, `repository`, `python_frontend`, `resolver`, and `cache.ImmutableCAS` authoritative; do not broaden into phase-two capsule compilation or an agent harness.
 
 ## ISI-G081 Durable identity contract
@@ -195,12 +195,12 @@ ISI-G000  Deterministic IncrementalSemanticIndex release
 - Track: contract-repair
 - Bundle: isi/identity-repair
 - Goal: Make stable/version identities total over legal Python syntax, recomputable from durable records, deeply immutable, repository-bound, and able to represent repeated decorators and legal aggregate bindings without span-derived identity.
-- Evidence: isi/literal-projection@1, isi/id-recompute@1, isi/binding-aggregation@1
-- Acceptance criteria: isi/literal-projection@1; isi/id-recompute@1; isi/binding-aggregation@1
+- Evidence: isi/literal-projection@1, isi/id-recompute@1, isi/binding-aggregation@1, isi/identity-closure@2
+- Acceptance criteria: isi/literal-projection@1; isi/id-recompute@1; isi/binding-aggregation@1; isi/identity-closure@2
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/models.py, ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py, tests/unit/logic/software_contracts/semantic_index/test_models.py, tests/unit/logic/software_contracts/semantic_index/test_identity_contract.py
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_models.py tests/unit/logic/software_contracts/semantic_index/test_identity_contract.py
-- Acceptance: All legal literal projections scan through strict tagged DAG-JSON, forged identities fail restore, nested metadata cannot mutate a frozen record, repository membership is enforced, and overload/property/rebinding facets have deterministic aggregate versions.
-- Gap task: ISI-033
+- Acceptance: V2 records persist and freeze every stable/version identity input, require a recomputable normalized projection, distinguish all legal finite/infinite literal components through strict tagged DAG-JSON, reject forged or unverifiable identity inputs, enforce repository membership, and retain deterministic aggregate facets. Legacy v1 data crosses only an explicit typed migration/rejection boundary.
+- Gap task: ISI-033, ISI-041
 - Refinement: Do not relax `content.py` or create a second CID/canonicalization authority.
 
 ## ISI-G082 Snapshot, extraction, and persistence authority

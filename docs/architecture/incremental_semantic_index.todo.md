@@ -29,7 +29,7 @@ W5  ISI-020
 W6  ISI-023
 W7  ISI-030 | ISI-031
 W8  ISI-032
-W9  ISI-033
+W9  ISI-033 -> ISI-041
 W10 ISI-034 | ISI-035 | ISI-037
 W11 ISI-036
 W12 ISI-038
@@ -493,13 +493,40 @@ W14 ISI-040
 - Effects: Bumps the semantic-index schema; stores the normalized version projection needed to recompute every symbol version after restore; recomputes stable/version IDs during construction and deserialization; recursively freezes nested metadata; validates every symbol belongs to the state repository; supplies deterministic aggregate definition/accessor facets so overloads, repeated bindings, and property getter/setter/deleter sets do not collide.
 - Acceptance: Identity/model round trips accept tagged float, bytes, complex, and Ellipsis constants plus repeated ordered decorators; changing any literal or decorator order changes the version CID. Forged kind/repository/version fields with old CIDs fail. Nested metadata mutation is impossible. Symbols whose repository ID differs from their containing state are rejected. Constructed overload/rebinding/property aggregate facets round-trip deterministically without a span-derived identity; formatting and unrelated fields still preserve stable logical IDs.
 
+## ISI-041 Harden durable identity closure after audit false-green
+
+- Status: todo
+- Completion: auto
+- Priority: P0
+- Track: identity-closure
+- Depends on: ISI-033
+- Goal id: ISI-G080, ISI-G081
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/models.py, ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py, tests/unit/logic/software_contracts/semantic_index/test_models.py, tests/unit/logic/software_contracts/semantic_index/test_identity_contract.py
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_models.py tests/unit/logic/software_contracts/semantic_index/test_identity_contract.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/identity-closure
+- Parallel lane: isi-identity-closure
+- Resource class: cpu-medium
+- Implementation timeout seconds: 7200
+- Provider role: codex-implement
+- Context budget tokens: 36000
+- LLM context budget bytes: 294912
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 5 and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/models.py, ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py, tests/unit/logic/software_contracts/semantic_index/test_models.py, tests/unit/logic/software_contracts/semantic_index/test_identity_contract.py
+- Predicted symbols: SEMANTIC_INDEX_SCHEMA, SYMBOL_SCHEMA, SYMBOL_VERSION_ID_SCHEMA, SymbolRecord, normalize_ast, symbol_version_identity_payload, symbol_version_cid
+- Interfaces: StableSymbolIdentity@2, SymbolVersionIdentity@2, RepositoryState@2
+- Conflict policy: Repair the audited closure gaps in merged baseline `2f96cc5a02aa1a7d37aae3a2ee93105870bebc55` without rewriting completed ISI-033 evidence. Keep `logic/software_contracts/content.py` strict and authoritative. Do not silently interpret an unverifiable v1 record as v2, weaken CID recomputation, or edit scanner/extractor/persistence consumers in this task.
+- Preconditions: ISI-033 is merged at implementation `0e73f9b9c` and completion marker `2f96cc5a0`; its focused tests passed but independent audit demonstrated that the durable identity contract remained open.
+- Effects: Publishes an explicit v2 durable symbol/version schema; makes the normalized semantic projection mandatory for every v2 record construction/deserialization and version recomputation, with an explicit typed v1 migration adapter or typed legacy rejection if compatibility is retained; persists every version-CID input including extractor name/version, semantic-index schema, property role, signature, ordered decorators, annotations, and normalized AST; recursively freezes every stable/version identity input; canonically and injectively represents finite values, signed zero, and positive/negative infinity in float and complex components while continuing to reject values that cannot arise from a Python literal unless they have an explicit tag.
+- Acceptance: Omitting `normalized_ast` from a v2 record or replacing it with a different projection fails with a typed model error. Forging extractor name/version, semantic-index schema, property role, signature, decorator order, annotation, or AST while retaining the old version CID fails restore. Mutating top-level or nested signature, annotations, metadata, normalized AST, or aggregate facets is impossible and cannot alter serialized/state identity. `ast.parse("x = 1e400")` and complex literals with positive/negative infinite components round-trip through distinct tagged projections and CIDs; positive/negative zero remain distinct. A v1 payload is accepted only through the named typed migration boundary and emerges as a fully verifiable v2 record, or is rejected explicitly. Tests exercise omitted/forged projections and attempted signature/annotation mutation rather than only metadata mutation.
+
 ## ISI-034 Root scans in exact Git blobs and snapshot identity
 
 - Status: todo
 - Completion: auto
 - Priority: P0
 - Track: snapshot-repair
-- Depends on: ISI-033
+- Depends on: ISI-041
 - Goal id: ISI-G080, ISI-G082
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_truth
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py
@@ -516,7 +543,7 @@ W14 ISI-040
 - Predicted symbols: RepositorySnapshot, SnapshotFile, GitSnapshotProvider, RepositoryScanner, scan_repository_state
 - Interfaces: RepositorySnapshot@2, RepositoryState@2
 - Conflict policy: Adapt the bounded Git object inventory and cat-file patterns in `logic/software_contracts/repository.py`; do not reread a clean snapshot path after its Git blob was selected. Keep dirty filesystem bytes and clean Git bytes as explicit mutually exclusive sources, and keep watcher events non-authoritative. `scanner.py` is owned only by this task in W10.
-- Preconditions: ISI-033 has established the new durable state and identity schema.
+- Preconditions: ISI-041 has closed and tested the v2 durable state and identity schema.
 - Effects: Carries selected bytes (or a verified immutable byte reference) from snapshot through parsing exactly once; records Git repository identity, commit OID, tree OID, tracked blob OIDs, snapshot CID, input disposition, and closed exclusions in the state root; bounds Git subprocesses; turns undecodable paths, unreadable files/directories, symlink escapes, oversize inputs, and read races into typed opaque artifacts; excludes semantic-index store/control files in both Git-dirty and filesystem modes.
 - Acceptance: A clean fixture with a Git smudge filter produces symbols/source CIDs from the indexed blob rather than transformed worktree bytes. Mutating a file between snapshot selection and parse cannot mix bytes and becomes an explicit race/opaque artifact. Two identical clean scans retain identical commit/tree/snapshot/state roots, while two unrelated same-basename repositories without a shared Git identity do not silently share repository identity. Dirty tracked and untracked bytes are deterministic. `.semantic-index` and configured store files never enter the target state. Malformed names and unreadable inputs are represented, not silently omitted; Git commands time out with typed failure.
 
@@ -526,7 +553,7 @@ W14 ISI-040
 - Completion: auto
 - Priority: P0
 - Track: extraction-repair
-- Depends on: ISI-033
+- Depends on: ISI-041
 - Goal id: ISI-G080, ISI-G082
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py, tests/fixtures/software_contracts/incremental_semantic_index/python_constructs
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/test_python_frontend.py
@@ -543,7 +570,7 @@ W14 ISI-040
 - Predicted symbols: PythonSemanticAnalyzer, PythonAnalysisResult, analyze_python_source, aggregate_logical_bindings, classify_confidence
 - Interfaces: PythonSemanticAnalysis@2
 - Conflict policy: Consume/adapt `python_frontend.py` AST records, diagnostics, effects, and duplicate-definition facts instead of maintaining a weaker second frontend. Extend only missing semantic-index projections. Never import target code, infer a complete call graph, flatten whitespace inside literal values, or label unknown native/dynamic behavior exact.
-- Preconditions: ISI-033 supplies legal aggregate binding/version projections; this task does not edit scanner or graph files.
+- Preconditions: ISI-041 supplies closed v2 aggregate binding/version projections; this task does not edit scanner or graph files.
 - Effects: Collects module, conditional and nested definitions; aggregates overload/rebinding/property roles; excludes independently addressed child bodies from parent body projections while preserving interfaces; renders signatures/defaults without changing string literal content; fixes generator scoping; emits alias-aware imports/calls/inheritance/composition; captures ordinary global reads/writes, destructuring/augmented/subscript instance-state access, raised/caught exception sets, context managers, dataclasses, class/functional TypedDict, Enum/IntEnum/StrEnum/Flag families, statically detectable Pydantic models, and explicit serializer/deserializer/validator targets. Confidence degrades for eval/exec, native imports, dynamic imports/attributes, decorators, metaclasses, monkey patching, reflection, plugins, code generation, and uncontrolled I/O with source-bound reasons.
 - Acceptance: Editing one method body versions that method but not unrelated methods or the module merely because it contains the method. Analyzer output aggregates overload declarations and property getter/setter/deleter sets without duplicate stable IDs, retains repeated decorator order, and gives each facet version evidence. Defaults `"a  b"` and `"a b"` have distinct signature projections. `from ctypes import CDLL` and native calls are conservative/opaque, never exact. Conditional/nested definitions are present or explicit opaque records. Fixtures prove Pydantic fields, functional TypedDict, IntEnum/StrEnum/Flag, class composition, ordinary global reads, tuple catches, context managers, state reads/writes, decorator opacity, dynamic attribute opacity, and schema-target serialization without executing code.
 
@@ -553,7 +580,7 @@ W14 ISI-040
 - Completion: auto
 - Priority: P0
 - Track: persistence-repair
-- Depends on: ISI-033
+- Depends on: ISI-041
 - Goal id: ISI-G080, ISI-G082
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/persistence.py, tests/unit/logic/software_contracts/semantic_index/test_persistence.py
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_persistence.py tests/unit/logic/software_contracts/test_cache.py
@@ -570,7 +597,7 @@ W14 ISI-040
 - Predicted symbols: SemanticIndexStore, LocalSemanticIndexStore, IpfsKitSemanticIndexStore, compare_and_swap_root, load_current_state, recover
 - Interfaces: SemanticIndexStore@2, StateRootCAS@2
 - Conflict policy: Compose `cache.ImmutableCAS` and authoritative CID recomputation; do not duplicate block identity/publication. The optional kit adapter remains lazy, injected, and capability checked. A platform without a reliable interprocess lock must fail closed rather than silently downgrade to thread-only CAS.
-- Preconditions: ISI-033 state deserialization rejects forged identities and repository membership.
+- Preconditions: ISI-041 v2 state deserialization rejects omitted or forged identity projections and repository membership.
 - Effects: Makes the store protocol concrete for state/delta/plan put/get and root operations; validates root-record CID, referenced state CID, and `state.repository_id` against the requested repository on every local and kit read/CAS; adds process-safe locked expected-old publication, explicit interruption points/WAL or equivalent recoverable transition records, atomic visibility, deterministic replay, and corruption/orphan recovery.
 - Acceptance: A valid repository-B state installed under repository A is rejected on current-root read and CAS. A root record whose canonical bytes or referenced state mismatch is rejected. Two separate subprocess writers using one expected root yield exactly one distinct successor and one typed conflict. Injected interruption before/after object write, transition write, and root replace recovers to the last fully visible root. Corrupt blocks/transitions fail closed; local tests require no daemon/network/install, and the kit adapter enforces the same binding.
 
