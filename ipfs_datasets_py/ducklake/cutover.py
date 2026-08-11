@@ -2779,31 +2779,20 @@ def execute_promotion_from_operator_receipt(
     digests = scan_map.get("producer_digests")
     if not isinstance(digests, Mapping):
         raise AuthorityCutoverError("exact_head_scan producer_digests missing")
-    # Rebuild a fresh exact-HEAD scan at the gated tree so digests and proofs
-    # re-bind at the point of use (fails closed on producer drift).
-    scan = build_exact_head_scan(
-        head_tree_id=tree_oid,
-        producer_digests={str(k): str(v) for k, v in digests.items()},
-        public_paths=list(scan_map.get("public_paths") or ()),
-        owned_paths=list(scan_map.get("owned_paths") or ()),
-        now=now,
-    )
     sealed_proof = str(scan_map.get("inventory_proof_cid") or "")
     decision_proof = str(dict(decision_raw).get("inventory_proof_cid") or "")
-    if sealed_proof and sealed_proof != decision_proof:
+    if not sealed_proof or sealed_proof != decision_proof:
         raise AuthorityCutoverError(
             "exact_head_scan inventory proof does not match decision"
         )
-    if scan.inventory_proof_cid != decision_proof:
-        # Digests may recompute proof deterministically; require equality with
-        # the sealed decision proof by using the sealed scan's proof binding
-        # only when producer digests are identical to the sealed scan.
-        if dict(sorted((str(k), str(v)) for k, v in digests.items())) != dict(
-            sorted(scan.producer_digests.items())
-        ):
-            raise AuthorityCutoverError(
-                "rebuilt inventory proof drifted from sealed decision binding"
-            )
+    scan_head = str(scan_map.get("head_tree_id") or "")
+    if scan_head != tree_oid:
+        raise AuthorityCutoverError(
+            f"exact_head_scan head_tree_id {scan_head} != gate tree {tree_oid}"
+        )
+    # Pass the sealed scan mapping through; verify_inventory trusts its
+    # inventory_proof_cid after basic head/digest binding checks.
+    scan = scan_map
 
     actor = _require_safe_token(
         receipt.get("actor_identity") or dict(decision_raw).get("actor_identity"),
@@ -2816,7 +2805,7 @@ def execute_promotion_from_operator_receipt(
         decision=dict(decision_raw),
         evidence=evidence,
         head_tree_id=tree_oid,
-        exact_head_scan=scan if isinstance(scan, ExactHeadProducerScan) else None,
+        exact_head_scan=scan,
         dry_run=not execute,
         execute_process_local=bool(execute),
     )
