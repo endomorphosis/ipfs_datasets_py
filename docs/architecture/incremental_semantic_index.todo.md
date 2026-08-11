@@ -84,7 +84,7 @@ W8  ISI-032
 
 ## ISI-002 Build deterministic working-tree and artifact snapshots
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: snapshot
