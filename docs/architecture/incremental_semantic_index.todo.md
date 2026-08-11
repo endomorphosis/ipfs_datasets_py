@@ -273,7 +273,7 @@ W8  ISI-032
 
 ## ISI-020 Implement explicit invalidation obligations
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: invalidation
