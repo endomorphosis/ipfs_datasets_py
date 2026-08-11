@@ -166,7 +166,7 @@ async def shard_embeddings_by_dimension(
         with open(manifest_path, 'w') as f:
             json.dump(manifest, f, indent=2)
 
-        return {
+        result = {
             "status": "success",
             "output_directory": str(output_path),
             "total_shards": len(shards_info),
@@ -175,6 +175,65 @@ async def shard_embeddings_by_dimension(
             "manifest_file": str(manifest_path),
             "metadata": shard_metadata,
         }
+
+        # Shadow shard manifests into the DuckDB vector catalog (DQK-062).
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_shadow_catalog,
+                safe_shadow_create,
+            )
+            logical = Path(output_directory).name or "embedding-shards"
+            mapping = {
+                f"shard_{info.get('shard_index', i)}": i
+                for i, info in enumerate(shards_info)
+            }
+            shadow = safe_shadow_create(
+                logical_name=logical,
+                backend="shard_embeddings",
+                dimension=int(embedding_dim),
+                dtype="float32",
+                mapping=mapping,
+                metadata_json={
+                    "producer": "shard_embeddings_engine",
+                    "manifest_file": str(manifest_path),
+                    "manifest": manifest,
+                },
+                shard_manifest={
+                    "shard_index": 0,
+                    "vector_count": total_embeddings,
+                    "shard_id": f"shard_manifest_{logical}",
+                    "total_shards": len(shards_info),
+                },
+                model_provider="embeddings",
+                model_name="shard-embeddings",
+                chunking_identity="chunk:shard@1",
+                normalization_identity="norm:none@1",
+                source_revision="src-shard-1",
+            )
+            if shadow is not None:
+                result["shadow"] = shadow.to_dict()
+                catalog = get_vector_shadow_catalog()
+                if catalog is not None and catalog.enabled:
+                    for info in shards_info:
+                        catalog.shadow_shard_manifest(
+                            logical_name=logical,
+                            backend="shard_embeddings",
+                            shard_manifest={
+                                "shard_index": int(info.get("shard_index", 0)),
+                                "vector_count": int(
+                                    info.get("embedding_count", 0)
+                                ),
+                                "path": info.get("path") or info.get("filename"),
+                                "type": info.get("type"),
+                            },
+                        )
+        except Exception as shadow_exc:  # noqa: BLE001
+            logger.warning(
+                "Shard embeddings shadow quarantined (legacy ok): %s",
+                shadow_exc,
+            )
+
+        return result
 
     except Exception as e:
         logger.error(f"Embedding sharding failed: {e}")

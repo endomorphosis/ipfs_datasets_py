@@ -347,6 +347,28 @@ class IPFSKnnIndex:
 
             self._metadata.extend(metadata)
 
+        # Shadow IPFS KNN id mappings into DuckDB (legacy authority retained).
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_shadow_catalog,
+            )
+            catalog = get_vector_shadow_catalog()
+            if catalog is not None and catalog.enabled:
+                mapping = {}
+                for i, meta in enumerate(self._metadata):
+                    vid = str(meta.get("id", i))
+                    mapping[vid] = i
+                logical = getattr(self, "index_id", None) or "ipfs-knn"
+                catalog.shadow_knn_mapping(
+                    logical_name=str(logical),
+                    mapping=mapping,
+                    dimension=int(self.dimension),
+                    dtype="float32",
+                    source_revision=f"knn-{self.metric}",
+                )
+        except Exception:
+            pass
+
     def search(self, query_vector: np.ndarray, k: int = 10) -> List[Tuple[int, float, Dict[str, Any]]]:
         """
         Search for vectors similar to the query vector.
@@ -621,6 +643,22 @@ class IPFSKnnIndexManager:
         index = IPFSKnnIndex(dimension=dimension, metric=metric, storage=self.storage)
         index.index_id = index_id  # Add the missing index_id attribute
         self.indexes[index_id] = index
+        # Shadow IPFS KNN mappings into the DuckDB vector catalog (DQK-062).
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_shadow_catalog,
+            )
+            catalog = get_vector_shadow_catalog()
+            if catalog is not None and catalog.enabled:
+                catalog.shadow_knn_mapping(
+                    logical_name=index_id,
+                    mapping={},
+                    dimension=int(dimension),
+                    dtype="float32",
+                    source_revision=f"knn-{metric}",
+                )
+        except Exception:
+            pass
         return index
 
     def get_index(self, index_id: str) -> Optional[IPFSKnnIndex]:

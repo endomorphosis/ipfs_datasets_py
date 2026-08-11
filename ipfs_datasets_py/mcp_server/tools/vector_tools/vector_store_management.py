@@ -1,7 +1,12 @@
 """
 Vector Store Management Tools for MCP Server — thin wrapper.
 
-Business logic lives in ``vector_store_management_engine.py``.
+Business logic lives in ``vector_store_management_engine.py`` /
+``ipfs_datasets_py.vector_stores.management_engine``.
+
+Create/list/delete entrypoints route lifecycle metadata through the DuckDB
+vector shadow catalog when configured (DQK-062); legacy backends remain
+authoritative and shadow failures quarantine without changing results.
 """
 
 from __future__ import annotations
@@ -16,9 +21,25 @@ from .vector_store_management_engine import (  # noqa: F401
     ELASTICSEARCH_AVAILABLE,
     EMBEDDINGS_AVAILABLE,
 )
+from .shared_state import (
+    configure_mcp_vector_shadow_catalog,
+    get_mcp_vector_shadow_catalog,
+)
 
 logger = logging.getLogger(__name__)
 _manager = VectorStoreManager()
+
+
+def _ensure_shadow_catalog() -> None:
+    """Bind the MCP manager to the process-local shadow catalog when present."""
+    catalog = get_mcp_vector_shadow_catalog()
+    if catalog is None:
+        try:
+            catalog = configure_mcp_vector_shadow_catalog(enabled=True)
+        except Exception:
+            return
+    if getattr(_manager, "shadow_catalog", None) is None:
+        _manager.shadow_catalog = catalog
 
 
 async def create_vector_index(
@@ -44,6 +65,7 @@ async def create_vector_index(
         Dict with 'status', 'index_name', 'backend', 'vector_count', etc.
     """
     try:
+        _ensure_shadow_catalog()
         return await _manager.create_index(
             index_name, documents, backend, vector_dim, distance_metric, index_config
         )
@@ -92,6 +114,7 @@ async def list_vector_indexes(backend: str = "all") -> Dict[str, Any]:
         Dict with 'status' and 'indexes' mapping backend→list.
     """
     try:
+        _ensure_shadow_catalog()
         return _manager.list_indexes(backend)
     except OSError as e:
         logger.error(f"Error listing vector indexes: {e}")
@@ -115,6 +138,7 @@ async def delete_vector_index(
         Dict with 'status' and 'message'.
     """
     try:
+        _ensure_shadow_catalog()
         return _manager.delete_index(index_name, backend, config)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Error deleting vector index: {e}")
