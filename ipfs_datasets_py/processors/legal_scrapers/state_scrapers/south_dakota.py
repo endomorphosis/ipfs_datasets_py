@@ -121,6 +121,11 @@ class SouthDakotaScraper(BaseStateScraper):
                     legal_area=self._identify_legal_area(full_text),
                     source_url=f"https://sdlegislature.gov/api/Statutes/Statute/{section_number}",
                     official_cite=f"S.D. Codified Laws {section_number}",
+                    structured_data={
+                        "source_kind": "official_south_dakota_statutes_api",
+                        "discovery_method": "official_statute_api_next_chain",
+                        "skip_hydrate": True,
+                    },
                 )
             )
 
