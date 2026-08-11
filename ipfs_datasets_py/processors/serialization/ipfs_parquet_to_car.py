@@ -78,10 +78,30 @@ class ipfs_parquet_to_car_py:
                 operation_id=f"op:ipfs_parquet_to_car:{dst}",
                 pre_source_digest=source_digest,
             )
+            # DQK-100: cutover content-address fence (no-op until lake authority promoted).
+            from ipfs_datasets_py.ducklake.cutover import maybe_enforce_lake_discovery
+
+            cutover = maybe_enforce_lake_discovery(
+                producer_id=ParquetProducerId.IPFS_PARQUET_TO_CAR.value,
+                source_uri=str(dst),
+                path=str(dst),
+                source_digest=source_digest,
+            )
             if shadow is not None:
-                return {"ok": True, "ducklake_shadow": shadow.to_dict()}
-        except Exception:
-            pass
+                payload = {"ok": True, "ducklake_shadow": shadow.to_dict()}
+                if cutover is not None:
+                    payload["ducklake_cutover"] = cutover
+                return payload
+        except Exception as cutover_exc:
+            from ipfs_datasets_py.ducklake.cutover import (
+                CutoverBlockedError,
+                is_lake_authority_active,
+            )
+
+            if is_lake_authority_active() and isinstance(
+                cutover_exc, CutoverBlockedError
+            ):
+                raise
         return True
 
     async def run_batch(self, src, dst):
