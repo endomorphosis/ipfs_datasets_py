@@ -49,12 +49,8 @@ class TexasScraper(BaseStateScraper):
         """
         base_url = self.get_base_url()
         
+        # Prefer statutory codes first; TAC is a separate regulation corpus.
         codes = [
-            {
-                "name": "Texas Administrative Code",
-                "url": "https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC",
-                "type": "Regulation",
-            },
             {"name": "Agriculture Code", "url": f"{base_url}/Docs/AG/htm/AG.1.htm", "type": "AG"},
             {"name": "Alcoholic Beverage Code", "url": f"{base_url}/Docs/AL/htm/AL.1.htm", "type": "AL"},
             {"name": "Business and Commerce Code", "url": f"{base_url}/Docs/BC/htm/BC.1.htm", "type": "BC"},
@@ -79,6 +75,11 @@ class TexasScraper(BaseStateScraper):
             {"name": "Transportation Code", "url": f"{base_url}/Docs/TN/htm/TN.1.htm", "type": "TN"},
             {"name": "Utilities Code", "url": f"{base_url}/Docs/UT/htm/UT.1.htm", "type": "UT"},
             {"name": "Water Code", "url": f"{base_url}/Docs/WA/htm/WA.1.htm", "type": "WA"},
+            {
+                "name": "Texas Administrative Code",
+                "url": "https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC",
+                "type": "Regulation",
+            },
         ]
         
         return codes
@@ -191,7 +192,12 @@ class TexasScraper(BaseStateScraper):
                     source_url=section_url,
                     legal_area=legal_area,
                     official_cite=f"Tex. {code_name} § {section_number}",
-                    metadata=StatuteMetadata()
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_texas_statutes_html",
+                        "discovery_method": "official_code_section_links",
+                        "skip_hydrate": True,
+                    },
                 )
                 
                 statutes.append(statute)
@@ -211,6 +217,11 @@ class TexasScraper(BaseStateScraper):
                         legal_area=legal_area,
                         official_cite=f"Tex. {code_name}",
                         metadata=StatuteMetadata(),
+                        structured_data={
+                            "source_kind": "official_texas_statutes_html",
+                            "discovery_method": "official_code_level_fallback",
+                            "skip_hydrate": True,
+                        },
                     )
                 )
             
@@ -479,6 +490,11 @@ class TexasScraper(BaseStateScraper):
                         legal_area="administrative",
                         official_cite=f"Tex. Admin. Code § {section_number}",
                         metadata=StatuteMetadata(),
+                        structured_data={
+                            "source_kind": "official_texas_admin_code_html",
+                            "discovery_method": "official_readtac_rule_links",
+                            "skip_hydrate": True,
+                        },
                     )
                 )
 

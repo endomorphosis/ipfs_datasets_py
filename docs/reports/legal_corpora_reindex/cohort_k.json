@@ -1,0 +1,358 @@
+{
+  "acceptance": {
+    "closed_frontier": true,
+    "exact_source_authority": true,
+    "failed_final_zero": true,
+    "non_placeholder_full_text": true,
+    "reconciled_counts_hashes": true,
+    "replay_evidence": true
+  },
+  "cohort": "K",
+  "goal_id": "LCR-G023",
+  "jurisdiction_receipts": {
+    "SD": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/chapter-1/section-1-1-1",
+        "last_hierarchy_unit": "title-1/chapter-1/section-1-1-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:b535bbd53c3ef753e9c82b61d68bdccaebe27f34d208c28605b8a7617497d70b",
+        "min_full_text_chars": 580,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://sdlegislature.gov/api/Statutes/Statute/1-1-1",
+          "https://sdlegislature.gov/api/Statutes/Statute/1-1-2"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "sd:1-1-1",
+          "sd:1-1-2"
+        ],
+        "derived_keys": [
+          "sd:1-1-1",
+          "sd:1-1-2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "SD",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:b535bbd53c3ef753e9c82b61d68bdccaebe27f34d208c28605b8a7617497d70b",
+        "first_frontier_digest": "sha256:063b7f90db3c2176db4a7035298f3fa96a03e7890738305f929d0dec7afdfdea",
+        "second_frontier_digest": "sha256:063b7f90db3c2176db4a7035298f3fa96a03e7890738305f929d0dec7afdfdea"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "sdlegislature.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "TN": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/chapter-1/section-1-1-101",
+        "last_hierarchy_unit": "title-1/chapter-1/section-1-1-102",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:b88dd88cd386166873037d3ab78352481dc6f5a08d1336041aad7e60964b393e",
+        "min_full_text_chars": 616,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.tn.gov/tga/statutes/title-1/chapter-1/section-1-1-101.html",
+          "https://www.tn.gov/tga/statutes/title-1/chapter-1/section-1-1-102.html"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "tn:1-1-101.html",
+          "tn:1-1-102.html"
+        ],
+        "derived_keys": [
+          "tn:1-1-101.html",
+          "tn:1-1-102.html"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "TN",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:b88dd88cd386166873037d3ab78352481dc6f5a08d1336041aad7e60964b393e",
+        "first_frontier_digest": "sha256:fc2c5621dcf9c885c989c2732cfecd37e16a79cf14360ea067c492f0ffac23ae",
+        "second_frontier_digest": "sha256:fc2c5621dcf9c885c989c2732cfecd37e16a79cf14360ea067c492f0ffac23ae"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.capitol.tn.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "TX": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "penal-code/title-1/chapter-1/section-1.01",
+        "last_hierarchy_unit": "penal-code/title-1/chapter-1/section-1.02",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:a4775a1e57deba6fe68fea13958f368f2b882244026a0bbac40dd30ca772021a",
+        "min_full_text_chars": 295,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.1.htm#1.01",
+          "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.1.htm#1.02"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "tx:1.01",
+          "tx:1.02"
+        ],
+        "derived_keys": [
+          "tx:1.01",
+          "tx:1.02"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "TX",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:a4775a1e57deba6fe68fea13958f368f2b882244026a0bbac40dd30ca772021a",
+        "first_frontier_digest": "sha256:af139d632b6240f73c83c2ddf71e1c9b743b86b8553388a9aeeb05bdce4d6125",
+        "second_frontier_digest": "sha256:af139d632b6240f73c83c2ddf71e1c9b743b86b8553388a9aeeb05bdce4d6125"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "statutes.capitol.texas.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "UT": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/chapter-1/section-1-1-101",
+        "last_hierarchy_unit": "title-1/chapter-1/section-1-1-102",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:00c0d6d46002e2ad0592170acfa983985ef5d6c8536134a7742b16c988d1bdb2",
+        "min_full_text_chars": 886,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://le.utah.gov/xcode/Title1/C_1800010118000101.xml",
+          "https://le.utah.gov/xcode/Title1/C_1800010118000101.xml"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ut:1-1-101",
+          "ut:1-1-102"
+        ],
+        "derived_keys": [
+          "ut:1-1-101",
+          "ut:1-1-102"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "UT",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:00c0d6d46002e2ad0592170acfa983985ef5d6c8536134a7742b16c988d1bdb2",
+        "first_frontier_digest": "sha256:b45b23beec6c20d5c54c284f1b98c5a9b233f869e4d4460e6694f3305e2aea69",
+        "second_frontier_digest": "sha256:b45b23beec6c20d5c54c284f1b98c5a9b233f869e4d4460e6694f3305e2aea69"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "le.utah.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "official_domains": {
+    "SD": "sdlegislature.gov",
+    "TN": "www.capitol.tn.gov",
+    "TX": "statutes.capitol.texas.gov",
+    "UT": "le.utah.gov"
+  },
+  "production_upload": false,
+  "program_id": "legal-corpora-reindex-v1",
+  "receipt_schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-receipt@1",
+  "repair_work": [],
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-k-report@1",
+  "shared_combined_write": false,
+  "state_results": {
+    "SD": {
+      "content_digest": "sha256:b535bbd53c3ef753e9c82b61d68bdccaebe27f34d208c28605b8a7617497d70b",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "sdlegislature.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "TN": {
+      "content_digest": "sha256:b88dd88cd386166873037d3ab78352481dc6f5a08d1336041aad7e60964b393e",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.capitol.tn.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "TX": {
+      "content_digest": "sha256:a4775a1e57deba6fe68fea13958f368f2b882244026a0bbac40dd30ca772021a",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "statutes.capitol.texas.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "UT": {
+      "content_digest": "sha256:00c0d6d46002e2ad0592170acfa983985ef5d6c8536134a7742b16c988d1bdb2",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "le.utah.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "states": [
+    "SD",
+    "TN",
+    "TX",
+    "UT"
+  ],
+  "status": "success",
+  "statutes_sample_counts": {
+    "SD": 2,
+    "TN": 2,
+    "TX": 2,
+    "UT": 2
+  },
+  "task_id": "LCR-019"
+}

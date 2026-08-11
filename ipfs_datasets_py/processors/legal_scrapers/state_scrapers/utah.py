@@ -3,6 +3,7 @@
 This module contains the scraper for Utah statutes from the official state legislative website.
 """
 
+import os
 import re
 from typing import List, Dict, Optional
 from urllib.parse import urljoin
@@ -33,9 +34,29 @@ class UtahScraper(BaseStateScraper):
         """Return list of available codes/statutes for Utah."""
         return [{
             "name": "Utah Code",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/xcode/code.html",
             "type": "Code"
         }]
+
+    def _justia_fallback_allowed(self) -> bool:
+        return str(
+            os.getenv("STATE_SCRAPER_UT_ALLOW_JUSTIA_FALLBACK", "0")
+        ).strip().lower() in {"1", "true", "yes", "on"}
+
+    def _is_justia_url(self, url: str) -> bool:
+        return "justia.com" in str(url or "").lower()
+
+    def _filter_official_only(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        """Drop secondary/Justia rows when full-corpus admission is sealed."""
+        if not self._full_corpus_enabled() or self._justia_fallback_allowed():
+            return statutes
+        return [
+            s
+            for s in statutes
+            if not self._is_justia_url(str(s.source_url or ""))
+            and "justia" not in str((s.structured_data or {}).get("source_kind") or "").lower()
+            and "le.utah.gov" in str(s.source_url or "").lower()
+        ]
     
     async def scrape_code(
         self,
@@ -52,28 +73,45 @@ class UtahScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._bounded_return_threshold(160)
+        # Honor explicit max_statutes / full-corpus uncapped mode the same way
+        # other sealed official adapters do (sample default remains 160).
         if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+            return_threshold = max(1, int(max_statutes))
+            unbounded_full = False
+        elif self._full_corpus_enabled():
+            return_threshold = 1000000
+            unbounded_full = True
+        else:
+            return_threshold = self._bounded_return_threshold(160)
+            unbounded_full = False
 
+        xml_budget = return_threshold if not unbounded_full else 1000000
         xml_sections = await self._scrape_official_xml_code_tree(
             code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=max(10, int(xml_budget)),
         )
         if xml_sections:
-            return xml_sections[:return_threshold]
+            return xml_sections if unbounded_full else xml_sections[:return_threshold]
 
         official_sections = await self._scrape_official_versioned_tree(
             code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=max(10, int(xml_budget)),
         )
         if official_sections:
-            return official_sections[:return_threshold]
+            return official_sections if unbounded_full else official_sections[:return_threshold]
 
-        if not self._full_corpus_enabled():
+        # Seed/direct recovery is for bounded probes only — never sole full-corpus path.
+        if not self._full_corpus_enabled() or max_statutes is not None:
             direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct:
                 return direct[:return_threshold]
+
+        if self._full_corpus_enabled() and max_statutes is None and not self._justia_fallback_allowed():
+            self.logger.warning(
+                "Utah full-corpus run found zero official le.utah.gov statutes; "
+                "refusing secondary Justia sole-admission fallback"
+            )
+            return []
 
         live_title_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
         live_chapter_stubs = await self._scrape_live_chapter_stubs(
@@ -82,14 +120,20 @@ class UtahScraper(BaseStateScraper):
             per_title_limit=max(1, min(10, return_threshold)),
         )
 
+        allow_justia = self._justia_fallback_allowed() or not self._full_corpus_enabled()
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/xcode/code.html",
             f"{self.get_base_url()}/xcode/",
             f"{self.get_base_url()}/xcode/Title01/",
-            "https://law.justia.com/codes/utah/",
-            "https://web.archive.org/web/20250101000000/https://law.justia.com/codes/utah/",
         ]
+        if allow_justia:
+            candidate_urls.extend(
+                [
+                    "https://law.justia.com/codes/utah/",
+                    "https://web.archive.org/web/20250101000000/https://law.justia.com/codes/utah/",
+                ]
+            )
         for archived in await self._discover_archived_title_urls(limit=max(10, return_threshold)):
             if archived not in candidate_urls:
                 candidate_urls.append(archived)
@@ -99,7 +143,7 @@ class UtahScraper(BaseStateScraper):
         merged_keys = set()
 
         def _merge(items: List[NormalizedStatute]) -> None:
-            for statute in items:
+            for statute in self._filter_official_only(items):
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in merged_keys:
                     continue
@@ -109,17 +153,19 @@ class UtahScraper(BaseStateScraper):
         _merge(live_title_stubs)
         _merge(live_chapter_stubs)
         if len(merged) >= return_threshold:
-            return merged
+            return merged[:return_threshold]
 
         for candidate in candidate_urls:
             if candidate in seen:
+                continue
+            if self._is_justia_url(candidate) and not allow_justia:
                 continue
             seen.add(candidate)
 
             statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=return_threshold)
             _merge(statutes)
             if len(merged) >= return_threshold:
-                return merged
+                return merged[:return_threshold]
 
         return merged
 
