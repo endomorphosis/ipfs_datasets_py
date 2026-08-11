@@ -9,10 +9,14 @@ Partial or cancelled runs produce :class:`PartialRunReceipt` values without
 advancing the durable checkpoint.  Successful batches commit the sink first,
 then compare-and-set the checkpoint (sink-before-CAS invariant).
 
-When a DuckDB wallet store is injected (DQK-071 shadow mode), the processor
-dual-writes ledger facts and checkpoints so blocks, transactions, transfers,
-UTXOs, events, cursors, finality, and reorgs shadow at ingestion time while
-JSONL / in-memory paths remain authority.
+When a DuckDB wallet store is injected:
+
+* **shadow** (DQK-071) — dual-writes ledger facts and checkpoints while JSONL /
+  in-memory paths remain authority.
+* **dual** / **db-primary** (DQK-072) — DuckDB is authoritative for normalized
+  ledger state and checkpoints; JSONL, Parquet, Arrow and CAR are outbox-driven
+  exports drained after durable DuckDB commits.  Kill/restart at page, block,
+  reorg and export boundaries neither loses nor duplicates durable records.
 
 Importing this module performs no network I/O.
 """
@@ -50,6 +54,7 @@ from .export import (
     ExportFormat,
     ExportReceipt,
     WalletDatasetExporter,
+    drain_wallet_export_outbox,
 )
 from .models import (
     ChainRef,
@@ -70,6 +75,7 @@ from .protocols import (
 )
 from .storage import (
     BatchWriteReceipt,
+    ExportOutbox,
     InMemoryRawPayloadStore,
     RawPayloadEncryptor,
     RawPayloadStore,
@@ -300,12 +306,14 @@ class WalletLedgerProcessor:
     """Streaming wallet and ledger-range processor with sink/checkpoint coupling.
 
     Dependencies are injected: provider, normalizer, sink factory, checkpoint
-    store, optional raw-payload store, optional DuckDB shadow store, and
+    store, optional raw-payload store, optional DuckDB shadow/dual store, and
     optional exporter.  The processor itself performs no ambient network or
     filesystem discovery on import.
 
     Shadow mode (DQK-071) dual-writes ledger facts and checkpoints into an
     injected :class:`~duckdb_storage.DuckDBWalletStore` at ingestion time.
+    Dual / db-primary (DQK-072) make DuckDB authoritative and drive JSONL /
+    Parquet / Arrow / CAR through the export outbox after durable commits.
     """
 
     def __init__(
@@ -320,6 +328,8 @@ class WalletLedgerProcessor:
         raw_payload_encryptor: RawPayloadEncryptor | None = None,
         shadow_store: Any | None = None,
         shadow: bool | Any | None = None,
+        authority_mode: ShadowLedgerMode | str | None = None,
+        export_outbox: ExportOutbox | None = None,
         provider_name: str = "wallet-ledger-processor",
         normalizer_version: str = DEFAULT_PROCESSOR_VERSION,
         normalized_schema_major: int = DEFAULT_NORMALIZED_SCHEMA_MAJOR,
@@ -336,11 +346,18 @@ class WalletLedgerProcessor:
         self._wallet_provider = wallet_provider
         self._ledger_provider = ledger_provider
         self._normalizer = normalizer
+        self._authority_mode = _resolve_pipeline_mode(
+            authority_mode=authority_mode,
+            shadow=shadow,
+            has_store=shadow_store is not None or shadow is True,
+        )
         self._shadow_store = _resolve_pipeline_shadow(
             shadow_store=shadow_store,
             shadow=shadow,
             scope=f"wallet:{chain.namespace}:{chain.network}",
+            authority_mode=self._authority_mode,
         )
+        self._export_outbox = export_outbox if export_outbox is not None else ExportOutbox()
         # Use explicit None checks: InMemory* stores implement __len__ and are
         # falsy when empty, which would incorrectly replace injected instances.
         if checkpoint_store is not None:
@@ -353,10 +370,24 @@ class WalletLedgerProcessor:
             ):
                 attach = getattr(self._checkpoint_store, "attach_shadow", None)
                 if callable(attach):
-                    attach(self._shadow_store)
+                    attach(
+                        self._shadow_store,
+                        authority_mode=self._authority_mode,
+                    )
+            elif self._shadow_store is not None:
+                # Align mode even when a store was already attached.
+                current = getattr(self._checkpoint_store, "authority_mode", None)
+                if current is not None and current is not self._authority_mode:
+                    attach = getattr(self._checkpoint_store, "attach_shadow", None)
+                    if callable(attach):
+                        attach(
+                            self._shadow_store,
+                            authority_mode=self._authority_mode,
+                        )
         else:
             self._checkpoint_store = InMemoryCheckpointStore(
-                shadow_store=self._shadow_store
+                shadow_store=self._shadow_store,
+                authority_mode=self._authority_mode,
             )
         self._coordinator = CheckpointCommitCoordinator(self._checkpoint_store)
         if not isinstance(raw_payload_policy, RawPayloadPolicy):
@@ -420,11 +451,9 @@ class WalletLedgerProcessor:
                 "normalizer_version": self._normalizer_version,
                 "normalized_schema_major": self._normalized_schema_major,
                 "raw_payload_policy": self._raw_payload_policy.value,
-                "shadow_mode": (
-                    ShadowLedgerMode.SHADOW.value
-                    if self._shadow_store is not None
-                    else ShadowLedgerMode.OFF.value
-                ),
+                "shadow_mode": self._authority_mode.value,
+                "authority_mode": self._authority_mode.value,
+                "duckdb_is_authority": self._authority_mode.duckdb_is_authority,
             },
         )
 
@@ -442,17 +471,27 @@ class WalletLedgerProcessor:
 
     @property
     def shadow_store(self) -> Any | None:
-        """DuckDB wallet store used for dual-write shadowing (DQK-071)."""
+        """DuckDB wallet store used for dual-write / dual-mode authority."""
 
         return self._shadow_store
 
     @property
+    def authority_store(self) -> Any | None:
+        if self._authority_mode.duckdb_is_authority:
+            return self._shadow_store
+        return None
+
+    @property
     def shadow_mode(self) -> ShadowLedgerMode:
-        return (
-            ShadowLedgerMode.SHADOW
-            if self._shadow_store is not None
-            else ShadowLedgerMode.OFF
-        )
+        return self._authority_mode
+
+    @property
+    def authority_mode(self) -> ShadowLedgerMode:
+        return self._authority_mode
+
+    @property
+    def export_outbox(self) -> ExportOutbox:
+        return self._export_outbox
 
     @property
     def last_sink(self) -> StreamingDatasetSink | None:
@@ -460,26 +499,107 @@ class WalletLedgerProcessor:
 
         return self._last_sink
 
-    def attach_shadow(self, shadow_store: Any | None) -> None:
-        """Attach or replace the DuckDB shadow ledger/checkpoint port."""
+    def attach_shadow(
+        self,
+        shadow_store: Any | None,
+        *,
+        authority_mode: ShadowLedgerMode | str | None = None,
+    ) -> None:
+        """Attach or replace the DuckDB shadow/dual ledger/checkpoint port."""
 
         self._shadow_store = shadow_store
+        if authority_mode is not None:
+            self._authority_mode = ShadowLedgerMode.parse(authority_mode)
+        elif shadow_store is not None and self._authority_mode is ShadowLedgerMode.OFF:
+            self._authority_mode = ShadowLedgerMode.SHADOW
         attach = getattr(self._checkpoint_store, "attach_shadow", None)
         if callable(attach):
-            attach(shadow_store)
+            attach(shadow_store, authority_mode=self._authority_mode)
         # Keep capabilities metadata accurate for discovery surfaces.
         meta = dict(self._capabilities.metadata)
-        meta["shadow_mode"] = (
-            ShadowLedgerMode.SHADOW.value
-            if shadow_store is not None
-            else ShadowLedgerMode.OFF.value
-        )
+        meta["shadow_mode"] = self._authority_mode.value
+        meta["authority_mode"] = self._authority_mode.value
+        meta["duckdb_is_authority"] = self._authority_mode.duckdb_is_authority
         self._capabilities = Capabilities(
             provider=self._capabilities.provider,
             chain_namespaces=self._capabilities.chain_namespaces,
             features=self._capabilities.features,
             metadata=meta,
         )
+
+    def promote_to_dual(self) -> ShadowLedgerMode:
+        """Promote shadow → dual so DuckDB becomes ledger/checkpoint authority."""
+
+        if self._shadow_store is None:
+            raise InvalidRequestError("cannot promote without a DuckDB wallet store")
+        if self._authority_mode is ShadowLedgerMode.OFF:
+            raise InvalidRequestError("cannot promote from off without dual-write")
+        if self._authority_mode is ShadowLedgerMode.SHADOW:
+            self._authority_mode = ShadowLedgerMode.DUAL
+        promote = getattr(self._checkpoint_store, "promote_to_dual", None)
+        if callable(promote):
+            promote()
+        else:
+            attach = getattr(self._checkpoint_store, "attach_shadow", None)
+            if callable(attach):
+                attach(self._shadow_store, authority_mode=self._authority_mode)
+        meta = dict(self._capabilities.metadata)
+        meta["shadow_mode"] = self._authority_mode.value
+        meta["authority_mode"] = self._authority_mode.value
+        meta["duckdb_is_authority"] = True
+        self._capabilities = Capabilities(
+            provider=self._capabilities.provider,
+            chain_namespaces=self._capabilities.chain_namespaces,
+            features=self._capabilities.features,
+            metadata=meta,
+        )
+        return self._authority_mode
+
+    def promote_to_db_primary(self) -> ShadowLedgerMode:
+        """Promote to db-primary (DuckDB sole authority; files are exports only)."""
+
+        if self._shadow_store is None:
+            raise InvalidRequestError("cannot promote without a DuckDB wallet store")
+        if self._authority_mode is ShadowLedgerMode.SHADOW:
+            self.promote_to_dual()
+        self._authority_mode = ShadowLedgerMode.DB_PRIMARY
+        promote = getattr(self._checkpoint_store, "promote_to_db_primary", None)
+        if callable(promote):
+            promote()
+        else:
+            attach = getattr(self._checkpoint_store, "attach_shadow", None)
+            if callable(attach):
+                attach(self._shadow_store, authority_mode=self._authority_mode)
+        meta = dict(self._capabilities.metadata)
+        meta["shadow_mode"] = self._authority_mode.value
+        meta["authority_mode"] = self._authority_mode.value
+        meta["duckdb_is_authority"] = True
+        self._capabilities = Capabilities(
+            provider=self._capabilities.provider,
+            chain_namespaces=self._capabilities.chain_namespaces,
+            features=self._capabilities.features,
+            metadata=meta,
+        )
+        return self._authority_mode
+
+    def recover_authority(self) -> Mapping[str, Any]:
+        """Recover DuckDB open stages and rehydrate last sink / checkpoints."""
+
+        report: dict[str, Any] = {
+            "mode": self._authority_mode.value,
+            "recovered": False,
+        }
+        if self._shadow_store is not None:
+            recover = getattr(self._shadow_store, "recover", None)
+            if callable(recover):
+                report["store_recovery"] = dict(recover())
+                report["recovered"] = True
+            reset = getattr(self._shadow_store, "reset_for_resume", None)
+            if callable(reset):
+                reset()
+        if self._last_sink is not None:
+            report["sink"] = dict(self._last_sink.recover_authority())
+        return report
 
     def identity_for(self, scope: str) -> CheckpointIdentity:
         return CheckpointIdentity(
@@ -568,12 +688,20 @@ class WalletLedgerProcessor:
         context.check_active()
         identity = plan.identity
         own_sink = sink is None
+        export_formats_for_outbox = tuple(
+            fmt.value if isinstance(fmt, ExportFormat) else str(fmt)
+            for fmt in plan.export_formats
+        )
         if sink is None:
             active_sink = StreamingDatasetSink(
                 scope=plan.request.scope,
                 output_dir=export_dir,
                 raw_payload_policy=self._raw_payload_policy,
                 shadow_store=self._shadow_store,
+                authority_mode=self._authority_mode,
+                export_formats=export_formats_for_outbox
+                or (("jsonl",) if export_dir is not None else ()),
+                export_outbox=self._export_outbox,
             )
         else:
             active_sink = sink
@@ -591,8 +719,19 @@ class WalletLedgerProcessor:
                 elif getattr(active_sink, "_shadow", None) is None:
                     active_sink._shadow = self._shadow_store  # noqa: SLF001
                     if hasattr(active_sink, "_shadow_mode"):
-                        active_sink._shadow_mode = ShadowLedgerMode.SHADOW  # noqa: SLF001
+                        active_sink._shadow_mode = self._authority_mode  # noqa: SLF001
+            if hasattr(active_sink, "_authority_mode") or hasattr(
+                active_sink, "_shadow_mode"
+            ):
+                # Align dual-mode authority when the processor was promoted.
+                if hasattr(active_sink, "_shadow_mode"):
+                    active_sink._shadow_mode = self._authority_mode  # noqa: SLF001
         self._last_sink = active_sink
+
+        # Dual-mode: recover any open DuckDB stages before resuming pages so
+        # kill/restart at page boundaries neither loses nor duplicates rows.
+        if self._authority_mode.duckdb_is_authority:
+            active_sink.recover_authority()
 
         checkpoint_before = await self._checkpoint_store.load(
             identity.key, context=context
@@ -773,20 +912,6 @@ class WalletLedgerProcessor:
                     raise InvalidRequestError(
                         "export_dir is required when export_formats is set"
                     )
-                exporter = WalletDatasetExporter(
-                    chain=self._chain,
-                    output_dir=export_dir,
-                    formats=plan.export_formats,
-                    processor_version=self._normalizer_version,
-                    normalized_schema_major=self._normalized_schema_major,
-                    raw_payload_policy=self._raw_payload_policy,
-                    provider=self._provider_name,
-                    provider_kind="pipeline",
-                    provider_capabilities=tuple(
-                        sorted(cap.value for cap in self._capabilities.features)
-                    ),
-                    clock=self._clock,
-                )
                 cursor_before = (
                     checkpoint_before.to_cursor()
                     if checkpoint_before is not None
@@ -802,16 +927,70 @@ class WalletLedgerProcessor:
                     if run_status is RunStatus.COMPLETE
                     else ExportStatus.PARTIAL
                 )
-                export_receipt = await exporter.export_records(
-                    active_sink.committed_records(),
-                    context=context,
-                    scope=plan.request.scope,
-                    status=export_status,
-                    checkpoint_before=cursor_before,
-                    checkpoint_after=cursor_after,
-                    warnings=tuple(warnings),
-                    sink=None,
-                )
+                if self._authority_mode.duckdb_is_authority:
+                    # DQK-072: drain outbox-driven exports from DuckDB authority.
+                    # If the commit already enqueued formats, drain them; otherwise
+                    # export_records still produces a receipt for the run.
+                    try:
+                        drain_wallet_export_outbox(
+                            active_sink,
+                            formats=[
+                                fmt.value if isinstance(fmt, ExportFormat) else str(fmt)
+                                for fmt in plan.export_formats
+                            ],
+                            output_dir=export_dir,
+                        )
+                    except ExportError as exc:
+                        warnings.append(f"export_outbox:{exc}")
+                    exporter = WalletDatasetExporter(
+                        chain=self._chain,
+                        output_dir=export_dir,
+                        formats=plan.export_formats,
+                        processor_version=self._normalizer_version,
+                        normalized_schema_major=self._normalized_schema_major,
+                        raw_payload_policy=self._raw_payload_policy,
+                        provider=self._provider_name,
+                        provider_kind="pipeline",
+                        provider_capabilities=tuple(
+                            sorted(cap.value for cap in self._capabilities.features)
+                        ),
+                        clock=self._clock,
+                    )
+                    export_receipt = await exporter.export_records(
+                        active_sink.committed_records(),
+                        context=context,
+                        scope=plan.request.scope,
+                        status=export_status,
+                        checkpoint_before=cursor_before,
+                        checkpoint_after=cursor_after,
+                        warnings=tuple(warnings),
+                        sink=None,
+                    )
+                else:
+                    exporter = WalletDatasetExporter(
+                        chain=self._chain,
+                        output_dir=export_dir,
+                        formats=plan.export_formats,
+                        processor_version=self._normalizer_version,
+                        normalized_schema_major=self._normalized_schema_major,
+                        raw_payload_policy=self._raw_payload_policy,
+                        provider=self._provider_name,
+                        provider_kind="pipeline",
+                        provider_capabilities=tuple(
+                            sorted(cap.value for cap in self._capabilities.features)
+                        ),
+                        clock=self._clock,
+                    )
+                    export_receipt = await exporter.export_records(
+                        active_sink.committed_records(),
+                        context=context,
+                        scope=plan.request.scope,
+                        status=export_status,
+                        checkpoint_before=cursor_before,
+                        checkpoint_after=cursor_after,
+                        warnings=tuple(warnings),
+                        sink=None,
+                    )
 
         except OperationCancelledError as exc:
             run_status = RunStatus.CANCELLED
@@ -984,18 +1163,38 @@ def _resolve_pipeline_shadow(
     shadow_store: Any | None,
     shadow: bool | Any | None,
     scope: str,
+    authority_mode: ShadowLedgerMode | None = None,
 ) -> Any | None:
-    """Normalize pipeline shadow constructor options (DQK-071)."""
+    """Normalize pipeline shadow/dual constructor options (DQK-071 / DQK-072)."""
 
     if shadow_store is not None:
         return shadow_store
-    if shadow is False or shadow is None:
+    if shadow is False:
         return None
-    if shadow is True:
+    if shadow is True or (
+        authority_mode is not None and authority_mode.dual_writes and shadow is not False
+    ):
         from .duckdb_storage import open_wallet_store
 
         return open_wallet_store(scope=scope, auto_recover=True)
+    if shadow is None:
+        return None
     return shadow
+
+
+def _resolve_pipeline_mode(
+    *,
+    authority_mode: ShadowLedgerMode | str | None,
+    shadow: bool | Any | None,
+    has_store: bool,
+) -> ShadowLedgerMode:
+    if authority_mode is not None:
+        return ShadowLedgerMode.parse(authority_mode)
+    if shadow is False:
+        return ShadowLedgerMode.OFF
+    if has_store or shadow is True:
+        return ShadowLedgerMode.SHADOW
+    return ShadowLedgerMode.OFF
 
 
 def canonical_native_batch(batch: RecordBatch) -> bytes:
