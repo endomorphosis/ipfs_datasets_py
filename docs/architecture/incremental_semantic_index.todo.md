@@ -715,7 +715,7 @@ W17 ISI-040
 
 ## ISI-046 Close stable repository and exact snapshot-byte authority
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: snapshot-authority-closure
