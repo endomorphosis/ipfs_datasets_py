@@ -418,6 +418,7 @@ class VerifiedHybridCache:
         max_bytes: int = DEFAULT_CACHE_MAX_BYTES,
         max_entries: int = DEFAULT_CACHE_MAX_ENTRIES,
         verify_on_read: bool = True,
+        shadow_authority: Any = None,
     ) -> None:
         if max_bytes < 0:
             raise GraphStoreError("INVALID_REQUEST", "max_bytes must be >= 0")
@@ -431,10 +432,61 @@ class VerifiedHybridCache:
         self._entries: "OrderedDict[str, CacheEntryMeta]" = OrderedDict()
         self._authority: Dict[str, AuthorityRecord] = {}
         self._total_bytes: int = 0
+        # DQK-059: optional DuckDB shadow for metadata; payload bytes stay local.
+        self._shadow_authority = shadow_authority
         self.root.mkdir(parents=True, exist_ok=True)
         (self.root / "objects").mkdir(parents=True, exist_ok=True)
         (self.root / "meta").mkdir(parents=True, exist_ok=True)
         self._load()
+
+    def attach_shadow_authority(self, authority: Any) -> None:
+        """Bind DuckDB shadow authority (JSON/local cache remains authority)."""
+
+        self._shadow_authority = authority
+
+    @property
+    def shadow_authority(self) -> Any:
+        return self._shadow_authority
+
+    def _emit_storage_shadow(
+        self,
+        kind: str,
+        cid: str,
+        *,
+        payload: Optional[Mapping[str, Any]] = None,
+        content_bytes: Optional[bytes] = None,
+        checksum: str = "",
+        operation_id: Optional[str] = None,
+    ) -> None:
+        shadow = self._shadow_authority
+        if shadow is None:
+            try:
+                from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                    get_graph_shadow_authority,
+                )
+
+                shadow = get_graph_shadow_authority()
+            except Exception:
+                shadow = None
+        if shadow is None:
+            return
+        try:
+            body = dict(payload or {})
+            body.setdefault("cid", cid)
+            shadow.record_storage_mutation(
+                kind=kind,
+                cid=cid,
+                payload=body,
+                operation_id=operation_id,
+                content_bytes=content_bytes,
+                checksum=checksum,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "hybrid storage shadow quarantined (legacy ok) cid=%s: %s",
+                cid,
+                exc,
+            )
 
     # -- paths -------------------------------------------------------------
 
@@ -769,7 +821,28 @@ class VerifiedHybridCache:
             self._evict_if_needed(protected={descriptor.cid})
             self._persist_authority()
             self._persist_index()
-            return self._entries[descriptor.cid]
+            result_meta = self._entries[descriptor.cid]
+
+        # Shadow projects metadata + content fingerprint; never rewrites bytes.
+        self._emit_storage_shadow(
+            "put",
+            descriptor.cid,
+            payload={
+                "cid": descriptor.cid,
+                "size": result_meta.size,
+                "sha256": result_meta.sha256,
+                "codec": result_meta.codec,
+                "authoritative": result_meta.authoritative,
+                "lifecycle": result_meta.lifecycle,
+                "pin_count": result_meta.pin_count,
+                "tenant": result_meta.tenant,
+                "graph_id": result_meta.graph_id,
+                "revision_id": result_meta.revision_id,
+            },
+            content_bytes=payload,
+            checksum=result_meta.sha256 or "",
+        )
+        return result_meta
 
     def get(
         self,
@@ -864,7 +937,18 @@ class VerifiedHybridCache:
             self._entries[cid] = updated
             self._persist_meta(updated)
             self._persist_index()
-            return updated
+            pin_result = updated
+        self._emit_storage_shadow(
+            "pin",
+            cid,
+            payload={
+                "cid": cid,
+                "pin_count": pin_result.pin_count,
+                "sha256": pin_result.sha256,
+            },
+            checksum=pin_result.sha256 or "",
+        )
+        return pin_result
 
     def unpin(self, cid: str) -> CacheEntryMeta:
         with self._lock:
@@ -892,7 +976,18 @@ class VerifiedHybridCache:
             self._entries[cid] = updated
             self._persist_meta(updated)
             self._persist_index()
-            return updated
+            unpin_result = updated
+        self._emit_storage_shadow(
+            "unpin",
+            cid,
+            payload={
+                "cid": cid,
+                "pin_count": unpin_result.pin_count,
+                "sha256": unpin_result.sha256,
+            },
+            checksum=unpin_result.sha256 or "",
+        )
+        return unpin_result
 
     def is_pinned(self, cid: str) -> bool:
         with self._lock:

@@ -15,7 +15,7 @@ import logging
 import time
 import uuid
 import anyio
-from typing import Dict, List, Optional, Set, Any
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Any
 
 from .types import (
     Transaction,
@@ -39,6 +39,9 @@ from ..exceptions import (
     TransactionAbortedError as TransactionAbortedException,
     TransactionTimeoutError
 )
+
+if TYPE_CHECKING:
+    from ipfs_datasets_py.knowledge_graphs.catalog.store import GraphShadowAuthority
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +76,9 @@ class TransactionManager:
         self,
         graph_engine: GraphEngine,
         storage_backend: IPLDBackend,
-        wal_head_cid: Optional[str] = None
+        wal_head_cid: Optional[str] = None,
+        *,
+        shadow_authority: Optional["GraphShadowAuthority"] = None,
     ):
         """
         Initialize transaction manager.
@@ -82,6 +87,8 @@ class TransactionManager:
             graph_engine: GraphEngine for executing operations
             storage_backend: IPLD backend for WAL storage
             wal_head_cid: Existing WAL head CID (for recovery)
+            shadow_authority: Optional DQK-059 DuckDB shadow authority for
+                WAL/MVCC control-state parity (IPLD WAL CIDs remain authoritative)
         """
         self.graph_engine = graph_engine
         self.wal = WriteAheadLog(storage_backend, wal_head_cid)
@@ -91,8 +98,73 @@ class TransactionManager:
         
         # Committed write sets (for conflict detection)
         self._committed_writes: Dict[str, Set[str]] = {}  # entity_id -> txn_ids
+        self._shadow_authority = shadow_authority
         
         logger.info("TransactionManager initialized")
+
+    def attach_shadow_authority(
+        self, authority: Optional["GraphShadowAuthority"]
+    ) -> None:
+        """Bind DuckDB shadow authority for WAL/MVCC control projection."""
+
+        self._shadow_authority = authority
+
+    @property
+    def shadow_authority(self) -> Optional["GraphShadowAuthority"]:
+        return self._shadow_authority
+
+    def _emit_tx_shadow(
+        self,
+        kind: str,
+        transaction: Transaction,
+        *,
+        wal_cid: str = "",
+        operation_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        shadow = self._shadow_authority
+        if shadow is None:
+            try:
+                from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                    get_graph_shadow_authority,
+                )
+
+                shadow = get_graph_shadow_authority()
+            except Exception:
+                shadow = None
+        if shadow is None:
+            return
+        try:
+            payload: Dict[str, Any] = {
+                "txn_id": transaction.txn_id,
+                "state": transaction.state.value,
+                "isolation_level": transaction.isolation_level.value,
+                "phase": getattr(
+                    getattr(transaction, "phase", None), "value", ""
+                ),
+                "read_set": list(transaction.read_set),
+                "write_set": list(transaction.write_set),
+                "start_time": float(transaction.start_time),
+                "snapshot_cid": transaction.snapshot_cid,
+                "wal_entries": list(transaction.wal_entries),
+                "wal_head_cid": self.wal.wal_head_cid,
+                "operation_count": len(transaction.operations),
+            }
+            if extra:
+                payload.update(extra)
+            shadow.record_transaction_mutation(
+                kind=kind,
+                txn_id=transaction.txn_id,
+                payload=payload,
+                operation_id=operation_id,
+                wal_cid=wal_cid or (self.wal.wal_head_cid or ""),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "transaction shadow quarantined (legacy ok) kind=%s: %s",
+                kind,
+                exc,
+            )
     
     def begin(
         self,
@@ -131,6 +203,7 @@ class TransactionManager:
         )
         
         self._active_transactions[txn_id] = transaction
+        self._emit_tx_shadow("begin", transaction)
         
         logger.info(f"Transaction {txn_id} started with isolation {isolation_level.value}")
         return transaction
@@ -271,6 +344,19 @@ class TransactionManager:
             
             # Remove from active
             del self._active_transactions[transaction.txn_id]
+            self._emit_tx_shadow(
+                "commit",
+                transaction,
+                wal_cid=self.wal.wal_head_cid or "",
+                extra={
+                    "prepare_cid": transaction.wal_entries[0]
+                    if transaction.wal_entries
+                    else "",
+                    "complete_cid": transaction.wal_entries[-1]
+                    if transaction.wal_entries
+                    else "",
+                },
+            )
             
             logger.info(f"Transaction {transaction.txn_id} committed successfully")
             return True
@@ -320,6 +406,7 @@ class TransactionManager:
         transaction.state = TransactionState.ABORTED
         transaction.phase = WALPhase.ABORT
         transaction.operations.clear()
+        self._emit_tx_shadow("rollback", transaction)
         
         logger.info(f"Transaction {transaction.txn_id} rolled back")
     
