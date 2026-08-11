@@ -603,7 +603,7 @@ W14 ISI-040
 
 ## ISI-037 Bind persisted roots to repositories and process-safe CAS
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: persistence-repair
