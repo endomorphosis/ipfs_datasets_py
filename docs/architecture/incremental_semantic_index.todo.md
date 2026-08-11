@@ -327,7 +327,7 @@ W8  ISI-032
 
 ## ISI-022 Add debounced notification-only repository watching
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: watcher
