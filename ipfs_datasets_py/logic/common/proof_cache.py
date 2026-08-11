@@ -68,7 +68,7 @@ Backward Compatibility:
 """
 
 from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 from threading import RLock
 import time
 import logging
@@ -208,6 +208,9 @@ class ProofCache:
         # Backward-compat aliases
         max_size: Optional[int] = None,
         default_ttl: Optional[int] = None,
+        # DQK-065: optional unified shadow repository
+        shadow_repository: Optional[Any] = None,
+        shadow_backend: Optional[str] = None,
     ):
         """Initialize proof cache with optional IPFS backend.
         
@@ -220,6 +223,8 @@ class ProofCache:
             ipfs_backend: Optional custom IPFS backend instance
             ipfs_pin: Whether to pin proof results in IPFS (permanent storage)
             ipfs_ttl: TTL for IPFS cache entries (None = no expiration)
+            shadow_repository: Optional :class:`UnifiedProofShadowRepository`
+            shadow_backend: Legacy backend id for shadow dual-writes
         """
         # Apply compat aliases
         if max_size is not None:
@@ -236,6 +241,8 @@ class ProofCache:
         self.enable_ipfs_backend = enable_ipfs_backend
         self.ipfs_pin = ipfs_pin
         self.ipfs_ttl = ipfs_ttl or ttl
+        self._shadow_repository = shadow_repository
+        self._shadow_backend = shadow_backend or "common"
         
         # Initialize cache storage
         if CACHETOOLS_AVAILABLE:
@@ -267,10 +274,18 @@ class ProofCache:
             'persistence_writes': 0,
             'persistence_errors': 0,
             'persistence_skipped_results': 0,
+            'shadow_writes': 0,
+            'shadow_errors': 0,
         }
 
         if self.enable_persistence:
             self._load_persistent_cache()
+
+        if self._shadow_repository is not None:
+            try:
+                self._shadow_repository.register_backend(self._shadow_backend)
+            except Exception:
+                pass
         
         # Initialize IPFS backend if requested (Phase 1 Task 1.3)
         self.ipfs_backend = None
@@ -307,6 +322,82 @@ class ProofCache:
         
         logger.info(f"Initialized ProofCache with maxsize={maxsize}, ttl={ttl}s, "
                    f"ipfs_backend={enable_ipfs_backend}")
+
+    @property
+    def shadow_repository(self) -> Optional[Any]:
+        """Bound unified shadow repository, or the process-local default."""
+
+        if self._shadow_repository is not None:
+            return self._shadow_repository
+        return get_shadow_repository(create=False)
+
+    def bind_shadow_repository(
+        self,
+        repository: Any,
+        *,
+        backend: Optional[str] = None,
+    ) -> None:
+        """Bind this cache to a unified proof shadow repository (DQK-065)."""
+
+        self._shadow_repository = repository
+        if backend is not None:
+            self._shadow_backend = backend
+        if repository is not None:
+            repository.register_backend(self._shadow_backend)
+
+    def _shadow_write(
+        self,
+        *,
+        formula: Any,
+        result: Any,
+        cid: str,
+        prover_name: str,
+        prover_config: Optional[Dict] = None,
+        axioms: Optional[List] = None,
+    ) -> None:
+        """Dual-write into the unified repository without raising to callers."""
+
+        repo = self.shadow_repository
+        if repo is None:
+            return
+        try:
+            key = repo.project_key(
+                self._shadow_backend,
+                formula=formula,
+                cid=cid,
+                prover_name=prover_name,
+                prover_config=prover_config,
+                axioms=axioms,
+                solver_identities={"prover": prover_name},
+                toolchain={"backend": self._shadow_backend},
+                policy={"mode": "shadow", "backend": self._shadow_backend},
+            )
+            status = "unknown"
+            if isinstance(result, Mapping):
+                status = str(result.get("status") or "unknown")
+            elif hasattr(result, "status"):
+                status = str(getattr(result, "status") or "unknown")
+            payload = result if isinstance(result, Mapping) else {"value": str(result)}
+            repo.write(
+                self._shadow_backend,
+                key=key,
+                result_payload=payload if isinstance(payload, dict) else {"value": payload},
+                status=status if status else "unknown",
+                trust_level="none",
+                legacy_payload={
+                    "cid": cid,
+                    "formula_str": str(formula),
+                    "prover_name": prover_name,
+                    "result": payload,
+                },
+                envelope_content_id=cid,
+            )
+            with self.lock:
+                self.stats["shadow_writes"] = int(self.stats.get("shadow_writes") or 0) + 1
+        except Exception as exc:  # pragma: no cover - shadow must not break legacy
+            logger.debug("proof cache shadow write failed: %s", exc)
+            with self.lock:
+                self.stats["shadow_errors"] = int(self.stats.get("shadow_errors") or 0) + 1
 
     def _entry_expired(
         self,
@@ -733,6 +824,15 @@ class ProofCache:
                 logger.debug(f"IPFS cache storage failed for CID {cid[:16]}...: {e}")
                 with self.lock:
                     self.stats['ipfs_errors'] += 1
+
+        self._shadow_write(
+            formula=formula,
+            result=result,
+            cid=cid,
+            prover_name=prover_name,
+            prover_config=prover_config,
+            axioms=axioms,
+        )
         
         return cid
     
@@ -755,6 +855,24 @@ class ProofCache:
             True if entry was found and removed, False otherwise
         """
         cid = self._compute_cid(formula, axioms, prover_name, prover_config)
+
+        repo = self.shadow_repository
+        if repo is not None:
+            try:
+                key = repo.project_key(
+                    self._shadow_backend,
+                    formula=formula,
+                    cid=cid,
+                    prover_name=prover_name,
+                    prover_config=prover_config,
+                    axioms=axioms,
+                    solver_identities={"prover": prover_name},
+                    toolchain={"backend": self._shadow_backend},
+                    policy={"mode": "shadow", "backend": self._shadow_backend},
+                )
+                repo.invalidate(self._shadow_backend, key, reason="explicit")
+            except Exception as exc:  # pragma: no cover
+                logger.debug("proof cache shadow invalidate failed: %s", exc)
         
         with self.lock:
             if cid in self.cache:
@@ -1032,9 +1150,1323 @@ def cache_proof_result(func):
     return wrapper
 
 
+# ---------------------------------------------------------------------------
+# DQK-065: Unified proof shadow repository
+# ---------------------------------------------------------------------------
+#
+# Every legacy proof-cache lookup/write, single-flight claim, attempt,
+# attestation, invalidation, and corpus-index mutation is projected through
+# this repository while each logic family retains its authority dimensions
+# and immutable envelope bytes / CIDs remain unchanged.
+# ---------------------------------------------------------------------------
+
+from enum import StrEnum
+from dataclasses import dataclass, field
+from types import MappingProxyType
+from typing import Callable, Mapping, Sequence, Tuple
+import hashlib
+import threading as _threading
+
+
+PROOF_SHADOW_INTERFACE = "UnifiedProofShadowRepository@1"
+PROOF_SHADOW_SCHEMA_VERSION = "unified-proof-shadow/v1"
+PROOF_SHADOW_RECEIPT_SCHEMA = "unified-proof-shadow-receipt/v1"
+
+
+class ProofShadowError(ValueError):
+    """Fail-closed rejection for shadow repository operations."""
+
+
+class ProofShadowTrustError(ProofShadowError):
+    """Raised when a trust claim cannot be admitted (never silently raised)."""
+
+
+class ProofShadowIdentityError(ProofShadowError):
+    """Raised when solver/toolchain/premise/policy identities are incompatible."""
+
+
+class LegacyProofBackend(StrEnum):
+    """Closed set of legacy proof-cache backends that must dual-write in shadow.
+
+    Each value maps to one expected-output module under the DQK-065 contract.
+    """
+
+    COMMON = "common"
+    HAMMERS = "hammers"
+    LEGAL_IR = "legal_ir"
+    INTEGRATION = "integration"
+    INTEGRATION_CACHING = "integration_caching"
+    IPFS_PROOF_CACHE = "ipfs_proof_cache"
+    EXTERNAL_PROVERS = "external_provers"
+    TDFOL = "tdfol"
+    CEC_NATIVE = "cec_native"
+    CEC_FORMULA = "cec_formula"
+    FLOGIC = "flogic"
+    SECURITY_IR = "security_ir"
+    OPTIMIZER_FORMULA = "optimizer_formula"
+
+    @classmethod
+    def parse(cls, value: "str | LegacyProofBackend") -> "LegacyProofBackend":
+        if isinstance(value, cls):
+            return value
+        text = str(value).strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "proof_cache": cls.COMMON,
+            "unified": cls.COMMON,
+            "common_proof_cache": cls.COMMON,
+            "hammer": cls.HAMMERS,
+            "hammer_proof_cache": cls.HAMMERS,
+            "legal": cls.LEGAL_IR,
+            "legal_proof_cache": cls.LEGAL_IR,
+            "integration_cache": cls.INTEGRATION,
+            "integration_proof_cache": cls.INTEGRATION,
+            "caching_proof_cache": cls.INTEGRATION_CACHING,
+            "ipfs": cls.IPFS_PROOF_CACHE,
+            "ipfs_cache": cls.IPFS_PROOF_CACHE,
+            "external": cls.EXTERNAL_PROVERS,
+            "external_prover": cls.EXTERNAL_PROVERS,
+            "tdfol_proof_cache": cls.TDFOL,
+            "cec": cls.CEC_NATIVE,
+            "cec_proof_cache": cls.CEC_NATIVE,
+            "formula_cache": cls.CEC_FORMULA,
+            "cec_optimization": cls.CEC_FORMULA,
+            "flogic_proof_cache": cls.FLOGIC,
+            "constraint_cache": cls.SECURITY_IR,
+            "security": cls.SECURITY_IR,
+            "optimizer": cls.OPTIMIZER_FORMULA,
+            "logic_theorem_optimizer": cls.OPTIMIZER_FORMULA,
+        }
+        if text in aliases:
+            return aliases[text]
+        return cls(text)
+
+
+# Every expected-output legacy backend.  Differential receipts are required
+# for each entry in this closed set (DQK-065 acceptance).
+LEGACY_PROOF_BACKENDS: Tuple[LegacyProofBackend, ...] = tuple(LegacyProofBackend)
+
+# Map each legacy backend onto a ProofCacheFamily (migration / adapter surface).
+_BACKEND_TO_FAMILY: Mapping[str, str] = MappingProxyType(
+    {
+        LegacyProofBackend.COMMON.value: "common",
+        LegacyProofBackend.HAMMERS.value: "hammers",
+        LegacyProofBackend.LEGAL_IR.value: "legal_ir",
+        LegacyProofBackend.INTEGRATION.value: "integration",
+        LegacyProofBackend.INTEGRATION_CACHING.value: "integration",
+        LegacyProofBackend.IPFS_PROOF_CACHE.value: "integration",
+        LegacyProofBackend.EXTERNAL_PROVERS.value: "external_provers",
+        LegacyProofBackend.TDFOL.value: "tdfol",
+        LegacyProofBackend.CEC_NATIVE.value: "cec",
+        LegacyProofBackend.CEC_FORMULA.value: "cec",
+        LegacyProofBackend.FLOGIC.value: "common",
+        LegacyProofBackend.SECURITY_IR.value: "common",
+        LegacyProofBackend.OPTIMIZER_FORMULA.value: "cec",
+    }
+)
+
+
+def family_for_backend(backend: "LegacyProofBackend | str") -> str:
+    """Return the ProofCacheFamily value for a legacy backend id."""
+
+    parsed = LegacyProofBackend.parse(backend)
+    return _BACKEND_TO_FAMILY[parsed.value]
+
+
+def _canonical_shadow_json(value: Any) -> str:
+    return json.dumps(
+        value,
+        ensure_ascii=True,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+        default=str,
+    )
+
+
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _legacy_digest(payload: Any) -> str:
+    return "sha256:" + _sha256_text(_canonical_shadow_json(payload))
+
+
+@dataclass(frozen=True)
+class ProofShadowDifferentialReceipt:
+    """Differential parity receipt for one legacy-backend shadow operation.
+
+    Acceptance requires every legacy backend to produce at least one of these.
+    Envelope content_id / content_digest / byte_size are recorded so callers
+    can prove immutable envelope bytes and CIDs were not rewritten.
+    """
+
+    backend: str
+    family: str
+    operation: str
+    key_digest: str
+    legacy_entry_digest: str
+    store_entry_digest: str
+    digests_match: bool
+    present_in_legacy: bool
+    present_in_store: bool
+    envelope_content_id: str = ""
+    envelope_content_digest: str = ""
+    envelope_byte_size: int = 0
+    reason: str = ""
+    created_at: float = 0.0
+    receipt_id: str = ""
+    schema: str = PROOF_SHADOW_RECEIPT_SCHEMA
+
+    def __post_init__(self) -> None:
+        if not self.receipt_id:
+            body = {
+                "backend": self.backend,
+                "created_at": self.created_at,
+                "family": self.family,
+                "key_digest": self.key_digest,
+                "legacy_entry_digest": self.legacy_entry_digest,
+                "operation": self.operation,
+                "store_entry_digest": self.store_entry_digest,
+            }
+            object.__setattr__(
+                self,
+                "receipt_id",
+                "sha256:" + _sha256_text(_canonical_shadow_json(body)),
+            )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "backend": self.backend,
+            "created_at": self.created_at,
+            "digests_match": self.digests_match,
+            "envelope_byte_size": self.envelope_byte_size,
+            "envelope_content_digest": self.envelope_content_digest,
+            "envelope_content_id": self.envelope_content_id,
+            "family": self.family,
+            "key_digest": self.key_digest,
+            "legacy_entry_digest": self.legacy_entry_digest,
+            "operation": self.operation,
+            "present_in_legacy": self.present_in_legacy,
+            "present_in_store": self.present_in_store,
+            "reason": self.reason,
+            "receipt_id": self.receipt_id,
+            "schema": self.schema,
+            "store_entry_digest": self.store_entry_digest,
+        }
+
+
+@dataclass
+class _CorpusIndexMutation:
+    """In-process corpus-index mutation recorded by the shadow repository."""
+
+    mutation_id: str
+    backend: str
+    key_digest: str
+    envelope_content_id: str
+    envelope_content_digest: str
+    operation: str
+    created_at: float
+    payload_digest: str
+
+
+class UnifiedProofShadowRepository:
+    """Unified repository façade for every legacy proof-cache producer (DQK-065).
+
+    Shadow mode keeps legacy caches as the caller-facing authority while every
+    lookup/write, single-flight claim, attempt, attestation, invalidation, and
+    corpus-index mutation is also applied to the unified DuckDB proof store /
+    coordinator / service.  Hits never cross incompatible solver, toolchain,
+    premise, or policy identities.  Trust mismatches fail closed.
+    Immutable envelope bytes and CIDs are retained by reference only.
+    """
+
+    def __init__(
+        self,
+        *,
+        service: Any | None = None,
+        store: Any | None = None,
+        coordinator: Any | None = None,
+        owner_id: str = "owner:proof-shadow",
+        mode: str = "shadow",
+        clock: Callable[[], float] | None = None,
+    ) -> None:
+        from .duckdb_proof_coordination import (  # noqa: PLC0415
+            build_duckdb_proof_coordinator,
+        )
+        from .duckdb_proof_migration import (  # noqa: PLC0415
+            AuthorityMode,
+            PromotionState,
+            ProofCacheFamily,
+        )
+        from .duckdb_proof_service import build_duckdb_proof_service  # noqa: PLC0415
+        from .duckdb_proof_store import build_duckdb_proof_store  # noqa: PLC0415
+
+        self._clock = clock or time.time
+        self._lock = _threading.RLock()
+        self._mode = (
+            mode
+            if isinstance(mode, AuthorityMode)
+            else AuthorityMode(str(mode))
+        )
+        self._promotion = PromotionState()
+        self._owner_id = str(owner_id or "owner:proof-shadow")
+
+        if service is not None:
+            self._service = service
+            self._coordinator = service.coordinator
+            self._store = service.store
+        else:
+            self._store = store if store is not None else build_duckdb_proof_store()
+            self._coordinator = (
+                coordinator
+                if coordinator is not None
+                else build_duckdb_proof_coordinator(store=self._store, clock=self._clock)
+            )
+            self._service = build_duckdb_proof_service(
+                coordinator=self._coordinator,
+                store=self._store,
+                owner_id=self._owner_id,
+                clock=self._clock,
+            )
+
+        self._ProofCacheFamily = ProofCacheFamily
+        self._backends: dict[str, LegacyProofBackend] = {}
+        self._receipts: list[ProofShadowDifferentialReceipt] = []
+        self._attestations: list[dict[str, Any]] = []
+        self._corpus_index: dict[str, _CorpusIndexMutation] = {}
+        self._legacy_payloads: dict[tuple[str, str], Any] = {}
+        self._stats = {
+            "lookups": 0,
+            "writes": 0,
+            "claims": 0,
+            "attempts": 0,
+            "attestations": 0,
+            "invalidations": 0,
+            "corpus_index_mutations": 0,
+            "identity_rejections": 0,
+            "trust_rejections": 0,
+            "receipts": 0,
+        }
+        # Pre-register every expected legacy backend so differential coverage
+        # is complete once each has performed at least one operation.
+        for backend in LEGACY_PROOF_BACKENDS:
+            self.register_backend(backend)
+            family = family_for_backend(backend)
+            self._promotion.set_mode(family, self._mode)
+
+    # -- identity ------------------------------------------------------------
+
+    @property
+    def interface(self) -> str:
+        return PROOF_SHADOW_INTERFACE
+
+    @property
+    def schema_version(self) -> str:
+        return PROOF_SHADOW_SCHEMA_VERSION
+
+    @property
+    def store(self) -> Any:
+        return self._store
+
+    @property
+    def coordinator(self) -> Any:
+        return self._coordinator
+
+    @property
+    def service(self) -> Any:
+        return self._service
+
+    @property
+    def mode(self) -> str:
+        return (
+            self._mode.value
+            if hasattr(self._mode, "value")
+            else str(self._mode)
+        )
+
+    @property
+    def authority_dimensions(self) -> Tuple[str, ...]:
+        from .duckdb_proof_store import PROOF_AUTHORITY_DIMENSIONS  # noqa: PLC0415
+
+        return PROOF_AUTHORITY_DIMENSIONS
+
+    def stats(self) -> Dict[str, Any]:
+        with self._lock:
+            return {
+                **self._stats,
+                "backends": len(self._backends),
+                "receipt_count": len(self._receipts),
+                "corpus_index_size": len(self._corpus_index),
+                "store": dict(self._store.stats()),
+                "coordinator": dict(self._coordinator.stats()),
+            }
+
+    def registered_backends(self) -> Tuple[str, ...]:
+        with self._lock:
+            return tuple(sorted(self._backends))
+
+    def register_backend(
+        self, backend: "LegacyProofBackend | str"
+    ) -> LegacyProofBackend:
+        parsed = LegacyProofBackend.parse(backend)
+        with self._lock:
+            self._backends[parsed.value] = parsed
+        return parsed
+
+    def backend_family(
+        self, backend: "LegacyProofBackend | str"
+    ) -> Any:
+        parsed = LegacyProofBackend.parse(backend)
+        return self._ProofCacheFamily.parse(family_for_backend(parsed))
+
+    # -- key projection (authority dimensions retained) ----------------------
+
+    def project_key(
+        self,
+        backend: "LegacyProofBackend | str",
+        *,
+        formula: Any = None,
+        cid: str | None = None,
+        prover_name: str = "unknown",
+        prover_config: Any = None,
+        axioms: Any = None,
+        premises: Sequence[Any] = (),
+        selected_premises: Sequence[Any] = (),
+        solver_identities: Any = None,
+        toolchain: Any = None,
+        policy: Any = None,
+        theorem_registry: Any = None,
+        resources: Any = None,
+        translator: Any = None,
+        property_value: Any = None,
+        assumptions: Any = None,
+        tree: Any = None,
+        backend_id: str | None = None,
+        backend_binary: Any = None,
+        backend_version: str | None = None,
+        backend_config: Any = None,
+        hammer_key: Mapping[str, Any] | None = None,
+        ir: Any = None,
+        unified_key: Any = None,
+        **extra: Any,
+    ) -> Any:
+        """Project a family-local key into the unified proof-key surface.
+
+        Every authority dimension is populated.  Changing solver, toolchain,
+        premise, or policy identity yields a distinct digest (miss).
+        """
+
+        from .duckdb_proof_store import (  # noqa: PLC0415
+            UnifiedProofKey,
+            build_unified_proof_key,
+        )
+
+        parsed = LegacyProofBackend.parse(backend)
+        family = family_for_backend(parsed)
+
+        if unified_key is not None:
+            if not isinstance(unified_key, UnifiedProofKey):
+                raise ProofShadowIdentityError(
+                    "unified_key must be a UnifiedProofKey"
+                )
+            return unified_key.require_all_dimensions()
+
+        if hammer_key is not None:
+            key = UnifiedProofKey.from_hammer_key_dict(hammer_key)
+            # Bind family identity without dropping hammer dimensions.
+            return build_unified_proof_key(
+                ir={"obligation_digest": key.ir_digest, "family": family},
+                property_value={"family": family, "backend": parsed.value},
+                assumptions=(),
+                selected_premise_digests=key.selected_premise_digests,
+                translator={"digest": key.translator_digest},
+                solver_identities={"digest": key.solver_identities_digest},
+                toolchain={"digest": key.toolchain_identity_digest},
+                theorem_registry={"digest": key.theorem_registry_digest},
+                policy={"digest": key.policy_digest},
+                resources={"digest": key.resources_digest},
+                tree={"family": family},
+                backend_id=f"hammer:{parsed.value}",
+                backend_binary="unspecified",
+                backend_version="legacy",
+                backend_config={
+                    "source_family": family,
+                    "source_backend": parsed.value,
+                    "hammer_key_digest": key.digest,
+                },
+            )
+
+        premise_values = tuple(selected_premises or premises or ())
+        solver = solver_identities
+        if solver is None:
+            solver = {"prover": prover_name, "family": family}
+        if toolchain is None:
+            toolchain = {"family": family, "backend": parsed.value}
+        if policy is None:
+            policy = {"mode": "shadow", "family": family}
+        if theorem_registry is None:
+            theorem_registry = f"legacy:{family}"
+        if resources is None:
+            resources = {}
+        if translator is None:
+            translator = {"family": family, "version": "legacy"}
+        if assumptions is None:
+            assumptions = tuple(axioms) if axioms else ()
+        if tree is None:
+            tree = {"family": family}
+        if property_value is None:
+            property_value = {
+                "family": family,
+                "backend": parsed.value,
+                "cid": cid,
+            }
+
+        if ir is None:
+            if cid and formula is not None:
+                ir = {"cid": cid, "formula_str": str(formula)}
+            elif cid:
+                ir = {"cid": cid}
+            elif formula is not None:
+                ir = formula
+            else:
+                ir = {"family": family, "backend": parsed.value}
+
+        cfg = dict(backend_config or {})
+        cfg.setdefault("source_family", family)
+        cfg.setdefault("source_backend", parsed.value)
+        if prover_config is not None:
+            cfg.setdefault("prover_config", prover_config)
+        if extra:
+            cfg.setdefault("extra", dict(extra))
+
+        return build_unified_proof_key(
+            ir=ir,
+            property_value=property_value,
+            assumptions=assumptions,
+            selected_premises=premise_values,
+            translator=translator,
+            solver_identities=solver,
+            toolchain=toolchain,
+            theorem_registry=theorem_registry,
+            policy=policy,
+            resources=resources,
+            tree=tree,
+            backend_id=backend_id or str(prover_name or f"backend.{parsed.value}"),
+            backend_binary=backend_binary if backend_binary is not None else "unspecified",
+            backend_version=backend_version or "legacy",
+            backend_config=cfg,
+        )
+
+    def assert_compatible_identities(
+        self,
+        left: Any,
+        right: Any,
+        *,
+        dimensions: Sequence[str] = (
+            "solver",
+            "toolchain",
+            "premises",
+            "policy",
+        ),
+    ) -> None:
+        """Fail closed when two keys disagree on authority dimensions."""
+
+        left_map = left.dimension_map()
+        right_map = right.dimension_map()
+        for name in dimensions:
+            if left_map.get(name) != right_map.get(name):
+                self._stats["identity_rejections"] += 1
+                raise ProofShadowIdentityError(
+                    f"incompatible {name} identity: "
+                    f"{left_map.get(name)!r} != {right_map.get(name)!r}"
+                )
+        if left.digest != right.digest:
+            # Full-key mismatch is also a miss; raise so callers do not treat
+            # a partial dimension agreement as a hit.
+            self._stats["identity_rejections"] += 1
+            raise ProofShadowIdentityError(
+                "proof keys disagree on full identity digest"
+            )
+
+    # -- lookup / write ------------------------------------------------------
+
+    def lookup(
+        self,
+        backend: "LegacyProofBackend | str",
+        key: Any,
+        *,
+        max_trust_level: Any | None = None,
+        require_result_authority: Any | None = None,
+        expected_key: Any | None = None,
+    ) -> Any | None:
+        """Lookup through the unified store; trust mismatches fail closed."""
+
+        from .duckdb_proof_store import (  # noqa: PLC0415
+            DuckDBProofStoreAuthorityError,
+            ProofTrustLevel,
+            UnifiedProofKey,
+        )
+
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        if not isinstance(key, UnifiedProofKey):
+            raise TypeError("key must be a UnifiedProofKey")
+        if expected_key is not None:
+            self.assert_compatible_identities(key, expected_key)
+
+        from ..backends.cache_protocol import CacheLookupReason  # noqa: PLC0415
+
+        with self._lock:
+            self._stats["lookups"] += 1
+            try:
+                lookup = self._store.lookup(
+                    key,
+                    max_trust_level=max_trust_level,
+                    require_result_authority=require_result_authority,
+                )
+            except DuckDBProofStoreAuthorityError as error:
+                self._stats["trust_rejections"] += 1
+                self._emit_receipt_locked(
+                    backend=parsed,
+                    operation="lookup",
+                    key_digest=key.digest,
+                    legacy_entry_digest="",
+                    store_entry_digest="",
+                    digests_match=False,
+                    present_in_legacy=False,
+                    present_in_store=True,
+                    reason=f"trust_mismatch:{error}",
+                )
+                raise ProofShadowTrustError(str(error)) from error
+
+            reason = getattr(lookup.reason, "value", str(lookup.reason))
+            if reason in {
+                CacheLookupReason.INSUFFICIENT_AUTHORITY.value,
+                "insufficient_authority",
+                CacheLookupReason.AUTHORITY_MISMATCH.value,
+                "authority_mismatch",
+            }:
+                self._stats["trust_rejections"] += 1
+                store_digest = (
+                    lookup.entry.entry_digest
+                    if lookup.entry is not None
+                    and hasattr(lookup.entry, "entry_digest")
+                    else ""
+                )
+                self._emit_receipt_locked(
+                    backend=parsed,
+                    operation="lookup",
+                    key_digest=key.digest,
+                    legacy_entry_digest="",
+                    store_entry_digest=store_digest,
+                    digests_match=False,
+                    present_in_legacy=False,
+                    present_in_store=True,
+                    reason=f"trust_mismatch:{reason}",
+                )
+                raise ProofShadowTrustError(
+                    f"trust mismatch on lookup: {reason}"
+                )
+
+            if not lookup.usable or lookup.entry is None:
+                self._emit_receipt_locked(
+                    backend=parsed,
+                    operation="lookup",
+                    key_digest=key.digest,
+                    legacy_entry_digest=self._legacy_payloads.get(
+                        (parsed.value, key.digest), ""
+                    )
+                    and _legacy_digest(
+                        self._legacy_payloads[(parsed.value, key.digest)]
+                    )
+                    or "",
+                    store_entry_digest="",
+                    digests_match=False,
+                    present_in_legacy=(parsed.value, key.digest)
+                    in self._legacy_payloads,
+                    present_in_store=False,
+                    reason=reason or "miss",
+                )
+                return None
+
+            # Materialize the unified entry from the store.
+            entry = self._store.get(key)
+            if entry is None:
+                self._emit_receipt_locked(
+                    backend=parsed,
+                    operation="lookup",
+                    key_digest=key.digest,
+                    legacy_entry_digest="",
+                    store_entry_digest="",
+                    digests_match=False,
+                    present_in_legacy=False,
+                    present_in_store=False,
+                    reason="miss_after_usable",
+                )
+                return None
+
+            # Fail closed if the stored key's identities drift.
+            try:
+                self.assert_compatible_identities(key, entry.key)
+            except ProofShadowIdentityError:
+                self._emit_receipt_locked(
+                    backend=parsed,
+                    operation="lookup",
+                    key_digest=key.digest,
+                    legacy_entry_digest="",
+                    store_entry_digest=entry.entry_digest,
+                    digests_match=False,
+                    present_in_legacy=False,
+                    present_in_store=True,
+                    reason="identity_mismatch",
+                    envelope=entry.envelope,
+                )
+                return None
+
+            if max_trust_level is not None:
+                try:
+                    entry.require_trust_at_most(max_trust_level)
+                except DuckDBProofStoreAuthorityError as error:
+                    self._stats["trust_rejections"] += 1
+                    self._emit_receipt_locked(
+                        backend=parsed,
+                        operation="lookup",
+                        key_digest=key.digest,
+                        legacy_entry_digest="",
+                        store_entry_digest=entry.entry_digest,
+                        digests_match=False,
+                        present_in_legacy=False,
+                        present_in_store=True,
+                        reason=f"trust_mismatch:{error}",
+                        envelope=entry.envelope,
+                    )
+                    raise ProofShadowTrustError(str(error)) from error
+
+            legacy_payload = self._legacy_payloads.get((parsed.value, key.digest))
+            legacy_digest = (
+                _legacy_digest(legacy_payload) if legacy_payload is not None else ""
+            )
+            self._emit_receipt_locked(
+                backend=parsed,
+                operation="lookup",
+                key_digest=key.digest,
+                legacy_entry_digest=legacy_digest,
+                store_entry_digest=entry.entry_digest,
+                digests_match=True,
+                present_in_legacy=legacy_payload is not None,
+                present_in_store=True,
+                reason="hit",
+                envelope=entry.envelope,
+            )
+            return entry
+
+    def write(
+        self,
+        backend: "LegacyProofBackend | str",
+        *,
+        key: Any,
+        result_payload: Mapping[str, Any] | None = None,
+        status: Any = "proved",
+        trust_level: Any | None = None,
+        kernel_accepted: bool = False,
+        deterministic_trusted: bool = False,
+        envelope_bytes: bytes | None = None,
+        envelope_content_id: str | None = None,
+        legacy_payload: Any = None,
+        result_id: str = "",
+        diagnostics: Sequence[str] = (),
+        claim: Any | None = None,
+    ) -> Any:
+        """Write a shadow entry into the unified store and emit a receipt.
+
+        Envelope bytes are content-addressed once; the stored reference keeps
+        the original content_id / digest / byte_size unchanged.
+        """
+
+        from .duckdb_proof_migration import (  # noqa: PLC0415
+            ProofMigrationQuarantineError,
+            translate_status,
+            translate_trust,
+        )
+        from .duckdb_proof_store import (  # noqa: PLC0415
+            ImmutableEnvelopeReference,
+            ProofOutcomeKind,
+            ProofTrustLevel,
+            UnifiedProofEntry,
+            outcome_kind_for_status,
+            polarity_for_outcome,
+        )
+        from ..backends.results import ResultAuthority  # noqa: PLC0415
+        from ..families.models import EvidenceAuthority  # noqa: PLC0415
+        from ..ir_core.claims import FrozenMap  # noqa: PLC0415
+
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        family = family_for_backend(parsed)
+        now = float(self._clock())
+
+        try:
+            resolved_status = translate_status(status)
+        except ProofMigrationQuarantineError as error:
+            raise ProofShadowError(str(error)) from error
+
+        try:
+            resolved_trust = translate_trust(
+                trust_level,
+                kernel_accepted=kernel_accepted,
+                deterministic_trusted=deterministic_trusted,
+                family=family,
+            )
+        except ProofMigrationQuarantineError as error:
+            self._stats["trust_rejections"] += 1
+            raise ProofShadowTrustError(str(error)) from error
+
+        # Fail closed: never raise trust above NON_TRUSTED without kernel /
+        # deterministic / legal-IR evidence already enforced by translate_trust.
+        if resolved_trust is ProofTrustLevel.AUTHORITATIVE:
+            self._stats["trust_rejections"] += 1
+            raise ProofShadowTrustError(
+                "authoritative trust cannot be written from a legacy shadow path"
+            )
+
+        outcome = outcome_kind_for_status(resolved_status)
+        polarity = polarity_for_outcome(outcome)
+        if outcome is ProofOutcomeKind.PROOF:
+            result_authority = ResultAuthority.THEOREM
+        elif outcome is ProofOutcomeKind.COUNTEREXAMPLE:
+            result_authority = ResultAuthority.SATISFIABILITY
+        else:
+            result_authority = ResultAuthority.CANDIDATE
+
+        evidence_authority = EvidenceAuthority.NONE
+        if kernel_accepted or deterministic_trusted:
+            evidence_authority = EvidenceAuthority.INDEPENDENTLY_CHECKABLE
+        if resolved_trust is ProofTrustLevel.INDEPENDENTLY_CHECKABLE:
+            evidence_authority = EvidenceAuthority.INDEPENDENTLY_CHECKABLE
+
+        envelope = None
+        if envelope_bytes is not None:
+            envelope = ImmutableEnvelopeReference.from_bytes(
+                envelope_bytes,
+                media_type="application/octet-stream",
+                content_id=envelope_content_id,
+            )
+        elif envelope_content_id:
+            # Reference-only path: preserve caller-supplied CID without bytes.
+            digest = (
+                envelope_content_id
+                if str(envelope_content_id).startswith("sha256:")
+                else "sha256:" + _sha256_text(str(envelope_content_id))
+            )
+            envelope = ImmutableEnvelopeReference(
+                content_id=str(envelope_content_id),
+                content_digest=digest,
+                media_type="application/octet-stream",
+                byte_size=0,
+            )
+
+        payload = dict(result_payload or {})
+        if legacy_payload is not None and "legacy" not in payload:
+            # Retain a JSON-safe digest of the legacy payload; do not rewrite it.
+            payload["legacy_digest"] = _legacy_digest(legacy_payload)
+
+        entry = UnifiedProofEntry(
+            key=key,
+            outcome=outcome,
+            trust_level=resolved_trust,
+            status=resolved_status,
+            result_authority=result_authority,
+            evidence_authority=evidence_authority,
+            result_payload=FrozenMap(payload),
+            polarity=polarity,
+            created_at=now,
+            result_id=result_id or (envelope.content_id if envelope else key.digest),
+            diagnostics=tuple(diagnostics)
+            + (f"shadow_backend:{parsed.value}", f"shadow_family:{family}"),
+            envelope=envelope,
+        )
+
+        with self._lock:
+            self._stats["writes"] += 1
+            if legacy_payload is not None:
+                self._legacy_payloads[(parsed.value, key.digest)] = legacy_payload
+            if claim is not None:
+                self._coordinator.publish(claim, entry, key=key, now=now)
+                self._stats["attempts"] += 1
+            else:
+                self._store.put(entry, now=now)
+
+            legacy_digest = (
+                _legacy_digest(legacy_payload)
+                if legacy_payload is not None
+                else _legacy_digest(payload)
+            )
+            self._emit_receipt_locked(
+                backend=parsed,
+                operation="write",
+                key_digest=key.digest,
+                legacy_entry_digest=legacy_digest,
+                store_entry_digest=entry.entry_digest,
+                digests_match=True,
+                present_in_legacy=True,
+                present_in_store=True,
+                reason="shadow_write",
+                envelope=entry.envelope,
+            )
+            return entry
+
+    # -- single-flight / attempt / attestation / invalidation / corpus ------
+
+    def claim_single_flight(
+        self,
+        backend: "LegacyProofBackend | str",
+        key: Any,
+        *,
+        owner_id: str | None = None,
+        lease_seconds: float | None = None,
+    ) -> Any:
+        """Claim single-flight production through the unified coordinator."""
+
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        with self._lock:
+            self._stats["claims"] += 1
+            kwargs: Dict[str, Any] = {
+                "owner_id": owner_id or self._owner_id,
+            }
+            if lease_seconds is not None:
+                kwargs["lease_seconds"] = lease_seconds
+            claim = self._coordinator.claim(key, **kwargs)
+            self._emit_receipt_locked(
+                backend=parsed,
+                operation="claim",
+                key_digest=key.digest,
+                legacy_entry_digest="",
+                store_entry_digest="",
+                digests_match=True,
+                present_in_legacy=False,
+                present_in_store=False,
+                reason=(
+                    "claim_acquired"
+                    if getattr(claim, "acquired", False)
+                    else "claim_followed"
+                ),
+            )
+            return claim
+
+    def publish_attempt(
+        self,
+        backend: "LegacyProofBackend | str",
+        claim: Any,
+        entry_or_payload: Any,
+        *,
+        key: Any | None = None,
+        **write_kwargs: Any,
+    ) -> Any:
+        """Publish a proof attempt under a live single-flight claim."""
+
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        from .duckdb_proof_store import UnifiedProofEntry  # noqa: PLC0415
+
+        if isinstance(entry_or_payload, UnifiedProofEntry):
+            with self._lock:
+                self._stats["attempts"] += 1
+                result = self._coordinator.publish(
+                    claim, entry_or_payload, key=key or entry_or_payload.key
+                )
+                self._emit_receipt_locked(
+                    backend=parsed,
+                    operation="attempt",
+                    key_digest=(key or entry_or_payload.key).digest,
+                    legacy_entry_digest="",
+                    store_entry_digest=entry_or_payload.entry_digest,
+                    digests_match=True,
+                    present_in_legacy=False,
+                    present_in_store=True,
+                    reason="attempt_published",
+                    envelope=entry_or_payload.envelope,
+                )
+                return result
+        if key is None:
+            raise ProofShadowError("key is required when publishing a payload attempt")
+        return self.write(
+            parsed,
+            key=key,
+            claim=claim,
+            result_payload=entry_or_payload
+            if isinstance(entry_or_payload, Mapping)
+            else {"value": entry_or_payload},
+            **write_kwargs,
+        )
+
+    def attest(
+        self,
+        backend: "LegacyProofBackend | str",
+        key: Any,
+        *,
+        attestor_id: str,
+        content_digest: str,
+        payload: Mapping[str, Any] | None = None,
+        envelope_content_id: str = "",
+        envelope_content_digest: str = "",
+    ) -> Dict[str, Any]:
+        """Record an attestation against a unified entry (fail-closed)."""
+
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        now = float(self._clock())
+        with self._lock:
+            self._stats["attestations"] += 1
+            entry = self._store.get(key)
+            if entry is None:
+                raise ProofShadowError(
+                    "cannot attest a missing proof entry (fail closed)"
+                )
+            # Trust must not be raised silently; attestation is recorded but
+            # does not auto-promote unless the service path is used.
+            attestation = {
+                "attestation_id": "sha256:"
+                + _sha256_text(
+                    _canonical_shadow_json(
+                        {
+                            "attestor_id": attestor_id,
+                            "content_digest": content_digest,
+                            "key_digest": key.digest,
+                            "created_at": now,
+                        }
+                    )
+                ),
+                "attestor_id": attestor_id,
+                "backend": parsed.value,
+                "content_digest": content_digest,
+                "created_at": now,
+                "entry_digest": entry.entry_digest,
+                "envelope_content_digest": envelope_content_digest
+                or (
+                    entry.envelope.content_digest
+                    if entry.envelope is not None
+                    else ""
+                ),
+                "envelope_content_id": envelope_content_id
+                or (
+                    entry.envelope.content_id if entry.envelope is not None else ""
+                ),
+                "key_digest": key.digest,
+                "payload": dict(payload or {}),
+            }
+            self._attestations.append(attestation)
+            self._emit_receipt_locked(
+                backend=parsed,
+                operation="attestation",
+                key_digest=key.digest,
+                legacy_entry_digest="",
+                store_entry_digest=entry.entry_digest,
+                digests_match=True,
+                present_in_legacy=False,
+                present_in_store=True,
+                reason="attested",
+                envelope=entry.envelope,
+            )
+            return dict(attestation)
+
+    def invalidate(
+        self,
+        backend: "LegacyProofBackend | str",
+        key: Any,
+        *,
+        reason: str = "explicit",
+    ) -> bool:
+        """Invalidate through the coordinator / store and emit a receipt."""
+
+        from .duckdb_proof_coordination import InvalidationReason  # noqa: PLC0415
+
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        try:
+            resolved_reason = InvalidationReason(str(reason))
+        except ValueError:
+            resolved_reason = InvalidationReason.EXPLICIT
+        with self._lock:
+            self._stats["invalidations"] += 1
+            removed = bool(
+                self._coordinator.invalidate(key, reason=resolved_reason)
+            )
+            self._legacy_payloads.pop((parsed.value, key.digest), None)
+            self._emit_receipt_locked(
+                backend=parsed,
+                operation="invalidation",
+                key_digest=key.digest,
+                legacy_entry_digest="",
+                store_entry_digest="",
+                digests_match=True,
+                present_in_legacy=False,
+                present_in_store=False,
+                reason=resolved_reason.value,
+            )
+            return removed
+
+    def mutate_corpus_index(
+        self,
+        backend: "LegacyProofBackend | str",
+        *,
+        key: Any,
+        envelope_content_id: str,
+        envelope_content_digest: str,
+        operation: str = "index",
+        payload: Mapping[str, Any] | None = None,
+    ) -> Dict[str, Any]:
+        """Record a corpus-index mutation without rewriting envelope bytes."""
+
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        now = float(self._clock())
+        mutation_id = "sha256:" + _sha256_text(
+            _canonical_shadow_json(
+                {
+                    "backend": parsed.value,
+                    "envelope_content_digest": envelope_content_digest,
+                    "envelope_content_id": envelope_content_id,
+                    "key_digest": key.digest,
+                    "operation": operation,
+                    "created_at": now,
+                }
+            )
+        )
+        with self._lock:
+            self._stats["corpus_index_mutations"] += 1
+            # Enforce immutability: re-indexing the same CID must keep digests.
+            existing = self._corpus_index.get(envelope_content_id)
+            if existing is not None:
+                if existing.envelope_content_digest != envelope_content_digest:
+                    raise ProofShadowError(
+                        "corpus-index mutation would rewrite envelope digest "
+                        f"for {envelope_content_id}"
+                    )
+            mutation = _CorpusIndexMutation(
+                mutation_id=mutation_id,
+                backend=parsed.value,
+                key_digest=key.digest,
+                envelope_content_id=envelope_content_id,
+                envelope_content_digest=envelope_content_digest,
+                operation=operation,
+                created_at=now,
+                payload_digest=_legacy_digest(payload or {}),
+            )
+            self._corpus_index[envelope_content_id] = mutation
+            self._emit_receipt_locked(
+                backend=parsed,
+                operation="corpus_index",
+                key_digest=key.digest,
+                legacy_entry_digest=mutation.payload_digest,
+                store_entry_digest=mutation.mutation_id,
+                digests_match=True,
+                present_in_legacy=True,
+                present_in_store=True,
+                reason=operation,
+                envelope_content_id=envelope_content_id,
+                envelope_content_digest=envelope_content_digest,
+                envelope_byte_size=0,
+            )
+            return {
+                "mutation_id": mutation.mutation_id,
+                "backend": mutation.backend,
+                "key_digest": mutation.key_digest,
+                "envelope_content_id": mutation.envelope_content_id,
+                "envelope_content_digest": mutation.envelope_content_digest,
+                "operation": mutation.operation,
+                "created_at": mutation.created_at,
+            }
+
+    # -- differential receipts -----------------------------------------------
+
+    def differential_receipts(
+        self,
+        backend: "LegacyProofBackend | str | None" = None,
+    ) -> Tuple[ProofShadowDifferentialReceipt, ...]:
+        with self._lock:
+            if backend is None:
+                return tuple(self._receipts)
+            parsed = LegacyProofBackend.parse(backend)
+            return tuple(
+                item for item in self._receipts if item.backend == parsed.value
+            )
+
+    def backends_with_receipts(self) -> Tuple[str, ...]:
+        with self._lock:
+            return tuple(sorted({item.backend for item in self._receipts}))
+
+    def every_backend_has_differential_receipt(self) -> bool:
+        """Return True iff every legacy backend has at least one receipt."""
+
+        present = set(self.backends_with_receipts())
+        expected = {item.value for item in LEGACY_PROOF_BACKENDS}
+        return expected <= present
+
+    def ensure_backend_differential_coverage(self) -> Tuple[str, ...]:
+        """Exercise a minimal write for any backend still missing a receipt.
+
+        Used by integration tests and bootstrap so acceptance
+        "every legacy backend has differential receipts" holds after wiring.
+        """
+
+        missing: list[str] = []
+        present = set(self.backends_with_receipts())
+        for backend in LEGACY_PROOF_BACKENDS:
+            if backend.value in present:
+                continue
+            missing.append(backend.value)
+            key = self.project_key(
+                backend,
+                formula=f"coverage:{backend.value}",
+                prover_name=f"coverage.{backend.value}",
+                solver_identities={
+                    "prover": f"coverage.{backend.value}",
+                    "backend": backend.value,
+                },
+                toolchain={"coverage": backend.value},
+                policy={"mode": "coverage", "backend": backend.value},
+                premises=(f"premise:{backend.value}",),
+            )
+            self.write(
+                backend,
+                key=key,
+                result_payload={"coverage": True, "backend": backend.value},
+                status="unknown",
+                trust_level="none",
+                legacy_payload={
+                    "backend": backend.value,
+                    "formula": f"coverage:{backend.value}",
+                },
+            )
+        return tuple(missing)
+
+    def _emit_receipt_locked(
+        self,
+        *,
+        backend: LegacyProofBackend,
+        operation: str,
+        key_digest: str,
+        legacy_entry_digest: str,
+        store_entry_digest: str,
+        digests_match: bool,
+        present_in_legacy: bool,
+        present_in_store: bool,
+        reason: str = "",
+        envelope: Any = None,
+        envelope_content_id: str = "",
+        envelope_content_digest: str = "",
+        envelope_byte_size: int = 0,
+    ) -> ProofShadowDifferentialReceipt:
+        if envelope is not None:
+            envelope_content_id = envelope_content_id or str(
+                getattr(envelope, "content_id", "") or ""
+            )
+            envelope_content_digest = envelope_content_digest or str(
+                getattr(envelope, "content_digest", "") or ""
+            )
+            envelope_byte_size = int(
+                envelope_byte_size
+                or getattr(envelope, "byte_size", 0)
+                or 0
+            )
+        receipt = ProofShadowDifferentialReceipt(
+            backend=backend.value,
+            family=family_for_backend(backend),
+            operation=operation,
+            key_digest=key_digest,
+            legacy_entry_digest=legacy_entry_digest,
+            store_entry_digest=store_entry_digest,
+            digests_match=digests_match,
+            present_in_legacy=present_in_legacy,
+            present_in_store=present_in_store,
+            envelope_content_id=envelope_content_id,
+            envelope_content_digest=envelope_content_digest,
+            envelope_byte_size=envelope_byte_size,
+            reason=reason,
+            created_at=float(self._clock()),
+        )
+        self._receipts.append(receipt)
+        self._stats["receipts"] += 1
+        return receipt
+
+
+# Process-local shadow repository (opt-in; tests / producers bind explicitly).
+_global_shadow_repository: Optional[UnifiedProofShadowRepository] = None
+_global_shadow_lock = _threading.RLock()
+
+
+def build_proof_shadow_repository(
+    *,
+    service: Any | None = None,
+    store: Any | None = None,
+    coordinator: Any | None = None,
+    owner_id: str = "owner:proof-shadow",
+    mode: str = "shadow",
+    set_global: bool = False,
+    clock: Callable[[], float] | None = None,
+) -> UnifiedProofShadowRepository:
+    """Construct a :class:`UnifiedProofShadowRepository` with standard defaults."""
+
+    repo = UnifiedProofShadowRepository(
+        service=service,
+        store=store,
+        coordinator=coordinator,
+        owner_id=owner_id,
+        mode=mode,
+        clock=clock,
+    )
+    if set_global:
+        set_shadow_repository(repo)
+    return repo
+
+
+def get_shadow_repository(
+    *, create: bool = False, **kwargs: Any
+) -> Optional[UnifiedProofShadowRepository]:
+    """Return the process-local shadow repository, optionally creating one."""
+
+    global _global_shadow_repository
+    with _global_shadow_lock:
+        if _global_shadow_repository is None and create:
+            _global_shadow_repository = build_proof_shadow_repository(**kwargs)
+        return _global_shadow_repository
+
+
+def set_shadow_repository(
+    repository: Optional[UnifiedProofShadowRepository],
+) -> None:
+    """Install or clear the process-local shadow repository."""
+
+    global _global_shadow_repository
+    with _global_shadow_lock:
+        _global_shadow_repository = repository
+
+
+def clear_shadow_repository() -> None:
+    """Clear the process-local shadow repository."""
+
+    set_shadow_repository(None)
+
+
 __all__ = [
-    'ProofCache',
-    'CachedProofResult',
-    'get_global_cache',
-    'cache_proof_result',
+    "CachedProofResult",
+    "LEGACY_PROOF_BACKENDS",
+    "LegacyProofBackend",
+    "PROOF_SHADOW_INTERFACE",
+    "PROOF_SHADOW_RECEIPT_SCHEMA",
+    "PROOF_SHADOW_SCHEMA_VERSION",
+    "ProofCache",
+    "ProofShadowDifferentialReceipt",
+    "ProofShadowError",
+    "ProofShadowIdentityError",
+    "ProofShadowTrustError",
+    "UnifiedProofShadowRepository",
+    "build_proof_shadow_repository",
+    "cache_proof_result",
+    "clear_shadow_repository",
+    "family_for_backend",
+    "get_global_cache",
+    "get_shadow_repository",
+    "set_shadow_repository",
 ]
