@@ -300,7 +300,7 @@ W8  ISI-032
 
 ## ISI-021 Explain symbols and transitive impact honestly
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: explanations
