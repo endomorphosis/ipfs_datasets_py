@@ -5,8 +5,8 @@ Contains ``VectorStoreManager`` extracted from ``vector_store_management.py``.
 Import this module directly to use vector-store operations outside of the MCP
 tool layer.
 
-Also hosts the DuckDB vector **shadow catalog** (DQK-062) and **dual-mode
-authority catalog** (DQK-063):
+Also hosts the DuckDB vector **shadow catalog** (DQK-062), **dual-mode
+authority catalog** (DQK-063), and **DuckDB-only metadata cutover** (DQK-064):
 
 * DQK-062 — collection, model, chunk, mapping, generation, shard, tombstone,
   and build producers route lifecycle metadata through DuckDB while legacy
@@ -18,6 +18,12 @@ authority catalog** (DQK-063):
   segment. Update/delete cannot resurrect stale or duplicate live vectors;
   external backend failures retry idempotently; VSS stays derived with
   exact-search fallback.
+* DQK-064 — after DuckDB promotion, FAISS pickle and process-local mappings
+  are one-time import compatibility only. Normal runtime never reads or
+  writes ``*_metadata.pkl``, ``vector_indexes/*/metadata.json``, shard JSON,
+  or mutable manifest JSON. MCP/manager restart rehydrates mappings from
+  DuckDB plus vector segments. Publication exposes approved collection/build
+  statistics rather than unrestricted embeddings.
 """
 
 from __future__ import annotations
@@ -30,9 +36,19 @@ import re
 import shutil
 import threading
 import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +104,19 @@ VECTOR_AUTHORITY_SCHEMA: str = (
 )
 VECTOR_AUTHORITY_OWNER_TASK: str = "DQK-063"
 
+VECTOR_DUCKDB_ONLY_DOMAIN: str = "vectors"
+VECTOR_DUCKDB_ONLY_SCHEMA: str = (
+    "ipfs_datasets_py/vector-stores-duckdb-only-metadata@1"
+)
+VECTOR_DUCKDB_ONLY_OWNER_TASK: str = "DQK-064"
+VECTOR_PUBLICATION_TYPE: str = "vector_quack_publication_v1"
+VECTOR_PUBLICATION_SCHEMA_VERSION: str = "vector-quack-publication/v1"
+
+# Durable catalog meta key for authority mode (survives process restart).
+_CATALOG_META_TABLE: str = "vector_catalog_meta"
+_CATALOG_META_AUTHORITY_MODE: str = "authority_mode"
+_CATALOG_META_LEGACY_IO: str = "allow_legacy_io"
+
 # External backend mutation retries (idempotent via operation_id).
 DEFAULT_EXTERNAL_RETRY_ATTEMPTS: int = 3
 DEFAULT_EXTERNAL_RETRY_BACKOFF_S: float = 0.01
@@ -95,8 +124,24 @@ DEFAULT_EXTERNAL_RETRY_BACKOFF_S: float = 0.01
 _SLUG_SAFE = re.compile(r"^[a-z0-9]([a-z0-9_-]{0,62}[a-z0-9])?$")
 _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/@+-]{0,191}$")
 
+# Guarded legacy metadata path patterns (DQK-064).
+_GUARDED_METADATA_PKL_SUFFIX: str = "_metadata.pkl"
+_GUARDED_METADATA_JSON_NAME: str = "metadata.json"
+_GUARDED_MANIFEST_NAMES = frozenset(
+    {
+        "sharding_manifest.json",
+        "clustering_manifest.json",
+        "shard_manifest.json",
+        "mutable_manifest.json",
+    }
+)
+_GUARDED_SHARD_JSON_RE = re.compile(
+    r"^(shard_\d+|cluster_\d+_shard_\d+|shard_\d+_dim_\d+)\.json$"
+)
+
 _process_catalog_lock = threading.RLock()
 _process_catalog: Optional["VectorShadowCatalog"] = None
+_process_filesystem_guard: Optional["VectorLegacyFilesystemGuard"] = None
 
 
 def _canonical_json(payload: Any) -> bytes:
@@ -144,6 +189,213 @@ def sanitize_id(value: str, *, prefix: str = "id") -> str:
         return text
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
     return f"{prefix}_{digest}"
+
+
+class ImplicitLegacyMetadataError(RuntimeError):
+    """Raised when normal runtime attempts pickle/JSON legacy metadata I/O."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        path: str = "",
+        kind: str = "",
+        operation: str = "write",
+    ) -> None:
+        super().__init__(message)
+        self.path = path
+        self.kind = kind
+        self.operation = operation
+
+
+class VectorLegacyFilesystemGuard:
+    """Blocks implicit ``*_metadata.pkl``, index ``metadata.json``, shard JSON,
+    and mutable manifest JSON I/O after DuckDB promotion (DQK-064).
+
+    Explicit one-time import/export compatibility methods obtain a short-lived
+    permit via :meth:`permit_import` / :meth:`permit_export`. All other
+    attempts fail closed with :class:`ImplicitLegacyMetadataError`.
+    """
+
+    def __init__(self, *, allow_legacy_io: bool = True) -> None:
+        self._lock = threading.RLock()
+        self._export_permits: int = 0
+        self._import_permits: int = 0
+        self._allow_legacy_io: bool = bool(allow_legacy_io)
+
+    @property
+    def allow_legacy_io(self) -> bool:
+        with self._lock:
+            return self._allow_legacy_io
+
+    @allow_legacy_io.setter
+    def allow_legacy_io(self, value: bool) -> None:
+        with self._lock:
+            self._allow_legacy_io = bool(value)
+
+    @contextmanager
+    def permit_export(self) -> Iterator[None]:
+        with self._lock:
+            self._export_permits += 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._export_permits = max(0, self._export_permits - 1)
+
+    @contextmanager
+    def permit_import(self) -> Iterator[None]:
+        with self._lock:
+            self._import_permits += 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._import_permits = max(0, self._import_permits - 1)
+
+    def _has_permit(self) -> bool:
+        with self._lock:
+            return self._export_permits > 0 or self._import_permits > 0
+
+    @staticmethod
+    def classify_path(path: Path | str) -> Optional[str]:
+        """Return the guarded kind for *path*, or ``None`` if unguarded."""
+
+        p = Path(path)
+        name = p.name
+        if name.endswith(_GUARDED_METADATA_PKL_SUFFIX) or name.endswith(
+            ".pkl"
+        ):
+            if name.endswith(_GUARDED_METADATA_PKL_SUFFIX) or name.endswith(
+                "_metadata.pkl"
+            ):
+                return "metadata_pkl"
+        if name == _GUARDED_METADATA_JSON_NAME:
+            # vector_indexes/<name>/metadata.json or any index metadata.json
+            return "metadata_json"
+        if name in _GUARDED_MANIFEST_NAMES:
+            return "mutable_manifest_json"
+        if _GUARDED_SHARD_JSON_RE.match(name):
+            return "shard_json"
+        return None
+
+    def is_guarded_path(self, path: Path | str) -> bool:
+        return self.classify_path(path) is not None
+
+    def assert_allowed(
+        self,
+        path: Path | str,
+        *,
+        kind: Optional[str] = None,
+        operation: str = "write",
+    ) -> None:
+        """Fail closed when legacy metadata I/O is blocked without a permit."""
+
+        classified = kind or self.classify_path(path)
+        if classified is None:
+            return
+        with self._lock:
+            allowed = self._allow_legacy_io or self._has_permit()
+        if allowed:
+            return
+        raise ImplicitLegacyMetadataError(
+            f"implicit {operation} of {classified} blocked after DuckDB "
+            f"promotion: {path} (use explicit one-time import/export "
+            f"compatibility methods; owner_task={VECTOR_DUCKDB_ONLY_OWNER_TASK})",
+            path=str(path),
+            kind=classified,
+            operation=operation,
+        )
+
+    def check_path_write(self, path: Path | str, *, kind: str = "") -> None:
+        self.assert_allowed(path, kind=kind or None, operation="write")
+
+    def check_path_read(self, path: Path | str, *, kind: str = "") -> None:
+        self.assert_allowed(path, kind=kind or None, operation="read")
+
+
+def get_vector_filesystem_guard() -> VectorLegacyFilesystemGuard:
+    """Return the process-local legacy metadata filesystem guard."""
+
+    global _process_filesystem_guard
+    with _process_catalog_lock:
+        if _process_filesystem_guard is None:
+            _process_filesystem_guard = VectorLegacyFilesystemGuard(
+                allow_legacy_io=True
+            )
+        return _process_filesystem_guard
+
+
+def reset_vector_filesystem_guard() -> None:
+    """Drop the process-local filesystem guard (tests)."""
+
+    global _process_filesystem_guard
+    with _process_catalog_lock:
+        _process_filesystem_guard = None
+
+
+def legacy_metadata_io_allowed() -> bool:
+    """True when pickle/JSON legacy metadata I/O is still permitted.
+
+    After DuckDB promotion (``db-primary`` / ``export-only``) this returns
+    ``False`` unless an explicit import/export permit is held.
+    """
+
+    catalog = _process_catalog
+    if catalog is not None and not catalog.legacy_io_allowed:
+        guard = get_vector_filesystem_guard()
+        if not guard._has_permit():  # noqa: SLF001 — intentional
+            return False
+        return True
+    return get_vector_filesystem_guard().allow_legacy_io or get_vector_filesystem_guard()._has_permit()  # noqa: SLF001
+
+
+def assert_legacy_metadata_path_allowed(
+    path: Path | str,
+    *,
+    kind: Optional[str] = None,
+    operation: str = "write",
+) -> None:
+    """Raise :class:`ImplicitLegacyMetadataError` if *path* is blocked."""
+
+    get_vector_filesystem_guard().assert_allowed(
+        path, kind=kind, operation=operation
+    )
+
+
+def duckdb_metadata_is_authority() -> bool:
+    """True when the process catalog is dual or db-primary for metadata."""
+
+    catalog = _process_catalog
+    if catalog is None or not catalog.enabled:
+        return False
+    mode = (catalog.mode or "").lower()
+    return mode in {
+        "dual",
+        "dual-write",
+        "dualwrite",
+        "db-primary",
+        "db_primary",
+        "export-only",
+        "export_only",
+        "duckdb",
+    }
+
+
+def duckdb_only_after_promotion() -> bool:
+    """True when DuckDB is sole metadata authority (no silent legacy fallback)."""
+
+    catalog = _process_catalog
+    if catalog is None or not catalog.enabled:
+        return False
+    mode = (catalog.mode or "").lower()
+    return mode in {
+        "db-primary",
+        "db_primary",
+        "export-only",
+        "export_only",
+        "duckdb",
+    }
 
 
 @dataclass
@@ -294,6 +546,16 @@ class VectorShadowCatalog:
     * **External backends** retry through :meth:`retry_external_mutation`.
     * **VSS** is always derived; :meth:`search_with_vss_fallback` keeps
       exact-search available.
+
+    DuckDB-only (DQK-064)
+    ---------------------
+    * After promotion to ``db-primary``, pickle / metadata.json / shard JSON /
+      mutable manifest JSON are blocked unless an explicit import/export
+      permit is held.
+    * :meth:`rehydrate_process_maps_from_store` rebuilds process-local
+      mappings from DuckDB so MCP/manager restart loses no live mappings.
+    * :meth:`publication_document` exposes approved collection/build
+      statistics only (never unrestricted embeddings).
     """
 
     DOMAIN = VECTOR_SHADOW_DOMAIN
@@ -307,6 +569,7 @@ class VectorShadowCatalog:
         authority_port: Any = None,
         writer_id: str = "writer:vector-shadow-catalog",
         initial_mode: Any = None,
+        allow_legacy_io: Optional[bool] = None,
     ) -> None:
         self._enabled = bool(enabled)
         self._path = (
@@ -330,10 +593,25 @@ class VectorShadowCatalog:
         # Tombstoned logical vector keys that must never re-live via stale ops
         self._tombstoned_logical: set = set()
         self._closed = False
+        # Explicit allow_legacy_io override; None → derive from mode.
+        self._allow_legacy_io_override = allow_legacy_io
+        self._allow_legacy_io: bool = True
+        self.filesystem_guard = VectorLegacyFilesystemGuard(
+            allow_legacy_io=True
+        )
         if self._enabled:
             self._open_store()
             if self._port is None:
                 self._port = self._build_default_port()
+            self._sync_legacy_io_from_mode()
+            # Rebuild process-local maps from durable DuckDB state (DQK-064).
+            if self._path != ":memory:":
+                try:
+                    self.rehydrate_process_maps_from_store()
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "vector catalog rehydrate on open failed: %s", exc
+                    )
 
     # -- lifecycle ----------------------------------------------------------
 
@@ -345,6 +623,13 @@ class VectorShadowCatalog:
         )
 
         mode = self._initial_mode
+        # Prefer durable mode stored in DuckDB (survives process restart).
+        persisted = self._read_catalog_meta(_CATALOG_META_AUTHORITY_MODE)
+        if persisted:
+            try:
+                mode = AuthorityMode.parse(persisted)
+            except Exception:  # noqa: BLE001
+                pass
         if mode is None:
             mode = AuthorityMode.SHADOW
         elif not isinstance(mode, AuthorityMode):
@@ -355,6 +640,320 @@ class VectorShadowCatalog:
             initial_mode=mode,
             writer_id=self._writer_id,
         )
+
+    def _ensure_catalog_meta_table(self) -> None:
+        if self._store is None:
+            return
+        try:
+            with self._store._lock:
+                self._store._conn.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {_CATALOG_META_TABLE} (
+                        key VARCHAR PRIMARY KEY,
+                        value VARCHAR NOT NULL
+                    )
+                    """
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("vector catalog meta table ensure failed: %s", exc)
+
+    def _write_catalog_meta(self, key: str, value: str) -> None:
+        if self._store is None:
+            return
+        try:
+            self._ensure_catalog_meta_table()
+            with self._store._lock:
+                self._store._conn.execute(
+                    f"""
+                    INSERT OR REPLACE INTO {_CATALOG_META_TABLE} (key, value)
+                    VALUES (?, ?)
+                    """,
+                    [key, value],
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("vector catalog meta write failed: %s", exc)
+
+    def _read_catalog_meta(self, key: str) -> Optional[str]:
+        if self._store is None:
+            return None
+        try:
+            self._ensure_catalog_meta_table()
+            with self._store._lock:
+                row = self._store._conn.execute(
+                    f"SELECT value FROM {_CATALOG_META_TABLE} WHERE key = ?",
+                    [key],
+                ).fetchone()
+            if row is None:
+                return None
+            return str(row[0])
+        except Exception:  # noqa: BLE001
+            return None
+
+    def _sync_legacy_io_from_mode(self) -> None:
+        """Disable silent legacy pickle/JSON I/O after DuckDB promotion."""
+
+        if self._allow_legacy_io_override is not None:
+            allowed = bool(self._allow_legacy_io_override)
+        else:
+            persisted = self._read_catalog_meta(_CATALOG_META_LEGACY_IO)
+            if persisted is not None:
+                allowed = persisted.lower() in {"1", "true", "yes", "on"}
+            else:
+                mode = (self.mode or "").lower()
+                # Dual still dual-writes for migration; db-primary/export-only
+                # forbid silent fallback.
+                allowed = mode not in {
+                    "db-primary",
+                    "db_primary",
+                    "export-only",
+                    "export_only",
+                    "duckdb",
+                }
+        self._allow_legacy_io = allowed
+        self.filesystem_guard.allow_legacy_io = allowed
+        # Keep process-global guard aligned with the active catalog.
+        guard = get_vector_filesystem_guard()
+        guard.allow_legacy_io = allowed
+
+    @property
+    def legacy_io_allowed(self) -> bool:
+        """True when pickle/JSON dual-write is still permitted."""
+
+        return bool(self._allow_legacy_io)
+
+    def set_legacy_io_allowed(self, allowed: bool) -> None:
+        """Explicitly enable/disable legacy pickle/JSON metadata I/O."""
+
+        self._allow_legacy_io_override = bool(allowed)
+        self._allow_legacy_io = bool(allowed)
+        self.filesystem_guard.allow_legacy_io = bool(allowed)
+        get_vector_filesystem_guard().allow_legacy_io = bool(allowed)
+        self._write_catalog_meta(
+            _CATALOG_META_LEGACY_IO, "true" if allowed else "false"
+        )
+
+    def rehydrate_process_maps_from_store(self) -> Dict[str, Any]:
+        """Rebuild process-local maps from DuckDB (restart without mapping loss).
+
+        Returns a summary of rehydrated collections and live vector bindings.
+        Tombstoned producer ids are restored so dual_create cannot resurrect
+        them after a process restart.
+        """
+
+        summary: Dict[str, Any] = {
+            "collections": 0,
+            "live_vectors": 0,
+            "tombstoned_vectors": 0,
+            "authority": self._authority_label(),
+            "mode": self.mode,
+        }
+        if self._store is None:
+            return summary
+        with self._lock:
+            self._logical_to_collection.clear()
+            self._logical_vector_map.clear()
+            self._tombstoned_logical.clear()
+            self._legacy_snapshots.clear()
+            try:
+                cols = self._store.list_collections()
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("rehydrate list_collections failed: %s", exc)
+                return summary
+            for col in cols:
+                meta = dict(col.metadata or {})
+                backend = str(meta.get("backend") or "unknown").strip().lower()
+                logical = str(
+                    meta.get("logical_name") or col.name or ""
+                ).strip()
+                if not logical:
+                    continue
+                col_key = self._legacy_key(logical, backend)
+                self._logical_to_collection[col_key] = col.collection_id
+                summary["collections"] += 1
+                try:
+                    visible = self._store.list_query_visible_chunks(
+                        col.collection_id
+                    )
+                except Exception:
+                    visible = []
+                for chunk in visible:
+                    cmeta = dict(chunk.metadata or {})
+                    raw = str(
+                        cmeta.get("producer_vector_id")
+                        or cmeta.get("raw_vector_id")
+                        or ""
+                    ).strip()
+                    if not raw:
+                        # Best-effort: strip namespaced prefix is lossy; keep
+                        # the chunk id as the producer key only when needed.
+                        raw = str(cmeta.get("legacy_id") or chunk.chunk_id)
+                    vkey = self._vector_key(backend, logical, raw)
+                    self._logical_vector_map[vkey] = chunk.chunk_id
+                    summary["live_vectors"] += 1
+                try:
+                    tombs = self._store.list_tombstones(col.collection_id)
+                except Exception:
+                    tombs = []
+                for tomb in tombs:
+                    entity_id = str(getattr(tomb, "entity_id", "") or "")
+                    # Tombstone reasons / entity metadata may carry producer id.
+                    reason = str(getattr(tomb, "reason", "") or "")
+                    producer = ""
+                    if "producer_vector_id=" in reason:
+                        producer = reason.split("producer_vector_id=", 1)[
+                            1
+                        ].split(";", 1)[0]
+                    if not producer and entity_id:
+                        # Match against known live map reverse lookup later.
+                        producer = ""
+                    if producer:
+                        vkey = self._vector_key(backend, logical, producer)
+                        self._tombstoned_logical.add(vkey)
+                        self._logical_vector_map.pop(vkey, None)
+                        summary["tombstoned_vectors"] += 1
+                    elif entity_id:
+                        # Record namespaced entity id as tombstoned sentinel.
+                        self._tombstoned_logical.add(
+                            self._vector_key(backend, logical, entity_id)
+                        )
+                        summary["tombstoned_vectors"] += 1
+                try:
+                    self._legacy_snapshots[col_key] = self._snapshot_from_store(
+                        col.collection_id
+                    )
+                    self._legacy_snapshots[col_key]["logical_name"] = logical
+                    self._legacy_snapshots[col_key]["backend"] = backend
+                except Exception:
+                    pass
+            # Also load any durable tombstone producer keys from catalog meta.
+            raw_tombs = self._read_catalog_meta("tombstoned_logical_keys")
+            if raw_tombs:
+                try:
+                    for item in json.loads(raw_tombs):
+                        self._tombstoned_logical.add(str(item))
+                except Exception:  # noqa: BLE001
+                    pass
+        return summary
+
+    def _persist_tombstoned_keys(self) -> None:
+        try:
+            payload = json.dumps(sorted(self._tombstoned_logical))
+            self._write_catalog_meta("tombstoned_logical_keys", payload)
+        except Exception:  # noqa: BLE001
+            pass
+
+    def approved_collection_build_statistics(
+        self, *, approved_only: bool = True
+    ) -> List[Dict[str, Any]]:
+        """Return collection/build statistics safe for Quack publication.
+
+        Never includes embedding vectors, unrestricted document payloads, or
+        pickle/process-local mapping dumps. Only aggregate collection and
+        index-build counters/status fields are returned.
+        """
+
+        stats: List[Dict[str, Any]] = []
+        if self._store is None:
+            return stats
+        with self._lock:
+            try:
+                cols = self._store.list_collections()
+            except Exception:
+                return stats
+            for col in cols:
+                meta = dict(col.metadata or {})
+                if approved_only:
+                    status = str(col.status or "").lower()
+                    if status not in {"active", "published", "approved"}:
+                        continue
+                    # Draft / quarantined producers stay off the publication plane.
+                    if meta.get("publication_approved") is False:
+                        continue
+                try:
+                    visible = self._store.list_query_visible_chunks(
+                        col.collection_id
+                    )
+                    live_count = len(visible)
+                except Exception:
+                    live_count = 0
+                build_stats: List[Dict[str, Any]] = []
+                try:
+                    with self._store._lock:
+                        rows = self._store._conn.execute(
+                            """
+                            SELECT build_id, generation_id, index_kind, status,
+                                   created_at, completed_at
+                            FROM vector_index_builds
+                            WHERE collection_id = ?
+                            ORDER BY created_at
+                            """,
+                            [col.collection_id],
+                        ).fetchall()
+                    for row in rows:
+                        build_status = str(row[3] or "").lower()
+                        if approved_only and build_status not in {
+                            "completed",
+                            "approved",
+                            "published",
+                        }:
+                            continue
+                        build_stats.append(
+                            {
+                                "build_id": row[0],
+                                "generation_id": int(row[1])
+                                if row[1] is not None
+                                else None,
+                                "index_kind": row[2],
+                                "status": row[3],
+                                "created_at": row[4],
+                                "completed_at": row[5],
+                            }
+                        )
+                except Exception:
+                    build_stats = []
+                stats.append(
+                    {
+                        "collection_id": col.collection_id,
+                        "name": col.name,
+                        "logical_name": meta.get("logical_name") or col.name,
+                        "backend": meta.get("backend") or "unknown",
+                        "dimension": col.dimension,
+                        "dtype": col.dtype,
+                        "status": col.status,
+                        "published_generation": col.published_generation,
+                        "live_vector_count": live_count,
+                        "model_id": col.model_id,
+                        "chunking_identity": col.chunking_identity,
+                        "normalization_identity": col.normalization_identity,
+                        "source_revision": col.source_revision,
+                        "index_builds": build_stats,
+                        # Explicitly exclude embeddings / unrestricted docs.
+                        "embeddings_excluded": True,
+                        "documents_excluded": True,
+                    }
+                )
+        return stats
+
+    def publication_document(self) -> Dict[str, Any]:
+        """Quack-facing publication: approved collection/build stats only."""
+
+        return {
+            "publication_type": VECTOR_PUBLICATION_TYPE,
+            "schema_version": VECTOR_PUBLICATION_SCHEMA_VERSION,
+            "schema": VECTOR_DUCKDB_ONLY_SCHEMA,
+            "domain": VECTOR_DUCKDB_ONLY_DOMAIN,
+            "owner_task": VECTOR_DUCKDB_ONLY_OWNER_TASK,
+            "authority_mode": self.mode,
+            "authority": self._authority_label(),
+            "approved_collection_build_statistics": (
+                self.approved_collection_build_statistics(approved_only=True)
+            ),
+            "embeddings_excluded": True,
+            "unrestricted_documents_excluded": True,
+            "pickle_authority": False,
+            "process_local_mappings_excluded": True,
+            "legacy_io_allowed": self.legacy_io_allowed,
+        }
 
     def _authority_label(self) -> str:
         """Return the authority surface label for the current port mode."""
@@ -383,6 +982,7 @@ class VectorShadowCatalog:
 
         self._store = DuckDBVectorStore(self._path)
         self._closed = False
+        self._ensure_catalog_meta_table()
 
     @property
     def enabled(self) -> bool:
@@ -413,33 +1013,42 @@ class VectorShadowCatalog:
         with self._lock:
             if self._store is not None:
                 try:
+                    self._persist_tombstoned_keys()
                     self._store.close()
                 except Exception:  # noqa: BLE001
                     pass
                 self._store = None
             self._closed = True
 
-    def reopen(self) -> "VectorShadowCatalog":
-        """Close and reopen the file-backed catalog (restart simulation)."""
+    def reopen(
+        self, *, rehydrate_from_duckdb: bool = True
+    ) -> "VectorShadowCatalog":
+        """Close and reopen the file-backed catalog (restart simulation).
+
+        When *rehydrate_from_duckdb* is true (default, DQK-064), process-local
+        maps are rebuilt from DuckDB so restart does not depend on in-memory
+        mappings. Set false only for transitional parity tests that supply
+        their own snapshot rebinding.
+        """
 
         with self._lock:
             if self._path == ":memory:":
                 raise RuntimeError("cannot restart an in-memory shadow catalog")
-            logical = dict(self._logical_to_collection)
-            legacy = dict(self._legacy_snapshots)
-            vec_map = dict(self._logical_vector_map)
-            completed = dict(self._completed_ops)
-            tombstoned = set(self._tombstoned_logical)
-            port = self._port
+            # Capture authority mode before close for re-bind when memory port
+            # is reconstructed; durable meta is the source of truth.
+            prior_mode = self.mode
+            self._persist_tombstoned_keys()
+            if prior_mode and prior_mode not in {"disabled", "unknown"}:
+                self._write_catalog_meta(_CATALOG_META_AUTHORITY_MODE, prior_mode)
             self.close()
             self._open_store()
-            self._logical_to_collection = logical
-            self._legacy_snapshots = legacy
-            self._logical_vector_map = vec_map
-            self._completed_ops = completed
-            self._tombstoned_logical = tombstoned
-            self._port = port
+            # Rebuild authority port from durable mode (process restart).
+            self._port = self._build_default_port()
+            self._completed_ops = {}
             self._closed = False
+            self._sync_legacy_io_from_mode()
+            if rehydrate_from_duckdb:
+                self.rehydrate_process_maps_from_store()
             return self
 
     # -- quarantine helpers -------------------------------------------------
@@ -672,17 +1281,29 @@ class VectorShadowCatalog:
 
         ids: List[str] = []
         map_payload: Dict[str, Any] = {}
+        # producer_vector_id (raw) → namespaced chunk id (durable for rehydrate)
+        raw_by_vid: Dict[str, str] = {}
         if mapping:
             for k, v in mapping.items():
-                vid = _namespaced(str(k))
+                raw = str(k)
+                vid = _namespaced(raw)
                 map_payload[vid] = v
+                raw_by_vid[vid] = raw
             ids = list(map_payload.keys())
         elif vector_ids:
-            ids = [_namespaced(str(v)) for v in vector_ids]
-            map_payload = {vid: i for i, vid in enumerate(ids)}
+            for i, v in enumerate(vector_ids):
+                raw = str(v)
+                vid = _namespaced(raw)
+                map_payload[vid] = i
+                raw_by_vid[vid] = raw
+            ids = list(map_payload.keys())
         elif vectors:
-            ids = [_namespaced(str(i)) for i in range(len(vectors))]
-            map_payload = {vid: i for i, vid in enumerate(ids)}
+            for i in range(len(vectors)):
+                raw = str(i)
+                vid = _namespaced(raw)
+                map_payload[vid] = i
+                raw_by_vid[vid] = raw
+            ids = list(map_payload.keys())
 
         identities = self._default_identities(
             dimension=int(dimension),
@@ -818,6 +1439,7 @@ class VectorShadowCatalog:
                             )
                         else:
                             values = list(values)[: identities["dimension"]]
+                    producer_raw = raw_by_vid.get(vid, str(i))
                     self._store.add_chunk(
                         collection_id=col.collection_id,
                         generation_id=gen.generation_id,
@@ -825,9 +1447,19 @@ class VectorShadowCatalog:
                         vector=values,
                         ordinal=int(map_payload.get(vid, i)),
                         chunk_id=vid,
-                        source={"vector_id": vid, "backend": backend},
+                        source={
+                            "vector_id": vid,
+                            "producer_vector_id": producer_raw,
+                            "backend": backend,
+                        },
                         text="",
-                        metadata={"legacy_id": vid},
+                        metadata={
+                            "legacy_id": vid,
+                            "producer_vector_id": producer_raw,
+                            "raw_vector_id": producer_raw,
+                            "backend": backend,
+                            "logical_name": logical,
+                        },
                     )
 
                 if shard_manifest:
@@ -1814,11 +2446,15 @@ class VectorShadowCatalog:
                     chunk_id = self._logical_vector_map.get(vkey) or (
                         self._namespaced_vector_id(backend_l, logical, raw_id)
                     )
+                    del_reason = (
+                        f"{reason or 'dual_delete'};"
+                        f"producer_vector_id={raw_id}"
+                    )
                     try:
                         t = self._store.delete_chunk(
                             collection_id=collection_id,
                             chunk_id=chunk_id,
-                            reason=reason or "dual_delete",
+                            reason=del_reason,
                         )
                         tombstone_ids.append(t.tombstone_id)
                     except Exception as del_exc:
@@ -1830,6 +2466,7 @@ class VectorShadowCatalog:
                             raise
                     self._tombstoned_logical.add(vkey)
                     self._logical_vector_map.pop(vkey, None)
+                    self._persist_tombstoned_keys()
                     snap = self._snapshot_from_store(collection_id)
                     gen_id = snap.get("published_generation")
                 else:
@@ -1870,6 +2507,7 @@ class VectorShadowCatalog:
                         )
                     if col_key in self._logical_to_collection:
                         del self._logical_to_collection[col_key]
+                    self._persist_tombstoned_keys()
                     snap = {
                         "status": "deleted",
                         "count": 0,
@@ -2130,6 +2768,11 @@ class VectorShadowCatalog:
             raise RuntimeError("cannot promote without an authority port")
         if self._port.mode is AuthorityMode.DB_PRIMARY:
             state = self._port.state()
+            # Ensure durable mode + legacy-I/O lock even on idempotent promote.
+            self._write_catalog_meta(
+                _CATALOG_META_AUTHORITY_MODE, AuthorityMode.DB_PRIMARY.value
+            )
+            self.set_legacy_io_allowed(False)
             return DecisionReceipt(
                 receipt_cid=state.last_decision_receipt_cid or "",
                 kind=DecisionKind.PROMOTE,
@@ -2146,12 +2789,19 @@ class VectorShadowCatalog:
                 created_at=state.updated_at or "",
                 atomic_across_filesystems=False,
             )
-        return self._port.promote(
+        receipt = self._port.promote(
             AuthorityMode.DB_PRIMARY,
             decision_id=decision_id,
             require_parity=require_parity,
             parity_key=parity_key,
         )
+        if getattr(receipt, "accepted", False):
+            # DQK-064: no silent pickle/JSON fallback after DuckDB promotion.
+            self._write_catalog_meta(
+                _CATALOG_META_AUTHORITY_MODE, AuthorityMode.DB_PRIMARY.value
+            )
+            self.set_legacy_io_allowed(False)
+        return receipt
 
     def ensure_duckdb_authority(
         self,
@@ -2461,6 +3111,7 @@ def configure_vector_shadow_catalog(
     authority_port: Any = None,
     replace: bool = True,
     initial_mode: Any = None,
+    allow_legacy_io: Optional[bool] = None,
 ) -> VectorShadowCatalog:
     """Install the process-local shadow catalog used by all producers."""
 
@@ -2478,6 +3129,11 @@ def configure_vector_shadow_catalog(
             enabled=enabled,
             authority_port=authority_port,
             initial_mode=initial_mode,
+            allow_legacy_io=allow_legacy_io,
+        )
+        # Align process-global filesystem guard with the new catalog.
+        get_vector_filesystem_guard().allow_legacy_io = (
+            _process_catalog.legacy_io_allowed
         )
         return _process_catalog
 
@@ -2489,11 +3145,14 @@ def configure_vector_authority_catalog(
     authority_port: Any = None,
     replace: bool = True,
     initial_mode: Any = None,
+    allow_legacy_io: Optional[bool] = None,
 ) -> VectorAuthorityCatalog:
-    """Install the process-local dual-mode authority catalog (DQK-063).
+    """Install the process-local dual-mode authority catalog (DQK-063/064).
 
     Defaults to :class:`AuthorityMode.DUAL` so DuckDB owns lifecycle metadata
     while vector bytes remain in the selected engine or immutable segment.
+    After promotion to ``db-primary``, legacy pickle/JSON I/O is disabled
+    (DQK-064) unless *allow_legacy_io* is explicitly True.
     """
 
     from ipfs_datasets_py.duckdb_control.authority_transition import (
@@ -2507,6 +3166,7 @@ def configure_vector_authority_catalog(
         authority_port=authority_port,
         replace=replace,
         initial_mode=mode,
+        allow_legacy_io=allow_legacy_io,
     )
 
 
@@ -2551,9 +3211,146 @@ def reset_vector_shadow_catalog() -> None:
             except Exception:  # noqa: BLE001
                 pass
         _process_catalog = None
+    reset_vector_filesystem_guard()
 
 
 reset_vector_authority_catalog = reset_vector_shadow_catalog
+
+
+def import_faiss_pickle_compat(
+    pickle_path: Union[str, Path],
+    *,
+    logical_name: str,
+    backend: str = "faiss",
+    dimension: int,
+    collection_id: Optional[str] = None,
+    catalog: Optional[VectorShadowCatalog] = None,
+) -> Dict[str, Any]:
+    """One-time FAISS pickle import compatibility path (DQK-064 / DQK-023).
+
+    Explicit opt-in only: obtains an import permit, unpickles under
+    ``allow_unpickle=True`` via the isolated migration helper (ExactVectorStore
+    sidecar), then projects validated vectors into the authority catalog via
+    :meth:`VectorShadowCatalog.dual_create`. Normal runtime never calls this.
+    """
+
+    import pickle as _pickle
+
+    from ipfs_datasets_py.vector_stores.duckdb_exact import ExactVectorStore
+    from ipfs_datasets_py.vector_stores.duckdb_migration import (
+        import_faiss_pickle_metadata,
+    )
+
+    cat = catalog or get_vector_authority_catalog() or get_vector_shadow_catalog()
+    if cat is None:
+        raise RuntimeError(
+            "DuckDB vector catalog required for one-time pickle import"
+        )
+    # Permit both the catalog guard and the process-global guard so the
+    # explicit one-time import path is not blocked after promotion.
+    guard = cat.filesystem_guard
+    process_guard = get_vector_filesystem_guard()
+    path = Path(pickle_path)
+    sidecar_path = path.parent / f".import_exact_{uuid.uuid4().hex[:10]}.duckdb"
+    report_dict: Dict[str, Any] = {}
+    dual_result: Optional[ShadowCreateResult] = None
+    with guard.permit_import(), process_guard.permit_import():
+        assert_legacy_metadata_path_allowed(
+            path, kind="metadata_pkl", operation="read"
+        )
+        exact = ExactVectorStore(sidecar_path)
+        try:
+            col_id = collection_id or sanitize_id(
+                f"{backend}_{logical_name}", prefix="col"
+            )
+            report = import_faiss_pickle_metadata(
+                path,
+                exact,
+                collection_id=col_id,
+                dimension=int(dimension),
+                allow_unpickle=True,
+            )
+            report_dict = (
+                report.to_dict() if hasattr(report, "to_dict") else dict(report)
+            )
+            # Project validated vectors into the authority catalog (no pickle
+            # authority after this point).
+            try:
+                raw = path.read_bytes()
+                payload = _pickle.loads(raw)  # noqa: S301 — permit-gated only
+            except Exception:
+                payload = {}
+            vectors_map = {}
+            if isinstance(payload, Mapping):
+                for key in ("vectors", "embeddings", "items"):
+                    cand = payload.get(key)
+                    if isinstance(cand, Mapping):
+                        vectors_map = cand
+                        break
+            vector_ids: List[str] = []
+            vectors: List[List[float]] = []
+            for vid, entry in vectors_map.items():
+                if isinstance(entry, Mapping):
+                    vals = entry.get("vector") or entry.get("embedding") or entry.get("values")
+                else:
+                    vals = entry
+                if not isinstance(vals, (list, tuple)):
+                    continue
+                try:
+                    vec = [float(x) for x in vals]
+                except (TypeError, ValueError):
+                    continue
+                if len(vec) != int(dimension):
+                    continue
+                vector_ids.append(str(vid))
+                vectors.append(vec)
+            if vector_ids:
+                dual_result = cat.dual_create(
+                    logical_name=logical_name,
+                    backend=backend,
+                    dimension=int(dimension),
+                    vector_ids=vector_ids,
+                    vectors=vectors,
+                    mapping={vid: i for i, vid in enumerate(vector_ids)},
+                    metadata_json={
+                        "producer": "import_faiss_pickle_compat",
+                        "one_time_import": True,
+                        "source_pickle": str(path),
+                        "publication_approved": True,
+                        "bytes_location": "engine",
+                    },
+                    model_provider="import",
+                    model_name="faiss-pickle-compat",
+                    source_revision=f"import:{path.name}",
+                    bytes_location="engine",
+                    operation_id=_new_op_id("pickle-import"),
+                )
+        finally:
+            try:
+                exact.close()
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                if sidecar_path.exists():
+                    sidecar_path.unlink()
+            except OSError:
+                pass
+    # Ensure process maps reflect the import.
+    try:
+        cat.rehydrate_process_maps_from_store()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("post-import rehydrate failed: %s", exc)
+    return {
+        "ok": True if dual_result is None else bool(dual_result.ok),
+        "path": str(path),
+        "logical_name": logical_name,
+        "backend": backend,
+        "report": report_dict,
+        "dual": dual_result.to_dict() if dual_result is not None else None,
+        "one_time_import": True,
+        "pickle_authority": False,
+        "owner_task": VECTOR_DUCKDB_ONLY_OWNER_TASK,
+    }
 
 
 def safe_shadow_create(**kwargs: Any) -> Optional[ShadowCreateResult]:
@@ -2743,6 +3540,10 @@ class VectorStoreManager:
     legacy on-disk / remote backends remain the authority (DQK-062). Under dual
     mode (DQK-063) DuckDB owns collection/generation/tombstone/compaction
     metadata; vector bytes stay in the selected engine or immutable segment.
+
+    After DuckDB promotion (DQK-064), normal runtime never reads or writes
+    ``vector_indexes/*/metadata.json``; lifecycle metadata is served from
+    DuckDB and vector bytes from engine segments (``index.faiss``).
     """
 
     def __init__(
@@ -2756,6 +3557,87 @@ class VectorStoreManager:
         self.indexes_dir = indexes_dir
         self.shadow_catalog = shadow_catalog or authority_catalog
         self.authority_catalog = authority_catalog or shadow_catalog
+
+    def _legacy_json_io_allowed(self) -> bool:
+        catalog = self._resolve_authority()
+        if catalog is not None and not catalog.legacy_io_allowed:
+            return False
+        if duckdb_only_after_promotion():
+            return False
+        return legacy_metadata_io_allowed()
+
+    def _metadata_json_path(self, index_name: str) -> str:
+        return os.path.join(self.indexes_dir, index_name, "metadata.json")
+
+    def _write_index_metadata_json(
+        self, index_name: str, metadata: Mapping[str, Any]
+    ) -> None:
+        """Write metadata.json only when legacy I/O is still permitted."""
+
+        meta_path = self._metadata_json_path(index_name)
+        assert_legacy_metadata_path_allowed(
+            meta_path, kind="metadata_json", operation="write"
+        )
+        with open(meta_path, "w") as fh:
+            json.dump(dict(metadata), fh, indent=2)
+
+    def _read_index_metadata_json(
+        self, index_name: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read metadata.json only when legacy I/O is still permitted."""
+
+        meta_path = self._metadata_json_path(index_name)
+        if not os.path.exists(meta_path):
+            return None
+        assert_legacy_metadata_path_allowed(
+            meta_path, kind="metadata_json", operation="read"
+        )
+        with open(meta_path) as fh:
+            return json.load(fh)
+
+    def _duckdb_collection_stats(
+        self, index_name: str, backend: str = "faiss"
+    ) -> Optional[Dict[str, Any]]:
+        catalog = self._resolve_authority()
+        if catalog is None or not catalog.enabled:
+            return None
+        try:
+            listing = catalog.shadow_list(backend=backend)
+            for item in listing.get("collections") or []:
+                if (
+                    str(item.get("logical_name") or "") == index_name
+                    or str(item.get("name") or "") == index_name
+                    or index_name in str(item.get("name") or "")
+                ):
+                    return dict(item)
+            # Fallback: logical key lookup via rehydrated maps.
+            key = catalog._legacy_key(index_name, backend)  # noqa: SLF001
+            snap = catalog._legacy_snapshots.get(key)  # noqa: SLF001
+            if snap:
+                return dict(snap)
+            col_id = catalog._logical_to_collection.get(key)  # noqa: SLF001
+            if col_id and catalog.store is not None:
+                return catalog._snapshot_from_store(col_id)  # noqa: SLF001
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("duckdb collection stats failed: %s", exc)
+        return None
+
+    def publication_document(self) -> Dict[str, Any]:
+        """Approved collection/build statistics for Quack (no embeddings)."""
+
+        catalog = self._resolve_authority()
+        if catalog is None:
+            return {
+                "publication_type": VECTOR_PUBLICATION_TYPE,
+                "schema_version": VECTOR_PUBLICATION_SCHEMA_VERSION,
+                "domain": VECTOR_DUCKDB_ONLY_DOMAIN,
+                "approved_collection_build_statistics": [],
+                "embeddings_excluded": True,
+                "unrestricted_documents_excluded": True,
+                "pickle_authority": False,
+            }
+        return catalog.publication_document()
+
     # ------------------------------------------------------------------
     # Create
     # ------------------------------------------------------------------
@@ -2822,17 +3704,26 @@ class VectorStoreManager:
 
             index_dir = os.path.join(self.indexes_dir, index_name)
             os.makedirs(index_dir, exist_ok=True)
+            # Vector segment bytes remain on disk; metadata goes to DuckDB.
             faiss.write_index(index, os.path.join(index_dir, "index.faiss"))
+            # Publication-safe stats only (no unrestricted document payloads).
             metadata: Dict[str, Any] = {
                 "index_name": index_name,
                 "backend": "faiss",
                 "vector_dim": vector_dim,
                 "distance_metric": distance_metric,
                 "document_count": len(documents),
-                "documents": documents,
             }
-            with open(os.path.join(index_dir, "metadata.json"), "w") as fh:
-                json.dump(metadata, fh, indent=2)
+            # Dual mode may still dual-write metadata.json; after promotion
+            # (DQK-064) the write is blocked unless an explicit permit is held.
+            if self._legacy_json_io_allowed():
+                try:
+                    self._write_index_metadata_json(
+                        index_name,
+                        {**metadata, "documents": documents},
+                    )
+                except ImplicitLegacyMetadataError:
+                    pass
             result = {
                 "status": "success",
                 "index_name": index_name,
@@ -2841,7 +3732,7 @@ class VectorStoreManager:
                 "document_count": len(documents),
                 "index_path": index_dir,
             }
-            shadow = self._shadow_after_create(
+            create_kwargs: Dict[str, Any] = dict(
                 logical_name=index_name,
                 backend="faiss",
                 dimension=vector_dim,
@@ -2850,7 +3741,12 @@ class VectorStoreManager:
                     emb.tolist() if hasattr(emb, "tolist") else list(emb)
                     for emb in embeddings
                 ],
-                metadata_json=metadata,
+                metadata_json={
+                    **metadata,
+                    "producer": "VectorStoreManager",
+                    "bytes_location": "engine",
+                    "publication_approved": True,
+                },
                 normalization_identity=(
                     "norm:l2@1"
                     if distance_metric == "cosine"
@@ -2862,8 +3758,17 @@ class VectorStoreManager:
                     "distance_metric": distance_metric,
                 },
             )
+            if (
+                self._resolve_authority() is not None
+                and duckdb_metadata_is_authority()
+            ):
+                create_kwargs["bytes_location"] = "engine"
+                shadow = self._dual_after_create(**create_kwargs)
+            else:
+                shadow = self._shadow_after_create(**create_kwargs)
             if shadow is not None:
                 result["shadow"] = shadow.to_dict()
+                result["authority"] = shadow.authority
             return result
         except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Error creating FAISS index: {e}")
@@ -3078,8 +3983,33 @@ class VectorStoreManager:
             if not os.path.exists(faiss_path):
                 return {"status": "error", "error": f"FAISS index not found: {index_name}"}
             index = faiss.read_index(faiss_path)
-            with open(os.path.join(index_dir, "metadata.json")) as fh:
-                metadata = json.load(fh)
+            # Prefer DuckDB metadata after promotion; never silent-fallback to
+            # metadata.json when legacy I/O is disabled (DQK-064).
+            metadata: Dict[str, Any] = {}
+            duck_stats = self._duckdb_collection_stats(index_name, "faiss")
+            if duck_stats:
+                metadata = {
+                    "vector_dim": duck_stats.get("dimension"),
+                    "document_count": duck_stats.get("count"),
+                    "distance_metric": (
+                        (duck_stats.get("metadata_json") or {}).get(
+                            "distance_metric"
+                        )
+                        if isinstance(duck_stats.get("metadata_json"), dict)
+                        else None
+                    )
+                    or "cosine",
+                    "documents": [],
+                }
+            elif self._legacy_json_io_allowed():
+                try:
+                    loaded = self._read_index_metadata_json(index_name)
+                    if loaded:
+                        metadata = loaded
+                except ImplicitLegacyMetadataError:
+                    metadata = {"distance_metric": "cosine", "documents": []}
+            else:
+                metadata = {"distance_metric": "cosine", "documents": []}
             resources = {"local_endpoints": [["thenlper/gte-small", "cpu", 512]]}
             engine = AdvancedIPFSEmbeddings(resources, {})
             qemb = await engine.generate_embeddings([query], "thenlper/gte-small")
@@ -3088,11 +4018,24 @@ class VectorStoreManager:
                 faiss.normalize_L2(q_vec)
             scores, indices = index.search(q_vec, top_k)
             docs = metadata.get("documents", [])
-            results = [
-                {"document": docs[idx], "score": float(score), "index": int(idx)}
-                for score, idx in zip(scores[0], indices[0])
-                if idx < len(docs)
-            ]
+            results = []
+            for score, idx in zip(scores[0], indices[0]):
+                if int(idx) < 0:
+                    continue
+                entry: Dict[str, Any] = {
+                    "score": float(score),
+                    "index": int(idx),
+                }
+                if docs and int(idx) < len(docs):
+                    entry["document"] = docs[int(idx)]
+                else:
+                    # DuckDB-only path: expose approved id/stats, not free docs.
+                    entry["vector_id"] = f"doc_{int(idx)}"
+                    entry["document"] = {
+                        "id": f"doc_{int(idx)}",
+                        "source": "duckdb_authority",
+                    }
+                results.append(entry)
             return {
                 "status": "success",
                 "query": query,
@@ -3100,6 +4043,9 @@ class VectorStoreManager:
                 "total_results": len(results),
                 "backend": "faiss",
                 "index_name": index_name,
+                "authority": (
+                    "duckdb" if duck_stats is not None else "legacy"
+                ),
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Error searching FAISS index: {e}")
@@ -3110,32 +4056,111 @@ class VectorStoreManager:
     # ------------------------------------------------------------------
 
     def list_indexes(self, backend: str = "all") -> Dict[str, Any]:
-        """List available vector indexes (FAISS only in this build)."""
+        """List available vector indexes from DuckDB authority when promoted.
+
+        After DuckDB promotion (DQK-064), listing does not read
+        ``vector_indexes/*/metadata.json``; collection/build statistics come
+        from the DuckDB catalog. FAISS segment presence (``index.faiss``) is
+        still reported as the byte-owner location.
+        """
         try:
             indexes: Dict[str, Any] = {}
-            if backend in ("all", "faiss"):
+            authority = "legacy"
+            catalog = self._resolve_authority()
+            if catalog is not None and catalog.enabled and duckdb_metadata_is_authority():
+                authority = catalog._authority_label()
                 faiss_indexes: List[Dict[str, Any]] = []
+                listing = catalog.shadow_list(
+                    backend=None if backend == "all" else backend
+                )
+                for col in listing.get("collections") or []:
+                    if backend not in ("all",) and str(
+                        col.get("backend") or ""
+                    ).lower() not in ("", backend.lower()):
+                        # Filter by requested backend via collection metadata.
+                        pass
+                    name = str(
+                        col.get("logical_name") or col.get("name") or ""
+                    )
+                    if not name:
+                        continue
+                    if backend in ("all", "faiss"):
+                        if str(col.get("backend") or "faiss").lower() not in {
+                            "faiss",
+                            "",
+                        } and backend == "faiss":
+                            continue
+                    entry = {
+                        "name": name,
+                        "backend": col.get("backend") or "faiss",
+                        "vector_dim": col.get("dimension"),
+                        "document_count": col.get("count"),
+                        "published_generation": col.get("published_generation"),
+                        "collection_id": col.get("collection_id"),
+                        "authority": authority,
+                    }
+                    # Annotate vector segment presence without reading metadata.json.
+                    segment = os.path.join(
+                        self.indexes_dir, name, "index.faiss"
+                    )
+                    entry["segment_present"] = os.path.exists(segment)
+                    faiss_indexes.append(entry)
+                if backend in ("all", "faiss"):
+                    indexes["faiss"] = [
+                        e
+                        for e in faiss_indexes
+                        if str(e.get("backend") or "").lower()
+                        in {"faiss", "shard_embeddings", ""}
+                        or backend == "all"
+                    ]
+                    if backend == "all":
+                        indexes["all"] = faiss_indexes
+                result = {
+                    "status": "success",
+                    "backend": backend,
+                    "indexes": indexes,
+                    "authority": authority,
+                }
+                result["shadow"] = listing
+                return result
+
+            # Legacy path: segment scan + optional metadata.json when allowed.
+            if backend in ("all", "faiss"):
+                faiss_indexes = []
                 if os.path.exists(self.indexes_dir):
                     for item in os.listdir(self.indexes_dir):
                         item_path = os.path.join(self.indexes_dir, item)
                         faiss_path = os.path.join(item_path, "index.faiss")
-                        if os.path.isdir(item_path) and os.path.exists(faiss_path):
-                            meta_path = os.path.join(item_path, "metadata.json")
-                            if os.path.exists(meta_path):
-                                with open(meta_path) as fh:
-                                    meta = json.load(fh)
-                                faiss_indexes.append({
-                                    "name": item,
-                                    "backend": "faiss",
-                                    "vector_dim": meta.get("vector_dim"),
-                                    "document_count": meta.get("document_count"),
-                                    "distance_metric": meta.get("distance_metric"),
-                                })
+                        if os.path.isdir(item_path) and os.path.exists(
+                            faiss_path
+                        ):
+                            entry = {
+                                "name": item,
+                                "backend": "faiss",
+                                "segment_present": True,
+                            }
+                            if self._legacy_json_io_allowed():
+                                try:
+                                    meta = self._read_index_metadata_json(item)
+                                    if meta:
+                                        entry["vector_dim"] = meta.get(
+                                            "vector_dim"
+                                        )
+                                        entry["document_count"] = meta.get(
+                                            "document_count"
+                                        )
+                                        entry["distance_metric"] = meta.get(
+                                            "distance_metric"
+                                        )
+                                except ImplicitLegacyMetadataError:
+                                    pass
+                            faiss_indexes.append(entry)
                 indexes["faiss"] = faiss_indexes
             result = {
                 "status": "success",
                 "backend": backend,
                 "indexes": indexes,
+                "authority": authority,
             }
             shadow_list = self._shadow_list(
                 backend=None if backend == "all" else backend
@@ -3242,6 +4267,18 @@ class VectorStoreManager:
         if catalog is None or not catalog.enabled:
             return None
         try:
+            # Prefer dual_create when the process catalog is already dual/db.
+            mode = (catalog.mode or "").lower()
+            if mode in {
+                "dual",
+                "dual-write",
+                "dualwrite",
+                "db-primary",
+                "db_primary",
+            }:
+                return catalog.dual_create(**kwargs)
+            # shadow_create does not accept bytes_location.
+            kwargs.pop("bytes_location", None)
             return catalog.shadow_create(**kwargs)
         except Exception as exc:  # noqa: BLE001
             logger.warning("shadow create failed (legacy unchanged): %s", exc)
@@ -3332,12 +4369,19 @@ __all__ = [
     "ShadowParityView",
     "ExternalMutationResult",
     "VSSFallbackSearchResult",
+    "ImplicitLegacyMetadataError",
+    "VectorLegacyFilesystemGuard",
     "VECTOR_SHADOW_DOMAIN",
     "VECTOR_SHADOW_SCHEMA",
     "VECTOR_SHADOW_OWNER_TASK",
     "VECTOR_AUTHORITY_DOMAIN",
     "VECTOR_AUTHORITY_SCHEMA",
     "VECTOR_AUTHORITY_OWNER_TASK",
+    "VECTOR_DUCKDB_ONLY_DOMAIN",
+    "VECTOR_DUCKDB_ONLY_SCHEMA",
+    "VECTOR_DUCKDB_ONLY_OWNER_TASK",
+    "VECTOR_PUBLICATION_TYPE",
+    "VECTOR_PUBLICATION_SCHEMA_VERSION",
     "DEFAULT_EXTERNAL_RETRY_ATTEMPTS",
     "DEFAULT_EXTERNAL_RETRY_BACKOFF_S",
     "configure_vector_shadow_catalog",
@@ -3346,6 +4390,13 @@ __all__ = [
     "get_vector_authority_catalog",
     "reset_vector_shadow_catalog",
     "reset_vector_authority_catalog",
+    "get_vector_filesystem_guard",
+    "reset_vector_filesystem_guard",
+    "legacy_metadata_io_allowed",
+    "assert_legacy_metadata_path_allowed",
+    "duckdb_metadata_is_authority",
+    "duckdb_only_after_promotion",
+    "import_faiss_pickle_compat",
     "safe_shadow_create",
     "safe_shadow_delete",
     "safe_shadow_list",
