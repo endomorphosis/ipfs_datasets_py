@@ -381,7 +381,7 @@ W8  ISI-032
 
 ## ISI-030 Add the dedicated semantic-index CLI
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: cli
