@@ -12155,6 +12155,151 @@ class _RefinementGateAuthorityAdapter:
         }
 
 
+class _PromotionGateAuthorityAdapter:
+    """Independent verifier for DQK-102 DuckLake promotion operator receipts.
+
+    Re-derives the promotion decision and process-local cutover binding from the
+    sealed operator receipt without trusting the verifier subprocess alone.
+    """
+
+    PROOF_SCHEMA = (
+        "ipfs_datasets_py/duckdb-quack-promotion-independent-proof@1"
+    )
+
+    def _independent_verification(
+        self,
+        *,
+        raw_input: bytes,
+        plan_root_cid: str,
+        repository_tree_id: str,
+        now: datetime | None = None,
+    ) -> dict[str, Any]:
+        if not isinstance(raw_input, (bytes, bytearray, memoryview)):
+            raise RuntimeError("promotion input must be exact bytes")
+        payload = bytes(raw_input)
+        if not payload or len(payload) > 2 * 1024 * 1024:
+            raise RuntimeError("promotion input size is out of bounds")
+        try:
+            receipt = json.loads(payload.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise RuntimeError("promotion operator receipt is not UTF-8 JSON") from exc
+        if not isinstance(receipt, dict):
+            raise RuntimeError("promotion operator receipt must be an object")
+        repo_root = str(REPO_ROOT)
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from ipfs_datasets_py.ducklake.cutover import (
+            verify_promotion_operator_receipt,
+        )
+
+        try:
+            verification = verify_promotion_operator_receipt(
+                receipt,
+                expected_plan_root_cid=plan_root_cid,
+                expected_repository_tree_id=repository_tree_id,
+                now=now,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"independent promotion verification failed: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+        if not isinstance(verification, Mapping) or verification.get("accepted") is not True:
+            raise RuntimeError(
+                "independent promotion verification did not accept the receipt"
+            )
+        return dict(verification)
+
+    def preflight(self, **kwargs: Any) -> dict[str, Any]:
+        task_id = str(kwargs.get("task_id") or "")
+        if task_id != PROMOTION_GATE_TASK_ID:
+            raise RuntimeError("promotion adapter cannot preflight a foreign gate")
+        snapshot = kwargs.get("snapshot")
+        if snapshot is None:
+            raise RuntimeError("promotion preflight requires a snapshot")
+        execution_time = kwargs.get("execution_time")
+        now = execution_time if isinstance(execution_time, datetime) else None
+        if now is None and isinstance(kwargs.get("now"), datetime):
+            now = kwargs.get("now")
+        verification = self._independent_verification(
+            raw_input=kwargs.get("raw_input"),
+            plan_root_cid=str(snapshot.plan_root_cid),
+            repository_tree_id=str(snapshot.repository_tree_id),
+            now=now,
+        )
+        return {
+            "schema": self.PROOF_SCHEMA,
+            "gate_task_id": PROMOTION_GATE_TASK_ID,
+            "decision_id": str(verification.get("decision_cid") or ""),
+            "decision_cid": str(verification.get("decision_cid") or ""),
+            "execution_receipt_cid": str(
+                verification.get("execution_receipt_cid") or ""
+            ),
+            "authority_fence_id": str(verification.get("authority_fence_id") or ""),
+            "plan_root_cid": str(verification.get("plan_root_cid") or ""),
+            "repository_tree_id": str(verification.get("repository_tree_id") or ""),
+            "expires_at": str(verification.get("expires_at") or ""),
+            "signed_input_sha256": "sha256:"
+            + hashlib.sha256(bytes(kwargs.get("raw_input") or b"")).hexdigest(),
+            "verification_schema": str(verification.get("schema") or ""),
+        }
+
+    def verify_execution(self, **kwargs: Any) -> dict[str, Any]:
+        task_id = str(kwargs.get("task_id") or "")
+        if task_id != PROMOTION_GATE_TASK_ID:
+            raise RuntimeError("promotion adapter cannot verify a foreign gate")
+        snapshot = kwargs.get("snapshot")
+        typed_output = kwargs.get("typed_output")
+        if snapshot is None or not isinstance(typed_output, Mapping):
+            raise RuntimeError("promotion typed output or snapshot is missing")
+        execution_time = kwargs.get("execution_time")
+        now = execution_time if isinstance(execution_time, datetime) else None
+        verification = self._independent_verification(
+            raw_input=kwargs.get("raw_input"),
+            plan_root_cid=str(snapshot.plan_root_cid),
+            repository_tree_id=str(snapshot.repository_tree_id),
+            now=now,
+        )
+        proof = self.preflight(
+            task_id=task_id,
+            raw_input=kwargs.get("raw_input"),
+            snapshot=snapshot,
+            verifier_attestation=kwargs.get("verifier_attestation"),
+            execution_time=execution_time,
+        )
+        for field in (
+            "decision_cid",
+            "plan_root_cid",
+            "repository_tree_id",
+        ):
+            if typed_output.get(field) != verification.get(field):
+                raise RuntimeError(
+                    f"promotion gate typed output field {field} differs from independent proof"
+                )
+        if typed_output.get("accepted") is not True:
+            raise RuntimeError("promotion gate typed output is not accepted")
+        if typed_output.get("production_authority_mutated") is True:
+            raise RuntimeError("promotion gate claimed production authority mutation")
+        decision_preflight = kwargs.get("decision_preflight")
+        if isinstance(decision_preflight, Mapping):
+            for field in (
+                "decision_id",
+                "decision_cid",
+                "signed_input_sha256",
+            ):
+                if decision_preflight.get(field) != proof.get(field):
+                    raise RuntimeError(
+                        f"promotion gate preflight field {field} drifted before execution"
+                    )
+        return {
+            **proof,
+            "typed_output_sha256": "sha256:"
+            + hashlib.sha256(
+                _canonical_json(dict(typed_output)).encode("utf-8")
+            ).hexdigest(),
+        }
+
+
 class _RuntimeActivationGateAuthorityAdapter:
     """Independent verifier for DQK-103 runtime-activation permits.
 
@@ -12320,9 +12465,7 @@ def _manual_gate_task_authority_adapter(task_id: str) -> Any:
     if task_id == RUNTIME_ACTIVATION_GATE_TASK_ID:
         return _RuntimeActivationGateAuthorityAdapter()
     if task_id == PROMOTION_GATE_TASK_ID:
-        raise RuntimeError(
-            f"manual_gate_effect_adapter_not_materialized:{task_id}"
-        )
+        return _PromotionGateAuthorityAdapter()
     raise RuntimeError(
         f"manual_gate_signature_adapter_not_materialized:{task_id}"
     )
@@ -13048,6 +13191,25 @@ def _prepare_manual_gate_effect(
             "manual-gate-runtime-activation-intent", intent
         )
         return intent
+    if task_id == PROMOTION_GATE_TASK_ID:
+        intent = {
+            "schema": "ipfs_datasets_py/duckdb-quack-manual-gate-promotion-intent@1",
+            "operation_id": journal["lifecycle_id"],
+            "execution_id": execution["execution_id"],
+            "plan_root_cid": snapshot.plan_root_cid,
+            "repository_tree_id": snapshot.repository_tree_id,
+            "decision_cid": str(output.get("decision_cid") or ""),
+            "execution_receipt_cid": str(output.get("execution_receipt_cid") or ""),
+            "authority_fence_id": str(output.get("authority_fence_id") or ""),
+            "process_local_promoted": bool(output.get("process_local_promoted")),
+            "production_authority_mutated": bool(
+                output.get("production_authority_mutated")
+            ),
+        }
+        intent["intent_id"] = _manual_gate_receipt_id(
+            "manual-gate-promotion-intent", intent
+        )
+        return intent
     raise RuntimeError(f"manual_gate_effect_adapter_not_materialized:{task_id}")
 
 
@@ -13122,6 +13284,41 @@ def _apply_manual_gate_effect(
         }
         receipt["receipt_id"] = _manual_gate_receipt_id(
             "manual-gate-runtime-activation-effect", receipt
+        )
+        return receipt
+    if task_id == PROMOTION_GATE_TASK_ID:
+        # Verifier already flipped process-local cutover state. The durable
+        # effect is the content-bound promotion binding (production unmutated).
+        if (
+            str(output.get("plan_root_cid") or "") != str(snapshot.plan_root_cid)
+            or str(output.get("repository_tree_id") or "")
+            != str(snapshot.repository_tree_id)
+        ):
+            raise RuntimeError("DQK-102 promotion output generation is stale")
+        for field in (
+            "decision_cid",
+            "execution_receipt_cid",
+            "authority_fence_id",
+        ):
+            if str(intent.get(field) or "") != str(output.get(field) or ""):
+                raise RuntimeError(f"DQK-102 effect intent field {field} drifted")
+        if output.get("production_authority_mutated") is True:
+            raise RuntimeError("DQK-102 must not claim production authority mutation")
+        receipt = {
+            "schema": "ipfs_datasets_py/duckdb-quack-manual-gate-promotion-effect@1",
+            "operation_id": journal["lifecycle_id"],
+            "execution_id": execution["execution_id"],
+            "plan_root_cid": snapshot.plan_root_cid,
+            "repository_tree_id": snapshot.repository_tree_id,
+            "decision_cid": str(output.get("decision_cid") or ""),
+            "execution_receipt_cid": str(output.get("execution_receipt_cid") or ""),
+            "authority_fence_id": str(output.get("authority_fence_id") or ""),
+            "process_local_promoted": bool(output.get("process_local_promoted")),
+            "production_authority_mutated": False,
+            "effect_commit": _git("rev-parse", "HEAD").lower(),
+        }
+        receipt["receipt_id"] = _manual_gate_receipt_id(
+            "manual-gate-promotion-effect", receipt
         )
         return receipt
     raise RuntimeError(f"manual_gate_effect_adapter_not_materialized:{task_id}")
@@ -13352,6 +13549,64 @@ def _validate_manual_gate_effect_receipt(
         effect_commit = str(effect_receipt.get("effect_commit") or "").strip().lower()
         if re.fullmatch(r"[0-9a-f]{40}", effect_commit) is None:
             raise RuntimeError("DQK-103 activation effect_commit is missing")
+        return
+    if task_id == PROMOTION_GATE_TASK_ID:
+        expected_intent_keys = {
+            "schema",
+            "operation_id",
+            "execution_id",
+            "plan_root_cid",
+            "repository_tree_id",
+            "decision_cid",
+            "execution_receipt_cid",
+            "authority_fence_id",
+            "process_local_promoted",
+            "production_authority_mutated",
+            "intent_id",
+        }
+        if (
+            set(effect_intent) != expected_intent_keys
+            or effect_intent.get("schema")
+            != "ipfs_datasets_py/duckdb-quack-manual-gate-promotion-intent@1"
+            or effect_intent.get("plan_root_cid") != snapshot.plan_root_cid
+            or effect_intent.get("repository_tree_id") != snapshot.repository_tree_id
+            or effect_intent.get("production_authority_mutated") is not False
+            or effect_intent.get("intent_id")
+            != _manual_gate_receipt_id(
+                "manual-gate-promotion-intent",
+                {
+                    key: value
+                    for key, value in effect_intent.items()
+                    if key != "intent_id"
+                },
+            )
+        ):
+            raise RuntimeError("DQK-102 promotion intent is stale or malformed")
+        if (
+            effect_receipt.get("schema")
+            != "ipfs_datasets_py/duckdb-quack-manual-gate-promotion-effect@1"
+            or effect_receipt.get("plan_root_cid") != snapshot.plan_root_cid
+            or effect_receipt.get("repository_tree_id") != snapshot.repository_tree_id
+            or effect_receipt.get("decision_cid") != effect_intent.get("decision_cid")
+            or effect_receipt.get("execution_receipt_cid")
+            != effect_intent.get("execution_receipt_cid")
+            or effect_receipt.get("authority_fence_id")
+            != effect_intent.get("authority_fence_id")
+            or effect_receipt.get("production_authority_mutated") is not False
+            or effect_receipt.get("receipt_id")
+            != _manual_gate_receipt_id(
+                "manual-gate-promotion-effect",
+                {
+                    key: value
+                    for key, value in effect_receipt.items()
+                    if key != "receipt_id"
+                },
+            )
+        ):
+            raise RuntimeError("DQK-102 promotion effect is stale or invalid")
+        effect_commit = str(effect_receipt.get("effect_commit") or "").strip().lower()
+        if re.fullmatch(r"[0-9a-f]{40}", effect_commit) is None:
+            raise RuntimeError("DQK-102 promotion effect_commit is missing")
         return
     raise RuntimeError(f"manual_gate_effect_adapter_not_materialized:{task_id}")
 
@@ -13823,6 +14078,24 @@ def _manual_gate_durable_effect_is_applied(
 ) -> bool:
     """Return True when a completed gate's durable effect is on the target branch."""
 
+    if task_id == PROMOTION_GATE_TASK_ID and isinstance(effect_receipt, Mapping):
+        effect_commit = str(effect_receipt.get("effect_commit") or "").strip().lower()
+        if re.fullmatch(r"[0-9a-f]{40}", effect_commit) is None:
+            return False
+        if effect_receipt.get("production_authority_mutated") is True:
+            return False
+        if not str(effect_receipt.get("decision_cid") or "").strip():
+            return False
+        if not str(effect_receipt.get("execution_receipt_cid") or "").strip():
+            return False
+        ancestry = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", effect_commit, "HEAD"],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        return ancestry.returncode == 0
     if task_id == RUNTIME_ACTIVATION_GATE_TASK_ID and isinstance(
         effect_receipt, Mapping
     ):

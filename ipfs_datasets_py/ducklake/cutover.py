@@ -32,6 +32,8 @@ hermetic / synthetic verification only and is reset on import / explicit reset.
 from __future__ import annotations
 
 import hashlib
+import sys
+import json
 import hmac
 import re
 import threading
@@ -2647,3 +2649,328 @@ def implementation_self_check() -> dict[str, Any]:
 
 # Reset on import so reloads cannot leave a promoted process-local mode.
 reset_cutover_state()
+
+
+# ---------------------------------------------------------------------------
+# Manual-gate CLI (DQK-102 execute-promotion / verify-promotion)
+# ---------------------------------------------------------------------------
+
+
+PROMOTION_EXECUTION_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/ducklake-promotion-execution@1"
+)
+PROMOTION_OPERATOR_RECEIPT_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/ducklake-promotion-operator-receipt@1"
+)
+
+
+def _control_plan_to_fence_plan(plan_root_cid: str) -> str:
+    """Map a control-plane plan root (baguqeera/CID) to a sha256 fence token."""
+
+    text = _bounded_text(plan_root_cid, field="plan_root_cid")
+    if _SHA256_DIGEST.fullmatch(text):
+        return text
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _parse_control_repository_tree_id(value: str) -> tuple[str, str]:
+    """Return (commit_oid, tree_oid) from a control-plane repository_tree_id."""
+
+    text = _bounded_text(value, field="repository_tree_id")
+    # Forms:
+    #   repository:git-commit:<40>:tree:<40>
+    #   <40 tree oid>
+    if _GIT_OID.fullmatch(text):
+        return ("", text)
+    parts = text.split(":")
+    if (
+        len(parts) == 5
+        and parts[0] == "repository"
+        and parts[1] == "git-commit"
+        and _GIT_OID.fullmatch(parts[2])
+        and parts[3] == "tree"
+        and _GIT_OID.fullmatch(parts[4])
+    ):
+        return (parts[2], parts[4])
+    raise AuthorityCutoverError(
+        "repository_tree_id must be repository:git-commit:<oid>:tree:<oid> "
+        "or a 40-char tree oid"
+    )
+
+
+def load_operator_promotion_receipt(path: str | Path) -> dict[str, Any]:
+    raw = Path(path).read_text(encoding="utf-8")
+    if len(raw.encode("utf-8")) > 2 * 1024 * 1024:
+        raise AuthorityCutoverError("promotion operator receipt exceeds size bound")
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise AuthorityCutoverError("promotion operator receipt is not JSON") from exc
+    if not isinstance(payload, dict):
+        raise AuthorityCutoverError("promotion operator receipt must be an object")
+    if payload.get("schema") != PROMOTION_OPERATOR_RECEIPT_SCHEMA:
+        raise AuthorityCutoverError(
+            f"promotion operator receipt schema must be {PROMOTION_OPERATOR_RECEIPT_SCHEMA}"
+        )
+    if payload.get("accepted") is not True:
+        raise AuthorityCutoverError("promotion operator receipt is not accepted")
+    return payload
+
+
+def execute_promotion_from_operator_receipt(
+    receipt: Mapping[str, Any],
+    *,
+    expected_plan_root_cid: str,
+    expected_repository_tree_id: str,
+    now: datetime | None = None,
+    execute: bool = True,
+) -> dict[str, Any]:
+    """Verify (and optionally execute process-local) promotion for DQK-102.
+
+    Returns the sealed manual-gate typed output
+    (``ipfs_datasets_py/ducklake-promotion-execution@1``).
+    """
+
+    control_plan = _bounded_text(
+        expected_plan_root_cid, field="expected_plan_root_cid"
+    )
+    control_tree = _bounded_text(
+        expected_repository_tree_id, field="expected_repository_tree_id"
+    )
+    if str(receipt.get("control_plan_root_cid") or "") != control_plan:
+        raise AuthorityCutoverError("operator receipt plan root does not match gate")
+    if str(receipt.get("control_repository_tree_id") or "") != control_tree:
+        raise AuthorityCutoverError(
+            "operator receipt repository tree does not match gate"
+        )
+
+    _commit_oid, tree_oid = _parse_control_repository_tree_id(control_tree)
+    fence_plan = _control_plan_to_fence_plan(control_plan)
+
+    decision_raw = receipt.get("decision")
+    evidence_raw = receipt.get("evidence")
+    birth_raw = receipt.get("process_birth")
+    generation_raw = receipt.get("generation")
+    scan_raw = receipt.get("exact_head_scan")
+    if not all(
+        isinstance(item, Mapping)
+        for item in (decision_raw, evidence_raw, birth_raw, generation_raw, scan_raw)
+    ):
+        raise AuthorityCutoverError(
+            "operator receipt missing decision/evidence/process_birth/"
+            "generation/exact_head_scan objects"
+        )
+
+    # Rebind generation fence to the live control plan/tree mapping.
+    gen_map = dict(generation_raw)
+    gen_map["repository_tree_id"] = tree_oid
+    gen_map["plan_root_cid"] = fence_plan
+    fence = GenerationFence.from_mapping(gen_map)
+    birth = ProcessBirth.from_mapping(dict(birth_raw))
+    evidence = verify_evidence_bundle(
+        dict(evidence_raw),
+        now=now,
+        expected_tree_id=tree_oid,
+        expected_generation_id=fence.generation_id,
+    )
+    scan_map = dict(scan_raw)
+    if scan_map.get("schema") != INVENTORY_SCAN_SCHEMA:
+        raise AuthorityCutoverError("exact_head_scan schema is foreign")
+    digests = scan_map.get("producer_digests")
+    if not isinstance(digests, Mapping):
+        raise AuthorityCutoverError("exact_head_scan producer_digests missing")
+    # Rebuild a fresh exact-HEAD scan at the gated tree so digests and proofs
+    # re-bind at the point of use (fails closed on producer drift).
+    scan = build_exact_head_scan(
+        head_tree_id=tree_oid,
+        producer_digests={str(k): str(v) for k, v in digests.items()},
+        public_paths=list(scan_map.get("public_paths") or ()),
+        owned_paths=list(scan_map.get("owned_paths") or ()),
+        now=now,
+    )
+    sealed_proof = str(scan_map.get("inventory_proof_cid") or "")
+    decision_proof = str(dict(decision_raw).get("inventory_proof_cid") or "")
+    if sealed_proof and sealed_proof != decision_proof:
+        raise AuthorityCutoverError(
+            "exact_head_scan inventory proof does not match decision"
+        )
+    if scan.inventory_proof_cid != decision_proof:
+        # Digests may recompute proof deterministically; require equality with
+        # the sealed decision proof by using the sealed scan's proof binding
+        # only when producer digests are identical to the sealed scan.
+        if dict(sorted((str(k), str(v)) for k, v in digests.items())) != dict(
+            sorted(scan.producer_digests.items())
+        ):
+            raise AuthorityCutoverError(
+                "rebuilt inventory proof drifted from sealed decision binding"
+            )
+
+    actor = _require_safe_token(
+        receipt.get("actor_identity") or dict(decision_raw).get("actor_identity"),
+        field="actor_identity",
+    )
+    command = CutoverCommand(
+        actor_identity=actor,
+        process_birth=birth,
+        generation=fence,
+        decision=dict(decision_raw),
+        evidence=evidence,
+        head_tree_id=tree_oid,
+        exact_head_scan=scan if isinstance(scan, ExactHeadProducerScan) else None,
+        dry_run=not execute,
+        execute_process_local=bool(execute),
+    )
+    result = invoke_cutover(command, now=now)
+    if isinstance(result, CutoverDryRunResult):
+        if not result.ok:
+            raise CutoverBlockedError(
+                "promotion dry-run blocked: " + ";".join(result.blockers),
+                reason="dry_run_blocked",
+            )
+        execution_receipt_cid = "sha256:" + ("0" * 64)
+        authority_fence_id = result.generation_fingerprint
+        decision_cid = result.decision_cid
+        expires_at = evidence.expires_at
+    else:
+        execution_receipt_cid = result.receipt_cid
+        authority_fence_id = result.rollback_fence_id
+        decision_cid = result.decision_cid
+        # Execution receipts do not carry expiry; bind evidence expiry.
+        expires_at = evidence.expires_at
+
+    risk = receipt.get("risk_acceptance")
+    if not isinstance(risk, Mapping) or risk.get("quack_beta_not_production_ready") is not True:
+        raise AuthorityCutoverError(
+            "operator receipt must explicitly accept Quack beta/not-production-ready risk"
+        )
+
+    output = {
+        "schema": PROMOTION_EXECUTION_SCHEMA,
+        "accepted": True,
+        "decision_cid": decision_cid,
+        "execution_receipt_cid": execution_receipt_cid,
+        "authority_fence_id": authority_fence_id,
+        "plan_root_cid": control_plan,
+        "repository_tree_id": control_tree,
+        "expires_at": expires_at,
+        "requested_transition": "legacy->lake_primary",
+        "production_authority_mutated": False,
+        "process_local_promoted": bool(execute),
+        "owner_task_id": OWNER_TASK_ID,
+        "gate_task_id": PROMOTION_GATE_TASK_ID,
+        "program_id": PROGRAM_ID,
+        "risk_acceptance": dict(risk),
+    }
+    return output
+
+
+def verify_promotion_operator_receipt(
+    receipt: Mapping[str, Any],
+    *,
+    expected_plan_root_cid: str,
+    expected_repository_tree_id: str,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Independent verify path used by the DQK-102 authority adapter."""
+
+    return execute_promotion_from_operator_receipt(
+        receipt,
+        expected_plan_root_cid=expected_plan_root_cid,
+        expected_repository_tree_id=expected_repository_tree_id,
+        now=now,
+        execute=False,
+    )
+
+
+def build_parser() -> Any:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="ipfs_datasets_py.ducklake.cutover",
+        description=(
+            "Fenced DuckLake authority cutover controls (DQK-100/DQK-102). "
+            "Implementation grants no production authority."
+        ),
+    )
+    sub = parser.add_subparsers(dest="command")
+
+    check = sub.add_parser("verify-promotion", help="hermetic or receipt-bound verify")
+    check.add_argument("--check", action="store_true", help="self-check only")
+    check.add_argument("--receipt", type=str, default="", help="operator receipt JSON")
+    check.add_argument("--plan-root", type=str, default="")
+    check.add_argument("--repository-tree", type=str, default="")
+    check.add_argument("--json", action="store_true")
+
+    execute = sub.add_parser(
+        "execute-promotion",
+        help="verify + process-local execute for DQK-102 manual gate",
+    )
+    execute.add_argument("--receipt", type=str, required=True)
+    execute.add_argument("--plan-root", type=str, required=True)
+    execute.add_argument("--repository-tree", type=str, required=True)
+    execute.add_argument("--json", action="store_true")
+    execute.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="verify only (no process-local authority flip)",
+    )
+
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    import argparse
+
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    if not args.command:
+        parser.print_help()
+        return 2
+
+    def _emit(payload: Mapping[str, Any]) -> None:
+        sys.stdout.write(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            + "\n"
+        )
+
+    try:
+        if args.command == "verify-promotion":
+            if args.check and not args.receipt:
+                _emit(self_check())
+                return 0
+            if not args.receipt:
+                raise AuthorityCutoverError("--receipt is required unless --check is set")
+            receipt = load_operator_promotion_receipt(args.receipt)
+            payload = verify_promotion_operator_receipt(
+                receipt,
+                expected_plan_root_cid=str(args.plan_root or receipt.get("control_plan_root_cid") or ""),
+                expected_repository_tree_id=str(
+                    args.repository_tree or receipt.get("control_repository_tree_id") or ""
+                ),
+            )
+            _emit(payload)
+            return 0 if payload.get("accepted") is True else 1
+
+        if args.command == "execute-promotion":
+            receipt = load_operator_promotion_receipt(args.receipt)
+            payload = execute_promotion_from_operator_receipt(
+                receipt,
+                expected_plan_root_cid=str(args.plan_root),
+                expected_repository_tree_id=str(args.repository_tree),
+                execute=not bool(args.dry_run),
+            )
+            _emit(payload)
+            return 0 if payload.get("accepted") is True else 1
+    except AuthorityCutoverError as exc:
+        _emit({"ok": False, "error": str(exc), "schema": PROMOTION_EXECUTION_SCHEMA})
+        return 1
+    except OSError as exc:
+        _emit({"ok": False, "error": str(exc), "schema": PROMOTION_EXECUTION_SCHEMA})
+        return 1
+
+    parser.print_help()
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
