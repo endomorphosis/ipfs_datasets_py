@@ -55,6 +55,33 @@ class ipfs_parquet_to_car_py:
             subprocess.run(cmd, check=True)
         except:
             return False
+        # DQK-089: optional admitted-lake shadow projection (CAR bytes remain authority).
+        try:
+            from ipfs_datasets_py.ducklake.adapters import (
+                ParquetProducerId,
+                digest_file,
+                maybe_shadow_project,
+            )
+
+            source_digest = None
+            if os.path.isfile(dst):
+                source_digest = digest_file(dst)
+            elif os.path.isfile(src):
+                source_digest = digest_file(src)
+            shadow = maybe_shadow_project(
+                producer_id=ParquetProducerId.IPFS_PARQUET_TO_CAR.value,
+                dataset_id=f"car:{dst}",
+                source_uri=str(dst),
+                source_digest=source_digest,
+                source_kind="car",
+                schema_fields=(),
+                operation_id=f"op:ipfs_parquet_to_car:{dst}",
+                pre_source_digest=source_digest,
+            )
+            if shadow is not None:
+                return {"ok": True, "ducklake_shadow": shadow.to_dict()}
+        except Exception:
+            pass
         return True
 
     async def run_batch(self, src, dst):
