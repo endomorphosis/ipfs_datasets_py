@@ -1,30 +1,22 @@
 #!/usr/bin/env python3
-"""Audit the legal source-rights and redistribution admission contract (LCR-077).
+"""Fail-closed LCR-082 source-rights audit and deterministic fixture builder.
 
-Fixture-only validation (network-free, non-authorizing)::
-
-    python scripts/ops/legal_data/audit_legal_source_rights.py --fixture-only --check
-
-Live evidence validation (LCR-078; fails closed when the live catalog is absent)::
-
-    python scripts/ops/legal_data/audit_legal_source_rights.py --require-live-source-evidence --check
-
-Design invariants
------------------
-* Fixture-only success is explicitly non-authorizing for publication.
-* Live mode requires a sealed live catalog with authorizing_for_publication=true.
-* The policy evaluator is the sole admission authority; card labels never admit.
-* Unknown, prohibited, stale, scope-mismatched, or unsupported evidence fails closed.
+The validation modes accept no catalog, schema, registry, clock, freshness, or
+output-path override.  ``--emit-deterministic-fixture`` only prints the exact
+checked-in fixture candidate to stdout; it never writes repository or remote
+state.  Normal ``--fixture-only --check`` compares the committed catalog with
+that deterministic candidate before evaluation.
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
+import hashlib
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Mapping, Sequence
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
@@ -32,277 +24,395 @@ if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from ipfs_datasets_py.processors.legal_data.legal_source_rights_policy import (
+    ADMISSIBLE_CONTENT_SCOPES,
+    CATALOG_PRODUCER,
     CATALOG_SCHEMA_VERSION,
+    CONDITION_EVIDENCE_SCHEMA_VERSION,
     CURRENTNESS_DISCLAIMER,
-    GOAL_ID,
-    PRODUCER as POLICY_PRODUCER,
+    EVIDENCE_SCHEMA_VERSION,
+    EXPECTED_FRONTIER_SIZE,
+    FIXTURE_GOAL_ID,
+    FIXTURE_TASK_ID,
+    PROGRAM_ID,
     SCHEMA_VERSION,
-    TASK_ID,
+    VERIFIER_ID,
+    CatalogSchemaError,
+    ContentScope,
     LegalSourceRightsPolicyError,
-    LiveEvidenceRequiredError,
     audit_fixture_catalog,
-    default_fixture_catalog_path,
-    default_live_catalog_path,
-    default_schema_path,
-    evaluate_catalog,
-    format_utc_timestamp,
+    compute_artifact_digests,
+    derive_expected_scope_frontier,
+    frontier_digest_sha256,
+    load_catalog_snapshot,
+    load_spdx_registry,
     require_live_source_evidence,
     sha256_json,
 )
 
-PRODUCER = "audit_legal_source_rights.py"
-REPORT_SCHEMA = "ipfs_datasets_py/legal-source-rights-compliance@1"
-CODE_VERSION = "1"
+
+REPORT_SCHEMA = "ipfs_datasets_py/legal-source-rights-compliance@2"
+CODE_VERSION = "2"
 
 
 class AuditError(RuntimeError):
-    """Raised when the rights audit cannot complete fail-closed."""
+    pass
 
 
-def _print_json(payload: Mapping[str, Any]) -> None:
-    sys.stdout.write(
-        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+def _sha256(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def _base64(value: bytes) -> str:
+    return base64.b64encode(value).decode("ascii")
+
+
+def _identity_fields(mode: str) -> dict[str, str]:
+    if mode != "fixture":
+        raise ValueError("the checked-in deterministic builder only emits fixture evidence")
+    return {
+        "producer": CATALOG_PRODUCER,
+        "program_id": PROGRAM_ID,
+        "task_id": FIXTURE_TASK_ID,
+        "goal_id": FIXTURE_GOAL_ID,
+        "evidence_mode": "fixture",
+    }
+
+
+def _evidence(
+    *,
+    kind: str,
+    source_id: str,
+    content_scope: str,
+    url: str,
+    observed_at: str,
+    content: bytes,
+) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "schema_version": EVIDENCE_SCHEMA_VERSION,
+        "evidence_kind": kind,
+        **_identity_fields("fixture"),
+        "verifier_id": VERIFIER_ID,
+        "source_id": source_id,
+        "content_scope": content_scope,
+        "url": url,
+        "verifier_observed_at": observed_at,
+        "content_bytes_base64": _base64(content),
+        "content_sha256": _sha256(content),
+    }
+    body["evidence_digest_sha256"] = sha256_json(body)
+    return body
+
+
+def _condition_receipt(
+    *,
+    condition_id: str,
+    source_id: str,
+    content_scope: str,
+    observed_at: str,
+    request: bytes,
+    response: bytes,
+) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "schema_version": CONDITION_EVIDENCE_SCHEMA_VERSION,
+        **_identity_fields("fixture"),
+        "verifier_id": VERIFIER_ID,
+        "condition_id": condition_id,
+        "source_id": source_id,
+        "content_scope": content_scope,
+        "verifier_observed_at": observed_at,
+        "request_bytes_base64": _base64(request),
+        "request_sha256": _sha256(request),
+        "response_bytes_base64": _base64(response),
+        "response_sha256": _sha256(response),
+    }
+    body["receipt_digest_sha256"] = sha256_json(body)
+    return body
+
+
+def _license_binding(scope: ContentScope) -> tuple[str, str, str]:
+    if scope is ContentScope.STATUTORY_TEXT:
+        return (
+            "LicenseRef-US-State-Statutory-Text",
+            "government_edicts_doctrine",
+            "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        )
+    if scope is ContentScope.FEDERAL_GOVERNMENT_TEXT:
+        return (
+            "LicenseRef-US-Federal-Government-Work",
+            "us_government_work",
+            "46cbe5c99f7016f4f9ced6344bb297581c2a78dbc2bdd91e93b188a025484e1d",
+        )
+    if scope is ContentScope.ANNOTATIONS:
+        return (
+            "LicenseRef-Annotations-Reserved",
+            "proprietary",
+            "af79ff861db14427b987ea16dab361da37194d8eee69fc7e00ecb78073bcd610",
+        )
+    if scope is ContentScope.DATABASE_CONTENT:
+        return (
+            "LicenseRef-Database-Content-Reserved",
+            "proprietary",
+            "b6d3f8abf435c9ea6cc789adab780b03e88cb57169fee2a9e16a21aad9580bb9",
+        )
+    return (
+        "LicenseRef-Site-Presentation-Reserved",
+        "proprietary",
+        "e445a14ae5519d72e26458c8ba81e080bb403fb2d45bd41bd2485fe6126b0da6",
     )
 
 
-def run_fixture_check(
-    *,
-    catalog_path: Optional[Path] = None,
-    schema_path: Optional[Path] = None,
-) -> dict[str, Any]:
-    """Validate the sealed fixture catalog and return a non-authorizing report."""
+def build_fixture_catalog_payload() -> dict[str, Any]:
+    """Build the deterministic, immutable 57-record fixture from canonical evidence."""
 
-    try:
-        report = audit_fixture_catalog(
-            catalog_path=catalog_path,
-            schema_path=schema_path,
+    registry = load_spdx_registry()
+    if registry.active_license_count != 465 or registry.deprecated_license_count != 25:
+        raise AuditError("complete SPDX source snapshot counts changed")
+    frontier = derive_expected_scope_frontier()
+    if len(frontier) != EXPECTED_FRONTIER_SIZE:
+        raise AuditError("derived frontier is incomplete")
+
+    records: list[dict[str, Any]] = []
+    admitted_ids: list[str] = []
+    for entry in frontier:
+        scope = ContentScope(entry.content_scope)
+        in_scope = scope in ADMISSIBLE_CONTENT_SCOPES
+        conditional = entry.source_id == "ak-akleg-basis" and scope is ContentScope.STATUTORY_TEXT
+        license_id, legal_basis, license_ref_digest = _license_binding(scope)
+        if registry.license_ref(license_id) is None:
+            raise AuditError(f"fixture LicenseRef is not registered: {license_id}")
+
+        record_id = f"{entry.source_id}-{entry.content_scope}"
+        terms_bytes = (
+            f"LCR-082 fixture terms bytes for {entry.source_id}/{entry.content_scope}; "
+            "the source URL and content scope are independently bound."
+        ).encode("utf-8")
+        robots_bytes = (
+            f"User-agent: lcr-082-fixture\nAllow: /\n"
+            f"# source={entry.source_id} scope={entry.content_scope}\n"
+        ).encode("utf-8")
+        terms = _evidence(
+            kind="terms",
+            source_id=entry.source_id,
+            content_scope=entry.content_scope,
+            url=entry.source_url,
+            observed_at="2026-08-01T10:00:00Z",
+            content=terms_bytes,
         )
+        robots = _evidence(
+            kind="robots",
+            source_id=entry.source_id,
+            content_scope=entry.content_scope,
+            url=entry.source_url,
+            observed_at="2026-08-01T10:05:00Z",
+            content=robots_bytes,
+        )
+        conditions: list[str] = []
+        receipts: list[dict[str, Any]] = []
+        robots_disposition = "allowed"
+        rights_disposition = "allowed" if in_scope else "prohibited"
+        if scope is ContentScope.DATABASE_CONTENT:
+            rights_disposition = "quarantined"
+        if conditional:
+            condition_id = "respect-crawl-delay-10-seconds"
+            conditions = [condition_id]
+            robots_disposition = "conditional"
+            rights_disposition = "conditional"
+            receipts = [
+                _condition_receipt(
+                    condition_id=condition_id,
+                    source_id=entry.source_id,
+                    content_scope=entry.content_scope,
+                    observed_at="2026-08-01T10:10:00Z",
+                    request=(
+                        b"GET /basis/statutes.asp HTTP/1.1\r\n"
+                        b"Host: www.akleg.gov\r\n"
+                        b"User-Agent: lcr-082-fixture\r\n\r\n"
+                    ),
+                    response=(
+                        b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n"
+                        b"X-Fixture-Crawl-Delay: 10\r\n\r\n"
+                    ),
+                )
+            ]
+        permissions = {
+            "redistribution": in_scope,
+            "derivatives": in_scope,
+            "archive": in_scope,
+        }
+        record = {
+            "record_id": record_id,
+            "source_id": entry.source_id,
+            "corpus_family": entry.corpus_family,
+            "dataset_repo_id": entry.dataset_repo_id,
+            "content_scope": entry.content_scope,
+            "rights_disposition": rights_disposition,
+            "license_spdx": license_id,
+            "license_ref_digest_sha256": license_ref_digest,
+            "legal_basis": legal_basis,
+            "terms": terms,
+            "robots": robots,
+            "robots_access_disposition": robots_disposition,
+            "access_conditions": conditions,
+            "condition_evidence": receipts,
+            "permissions": permissions,
+            "attribution_notice": (
+                f"Source {entry.source_id} ({entry.jurisdiction_or_authority}); "
+                f"scope {entry.content_scope}. Not a substitute for the official source."
+            ),
+            "review_status": "reviewed",
+            "reviewed_at": "2026-08-05T12:00:00Z",
+            "sealed_at": "2026-08-08T12:00:00Z",
+            "source_url": entry.source_url,
+            "jurisdiction_or_authority": entry.jurisdiction_or_authority,
+            "card_label_is_not_authority": True,
+            "dataset_card_label": "other" if scope is ContentScope.FEDERAL_GOVERNMENT_TEXT else None,
+            "notes": f"Deterministic {entry.origin} fixture projection; fixture-only and non-authorizing.",
+        }
+        records.append(record)
+        if in_scope:
+            admitted_ids.append(record_id)
+
+    payload: dict[str, Any] = {
+        "schema_version": CATALOG_SCHEMA_VERSION,
+        "producer": CATALOG_PRODUCER,
+        "program_id": PROGRAM_ID,
+        "task_id": FIXTURE_TASK_ID,
+        "goal_id": FIXTURE_GOAL_ID,
+        "evidence_mode": "fixture",
+        "policy_schema_version": SCHEMA_VERSION,
+        "sealed_at": "2026-08-09T12:00:00Z",
+        "authorizing_for_publication": False,
+        "target_dataset_repo_ids": [
+            "justicedao/ipfs_state_laws",
+            "justicedao/ipfs_federal_register",
+        ],
+        "artifact_digests": compute_artifact_digests(),
+        "expected_scope_frontier_sha256": frontier_digest_sha256(),
+        "admitted_record_ids": admitted_ids,
+        "description": (
+            "Immutable LCR-082 fixture covering all 51 LCR-002 state sources and "
+            "the content-scope projection of the exact pinned LCR-048 Federal baseline."
+        ),
+        "currentness_disclaimer": CURRENTNESS_DISCLAIMER,
+        "records": records,
+    }
+    payload["catalog_digest_sha256"] = sha256_json(payload)
+    return payload
+
+
+def run_fixture_check() -> dict[str, Any]:
+    committed_bytes, committed = load_catalog_snapshot()
+    generated = build_fixture_catalog_payload()
+    generated_bytes = (
+        json.dumps(generated, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    ).encode("utf-8")
+    if committed_bytes != generated_bytes:
+        raise AuditError(
+            "committed fixture bytes differ from the deterministic canonical build; "
+            "fixture bytes/digests must be deliberately regenerated and committed"
+        )
+    try:
+        report = audit_fixture_catalog(committed)
     except LegalSourceRightsPolicyError as exc:
         raise AuditError(str(exc)) from exc
-
-    report = dict(report)
-    report.update(
+    result = dict(report)
+    result.update(
         {
             "report_schema": REPORT_SCHEMA,
             "code_version": CODE_VERSION,
-            "audit_producer": PRODUCER,
-            "policy_producer": POLICY_PRODUCER,
-            "program_id": "legal-corpora-reindex-v1",
+            "audit_producer": CATALOG_PRODUCER,
             "mode": "fixture_only",
+            "status": "passed",
             "authorizing_for_publication": False,
             "fixture_only_non_authorizing": True,
-            "status": "passed",
-            "acceptance": {
-                "distinguishes_government_from_presentation_annotations_editorial_database": True,
-                "deny_on_unknown": True,
-                "card_label_alone_not_authority": True,
-                "fixture_only_non_authorizing": True,
-                "admitted_count": report["admitted_count"],
-                "denied_count": report["denied_count"],
-            },
-            "currentness_disclaimer": CURRENTNESS_DISCLAIMER,
         }
     )
-    report["report_digest_sha256"] = sha256_json(
-        {k: v for k, v in report.items() if k != "report_digest_sha256"}
-    )
-    return report
+    result["report_digest_sha256"] = sha256_json(result)
+    return result
 
 
-def run_live_check(
-    *,
-    catalog_path: Optional[Path] = None,
-    now: Optional[datetime] = None,
-) -> dict[str, Any]:
-    """Validate the live rights catalog (LCR-078 entry point).
-
-    Fails closed when the live catalog is missing, non-live, or non-authorizing.
-    """
-
+def run_live_check() -> dict[str, Any]:
     try:
-        catalog = require_live_source_evidence(catalog_path=catalog_path)
-    except LiveEvidenceRequiredError as exc:
-        raise AuditError(str(exc)) from exc
+        report = require_live_source_evidence()
     except LegalSourceRightsPolicyError as exc:
         raise AuditError(str(exc)) from exc
-
-    verifier_now = now if now is not None else datetime.now(timezone.utc)
-    evaluation = evaluate_catalog(
-        catalog,
-        now=verifier_now,
-        authorizing_mode=True,
-    )
-    if evaluation["denied_count"] != 0:
-        # Live catalogs may include quarantined scopes; only *default-release*
-        # admitted scopes are required to pass. Deny non-quarantine unexpected
-        # denials among scopes that claim allowed disposition.
-        unexpected = [
-            d
-            for d in evaluation["decisions"]
-            if (not d["admitted"])
-            and d["rights_disposition"] == "allowed"
-            and "presentation_or_enhancement_scope" not in d.get("reason_codes", [])
-        ]
-        # For live mode under LCR-078, the catalog may still list quarantine
-        # scopes. Fail only when an allowed government/statutory claim is denied.
-        if unexpected:
-            raise AuditError(
-                "live catalog has unexpected denials for allowed dispositions:\n- "
-                + "\n- ".join(
-                    f"{d['record_id']}: {','.join(d['reason_codes'])}" for d in unexpected
-                )
-            )
-
-    if evaluation["admitted_count"] < 1:
-        raise AuditError("live catalog must admit at least one government/statutory scope")
-
-    report = dict(evaluation)
-    report.update(
+    result = dict(report)
+    result.update(
         {
             "report_schema": REPORT_SCHEMA,
             "code_version": CODE_VERSION,
-            "audit_producer": PRODUCER,
-            "policy_producer": POLICY_PRODUCER,
-            "program_id": "legal-corpora-reindex-v1",
+            "audit_producer": CATALOG_PRODUCER,
             "mode": "live",
             "status": "passed",
-            "verified_at": format_utc_timestamp(verifier_now),
-            "catalog_path": str(
-                (Path(catalog_path) if catalog_path else default_live_catalog_path()).as_posix()
-            ),
-            "acceptance": {
-                "live_source_evidence_required": True,
-                "deny_on_unknown": True,
-                "card_label_alone_not_authority": True,
-                "admitted_count": evaluation["admitted_count"],
-                "denied_count": evaluation["denied_count"],
-            },
-            "currentness_disclaimer": CURRENTNESS_DISCLAIMER,
         }
     )
-    report["report_digest_sha256"] = sha256_json(
-        {k: v for k, v in report.items() if k != "report_digest_sha256"}
-    )
-    return report
+    result["report_digest_sha256"] = sha256_json(result)
+    return result
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=(
-            "Audit legal source-rights admission (LCR-077). "
-            "Fixture-only success is non-authorizing."
-        )
-    )
+    parser = argparse.ArgumentParser(description="Audit LCR-082 source-rights authority")
     mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument(
-        "--fixture-only",
+    mode.add_argument("--fixture-only", action="store_true")
+    mode.add_argument("--require-live-source-evidence", action="store_true")
+    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--emit-deterministic-fixture",
         action="store_true",
-        help="Validate the sealed fixture catalog offline (non-authorizing).",
-    )
-    mode.add_argument(
-        "--require-live-source-evidence",
-        action="store_true",
-        help=(
-            "Require the live sealed catalog and evaluate with a trusted clock "
-            "(LCR-078). Fails closed when live evidence is missing."
-        ),
-    )
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Run validation and exit non-zero on failure (default behavior).",
-    )
-    parser.add_argument(
-        "--catalog",
-        type=Path,
-        default=None,
-        help="Override catalog path (fixture or live depending on mode).",
-    )
-    parser.add_argument(
-        "--schema",
-        type=Path,
-        default=None,
-        help="Override JSON schema path (fixture mode).",
-    )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Emit the full audit report as JSON on stdout.",
-    )
-    parser.add_argument(
-        "--write-receipt",
-        type=Path,
-        default=None,
-        help=(
-            "Optional path to write the compliance receipt JSON. "
-            "Fixture mode writes are marked non-authorizing."
-        ),
+        help="Print the canonical fixture to stdout without writing any path.",
     )
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(list(argv) if argv is not None else None)
+def _print_json(value: Mapping[str, Any]) -> None:
+    sys.stdout.write(json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
 
-    # --check is the default validation posture for both modes.
-    _ = args.check  # accepted for CLI compatibility with the task contract
 
-    try:
-        if args.fixture_only:
-            catalog_path = args.catalog or default_fixture_catalog_path()
-            schema_path = args.schema or default_schema_path()
-            report = run_fixture_check(
-                catalog_path=catalog_path,
-                schema_path=schema_path,
+def main(argv: Sequence[str] | None = None) -> int:
+    args = build_parser().parse_args(list(argv) if argv is not None else None)
+    if args.emit_deterministic_fixture:
+        if not args.fixture_only or args.require_live_source_evidence or args.check:
+            sys.stderr.write(
+                "audit_legal_source_rights: FAILED: fixture emission requires "
+                "--fixture-only without --check\n"
             )
-        else:
-            catalog_path = args.catalog or default_live_catalog_path()
-            report = run_live_check(catalog_path=catalog_path)
-    except AuditError as exc:
-        error_payload = {
-            "status": "failed",
-            "task_id": TASK_ID,
-            "goal_id": GOAL_ID,
-            "schema_version": SCHEMA_VERSION,
-            "catalog_schema_version": CATALOG_SCHEMA_VERSION,
-            "error": str(exc),
-            "authorizing_for_publication": False,
-        }
+            return 2
+        try:
+            _print_json(build_fixture_catalog_payload())
+        except Exception as exc:  # noqa: BLE001 - fail closed
+            sys.stderr.write(f"audit_legal_source_rights: FAILED: {exc}\n")
+            return 1
+        return 0
+    if not args.check:
+        sys.stderr.write("audit_legal_source_rights: FAILED: --check is required\n")
+        return 2
+    try:
+        report = run_fixture_check() if args.fixture_only else run_live_check()
+    except (AuditError, CatalogSchemaError) as exc:
         if args.json:
-            _print_json(error_payload)
+            _print_json(
+                {
+                    "status": "failed",
+                    "producer": CATALOG_PRODUCER,
+                    "program_id": PROGRAM_ID,
+                    "authorizing_for_publication": False,
+                    "error": str(exc),
+                }
+            )
         else:
             sys.stderr.write(f"audit_legal_source_rights: FAILED: {exc}\n")
         return 1
-    except Exception as exc:  # noqa: BLE001 - fail closed on unexpected errors
-        sys.stderr.write(f"audit_legal_source_rights: FAILED (unexpected): {exc}\n")
-        return 1
-
-    if args.write_receipt is not None:
-        receipt_path = Path(args.write_receipt)
-        receipt_path.parent.mkdir(parents=True, exist_ok=True)
-        receipt_path.write_text(
-            json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-
     if args.json:
         _print_json(report)
     else:
-        mode = report.get("mode", "unknown")
         sys.stdout.write(
-            f"audit_legal_source_rights: PASSED ({mode})\n"
-            f"  task_id={TASK_ID} goal_id={GOAL_ID}\n"
-            f"  admitted={report.get('admitted_count')} "
-            f"denied={report.get('denied_count')}\n"
-            f"  authorizing_for_publication="
-            f"{report.get('authorizing_for_publication')}\n"
-            f"  catalog_digest={report.get('catalog_digest_sha256')}\n"
+            f"audit_legal_source_rights: PASSED ({report['mode']})\n"
+            f"  records={report['record_count']} admitted={report['admitted_count']} "
+            f"denied={report['denied_count']}\n"
+            f"  authorizing_for_publication={report['authorizing_for_publication']}\n"
+            f"  catalog_digest={report['catalog_digest_sha256']}\n"
         )
-        if mode == "fixture_only":
-            sys.stdout.write(
-                "  note: fixture-only success is non-authorizing for publication\n"
-            )
     return 0
 
 
