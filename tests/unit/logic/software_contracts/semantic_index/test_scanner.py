@@ -66,13 +66,47 @@ def test_clean_scan_uses_indexed_blob_not_smudged_worktree_bytes(tmp_path) -> No
     assert module.source_cid == cid_for_bytes(b"value = 'indexed'\n")
 
 
-def test_working_file_mutation_after_snapshot_is_explicit_opaque_artifact(tmp_path) -> None:
+def test_working_file_mutation_after_snapshot_uses_immutable_captured_bytes(tmp_path) -> None:
     path = tmp_path / "module.py"
     path.write_text("value = 1\n", encoding="utf-8")
     snapshot = snapshot_repository(tmp_path, repository_id="repo:race")
     path.write_text("value = 2\n", encoding="utf-8")
     state = RepositoryScanner(repository_id="repo:race").scan(tmp_path, snapshot=snapshot)
-    artifact = next(item for item in state.artifacts if item.path == "module.py")
-    assert artifact.confidence == "opaque"
-    assert artifact.metadata["opaque_reason"] == "source_cid_mismatch"
-    assert not state.symbols
+    module = _symbols(state)["module"]
+    assert module.source_cid == cid_for_bytes(b"value = 1\n")
+
+
+def test_same_tree_commit_changes_state_through_snapshot_evidence(tmp_path) -> None:
+    def git(*args: str) -> None:
+        subprocess.run(["git", *args], cwd=tmp_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    git("init")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "Test")
+    (tmp_path / "module.py").write_text("value = 1\n", encoding="utf-8")
+    git("add", "module.py")
+    git("commit", "-m", "initial")
+    first = scan_repository_state(tmp_path)
+    first_symbols = _symbols(first)
+    git("commit", "--allow-empty", "-m", "same tree")
+    second = scan_repository_state(tmp_path, previous_state=first)
+    assert first.state_cid != second.state_cid
+    assert first_symbols["module"].stable_id == _symbols(second)["module"].stable_id
+
+
+def test_no_origin_source_commit_preserves_stable_symbol_ids(tmp_path) -> None:
+    def git(*args: str) -> None:
+        subprocess.run(["git", *args], cwd=tmp_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    git("init")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "Test")
+    path = tmp_path / "module.py"
+    path.write_text("def value():\n    return 1\n", encoding="utf-8")
+    git("add", "module.py")
+    git("commit", "-m", "initial")
+    first = scan_repository_state(tmp_path)
+    path.write_text("def value():\n    return 2\n", encoding="utf-8")
+    git("commit", "-am", "source change")
+    second = scan_repository_state(tmp_path, previous_state=first)
+    assert _symbols(first)["module.value"].stable_id == _symbols(second)["module.value"].stable_id

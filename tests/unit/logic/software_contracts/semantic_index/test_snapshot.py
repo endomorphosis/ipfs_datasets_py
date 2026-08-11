@@ -91,6 +91,66 @@ def test_unrelated_same_basename_git_repositories_have_distinct_identity(tmp_pat
     assert repository_identity(roots[0]) != repository_identity(roots[1])
 
 
+def test_no_origin_identity_is_stable_across_commits_and_unborn_roots_do_not_collide(tmp_path: Path) -> None:
+    root = tmp_path / "stable"
+    root.mkdir()
+    _git(root, "init")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "config", "user.name", "Test")
+    (root / "module.py").write_text("value = 1\n", encoding="utf-8")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "initial")
+    initial = repository_identity(root)
+    _git(root, "commit", "--allow-empty", "-m", "empty")
+    assert repository_identity(root) == initial
+    (root / "module.py").write_text("value = 2\n", encoding="utf-8")
+    _git(root, "commit", "-am", "change")
+    assert repository_identity(root) == initial
+
+    unborn = [tmp_path / "one" / "same", tmp_path / "two" / "same"]
+    for item in unborn:
+        item.mkdir(parents=True)
+        _git(item, "init")
+    assert repository_identity(unborn[0]) != repository_identity(unborn[1])
+    plain = [tmp_path / "three" / "same", tmp_path / "four" / "same"]
+    for item in plain:
+        item.mkdir(parents=True)
+    assert repository_identity(plain[0]) != repository_identity(plain[1])
+
+
+def test_excluded_state_root_does_not_make_clean_tree_working_or_change_snapshot(tmp_path: Path) -> None:
+    _git(tmp_path, "init")
+    _git(tmp_path, "config", "user.email", "test@example.invalid")
+    _git(tmp_path, "config", "user.name", "Test")
+    (tmp_path / "module.py").write_text("value = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "module.py")
+    _git(tmp_path, "commit", "-m", "initial")
+    first = snapshot_repository(tmp_path, state_root="private-state")
+    (tmp_path / "private-state").mkdir()
+    (tmp_path / "private-state" / "state.json").write_text("one", encoding="utf-8")
+    second = snapshot_repository(tmp_path, state_root="private-state")
+    (tmp_path / "private-state" / "state.json").write_text("two", encoding="utf-8")
+    third = snapshot_repository(tmp_path, state_root="private-state")
+    assert first.mode == second.mode == third.mode == "git-clean"
+    assert first.snapshot_cid == second.snapshot_cid == third.snapshot_cid
+
+
+def test_git_snapshot_records_commit_tree_and_blob_evidence(tmp_path: Path) -> None:
+    _git(tmp_path, "init")
+    _git(tmp_path, "config", "user.email", "test@example.invalid")
+    _git(tmp_path, "config", "user.name", "Test")
+    (tmp_path / "module.py").write_text("value = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "module.py")
+    _git(tmp_path, "commit", "-m", "initial")
+    first = snapshot_repository(tmp_path)
+    _git(tmp_path, "commit", "--allow-empty", "-m", "same-tree")
+    second = snapshot_repository(tmp_path)
+    assert first.git_commit != second.git_commit
+    assert first.git_tree == second.git_tree
+    assert first.entries[0].blob_oid is not None
+    assert first.snapshot_cid != second.snapshot_cid
+
+
 def test_malformed_git_name_is_retained_as_opaque_artifact(tmp_path: Path) -> None:
     _git(tmp_path, "init")
     _git(tmp_path, "config", "user.email", "test@example.invalid")
