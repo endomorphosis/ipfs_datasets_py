@@ -165,7 +165,7 @@ W8  ISI-032
 
 ## ISI-005 Implement verified local persistence and optional ipfs_kit adapter
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: persistence
