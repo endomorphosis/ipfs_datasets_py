@@ -44,15 +44,16 @@ class IdahoScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str, max_statutes: int | None = None) -> List[NormalizedStatute]:
-        """Scrape a specific code from Idaho's legislative website.
-        
-        Args:
-            code_name: Name of the code to scrape
-            code_url: URL of the code
-            
-        Returns:
-            List of NormalizedStatute objects
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: int | None = None,
+    ) -> List[NormalizedStatute]:
+        """Scrape Idaho statutes from the official title/chapter/section tree.
+
+        When ``max_statutes`` is omitted the walk is uncapped for full-corpus
+        certification runs.
         """
         limit = max(1, int(max_statutes)) if max_statutes else None
         statutes: List[NormalizedStatute] = []

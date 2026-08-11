@@ -1,0 +1,358 @@
+{
+  "acceptance": {
+    "closed_frontier": true,
+    "exact_source_authority": true,
+    "failed_final_zero": true,
+    "non_placeholder_full_text": true,
+    "reconciled_counts_hashes": true,
+    "replay_evidence": true
+  },
+  "cohort": "C",
+  "goal_id": "LCR-G021",
+  "jurisdiction_receipts": {
+    "FL": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-xlvi/chapter-775/section-775.01",
+        "last_hierarchy_unit": "title-xlvi/chapter-775/section-775.011",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:35b01ea700c87b73581285b4f4d5209a32e5494bf13c89b916fdf4d3eeace43d",
+        "min_full_text_chars": 539,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.leg.state.fl.us/Statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0775/Sections/0775.01.html",
+          "https://www.leg.state.fl.us/Statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0775/Sections/0775.011.html"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "fl:775.01",
+          "fl:775.011"
+        ],
+        "derived_keys": [
+          "fl:775.01",
+          "fl:775.011"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "FL",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:35b01ea700c87b73581285b4f4d5209a32e5494bf13c89b916fdf4d3eeace43d",
+        "first_frontier_digest": "sha256:e5ee66d4a952c2df3f2b644d1714d4c3bbcbb509ca6684da86194b57e3986251",
+        "second_frontier_digest": "sha256:e5ee66d4a952c2df3f2b644d1714d4c3bbcbb509ca6684da86194b57e3986251"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.leg.state.fl.us",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "GA": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-16/chapter-1/section-16-1-1",
+        "last_hierarchy_unit": "title-16/chapter-1/section-16-1-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:1fc447dd2ff8ac74bbb685a50f1578d8e333c28479e054fcb9573ec377aa1004",
+        "min_full_text_chars": 589,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.legis.ga.gov/legislation/georgia-code/title-16/chapter-1/section-16-1-1/",
+          "https://www.legis.ga.gov/legislation/georgia-code/title-16/chapter-1/section-16-1-2/"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ga:16-1-1",
+          "ga:16-1-2"
+        ],
+        "derived_keys": [
+          "ga:16-1-1",
+          "ga:16-1-2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "GA",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:1fc447dd2ff8ac74bbb685a50f1578d8e333c28479e054fcb9573ec377aa1004",
+        "first_frontier_digest": "sha256:744533a0d4f42526964131b2f2aa322338fd4bbd689b09af51f58972ff821b32",
+        "second_frontier_digest": "sha256:744533a0d4f42526964131b2f2aa322338fd4bbd689b09af51f58972ff821b32"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.legis.ga.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "HI": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "vol01/hrs0001/section-1-1",
+        "last_hierarchy_unit": "vol01/hrs0001/section-1-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:f0536a80b004752f0aecd465c4e20ade0a76a8d4f0ba3818dadfb98ca4285446",
+        "min_full_text_chars": 566,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/HRS0001/HRS_0001-0001.HTM",
+          "https://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/HRS0001/HRS_0001-0002.HTM"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "hi:1-1",
+          "hi:1-2"
+        ],
+        "derived_keys": [
+          "hi:1-1",
+          "hi:1-2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "HI",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:f0536a80b004752f0aecd465c4e20ade0a76a8d4f0ba3818dadfb98ca4285446",
+        "first_frontier_digest": "sha256:22500aea1b622dd1c2a631e9871e9d7cfc6d403e2ef7ecef11ce029adb93d888",
+        "second_frontier_digest": "sha256:22500aea1b622dd1c2a631e9871e9d7cfc6d403e2ef7ecef11ce029adb93d888"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.capitol.hawaii.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "ID": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-18/chapter-1/section-18-101",
+        "last_hierarchy_unit": "title-18/chapter-1/section-18-102",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:6f18cb0ea3946d7e3fd385730eb608d70aaa59e70debfbc6bba5ee3a8895ed20",
+        "min_full_text_chars": 645,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://legislature.idaho.gov/statutesrules/idstat/title18/t18ch1/sect18-101/",
+          "https://legislature.idaho.gov/statutesrules/idstat/title18/t18ch1/sect18-102/"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "id:18-101",
+          "id:18-102"
+        ],
+        "derived_keys": [
+          "id:18-101",
+          "id:18-102"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "ID",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:6f18cb0ea3946d7e3fd385730eb608d70aaa59e70debfbc6bba5ee3a8895ed20",
+        "first_frontier_digest": "sha256:834cd4e15615190b97e0f465597287229316fab1cc44945a34f2d013cc51299e",
+        "second_frontier_digest": "sha256:834cd4e15615190b97e0f465597287229316fab1cc44945a34f2d013cc51299e"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "legislature.idaho.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "official_domains": {
+    "FL": "www.leg.state.fl.us",
+    "GA": "www.legis.ga.gov",
+    "HI": "www.capitol.hawaii.gov",
+    "ID": "legislature.idaho.gov"
+  },
+  "production_upload": false,
+  "program_id": "legal-corpora-reindex-v1",
+  "receipt_schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-receipt@1",
+  "repair_work": [],
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-c-report@1",
+  "shared_combined_write": false,
+  "state_results": {
+    "FL": {
+      "content_digest": "sha256:35b01ea700c87b73581285b4f4d5209a32e5494bf13c89b916fdf4d3eeace43d",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.leg.state.fl.us",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "GA": {
+      "content_digest": "sha256:1fc447dd2ff8ac74bbb685a50f1578d8e333c28479e054fcb9573ec377aa1004",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.legis.ga.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "HI": {
+      "content_digest": "sha256:f0536a80b004752f0aecd465c4e20ade0a76a8d4f0ba3818dadfb98ca4285446",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.capitol.hawaii.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "ID": {
+      "content_digest": "sha256:6f18cb0ea3946d7e3fd385730eb608d70aaa59e70debfbc6bba5ee3a8895ed20",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "legislature.idaho.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "states": [
+    "FL",
+    "GA",
+    "HI",
+    "ID"
+  ],
+  "status": "success",
+  "statutes_sample_counts": {
+    "FL": 2,
+    "GA": 2,
+    "HI": 2,
+    "ID": 2
+  },
+  "task_id": "LCR-011"
+}
