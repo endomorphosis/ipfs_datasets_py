@@ -469,9 +469,11 @@ class AuditLogger:
             event.source_module = os.path.basename(frame.filename)
             event.source_function = frame.name
 
-        # Dispatch to handlers (legacy file sinks remain selected authority
-        # under DQK-077 shadow mode; typed catalog is a non-authoritative
-        # projection when the observability shadow repository is configured).
+        # Dispatch to handlers. Under DQK-078 dual/db-primary cutover, DuckDB
+        # is the typed observability authority and file/console sinks are
+        # disposable projections. Under DQK-077 shadow mode, legacy file sinks
+        # remain selected authority while the catalog is a non-authoritative
+        # projection.
         with self._lock:
             for handler in self.handlers:
                 try:
@@ -488,12 +490,14 @@ class AuditLogger:
         return event.event_id
 
     def _route_to_observability_shadow(self, event: "AuditEvent") -> None:
-        """Project a recorded event into the typed observability shadow (DQK-077)."""
+        """Project a recorded event into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (
                 ObservabilityProducer,
-                record_observability_event,
+            )
+            from ipfs_datasets_py.duckdb_control.observability_cutover import (
+                try_record_observability_event,
             )
         except Exception:
             return
@@ -523,7 +527,17 @@ class AuditLogger:
             details.setdefault("client_ip", event.client_ip)
 
         resource = event.resource_id or event.resource_type or ""
-        record_observability_event(
+        # Provenance category routes as provenance_event kind under cutover.
+        kind = None
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_cutover import EventKind
+            cat_name = getattr(event.category, "name", "") if event.category else ""
+            if cat_name == "PROVENANCE":
+                kind = EventKind.PROVENANCE_EVENT
+        except Exception:
+            kind = None
+
+        try_record_observability_event(
             producer=ObservabilityProducer.AUDIT_LOGGER,
             action=event.action or "audit.event",
             actor=event.user or "system",
@@ -535,6 +549,7 @@ class AuditLogger:
             resource=str(resource or ""),
             raw_payload=event.to_dict(),
             recorded_at=event.timestamp,
+            kind=kind,
         )
 
     # Convenience methods for different audit levels

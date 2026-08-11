@@ -270,13 +270,15 @@ class AuditLogger:
         self._route_to_observability_shadow(event)
 
     def _route_to_observability_shadow(self, event: AuditEvent) -> None:
-        """Project GraphRAG audit events into the typed shadow catalog (DQK-077)."""
+        """Project GraphRAG audit events into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (
                 ObservabilityProducer,
                 derive_stable_event_id,
-                record_observability_event,
+            )
+            from ipfs_datasets_py.duckdb_control.observability_cutover import (
+                try_record_observability_event,
             )
         except Exception:
             return
@@ -301,7 +303,7 @@ class AuditLogger:
             "event_data": dict(event.event_data or {}),
             "metadata": dict(event.metadata or {}),
         }
-        record_observability_event(
+        try_record_observability_event(
             producer=ObservabilityProducer.GRAPHRAG_AUDIT,
             action=event_type,
             actor=self.session_id or "graphrag",

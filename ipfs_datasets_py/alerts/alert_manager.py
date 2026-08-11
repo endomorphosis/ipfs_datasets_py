@@ -329,13 +329,16 @@ class AlertManager:
         event: Dict[str, Any],
         result: Dict[str, Any],
     ) -> None:
-        """Project triggered alerts into the typed shadow catalog (DQK-077)."""
+        """Project triggered alerts into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (
                 ObservabilityProducer,
                 derive_stable_event_id,
-                record_observability_event,
+            )
+            from ipfs_datasets_py.duckdb_control.observability_cutover import (
+                EventKind,
+                try_record_observability_event,
             )
         except Exception:
             return
@@ -358,7 +361,7 @@ class AlertManager:
             "event_keys": sorted(str(k) for k in event.keys())[:32],
         }
         outcome = "error" if result.get("status") == "error" else "info"
-        record_observability_event(
+        try_record_observability_event(
             producer=ObservabilityProducer.ALERT_MANAGER,
             action=f"alert.{rule.severity}",
             actor="alert-manager",
@@ -370,6 +373,7 @@ class AlertManager:
             resource=rule.rule_id,
             raw_payload={"rule": rule.to_dict(), "result": result, "event": event},
             recorded_at=ts or None,
+            kind=EventKind.ALERT,
         )
     
     def _is_suppressed(self, rule_id: str, suppression_window: int) -> bool:

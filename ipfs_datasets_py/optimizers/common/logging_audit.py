@@ -237,13 +237,15 @@ class LoggingAuditor:
         return "\n".join(report_lines)
 
     def _route_report_to_observability_shadow(self) -> None:
-        """Project logging-audit summary into the typed shadow catalog (DQK-077)."""
+        """Project logging-audit summary into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (
                 ObservabilityProducer,
                 derive_stable_event_id,
-                record_observability_event,
+            )
+            from ipfs_datasets_py.duckdb_control.observability_cutover import (
+                try_record_observability_event,
             )
         except Exception:
             return
@@ -268,8 +270,9 @@ class LoggingAuditor:
             detail=seed,
             seed=seed,
         )
-        # Legacy report print/file remains authority; typed catalog is shadow.
-        record_observability_event(
+        # Under DQK-078 dual/db-primary, DuckDB is authority; report print is
+        # a disposable operational projection only.
+        try_record_observability_event(
             producer=ObservabilityProducer.LOGGING_AUDIT,
             action="logging_audit.report",
             actor="logging-auditor",

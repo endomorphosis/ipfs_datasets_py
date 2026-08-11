@@ -189,13 +189,15 @@ class AuditLogger:
 
     @staticmethod
     def _route_to_observability_shadow(event: Dict[str, Any]) -> None:
-        """Project a security audit event into the typed shadow catalog (DQK-077)."""
+        """Project a security audit event into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (
                 ObservabilityProducer,
                 derive_stable_event_id,
-                record_observability_event,
+            )
+            from ipfs_datasets_py.duckdb_control.observability_cutover import (
+                try_record_observability_event,
             )
         except Exception:
             return
@@ -219,7 +221,7 @@ class AuditLogger:
         if details:
             attributes["details"] = details
 
-        record_observability_event(
+        try_record_observability_event(
             producer=ObservabilityProducer.LOGIC_SECURITY_AUDIT,
             action=event_type,
             actor=user_id,
