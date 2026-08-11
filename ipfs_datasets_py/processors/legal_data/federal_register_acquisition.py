@@ -4002,7 +4002,7 @@ def _check_inventory_report_structure(
             )
 
     return {
-        "ok": True,
+        "structure_valid": True,
         "acceptance": dict(acceptance),
         "unique_document_count": acceptance.get("unique_document_count"),
         "partition_count": acceptance.get("partition_count"),
@@ -4057,6 +4057,7 @@ def check_inventory_report(
     raw = expand_inventory_payload(_as_mapping(report, "inventory_report"))
     if raw.get("mode") != MODE_LIVE:
         structural["live_authority_replayed"] = False
+        structural["ok"] = True
         return structural
 
     fresh = _fresh_live_inventory_report()
@@ -4071,6 +4072,7 @@ def check_inventory_report(
         )
     structural["live_authority_replayed"] = True
     structural["fresh_inventory_digest"] = fresh["inventory_digest"]
+    structural["ok"] = True
     return structural
 
 
