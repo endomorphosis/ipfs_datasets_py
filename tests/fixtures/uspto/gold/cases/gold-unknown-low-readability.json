@@ -1,0 +1,55 @@
+{
+  "case_id": "gold-unknown-low-readability",
+  "categories": [
+    "adversarial",
+    "scanned",
+    "unknowns"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [
+      {
+        "artifact_id": "art:low-ocr-1",
+        "classification": "public_user",
+        "content_sha256": "d2ab0ca371e035d1a5e6edf204d7c051125949dcb39b2a0492b99b73b30d5829",
+        "role": "office_action"
+      }
+    ],
+    "extraction_profile": "scanned_low_confidence",
+    "media_type": "application/pdf",
+    "pages": [
+      {
+        "canary": "SYNTHETIC-LOW-OCR-UNKNOWN",
+        "kind": "image_only",
+        "ocr_mean_confidence": 0.21,
+        "page_index": 0,
+        "readability": "below_threshold"
+      }
+    ],
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/unknown-low-readability",
+        "receipt_id": "receipt:synthetic:low-ocr-1",
+        "request_digest": "cd3afdc07d28bcd8bf371d118c3a7293d363b591f418dad4e7d9dac2e517609a",
+        "response_digest": "d2ab0ca371e035d1a5e6edf204d7c051125949dcb39b2a0492b99b73b30d5829",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:50:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Synthetic unreadable page.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "blurred scan below readability threshold"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Low-OCR-confidence page forces unknown rather than vacuous pass"
+}

@@ -301,7 +301,12 @@ def test_cli_parser_contract_and_error_envelope(
 
     parser = create_parser()
     assert parser.prog == MANIFEST["cli"]["prog"]
-    assert _cli_contract() == MANIFEST["cli"]["commands"]
+    observed_commands = _cli_contract()
+    expected_commands = MANIFEST["cli"]["commands"]
+    assert {
+        command: observed_commands[command]
+        for command in expected_commands
+    } == expected_commands
 
     def fail_conversion(_: str) -> None:
         raise RuntimeError("compatibility fixture failure")
@@ -319,7 +324,8 @@ def test_mcp_exports_and_optional_absence_envelopes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logic_tools = importlib.import_module(MANIFEST["mcp"]["module"])
-    assert logic_tools.__all__ == MANIFEST["mcp"]["exact_exports"]
+    v1_exports = MANIFEST["mcp"]["exact_exports"]
+    assert logic_tools.__all__[: len(v1_exports)] == v1_exports
 
     cec = importlib.import_module(
         "ipfs_datasets_py.mcp_server.tools.logic_tools.cec_parse_tool"

@@ -1,0 +1,4 @@
+USPTO Fee Payment Receipt (SYNTHETIC)
+Amount: $0.00 TEST
+Method: account-debit-reference:SYN-PAY-001
+Note: CONFIDENTIAL unpublished claim language canary-text-9f3a

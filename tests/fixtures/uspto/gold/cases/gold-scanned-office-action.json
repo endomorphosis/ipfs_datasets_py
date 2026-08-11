@@ -1,0 +1,62 @@
+{
+  "case_id": "gold-scanned-office-action",
+  "categories": [
+    "citations",
+    "office_action",
+    "requirements",
+    "scanned"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [
+      {
+        "artifact_id": "art:scanned-oa-1",
+        "classification": "public_user",
+        "content_sha256": "d8dc88677faebbf9dbe1309bc0c02d4843bc225969f6b7b89b4e07e93428977c",
+        "role": "office_action"
+      }
+    ],
+    "extraction_profile": "scanned_ocr",
+    "media_type": "application/pdf",
+    "page_count": 2,
+    "pages": [
+      {
+        "canary": "SYNTHETIC-SCANNED-OA-112-CLAIM1",
+        "kind": "image_only",
+        "page_index": 0,
+        "rotation_degrees": 0
+      },
+      {
+        "canary": "SYNTHETIC-SCANNED-OA-RESPONSE-PERIOD",
+        "kind": "image_only",
+        "page_index": 1,
+        "rotation_degrees": 0
+      }
+    ],
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/scanned-office-action",
+        "receipt_id": "receipt:synthetic:scanned-oa-1",
+        "request_digest": "dff874024255254dbf98fd04a39c722900365caa044a702b35a787c0dbe0af53",
+        "response_digest": "d8dc88677faebbf9dbe1309bc0c02d4843bc225969f6b7b89b4e07e93428977c",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:00:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Fully synthetic USPTO-style content.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "image-only multi-page office action; OCR path expected"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Scanned non-final office action with 112 rejection"
+}

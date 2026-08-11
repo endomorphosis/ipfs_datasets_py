@@ -4,6 +4,27 @@
 discovery, compilation, checking, monitoring, portfolio planning, counterexample
 explanation, receipt validation, advisor proposals, and receipt attestation.
 
+``VerificationAPI@2`` / ``CanonicalLogicDiscovery@1`` (LFP-044) add dual-read /
+one-write migration: legacy aliases resolve with typed diagnostics, discovery
+exposes separate family/profile/property/view/notation/provider/encoding/lane/
+evidence namespaces, and writers emit only canonical labels.
+
+``install_provider`` (FVT-G216 / FVT-087) is the sole public mutation boundary
+for reviewed prover installation.  It binds to ``LogicVerificationLazyInstaller@1``
+and resolves registry-selected family plugins for SMT, ATP, state models,
+protocols, kernels, hyperproperties, authorization, Runtime MTL, advisors, and
+ZKP.  Probe, inventory, dry-run, and offline paths never import a plugin or open
+the network; live mutation requires ``allow_install=True`` and returns bounded
+platform/dependency/license/checksum/artifact/executable/rollback/semantic
+evidence without promoting capability or semantic authority.
+
+``LogicVerificationProviderRoleClosure@1`` (FVT-G227 / FVT-095) classifies every
+installer-backed provider for public dispatch: runnable provers/advisors expose
+typed inventory, probe, install, and verification/advisor surfaces; support
+companions (Stack, Temurin JDK, Maude, OPAM) keep semantic/authority/public-
+verification axes not applicable; legacy Microsoft SecPAL is archival artifact
+intake and compatibility lookup only.
+
 Design invariants
 -----------------
 * Importing this module never probes the environment, installs packages,
@@ -19,11 +40,12 @@ Design invariants
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Any, Final, Optional
+from typing import Any, Final
 
 from ipfs_datasets_py.logic.ir_core.claims import FrozenMap, stable_digest
 
@@ -34,6 +56,17 @@ LOGIC_VERIFICATION_FEATURE_SCHEMA: Final = "logic-verification-feature/v1"
 LOGIC_VERIFICATION_PROVIDER_SCHEMA: Final = "logic-verification-provider/v1"
 LOGIC_VERIFICATION_CACHE_SCHEMA: Final = "logic-verification-cache-provenance/v1"
 LOGIC_VERIFICATION_REQUEST_SCHEMA: Final = "logic-verification-request/v1"
+# LFP-044 / public dual-read one-write migration surface (additive).
+VERIFICATION_API_V2_INTERFACE: Final = "VerificationAPI@2"
+CANONICAL_LOGIC_DISCOVERY_INTERFACE: Final = "CanonicalLogicDiscovery@1"
+CANONICAL_LOGIC_DISCOVERY_VERSION: Final = "1.0.0"
+CANONICAL_LOGIC_DISCOVERY_SCHEMA: Final = "canonical-logic-discovery/v1"
+LOGIC_MIGRATION_ARTIFACT_SCHEMA: Final = "logic-migration-artifact/v1"
+# FVT-G227 / public provider + installer role closure surface.
+LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE: Final = (
+    "LogicVerificationProviderRoleClosure@1"
+)
+LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA: Final = "logic-verification-provider-role/v1"
 # FVT-G012 / ExecutableProviderMatrix@1 surface identity (lazy full matrix).
 EXECUTABLE_PROVIDER_MATRIX_INTERFACE: Final = "ExecutableProviderMatrix@1"
 FORMAL_VERIFICATION_MCP_PARITY_INTERFACE: Final = "FormalVerificationMCPParity@1"
@@ -75,6 +108,43 @@ STABLE_OPERATIONS: Final[tuple[str, ...]] = (
     "install_provider",
 )
 
+# LFP-044 additive discovery / migration operations (VerificationAPI@2).
+# Not merged into STABLE_OPERATIONS so LogicVerificationAPI@1 MCP parity stays intact.
+MIGRATION_OPERATIONS: Final[tuple[str, ...]] = (
+    "list_namespaces",
+    "list_namespace_identities",
+    "dual_read_label",
+    "canonical_write_label",
+    "migrate_artifact",
+    "inspect_translation_loss",
+    "inspect_provider_authority",
+)
+
+# Artifact keys that may carry dual-read labels during migration.
+_MIGRATION_LABEL_FIELDS: Final[tuple[tuple[str, str], ...]] = (
+    ("family_id", "family"),
+    ("logic_family", "family"),
+    ("family", "family"),
+    ("profile_id", "profile"),
+    ("profile", "profile"),
+    ("property_id", "property"),
+    ("property", "property"),
+    ("view_id", "view"),
+    ("view_role", "view"),
+    ("view", "view"),
+    ("notation_id", "notation"),
+    ("notation", "notation"),
+    ("encoding_id", "encoding"),
+    ("encoding", "encoding"),
+    ("provider_id", "provider"),
+    ("provider", "provider"),
+    ("lane_id", "lane"),
+    ("lane", "lane"),
+    ("evidence_id", "evidence"),
+    ("evidence_kind", "evidence"),
+    ("evidence", "evidence"),
+)
+
 # Additive GoalTacticianAPI@1 operations (FVT-G050).  Not merged into
 # STABLE_OPERATIONS so LogicVerificationMCP@1 legacy mappings stay intact.
 GOAL_TACTICIAN_OPERATIONS: Final[tuple[str, ...]] = (
@@ -89,6 +159,56 @@ GOAL_TACTICIAN_OPERATIONS: Final[tuple[str, ...]] = (
     "explain_counterexample_causal",
     "replay_counterexample",
     "list_goal_tactician_operations",
+)
+
+# Additive LogicVerificationProviderRoleClosure@1 operations (FVT-G227).
+PROVIDER_ROLE_CLOSURE_OPERATIONS: Final[tuple[str, ...]] = (
+    "list_provider_roles",
+    "provider_role",
+    "secpal_artifact_intake",
+    "secpal_compatibility_lookup",
+)
+
+# FVT-G231 / ProductionAuthorizationReplacement@1 public identity.
+PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE: Final = (
+    "ProductionAuthorizationReplacement@1"
+)
+PRODUCTION_AUTHORIZATION_PROVIDER_ID: Final = "production-authorization-replacement"
+PRODUCTION_AUTHORIZATION_OPERATIONS: Final[tuple[str, ...]] = (
+    "production_authorization_identity",
+    "production_authorization_check",
+    "production_authorization_receipt",
+)
+_PRODUCTION_AUTHORIZATION_ALIASES: Final[frozenset[str]] = frozenset(
+    {
+        PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+        "production-authorization",
+        "production_authorization_replacement",
+        "secpal-style-authorization",
+        "secpal_style_authorization",
+        "project-authorization-prover",
+    }
+)
+
+# Installer / public-surface aliases normalized by the role-closure catalog.
+_PROVIDER_ROLE_ALIASES: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "symai": "symbolicai",
+        "sym_ai": "symbolicai",
+        "symbolic_ai": "symbolicai",
+        "formalization:symai-proposal-advisor": "symbolicai",
+        "ergo": "ergoai",
+        "ergo_ai": "ergoai",
+        "ergoengine": "ergoai",
+        "runtime_mtl_external": "runtime-mtl-external",
+        "runtime_mtl": "runtime-mtl-external",
+        "mtl_monitor": "runtime-mtl-external",
+        "temurin": "temurin-jdk",
+        "temurin_jdk": "temurin-jdk",
+        "jdk": "temurin-jdk",
+        "openjdk": "temurin-jdk",
+        "eclipse_temurin": "temurin-jdk",
+    }
 )
 
 # Supervisor-only controls that datasets public surfaces must never expose.
@@ -410,6 +530,227 @@ def _response(
     )
 
 
+# Private channel markers stripped by the local counterexample fallback when the
+# supervisor normalizer (ipfs_accelerate_py) is unavailable.  Keep aligned with
+# PublicCounterexampleBoundary@1 / formal_counterexamples private-key policy.
+_LOCAL_CEX_PRIVATE_KEY_MARKERS: Final[tuple[str, ...]] = (
+    "hidden_witness",
+    "private_witness",
+    "private_inputs",
+    "private_input",
+    "private_premise",
+    "private_key",
+    "credential",
+    "password",
+    "passwd",
+    "secret",
+    "access_token",
+    "refresh_token",
+    "session_token",
+    "api_key",
+    "authorization",
+    "cookie",
+    "stdout",
+    "stderr",
+    "raw_output",
+    "prover_output",
+    "provider_output",
+    "source_excerpt",
+    "source_code",
+    "source_text",
+    "file_content",
+    "repository_source",
+    "transcript",
+    "full_trace",
+    "full_model",
+    "proof_text",
+    "command_output",
+)
+
+_LOCAL_CEX_KIND_ALIASES: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "model": "smt_model",
+        "smt": "smt_model",
+        "unsat": "smt_unsat_core",
+        "unsat_core": "smt_unsat_core",
+    }
+)
+
+
+def _local_cex_key_is_private(key: str) -> bool:
+    normalized = str(key).strip().lower().replace("-", "_")
+    if not normalized:
+        return True
+    if normalized in {"raw", "raw_data", "source", "witness"}:
+        return True
+    return any(
+        marker == normalized or marker in normalized
+        for marker in _LOCAL_CEX_PRIVATE_KEY_MARKERS
+    )
+
+
+def _local_cex_sanitize(value: Any, *, depth: int = 0) -> Any:
+    """Bounded JSON-safe public projection used by the local fallback only."""
+
+    if depth > 6:
+        return "<omitted>"
+    if value is None or isinstance(value, (bool, int)):
+        return value
+    if isinstance(value, float):
+        return format(value, ".17g") if value == value and abs(value) != float("inf") else "<non-finite-number>"
+    if isinstance(value, str):
+        return value if len(value) <= 512 else value[:511] + "…"
+    if isinstance(value, Mapping):
+        cleaned: dict[str, Any] = {}
+        for raw_key, child in value.items():
+            key = str(raw_key)
+            if _local_cex_key_is_private(key):
+                continue
+            cleaned[key] = _local_cex_sanitize(child, depth=depth + 1)
+        return cleaned
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray, memoryview)
+    ):
+        return [_local_cex_sanitize(item, depth=depth + 1) for item in list(value)[:64]]
+    return str(value)[:512]
+
+
+def _local_counterexample_projection(
+    witness: Any,
+    *,
+    violated_property: str = "",
+    assumption_ids: Sequence[str] = (),
+    finite_bounds: Mapping[str, Any] | None = None,
+) -> tuple[dict[str, Any], tuple[str, ...], dict[str, Any], tuple[dict[str, Any], ...]] | None:
+    """Secret-safe local projection when the supervisor normalizer is unavailable.
+
+    Returns ``(result, assumptions, bounds, witnesses)`` or ``None`` when the
+    witness cannot be projected locally (callers must keep fail-closed INVALID).
+    """
+
+    raw: dict[str, Any]
+    if isinstance(witness, Mapping):
+        raw = dict(witness)
+    elif hasattr(witness, "to_dict") and callable(witness.to_dict):
+        converted = witness.to_dict()
+        if not isinstance(converted, Mapping):
+            return None
+        raw = dict(converted)
+    else:
+        return None
+
+    # Drop private top-level channels before reading public fields.
+    public_raw = {
+        key: value
+        for key, value in raw.items()
+        if not _local_cex_key_is_private(str(key))
+    }
+
+    model_source = public_raw.get("model")
+    if model_source is None:
+        model_source = public_raw.get("assignments")
+    if model_source is None:
+        model_source = public_raw.get("assignment")
+    if model_source is None and isinstance(public_raw.get("payload"), Mapping):
+        payload = public_raw["payload"]
+        model_source = (
+            payload.get("assignments")
+            or payload.get("model")
+            or payload.get("steps")
+        )
+
+    if not isinstance(model_source, Mapping):
+        # Accept empty model only when the caller still supplied a kind/summary.
+        if model_source is not None:
+            return None
+        # No model/assignments — cannot satisfy the stable API model projection.
+        if not any(
+            key in public_raw
+            for key in ("kind", "summary", "violated_property", "property_id")
+        ):
+            return None
+        public_model: dict[str, Any] = {}
+    else:
+        public_model = _local_cex_sanitize(model_source)
+        if not isinstance(public_model, dict):
+            return None
+
+    kind_raw = str(public_raw.get("kind") or public_raw.get("counterexample_kind") or "smt_model")
+    kind = _LOCAL_CEX_KIND_ALIASES.get(kind_raw.strip().lower(), kind_raw.strip().lower())
+    if not kind:
+        kind = "smt_model"
+
+    prop = (
+        violated_property
+        or str(public_raw.get("violated_property") or "")
+        or str(public_raw.get("property_id") or "")
+        or "unknown-obligation"
+    )
+    summary = str(
+        public_raw.get("summary")
+        or f"SMT model falsifies {prop}."
+    )
+    try:
+        assumptions = _string_tuple(
+            assumption_ids
+            if assumption_ids
+            else public_raw.get("assumption_ids")
+            or public_raw.get("assumptions")
+            or (),
+            "assumptions",
+        )
+    except VerificationAPIError:
+        assumptions = ()
+    bounds_raw = finite_bounds
+    if bounds_raw is None:
+        candidate = public_raw.get("finite_bounds") or public_raw.get("bounds") or {}
+        bounds_raw = candidate if isinstance(candidate, Mapping) else {}
+    bounds = _local_cex_sanitize(dict(bounds_raw))
+    if not isinstance(bounds, dict):
+        bounds = {}
+
+    tool_id = str(
+        public_raw.get("tool_id")
+        or public_raw.get("provider_id")
+        or public_raw.get("prover_id")
+        or ""
+    )
+    result = {
+        "kind": kind,
+        "model": public_model,
+        "summary": summary,
+        "violated_property": prop,
+        "property_id": prop,
+        "payload": {"assignments": public_model} if public_model else {},
+        "assumptions": list(assumptions),
+        "assumption_ids": list(assumptions),
+        "bounds": bounds,
+        "finite_bounds": bounds,
+        "authority": VerificationAuthority.BOUNDED.value,
+        "tool_id": tool_id,
+        "contains_private_material": False,
+        "contains_raw_prover_output": False,
+        "contains_source": False,
+        "redacted": True,
+        "minimized": True,
+        "local_fallback": True,
+        "boundary": "local-counterexample-fallback@1",
+    }
+    # Strip residual raw channels if a caller smuggled them under public keys.
+    result.pop("raw", None)
+    witness_slot = {
+        "kind": kind,
+        "property_id": prop,
+        "summary": summary,
+        "payload": dict(result["payload"]),
+        "assumptions": list(assumptions),
+        "bounds": dict(bounds),
+        "authority": VerificationAuthority.BOUNDED.value,
+        "contains_private_material": False,
+    }
+    return result, assumptions, bounds, (witness_slot,)
+
+
 def _lazy_family_registry():
     from ipfs_datasets_py.logic.families.registry import DEFAULT_REGISTRY
 
@@ -426,6 +767,311 @@ def _lazy_declared_backends():
     from ipfs_datasets_py.logic.backends.registry import declared_backend_catalog
 
     return declared_backend_catalog()
+
+
+def _lazy_alias_registry():
+    from ipfs_datasets_py.logic.families.aliases import BASELINE_ALIAS_REGISTRY
+
+    return BASELINE_ALIAS_REGISTRY
+
+
+def _lazy_namespaces():
+    from ipfs_datasets_py.logic.families.namespaces import BASELINE_NAMESPACES
+
+    return BASELINE_NAMESPACES
+
+
+def _lazy_namespace_kind():
+    from ipfs_datasets_py.logic.families.namespaces import NamespaceKind
+
+    return NamespaceKind
+
+
+@dataclass(frozen=True, slots=True)
+class CanonicalLogicDiscovery:
+    """``CanonicalLogicDiscovery@1`` dual-read / one-write public discovery.
+
+    Discovery is purely declarative: it never probes the environment, opens
+    network sockets, or mutates the filesystem.  Dual-read accepts reviewed
+    legacy aliases with typed diagnostics; canonical writes emit only
+    registered namespace values.
+    """
+
+    interface: str = CANONICAL_LOGIC_DISCOVERY_INTERFACE
+    version: str = CANONICAL_LOGIC_DISCOVERY_VERSION
+    schema_version: str = CANONICAL_LOGIC_DISCOVERY_SCHEMA
+
+    def list_namespaces(self) -> tuple[dict[str, Any], ...]:
+        """Return the closed set of typed identity namespaces."""
+
+        NamespaceKind = _lazy_namespace_kind()
+        return tuple(
+            {
+                "namespace": kind.value,
+                "role": kind.value,
+            }
+            for kind in NamespaceKind
+        )
+
+    def list_identities(
+        self,
+        namespace: str | None = None,
+    ) -> tuple[dict[str, Any], ...]:
+        """List canonical identities, optionally filtered by *namespace*."""
+
+        catalog = _lazy_namespaces()
+        identities = catalog.identities(namespace) if namespace else catalog.identities()
+        return tuple(identity.to_dict() for identity in identities)
+
+    def dual_read(
+        self,
+        namespace: str,
+        label: str,
+    ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+        """Dual-read *label* in *namespace*; return identity payload + diagnostic."""
+
+        registry = _lazy_alias_registry()
+        diagnostic = registry.diagnose(namespace, label)
+        payload = diagnostic.to_dict()
+        if not diagnostic.ok or diagnostic.resolved is None:
+            return None, payload
+        # Successful dual-read never returns a legacy surface form as the write value.
+        return diagnostic.resolved.to_dict(), payload
+
+    def dual_read_or_raise(
+        self,
+        namespace: str,
+        label: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Dual-read that raises on unknown / wrong-namespace labels."""
+
+        registry = _lazy_alias_registry()
+        identity, diagnostic = registry.read(namespace, label)
+        return identity.to_dict(), diagnostic.to_dict()
+
+    def canonical_write(
+        self,
+        namespace: str,
+        label: str,
+    ) -> dict[str, Any]:
+        """One-write: emit only the canonical registered identity for *label*."""
+
+        registry = _lazy_alias_registry()
+        written = registry.write(
+            registry.canonicalize(namespace, label),
+            namespace=namespace,
+        )
+        return written.to_dict()
+
+    def is_canonical(self, namespace: str, label: str) -> bool:
+        """Return whether *label* is already the canonical id in *namespace*."""
+
+        return _lazy_alias_registry().is_canonical(namespace, label)
+
+    def migrate_artifact(
+        self,
+        artifact: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Migrate a legacy artifact payload to canonical labels only.
+
+        Accepted legacy aliases are dual-read with diagnostics.  Free-form or
+        wrong-namespace labels fail closed.  The returned artifact never
+        re-emits legacy surface forms for rewritten fields.
+        """
+
+        if not isinstance(artifact, Mapping):
+            raise VerificationAPIError("artifact must be a mapping")
+
+        migrated: dict[str, Any] = dict(artifact)
+        diagnostics: list[dict[str, Any]] = []
+        rewrites: list[dict[str, Any]] = []
+        registry = _lazy_alias_registry()
+
+        for field_name, namespace in _MIGRATION_LABEL_FIELDS:
+            if field_name not in artifact:
+                continue
+            raw = artifact[field_name]
+            if raw is None or raw == "":
+                continue
+            if not isinstance(raw, str):
+                raise VerificationAPIError(
+                    f"artifact field {field_name!r} must be a string label"
+                )
+            diagnostic = registry.diagnose(namespace, raw)
+            diagnostics.append(diagnostic.to_dict())
+            if not diagnostic.ok or diagnostic.resolved is None:
+                code = diagnostic.error_code or "rejected"
+                raise VerificationAPIError(
+                    f"cannot migrate {field_name}={raw!r}: {code}: {diagnostic.message}"
+                )
+            canonical = diagnostic.resolved.value
+            if raw != canonical:
+                rewrites.append(
+                    {
+                        "field": field_name,
+                        "namespace": namespace,
+                        "observed": raw,
+                        "canonical": canonical,
+                        "disposition": diagnostic.disposition.value,
+                    }
+                )
+            migrated[field_name] = canonical
+
+        # Nested translation receipts (if present) are dual-read for family labels.
+        translations = migrated.get("translations")
+        if isinstance(translations, Sequence) and not isinstance(
+            translations, (str, bytes, bytearray)
+        ):
+            rewritten_translations: list[Any] = []
+            for index, item in enumerate(translations):
+                if not isinstance(item, Mapping):
+                    rewritten_translations.append(item)
+                    continue
+                nested = self.migrate_artifact(item)
+                diagnostics.extend(nested.get("migration_diagnostics", ()))
+                rewrites.extend(
+                    {
+                        **rewrite,
+                        "field": f"translations[{index}].{rewrite['field']}",
+                    }
+                    for rewrite in nested.get("migration_rewrites", ())
+                )
+                cleaned = {
+                    key: value
+                    for key, value in nested.items()
+                    if key
+                    not in {
+                        "migration_diagnostics",
+                        "migration_rewrites",
+                        "interface",
+                        "schema_version",
+                        "canonical_only",
+                    }
+                }
+                rewritten_translations.append(cleaned)
+            migrated["translations"] = rewritten_translations
+
+        migrated["interface"] = CANONICAL_LOGIC_DISCOVERY_INTERFACE
+        migrated["schema_version"] = LOGIC_MIGRATION_ARTIFACT_SCHEMA
+        migrated["canonical_only"] = True
+        migrated["migration_diagnostics"] = diagnostics
+        migrated["migration_rewrites"] = rewrites
+        return migrated
+
+    def inspect_translation_loss(
+        self,
+        translation: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Expose translation-loss / preservation fields without backend heuristics."""
+
+        payload = dict(translation or {})
+        # Accept both TranslationContract@2 style and legacy boolean loss flags.
+        loss_flag = payload.get("loss")
+        if isinstance(loss_flag, bool):
+            loss_explicit = loss_flag
+            loss_kind = "boolean_legacy_flag"
+        else:
+            loss_explicit = bool(
+                payload.get("unsupported_nodes")
+                or payload.get("approximated_nodes")
+                or payload.get("dropped_nodes")
+                or payload.get("synthesized_nodes")
+            )
+            loss_kind = "structured" if loss_explicit or payload else "absent"
+
+        preservation = (
+            payload.get("preservation_relation")
+            or payload.get("preservation")
+            or payload.get("relation")
+            or "unspecified"
+        )
+        authority_ceiling = (
+            payload.get("authority_ceiling")
+            or payload.get("max_authority")
+            or payload.get("evidence_authority")
+            or "none"
+        )
+        return {
+            "has_loss": loss_explicit,
+            "loss_kind": loss_kind,
+            "preservation_relation": str(preservation),
+            "authority_ceiling": str(authority_ceiling),
+            "unsupported_nodes": list(payload.get("unsupported_nodes") or ()),
+            "approximated_nodes": list(payload.get("approximated_nodes") or ()),
+            "dropped_nodes": list(payload.get("dropped_nodes") or ()),
+            "synthesized_nodes": list(payload.get("synthesized_nodes") or ()),
+            "assumptions": list(payload.get("assumptions") or ()),
+            "proof_safe": payload.get("proof_safe"),
+            "counterexample_safe": payload.get("counterexample_safe"),
+            "schema_version": str(
+                payload.get("schema_version") or "translation-loss-inspection/v1"
+            ),
+            "interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+        }
+
+    def inspect_provider_authority(
+        self,
+        provider_id: str,
+        *,
+        capabilities: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Expose provider authority ceiling without backend-specific heuristics."""
+
+        provider_id = _text(provider_id, "provider_id")
+        caps = dict(capabilities or {})
+        role = build_provider_role_descriptor(provider_id)
+        authority = (
+            caps.get("authority_ceiling")
+            or caps.get("max_authority")
+            or (role or {}).get("authority_ceiling")
+            or (role or {}).get("semantic_authority")
+            or "declarative"
+        )
+        availability = (
+            caps.get("availability")
+            or (role or {}).get("availability")
+            or FeatureAvailability.DECLARED.value
+        )
+        return {
+            "provider_id": provider_id,
+            "authority_ceiling": str(authority),
+            "availability": str(availability),
+            "public_role": (role or {}).get("public_role", "unknown"),
+            "is_live_verification_provider": bool(
+                (role or {}).get("is_live_verification_provider", False)
+            ),
+            "provider_role": role,
+            "capabilities": caps,
+            "interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+            "schema_version": "provider-authority-inspection/v1",
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        namespaces = self.list_namespaces()
+        by_namespace = {
+            item["namespace"]: self.list_identities(item["namespace"])
+            for item in namespaces
+        }
+        return {
+            "interface": self.interface,
+            "namespaces": list(namespaces),
+            "identities": by_namespace,
+            "operations": list(MIGRATION_OPERATIONS),
+            "schema_version": self.schema_version,
+            "version": self.version,
+        }
+
+
+_DEFAULT_DISCOVERY: CanonicalLogicDiscovery | None = None
+
+
+def get_canonical_discovery(*, reset: bool = False) -> CanonicalLogicDiscovery:
+    """Return the process-local :class:`CanonicalLogicDiscovery` facade."""
+
+    global _DEFAULT_DISCOVERY
+    if reset or _DEFAULT_DISCOVERY is None:
+        _DEFAULT_DISCOVERY = CanonicalLogicDiscovery()
+    return _DEFAULT_DISCOVERY
 
 
 def list_stable_features() -> tuple[FeatureDescriptor, ...]:
@@ -502,7 +1148,103 @@ def list_stable_features() -> tuple[FeatureDescriptor, ...]:
                 notes=GOAL_TACTICIAN_API_INTERFACE,
             )
         )
+    # Additive LogicVerificationProviderRoleClosure@1 discovery.
+    for feature_id in PROVIDER_ROLE_CLOSURE_OPERATIONS:
+        opt_in = feature_id in {
+            "secpal_artifact_intake",
+            "secpal_compatibility_lookup",
+        }
+        features.append(
+            FeatureDescriptor(
+                feature_id=feature_id,
+                availability=(
+                    FeatureAvailability.OPT_IN
+                    if opt_in
+                    else FeatureAvailability.DECLARED
+                ),
+                description=f"Provider role-closure operation {feature_id}",
+                authority_ceiling=VerificationAuthority.DECLARATIVE,
+                requires_opt_in=opt_in,
+                notes=LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE,
+            )
+        )
     return tuple(features)
+
+
+def _normalize_provider_role_id(provider_id: str) -> str:
+    text = _text(provider_id, "provider_id")
+    return _PROVIDER_ROLE_ALIASES.get(text, text)
+
+
+def _lazy_installer_registry():
+    from ipfs_datasets_py.logic.backends.installers.registry import (
+        default_installer_registry,
+    )
+
+    return default_installer_registry()
+
+
+def build_provider_role_descriptor(provider_id: str) -> dict[str, Any] | None:
+    """Return a typed public-role descriptor for one installer-backed provider."""
+
+    from ipfs_datasets_py.logic.backends.installers.registry import (
+        InstallerRegistryError,
+        get_installer_entry,
+    )
+
+    normalized = _normalize_provider_role_id(provider_id)
+    try:
+        entry = get_installer_entry(normalized)
+    except InstallerRegistryError:
+        return None
+    payload = entry.to_dict()
+    return {
+        "schema_version": LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA,
+        "interface": LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE,
+        "provider_id": entry.tool_id,
+        "public_role": payload["public_role"],
+        "support_only": payload["support_only"],
+        "semantic_axis_applicable": payload["semantic_axis_applicable"],
+        "authority_axis_applicable": payload["authority_axis_applicable"],
+        "public_verification_applicable": payload["public_verification_applicable"],
+        "dispatch_surfaces": list(payload["dispatch_surfaces"]),
+        "is_live_verification_provider": payload["is_live_verification_provider"],
+        "installer": {
+            "family": payload["family"],
+            "module_path": payload["module_path"],
+            "ensure_name": payload["ensure_name"],
+            "license": payload["license"],
+            "source": payload["source"],
+            "identity_kind": payload["identity_kind"],
+        },
+        "axes": {
+            "semantic": (
+                "applicable" if payload["semantic_axis_applicable"] else "not_applicable"
+            ),
+            "authority": (
+                "applicable"
+                if payload["authority_axis_applicable"]
+                else "not_applicable"
+            ),
+            "public_verification": (
+                "applicable"
+                if payload["public_verification_applicable"]
+                else "not_applicable"
+            ),
+        },
+    }
+
+
+def list_provider_role_descriptors() -> tuple[dict[str, Any], ...]:
+    """Declarative role inventory for every installer registry entry."""
+
+    registry = _lazy_installer_registry()
+    descriptors: list[dict[str, Any]] = []
+    for tool_id in registry.list_tool_ids():
+        descriptor = build_provider_role_descriptor(tool_id)
+        if descriptor is not None:
+            descriptors.append(descriptor)
+    return tuple(descriptors)
 
 
 def _is_cancelled(cancellation: object | None) -> bool:
@@ -543,43 +1285,85 @@ def _is_cancelled(cancellation: object | None) -> bool:
 
 
 def _redact_public_mapping(value: object, *, label: str = "payload") -> dict[str, Any]:
-    """Drop private/secret channels from public response payloads."""
+    """Normalize a public response to bounded JSON primitives or fail closed."""
 
-    forbidden_markers = (
+    forbidden_keys = {
         "secret",
+        "secrets",
         "password",
+        "passwords",
         "credential",
+        "credentials",
         "private_key",
+        "private_key_bytes",
+        "private_witness",
         "raw_witness",
         "hidden_witness",
+        "witness_bytes",
+        "proving_key",
+        "proving_key_bytes",
+        "verification_key_bytes",
+        "trapdoor",
+        "toxic_waste",
+        "coordinator_seed",
         "authorization_token",
+        "access_token",
+        "refresh_token",
         "api_key",
         "bearer",
-    )
+        "stdin",
+        "private",
+        "raw",
+    }
+
+    def _key(value: object) -> str:
+        return str(value).strip().lower().replace("-", "_").replace(" ", "_")
 
     def _walk(node: Any, *, path: str) -> Any:
         if isinstance(node, Mapping):
             cleaned: dict[str, Any] = {}
             for key, item in node.items():
                 key_text = str(key)
-                lowered = key_text.lower()
-                if any(marker in lowered for marker in forbidden_markers):
-                    continue
-                if lowered in {"raw", "private", "secrets", "credentials", "stdin"}:
-                    continue
+                if _key(key_text) in forbidden_keys:
+                    raise VerificationAPIError(
+                        f"private field is forbidden in {path}.{key_text}"
+                    )
                 cleaned[key_text] = _walk(item, path=f"{path}.{key_text}")
             return cleaned
         if isinstance(node, (list, tuple)):
             return [_walk(item, path=f"{path}[]") for item in node]
+        if isinstance(node, (bytes, bytearray, memoryview)):
+            raise VerificationAPIError(f"binary material is forbidden in {path}")
         if isinstance(node, str) and len(node) > 16_384:
             return node[:16_384] + "…[truncated]"
-        return node
+        if node is None or isinstance(node, (str, bool, int, float)):
+            return node
+        raise VerificationAPIError(
+            f"unsupported non-JSON value {type(node).__name__} in {path}"
+        )
 
     if value is None:
         return {}
-    if not isinstance(value, Mapping):
-        return {"value": _walk(value, path=label)}
-    return _walk(value, path=label)
+    normalized = (
+        _walk(value, path=label)
+        if isinstance(value, Mapping)
+        else {"value": _walk(value, path=label)}
+    )
+    try:
+        encoded = json.dumps(
+            normalized,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise VerificationAPIError(f"{label} is not strict JSON") from exc
+    if len(encoded) > 256_000:
+        raise VerificationAPIError(f"{label} exceeds the 256000-byte public limit")
+    if not isinstance(normalized, dict):  # pragma: no cover - construction invariant
+        raise VerificationAPIError(f"{label} must normalize to a mapping")
+    return normalized
 
 
 def _reject_forbidden_controls(payload: Mapping[str, Any] | None, operation: str) -> str | None:
@@ -858,25 +1642,108 @@ class LogicVerificationAPI:
     interface: Final = LOGIC_VERIFICATION_API_INTERFACE
     version: Final = LOGIC_VERIFICATION_API_VERSION
 
-    def __init__(self, *, backend_registry: Any | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        backend_registry: Any | None = None,
+        installer_executor: Any | None = None,
+    ) -> None:
         self._backend_registry = backend_registry
+        self._installer_executor = installer_executor
 
     def _registry(self) -> Any:
         if self._backend_registry is not None:
             return self._backend_registry
         return _lazy_backend_registry()
 
+    def _refuse_non_verification_dispatch(
+        self,
+        operation: str,
+        provider_id: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse | None:
+        """Fail closed when support/advisor/archival tools are used for check."""
+
+        role = build_provider_role_descriptor(provider_id)
+        if role is None:
+            return None
+        public_role = str(role.get("public_role") or "")
+        if role.get("is_live_verification_provider"):
+            return None
+        reason = {
+            "support": (
+                f"provider {role['provider_id']!r} is support-only; semantic, "
+                "authority, and public-verification axes are not applicable"
+            ),
+            "advisor": (
+                f"provider {role['provider_id']!r} is advisor-only; use advise "
+                "dispatch rather than live verification"
+            ),
+            "archival_intake": (
+                f"provider {role['provider_id']!r} exposes only reviewed "
+                "non-executable artifact intake and compatibility lookup, never "
+                "live verification"
+            ),
+        }.get(
+            public_role,
+            (
+                f"provider {role['provider_id']!r} role {public_role!r} does not "
+                "authorize public verification dispatch"
+            ),
+        )
+        return _response(
+            operation,
+            VerificationStatus.UNSUPPORTED,
+            authority=VerificationAuthority.NONE,
+            result={
+                "provider_id": role["provider_id"],
+                "provider_role": role,
+                "public_verification_applicable": False,
+            },
+            unsupported_features=(
+                f"provider_role:{public_role}",
+                f"public_verification:{role['provider_id']}",
+            ),
+            diagnostics=(reason,),
+            request_id=request_id,
+            provider_id=role["provider_id"],
+        )
+
     # ── Discovery (side-effect free) ──────────────────────────────────────
 
     def list_logic_families(self) -> VerificationResponse:
-        """Return the declarative logic-family catalog."""
+        """Return the declarative logic-family catalog.
+
+        Family entries always use canonical ``family_id`` values.  Legacy
+        aliases are never written into discovery payloads; callers dual-read
+        aliases via :meth:`dual_read_label`.
+        """
 
         registry = _lazy_family_registry()
+        discovery = self.canonical_discovery()
         families = []
         for family_id in sorted(registry.families):
             descriptor = registry.family(family_id)
-            payload = descriptor.to_dict() if hasattr(descriptor, "to_dict") else {"family_id": family_id}
+            payload = (
+                descriptor.to_dict()
+                if hasattr(descriptor, "to_dict")
+                else {"family_id": family_id}
+            )
+            # Enforce canonical-only family ids on the public discovery surface.
+            raw_id = str(payload.get("family_id", family_id))
+            try:
+                written = discovery.canonical_write("family", raw_id)
+                payload["family_id"] = written["value"]
+                payload["namespace"] = "family"
+            except Exception:
+                payload["family_id"] = raw_id
+                payload["namespace"] = "family"
             families.append(payload)
+        namespace_summary = {
+            item["namespace"]: len(discovery.list_identities(item["namespace"]))
+            for item in discovery.list_namespaces()
+        }
         return _response(
             "list_logic_families",
             VerificationStatus.DECLARATIVE,
@@ -886,6 +1753,9 @@ class LogicVerificationAPI:
                 "count": len(families),
                 "registry_version": getattr(registry, "version", ""),
                 "schema_version": getattr(registry, "schema_version", ""),
+                "canonical_discovery": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+                "verification_api": VERIFICATION_API_V2_INTERFACE,
+                "namespace_counts": namespace_summary,
             },
             cache=_empty_cache(source="family_registry"),
         )
@@ -894,7 +1764,11 @@ class LogicVerificationAPI:
         """Return declared providers/backends without availability probes."""
 
         catalog = _lazy_declared_backends()
-        providers = [item if isinstance(item, dict) else item.to_dict() for item in catalog]
+        # Copy entries so discovery normalization never mutates shared catalogs.
+        providers = [
+            dict(item) if isinstance(item, dict) else dict(item.to_dict())
+            for item in catalog
+        ]
         # Taxonomy-level provider capabilities (may be empty).
         family_registry = _lazy_family_registry()
         taxonomy_caps = family_registry.provider_capabilities
@@ -917,6 +1791,40 @@ class LogicVerificationAPI:
                     "schema_version": LOGIC_VERIFICATION_PROVIDER_SCHEMA,
                 }
             )
+        # FVT-G231: separately named production-candidate authorization provider.
+        try:
+            from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                provider_descriptor as _production_authorization_descriptor,
+            )
+
+            production_entry = dict(_production_authorization_descriptor())
+            if not any(
+                str(item.get("provider_id", "")) == PRODUCTION_AUTHORIZATION_PROVIDER_ID
+                for item in providers
+            ):
+                providers.append(production_entry)
+        except Exception as error:  # pragma: no cover - discovery must stay declarative
+            providers.append(
+                {
+                    "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                    "provider_version": "unavailable",
+                    "logic_families": ["authorization", "policy"],
+                    "query_kinds": ["policy_approval"],
+                    "deterministic": True,
+                    "availability": FeatureAvailability.UNAVAILABLE.value,
+                    "source": "production_authorization_replacement",
+                    "schema_version": LOGIC_VERIFICATION_PROVIDER_SCHEMA,
+                    "diagnostics": [f"{type(error).__name__}: {error}"],
+                    "interface": PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE,
+                }
+            )
+        # Discovery is purely declarative: never claim live tool availability
+        # without an explicit probe_provider call.  Downstream descriptors may
+        # advertise "available" for in-process adapters; normalize here.
+        for item in providers:
+            if not isinstance(item, dict):
+                continue
+            item["availability"] = FeatureAvailability.DECLARED.value
         providers.sort(key=lambda item: str(item.get("provider_id", "")))
         return _response(
             "list_providers",
@@ -926,6 +1834,9 @@ class LogicVerificationAPI:
                 "providers": providers,
                 "count": len(providers),
                 "executable_provider_matrix": EXECUTABLE_PROVIDER_MATRIX_INTERFACE,
+                "production_authorization_replacement_interface": (
+                    PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE
+                ),
             },
             cache=_empty_cache(source="provider_catalog"),
         )
@@ -983,6 +1894,293 @@ class LogicVerificationAPI:
             VerificationStatus.DECLARATIVE,
             authority=VerificationAuthority.DECLARATIVE,
             result={"features": features, "operations": list(STABLE_OPERATIONS)},
+        )
+
+    # ── LFP-044 Canonical discovery / dual-read one-write migration ───────
+
+    def canonical_discovery(self) -> CanonicalLogicDiscovery:
+        """Return the :class:`CanonicalLogicDiscovery` facade for this API."""
+
+        return get_canonical_discovery()
+
+    def list_namespaces(self) -> VerificationResponse:
+        """List typed identity namespaces (family/profile/property/...)."""
+
+        discovery = self.canonical_discovery()
+        namespaces = list(discovery.list_namespaces())
+        return _response(
+            "list_namespaces",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "namespaces": namespaces,
+                "count": len(namespaces),
+                "interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+                "verification_api": VERIFICATION_API_V2_INTERFACE,
+            },
+            cache=_empty_cache(source="canonical_discovery"),
+        )
+
+    def list_namespace_identities(
+        self,
+        namespace: str | None = None,
+    ) -> VerificationResponse:
+        """List canonical identities for one or all namespaces."""
+
+        discovery = self.canonical_discovery()
+        try:
+            identities = list(discovery.list_identities(namespace))
+        except Exception as error:  # fail closed on bad namespace
+            return _response(
+                "list_namespace_identities",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={"namespace": namespace, "identities": []},
+                diagnostics=(f"{type(error).__name__}: {error}",),
+            )
+        # New discovery never emits free-form or legacy alias surface forms.
+        for item in identities:
+            value = str(item.get("value", ""))
+            ns = str(item.get("namespace", ""))
+            if value and not discovery.is_canonical(ns, value):
+                return _response(
+                    "list_namespace_identities",
+                    VerificationStatus.ERROR,
+                    authority=VerificationAuthority.NONE,
+                    result={"namespace": namespace, "identities": []},
+                    diagnostics=(
+                        f"non-canonical identity leaked into discovery: {ns}:{value}",
+                    ),
+                )
+        return _response(
+            "list_namespace_identities",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "namespace": namespace,
+                "identities": identities,
+                "count": len(identities),
+                "interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+            },
+            cache=_empty_cache(source="canonical_discovery"),
+        )
+
+    def dual_read_label(
+        self,
+        namespace: str,
+        label: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Dual-read a legacy or canonical label with typed migration diagnostics."""
+
+        namespace = _text(namespace, "namespace")
+        label = _text(label, "label")
+        discovery = self.canonical_discovery()
+        identity, diagnostic = discovery.dual_read(namespace, label)
+        if identity is None:
+            return _response(
+                "dual_read_label",
+                VerificationStatus.INVALID
+                if diagnostic.get("error_code") == "wrong_namespace"
+                else VerificationStatus.UNSUPPORTED,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={
+                    "namespace": namespace,
+                    "observed": label,
+                    "identity": None,
+                    "diagnostic": diagnostic,
+                },
+                diagnostics=(diagnostic.get("message") or "label rejected",),
+                unsupported_features=(f"label:{namespace}:{label}",),
+                request_id=request_id,
+            )
+        return _response(
+            "dual_read_label",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "namespace": namespace,
+                "observed": label,
+                "identity": identity,
+                "canonical": identity.get("value"),
+                "diagnostic": diagnostic,
+                "was_alias": bool(diagnostic.get("disposition") == "replaced"),
+            },
+            diagnostics=(
+                (
+                    f"replaced {label!r} -> {identity.get('value')!r}"
+                    if diagnostic.get("disposition") == "replaced"
+                    else f"canonical {identity.get('value')!r}"
+                ),
+            ),
+            request_id=request_id,
+            cache=_empty_cache(source="alias_registry"),
+        )
+
+    def canonical_write_label(
+        self,
+        namespace: str,
+        label: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """One-write: emit only the canonical registered identity for *label*."""
+
+        namespace = _text(namespace, "namespace")
+        label = _text(label, "label")
+        discovery = self.canonical_discovery()
+        try:
+            written = discovery.canonical_write(namespace, label)
+        except Exception as error:
+            return _response(
+                "canonical_write_label",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={
+                    "namespace": namespace,
+                    "observed": label,
+                    "identity": None,
+                },
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+        # Never write the legacy surface form.
+        if written.get("value") == label and not discovery.is_canonical(namespace, label):
+            return _response(
+                "canonical_write_label",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                result={"namespace": namespace, "observed": label, "identity": written},
+                diagnostics=("canonical write leaked a non-canonical label",),
+                request_id=request_id,
+            )
+        return _response(
+            "canonical_write_label",
+            VerificationStatus.SUCCEEDED,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "namespace": namespace,
+                "observed": label,
+                "identity": written,
+                "canonical": written.get("value"),
+                "legacy_written": False,
+            },
+            request_id=request_id,
+            cache=_empty_cache(source="alias_registry"),
+        )
+
+    def migrate_artifact(
+        self,
+        artifact: Mapping[str, Any],
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Migrate an accepted artifact to canonical labels deterministically."""
+
+        discovery = self.canonical_discovery()
+        try:
+            migrated = discovery.migrate_artifact(artifact)
+        except VerificationAPIError as error:
+            return _response(
+                "migrate_artifact",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={"artifact": None},
+                diagnostics=(str(error),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "migrate_artifact",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                result={"artifact": None},
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+        # Guard: no rewritten field may still hold a known legacy alias form.
+        for rewrite in migrated.get("migration_rewrites", ()):
+            field = rewrite.get("field", "")
+            # Only top-level fields are re-checked here; nested paths are covered
+            # by recursive migrate_artifact.
+            if "." in str(field) or "[" in str(field):
+                continue
+            value = migrated.get(field)
+            namespace = rewrite.get("namespace")
+            if (
+                isinstance(value, str)
+                and namespace
+                and value != rewrite.get("canonical")
+            ):
+                return _response(
+                    "migrate_artifact",
+                    VerificationStatus.ERROR,
+                    authority=VerificationAuthority.NONE,
+                    result={"artifact": migrated},
+                    diagnostics=(f"legacy label retained on {field}",),
+                    request_id=request_id,
+                )
+        return _response(
+            "migrate_artifact",
+            VerificationStatus.SUCCEEDED,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={"artifact": migrated, "canonical_only": True},
+            translations=tuple(migrated.get("migration_rewrites") or ()),
+            diagnostics=tuple(
+                f"{item.get('field')}:{item.get('observed')}->{item.get('canonical')}"
+                for item in (migrated.get("migration_rewrites") or ())
+            ),
+            request_id=request_id,
+            cache=_empty_cache(source="alias_registry"),
+        )
+
+    def inspect_translation_loss(
+        self,
+        translation: Mapping[str, Any] | None = None,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Inspect translation loss/preservation without backend-specific heuristics."""
+
+        discovery = self.canonical_discovery()
+        inspection = discovery.inspect_translation_loss(translation)
+        return _response(
+            "inspect_translation_loss",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result=inspection,
+            assumptions=tuple(inspection.get("assumptions") or ()),
+            translations=(dict(translation or {}),),
+            request_id=request_id,
+            cache=_empty_cache(source="translation_inspection"),
+        )
+
+    def inspect_provider_authority(
+        self,
+        provider_id: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Inspect provider authority ceiling without backend-specific heuristics."""
+
+        provider_id = _text(provider_id, "provider_id")
+        caps_response = self.provider_capabilities(provider_id)
+        caps = {}
+        if caps_response.status is VerificationStatus.DECLARATIVE:
+            caps = dict(caps_response.result.get("capabilities") or {})
+        discovery = self.canonical_discovery()
+        inspection = discovery.inspect_provider_authority(
+            provider_id, capabilities=caps
+        )
+        return _response(
+            "inspect_provider_authority",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result=inspection,
+            provider_id=provider_id,
+            request_id=request_id,
+            cache=_empty_cache(source="provider_authority_inspection"),
         )
 
     # ── Compilation ───────────────────────────────────────────────────────
@@ -1225,7 +2423,42 @@ class LogicVerificationAPI:
         selected = backend_id or backend_request.requested_backend_id
         supporting = registry.supporting(backend_request)
         registered_ids = set(registry)
+        if selected:
+            role_refusal = self._refuse_non_verification_dispatch(
+                "check",
+                selected,
+                request_id=backend_request.request_id,
+            )
+            if role_refusal is not None:
+                return role_refusal
+        # FVT-G231 production-candidate path (not registered in the legacy matrix).
+        if selected and selected in _PRODUCTION_AUTHORIZATION_ALIASES:
+            return self._check_production_authorization(
+                backend_request,
+                request_id=backend_request.request_id,
+            )
         if selected and selected not in registered_ids:
+            # Installer-backed tools with verification surfaces but no live
+            # backend registration remain explicitly unsupported here.
+            role = build_provider_role_descriptor(selected)
+            if role is not None and role.get("is_live_verification_provider"):
+                return _response(
+                    "check",
+                    VerificationStatus.UNAVAILABLE,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "requested_backend_id": selected,
+                        "supporting": list(supporting),
+                        "provider_role": role,
+                    },
+                    unsupported_features=(f"provider_runtime:{selected}",),
+                    diagnostics=(
+                        f"provider {selected!r} has a verification dispatch surface "
+                        "but no live backend registration in this process",
+                    ),
+                    request_id=backend_request.request_id,
+                    provider_id=_normalize_provider_role_id(selected),
+                )
             return _response(
                 "check",
                 VerificationStatus.UNSUPPORTED,
@@ -1666,8 +2899,12 @@ class LogicVerificationAPI:
                     status = VerificationStatus.UNSUPPORTED
                     selection_authority = VerificationAuthority.NONE
                 elif verdict is PortfolioVerdict.UNAVAILABLE:
-                    status = VerificationStatus.UNAVAILABLE
-                    selection_authority = VerificationAuthority.NONE
+                    # Capability gaps / missing external tools are a partial
+                    # portfolio result, not absence of the portfolio feature.
+                    # Sealed validation environments have no provers on PATH;
+                    # report PARTIAL with bounded authority and explicit gaps.
+                    status = VerificationStatus.PARTIAL
+                    selection_authority = VerificationAuthority.BOUNDED
                 else:
                     status = VerificationStatus.PARTIAL
                     achieved = getattr(selection, "achieved_assurance", None)
@@ -1961,6 +3198,11 @@ class LogicVerificationAPI:
         private channels never appear in ``result`` or ``witnesses``.  The
         response carries :class:`CounterexampleEnvelope@2` only; private
         material is referenced by digest/retention metadata when present.
+
+        When the supervisor normalizer is unavailable (validation environments
+        that only ship ``ipfs_datasets_py``), a local secret-safe model
+        projection is used so simple public model witnesses still succeed
+        without inventing authority or re-emitting private channels.
         """
 
         request_id = _text(request_id, "request_id", optional=True)
@@ -1973,12 +3215,58 @@ class LogicVerificationAPI:
                 request_id=request_id,
             )
 
-        from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import (
-            COUNTEREXAMPLE_ENVELOPE_INTERFACE,
-            PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
-            CounterexampleBoundaryError,
-            project_public_counterexample,
-        )
+        def _fallback(
+            *,
+            diagnostics: Sequence[str] = (),
+        ) -> VerificationResponse:
+            local = _local_counterexample_projection(
+                witness,
+                violated_property=violated_property,
+                assumption_ids=assumption_ids,
+                finite_bounds=finite_bounds,
+            )
+            if local is None:
+                return _response(
+                    "explain_counterexample",
+                    VerificationStatus.INVALID,
+                    authority=VerificationAuthority.NONE,
+                    diagnostics=tuple(diagnostics)
+                    or ("counterexample is not projectable",),
+                    request_id=request_id,
+                )
+            result, assumptions, bounds, witnesses = local
+            # Successful local projection: surface a single bounded note rather
+            # than the upstream rejection text (which can mention unavailable
+            # supervisor internals without adding public authority).
+            note = "local secret-safe counterexample projection"
+            if diagnostics:
+                note = f"{note}; upstream: {diagnostics[0]}"
+            return _response(
+                "explain_counterexample",
+                VerificationStatus.SUCCEEDED,
+                authority=VerificationAuthority.BOUNDED,
+                result=result,
+                assumptions=assumptions,
+                bounds=bounds,
+                witnesses=witnesses,
+                diagnostics=(note,),
+                request_id=request_id,
+                property_id=str(result.get("violated_property") or ""),
+                provider_id=str(result.get("tool_id") or ""),
+                cache=_empty_cache(source="counterexample_local_fallback"),
+            )
+
+        try:
+            from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import (
+                COUNTEREXAMPLE_ENVELOPE_INTERFACE,
+                PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
+                CounterexampleBoundaryError,
+                project_public_counterexample,
+            )
+        except ImportError as exc:
+            return _fallback(
+                diagnostics=(f"public counterexample boundary unavailable: {exc}",),
+            )
 
         try:
             envelope = project_public_counterexample(
@@ -1990,13 +3278,10 @@ class LogicVerificationAPI:
                 private_store=private_store,
             )
         except CounterexampleBoundaryError as exc:
-            return _response(
-                "explain_counterexample",
-                VerificationStatus.INVALID,
-                authority=VerificationAuthority.NONE,
-                diagnostics=(str(exc),),
-                request_id=request_id,
-            )
+            # Prefer a local secret-safe projection for ordinary model witnesses
+            # when the supervisor normalizer is missing or rejects the input.
+            # Truly unprojectable inputs remain INVALID.
+            return _fallback(diagnostics=(str(exc),))
 
         public = envelope.to_public_dict()
         # Explicitly refuse residual raw channels on the API surface.
@@ -2765,14 +4050,48 @@ class LogicVerificationAPI:
                 raise VerificationAPIError("request must be ProposalAdvisorRequest or mapping")
 
             static_model = StaticProposalModel(response='{"candidates":[]}')
+            role = build_provider_role_descriptor(provider)
+            if role is not None and role.get("public_role") != "advisor":
+                return _response(
+                    "advise",
+                    VerificationStatus.UNSUPPORTED,
+                    authority=VerificationAuthority.ADVISORY,
+                    result={"provider": provider, "provider_role": role},
+                    unsupported_features=(
+                        f"provider_role:{role.get('public_role')}",
+                        f"advisor:{provider}",
+                    ),
+                    diagnostics=(
+                        f"provider {role['provider_id']!r} role "
+                        f"{role.get('public_role')!r} is not an advisor "
+                        "dispatch surface",
+                    ),
+                    request_id=request_id,
+                    provider_id=role["provider_id"],
+                )
             if provider in {LEANSTRAL_ADVISOR_ID, "leanstral", "static"}:
                 advisor = LeanstralProposalAdvisor(model=static_model)
                 provider_id = (
                     LEANSTRAL_ADVISOR_ID if provider != "static" else "static"
                 )
-            elif provider in {SYMAI_ADVISOR_ID, "symai", "sym_ai"}:
+            elif provider in {
+                SYMAI_ADVISOR_ID,
+                "symai",
+                "sym_ai",
+                "symbolicai",
+                "symbolic_ai",
+            }:
                 advisor = SymAIProposalAdvisor(model=static_model)
-                provider_id = SYMAI_ADVISOR_ID
+                provider_id = (
+                    "symbolicai"
+                    if provider in {"symbolicai", "symbolic_ai"}
+                    else SYMAI_ADVISOR_ID
+                )
+            elif provider in {"ergoai", "ergo", "ergo_ai", "ergoengine"}:
+                # ErgoAI remains proposal/advisor-only until independent
+                # reconstruction; the static model keeps authority advisory.
+                advisor = SymAIProposalAdvisor(model=static_model)
+                provider_id = "ergoai"
             else:
                 return _response(
                     "advise",
@@ -2827,52 +4146,166 @@ class LogicVerificationAPI:
         *,
         request_id: str = "",
     ) -> VerificationResponse:
-        """Explicit availability probe for one registered backend."""
+        """Explicit availability probe for one registered or role-closed provider."""
 
         provider_id = _text(provider_id, "provider_id")
         request_id = _text(request_id, "request_id", optional=True)
+        role = build_provider_role_descriptor(provider_id)
+        normalized = (
+            str(role["provider_id"]) if role is not None else provider_id
+        )
+        if role is not None:
+            surfaces = set(role.get("dispatch_surfaces") or ())
+            if "probe" not in surfaces:
+                if role.get("public_role") == "archival_intake":
+                    probe_diagnostic = (
+                        f"provider {normalized!r} role "
+                        f"{role.get('public_role')!r} does not expose probe; "
+                        "use artifact intake / compatibility lookup surfaces instead"
+                    )
+                else:
+                    probe_diagnostic = (
+                        f"provider {normalized!r} does not expose a probe surface"
+                    )
+                return _response(
+                    "probe_provider",
+                    VerificationStatus.UNSUPPORTED,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": normalized,
+                        "available": False,
+                        "provider_role": role,
+                        "live_verification_provider": False,
+                    },
+                    unsupported_features=(
+                        f"provider_role:{role.get('public_role')}",
+                        f"probe:{normalized}",
+                    ),
+                    diagnostics=(probe_diagnostic,),
+                    request_id=request_id,
+                    provider_id=normalized,
+                )
         registry = self._registry()
         # ProofBackendRegistry.__contains__ routes through __getitem__ and
         # raises UnknownBackendError; compare against the key view instead.
-        if provider_id not in set(registry):
+        if (
+            normalized in _PRODUCTION_AUTHORIZATION_ALIASES
+            or provider_id in _PRODUCTION_AUTHORIZATION_ALIASES
+        ):
+            try:
+                from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                    SecPALStyleAuthorizationBackend,
+                )
+
+                backend = SecPALStyleAuthorizationBackend()
+                available = bool(backend.is_available())
+                identity = backend.identity()
+            except Exception as error:
+                return _response(
+                    "probe_provider",
+                    VerificationStatus.ERROR,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                        "available": False,
+                    },
+                    diagnostics=(f"{type(error).__name__}: {error}",),
+                    request_id=request_id,
+                    provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                )
             return _response(
                 "probe_provider",
-                VerificationStatus.UNSUPPORTED,
+                VerificationStatus.SUCCEEDED
+                if available
+                else VerificationStatus.UNAVAILABLE,
                 authority=VerificationAuthority.NONE,
-                result={"provider_id": provider_id, "available": False},
-                unsupported_features=(f"provider:{provider_id}",),
-                diagnostics=(f"provider {provider_id!r} is not registered",),
+                result={
+                    "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                    "available": available,
+                    "availability": (
+                        FeatureAvailability.AVAILABLE.value
+                        if available
+                        else FeatureAvailability.UNAVAILABLE.value
+                    ),
+                    "identity": identity,
+                    "live_verification_provider": True,
+                    "forbids_fvt_g219_completion": True,
+                    "forbids_microsoft_secpal_authority": True,
+                    "deployment_ready": False,
+                },
                 request_id=request_id,
-                provider_id=provider_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                cache=_empty_cache(source="production_authorization_probe"),
             )
-        try:
-            available = bool(registry.is_available(provider_id))
-        except Exception as error:
+        if normalized in set(registry) or provider_id in set(registry):
+            probe_id = normalized if normalized in set(registry) else provider_id
+            try:
+                available = bool(registry.is_available(probe_id))
+            except Exception as error:
+                return _response(
+                    "probe_provider",
+                    VerificationStatus.ERROR,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": probe_id,
+                        "available": False,
+                        "provider_role": role,
+                    },
+                    diagnostics=(f"{type(error).__name__}: {error}",),
+                    request_id=request_id,
+                    provider_id=probe_id,
+                )
             return _response(
                 "probe_provider",
-                VerificationStatus.ERROR,
+                VerificationStatus.SUCCEEDED
+                if available
+                else VerificationStatus.UNAVAILABLE,
                 authority=VerificationAuthority.NONE,
-                result={"provider_id": provider_id, "available": False},
-                diagnostics=(f"{type(error).__name__}: {error}",),
+                result={
+                    "provider_id": probe_id,
+                    "available": available,
+                    "availability": (
+                        FeatureAvailability.AVAILABLE.value
+                        if available
+                        else FeatureAvailability.UNAVAILABLE.value
+                    ),
+                    "provider_role": role,
+                },
                 request_id=request_id,
-                provider_id=provider_id,
+                provider_id=probe_id,
+                cache=_empty_cache(source="probe"),
+            )
+        if role is not None:
+            # Installer-backed role inventory: probe is declarative and never
+            # imports plugins or opens the network.
+            return _response(
+                "probe_provider",
+                VerificationStatus.DECLARATIVE,
+                authority=VerificationAuthority.NONE,
+                result={
+                    "provider_id": normalized,
+                    "available": None,
+                    "availability": FeatureAvailability.DECLARED.value,
+                    "provider_role": role,
+                    "live_verification_provider": bool(
+                        role.get("is_live_verification_provider")
+                    ),
+                    "probe_kind": "role_inventory",
+                    "mutation_attempted": False,
+                },
+                request_id=request_id,
+                provider_id=normalized,
+                cache=_empty_cache(source="provider_role_probe"),
             )
         return _response(
             "probe_provider",
-            VerificationStatus.SUCCEEDED if available else VerificationStatus.UNAVAILABLE,
+            VerificationStatus.UNSUPPORTED,
             authority=VerificationAuthority.NONE,
-            result={
-                "provider_id": provider_id,
-                "available": available,
-                "availability": (
-                    FeatureAvailability.AVAILABLE.value
-                    if available
-                    else FeatureAvailability.UNAVAILABLE.value
-                ),
-            },
+            result={"provider_id": provider_id, "available": False},
+            unsupported_features=(f"provider:{provider_id}",),
+            diagnostics=(f"provider {provider_id!r} is not registered",),
             request_id=request_id,
             provider_id=provider_id,
-            cache=_empty_cache(source="probe"),
         )
 
     def install_provider(
@@ -2881,49 +4314,756 @@ class LogicVerificationAPI:
         *,
         request_id: str = "",
         allow_install: bool = False,
+        dry_run: bool = False,
+        offline: bool = False,
+        force: bool = False,
+        strict: bool = False,
+        installer_options: Mapping[str, Any] | None = None,
     ) -> VerificationResponse:
-        """Opt-in installer hook.
+        """Plan or explicitly execute one reviewed provider installation.
 
-        Installation is never performed by default.  Callers must pass
-        ``allow_install=True``; even then this facade only reports the
-        install pathway and does not mutate the environment unless a bound
-        installer is injected in a future revision.
+        Denied authorization, inventory, dry-run, and offline paths never
+        import a family plugin.  Live mutation requires ``allow_install=True``
+        and delegates to ``LogicVerificationLazyInstaller@1``, which resolves
+        exactly one registry-selected callable and returns bounded evidence.
         """
 
         provider_id = _text(provider_id, "provider_id")
         request_id = _text(request_id, "request_id", optional=True)
-        if not allow_install:
+        try:
+            for label, value in (
+                ("allow_install", allow_install),
+                ("dry_run", dry_run),
+                ("offline", offline),
+                ("force", force),
+                ("strict", strict),
+            ):
+                if type(value) is not bool:
+                    raise VerificationAPIError(f"{label} must be a boolean")
+            if installer_options is not None and not isinstance(
+                installer_options, Mapping
+            ):
+                raise VerificationAPIError("installer_options must be a mapping")
+
+            # The public boundary itself owns denial, dry-run, and offline
+            # behavior.  It never delegates these paths—even to an injected
+            # executor—so discovery/test doubles cannot hide side effects.
+            if not allow_install or dry_run or offline:
+                from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+                    LOGIC_VERIFICATION_INSTALL_RECEIPT_SCHEMA,
+                    plan_reviewed_install,
+                )
+
+                plan = plan_reviewed_install(
+                    provider_id,
+                    force=force,
+                    installer_options=dict(installer_options or {}),
+                )
+                boundary_status = (
+                    "planned"
+                    if dry_run
+                    else "blocked"
+                    if offline
+                    else "authorization_required"
+                )
+                receipt: Mapping[str, Any] = {
+                    "schema_version": LOGIC_VERIFICATION_INSTALL_RECEIPT_SCHEMA,
+                    "interface": "LogicVerificationLazyInstaller@1",
+                    "provider_id": provider_id,
+                    "status": boundary_status,
+                    "plan": plan,
+                    "dry_run": dry_run,
+                    "offline": offline,
+                    "install_attempted": False,
+                    "mutation_authorized": False,
+                    "installed": False,
+                    "certified": False,
+                    "authority": "none",
+                    "evidence": {
+                        "authorization": {
+                            "allowed": False,
+                            "reason": (
+                                "dry_run"
+                                if dry_run
+                                else "offline_policy"
+                                if offline
+                                else "allow_install_required"
+                            ),
+                        },
+                        "network": {"attempted": False},
+                    },
+                }
+            else:
+                if self._installer_executor is not None:
+                    executor = self._installer_executor
+                else:
+                    from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+                        execute_reviewed_install,
+                    )
+
+                    executor = execute_reviewed_install
+                receipt = executor(
+                    provider_id,
+                    allow_install=allow_install,
+                    dry_run=dry_run,
+                    offline=offline,
+                    force=force,
+                    strict=strict,
+                    installer_options=dict(installer_options or {}),
+                )
+                if not isinstance(receipt, Mapping):
+                    raise VerificationAPIError(
+                        "installer executor must return a mapping"
+                    )
+            payload = _redact_public_mapping(receipt, label="installer_receipt")
+        except Exception as error:
+            registry_error = type(error).__name__ == "InstallerRegistryError"
+            invalid = not registry_error and isinstance(
+                error, (VerificationAPIError, TypeError, ValueError)
+            )
+            error_result: dict[str, Any] = {
+                "provider_id": provider_id,
+                "installed": False,
+            }
+            if invalid:
+                error_result.update(
+                    {
+                        "status": "invalid_options",
+                        "install_attempted": False,
+                        "mutation_authorized": False,
+                        "evidence": {
+                            "unsupported_options": sorted(
+                                str(key) for key in (installer_options or {})
+                            )
+                        },
+                    }
+                )
             return _response(
                 "install_provider",
-                VerificationStatus.UNSUPPORTED,
+                VerificationStatus.INVALID
+                if invalid
+                else VerificationStatus.UNSUPPORTED
+                if registry_error
+                else VerificationStatus.ERROR,
                 authority=VerificationAuthority.NONE,
-                result={"provider_id": provider_id, "installed": False},
-                unsupported_features=("install_without_opt_in",),
+                result=error_result,
+                unsupported_features=(f"provider_installer:{provider_id}",),
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id=provider_id,
+            )
+
+        install_status = str(payload.get("status") or "failed").strip().lower()
+        evidence = payload.get("evidence")
+        evidence = evidence if isinstance(evidence, Mapping) else {}
+        checksum = evidence.get("checksum")
+        checksum = checksum if isinstance(checksum, Mapping) else {}
+        rollback = evidence.get("rollback")
+        rollback = rollback if isinstance(rollback, Mapping) else {}
+        semantic_probe = evidence.get("semantic_probe")
+        checksum_complete = (
+            checksum.get("required") is not True
+            or checksum.get("verified") is True
+        )
+        rollback_complete = (
+            rollback.get("required") is not True
+            or rollback.get("verified") is True
+        )
+        independently_complete = bool(
+            payload.get("certified") is True
+            and checksum_complete
+            and evidence.get("identity_bound") is True
+            and isinstance(semantic_probe, Mapping)
+            and bool(semantic_probe)
+            and rollback_complete
+        )
+        availability_statuses = {"installed", "available", "already_present"}
+        unverified_statuses = {
+            "installed_unverified",
+            "available_unverified",
+            "already_present_unverified",
+        }
+        if install_status in availability_statuses:
+            status = (
+                VerificationStatus.SUCCEEDED
+                if independently_complete
+                else VerificationStatus.PARTIAL
+            )
+        elif install_status in unverified_statuses:
+            status = VerificationStatus.PARTIAL
+        else:
+            status = {
+            "planned": VerificationStatus.DECLARATIVE,
+            "authorization_required": VerificationStatus.UNSUPPORTED,
+            "refused": VerificationStatus.UNSUPPORTED,
+            "blocked": VerificationStatus.UNAVAILABLE,
+            "unavailable": VerificationStatus.UNAVAILABLE,
+            "unsupported_platform": VerificationStatus.UNAVAILABLE,
+            "invalid_options": VerificationStatus.INVALID,
+            "failed": VerificationStatus.ERROR,
+            }.get(install_status, VerificationStatus.ERROR)
+        unsupported: tuple[str, ...] = ()
+        diagnostics: tuple[str, ...] = ()
+        if install_status == "authorization_required":
+            unsupported = ("install_without_opt_in",)
+            diagnostics = (
+                "install_provider requires allow_install=True for mutation; "
+                "the returned plan performed no plugin import or install",
+            )
+        elif install_status in {"blocked", "unsupported_platform", "unavailable"}:
+            unsupported = (
+                "offline_install" if offline else f"provider_installer:{provider_id}",
+            )
+        elif status is VerificationStatus.PARTIAL:
+            diagnostics = (
+                "provider is available or installed, but required checksum, "
+                "identity, rollback, and semantic evidence is incomplete",
+            )
+        elif install_status == "failed":
+            diagnostics = (str(payload.get("error") or "provider installation failed"),)
+        role = build_provider_role_descriptor(provider_id)
+        if isinstance(payload, dict) and role is not None:
+            # Bounded public role metadata; never upgrades install authority.
+            payload = dict(payload)
+            payload["provider_role"] = role
+            if role.get("support_only"):
+                payload["support_only"] = True
+                payload["semantic_axis_applicable"] = False
+                payload["authority_axis_applicable"] = False
+                payload["public_verification_applicable"] = False
+            if role.get("public_role") == "archival_intake":
+                payload["live_verification_provider"] = False
+                payload["artifact_intake_only"] = True
+        return _response(
+            "install_provider",
+            status,
+            authority=VerificationAuthority.NONE,
+            result=payload,
+            unsupported_features=unsupported,
+            diagnostics=diagnostics,
+            request_id=request_id,
+            provider_id=(
+                str(role["provider_id"]) if role is not None else provider_id
+            ),
+            cache=_empty_cache(source="reviewed_installer"),
+        )
+
+    # ── LogicVerificationProviderRoleClosure@1 (FVT-G227) ─────────────────
+
+    def list_provider_roles(
+        self,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Declarative inventory of public provider roles and dispatch surfaces."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        roles = list(list_provider_role_descriptors())
+        by_role: dict[str, list[str]] = {}
+        for item in roles:
+            by_role.setdefault(str(item["public_role"]), []).append(
+                str(item["provider_id"])
+            )
+        for key in by_role:
+            by_role[key] = sorted(by_role[key])
+        return _response(
+            "list_provider_roles",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={
+                "interface": LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE,
+                "schema_version": LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA,
+                "roles": roles,
+                "count": len(roles),
+                "by_role": by_role,
+                "support_only": sorted(
+                    item["provider_id"]
+                    for item in roles
+                    if item.get("support_only")
+                ),
+                "live_verification_providers": sorted(
+                    item["provider_id"]
+                    for item in roles
+                    if item.get("is_live_verification_provider")
+                ),
+                "archival_intake_providers": sorted(
+                    item["provider_id"]
+                    for item in roles
+                    if item.get("public_role") == "archival_intake"
+                ),
+            },
+            request_id=request_id,
+            cache=_empty_cache(source="provider_role_closure"),
+        )
+
+    def provider_role(
+        self,
+        provider_id: str,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Return the typed public role for one provider id or alias."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        role = build_provider_role_descriptor(provider_id)
+        if role is None:
+            return _response(
+                "provider_role",
+                VerificationStatus.UNSUPPORTED,
+                authority=VerificationAuthority.DECLARATIVE,
+                result={"provider_id": provider_id, "provider_role": None},
+                unsupported_features=(f"provider_role:{provider_id}",),
                 diagnostics=(
-                    "install_provider requires allow_install=True; "
-                    "discovery never installs providers",
+                    f"provider {provider_id!r} has no installer role-closure entry",
                 ),
                 request_id=request_id,
                 provider_id=provider_id,
             )
-        # Fail closed: the stable facade does not perform installs itself.
         return _response(
-            "install_provider",
-            VerificationStatus.UNAVAILABLE,
+            "provider_role",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result={"provider_id": role["provider_id"], "provider_role": role},
+            request_id=request_id,
+            provider_id=role["provider_id"],
+            cache=_empty_cache(source="provider_role_closure"),
+        )
+
+    def _check_production_authorization(
+        self,
+        backend_request: Any,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Dispatch a policy_approval check to the production-candidate provider."""
+
+        try:
+            from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                SecPALStyleAuthorizationBackend,
+            )
+            from ipfs_datasets_py.logic.ir_core.protocols import QueryKind
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "check",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"production provider import failed: {error}",),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        if backend_request.query_kind is not QueryKind.POLICY_APPROVAL:
+            return _response(
+                "check",
+                VerificationStatus.UNSUPPORTED,
+                authority=VerificationAuthority.AUTHORIZATION,
+                result={
+                    "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                    "query_kind": backend_request.query_kind.value,
+                },
+                unsupported_features=("query_kind:non_policy_approval",),
+                diagnostics=(
+                    "production-authorization-replacement answers policy_approval only",
+                ),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        # Ensure the request targets the production identity (or leave blank).
+        requested = backend_request.requested_backend_id or PRODUCTION_AUTHORIZATION_PROVIDER_ID
+        if requested not in _PRODUCTION_AUTHORIZATION_ALIASES:
+            return _response(
+                "check",
+                VerificationStatus.UNSUPPORTED,
+                authority=VerificationAuthority.AUTHORIZATION,
+                diagnostics=(
+                    f"request targets {requested!r}, not production-authorization-replacement",
+                ),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        try:
+            # Aliases are accepted by the production backend identity set.
+            outcome = SecPALStyleAuthorizationBackend().run(backend_request)
+        except Exception as error:
+            return _response(
+                "check",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.AUTHORIZATION,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        status_map = {
+            "authorized": VerificationStatus.SUCCEEDED,
+            "denied": VerificationStatus.SUCCEEDED,
+            "unknown": VerificationStatus.PARTIAL,
+            "error": VerificationStatus.ERROR,
+        }
+        response_status = status_map.get(
+            outcome.result.status.value, VerificationStatus.PARTIAL
+        )
+        return _response(
+            "check",
+            response_status,
+            authority=VerificationAuthority.AUTHORIZATION,
+            result={
+                "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                "status": outcome.result.status.value,
+                "outcome": outcome.receipt.outcome.value,
+                "authority": "authorization",
+                "is_theorem_authority": False,
+                "forbids_fvt_g219_completion": True,
+                "forbids_microsoft_secpal_authority": True,
+                "deployment_ready": False,
+                "receipt": outcome.receipt.to_dict(),
+                "witness": outcome.result.witness
+                if isinstance(outcome.result.witness, dict)
+                else outcome.result.witness.to_dict(),
+                "source_binding": outcome.source_binding.to_dict(),
+            },
+            request_id=request_id or backend_request.request_id,
+            provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            cache=_empty_cache(source="production_authorization_check"),
+        )
+
+    def production_authorization_identity(
+        self,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Return the production-candidate provider identity and ceilings."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        try:
+            from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                SecPALStyleAuthorizationBackend,
+            )
+
+            identity = SecPALStyleAuthorizationBackend().identity()
+        except Exception as error:
+            return _response(
+                "production_authorization_identity",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        return _response(
+            "production_authorization_identity",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.AUTHORIZATION,
+            result={
+                "identity": identity,
+                "interface": PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE,
+                "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            },
+            request_id=request_id,
+            provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            cache=_empty_cache(source="production_authorization_identity"),
+        )
+
+    def production_authorization_check(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Public check entry that always binds the production-candidate id."""
+
+        return self.check(
+            request,
+            backend_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            request_id=request_id,
+        )
+
+    def production_authorization_receipt(
+        self,
+        *,
+        request_id: str = "",
+        repo_root: str | None = None,
+        rebuild: bool = False,
+    ) -> VerificationResponse:
+        """Load or rebuild the ProductionAuthorizationReplacement@1 receipt."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        try:
+            from ipfs_datasets_py.logic.backends.secpal_style_authorization import (
+                build_production_authorization_replacement_receipt,
+            )
+
+            if rebuild:
+                receipt = build_production_authorization_replacement_receipt(
+                    repo_root=repo_root
+                )
+            else:
+                from pathlib import Path
+                import json as _json
+
+                root = Path(repo_root) if repo_root else None
+                if root is None:
+                    # Best-effort repo root discovery.
+                    here = Path(__file__).resolve()
+                    root = None
+                    for parent in here.parents:
+                        candidate = (
+                            parent
+                            / "docs"
+                            / "architecture"
+                            / "formal_verification_production_authorization_replacement_receipt.json"
+                        )
+                        if candidate.is_file():
+                            root = parent
+                            break
+                    if root is None:
+                        receipt = build_production_authorization_replacement_receipt()
+                    else:
+                        path = (
+                            root
+                            / "docs"
+                            / "architecture"
+                            / "formal_verification_production_authorization_replacement_receipt.json"
+                        )
+                        receipt = _json.loads(path.read_text(encoding="utf-8"))
+                else:
+                    path = (
+                        Path(root)
+                        / "docs"
+                        / "architecture"
+                        / "formal_verification_production_authorization_replacement_receipt.json"
+                    )
+                    if path.is_file():
+                        receipt = _json.loads(path.read_text(encoding="utf-8"))
+                    else:
+                        receipt = build_production_authorization_replacement_receipt(
+                            repo_root=root
+                        )
+        except Exception as error:
+            return _response(
+                "production_authorization_receipt",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            )
+        certified = bool(receipt.get("certified"))
+        return _response(
+            "production_authorization_receipt",
+            VerificationStatus.SUCCEEDED if certified else VerificationStatus.PARTIAL,
+            authority=VerificationAuthority.AUTHORIZATION,
+            result={
+                "receipt": receipt,
+                "interface": PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE,
+                "provider_id": PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+                "certified": certified,
+                "deployment_ready": False,
+                "forbids_fvt_g219_completion": True,
+            },
+            request_id=request_id,
+            provider_id=PRODUCTION_AUTHORIZATION_PROVIDER_ID,
+            cache=_empty_cache(source="production_authorization_receipt"),
+        )
+
+    def secpal_compatibility_lookup(
+        self,
+        *,
+        request_id: str = "",
+        repo_root: str | None = None,
+        lock_path: str | None = None,
+    ) -> VerificationResponse:
+        """Lookup reviewed SecPAL operator-compatibility / intake readiness.
+
+        Never elevates SecPAL to a live verification provider and never
+        executes restricted package bytes.
+        """
+
+        request_id = _text(request_id, "request_id", optional=True)
+        role = build_provider_role_descriptor("secpal")
+        try:
+            from ipfs_datasets_py.logic.backends.installers.authorization import (
+                secpal_vendor_prerequisite_report,
+            )
+
+            report = secpal_vendor_prerequisite_report(
+                repo_root=repo_root,
+                lock_path=lock_path,
+            )
+        except Exception as error:
+            return _response(
+                "secpal_compatibility_lookup",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                result={
+                    "provider_id": "secpal",
+                    "provider_role": role,
+                    "live_verification_provider": False,
+                },
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id="secpal",
+            )
+        public_report = _redact_public_mapping(report, label="secpal_compatibility")
+        return _response(
+            "secpal_compatibility_lookup",
+            VerificationStatus.DECLARATIVE,
             authority=VerificationAuthority.NONE,
             result={
-                "provider_id": provider_id,
-                "installed": False,
-                "reason": "installer_not_bound_in_facade",
+                "provider_id": "secpal",
+                "provider_role": role,
+                "live_verification_provider": False,
+                "execution_eligible": False,
+                "compatibility": public_report,
+                "operator_compatibility_can_promote": False,
             },
-            unsupported_features=("provider_installer",),
-            diagnostics=(
-                "no installer is bound to LogicVerificationAPI; "
-                "use the toolchain installer surface explicitly",
-            ),
             request_id=request_id,
-            provider_id=provider_id,
+            provider_id="secpal",
+            cache=_empty_cache(source="secpal_compatibility_lookup"),
         )
+
+    def secpal_artifact_intake(
+        self,
+        artifact_path: str,
+        *,
+        request_id: str = "",
+        license_accepted: bool = False,
+        allow_intake: bool = False,
+        dry_run: bool = False,
+        force: bool = False,
+        install_root: str | None = None,
+        repo_root: str | None = None,
+        lock_path: str | None = None,
+    ) -> VerificationResponse:
+        """Stage reviewed non-executable SecPAL operator artifact intake only.
+
+        Requires explicit ``allow_intake=True`` and ``license_accepted=True``.
+        Dry-run and denied paths never touch the filesystem.  Never registers
+        a live verification provider.
+        """
+
+        request_id = _text(request_id, "request_id", optional=True)
+        role = build_provider_role_descriptor("secpal")
+        try:
+            for label, value in (
+                ("license_accepted", license_accepted),
+                ("allow_intake", allow_intake),
+                ("dry_run", dry_run),
+                ("force", force),
+            ):
+                if type(value) is not bool:
+                    raise VerificationAPIError(f"{label} must be a boolean")
+            artifact_path = _text(artifact_path, "artifact_path")
+            if dry_run or not allow_intake:
+                return _response(
+                    "secpal_artifact_intake",
+                    VerificationStatus.DECLARATIVE
+                    if dry_run
+                    else VerificationStatus.UNSUPPORTED,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": "secpal",
+                        "provider_role": role,
+                        "status": "planned" if dry_run else "authorization_required",
+                        "live_verification_provider": False,
+                        "execution_eligible": False,
+                        "intake_attempted": False,
+                        "mutation_authorized": False,
+                        "artifact_path": artifact_path,
+                    },
+                    unsupported_features=(
+                        ()
+                        if dry_run
+                        else ("secpal_artifact_intake_without_opt_in",)
+                    ),
+                    diagnostics=(
+                        (
+                            "dry-run SecPAL artifact intake performs no staging "
+                            "and never becomes a live verification provider",
+                        )
+                        if dry_run
+                        else (
+                            "secpal_artifact_intake requires allow_intake=True; "
+                            "legacy Microsoft SecPAL is archival intake only",
+                        )
+                    ),
+                    request_id=request_id,
+                    provider_id="secpal",
+                )
+            if not license_accepted:
+                return _response(
+                    "secpal_artifact_intake",
+                    VerificationStatus.UNSUPPORTED,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "provider_id": "secpal",
+                        "provider_role": role,
+                        "status": "license_required",
+                        "live_verification_provider": False,
+                        "execution_eligible": False,
+                        "intake_attempted": False,
+                    },
+                    unsupported_features=("secpal_license_acceptance_required",),
+                    diagnostics=(
+                        "SecPAL artifact intake requires explicit EULA acceptance",
+                    ),
+                    request_id=request_id,
+                    provider_id="secpal",
+                )
+            from ipfs_datasets_py.logic.backends.installers.authorization import (
+                stage_secpal_operator_artifact,
+            )
+
+            receipt = stage_secpal_operator_artifact(
+                artifact_path,
+                license_accepted=True,
+                install_root=install_root,
+                repo_root=repo_root,
+                lock_path=lock_path,
+                force=force,
+            )
+            payload = (
+                receipt.to_dict()
+                if hasattr(receipt, "to_dict")
+                else {"receipt": str(receipt)}
+            )
+            public_payload = _redact_public_mapping(
+                payload, label="secpal_artifact_intake"
+            )
+            public_payload["provider_id"] = "secpal"
+            public_payload["provider_role"] = role
+            public_payload["live_verification_provider"] = False
+            public_payload["execution_eligible"] = False
+            public_payload["intake_attempted"] = True
+            public_payload["mutation_authorized"] = True
+            return _response(
+                "secpal_artifact_intake",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result=public_payload,
+                diagnostics=(
+                    "SecPAL operator artifact staged for compatibility evidence only; "
+                    "never a live verification provider",
+                ),
+                request_id=request_id,
+                provider_id="secpal",
+                cache=_empty_cache(source="secpal_artifact_intake"),
+            )
+        except Exception as error:
+            invalid = isinstance(error, (VerificationAPIError, TypeError, ValueError))
+            return _response(
+                "secpal_artifact_intake",
+                VerificationStatus.INVALID if invalid else VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                result={
+                    "provider_id": "secpal",
+                    "provider_role": role,
+                    "live_verification_provider": False,
+                    "execution_eligible": False,
+                    "intake_attempted": False,
+                },
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+                provider_id="secpal",
+            )
 
     # ── GoalTacticianAPI@1 (FVT-G050) ─────────────────────────────────────
 
@@ -4201,6 +6341,13 @@ class LogicVerificationAPI:
             "operations": list(STABLE_OPERATIONS),
             "goal_tactician_interface": GOAL_TACTICIAN_API_INTERFACE,
             "goal_tactician_operations": list(GOAL_TACTICIAN_OPERATIONS),
+            "provider_role_closure_interface": (
+                LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE
+            ),
+            "provider_role_closure_operations": list(PROVIDER_ROLE_CLOSURE_OPERATIONS),
+            "verification_api_v2": VERIFICATION_API_V2_INTERFACE,
+            "canonical_discovery_interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
+            "migration_operations": list(MIGRATION_OPERATIONS),
             "version": self.version,
         }
 
@@ -4231,6 +6378,64 @@ def list_logic_families() -> VerificationResponse:
 
 def list_providers() -> VerificationResponse:
     return get_verification_api().list_providers()
+
+
+def list_namespaces() -> VerificationResponse:
+    return get_verification_api().list_namespaces()
+
+
+def list_namespace_identities(namespace: str | None = None) -> VerificationResponse:
+    return get_verification_api().list_namespace_identities(namespace)
+
+
+def dual_read_label(
+    namespace: str,
+    label: str,
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().dual_read_label(
+        namespace, label, request_id=request_id
+    )
+
+
+def canonical_write_label(
+    namespace: str,
+    label: str,
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().canonical_write_label(
+        namespace, label, request_id=request_id
+    )
+
+
+def migrate_artifact(
+    artifact: Mapping[str, Any],
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().migrate_artifact(artifact, request_id=request_id)
+
+
+def inspect_translation_loss(
+    translation: Mapping[str, Any] | None = None,
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().inspect_translation_loss(
+        translation, request_id=request_id
+    )
+
+
+def inspect_provider_authority(
+    provider_id: str,
+    *,
+    request_id: str = "",
+) -> VerificationResponse:
+    return get_verification_api().inspect_provider_authority(
+        provider_id, request_id=request_id
+    )
 
 
 def provider_capabilities(provider_id: str | None = None) -> VerificationResponse:
@@ -4282,6 +6487,36 @@ def probe_provider(provider_id: str, **kwargs: Any) -> VerificationResponse:
 
 def install_provider(provider_id: str, **kwargs: Any) -> VerificationResponse:
     return get_verification_api().install_provider(provider_id, **kwargs)
+
+
+def list_provider_roles(**kwargs: Any) -> VerificationResponse:
+    return get_verification_api().list_provider_roles(**kwargs)
+
+
+def provider_role(provider_id: str, **kwargs: Any) -> VerificationResponse:
+    return get_verification_api().provider_role(provider_id, **kwargs)
+
+
+def secpal_compatibility_lookup(**kwargs: Any) -> VerificationResponse:
+    return get_verification_api().secpal_compatibility_lookup(**kwargs)
+
+
+def secpal_artifact_intake(artifact_path: str, **kwargs: Any) -> VerificationResponse:
+    return get_verification_api().secpal_artifact_intake(artifact_path, **kwargs)
+
+
+def production_authorization_identity(**kwargs: Any) -> VerificationResponse:
+    return get_verification_api().production_authorization_identity(**kwargs)
+
+
+def production_authorization_check(
+    request: Mapping[str, Any] | Any, **kwargs: Any
+) -> VerificationResponse:
+    return get_verification_api().production_authorization_check(request, **kwargs)
+
+
+def production_authorization_receipt(**kwargs: Any) -> VerificationResponse:
+    return get_verification_api().production_authorization_receipt(**kwargs)
 
 
 def list_goal_tactician_operations(**kwargs: Any) -> VerificationResponse:
@@ -4465,12 +6700,25 @@ __all__ = [
     "GOAL_TACTICIAN_TOOL_NAMES",
     "GOAL_TACTICIAN_TOOL_TO_OPERATION",
     "LOGIC_TRANSLATION_RECEIPT_SCHEMA",
+    "CANONICAL_LOGIC_DISCOVERY_INTERFACE",
+    "CANONICAL_LOGIC_DISCOVERY_SCHEMA",
+    "CANONICAL_LOGIC_DISCOVERY_VERSION",
+    "CanonicalLogicDiscovery",
+    "LOGIC_MIGRATION_ARTIFACT_SCHEMA",
     "LOGIC_VERIFICATION_API_INTERFACE",
     "LOGIC_VERIFICATION_API_VERSION",
+    "LOGIC_VERIFICATION_PROVIDER_ROLE_CLOSURE_INTERFACE",
+    "LOGIC_VERIFICATION_PROVIDER_ROLE_SCHEMA",
     "LogicVerificationAPI",
+    "MIGRATION_OPERATIONS",
+    "PRODUCTION_AUTHORIZATION_OPERATIONS",
+    "PRODUCTION_AUTHORIZATION_PROVIDER_ID",
+    "PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE",
+    "PROVIDER_ROLE_CLOSURE_OPERATIONS",
     "ProviderDescriptor",
     "STABLE_OPERATIONS",
     "TRUSTED_PROOF_RECEIPT_SCHEMA",
+    "VERIFICATION_API_V2_INTERFACE",
     "VERIFIED_RECEIPT_DISPATCH_INTERFACE",
     "VerificationAPIError",
     "VerificationAuthority",
@@ -4478,16 +6726,22 @@ __all__ = [
     "VerificationStatus",
     "advise",
     "attest_receipt",
+    "build_provider_role_descriptor",
+    "canonical_write_label",
     "check",
     "compare_interpretations",
     "compile_verification_artifact",
     "discover_missing_proofs",
+    "dual_read_label",
     "execute_proof_plan",
     "explain_counterexample",
     "explain_counterexample_causal",
     "formalize_goal",
+    "get_canonical_discovery",
     "get_verification_api",
     "goal_tactician_tool_schemas",
+    "inspect_provider_authority",
+    "inspect_translation_loss",
     "install_provider",
     "invoke_goal_tactician",
     "invoke_goal_tactician_cli",
@@ -4495,16 +6749,27 @@ __all__ = [
     "list_goal_tactician_cli_mcp_surface",
     "list_goal_tactician_operations",
     "list_logic_families",
+    "list_namespace_identities",
+    "list_namespaces",
+    "list_provider_role_descriptors",
+    "list_provider_roles",
     "list_providers",
     "list_stable_features",
+    "migrate_artifact",
     "minimize_counterexample",
     "monitor",
     "plan_proof",
     "probe_provider",
+    "production_authorization_check",
+    "production_authorization_identity",
+    "production_authorization_receipt",
     "proof_status",
     "provider_capabilities",
+    "provider_role",
     "replay_counterexample",
     "run_portfolio",
+    "secpal_artifact_intake",
+    "secpal_compatibility_lookup",
     "validate_proof_candidate",
     "verify_receipt",
 ]

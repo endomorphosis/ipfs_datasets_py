@@ -14,9 +14,12 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from collections.abc import Mapping, Sequence
 from typing import Any, Final
+
+import anyio
 
 logger = logging.getLogger(__name__)
 
@@ -277,6 +280,9 @@ TOOL_SCHEMAS: Final[dict[str, dict[str, Any]]] = {
             "properties": {
                 "provider_id": {"type": "string"},
                 "allow_install": {"type": "boolean", "default": False},
+                "dry_run": {"type": "boolean", "default": False},
+                "offline": {"type": "boolean", "default": False},
+                "force": {"type": "boolean", "default": False},
                 "request_id": {"type": "string"},
             },
         },
@@ -423,6 +429,19 @@ def _envelope_from_response(response: Any, *, tool: str) -> dict[str, Any]:
     out["mcp_interface"] = LOGIC_VERIFICATION_MCP_INTERFACE
     out["mcp_schema_version"] = LOGIC_VERIFICATION_MCP_SCHEMA
     out["python_operation"] = TOOL_TO_OPERATION.get(tool, tool)
+    try:
+        encoded = json.dumps(
+            out,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise ValueError("MCP response is not strict JSON") from exc
+    if len(encoded) > MAX_JSON_BYTES:
+        raise ValueError(
+            f"MCP response exceeds max JSON size of {MAX_JSON_BYTES} bytes"
+        )
     return out
 
 
@@ -436,7 +455,7 @@ def _error_envelope(
 ) -> dict[str, Any]:
     """Stable secret-safe error envelope when the facade cannot be reached."""
 
-    return {
+    payload = {
         "success": False,
         "status": status,
         "authority": "none",
@@ -463,6 +482,20 @@ def _error_envelope(
         "error_type": error_type,
         **{key: _bound_value(value) for key, value in extra.items()},
     }
+    bounded = _bound_value(payload)
+    if not isinstance(bounded, dict) or _estimate_json_bytes(bounded) > MAX_JSON_BYTES:
+        return {
+            "success": False,
+            "status": "error",
+            "authority": "none",
+            "operation": TOOL_TO_OPERATION.get(tool, tool),
+            "result": {},
+            "diagnostics": ["error envelope exceeded public output bound"],
+            "tool": tool,
+            "mcp_interface": LOGIC_VERIFICATION_MCP_INTERFACE,
+            "mcp_schema_version": LOGIC_VERIFICATION_MCP_SCHEMA,
+        }
+    return bounded
 
 
 def _run_facade(tool: str, call) -> dict[str, Any]:
@@ -896,9 +929,26 @@ async def verification_probe_provider(
 async def verification_install_provider(
     provider_id: str,
     allow_install: bool = False,
+    dry_run: bool = False,
+    offline: bool = False,
+    force: bool = False,
     request_id: str = "",
 ) -> dict[str, Any]:
-    """Opt-in install of a provider (requires allow_install=true)."""
+    """Install behind both request consent and an operator-owned host gate."""
+
+    for label, value in (
+        ("allow_install", allow_install),
+        ("dry_run", dry_run),
+        ("offline", offline),
+        ("force", force),
+    ):
+        if type(value) is not bool:
+            return _error_envelope(
+                "verification_install_provider",
+                error=f"{label} must be a boolean",
+                status="invalid",
+                error_type="TypeError",
+            )
 
     pid = _optional_str(provider_id, "provider_id")
     if not pid:
@@ -909,11 +959,40 @@ async def verification_install_provider(
             error_type="ValueError",
         )
     rid = _optional_str(request_id, "request_id")
-    return _run_facade(
-        "verification_install_provider",
-        lambda: _get_api().install_provider(
-            pid, allow_install=bool(allow_install), request_id=rid
+    host_allows_mutation = str(
+        os.environ.get("IPFS_DATASETS_PY_MCP_ALLOW_PROVIDER_INSTALLS") or ""
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    if allow_install and not dry_run and not offline and not host_allows_mutation:
+        return _error_envelope(
+            "verification_install_provider",
+            error=(
+                "operator policy denies MCP provider installation; set "
+                "IPFS_DATASETS_PY_MCP_ALLOW_PROVIDER_INSTALLS=1 in the server "
+                "environment to enable explicitly consented requests"
+            ),
+            status="unsupported",
+            error_type="OperatorPolicyDenied",
+            provider_id=pid,
+            request_id=rid,
+            unsupported_features=["mcp_provider_install_operator_policy"],
+        )
+
+    # Native builds are synchronous and potentially long-running.  Run them
+    # through AnyIO's bounded worker pool so the MCP event loop continues to
+    # serve probes, progress consumers, and cancellation requests.
+    return await anyio.to_thread.run_sync(
+        lambda: _run_facade(
+            "verification_install_provider",
+            lambda: _get_api().install_provider(
+                pid,
+                allow_install=allow_install,
+                dry_run=dry_run,
+                offline=offline,
+                force=force,
+                request_id=rid,
+            ),
         ),
+        abandon_on_cancel=False,
     )
 
 

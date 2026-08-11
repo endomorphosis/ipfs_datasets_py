@@ -1,0 +1,146 @@
+{
+  "failures": [],
+  "fixture_id": "ecfr-title37-current-2024-07-01",
+  "notes": "Compact current Title 37 eCFR recipe. Labeled unofficial presentation; up_to_date_as_of and amendment/effective metadata retained. Official annual CFR identity lives in cfr_annual fixtures, not here.",
+  "packages": {
+    "full_xml": {
+      "byte_size": 2500000,
+      "content_kind": "full_xml",
+      "content_sha256": "2c20fc0886291a970470f1740cc8226fcc7b198cbae4eb8b093101ab3af61bda",
+      "media_type": "application/xml",
+      "source_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+      "up_to_date_as_of": "2024-07-01",
+      "version_id": "ecfr-title-37-as-of-2024-07-01"
+    },
+    "structure": {
+      "byte_size": 4096,
+      "content_kind": "structure",
+      "content_sha256": "36131cbbc0d1425d3c2486264746f45f543025613ed1fc82472acc9b9715b398",
+      "media_type": "application/json",
+      "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+      "up_to_date_as_of": "2024-07-01",
+      "version_id": "ecfr-title-37-as-of-2024-07-01"
+    },
+    "version_history": {
+      "byte_size": 8192,
+      "content_kind": "version_history",
+      "content_sha256": "2d86185ec27762eb7165f4dd7174003711d7ed2d3bf04b1fc2be669228ab6407",
+      "media_type": "application/json",
+      "source_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json",
+      "up_to_date_as_of": "2024-07-01",
+      "version_id": "ecfr-title-37-as-of-2024-07-01"
+    }
+  },
+  "presentation_label": "unofficial presentation",
+  "schema_version": "ecfr-crosscheck-fixture-v1",
+  "sections": [
+    {
+      "amendment": {
+        "amendatory_action": "revised",
+        "authority_citation": "35 U.S.C. 2(b)(2)",
+        "effective_date": "1992-03-16",
+        "fr_citation": "57 FR 2034",
+        "publication_date": "1992-01-17",
+        "source_citation": "57 FR 2034, Jan. 17, 1992"
+      },
+      "citation": "37 CFR 1.56",
+      "content_kind": "section",
+      "content_sha256": "9b3920a73e5c562a1bd61400653f142adaf126a0814e9b4ab6faf8b0b1e5b826",
+      "heading": "Duty to disclose information material to patentability",
+      "media_type": "application/xml",
+      "part": "1",
+      "section": "1.56",
+      "source_url": "https://www.ecfr.gov/current/title-37/section-1.56",
+      "text_excerpt": "(a) A patent by its very nature is affected with a public interest. The public interest is best served, and the most effective patent examination occurs when, at the time an application is being examined, the Office is aware of and evaluates the teachings of all information material to patentability...",
+      "title": "37",
+      "up_to_date_as_of": "2024-07-01",
+      "version_id": "ecfr-title-37-as-of-2024-07-01"
+    },
+    {
+      "amendment": null,
+      "citation": "37 CFR 1.97",
+      "content_kind": "section",
+      "content_sha256": "fe1b38fb06a8adf4a2df3bf2c53c821ab8cd9aad6e7e7301f43cf54590c7ba33",
+      "heading": "Filing of information disclosure statement",
+      "media_type": "application/xml",
+      "part": "1",
+      "section": "1.97",
+      "source_url": "https://www.ecfr.gov/current/title-37/section-1.97",
+      "text_excerpt": "(a) In order for an applicant for a patent or for a reissue of a patent to have an information disclosure statement in a nonprovisional patent application...",
+      "title": "37",
+      "up_to_date_as_of": "2024-07-01",
+      "version_id": "ecfr-title-37-as-of-2024-07-01"
+    },
+    {
+      "amendment": null,
+      "citation": "37 CFR 1.98",
+      "content_kind": "section",
+      "content_sha256": "65de97977c691d5cfc84fab7040040363add9d63a261fe6018fc71442a197c53",
+      "heading": "Content of information disclosure statement",
+      "media_type": "application/xml",
+      "part": "1",
+      "section": "1.98",
+      "source_url": "https://www.ecfr.gov/current/title-37/section-1.98",
+      "text_excerpt": "[excerpt 37 CFR 1.98]",
+      "title": "37",
+      "up_to_date_as_of": "2024-07-01",
+      "version_id": "ecfr-title-37-as-of-2024-07-01"
+    },
+    {
+      "amendment": null,
+      "citation": "37 CFR 41.50",
+      "content_kind": "section",
+      "content_sha256": "d68482e0ac99cf718eae7c34a6195368e213a55993a761ff8c56ce86f55aaa44",
+      "heading": "Decisions and other actions by the Board",
+      "media_type": "application/xml",
+      "part": "41",
+      "section": "41.50",
+      "source_url": "https://www.ecfr.gov/current/title-37/section-41.50",
+      "text_excerpt": "[excerpt 37 CFR 41.50]",
+      "title": "37",
+      "up_to_date_as_of": "2024-07-01",
+      "version_id": "ecfr-title-37-as-of-2024-07-01"
+    },
+    {
+      "amendment": {
+        "amendatory_action": "added",
+        "authority_citation": "35 U.S.C. 316",
+        "effective_date": "2012-09-16",
+        "fr_citation": "77 FR 48680",
+        "publication_date": "2012-08-14",
+        "source_citation": "77 FR 48680, Aug. 14, 2012"
+      },
+      "citation": "37 CFR 42.100",
+      "content_kind": "section",
+      "content_sha256": "057bc401a7ee7e59a0ac3bd5ea0aef4fe0b25633b4c3d7d2f90759efaff37238",
+      "heading": "Procedure; pendency",
+      "media_type": "application/xml",
+      "part": "42",
+      "section": "42.100",
+      "source_url": "https://www.ecfr.gov/current/title-37/section-42.100",
+      "text_excerpt": "[excerpt 37 CFR 42.100]",
+      "title": "37",
+      "up_to_date_as_of": "2024-07-01",
+      "version_id": "ecfr-title-37-as-of-2024-07-01"
+    }
+  ],
+  "title": "37",
+  "version": {
+    "content_sha256": "2c20fc0886291a970470f1740cc8226fcc7b198cbae4eb8b093101ab3af61bda",
+    "full_xml_url": "https://www.ecfr.gov/api/versioner/v1/full/2024-07-01/title-37.xml",
+    "is_current_snapshot": true,
+    "provider": "ecfr",
+    "retrieved_at": "2024-07-15T12:00:00Z",
+    "source_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+    "structure_url": "https://www.ecfr.gov/api/versioner/v1/structure/2024-07-01/title-37.json",
+    "title": "37",
+    "up_to_date_as_of": "2024-07-01",
+    "version_id": "ecfr-title-37-as-of-2024-07-01",
+    "versions_url": "https://www.ecfr.gov/api/versioner/v1/versions/title-37.json"
+  },
+  "version_history": [
+    "2023-07-01",
+    "2024-01-01",
+    "2024-07-01"
+  ]
+}

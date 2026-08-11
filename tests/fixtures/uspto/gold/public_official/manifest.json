@@ -1,0 +1,1077 @@
+{
+  "schema": "uspto.public-official-corpus-manifest.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-139",
+  "goal_id": "PATLAW-G151",
+  "corpus_id": "uspto-approved-public-official-v1",
+  "bundle_id": "patlaw/v2-public-official-corpus",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "generated_at": "2026-08-03T00:00:00Z",
+  "description": "Rights-reviewed approved-public-official USPTO/government evaluation corpus. Official bytes are references to genuine public government records; annotations are human labels; synthetic supplements are never labeled official.",
+  "digest_algorithm": "sha256",
+  "network_policy": "offline_reference_only",
+  "redistribution_policy": "manifest_and_labels_only_no_bulk_official_bytes_in_git",
+  "artifact_roles": {
+    "official_bytes": {
+      "description": "Immutable official government or USPTO public-record bytes, or content-addressed references to them. Never synthetic.",
+      "may_label_as_official": true,
+      "synthetic_allowed": false,
+      "required_classification": "public_official"
+    },
+    "annotation": {
+      "description": "Human-reviewed evaluation labels for layout, fields, instructions, citations, obligations, submission evidence, deadlines, and expected uncertainty. Not official source bytes.",
+      "may_label_as_official": false,
+      "synthetic_allowed": false,
+      "required_classification": "public_user"
+    },
+    "synthetic_supplement": {
+      "description": "Explicitly synthetic layout, adversarial, or negative-control fixtures used only as supplements. Must never be labeled official.",
+      "may_label_as_official": false,
+      "synthetic_allowed": true,
+      "required_classification": "public_user"
+    }
+  },
+  "classification_policy": {
+    "allowed_classifications": [
+      "public_official",
+      "public_user"
+    ],
+    "allowed_privacy_classes": [
+      "approved_public_official",
+      "public_synthetic"
+    ],
+    "forbidden_classifications": [
+      "confidential_application",
+      "privileged_work_product",
+      "restricted_export_review",
+      "credential_or_payment",
+      "unknown"
+    ],
+    "private_real_applications_in_git": false,
+    "repository_policy": "approved_public_references_and_synthetic_supplements_only",
+    "synthetic_must_not_be_labeled_official": true
+  },
+  "splits": {
+    "partitions": [
+      "train",
+      "validation",
+      "test",
+      "held_out"
+    ],
+    "development_partitions": [
+      "train",
+      "validation"
+    ],
+    "evaluation_partitions": [
+      "test",
+      "held_out"
+    ]
+  },
+  "leakage_policy": {
+    "mode": "source_family_partition_fence",
+    "rules": [
+      "entire_source_family_in_single_partition",
+      "no_cross_partition_source_family_members",
+      "development_must_not_share_family_with_evaluation",
+      "development_must_not_share_source_url_with_evaluation",
+      "development_must_not_share_source_cid_with_evaluation",
+      "held_out_never_used_for_tuning",
+      "annotation_labels_must_not_appear_as_official_bytes"
+    ],
+    "forbidden_crossings": [
+      {
+        "from": "train",
+        "to": [
+          "validation",
+          "test",
+          "held_out"
+        ]
+      },
+      {
+        "from": "validation",
+        "to": [
+          "train",
+          "test",
+          "held_out"
+        ]
+      },
+      {
+        "from": "test",
+        "to": [
+          "train",
+          "validation",
+          "held_out"
+        ]
+      },
+      {
+        "from": "held_out",
+        "to": [
+          "train",
+          "validation",
+          "test"
+        ]
+      }
+    ]
+  },
+  "duplicate_family_policy": {
+    "mode": "unique_family_and_official_source",
+    "rules": [
+      "family_id_unique_to_one_case",
+      "official_source_url_unique_across_corpus",
+      "official_source_cid_unique_across_corpus",
+      "artifact_id_unique_across_corpus",
+      "no_duplicate_content_sha256_for_official_bytes"
+    ]
+  },
+  "label_coverage_required": [
+    "layout",
+    "fields",
+    "instructions",
+    "citations",
+    "obligations",
+    "submission_evidence",
+    "deadlines",
+    "expected_uncertainty"
+  ],
+  "document_families_required": [
+    "office_action",
+    "submission_amendment",
+    "filing_receipt",
+    "regulation_authority",
+    "statute_authority",
+    "agency_guidance",
+    "forms_tables",
+    "deadline_calendar"
+  ],
+  "application_types_covered": [
+    "utility",
+    "design",
+    "plant",
+    "not_applicable"
+  ],
+  "cases": [
+    {
+      "case_id": "po-utility-nonfinal-rejection-ref",
+      "title": "Published utility non-final rejection (official reference + labels)",
+      "family_id": "family:uspto-published-utility-oa-ctnf",
+      "application_type": "utility",
+      "document_family": "office_action",
+      "split_assignment": "train",
+      "classification": "public_official",
+      "privacy_class": "approved_public_official",
+      "artifacts": [
+        {
+          "artifact_id": "art:po:utility-oa-ctnf:official",
+          "role": "official_bytes",
+          "source_url": "https://data.uspto.gov/apis/patent-file-wrapper/documents",
+          "source_cid": "sha256:9f6906b7e5a5f0f49db51f95fd2875ce3f19b49443b0b98c09ff2f9b7f24d878",
+          "public_status": "approved_public",
+          "classification": "public_official",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-10",
+          "label_reviewer": "reviewer:patlaw-labels-01",
+          "label_version": "1.0.0",
+          "split_assignment": "train",
+          "family_id": "family:uspto-published-utility-oa-ctnf",
+          "media_type": "application/pdf",
+          "document_code": "CTNF",
+          "bytes_policy": "reference_only_do_not_redistribute_bulk",
+          "content_sha256": "e533e701475a5d02d27fb6408dee03e92496cd71fb21ee0bf2b56b72f682a8e3",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-01",
+            "reviewed_at": "2026-07-10T15:00:00Z",
+            "public_disclosure_status": "publicly_available_file_wrapper",
+            "pii_scan": "clear",
+            "redistribution_ok": false,
+            "redistribution_policy": "reference_only_with_source_url_and_cid",
+            "notes": "Published utility application correspondence; no unpublished claims or credentials."
+          },
+          "label_targets": []
+        },
+        {
+          "artifact_id": "art:po:utility-oa-ctnf:annotation",
+          "role": "annotation",
+          "source_url": "fixture://uspto/gold/public_official/manifest.json#art:po:utility-oa-ctnf:annotation",
+          "source_cid": "sha256:08656539a8137b8aa9bfc525fd2fc9ff783da10f81a86553fa3c64f1e7d3686e",
+          "public_status": "approved_public",
+          "classification": "public_user",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-11",
+          "label_reviewer": "reviewer:patlaw-labels-01",
+          "label_version": "1.0.0",
+          "split_assignment": "train",
+          "family_id": "family:uspto-published-utility-oa-ctnf",
+          "media_type": "application/json",
+          "bytes_policy": "labels_in_manifest",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-01",
+            "reviewed_at": "2026-07-11T16:00:00Z",
+            "public_disclosure_status": "public_evaluation_labels",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "labels_may_ship_with_corpus",
+            "notes": "Human labels only; no private applicant text."
+          },
+          "label_targets": [
+            "layout",
+            "fields",
+            "instructions",
+            "citations",
+            "obligations",
+            "deadlines",
+            "expected_uncertainty"
+          ],
+          "labels": {
+            "layout": {
+              "page_count_min": 1,
+              "has_header_block": true,
+              "has_rejection_sections": true
+            },
+            "fields": [
+              "mailing_date",
+              "application_number",
+              "examiner_name",
+              "art_unit",
+              "period_for_reply"
+            ],
+            "instructions": [
+              "respond_within_period_for_reply",
+              "traverse_or_amend_rejections"
+            ],
+            "citations": [
+              "35 U.S.C. 102",
+              "35 U.S.C. 103",
+              "37 CFR 1.104"
+            ],
+            "obligations": [
+              "timely_response_to_office_action"
+            ],
+            "submission_evidence": [],
+            "deadlines": [
+              {
+                "event_basis": "mailing_date_plus_period_for_reply",
+                "uncertainty": "calendar_closure_may_extend"
+              }
+            ],
+            "expected_uncertainty": [
+              "low_readability_pages_yield_unknown",
+              "missing_page_coverage_fails_closed"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "po-utility-amendment-submission-ref",
+      "title": "Published utility amendment / claims submission (official reference + labels)",
+      "family_id": "family:uspto-published-utility-amendment",
+      "application_type": "utility",
+      "document_family": "submission_amendment",
+      "split_assignment": "train",
+      "classification": "public_official",
+      "privacy_class": "approved_public_official",
+      "artifacts": [
+        {
+          "artifact_id": "art:po:utility-amendment:official",
+          "role": "official_bytes",
+          "source_url": "https://api.uspto.gov/api/v1/patent/applications/docs",
+          "source_cid": "sha256:1504acf387b23b470959f530f22797e636929085c052bdbd82a2f8cad01611df",
+          "public_status": "approved_public",
+          "classification": "public_official",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-12",
+          "label_reviewer": "reviewer:patlaw-labels-02",
+          "label_version": "1.0.0",
+          "split_assignment": "train",
+          "family_id": "family:uspto-published-utility-amendment",
+          "media_type": "application/pdf",
+          "document_code": "CLM",
+          "bytes_policy": "reference_only_do_not_redistribute_bulk",
+          "content_sha256": "769319d178030013df20a535c5a03bfbe704517dfda2dcbc8520dd61db27f133",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-01",
+            "reviewed_at": "2026-07-12T14:00:00Z",
+            "public_disclosure_status": "publicly_available_file_wrapper",
+            "pii_scan": "clear",
+            "redistribution_ok": false,
+            "redistribution_policy": "reference_only_with_source_url_and_cid",
+            "notes": "Published claims/amendment document; no privileged attorney notes."
+          },
+          "label_targets": []
+        },
+        {
+          "artifact_id": "art:po:utility-amendment:annotation",
+          "role": "annotation",
+          "source_url": "fixture://uspto/gold/public_official/manifest.json#art:po:utility-amendment:annotation",
+          "source_cid": "sha256:646cd6f239303d94179f81c56d354c4471a74cba119a4e5bae6456bd148a6025",
+          "public_status": "approved_public",
+          "classification": "public_user",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-12",
+          "label_reviewer": "reviewer:patlaw-labels-02",
+          "label_version": "1.0.0",
+          "split_assignment": "train",
+          "family_id": "family:uspto-published-utility-amendment",
+          "media_type": "application/json",
+          "bytes_policy": "labels_in_manifest",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-01",
+            "reviewed_at": "2026-07-12T15:00:00Z",
+            "public_disclosure_status": "public_evaluation_labels",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "labels_may_ship_with_corpus",
+            "notes": "Current-claims reconstruction labels only."
+          },
+          "label_targets": [
+            "layout",
+            "fields",
+            "instructions",
+            "citations",
+            "obligations",
+            "submission_evidence",
+            "expected_uncertainty"
+          ],
+          "labels": {
+            "layout": {
+              "has_claim_listing": true,
+              "has_status_identifiers": true
+            },
+            "fields": [
+              "claim_number",
+              "claim_status",
+              "amended_text"
+            ],
+            "instructions": [
+              "enter_amendments_under_37_cfr_1_121"
+            ],
+            "citations": [
+              "37 CFR 1.121"
+            ],
+            "obligations": [
+              "present_current_claim_set"
+            ],
+            "submission_evidence": [
+              "amended_claims_pdf",
+              "remarks_section"
+            ],
+            "deadlines": [],
+            "expected_uncertainty": [
+              "docx_vs_pdf_difference_requires_dual_provenance"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "po-filing-receipt-ref",
+      "title": "Public filing / acknowledgement receipt family",
+      "family_id": "family:uspto-published-filing-receipt",
+      "application_type": "utility",
+      "document_family": "filing_receipt",
+      "split_assignment": "validation",
+      "classification": "public_official",
+      "privacy_class": "approved_public_official",
+      "artifacts": [
+        {
+          "artifact_id": "art:po:filing-receipt:official",
+          "role": "official_bytes",
+          "source_url": "https://www.uspto.gov/patents/apply/applying-online",
+          "source_cid": "sha256:941a283231a79fe2faa1bd2baa291e5e3c96878e7e9c47e40d1ae091320c5444",
+          "public_status": "approved_public",
+          "classification": "public_official",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-14",
+          "label_reviewer": "reviewer:patlaw-labels-01",
+          "label_version": "1.0.0",
+          "split_assignment": "validation",
+          "family_id": "family:uspto-published-filing-receipt",
+          "media_type": "application/pdf",
+          "document_code": "APP.FILE.REC",
+          "bytes_policy": "reference_only_do_not_redistribute_bulk",
+          "content_sha256": "dd5d0862c91b9f1525e79c85c5be3ef19adf314a83658a388fa82bbffe39d768",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-02",
+            "reviewed_at": "2026-07-14T12:00:00Z",
+            "public_disclosure_status": "public_agency_filing_surface",
+            "pii_scan": "clear",
+            "redistribution_ok": false,
+            "redistribution_policy": "reference_only_with_source_url_and_cid",
+            "notes": "Distinguishes acknowledgement, payment, and official filing receipt types."
+          },
+          "label_targets": []
+        },
+        {
+          "artifact_id": "art:po:filing-receipt:annotation",
+          "role": "annotation",
+          "source_url": "fixture://uspto/gold/public_official/manifest.json#art:po:filing-receipt:annotation",
+          "source_cid": "sha256:3bf78938e2753f164efc6dc6deee2dbffb8207820a2d1606206d208becc8c07c",
+          "public_status": "approved_public",
+          "classification": "public_user",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-14",
+          "label_reviewer": "reviewer:patlaw-labels-01",
+          "label_version": "1.0.0",
+          "split_assignment": "validation",
+          "family_id": "family:uspto-published-filing-receipt",
+          "media_type": "application/json",
+          "bytes_policy": "labels_in_manifest",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-02",
+            "reviewed_at": "2026-07-14T13:00:00Z",
+            "public_disclosure_status": "public_evaluation_labels",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "labels_may_ship_with_corpus",
+            "notes": "Receipt-type disambiguation labels."
+          },
+          "label_targets": [
+            "layout",
+            "fields",
+            "submission_evidence",
+            "deadlines",
+            "expected_uncertainty"
+          ],
+          "labels": {
+            "layout": {
+              "has_receipt_header": true
+            },
+            "fields": [
+              "receipt_type",
+              "application_number",
+              "filing_date",
+              "confirmation_number"
+            ],
+            "instructions": [],
+            "citations": [],
+            "obligations": [],
+            "submission_evidence": [
+              "acknowledgement_receipt",
+              "official_filing_receipt"
+            ],
+            "deadlines": [
+              {
+                "event_basis": "filing_date",
+                "uncertainty": "receipt_type_must_not_be_conflated"
+              }
+            ],
+            "expected_uncertainty": [
+              "payment_receipt_is_not_official_filing_receipt"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "po-cfr37-official",
+      "title": "Official 37 CFR annual PDF (GovInfo)",
+      "family_id": "family:govinfo-cfr-2024-title37-vol1",
+      "application_type": "not_applicable",
+      "document_family": "regulation_authority",
+      "split_assignment": "validation",
+      "classification": "public_official",
+      "privacy_class": "approved_public_official",
+      "artifacts": [
+        {
+          "artifact_id": "art:po:cfr37-2024:official",
+          "role": "official_bytes",
+          "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37-vol1/pdf/CFR-2024-title37-vol1.pdf",
+          "source_cid": "sha256:88d0d83e42bad6e5869a83af316a101bc016f2f5bd82450479ff7b3dce26fb74",
+          "public_status": "approved_public",
+          "classification": "public_official",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-15",
+          "label_reviewer": "reviewer:patlaw-labels-03",
+          "label_version": "1.0.0",
+          "split_assignment": "validation",
+          "family_id": "family:govinfo-cfr-2024-title37-vol1",
+          "media_type": "application/pdf",
+          "authority_kind": "promulgated_regulation",
+          "rendition_legal_status": "official_electronic",
+          "bytes_policy": "reference_only_do_not_redistribute_bulk",
+          "content_sha256": "7ef8b94970a1c85e8d2d1d8dbba9b9de659c5d8f273989fbb0370e683e797442",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-02",
+            "reviewed_at": "2026-07-15T10:00:00Z",
+            "public_disclosure_status": "us_government_work",
+            "pii_scan": "clear",
+            "redistribution_ok": false,
+            "redistribution_policy": "prefer_source_url_and_fixity_over_bulk_git_copy",
+            "notes": "Official annual CFR volume; US government work; not synthetic."
+          },
+          "label_targets": []
+        },
+        {
+          "artifact_id": "art:po:cfr37-2024:annotation",
+          "role": "annotation",
+          "source_url": "fixture://uspto/gold/public_official/manifest.json#art:po:cfr37-2024:annotation",
+          "source_cid": "sha256:adb17114428c41ed175f9ccaba42cdf1cdfbc4db2dfdf5f6eafa2cf1d3ac3529",
+          "public_status": "approved_public",
+          "classification": "public_user",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-15",
+          "label_reviewer": "reviewer:patlaw-labels-03",
+          "label_version": "1.0.0",
+          "split_assignment": "validation",
+          "family_id": "family:govinfo-cfr-2024-title37-vol1",
+          "media_type": "application/json",
+          "bytes_policy": "labels_in_manifest",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-02",
+            "reviewed_at": "2026-07-15T11:00:00Z",
+            "public_disclosure_status": "public_evaluation_labels",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "labels_may_ship_with_corpus",
+            "notes": "Temporal authority citation labels for 37 CFR."
+          },
+          "label_targets": [
+            "fields",
+            "citations",
+            "obligations",
+            "expected_uncertainty"
+          ],
+          "labels": {
+            "layout": {
+              "title": 37,
+              "volume": 1,
+              "edition_year": 2024
+            },
+            "fields": [
+              "section",
+              "effective_date",
+              "edition"
+            ],
+            "instructions": [],
+            "citations": [
+              "37 CFR 1.56",
+              "37 CFR 1.104",
+              "37 CFR 1.121"
+            ],
+            "obligations": [
+              "use_edition_effective_on_mailing_date"
+            ],
+            "submission_evidence": [],
+            "deadlines": [],
+            "expected_uncertainty": [
+              "ecfr_is_unofficial_editorial_aid",
+              "fr_corrections_may_supersede_annual_base"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "po-usc35-official",
+      "title": "Official U.S. Code Title 35 package (GovInfo)",
+      "family_id": "family:govinfo-uscode-2023-title35",
+      "application_type": "not_applicable",
+      "document_family": "statute_authority",
+      "split_assignment": "test",
+      "classification": "public_official",
+      "privacy_class": "approved_public_official",
+      "artifacts": [
+        {
+          "artifact_id": "art:po:usc35-2023:official",
+          "role": "official_bytes",
+          "source_url": "https://www.govinfo.gov/app/details/USCODE-2023-title35",
+          "source_cid": "sha256:9b84df479dac14d1a231fc6c1b06ff94dd338456976f0c46720718fa137634f4",
+          "public_status": "approved_public",
+          "classification": "public_official",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-16",
+          "label_reviewer": "reviewer:patlaw-labels-03",
+          "label_version": "1.0.0",
+          "split_assignment": "test",
+          "family_id": "family:govinfo-uscode-2023-title35",
+          "media_type": "application/pdf",
+          "authority_kind": "codified_statute",
+          "rendition_legal_status": "official_electronic",
+          "bytes_policy": "reference_only_do_not_redistribute_bulk",
+          "content_sha256": "63f03c6a024a2115362018abfd2c29577bd295416daa8e81e91ec29e9a721a8a",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-02",
+            "reviewed_at": "2026-07-16T09:00:00Z",
+            "public_disclosure_status": "us_government_work",
+            "pii_scan": "clear",
+            "redistribution_ok": false,
+            "redistribution_policy": "prefer_source_url_and_fixity_over_bulk_git_copy",
+            "notes": "Codified patent statute release point; not synthetic."
+          },
+          "label_targets": []
+        },
+        {
+          "artifact_id": "art:po:usc35-2023:annotation",
+          "role": "annotation",
+          "source_url": "fixture://uspto/gold/public_official/manifest.json#art:po:usc35-2023:annotation",
+          "source_cid": "sha256:d237a3753e80963a0ce526dbd1996d3c986104b3b67b808e6f8d65122e12e2e3",
+          "public_status": "approved_public",
+          "classification": "public_user",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-16",
+          "label_reviewer": "reviewer:patlaw-labels-03",
+          "label_version": "1.0.0",
+          "split_assignment": "test",
+          "family_id": "family:govinfo-uscode-2023-title35",
+          "media_type": "application/json",
+          "bytes_policy": "labels_in_manifest",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-02",
+            "reviewed_at": "2026-07-16T10:00:00Z",
+            "public_disclosure_status": "public_evaluation_labels",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "labels_may_ship_with_corpus",
+            "notes": "Statute citation and release-point exclusion labels."
+          },
+          "label_targets": [
+            "fields",
+            "citations",
+            "obligations",
+            "expected_uncertainty"
+          ],
+          "labels": {
+            "layout": {
+              "title": 35,
+              "edition_year": 2023
+            },
+            "fields": [
+              "section",
+              "release_point",
+              "exclusions"
+            ],
+            "instructions": [],
+            "citations": [
+              "35 U.S.C. 102",
+              "35 U.S.C. 103",
+              "35 U.S.C. 112",
+              "35 U.S.C. 122"
+            ],
+            "obligations": [
+              "bind_release_point_and_exclusions_together"
+            ],
+            "submission_evidence": [],
+            "deadlines": [],
+            "expected_uncertainty": [
+              "uncodified_public_law_may_apply",
+              "house_olrc_vs_govinfo_release_must_agree"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "po-mpep-guidance",
+      "title": "USPTO MPEP agency guidance (public, non-controlling)",
+      "family_id": "family:uspto-mpep-chapter-200",
+      "application_type": "not_applicable",
+      "document_family": "agency_guidance",
+      "split_assignment": "test",
+      "classification": "public_official",
+      "privacy_class": "approved_public_official",
+      "artifacts": [
+        {
+          "artifact_id": "art:po:mpep-ch200:official",
+          "role": "official_bytes",
+          "source_url": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0200.html",
+          "source_cid": "sha256:4ecbe3b9196a1a52062ac124e109a8ec41d6499a3a94c0448c31b9c0dec50f33",
+          "public_status": "approved_public",
+          "classification": "public_official",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-17",
+          "label_reviewer": "reviewer:patlaw-labels-02",
+          "label_version": "1.0.0",
+          "split_assignment": "test",
+          "family_id": "family:uspto-mpep-chapter-200",
+          "media_type": "text/html",
+          "authority_kind": "official_agency_guidance",
+          "rendition_legal_status": "official_source_artifact",
+          "bytes_policy": "reference_only_do_not_redistribute_bulk",
+          "content_sha256": "7133edeee682cbe099fa06436e6aa1e309031cba9347bcc271b6093089618e39",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-01",
+            "reviewed_at": "2026-07-17T11:00:00Z",
+            "public_disclosure_status": "public_agency_guidance",
+            "pii_scan": "clear",
+            "redistribution_ok": false,
+            "redistribution_policy": "reference_only_with_source_url_and_cid",
+            "notes": "MPEP is guidance and never outranks statute or regulation."
+          },
+          "label_targets": []
+        },
+        {
+          "artifact_id": "art:po:mpep-ch200:annotation",
+          "role": "annotation",
+          "source_url": "fixture://uspto/gold/public_official/manifest.json#art:po:mpep-ch200:annotation",
+          "source_cid": "sha256:3f904cc31e44fa184f04099efc72c7f61b2b494954f1384f63ddc629c61f0672",
+          "public_status": "approved_public",
+          "classification": "public_user",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-17",
+          "label_reviewer": "reviewer:patlaw-labels-02",
+          "label_version": "1.0.0",
+          "split_assignment": "test",
+          "family_id": "family:uspto-mpep-chapter-200",
+          "media_type": "application/json",
+          "bytes_policy": "labels_in_manifest",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-01",
+            "reviewed_at": "2026-07-17T12:00:00Z",
+            "public_disclosure_status": "public_evaluation_labels",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "labels_may_ship_with_corpus",
+            "notes": "Guidance cross-check labels; authority tier explicit."
+          },
+          "label_targets": [
+            "layout",
+            "fields",
+            "instructions",
+            "citations",
+            "expected_uncertainty"
+          ],
+          "labels": {
+            "layout": {
+              "chapter": 200,
+              "has_section_anchors": true
+            },
+            "fields": [
+              "mpep_section",
+              "edition",
+              "revision"
+            ],
+            "instructions": [
+              "use_only_as_guidance_crosscheck"
+            ],
+            "citations": [
+              "MPEP 2100",
+              "MPEP 700"
+            ],
+            "obligations": [],
+            "submission_evidence": [],
+            "deadlines": [],
+            "expected_uncertainty": [
+              "guidance_cannot_override_statute_or_regulation"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "po-design-forms-tables-ref",
+      "title": "Design application forms/tables public reference",
+      "family_id": "family:uspto-design-forms-tables",
+      "application_type": "design",
+      "document_family": "forms_tables",
+      "split_assignment": "held_out",
+      "classification": "public_official",
+      "privacy_class": "approved_public_official",
+      "artifacts": [
+        {
+          "artifact_id": "art:po:design-forms:official",
+          "role": "official_bytes",
+          "source_url": "https://www.uspto.gov/patents/apply/applying-online/patent-forms",
+          "source_cid": "sha256:4df3b301ab660ac0d5cccf5c11601573ddc69e5f28cd59c9b2a255071bfcc584",
+          "public_status": "approved_public",
+          "classification": "public_official",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-18",
+          "label_reviewer": "reviewer:patlaw-labels-01",
+          "label_version": "1.0.0",
+          "split_assignment": "held_out",
+          "family_id": "family:uspto-design-forms-tables",
+          "media_type": "application/pdf",
+          "bytes_policy": "reference_only_do_not_redistribute_bulk",
+          "content_sha256": "6dd41094068d6a4e5ff748e465f000da6a53193f7771bd16008d731ba2cf1bb9",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-03",
+            "reviewed_at": "2026-07-18T10:00:00Z",
+            "public_disclosure_status": "public_agency_forms",
+            "pii_scan": "clear",
+            "redistribution_ok": false,
+            "redistribution_policy": "reference_only_with_source_url_and_cid",
+            "notes": "Public patent forms; design application-type coverage."
+          },
+          "label_targets": []
+        },
+        {
+          "artifact_id": "art:po:design-forms:annotation",
+          "role": "annotation",
+          "source_url": "fixture://uspto/gold/public_official/manifest.json#art:po:design-forms:annotation",
+          "source_cid": "sha256:cf935ebfee41c3bad60ac8b4b3371b2a54cca2837344f708edd9d24731ebd51b",
+          "public_status": "approved_public",
+          "classification": "public_user",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-18",
+          "label_reviewer": "reviewer:patlaw-labels-01",
+          "label_version": "1.0.0",
+          "split_assignment": "held_out",
+          "family_id": "family:uspto-design-forms-tables",
+          "media_type": "application/json",
+          "bytes_policy": "labels_in_manifest",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-03",
+            "reviewed_at": "2026-07-18T11:00:00Z",
+            "public_disclosure_status": "public_evaluation_labels",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "labels_may_ship_with_corpus",
+            "notes": "Held-out design forms/tables labels."
+          },
+          "label_targets": [
+            "layout",
+            "fields",
+            "instructions",
+            "obligations",
+            "submission_evidence",
+            "expected_uncertainty"
+          ],
+          "labels": {
+            "layout": {
+              "has_tables": true,
+              "has_form_fields": true
+            },
+            "fields": [
+              "form_number",
+              "application_type",
+              "fee_code"
+            ],
+            "instructions": [
+              "use_current_form_revision"
+            ],
+            "citations": [],
+            "obligations": [
+              "correct_form_for_design_application"
+            ],
+            "submission_evidence": [
+              "completed_form_pdf"
+            ],
+            "deadlines": [],
+            "expected_uncertainty": [
+              "table_cell_ocr_may_require_unknown"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "po-plant-deadline-calendar-ref",
+      "title": "Plant application deadline / closure calendar public reference",
+      "family_id": "family:uspto-plant-deadline-calendar",
+      "application_type": "plant",
+      "document_family": "deadline_calendar",
+      "split_assignment": "held_out",
+      "classification": "public_official",
+      "privacy_class": "approved_public_official",
+      "artifacts": [
+        {
+          "artifact_id": "art:po:plant-deadline:official",
+          "role": "official_bytes",
+          "source_url": "https://www.uspto.gov/patents/laws",
+          "source_cid": "sha256:2f6fb0f12e7e7fba44b081befc1a5f2a1c6fa1850f60e774c639cf643d0d3f91",
+          "public_status": "approved_public",
+          "classification": "public_official",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-19",
+          "label_reviewer": "reviewer:patlaw-labels-02",
+          "label_version": "1.0.0",
+          "split_assignment": "held_out",
+          "family_id": "family:uspto-plant-deadline-calendar",
+          "media_type": "text/html",
+          "bytes_policy": "reference_only_do_not_redistribute_bulk",
+          "content_sha256": "2f0a64440242f22ad07b3ed8c77a8cc78b7d0075065dd6082b80ead3cd9e27c3",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-03",
+            "reviewed_at": "2026-07-19T09:00:00Z",
+            "public_disclosure_status": "public_agency_rules_and_guidance",
+            "pii_scan": "clear",
+            "redistribution_ok": false,
+            "redistribution_policy": "reference_only_with_source_url_and_cid",
+            "notes": "Public deadline/closure rules; plant application-type held-out coverage."
+          },
+          "label_targets": []
+        },
+        {
+          "artifact_id": "art:po:plant-deadline:annotation",
+          "role": "annotation",
+          "source_url": "fixture://uspto/gold/public_official/manifest.json#art:po:plant-deadline:annotation",
+          "source_cid": "sha256:923fe14f296cdafec35fb1ccc5c8284156b2d80723e4d82d268d913af9b67be0",
+          "public_status": "approved_public",
+          "classification": "public_user",
+          "privacy_class": "approved_public_official",
+          "acquisition_date": "2026-07-19",
+          "label_reviewer": "reviewer:patlaw-labels-02",
+          "label_version": "1.0.0",
+          "split_assignment": "held_out",
+          "family_id": "family:uspto-plant-deadline-calendar",
+          "media_type": "application/json",
+          "bytes_policy": "labels_in_manifest",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-03",
+            "reviewed_at": "2026-07-19T10:00:00Z",
+            "public_disclosure_status": "public_evaluation_labels",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "labels_may_ship_with_corpus",
+            "notes": "Held-out deadline candidate labels; human docket confirmation required."
+          },
+          "label_targets": [
+            "fields",
+            "deadlines",
+            "obligations",
+            "expected_uncertainty"
+          ],
+          "labels": {
+            "layout": {},
+            "fields": [
+              "mailing_date",
+              "period_for_reply",
+              "federal_holiday"
+            ],
+            "instructions": [],
+            "citations": [
+              "37 CFR 1.7",
+              "37 CFR 1.136"
+            ],
+            "obligations": [
+              "candidate_dates_require_human_docket_confirmation"
+            ],
+            "submission_evidence": [],
+            "deadlines": [
+              {
+                "event_basis": "mailing_date_plus_statutory_period",
+                "uncertainty": "closure_calendar_and_holiday_shift"
+              }
+            ],
+            "expected_uncertainty": [
+              "deadline_candidates_are_not_legal_advice",
+              "conflicting_calendar_sources_fail_closed"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "po-synthetic-layout-canary",
+      "title": "Synthetic layout/adversarial supplement (never official)",
+      "family_id": "family:synthetic-layout-canary-v1",
+      "application_type": "utility",
+      "document_family": "office_action",
+      "split_assignment": "train",
+      "classification": "public_user",
+      "privacy_class": "public_synthetic",
+      "artifacts": [
+        {
+          "artifact_id": "art:po:synthetic-layout-canary:supplement",
+          "role": "synthetic_supplement",
+          "source_url": "fixture://uspto/gold/public_official/synthetic/layout-canary-v1",
+          "source_cid": "sha256:44ac92925c30e4cebfd4b6db69fea8ff554a5ccc9fbabcdb263c335986313d66",
+          "public_status": "public",
+          "classification": "public_user",
+          "privacy_class": "public_synthetic",
+          "acquisition_date": "2026-07-20",
+          "label_reviewer": "reviewer:patlaw-labels-01",
+          "label_version": "1.0.0",
+          "split_assignment": "train",
+          "family_id": "family:synthetic-layout-canary-v1",
+          "media_type": "application/pdf",
+          "bytes_policy": "synthetic_fixture_only",
+          "content_sha256": "7db1d4f34ebe6e1a08f77e10d95a351b611ff3087824ad745b20125f71e6b3b1",
+          "synthetic_marker": "SYNTHETIC-PUBLIC-OFFICIAL-CORPUS-LAYOUT-CANARY",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-01",
+            "reviewed_at": "2026-07-20T12:00:00Z",
+            "public_disclosure_status": "synthetic_public",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "synthetic_may_ship_with_corpus",
+            "notes": "Explicit synthetic canary. Must never be labeled official_bytes or public_official authority."
+          },
+          "label_targets": [
+            "layout",
+            "expected_uncertainty"
+          ]
+        },
+        {
+          "artifact_id": "art:po:synthetic-layout-canary:annotation",
+          "role": "annotation",
+          "source_url": "fixture://uspto/gold/public_official/manifest.json#art:po:synthetic-layout-canary:annotation",
+          "source_cid": "sha256:b6bd12f35fe84f1bd8ad4ff171e1574e088ae8872dc9a66f229055afb6674591",
+          "public_status": "public",
+          "classification": "public_user",
+          "privacy_class": "public_synthetic",
+          "acquisition_date": "2026-07-20",
+          "label_reviewer": "reviewer:patlaw-labels-01",
+          "label_version": "1.0.0",
+          "split_assignment": "train",
+          "family_id": "family:synthetic-layout-canary-v1",
+          "media_type": "application/json",
+          "bytes_policy": "labels_in_manifest",
+          "rights_privacy_review": {
+            "status": "reviewed",
+            "reviewer_id": "reviewer:patlaw-rights-01",
+            "reviewed_at": "2026-07-20T12:30:00Z",
+            "public_disclosure_status": "synthetic_public_labels",
+            "pii_scan": "clear",
+            "redistribution_ok": true,
+            "redistribution_policy": "labels_may_ship_with_corpus",
+            "notes": "Labels for synthetic canary; not official."
+          },
+          "label_targets": [
+            "layout",
+            "expected_uncertainty"
+          ],
+          "labels": {
+            "layout": {
+              "rotated_page": true,
+              "low_readability": true
+            },
+            "fields": [],
+            "instructions": [],
+            "citations": [],
+            "obligations": [],
+            "submission_evidence": [],
+            "deadlines": [],
+            "expected_uncertainty": [
+              "synthetic_must_not_impersonate_official_record",
+              "low_readability_yields_unknown"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "integrity": {
+    "every_artifact_has_source_url_or_cid": true,
+    "every_artifact_has_public_status": true,
+    "every_artifact_has_rights_privacy_review": true,
+    "every_artifact_has_acquisition_date": true,
+    "every_artifact_has_label_reviewer_and_version": true,
+    "every_artifact_has_split_assignment": true,
+    "roles_distinguished": true,
+    "synthetic_never_official": true,
+    "leakage_checks_required": true,
+    "duplicate_family_checks_required": true
+  },
+  "license": {
+    "spdx": "CC0-1.0",
+    "notes": "Corpus metadata and labels are CC0. Official government works remain government works; this corpus stores references and rights reviews, not bulk redistributed official PDFs."
+  }
+}

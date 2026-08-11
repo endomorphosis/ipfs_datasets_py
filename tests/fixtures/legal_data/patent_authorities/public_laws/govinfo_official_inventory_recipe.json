@@ -1,0 +1,661 @@
+{
+  "discovered_at": "2024-09-01T10:00:00Z",
+  "edition_catalog": {
+    "discovery_source": "govinfo-collection-browse-fixture",
+    "latest_editions": [
+      {
+        "collection": "CFR",
+        "discovered_at": "2024-09-01T10:00:00Z",
+        "discovery_source": "govinfo-CFR-collection",
+        "edition": "annual-2024-title37-vol1",
+        "package_id": "CFR-2024-title37-vol1",
+        "title": "37",
+        "volume": "1",
+        "year": "2024"
+      },
+      {
+        "collection": "USCODE",
+        "discovered_at": "2024-09-01T10:05:00Z",
+        "discovery_source": "govinfo-USCODE-collection",
+        "edition": "govinfo-2023-title35",
+        "package_id": "USCODE-2023-title35",
+        "title": "35",
+        "year": "2023"
+      },
+      {
+        "collection": "FR",
+        "discovered_at": "2024-09-01T10:10:00Z",
+        "discovery_source": "govinfo-FR-collection",
+        "edition": "daily-2024-03-15",
+        "package_id": "FR-2024-03-15",
+        "title": "FR",
+        "year": "2024"
+      }
+    ]
+  },
+  "fixture_id": "govinfo-official-inventory-2024",
+  "inventory": [
+    {
+      "collection": "CFR",
+      "content_sha256": "2e25fd730e48ded34c9fcc98f20022f0ed28adef550c334825d7b650c964fef5",
+      "edition": "annual-2024-title37-vol1",
+      "expected_formats": [
+        "pdf",
+        "xml",
+        "mods",
+        "premis"
+      ],
+      "formats": {
+        "mods": {
+          "artifact_sha256": "be2781cfde37a3ebecb5b23eacb9bdca94390da0c8044556383587c606962027",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "mods",
+          "media_type": "application/mods+xml",
+          "observed_sha256": "be2781cfde37a3ebecb5b23eacb9bdca94390da0c8044556383587c606962027",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37-vol1/mods/CFR-2024-title37-vol1.mods",
+          "upstream_package_id": "CFR-2024-title37-vol1"
+        },
+        "pdf": {
+          "artifact_sha256": "34aed8135081766282f75226b2fb572d27e6539bbb973e42d392f95c72d71659",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "observed_sha256": "34aed8135081766282f75226b2fb572d27e6539bbb973e42d392f95c72d71659",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37-vol1/pdf/CFR-2024-title37-vol1.pdf",
+          "upstream_package_id": "CFR-2024-title37-vol1"
+        },
+        "premis": {
+          "artifact_sha256": "dafecfaf4a2f18463b4b2935fa5f141756ab9faba4859f406f25beb2758d9355",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "premis",
+          "media_type": "application/premis+xml",
+          "observed_sha256": "dafecfaf4a2f18463b4b2935fa5f141756ab9faba4859f406f25beb2758d9355",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37-vol1/premis/CFR-2024-title37-vol1.premis",
+          "upstream_package_id": "CFR-2024-title37-vol1"
+        },
+        "xml": {
+          "artifact_sha256": "7e749d49d778a32313f5723249475b8106fc09af7c85674f9daff16b5409fe22",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "xml",
+          "media_type": "application/xml",
+          "observed_sha256": "7e749d49d778a32313f5723249475b8106fc09af7c85674f9daff16b5409fe22",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37-vol1/xml/CFR-2024-title37-vol1.xml",
+          "upstream_package_id": "CFR-2024-title37-vol1"
+        }
+      },
+      "kind": "cfr_volume",
+      "metadata": {
+        "printed_attestation": {
+          "attested_at": "2024-09-02T10:00:00Z",
+          "attestor": "operator-print-desk-1",
+          "evidence_ref": "print-page-attestation-cfr-2024-t37",
+          "notes": "Human print-page attestation independent of digital signature.",
+          "page_end": 400,
+          "page_start": 1,
+          "print_edition": "GPO-print-2024-t37-v1",
+          "result": "attested",
+          "volume_label": "CFR Title 37 (2024) Vol. 1"
+        },
+        "signature": {
+          "algorithm": "GPO-PAdES",
+          "checked_at": "2024-09-01T12:00:00Z",
+          "evidence": "digital-sig-cfr-2024-t37",
+          "result": "valid",
+          "signer": "U.S. Government Publishing Office"
+        },
+        "source_spans": [
+          {
+            "end": 40,
+            "excerpt": "37 CFR Part 1 — Rules of Practice",
+            "format": "pdf",
+            "page_end": 12,
+            "page_start": 12,
+            "start": 0,
+            "unit": "char"
+          }
+        ]
+      },
+      "package_id": "CFR-2024-title37-vol1",
+      "source_url": "https://www.govinfo.gov/content/pkg/CFR-2024-title37-vol1",
+      "title": "37",
+      "volume": "1",
+      "year": "2024"
+    },
+    {
+      "collection": "USCODE",
+      "content_sha256": "d7415a96a3be0ae7af5b9a1ae43b5711c9cf5412345b5d28e77c96093a95473d",
+      "edition": "govinfo-2023-title35",
+      "expected_formats": [
+        "pdf",
+        "xml",
+        "mods"
+      ],
+      "formats": {
+        "mods": {
+          "artifact_sha256": "19e121fa54e414e5ecc8128b5f1167d2147e3609e4a214947c7e511e62b18dc5",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "mods",
+          "media_type": "application/mods+xml",
+          "observed_sha256": "19e121fa54e414e5ecc8128b5f1167d2147e3609e4a214947c7e511e62b18dc5",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2023-title35/mods/USCODE-2023-title35.mods",
+          "upstream_package_id": "USCODE-2023-title35"
+        },
+        "pdf": {
+          "artifact_sha256": "92268e6ddbb72f82d861e776507047a38e86148ea7b2a41d6e9f0ad64391eef9",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "observed_sha256": "92268e6ddbb72f82d861e776507047a38e86148ea7b2a41d6e9f0ad64391eef9",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2023-title35/pdf/USCODE-2023-title35.pdf",
+          "upstream_package_id": "USCODE-2023-title35"
+        },
+        "xml": {
+          "artifact_sha256": "4b9cb2a28a699b4d320378b06ec3de796f7b5f3a1a0623d5cbb2007c392e541a",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "xml",
+          "media_type": "application/xml",
+          "observed_sha256": "4b9cb2a28a699b4d320378b06ec3de796f7b5f3a1a0623d5cbb2007c392e541a",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2023-title35/xml/USCODE-2023-title35.xml",
+          "upstream_package_id": "USCODE-2023-title35"
+        }
+      },
+      "kind": "uscode_edition",
+      "metadata": {
+        "printed_attestation": {
+          "result": "not_checked"
+        },
+        "signature": {
+          "algorithm": "GPO-PAdES",
+          "checked_at": "2024-09-01T12:30:00Z",
+          "evidence": "digital-sig-uscode-2023-t35",
+          "result": "valid"
+        }
+      },
+      "package_id": "USCODE-2023-title35",
+      "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2023-title35",
+      "title": "35",
+      "year": "2023"
+    },
+    {
+      "collection": "FR",
+      "content_sha256": "edece3a82aef71f1b46c4effdabf41d7940bd909c5db04c91cbfb4d26a88a2ff",
+      "edition": "daily-2024-03-15",
+      "expected_formats": [
+        "pdf",
+        "xml",
+        "mods"
+      ],
+      "formats": {
+        "mods": {
+          "artifact_sha256": "b120ce18097ec0bce06ce5e66884d9dc5a8fc93718e98968cb918478e1278c9b",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "mods",
+          "media_type": "application/mods+xml",
+          "observed_sha256": "b120ce18097ec0bce06ce5e66884d9dc5a8fc93718e98968cb918478e1278c9b",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/mods/FR-2024-03-15.mods",
+          "upstream_package_id": "FR-2024-03-15"
+        },
+        "pdf": {
+          "artifact_sha256": "4195cef17784c28565a48e420304137a056495bf5721a7943bb9974d6730a4c7",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "observed_sha256": "4195cef17784c28565a48e420304137a056495bf5721a7943bb9974d6730a4c7",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/pdf/FR-2024-03-15.pdf",
+          "upstream_package_id": "FR-2024-03-15"
+        },
+        "xml": {
+          "artifact_sha256": "3caae708b65aca32049d95f1980b1ae40c809b97929edcc4241903d509b72622",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "xml",
+          "media_type": "application/xml",
+          "observed_sha256": "3caae708b65aca32049d95f1980b1ae40c809b97929edcc4241903d509b72622",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/xml/FR-2024-03-15.xml",
+          "upstream_package_id": "FR-2024-03-15"
+        }
+      },
+      "granules": [
+        "2024-05512",
+        "2024-05513"
+      ],
+      "kind": "fr_daily_package",
+      "metadata": {
+        "expected_granules": [
+          "2024-05512",
+          "2024-05513"
+        ],
+        "present_granules": [
+          "2024-05512",
+          "2024-05513"
+        ],
+        "printed_attestation": {
+          "notes": "Daily FR issues typically lack separate print-volume attestation.",
+          "result": "not_attested"
+        },
+        "signature": {
+          "algorithm": "GPO-PAdES",
+          "checked_at": "2024-09-01T13:00:00Z",
+          "evidence": "digital-sig-fr-2024-03-15",
+          "result": "valid"
+        }
+      },
+      "package_id": "FR-2024-03-15",
+      "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15",
+      "year": "2024"
+    },
+    {
+      "citation": "89 FR 12345",
+      "collection": "FR",
+      "content_sha256": "fe9ff250a8c73eaf41b11b3534c5f8921bf13d1061e3fcaed406d3314661e777",
+      "edition": "daily-2024-03-15",
+      "expected_formats": [
+        "pdf",
+        "xml"
+      ],
+      "formats": {
+        "pdf": {
+          "artifact_sha256": "01ecb535eb216262e5f1eb2093c4e8384a0671bcb14c6c83984580a1a330aab6",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "observed_sha256": "01ecb535eb216262e5f1eb2093c4e8384a0671bcb14c6c83984580a1a330aab6",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/pdf/FR-2024-03-15.pdf",
+          "upstream_package_id": "FR-2024-03-15"
+        },
+        "xml": {
+          "artifact_sha256": "a6a6651c9314d9169883f41363f8bfbe07c23b9f14294fc33f1a7c464bda4e81",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "xml",
+          "media_type": "application/xml",
+          "observed_sha256": "a6a6651c9314d9169883f41363f8bfbe07c23b9f14294fc33f1a7c464bda4e81",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/xml/FR-2024-03-15.xml",
+          "upstream_package_id": "FR-2024-03-15"
+        }
+      },
+      "granule_id": "2024-05512",
+      "kind": "fr_granule",
+      "metadata": {
+        "signature": {
+          "algorithm": "GPO-PAdES",
+          "checked_at": "2024-09-01T13:05:00Z",
+          "evidence": "digital-sig-fr-granule-2024-05512",
+          "result": "valid"
+        }
+      },
+      "package_id": "FR-2024-03-15",
+      "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-03-15/pdf/FR-2024-03-15-2024-05512.pdf"
+    },
+    {
+      "citation": "Pub. L. 112-29",
+      "collection": "PLAW",
+      "content_sha256": "418347bc8a299bc305738eadcba11627427f6d51000d5213b0dfcfc64872bb2f",
+      "edition": "plaw-112-29",
+      "expected_formats": [
+        "pdf",
+        "xml",
+        "mods",
+        "premis"
+      ],
+      "formats": {
+        "mods": {
+          "artifact_sha256": "62ba124a30855737fdd87f78c916fa9cae3a9ee33d9135bcdc49e23700a5129c",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "mods",
+          "media_type": "application/mods+xml",
+          "observed_sha256": "62ba124a30855737fdd87f78c916fa9cae3a9ee33d9135bcdc49e23700a5129c",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29/mods/PLAW-112publ29.mods",
+          "upstream_package_id": "PLAW-112publ29"
+        },
+        "pdf": {
+          "artifact_sha256": "c7e0d6c5169261f5d7bf889fc97dd84d728bcf0882f06283a7e5c4a447fa8e48",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "observed_sha256": "c7e0d6c5169261f5d7bf889fc97dd84d728bcf0882f06283a7e5c4a447fa8e48",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29/pdf/PLAW-112publ29.pdf",
+          "upstream_package_id": "PLAW-112publ29"
+        },
+        "premis": {
+          "artifact_sha256": "230fdf06da5859c35a0da6b8b7a57aff95c697ffbff641be25b916abed79cf23",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "premis",
+          "media_type": "application/premis+xml",
+          "observed_sha256": "230fdf06da5859c35a0da6b8b7a57aff95c697ffbff641be25b916abed79cf23",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29/premis/PLAW-112publ29.premis",
+          "upstream_package_id": "PLAW-112publ29"
+        },
+        "xml": {
+          "artifact_sha256": "cb83c72cac66e30de520a95168ecd8864a0e1e63bdbf3b35b3761e8a1cd6a9ec",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "xml",
+          "media_type": "application/xml",
+          "observed_sha256": "cb83c72cac66e30de520a95168ecd8864a0e1e63bdbf3b35b3761e8a1cd6a9ec",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29/xml/PLAW-112publ29.xml",
+          "upstream_package_id": "PLAW-112publ29"
+        }
+      },
+      "kind": "public_law",
+      "metadata": {
+        "signature": {
+          "algorithm": "GPO-PAdES",
+          "checked_at": "2024-09-01T14:00:00Z",
+          "evidence": "digital-sig-plaw-112-29",
+          "result": "valid"
+        }
+      },
+      "package_id": "PLAW-112publ29",
+      "patent_relevant": true,
+      "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29"
+    },
+    {
+      "collection": "CFR",
+      "edition": "annual-2023-title37-vol2-missing",
+      "expected_formats": [
+        "pdf",
+        "xml",
+        "mods",
+        "premis"
+      ],
+      "formats": {},
+      "kind": "cfr_volume",
+      "metadata": {
+        "missing_all_formats": true,
+        "printed_attestation": {
+          "notes": "Printed volume not held; cannot attest.",
+          "result": "unavailable"
+        },
+        "signature": {
+          "result": "missing"
+        },
+        "volume_missing": true
+      },
+      "package_id": "CFR-2023-title37-vol2",
+      "source_url": "https://www.govinfo.gov/content/pkg/CFR-2023-title37-vol2",
+      "title": "37",
+      "volume": "2",
+      "year": "2023"
+    },
+    {
+      "collection": "FR",
+      "content_sha256": "4e7a31419af84d8e87cdad53657fe1999d816a47e623e56aeafda0167c35b6a8",
+      "edition": "daily-2024-06-01",
+      "expected_formats": [
+        "pdf",
+        "xml"
+      ],
+      "formats": {
+        "pdf": {
+          "artifact_sha256": "d2e4bc9aa41864d23f8ff7416702ad0a0c5b835a8efb39a679e79d334b3c56b5",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "observed_sha256": "d2e4bc9aa41864d23f8ff7416702ad0a0c5b835a8efb39a679e79d334b3c56b5",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-06-01/pdf/FR-2024-06-01.pdf",
+          "upstream_package_id": "FR-2024-06-01"
+        },
+        "xml": {
+          "artifact_sha256": "c939e5d445575b2c7725470f048b2846ea5b95f02314561a98db8e49c0adb8c9",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "xml",
+          "media_type": "application/xml",
+          "observed_sha256": "c939e5d445575b2c7725470f048b2846ea5b95f02314561a98db8e49c0adb8c9",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-06-01/xml/FR-2024-06-01.xml",
+          "upstream_package_id": "FR-2024-06-01"
+        }
+      },
+      "granules": [
+        "2024-10001",
+        "2024-10002",
+        "2024-10003"
+      ],
+      "kind": "fr_daily_package",
+      "metadata": {
+        "expected_granules": [
+          "2024-10001",
+          "2024-10002",
+          "2024-10003"
+        ],
+        "present_granules": [
+          "2024-10001",
+          "2024-10002"
+        ],
+        "signature": {
+          "algorithm": "GPO-PAdES",
+          "checked_at": "2024-09-01T13:30:00Z",
+          "evidence": "digital-sig-fr-2024-06-01",
+          "result": "valid"
+        }
+      },
+      "package_id": "FR-2024-06-01",
+      "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-06-01",
+      "year": "2024"
+    },
+    {
+      "collection": "USCODE",
+      "content_sha256": "9fc866d517c54ab77f9a56bb47143cb6f906cc5dbc85e405ecd4a3063fbb3592",
+      "edition": "govinfo-2022-title35-sig-fail",
+      "expected_formats": [
+        "pdf",
+        "xml"
+      ],
+      "formats": {
+        "pdf": {
+          "artifact_sha256": "1a3cbc4bc37831bed1bd87c8e7a76b98d0dcc6b07886eee30b75e740da310c8b",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "observed_sha256": "1a3cbc4bc37831bed1bd87c8e7a76b98d0dcc6b07886eee30b75e740da310c8b",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2022-title35/pdf/USCODE-2022-title35.pdf",
+          "upstream_package_id": "USCODE-2022-title35"
+        },
+        "xml": {
+          "artifact_sha256": "3a2f7ff44fd4a6efaa82ab0b5aa32181dfda8b11117a20e724530d803504b5fe",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "xml",
+          "media_type": "application/xml",
+          "observed_sha256": "3a2f7ff44fd4a6efaa82ab0b5aa32181dfda8b11117a20e724530d803504b5fe",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2022-title35/xml/USCODE-2022-title35.xml",
+          "upstream_package_id": "USCODE-2022-title35"
+        }
+      },
+      "kind": "uscode_edition",
+      "metadata": {
+        "printed_attestation": {
+          "result": "not_checked"
+        },
+        "signature": {
+          "algorithm": "GPO-PAdES",
+          "checked_at": "2024-09-01T12:45:00Z",
+          "evidence": "digital-sig-INVALID-uscode-2022",
+          "result": "invalid"
+        }
+      },
+      "package_id": "USCODE-2022-title35",
+      "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2022-title35",
+      "title": "35",
+      "year": "2022"
+    },
+    {
+      "collection": "CFR",
+      "content_sha256": "e098643c55727105484bbf8a58d8a030d6fb18b9b8c9fee0894e5ae7d4499d35",
+      "edition": "annual-2021-title37-text-conflict",
+      "expected_formats": [
+        "pdf",
+        "xml"
+      ],
+      "formats": {
+        "pdf": {
+          "artifact_sha256": "73438f58f2fca84213bf0c3f7e5234ab776c4cdf22c05694414ba474ba194d20",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "observed_sha256": "73438f58f2fca84213bf0c3f7e5234ab776c4cdf22c05694414ba474ba194d20",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/CFR-2021-title37/pdf/CFR-2021-title37.pdf",
+          "upstream_package_id": "CFR-2021-title37"
+        },
+        "xml": {
+          "artifact_sha256": "73d38bfcd9a0313dd99a973003d96dde5ca5737cb26d80841f6a7be25bfaa15f",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "xml",
+          "media_type": "application/xml",
+          "observed_sha256": "73d38bfcd9a0313dd99a973003d96dde5ca5737cb26d80841f6a7be25bfaa15f",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/CFR-2021-title37/xml/CFR-2021-title37.xml",
+          "upstream_package_id": "CFR-2021-title37"
+        }
+      },
+      "kind": "cfr_volume",
+      "metadata": {
+        "printed_attestation": {
+          "result": "not_checked"
+        },
+        "signature": {
+          "algorithm": "GPO-PAdES",
+          "checked_at": "2024-09-01T11:00:00Z",
+          "evidence": "digital-sig-cfr-2021-t37",
+          "result": "valid"
+        },
+        "text_conflicts": [
+          {
+            "cross_check_excerpt": "[ecfr current] duty to disclose (amended)...",
+            "cross_check_provider": "ecfr",
+            "description": "eCFR cross-check excerpt diverges from official annual CFR PDF source span for 37 CFR 1.56.",
+            "official_excerpt": "[official annual] duty to disclose...",
+            "source_span": {
+              "end": 200,
+              "excerpt": "[official annual] duty to disclose...",
+              "format": "pdf",
+              "page_end": 45,
+              "page_start": 45,
+              "start": 100,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      "package_id": "CFR-2021-title37",
+      "source_url": "https://www.govinfo.gov/content/pkg/CFR-2021-title37",
+      "title": "37",
+      "volume": "1",
+      "year": "2021"
+    },
+    {
+      "citation": "89 FR 444",
+      "collection": "FR",
+      "content_sha256": "1d0d931ddbf13cb90078caacdb727fbd064df49bd7554d24c0431a98740edbc9",
+      "edition": "daily-2024-01-10",
+      "expected_formats": [
+        "pdf",
+        "xml"
+      ],
+      "formats": {
+        "pdf": {
+          "artifact_sha256": "be55dbf852f6487bd5a903ec28072dc7c6c612e93906871b5ce5c515350bfa3e",
+          "byte_size": 10000,
+          "fixity_status": "mismatch",
+          "force_mismatch": true,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "observed_sha256": "4588824aa9fa101fa498051776043d1bd4ce04065a6ba85df6f0a301f04edbca",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-01-10/pdf/FR-2024-01-10.pdf",
+          "upstream_package_id": "FR-2024-01-10"
+        },
+        "xml": {
+          "artifact_sha256": "b52db107f736ca3a021a7971bd40d877935cca1567f38b7638e49ba468bb6a3d",
+          "byte_size": 10000,
+          "fixity_status": "match",
+          "force_mismatch": false,
+          "format": "xml",
+          "media_type": "application/xml",
+          "observed_sha256": "b52db107f736ca3a021a7971bd40d877935cca1567f38b7638e49ba468bb6a3d",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-01-10/xml/FR-2024-01-10.xml",
+          "upstream_package_id": "FR-2024-01-10"
+        }
+      },
+      "granule_id": "2024-00444",
+      "kind": "fr_granule",
+      "metadata": {
+        "signature": {
+          "algorithm": "GPO-PAdES",
+          "checked_at": "2024-09-01T13:40:00Z",
+          "evidence": "digital-sig-fr-2024-00444",
+          "result": "valid"
+        }
+      },
+      "package_id": "FR-2024-01-10",
+      "source_url": "https://www.govinfo.gov/content/pkg/FR-2024-01-10/pdf/FR-2024-01-10-2024-00444.pdf"
+    }
+  ],
+  "inventory_source": "fixture-runtime-inventory-v1",
+  "notes": "Compact GovInfo official inventory recipe. Latest editions are discovered at runtime from the edition_catalog with concrete package ids. Digital authentication and printed-volume attestation are separate. Missing volumes/granules/signatures and text/fixity conflicts yield conflict/inconclusive/unverified rather than success. House/eCFR/FederalRegister.gov remain cross-check-only.",
+  "public_laws_fixture": "public_laws_recipe.json",
+  "schema_version": "govinfo-official-fixture-v1",
+  "verified_at": "2024-09-01T15:00:00Z"
+}

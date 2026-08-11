@@ -1,0 +1,14 @@
+{
+  "failures": [],
+  "fixture_id": "cfr-annual-missing-package",
+  "notes": "Package identity deliberately omitted for unknown-status tests.",
+  "package": {
+    "package_id": null,
+    "provider": "govinfo",
+    "title": "37",
+    "year": null
+  },
+  "schema_version": "cfr-annual-fixture-v1",
+  "sections": [],
+  "title": "37"
+}

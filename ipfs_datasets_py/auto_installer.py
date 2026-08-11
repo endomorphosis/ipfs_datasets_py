@@ -1278,48 +1278,69 @@ exec "$BIN" "$@"
         return success_count >= len(dependencies) * minimum_success_ratio
 
     def install_theorem_provers(self) -> Dict[str, bool]:
-        """Install multiple theorem provers and return status"""
+        """Install managed prover runtimes without legacy system-package drift."""
         if self.verbose:
             logger.info("Installing theorem provers and SAT/SMT solvers...")
-            
-        provers = ['z3', 'cvc5', 'lean', 'coq']
-        results = {}
-        
-        for prover in provers:
+
+        from .logic.integration.bridges import prover_installer
+
+        allow_sudo = _truthy_env_value(
+            os.getenv("IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS")
+        )
+
+        def progress(phase: str, message: str) -> None:
             if self.verbose:
-                logger.info(f"Installing theorem prover: {prover}")
-            success = True
-            
-            # Special handling for Lean 4
-            if prover == 'lean':
-                success = self.install_lean_elan()
-            else:
-                # Install system package
-                if not self.install_system_dependency(prover):
-                    success = False
-            
-            # Install Python binding if available
-            python_packages = {
-                'z3': 'z3-solver',
-                'cvc5': 'cvc5',
-                'lean': None,    # No Python binding, system only
-                'coq': None      # No Python binding, system only
-            }
-            
-            if python_packages.get(prover):
-                if not self.install_python_dependency(python_packages[prover]):
-                    success = False
-            
-            # Verify installation
-            if success:
-                success = self.verify_theorem_prover_installation(prover)
-            
+                logger.info("Theorem prover install [%s]: %s", phase, message)
+
+        installers = {
+            "z3": lambda: prover_installer.ensure_z3(
+                yes=self.auto_install,
+                strict=False,
+                on_progress=progress,
+            ),
+            "cvc5": lambda: prover_installer.ensure_cvc5(
+                yes=self.auto_install,
+                strict=False,
+                on_progress=progress,
+            ),
+            "cvc5_cli": lambda: prover_installer.ensure_cvc5_cli(
+                yes=self.auto_install,
+                strict=False,
+                on_progress=progress,
+            ),
+            "lean": lambda: prover_installer.ensure_lean(
+                yes=self.auto_install,
+                strict=False,
+                on_progress=progress,
+            ),
+            "coq": lambda: prover_installer.ensure_coq(
+                yes=self.auto_install,
+                strict=False,
+                allow_sudo=allow_sudo,
+                on_progress=progress,
+            ),
+        }
+        results: Dict[str, bool] = {}
+        for prover, install in installers.items():
+            try:
+                success = bool(install())
+            except Exception as exc:
+                logger.warning(
+                    "Managed theorem prover install failed for %s: %s",
+                    prover,
+                    exc,
+                )
+                success = False
             results[prover] = success
-            
             if self.verbose:
                 status = "✓" if success else "✗"
-                logger.info(f"{status} {prover}: {'Success' if success else 'Failed'}")
-            
+                logger.info(
+                    "%s %s: %s",
+                    status,
+                    prover,
+                    "Success" if success else "Failed",
+                )
+
         return results
 
     def verify_theorem_prover_installation(self, prover: str) -> bool:
@@ -1562,7 +1583,12 @@ def install_for_component(component: str) -> bool:
     if component == 'ipfs':
         return ensure_main_ipfs_kit_py()
     if component == 'theorem_provers':
-        return installer.install_theorem_provers()
+        python_bindings_ready = installer.install_component_dependencies(
+            'theorem_provers'
+        )
+        native_results = installer.install_theorem_provers()
+        native_provers_ready = bool(native_results) and all(native_results.values())
+        return python_bindings_ready and native_provers_ready
     if component == 'lean':
         return installer.install_system_dependency('lean')
     if component == 'coq':

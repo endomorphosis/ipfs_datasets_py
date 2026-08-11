@@ -21,13 +21,14 @@ Environment variables (all optional):
 - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN: enable Lean install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
 - IPFS_DATASETS_PY_AUTO_INSTALL_COQ: enable Coq install attempts (default: 0)
 - IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI: enable SymbolicAI install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
-- IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI: enable ErgoAI/ErgoEngine install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
-- IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS: enable install attempts from requested prover bridges (default: 0)
+- IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI: ErgoAI install override (default: on for missing managed vendor; set 0 to opt out)
+- IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS: enable install attempts for the general solver portfolio (default: 0; ErgoAI is default-on when managed vendor is missing)
 - IPFS_DATASETS_PY_LAZY_INSTALL_<PROVER>: per-prover lazy install override
   (Z3/CVC5/LEAN/COQ/APALACHE/TAMARIN/MAUDE/PROVERIF/SYMBOLICAI/ERGOAI)
 - IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS: allow lazy Coq install to use interactive sudo (default: 0)
 - IPFS_DATASETS_PY_ERGOAI_GIT_URL: override ErgoAI/ErgoEngine source repository.
 - IPFS_DATASETS_PY_ERGOAI_RELEASE_URL: override the official ErgoAI .run installer URL.
+- IPFS_DATASETS_PY_ERGOAI_RELEASE_SHA256: required checksum for a release URL override.
 - IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR: user-local directory for official ErgoAI release installs.
 - IPFS_DATASETS_PY_ERGOAI_INSTALL_RELEASE=0: skip the official release installer path.
 - IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND: custom command used before git clone fallback.
@@ -73,6 +74,13 @@ DEFAULT_ERGOAI_RELEASE_URL = (
     "https://github.com/ErgoAI/.github/releases/download/"
     "v3.0_release/ergoAI_3.0.run"
 )
+DEFAULT_ERGOAI_RELEASE_SHA256 = (
+    "46f9747db118567a7da50f70b439e35ee36ea02c3dfde971a57c77a8ce94aa01"
+)
+DEFAULT_ERGOAI_RELEASE_SIZE_BYTES = 53_064_767
+ERGOAI_RELEASE_SUPPORTED_PLATFORMS = frozenset(
+    {("linux", "x86_64"), ("linux", "aarch64")}
+)
 DEFAULT_EXTERNAL_PROVER_ROOT = (
     Path.home() / ".local" / "share" / "ipfs_datasets_py" / "theorem-provers"
 )
@@ -83,6 +91,13 @@ APALACHE_PORTABLE_URL = (
 )
 APALACHE_PORTABLE_SHA256 = (
     "ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"
+)
+TLC_VERSION = "1.8.0"
+TLC_PORTABLE_URL = (
+    "https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
+)
+TLC_PORTABLE_SHA256 = (
+    "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
 )
 # Compatibility aliases retained for callers that imported the old names.
 APALACHE_LINUX_X86_64_URL = APALACHE_PORTABLE_URL
@@ -252,6 +267,7 @@ ProgressCallback = Callable[[str, str], None]
 # through the installer CLI so solver evidence remains reproducible.
 MANAGED_SOLVER_VERSIONS: dict[str, str] = {
     "apalache": APALACHE_VERSION,
+    "tlc": TLC_VERSION,
     "tamarin": TAMARIN_VERSION,
     "maude": MAUDE_VERSION,
     "proverif": PROVERIF_VERSION,
@@ -283,6 +299,7 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
     # Native engines attached to specific LegalIR families.
     "legal_ir_specialists": (
         "ergoai",
+        "tlc",
         "apalache",
         "maude",
         "tamarin",
@@ -302,6 +319,7 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
         "vampire",
         "eprover",
         "ergoai",
+        "tlc",
         "apalache",
         "maude",
         "tamarin",
@@ -318,6 +336,7 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
         "vampire",
         "eprover",
         "ergoai",
+        "tlc",
         "apalache",
         "maude",
         "tamarin",
@@ -326,7 +345,26 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
         "isabelle",
         "symbolicai",
     ),
+    # Real external engines used for software-state, hyperproperty,
+    # authorization, and finite-trace verification.  These are intentionally
+    # separate from the legal-only profiles because their reviewed installers
+    # may require native compiler/runtime dependencies.  Every route fails
+    # closed unless its reviewed artifact, provenance, and semantic checks pass;
+    # external SecPAL currently has no authentic distributable artifact.
+    "software_verification_external": (
+        "hyperltl",
+        "autohyper",
+        "mchyper",
+        "souffle",
+        "secpal",
+        "runtime-mtl-external",
+        "ergoai",
+    ),
 }
+
+REVIEWED_EXTERNAL_PROVIDER_IDS: tuple[str, ...] = PROVER_PORTFOLIOS[
+    "software_verification_external"
+]
 
 
 def _truthy(value: str | None) -> bool:
@@ -427,6 +465,8 @@ def _read_version(executable: str | None) -> str:
 
     if executable is None:
         return ""
+    if Path(executable).name == "proverif":
+        return _read_proverif_version(executable)
     version_pattern = re.compile(
         r"(?:^|\b(?:version|proverif|tamarin-prover|lean|rocq|coq|maude|cvc5|vampire|e(?:prover)?|apalache(?:-mc)?|isabelle)\s*(?:is|,)?\s*)v?\d+\.\d+",
         flags=re.IGNORECASE,
@@ -443,10 +483,10 @@ def _read_version(executable: str | None) -> str:
         except (OSError, subprocess.SubprocessError):
             continue
         # Several otherwise usable solvers disagree on their version flag.
-        # ProVerif, for example, reports an unsupported ``--version`` option
-        # before printing its version, while cvc5 can print a usage line before
-        # succeeding with ``-version``.  Keep searching for an informative
-        # line instead of rejecting the whole probe output.
+        # Keep trying only after failed invocations; output from a non-zero
+        # command is never version identity evidence.
+        if completed.returncode != 0:
+            continue
         output = "\n".join(
             value.strip() for value in (completed.stdout, completed.stderr) if value.strip()
         )
@@ -460,12 +500,32 @@ def _read_version(executable: str | None) -> str:
                 continue
             if re.search(r"\bIsabelle\d{4}(?:-\d+)?\b", compact):
                 return compact
-            # A few tools (notably ProVerif) return a non-zero status for an
-            # unsupported flag but still print an authoritative version line.
-            # Do not accept arbitrary output from those failed invocations.
             if version_pattern.search(compact):
                 return compact
     return ""
+
+
+def _read_proverif_version(executable: str | None) -> str:
+    """Return ProVerif's exact version from its canonical successful probe."""
+
+    if executable is None:
+        return ""
+    from ipfs_datasets_py.logic.backends.installers import proverif
+
+    probe = proverif.probe_proverif_runtime(
+        executable,
+        expected_version=PROVERIF_VERSION,
+    )
+    return probe.observed_version if probe.usable and probe.observed_version else ""
+
+
+def _proverif_version_matches(
+    executable: str | None,
+    expected: str = PROVERIF_VERSION,
+) -> bool:
+    """Return whether the canonical ProVerif probe reports the exact pin."""
+
+    return _read_proverif_version(executable) == str(expected)
 
 
 def _version_matches(executable: str | None, expected: str) -> bool:
@@ -482,10 +542,33 @@ def _distribution_version(distribution: str) -> str:
         return ""
 
 
+def _managed_tlc_release(executable: str | None) -> str:
+    """Bind TLC's release to its reviewed jar digest, not a version flag."""
+
+    if executable is None:
+        return ""
+    from ipfs_datasets_py.logic.backends.installers import state_model
+
+    path = Path(executable)
+    if path.parent.name != "bin":
+        return ""
+    java = state_model.probe_java_runtime(
+        minimum_major=state_model.TLC_MIN_JAVA_MAJOR,
+    )
+    if not java.usable or java.executable is None:
+        return ""
+    identity = state_model.managed_tlc_identity(
+        path.parent.parent,
+        java_executable=java.executable,
+    )
+    return TLC_VERSION if identity.get("usable") else ""
+
+
 def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
     """Report managed-version drift without downloading or changing any solver."""
 
     specs = (
+        ("tlc", "tlc", TLC_VERSION, None),
         ("apalache", "apalache-mc", APALACHE_VERSION, None),
         ("tamarin", "tamarin-prover", TAMARIN_VERSION, None),
         ("maude", "maude", MAUDE_VERSION, None),
@@ -507,20 +590,27 @@ def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
             if isinstance(executable_name, Path)
             else _which(executable_name) if isinstance(executable_name, str) else None
         )
-        observed = _distribution_version(distribution) if distribution else _read_version(executable)
-        if name == "proverif" and executable and not observed:
-            try:
-                launcher_contents = Path(executable).read_text(encoding="utf-8", errors="ignore")
-            except OSError:
-                launcher_contents = ""
-            if f"proverif{target}" in launcher_contents:
-                observed = str(target)
+        observed = (
+            _managed_tlc_release(executable)
+            if name == "tlc"
+            else (
+                _read_proverif_version(executable)
+                if name == "proverif"
+                else (
+                    _distribution_version(distribution)
+                    if distribution
+                    else _read_version(executable)
+                )
+            )
+        )
         present = bool(observed or executable)
         # Version strings vary by solver; containment catches the reviewed
         # fixed releases while package ranges are reported for human review.
         normalized_target = str(target).lstrip("v")
         normalized_observed = observed.lstrip("v")
         matches = bool(observed and normalized_target in normalized_observed)
+        if name == "proverif":
+            matches = observed == PROVERIF_VERSION
         if name in {"z3", "symbolicai"}:
             matches = bool(observed)
         statuses.append(
@@ -602,6 +692,11 @@ def pinned_release_inventory() -> dict[str, dict[str, str]]:
     """
 
     return {
+        "tlc": {
+            "version": TLC_VERSION,
+            "url": TLC_PORTABLE_URL,
+            "sha256": TLC_PORTABLE_SHA256,
+        },
         "apalache": {
             "version": APALACHE_VERSION,
             "url": APALACHE_PORTABLE_URL,
@@ -898,15 +993,15 @@ _SYSTEM_PACKAGE_NAMES: dict[str, dict[str, list[str]]] = {
         "mamba": ["coq"],
     },
     "ergoai_build": {
-        "apt": ["git", "make", "gcc", "g++", "unzip", "tar"],
-        "dnf": ["git", "make", "gcc", "gcc-c++", "unzip", "tar"],
-        "yum": ["git", "make", "gcc", "gcc-c++", "unzip", "tar"],
-        "pacman": ["git", "make", "gcc", "unzip", "tar"],
-        "zypper": ["git", "make", "gcc", "gcc-c++", "unzip", "tar"],
-        "apk": ["git", "make", "gcc", "g++", "musl-dev", "unzip", "tar"],
-        "brew": ["git", "make", "gcc", "unzip"],
-        "conda": ["git", "make", "compilers", "unzip"],
-        "mamba": ["git", "make", "compilers", "unzip"],
+        "apt": ["git", "make", "gcc", "g++", "flex", "bison", "unzip", "tar"],
+        "dnf": ["git", "make", "gcc", "gcc-c++", "flex", "bison", "unzip", "tar"],
+        "yum": ["git", "make", "gcc", "gcc-c++", "flex", "bison", "unzip", "tar"],
+        "pacman": ["git", "make", "gcc", "flex", "bison", "unzip", "tar"],
+        "zypper": ["git", "make", "gcc", "gcc-c++", "flex", "bison", "unzip", "tar"],
+        "apk": ["git", "make", "gcc", "g++", "musl-dev", "flex", "bison", "unzip", "tar"],
+        "brew": ["git", "make", "gcc", "flex", "bison", "unzip"],
+        "conda": ["git", "make", "compilers", "flex", "bison", "unzip"],
+        "mamba": ["git", "make", "compilers", "flex", "bison", "unzip"],
     },
 }
 
@@ -1193,13 +1288,36 @@ def _run_custom_ergoai_installer(*, strict: bool) -> bool:
         return False
 
 
-def _download_file(url: str, destination: Path, *, strict: bool) -> bool:
+def _download_file(
+    url: str,
+    destination: Path,
+    *,
+    expected_sha256: str,
+    expected_size_bytes: int = 0,
+    strict: bool,
+) -> bool:
     try:
         destination.parent.mkdir(parents=True, exist_ok=True)
         if destination.is_file():
-            return True
+            observed = _sha256(destination)
+            size_matches = (
+                not expected_size_bytes
+                or destination.stat().st_size == expected_size_bytes
+            )
+            if observed == expected_sha256.lower() and size_matches:
+                return True
         print(f"Downloading ErgoAI release installer from {url}...")
-        urllib.request.urlretrieve(url, destination)
+        partial = destination.with_suffix(destination.suffix + ".partial")
+        urllib.request.urlretrieve(url, partial)
+        observed = _sha256(partial)
+        size_matches = (
+            not expected_size_bytes or partial.stat().st_size == expected_size_bytes
+        )
+        if observed != expected_sha256.lower() or not size_matches:
+            partial.unlink(missing_ok=True)
+            print("Refusing ErgoAI installer: release checksum or size mismatch.")
+            return False
+        partial.replace(destination)
         _make_executable(destination)
         return True
     except Exception as exc:
@@ -1214,7 +1332,17 @@ def _install_ergoai_release(*, strict: bool) -> bool:
 
     if os.environ.get("IPFS_DATASETS_PY_ERGOAI_INSTALL_RELEASE") == "0":
         return False
-    if platform.system().lower() not in {"linux", "darwin"}:
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    if machine == "amd64":
+        machine = "x86_64"
+    elif machine == "arm64":
+        machine = "aarch64"
+    if (system, machine) not in ERGOAI_RELEASE_SUPPORTED_PLATFORMS:
+        print(
+            "No reviewed ErgoAI 3.0 release pin for "
+            f"{system}-{machine}; refusing unbound installation."
+        )
         return False
 
     shell = _which("sh") or "/bin/sh"
@@ -1236,9 +1364,38 @@ def _install_ergoai_release(*, strict: bool) -> bool:
         os.environ.get("IPFS_DATASETS_PY_ERGOAI_RELEASE_URL")
         or DEFAULT_ERGOAI_RELEASE_URL
     ).strip()
+    configured_sha256 = str(
+        os.environ.get("IPFS_DATASETS_PY_ERGOAI_RELEASE_SHA256")
+        or (
+            DEFAULT_ERGOAI_RELEASE_SHA256
+            if release_url == DEFAULT_ERGOAI_RELEASE_URL
+            else ""
+        )
+    ).strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", configured_sha256):
+        message = (
+            "ErgoAI release URL overrides require "
+            "IPFS_DATASETS_PY_ERGOAI_RELEASE_SHA256; refusing to execute an "
+            "unbound installer."
+        )
+        print(message)
+        if strict:
+            raise RuntimeError(message)
+        return False
+    expected_size = (
+        DEFAULT_ERGOAI_RELEASE_SIZE_BYTES
+        if release_url == DEFAULT_ERGOAI_RELEASE_URL
+        else 0
+    )
     installer_name = release_url.rstrip("/").rsplit("/", 1)[-1] or "ergoAI.run"
     installer = root / installer_name
-    if not _download_file(release_url, installer, strict=strict):
+    if not _download_file(
+        release_url,
+        installer,
+        expected_sha256=configured_sha256,
+        expected_size_bytes=expected_size,
+        strict=strict,
+    ):
         return False
 
     try:
@@ -1415,7 +1572,7 @@ def ensure_cvc5(
         pip_kwargs = {"strict": strict}
         if force:
             pip_kwargs["upgrade"] = True
-        if _pip_install("cvc5>=1.0.0,<2.0.0", **pip_kwargs) and _module_available("cvc5"):
+        if _pip_install("cvc5==1.3.3", **pip_kwargs) and _module_available("cvc5"):
             _announce(
                 "Updated cvc5 Python bindings." if force else "Installed cvc5 Python bindings.",
                 on_progress,
@@ -1481,9 +1638,9 @@ def ensure_ergoai(
     Strategy:
     - Respect ``ERGOAI_BINARY`` or an existing ``ergo``/``ergoai``/``runErgo.sh``.
     - Run ``IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND`` when configured.
-    - Install the official user-local ErgoAI release on Linux/macOS when enabled.
-    - Hydrate the vendored ``ipfs_datasets_py/logic/ErgoAI`` checkout from
-      ErgoAI/ErgoEngine as a best-effort source install.
+    - Install the official user-local ErgoAI release on reviewed Linux platforms.
+    - Fail closed rather than hydrating an unpinned/incomplete source checkout;
+      the official release contains the matching XSB source needed to build.
 
     ErgoAI may still require host-specific build/runtime dependencies.  In
     that case this function leaves a clear message and the wrapper can continue
@@ -1519,13 +1676,10 @@ def ensure_ergoai(
 
     if force:
         _announce(
-            "ErgoAI update requested. Refreshing the configured source checkout; "
-            "set IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND to select a reviewed release.",
+            "ErgoAI update requested. Revalidating the checksummed official release; "
+            "set IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND only for an operator-reviewed override.",
             on_progress,
         )
-        if _clone_or_update_ergoai(strict=strict):
-            _announce("Updated the configured ErgoAI source checkout.", on_progress, phase="installed")
-            return True
 
     profile = detect_platform_install_profile()
     build_packages = _package_names_for("ergoai_build", profile.package_manager)
@@ -1543,14 +1697,6 @@ def ensure_ergoai(
             os.environ["ERGOAI_BINARY"] = str(binary)
             _write_ergoai_launchers(Path(binary))
         _announce("Installed the configured ErgoAI release.", on_progress, phase="installed")
-        return True
-
-    if _clone_or_update_ergoai(strict=strict):
-        binary = _find_ergoai_binary()
-        if binary is not None:
-            os.environ["ERGOAI_BINARY"] = str(binary)
-            _write_ergoai_launchers(Path(binary))
-        _announce("Installed ErgoAI from the configured source checkout.", on_progress, phase="installed")
         return True
 
     _announce(
@@ -1898,64 +2044,132 @@ def _proverif_build_environment(
         return None
 
 
-def ensure_apalache(
-    *, yes: bool, strict: bool, on_progress: ProgressCallback | None = None, force: bool = False
+def _state_model_available(
+    receipt: object,
+    *,
+    tool_id: str,
+    install_root: Path,
+    java_executable: str | Path | None,
 ) -> bool:
-    """Ensure the pinned JVM-based Apalache distribution is user-local."""
+    """Verify the final managed bundle instead of trusting receipt flags."""
 
-    existing = _which("apalache-mc") or _which("apalache")
-    if existing and not force:
-        _announce(f"Apalache is already available at {existing}", on_progress, phase="available")
-        return True
-    if not yes:
-        _announce("Apalache is missing; rerun with --yes to install it user-locally.", on_progress, phase="blocked")
+    if (
+        str(getattr(receipt, "status", "")) not in {"available", "installed"}
+        or not bool(getattr(receipt, "installed", False))
+    ):
         return False
-    # Managed installs require explicit consent and registry authorization.
-    # Checksums are verified later by _download_release_artifact.
-    authorize_managed_install("apalache", yes=True, checksum_verified=None)
-    if _run_custom_solver_installer("apalache", strict=strict, on_progress=on_progress):
-        return _which("apalache-mc") is not None or _which("apalache") is not None
-    if platform.system().lower() not in {"linux", "darwin"}:
-        _announce(
-            "The portable Apalache launcher supports Linux and macOS. Set "
-            "IPFS_DATASETS_PY_APALACHE_INSTALL_COMMAND for this platform.",
-            on_progress,
-            phase="blocked",
-        )
-        return False
-    if _which("java") is None:
-        _announce(
-            "Apalache requires a Java runtime. Install Java or set JAVA_HOME before retrying.",
-            on_progress,
-            phase="blocked",
-        )
-        return False
+    from ipfs_datasets_py.logic.backends.installers import state_model
 
-    root = _external_prover_root()
-    archive = root / "downloads" / f"apalache-{APALACHE_VERSION}.tgz"
-    destination = root / f"apalache-{APALACHE_VERSION}"
-    try:
-        if not _download_release_artifact(
-            APALACHE_PORTABLE_URL,
-            archive,
-            APALACHE_PORTABLE_SHA256,
-            strict=strict,
-            on_progress=on_progress,
-        ):
-            return False
-        _announce(f"Extracting Apalache {APALACHE_VERSION} into {destination}", on_progress)
-        _safe_extract_tar(archive, destination)
-        candidates = [path for path in destination.rglob("apalache-mc") if path.is_file()]
-        if len(candidates) != 1:
-            raise RuntimeError("Apalache archive did not contain exactly one apalache-mc executable")
-        _write_launcher("apalache-mc", candidates[0])
-        _announce(f"Installed Apalache {APALACHE_VERSION} user-locally.", on_progress, phase="installed")
-        return _which("apalache-mc") is not None
-    except Exception as exc:
-        _announce(f"Apalache installation failed: {exc}", on_progress, phase="failed")
-        if strict:
-            raise
+    minimum_java = (
+        state_model.TLC_MIN_JAVA_MAJOR
+        if tool_id == "tlc"
+        else state_model.APALACHE_MIN_JAVA_MAJOR
+    )
+    java = state_model.probe_java_runtime(
+        java_executable=java_executable,
+        minimum_major=minimum_java,
+    )
+    if not java.usable or java.executable is None:
         return False
+    root = state_model.expand_user_local_root(install_root)
+    if tool_id == "tlc":
+        identity = state_model.managed_tlc_identity(
+            root,
+            java_executable=java.executable,
+        )
+        launcher = root / "bin" / state_model.TLC_EXECUTABLE
+        probe = state_model.probe_tlc_runtime(
+            executable=str(launcher),
+            java_executable=java.executable,
+        )
+    elif tool_id == "apalache":
+        identity = state_model.managed_apalache_identity(
+            root,
+            java_executable=java.executable,
+        )
+        launcher = root / "bin" / state_model.APALACHE_EXECUTABLE
+        probe = state_model.probe_apalache_runtime(
+            str(launcher),
+            java_executable=java.executable,
+            expected_version=state_model.APALACHE_VERSION,
+        )
+    else:
+        return False
+    receipt_executable = getattr(receipt, "executable_path", None)
+    receipt_path = (
+        Path(os.path.abspath(os.path.expanduser(str(receipt_executable))))
+        if receipt_executable
+        else None
+    )
+    return bool(
+        identity.get("usable")
+        and probe.usable
+        and receipt_path is not None
+        and not receipt_path.is_symlink()
+        and receipt_path == launcher
+    )
+
+
+def ensure_tlc(
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+    java_executable: str | Path | None = None,
+) -> bool:
+    """Public compatibility bridge to the reviewed TLC state-model installer."""
+
+    from ipfs_datasets_py.logic.backends.installers.state_model import (
+        ensure_tlc as ensure_managed_tlc,
+    )
+
+    install_root = _external_prover_root()
+    receipt = ensure_managed_tlc(
+        yes=yes,
+        strict=strict,
+        force=force,
+        on_progress=on_progress,
+        install_root=install_root,
+        java_executable=java_executable,
+    )
+    return _state_model_available(
+        receipt,
+        tool_id="tlc",
+        install_root=install_root,
+        java_executable=java_executable,
+    )
+
+
+def ensure_apalache(
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+    java_executable: str | Path | None = None,
+) -> bool:
+    """Public compatibility bridge to the reviewed Apalache installer."""
+
+    from ipfs_datasets_py.logic.backends.installers.state_model import (
+        ensure_apalache as ensure_managed_apalache,
+    )
+
+    install_root = _external_prover_root()
+    receipt = ensure_managed_apalache(
+        yes=yes,
+        strict=strict,
+        force=force,
+        on_progress=on_progress,
+        install_root=install_root,
+        java_executable=java_executable,
+    )
+    return _state_model_available(
+        receipt,
+        tool_id="apalache",
+        install_root=install_root,
+        java_executable=java_executable,
+    )
 
 
 def _numeric_version(value: str) -> tuple[int, ...]:
@@ -2508,13 +2722,28 @@ def ensure_proverif(
 
     existing = _which("proverif")
     if existing and not force:
-        _announce(f"ProVerif is already available at {existing}", on_progress, phase="available")
-        return True
+        if _proverif_version_matches(existing):
+            _announce(
+                f"ProVerif is already available at {existing}",
+                on_progress,
+                phase="available",
+            )
+            return True
+        _announce(
+            f"ProVerif at {existing} failed the canonical -help identity probe.",
+            on_progress,
+            phase="mismatched",
+        )
     if not yes:
-        _announce("ProVerif is missing; rerun with --yes to build it user-locally.", on_progress, phase="blocked")
+        _announce(
+            "ProVerif is missing or mismatched; rerun with --yes to build it "
+            "user-locally.",
+            on_progress,
+            phase="blocked",
+        )
         return False
     if _run_custom_solver_installer("proverif", strict=strict, on_progress=on_progress):
-        return _which("proverif") is not None
+        return _proverif_version_matches(_which("proverif"))
 
     build_env = _proverif_build_environment(
         allow_sudo=allow_sudo,
@@ -2561,7 +2790,7 @@ def ensure_proverif(
             } if "OPAMROOT" in build_env and "OPAMSWITCH" in build_env else None,
         )
         _announce(f"Installed headless ProVerif {PROVERIF_VERSION} user-locally.", on_progress, phase="installed")
-        if not _version_matches(_which("proverif"), PROVERIF_VERSION):
+        if not _proverif_version_matches(_which("proverif")):
             raise RuntimeError(f"ProVerif launcher does not report {PROVERIF_VERSION}")
         return True
     except Exception as exc:
@@ -2935,6 +3164,68 @@ def ensure_isabelle(
         return False
 
 
+def _typed_install_result_succeeded(result: object) -> bool:
+    """Interpret reviewed plugin receipts without generic object truthiness."""
+
+    if isinstance(result, bool):
+        return result
+    status = str(getattr(result, "status", "") or "").strip().lower()
+    if isinstance(result, dict):
+        status = str(result.get("status") or "").strip().lower()
+    return status in {"available", "already_present", "installed"}
+
+
+def ensure_reviewed_external_provider(
+    provider_id: str,
+    *,
+    yes: bool = False,
+    strict: bool = True,
+    force: bool = False,
+    on_progress: ProgressCallback | None = None,
+) -> bool:
+    """Invoke a reviewed family plugin on its real external-vendor path.
+
+    Imports happen only after this explicit call.  Shadow/parity engines and
+    advisor version shims are deliberately disabled: a successful return means
+    the named external provider is genuinely available or installed.
+    """
+
+    if provider_id not in REVIEWED_EXTERNAL_PROVIDER_IDS:
+        raise ValueError(f"unsupported reviewed external provider: {provider_id}")
+
+    from ipfs_datasets_py.logic.backends.installers.registry import (
+        get_installer_entry,
+    )
+
+    entry = get_installer_entry(provider_id)
+    plugin = importlib.import_module(entry.module_path)
+    ensure = getattr(plugin, entry.ensure_name, None)
+    if not callable(ensure):
+        if strict:
+            raise RuntimeError(
+                f"reviewed installer {entry.module_path}:{entry.ensure_name} "
+                "is not callable"
+            )
+        return False
+
+    kwargs: dict[str, object] = {
+        "yes": yes,
+        "strict": strict,
+        "force": force,
+        "on_progress": on_progress,
+    }
+    if provider_id in {"hyperltl", "autohyper", "mchyper"}:
+        kwargs.update({"vendor": True, "hermetic_engine": False})
+    elif provider_id in {"souffle", "secpal"}:
+        kwargs.update({"vendor": True, "hermetic_shadow": False})
+    elif provider_id == "runtime-mtl-external":
+        kwargs.update({"vendor": True, "hermetic_parity_engine": False})
+    elif provider_id == "ergoai":
+        kwargs["hermetic_shim"] = False
+
+    return _typed_install_result_succeeded(ensure(**kwargs))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Best-effort user-local installer for theorem provers and their Python bindings"
@@ -2943,6 +3234,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cvc5", action="store_true", help="Install/ensure CVC5 Python bindings")
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean")
     parser.add_argument("--coq", "--rocq", action="store_true", help="Install/ensure Rocq 9.1.1 (Coq-compatible CLI)")
+    parser.add_argument("--tlc", action="store_true", help="Install/ensure TLC 1.8.0")
     parser.add_argument("--apalache", action="store_true", help="Install/ensure Apalache")
     parser.add_argument("--tamarin", action="store_true", help="Install/ensure Tamarin and Maude")
     parser.add_argument("--maude", action="store_true", help="Install/ensure the Maude runtime")
@@ -2957,6 +3249,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
     parser.add_argument("--ergoai", "--ergo", action="store_true", help="Install/ensure ErgoAI/ErgoEngine")
+    parser.add_argument("--hyperltl", action="store_true", help="Install/ensure the reviewed EAHyper HyperLTL engine")
+    parser.add_argument("--autohyper", action="store_true", help="Install/ensure the reviewed AutoHyper engine")
+    parser.add_argument("--mchyper", action="store_true", help="Install/ensure the reviewed MCHyper engine")
+    parser.add_argument("--souffle", action="store_true", help="Build/install the reviewed native Souffle engine")
+    parser.add_argument("--secpal", action="store_true", help="Install/ensure an authentic reviewed external SecPAL engine")
+    parser.add_argument(
+        "--runtime-mtl-external",
+        action="store_true",
+        help="Build/install the independent TypeScript Runtime MTL engine",
+    )
     parser.add_argument(
         "--portfolio",
         action="append",
@@ -3023,6 +3325,7 @@ def main(argv: list[str] | None = None) -> int:
     want_cvc5 = bool(args.cvc5)
     want_lean = bool(args.lean)
     want_coq = bool(args.coq)
+    want_tlc = bool(args.tlc)
     want_apalache = bool(args.apalache)
     want_tamarin = bool(args.tamarin)
     want_maude = bool(args.maude)
@@ -3033,6 +3336,12 @@ def main(argv: list[str] | None = None) -> int:
     want_isabelle = bool(args.isabelle)
     want_symbolicai = bool(args.symbolicai)
     want_ergoai = bool(args.ergoai)
+    want_hyperltl = bool(args.hyperltl)
+    want_autohyper = bool(args.autohyper)
+    want_mchyper = bool(args.mchyper)
+    want_souffle = bool(args.souffle)
+    want_secpal = bool(args.secpal)
+    want_runtime_mtl_external = bool(args.runtime_mtl_external)
     portfolio_solvers = {
         solver
         for portfolio in args.portfolio
@@ -3043,6 +3352,7 @@ def main(argv: list[str] | None = None) -> int:
     want_cvc5 = want_cvc5 or "cvc5" in portfolio_solvers
     want_lean = want_lean or "lean" in portfolio_solvers
     want_coq = want_coq or "coq" in portfolio_solvers
+    want_tlc = want_tlc or "tlc" in portfolio_solvers
     want_apalache = want_apalache or "apalache" in portfolio_solvers
     want_tamarin = want_tamarin or "tamarin" in portfolio_solvers
     want_maude = want_maude or "maude" in portfolio_solvers
@@ -3053,16 +3363,27 @@ def main(argv: list[str] | None = None) -> int:
     want_isabelle = want_isabelle or "isabelle" in portfolio_solvers
     want_symbolicai = want_symbolicai or "symbolicai" in portfolio_solvers
     want_ergoai = want_ergoai or "ergoai" in portfolio_solvers
+    want_hyperltl = want_hyperltl or "hyperltl" in portfolio_solvers
+    want_autohyper = want_autohyper or "autohyper" in portfolio_solvers
+    want_mchyper = want_mchyper or "mchyper" in portfolio_solvers
+    want_souffle = want_souffle or "souffle" in portfolio_solvers
+    want_secpal = want_secpal or "secpal" in portfolio_solvers
+    want_runtime_mtl_external = (
+        want_runtime_mtl_external or "runtime-mtl-external" in portfolio_solvers
+    )
     if not (
-        want_z3 or want_cvc5 or want_lean or want_coq or want_apalache
+        want_z3 or want_cvc5 or want_lean or want_coq or want_tlc or want_apalache
         or want_tamarin or want_maude or want_proverif or want_cvc5_cli
         or want_vampire or want_eprover or want_isabelle
-        or want_symbolicai or want_ergoai
+        or want_symbolicai or want_ergoai or want_hyperltl or want_autohyper
+        or want_mchyper or want_souffle or want_secpal
+        or want_runtime_mtl_external
     ):
         want_z3 = True
         want_cvc5 = True
         want_lean = True
         want_coq = True
+        want_tlc = True
         want_apalache = True
         want_tamarin = True
         want_proverif = True
@@ -3088,6 +3409,8 @@ def main(argv: list[str] | None = None) -> int:
             allow_sudo=bool(args.allow_sudo),
             **update_kwargs,
         ) and ok
+    if want_tlc:
+        ok = ensure_tlc(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_apalache:
         ok = ensure_apalache(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_maude:
@@ -3106,8 +3429,22 @@ def main(argv: list[str] | None = None) -> int:
         ok = ensure_isabelle(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_symbolicai:
         ok = ensure_symbolicai(yes=args.yes, strict=args.strict, **update_kwargs) and ok
-    if want_ergoai:
-        ok = ensure_ergoai(yes=args.yes, strict=args.strict, **update_kwargs) and ok
+    for provider_id, wanted in (
+        ("hyperltl", want_hyperltl),
+        ("autohyper", want_autohyper),
+        ("mchyper", want_mchyper),
+        ("souffle", want_souffle),
+        ("secpal", want_secpal),
+        ("runtime-mtl-external", want_runtime_mtl_external),
+        ("ergoai", want_ergoai),
+    ):
+        if wanted:
+            ok = ensure_reviewed_external_provider(
+                provider_id,
+                yes=args.yes,
+                strict=args.strict,
+                **update_kwargs,
+            ) and ok
 
     if ok:
         return 0

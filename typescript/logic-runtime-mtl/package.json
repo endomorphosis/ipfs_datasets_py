@@ -1,23 +1,32 @@
 {
   "name": "@ipfs-datasets/logic-runtime-mtl",
-  "version": "1.0.0",
-  "description": "Portable RuntimeMTLMonitor@1 finite-trace MTL/LTLf evaluator with Python parity",
+  "version": "1.0.0-reviewed",
+  "description": "Independent RuntimeMTLMonitor@1 finite-trace MTL/LTLf TypeScript/Node monitor",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "runtime-mtl-external": "dist/src/cli.js"
+  },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./cli": {
+      "types": "./dist/src/cli.d.ts",
+      "import": "./dist/src/cli.js"
     }
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "package-lock.json"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "tsc -p tsconfig.json && node --test dist/test/runtime_mtl.test.js"
+    "build": "tsc -p tsconfig.json && node --input-type=module -e \"import fs from 'node:fs'; const p='dist/src/cli.js'; const t=fs.readFileSync(p,'utf8'); if(!t.startsWith('#!')) fs.writeFileSync(p,'#!/usr/bin/env node\\n'+t); fs.chmodSync(p,0o755);\"",
+    "test": "tsc -p tsconfig.json && node --test dist/test/runtime_mtl.test.js",
+    "evaluate": "node dist/src/cli.js evaluate"
   },
   "engines": {
     "node": ">=18"
@@ -26,6 +35,6 @@
     "@types/node": "20.17.10",
     "typescript": "5.6.3"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "private": true
 }

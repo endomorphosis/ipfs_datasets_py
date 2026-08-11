@@ -1,0 +1,86 @@
+{
+  "schema": "uspto.offline-replay-manifest.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-072",
+  "goal_id": "PATLAW-G080",
+  "title": "Deterministic offline end-to-end USPTO application analysis replay",
+  "network_free": true,
+  "notes": "Compact recipe index. Generators materialize digests; no bulk golden dumps.",
+  "version_pins": {
+    "parser": "patlaw-031.document-extraction.v1",
+    "model": {
+      "ocr": "tesseract@fixture-replay",
+      "layout": "none@offline"
+    },
+    "ruleset": {
+      "analysis_bundle": "analysis-bundle-rules@1",
+      "gap_report": "gap-report-rules@1",
+      "workflow": "preflight-human-gate-rules@1",
+      "requirement": "requirement-compiler-rules@1",
+      "span_validator": "uspto.span-validator.v1"
+    },
+    "config": {
+      "api_schema": "uspto.analysis-api.v1",
+      "api_interface": "USPTOAnalysisAPI@1",
+      "output_policy": "redact_private",
+      "freshness_max_days": "7300"
+    },
+    "tree": {
+      "tree_id": "replay-tree:patlaw-072:v1",
+      "tree_digest": "45d09c7de8c0d78cc80b6dcfe8c5d630dfc9d68c000000000000000000000000"
+    }
+  },
+  "binding_keys": [
+    "input_artifact_ids",
+    "parser_versions",
+    "model_versions",
+    "ruleset_versions",
+    "config_versions",
+    "tree_id",
+    "tree_digest"
+  ],
+  "matters": {
+    "public": {
+      "recipe": "public_matter_recipe.json",
+      "classification": "public_user",
+      "application_number": "16123456",
+      "matter_id": "matter:replay:public:16123456"
+    },
+    "private": {
+      "recipe": "private_matter_recipe.json",
+      "classification": "confidential_application",
+      "tenant_id": "tenant-a",
+      "matter_id": "matter:replay:private:syn-16-000001"
+    },
+    "unknown": {
+      "recipe": "public_matter_recipe.json",
+      "case_variant": "unknown_low_readability",
+      "classification": "public_user",
+      "matter_id": "matter:replay:unknown:low-ocr"
+    }
+  },
+  "forbidden_capabilities": [
+    "sign",
+    "pay",
+    "file",
+    "submit",
+    "automate_browser",
+    "scrape",
+    "login",
+    "session"
+  ],
+  "acceptance": {
+    "network_free_replay_deterministic": true,
+    "output_binds_input_parser_model_ruleset_config_tree": true,
+    "all_source_spans_resolve": true,
+    "unknowns_remain_unknown": true,
+    "private_data_isolation_holds": true,
+    "no_sign_file_pay_reachable": true
+  },
+  "dependencies": {
+    "odp_http_recipe": "../odp/http/odp_http_recipe.json",
+    "private_import_root": "../private_import",
+    "document_generators": "../documents/generators.py",
+    "gold_unknown_case": "../gold/cases/gold-unknown-low-readability.json"
+  }
+}

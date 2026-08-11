@@ -4,6 +4,7 @@ package-lock.json
 **/__pycache__
 **/node_modules
 **/package-lock.json
+!typescript/logic-runtime-mtl/package-lock.json
 build/
 test_screenshots/
 dist/

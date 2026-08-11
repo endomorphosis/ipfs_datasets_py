@@ -1,0 +1,313 @@
+{
+  "discovered_at": "2024-09-01T12:00:00Z",
+  "fixture_id": "public-laws-examination-118",
+  "inventory_source": "fixture-runtime-inventory-v1",
+  "notes": "Compact Public Law examination recipe. Patent-relevant and non-patent laws are both examined; the manifest retains every examined Public Law. House/eCFR/FederalRegister.gov views are cross-check-only.",
+  "public_laws": [
+    {
+      "affects_titles": [
+        "35"
+      ],
+      "citation": "Pub. L. 112-29",
+      "congress": "112",
+      "content_sha256": "418347bc8a299bc305738eadcba11627427f6d51000d5213b0dfcfc64872bb2f",
+      "cross_checks": [
+        {
+          "content_sha256": "0d63a22922e10e2ce1f4fbee7683c6f156d1036fff15326a09fb039760d1b779",
+          "derived_presentation": {
+            "artifact_sha256": "0d63a22922e10e2ce1f4fbee7683c6f156d1036fff15326a09fb039760d1b779",
+            "media_type": "text/html",
+            "provider": "ushouse",
+            "role": "derived_presentation",
+            "source_id": "ushouse:title35:crosscheck-pl112-29",
+            "source_url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title35"
+          },
+          "notes": "House OLRC codification view; cross-check only.",
+          "provider": "ushouse",
+          "role": "house_codification",
+          "source_url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title35"
+        }
+      ],
+      "date_enacted": "2011-09-16",
+      "formats": {
+        "mods": {
+          "artifact_sha256": "1b827c1c99dd46b1a4949df1c893cf45a94b7feee0bacc2e99474ed8fa1ad869",
+          "byte_size": 5000,
+          "format": "mods",
+          "media_type": "application/mods+xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29/mods/PLAW-112publ29.mods",
+          "upstream_package_id": "PLAW-112publ29"
+        },
+        "pdf": {
+          "artifact_sha256": "d04a90ca5649af57c25498342962697191414c45ffcf7f977534163b4e8d3a84",
+          "byte_size": 5010,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29/pdf/PLAW-112publ29.pdf",
+          "upstream_package_id": "PLAW-112publ29"
+        },
+        "premis": {
+          "artifact_sha256": "2d1fcad5beb197ce189f4368c3c5b92e6e14f0a05a0bbd27f6ef3374fe1e8d15",
+          "byte_size": 5000,
+          "format": "premis",
+          "media_type": "application/premis+xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29/premis/PLAW-112publ29.premis",
+          "upstream_package_id": "PLAW-112publ29"
+        },
+        "xml": {
+          "artifact_sha256": "89ce73e3499c0803f27be16b2a3f4e01ba7516dbb1653accf7a574b45b8fa400",
+          "byte_size": 5000,
+          "format": "xml",
+          "media_type": "application/xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29/xml/PLAW-112publ29.xml",
+          "upstream_package_id": "PLAW-112publ29"
+        }
+      },
+      "law_number": "29",
+      "package_id": "PLAW-112publ29",
+      "patent_relevant": true,
+      "retrieved_at": "2024-09-01T12:00:00Z",
+      "source_spans": [
+        {
+          "end": 72,
+          "excerpt": "An Act to amend title 35, United States Code",
+          "format": "pdf",
+          "page_end": 1,
+          "page_start": 1,
+          "start": 0,
+          "unit": "char"
+        }
+      ],
+      "source_url": "https://www.govinfo.gov/content/pkg/PLAW-112publ29",
+      "subjects": [
+        "patents",
+        "USPTO",
+        "inter partes review"
+      ],
+      "text_excerpt": "An Act to amend title 35, United States Code, to provide for patent reform.",
+      "title": "Leahy-Smith America Invents Act",
+      "verification_state": "unverified"
+    },
+    {
+      "affects_titles": [
+        "35"
+      ],
+      "citation": "Pub. L. 118-45",
+      "congress": "118",
+      "content_sha256": "1251c78e5d691b690feb940f68818dbf47c7f70683975af2a8971a1034817401",
+      "date_enacted": "2022-12-29",
+      "formats": {
+        "mods": {
+          "artifact_sha256": "414c16dedf1e40d79e0a27f2cec2824e2ba4eeb9aaf9e3574ed921b6c8fd729f",
+          "byte_size": 5000,
+          "format": "mods",
+          "media_type": "application/mods+xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ45/mods/PLAW-118publ45.mods",
+          "upstream_package_id": "PLAW-118publ45"
+        },
+        "pdf": {
+          "artifact_sha256": "6f03cff6680d5d28a3dac426e75ec8db417500f97e3df9d349a11aae064b8d7c",
+          "byte_size": 5010,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ45/pdf/PLAW-118publ45.pdf",
+          "upstream_package_id": "PLAW-118publ45"
+        },
+        "premis": {
+          "artifact_sha256": "a92214ee765694c4911749faa60b2c2b2e639be07e3d7e8fdda6898fdc539dc4",
+          "byte_size": 5000,
+          "format": "premis",
+          "media_type": "application/premis+xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ45/premis/PLAW-118publ45.premis",
+          "upstream_package_id": "PLAW-118publ45"
+        },
+        "xml": {
+          "artifact_sha256": "f379086a790b146e776b49e37c6d99c403e518703c03e01f4526b0285d33701b",
+          "byte_size": 5000,
+          "format": "xml",
+          "media_type": "application/xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ45/xml/PLAW-118publ45.xml",
+          "upstream_package_id": "PLAW-118publ45"
+        }
+      },
+      "law_number": "45",
+      "package_id": "PLAW-118publ45",
+      "patent_relevant": true,
+      "retrieved_at": "2024-09-01T12:05:00Z",
+      "source_spans": [
+        {
+          "end": 80,
+          "excerpt": "Adjustments to patent fees and small entity definitions",
+          "format": "xml",
+          "page_end": 1,
+          "page_start": 1,
+          "start": 0,
+          "unit": "char"
+        }
+      ],
+      "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ45",
+      "subjects": [
+        "patent fees",
+        "USPTO"
+      ],
+      "text_excerpt": "Adjustments to patent fees and small entity definitions under title 35, United States Code.",
+      "title": "Unleashing American Innovators Act of 2022 (fixture)",
+      "verification_state": "unverified"
+    },
+    {
+      "affects_titles": [
+        "23",
+        "49"
+      ],
+      "citation": "Pub. L. 117-58",
+      "congress": "117",
+      "content_sha256": "cdb5f613af6a96707fcb4231c89c3c668dad89420be130e7bb2b56cc98d9ca5c",
+      "cross_checks": [
+        {
+          "content_sha256": "e8cb244449b332b88362f0708c51b66efc808145db756b97d414d9d309bffbee",
+          "derived_presentation": {
+            "artifact_sha256": "e8cb244449b332b88362f0708c51b66efc808145db756b97d414d9d309bffbee",
+            "media_type": "application/json",
+            "provider": "federalregister.gov",
+            "role": "derived_presentation",
+            "source_id": "fr.gov:discovery:pl117-58",
+            "source_url": "https://www.federalregister.gov/documents/search?conditions%5Bterm%5D=117-58"
+          },
+          "notes": "FederalRegister.gov discovery; cross-check only.",
+          "provider": "federalregister.gov",
+          "role": "federal_register_discovery",
+          "source_url": "https://www.federalregister.gov/documents/search?conditions%5Bterm%5D=117-58"
+        }
+      ],
+      "date_enacted": "2021-11-15",
+      "formats": {
+        "mods": {
+          "artifact_sha256": "0e9f01640e4330387bd59db3f68da2d9475d7eef9ab25d7398ea2809e3c883bc",
+          "byte_size": 5000,
+          "format": "mods",
+          "media_type": "application/mods+xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-117publ58/mods/PLAW-117publ58.mods",
+          "upstream_package_id": "PLAW-117publ58"
+        },
+        "pdf": {
+          "artifact_sha256": "0cf5cfd44400ca693e8fab13720e4ddcb66abcf57fef3bf6a664d22161d76f28",
+          "byte_size": 5010,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-117publ58/pdf/PLAW-117publ58.pdf",
+          "upstream_package_id": "PLAW-117publ58"
+        },
+        "premis": {
+          "artifact_sha256": "fa1f878d30780999dac0a34bfbf7406dd36bab2d6eea79b8678753eb292887c1",
+          "byte_size": 5000,
+          "format": "premis",
+          "media_type": "application/premis+xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-117publ58/premis/PLAW-117publ58.premis",
+          "upstream_package_id": "PLAW-117publ58"
+        },
+        "xml": {
+          "artifact_sha256": "c3ad0f7b669ee9266ca25d96ecfe9465759cf7ad7d0b6dd6ded0421260c5384a",
+          "byte_size": 5000,
+          "format": "xml",
+          "media_type": "application/xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-117publ58/xml/PLAW-117publ58.xml",
+          "upstream_package_id": "PLAW-117publ58"
+        }
+      },
+      "law_number": "58",
+      "package_id": "PLAW-117publ58",
+      "patent_relevant": false,
+      "retrieved_at": "2024-09-01T12:10:00Z",
+      "source_spans": [
+        {
+          "end": 90,
+          "excerpt": "An Act to authorize funds for Federal-aid highways",
+          "format": "pdf",
+          "page_end": 1,
+          "page_start": 1,
+          "start": 0,
+          "unit": "char"
+        }
+      ],
+      "source_url": "https://www.govinfo.gov/content/pkg/PLAW-117publ58",
+      "subjects": [
+        "infrastructure",
+        "transportation",
+        "broadband"
+      ],
+      "text_excerpt": "An Act to authorize funds for Federal-aid highways, highway safety programs, and transit programs.",
+      "title": "Infrastructure Investment and Jobs Act",
+      "verification_state": "unverified"
+    },
+    {
+      "affects_titles": [],
+      "citation": "Pub. L. 118-47",
+      "congress": "118",
+      "content_sha256": "b4503476fa891860521c8bc8f915fd660a66f9915b3bea39ba16db711a8d3197",
+      "date_enacted": "2024-03-23",
+      "formats": {
+        "mods": {
+          "artifact_sha256": "a20422755ed63153ff6cdcd1c22aa84f53cb978ed2bfb4a7c48ac0e49ff7ef93",
+          "byte_size": 5000,
+          "format": "mods",
+          "media_type": "application/mods+xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ47/mods/PLAW-118publ47.mods",
+          "upstream_package_id": "PLAW-118publ47"
+        },
+        "pdf": {
+          "artifact_sha256": "3c73c8b1bb78b3b9a05265320c9c8caf43ffd568f5775e38e0c125ad19d1ea62",
+          "byte_size": 5010,
+          "format": "pdf",
+          "media_type": "application/pdf",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ47/pdf/PLAW-118publ47.pdf",
+          "upstream_package_id": "PLAW-118publ47"
+        },
+        "premis": {
+          "artifact_sha256": "ad900c7183868d9e3c576555c83f57739373d99551f92a9f80353aeb810e0d65",
+          "byte_size": 5000,
+          "format": "premis",
+          "media_type": "application/premis+xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ47/premis/PLAW-118publ47.premis",
+          "upstream_package_id": "PLAW-118publ47"
+        },
+        "xml": {
+          "artifact_sha256": "a59ebc8077d540f3ae86d886d464f98202ab21d01a4a815c4141bbd0fa1d6725",
+          "byte_size": 5000,
+          "format": "xml",
+          "media_type": "application/xml",
+          "role": "official_artifact",
+          "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ47/xml/PLAW-118publ47.xml",
+          "upstream_package_id": "PLAW-118publ47"
+        }
+      },
+      "law_number": "47",
+      "package_id": "PLAW-118publ47",
+      "patent_relevant": false,
+      "retrieved_at": "2024-09-01T12:15:00Z",
+      "source_url": "https://www.govinfo.gov/content/pkg/PLAW-118publ47",
+      "subjects": [
+        "appropriations",
+        "budget"
+      ],
+      "text_excerpt": "Making further consolidated appropriations for the fiscal year ending September 30, 2024.",
+      "title": "Further Consolidated Appropriations Act, 2024 (fixture)",
+      "verification_state": "unverified"
+    }
+  ],
+  "schema_version": "public-law-change-fixture-v1"
+}

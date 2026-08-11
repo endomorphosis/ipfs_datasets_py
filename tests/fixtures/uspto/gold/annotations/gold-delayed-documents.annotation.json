@@ -1,0 +1,34 @@
+{
+  "case_id": "gold-delayed-documents",
+  "expected_assessment_status": "unknown",
+  "expected_human_review": "pending",
+  "goal_id": "PATLAW-G080",
+  "notes": "Missing bytes are freshness gaps, not proof USPTO did not receive the item.",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [],
+    "dates": [],
+    "provenance": [
+      {
+        "artifact_id": "art:missing-doc-9001",
+        "classification": "public_user",
+        "item_id": "gap:doc-9001",
+        "item_kind": "retrieval_gap",
+        "origin": "metadata",
+        "page_index": null,
+        "source_receipt_id": "receipt:synthetic:delayed-bytes-1",
+        "span_id": "span:meta-doc-9001"
+      }
+    ],
+    "requirements": []
+  }
+}

@@ -13,18 +13,19 @@ import importlib.util
 import math
 import os
 import shutil
+import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 def _cosine(a, b):
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=True))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(y * y for y in b))
     return dot / (na * nb) if na and nb else 0.0
@@ -73,13 +74,24 @@ def test_prover_installer_accepts_existing_ergoai_binary(tmp_path, monkeypatch):
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
     fake_binary = tmp_path / "runErgo.sh"
+    managed_root = tmp_path / "managed-provers"
     fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
     (tmp_path / ".ergo_paths").write_text("PROLOG=/usr/bin/false\n", encoding="utf-8")
     fake_binary.chmod(0o644)
     monkeypatch.setenv("ERGOAI_BINARY", str(fake_binary))
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(managed_root))
+    # ensure_ergoai prepends its managed bin directory directly to PATH. Register
+    # PATH with monkeypatch so that change is also rolled back after this test.
+    monkeypatch.setenv("PATH", os.environ.get("PATH", ""))
 
     assert prover_installer.ensure_ergoai(yes=False, strict=True) is True
     assert os.access(fake_binary, os.X_OK)
+    launchers = [managed_root / "bin" / name for name in ("runergo", "runErgo.sh")]
+    assert all(launcher.is_file() for launcher in launchers)
+    assert all(
+        str(fake_binary.resolve()) in launcher.read_text(encoding="utf-8")
+        for launcher in launchers
+    )
 
 
 def test_prover_installer_discovers_repo_runergo(tmp_path, monkeypatch):
@@ -134,6 +146,8 @@ def test_prover_installer_discovers_release_runergo(tmp_path, monkeypatch):
 def test_ergoai_release_installer_runs_noninteractive(tmp_path, monkeypatch):
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
+    missing = object()
+    previous_ergoai_binary = os.environ.get("ERGOAI_BINARY", missing)
     calls = []
     fake_binary = tmp_path / "Coherent" / "ERGOAI_3.0" / "ErgoAI" / "runergo"
 
@@ -163,11 +177,16 @@ def test_ergoai_release_installer_runs_noninteractive(tmp_path, monkeypatch):
     monkeypatch.setattr(prover_installer, "_download_file", fake_download)
     monkeypatch.setattr(prover_installer, "_run", fake_run)
 
-    assert prover_installer._install_ergoai_release(strict=True) is True
-    assert os.environ["ERGOAI_BINARY"] == str(fake_binary)
-    assert calls[0][0][-2:] == ["--", "noninteractive"]
-    assert calls[0][1]["cwd"] == tmp_path
-    monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+    try:
+        assert prover_installer._install_ergoai_release(strict=True) is True
+        assert os.environ["ERGOAI_BINARY"] == str(fake_binary)
+        assert calls[0][0][-2:] == ["--", "noninteractive"]
+        assert calls[0][1]["cwd"] == tmp_path
+    finally:
+        if previous_ergoai_binary is missing:
+            os.environ.pop("ERGOAI_BINARY", None)
+        else:
+            os.environ["ERGOAI_BINARY"] = previous_ergoai_binary
 
 
 def test_platform_package_plan_uses_passwordless_sudo_for_apt():
@@ -240,6 +259,14 @@ def test_platform_system_install_runs_update_and_install(monkeypatch):
     commands = []
 
     monkeypatch.setattr(prover_installer, "detect_platform_install_profile", lambda: profile)
+    # This unit test exercises command planning with a mocked executor.  The
+    # production guard correctly rejects real system-package mutation under
+    # pytest, so make the no-op boundary explicit instead of weakening it.
+    monkeypatch.setattr(
+        prover_installer,
+        "refuse_system_package_mutation_in_tests",
+        lambda **_kwargs: None,
+    )
     monkeypatch.setattr(
         prover_installer,
         "_run",
@@ -490,6 +517,11 @@ class TestErgoAIWrapperSimulation:
         monkeypatch.delenv("ERGOAI_BINARY", raising=False)
         monkeypatch.setattr(ergoai_wrapper, "_find_ergo_binary", fake_find_ergo_binary)
         monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: None,
+        )
+        monkeypatch.setattr(
             lazy_installer,
             "ensure_prover_executable",
             fake_ensure_executable,
@@ -501,6 +533,121 @@ class TestErgoAIWrapperSimulation:
         assert ergo.binary == fake_binary
         assert calls
         assert calls[0][0] == "ergoai"
+
+    def test_wrapper_prefers_and_binds_provenance_valid_managed_root(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
+
+        root = tmp_path / "managed"
+        launcher = root / "bin" / "ergoai"
+        launcher.parent.mkdir(parents=True)
+        launcher.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        launcher.chmod(0o755)
+        probe = {"managed_vendor_provenance_verified": True}
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: root,
+        )
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_find_provenance_valid_managed_binary",
+            lambda selected_root, **_kwargs: (launcher, probe)
+            if selected_root == root
+            else (None, {}),
+        )
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_find_ergo_binary",
+            lambda: (_ for _ in ()).throw(
+                AssertionError("legacy discovery must not outrank managed identity")
+            ),
+        )
+
+        wrapper = ergoai_wrapper.ErgoAIWrapper(lazy_install=False)
+
+        assert wrapper.binary == launcher
+        assert wrapper.install_root == root
+        assert wrapper.is_live_vendor_execution() is True
+
+    def test_dynamic_availability_observes_same_process_change(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
+
+        discovered: list[Path | None] = [None]
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: None,
+        )
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_find_ergo_binary",
+            lambda: discovered[0],
+        )
+
+        assert ergoai_wrapper.ergoai_available() is False
+        discovered[0] = tmp_path / "newly-installed-ergoai"
+        assert ergoai_wrapper.ergoai_available() is True
+        assert ergoai_wrapper.ergoai_available(require_managed_vendor=True) is False
+
+    def test_explicit_configured_root_can_lazy_install_and_bind(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
+
+        root = tmp_path / "managed"
+        launcher = root / "bin" / "ergoai"
+        installed = False
+        calls: list[str] = []
+
+        def find_managed(selected_root, **_kwargs):
+            if installed and selected_root == root:
+                return launcher, {"managed_vendor_provenance_verified": True}
+            return None, {"managed_vendor_provenance_verified": False}
+
+        def lazy_install(reason):
+            nonlocal installed
+            installed = True
+            calls.append(reason)
+            launcher.parent.mkdir(parents=True)
+            launcher.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            launcher.chmod(0o755)
+            return launcher
+
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: root,
+        )
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_find_provenance_valid_managed_binary",
+            find_managed,
+        )
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_lazy_install_ergo_binary",
+            lazy_install,
+        )
+
+        wrapper = ergoai_wrapper.ErgoAIWrapper(
+            install_root=root,
+            lazy_install=True,
+        )
+
+        assert calls == ["ErgoAIWrapper requested"]
+        assert wrapper.binary == launcher
+        assert wrapper.install_root == root
+        assert wrapper.is_live_vendor_execution() is True
 
     def test_wrapper_discovers_repo_runergo(self, tmp_path, monkeypatch):
         import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
@@ -516,6 +663,11 @@ class TestErgoAIWrapperSimulation:
         monkeypatch.delenv("ERGOAI_BINARY", raising=False)
         monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path / "release"))
         monkeypatch.setattr(ergoai_wrapper, "ERGOAI_SUBMODULE_PATH", tmp_path)
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: None,
+        )
 
         assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) == fake_binary
 
@@ -532,6 +684,11 @@ class TestErgoAIWrapperSimulation:
         fake_binary.chmod(0o755)
         monkeypatch.delenv("ERGOAI_BINARY", raising=False)
         monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path))
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: None,
+        )
 
         assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) == fake_binary
 
@@ -545,11 +702,22 @@ class TestErgoAIWrapperSimulation:
         monkeypatch.delenv("ERGOAI_BINARY", raising=False)
         monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path / "release"))
         monkeypatch.setattr(ergoai_wrapper, "ERGOAI_SUBMODULE_PATH", tmp_path)
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: None,
+        )
         monkeypatch.setattr(shutil, "which", lambda _name: None)
 
         assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) is None
 
-    def test_wrapper_feeds_load_command_to_ergo_runner(self, tmp_path):
+    def test_wrapper_feeds_load_command_to_ergo_runner(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        import tempfile
+
         runner = tmp_path / "runergo"
         stdin_capture = tmp_path / "stdin.txt"
         argc_capture = tmp_path / "argc.txt"
@@ -565,6 +733,10 @@ class TestErgoAIWrapperSimulation:
             "PROLOG=/usr/bin/false\n",
             encoding="utf-8",
         )
+        unsafe_tmp = tmp_path / "unsafe'}.\\halt."
+        unsafe_tmp.mkdir()
+        monkeypatch.setenv("TMPDIR", str(unsafe_tmp))
+        monkeypatch.setattr(tempfile, "tempdir", str(unsafe_tmp))
 
         ergo = self.ErgoAIWrapper(binary=runner, lazy_install=False)
         ergo.add_frame(self.FLogicFrame("rex", isa="Dog"))
@@ -575,8 +747,59 @@ class TestErgoAIWrapperSimulation:
         assert argc_capture.read_text(encoding="utf-8").strip() == "0"
         stdin_text = stdin_capture.read_text(encoding="utf-8")
         assert "load{'" in stdin_text
+        assert "unsafe" not in stdin_text
         assert "?X : Dog." in stdin_text
         assert "\\halt." in stdin_text
+
+    def test_ergo_path_literal_rejects_escaping_path(self):
+        import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
+
+        with pytest.raises(ValueError, match="unsafe generated Ergo source path"):
+            ergoai_wrapper._ergo_path_literal(Path("/tmp/source'}.\\halt.ergo"))
+
+    def test_simulation_semantic_adapter_fails_closed_when_live_not_required(self):
+        wrapper = self._make_wrapper()
+
+        evidence = wrapper.run_live_semantic_adapter(require_live_binary=False)
+
+        assert evidence["passed"] is False
+        assert evidence["live_vendor_execution"] is False
+        assert evidence["external_process_execution"] is False
+        assert evidence["block_reasons"] == [
+            "simulation_cannot_produce_live_semantic_evidence"
+        ]
+
+    def test_unmanaged_semantic_adapter_cannot_report_passed(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        import ipfs_datasets_py.logic.backends.installers.advisors as advisors
+
+        runner = tmp_path / "ergoai"
+        runner.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        runner.chmod(0o755)
+        monkeypatch.setattr(
+            advisors,
+            "run_ergoai_semantic_checks",
+            lambda *_args, **_kwargs: {
+                "passed": True,
+                "core_passed": True,
+                "extended_passed": True,
+                "replay_bound": True,
+                "checks": {"entailment": {"passed": True}},
+                "normalized_evidence_digest_sha256": "a" * 64,
+            },
+        )
+        wrapper = self.ErgoAIWrapper(binary=runner, lazy_install=False)
+
+        evidence = wrapper.run_live_semantic_adapter(
+            require_managed_vendor=False,
+        )
+
+        assert evidence["passed"] is False
+        assert evidence["live_vendor_execution"] is False
+        assert "managed_vendor_provenance_unverified" in evidence["block_reasons"]
 
     def test_ergo_output_parser_ignores_timing_lines(self):
         import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
@@ -655,21 +878,65 @@ def test_flogic_package_exports():
 
 def test_flogic_import_is_quiet():
     """Importing the flogic package must not emit warnings."""
-    import warnings
-
     root = "ipfs_datasets_py.logic.flogic"
-    for key in list(sys.modules.keys()):
-        if key == root or key.startswith(root + "."):
-            del sys.modules[key]
+    parent_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == root or name.startswith(root + ".")
+    }
+    parent_package = sys.modules.get(root)
+    parent_frame = (
+        getattr(parent_package, "FLogicFrame", None)
+        if parent_package is not None
+        else None
+    )
+    repo_root = Path(__file__).resolve().parents[3]
+    script = textwrap.dedent(
+        """
+        import importlib
+        import sys
+        import warnings
 
-    with warnings.catch_warnings(record=True) as rec:
-        warnings.simplefilter("always")
-        import ipfs_datasets_py.logic.flogic  # noqa: F401
+        root = "ipfs_datasets_py.logic.flogic"
+        assert root not in sys.modules
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            module = importlib.import_module(root)
 
-    ipfs_warns = [
-        w for w in rec if "ipfs_datasets_py" in (getattr(w, "filename", "") or "")
-    ]
-    assert ipfs_warns == [], [str(w.message) for w in ipfs_warns]
+        ipfs_warnings = [
+            item
+            for item in recorded
+            if "ipfs_datasets_py" in (getattr(item, "filename", "") or "")
+        ]
+        assert ipfs_warnings == [], [str(item.message) for item in ipfs_warnings]
+        assert module.__name__ == root
+        print("ok")
+        """
+    )
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONPATH"] = os.pathsep.join(
+        part
+        for part in (str(repo_root), env.get("PYTHONPATH", ""))
+        if part
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=str(repo_root),
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "ok" in completed.stdout
+    for name, module in parent_modules.items():
+        assert sys.modules.get(name) is module
+    assert sys.modules.get(root) is parent_package
+    if parent_package is not None:
+        assert getattr(parent_package, "FLogicFrame", None) is parent_frame
 
 
 # ---------------------------------------------------------------------------
@@ -762,7 +1029,6 @@ class TestFLogicSemanticOptimizer:
 
     def test_default_config(self):
         mod = _load_flogic_optimizer()
-        FLogicOptimizerConfig = mod.FLogicOptimizerConfig
         FLogicSemanticOptimizer = mod.FLogicSemanticOptimizer
 
         opt = FLogicSemanticOptimizer()

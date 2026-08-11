@@ -3,16 +3,25 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
+
+import pytest
 
 
 def _clear_lazy_install_environment(monkeypatch) -> None:
     for name in (
         "IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS",
         "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS",
+        "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI",
+        "IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI",
         "IPFS_DATASETS_PY_MINIMAL_IMPORTS",
         "IPFS_DATASETS_PY_BENCHMARK",
+        "IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT",
+        "IPFS_DATASETS_PY_THEOREM_PROVERS_ROOT",
+        "IPFS_DATASETS_PY_IMPORT_CONTEXT",
+        "ERGOAI_BINARY",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -83,6 +92,286 @@ def test_parallel_first_use_installs_each_prover_once(monkeypatch) -> None:
     assert calls == ["vampire"]
 
 
+def test_reviewed_gap_installer_uses_real_vendor_path(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[dict[str, object]] = []
+
+    def ensure_runtime_mtl(**kwargs):
+        calls.append(dict(kwargs))
+        return SimpleNamespace(status="installed", installed=True)
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_resolve_reviewed_installer",
+        lambda prover: ensure_runtime_mtl
+        if prover == "runtime-mtl-external"
+        else None,
+    )
+
+    assert lazy_installer.lazy_install_prover(
+        "runtime_mtl",
+        allow_automatic=True,
+        reason="live trace verification",
+    )
+    assert calls == [
+        {
+            "yes": True,
+            "strict": False,
+            "install_root": str(
+                home
+                / ".local"
+                / "share"
+                / "ipfs_datasets_py"
+                / "theorem-provers"
+            ),
+            "vendor": True,
+            "hermetic_parity_engine": False,
+        }
+    ]
+
+
+def test_normal_lazy_path_holds_process_lease_and_binds_reviewed_root(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    home = tmp_path / "home"
+    home.mkdir()
+    root = home / "managed" / "theorem-provers"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    lazy_installer.reset_lazy_install_attempts()
+    events: list[str] = []
+    calls: list[dict[str, object]] = []
+
+    def ensure_runtime_mtl(**kwargs):
+        events.append("ensure")
+        calls.append(dict(kwargs))
+        return SimpleNamespace(status="installed", installed=True)
+
+    @contextmanager
+    def observed_process_lock(provider: str):
+        events.append(f"lock-enter:{provider}")
+        yield {"cross_process": True, "lock_name": "observed.lock"}
+        events.append(f"lock-exit:{provider}")
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_resolve_reviewed_installer",
+        lambda prover: ensure_runtime_mtl
+        if prover == "runtime-mtl-external"
+        else None,
+    )
+    monkeypatch.setattr(
+        lazy_installer,
+        "_cross_process_install_lock",
+        observed_process_lock,
+    )
+
+    assert lazy_installer.lazy_install_prover(
+        "runtime_mtl",
+        allow_automatic=True,
+        reason="live trace verification",
+    )
+    assert events == [
+        "lock-enter:runtime-mtl-external",
+        "ensure",
+        "lock-exit:runtime-mtl-external",
+    ]
+    assert calls[0]["install_root"] == str(root)
+
+
+def test_normal_lazy_path_rejects_non_user_local_managed_root(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT",
+        str(tmp_path / "outside-home"),
+    )
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[dict[str, object]] = []
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_resolve_reviewed_installer",
+        lambda prover: (
+            lambda **kwargs: calls.append(dict(kwargs)) or True
+        )
+        if prover == "runtime-mtl-external"
+        else None,
+    )
+
+    assert not lazy_installer.lazy_install_prover(
+        "runtime_mtl",
+        allow_automatic=True,
+        reason="unsafe root must fail closed",
+    )
+    assert calls == []
+
+
+def test_process_lease_refuses_symlink_lock_file(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    home = tmp_path / "home"
+    root = home / "managed"
+    lock_dir = root / ".locks"
+    lock_dir.mkdir(parents=True)
+    victim = tmp_path / "victim"
+    victim.write_text("unchanged\n", encoding="utf-8")
+    (lock_dir / "facade-ergoai.lock").symlink_to(victim)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+
+    with pytest.raises((OSError, ValueError)):
+        with lazy_installer._cross_process_install_lock("ergoai"):
+            pass
+
+    assert victim.read_text(encoding="utf-8") == "unchanged\n"
+
+
+def test_reviewed_installer_receipt_does_not_leak_object_truthiness(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[dict[str, object]] = []
+
+    def unavailable_secpal(**kwargs):
+        calls.append(dict(kwargs))
+        return SimpleNamespace(status="unavailable", installed=False)
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_resolve_reviewed_installer",
+        lambda prover: unavailable_secpal if prover == "secpal" else None,
+    )
+
+    assert not lazy_installer.lazy_install_prover(
+        "secpal",
+        allow_automatic=True,
+        reason="authorization verification",
+    )
+    assert calls[0]["vendor"] is True
+    assert calls[0]["hermetic_shadow"] is False
+
+
+def test_disabled_reviewed_installer_does_not_import_plugin(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", "0")
+
+    def forbidden(_prover):
+        raise AssertionError("disabled lazy install must not resolve a plugin")
+
+    monkeypatch.setattr(lazy_installer, "_resolve_reviewed_installer", forbidden)
+    assert not lazy_installer.lazy_install_prover("hyperltl")
+
+
+def test_tlc_lazy_install_binds_attempt_cache_to_selected_java(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    first_java = tmp_path / "jdk-17" / "bin" / "java"
+    second_java = tmp_path / "jdk-21" / "bin" / "java"
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        prover_installer,
+        "ensure_tlc",
+        lambda **kwargs: calls.append(dict(kwargs)) or True,
+    )
+
+    assert lazy_installer.lazy_install_prover(
+        "tlc",
+        allow_automatic=True,
+        java_executable=first_java,
+    )
+    assert lazy_installer.lazy_install_prover(
+        "tlc2",
+        allow_automatic=True,
+        java_executable=first_java,
+    )
+    assert lazy_installer.lazy_install_prover(
+        "tla2tools",
+        allow_automatic=True,
+        java_executable=second_java,
+    )
+
+    assert [call["java_executable"] for call in calls] == [
+        first_java,
+        second_java,
+    ]
+    assert all(call["yes"] is True for call in calls)
+
+
+def test_managed_tlc_status_uses_digest_bound_release_not_generic_version_flag(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    monkeypatch.setattr(
+        prover_installer,
+        "_which",
+        lambda name: "/managed/bin/tlc" if name == "tlc" else None,
+    )
+    monkeypatch.setattr(prover_installer, "_read_version", lambda _path: "")
+    monkeypatch.setattr(
+        prover_installer,
+        "_distribution_version",
+        lambda _distribution: "",
+    )
+    monkeypatch.setattr(prover_installer, "_find_ergoai_binary", lambda: None)
+    observed: list[str | None] = []
+
+    def managed_release(executable: str | None) -> str:
+        observed.append(executable)
+        return prover_installer.TLC_VERSION
+
+    monkeypatch.setattr(
+        prover_installer,
+        "_managed_tlc_release",
+        managed_release,
+    )
+
+    statuses = {
+        item["solver"]: item
+        for item in prover_installer.managed_solver_version_status()
+    }
+
+    assert observed == ["/managed/bin/tlc"]
+    assert statuses["tlc"]["status"] == "managed"
+    assert statuses["tlc"]["installed_version"] == prover_installer.TLC_VERSION
+
+
 def test_execution_request_respects_global_opt_out(monkeypatch) -> None:
     from ipfs_datasets_py.logic.external_provers import lazy_installer
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
@@ -119,6 +408,129 @@ def test_ergoai_explicit_binary_is_resolved_without_install(monkeypatch, tmp_pat
         "ergoai",
         reason="external proof execution",
     ) == str(executable)
+
+
+def test_ergoai_default_enabled_without_portfolio_opt_in(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+
+    assert lazy_installer.lazy_installs_enabled() is False
+    assert lazy_installer.prover_lazy_install_enabled("ergoai") is True
+    # Full first-use portfolio (including kernels) is default-on for packages.
+    assert lazy_installer.prover_lazy_install_enabled("z3") is True
+    assert lazy_installer.prover_lazy_install_enabled("runtime-mtl-external") is True
+    assert lazy_installer.prover_lazy_install_enabled("coq") is True
+    assert lazy_installer.prover_lazy_install_enabled("isabelle") is True
+
+    monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", "0")
+    assert lazy_installer.prover_lazy_install_enabled("ergoai") is False
+    assert lazy_installer.prover_lazy_install_enabled("runtime-mtl-external") is False
+    monkeypatch.delenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI", "0")
+    assert lazy_installer.prover_lazy_install_enabled("ergoai") is False
+
+
+def test_default_prover_portfolio_includes_runtime_mtl_and_atp(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    portfolio = set(lazy_installer.default_first_use_prover_portfolio())
+    assert "runtime-mtl-external" in portfolio
+    assert "vampire" in portfolio
+    assert "tlc" in portfolio
+    assert "souffle" in portfolio
+    assert "coq" in portfolio
+    assert "isabelle" in portfolio
+    assert "lean" in portfolio
+
+
+def test_ensure_prover_rejects_hermetic_shim_and_installs_vendor(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[dict[str, object]] = []
+    hermetic = "/tmp/hermetic-shim/bin/ergoai"
+    managed = "/tmp/managed-vendor/bin/ergoai"
+    state = {"phase": "hermetic"}
+
+    def fake_find(name: str) -> str | None:
+        if name in {"ergoai", "runergo", "runErgo.sh", "ergo"}:
+            return hermetic
+        return None
+
+    def fake_managed() -> str | None:
+        return managed if state["phase"] == "managed" else None
+
+    def fake_lazy_install(prover, **kwargs):
+        assert prover == "ergoai"
+        calls.append(dict(kwargs))
+        state["phase"] = "managed"
+        return True
+
+    monkeypatch.setattr(lazy_installer, "find_executable", fake_find)
+    monkeypatch.setattr(
+        lazy_installer, "_find_managed_vendor_ergoai_executable", fake_managed
+    )
+    monkeypatch.setattr(lazy_installer, "lazy_install_prover", fake_lazy_install)
+
+    assert (
+        lazy_installer.ensure_prover_executable(
+            "ergoai", reason="package consumer first use"
+        )
+        == managed
+    )
+    assert calls and calls[0].get("allow_automatic") is True
+
+
+def test_ensure_managed_ergoai_if_missing_is_noop_when_vendor_present(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    managed = "/tmp/managed-vendor/bin/ergoai"
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        lazy_installer,
+        "_find_managed_vendor_ergoai_executable",
+        lambda: managed,
+    )
+    monkeypatch.setattr(
+        lazy_installer,
+        "ensure_prover_executable",
+        lambda *a, **k: calls.append("install") or managed,
+    )
+
+    assert (
+        lazy_installer.ensure_managed_ergoai_if_missing(reason="import") == managed
+    )
+    assert calls == []
+
+
+def test_ensure_managed_ergoai_if_missing_skips_under_import_context(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[str] = []
+    monkeypatch.setenv("IPFS_DATASETS_PY_IMPORT_CONTEXT", "1")
+    monkeypatch.setattr(
+        lazy_installer, "_find_managed_vendor_ergoai_executable", lambda: None
+    )
+    monkeypatch.setattr(
+        lazy_installer,
+        "ensure_prover_executable",
+        lambda *a, **k: calls.append("install") or None,
+    )
+
+    assert lazy_installer.ensure_managed_ergoai_if_missing(reason="import") is None
+    assert calls == []
 
 
 def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch, tmp_path: Path) -> None:
@@ -212,41 +624,158 @@ def test_cvc5_resolution_accepts_explicit_portable_launcher(
     assert lazy_installer.find_executable("cvc5") == str(launcher)
 
 
-def test_apalache_installer_handles_versioned_archive_root(monkeypatch, tmp_path: Path) -> None:
+def test_apalache_bridge_delegates_to_reviewed_state_model_installer(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.backends.installers import state_model
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
     root = tmp_path / "provers"
     monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
-    monkeypatch.setattr(prover_installer.platform, "system", lambda: "Linux")
-    monkeypatch.setattr(prover_installer.platform, "machine", lambda: "aarch64")
-    downloaded: dict[str, str] = {}
+    selected_java = tmp_path / "jdk" / "bin" / "java"
+    calls: list[dict[str, object]] = []
 
-    def fake_which(name: str) -> str | None:
-        if name == "java":
-            return "/fixture/java"
-        launcher = root / "bin" / name
-        return str(launcher) if launcher.is_file() else None
+    def fake_ensure_apalache(**kwargs):
+        calls.append(dict(kwargs))
+        return SimpleNamespace(
+            status="installed",
+            installed=True,
+            executable_path=str(root / "bin" / "apalache-mc"),
+        )
 
-    def fake_download(url, destination, sha256, **_kwargs) -> bool:
-        downloaded.update(url=url, sha256=sha256)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(b"fixture")
-        return True
+    monkeypatch.setattr(state_model, "ensure_apalache", fake_ensure_apalache)
+    monkeypatch.setattr(
+        state_model,
+        "probe_java_runtime",
+        lambda **_kwargs: SimpleNamespace(
+            usable=True,
+            executable=str(selected_java),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_apalache_identity",
+        lambda *_args, **_kwargs: {"usable": True},
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_apalache_runtime",
+        lambda *_args, **_kwargs: SimpleNamespace(usable=True),
+    )
 
-    def fake_extract(_archive: Path, destination: Path) -> None:
-        executable = destination / "apalache-0.58.3" / "bin" / "apalache-mc"
-        executable.parent.mkdir(parents=True, exist_ok=True)
-        executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-        executable.chmod(0o755)
+    assert prover_installer.ensure_apalache(
+        yes=True,
+        strict=True,
+        force=True,
+        java_executable=selected_java,
+    )
+    assert calls == [
+        {
+            "yes": True,
+            "strict": True,
+            "force": True,
+            "on_progress": None,
+            "install_root": root,
+            "java_executable": selected_java,
+        }
+    ]
 
-    monkeypatch.setattr(prover_installer, "_which", fake_which)
-    monkeypatch.setattr(prover_installer, "_download_release_artifact", fake_download)
-    monkeypatch.setattr(prover_installer, "_safe_extract_tar", fake_extract)
 
-    assert prover_installer.ensure_apalache(yes=True, strict=True)
-    assert (root / "bin" / "apalache-mc").is_file()
-    assert downloaded["url"].endswith("/apalache-0.58.3.tgz")
-    assert downloaded["sha256"] == prover_installer.APALACHE_PORTABLE_SHA256
+def test_state_model_bridge_rejects_success_flag_without_final_managed_identity(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.backends.installers import state_model
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    root = tmp_path / "provers"
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    selected_java = tmp_path / "jdk" / "bin" / "java"
+    monkeypatch.setattr(
+        state_model,
+        "ensure_tlc",
+        lambda **_kwargs: SimpleNamespace(
+            status="installed",
+            installed=True,
+            executable_path=str(root / "bin" / "tlc"),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_java_runtime",
+        lambda **_kwargs: SimpleNamespace(
+            usable=True,
+            executable=str(selected_java),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_tlc_identity",
+        lambda *_args, **_kwargs: {"usable": False},
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_tlc_runtime",
+        lambda *_args, **_kwargs: SimpleNamespace(usable=True),
+    )
+
+    assert not prover_installer.ensure_tlc(
+        yes=True,
+        strict=True,
+        java_executable=selected_java,
+    )
+
+
+def test_state_model_bridge_rejects_symlink_alias_in_success_receipt(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.backends.installers import state_model
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    root = tmp_path / "provers"
+    launcher = root / "bin" / state_model.TLC_EXECUTABLE
+    launcher.parent.mkdir(parents=True)
+    launcher.write_text("#!/bin/sh\n", encoding="utf-8")
+    launcher.chmod(0o755)
+    alias = tmp_path / "tlc-alias"
+    alias.symlink_to(launcher)
+    selected_java = tmp_path / "jdk" / "bin" / "java"
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    monkeypatch.setattr(
+        state_model,
+        "ensure_tlc",
+        lambda **_kwargs: SimpleNamespace(
+            status="installed",
+            installed=True,
+            executable_path=str(alias),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_java_runtime",
+        lambda **_kwargs: SimpleNamespace(
+            usable=True,
+            executable=str(selected_java),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_tlc_identity",
+        lambda *_args, **_kwargs: {"usable": True},
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_tlc_runtime",
+        lambda *_args, **_kwargs: SimpleNamespace(usable=True),
+    )
+
+    assert not prover_installer.ensure_tlc(
+        yes=True,
+        strict=True,
+        java_executable=selected_java,
+    )
 
 
 def test_opam_bootstrap_uses_official_user_local_arm_binary(
@@ -315,6 +844,46 @@ def test_generation_portfolio_includes_flogic_authority() -> None:
     assert managed_install_keys.issubset(
         prover_installer.PROVER_PORTFOLIOS["legal_ir_full"]
     )
+    assert set(prover_installer.REVIEWED_EXTERNAL_PROVIDER_IDS) == {
+        "hyperltl",
+        "autohyper",
+        "mchyper",
+        "souffle",
+        "secpal",
+        "runtime-mtl-external",
+        "ergoai",
+    }
+
+
+def test_external_provider_cli_delegates_to_reviewed_vendor_installer(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    def reviewed(provider_id: str, **kwargs) -> bool:
+        calls.append((provider_id, dict(kwargs)))
+        return True
+
+    monkeypatch.setattr(
+        prover_installer,
+        "ensure_reviewed_external_provider",
+        reviewed,
+    )
+
+    assert (
+        prover_installer.main(
+            ["--secpal", "--yes", "--strict", "--update"]
+        )
+        == 0
+    )
+    assert calls == [
+        (
+            "secpal",
+            {"yes": True, "strict": True, "force": True},
+        )
+    ]
 
 
 def test_portfolio_exclusion_omits_inherited_solver(monkeypatch) -> None:

@@ -1,0 +1,68 @@
+{
+  "case_id": "gold-rescinded-reissued-action",
+  "goal_id": "PATLAW-G080",
+  "notes": "Rescinded action requirements and deadlines must not remain active after reissue.",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [
+      {
+        "authority_tier": "official-base",
+        "citation_id": "cite:35usc103",
+        "kind": "statute",
+        "source_span_id": "span:reissue-p0-r0",
+        "text": "35 U.S.C. 103"
+      }
+    ],
+    "dates": [
+      {
+        "candidate_utc": "2026-06-01T03:59:59Z",
+        "classification": "public_user",
+        "deadline_id": "date:reissue-response-3m",
+        "event_basis": "mailing_date_reissued_office_action",
+        "reviewer_confirmation": "required",
+        "rule_chain": [
+          "37 CFR 1.134"
+        ],
+        "uncertainty": "rescinded_action_must_not_control_deadline"
+      }
+    ],
+    "provenance": [
+      {
+        "artifact_id": "art:oa-reissue-1",
+        "classification": "public_user",
+        "item_id": "req:reissue-103-claim-1",
+        "item_kind": "requirement",
+        "origin": "native",
+        "page_index": 0,
+        "source_receipt_id": "receipt:synthetic:reissue-1",
+        "span_id": "span:reissue-p0-r0"
+      }
+    ],
+    "requirements": [
+      {
+        "affected_claims": [
+          "1"
+        ],
+        "classification": "public_user",
+        "instruction_text_digest": "7d309a3f0983b0f163f414bfe66cac73a8446ec43b4db4c8072651dd10c2bbe4",
+        "legal_citations": [
+          "35 U.S.C. 103"
+        ],
+        "proposed_date_rule": "37_cfr_1.134_non_final_response",
+        "requirement_id": "req:reissue-103-claim-1",
+        "requirement_type": "rejection_103",
+        "review_state": "complete",
+        "source_span_id": "span:reissue-p0-r0"
+      }
+    ]
+  }
+}

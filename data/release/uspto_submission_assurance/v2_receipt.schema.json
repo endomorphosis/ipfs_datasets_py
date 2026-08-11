@@ -1,0 +1,483 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/uspto-submission-assurance-release.v2.schema.json",
+  "title": "USPTO Submission Assurance Release Receipt v2",
+  "description": "Content-free v2 release receipt (PATLAW-143 / PATLAW-G152). An accepted receipt binds code/config/corpus/rules/parser/compiler/prover/model/test/metric digests and supervisor merge receipts, includes independent human legal-review scope and exceptions, proves adversarial/privacy-lifecycle/transactional-migration evidence with explicit no-disclosure and provider-call fields, leaves every unknown mandatory gate blocking, and refuses task-status-alone reconciliation of goal status.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "interface",
+    "policy_id",
+    "task_id",
+    "goal_id",
+    "receipt_id",
+    "status",
+    "mode",
+    "started_at_utc",
+    "completed_at_utc",
+    "git",
+    "digests",
+    "versions",
+    "test_results",
+    "privacy_scan",
+    "supervisor_merge_receipts",
+    "independent_legal_review",
+    "adversarial_assurance",
+    "privacy_lifecycle",
+    "migration",
+    "prior_tasks",
+    "gates",
+    "mandatory_gates",
+    "missing_mandatory_gates",
+    "policy",
+    "content_free",
+    "notes",
+    "receipt_digest_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "uspto.submission-assurance-release.v2"
+    },
+    "interface": {
+      "const": "UsptoSubmissionAssuranceRelease@2"
+    },
+    "policy_id": {
+      "const": "uspto-submission-assurance-release/v2"
+    },
+    "task_id": {
+      "const": "PATLAW-143"
+    },
+    "goal_id": {
+      "const": "PATLAW-G152"
+    },
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "rejected", "blocked"]
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["offline", "live", "validate"]
+    },
+    "started_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "completed_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "git": {
+      "$ref": "#/$defs/gitBinding"
+    },
+    "digests": {
+      "$ref": "#/$defs/digestInventory"
+    },
+    "versions": {
+      "type": "object",
+      "description": "Parser/ruleset/model/compiler/prover pins and fixture digests (content-free)."
+    },
+    "test_results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/testResult"
+      }
+    },
+    "privacy_scan": {
+      "type": "object"
+    },
+    "supervisor_merge_receipts": {
+      "$ref": "#/$defs/supervisorMergeBlock"
+    },
+    "independent_legal_review": {
+      "$ref": "#/$defs/independentLegalReview"
+    },
+    "adversarial_assurance": {
+      "$ref": "#/$defs/adversarialAssurance"
+    },
+    "privacy_lifecycle": {
+      "type": "object"
+    },
+    "migration": {
+      "$ref": "#/$defs/migrationEvidence"
+    },
+    "prior_tasks": {
+      "type": "object"
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/gate"
+      }
+    },
+    "mandatory_gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "missing_mandatory_gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "content_free": {
+      "const": true
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 512
+      }
+    },
+    "receipt_digest_sha256": {
+      "$ref": "#/$defs/sha256Hex"
+    }
+  },
+  "$defs": {
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "gitBinding": {
+      "type": "object",
+      "properties": {
+        "head_sha": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitSha" }]
+        },
+        "tree_sha": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitSha" }]
+        },
+        "ref": {
+          "oneOf": [{ "type": "null" }, { "type": "string" }]
+        },
+        "is_repo": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "pathDigestBlock": {
+      "type": "object",
+      "required": ["label", "digest_sha256", "paths", "missing", "complete"],
+      "properties": {
+        "label": { "type": "string" },
+        "digest_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "paths": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        },
+        "missing": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "complete": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "digestInventory": {
+      "type": "object",
+      "required": [
+        "code",
+        "config",
+        "corpus",
+        "rules",
+        "parser",
+        "compiler",
+        "prover",
+        "model",
+        "test",
+        "metric",
+        "all_complete",
+        "aggregate_sha256"
+      ],
+      "properties": {
+        "code": { "$ref": "#/$defs/pathDigestBlock" },
+        "config": { "$ref": "#/$defs/pathDigestBlock" },
+        "corpus": { "$ref": "#/$defs/pathDigestBlock" },
+        "rules": { "$ref": "#/$defs/pathDigestBlock" },
+        "parser": { "$ref": "#/$defs/pathDigestBlock" },
+        "compiler": { "$ref": "#/$defs/pathDigestBlock" },
+        "prover": { "$ref": "#/$defs/pathDigestBlock" },
+        "model": { "$ref": "#/$defs/pathDigestBlock" },
+        "test": { "$ref": "#/$defs/pathDigestBlock" },
+        "metric": { "$ref": "#/$defs/pathDigestBlock" },
+        "all_complete": { "type": "boolean" },
+        "aggregate_sha256": { "$ref": "#/$defs/sha256Hex" }
+      },
+      "additionalProperties": false
+    },
+    "testResult": {
+      "type": "object",
+      "required": ["name", "status", "exit_code"],
+      "properties": {
+        "name": { "type": "string" },
+        "status": { "type": "string" },
+        "exit_code": { "type": "integer" },
+        "command": { "type": "string" },
+        "suite": { "type": "string" },
+        "sha256": { "$ref": "#/$defs/sha256Hex" }
+      },
+      "additionalProperties": true
+    },
+    "gate": {
+      "type": "object",
+      "required": ["gate_id", "status", "evidence_kind"],
+      "properties": {
+        "gate_id": { "type": "string" },
+        "status": { "type": "string" },
+        "detail": { "type": "string", "maxLength": 512 },
+        "evidence_kind": { "type": "string" },
+        "sha256": { "$ref": "#/$defs/sha256Hex" }
+      },
+      "additionalProperties": true
+    },
+    "supervisorMergeBlock": {
+      "type": "object",
+      "required": ["status", "receipts", "content_free"],
+      "properties": {
+        "status": { "type": "string" },
+        "receipts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["task_id", "status", "content_free"],
+            "properties": {
+              "schema": { "type": "string" },
+              "task_id": { "type": "string" },
+              "goal_id": { "type": "string" },
+              "status": {
+                "type": "string",
+                "enum": ["merged", "pending", "blocked", "rejected"]
+              },
+              "tree_sha": {
+                "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitSha" }]
+              },
+              "head_sha": {
+                "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitSha" }]
+              },
+              "aggregate_digest_sha256": {
+                "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256Hex" }]
+              },
+              "synthetic": { "type": "boolean" },
+              "supporting": { "type": "boolean" },
+              "content_free": { "const": true },
+              "sha256": { "$ref": "#/$defs/sha256Hex" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "required_task_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "prior_tasks_bound": { "type": "boolean" },
+        "content_free": { "const": true },
+        "synthetic": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "independentLegalReview": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "interface",
+        "status",
+        "independent",
+        "human_review",
+        "scope",
+        "exceptions",
+        "open_exception_count",
+        "content_free"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "uspto.independent-legal-review.v2"
+        },
+        "interface": {
+          "const": "UsptoIndependentLegalReview@2"
+        },
+        "review_id": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["accepted", "rejected", "blocked"]
+        },
+        "independent": { "const": true },
+        "human_review": { "const": true },
+        "reviewer_role": { "type": "string" },
+        "reviewer_id_ref": { "type": "string" },
+        "scope": {
+          "type": "object",
+          "required": ["axes"],
+          "properties": {
+            "axes": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            },
+            "goal_id": { "type": "string" },
+            "task_id": { "type": "string" },
+            "tree_sha": {
+              "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitSha" }]
+            },
+            "head_sha": {
+              "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitSha" }]
+            },
+            "corpus_id": {
+              "oneOf": [{ "type": "null" }, { "type": "string" }]
+            },
+            "aggregate_digest_sha256": {
+              "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256Hex" }]
+            }
+          },
+          "additionalProperties": true
+        },
+        "exceptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["exception_id", "status"],
+            "properties": {
+              "exception_id": { "type": "string" },
+              "axis": { "type": "string" },
+              "status": {
+                "type": "string",
+                "enum": ["open", "waived", "closed"]
+              },
+              "summary_ref": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "open_exception_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "signed": { "type": "boolean" },
+        "signature_alg": { "type": "string" },
+        "signature_ref": { "type": "string" },
+        "content_free": { "const": true },
+        "reviewed_at_utc": { "$ref": "#/$defs/utcTimestamp" },
+        "sha256": { "$ref": "#/$defs/sha256Hex" }
+      },
+      "additionalProperties": true
+    },
+    "adversarialAssurance": {
+      "type": "object",
+      "required": [
+        "status",
+        "disclosure",
+        "provider_calls_total",
+        "no_disclosure_evidence",
+        "provider_call_evidence",
+        "content_free"
+      ],
+      "properties": {
+        "schema": { "type": "string" },
+        "status": { "type": "string" },
+        "families": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "results": { "type": "array" },
+        "unknown_family": { "type": "object" },
+        "provider_calls_total": {
+          "type": "integer",
+          "const": 0
+        },
+        "disclosure": { "const": false },
+        "content_free": { "const": true },
+        "no_disclosure_evidence": { "const": true },
+        "provider_call_evidence": {
+          "type": "object",
+          "required": [
+            "calls_attempted",
+            "calls_completed",
+            "credentials_resolved"
+          ],
+          "properties": {
+            "calls_attempted": { "type": "integer", "const": 0 },
+            "calls_completed": { "type": "integer", "const": 0 },
+            "credentials_resolved": { "const": false },
+            "mode": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "sha256": { "$ref": "#/$defs/sha256Hex" }
+      },
+      "additionalProperties": true
+    },
+    "migrationEvidence": {
+      "type": "object",
+      "required": [
+        "status",
+        "transactional",
+        "fail_without_mutation",
+        "content_free"
+      ],
+      "properties": {
+        "status": { "type": "string" },
+        "schema": { "type": "string" },
+        "success": { "type": "object" },
+        "corrupt_abort": { "type": "object" },
+        "forced_abort": { "type": "object" },
+        "content_free": { "const": true },
+        "transactional": { "const": true },
+        "fail_without_mutation": { "type": "boolean" },
+        "sha256": { "$ref": "#/$defs/sha256Hex" }
+      },
+      "additionalProperties": true
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "task_status_alone_insufficient",
+        "goal_status_alone_insufficient",
+        "fail_closed",
+        "content_free",
+        "unknown_mandatory_gates_block",
+        "independent_legal_review_required"
+      ],
+      "properties": {
+        "task_status_alone_insufficient": { "const": true },
+        "goal_status_alone_insufficient": { "const": true },
+        "fail_closed": { "const": true },
+        "content_free": { "const": true },
+        "receipts_outside_tracked_source_default": { "type": "boolean" },
+        "unknown_mandatory_gates_block": { "const": true },
+        "migration_transactional_or_abort": { "type": "boolean" },
+        "independent_legal_review_required": { "const": true },
+        "rejected_substitutes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "required_prior_tasks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

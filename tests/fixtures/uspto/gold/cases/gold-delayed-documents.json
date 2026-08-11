@@ -1,0 +1,56 @@
+{
+  "case_id": "gold-delayed-documents",
+  "categories": [
+    "delayed_docs",
+    "provenance",
+    "unknowns"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [],
+    "documents": [
+      {
+        "bytes_available": false,
+        "document_code": "CTNF",
+        "download_status": 404,
+        "last_modified": "2026-07-20T00:00:00Z",
+        "upstream_id": "doc-9001"
+      }
+    ],
+    "extraction_profile": "document_sync_delayed",
+    "media_type": "application/json",
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/delayed-documents/metadata",
+        "receipt_id": "receipt:synthetic:delayed-meta-1",
+        "request_digest": "92eef0e7a47a060b8a9cc079b292e023a71c199458333394549c2a9a521aaa81",
+        "response_digest": "bb5de26940e85948c9b078cabe71d7b4cdbc1b10e740329fd195b5be2538ef04",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:40:00Z"
+      },
+      {
+        "endpoint": "fixture://uspto/gold/delayed-documents/bytes/doc-9001",
+        "receipt_id": "receipt:synthetic:delayed-bytes-1",
+        "request_digest": "339ba595b29b64194224e66807fdb255d16102fd19a15600715962fc57c4a529",
+        "response_digest": null,
+        "response_status": 404,
+        "retrieval_utc": "2026-08-01T12:40:05Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Synthetic delayed retrieval gap.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "document metadata present; bytes delayed/404"
+  },
+  "task_id": "PATLAW-070",
+  "title": "ODP metadata lists document not yet available for download"
+}

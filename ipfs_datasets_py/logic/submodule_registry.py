@@ -350,6 +350,55 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         notes="Lazy package exports; simulated ZKP evidence is never production-authoritative.",
     ),
     LogicSubmoduleSpec(
+        name="tactician",
+        module="ipfs_datasets_py.logic.tactician",
+        description=(
+            "Domain-neutral versioned Logic Tactician: finite deterministic "
+            "proof-search planning with opaque source classes, selected/excluded "
+            "routes, acyclic subgoal DAG, stop/abstain conditions, and content-"
+            "addressed receipts (semantic_authority=false)."
+        ),
+        roles=(
+            "tactician",
+            "planner",
+            "proof_search",
+            "receipt",
+            "adapter",
+        ),
+        optimizer_components=("tactician.planner", "tactician.policy"),
+        target_files=(
+            "ipfs_datasets_py/logic/tactician/__init__.py",
+            "ipfs_datasets_py/logic/tactician/models.py",
+            "ipfs_datasets_py/logic/tactician/policy.py",
+            "ipfs_datasets_py/logic/tactician/planner.py",
+            "ipfs_datasets_py/logic/tactician/receipts.py",
+            "ipfs_datasets_py/logic/tactician/adapters.py",
+        ),
+        ast_scope="tactician",
+        required=True,
+        import_check=True,
+        optional_dependencies=(),
+        public_symbols=(
+            "TACTICIAN_INTERFACE",
+            "SCHEMA_VERSION",
+            "TacticianGoal",
+            "TacticianSource",
+            "TacticianRoute",
+            "TacticianSubgoal",
+            "TacticianPolicy",
+            "TacticianPlan",
+            "TacticianReceipt",
+            "LogicTactician",
+            "default_policy",
+            "adapt_proof_tactician_plan",
+        ),
+        notes=(
+            "Lazy package exports; performs no proof/write/network. Legal "
+            "ProofTactician compatibility is adapter-only and must not leak "
+            "legal source categories into generic models."
+        ),
+    ),
+    LogicSubmoduleSpec(
         name="admissibility",
         module="ipfs_datasets_py.logic.admissibility",
         description="Intent admissibility gate, exact-context authorization service, receipts, enforcement, telemetry, and rollout policy.",
@@ -889,6 +938,20 @@ def logic_optimizer_target_file_hints() -> dict[str, tuple[str, ...]]:
             "ipfs_datasets_py/logic/modal/kg_bridge.py",
             "ipfs_datasets_py/logic/flogic_optimizer.py",
             "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
+        ),
+    )
+    _extend_unique(
+        hints.setdefault("modal.autoencoder", []),
+        (
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        ),
+    )
+    _extend_unique(
+        hints.setdefault("codex.program_repair", []),
+        (
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
         ),
     )
 

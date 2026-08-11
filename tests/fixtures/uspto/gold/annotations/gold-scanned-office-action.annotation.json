@@ -1,0 +1,68 @@
+{
+  "case_id": "gold-scanned-office-action",
+  "goal_id": "PATLAW-G080",
+  "reviewer": {
+    "labeler_id": "synthetic-reviewer-patlaw-070",
+    "notes": "Hand-authored synthetic truth labels for PATLAW-070; not model-generated.",
+    "review_state": "complete",
+    "reviewed_at": "2026-08-03T00:00:00Z",
+    "role": "corpus_reviewer"
+  },
+  "schema": "uspto.gold-annotation.v1",
+  "schema_version": 1,
+  "task_id": "PATLAW-070",
+  "truth": {
+    "citations": [
+      {
+        "authority_tier": "official-base",
+        "citation_id": "cite:35usc112a",
+        "kind": "statute",
+        "source_span_id": "span:scanned-oa-p0-r0",
+        "text": "35 U.S.C. 112(a)"
+      }
+    ],
+    "dates": [
+      {
+        "candidate_utc": "2026-11-01T04:59:59Z",
+        "classification": "public_user",
+        "deadline_id": "date:scanned-oa-response-3m",
+        "event_basis": "mailing_date_non_final_office_action",
+        "reviewer_confirmation": "required",
+        "rule_chain": [
+          "37 CFR 1.134",
+          "37 CFR 1.136(a)"
+        ],
+        "uncertainty": "entity_status_assumed_small; reviewer confirmation required"
+      }
+    ],
+    "provenance": [
+      {
+        "artifact_id": "art:scanned-oa-1",
+        "classification": "public_user",
+        "item_id": "req:scanned-oa-112a-claim-1",
+        "item_kind": "requirement",
+        "origin": "ocr",
+        "page_index": 0,
+        "source_receipt_id": "receipt:synthetic:scanned-oa-1",
+        "span_id": "span:scanned-oa-p0-r0"
+      }
+    ],
+    "requirements": [
+      {
+        "affected_claims": [
+          "1"
+        ],
+        "classification": "public_user",
+        "instruction_text_digest": "f075f2f3e5c65df7acce3e5c4301f3188e96f4711fd98f468bbb979032c52cf5",
+        "legal_citations": [
+          "35 U.S.C. 112(a)"
+        ],
+        "proposed_date_rule": "37_cfr_1.134_non_final_response",
+        "requirement_id": "req:scanned-oa-112a-claim-1",
+        "requirement_type": "rejection_112_written_description",
+        "review_state": "complete",
+        "source_span_id": "span:scanned-oa-p0-r0"
+      }
+    ]
+  }
+}

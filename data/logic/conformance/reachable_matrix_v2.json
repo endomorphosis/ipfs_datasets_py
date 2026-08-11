@@ -1,0 +1,95 @@
+{
+  "acceptance": {
+    "authority_escalation": 0,
+    "false_capability": 0,
+    "family_drift": 0,
+    "hard_zero_floors_clear": true,
+    "kernel_trust_escape": 0,
+    "raw_ingress": 0,
+    "required_join_dimensions": [
+      "domain_source",
+      "profile",
+      "translation_path",
+      "provider_feature",
+      "execution",
+      "replay",
+      "disposition",
+      "authority"
+    ],
+    "silent_node_drop": 0,
+    "silent_node_loss": 0,
+    "sparse": true,
+    "unexplained_reachable_gap": 0
+  },
+  "conformance_report": {
+    "goal_id": "LFP2-G080",
+    "interface": "LogicConformanceReport@2",
+    "schema_version": "logic-conformance-report/v2",
+    "task_id": "LFP2-047"
+  },
+  "description": "Sparse reachable conformance matrix joining domain source, profile, translation path, provider feature, execution, replay, disposition, and authority with machine-checked hard-zero safety floors.",
+  "evidence_subset": [
+    "reachable",
+    "matrix",
+    "domain",
+    "translation",
+    "provider",
+    "replay",
+    "hard_zero"
+  ],
+  "goal_id": "LFP2-G080",
+  "hard_zero_floors": {
+    "all_clear": true,
+    "authority_escalation": 0,
+    "false_capability": 0,
+    "family_drift": 0,
+    "kernel_trust_escape": 0,
+    "raw_ingress": 0,
+    "schema_version": "reachable-conformance-hard-zero-floors/v2",
+    "silent_node_drop": 0,
+    "silent_node_loss": 0,
+    "unexplained_reachable_gap": 0
+  },
+  "interface": "ReachableConformanceMatrix@2",
+  "materialization": "ipfs_datasets_py.logic.conformance.matrix_v2:build_default_reachable_conformance_matrix",
+  "notes": "Sparse join of domain bindings, family extension provider routes, admitted reachable-graph routes, and hermetic execution/replay dispositions. Hard-zero floors are machine checked and must remain zero. Live process capability remains a separate scheduled lane. Full cell bodies are rematerialized through the materialization target.",
+  "producer_id": "reachable-conformance-matrix@2",
+  "program_id": "ipfs-datasets-logic-family-parser-v2",
+  "required_join_dimensions": [
+    "domain_source",
+    "profile",
+    "translation_path",
+    "provider_feature",
+    "execution",
+    "replay",
+    "disposition",
+    "authority"
+  ],
+  "schema_version": "reachable-conformance-matrix/v2",
+  "source_identities": {
+    "domain_family_bindings": "DomainFamilyBindings@2",
+    "family_extension_routes": "FamilyRoutePublication@1",
+    "logic_evidence_replay": "LogicEvidenceReplay@1",
+    "logic_family_registry": "LogicFamilyRegistry@3",
+    "reachable_capability_graph": "ReachableCapabilityGraph@1",
+    "scheduled_provider_tiers": "ScheduledProviderTier@1"
+  },
+  "summary": {
+    "acceptance_holds": true,
+    "every_cell_has_all_join_dimensions": true,
+    "hard_zero_floors_clear": true,
+    "required_join_dimensions": [
+      "domain_source",
+      "profile",
+      "translation_path",
+      "provider_feature",
+      "execution",
+      "replay",
+      "disposition",
+      "authority"
+    ],
+    "sparse": true
+  },
+  "task_id": "LFP2-047",
+  "version": "2.0.0"
+}

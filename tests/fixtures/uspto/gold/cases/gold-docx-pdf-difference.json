@@ -1,0 +1,70 @@
+{
+  "case_id": "gold-docx-pdf-difference",
+  "categories": [
+    "docx_pdf_difference",
+    "provenance",
+    "unknowns"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [
+      {
+        "artifact_id": "art:orig-docx-1",
+        "classification": "public_user",
+        "content_sha256": "d24b2b7f4f40934c5d723e154575a8203653c8b2ade0c19b25d0aad17d6762d0",
+        "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "relation": "authoritative_original",
+        "role": "authoritative_submission_docx"
+      },
+      {
+        "artifact_id": "art:uspto-pdf-1",
+        "classification": "public_user",
+        "content_sha256": "e7ec0445893dbc01b8b1381eafe9c823b5cc6fc7e430387284b888354bb8c8c2",
+        "derived_from": "art:orig-docx-1",
+        "media_type": "application/pdf",
+        "relation": "derivative",
+        "role": "uspto_converted_pdf"
+      }
+    ],
+    "differences": [
+      {
+        "docx_page": 2,
+        "element": "equation_1",
+        "kind": "pagination",
+        "pdf_page": 3
+      },
+      {
+        "field": "claim_1_preamble_symbol",
+        "kind": "table_cell_text",
+        "status": "disagreement"
+      }
+    ],
+    "extraction_profile": "docx_pdf_compare",
+    "media_type": "multipart/related",
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/docx-pdf-difference",
+        "receipt_id": "receipt:synthetic:docx-pdf-1",
+        "request_digest": "66791341894a391714d0fc2e6a527b55213d67bf0e62ba06c4f7263e993b00de",
+        "response_digest": "c159b249b4151b86d963742acf3ad925d5e552543c368ed5346caa3629e520a2",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:15:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Fully synthetic paired artifacts.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "original DOCX + converted PDF with table/equation pagination drift"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Authoritative DOCX versus USPTO-converted PDF pagination difference"
+}

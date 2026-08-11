@@ -1,0 +1,811 @@
+{
+  "authority_class": "guidance",
+  "cases": [
+    {
+      "case_id": "mpep-edition-rollover-r07.2022-to-r01.2024",
+      "expected_outcome": "rollover_retained",
+      "items": [
+        {
+          "anchor": "2106",
+          "citation": "MPEP § 2106",
+          "cutoff": "2022-07-01",
+          "item_id": "mpep-2106",
+          "kind": "mpep_section",
+          "title": "Patent Subject Matter Eligibility",
+          "versions": [
+            {
+              "body_text": "<mpep section=\"2106\" rev=\"07.2022\">96c4537d34406097a6387c655e4985ea361a71df65b47e6d3fc91db13e01d05d</mpep>",
+              "content_sha256": "96c4537d34406097a6387c655e4985ea361a71df65b47e6d3fc91db13e01d05d",
+              "edition": "9",
+              "effective": {
+                "availability": "present",
+                "value": "2022-07-01"
+              },
+              "http_status": 200,
+              "media_type": "text/html",
+              "published": {
+                "availability": "present",
+                "value": "2022-07-01"
+              },
+              "removed": false,
+              "retrieved_at": "2024-01-10T10:00:00Z",
+              "revision": "07.2022",
+              "role": "prior",
+              "source_cid": "bafkreihd2zy2yaqwnxovwmjcth3puqizatl4nlcb3sc7fa2ndjwbquacha",
+              "source_span": {
+                "end": 70,
+                "excerpt": "Subject matter eligibility under 35 U.S.C. 101 (r07.2022 manual text).",
+                "format": "text/html",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/web/offices/pac/mpep/s2106.html",
+              "text_excerpt": "Subject matter eligibility under 35 U.S.C. 101 (r07.2022 manual text).",
+              "version_id": "mpep-2106@9-r07.2022",
+              "version_label": "MPEP 9 r07.2022"
+            },
+            {
+              "body_text": "<mpep section=\"2106\" rev=\"01.2024\">18143ce7aacdbfbbd16d0a00467dd6f8e6b6c834e7b145112a1890e5805c08ad</mpep>",
+              "content_sha256": "18143ce7aacdbfbbd16d0a00467dd6f8e6b6c834e7b145112a1890e5805c08ad",
+              "edition": "9",
+              "effective": {
+                "availability": "present",
+                "value": "2024-01-01"
+              },
+              "http_status": 200,
+              "media_type": "text/html",
+              "published": {
+                "availability": "present",
+                "value": "2024-01-01"
+              },
+              "removed": false,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": "01.2024",
+              "role": "successor",
+              "source_cid": "bafkreiejgirawuoaremczc4i7kzdz2cd2p65bjwdj3wxwfof5ianas2tru",
+              "source_span": {
+                "end": 93,
+                "excerpt": "Subject matter eligibility under 35 U.S.C. 101 (r01.2024 manual text with AI practice notes).",
+                "format": "text/html",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/web/offices/pac/mpep/s2106.html",
+              "text_excerpt": "Subject matter eligibility under 35 U.S.C. 101 (r01.2024 manual text with AI practice notes).",
+              "version_id": "mpep-2106@9-r01.2024",
+              "version_label": "MPEP 9 r01.2024"
+            }
+          ]
+        }
+      ],
+      "notes": "MPEP 9 Edition revision rollover r07.2022 → r01.2024. Both editions retained with concrete revision ids (never 'latest').",
+      "prior_edition": "mpep-9-r07.2022",
+      "scenario": "edition_rollover",
+      "successor_edition": "mpep-9-r01.2024"
+    },
+    {
+      "case_id": "form-pto-sb-01a-removal",
+      "expected_outcome": "removal_retained",
+      "items": [
+        {
+          "anchor": "PTO/SB/01A",
+          "citation": "PTO/SB/01A",
+          "cutoff": "2022-07-01",
+          "item_id": "form-pto-sb-01a",
+          "kind": "form",
+          "title": "Declaration (removed inventory)",
+          "versions": [
+            {
+              "body_text": "%PDF-1.4 form-sb-01a 68a01e1214e2dbd688b9a8535cf25ba9e0d11d30b7013469c6b03592f6bcd642",
+              "content_sha256": "68a01e1214e2dbd688b9a8535cf25ba9e0d11d30b7013469c6b03592f6bcd642",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2021-06-15"
+              },
+              "http_status": 200,
+              "media_type": "application/pdf",
+              "published": {
+                "availability": "present",
+                "value": "2021-06-15"
+              },
+              "removed": true,
+              "retrieved_at": "2023-06-01T09:00:00Z",
+              "revision": null,
+              "role": "removed",
+              "source_cid": "bafkreiefdnejwzrttbnltv5pdn3lihyt2ql5ahtsmvmdx6yw5idjhg3hle",
+              "source_span": {
+                "end": 38,
+                "excerpt": "Declaration form PTO/SB/01A (2021-06).",
+                "format": "application/pdf",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/apply/forms/sb0001a.pdf",
+              "text_excerpt": "Declaration form PTO/SB/01A (2021-06).",
+              "version_id": "form-pto-sb-01a@2021-06",
+              "version_label": "2021-06"
+            },
+            {
+              "body_text": null,
+              "content_sha256": "2007526d191888d6cc585ed6314c2f52d1da32851c0f81fc03ac21bb0fb21612",
+              "edition": null,
+              "effective": {
+                "availability": "unavailable",
+                "notes": "effective date unavailable from USPTO inventory",
+                "value": null
+              },
+              "http_status": 404,
+              "media_type": "application/pdf",
+              "published": {
+                "availability": "unavailable",
+                "notes": "publication date unavailable from USPTO inventory",
+                "value": null
+              },
+              "removed": true,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": null,
+              "role": "current",
+              "source_cid": "bafkreib2x6hajjpqb6nmhbq4vuovx3yvxz6c7zu6ypi5nusuq7zfy4xxii",
+              "source_span": {
+                "end": 53,
+                "excerpt": "Form absent from 2024-09 public inventory (HTTP 404).",
+                "format": "application/pdf",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/apply/forms/sb0001a.pdf",
+              "text_excerpt": "Form absent from 2024-09 public inventory (HTTP 404).",
+              "version_id": "form-pto-sb-01a@inventory-2024-09",
+              "version_label": "inventory-2024-09"
+            }
+          ]
+        }
+      ],
+      "notes": "Form PTO/SB/01A removed from the public forms inventory; prior version retained and marked removed rather than silently dropped.",
+      "scenario": "artifact_removal"
+    },
+    {
+      "case_id": "exam-guide-1-23-version-conflict",
+      "expected_outcome": "conflict_retained",
+      "items": [
+        {
+          "anchor": "1-23",
+          "citation": "Examination Guide 1-23",
+          "cutoff": "2022-07-01",
+          "item_id": "exam-guide-1-23",
+          "kind": "examination_guide",
+          "title": "Updated Prior-Art Practice",
+          "versions": [
+            {
+              "body_text": "%PDF-1.4 guide-1-23-a 14beb9f78c6724a83e70c392e058398496b2313fef3e3b1e322549f71f339b69",
+              "content_sha256": "14beb9f78c6724a83e70c392e058398496b2313fef3e3b1e322549f71f339b69",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2023-03-15"
+              },
+              "http_status": 200,
+              "media_type": "application/pdf",
+              "published": {
+                "availability": "present",
+                "value": "2023-03-15"
+              },
+              "removed": false,
+              "retrieved_at": "2024-03-01T11:00:00Z",
+              "revision": null,
+              "role": "conflicting_a",
+              "source_cid": "bafkreihyet7g2zphqjul5qqjiyqikaqingzilxdf4npxtfdg73vvhf34f4",
+              "source_span": {
+                "end": 38,
+                "excerpt": "Examination Guide 1-23 mirror A bytes.",
+                "format": "application/pdf",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/laws/examination-policy/examination-guide-1-23.pdf",
+              "text_excerpt": "Examination Guide 1-23 mirror A bytes.",
+              "version_id": "exam-guide-1-23@mirror-a",
+              "version_label": "mirror-a"
+            },
+            {
+              "body_text": "%PDF-1.4 guide-1-23-b 9907e850d7edc5d42bc2e05a264042d0385f3ef2f4cdee85131e6bd77418689e",
+              "content_sha256": "9907e850d7edc5d42bc2e05a264042d0385f3ef2f4cdee85131e6bd77418689e",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2023-03-15"
+              },
+              "http_status": 200,
+              "media_type": "application/pdf",
+              "published": {
+                "availability": "present",
+                "value": "2023-03-15"
+              },
+              "removed": false,
+              "retrieved_at": "2024-03-01T11:05:00Z",
+              "revision": null,
+              "role": "conflicting_b",
+              "source_cid": "bafkreihp4czemycwtrwzfwphtrlt422vlfe4b266d5oeboacp3tm4n2ira",
+              "source_span": {
+                "end": 49,
+                "excerpt": "Examination Guide 1-23 mirror B bytes (conflict).",
+                "format": "application/pdf",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/laws/examination-policy/examination-guide-1-23.pdf",
+              "text_excerpt": "Examination Guide 1-23 mirror B bytes (conflict).",
+              "version_id": "exam-guide-1-23@mirror-b",
+              "version_label": "mirror-b"
+            }
+          ]
+        }
+      ],
+      "notes": "Two recorded mirrors of Examination Guide 1-23 disagree on bytes; both versions retained as conflict — neither silently selected as latest.",
+      "scenario": "version_conflict"
+    },
+    {
+      "case_id": "exam-guide-supersedes-mpep-706.02",
+      "expected_outcome": "superseded",
+      "items": [
+        {
+          "anchor": "706.02",
+          "citation": "MPEP § 706.02",
+          "cutoff": "2022-07-01",
+          "item_id": "mpep-706.02",
+          "kind": "mpep_section",
+          "superseded_by": "exam-guide-1-23@2023-03-15",
+          "supersedes": [],
+          "title": "Rejection on Prior Art",
+          "versions": [
+            {
+              "body_text": "<mpep section=\"706.02\">83229422985ab22fb98b4c702b5602080ff2dac96867d05f3b940ed36047378a</mpep>",
+              "content_sha256": "83229422985ab22fb98b4c702b5602080ff2dac96867d05f3b940ed36047378a",
+              "edition": "9",
+              "effective": {
+                "availability": "present",
+                "value": "2022-07-01"
+              },
+              "http_status": 200,
+              "media_type": "text/html",
+              "published": {
+                "availability": "present",
+                "value": "2022-07-01"
+              },
+              "removed": false,
+              "retrieved_at": "2024-01-10T10:00:00Z",
+              "revision": "07.2022",
+              "role": "superseded",
+              "source_cid": "bafkreigs4d4tltazpeeaz76wh5s2qie55azyxrfbp64dmfmtqeldunzvuy",
+              "source_span": {
+                "end": 48,
+                "excerpt": "Dual-framework prior-art manual text (r07.2022).",
+                "format": "text/html",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/web/offices/pac/mpep/s706.02.html",
+              "text_excerpt": "Dual-framework prior-art manual text (r07.2022).",
+              "version_id": "mpep-706.02@9-r07.2022",
+              "version_label": null
+            },
+            {
+              "body_text": "%PDF-1.4 exam-guide-1-23 2e062dde96f93f115771eeb459f3363c245b7cb7de3b8702046d04b77333c46f",
+              "content_sha256": "2e062dde96f93f115771eeb459f3363c245b7cb7de3b8702046d04b77333c46f",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2023-03-15"
+              },
+              "http_status": 200,
+              "media_type": "application/pdf",
+              "published": {
+                "availability": "present",
+                "value": "2023-03-15"
+              },
+              "removed": false,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": null,
+              "role": "superseding",
+              "source_cid": "bafkreic46yqjicmjmdmutztx3wogjhxg5r2xvtckstta5uvbiha66kiicm",
+              "source_span": {
+                "end": 85,
+                "excerpt": "This examination guide supersedes inconsistent MPEP § 706.02. Guidance only; not law.",
+                "format": "application/pdf",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/laws/examination-policy/examination-guide-1-23.pdf",
+              "text_excerpt": "This examination guide supersedes inconsistent MPEP § 706.02. Guidance only; not law.",
+              "version_id": "exam-guide-1-23@2023-03-15",
+              "version_label": "1-23"
+            }
+          ]
+        }
+      ],
+      "notes": "Examination Guide 1-23 supersedes inconsistent MPEP § 706.02 manual text; both remain guidance-tier (not law).",
+      "scenario": "supersession",
+      "supersessions": [
+        {
+          "effective_date": "2023-03-15",
+          "elevates_to_law": false,
+          "predecessor_id": "mpep-706.02@9-r07.2022",
+          "reason": "Examination Guide 1-23 supersedes inconsistent MPEP § 706.02 manual text for listed scenarios; both remain guidance, not law.",
+          "relation": "supersedes",
+          "remains_guidance": true,
+          "successor_id": "exam-guide-1-23@2023-03-15"
+        }
+      ]
+    },
+    {
+      "case_id": "fee-schedule-unavailable-effective-date",
+      "expected_outcome": "date_unavailable",
+      "items": [
+        {
+          "anchor": "FY2025",
+          "citation": "USPTO Fee Schedule FY2025",
+          "cutoff": "2022-07-01",
+          "item_id": "fees-fy2025",
+          "kind": "fee_schedule",
+          "title": "Patent Fee Schedule FY2025 (dates unavailable)",
+          "versions": [
+            {
+              "body_text": "<fees fy=\"2025\">c5c45f3f5640b5849661b6347784375a9610879a4b3915a92e84fb2f876aef68</fees>",
+              "content_sha256": "c5c45f3f5640b5849661b6347784375a9610879a4b3915a92e84fb2f876aef68",
+              "edition": null,
+              "effective": {
+                "availability": "unavailable",
+                "notes": "effective date unavailable from USPTO inventory",
+                "value": null
+              },
+              "http_status": 200,
+              "media_type": "text/html",
+              "published": {
+                "availability": "unavailable",
+                "notes": "publication date unavailable from USPTO inventory",
+                "value": null
+              },
+              "removed": false,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": null,
+              "role": "sole",
+              "source_cid": "bafkreifgudwmo6c47xuvynghdpaffwfpbse4r7wer2bhivs5z5o23mudga",
+              "source_span": {
+                "end": 52,
+                "excerpt": "FY2025 fee schedule listed; dates not yet published.",
+                "format": "text/html",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/learning-and-resources/fees-and-payment/fy2025",
+              "text_excerpt": "FY2025 fee schedule listed; dates not yet published.",
+              "version_id": "fees-fy2025@inventory-stub",
+              "version_label": "FY2025-inventory-stub"
+            }
+          ]
+        }
+      ],
+      "notes": "FY2025 fee schedule listing lacks a published/effective date in the inventory feed; unavailability is explicit, not silently filled.",
+      "scenario": "unavailable_date"
+    },
+    {
+      "case_id": "happy-path-forms-fees-notice",
+      "expected_outcome": "acquired",
+      "items": [
+        {
+          "anchor": "PTO/SB/08",
+          "citation": "PTO/SB/08",
+          "cutoff": "2022-07-01",
+          "item_id": "form-pto-sb-08",
+          "kind": "form",
+          "title": "Information Disclosure Statement",
+          "versions": [
+            {
+              "body_text": "%PDF-1.4 form-sb-08 5ac29c5063cb96078706851f3fa79eab92aafe40ce61273abb64bbb874a6fa08",
+              "content_sha256": "5ac29c5063cb96078706851f3fa79eab92aafe40ce61273abb64bbb874a6fa08",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2022-07-01"
+              },
+              "http_status": 200,
+              "media_type": "application/pdf",
+              "published": {
+                "availability": "present",
+                "value": "2022-07-01"
+              },
+              "removed": false,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": null,
+              "role": "sole",
+              "source_cid": "bafkreifymggocfi37mcuhxt272spwzlzyj4qzbvcsd2ti6r32fqbes4n74",
+              "source_span": {
+                "end": 51,
+                "excerpt": "Form for listing information disclosure references.",
+                "format": "application/pdf",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/apply/forms/sb0008.pdf",
+              "text_excerpt": "Form for listing information disclosure references.",
+              "version_id": "form-pto-sb-08@2022-07",
+              "version_label": "2022-07"
+            }
+          ]
+        },
+        {
+          "anchor": "FY2024",
+          "citation": "USPTO Fee Schedule FY2024",
+          "cutoff": "2022-07-01",
+          "item_id": "fees-fy2024",
+          "kind": "fee_schedule",
+          "title": "Patent Fee Schedule FY2024",
+          "versions": [
+            {
+              "body_text": "<fees fy=\"2024\">6ff65140630de9f0896ddb9e537ddf0165c7a4f8e29f4f7fba79ac7d4cd7ca0e</fees>",
+              "content_sha256": "6ff65140630de9f0896ddb9e537ddf0165c7a4f8e29f4f7fba79ac7d4cd7ca0e",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2023-10-01"
+              },
+              "http_status": 200,
+              "media_type": "text/html",
+              "published": {
+                "availability": "present",
+                "value": "2023-10-01"
+              },
+              "removed": false,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": null,
+              "role": "sole",
+              "source_cid": "bafkreidebeerrqdzvjlwdsilfv5rx2anjmw2a35v6x45je2u7yl2zoqe7u",
+              "source_span": {
+                "end": 43,
+                "excerpt": "Fee amounts effective for fiscal year 2024.",
+                "format": "text/html",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/learning-and-resources/fees-and-payment/fy2024",
+              "text_excerpt": "Fee amounts effective for fiscal year 2024.",
+              "version_id": "fees-fy2024@2023-10-01",
+              "version_label": "FY2024"
+            }
+          ]
+        },
+        {
+          "anchor": "2023-10-17-eligibility",
+          "citation": "OG Notice 2023-10-17",
+          "cutoff": "2022-07-01",
+          "item_id": "notice-2023-10-17",
+          "kind": "notice",
+          "title": "Subject Matter Eligibility Update Notice",
+          "versions": [
+            {
+              "body_text": "<notice id=\"2023-10-17\">83a4f97f3321ff7044baa80c3e40ab8cc1bf49d9fd4cb81c8460fc1b24f3f5f6</notice>",
+              "content_sha256": "83a4f97f3321ff7044baa80c3e40ab8cc1bf49d9fd4cb81c8460fc1b24f3f5f6",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2023-10-17"
+              },
+              "http_status": 200,
+              "media_type": "text/html",
+              "published": {
+                "availability": "present",
+                "value": "2023-10-17"
+              },
+              "removed": false,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": null,
+              "role": "sole",
+              "source_cid": "bafkreiffekpxjtnxncyfgh7waih5owkta3jtyju4v4soqa3rjkgl5hirka",
+              "source_span": {
+                "end": 103,
+                "excerpt": "Clarifies examination practice under MPEP § 2106 for certain AI-related claims. Guidance only; not law.",
+                "format": "text/html",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/laws/examination-policy/notice-2023-10-17.html",
+              "text_excerpt": "Clarifies examination practice under MPEP § 2106 for certain AI-related claims. Guidance only; not law.",
+              "version_id": "notice-2023-10-17@2023-10-17",
+              "version_label": "2023-10-17"
+            }
+          ]
+        }
+      ],
+      "notes": "Successful acquisition of form PTO/SB/08, FY2024 fee schedule, and OG eligibility notice with full provenance metadata.",
+      "scenario": "happy_path"
+    },
+    {
+      "case_id": "form-pto-sb-08-replacement",
+      "expected_outcome": "acquired",
+      "items": [
+        {
+          "anchor": "PTO/SB/08",
+          "citation": "PTO/SB/08",
+          "cutoff": "2022-07-01",
+          "item_id": "form-pto-sb-08-replaced",
+          "kind": "form",
+          "title": "Information Disclosure Statement (replacement)",
+          "versions": [
+            {
+              "body_text": "%PDF-1.4 form-sb-08-2022 5ac29c5063cb96078706851f3fa79eab92aafe40ce61273abb64bbb874a6fa08",
+              "content_sha256": "5ac29c5063cb96078706851f3fa79eab92aafe40ce61273abb64bbb874a6fa08",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2022-07-01"
+              },
+              "http_status": 200,
+              "media_type": "application/pdf",
+              "published": {
+                "availability": "present",
+                "value": "2022-07-01"
+              },
+              "removed": false,
+              "retrieved_at": "2023-01-01T10:00:00Z",
+              "revision": null,
+              "role": "prior",
+              "source_cid": "bafkreifymggocfi37mcuhxt272spwzlzyj4qzbvcsd2ti6r32fqbes4n74",
+              "source_span": {
+                "end": 26,
+                "excerpt": "IDS form 2022-07 revision.",
+                "format": "application/pdf",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/apply/forms/sb0008.pdf",
+              "text_excerpt": "IDS form 2022-07 revision.",
+              "version_id": "form-pto-sb-08@2022-07",
+              "version_label": "2022-07"
+            },
+            {
+              "body_text": "%PDF-1.4 form-sb-08-2024 723338d9d0f770c321397978fcbbf7f1d0f289970dee6189b3c915300b0f843f",
+              "content_sha256": "723338d9d0f770c321397978fcbbf7f1d0f289970dee6189b3c915300b0f843f",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2024-03-01"
+              },
+              "http_status": 200,
+              "media_type": "application/pdf",
+              "published": {
+                "availability": "present",
+                "value": "2024-03-01"
+              },
+              "removed": false,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": null,
+              "role": "successor",
+              "source_cid": "bafkreidh2nxnutgw3cvej3bvzl7rdk44tk7twrf6us3w2443ofvqzoohau",
+              "source_span": {
+                "end": 40,
+                "excerpt": "IDS form 2024-03 revision (replacement).",
+                "format": "application/pdf",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/apply/forms/sb0008.pdf",
+              "text_excerpt": "IDS form 2024-03 revision (replacement).",
+              "version_id": "form-pto-sb-08@2024-03",
+              "version_label": "2024-03"
+            }
+          ]
+        }
+      ],
+      "notes": "Form PTO/SB/08 replacement: 2022 and 2024 versions both retained with distinct digests and effective dates.",
+      "scenario": "form_replacement"
+    },
+    {
+      "case_id": "fee-schedule-rollover-fy2023-to-fy2024",
+      "expected_outcome": "rollover_retained",
+      "items": [
+        {
+          "anchor": "patent-fees",
+          "citation": "USPTO Patent Fee Schedule",
+          "cutoff": "2022-07-01",
+          "item_id": "fees-schedule",
+          "kind": "fee_schedule",
+          "title": "Patent Fee Schedule (FY rollover)",
+          "versions": [
+            {
+              "body_text": "<fees fy=\"2023\">d8f268b73918b51635c99b0f855070753b642abd307aee310a025a97a901612a</fees>",
+              "content_sha256": "d8f268b73918b51635c99b0f855070753b642abd307aee310a025a97a901612a",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2022-10-01"
+              },
+              "http_status": 200,
+              "media_type": "text/html",
+              "published": {
+                "availability": "present",
+                "value": "2022-10-01"
+              },
+              "removed": false,
+              "retrieved_at": "2023-09-01T10:00:00Z",
+              "revision": null,
+              "role": "prior",
+              "source_cid": "bafkreibrnfmnoeh23kxguxjld77d5u47sfhnygky3vwxtgkl4b42s6jvpi",
+              "source_span": {
+                "end": 43,
+                "excerpt": "Fee amounts effective for fiscal year 2023.",
+                "format": "text/html",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/learning-and-resources/fees-and-payment/fy2023",
+              "text_excerpt": "Fee amounts effective for fiscal year 2023.",
+              "version_id": "fees-fy2023@2022-10-01",
+              "version_label": "FY2023"
+            },
+            {
+              "body_text": "<fees fy=\"2024\">6ff65140630de9f0896ddb9e537ddf0165c7a4f8e29f4f7fba79ac7d4cd7ca0e</fees>",
+              "content_sha256": "6ff65140630de9f0896ddb9e537ddf0165c7a4f8e29f4f7fba79ac7d4cd7ca0e",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2023-10-01"
+              },
+              "http_status": 200,
+              "media_type": "text/html",
+              "published": {
+                "availability": "present",
+                "value": "2023-10-01"
+              },
+              "removed": false,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": null,
+              "role": "successor",
+              "source_cid": "bafkreidebeerrqdzvjlwdsilfv5rx2anjmw2a35v6x45je2u7yl2zoqe7u",
+              "source_span": {
+                "end": 43,
+                "excerpt": "Fee amounts effective for fiscal year 2024.",
+                "format": "text/html",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/learning-and-resources/fees-and-payment/fy2024",
+              "text_excerpt": "Fee amounts effective for fiscal year 2024.",
+              "version_id": "fees-fy2024@2023-10-01",
+              "version_label": "FY2024"
+            }
+          ]
+        }
+      ],
+      "notes": "Fee schedule fiscal-year rollover retains both FY2023 and FY2024.",
+      "prior_edition": "fees-fy2023",
+      "scenario": "fee_schedule_rollover",
+      "successor_edition": "fees-fy2024"
+    },
+    {
+      "case_id": "faq-freshness-gap-unavailable",
+      "expected_outcome": "freshness_gap",
+      "freshness_gaps": [
+        {
+          "cutoff": "2022-07-01",
+          "detected_at": "2024-09-15T12:00:00Z",
+          "expected_sha256": "30c2d97b3870fc39960a751272dfe267ef3c94b2c1ff721fad8e24a5b9b01efe",
+          "gap_id": "gap-unavailable-faq-sme-2023",
+          "kind": "unavailable",
+          "reason": "Subject-matter eligibility FAQ listed in examination-policy inventory but public page returns HTTP 404.",
+          "source_id": "faq-subject-matter-2023",
+          "source_url": "https://www.uspto.gov/patents/laws/examination-policy/faq-subject-matter-eligibility.html"
+        }
+      ],
+      "items": [
+        {
+          "anchor": "faq-sme-2023",
+          "citation": "SME FAQ 2023",
+          "cutoff": "2022-07-01",
+          "item_id": "faq-subject-matter-2023",
+          "kind": "later_publication",
+          "title": "Subject Matter Eligibility FAQ",
+          "versions": [
+            {
+              "body_text": null,
+              "content_sha256": "30c2d97b3870fc39960a751272dfe267ef3c94b2c1ff721fad8e24a5b9b01efe",
+              "edition": null,
+              "effective": {
+                "availability": "present",
+                "value": "2023-06-01"
+              },
+              "http_status": 404,
+              "media_type": "text/html",
+              "published": {
+                "availability": "present",
+                "value": "2023-06-01"
+              },
+              "removed": false,
+              "retrieved_at": "2024-09-15T12:00:00Z",
+              "revision": null,
+              "role": "sole",
+              "source_cid": "bafkreicplt2q5kenjhrllcwocsassc5bybfmfadsvpbckmg3kd7o2y7qb4",
+              "source_span": {
+                "end": 40,
+                "excerpt": "FAQ inventory stub; content unavailable.",
+                "format": "text/html",
+                "page_end": null,
+                "page_start": null,
+                "start": 0,
+                "unit": "char"
+              },
+              "source_url": "https://www.uspto.gov/patents/laws/examination-policy/faq-subject-matter-eligibility.html",
+              "text_excerpt": "FAQ inventory stub; content unavailable.",
+              "version_id": "faq-sme-2023@inventory",
+              "version_label": "inventory-stub"
+            }
+          ]
+        }
+      ],
+      "notes": "FAQ page listed in inventory but currently unavailable; explicit freshness gap (not silent omission).",
+      "scenario": "freshness_gap"
+    }
+  ],
+  "discovered_at": "2024-09-15T12:00:00Z",
+  "expected": {
+    "never_elevate_to_law": true,
+    "never_silent_latest": true,
+    "provenance_fields": [
+      "source_cid",
+      "source_span",
+      "retrieved_at",
+      "published",
+      "effective"
+    ],
+    "required_scenarios": [
+      "artifact_removal",
+      "edition_rollover",
+      "happy_path",
+      "supersession",
+      "unavailable_date",
+      "version_conflict"
+    ],
+    "retain_old_and_new_for": [
+      "edition_rollover",
+      "artifact_removal",
+      "version_conflict"
+    ]
+  },
+  "fixture_id": "live-uspto-guidance-v1",
+  "is_binding": false,
+  "notes": "Compact live USPTO guidance recipe (PATLAW-132). Covers MPEP edition rollover, form removal, version conflict, explicit supersession, unavailable dates, happy-path forms/fees/notices, form replacement, fee-schedule rollover, and freshness gaps. Every item retains source CID/span/retrieved/published/effective metadata; links never select 'latest'. Guidance remains non-binding.",
+  "recipe_id": "live-uspto-guidance-v1",
+  "schema_version": "live-uspto-guidance-recipe-v1"
+}

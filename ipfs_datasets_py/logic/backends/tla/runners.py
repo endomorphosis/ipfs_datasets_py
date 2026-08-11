@@ -19,11 +19,12 @@ while keeping capability and bound disclosures tool-specific.
 
 from __future__ import annotations
 
+import os
 import re
-import shutil
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
+from pathlib import Path
 from typing import Any, Final
 
 from ...families.models import EvidenceAuthority
@@ -533,6 +534,14 @@ ExecutableFinder = Callable[[str], str | None]
 JvmProbe = Callable[[], bool]
 
 
+def _production_executable_finder(name: str) -> str | None:
+    """Resolve managed prover launchers before ambient PATH."""
+
+    from ...external_provers.lazy_installer import find_executable
+
+    return find_executable(name)
+
+
 def parse_counterexample_trace(output: str) -> CounterexampleTrace:
     """Parse TLC/Apalache state blocks while retaining the exact raw trace."""
 
@@ -607,16 +616,42 @@ class TLAModelCheckerBackend:
         self,
         *,
         runner: BoundedToolRunner | None = None,
-        which: ExecutableFinder = shutil.which,
+        which: ExecutableFinder | None = None,
         jvm_probe: JvmProbe | None = None,
         compiler: TLACompiler | None = None,
         executable: str | None = None,
+        java_executable: str | None = None,
+        lazy_install: bool = True,
     ) -> None:
         self._runner = runner or BoundedToolRunner()
-        self._which = which
-        self._jvm_probe = jvm_probe or (lambda: self._which("java") is not None)
+        self._which = which or _production_executable_finder
+        self._lazy_install = bool(lazy_install and which is None)
         self._compiler = compiler or TLACompiler()
         self._executable = executable
+        self._java_executable = ""
+        if java_executable is not None or jvm_probe is None:
+            from ..installers.state_model import (
+                APALACHE_MIN_JAVA_MAJOR,
+                TLC_MIN_JAVA_MAJOR,
+                probe_java_runtime,
+            )
+
+            minimum = (
+                TLC_MIN_JAVA_MAJOR
+                if self.tool is ModelCheckerTool.TLC
+                else APALACHE_MIN_JAVA_MAJOR
+            )
+            runtime = probe_java_runtime(
+                java_executable=java_executable,
+                minimum_major=minimum,
+            )
+            self._java_executable = runtime.executable or ""
+            self._jvm_probe = lambda: runtime.usable
+        else:
+            # Explicit dependency injection remains available for deterministic
+            # runner tests; production construction always uses the validated
+            # branch above.
+            self._jvm_probe = jvm_probe
 
     def capabilities(self) -> BackendCapabilities:
         return BackendCapabilities(
@@ -638,17 +673,27 @@ class TLAModelCheckerBackend:
             return False
         return self.resolve_executable() != ""
 
-    def resolve_executable(self) -> str:
+    def resolve_executable(self, *, allow_install: bool = False) -> str:
         if self._executable:
             return str(self._executable)
         for candidate in self.capability.executable_candidates:
             path = self._which(candidate)
             if path:
                 return path
+        if allow_install and self._lazy_install and self._jvm_probe():
+            from ...external_provers.lazy_installer import ensure_prover_executable
+
+            installed = ensure_prover_executable(
+                self.tool.value,
+                reason=f"{self.backend_id} model-check execution requested",
+                java_executable=self._java_executable or None,
+            )
+            if installed:
+                return installed
         return ""
 
-    def probe(self) -> ToolProbe:
-        executable = self.resolve_executable()
+    def _probe(self, *, allow_install: bool) -> ToolProbe:
+        executable = self.resolve_executable(allow_install=allow_install)
         jvm_ok = self._jvm_probe() if self.capability.requires_jvm else True
         available = bool(executable) and jvm_ok
         reason = ""
@@ -666,6 +711,21 @@ class TLAModelCheckerBackend:
             executable_path=executable if available else "",
             reason=reason,
         )
+
+    def probe(self) -> ToolProbe:
+        """Read-only capability probe; installation is reserved for execution."""
+
+        return self._probe(allow_install=False)
+
+    def _java_environment(self) -> dict[str, str]:
+        if not self._java_executable:
+            return {}
+        java_dir = str(Path(self._java_executable).resolve().parent)
+        return {
+            "PATH": os.pathsep.join(
+                part for part in (java_dir, os.environ.get("PATH", "")) if part
+            )
+        }
 
     def compile_and_check(
         self,
@@ -704,7 +764,7 @@ class TLAModelCheckerBackend:
                 max_steps=artifacts.bounds.max_steps,
             )
         )
-        probe = self.probe()
+        probe = self._probe(allow_install=True)
         if not probe.available:
             receipt = self._unavailable_receipt(
                 artifacts, probe=probe, bounds=bounds
@@ -772,6 +832,7 @@ class TLAModelCheckerBackend:
                 "violation.tla",
                 "example.tla",
             ),
+            environment=self._java_environment(),
         )
         process = self._runner.run(tool_request, cancellation=cancellation)
         version = self._tool_version(executable)
@@ -1009,6 +1070,7 @@ class TLAModelCheckerBackend:
                 timeout_seconds=DEFAULT_VERSION_TIMEOUT_SECONDS,
                 max_output_bytes=64 * 1024,
             ),
+            environment=self._java_environment(),
         )
         try:
             result = self._runner.run(request)
@@ -1207,8 +1269,10 @@ class TLABackend:
         tlc: TLCBackend | None = None,
         apalache: ApalacheBackend | None = None,
         runner: BoundedToolRunner | None = None,
-        which: ExecutableFinder = shutil.which,
+        which: ExecutableFinder | None = None,
         jvm_probe: JvmProbe | None = None,
+        java_executable: str | None = None,
+        lazy_install: bool = True,
     ) -> None:
         self.compiler = compiler or TLACompiler()
         shared_runner = runner
@@ -1217,12 +1281,16 @@ class TLABackend:
             which=which,
             jvm_probe=jvm_probe,
             compiler=self.compiler,
+            java_executable=java_executable,
+            lazy_install=lazy_install,
         )
         self.apalache = apalache or ApalacheBackend(
             runner=shared_runner,
             which=which,
             jvm_probe=jvm_probe,
             compiler=self.compiler,
+            java_executable=java_executable,
+            lazy_install=lazy_install,
         )
 
     def compile(self, document: object, **kwargs: Any) -> GeneratedTLAArtifacts:

@@ -203,14 +203,12 @@ DEPENDENCY_SPECS: tuple[DependencySpec, ...] = (
         "z3-solver",
         ("z3-solver>=4.12.0,<5.0.0",),
         ("z3", "smt_solvers"),
-        system_dependencies=("z3",),
     ),
     DependencySpec(
         "cvc5",
         "cvc5",
-        ("cvc5>=1.0.0,<2.0.0",),
+        ("cvc5==1.3.3",),
         ("cvc5", "smt_solvers"),
-        system_dependencies=("cvc5",),
     ),
     DependencySpec("pysmt", "pysmt", ("pysmt>=0.9.5,<1.0.0",), ("smt_solvers",)),
     DependencySpec("mathsat", "mathsat", ("mathsat>=5.6.0",)),
@@ -317,7 +315,8 @@ COMPONENT_MODULES: dict[str, tuple[str, ...]] = {
     "z3": ("z3",),
     "cvc5": ("cvc5",),
     "smt_solvers": ("z3", "cvc5", "pysmt"),
-    "logic": ("cv2", "symai"),
+    "theorem_provers": ("z3", "cvc5", "pysmt", "beartype", "jsonschema"),
+    "logic": ("cv2", "symai", "z3", "cvc5", "beartype", "jsonschema"),
     "symbolicai": ("cv2", "symai"),
     "web": ("requests", "bs4", "newspaper", "readability"),
     "test": (
@@ -351,6 +350,8 @@ COMPONENT_MODULES: dict[str, tuple[str, ...]] = {
         "aiohttp_cache",
         "magic",
         "lxml",
+        "z3",
+        "cvc5",
     ),
 }
 

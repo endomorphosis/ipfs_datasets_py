@@ -1,0 +1,70 @@
+{
+  "case_id": "gold-amendments-current-claims",
+  "categories": [
+    "amendments",
+    "citations",
+    "current_claims",
+    "requirements"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [
+      {
+        "artifact_id": "art:amendment-1",
+        "classification": "public_user",
+        "content_sha256": "51fbda0265da3327d54008c4add92141ee419b4875cc374eec799968aafc8f81",
+        "role": "preliminary_amendment"
+      }
+    ],
+    "claim_versions": [
+      {
+        "claims": {
+          "1": "A device comprising a sensor.",
+          "2": "The device of claim 1 further comprising a filter."
+        },
+        "version": "as_filed"
+      },
+      {
+        "claims": {
+          "1": "A device comprising a temperature sensor.",
+          "2": "The device of claim 1 further comprising a filter."
+        },
+        "version": "preliminary_amendment"
+      },
+      {
+        "claims": {
+          "1": "A device comprising a temperature sensor.",
+          "2": "The device of claim 1 further comprising a filter."
+        },
+        "version": "current"
+      }
+    ],
+    "extraction_profile": "claims_amendment",
+    "media_type": "application/pdf",
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/amendments-current-claims",
+        "receipt_id": "receipt:synthetic:amend-1",
+        "request_digest": "f20da75bfceaf5fd007c87304a37bf67c23d9cd1636dd3b17bc7c52ee2488d8c",
+        "response_digest": "51fbda0265da3327d54008c4add92141ee419b4875cc374eec799968aafc8f81",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:30:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Synthetic claim set.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "preliminary amendment + current claim reconstruction"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Claim amendment set and reconstructed current claims"
+}

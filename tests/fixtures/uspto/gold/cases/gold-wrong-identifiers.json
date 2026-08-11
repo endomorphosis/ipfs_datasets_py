@@ -1,0 +1,79 @@
+{
+  "case_id": "gold-wrong-identifiers",
+  "categories": [
+    "adversarial",
+    "unknowns",
+    "wrong_identifiers"
+  ],
+  "classification": "public_user",
+  "contracts_schema_version": "uspto.contracts.v1",
+  "fixture": {
+    "artifacts": [
+      {
+        "artifact_id": "art:wrong-id-letter-1",
+        "classification": "public_user",
+        "content_sha256": "f8b8a25728a3cac8c81dcb4d445435cf15982d0cc632eda569d0c928788e99dc",
+        "role": "correspondence"
+      }
+    ],
+    "expected_binding": {
+      "application_number": "16/900,001",
+      "patent_number": null,
+      "publication_number": "US-2024-0123456-A1",
+      "unresolved_ambiguity": true
+    },
+    "extraction_profile": "identity_validation",
+    "identity_candidates": [
+      {
+        "kind": "application_number",
+        "source": "document_header",
+        "value": "16/900,001"
+      },
+      {
+        "kind": "publication_number",
+        "source": "document_header",
+        "value": "US-2024-0123456-A1"
+      },
+      {
+        "kind": "patent_number",
+        "source": "adversarial_footer_noise",
+        "value": "11,234,567"
+      },
+      {
+        "kind": "customer_number",
+        "source": "letterhead",
+        "value": "999999"
+      },
+      {
+        "kind": "confirmation_number",
+        "source": "letterhead",
+        "value": "4321"
+      }
+    ],
+    "media_type": "application/json",
+    "source_receipts": [
+      {
+        "endpoint": "fixture://uspto/gold/wrong-identifiers",
+        "receipt_id": "receipt:synthetic:wrong-id-1",
+        "request_digest": "f38d25507a5fe4b23bae731f87a7433969131cd61b16d82ed2d4730d9e6c67f4",
+        "response_digest": "f8b8a25728a3cac8c81dcb4d445435cf15982d0cc632eda569d0c928788e99dc",
+        "response_status": 200,
+        "retrieval_utc": "2026-08-01T12:25:00Z"
+      }
+    ]
+  },
+  "goal_id": "PATLAW-G080",
+  "license": {
+    "notes": "Synthetic identifier confusion vectors.",
+    "spdx": "CC0-1.0"
+  },
+  "schema": "uspto.gold-case-recipe.v1",
+  "schema_version": 1,
+  "source": {
+    "kind": "synthetic",
+    "privacy_class": "public_synthetic",
+    "recipe": "deliberately mismatched application vs publication numbers"
+  },
+  "task_id": "PATLAW-070",
+  "title": "Application/publication/patent number confusion and wrong matter binding"
+}

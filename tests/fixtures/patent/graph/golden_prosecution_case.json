@@ -1,0 +1,737 @@
+{
+  "case": {
+    "candidate_edges": [
+      {
+        "metadata": {
+          "note": "unverified claim-to-reference suggestion",
+          "proposed_by": "llm-extraction-v0"
+        },
+        "object": "cit-smith",
+        "provenance": "llm_proposed",
+        "relation": "cites",
+        "subject": "claim-1"
+      }
+    ],
+    "case_id": "golden-prosecution-us16123456",
+    "edges": [
+      {
+        "object": "parent-app",
+        "relation": "priority",
+        "source_links": [
+          {
+            "artifact_id": "artifact:app-16123456",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "span": {
+              "end": 120,
+              "start": 80,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "child-app"
+      },
+      {
+        "object": "parent-app",
+        "relation": "continuation",
+        "source_links": [
+          {
+            "artifact_id": "artifact:app-16123456",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "span": {
+              "end": 160,
+              "start": 120,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "child-app"
+      },
+      {
+        "object": "family-1",
+        "relation": "member_of",
+        "source_links": [
+          {
+            "artifact_id": "artifact:family-f9001",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "span": {
+              "end": 24,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "child-app"
+      },
+      {
+        "object": "pub-1",
+        "relation": "has_publication",
+        "source_links": [
+          {
+            "artifact_id": "artifact:pub-20200123456",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 18,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "child-app"
+      },
+      {
+        "object": "child-app",
+        "relation": "grants",
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 12,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "patent-1"
+      },
+      {
+        "object": "claim-1",
+        "relation": "depends_on",
+        "source_links": [
+          {
+            "artifact_id": "artifact:claim-2",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 450,
+              "start": 421,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "claim-2"
+      },
+      {
+        "object": "claim-1",
+        "relation": "has_claim",
+        "source_links": [
+          {
+            "artifact_id": "artifact:claim-1",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 120,
+              "start": 100,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "child-app"
+      },
+      {
+        "object": "claim-2",
+        "relation": "has_claim",
+        "source_links": [
+          {
+            "artifact_id": "artifact:claim-2",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 440,
+              "start": 421,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "child-app"
+      },
+      {
+        "object": "child-app",
+        "relation": "office_action",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "oa-1"
+      },
+      {
+        "object": "claim-1",
+        "relation": "rejects",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 300,
+              "start": 220,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "rej-103"
+      },
+      {
+        "object": "claim-2",
+        "relation": "rejects",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 360,
+              "start": 300,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "rej-103"
+      },
+      {
+        "object": "auth-35usc103",
+        "relation": "legal_authority",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 400,
+              "start": 360,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "rej-103"
+      },
+      {
+        "object": "cit-smith",
+        "relation": "cites",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 560,
+              "start": 500,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "rej-103"
+      },
+      {
+        "object": "oa-1",
+        "relation": "responds_to",
+        "source_links": [
+          {
+            "artifact_id": "artifact:resp-20210601",
+            "source_cid": "bafybeiresponse00000000000000000000000000000000000000000001",
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "resp-1"
+      },
+      {
+        "object": "claim-1",
+        "relation": "amends",
+        "source_links": [
+          {
+            "artifact_id": "artifact:resp-20210601",
+            "source_cid": "bafybeiresponse00000000000000000000000000000000000000000001",
+            "span": {
+              "end": 220,
+              "start": 160,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "amend-1"
+      },
+      {
+        "object": "examiner-1",
+        "relation": "examiner",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 45,
+              "start": 20,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "oa-1"
+      },
+      {
+        "object": "applicant-1",
+        "relation": "applicant",
+        "source_links": [
+          {
+            "artifact_id": "artifact:app-16123456",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "span": {
+              "end": 70,
+              "start": 50,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "child-app"
+      },
+      {
+        "object": "cpc-g06f",
+        "relation": "classifies",
+        "source_links": [
+          {
+            "artifact_id": "artifact:pub-20200123456",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 49,
+              "start": 40,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "pub-1"
+      },
+      {
+        "object": "edition-2020",
+        "relation": "in_edition",
+        "source_links": [
+          {
+            "artifact_id": "artifact:usc-35-2020",
+            "source_cid": "bafybeiuscode35section103000000000000000000000000000000001",
+            "span": {
+              "end": 12,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "authority-title35"
+      },
+      {
+        "object": "section-103",
+        "relation": "has_section",
+        "source_links": [
+          {
+            "artifact_id": "artifact:usc-35-103",
+            "source_cid": "bafybeiuscode35section103000000000000000000000000000000001",
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "edition-2020"
+      },
+      {
+        "object": "interval-103-2020",
+        "relation": "effective_during",
+        "source_links": [
+          {
+            "artifact_id": "artifact:usc-35-103",
+            "source_cid": "bafybeiuscode35section103000000000000000000000000000000001",
+            "span": {
+              "end": 90,
+              "start": 40,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "section-103"
+      },
+      {
+        "object": "section-103",
+        "relation": "references_authority",
+        "source_links": [
+          {
+            "artifact_id": "artifact:usc-35-103",
+            "source_cid": "bafybeiuscode35section103000000000000000000000000000000001",
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ],
+        "subject": "auth-35usc103"
+      }
+    ],
+    "entities": [
+      {
+        "disclosure": "public_official",
+        "id": "family-1",
+        "kind": "family",
+        "label": "Family F-9001",
+        "source_links": [
+          {
+            "artifact_id": "artifact:family-f9001",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "span": {
+              "end": 24,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "application_number": "15/000001",
+        "disclosure": "public_official",
+        "id": "parent-app",
+        "kind": "application",
+        "label": "15/000,001",
+        "source_links": [
+          {
+            "artifact_id": "artifact:app-15000001",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "span": {
+              "end": 40,
+              "start": 10,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "application_number": "16/123456",
+        "disclosure": "public_official",
+        "id": "child-app",
+        "kind": "application",
+        "label": "16/123,456",
+        "source_links": [
+          {
+            "artifact_id": "artifact:app-16123456",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "span": {
+              "end": 32,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "pub-1",
+        "kind": "publication",
+        "label": "US 2020/0123456 A1",
+        "publication_number": "US20200123456A1",
+        "source_links": [
+          {
+            "artifact_id": "artifact:pub-20200123456",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 18,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "patent-1",
+        "kind": "patent",
+        "label": "US 11,222,333",
+        "patent_number": "11222333",
+        "source_links": [
+          {
+            "artifact_id": "artifact:patent-11222333",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 12,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "claim_number": "1",
+        "disclosure": "public_official",
+        "id": "claim-1",
+        "kind": "claim",
+        "label": "Claim 1",
+        "source_links": [
+          {
+            "artifact_id": "artifact:claim-1",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 420,
+              "start": 100,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "claim_number": "2",
+        "disclosure": "public_official",
+        "id": "claim-2",
+        "kind": "claim",
+        "label": "Claim 2",
+        "source_links": [
+          {
+            "artifact_id": "artifact:claim-2",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 600,
+              "start": 421,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "oa-1",
+        "kind": "office_action",
+        "label": "Non-Final Rejection 2021-03-15",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 200,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "basis": "103",
+        "disclosure": "public_official",
+        "id": "rej-103",
+        "kind": "rejection",
+        "label": "103 rejection of claims 1-2",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 480,
+              "start": 220,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "resp-1",
+        "kind": "response",
+        "label": "Applicant response 2021-06-01",
+        "source_links": [
+          {
+            "artifact_id": "artifact:resp-20210601",
+            "source_cid": "bafybeiresponse00000000000000000000000000000000000000000001",
+            "span": {
+              "end": 150,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "amend-1",
+        "kind": "amendment",
+        "label": "Claim amendment set A",
+        "source_links": [
+          {
+            "artifact_id": "artifact:resp-20210601",
+            "source_cid": "bafybeiresponse00000000000000000000000000000000000000000001",
+            "span": {
+              "end": 400,
+              "start": 160,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "citation_kind": "patent",
+        "cited_id": "US9999999",
+        "disclosure": "public_official",
+        "id": "cit-smith",
+        "kind": "citation",
+        "label": "US 9,999,999 (Smith)",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 560,
+              "start": 500,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "cpc": "G06F16/00",
+        "disclosure": "public_official",
+        "id": "cpc-g06f",
+        "kind": "classification",
+        "label": "G06F16/00",
+        "source_links": [
+          {
+            "artifact_id": "artifact:pub-20200123456",
+            "source_cid": "bafybeic3g5s5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x",
+            "span": {
+              "end": 49,
+              "start": 40,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "examiner-1",
+        "kind": "examiner",
+        "label": "Examiner A. Roe",
+        "source_links": [
+          {
+            "artifact_id": "artifact:oa-20210315",
+            "source_cid": "bafybeiofficeaction0000000000000000000000000000000000000001",
+            "span": {
+              "end": 45,
+              "start": 20,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "applicant-1",
+        "kind": "applicant",
+        "label": "Example Corp.",
+        "source_links": [
+          {
+            "artifact_id": "artifact:app-16123456",
+            "source_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            "span": {
+              "end": 70,
+              "start": 50,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "auth-35usc103",
+        "kind": "legal_authority",
+        "label": "35 U.S.C. \u00a7 103",
+        "source_links": [
+          {
+            "artifact_id": "artifact:usc-35-103",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeiuscode35section103000000000000000000000000000000001",
+            "span": {
+              "end": 80,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "authority-title35",
+        "kind": "authority",
+        "label": "Title 35 USC",
+        "source_links": [
+          {
+            "artifact_id": "artifact:usc-35",
+            "authority_tier": "official-base",
+            "source_cid": "bafybeiuscode35section103000000000000000000000000000000001",
+            "span": {
+              "end": 20,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "edition": "2020",
+        "id": "edition-2020",
+        "kind": "edition",
+        "label": "USC 2020 edition",
+        "source_links": [
+          {
+            "artifact_id": "artifact:usc-35-2020",
+            "source_cid": "bafybeiuscode35section103000000000000000000000000000000001",
+            "span": {
+              "end": 12,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "id": "section-103",
+        "kind": "section",
+        "label": "\u00a7 103",
+        "section": "103",
+        "source_links": [
+          {
+            "artifact_id": "artifact:usc-35-103",
+            "source_cid": "bafybeiuscode35section103000000000000000000000000000000001",
+            "span": {
+              "end": 40,
+              "start": 0,
+              "unit": "char"
+            }
+          }
+        ]
+      },
+      {
+        "disclosure": "public_official",
+        "effective_from_utc": "2020-01-01T00:00:00Z",
+        "id": "interval-103-2020",
+        "kind": "effective_interval",
+        "label": "\u00a7 103 effective 2020-01-01..",
+        "source_links": [
+          {
+            "artifact_id": "artifact:usc-35-103",
+            "source_cid": "bafybeiuscode35section103000000000000000000000000000000001",
+            "span": {
+              "end": 90,
+              "start": 40,
+              "unit": "char"
+            }
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "fixture": "golden_prosecution_case",
+      "matter": "16/123,456"
+    },
+    "schema_version": "patent.graph.case.v1",
+    "tenant_id": "tenant-public"
+  },
+  "description": "Golden public prosecution matter covering priority, continuation, amendment, rejection, examiner, applicant, legal-authority, and one LLM-proposed candidate edge.",
+  "schema_version": "patent.graph.golden.v1"
+}

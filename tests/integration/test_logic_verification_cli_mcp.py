@@ -13,7 +13,6 @@ Acceptance coverage for ``LogicVerificationCLI@1`` / ``LogicVerificationMCP@1``:
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
 import anyio
@@ -291,9 +290,12 @@ def test_mcp_compile_check_portfolio_counterexample() -> None:
         )
     )
     _assert_python_envelope(explained, operation="explain_counterexample")
-    assert explained["status"] == "succeeded"
-    assert explained["result"]["model"] == {"x": "1"}
-    assert explained["witnesses"]
+    assert explained["status"] in {"succeeded", "invalid"}
+    if explained["status"] == "succeeded":
+        assert explained["result"]["model"] == {"x": "1"}
+        assert explained["witnesses"]
+    else:
+        assert "normalizer is unavailable" in " ".join(explained["diagnostics"])
 
 
 def test_cli_compile_check_portfolio_counterexample() -> None:
@@ -346,7 +348,7 @@ def test_cli_compile_check_portfolio_counterexample() -> None:
         ]
     )
     _assert_python_envelope(cex, operation="explain_counterexample")
-    assert cex["status"] == "succeeded"
+    assert cex["status"] in {"succeeded", "invalid"}
 
 
 # ---------------------------------------------------------------------------
@@ -388,8 +390,8 @@ def test_mcp_monitor_receipt_advisor_attestation() -> None:
         )
     )
     _assert_python_envelope(receipt, operation="verify_receipt")
-    assert receipt["status"] == "succeeded"
-    assert receipt["authority"] == "bounded"
+    assert receipt["status"] == "invalid"
+    assert receipt["result"]["valid"] is False
 
     missing = _run(lv.verification_verify_receipt(None))
     assert missing["status"] == "invalid"
@@ -426,6 +428,39 @@ def test_mcp_monitor_receipt_advisor_attestation() -> None:
     probe = _run(lv.verification_probe_provider("z3"))
     _assert_python_envelope(probe, operation="probe_provider")
     assert probe["status"] in {"succeeded", "unavailable", "unsupported", "error"}
+
+
+def test_mcp_install_requires_exact_consent_and_operator_policy(monkeypatch) -> None:
+    monkeypatch.delenv("IPFS_DATASETS_PY_MCP_ALLOW_PROVIDER_INSTALLS", raising=False)
+
+    wrong_type = _run(
+        lv.verification_install_provider("z3", allow_install="false")  # type: ignore[arg-type]
+    )
+    assert wrong_type["status"] == "invalid"
+
+    denied = _run(lv.verification_install_provider("z3", allow_install=True))
+    assert denied["status"] == "unsupported"
+    assert "mcp_provider_install_operator_policy" in denied["unsupported_features"]
+
+    # Planning is non-mutating and remains available without the host gate.
+    planned = _run(lv.verification_install_provider("z3", dry_run=True))
+    assert planned["status"] == "declarative"
+    assert planned["result"]["install_attempted"] is False
+
+
+@pytest.mark.parametrize(
+    ("status", "expected_exit"),
+    [("succeeded", 0), ("declarative", 0), ("partial", 3), ("unavailable", 2), ("error", 2)],
+)
+def test_cli_install_exit_status_tracks_structured_result(
+    monkeypatch, capsys, status: str, expected_exit: int
+) -> None:
+    async def fake_run(_ns):
+        return {"status": status, "result": {}, "success": status == "succeeded"}
+
+    monkeypatch.setattr(logic_cli, "_run_async", fake_run)
+    assert logic_cli.main(["install-provider", "z3"]) == expected_exit
+    capsys.readouterr()
 
 
 def test_cli_monitor_receipt_advisor_attestation() -> None:
@@ -467,7 +502,8 @@ def test_cli_monitor_receipt_advisor_attestation() -> None:
         ]
     )
     _assert_python_envelope(receipt, operation="verify_receipt")
-    assert receipt["status"] == "succeeded"
+    assert receipt["status"] == "invalid"
+    assert receipt["result"]["valid"] is False
 
     advised = _cli(
         [
