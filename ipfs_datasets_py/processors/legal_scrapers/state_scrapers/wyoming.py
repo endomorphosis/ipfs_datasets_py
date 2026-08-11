@@ -1,6 +1,7 @@
 """Scraper for Wyoming state laws.
 
-This module contains the scraper for Wyoming statutes from the official state legislative website.
+Official path: deterministic title PDFs on https://www.wyoleg.gov/statutes/compress/
+(preferred over the JS StatutesDownload SPA). Playwright/generic remain fallbacks only.
 """
 
 import re
