@@ -495,7 +495,7 @@ W14 ISI-040
 
 ## ISI-041 Harden durable identity closure after audit false-green
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: identity-closure
