@@ -20,6 +20,8 @@ Design invariants
   never durable merge keys.
 * Unknown effective dates are preserved and never invented or used as the sole
   merge key.
+* Identity construction rehashes supplied evidence but never authorizes corpus
+  admission; the LCR-085 full-text gate owns official-body authorization.
 
 The sealed collision fixture expands from a compact recipe that exercises
 correction pairs, source-format duplicates, changed-text versions, publication-
@@ -32,17 +34,45 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from datetime import date
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Optional, Sequence, Union
+from typing import Any
 
+from ipfs_datasets_py.logic.ir_core.identity import cid_v1
 from ipfs_datasets_py.processors.legal_data.federal_register_release_schema import (
+    SCHEMA_VERSION as RELEASE_SCHEMA_VERSION,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_release_schema import (
+    AdmissionStatus,
     CorrectionRelation,
     DocumentType,
-    validate_document_number as schema_validate_document_number,
+    SourceAuthorityClass,
+    TextAvailability,
+    VerificationResult,
+    normalize_sha256,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_release_schema import (
+    validate_digest as schema_validate_digest,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_release_schema import (
+    validate_document_index as schema_validate_document_index,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_release_schema import (
+    validate_entry_cid as schema_validate_entry_cid,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_release_schema import (
     validate_legal_id as schema_validate_legal_id,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_release_schema import (
+    validate_official_url as schema_validate_official_url,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_release_schema import (
     validate_publication_date as schema_validate_publication_date,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_release_schema import (
     validate_year_month as schema_validate_year_month,
 )
 
@@ -69,7 +99,19 @@ _SOURCE_FORMAT_PRIORITY: dict[str, int] = {
     "unknown": 99,
 }
 
-_DOCUMENT_NUMBER_RE = re.compile(r"^[0-9]{4}-[0-9]{4,6}$")
+# Keep this trust-boundary grammar byte-for-byte aligned with the accepted
+# LCR-049/LCR-050 ADR.  Historical two-character series have short tails;
+# modern/revision forms deliberately do not.  Revision prefixes are exactly
+# one digit, including zero, and all alphabetic bytes are uppercase.
+_HISTORICAL_DOCUMENT_SERIES_PATTERN = (
+    r"(?:0[0-9]|20|9[2-9]|C[0-9]|E[13-9]|R[0-9]|X[019]|Z[4-9])"
+)
+_DOCUMENT_NUMBER_PATTERN = (
+    rf"(?:[CR][0-9]-[0-9]{{4}}-[0-9]{{4,6}}|"
+    rf"[0-9]{{4}}-[0-9]{{4,6}}|"
+    rf"{_HISTORICAL_DOCUMENT_SERIES_PATTERN}-[0-9]{{1,6}})"
+)
+_DOCUMENT_NUMBER_RE = re.compile(rf"^{_DOCUMENT_NUMBER_PATTERN}$")
 _PUBLICATION_DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 _YEAR_MONTH_RE = re.compile(r"^[0-9]{4}-[0-9]{2}$")
 _CHUNK_SUFFIX_RE = re.compile(r"#chunk=(?P<index>\d+)$")
@@ -90,7 +132,10 @@ _QUALIFIER_KEYS = (
     "type",
 )
 
-PathLike = Union[str, Path]
+# Entry identity binds the complete canonical row.  Observation/acquisition
+# clocks remain excluded only from representative-version ranking; if returned,
+# their bytes still participate in ``entry_cid``.
+PathLike = str | Path
 JsonMapping = Mapping[str, Any]
 
 
@@ -140,7 +185,7 @@ class SourceFormat(str, Enum):
     UNKNOWN = "unknown"
 
     @classmethod
-    def coerce(cls, value: Any) -> "SourceFormat":
+    def coerce(cls, value: Any) -> SourceFormat:
         if value is None or value == "":
             return cls.HTML
         if isinstance(value, SourceFormat):
@@ -191,7 +236,7 @@ class IdentityDisposition(str, Enum):
     PRESERVE_UNKNOWN_EFFECTIVE_DATE = "preserve_unknown_effective_date"
 
     @classmethod
-    def coerce(cls, value: Any) -> "IdentityDisposition":
+    def coerce(cls, value: Any) -> IdentityDisposition:
         if isinstance(value, IdentityDisposition):
             return value
         text = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
@@ -225,15 +270,23 @@ class IdentityDisposition(str, Enum):
 # ---------------------------------------------------------------------------
 
 
-def _require_non_empty_str(value: Any, name: str) -> str:
+def _require_non_empty_str(
+    value: Any,
+    name: str,
+    *,
+    maximum: int | None = None,
+) -> str:
     if not isinstance(value, str) or not value.strip():
         raise FederalRegisterIdentityError(f"{name} must be a non-empty string")
     if "\x00" in value:
         raise FederalRegisterIdentityError(f"{name} must not contain NUL")
-    return value.strip()
+    text = value.strip()
+    if maximum is not None and len(text) > maximum:
+        raise FederalRegisterIdentityError(f"{name} exceeds maximum length {maximum}")
+    return text
 
 
-def _optional_str(value: Any) -> Optional[str]:
+def _optional_str(value: Any) -> str | None:
     if value is None or value == "":
         return None
     return _require_non_empty_str(value, "value")
@@ -244,33 +297,153 @@ def _stable_hex(material: str, *, salt: str = "") -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def normalize_document_number(value: Any) -> str:
-    """Normalize a Federal Register document number (``YYYY-NNNNN``)."""
+def _json_ready(value: Any) -> Any:
+    """Return a deterministic JSON-safe projection used only for hashing.
 
-    text = _require_non_empty_str(value, "document_number")
+    Corpus rows are JSON records, but fixture and caller probes may carry byte
+    evidence.  Bytes are represented losslessly as lowercase hex instead of
+    being coerced with ``str(bytes)`` (which is not a canonical byte binding).
+    """
+
+    if isinstance(value, Mapping):
+        return {
+            str(key): _json_ready(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
+    if isinstance(value, (list, tuple)):
+        return [_json_ready(item) for item in value]
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        return {"$bytes_hex": bytes(value).hex()}
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, Enum):
+        return value.value
+    raise FederalRegisterIdentityError(
+        f"identity material contains unsupported value {type(value).__name__}"
+    )
+
+
+def _canonical_json_bytes(value: Any) -> bytes:
+    return json.dumps(
+        _json_ready(value),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+
+
+def _canonical_cid(*, domain: str, payload: Mapping[str, Any]) -> str:
+    """Return a real raw/sha2-256 CIDv1 for a domain-separated payload."""
+
+    return cid_v1(
+        _canonical_json_bytes(
+            {
+                "domain": domain,
+                "identity_schema_version": SCHEMA_VERSION,
+                "payload": payload,
+            }
+        )
+    )
+
+
+def _evidence_bytes(
+    value: Any,
+    *,
+    name: str,
+    allow_empty: bool = False,
+) -> bytes | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if value == "":
+            return b"" if allow_empty else None
+        return value.encode("utf-8")
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        raw = bytes(value)
+        return raw if raw or allow_empty else None
+    raise FederalRegisterIdentityError(f"{name} must be text or bytes")
+
+
+def _content_digest_tokens(data: bytes) -> tuple[str, str, str]:
+    digest = hashlib.sha256(data).hexdigest()
+    return digest, f"sha256:{digest}", cid_v1(data)
+
+
+def _require_declared_digest_matches_bytes(
+    value: Any,
+    data: bytes,
+    *,
+    name: str,
+) -> str:
+    """Validate *value* and prove it addresses exactly *data*."""
+
+    declared = schema_validate_digest(value, name=name)
+    digest, labelled, content_cid = _content_digest_tokens(data)
+    if declared not in {digest, labelled, content_cid}:
+        raise FederalRegisterIdentityError(
+            f"{name} does not match the independently recomputed content digest"
+        )
+    return declared
+
+
+def normalize_document_number(value: Any) -> str:
+    """Normalize an official Federal Register document number.
+
+    Besides ``YYYY-NNNNN``, the official API emits correction/replacement
+    numbers ``C<n>-YYYY-NNNNN`` and ``R<n>-YYYY-NNNNN``.  Those prefixes are
+    durable identity and are never stripped or moved into a qualifier.
+    """
+
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise IdentityParseError(
+            "document_number must be a non-empty exact canonical string"
+        )
+    text = value
     if _POSITIONAL_ID_RE.fullmatch(text):
         raise PositionalIdentityError(
             f"document_number must not be positional: {value!r}"
         )
-    # Accept common spacing variants: "2020 - 12345" → "2020-12345".
-    text = re.sub(r"\s+", "", text)
-    if text.lower().startswith("fr-"):
-        text = text[3:]
-    if text.lower().startswith("document:"):
-        text = text.split(":", 1)[1]
-    # Strip leading zeros on the numeric suffix only when the whole suffix is
-    # numeric and longer than required — FR numbers keep zero padding as-is
-    # when already well-formed (YYYY-NNNNN with 4–6 digit suffix).
     if not _DOCUMENT_NUMBER_RE.fullmatch(text):
-        # Try zero-padding a short numeric suffix: 2020-123 → 2020-0123
-        match = re.fullmatch(r"([0-9]{4})-([0-9]{1,6})", text)
-        if match:
-            year, suffix = match.group(1), match.group(2)
-            text = f"{year}-{suffix.zfill(4)}"
-    try:
-        return schema_validate_document_number(text)
-    except Exception as exc:  # noqa: BLE001 - rewrap as identity error
-        raise IdentityParseError(str(exc)) from exc
+        raise IdentityParseError(
+            "document_number must be an exact canonical modern, historical, "
+            f"or revision Federal Register number; got {value!r}"
+        )
+    parts = text.split("-")
+    if len(parts) == 2 and len(parts[0]) == 4 and parts[0].isdigit():
+        year = int(parts[0])
+        if year < 1936 or year > 2100:
+            raise IdentityParseError(f"document_number year out of range: {value!r}")
+    elif len(parts) == 3:
+        year = int(parts[1])
+        if year < 1936 or year > 2100:
+            raise IdentityParseError(f"document_number year out of range: {value!r}")
+    return text
+
+
+def _validate_legal_id_shape(value: Any) -> str:
+    """Validate the local legal-ID shape, including official Cn-/Rn- IDs."""
+
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise IdentityParseError(
+            "legal_id must be a non-empty string in exact canonical form"
+        )
+    parts = value.split(":")
+    if len(parts) < 3 or parts[0] != LEGAL_ID_PREFIX:
+        raise IdentityParseError(
+            "legal_id must match fr:<document_number>:<publication_date>"
+            f"[:qualifier...]; got {value!r}"
+        )
+    if normalize_document_number(parts[1]) != parts[1]:
+        raise IdentityParseError("legal_id document number is not canonical")
+    if normalize_publication_date(parts[2]) != parts[2]:
+        raise IdentityParseError("legal_id publication date is not canonical")
+    for segment in parts[3:]:
+        if not segment or not re.fullmatch(r"[a-z0-9][A-Za-z0-9._=-]{0,127}", segment):
+            raise IdentityParseError(
+                f"legal_id qualifier segment is not canonical: {segment!r}"
+            )
+    return value
 
 
 def normalize_publication_date(value: Any) -> str:
@@ -282,12 +455,16 @@ def normalize_publication_date(value: Any) -> str:
     if re.fullmatch(r"[0-9]{8}", text):
         text = f"{text[0:4]}-{text[4:6]}-{text[6:8]}"
     try:
-        return schema_validate_publication_date(text)
-    except Exception as exc:  # noqa: BLE001
+        normalized = schema_validate_publication_date(text)
+        # LCR-050's shape validator is intentionally lightweight.  Identity
+        # normalization must additionally reject impossible calendar dates.
+        date.fromisoformat(normalized)
+        return normalized
+    except Exception as exc:
         raise IdentityParseError(str(exc)) from exc
 
 
-def normalize_year_month(value: Any, *, publication_date: Optional[str] = None) -> str:
+def normalize_year_month(value: Any, *, publication_date: str | None = None) -> str:
     """Normalize a partition key ``YYYY-MM`` (derived from publication date)."""
 
     if value is None or value == "":
@@ -300,12 +477,22 @@ def normalize_year_month(value: Any, *, publication_date: Optional[str] = None) 
     if re.fullmatch(r"[0-9]{6}", text):
         text = f"{text[0:4]}-{text[4:6]}"
     try:
-        return schema_validate_year_month(text)
-    except Exception as exc:  # noqa: BLE001
+        normalized = schema_validate_year_month(text)
+        if publication_date not in (None, ""):
+            expected = normalize_publication_date(publication_date)[:7]
+            if normalized != expected:
+                raise IdentityParseError(
+                    f"year_month {normalized!r} does not match publication_date "
+                    f"partition {expected!r}"
+                )
+        return normalized
+    except Exception as exc:
+        if isinstance(exc, IdentityParseError):
+            raise
         raise IdentityParseError(str(exc)) from exc
 
 
-def normalize_effective_date(value: Any) -> Optional[str]:
+def normalize_effective_date(value: Any) -> str | None:
     """Normalize an effective date, preserving unknown / missing values.
 
     Unknown tokens (``unknown``, ``n/a``, ``tbd``, empty) return ``None`` and
@@ -336,19 +523,41 @@ def normalize_effective_date(value: Any) -> Optional[str]:
 
 
 def normalize_source_format(value: Any) -> str:
-    """Normalize an official source format token."""
+    """Normalize a source-format label for non-authorizing display/ranking.
+
+    Identity-producing paths use :func:`_require_canonical_source_format`
+    instead: a convenience alias must never silently select provenance.
+    """
 
     return SourceFormat.coerce(value).value
+
+
+def _require_canonical_source_format(value: Any) -> str:
+    """Require one explicit, exact source-format token for provenance."""
+
+    if not isinstance(value, str) or not value:
+        raise FederalRegisterIdentityError(
+            "source_format must be an explicit supported string"
+        )
+    if value != value.strip().lower():
+        raise FederalRegisterIdentityError(
+            f"source_format must be an exact supported token, got {value!r}"
+        )
+    if value not in _SOURCE_FORMAT_PRIORITY or value == SourceFormat.UNKNOWN.value:
+        raise FederalRegisterIdentityError(
+            f"source_format must be an exact supported token, got {value!r}"
+        )
+    return value
 
 
 def normalize_document_type(value: Any) -> str:
     """Normalize a Federal Register document type."""
 
     if value is None or value == "":
-        return DEFAULT_DOCUMENT_TYPE
+        raise IdentityParseError("document_type is required for legal identity")
     try:
         return DocumentType.coerce(value).value
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise IdentityParseError(str(exc)) from exc
 
 
@@ -359,16 +568,17 @@ def normalize_correction_relation(value: Any) -> str:
         return DEFAULT_CORRECTION_RELATION
     try:
         return CorrectionRelation.coerce(value).value
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise IdentityParseError(str(exc)) from exc
 
 
-def _normalize_qualifier_value(value: Any, name: str) -> Optional[str]:
+def _normalize_qualifier_value(value: Any, name: str) -> str | None:
     if value is None or value == "":
         return None
-    text = _require_non_empty_str(value, name).lower()
-    text = re.sub(r"\s+", "-", text)
-    text = re.sub(r"[^a-z0-9._-]", "", text)
+    raw = _require_non_empty_str(value, name)
+    if not isinstance(value, str) or value != value.strip():
+        raise IdentityParseError(f"{name} must have no surrounding whitespace")
+    text = raw.lower()
     if not text or not _QUALIFIER_TOKEN_RE.fullmatch(text):
         raise IdentityParseError(
             f"{name} must match [a-z0-9][a-z0-9._-]{{0,63}}; got {value!r}"
@@ -376,14 +586,11 @@ def _normalize_qualifier_value(value: Any, name: str) -> Optional[str]:
     return text
 
 
-def _format_qualifiers(components: Mapping[str, Optional[str]]) -> str:
+def _format_qualifiers(components: Mapping[str, str | None]) -> str:
     parts: list[str] = []
     for key in _QUALIFIER_KEYS:
         value = components.get(key)
         if value is None or value == "":
-            continue
-        if key == "type" and value == DEFAULT_DOCUMENT_TYPE:
-            # Default notice type is omitted for compact legal_id.
             continue
         if key == "rel" and value == DEFAULT_CORRECTION_RELATION:
             continue
@@ -416,20 +623,15 @@ class LegalIdentity:
 
     document_number: str
     publication_date: str
-    document_type: str = DEFAULT_DOCUMENT_TYPE
+    document_type: str
     correction_relation: str = DEFAULT_CORRECTION_RELATION
-    related_document_number: Optional[str] = None
-    year_month: Optional[str] = None
-    effective_date: Optional[str] = None
-    source_format: str = DEFAULT_SOURCE_FORMAT
-    edition: Optional[str] = None
-    granule: Optional[str] = None
-    part: Optional[str] = None
-    include_type_qualifier: bool = field(default=False, compare=False, hash=False)
-    include_correction_qualifier: bool = field(default=False, compare=False, hash=False)
-    source_document_number: Optional[str] = field(
-        default=None, compare=False, hash=False
-    )
+    related_document_number: str | None = None
+    year_month: str | None = field(default=None, compare=False, hash=False)
+    effective_date: str | None = field(default=None, compare=False, hash=False)
+    edition: str | None = None
+    granule: str | None = None
+    part: str | None = None
+    source_document_number: str | None = field(default=None, compare=False, hash=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -456,16 +658,19 @@ class LegalIdentity:
         object.__setattr__(
             self,
             "year_month",
-            normalize_year_month(self.year_month, publication_date=self.publication_date),
+            normalize_year_month(
+                self.year_month, publication_date=self.publication_date
+            ),
         )
         object.__setattr__(
             self, "effective_date", normalize_effective_date(self.effective_date)
         )
         object.__setattr__(
-            self, "source_format", normalize_source_format(self.source_format)
+            self, "edition", _normalize_qualifier_value(self.edition, "edition")
         )
-        object.__setattr__(self, "edition", _normalize_qualifier_value(self.edition, "edition"))
-        object.__setattr__(self, "granule", _normalize_qualifier_value(self.granule, "granule"))
+        object.__setattr__(
+            self, "granule", _normalize_qualifier_value(self.granule, "granule")
+        )
         object.__setattr__(self, "part", _normalize_qualifier_value(self.part, "part"))
 
         # Correction identity rules (fail-closed).
@@ -496,7 +701,7 @@ class LegalIdentity:
         """Return the stable publication-oriented legal identifier."""
 
         base = f"{LEGAL_ID_PREFIX}:{self.document_number}:{self.publication_date}"
-        qualifiers: dict[str, Optional[str]] = {
+        qualifiers: dict[str, str | None] = {
             "edition": self.edition,
             "granule": self.granule,
             "part": self.part,
@@ -504,15 +709,13 @@ class LegalIdentity:
             "rel": None,
             "type": None,
         }
-        if self.include_type_qualifier or (
-            self.document_type
-            not in {DEFAULT_DOCUMENT_TYPE, DocumentType.UNKNOWN.value}
-            and self.document_type == DocumentType.CORRECTION.value
-        ):
-            # Always surface correction type when the document is a correction.
-            if self.include_type_qualifier or self.document_type == DocumentType.CORRECTION.value:
-                qualifiers["type"] = self.document_type
-        if self.include_correction_qualifier and self.correction_relation != DEFAULT_CORRECTION_RELATION:
+        # Document type is publication identity for every document.  It is
+        # never optional presentation and no caller flag can suppress it.
+        qualifiers["type"] = self.document_type
+        # Correction, withdrawal, and supersession semantics are identity, not
+        # optional presentation.  Every real relation and its exact target are
+        # emitted; the default ``none`` relation is the only omitted token.
+        if self.correction_relation != DEFAULT_CORRECTION_RELATION:
             qualifiers["rel"] = self.correction_relation
             if self.related_document_number:
                 qualifiers["related"] = self.related_document_number
@@ -548,12 +751,9 @@ class LegalIdentity:
             related_document_number=self.related_document_number,
             year_month=self.year_month,
             effective_date=self.effective_date,
-            source_format=self.source_format,
             edition=self.edition,
             granule=None,
             part=None,
-            include_type_qualifier=self.include_type_qualifier,
-            include_correction_qualifier=self.include_correction_qualifier,
         )
         return parent.legal_id
 
@@ -582,114 +782,179 @@ class LegalIdentity:
             "related_document_number": self.related_document_number,
             "schema_version": SCHEMA_VERSION,
             "source_document_number": self.source_document_number,
-            "source_format": self.source_format,
             "year_month": self.year_month,
         }
 
     @classmethod
-    def from_mapping(cls, value: Mapping[str, Any]) -> "LegalIdentity":
+    def from_mapping(cls, value: Mapping[str, Any]) -> LegalIdentity:
         if not isinstance(value, Mapping):
             raise FederalRegisterIdentityError("identity payload must be a mapping")
-        document_number = value.get("document_number")
-        if document_number is None:
-            document_number = value.get("documentNumber") or value.get("doc_number")
-        publication_date = value.get("publication_date")
-        if publication_date is None:
-            publication_date = (
-                value.get("publicationDate")
-                or value.get("pub_date")
-                or value.get("date")
+        forbidden_flags = {
+            "include_type_qualifier",
+            "type_in_legal_id",
+            "include_correction_qualifier",
+            "correction_in_legal_id",
+        }.intersection(value)
+        if forbidden_flags:
+            raise IdentityParseError(
+                "legal identity qualifier inclusion is not caller-selectable: "
+                f"{sorted(forbidden_flags)}"
             )
-        related = value.get("related_document_number")
-        if related is None:
-            related = value.get("relatedDocumentNumber") or value.get("related_document")
-        source_format = value.get("source_format")
-        if source_format is None:
-            source_format = value.get("format") or value.get("content_format")
-        include_type = bool(
-            value.get("include_type_qualifier")
-            or value.get("type_in_legal_id")
-            or (value.get("document_type") == DocumentType.CORRECTION.value)
-        )
-        include_correction = bool(
-            value.get("include_correction_qualifier")
-            or value.get("correction_in_legal_id")
-        )
-        # If an explicit legal_id is present with qualifiers, prefer parsing it.
+
+        def _field(canonical: str, *aliases: str) -> Any:
+            present = [
+                (name, value[name])
+                for name in (canonical, *aliases)
+                if name in value and value[name] not in (None, "")
+            ]
+            if not present:
+                return None
+            first = str(present[0][1]).strip()
+            for name, candidate in present[1:]:
+                if str(candidate).strip() != first:
+                    raise IdentityParseError(
+                        f"conflicting {canonical} aliases: "
+                        f"{present[0][0]}={present[0][1]!r}, {name}={candidate!r}"
+                    )
+            return present[0][1]
+
         existing = value.get("legal_id")
-        if isinstance(existing, str) and existing.strip().lower().startswith(
-            f"{LEGAL_ID_PREFIX}:"
-        ):
-            try:
-                parsed = parse_legal_id(existing.strip())
-                # Overlay row fields that parse_legal_id may not carry.
-                return LegalIdentity(
-                    document_number=document_number or parsed.document_number,
-                    publication_date=publication_date or parsed.publication_date,
-                    document_type=value.get("document_type") or parsed.document_type,
-                    correction_relation=value.get("correction_relation")
-                    or parsed.correction_relation,
-                    related_document_number=related or parsed.related_document_number,
-                    year_month=value.get("year_month") or parsed.year_month,
-                    effective_date=value.get("effective_date")
-                    if "effective_date" in value
-                    else parsed.effective_date,
-                    source_format=source_format or parsed.source_format,
-                    edition=value.get("edition") or parsed.edition,
-                    granule=value.get("granule") or parsed.granule,
-                    part=value.get("part") or parsed.part,
-                    include_type_qualifier=include_type or parsed.include_type_qualifier,
-                    include_correction_qualifier=(
-                        include_correction or parsed.include_correction_qualifier
-                    ),
-                    source_document_number=str(document_number)
-                    if document_number is not None
-                    else parsed.source_document_number,
+        parsed: LegalIdentity | None = None
+        asserted_document_number: str | None = None
+        asserted_publication_date: str | None = None
+        asserted_relation: str | None = None
+        asserted_related: str | None = None
+        canonical_assertion = False
+        if existing not in (None, ""):
+            if not isinstance(existing, str) or existing != existing.strip():
+                raise IdentityParseError(
+                    "legal_id must be a string in exact canonical form"
                 )
-            except FederalRegisterIdentityError:
-                pass
+            try:
+                parsed = parse_legal_id(existing)
+                canonical_assertion = True
+            except IdentityParseError:
+                # LCR-050's authoritative examples predate the closed current
+                # qualifier grammar.  Accept exactly its bare publication
+                # assertion and its closed ``:<relation>:<related-doc>`` form;
+                # row fields still provide and must agree with type/relation
+                # semantics before we emit the current canonical legal_id.
+                parts = existing.split(":")
+                if len(parts) not in {3, 5} or parts[0] != LEGAL_ID_PREFIX:
+                    raise
+                asserted_document_number = normalize_document_number(parts[1])
+                asserted_publication_date = normalize_publication_date(parts[2])
+                if len(parts) == 5:
+                    relation_values = {
+                        item.value
+                        for item in CorrectionRelation
+                        if item is not CorrectionRelation.NONE
+                    }
+                    if parts[3] not in relation_values:
+                        raise
+                    asserted_relation = parts[3]
+                    asserted_related = normalize_document_number(parts[4])
+
+        document_number = _field("document_number", "documentNumber", "doc_number")
+        publication_date = _field(
+            "publication_date", "publicationDate", "pub_date", "date"
+        )
+        related = _field(
+            "related_document_number", "relatedDocumentNumber", "related_document"
+        )
+        asserted_doc = (
+            parsed.document_number if parsed is not None else asserted_document_number
+        )
+        asserted_pub = (
+            parsed.publication_date if parsed is not None else asserted_publication_date
+        )
+        if (
+            document_number is not None
+            and asserted_doc is not None
+            and normalize_document_number(document_number) != asserted_doc
+        ):
+            raise IdentityParseError(
+                "explicit legal_id document number does not match row identity"
+            )
+        if (
+            publication_date is not None
+            and asserted_pub is not None
+            and normalize_publication_date(publication_date) != asserted_pub
+        ):
+            raise IdentityParseError(
+                "explicit legal_id publication date does not match row identity"
+            )
+        document_number = document_number or asserted_doc
+        publication_date = publication_date or asserted_pub
         if document_number is None or publication_date is None:
             raise IdentityParseError(
                 "document_number and publication_date are required for identity"
             )
-        return cls(
+
+        document_type = _field("document_type", "type")
+        correction_relation = _field("correction_relation", "relation")
+        if document_type is None and parsed is None:
+            raise IdentityParseError("document_type is required for legal identity")
+        identity = cls(
             document_number=document_number,
             publication_date=publication_date,
-            document_type=value.get("document_type") or value.get("type") or DEFAULT_DOCUMENT_TYPE,
-            correction_relation=value.get("correction_relation")
-            or value.get("relation")
-            or DEFAULT_CORRECTION_RELATION,
-            related_document_number=related,
+            document_type=document_type
+            if document_type is not None
+            else parsed.document_type,
+            correction_relation=correction_relation
+            if correction_relation is not None
+            else (
+                parsed.correction_relation
+                if parsed is not None
+                else DEFAULT_CORRECTION_RELATION
+            ),
+            related_document_number=related
+            if related is not None
+            else (parsed.related_document_number if parsed is not None else None),
             year_month=value.get("year_month"),
             effective_date=value.get("effective_date"),
-            source_format=source_format or DEFAULT_SOURCE_FORMAT,
-            edition=value.get("edition"),
-            granule=value.get("granule") or value.get("granule_id"),
-            part=value.get("part"),
-            include_type_qualifier=include_type,
-            include_correction_qualifier=include_correction,
+            edition=value.get("edition")
+            if "edition" in value
+            else (parsed.edition if parsed is not None else None),
+            granule=_field("granule", "granule_id")
+            if _field("granule", "granule_id") is not None
+            else (parsed.granule if parsed is not None else None),
+            part=value.get("part")
+            if "part" in value
+            else (parsed.part if parsed is not None else None),
             source_document_number=str(document_number),
         )
+        if canonical_assertion and identity.legal_id != existing:
+            raise IdentityParseError(
+                f"explicit legal_id {existing!r} does not exactly match "
+                f"canonical row identity {identity.legal_id!r}"
+            )
+        if asserted_relation is not None and (
+            identity.correction_relation != asserted_relation
+            or identity.related_document_number != asserted_related
+        ):
+            raise IdentityParseError(
+                "legacy legal_id relation assertion does not match row identity"
+            )
+        return identity
 
 
 def build_legal_id(
     document_number: Any,
     publication_date: Any,
     *,
-    document_type: Any = DEFAULT_DOCUMENT_TYPE,
+    document_type: Any,
     correction_relation: Any = DEFAULT_CORRECTION_RELATION,
     related_document_number: Any = None,
     edition: Any = None,
     granule: Any = None,
     part: Any = None,
-    include_type_qualifier: bool = False,
-    include_correction_qualifier: bool = False,
     qualifier: Any = None,
 ) -> str:
     """Build a stable ``legal_id`` from publication components.
 
-    Optional free-form *qualifier* is appended as a single trailing segment
-    (lower-cased) when no structured qualifiers are present.
+    Free-form qualifiers are rejected.  The legal-id grammar is deliberately
+    closed so a parser can never silently discard identity-bearing material.
     """
 
     identity = LegalIdentity(
@@ -701,20 +966,15 @@ def build_legal_id(
         edition=edition,
         granule=granule,
         part=part,
-        include_type_qualifier=include_type_qualifier,
-        include_correction_qualifier=include_correction_qualifier,
     )
     legal_id = identity.legal_id
     if qualifier is not None and str(qualifier).strip():
-        q = _normalize_qualifier_value(qualifier, "qualifier")
-        if q and f"={q}" not in legal_id and f":{q}" not in legal_id:
-            # Free-form qualifier as trailing segment (schema allows :.+).
-            if legal_id.count(":") == 2:
-                legal_id = f"{legal_id}:{q}"
-            else:
-                legal_id = f"{legal_id}:{q}"
+        raise IdentityParseError(
+            "free-form legal_id qualifiers are not supported; use a closed "
+            "structured qualifier"
+        )
     # Ensure schema contract is satisfied.
-    return schema_validate_legal_id(legal_id)
+    return _validate_legal_id_shape(legal_id)
 
 
 def build_canonical_citation(
@@ -724,24 +984,24 @@ def build_canonical_citation(
 ) -> str:
     """Build a compact human-readable Federal Register citation."""
 
+    allowed = {
+        "document_type",
+        "correction_relation",
+        "related_document_number",
+        "effective_date",
+        "edition",
+        "granule",
+        "part",
+    }
+    unknown = set(kwargs) - allowed
+    if unknown:
+        raise IdentityParseError(
+            f"unsupported legal identity fields: {sorted(unknown)}"
+        )
     return LegalIdentity(
         document_number=document_number,
         publication_date=publication_date,
-        **{
-            k: v
-            for k, v in kwargs.items()
-            if k
-            in {
-                "document_type",
-                "correction_relation",
-                "related_document_number",
-                "effective_date",
-                "source_format",
-                "edition",
-                "granule",
-                "part",
-            }
-        },
+        **kwargs,
     ).canonical_citation
 
 
@@ -752,24 +1012,23 @@ def build_chunk_parent_id(
 ) -> str:
     """Return the deterministic parent identity for semantic text chunks."""
 
+    allowed = {
+        "document_type",
+        "correction_relation",
+        "related_document_number",
+        "edition",
+        "granule",
+        "part",
+    }
+    unknown = set(kwargs) - allowed
+    if unknown:
+        raise IdentityParseError(
+            f"unsupported legal identity fields: {sorted(unknown)}"
+        )
     return LegalIdentity(
         document_number=document_number,
         publication_date=publication_date,
-        **{
-            k: v
-            for k, v in kwargs.items()
-            if k
-            in {
-                "document_type",
-                "correction_relation",
-                "related_document_number",
-                "edition",
-                "granule",
-                "part",
-                "include_type_qualifier",
-                "include_correction_qualifier",
-            }
-        },
+        **kwargs,
     ).parent_legal_id
 
 
@@ -787,10 +1046,18 @@ def parse_chunk_id(chunk_id: str) -> tuple[str, int]:
 def parse_legal_id(legal_id: str) -> LegalIdentity:
     """Parse a previously built ``legal_id`` back into components."""
 
+    if not isinstance(legal_id, str) or legal_id != legal_id.strip():
+        raise IdentityParseError(
+            "legal_id must be a string in exact canonical form without whitespace"
+        )
     text = _require_non_empty_str(legal_id, "legal_id")
     if _POSITIONAL_ID_RE.fullmatch(text):
         raise PositionalIdentityError(f"legal_id must not be positional: {legal_id!r}")
-    normalized = schema_validate_legal_id(text)
+    normalized = _validate_legal_id_shape(text)
+    if text != normalized:
+        raise IdentityParseError(
+            f"legal_id must already be in exact canonical form: {normalized!r}"
+        )
     parts = normalized.split(":")
     if len(parts) < 3 or parts[0].lower() != LEGAL_ID_PREFIX:
         raise IdentityParseError(
@@ -799,39 +1066,42 @@ def parse_legal_id(legal_id: str) -> LegalIdentity:
         )
     document_number = parts[1]
     publication_date = parts[2]
-    document_type = DEFAULT_DOCUMENT_TYPE
+    document_type: str | None = None
     correction_relation = DEFAULT_CORRECTION_RELATION
-    related_document_number: Optional[str] = None
-    edition: Optional[str] = None
-    granule: Optional[str] = None
-    part: Optional[str] = None
-    include_type = False
-    include_correction = False
+    related_document_number: str | None = None
+    edition: str | None = None
+    granule: str | None = None
+    part: str | None = None
+    seen_qualifiers: set[str] = set()
     for segment in parts[3:]:
-        if "=" in segment:
-            key, value = segment.split("=", 1)
-            key = key.lower()
-            if key == "type":
-                document_type = value
-                include_type = True
-            elif key == "rel":
-                correction_relation = value
-                include_correction = True
-            elif key == "related":
-                related_document_number = value
-                include_correction = True
-            elif key == "edition":
-                edition = value
-            elif key == "granule":
-                granule = value
-            elif key == "part":
-                part = value
-            # Unknown key=value segments are ignored for round-trip fields.
-        else:
-            # Free-form trailing qualifier — store as granule if unset.
-            if granule is None:
-                granule = segment
-    return LegalIdentity(
+        if "=" not in segment:
+            raise IdentityParseError(
+                f"free-form legal_id qualifier is not supported: {segment!r}"
+            )
+        key, value = segment.split("=", 1)
+        key = key.lower()
+        if key not in _QUALIFIER_KEYS:
+            raise IdentityParseError(f"unknown legal_id qualifier key: {key!r}")
+        if key in seen_qualifiers:
+            raise IdentityParseError(f"duplicate legal_id qualifier key: {key!r}")
+        seen_qualifiers.add(key)
+        if not value:
+            raise IdentityParseError(f"empty legal_id qualifier value for {key!r}")
+        if key == "type":
+            document_type = value
+        elif key == "rel":
+            correction_relation = value
+        elif key == "related":
+            related_document_number = value
+        elif key == "edition":
+            edition = value
+        elif key == "granule":
+            granule = value
+        elif key == "part":
+            part = value
+    if document_type is None:
+        raise IdentityParseError("legal_id must include exactly one type qualifier")
+    identity = LegalIdentity(
         document_number=document_number,
         publication_date=publication_date,
         document_type=document_type,
@@ -840,9 +1110,13 @@ def parse_legal_id(legal_id: str) -> LegalIdentity:
         edition=edition,
         granule=granule,
         part=part,
-        include_type_qualifier=include_type,
-        include_correction_qualifier=include_correction,
     )
+    if identity.legal_id != normalized:
+        raise IdentityParseError(
+            f"legal_id is not canonical or omits mandatory relation identity; "
+            f"expected {identity.legal_id!r}"
+        )
+    return identity
 
 
 def identity_from_row(row: Mapping[str, Any]) -> LegalIdentity:
@@ -852,17 +1126,24 @@ def identity_from_row(row: Mapping[str, Any]) -> LegalIdentity:
 
 
 def legal_id_from_row(row: Mapping[str, Any]) -> str:
-    """Return ``legal_id`` for a row mapping (uses existing field when present)."""
+    """Return the canonical ``legal_id`` and reject any conflicting claim."""
 
     existing = row.get("legal_id")
-    if isinstance(existing, str) and existing.strip():
-        text = existing.strip()
+    if existing not in (None, ""):
+        if not isinstance(existing, str):
+            raise IdentityParseError("legal_id must be a string")
+        text = existing
+        if text != text.strip():
+            raise IdentityParseError("legal_id must have no surrounding whitespace")
         if _POSITIONAL_ID_RE.fullmatch(text):
-            raise PositionalIdentityError(
-                f"legal_id must not be positional: {text!r}"
+            raise PositionalIdentityError(f"legal_id must not be positional: {text!r}")
+        if not text.startswith(f"{LEGAL_ID_PREFIX}:"):
+            raise IdentityParseError(
+                f"explicit legal_id is not a canonical Federal Register ID: {text!r}"
             )
-        if text.lower().startswith(f"{LEGAL_ID_PREFIX}:"):
-            return parse_legal_id(text).legal_id
+        # ``identity_from_row`` below accepts only the two exact legacy
+        # LCR-050 assertion shapes in addition to the closed current grammar,
+        # then rebuilds all semantics from structured row fields.
     return identity_from_row(row).legal_id
 
 
@@ -875,134 +1156,201 @@ def compute_source_cid(
     document_number: Any,
     publication_date: Any,
     *,
-    source_format: Any = DEFAULT_SOURCE_FORMAT,
+    source_format: Any = None,
     official_source_url: Any = None,
     source_checksum: Any = None,
     body: Any = None,
+    source_bytes: Any = None,
 ) -> str:
     """Compute a deterministic ``source_cid`` for normalized official evidence.
 
-    Prefers an explicit ``source_checksum`` / body digest when present so
-    identical official bytes yield the same source address regardless of URL
-    packaging variants. Format participates so html/pdf of different bytes
-    remain distinct while same-bytes multi-URL packaging stays stable.
+    The CID is derived from independently observed bytes and an official URL.
+    A declared checksum is accepted only when it matches those bytes.  It can
+    never replace them or override a mismatch.
     """
 
     doc = normalize_document_number(document_number)
     pub = normalize_publication_date(publication_date)
-    fmt = normalize_source_format(source_format)
-    if source_checksum is not None and str(source_checksum).strip():
-        checksum = str(source_checksum).strip().lower()
-        if checksum.startswith("sha256:"):
-            checksum = checksum[7:]
-        material = f"fr-source|{doc}|{pub}|{fmt}|checksum:{checksum}"
-    elif isinstance(body, (bytes, bytearray)):
-        digest = hashlib.sha256(bytes(body)).hexdigest()
-        material = f"fr-source|{doc}|{pub}|{fmt}|body:{digest}"
-    elif isinstance(body, str) and body:
-        digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
-        material = f"fr-source|{doc}|{pub}|{fmt}|body:{digest}"
-    else:
-        url = str(official_source_url or "").strip().lower()
-        material = f"fr-source|{doc}|{pub}|{fmt}|url:{url}"
-    digest = _stable_hex(material, salt="lcr-054-source")
-    return f"bafkreis{digest[:47]}"
+    fmt = _require_canonical_source_format(source_format)
+    url = schema_validate_official_url(official_source_url)
+    observed = _evidence_bytes(
+        source_bytes,
+        name="source_bytes",
+        allow_empty=True,
+    )
+    fallback_body = _evidence_bytes(body, name="body")
+    if observed is not None and fallback_body is not None and observed != fallback_body:
+        raise FederalRegisterIdentityError(
+            "source_bytes and body encode different official source evidence"
+        )
+    if observed is None:
+        observed = fallback_body
+    if observed is None:
+        raise FederalRegisterIdentityError(
+            "source identity requires independently observed source/body bytes"
+        )
+    digest = hashlib.sha256(observed).hexdigest()
+    if source_checksum not in (None, ""):
+        declared = normalize_sha256(source_checksum, name="source_checksum")
+        if declared != digest:
+            raise FederalRegisterIdentityError(
+                "source_checksum does not match independently recomputed source bytes"
+            )
+    return _canonical_cid(
+        domain="federal-register-source",
+        payload={
+            "content_sha256": digest,
+            "document_number": doc,
+            "official_source_url": url,
+            "publication_date": pub,
+            "source_format": fmt,
+        },
+    )
 
 
-def compute_entry_cid(
-    document_number: Any,
-    publication_date: Any,
+def _compute_entry_cid_from_canonical_row(
+    row: Mapping[str, Any],
     *,
-    content_token: Any = None,
-    text: Any = None,
-    source_cid: Any = None,
-    legal_id: Any = None,
+    content: bytes,
+    source_cid: str,
 ) -> str:
-    """Compute a deterministic ``entry_cid`` for a retrieval record.
+    """Private fixed-envelope entry identity primitive.
 
-    Content version participates so changed-text versions under the same
-    ``legal_id`` receive distinct primary keys.
+    Callers cannot select the envelope.  ``enrich_row_identity`` first
+    canonicalizes every accepted representation, and this primitive projects
+    one fixed set of release-row fields.
     """
 
-    doc = normalize_document_number(document_number)
-    pub = normalize_publication_date(publication_date)
-    lid = str(legal_id or f"{LEGAL_ID_PREFIX}:{doc}:{pub}").strip().lower()
-    if content_token is not None and str(content_token).strip():
-        token = str(content_token).strip().lower()
-    elif isinstance(text, str) and text.strip():
-        token = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
-    elif source_cid is not None and str(source_cid).strip():
-        token = str(source_cid).strip().lower()
-    else:
-        token = "empty"
-    material = f"fr-entry|{lid}|{token}"
-    digest = _stable_hex(material, salt="lcr-054-entry")
-    return f"bafkreie{digest[:47]}"
+    doc = normalize_document_number(row.get("document_number"))
+    pub = normalize_publication_date(row.get("publication_date"))
+    lid = parse_legal_id(row.get("legal_id")).legal_id
+    if lid.split(":")[1:3] != [doc, pub]:
+        raise IdentityParseError(
+            "legal_id document number/publication date do not match entry fields"
+        )
+    normalized_source = schema_validate_digest(source_cid, name="source_cid")
+    digest, _labelled, content_cid = _content_digest_tokens(content)
+    # Bind the complete returned row, not a caller-selected or partial field
+    # list.  ``entry_cid`` is the sole excluded fixed-point value; source and
+    # content identities remain present both here and in their domain-specific
+    # slots for explicit verification.
+    outside_envelope = set(row) - _ENTRY_ENVELOPE_FIELDS - {"entry_cid"}
+    if outside_envelope:
+        raise FederalRegisterIdentityError(
+            f"canonical row escaped fixed entry envelope: {sorted(outside_envelope)}"
+        )
+    canonical_row = {
+        key: row[key] for key in sorted(_ENTRY_ENVELOPE_FIELDS) if key in row
+    }
+    return _canonical_cid(
+        domain="federal-register-entry",
+        payload={
+            "canonical_row": canonical_row,
+            "content_cid": content_cid,
+            "content_sha256": digest,
+            "document_number": doc,
+            "legal_id": lid,
+            "publication_date": pub,
+            "source_cid": normalized_source,
+        },
+    )
+
+
+def compute_entry_cid(row: Mapping[str, Any]) -> str:
+    """Compute ``entry_cid`` from the one canonical Federal Register row shape."""
+
+    if not isinstance(row, Mapping):
+        raise FederalRegisterIdentityError("entry identity requires a row mapping")
+    if "record_fields" in row:
+        raise FederalRegisterIdentityError(
+            "record_fields is not a caller-selectable entry identity envelope"
+        )
+    return enrich_row_identity(row)["entry_cid"]
+
+
+def _row_content_bytes(row: Mapping[str, Any]) -> bytes:
+    """Return canonical retrieval bytes and reject conflicting byte surfaces."""
+
+    candidates: list[tuple[str, bytes]] = []
+    for field_name in ("content_bytes", "body_bytes", "text"):
+        if field_name not in row:
+            continue
+        raw = _evidence_bytes(
+            row.get(field_name),
+            name=field_name,
+            allow_empty=True,
+        )
+        if raw is not None:
+            candidates.append((field_name, raw))
+    if not candidates:
+        raise FederalRegisterIdentityError(
+            "content identity requires text/content_bytes/body_bytes"
+        )
+    first_name, first = candidates[0]
+    for name, candidate in candidates[1:]:
+        if candidate != first:
+            raise FederalRegisterIdentityError(
+                f"conflicting canonical content bytes: {first_name} and {name}"
+            )
+    availability = None
+    if row.get("text_availability") not in (None, ""):
+        try:
+            availability = TextAvailability.coerce(row["text_availability"]).value
+        except Exception as exc:
+            raise FederalRegisterIdentityError(str(exc)) from exc
+    if not first and availability == TextAvailability.ABSTRACT_ONLY.value:
+        abstract = _evidence_bytes(row.get("abstract"), name="abstract")
+        if abstract is not None:
+            return abstract
+    if not first and availability in {
+        TextAvailability.FULL_TEXT.value,
+        *tuple(_TEXT_AVAILABILITY_SOURCE_FORMAT),
+    }:
+        raise FederalRegisterIdentityError(
+            f"text_availability={availability!r} requires non-empty content bytes"
+        )
+    return first
+
+
+def _validate_row_content_claims(row: Mapping[str, Any], content: bytes) -> None:
+    for field_name in ("content_cid", "ipfs_cid"):
+        if row.get(field_name) not in (None, ""):
+            _require_declared_digest_matches_bytes(
+                row[field_name], content, name=field_name
+            )
+    digest = hashlib.sha256(content).hexdigest()
+    for field_name in ("content_sha256", "official_content_hash"):
+        if row.get(field_name) not in (None, ""):
+            declared = normalize_sha256(row[field_name], name=field_name)
+            if declared != digest:
+                raise FederalRegisterIdentityError(
+                    f"{field_name} does not match canonical content bytes"
+                )
 
 
 def content_identity_from_row(row: Mapping[str, Any]) -> str:
     """Return the content-version identity for a row.
 
     Used to distinguish changed-text versions under the same ``legal_id``.
-    Prefer body evidence (``content_cid``, then text digest) so two retrieval
-    rows with different ``entry_cid`` values but identical body text are
-    classified as logical duplicates. Fall back to ``source_cid`` / ``entry_cid``
-    only when no body evidence is present.
+    The identity is always recomputed from body bytes. Declared content CIDs
+    and hashes are only consistency claims; no declared digest can replace the
+    bytes or override a mismatch.
     """
 
-    for field_name in ("content_cid",):
-        value = row.get(field_name)
-        if (
-            isinstance(value, str)
-            and value.strip()
-            and not _POSITIONAL_ID_RE.fullmatch(value.strip())
-        ):
-            return value.strip().lower()
-    text = row.get("text")
-    if isinstance(text, str) and text.strip():
-        return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
-    for field_name in ("source_checksum", "official_content_hash"):
-        value = row.get(field_name)
-        if isinstance(value, str) and value.strip():
-            text_value = value.strip().lower()
-            if text_value.startswith("sha256:"):
-                return text_value
-            if re.fullmatch(r"[0-9a-f]{64}", text_value):
-                return f"sha256:{text_value}"
-    for field_name in ("source_cid", "entry_cid", "ipfs_cid"):
-        value = row.get(field_name)
-        if (
-            isinstance(value, str)
-            and value.strip()
-            and not _POSITIONAL_ID_RE.fullmatch(value.strip())
-        ):
-            return value.strip().lower()
-    return "sha256:" + hashlib.sha256(b"").hexdigest()
+    content = _row_content_bytes(row)
+    _validate_row_content_claims(row, content)
+    return "sha256:" + hashlib.sha256(content).hexdigest()
 
 
-def body_content_token(row: Mapping[str, Any]) -> Optional[str]:
+def body_content_token(row: Mapping[str, Any]) -> str | None:
     """Return a body/content token that must not merge distinct legal identities."""
 
-    for field_name in ("content_cid", "ipfs_cid"):
-        value = row.get(field_name)
-        if (
-            isinstance(value, str)
-            and value.strip()
-            and not _POSITIONAL_ID_RE.fullmatch(value.strip())
-        ):
-            return f"cid:{value.strip().lower()}"
-    text = row.get("text")
-    if isinstance(text, str) and text.strip():
-        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        return f"text:{digest}"
-    for field_name in ("source_checksum", "official_content_hash"):
-        value = row.get(field_name)
-        if isinstance(value, str) and value.strip():
-            return f"checksum:{value.strip().lower()}"
-    return None
+    content = _row_content_bytes(row)
+    _validate_row_content_claims(row, content)
+    return f"content:sha256:{hashlib.sha256(content).hexdigest()}"
 
 
-def row_position_token(row: Mapping[str, Any]) -> Optional[str]:
+def row_position_token(row: Mapping[str, Any]) -> str | None:
     """Return a positional index token if present (not durable identity)."""
 
     for field_name in ("document_index", "row_index", "row_id", "index", "offset"):
@@ -1011,9 +1359,10 @@ def row_position_token(row: Mapping[str, Any]) -> Optional[str]:
             continue
         text = str(value).strip()
         if field_name == "row_id" and not re.fullmatch(
-            r"(?:row[-_]?)?\d+", text, re.I
+            r"(?:row[-_]?)?\d+", text, re.IGNORECASE
         ):
-            # Human fixture row_ids such as "seed-correction-original" are not positions.
+            # Human fixture row_ids such as "seed-correction-original" are
+            # not positions.
             continue
         if isinstance(value, int) or re.fullmatch(r"\d+", text):
             return f"row-{text}"
@@ -1037,10 +1386,7 @@ def _source_cid_of(row: Mapping[str, Any]) -> str:
 
 
 def _source_format_of(row: Mapping[str, Any]) -> str:
-    value = row.get("source_format") or row.get("format") or row.get("content_format")
-    if value is None or value == "":
-        return DEFAULT_SOURCE_FORMAT
-    return normalize_source_format(value)
+    return _require_canonical_source_format(row.get("source_format"))
 
 
 def _effective_date_token(row: Mapping[str, Any]) -> str:
@@ -1052,9 +1398,8 @@ def _effective_date_token(row: Mapping[str, Any]) -> str:
     return normalized or ""
 
 
-def _acquisition_time_token(row: Mapping[str, Any]) -> str:
-    value = row.get("acquisition_time") or row.get("acquired_at") or ""
-    return str(value).strip()
+def _stable_row_token(row: Mapping[str, Any]) -> str:
+    return hashlib.sha256(_canonical_json_bytes(row)).hexdigest()
 
 
 def _row_stability_key(row: Mapping[str, Any]) -> tuple[str, ...]:
@@ -1067,8 +1412,8 @@ def _row_stability_key(row: Mapping[str, Any]) -> tuple[str, ...]:
         _source_format_of(row),
         _entry_cid_of(row),
         _source_cid_of(row),
-        _acquisition_time_token(row),
         _effective_date_token(row),
+        _stable_row_token(row),
     )
 
 
@@ -1107,6 +1452,11 @@ def classify_identity_pair(
 
     if not isinstance(left, Mapping) or not isinstance(right, Mapping):
         raise FederalRegisterIdentityError("pair rows must be mappings")
+
+    # Pair classification can cause destructive deduplication, so it uses the
+    # same canonical byte/provenance validation as the batch resolver.
+    left = enrich_row_identity(left)
+    right = enrich_row_identity(right)
 
     left_legal = legal_id_from_row(left)
     right_legal = legal_id_from_row(right)
@@ -1151,18 +1501,26 @@ def classify_identity_pair(
     # document number matches the other side's document number. Either side
     # may also declare document_type=correction with an explicit related target.
     left_related = left.get("related_document_number") or left.get("related_document")
-    right_related = right.get("related_document_number") or right.get("related_document")
+    right_related = right.get("related_document_number") or right.get(
+        "related_document"
+    )
     left_doc = str(left.get("document_number") or "").strip()
     right_doc = str(right.get("document_number") or "").strip()
     correction_linked = False
     try:
-        if left_related and right_doc and normalize_document_number(
+        if (
             left_related
-        ) == normalize_document_number(right_doc):
+            and right_doc
+            and normalize_document_number(left_related)
+            == normalize_document_number(right_doc)
+        ):
             correction_linked = True
-        if right_related and left_doc and normalize_document_number(
+        if (
             right_related
-        ) == normalize_document_number(left_doc):
+            and left_doc
+            and normalize_document_number(right_related)
+            == normalize_document_number(left_doc)
+        ):
             correction_linked = True
     except FederalRegisterIdentityError:
         correction_linked = False
@@ -1212,7 +1570,7 @@ def classify_identity_pair(
 
 
 def resolve_version_dispositions(
-    rows: Sequence[Mapping[str, Any]],
+    rows: Sequence[Mapping[str, Any]] | Mapping[str, Any],
 ) -> dict[str, Any]:
     """Group rows by durable ``legal_id`` and assign deterministic dispositions.
 
@@ -1220,26 +1578,54 @@ def resolve_version_dispositions(
     before grouping so resume / reordered inputs yield identical current and
     history sets.
 
-    * Within a ``legal_id`` group, identical content identities with the same
-      source format are ``duplicate``; identical content with different source
-      formats are ``duplicate_source_format`` (preferred format kept).
-    * Differing content identities become one ``keep_current`` (deterministic
-      max by acquisition time / content id / entry_cid) plus ``archive_history``.
+    * Repeated canonical entry CIDs are one observation and have no duplicate
+      disposition. Distinct entry CIDs with identical content and source format
+      are ``duplicate``; different source formats are
+      ``duplicate_source_format`` (preferred format kept).
+    * Differing content identities become one deterministic ``keep_current``
+      plus ``archive_history``; acquisition clocks never claim legal currentness.
     * Unknown effective dates are preserved on retained rows and never filled.
     * Rows that only share content CID or only share row position across
       different legal_ids are **not** merged.
     """
 
-    if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes)):
-        raise FederalRegisterIdentityError("rows must be a sequence of mappings")
+    if isinstance(rows, Mapping):
+        resumed = rows.get("all_rows")
+        if not isinstance(resumed, Sequence) or isinstance(resumed, (str, bytes)):
+            raise FederalRegisterIdentityError(
+                "resume mapping must contain the prior full all_rows sequence"
+            )
+        input_rows: Sequence[Mapping[str, Any]] = resumed
+    elif isinstance(rows, Sequence) and not isinstance(rows, (str, bytes)):
+        input_rows = rows
+    else:
+        raise FederalRegisterIdentityError(
+            "rows must be a sequence or a prior resolution mapping"
+        )
 
-    # Materialize and sort for order-independent resume semantics.
-    material: list[tuple[int, Mapping[str, Any]]] = []
-    for index, row in enumerate(rows):
+    # Validate and canonicalize every observation before it can participate in
+    # a merge.  Resolution operates on the canonical observation *set*: an
+    # exact entry replay is not a second observation, regardless of whether it
+    # occurred within one batch or across a checkpoint boundary.  Distinct
+    # provenance, source packaging, or content produces a distinct fully bound
+    # entry CID and remains available for disposition classification below.
+    canonical_by_entry_cid: dict[str, dict[str, Any]] = {}
+    for index, row in enumerate(input_rows):
         if not isinstance(row, Mapping):
             raise FederalRegisterIdentityError(f"row {index} must be a mapping")
-        material.append((index, row))
-    material.sort(key=lambda item: _row_stability_key(item[1]) + (f"{item[0]:08d}",))
+        canonical = enrich_row_identity(row)
+        entry_cid = canonical["entry_cid"]
+        previous = canonical_by_entry_cid.get(entry_cid)
+        if previous is not None and previous != canonical:
+            raise DuplicatePrimaryKeyError(
+                f"entry_cid {entry_cid!r} has conflicting canonical rows"
+            )
+        canonical_by_entry_cid[entry_cid] = canonical
+    canonical_rows = list(canonical_by_entry_cid.values())
+    canonical_rows.sort(key=_row_stability_key)
+    # Stable ordinals are assigned after canonical sorting.  They therefore do
+    # not leak caller order into dispositions or duplicate references.
+    material: list[tuple[int, Mapping[str, Any]]] = list(enumerate(canonical_rows))
 
     groups: dict[str, list[tuple[int, Mapping[str, Any]]]] = {}
     order: list[str] = []
@@ -1255,6 +1641,7 @@ def resolve_version_dispositions(
 
     current_rows: list[dict[str, Any]] = []
     history_by_key: dict[str, list[dict[str, Any]]] = {}
+    source_variants_by_key: dict[str, list[dict[str, Any]]] = {}
     dispositions: list[dict[str, Any]] = []
 
     for legal_id in order:
@@ -1269,11 +1656,15 @@ def resolve_version_dispositions(
                 by_content[cid] = []
             by_content[cid].append((index, row))
 
-        # Deterministic content version ranking: prefer later acquisition_time,
-        # then lexicographically greater content id, then entry_cid. Unknown
-        # effective dates do not invent ordering.
-        def _content_rank(cid: str) -> tuple[str, str, str]:
-            cohort = by_content[cid]
+        # Deterministic representative ranking.  Acquisition/publication clocks
+        # are deliberately excluded: the ADR forbids treating acquisition time
+        # as a legal-currentness claim.  Every non-representative version is
+        # retained in full below.
+        def _content_rank(
+            cid: str,
+            cohorts: Mapping[str, list[tuple[int, Mapping[str, Any]]]] = by_content,
+        ) -> tuple[str, str, str]:
+            cohort = cohorts[cid]
             best = min(
                 cohort,
                 key=lambda item: (
@@ -1283,14 +1674,15 @@ def resolve_version_dispositions(
             )
             row = best[1]
             return (
-                _acquisition_time_token(row),
                 cid,
                 _entry_cid_of(row),
+                _stable_row_token(row),
             )
 
         content_order = sorted(content_order, key=_content_rank)
 
         history: list[dict[str, Any]] = []
+        source_variants: list[dict[str, Any]] = []
         for content_index, cid in enumerate(content_order):
             cohort = sorted(
                 by_content[cid],
@@ -1308,6 +1700,7 @@ def resolve_version_dispositions(
                 current["legal_id"] = legal_id
                 current["logical_key"] = legal_id
                 current["identity_disposition"] = IdentityDisposition.KEEP_CURRENT.value
+                current["currentness_claim"] = False
                 # Preserve unknown effective dates explicitly.
                 if "effective_date" in primary_row:
                     current["effective_date"] = normalize_effective_date(
@@ -1323,25 +1716,26 @@ def resolve_version_dispositions(
                         "legal_id": legal_id,
                         "row_index": primary_index,
                         "content_id": cid,
+                        "entry_cid": _entry_cid_of(primary_row),
+                        "row_token": _stable_row_token(primary_row),
                         "source_format": _source_format_of(primary_row),
                         "disposition": IdentityDisposition.KEEP_CURRENT.value,
                     }
                 )
             else:
-                hist_entry = {
-                    "logical_key": legal_id,
-                    "legal_id": legal_id,
-                    "content_id": cid,
-                    "entry_cid": str(
-                        primary_row.get("entry_cid")
-                        or primary_row.get("source_cid")
-                        or primary_row.get("content_cid")
-                        or cid
-                    ),
-                    "source_format": _source_format_of(primary_row),
-                    "disposition": IdentityDisposition.ARCHIVE_HISTORY.value,
-                    "row_index": primary_index,
-                }
+                hist_entry = dict(primary_row)
+                hist_entry.update(
+                    {
+                        "logical_key": legal_id,
+                        "legal_id": legal_id,
+                        "content_id": cid,
+                        "source_format": _source_format_of(primary_row),
+                        "disposition": IdentityDisposition.ARCHIVE_HISTORY.value,
+                        "currentness_claim": False,
+                        "row_index": primary_index,
+                        "row_token": _stable_row_token(primary_row),
+                    }
+                )
                 if "effective_date" in primary_row:
                     hist_entry["effective_date"] = normalize_effective_date(
                         primary_row.get("effective_date")
@@ -1352,6 +1746,8 @@ def resolve_version_dispositions(
                         "legal_id": legal_id,
                         "row_index": primary_index,
                         "content_id": cid,
+                        "entry_cid": _entry_cid_of(primary_row),
+                        "row_token": _stable_row_token(primary_row),
                         "disposition": IdentityDisposition.CHANGED_TEXT_VERSION.value,
                     }
                 )
@@ -1364,11 +1760,25 @@ def resolve_version_dispositions(
                     if same_fmt
                     else IdentityDisposition.DUPLICATE_SOURCE_FORMAT
                 )
+                variant = dict(dup_row)
+                variant.update(
+                    {
+                        "content_id": cid,
+                        "disposition": dup_disposition.value,
+                        "duplicate_of_entry_cid": _entry_cid_of(primary_row),
+                        "preferred_source_format": _source_format_of(primary_row),
+                        "row_index": dup_index,
+                        "row_token": _stable_row_token(dup_row),
+                    }
+                )
+                source_variants.append(variant)
                 dispositions.append(
                     {
                         "legal_id": legal_id,
                         "row_index": dup_index,
                         "content_id": cid,
+                        "entry_cid": _entry_cid_of(dup_row),
+                        "row_token": _stable_row_token(dup_row),
                         "source_format": _source_format_of(dup_row),
                         "disposition": dup_disposition.value,
                         "duplicate_of_row_index": primary_index,
@@ -1377,6 +1787,7 @@ def resolve_version_dispositions(
                 )
 
         history_by_key[legal_id] = history
+        source_variants_by_key[legal_id] = source_variants
 
     # Cross-identity illegal merge probes.
     reject_events: list[dict[str, Any]] = []
@@ -1395,7 +1806,9 @@ def resolve_version_dispositions(
         if len(legal_ids) > 1:
             reject_events.append(
                 {
-                    "disposition": IdentityDisposition.REJECT_CONTENT_CID_ONLY_MERGE.value,
+                    "disposition": (
+                        IdentityDisposition.REJECT_CONTENT_CID_ONLY_MERGE.value
+                    ),
                     "body_content_token": body,
                     "legal_ids": sorted(legal_ids),
                     "merge_allowed": False,
@@ -1415,7 +1828,9 @@ def resolve_version_dispositions(
     return {
         "schema_version": SCHEMA_VERSION,
         "current_rows": current_rows,
+        "all_rows": canonical_rows,
         "history_by_key": history_by_key,
+        "source_variants_by_key": source_variants_by_key,
         "current_keys": list(order),
         "history_keys": [key for key in order if history_by_key.get(key)],
         "dispositions": dispositions,
@@ -1445,21 +1860,42 @@ def resolve_version_dispositions(
 
 
 def merge_by_legal_identity(
-    existing_rows: Sequence[Mapping[str, Any]],
-    new_rows: Sequence[Mapping[str, Any]] | None = None,
+    existing_rows: Sequence[Mapping[str, Any]] | Mapping[str, Any],
+    new_rows: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Merge rows by durable legal identity with explicit version dispositions.
 
     Content changes under the same ``legal_id`` replace the current row and
     archive the prior content identity. Content CID alone, source format alone
     across distinct documents, or row position alone never merges distinct
-    legal identities. Result is order-independent for resume safety.
+    legal identities. Exact entry-CID repeats are one canonical observation,
+    making the result order- and checkpoint-independent for resume safety.
     """
 
-    combined: list[Mapping[str, Any]] = list(existing_rows or ())
-    if new_rows:
-        combined.extend(list(new_rows))
-    return resolve_version_dispositions(combined)
+    def _full_rows(
+        value: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None,
+        *,
+        name: str,
+    ) -> list[Mapping[str, Any]]:
+        if value is None:
+            return []
+        if isinstance(value, Mapping):
+            material = value.get("all_rows")
+            if not isinstance(material, Sequence) or isinstance(material, (str, bytes)):
+                raise FederalRegisterIdentityError(
+                    f"{name} resume mapping requires full all_rows"
+                )
+            return list(material)
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            return list(value)
+        raise FederalRegisterIdentityError(f"{name} must be rows or prior resolution")
+
+    prior_rows = _full_rows(existing_rows, name="existing_rows")
+    incoming_rows = _full_rows(new_rows, name="new_rows")
+    # The resolver canonicalizes and deduplicates the combined observation set
+    # by entry CID.  Consequently raw batches, resumed checkpoints, and replay
+    # all have exactly the same semantics.
+    return resolve_version_dispositions([*prior_rows, *incoming_rows])
 
 
 def reject_positional_or_cid_only_merge(
@@ -1504,7 +1940,12 @@ def validate_primary_keys(
 ) -> None:
     """Fail closed when duplicate primary keys are present."""
 
+    if key_field != "entry_cid":
+        raise FederalRegisterIdentityError(
+            "entry_cid is the only durable primary key; key_field is not overridable"
+        )
     seen: dict[str, int] = {}
+    material: list[tuple[int, Mapping[str, Any], str]] = []
     for index, row in enumerate(rows):
         if not isinstance(row, Mapping):
             raise FederalRegisterIdentityError(f"row {index} must be a mapping")
@@ -1512,19 +1953,33 @@ def validate_primary_keys(
             raise FederalRegisterIdentityError(
                 f"row {index} missing required primary key field {key_field!r}"
             )
-        key = str(row[key_field]).strip()
-        if not key:
-            raise FederalRegisterIdentityError(f"row {index} has empty {key_field}")
-        if _POSITIONAL_ID_RE.fullmatch(key):
-            raise PositionalIdentityError(
-                f"row {index} primary key must not be positional: {key!r}"
-            )
+        try:
+            key = schema_validate_entry_cid(row[key_field], name=key_field)
+        except Exception as exc:
+            if _POSITIONAL_ID_RE.fullmatch(str(row[key_field]).strip()):
+                raise PositionalIdentityError(
+                    f"row {index} primary key must not be positional: "
+                    f"{row[key_field]!r}"
+                ) from exc
+            raise FederalRegisterIdentityError(
+                f"row {index} has invalid {key_field}: {row[key_field]!r}"
+            ) from exc
         if key in seen:
             raise DuplicatePrimaryKeyError(
                 f"duplicate primary key {key_field}={key!r} at rows "
                 f"{seen[key]} and {index}"
             )
         seen[key] = index
+        material.append((index, row, key))
+
+    # Shape and uniqueness are insufficient for a content address.  Recompute
+    # every entry from the row's canonical bytes and provenance evidence.
+    for index, row, key in material:
+        canonical = enrich_row_identity(row)
+        if canonical["entry_cid"] != key:
+            raise FederalRegisterIdentityError(
+                f"row {index} entry_cid is not bound to canonical row bytes"
+            )
 
 
 def assert_legal_ids_distinguishable(
@@ -1539,35 +1994,419 @@ def assert_legal_ids_distinguishable(
     changed-text versions and source-format duplicates.
     """
 
+    if not isinstance(allow_version_collisions, bool):
+        raise FederalRegisterIdentityError("allow_version_collisions must be boolean")
     legal_ids: list[str] = []
-    seen: dict[str, tuple[int, str]] = {}
+    seen: dict[str, tuple[int, str, tuple[Any, ...]]] = {}
     for index, row in enumerate(rows):
-        legal_id = legal_id_from_row(row)
-        content_id = content_identity_from_row(row)
+        canonical = enrich_row_identity(row)
+        identity = identity_from_row(canonical)
+        legal_id = identity.legal_id
+        content_id = content_identity_from_row(canonical)
+        semantic_identity = (
+            identity.document_number,
+            identity.publication_date,
+            identity.document_type,
+            identity.correction_relation,
+            identity.related_document_number,
+            identity.edition,
+            identity.granule,
+            identity.part,
+        )
         if legal_id in seen:
             if not allow_version_collisions:
-                prior_index, _prior_content = seen[legal_id]
+                prior_index, _prior_content, _prior_semantics = seen[legal_id]
                 raise FederalRegisterIdentityError(
                     f"legal_id collision for {legal_id!r} at rows "
                     f"{prior_index} and {index}"
                 )
+            prior_index, _prior_content, prior_semantics = seen[legal_id]
+            if semantic_identity != prior_semantics:
+                raise FederalRegisterIdentityError(
+                    f"legal_id {legal_id!r} aliases distinct publication semantics "
+                    f"at rows {prior_index} and {index}"
+                )
         else:
-            seen[legal_id] = (index, content_id)
+            seen[legal_id] = (index, content_id, semantic_identity)
         legal_ids.append(legal_id)
     return legal_ids
+
+
+_ROW_ALIAS_FIELDS = frozenset(
+    {
+        "content_format",
+        "date",
+        "doc_number",
+        "documentNumber",
+        "format",
+        "granule_id",
+        "publicationDate",
+        "pub_date",
+        "relatedDocumentNumber",
+        "related_document",
+        "relation",
+        "type",
+    }
+)
+_CONTENT_ALIAS_FIELDS = ("content_bytes", "body_bytes")
+_SOURCE_BYTE_FIELDS = ("source_bytes", "official_source_bytes", "artifact_bytes")
+# Input is a closed contract.  The first group is the exact LCR-050
+# ``CorpusRecord`` surface, the second is canonical/declared identity material,
+# and the final three are sealed-fixture annotations retained for collision
+# auditing.  No arbitrary extension map can alter returned row bytes outside
+# the entry-CID envelope.
+_CORPUS_RECORD_FIELDS = frozenset(
+    {
+        "abstract",
+        "acquisition_receipt_id",
+        "acquisition_time",
+        "admission_reason",
+        "admission_status",
+        "agencies",
+        "correction_relation",
+        "document_index",
+        "document_number",
+        "document_type",
+        "entry_cid",
+        "legal_id",
+        "observed_at",
+        "official_content_hash",
+        "official_html_url",
+        "official_pdf_url",
+        "official_source_url",
+        "official_xml_url",
+        "parent_path",
+        "parser_version",
+        "publication_date",
+        "related_document_number",
+        "release_point",
+        "schema_version",
+        "source_authority_class",
+        "source_checksum",
+        "source_cid",
+        "text",
+        "text_availability",
+        "title",
+        "verification_result",
+        "year_month",
+    }
+)
+_IDENTITY_INPUT_FIELDS = frozenset(
+    {
+        "body_bytes",
+        "canonical_citation",
+        "content_bytes",
+        "content_cid",
+        "content_sha256",
+        "edition",
+        "effective_date",
+        "granule",
+        "ipfs_cid",
+        "parent_legal_id",
+        "part",
+        "source_format",
+        *_SOURCE_BYTE_FIELDS,
+    }
+)
+_FIXTURE_ANNOTATION_FIELDS = frozenset(
+    {"collision_family", "expected_disposition", "row_id"}
+)
+_ALLOWED_ROW_FIELDS = (
+    _CORPUS_RECORD_FIELDS
+    | _IDENTITY_INPUT_FIELDS
+    | _ROW_ALIAS_FIELDS
+    | _FIXTURE_ANNOTATION_FIELDS
+)
+_ENTRY_ENVELOPE_FIELDS = (
+    _CORPUS_RECORD_FIELDS
+    | _FIXTURE_ANNOTATION_FIELDS
+    | frozenset(
+        {
+            "canonical_citation",
+            "content_cid",
+            "content_sha256",
+            "parent_legal_id",
+            "source_format",
+        }
+    )
+) - {"entry_cid"}
+_OPTIONAL_CORPUS_FIELDS = (
+    "abstract",
+    "document_index",
+    "observed_at",
+    "official_html_url",
+    "official_pdf_url",
+    "official_xml_url",
+    "parent_path",
+    "related_document_number",
+    "title",
+)
+_TEXT_AVAILABILITY_SOURCE_FORMAT = {
+    TextAvailability.HTML_BODY.value: SourceFormat.HTML.value,
+    TextAvailability.XML_BODY.value: SourceFormat.XML.value,
+    TextAvailability.PDF_BODY.value: SourceFormat.PDF.value,
+    TextAvailability.GOVINFO_BODY.value: SourceFormat.GOVINFO.value,
+}
+_NON_BODY_AVAILABILITY_SOURCE_FORMAT = {
+    TextAvailability.ABSTRACT_ONLY.value: SourceFormat.JSON.value,
+    TextAvailability.METADATA_ONLY.value: SourceFormat.JSON.value,
+    TextAvailability.UNAVAILABLE.value: SourceFormat.JSON.value,
+}
+_SOURCE_FORMAT_TEXT_AVAILABILITY = {
+    source_format: availability
+    for availability, source_format in _TEXT_AVAILABILITY_SOURCE_FORMAT.items()
+}
+
+
+def _canonical_source_projection(row: Mapping[str, Any]) -> tuple[str, str]:
+    """Return retained ``(text_availability, source_format)`` projection.
+
+    LCR-050 retains availability but not ``source_format``. Body-specific
+    availability values recover their exact package format. Generic
+    ``full_text`` is deterministically specialized from explicit/URL evidence.
+    Non-body states address the retained official metadata projection as JSON
+    and keep their authoritative availability unchanged.
+    """
+
+    explicit: list[tuple[str, str]] = []
+    for name in ("source_format", "format", "content_format"):
+        if name not in row:
+            continue
+        if row[name] in (None, ""):
+            raise FederalRegisterIdentityError(f"{name} must not be explicitly empty")
+        explicit.append((name, _require_canonical_source_format(row[name])))
+    if len({value for _name, value in explicit}) > 1:
+        raise FederalRegisterIdentityError(
+            f"conflicting source format aliases: {explicit!r}"
+        )
+
+    availability: str | None = None
+    if row.get("text_availability") not in (None, ""):
+        try:
+            availability = TextAvailability.coerce(row["text_availability"]).value
+        except Exception as exc:
+            raise FederalRegisterIdentityError(str(exc)) from exc
+    derived: set[str] = set()
+    if availability in _TEXT_AVAILABILITY_SOURCE_FORMAT:
+        derived.add(_TEXT_AVAILABILITY_SOURCE_FORMAT[availability])
+    if availability in _NON_BODY_AVAILABILITY_SOURCE_FORMAT:
+        derived.add(_NON_BODY_AVAILABILITY_SOURCE_FORMAT[availability])
+
+    official_source_url = row.get("official_source_url")
+    if (
+        availability not in _NON_BODY_AVAILABILITY_SOURCE_FORMAT
+        and official_source_url not in (None, "")
+    ):
+        normalized_source_url = schema_validate_official_url(official_source_url)
+        for field_name, source_format in (
+            ("official_html_url", SourceFormat.HTML.value),
+            ("official_xml_url", SourceFormat.XML.value),
+            ("official_pdf_url", SourceFormat.PDF.value),
+        ):
+            if row.get(field_name) not in (None, ""):
+                candidate = schema_validate_official_url(
+                    row[field_name], name=field_name
+                )
+                if candidate == normalized_source_url:
+                    derived.add(source_format)
+
+    chosen = explicit[0][1] if explicit else None
+    if (
+        chosen is None
+        and availability == TextAvailability.FULL_TEXT.value
+        and not derived
+    ):
+        # LCR-050's generic FULL_TEXT does not retain packaging. Prefer exact
+        # official URL matches above, then use a closed URL-shape projection.
+        url_text = str(official_source_url or "").lower()
+        if url_text.endswith(".pdf") or "/pdf/" in url_text:
+            derived.add(SourceFormat.PDF.value)
+        elif url_text.endswith((".xml", ".xml?")) or "/xml/" in url_text:
+            derived.add(SourceFormat.XML.value)
+        elif "govinfo.gov/" in url_text:
+            derived.add(SourceFormat.GOVINFO.value)
+        else:
+            derived.add(SourceFormat.HTML.value)
+    if chosen is not None and derived and derived != {chosen}:
+        raise FederalRegisterIdentityError(
+            "source_format conflicts with format-bound text/URL evidence"
+        )
+    if chosen is None:
+        if len(derived) != 1:
+            raise FederalRegisterIdentityError(
+                "source_format must be explicit or uniquely recoverable from "
+                "retained availability/URL evidence"
+            )
+        chosen = next(iter(derived))
+
+    if availability in _NON_BODY_AVAILABILITY_SOURCE_FORMAT:
+        return availability, chosen
+    try:
+        return _SOURCE_FORMAT_TEXT_AVAILABILITY[chosen], chosen
+    except KeyError as exc:
+        raise FederalRegisterIdentityError(
+            f"source_format {chosen!r} has no retained LCR-050 body projection"
+        ) from exc
+
+
+def _row_source_bytes(row: Mapping[str, Any], content: bytes) -> bytes:
+    candidates: list[tuple[str, bytes]] = []
+    for field_name in _SOURCE_BYTE_FIELDS:
+        raw = _evidence_bytes(
+            row.get(field_name),
+            name=field_name,
+            allow_empty=True,
+        )
+        if raw is not None:
+            candidates.append((field_name, raw))
+    if not candidates:
+        return content
+    first_name, first = candidates[0]
+    for name, candidate in candidates[1:]:
+        if candidate != first:
+            raise FederalRegisterIdentityError(
+                f"conflicting source artifact bytes: {first_name} and {name}"
+            )
+    return first
+
+
+def _canonical_text(content: bytes) -> str:
+    try:
+        return content.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise FederalRegisterIdentityError(
+            "canonical retrieval text bytes must be valid UTF-8"
+        ) from exc
+
+
+def _canonicalize_release_values(out: dict[str, Any]) -> None:
+    """Normalize representations retained by the LCR-050 corpus record."""
+
+    if "source_authority_class" not in out:
+        out["source_authority_class"] = SourceAuthorityClass.OFFICIAL.value
+    enum_fields = (
+        ("admission_status", AdmissionStatus),
+        ("source_authority_class", SourceAuthorityClass),
+        ("text_availability", TextAvailability),
+        ("verification_result", VerificationResult),
+    )
+    for field_name, enum_type in enum_fields:
+        if field_name not in out:
+            continue
+        if out[field_name] in (None, ""):
+            raise FederalRegisterIdentityError(
+                f"{field_name} must not be explicitly empty"
+            )
+        try:
+            out[field_name] = enum_type.coerce(out[field_name]).value
+        except Exception as exc:
+            raise FederalRegisterIdentityError(str(exc)) from exc
+
+    agencies = out.get("agencies", [])
+    if agencies is None:
+        agencies = []
+    if not isinstance(agencies, (list, tuple)):
+        raise FederalRegisterIdentityError("agencies must be a list or tuple")
+    out["agencies"] = [
+        _require_non_empty_str(item, f"agencies[{index}]", maximum=256)
+        for index, item in enumerate(agencies)
+    ]
+
+    if "document_index" in out:
+        try:
+            out["document_index"] = schema_validate_document_index(
+                out["document_index"]
+            )
+        except Exception as exc:
+            raise FederalRegisterIdentityError(str(exc)) from exc
+
+    for field_name in _OPTIONAL_CORPUS_FIELDS:
+        if out.get(field_name) in (None, ""):
+            out.pop(field_name, None)
+    for field_name in ("abstract", "title"):
+        if field_name in out:
+            if out[field_name] == "":
+                out.pop(field_name)
+            else:
+                out[field_name] = _require_non_empty_str(
+                    out[field_name], field_name, maximum=4096
+                )
+    bounded_required_strings = {
+        "acquisition_receipt_id": 256,
+        "acquisition_time": 64,
+        "admission_reason": 4096,
+        "parser_version": 128,
+        "release_point": 256,
+    }
+    for field_name, maximum in bounded_required_strings.items():
+        if field_name not in out:
+            continue
+        out[field_name] = _require_non_empty_str(
+            out[field_name], field_name, maximum=maximum
+        )
+
+    if "schema_version" in out and out["schema_version"] != RELEASE_SCHEMA_VERSION:
+        raise FederalRegisterIdentityError(
+            f"corpus row schema_version must be {RELEASE_SCHEMA_VERSION!r}"
+        )
+    out["schema_version"] = RELEASE_SCHEMA_VERSION
 
 
 def enrich_row_identity(row: Mapping[str, Any]) -> dict[str, Any]:
     """Return a copy of *row* with legal_id / entry_cid / source_cid filled.
 
-    Existing non-positional identity fields are preserved. Missing fields are
-    computed deterministically from publication components and body evidence.
+    Existing identities and declared hashes are treated as untrusted claims:
+    each is normalized and required to equal the value independently computed
+    from canonical bytes.  Missing provenance evidence fails closed.
     """
 
     if not isinstance(row, Mapping):
         raise FederalRegisterIdentityError("row must be a mapping")
+    if "record_fields" in row:
+        raise FederalRegisterIdentityError(
+            "record_fields is not a caller-selectable entry identity envelope"
+        )
+    unknown_fields = set(row) - _ALLOWED_ROW_FIELDS
+    if unknown_fields:
+        raise FederalRegisterIdentityError(
+            f"unsupported corpus row fields: {sorted(unknown_fields)}"
+        )
     out = dict(row)
     identity = identity_from_row(out)
+    if any(
+        value is not None
+        for value in (identity.edition, identity.granule, identity.part)
+    ):
+        raise FederalRegisterIdentityError(
+            "edition, granule, and part are not retained by LCR-050 CorpusRecord"
+        )
+    if identity.effective_date is not None:
+        raise FederalRegisterIdentityError(
+            "effective_date is not retained by LCR-050 CorpusRecord"
+        )
+    canonical_availability, source_format = _canonical_source_projection(out)
+    out["text_availability"] = canonical_availability
+    official_source_url = schema_validate_official_url(out.get("official_source_url"))
+    content = _row_content_bytes(out)
+    _validate_row_content_claims(out, content)
+    source_bytes = _row_source_bytes(out, content)
+    if source_bytes != content:
+        raise FederalRegisterIdentityError(
+            "distinct source artifact bytes are not retained by LCR-050 CorpusRecord"
+        )
+
+    declared_source_cid = out.get("source_cid")
+    declared_entry_cid = out.get("entry_cid")
+    for alias in _ROW_ALIAS_FIELDS:
+        out.pop(alias, None)
+    for alias in (*_CONTENT_ALIAS_FIELDS, "ipfs_cid"):
+        out.pop(alias, None)
+    for alias in _SOURCE_BYTE_FIELDS:
+        out.pop(alias, None)
+    out["text"] = _canonical_text(content)
+    for field_name in ("edition", "effective_date", "granule", "part"):
+        out.pop(field_name, None)
+
     out["document_number"] = identity.document_number
     out["publication_date"] = identity.publication_date
     out["year_month"] = identity.year_month
@@ -1575,32 +2414,71 @@ def enrich_row_identity(row: Mapping[str, Any]) -> dict[str, Any]:
     out["correction_relation"] = identity.correction_relation
     if identity.related_document_number is not None:
         out["related_document_number"] = identity.related_document_number
-    out["source_format"] = identity.source_format
-    if "effective_date" in row:
-        out["effective_date"] = identity.effective_date
+    else:
+        out.pop("related_document_number", None)
+    out["source_format"] = source_format
+    out["official_source_url"] = official_source_url
+    for field_name in ("official_html_url", "official_pdf_url", "official_xml_url"):
+        if out.get(field_name) not in (None, ""):
+            out[field_name] = schema_validate_official_url(
+                out[field_name], name=field_name
+            )
+    declared_citation = out.get("canonical_citation")
+    if (
+        declared_citation not in (None, "")
+        and declared_citation != identity.canonical_citation
+    ):
+        raise FederalRegisterIdentityError(
+            "canonical_citation does not match canonical legal identity"
+        )
+    declared_parent = out.get("parent_legal_id")
+    if (
+        declared_parent not in (None, "")
+        and declared_parent != identity.parent_legal_id
+    ):
+        raise FederalRegisterIdentityError(
+            "parent_legal_id does not match canonical legal identity"
+        )
     out["legal_id"] = identity.legal_id
     out["canonical_citation"] = identity.canonical_citation
     out["parent_legal_id"] = identity.parent_legal_id
 
-    if not out.get("source_cid"):
-        out["source_cid"] = compute_source_cid(
-            identity.document_number,
-            identity.publication_date,
-            source_format=identity.source_format,
-            official_source_url=out.get("official_source_url"),
-            source_checksum=out.get("source_checksum") or out.get("official_content_hash"),
-            body=out.get("text"),
-        )
-    if not out.get("entry_cid"):
-        out["entry_cid"] = compute_entry_cid(
-            identity.document_number,
-            identity.publication_date,
-            text=out.get("text"),
-            content_token=out.get("content_cid"),
-            source_cid=out.get("source_cid"),
-            legal_id=out["legal_id"],
-        )
-    return out
+    computed_source = compute_source_cid(
+        identity.document_number,
+        identity.publication_date,
+        source_format=source_format,
+        official_source_url=official_source_url,
+        source_checksum=out.get("source_checksum"),
+        source_bytes=source_bytes,
+    )
+    if declared_source_cid not in (None, ""):
+        declared_source = schema_validate_digest(declared_source_cid, name="source_cid")
+        if declared_source != computed_source:
+            raise FederalRegisterIdentityError(
+                "source_cid does not match canonical source evidence"
+            )
+    out["source_cid"] = computed_source
+    out["source_checksum"] = hashlib.sha256(source_bytes).hexdigest()
+
+    content_cid = cid_v1(content)
+    out["content_cid"] = content_cid
+    content_digest = hashlib.sha256(content).hexdigest()
+    out["content_sha256"] = content_digest
+    out["official_content_hash"] = content_digest
+    _canonicalize_release_values(out)
+    computed_entry = _compute_entry_cid_from_canonical_row(
+        out,
+        content=content,
+        source_cid=computed_source,
+    )
+    if declared_entry_cid not in (None, ""):
+        declared_entry = schema_validate_entry_cid(declared_entry_cid)
+        if declared_entry != computed_entry:
+            raise FederalRegisterIdentityError(
+                "entry_cid does not match canonical retrieval record"
+            )
+    out["entry_cid"] = computed_entry
+    return dict(sorted(out.items()))
 
 
 # ---------------------------------------------------------------------------
@@ -1621,15 +2499,19 @@ def default_collision_fixture_path() -> Path:
 
 
 def _synthetic_entry_cid(index: int, *, salt: str = "lcr-054") -> str:
-    """Deterministic fake entry_cid (CIDv1-shaped) for fixture rows."""
+    """Deterministic, schema-valid CIDv1 for pre-enrichment fixture labels."""
 
-    digest = _stable_hex(f"{salt}:{index}", salt="entry")
-    return f"bafkreie{digest[:47]}"
+    return _canonical_cid(
+        domain="federal-register-fixture-entry-label",
+        payload={"index": index, "salt": salt},
+    )
 
 
 def _synthetic_source_cid(index: int, *, salt: str = "lcr-054") -> str:
-    digest = _stable_hex(f"{salt}:{index}", salt="source")
-    return f"bafkreis{digest[:47]}"
+    return _canonical_cid(
+        domain="federal-register-fixture-source-label",
+        payload={"index": index, "salt": salt},
+    )
 
 
 def _doc_number(year: int, serial: int) -> str:
@@ -1724,14 +2606,10 @@ def expand_collision_fixture(payload: Mapping[str, Any]) -> list[dict[str, Any]]
                     }
                     if related is not None:
                         row["related_document_number"] = related
-                        row["include_type_qualifier"] = True
-                        row["include_correction_qualifier"] = True
                     rows.append(row)
 
         elif kind == "source_format_duplicates":
-            formats = list(
-                generator.get("formats") or ["html", "pdf", "xml"]
-            )
+            formats = list(generator.get("formats") or ["html", "pdf", "xml"])
             year = int(generator.get("year_start") or 2019)
             serial_start = int(generator.get("serial_start") or 20000)
             for item_index in range(count):
@@ -1782,9 +2660,7 @@ def expand_collision_fixture(payload: Mapping[str, Any]) -> list[dict[str, Any]]
                             "correction_relation": "none",
                             "source_format": "html",
                             "text": text,
-                            "acquisition_time": (
-                                f"{pub}T0{local_index}:00:00Z"
-                            ),
+                            "acquisition_time": (f"{pub}T0{local_index}:00:00Z"),
                             "entry_cid": _synthetic_entry_cid(
                                 global_index, salt=f"lcr-054-version-{local_index}"
                             ),
@@ -1807,7 +2683,9 @@ def expand_collision_fixture(payload: Mapping[str, Any]) -> list[dict[str, Any]]
                 doc = _doc_number(year, (serial_start + pair_index) % 100000)
                 for local_index in range(2):
                     pub = _pub_date(
-                        year, 1 + (pair_index % 6), 1 + local_index * 10 + (pair_index % 5)
+                        year,
+                        1 + (pair_index % 6),
+                        1 + local_index * 10 + (pair_index % 5),
                     )
                     global_index = len(rows)
                     rows.append(
@@ -1840,7 +2718,9 @@ def expand_collision_fixture(payload: Mapping[str, Any]) -> list[dict[str, Any]]
                         year, (serial_start + pair_index * 2 + local_index) % 100000
                     )
                     pub = _pub_date(
-                        year, 1 + (pair_index % 12), 1 + ((pair_index + local_index) % 28)
+                        year,
+                        1 + (pair_index % 12),
+                        1 + ((pair_index + local_index) % 28),
                     )
                     global_index = len(rows)
                     rows.append(
@@ -1872,7 +2752,9 @@ def expand_collision_fixture(payload: Mapping[str, Any]) -> list[dict[str, Any]]
                         year, (serial_start + pair_index * 2 + local_index) % 100000
                     )
                     pub = _pub_date(
-                        year, 1 + (pair_index % 12), 1 + ((pair_index + local_index) % 28)
+                        year,
+                        1 + (pair_index % 12),
+                        1 + ((pair_index + local_index) % 28),
                     )
                     global_index = len(rows)
                     rows.append(
@@ -1898,8 +2780,7 @@ def expand_collision_fixture(payload: Mapping[str, Any]) -> list[dict[str, Any]]
             year = int(generator.get("year_start") or 2024)
             serial_start = int(generator.get("serial_start") or 70000)
             unknown_tokens = list(
-                generator.get("unknown_tokens")
-                or ["unknown", "n/a", "tbd", None, ""]
+                generator.get("unknown_tokens") or ["unknown", "n/a", "tbd", None, ""]
             )
             for item_index in range(count):
                 doc = _doc_number(year, (serial_start + item_index) % 100000)
@@ -1961,14 +2842,14 @@ def expand_collision_fixture(payload: Mapping[str, Any]) -> list[dict[str, Any]]
             year = int(generator.get("year_start") or 2016)
             serial_start = int(generator.get("serial_start") or 90000)
             for pair_index in range(count):
-                orig_doc = _doc_number(
-                    year, (serial_start + pair_index * 2) % 100000
+                orig_doc = _doc_number(year, (serial_start + pair_index * 2) % 100000)
+                wd_doc = _doc_number(year, (serial_start + pair_index * 2 + 1) % 100000)
+                orig_date = _pub_date(
+                    year, 2 + (pair_index % 10), 1 + (pair_index % 28)
                 )
-                wd_doc = _doc_number(
-                    year, (serial_start + pair_index * 2 + 1) % 100000
+                wd_date = _pub_date(
+                    year, 2 + (pair_index % 10), min(2 + (pair_index % 27), 28)
                 )
-                orig_date = _pub_date(year, 2 + (pair_index % 10), 1 + (pair_index % 28))
-                wd_date = _pub_date(year, 2 + (pair_index % 10), min(2 + (pair_index % 27), 28))
                 for local_index, (doc, pub, rel, related, text) in enumerate(
                     (
                         (
@@ -2017,24 +2898,47 @@ def expand_collision_fixture(payload: Mapping[str, Any]) -> list[dict[str, Any]]
             f"expanded fixture has {len(rows)} rows; expected {expected}"
         )
 
-    for index, row in enumerate(rows):
-        if "entry_cid" not in row or not row["entry_cid"]:
-            row["entry_cid"] = _synthetic_entry_cid(index)
-        if "source_cid" not in row or not row["source_cid"]:
-            row["source_cid"] = _synthetic_source_cid(index)
-        identity = identity_from_row(row)
-        row["legal_id"] = identity.legal_id
-        row["canonical_citation"] = identity.canonical_citation
-        row["parent_legal_id"] = identity.parent_legal_id
-        row["document_number"] = identity.document_number
-        row["publication_date"] = identity.publication_date
-        row["year_month"] = identity.year_month
-        row["document_type"] = identity.document_type
-        row["source_format"] = identity.source_format
-        if "effective_date" in row:
-            row["normalized_effective_date"] = identity.effective_date
-        # Validate legal_id against release schema contract.
-        schema_validate_legal_id(row["legal_id"])
+    for _index, row in enumerate(rows):
+        # Generated labels are deliberately discarded: fixture identities are
+        # recomputed from the same canonical bytes as production inputs.
+        row.pop("entry_cid", None)
+        row.pop("source_cid", None)
+        # Legacy sealed recipes predate mandatory type/relation qualifiers.
+        # Fixture expansion is non-authorizing and discards those old toggles;
+        # public identity APIs reject them.
+        row.pop("include_type_qualifier", None)
+        row.pop("include_correction_qualifier", None)
+        # The sealed recipe predates the LCR-050 CorpusRecord projection and
+        # contains effective-date probes.  Effective date is not a retained
+        # corpus column, so fixture expansion canonicalizes it away exactly as
+        # a production unknown token is canonicalized away; known values are
+        # exercised as public-path rejections in the unit matrix.
+        row.pop("effective_date", None)
+        pub = normalize_publication_date(row.get("publication_date"))
+        doc = normalize_document_number(row.get("document_number"))
+        row.setdefault(
+            "official_source_url",
+            (
+                "https://www.federalregister.gov/documents/"
+                f"{pub[0:4]}/{pub[5:7]}/{pub[8:10]}/{doc}"
+            ),
+        )
+        content = _row_content_bytes(row)
+        if "content_cid" in row:
+            row["content_cid"] = cid_v1(content)
+        row["source_checksum"] = hashlib.sha256(content).hexdigest()
+        enriched = enrich_row_identity(row)
+        row.clear()
+        row.update(enriched)
+        # Validate the complete durable identity against the LCR-050 contract.
+        _validate_legal_id_shape(row["legal_id"])
+        if not row["document_number"].startswith(("C", "R")):
+            # LCR-050 currently covers the unprefixed domain.  Keep checking
+            # that dependency while the upstream schema widens for official
+            # correction/replacement numbers.
+            schema_validate_legal_id(row["legal_id"])
+        schema_validate_entry_cid(row["entry_cid"])
+        schema_validate_digest(row["source_cid"], name="source_cid")
 
     validate_primary_keys(rows)
     return rows
@@ -2090,7 +2994,37 @@ def disposition_cases(payload: Mapping[str, Any] | None = None) -> list[dict[str
     cases = payload.get("disposition_cases") or []
     if not isinstance(cases, list):
         raise CollisionFixtureError("disposition_cases must be a list")
-    return [dict(item) for item in cases if isinstance(item, Mapping)]
+    material: list[dict[str, Any]] = []
+    for item in cases:
+        if not isinstance(item, Mapping):
+            raise CollisionFixtureError("disposition case must be a mapping")
+        case = dict(item)
+        for side in ("left", "right"):
+            raw = case.get(side)
+            if not isinstance(raw, Mapping):
+                raise CollisionFixtureError(f"disposition case missing {side} row")
+            row = dict(raw)
+            row.pop("entry_cid", None)
+            row.pop("source_cid", None)
+            row.pop("include_type_qualifier", None)
+            row.pop("include_correction_qualifier", None)
+            row.setdefault("source_format", DEFAULT_SOURCE_FORMAT)
+            pub = normalize_publication_date(row.get("publication_date"))
+            doc = normalize_document_number(row.get("document_number"))
+            row.setdefault(
+                "official_source_url",
+                (
+                    "https://www.federalregister.gov/documents/"
+                    f"{pub[0:4]}/{pub[5:7]}/{pub[8:10]}/{doc}"
+                ),
+            )
+            content = _row_content_bytes(row)
+            if "content_cid" in row:
+                row["content_cid"] = cid_v1(content)
+            row["source_checksum"] = hashlib.sha256(content).hexdigest()
+            case[side] = enrich_row_identity(row)
+        material.append(case)
+    return material
 
 
 def build_default_collision_fixture_payload() -> dict[str, Any]:
@@ -2193,9 +3127,7 @@ def build_default_collision_fixture_payload() -> dict[str, Any]:
             },
             {
                 "case_id": "correction-distinct",
-                "expected_disposition": (
-                    IdentityDisposition.CORRECTION_DISTINCT.value
-                ),
+                "expected_disposition": (IdentityDisposition.CORRECTION_DISTINCT.value),
                 "left": {
                     "document_number": "2020-12345",
                     "publication_date": "2020-06-15",
@@ -2483,7 +3415,9 @@ def build_default_collision_fixture_payload() -> dict[str, Any]:
                 "document_number": "2022-66666",
                 "publication_date": "2022-05-05",
                 "document_type": "notice",
-                "content_cid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "content_cid": (
+                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                ),
                 "text": "shared boilerplate",
                 "source_format": "html",
             },
@@ -2493,7 +3427,9 @@ def build_default_collision_fixture_payload() -> dict[str, Any]:
                 "document_number": "2022-66667",
                 "publication_date": "2022-05-06",
                 "document_type": "notice",
-                "content_cid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "content_cid": (
+                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                ),
                 "text": "shared boilerplate",
                 "source_format": "html",
             },
@@ -2502,54 +3438,54 @@ def build_default_collision_fixture_payload() -> dict[str, Any]:
 
 
 __all__ = [
-    "SCHEMA_VERSION",
+    "DEFAULT_CORRECTION_RELATION",
+    "DEFAULT_DOCUMENT_TYPE",
+    "DEFAULT_SOURCE_FORMAT",
     "FIXTURE_SCHEMA_VERSION",
-    "TASK_ID",
     "KNOWN_COLLISION_ROW_COUNT",
     "LEGAL_ID_PREFIX",
-    "DEFAULT_DOCUMENT_TYPE",
-    "DEFAULT_CORRECTION_RELATION",
-    "DEFAULT_SOURCE_FORMAT",
-    "FederalRegisterIdentityError",
-    "IdentityParseError",
-    "DuplicatePrimaryKeyError",
+    "SCHEMA_VERSION",
+    "TASK_ID",
     "CollisionFixtureError",
+    "DuplicatePrimaryKeyError",
+    "FederalRegisterIdentityError",
+    "IdentityDisposition",
     "IdentityDispositionError",
+    "IdentityParseError",
+    "LegalIdentity",
     "PositionalIdentityError",
     "SourceFormat",
-    "IdentityDisposition",
-    "LegalIdentity",
-    "normalize_document_number",
-    "normalize_publication_date",
-    "normalize_year_month",
-    "normalize_effective_date",
-    "normalize_source_format",
-    "normalize_document_type",
-    "normalize_correction_relation",
-    "source_format_priority",
-    "build_legal_id",
+    "assert_legal_ids_distinguishable",
+    "body_content_token",
     "build_canonical_citation",
     "build_chunk_parent_id",
-    "parse_chunk_id",
-    "parse_legal_id",
+    "build_default_collision_fixture_payload",
+    "build_legal_id",
+    "classify_identity_pair",
+    "compute_entry_cid",
+    "compute_source_cid",
+    "content_identity_from_row",
+    "default_collision_fixture_path",
+    "disposition_cases",
+    "enrich_row_identity",
+    "expand_collision_fixture",
     "identity_from_row",
     "legal_id_from_row",
-    "compute_source_cid",
-    "compute_entry_cid",
-    "content_identity_from_row",
-    "body_content_token",
-    "row_position_token",
-    "classify_identity_pair",
-    "resolve_version_dispositions",
-    "merge_by_legal_identity",
-    "reject_positional_or_cid_only_merge",
-    "validate_primary_keys",
-    "assert_legal_ids_distinguishable",
-    "enrich_row_identity",
-    "default_collision_fixture_path",
-    "expand_collision_fixture",
     "load_collision_fixture",
     "load_collision_fixture_payload",
-    "disposition_cases",
-    "build_default_collision_fixture_payload",
+    "merge_by_legal_identity",
+    "normalize_correction_relation",
+    "normalize_document_number",
+    "normalize_document_type",
+    "normalize_effective_date",
+    "normalize_publication_date",
+    "normalize_source_format",
+    "normalize_year_month",
+    "parse_chunk_id",
+    "parse_legal_id",
+    "reject_positional_or_cid_only_merge",
+    "resolve_version_dispositions",
+    "row_position_token",
+    "source_format_priority",
+    "validate_primary_keys",
 ]
