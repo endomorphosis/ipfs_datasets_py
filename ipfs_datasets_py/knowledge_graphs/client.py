@@ -11,6 +11,12 @@
 * import only the service control plane — optional backends (spaCy, torch,
   neo4j drivers, ipfs_kit, …) are **not** import-time requirements.
 
+DQK-060: during dual→db-primary promotion of graph control metadata, clients
+bind one branch-head revision for the duration of the promotion window so
+readers never observe branch-head split brain. Immutable Parquet/IPLD
+revisions remain the content authority; DuckDB owns catalog and
+transaction-control metadata after cutover.
+
 Contract: ``kg-python-client/v1`` over ``kg-service-contract/v1``.
 """
 
@@ -401,6 +407,7 @@ class Client:
         config: Optional[ClientConfig] = None,
         default_auth: Optional[Mapping[str, Any]] = None,
         raise_on_error: bool = False,
+        authority: Any = None,
     ) -> None:
         if service is None:
             raise ValueError("service is required")
@@ -411,6 +418,10 @@ class Client:
         self._raise_on_error = bool(raise_on_error)
         self._closed = False
         self._lock = threading.RLock()
+        # DQK-060 dual/db-primary authority for control-metadata reads.
+        self._authority = authority
+        # Local cache of bound revisions (key -> revision_id) for this handle.
+        self._bound_revisions: Dict[str, str] = {}
 
     # -- construction -------------------------------------------------------
 
@@ -427,15 +438,31 @@ class Client:
         holder_id: Optional[str] = None,
         default_auth: Optional[Mapping[str, Any]] = None,
         raise_on_error: bool = False,
+        authority: Any = None,
         **catalog_kwargs: Any,
     ) -> "Client":
         """Open a client bound to durable catalog (+ payload) paths.
 
         Does **not** create a default graph. Callers must ``create`` or
         ``open_graph`` an explicit :class:`GraphTarget`.
+
+        *authority* is an optional DQK-060 dual/db-primary graph authority.
+        When provided (or discoverable via the process registry), readers
+        bind one branch-head revision during promotion.
         """
         cat = Path(catalog_path)
         store = Path(storage_path) if storage_path is not None else None
+        # Prefer an explicit authority; fall back to process-local registry.
+        if authority is None:
+            try:
+                from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                    get_graph_authority,
+                )
+
+                authority = get_graph_authority()
+            except Exception:
+                authority = None
+        # Wire authority into the catalog when the service exposes one.
         service = GraphService.open(
             cat,
             storage_path=store,
@@ -446,6 +473,13 @@ class Client:
             holder_id=holder_id,
             **catalog_kwargs,
         )
+        if authority is not None:
+            try:
+                catalog = getattr(service, "catalog", None)
+                if catalog is not None and hasattr(catalog, "attach_shadow_authority"):
+                    catalog.attach_shadow_authority(authority)
+            except Exception:
+                pass
         config = ClientConfig(
             catalog_path=cat.resolve(),
             storage_path=store.resolve() if store is not None else None,
@@ -457,7 +491,160 @@ class Client:
             config=config,
             default_auth=default_auth,
             raise_on_error=raise_on_error,
+            authority=authority,
         )
+
+    # -- DQK-060 authority / reader revision binding ------------------------
+
+    @property
+    def authority(self) -> Any:
+        """Attached dual/db-primary graph authority, if any."""
+
+        return self._authority
+
+    def attach_authority(self, authority: Any) -> None:
+        """Bind a DQK-060 graph authority for control-metadata reads."""
+
+        with self._lock:
+            self._authority = authority
+            try:
+                catalog = getattr(self._service, "catalog", None)
+                if catalog is not None and hasattr(catalog, "attach_shadow_authority"):
+                    catalog.attach_shadow_authority(authority)
+            except Exception:
+                pass
+
+    def _target_binding_key(self, target: GraphTarget) -> str:
+        return f"{target.tenant}/{target.graph_id}/{target.branch or 'main'}"
+
+    def _resolve_authority(self) -> Any:
+        auth = self._authority
+        if auth is not None:
+            return auth
+        try:
+            from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                get_graph_authority,
+            )
+
+            auth = get_graph_authority()
+            if auth is not None:
+                self._authority = auth
+            return auth
+        except Exception:
+            return None
+
+    def bind_revision(
+        self,
+        target: TargetLike,
+        *,
+        revision_id: Optional[str] = None,
+        operation_id: Optional[str] = None,
+    ) -> str:
+        """Bind one branch-head revision for this client during promotion.
+
+        Returns the bound revision id. Subsequent :meth:`bound_revision`
+        lookups return this value until :meth:`unbind_revision`.
+        """
+
+        self._ensure_open()
+        gt = self._coerce_target(target)
+        auth = self._resolve_authority()
+        if auth is None:
+            # No dual authority: fall back to catalog head and cache locally.
+            catalog = getattr(self._service, "catalog", None)
+            head = revision_id
+            if head is None and catalog is not None:
+                try:
+                    branch = catalog.get_branch(
+                        gt.tenant, gt.graph_id, gt.branch or "main"
+                    )
+                    head = branch.head_revision
+                except Exception as exc:
+                    raise ServiceError(
+                        TypedError.of(
+                            "NOT_FOUND",
+                            f"cannot bind revision: {exc}",
+                        ),
+                        operation="bind_revision",
+                        target=gt,
+                    ) from exc
+            if not head:
+                raise ServiceError(
+                    TypedError.of(
+                        "NOT_FOUND",
+                        "cannot bind revision: no branch head",
+                    ),
+                    operation="bind_revision",
+                    target=gt,
+                )
+            with self._lock:
+                self._bound_revisions[self._target_binding_key(gt)] = str(head)
+            return str(head)
+
+        catalog = getattr(self._service, "catalog", None)
+        binding = auth.bind_reader_revision(
+            gt.tenant,
+            gt.graph_id,
+            gt.branch or "main",
+            catalog=catalog,
+            revision_id=revision_id,
+            operation_id=operation_id,
+        )
+        with self._lock:
+            self._bound_revisions[self._target_binding_key(gt)] = binding.revision_id
+        return binding.revision_id
+
+    def bound_revision(self, target: TargetLike) -> Optional[str]:
+        """Return the revision bound for *target*, if any."""
+
+        gt = self._coerce_target(target)
+        key = self._target_binding_key(gt)
+        with self._lock:
+            local = self._bound_revisions.get(key)
+        if local:
+            return local
+        auth = self._resolve_authority()
+        if auth is None:
+            return None
+        binding = auth.get_bound_reader_revision(
+            gt.tenant, gt.graph_id, gt.branch or "main"
+        )
+        return binding.revision_id if binding is not None else None
+
+    def unbind_revision(self, target: TargetLike) -> Optional[str]:
+        """Clear the bound revision for *target* (after promotion completes)."""
+
+        gt = self._coerce_target(target)
+        key = self._target_binding_key(gt)
+        with self._lock:
+            prev = self._bound_revisions.pop(key, None)
+        auth = self._resolve_authority()
+        if auth is not None:
+            cleared = auth.unbind_reader_revision(
+                gt.tenant, gt.graph_id, gt.branch or "main"
+            )
+            if cleared is not None:
+                return cleared.revision_id
+        return prev
+
+    def _coerce_target(self, target: TargetLike) -> GraphTarget:
+        if isinstance(target, GraphTarget):
+            return target
+        if isinstance(target, Mapping):
+            return GraphTarget.from_mapping(target)
+        if isinstance(target, str):
+            # Prefer URI parse when available; fall back to slash form.
+            try:
+                return GraphTarget.from_uri(target)
+            except Exception:
+                parts = target.split("/")
+                if len(parts) >= 2:
+                    return GraphTarget(
+                        tenant=parts[0],
+                        graph_id=parts[1],
+                        branch=parts[2] if len(parts) > 2 else "main",
+                    )
+        raise GraphTargetError(f"cannot coerce target: {target!r}")
 
     @classmethod
     def from_service(
@@ -647,10 +834,16 @@ class Client:
         request_id: Optional[str] = None,
         budgets: Optional[Mapping[str, Any]] = None,
         raise_on_error: Optional[bool] = None,
+        bind_revision: bool = True,
     ) -> LifecycleResult:
-        """Resolve a target to an immutable revision snapshot (operation ``open``)."""
+        """Resolve a target to an immutable revision snapshot (operation ``open``).
+
+        During dual-mode promotion (DQK-060), when *bind_revision* is True
+        the client binds one branch-head revision for the duration of the
+        promotion window so subsequent reads observe a single head.
+        """
         self._ensure_open()
-        return self._finish(
+        result = self._finish(
             self._service.open_graph(
                 target,
                 params=params,
@@ -660,6 +853,28 @@ class Client:
             ),
             raise_on_error=raise_on_error,
         )
+        # Bind one revision during dual-mode promotion (readers never flip).
+        if bind_revision and getattr(result, "ok", False):
+            authority = self._resolve_authority()
+            should_bind = False
+            if authority is not None:
+                should_bind = bool(
+                    getattr(authority, "promotion_window_active", False)
+                    or getattr(authority, "is_dual_mode", False)
+                )
+            if should_bind:
+                try:
+                    rev = None
+                    payload = getattr(result, "result", None) or getattr(
+                        result, "payload", None
+                    )
+                    if isinstance(payload, Mapping):
+                        rev = payload.get("revision") or payload.get("head_revision")
+                    self.bind_revision(target, revision_id=rev)
+                except Exception:
+                    # Binding is best-effort; open itself already succeeded.
+                    pass
+        return result
 
     def branch(
         self,

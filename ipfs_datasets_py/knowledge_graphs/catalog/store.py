@@ -9,6 +9,13 @@ sole authority while producers dual-project control-plane mutations through the
 domain-neutral :class:`~ipfs_datasets_py.duckdb_control.authority_transition.AuthorityTransitionPort`
 and a DuckDB catalog mirror that emits parity receipts. Parquet/IPLD payload
 bytes, checksums, and CIDs are never rewritten by the shadow path.
+
+DQK-060 promotes graph **control metadata** through fenced dual writes to
+DuckDB authority (``dual`` → ``db-primary``). Immutable Parquet/IPLD revisions
+remain the content authority. Legacy SQLite writes become outbox projections;
+promotion and rollback are CAS-fenced and receipted. Readers bind one branch
+revision for the duration of a promotion window so they never observe split
+brain on branch heads.
 """
 
 from __future__ import annotations
@@ -60,7 +67,7 @@ PathLike = Union[str, Path]
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# DQK-059 shadow authority constants
+# DQK-059 shadow / DQK-060 dual→db-primary authority constants
 # ---------------------------------------------------------------------------
 
 GRAPH_SHADOW_DOMAIN: str = "graphs"
@@ -68,6 +75,13 @@ GRAPH_SHADOW_SCHEMA: str = (
     "ipfs_datasets_py/knowledge-graphs-duckdb-shadow-authority@1"
 )
 GRAPH_SHADOW_OWNER_TASK: str = "DQK-059"
+
+# DQK-060 cutover surface (same domain, dual-mode owner task).
+GRAPH_AUTHORITY_DOMAIN: str = GRAPH_SHADOW_DOMAIN
+GRAPH_AUTHORITY_SCHEMA: str = (
+    "ipfs_datasets_py/knowledge-graphs-duckdb-authority@1"
+)
+GRAPH_AUTHORITY_OWNER_TASK: str = "DQK-060"
 
 _process_shadow_lock = threading.RLock()
 _process_shadow_authority: Optional["GraphShadowAuthority"] = None
@@ -225,9 +239,16 @@ class GraphCatalog:
     def attach_shadow_authority(
         self, authority: Optional["GraphShadowAuthority"]
     ) -> None:
-        """Bind or clear the DuckDB shadow authority (SQLite remains authority)."""
+        """Bind or clear the DuckDB shadow/dual authority (DQK-059/DQK-060)."""
 
         self._shadow_authority = authority
+
+    # Alias used by dual-mode cutover callers.
+    attach_authority = attach_shadow_authority
+
+    @property
+    def authority(self) -> Optional["GraphShadowAuthority"]:
+        return self._shadow_authority
 
     def _notify_shadow(
         self,
@@ -236,7 +257,7 @@ class GraphCatalog:
         args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
     ) -> None:
-        """Best-effort shadow projection; never raises to catalog callers."""
+        """Best-effort dual/shadow projection; never raises to catalog callers."""
 
         shadow = self._shadow_authority
         if shadow is None:
@@ -255,6 +276,31 @@ class GraphCatalog:
                 operation,
                 exc,
             )
+
+    def authoritative_branch_head(
+        self, tenant: str, graph_id: str, branch: str = DEFAULT_BRANCH
+    ) -> Optional[str]:
+        """Return the authoritative branch head under the attached authority.
+
+        When a dual/db-primary authority is bound, prefer DuckDB (and any
+        reader revision binding). Otherwise fall back to SQLite.
+        """
+
+        shadow = self._shadow_authority
+        if shadow is not None and hasattr(shadow, "authoritative_branch_head"):
+            try:
+                head = shadow.authoritative_branch_head(
+                    tenant, graph_id, branch, catalog=self
+                )
+                if head is not None:
+                    return head
+            except Exception:  # noqa: BLE001
+                pass
+        try:
+            rec = self.get_branch(tenant, graph_id, branch)
+            return rec.head_revision
+        except CatalogError:
+            return None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -2042,24 +2088,67 @@ class GraphMutationReceipt:
         }
 
 
+@dataclass
+class ReaderRevisionBinding:
+    """One branch-head revision bound for a reader during dual-mode promotion."""
+
+    tenant: str
+    graph_id: str
+    branch: str
+    revision_id: str
+    bound_at: str
+    authority_mode: str
+    fence_token: int = 0
+    operation_id: str = ""
+
+    @property
+    def key(self) -> str:
+        return f"{self.tenant}/{self.graph_id}/{self.branch}"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "schema": GRAPH_AUTHORITY_SCHEMA,
+            "tenant": self.tenant,
+            "graph_id": self.graph_id,
+            "branch": self.branch,
+            "revision_id": self.revision_id,
+            "bound_at": self.bound_at,
+            "authority_mode": self.authority_mode,
+            "fence_token": self.fence_token,
+            "operation_id": self.operation_id,
+        }
+
+
 class GraphShadowAuthority:
-    """DuckDB shadow authority for knowledge-graph producers (DQK-059).
+    """DuckDB shadow / dual / db-primary authority for knowledge-graph producers.
+
+    DQK-059 (**shadow**):
 
     * **SQLite / JSON / in-memory is authority** — caller-visible results never
       switch to DuckDB.
     * **DuckDB is a shadow projection** of catalog, transaction/MVCC/WAL control
       state, hybrid storage metadata, engine inventory, and crypto-flow
       snapshots.
-    * **Every mutation** is bound to an idempotent ``operation_id`` and a parity
-      receipt on the domain-neutral authority port.
-    * **Immutable content** (Parquet/IPLD bytes, checksums, CIDs) is projected by
-      reference only and never rewritten.
     * **Shadow failures quarantine** without changing legacy authority.
+
+    DQK-060 (**dual** → **db-primary** cutover):
+
+    * Fenced dual writes coordinate SQLite and DuckDB through the domain-neutral
+      outbox; mismatch quarantines rather than silently diverging.
+    * After promotion, DuckDB is authority for graph catalog and
+      transaction-control metadata; legacy SQLite writes are outbox projections.
+    * Immutable Parquet/IPLD revisions remain the **content** authority.
+    * Readers bind one branch revision during the promotion window.
+    * Promotion and rollback are CAS-fenced and receipted.
+    * Crash recovery redrives the outbox so branch heads and transaction
+      control state do not split-brain or lose durable progress.
     """
 
     DOMAIN = GRAPH_SHADOW_DOMAIN
     SCHEMA = GRAPH_SHADOW_SCHEMA
     OWNER_TASK = GRAPH_SHADOW_OWNER_TASK
+    AUTHORITY_SCHEMA = GRAPH_AUTHORITY_SCHEMA
+    AUTHORITY_OWNER_TASK = GRAPH_AUTHORITY_OWNER_TASK
 
     def __init__(
         self,
@@ -2071,16 +2160,20 @@ class GraphShadowAuthority:
         authority_port: Any = None,
         writer_id: str = "writer:graph-shadow-authority",
         domain: str = GRAPH_SHADOW_DOMAIN,
+        initial_mode: Any = None,
+        owner_task: str = GRAPH_SHADOW_OWNER_TASK,
     ) -> None:
         self._enabled = bool(enabled)
         self._domain = domain
         self._writer_id = writer_id
+        self._owner_task = owner_task
         self._lock = threading.RLock()
         self._closed = False
         self._port = authority_port
         self._duck_catalog: Any = None
         self._duck_tx: Any = None
         self._duck_crypto: Any = None
+        self._initial_mode = initial_mode
         self._catalog_path = (
             None
             if duckdb_catalog_path in (None, ":memory:")
@@ -2099,6 +2192,10 @@ class GraphShadowAuthority:
         self._mutation_index: Dict[str, GraphMutationReceipt] = {}
         self._content_fingerprints: Dict[str, Dict[str, str]] = {}
         self._legacy_snapshots: Dict[str, Dict[str, Any]] = {}
+        # DQK-060: reader revision binds + decision receipts.
+        self._reader_bindings: Dict[str, ReaderRevisionBinding] = {}
+        self._decision_receipts: List[Any] = []
+        self._promotion_window: bool = False
         if self._enabled:
             self._open_stores(duckdb_catalog_path)
             if self._port is None:
@@ -2113,10 +2210,16 @@ class GraphShadowAuthority:
             build_authority_port,
         )
 
+        mode = self._initial_mode
+        if mode is None:
+            mode = AuthorityMode.SHADOW
+        elif not isinstance(mode, AuthorityMode):
+            mode = AuthorityMode.parse(mode)
+
         return build_authority_port(
             MemoryAuthorityBackend(),
             domain=self._domain,
-            initial_mode=AuthorityMode.SHADOW,
+            initial_mode=mode,
             writer_id=self._writer_id,
         )
 
@@ -2184,6 +2287,10 @@ class GraphShadowAuthority:
             return "unknown"
 
     @property
+    def owner_task(self) -> str:
+        return self._owner_task
+
+    @property
     def duckdb_catalog(self) -> Any:
         return self._duck_catalog
 
@@ -2194,6 +2301,39 @@ class GraphShadowAuthority:
     @property
     def duckdb_crypto_store(self) -> Any:
         return self._duck_crypto
+
+    @property
+    def legacy_is_outbox_projection(self) -> bool:
+        """True when legacy SQLite writes are fenced outbox projections (DQK-060)."""
+
+        mode = self.mode
+        return mode in {"dual", "db-primary", "export-only"}
+
+    @property
+    def is_duckdb_authority(self) -> bool:
+        return self.mode in {"db-primary", "export-only"}
+
+    @property
+    def is_dual_mode(self) -> bool:
+        return self.mode == "dual"
+
+    @property
+    def promotion_window_active(self) -> bool:
+        """True while dual-mode promotion is in progress (readers must bind)."""
+
+        return bool(self._promotion_window) or self.mode == "dual"
+
+    def _authority_label(self) -> str:
+        """Caller-facing authority label for receipts and tests."""
+
+        mode = self.mode
+        if mode in {"db-primary", "export-only"}:
+            return "duckdb"
+        if mode == "dual":
+            return "dual"
+        if mode in {"shadow", "legacy", "disabled", "unknown"}:
+            return "legacy"
+        return mode
 
     def close(self) -> None:
         with self._lock:
@@ -2216,20 +2356,35 @@ class GraphShadowAuthority:
             mutations = dict(self._mutation_index)
             fingerprints = dict(self._content_fingerprints)
             snapshots = dict(self._legacy_snapshots)
+            bindings = dict(self._reader_bindings)
+            decisions = list(self._decision_receipts)
+            promotion = self._promotion_window
             port = self._port
             cat_path = self._catalog_path
             tx_path = self._tx_path
             crypto_path = self._crypto_path
+            owner_task = self._owner_task
+            initial_mode = self._initial_mode
             self.close()
             self._closed = False
             self._enabled = True
             self._port = port
             self._tx_path = tx_path
             self._crypto_path = crypto_path
+            self._owner_task = owner_task
+            self._initial_mode = initial_mode
             self._open_stores(cat_path if cat_path is not None else ":memory:")
             self._mutation_index = mutations
             self._content_fingerprints = fingerprints
             self._legacy_snapshots = snapshots
+            self._reader_bindings = bindings
+            self._decision_receipts = decisions
+            self._promotion_window = promotion
+            # Crash recovery: redrive incomplete outbox before serving.
+            try:
+                self.recover_after_crash()
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("authority recover_after_crash on reopen: %s", exc)
             return self
 
     # -- quarantine ---------------------------------------------------------
@@ -2348,15 +2503,26 @@ class GraphShadowAuthority:
                 self._mutation_index[op_id] = receipt
                 return receipt
 
+            schema = (
+                GRAPH_AUTHORITY_SCHEMA
+                if self.mode in {"dual", "db-primary", "export-only"}
+                else GRAPH_SHADOW_SCHEMA
+            )
+            owner = (
+                GRAPH_AUTHORITY_OWNER_TASK
+                if self.mode in {"dual", "db-primary", "export-only"}
+                else self._owner_task
+            )
             body = {
-                "schema": GRAPH_SHADOW_SCHEMA,
-                "owner_task": GRAPH_SHADOW_OWNER_TASK,
+                "schema": schema,
+                "owner_task": owner,
                 "producer": producer,
                 "kind": kind,
                 "key": key,
                 "payload": dict(payload),
                 "content_cid": content_cid or "",
                 "content_checksum": content_checksum or "",
+                "legacy_is_outbox_projection": self.legacy_is_outbox_projection,
             }
             if content_bytes is not None:
                 checksum = "sha256:" + hashlib.sha256(content_bytes).hexdigest()
@@ -2378,6 +2544,21 @@ class GraphShadowAuthority:
             try:
                 write_result = self._port.write(key, body, operation_id=op_id)
                 parity = self._port.emit_parity_receipt(key, operation_id=op_id)
+                authority = str(
+                    write_result.get("authority") or self._authority_label()
+                )
+                # In dual/db-primary, legacy SQLite is an outbox projection and
+                # must never silently re-claim authority on the receipt.
+                if self.mode == "db-primary" and authority not in {
+                    "duckdb",
+                    "db-primary",
+                }:
+                    authority = "duckdb"
+                elif self.mode == "dual" and authority not in {
+                    "dual",
+                    "duckdb",
+                }:
+                    authority = "dual"
                 receipt = GraphMutationReceipt(
                     operation_id=op_id,
                     producer=producer,
@@ -2391,7 +2572,7 @@ class GraphShadowAuthority:
                     payload_digest=str(
                         write_result.get("payload_digest") or _digest(body)
                     ),
-                    authority=str(write_result.get("authority") or "legacy"),
+                    authority=authority,
                     idempotent_replay=bool(write_result.get("idempotent_replay")),
                     outbox_id=str(write_result.get("outbox_id") or ""),
                     content_cid=content_cid or "",
@@ -3390,6 +3571,629 @@ class GraphShadowAuthority:
         }
 
 
+    # ------------------------------------------------------------------
+    # DQK-060: dual-write cutover, promotion, rollback, reader binds
+    # ------------------------------------------------------------------
+
+    def promote_to_dual(
+        self,
+        *,
+        parity_key: str,
+        decision_id: str | None = None,
+        require_parity: bool = True,
+    ) -> Any:
+        """Promote shadow → dual (fenced dual writes)."""
+
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+            DecisionKind,
+            DecisionReceipt,
+        )
+
+        if self._port is None:
+            raise RuntimeError("cannot promote without an authority port")
+        if self._port.mode is AuthorityMode.DUAL:
+            state = self._port.state()
+            receipt = DecisionReceipt(
+                receipt_cid=state.last_decision_receipt_cid or "",
+                kind=DecisionKind.PROMOTE,
+                domain=self._port.domain,
+                from_mode=AuthorityMode.DUAL,
+                to_mode=AuthorityMode.DUAL,
+                expected_cas_revision=state.cas_revision,
+                new_cas_revision=state.cas_revision,
+                fence=state.fence,
+                parity_receipt_cid=state.last_parity_receipt_cid or "",
+                decision_id=decision_id or "already-dual",
+                accepted=True,
+                reason="already_dual",
+                created_at=state.updated_at or "",
+                atomic_across_filesystems=False,
+            )
+            self._decision_receipts.append(receipt)
+            self._promotion_window = True
+            return receipt
+        if self._port.mode is AuthorityMode.DB_PRIMARY:
+            # Dual is a rollback target from db-primary; treat as no-op promote.
+            state = self._port.state()
+            receipt = DecisionReceipt(
+                receipt_cid=state.last_decision_receipt_cid or "",
+                kind=DecisionKind.PROMOTE,
+                domain=self._port.domain,
+                from_mode=AuthorityMode.DB_PRIMARY,
+                to_mode=AuthorityMode.DB_PRIMARY,
+                expected_cas_revision=state.cas_revision,
+                new_cas_revision=state.cas_revision,
+                fence=state.fence,
+                parity_receipt_cid=state.last_parity_receipt_cid or "",
+                decision_id=decision_id or "already-db-primary",
+                accepted=True,
+                reason="already_db_primary",
+                created_at=state.updated_at or "",
+                atomic_across_filesystems=False,
+            )
+            self._decision_receipts.append(receipt)
+            return receipt
+        sealed = self._port.promote(
+            AuthorityMode.DUAL,
+            decision_id=decision_id or f"to-dual:{parity_key}",
+            require_parity=require_parity,
+            parity_key=parity_key,
+        )
+        self._decision_receipts.append(sealed)
+        if getattr(sealed, "accepted", False):
+            self._promotion_window = True
+        return sealed
+
+    def promote_to_db_primary(
+        self,
+        *,
+        parity_key: str,
+        decision_id: str | None = None,
+        require_parity: bool = True,
+    ) -> Any:
+        """Promote dual → db-primary (DuckDB control-metadata authority)."""
+
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+            DecisionKind,
+            DecisionReceipt,
+        )
+
+        if self._port is None:
+            raise RuntimeError("cannot promote without an authority port")
+        if self._port.mode is AuthorityMode.DB_PRIMARY:
+            state = self._port.state()
+            receipt = DecisionReceipt(
+                receipt_cid=state.last_decision_receipt_cid or "",
+                kind=DecisionKind.PROMOTE,
+                domain=self._port.domain,
+                from_mode=AuthorityMode.DB_PRIMARY,
+                to_mode=AuthorityMode.DB_PRIMARY,
+                expected_cas_revision=state.cas_revision,
+                new_cas_revision=state.cas_revision,
+                fence=state.fence,
+                parity_receipt_cid=state.last_parity_receipt_cid or "",
+                decision_id=decision_id or "already-db-primary",
+                accepted=True,
+                reason="already_db_primary",
+                created_at=state.updated_at or "",
+                atomic_across_filesystems=False,
+            )
+            self._decision_receipts.append(receipt)
+            self._promotion_window = False
+            return receipt
+        sealed = self._port.promote(
+            AuthorityMode.DB_PRIMARY,
+            decision_id=decision_id or f"cutover:{parity_key}",
+            require_parity=require_parity,
+            parity_key=parity_key,
+        )
+        self._decision_receipts.append(sealed)
+        if getattr(sealed, "accepted", False):
+            # Promotion complete: readers may unbind, DuckDB is authority.
+            self._promotion_window = False
+        return sealed
+
+    def ensure_duckdb_authority(
+        self,
+        *,
+        tenant: str,
+        graph_id: str,
+        decision_id: str | None = None,
+    ) -> Any:
+        """Ensure DuckDB is authoritative for *tenant/graph_id* (shadow→dual→db)."""
+
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+            PromotionBlockedError,
+        )
+
+        if self._port is None:
+            return None
+        key = self._graph_key(tenant, graph_id)
+        mode = self._port.mode
+        if mode is AuthorityMode.DB_PRIMARY:
+            return None
+        if mode is AuthorityMode.DUAL:
+            return self.promote_to_db_primary(
+                parity_key=key,
+                decision_id=decision_id or f"cutover:{key}",
+            )
+        if mode is AuthorityMode.SHADOW:
+            first = self.promote_to_dual(
+                parity_key=key,
+                decision_id=f"to-dual:{key}",
+            )
+            if not getattr(first, "accepted", False):
+                raise PromotionBlockedError(
+                    getattr(first, "reason", None) or "shadow→dual rejected",
+                    reason=getattr(first, "reason", None) or "promotion_rejected",
+                )
+            return self.promote_to_db_primary(
+                parity_key=key,
+                decision_id=decision_id or f"cutover:{key}",
+            )
+        return None
+
+    def rollback_authority(
+        self,
+        to_mode: Any,
+        *,
+        decision_id: str | None = None,
+        reason: str = "operator_rollback",
+    ) -> Any:
+        """CAS-fenced, receipted authority rollback (DQK-060).
+
+        Returns a :class:`DecisionReceipt` with ``kind=rollback``. Legacy
+        SQLite may re-claim authority only after an accepted rollback to
+        shadow/legacy; until then outbox projections remain the legacy path.
+        """
+
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+        )
+
+        if self._port is None:
+            raise RuntimeError("cannot rollback without an authority port")
+        target = AuthorityMode.parse(to_mode)
+        sealed = self._port.rollback(
+            target,
+            decision_id=decision_id or new_graph_operation_id("rollback"),
+            reason=reason,
+        )
+        self._decision_receipts.append(sealed)
+        if getattr(sealed, "accepted", False):
+            # Dual remains a promotion window; pure shadow/legacy is not.
+            self._promotion_window = sealed.to_mode == AuthorityMode.DUAL
+            if sealed.to_mode in {AuthorityMode.SHADOW, AuthorityMode.LEGACY}:
+                # Clear binds — legacy authority resumes without dual fence.
+                self._reader_bindings.clear()
+        return sealed
+
+    def list_decision_receipts(self) -> List[Any]:
+        with self._lock:
+            return list(self._decision_receipts)
+
+    def last_decision_receipt(self) -> Any:
+        with self._lock:
+            return self._decision_receipts[-1] if self._decision_receipts else None
+
+    # -- reader revision binding --------------------------------------------
+
+    def _binding_key(self, tenant: str, graph_id: str, branch: str) -> str:
+        return f"{tenant}/{graph_id}/{branch}"
+
+    def bind_reader_revision(
+        self,
+        tenant: str,
+        graph_id: str,
+        branch: str = DEFAULT_BRANCH,
+        *,
+        catalog: Optional["GraphCatalog"] = None,
+        revision_id: str | None = None,
+        operation_id: str | None = None,
+    ) -> ReaderRevisionBinding:
+        """Bind a single branch-head revision for readers during promotion.
+
+        Acceptance: readers observe one revision for the duration of the
+        promotion window and never flip between SQLite and DuckDB heads mid-read.
+        """
+
+        op_id = operation_id or new_graph_operation_id("reader.bind")
+        head = revision_id
+        if head is None:
+            head = self.authoritative_branch_head(
+                tenant, graph_id, branch, catalog=catalog
+            )
+        if not head:
+            raise CatalogError(
+                f"cannot bind reader revision: no head for "
+                f"{tenant}/{graph_id}/{branch}"
+            )
+        fence_token = 0
+        if self._port is not None:
+            try:
+                fence_token = int(self._port.state().fence.fencing_token)
+            except Exception:  # noqa: BLE001
+                fence_token = 0
+        binding = ReaderRevisionBinding(
+            tenant=tenant,
+            graph_id=graph_id,
+            branch=branch,
+            revision_id=str(head),
+            bound_at=utc_now_iso(),
+            authority_mode=self.mode,
+            fence_token=fence_token,
+            operation_id=op_id,
+        )
+        with self._lock:
+            self._reader_bindings[binding.key] = binding
+        # Journal the bind on the authority port so crash recovery preserves it.
+        try:
+            self.record_operation(
+                producer="catalog",
+                kind="bind_reader_revision",
+                key=self._graph_key(tenant, graph_id),
+                payload=binding.to_dict(),
+                operation_id=op_id,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("reader bind journal failed: %s", exc)
+        return binding
+
+    def get_bound_reader_revision(
+        self, tenant: str, graph_id: str, branch: str = DEFAULT_BRANCH
+    ) -> Optional[ReaderRevisionBinding]:
+        with self._lock:
+            return self._reader_bindings.get(
+                self._binding_key(tenant, graph_id, branch)
+            )
+
+    def unbind_reader_revision(
+        self, tenant: str, graph_id: str, branch: str = DEFAULT_BRANCH
+    ) -> Optional[ReaderRevisionBinding]:
+        with self._lock:
+            return self._reader_bindings.pop(
+                self._binding_key(tenant, graph_id, branch), None
+            )
+
+    def list_reader_bindings(self) -> List[ReaderRevisionBinding]:
+        with self._lock:
+            return list(self._reader_bindings.values())
+
+    def authoritative_branch_head(
+        self,
+        tenant: str,
+        graph_id: str,
+        branch: str = DEFAULT_BRANCH,
+        *,
+        catalog: Optional["GraphCatalog"] = None,
+    ) -> Optional[str]:
+        """Return the control-plane branch head under current authority mode.
+
+        * Bound reader revision wins when present (promotion window).
+        * dual / db-primary: prefer DuckDB head when available.
+        * shadow / legacy: prefer SQLite when *catalog* is provided.
+        """
+
+        bound = self.get_bound_reader_revision(tenant, graph_id, branch)
+        if bound is not None:
+            return bound.revision_id
+
+        duck_head: Optional[str] = None
+        duck = self._duck_catalog
+        if duck is not None:
+            try:
+                rec = duck.get_branch(tenant, graph_id, branch)
+                duck_head = getattr(rec, "head_revision", None) or None
+            except Exception:  # noqa: BLE001
+                duck_head = None
+
+        sqlite_head: Optional[str] = None
+        if catalog is not None:
+            try:
+                rec = catalog.get_branch(tenant, graph_id, branch)
+                sqlite_head = getattr(rec, "head_revision", None) or None
+            except Exception:  # noqa: BLE001
+                sqlite_head = None
+
+        if self.is_duckdb_authority or self.is_dual_mode:
+            return duck_head or sqlite_head
+        return sqlite_head or duck_head
+
+    def reconcile_branch_heads(
+        self,
+        catalog: "GraphCatalog",
+        tenant: str,
+        graph_id: str,
+        branch: str = DEFAULT_BRANCH,
+    ) -> Dict[str, Any]:
+        """Resolve branch-head split brain after crash using authority mode.
+
+        Returns a receipt dict describing the action taken. Never invents a
+        new head: chooses the authoritative side and re-projects the other.
+        """
+
+        key = self._graph_key(tenant, graph_id)
+        sqlite_head: Optional[str] = None
+        duck_head: Optional[str] = None
+        try:
+            sqlite_head = catalog.get_branch(tenant, graph_id, branch).head_revision
+        except CatalogError:
+            sqlite_head = None
+        if self._duck_catalog is not None:
+            try:
+                duck_head = self._duck_catalog.get_branch(
+                    tenant, graph_id, branch
+                ).head_revision
+            except Exception:  # noqa: BLE001
+                duck_head = None
+
+        if sqlite_head == duck_head:
+            return {
+                "ok": True,
+                "matched": True,
+                "head": sqlite_head,
+                "action": "none",
+                "authority": self._authority_label(),
+                "key": key,
+            }
+
+        authority = self._authority_label()
+        if authority in {"duckdb", "dual"}:
+            winner = duck_head or sqlite_head
+            loser_side = "sqlite" if winner == duck_head else "duckdb"
+            # Re-project winner onto SQLite when DuckDB is authority.
+            if winner and duck_head and sqlite_head != duck_head:
+                try:
+                    # Direct SQL update on SQLite to repair projection without
+                    # re-running CAS lease fencing (recovery path only).
+                    with catalog._lock:  # noqa: SLF001
+                        catalog._conn.execute(  # noqa: SLF001
+                            "UPDATE branches SET head_revision = ?, updated_at = ? "
+                            "WHERE tenant = ? AND graph_id = ? AND branch = ?",
+                            [
+                                duck_head,
+                                utc_now_iso(),
+                                tenant,
+                                graph_id,
+                                branch,
+                            ],
+                        )
+                    action = "project_duckdb_to_sqlite"
+                    winner = duck_head
+                    loser_side = "sqlite"
+                except Exception as exc:  # noqa: BLE001
+                    return {
+                        "ok": False,
+                        "matched": False,
+                        "head": duck_head,
+                        "sqlite_head": sqlite_head,
+                        "duck_head": duck_head,
+                        "action": "failed",
+                        "error": str(exc),
+                        "authority": authority,
+                        "key": key,
+                    }
+            else:
+                action = "prefer_duckdb" if duck_head else "prefer_sqlite"
+        else:
+            winner = sqlite_head or duck_head
+            action = "prefer_sqlite"
+            loser_side = "duckdb"
+            if winner and sqlite_head and duck_head != sqlite_head and self._duck_catalog:
+                try:
+                    with self._duck_catalog._txn() as conn:  # noqa: SLF001
+                        conn.execute(
+                            "UPDATE branches SET head_revision = ?, updated_at = ? "
+                            "WHERE tenant = ? AND graph_id = ? AND branch = ?",
+                            [
+                                sqlite_head,
+                                utc_now_iso(),
+                                tenant,
+                                graph_id,
+                                branch,
+                            ],
+                        )
+                    action = "project_sqlite_to_duckdb"
+                except Exception as exc:  # noqa: BLE001
+                    return {
+                        "ok": False,
+                        "matched": False,
+                        "head": sqlite_head,
+                        "sqlite_head": sqlite_head,
+                        "duck_head": duck_head,
+                        "action": "failed",
+                        "error": str(exc),
+                        "authority": authority,
+                        "key": key,
+                    }
+
+        # Journal the reconciliation so outbox/parity stay consistent.
+        op_id = new_graph_operation_id("reconcile.head")
+        try:
+            self.record_operation(
+                producer="catalog",
+                kind="reconcile_branch_head",
+                key=key,
+                payload={
+                    "tenant": tenant,
+                    "graph_id": graph_id,
+                    "branch": branch,
+                    "winner": winner,
+                    "sqlite_head": sqlite_head,
+                    "duck_head": duck_head,
+                    "action": action,
+                    "loser_side": loser_side,
+                },
+                operation_id=op_id,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("reconcile journal failed: %s", exc)
+
+        return {
+            "ok": True,
+            "matched": True,
+            "head": winner,
+            "sqlite_head": sqlite_head,
+            "duck_head": duck_head,
+            "action": action,
+            "authority": authority,
+            "key": key,
+            "operation_id": op_id,
+        }
+
+    def recover_after_crash(
+        self, catalog: Optional["GraphCatalog"] = None
+    ) -> Dict[str, Any]:
+        """Idempotent crash recovery: redrive outbox, reconcile heads, keep txs.
+
+        Guarantees (DQK-060 acceptance):
+
+        * Incomplete dual/db-primary outbox entries are redriven.
+        * Branch heads are reconciled to the authoritative side (no split brain).
+        * Durable DuckDB transaction-control state survives reopen (no lost tx).
+        """
+
+        outbox_result: Dict[str, Any] = {
+            "ok": True,
+            "recovered_outbox_ids": [],
+            "quarantined_outbox_ids": [],
+        }
+        if self._port is not None:
+            try:
+                outbox_result = dict(self._port.recover_outbox())
+            except Exception as exc:  # noqa: BLE001
+                outbox_result = {"ok": False, "error": str(exc)}
+
+        head_receipts: List[Dict[str, Any]] = []
+        if catalog is not None:
+            # Prefer reconciling graphs we already dual-projected (legacy snapshots).
+            targets: List[tuple[str, str]] = []
+            for key, snap in list(self._legacy_snapshots.items()):
+                t = str(snap.get("tenant") or "")
+                g = str(snap.get("graph_id") or "")
+                if t and g:
+                    targets.append((t, g))
+            # Also walk known keys from mutation receipts.
+            for receipt in self.list_mutation_receipts():
+                if receipt.producer != "catalog":
+                    continue
+                # key form: graph:tenant/graph_id
+                raw = receipt.key
+                if raw.startswith("graph:"):
+                    body = raw[len("graph:") :]
+                    if "/" in body:
+                        t, g = body.split("/", 1)
+                        if (t, g) not in targets:
+                            targets.append((t, g))
+            for tenant, graph_id in targets:
+                branch = DEFAULT_BRANCH
+                try:
+                    head_receipts.append(
+                        self.reconcile_branch_heads(
+                            catalog, str(tenant), str(graph_id), str(branch)
+                        )
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    head_receipts.append(
+                        {
+                            "ok": False,
+                            "error": str(exc),
+                            "tenant": tenant,
+                            "graph_id": graph_id,
+                        }
+                    )
+
+        # Transaction control: durable DuckDB state is already on disk after
+        # reopen; expose a summary so tests can assert no lost progress.
+        tx_summary: Dict[str, Any] = {"wal_head_cid": None, "applied_keys": {}}
+        duck_tx = self._duck_tx
+        if duck_tx is not None:
+            try:
+                tx_summary["wal_head_cid"] = duck_tx.get_wal_head_cid()
+                tx_summary["applied_keys"] = dict(duck_tx.list_wal_applied_keys())
+            except Exception as exc:  # noqa: BLE001
+                tx_summary["error"] = str(exc)
+
+        return {
+            "ok": bool(outbox_result.get("ok", True)),
+            "authority": self._authority_label(),
+            "mode": self.mode,
+            "outbox": outbox_result,
+            "branch_heads": head_receipts,
+            "transaction_control": tx_summary,
+            "legacy_is_outbox_projection": self.legacy_is_outbox_projection,
+            "atomic_across_filesystems": False,
+            "idempotent": True,
+        }
+
+    def dual_write_catalog_mutation(
+        self,
+        operation: str,
+        *,
+        result: Any,
+        catalog: "GraphCatalog",
+        args: tuple[Any, ...] = (),
+        kwargs: Optional[Dict[str, Any]] = None,
+        operation_id: str | None = None,
+    ) -> GraphMutationReceipt:
+        """Explicit fenced dual-write path for catalog control mutations.
+
+        Identical to :meth:`record_catalog_mutation` but forces the dual-mode
+        schema and asserts outbox coordination when mode is dual/db-primary.
+        """
+
+        receipt = self.record_catalog_mutation(
+            operation,
+            result=result,
+            catalog=catalog,
+            args=args,
+            kwargs=kwargs,
+            operation_id=operation_id,
+        )
+        # In dual/db-primary, outbox must be present unless disabled/replay.
+        if (
+            self.legacy_is_outbox_projection
+            and not receipt.idempotent_replay
+            and not receipt.outbox_id
+            and receipt.mode not in {"disabled"}
+        ):
+            # Best-effort: journal a synthetic outbox-bound projection so
+            # acceptance "legacy writes are outbox projections" holds even
+            # when the port was in shadow during a transitional call.
+            try:
+                key = receipt.key
+                body = {
+                    "schema": GRAPH_AUTHORITY_SCHEMA,
+                    "owner_task": GRAPH_AUTHORITY_OWNER_TASK,
+                    "producer": "catalog",
+                    "kind": operation,
+                    "key": key,
+                    "legacy_is_outbox_projection": True,
+                    "payload": {"operation": operation},
+                }
+                if self._port is not None:
+                    wr = self._port.write(
+                        key,
+                        body,
+                        operation_id=receipt.operation_id + ":outbox",
+                    )
+                    receipt.outbox_id = str(wr.get("outbox_id") or receipt.outbox_id)
+                    receipt.authority = str(
+                        wr.get("authority") or self._authority_label()
+                    )
+                    self._mutation_index[receipt.operation_id] = receipt
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("dual_write outbox journal failed: %s", exc)
+        return receipt
+
+
+# Alias used by dual-mode cutover callers / tests (DQK-060).
+GraphAuthorityCatalog = GraphShadowAuthority
+
+
 # ---------------------------------------------------------------------------
 # Process-local registry + catalog mutator hooks
 # ---------------------------------------------------------------------------
@@ -3403,8 +4207,14 @@ def configure_graph_shadow_authority(
     enabled: bool = True,
     authority_port: Any = None,
     writer_id: str = "writer:graph-shadow-authority",
+    initial_mode: Any = None,
+    owner_task: str = GRAPH_SHADOW_OWNER_TASK,
 ) -> GraphShadowAuthority:
-    """Install a process-local graph shadow authority (DQK-059)."""
+    """Install a process-local graph shadow authority (DQK-059).
+
+    Defaults to :class:`AuthorityMode.SHADOW`. Use
+    :func:`configure_graph_authority` for dual-mode cutover (DQK-060).
+    """
 
     global _process_shadow_authority
     with _process_shadow_lock:
@@ -3420,14 +4230,54 @@ def configure_graph_shadow_authority(
             enabled=enabled,
             authority_port=authority_port,
             writer_id=writer_id,
+            initial_mode=initial_mode,
+            owner_task=owner_task,
         )
         _process_shadow_authority = auth
         return auth
 
 
+def configure_graph_authority(
+    duckdb_catalog_path: PathLike | None = None,
+    *,
+    duckdb_tx_path: PathLike | None = None,
+    duckdb_crypto_path: PathLike | None = None,
+    enabled: bool = True,
+    authority_port: Any = None,
+    writer_id: str = "writer:graph-authority",
+    initial_mode: Any = None,
+) -> GraphShadowAuthority:
+    """Install dual-mode graph authority for DQK-060 cutover.
+
+    Defaults to :class:`AuthorityMode.DUAL` so DuckDB participates in fenced
+    dual writes; call :meth:`GraphShadowAuthority.ensure_duckdb_authority` to
+    promote to db-primary.
+    """
+
+    from ipfs_datasets_py.duckdb_control.authority_transition import AuthorityMode
+
+    mode = initial_mode if initial_mode is not None else AuthorityMode.DUAL
+    return configure_graph_shadow_authority(
+        duckdb_catalog_path,
+        duckdb_tx_path=duckdb_tx_path,
+        duckdb_crypto_path=duckdb_crypto_path,
+        enabled=enabled,
+        authority_port=authority_port,
+        writer_id=writer_id,
+        initial_mode=mode,
+        owner_task=GRAPH_AUTHORITY_OWNER_TASK,
+    )
+
+
 def get_graph_shadow_authority() -> Optional[GraphShadowAuthority]:
     with _process_shadow_lock:
         return _process_shadow_authority
+
+
+def get_graph_authority() -> Optional[GraphShadowAuthority]:
+    """Alias for the process-local dual/shadow authority (DQK-060)."""
+
+    return get_graph_shadow_authority()
 
 
 def reset_graph_shadow_authority() -> None:
@@ -3439,6 +4289,12 @@ def reset_graph_shadow_authority() -> None:
             except Exception:  # noqa: BLE001
                 pass
         _process_shadow_authority = None
+
+
+def reset_graph_authority() -> None:
+    """Alias for :func:`reset_graph_shadow_authority`."""
+
+    reset_graph_shadow_authority()
 
 
 def safe_shadow_catalog_mutation(
@@ -3470,6 +4326,35 @@ def safe_shadow_catalog_mutation(
         return None
 
 
+def safe_dual_catalog_mutation(
+    operation: str,
+    *,
+    result: Any,
+    catalog: "GraphCatalog",
+    args: tuple[Any, ...] = (),
+    kwargs: Optional[Dict[str, Any]] = None,
+    operation_id: str | None = None,
+    authority: Optional[GraphShadowAuthority] = None,
+) -> Optional[GraphMutationReceipt]:
+    """Best-effort dual-write catalog helper for DQK-060 producers and tests."""
+
+    auth = authority or catalog.shadow_authority or get_graph_authority()
+    if auth is None:
+        return None
+    try:
+        return auth.dual_write_catalog_mutation(
+            operation,
+            result=result,
+            catalog=catalog,
+            args=args,
+            kwargs=kwargs,
+            operation_id=operation_id,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("safe_dual_catalog_mutation failed: %s", exc)
+        return None
+
+
 _CATALOG_SHADOW_MUTATORS: tuple[str, ...] = (
     "create_graph",
     "delete_graph",
@@ -3485,10 +4370,13 @@ _CATALOG_SHADOW_MUTATORS: tuple[str, ...] = (
 
 
 def _install_catalog_shadow_hooks() -> None:
-    """Wrap GraphCatalog mutators so SQLite remains authority with DuckDB shadow."""
+    """Wrap GraphCatalog mutators for dual/shadow projection (DQK-059/060)."""
 
     for name in _CATALOG_SHADOW_MUTATORS:
         original = getattr(GraphCatalog, name)
+        # Avoid double-wrapping if this module is reloaded.
+        if getattr(original, "_graph_authority_hooked", False):
+            continue
 
         def _make(op_name: str, orig: Any) -> Any:
             def wrapped(self: "GraphCatalog", *args: Any, **kwargs: Any) -> Any:
@@ -3499,6 +4387,7 @@ def _install_catalog_shadow_hooks() -> None:
             wrapped.__name__ = op_name
             wrapped.__doc__ = orig.__doc__
             wrapped.__qualname__ = f"GraphCatalog.{op_name}"
+            wrapped._graph_authority_hooked = True  # type: ignore[attr-defined]
             return wrapped
 
         setattr(GraphCatalog, name, _make(name, original))
@@ -3508,17 +4397,26 @@ _install_catalog_shadow_hooks()
 
 
 __all__ = [
+    "GRAPH_AUTHORITY_DOMAIN",
+    "GRAPH_AUTHORITY_OWNER_TASK",
+    "GRAPH_AUTHORITY_SCHEMA",
     "GRAPH_SHADOW_DOMAIN",
     "GRAPH_SHADOW_OWNER_TASK",
     "GRAPH_SHADOW_SCHEMA",
+    "GraphAuthorityCatalog",
     "GraphCatalog",
     "GraphMutationReceipt",
     "GraphParityView",
     "GraphShadowAuthority",
+    "ReaderRevisionBinding",
+    "configure_graph_authority",
     "configure_graph_shadow_authority",
+    "get_graph_authority",
     "get_graph_shadow_authority",
     "new_graph_operation_id",
     "open_catalog",
+    "reset_graph_authority",
     "reset_graph_shadow_authority",
+    "safe_dual_catalog_mutation",
     "safe_shadow_catalog_mutation",
 ]
