@@ -14,25 +14,25 @@ from .registry import StateScraperRegistry
 
 
 class FloridaScraper(BaseStateScraper):
-    """Scraper for Florida state laws."""
+    """Scraper for Florida state laws from https://www.leg.state.fl.us."""
 
     _TITLE_INDEX_RE = re.compile(r"App_mode=Display_Index&Title_Request=", re.IGNORECASE)
-    _CHAPTER_CONTENTS_RE = re.compile(r"URL=([0-9]{4}-[0-9]{4}/[0-9]{4}/[0-9]{4})ContentsIndex\.html", re.IGNORECASE)
-    
+    _CHAPTER_CONTENTS_RE = re.compile(
+        r"URL=([0-9]{4}-[0-9]{4}/[0-9]{4}/[0-9]{4})ContentsIndex\.html",
+        re.IGNORECASE,
+    )
+
     def get_base_url(self) -> str:
         """Get base URL for Florida statutes."""
-        return "http://www.leg.state.fl.us"
-    
+        return "https://www.leg.state.fl.us"
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Get list of Florida statutes."""
         base_url = self.get_base_url()
-        
-        codes = [
+        return [
             {"name": "Florida Statutes", "url": f"{base_url}/Statutes/", "type": "FS"},
         ]
-        
-        return codes
-    
+
     async def scrape_code(
         self,
         code_name: str,
@@ -40,6 +40,7 @@ class FloridaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape Florida statutes directly from official title/chapter indexes."""
+        # Uncapped when max_statutes is omitted (full-corpus daemon runs).
         limit = max(1, int(max_statutes)) if max_statutes else None
         statutes: List[NormalizedStatute] = []
         title_links = await self._discover_title_links(code_url)
@@ -71,7 +72,10 @@ class FloridaScraper(BaseStateScraper):
                 )
 
         if not statutes:
-            self.logger.warning("Florida official direct crawl returned no statutes; skipping generic recovery fallback")
+            self.logger.warning(
+                "Florida official direct crawl returned no statutes; "
+                "skipping generic recovery fallback"
+            )
         return statutes[:limit] if limit is not None else statutes
 
     async def _fetch_official_fl_html(self, url: str, timeout_seconds: int = 12) -> str:
