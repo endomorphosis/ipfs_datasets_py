@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import ast
 from collections.abc import Mapping, Sequence
+import base64
+import math
 import posixpath
 import unicodedata
 from typing import Any, Final
 
-from ipfs_datasets_py.logic.software_contracts.content import cid_for_structured, validate_structured_value
+from ipfs_datasets_py.logic.software_contracts.content import cid_for_structured, validate_cid, validate_structured_value
 from ipfs_datasets_py.logic.software_contracts.semantic_index.models import SEMANTIC_INDEX_SCHEMA, SemanticIndexModelError, SymbolKind
 
 
@@ -67,11 +69,32 @@ def normalize_ast(value: Any) -> Any:
     if isinstance(value, ast.AST):
         return {"_type": type(value).__name__, **{name: normalize_ast(getattr(value, name)) for name in value._fields}}
     if isinstance(value, Mapping):
-        return {str(key): normalize_ast(item) for key, item in sorted(value.items()) if key not in {"lineno", "col_offset", "end_lineno", "end_col_offset", "type_comment"}}
+        return {str(key): normalize_ast(item) for key, item in sorted(value.items()) if key not in {"lineno", "col_offset", "end_lineno", "end_col_offset"}}
     if isinstance(value, (list, tuple)):
         return [normalize_ast(item) for item in value]
     if value is None or type(value) in {bool, int, str}:
         return value
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise SemanticIndexModelError("normalized AST rejects non-finite float constants")
+        # ``float.hex`` is exact, including negative zero, and does not depend
+        # on a platform's decimal formatting choices.
+        return {"$semantic_literal": "float", "hex": value.hex()}
+    if type(value) is bytes:
+        return {
+            "$semantic_literal": "bytes",
+            "base64": base64.b64encode(value).decode("ascii"),
+        }
+    if type(value) is complex:
+        if not math.isfinite(value.real) or not math.isfinite(value.imag):
+            raise SemanticIndexModelError("normalized AST rejects non-finite complex constants")
+        return {
+            "$semantic_literal": "complex",
+            "real_hex": value.real.hex(),
+            "imag_hex": value.imag.hex(),
+        }
+    if value is Ellipsis:
+        return {"$semantic_literal": "ellipsis"}
     raise SemanticIndexModelError(f"normalized AST rejects {type(value).__name__}")
 
 
@@ -85,14 +108,18 @@ def _structured(value: Any, name: str) -> Any:
 
 def symbol_version_identity_payload(*, stable_id: str, normalized_ast: Any, signature: Mapping[str, Any] | None = None, decorators: Sequence[str] = (), annotations: Mapping[str, Any] | None = None, extractor_name: str = DEFAULT_EXTRACTOR_NAME, extractor_version: str = DEFAULT_EXTRACTOR_VERSION, semantic_index_schema: str = SEMANTIC_INDEX_SCHEMA, property_role: str | None = None) -> dict[str, Any]:
     """Return the normalized semantic projection bound by a version CID."""
-    normalized_decorators = sorted(_text(item, "decorator") for item in decorators)
-    if len(normalized_decorators) != len(set(normalized_decorators)):
-        raise SemanticIndexModelError("decorators must not contain duplicates")
+    # Decorator application is ordered and repeated decorators are meaningful.
+    # Do not treat this semantic sequence as a set.
+    normalized_decorators = [_text(item, "decorator") for item in decorators]
     if property_role is not None:
         property_role = _text(property_role, "property_role")
     if semantic_index_schema != SEMANTIC_INDEX_SCHEMA:
         raise SemanticIndexModelError("unsupported semantic-index schema")
-    payload = {"schema": SYMBOL_VERSION_ID_SCHEMA, "semantic_index_schema": semantic_index_schema, "extractor_name": _text(extractor_name, "extractor_name"), "extractor_version": _text(extractor_version, "extractor_version"), "stable_id": _text(stable_id, "stable_id"), "normalized_ast": normalize_ast(normalized_ast), "signature": dict(sorted((signature or {}).items())), "decorators": normalized_decorators, "property_role": property_role, "annotations": dict(sorted((annotations or {}).items()))}
+    try:
+        stable_id = validate_cid(stable_id)
+    except Exception as exc:
+        raise SemanticIndexModelError("stable_id must be a valid CID") from exc
+    payload = {"schema": SYMBOL_VERSION_ID_SCHEMA, "semantic_index_schema": semantic_index_schema, "extractor_name": _text(extractor_name, "extractor_name"), "extractor_version": _text(extractor_version, "extractor_version"), "stable_id": stable_id, "normalized_ast": normalize_ast(normalized_ast), "signature": dict(sorted((signature or {}).items())), "decorators": normalized_decorators, "property_role": property_role, "annotations": dict(sorted((annotations or {}).items()))}
     return _structured(payload, "version identity payload")
 
 

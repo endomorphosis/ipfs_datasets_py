@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 import posixpath
+from types import MappingProxyType
 import unicodedata
 from typing import Any, ClassVar, Iterable, Mapping, Sequence
 
@@ -115,15 +116,36 @@ def _cid(value: Any, name: str) -> str:
         raise SemanticIndexModelError(f"{name} must be a valid CID") from exc
 
 
-def _mapping(value: Any, name: str) -> dict[str, Any]:
+def _freeze_structured(value: Any) -> Any:
+    """Recursively freeze a value already admitted as strict DAG-JSON."""
+    if isinstance(value, Mapping):
+        return MappingProxyType({key: _freeze_structured(item) for key, item in value.items()})
+    if isinstance(value, list):
+        return tuple(_freeze_structured(item) for item in value)
+    return value
+
+
+def _thaw_structured(value: Any) -> Any:
+    """Return a detached strict DAG-JSON value suitable for serialization."""
+    if isinstance(value, Mapping):
+        return {key: _thaw_structured(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw_structured(item) for item in value]
+    return value
+
+
+def _mapping(value: Any, name: str, *, frozen: bool = True) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise SemanticIndexModelError(f"{name} must be a mapping")
-    result = dict(value)
+    # Values returned by an existing immutable record contain tuples and
+    # mapping proxies.  Rehydrate them before validating the durable JSON
+    # shape so ``dataclasses.replace`` remains safe and deterministic.
+    result = _thaw_structured(dict(value))
     try:
         validate_structured_value(result)
     except Exception as exc:
         raise SemanticIndexModelError(f"{name} must be strict DAG-JSON") from exc
-    return result
+    return _freeze_structured(result) if frozen else result
 
 
 def _closed(data: Mapping[str, Any], fields: frozenset[str], name: str) -> dict[str, Any]:
@@ -142,6 +164,11 @@ def _unique_sorted(values: Iterable[str], name: str) -> tuple[str, ...]:
     if len(ordered) != len(set(ordered)):
         raise SemanticIndexModelError(f"{name} must not contain duplicates")
     return ordered
+
+
+def _ordered_texts(values: Iterable[str], name: str) -> tuple[str, ...]:
+    """Preserve the order and multiplicity of a semantic sequence."""
+    return tuple(_text(value, name) for value in values)
 
 
 @dataclass(frozen=True, slots=True)
@@ -195,7 +222,7 @@ class ArtifactRecord:
         object.__setattr__(self, "metadata", _mapping(self.metadata, "metadata"))
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": ARTIFACT_SCHEMA, "artifact_id": self.artifact_id, "kind": self.kind, "path": self.path, "source_cid": self.source_cid, "confidence": self.confidence, "metadata": dict(sorted(self.metadata.items()))}
+        return {"schema": ARTIFACT_SCHEMA, "artifact_id": self.artifact_id, "kind": self.kind, "path": self.path, "source_cid": self.source_cid, "confidence": self.confidence, "metadata": _thaw_structured(self.metadata)}
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ArtifactRecord":
@@ -222,8 +249,14 @@ class SymbolRecord:
     decorators: Sequence[str] = ()
     annotations: Mapping[str, Any] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    # Older extractors may omit this projection.  When supplied, it makes the
+    # version CID self-verifying at the model boundary.
+    normalized_ast: Any | None = None
+    extractor_name: str = "python-cpython-ast"
+    extractor_version: str = "1"
+    property_role: str | None = None
 
-    _FIELDS: ClassVar[frozenset[str]] = frozenset({"schema", "stable_id", "version_cid", "repository_id", "language", "module_path", "qualified_name", "kind", "namespace", "source_cid", "span", "confidence", "signature", "decorators", "annotations", "metadata"})
+    _FIELDS: ClassVar[frozenset[str]] = frozenset({"schema", "stable_id", "version_cid", "repository_id", "language", "module_path", "qualified_name", "kind", "namespace", "source_cid", "span", "confidence", "signature", "decorators", "annotations", "metadata", "normalized_ast", "extractor_name", "extractor_version", "property_role"})
 
     def __post_init__(self) -> None:
         for name in ("stable_id", "version_cid"):
@@ -239,13 +272,42 @@ class SymbolRecord:
         if self.span is not None and not isinstance(self.span, SourceSpan):
             raise SemanticIndexModelError("span must be a SourceSpan or None")
         object.__setattr__(self, "confidence", _enum(self.confidence, AnalysisConfidence, "confidence"))
-        object.__setattr__(self, "signature", _mapping(self.signature, "signature"))
-        object.__setattr__(self, "decorators", _unique_sorted(self.decorators, "decorator"))
-        object.__setattr__(self, "annotations", _mapping(self.annotations, "annotations"))
+        object.__setattr__(self, "signature", _mapping(self.signature, "signature", frozen=False))
+        object.__setattr__(self, "decorators", _ordered_texts(self.decorators, "decorator"))
+        object.__setattr__(self, "annotations", _mapping(self.annotations, "annotations", frozen=False))
         object.__setattr__(self, "metadata", _mapping(self.metadata, "metadata"))
+        object.__setattr__(self, "extractor_name", _text(self.extractor_name, "extractor_name"))
+        object.__setattr__(self, "extractor_version", _text(self.extractor_version, "extractor_version"))
+        if self.property_role is not None:
+            object.__setattr__(self, "property_role", _text(self.property_role, "property_role"))
+        # Import lazily to avoid identity/models' intentional import cycle.
+        from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import (
+            normalize_ast,
+            stable_symbol_id,
+            symbol_version_cid,
+        )
+
+        expected_stable_id = stable_symbol_id(
+            self.repository_id, self.language, self.module_path,
+            self.qualified_name, self.kind, self.namespace,
+        )
+        if self.stable_id != expected_stable_id:
+            raise SemanticIndexModelError("stable_id does not verify symbol identity fields")
+        if self.normalized_ast is not None:
+            object.__setattr__(self, "normalized_ast", _freeze_structured(normalize_ast(self.normalized_ast)))
+            expected_version_cid = symbol_version_cid(
+                self.stable_id, _thaw_structured(self.normalized_ast),
+                _thaw_structured(self.signature), self.decorators,
+                _thaw_structured(self.annotations),
+                extractor_name=self.extractor_name,
+                extractor_version=self.extractor_version,
+                property_role=self.property_role,
+            )
+            if self.version_cid != expected_version_cid:
+                raise SemanticIndexModelError("version_cid does not verify symbol semantic fields")
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": SYMBOL_SCHEMA, "stable_id": self.stable_id, "version_cid": self.version_cid, "repository_id": self.repository_id, "language": self.language, "module_path": self.module_path, "qualified_name": self.qualified_name, "kind": self.kind, "namespace": self.namespace, "source_cid": self.source_cid, "span": None if self.span is None else self.span.to_dict(), "confidence": self.confidence, "signature": dict(sorted(self.signature.items())), "decorators": list(self.decorators), "annotations": dict(sorted(self.annotations.items())), "metadata": dict(sorted(self.metadata.items()))}
+        return {"schema": SYMBOL_SCHEMA, "stable_id": self.stable_id, "version_cid": self.version_cid, "repository_id": self.repository_id, "language": self.language, "module_path": self.module_path, "qualified_name": self.qualified_name, "kind": self.kind, "namespace": self.namespace, "source_cid": self.source_cid, "span": None if self.span is None else self.span.to_dict(), "confidence": self.confidence, "signature": _thaw_structured(self.signature), "decorators": list(self.decorators), "annotations": _thaw_structured(self.annotations), "metadata": _thaw_structured(self.metadata), "normalized_ast": None if self.normalized_ast is None else _thaw_structured(self.normalized_ast), "extractor_name": self.extractor_name, "extractor_version": self.extractor_version, "property_role": self.property_role}
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "SymbolRecord":
@@ -286,7 +348,7 @@ class DependencyEdge:
         return cid_for_structured(self.identity_payload())
 
     def identity_payload(self) -> dict[str, Any]:
-        return {"schema": EDGE_SCHEMA, "source_id": self.source_id, "target_id": self.target_id, "relation": self.relation, "extraction_method": self.extraction_method, "confidence": self.confidence, "extractor_version": self.extractor_version, "span": None if self.span is None else self.span.to_dict(), "metadata": dict(sorted(self.metadata.items()))}
+        return {"schema": EDGE_SCHEMA, "source_id": self.source_id, "target_id": self.target_id, "relation": self.relation, "extraction_method": self.extraction_method, "confidence": self.confidence, "extractor_version": self.extractor_version, "span": None if self.span is None else self.span.to_dict(), "metadata": _thaw_structured(self.metadata)}
 
     def to_dict(self) -> dict[str, Any]:
         value = self.identity_payload()
@@ -335,6 +397,8 @@ class RepositoryState:
         if any(not isinstance(item, SymbolRecord) for item in self.symbols): raise SemanticIndexModelError("symbols must be SymbolRecords")
         if any(not isinstance(item, ArtifactRecord) for item in self.artifacts): raise SemanticIndexModelError("artifacts must be ArtifactRecords")
         if any(not isinstance(item, DependencyEdge) for item in self.edges): raise SemanticIndexModelError("edges must be DependencyEdges")
+        if any(item.repository_id != self.repository_id for item in self.symbols):
+            raise SemanticIndexModelError("all symbols must have the RepositoryState repository_id")
         object.__setattr__(self, "symbols", _sorted_records(self.symbols, "stable_id", "symbols"))
         object.__setattr__(self, "artifacts", _sorted_records(self.artifacts, "artifact_id", "artifacts"))
         object.__setattr__(self, "edges", _sorted_records(self.edges, "edge_id", "edges"))
@@ -393,7 +457,7 @@ class RepositoryStateDelta:
             "deleted_symbol_ids": list(self.deleted_symbol_ids),
             "modified_symbol_ids": list(self.modified_symbol_ids),
             "unchanged_symbol_ids": list(self.unchanged_symbol_ids),
-            "rename_candidates": list(self.rename_candidates),
+            "rename_candidates": [_thaw_structured(item) for item in self.rename_candidates],
             "added_artifact_ids": list(self.added_artifact_ids),
             "deleted_artifact_ids": list(self.deleted_artifact_ids),
             "modified_artifact_ids": list(self.modified_artifact_ids),
@@ -439,7 +503,7 @@ class InvalidationObligation:
 
     @property
     def obligation_id(self) -> str: return cid_for_structured(self.identity_payload())
-    def identity_payload(self) -> dict[str, Any]: return {"schema": OBLIGATION_SCHEMA, "subject_id": self.subject_id, "reason_code": self.reason_code, "remediation_kind": self.remediation_kind, "confidence": self.confidence, "old_identity": self.old_identity, "new_identity": self.new_identity, "supporting_edge_ids": list(self.supporting_edge_ids), "details": dict(sorted(self.details.items()))}
+    def identity_payload(self) -> dict[str, Any]: return {"schema": OBLIGATION_SCHEMA, "subject_id": self.subject_id, "reason_code": self.reason_code, "remediation_kind": self.remediation_kind, "confidence": self.confidence, "old_identity": self.old_identity, "new_identity": self.new_identity, "supporting_edge_ids": list(self.supporting_edge_ids), "details": _thaw_structured(self.details)}
     def to_dict(self) -> dict[str, Any]: value = self.identity_payload(); value["obligation_id"] = self.obligation_id; return value
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "InvalidationObligation":
