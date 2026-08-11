@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from ipfs_datasets_py.logic.software_contracts.semantic_index.scanner import scan_repository_state
+import subprocess
+
+from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
+from ipfs_datasets_py.logic.software_contracts.semantic_index.scanner import RepositoryScanner, scan_repository_state
+from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import snapshot_repository
 
 
 def _symbols(state):
@@ -36,3 +40,39 @@ def test_syntax_failure_is_an_explicit_opaque_artifact(tmp_path) -> None:
     assert artifact.kind == "python-analysis"
     assert artifact.confidence == "opaque"
     assert artifact.metadata["diagnostics"]
+
+
+def test_clean_scan_uses_indexed_blob_not_smudged_worktree_bytes(tmp_path) -> None:
+    def git(*args: str) -> None:
+        subprocess.run(["git", *args], cwd=tmp_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    git("init")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "Test")
+    git("config", "filter.fixture.smudge", "sed s/indexed/smudged/g")
+    git("config", "filter.fixture.clean", "sed s/smudged/indexed/g")
+    (tmp_path / ".gitattributes").write_text("module.py filter=fixture\n", encoding="utf-8")
+    (tmp_path / "module.py").write_text("value = 'indexed'\n", encoding="utf-8")
+    git("add", ".")
+    git("commit", "-m", "initial")
+    (tmp_path / "module.py").unlink()
+    git("checkout", "--", "module.py")
+    assert "smudged" in (tmp_path / "module.py").read_text(encoding="utf-8")
+    snapshot = snapshot_repository(tmp_path)
+    state = RepositoryScanner().scan(tmp_path, snapshot=snapshot)
+    assert snapshot.mode == "git-clean"
+    assert snapshot.entries[1].path == "module.py"
+    module = _symbols(state)["module"]
+    assert module.source_cid == cid_for_bytes(b"value = 'indexed'\n")
+
+
+def test_working_file_mutation_after_snapshot_is_explicit_opaque_artifact(tmp_path) -> None:
+    path = tmp_path / "module.py"
+    path.write_text("value = 1\n", encoding="utf-8")
+    snapshot = snapshot_repository(tmp_path, repository_id="repo:race")
+    path.write_text("value = 2\n", encoding="utf-8")
+    state = RepositoryScanner(repository_id="repo:race").scan(tmp_path, snapshot=snapshot)
+    artifact = next(item for item in state.artifacts if item.path == "module.py")
+    assert artifact.confidence == "opaque"
+    assert artifact.metadata["opaque_reason"] == "source_cid_mismatch"
+    assert not state.symbols
