@@ -270,6 +270,12 @@
       }
     }
   },
+  "goal_evidence": {
+    "LogicParserReleaseReceipt@2": true,
+    "immutable-v1-predecessor-binding": true,
+    "schema": "logic-parser-release-goal-evidence/v2",
+    "wave2-release-validation": true
+  },
   "goal_id": "LFP2-G100",
   "interface": "LogicParserReleaseReceipt@2",
   "kernel_authority": false,
