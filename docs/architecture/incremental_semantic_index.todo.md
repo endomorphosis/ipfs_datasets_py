@@ -219,7 +219,7 @@ W8  ISI-032
 
 ## ISI-011 Build and traverse the typed symbol graph
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: symbol-graph
