@@ -311,7 +311,23 @@ def log_event(
     extra = kwargs.copy()
     extra[LogField.EVENT_TYPE.value] = event_type
     
+    # Legacy stream/file sink remains authority under DQK-077 shadow mode.
     logger.log(level, f"Event: {event_type}", extra=extra)
+
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            route_structured_log_event,
+        )
+
+        route_structured_log_event(
+            event_type=str(
+                event_type.value if hasattr(event_type, "value") else event_type
+            ),
+            fields=extra,
+            level=logging.getLevelName(level),
+        )
+    except Exception:
+        pass
 
 
 def log_error(
@@ -345,6 +361,19 @@ def log_error(
         exc_info=True,
         extra=extra
     )
+
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            route_structured_log_event,
+        )
+
+        route_structured_log_event(
+            event_type=EventType.ERROR_OCCURRED.value,
+            fields=extra,
+            level="ERROR",
+        )
+    except Exception:
+        pass
 
 
 def log_performance(

@@ -1,10 +1,13 @@
 """
 Logger configuration for IPFS Datasets MCP server.
 """
+from __future__ import annotations
+
 import logging
 import re
 import sys
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 _OPTIONAL_WARNING_PATTERNS = (
@@ -90,3 +93,44 @@ mcp_logger.setLevel(logging.INFO)
 # Ensure the log directory exists
 log_dir = Path.home() / ".ipfs_datasets"
 log_dir.mkdir(exist_ok=True)
+
+
+def log_mcp_event(
+    message: str,
+    *,
+    level: str = "INFO",
+    logger_name: str = "ipfs_datasets.mcp_server",
+    extra: Optional[Dict[str, Any]] = None,
+    event_id: Optional[str] = None,
+    operation_id: Optional[str] = None,
+) -> None:
+    """Log an MCP operational event to the legacy sink and observability shadow.
+
+    Legacy file / stderr handlers remain the selected authority under DQK-077
+    shadow mode. When the process-local observability shadow repository is
+    configured, a typed redacted projection is dual-written with a stable
+    event ID and parity receipt.
+    """
+
+    target = logging.getLogger(logger_name)
+    level_no = getattr(logging, str(level).upper(), logging.INFO)
+    if not isinstance(level_no, int):
+        level_no = logging.INFO
+    target.log(level_no, message, extra=dict(extra or {}))
+
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            route_mcp_log_event,
+        )
+
+        route_mcp_log_event(
+            message=message,
+            level=str(level).upper(),
+            logger_name=logger_name,
+            extra=extra,
+            event_id=event_id,
+            operation_id=operation_id,
+        )
+    except Exception:
+        pass
+

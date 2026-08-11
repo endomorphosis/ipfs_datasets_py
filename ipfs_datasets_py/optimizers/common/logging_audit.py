@@ -79,6 +79,7 @@ class LoggingAuditor:
                 content = f.read()
         except (OSError, UnicodeDecodeError, ValueError) as e:
             result.issues.append(f"Could not read file: {e}")
+            self._route_result(result)
             return result
         
         lines = content.split('\n')
@@ -136,8 +137,22 @@ class LoggingAuditor:
         # Check for missing logger init when methods exist
         if all_methods and not result.has_logger_init:
             result.issues.append("No logger initialization found but file has methods")
-        
+
+        self._route_result(result)
         return result
+
+    @staticmethod
+    def _route_result(result: LoggingAuditResult) -> None:
+        """DQK-077: project logging-audit findings into typed observability."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                route_logging_audit_result,
+            )
+
+            route_logging_audit_result(result)
+        except Exception:
+            pass
     
     def audit_directory(self) -> List[LoggingAuditResult]:
         """Scan entire optimizer directory.

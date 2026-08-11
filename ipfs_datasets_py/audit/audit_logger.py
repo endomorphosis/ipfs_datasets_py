@@ -481,6 +481,18 @@ class AuditLogger:
             self.notify_listeners(event)
             self._events.append(event)
 
+        # DQK-077: route through typed observability catalog (shadow mode).
+        # Legacy handlers remain the selected authority; failures never break
+        # the primary audit path.
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                route_audit_logger_event,
+            )
+
+            route_audit_logger_event(event)
+        except Exception as exc:  # noqa: BLE001
+            logging.debug("observability shadow route skipped: %s", exc)
+
         return event.event_id
 
     # Convenience methods for different audit levels

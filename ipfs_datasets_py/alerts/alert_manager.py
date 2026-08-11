@@ -298,8 +298,8 @@ class AlertManager:
                 role_names=rule.role_names if rule.role_names else None,
                 embed=embed
             )
-            
-            return {
+
+            result = {
                 'rule_id': rule.rule_id,
                 'rule_name': rule.name,
                 'severity': rule.severity,
@@ -308,14 +308,41 @@ class AlertManager:
                 'notification_result': send_result,
                 'timestamp': datetime.now().isoformat()
             }
+            self._route_alert_shadow(result, event)
+            return result
         
         except Exception as e:
             logger.error(f"Error sending notification: {e}", exc_info=True)
-            return {
+            result = {
                 'rule_id': rule.rule_id,
                 'status': 'error',
                 'error': f"Failed to send notification: {e}"
             }
+            self._route_alert_shadow(result, event)
+            return result
+
+    def _route_alert_shadow(
+        self,
+        result: Dict[str, Any],
+        event: Dict[str, Any],
+    ) -> None:
+        """DQK-077: dual-project alert outcomes into typed observability."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                route_alert_event,
+            )
+
+            route_alert_event(
+                rule_id=str(result.get("rule_id") or "unknown"),
+                rule_name=str(result.get("rule_name") or ""),
+                severity=str(result.get("severity") or "info"),
+                status=str(result.get("status") or "triggered"),
+                message=str(result.get("message") or result.get("error") or ""),
+                event_payload=event,
+            )
+        except Exception:
+            pass
     
     def _is_suppressed(self, rule_id: str, suppression_window: int) -> bool:
         """Check if a rule is currently suppressed."""
