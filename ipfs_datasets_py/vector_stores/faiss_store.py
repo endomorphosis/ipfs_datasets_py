@@ -300,6 +300,36 @@ class FAISSVectorStore(BaseVectorStore):
                 "id_mapping": {},
                 "reverse_id_mapping": {}
             })
+
+            # DuckDB shadow catalog (DQK-062); legacy remains authority.
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    safe_shadow_create,
+                )
+                safe_shadow_create(
+                    logical_name=collection_name,
+                    backend="faiss",
+                    dimension=int(dimension),
+                    dtype="float32",
+                    mapping={},
+                    metadata_json={
+                        "index_type": index_type,
+                        "producer": "faiss_store",
+                    },
+                    model_name=getattr(self, "model_name", None) or "faiss",
+                    model_provider="faiss",
+                    chunking_identity=kwargs.get(
+                        "chunking_identity", "chunk:faiss@1"
+                    ),
+                    normalization_identity=kwargs.get(
+                        "normalization_identity", "norm:l2@1"
+                    ),
+                    source_revision=kwargs.get("source_revision", "src-0"),
+                )
+            except Exception as shadow_exc:  # noqa: BLE001
+                logger.warning(
+                    "FAISS shadow create quarantined (legacy ok): %s", shadow_exc
+                )
             
             logger.info(f"Created FAISS collection: {collection_name}")
             return True
@@ -337,6 +367,16 @@ class FAISSVectorStore(BaseVectorStore):
                 os.remove(index_path)
             if os.path.exists(metadata_path):
                 os.remove(metadata_path)
+
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    safe_shadow_delete,
+                )
+                safe_shadow_delete(logical_name=collection_name, backend="faiss")
+            except Exception as shadow_exc:  # noqa: BLE001
+                logger.warning(
+                    "FAISS shadow delete quarantined (legacy ok): %s", shadow_exc
+                )
             
             logger.info(f"Deleted FAISS collection: {collection_name}")
             return True
@@ -432,6 +472,39 @@ class FAISSVectorStore(BaseVectorStore):
             "id_mapping": self.id_mapping[collection_name],
             "reverse_id_mapping": self.reverse_id_mapping[collection_name]
         })
+
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                safe_shadow_create,
+            )
+            dim = len(embeddings[0].embedding) if embeddings else self.dimension
+            safe_shadow_create(
+                logical_name=collection_name,
+                backend="faiss",
+                dimension=int(dim or 0) or 1,
+                dtype="float32",
+                mapping={
+                    pid: self.id_mapping[collection_name].get(pid, i)
+                    for i, pid in enumerate(point_ids)
+                },
+                vector_ids=point_ids,
+                vectors=[list(emb.embedding) for emb in embeddings],
+                metadata_json={
+                    "producer": "faiss_store",
+                    "id_mapping": dict(self.id_mapping[collection_name]),
+                },
+                model_name=(
+                    embeddings[0].model_name if embeddings and embeddings[0].model_name
+                    else "faiss"
+                ),
+                model_provider="faiss",
+                normalization_identity="norm:l2@1",
+                chunking_identity="chunk:faiss@1",
+            )
+        except Exception as shadow_exc:  # noqa: BLE001
+            logger.warning(
+                "FAISS shadow add quarantined (legacy ok): %s", shadow_exc
+            )
         
         logger.info(f"Added {len(embeddings)} embeddings to FAISS collection {collection_name}")
         return point_ids

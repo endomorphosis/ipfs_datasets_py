@@ -70,11 +70,18 @@ class VectorStoreManager:
         ```
     """
     
-    def __init__(self):
-        """Initialize vector store manager."""
+    def __init__(self, shadow_catalog: Optional[Any] = None):
+        """Initialize vector store manager.
+
+        Args:
+            shadow_catalog: Optional DuckDB :class:`VectorShadowCatalog` used to
+                dual-write lifecycle metadata while legacy stores remain
+                authoritative (DQK-062).
+        """
         self.stores: Dict[str, BaseVectorStore] = {}
         self.configs: Dict[str, UnifiedVectorStoreConfig] = {}
         self.bridges: Dict[tuple, VectorStoreBridge] = {}
+        self.shadow_catalog = shadow_catalog
         
         logger.info("Initialized VectorStoreManager")
     
@@ -98,6 +105,38 @@ class VectorStoreManager:
         
         if store_instance:
             self.stores[name] = store_instance
+
+        # Shadow collection metadata for the registered store (DQK-062).
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_shadow_catalog,
+                safe_shadow_create,
+            )
+            catalog = self.shadow_catalog or get_vector_shadow_catalog()
+            if catalog is not None and catalog.enabled:
+                backend = str(
+                    getattr(config.store_type, "value", config.store_type)
+                ).lower()
+                safe_shadow_create(
+                    logical_name=config.collection_name or name,
+                    backend=backend,
+                    dimension=int(getattr(config, "dimension", 0) or 1),
+                    dtype="float32",
+                    mapping={},
+                    metadata_json={
+                        "producer": "vector_stores.manager",
+                        "store_name": name,
+                    },
+                    model_provider=backend,
+                    model_name=backend,
+                    chunking_identity="chunk:manager@1",
+                    normalization_identity="norm:none@1",
+                    source_revision="src-0",
+                )
+        except Exception as shadow_exc:  # noqa: BLE001
+            logger.warning(
+                "Manager shadow register quarantined (legacy ok): %s", shadow_exc
+            )
         
         logger.info(f"Registered store '{name}' ({config.store_type})")
     

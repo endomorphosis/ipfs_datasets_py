@@ -238,6 +238,38 @@ class IPLDVectorStore:
         # Update the root CID
         self._update_root_cid()
 
+        # Shadow duplicate IPLD store metadata into DuckDB (DQK-062).
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                safe_shadow_create,
+            )
+            mapping = {str(vid): i for i, vid in enumerate(vector_ids)}
+            safe_shadow_create(
+                logical_name=f"ipld-processor-{self.dimension}",
+                backend="ipld_processor",
+                dimension=int(self.dimension),
+                dtype="float32",
+                mapping=mapping,
+                vector_ids=[str(v) for v in vector_ids],
+                vectors=[list(map(float, v)) for v in vectors],
+                metadata_json={
+                    "producer": "processors.storage.ipld.vector_store",
+                    "metric": self.metric,
+                    "root_cid": self.root_cid,
+                },
+                model_provider="ipld",
+                model_name="ipld-processor",
+                chunking_identity="chunk:ipld-processor@1",
+                normalization_identity=(
+                    "norm:l2@1" if self.metric == "cosine" else "norm:none@1"
+                ),
+                source_revision="src-ipld-processor",
+            )
+        except Exception as shadow_exc:  # noqa: BLE001
+            logging.warning(
+                "IPLD processor shadow quarantined (legacy ok): %s", shadow_exc
+            )
+
         return vector_ids
 
     def search(

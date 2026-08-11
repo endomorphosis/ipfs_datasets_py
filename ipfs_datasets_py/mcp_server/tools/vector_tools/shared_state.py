@@ -3,10 +3,15 @@ Shared state management for MCP vector tools.
 
 This module maintains state for vector indexes via ServerContext
 or global fallback for backward compatibility.
+
+Also binds the process-local DuckDB vector shadow catalog (DQK-062) so MCP
+create/list/delete entrypoints share mapping/count/query parity with adapter
+producers while legacy authority is retained.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, Optional, Union
 
 # Global manager instance (deprecated - use ServerContext instead)
 _global_manager = None
@@ -21,12 +26,53 @@ def _get_global_manager():
     if _global_manager is None:
         from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndexManager
         _global_manager = IPFSKnnIndexManager()
+        # Ensure a shared shadow catalog is available for MCP producers.
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_shadow_catalog,
+                configure_vector_shadow_catalog,
+            )
+            if get_vector_shadow_catalog() is None:
+                configure_vector_shadow_catalog(enabled=True)
+        except Exception:
+            pass
     return _global_manager
 
 def _reset_global_manager():
     """Reset the global manager (for testing purposes)."""
     global _global_manager
     _global_manager = None
+    try:
+        from ipfs_datasets_py.vector_stores.management_engine import (
+            reset_vector_shadow_catalog,
+        )
+        reset_vector_shadow_catalog()
+    except Exception:
+        pass
+
+
+def configure_mcp_vector_shadow_catalog(
+    catalog_path: Union[str, Path, None] = None,
+    *,
+    enabled: bool = True,
+) -> Any:
+    """Configure the process-local DuckDB shadow catalog for MCP tools."""
+
+    from ipfs_datasets_py.vector_stores.management_engine import (
+        configure_vector_shadow_catalog,
+    )
+    return configure_vector_shadow_catalog(
+        catalog_path, enabled=enabled, replace=True
+    )
+
+
+def get_mcp_vector_shadow_catalog() -> Any:
+    """Return the shared DuckDB vector shadow catalog (may be ``None``)."""
+
+    from ipfs_datasets_py.vector_stores.management_engine import (
+        get_vector_shadow_catalog,
+    )
+    return get_vector_shadow_catalog()
 
 # Main MCP functions for registration
 async def get_global_manager(context: Optional["ServerContext"] = None) -> Dict[str, Any]:
