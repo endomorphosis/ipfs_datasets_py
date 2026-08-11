@@ -1232,6 +1232,539 @@ def public_identity_bindings(public: TestPassPublicInputs) -> dict[str, str]:
     }
 
 
+# ---------------------------------------------------------------------------
+# V5: exact-byte PTR-160 composition (PTR-171 / native PTR-163 profile)
+# ---------------------------------------------------------------------------
+#
+# Codec split (mandatory):
+#   * TestPassReceipt@1  — canonical DAG-JSON, CIDv1/dag-json/sha2-256
+#   * RunnerPassAttestation@1 / RunnerTrustPolicy@1 — canonical DAG-CBOR,
+#     CIDv1/dag-cbor/sha2-256
+#
+# Native public inputs (ordered, 7 Fr as 0x-prefixed 32-byte BE hex) match
+# PTR-163 exactly.  Signature/trust evaluation is a local co-condition; the
+# circuit proves knowledge of the exact receipt/attestation openings.
+
+TEST_PASS_STATEMENT_V5_INTERFACE: Final = "TestPassStatementV5"
+TEST_PASS_STATEMENT_V5_VERSION: Final = 5
+TEST_PASS_V5_PUBLIC_INPUT_SCHEMA: Final = "test-pass-exact-byte-v5-public-inputs@1"
+TEST_PASS_V5_CIRCUIT_PROFILE: Final = "test-pass-exact-byte-v5-groth16@1"
+TEST_PASS_V5_RULESET_ID: Final = "test_pass_exact_byte_v5"
+TEST_PASS_V5_RECEIPT_INTERFACE: Final = "TestPassReceipt@1"
+TEST_PASS_V5_ATTESTATION_INTERFACE: Final = "RunnerPassAttestation@1"
+TEST_PASS_V5_POLICY_INTERFACE: Final = "RunnerTrustPolicy@1"
+TEST_PASS_V5_CAPACITY: Final = 128
+TEST_PASS_V5_PUBLIC_INPUT_COUNT: Final = 7
+TEST_PASS_V5_PUBLIC_INPUT_LABELS: Final = (
+    "receipt_digest_hi",
+    "receipt_digest_lo",
+    "attestation_digest_hi",
+    "attestation_digest_lo",
+    "receipt_len",
+    "attestation_len",
+    "circuit_version",
+)
+TEST_PASS_V5_PROFILE: Final = TEST_PASS_V5_CIRCUIT_PROFILE
+
+
+def _v5_multiformats() -> tuple[Any, Any]:
+    try:
+        from multiformats import CID, multihash
+    except ImportError as exc:  # pragma: no cover - installation dependent
+        raise TestPassStatementError("V5 requires multiformats") from exc
+    return CID, multihash
+
+
+def _v5_dag_cbor() -> Any:
+    try:
+        import dag_cbor
+    except ImportError as exc:  # pragma: no cover - installation dependent
+        raise TestPassStatementError("V5 requires dag-cbor") from exc
+    return dag_cbor
+
+
+def v5_cid_for_bytes(data: bytes, codec: str) -> str:
+    """Return CIDv1/base32/sha2-256 over *data* with the given multicodec name."""
+
+    if not isinstance(data, bytes) or not data:
+        raise TestPassStatementError("V5 CID input must be non-empty bytes")
+    if len(data) > MAX_RECEIPT_BYTES:
+        raise TestPassStatementError("V5 CID input exceeds bound")
+    CID, multihash = _v5_multiformats()
+    try:
+        return CID("base32", 1, codec, multihash.digest(data, "sha2-256")).encode()
+    except Exception as exc:
+        raise TestPassStatementError(f"V5 CID construction failed for codec={codec}") from exc
+
+
+def require_v5_cid(value: Any, field_name: str, *, codec: str | None = None) -> str:
+    """Reject labels, legacy digests, CIDv0 and non-canonical multihashes."""
+
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise TestPassStatementError(f"{field_name} must be a canonical CIDv1")
+    CID, _ = _v5_multiformats()
+    try:
+        parsed = CID.decode(value)
+    except Exception as exc:
+        raise TestPassStatementError(f"{field_name} is not a CID") from exc
+    if (
+        parsed.version != 1
+        or parsed.hashfun.name != "sha2-256"
+        or parsed.base.name != "base32"
+        or parsed.encode() != value
+        or (codec is not None and parsed.codec.name != codec)
+    ):
+        raise TestPassStatementError(f"{field_name} has an unsupported CID profile")
+    return value
+
+
+_V5_TOKEN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9:._/@+-]{0,255}$")
+
+
+def require_v5_identity(value: Any, field_name: str, *, codec: str | None = None) -> str:
+    """Accept a canonical CIDv1 or a bounded non-empty identity token.
+
+    Content identities for the openings themselves (receipt/attestation CIDs)
+    always use :func:`require_v5_cid`.  Capacity-fitting exact-byte fixtures may
+    bind shorter field tokens that still match byte-for-byte between the
+    decoded openings and the public vector.
+    """
+
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise TestPassStatementError(f"{field_name} must be non-empty text")
+    if len(value) > MAX_TEXT_CHARS:
+        raise TestPassStatementError(f"{field_name} exceeds bound")
+    if value.startswith("bafy") or value.startswith("bafk") or value.startswith("bagu"):
+        return require_v5_cid(value, field_name, codec=codec)
+    if not _V5_TOKEN_RE.match(value):
+        raise TestPassStatementError(f"{field_name} has an unsupported identity profile")
+    return value
+
+
+def canonical_dag_json_bytes(value: Mapping[str, Any]) -> bytes:
+    """Return the sole accepted canonical DAG-JSON encoding for a receipt map."""
+
+    if not isinstance(value, Mapping):
+        raise TestPassStatementError("DAG-JSON value must be a mapping")
+    # Reuse the finite, sorted-key DAG-JSON-compatible encoder already used by
+    # V1 digests so alternate JSON (spaces, key order, NaN) cannot re-encode.
+    encoded = _canonical_bytes(_json_ready(dict(value)))
+    if not encoded or len(encoded) > MAX_RECEIPT_BYTES:
+        raise TestPassStatementError("DAG-JSON artifact exceeds bound")
+    return encoded
+
+
+def decode_canonical_dag_json(data: bytes, field_name: str = "receipt_bytes") -> Mapping[str, Any]:
+    """Decode exact canonical DAG-JSON; alternate JSON is rejected."""
+
+    if not isinstance(data, bytes) or not data or len(data) > MAX_RECEIPT_BYTES:
+        raise TestPassStatementError(f"{field_name} must be bounded non-empty bytes")
+    try:
+        decoded = json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        raise TestPassStatementError(f"{field_name} is not DAG-JSON") from exc
+    if not isinstance(decoded, dict):
+        raise TestPassStatementError(f"{field_name} is not a DAG-JSON object")
+    if canonical_dag_json_bytes(decoded) != data:
+        raise TestPassStatementError(f"{field_name} is not strict canonical DAG-JSON")
+    return MappingProxyType(dict(decoded))
+
+
+def canonical_dag_cbor_bytes(value: Mapping[str, Any]) -> bytes:
+    """Return the sole accepted canonical DAG-CBOR encoding."""
+
+    if not isinstance(value, Mapping):
+        raise TestPassStatementError("DAG-CBOR value must be a mapping")
+    dag_cbor = _v5_dag_cbor()
+    try:
+        encoded = dag_cbor.encode(dict(value))
+    except Exception as exc:
+        raise TestPassStatementError("DAG-CBOR encoding failed") from exc
+    if not isinstance(encoded, bytes) or not encoded or len(encoded) > MAX_RECEIPT_BYTES:
+        raise TestPassStatementError("DAG-CBOR artifact exceeds bound")
+    # Round-trip enforces strict canonical form.
+    try:
+        decoded = dag_cbor.decode(encoded)
+        if not isinstance(decoded, dict) or dag_cbor.encode(decoded) != encoded:
+            raise TestPassStatementError("DAG-CBOR is not strict canonical form")
+    except TestPassStatementError:
+        raise
+    except Exception as exc:
+        raise TestPassStatementError("DAG-CBOR is not strict canonical form") from exc
+    return encoded
+
+
+def decode_canonical_dag_cbor(data: bytes, field_name: str = "attestation_bytes") -> Mapping[str, Any]:
+    """Decode exact canonical DAG-CBOR; JSON is never a fallback."""
+
+    if not isinstance(data, bytes) or not data or len(data) > MAX_RECEIPT_BYTES:
+        raise TestPassStatementError(f"{field_name} must be bounded non-empty bytes")
+    dag_cbor = _v5_dag_cbor()
+    try:
+        decoded = dag_cbor.decode(data)
+    except Exception as exc:
+        raise TestPassStatementError(f"{field_name} is not DAG-CBOR") from exc
+    if not isinstance(decoded, dict) or dag_cbor.encode(decoded) != data:
+        raise TestPassStatementError(f"{field_name} is not strict canonical DAG-CBOR")
+    return MappingProxyType(dict(decoded))
+
+
+def pad_v5_opening(message: bytes) -> tuple[bytes, int]:
+    """Return (capacity-padded buffer, length) expected by the native V5 circuit."""
+
+    if not isinstance(message, bytes) or not message:
+        raise TestPassStatementError("V5 opening must be non-empty bytes")
+    if len(message) > TEST_PASS_V5_CAPACITY:
+        raise TestPassStatementError(
+            f"V5 opening length {len(message)} exceeds capacity {TEST_PASS_V5_CAPACITY}"
+        )
+    buf = bytearray(TEST_PASS_V5_CAPACITY)
+    buf[: len(message)] = message
+    return bytes(buf), len(message)
+
+
+def v5_sha256_digest(message: bytes) -> bytes:
+    if not isinstance(message, bytes) or not message:
+        raise TestPassStatementError("V5 digest input must be non-empty bytes")
+    return hashlib.sha256(message).digest()
+
+
+def digest_to_u128_limb_hex(digest: bytes) -> tuple[str, str]:
+    """Split a 32-byte digest into two 0x-prefixed 32-byte BE limb encodings."""
+
+    if not isinstance(digest, bytes) or len(digest) != 32:
+        raise TestPassStatementError("digest must be 32 bytes")
+    hi = digest[:16]
+    lo = digest[16:]
+    return ("0x" + ("00" * 16) + hi.hex(), "0x" + ("00" * 16) + lo.hex())
+
+
+def length_to_field_hex(length: int) -> str:
+    if not isinstance(length, int) or isinstance(length, bool) or length < 1 or length > TEST_PASS_V5_CAPACITY:
+        raise TestPassStatementError("V5 length is out of bounds")
+    return "0x" + length.to_bytes(32, "big").hex()
+
+
+def circuit_version_field_hex() -> str:
+    return "0x" + TEST_PASS_STATEMENT_V5_VERSION.to_bytes(32, "big").hex()
+
+
+def native_public_inputs_from_openings(
+    receipt_bytes: bytes,
+    attestation_bytes: bytes,
+) -> list[str]:
+    """Build the complete ordered native public-input vector (7 × 0x32 hex)."""
+
+    r_pad, r_len = pad_v5_opening(receipt_bytes)
+    a_pad, a_len = pad_v5_opening(attestation_bytes)
+    # Digest only the exact prefix (matches native test_pass_v5_digest).
+    if any(b != 0 for b in r_pad[r_len:]) or any(b != 0 for b in a_pad[a_len:]):
+        raise TestPassStatementError("V5 padding must be zero after length")
+    r_hi, r_lo = digest_to_u128_limb_hex(v5_sha256_digest(receipt_bytes))
+    a_hi, a_lo = digest_to_u128_limb_hex(v5_sha256_digest(attestation_bytes))
+    return [
+        r_hi,
+        r_lo,
+        a_hi,
+        a_lo,
+        length_to_field_hex(r_len),
+        length_to_field_hex(a_len),
+        circuit_version_field_hex(),
+    ]
+
+
+def native_witness_payload(receipt_bytes: bytes, attestation_bytes: bytes) -> dict[str, Any]:
+    """Wire witness body expected by the native ``prove`` command for V5."""
+
+    r_pad, r_len = pad_v5_opening(receipt_bytes)
+    a_pad, a_len = pad_v5_opening(attestation_bytes)
+    return {
+        "private_axioms": [],
+        "theorem": "",
+        "axioms_commitment_hex": "00" * 32,
+        "theorem_hash_hex": "00" * 32,
+        "circuit_version": TEST_PASS_STATEMENT_V5_VERSION,
+        "ruleset_id": TEST_PASS_V5_RULESET_ID,
+        "test_pass_v5": {
+            "receipt_bytes_hex": r_pad.hex(),
+            "receipt_len": r_len,
+            "attestation_bytes_hex": a_pad.hex(),
+            "attestation_len": a_len,
+        },
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class TestPassPublicInputsV5:
+    """Verifier-visible V5 commitments: native wire vector plus semantic CIDs.
+
+    The ordered ``native_public_inputs`` vector is compared byte-for-byte to
+    the proof before native verify.  Semantic CIDs bind PTR-160 identities
+    that the local co-condition re-derives from the private openings.
+    """
+
+    native_public_inputs: tuple[str, ...]
+    receipt_cid: str
+    attestation_cid: str
+    execution_key_cid: str
+    runner_key_cid: str
+    policy_cid: str
+    candidate_context_cid: str
+    phase_root_cid: str
+    trace_root_cid: str
+    key_epoch: str
+    issuance_nonce: str
+    trust_domain: str
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.native_public_inputs, tuple)
+            or len(self.native_public_inputs) != TEST_PASS_V5_PUBLIC_INPUT_COUNT
+        ):
+            raise TestPassStatementError("V5 requires exactly 7 native public inputs")
+        for item in self.native_public_inputs:
+            if (
+                not isinstance(item, str)
+                or not item.startswith("0x")
+                or len(item) != 66
+                or any(ch not in "0123456789abcdefABCDEF" for ch in item[2:])
+            ):
+                raise TestPassStatementError("native public inputs must be 0x32 hex")
+        object.__setattr__(
+            self,
+            "receipt_cid",
+            require_v5_cid(self.receipt_cid, "receipt_cid", codec="dag-json"),
+        )
+        object.__setattr__(
+            self,
+            "attestation_cid",
+            require_v5_cid(self.attestation_cid, "attestation_cid", codec="dag-cbor"),
+        )
+        object.__setattr__(
+            self,
+            "policy_cid",
+            require_v5_identity(self.policy_cid, "policy_cid", codec="dag-cbor"),
+        )
+        for name in (
+            "execution_key_cid",
+            "runner_key_cid",
+            "candidate_context_cid",
+            "phase_root_cid",
+            "trace_root_cid",
+        ):
+            object.__setattr__(self, name, require_v5_identity(getattr(self, name), name))
+        for name in ("key_epoch", "issuance_nonce", "trust_domain"):
+            text = getattr(self, name)
+            if not isinstance(text, str) or not text or text != text.strip() or len(text) > MAX_TEXT_CHARS:
+                raise TestPassStatementError(f"invalid {name}")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "interface": TEST_PASS_STATEMENT_V5_INTERFACE,
+            "public_input_schema": TEST_PASS_V5_PUBLIC_INPUT_SCHEMA,
+            "circuit_profile": TEST_PASS_V5_CIRCUIT_PROFILE,
+            "native_public_inputs": list(self.native_public_inputs),
+            "receipt_cid": self.receipt_cid,
+            "attestation_cid": self.attestation_cid,
+            "execution_key_cid": self.execution_key_cid,
+            "runner_key_cid": self.runner_key_cid,
+            "policy_cid": self.policy_cid,
+            "candidate_context_cid": self.candidate_context_cid,
+            "phase_root_cid": self.phase_root_cid,
+            "trace_root_cid": self.trace_root_cid,
+            "key_epoch": self.key_epoch,
+            "issuance_nonce": self.issuance_nonce,
+            "trust_domain": self.trust_domain,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class TestPassPrivateWitnessV5:
+    """Private V5 openings: exact receipt and attestation bytes only."""
+
+    receipt_bytes: bytes
+    attestation_bytes: bytes
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.receipt_bytes, (bytes, bytearray)) or not self.receipt_bytes:
+            raise TestPassStatementError("receipt_bytes must be non-empty bytes")
+        if not isinstance(self.attestation_bytes, (bytes, bytearray)) or not self.attestation_bytes:
+            raise TestPassStatementError("attestation_bytes must be non-empty bytes")
+        raw_r = bytes(self.receipt_bytes)
+        raw_a = bytes(self.attestation_bytes)
+        if len(raw_r) > MAX_RECEIPT_BYTES or len(raw_a) > MAX_RECEIPT_BYTES:
+            raise TestPassStatementError("V5 openings exceed bound")
+        # Reject alternate JSON / non-canonical encodings at construction.
+        decode_canonical_dag_json(raw_r, "receipt_bytes")
+        decode_canonical_dag_cbor(raw_a, "attestation_bytes")
+        object.__setattr__(self, "receipt_bytes", raw_r)
+        object.__setattr__(self, "attestation_bytes", raw_a)
+
+    def padded_openings(self) -> tuple[bytes, int, bytes, int]:
+        r_pad, r_len = pad_v5_opening(self.receipt_bytes)
+        a_pad, a_len = pad_v5_opening(self.attestation_bytes)
+        return r_pad, r_len, a_pad, a_len
+
+    def native_public_inputs(self) -> list[str]:
+        return native_public_inputs_from_openings(self.receipt_bytes, self.attestation_bytes)
+
+    def native_witness(self) -> dict[str, Any]:
+        return native_witness_payload(self.receipt_bytes, self.attestation_bytes)
+
+
+@dataclass(frozen=True, slots=True)
+class TestPassStatementV5:
+    """Native V5 relation over exact receipt and attestation openings."""
+
+    public_inputs: TestPassPublicInputsV5
+
+    interface: str = TEST_PASS_STATEMENT_V5_INTERFACE
+    version: int = TEST_PASS_STATEMENT_V5_VERSION
+    circuit_profile: str = TEST_PASS_V5_CIRCUIT_PROFILE
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.public_inputs, TestPassPublicInputsV5):
+            raise TestPassStatementError("V5 requires TestPassPublicInputsV5")
+        if self.interface != TEST_PASS_STATEMENT_V5_INTERFACE:
+            raise TestPassStatementError("unsupported V5 statement interface")
+        if self.version != TEST_PASS_STATEMENT_V5_VERSION:
+            raise TestPassStatementError("unsupported V5 statement version")
+        if self.circuit_profile != TEST_PASS_V5_CIRCUIT_PROFILE:
+            raise TestPassStatementError("unsupported V5 circuit profile")
+
+    def to_public_inputs(self) -> dict[str, Any]:
+        return self.public_inputs.to_dict()
+
+    def assert_witness_satisfies(self, witness: TestPassPrivateWitnessV5) -> None:
+        """Bind openings: codecs, CIDs, typed fields, native public-input vector.
+
+        Receipt openings must re-encode as canonical DAG-JSON; attestation
+        openings as canonical DAG-CBOR.  Capacity-constrained padding is
+        enforced so the openings are admissible to the native V5 circuit.
+        """
+
+        if not isinstance(witness, TestPassPrivateWitnessV5):
+            raise TestPassStatementError("V5 requires TestPassPrivateWitnessV5")
+        public = self.public_inputs
+
+        # Capacity-constrained padding must be well-formed for native prove.
+        pad_v5_opening(witness.receipt_bytes)
+        pad_v5_opening(witness.attestation_bytes)
+
+        # Exact native public-input equality (ordered 0x32 hex vector).
+        derived = witness.native_public_inputs()
+        if tuple(derived) != public.native_public_inputs:
+            raise TestPassStatementError(
+                "native public-input vector does not match TestPassStatementV5"
+            )
+
+        # Codec-correct CID rederivation from exact openings.
+        receipt_cid = v5_cid_for_bytes(witness.receipt_bytes, "dag-json")
+        attestation_cid = v5_cid_for_bytes(witness.attestation_bytes, "dag-cbor")
+        if receipt_cid != public.receipt_cid:
+            raise TestPassStatementError("receipt bytes do not open receipt_cid")
+        if attestation_cid != public.attestation_cid:
+            raise TestPassStatementError("attestation bytes do not open attestation_cid")
+
+        receipt = decode_canonical_dag_json(witness.receipt_bytes, "receipt_bytes")
+        attestation = decode_canonical_dag_cbor(witness.attestation_bytes, "attestation_bytes")
+
+        if receipt.get("interface") != TEST_PASS_V5_RECEIPT_INTERFACE:
+            raise TestPassStatementError("receipt is not TestPassReceipt@1")
+        if attestation.get("interface") != TEST_PASS_V5_ATTESTATION_INTERFACE:
+            raise TestPassStatementError("attestation is not RunnerPassAttestation@1")
+
+        # Bind receipt execution/context/phase/trace when present.  Capacity-fitting
+        # exact-byte fixtures may omit optional fields; explicit values must match.
+        if "execution_key_cid" in receipt and receipt.get("execution_key_cid") != public.execution_key_cid:
+            raise TestPassStatementError("receipt execution_key_cid mismatch")
+        if "policy_cid" in receipt and receipt.get("policy_cid") != public.policy_cid:
+            raise TestPassStatementError("receipt policy_cid mismatch")
+        if receipt.get("trust_domain") not in (None, "", public.trust_domain) and receipt.get(
+            "trust_domain"
+        ) != public.trust_domain:
+            raise TestPassStatementError("receipt trust_domain mismatch")
+        for phase in ("setup_outcome", "call_outcome", "teardown_outcome"):
+            if phase in receipt and receipt.get(phase) != "pass":
+                raise TestPassStatementError(f"receipt {phase} is not pass")
+        if receipt.get("admitted") is False:
+            raise TestPassStatementError("receipt is not admitted")
+        disq = receipt.get("disqualifying_states") or receipt.get("disqualifying_bits") or ()
+        if disq:
+            raise TestPassStatementError("receipt carries disqualifying states")
+
+        # Bind attestation pass/key/policy/nonce/epoch fields when present.
+        expected_att = {
+            "receipt_cid": public.receipt_cid,
+            "execution_key_cid": public.execution_key_cid,
+            "candidate_context_cid": public.candidate_context_cid,
+            "phase_root_cid": public.phase_root_cid,
+            "trace_root_cid": public.trace_root_cid,
+            "policy_cid": public.policy_cid,
+            "signer_key_cid": public.runner_key_cid,
+            "key_epoch": public.key_epoch,
+            "issuance_nonce": public.issuance_nonce,
+            "trust_domain": public.trust_domain,
+        }
+        for name, value in expected_att.items():
+            if name in attestation and attestation.get(name) != value:
+                raise TestPassStatementError(f"attestation {name} does not match V5 public input")
+
+
+def build_statement_v5_from_openings(
+    receipt_bytes: bytes,
+    attestation_bytes: bytes,
+    *,
+    execution_key_cid: str | None = None,
+    runner_key_cid: str | None = None,
+    policy_cid: str | None = None,
+    candidate_context_cid: str | None = None,
+    phase_root_cid: str | None = None,
+    trace_root_cid: str | None = None,
+    key_epoch: str | None = None,
+    issuance_nonce: str | None = None,
+    trust_domain: str | None = None,
+) -> tuple[TestPassStatementV5, TestPassPrivateWitnessV5]:
+    """Compose a V5 statement/witness pair from exact openings.
+
+    Semantic fields default from the decoded openings when omitted.  Callers
+    may override only when the override still matches the openings.
+    """
+
+    witness = TestPassPrivateWitnessV5(
+        receipt_bytes=receipt_bytes, attestation_bytes=attestation_bytes
+    )
+    receipt = decode_canonical_dag_json(witness.receipt_bytes, "receipt_bytes")
+    attestation = decode_canonical_dag_cbor(witness.attestation_bytes, "attestation_bytes")
+    public = TestPassPublicInputsV5(
+        native_public_inputs=tuple(witness.native_public_inputs()),
+        receipt_cid=v5_cid_for_bytes(witness.receipt_bytes, "dag-json"),
+        attestation_cid=v5_cid_for_bytes(witness.attestation_bytes, "dag-cbor"),
+        execution_key_cid=execution_key_cid or str(attestation.get("execution_key_cid") or receipt.get("execution_key_cid") or ""),
+        runner_key_cid=runner_key_cid or str(attestation.get("signer_key_cid") or ""),
+        policy_cid=policy_cid or str(attestation.get("policy_cid") or receipt.get("policy_cid") or ""),
+        candidate_context_cid=candidate_context_cid or str(attestation.get("candidate_context_cid") or ""),
+        phase_root_cid=phase_root_cid or str(attestation.get("phase_root_cid") or ""),
+        trace_root_cid=trace_root_cid or str(attestation.get("trace_root_cid") or ""),
+        key_epoch=key_epoch or str(attestation.get("key_epoch") or ""),
+        issuance_nonce=issuance_nonce or str(attestation.get("issuance_nonce") or ""),
+        trust_domain=trust_domain or str(attestation.get("trust_domain") or receipt.get("trust_domain") or ""),
+    )
+    statement = TestPassStatementV5(public_inputs=public)
+    statement.assert_witness_satisfies(witness)
+    return statement, witness
+
+
+def v5_statement_can_authorize_skip(statement: Any) -> bool:
+    """Type gate used at the reuse boundary; V1–V4 always remain RUN."""
+
+    return isinstance(statement, TestPassStatementV5)
+
+
+def is_test_pass_statement_v5(value: Any) -> bool:
+    return isinstance(value, TestPassStatementV5)
+
+
 __all__ = [
     "DISQUALIFYING_BITS",
     "MAX_PUBLIC_INPUT_KEYS",
@@ -1249,18 +1782,50 @@ __all__ = [
     "TEST_PASS_RULESET_ID",
     "TEST_PASS_STATEMENT_INTERFACE",
     "TEST_PASS_STATEMENT_VERSION",
+    "TEST_PASS_STATEMENT_V5_INTERFACE",
+    "TEST_PASS_STATEMENT_V5_VERSION",
+    "TEST_PASS_V5_ATTESTATION_INTERFACE",
+    "TEST_PASS_V5_CAPACITY",
+    "TEST_PASS_V5_CIRCUIT_PROFILE",
+    "TEST_PASS_V5_POLICY_INTERFACE",
+    "TEST_PASS_V5_PROFILE",
+    "TEST_PASS_V5_PUBLIC_INPUT_COUNT",
+    "TEST_PASS_V5_PUBLIC_INPUT_LABELS",
+    "TEST_PASS_V5_PUBLIC_INPUT_SCHEMA",
+    "TEST_PASS_V5_RECEIPT_INTERFACE",
+    "TEST_PASS_V5_RULESET_ID",
     "TestPassPrivateWitness",
+    "TestPassPrivateWitnessV5",
     "TestPassPublicInputs",
+    "TestPassPublicInputsV5",
     "TestPassStatementError",
     "TestPassStatementV1",
+    "TestPassStatementV5",
     "assert_witness_satisfies",
     "build_public_inputs",
     "build_statement",
     "build_statement_from_receipt",
+    "build_statement_v5_from_openings",
+    "canonical_dag_cbor_bytes",
+    "canonical_dag_json_bytes",
+    "circuit_version_field_hex",
     "compute_receipt_cid",
     "content_digest_of_bytes",
+    "decode_canonical_dag_cbor",
+    "decode_canonical_dag_json",
+    "digest_to_u128_limb_hex",
     "disqualifying_bits_present",
+    "is_test_pass_statement_v5",
+    "length_to_field_hex",
+    "native_public_inputs_from_openings",
+    "native_witness_payload",
+    "pad_v5_opening",
     "phases_all_pass",
     "public_identity_bindings",
+    "require_v5_cid",
+    "require_v5_identity",
+    "v5_cid_for_bytes",
+    "v5_sha256_digest",
+    "v5_statement_can_authorize_skip",
     "validate_public_inputs",
 ]

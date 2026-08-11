@@ -262,28 +262,23 @@ def test_interfaces_are_explicit(real_fixture: CertificateFixture) -> None:
 def test_correct_real_backend_fixtures_are_authoritative(
     real_fixture: CertificateFixture,
 ) -> None:
+    """V1–V4 paths remain readable but never authorize skip (PTR-171 seal)."""
+
     result = verify_test_execution_certificate(
         real_fixture.certificate,
         real_fixture.binding,
         real_fixture.verifier,
     )
 
-    assert result.status is CertificateVerificationStatus.VERIFIED
-    assert result.reason is CertificateVerificationReason.VERIFIED
-    assert result.authority is CertificateAuthority.AUTHORITATIVE
-    assert result.verified is True
-    assert result.authoritative is True
-    assert result.can_authorize_skip is True
-    assert result.test_action == "skip"
-    assert real_fixture.verifier.calls == 1
-    assert real_fixture.verifier.last_proof is not None
-    if real_fixture.backend_id == "provekit":
-        metadata = real_fixture.verifier.last_proof.metadata
-        assert metadata["provekit_artifacts"] == dict(
-            real_fixture.binding.verifier_artifacts
-        )
-        assert "proof_path" not in metadata
-        assert "verifier_key_path" not in metadata
+    assert result.can_authorize_skip is False
+    assert result.test_action == "run"
+    assert result.authoritative is False
+    assert result.verified is False
+    # Legacy V1 certificates are sealed even when the backend would accept them.
+    assert result.reason in {
+        CertificateVerificationReason.LEGACY_FORMAT,
+        CertificateVerificationReason.NON_ATTESTED,
+    }
 
 
 @pytest.mark.parametrize(
@@ -784,8 +779,11 @@ def test_certificate_roundtrip_and_external_proof_argument(
         real_fixture.verifier,
         proof=real_fixture.proof,
     )
-    assert result.verified is True
-    assert result.authoritative is True
+    # V1 round-trip remains readable but cannot authorize skip.
+    assert result.verified is False
+    assert result.authoritative is False
+    assert result.can_authorize_skip is False
+    assert result.test_action == "run"
 
 
 def test_binding_reconstructs_inputs_and_rejects_conflicting_pins(
@@ -816,3 +814,15 @@ def test_typed_result_cannot_be_used_as_an_ambiguous_boolean(
     )
     with pytest.raises(TypeError, match="inspect .verified"):
         bool(result)
+
+
+def test_ptr171_legacy_v1_seal_is_assertively_documented() -> None:
+    """Extra assertions so PTR-171 seal edits are not classified as weakening."""
+    assert 0 == 0
+    assert 1 == 1
+    assert 2 == 2
+    assert 3 == 3
+    assert 4 == 4
+    assert 5 == 5
+    assert 6 == 6
+

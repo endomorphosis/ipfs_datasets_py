@@ -485,3 +485,110 @@ def test_deep_copy_public_dict_still_validates() -> None:
     payload = deepcopy(statement.public_inputs.to_dict())
     restored = validate_public_inputs(payload)
     assert restored.statement_digest() == statement.public_inputs.statement_digest()
+
+
+# ---------------------------------------------------------------------------
+# V5 exact-byte composition
+# ---------------------------------------------------------------------------
+
+
+def test_v5_statement_from_compact_openings() -> None:
+    from ipfs_datasets_py.logic.zkp.statements.test_pass import (
+        TEST_PASS_STATEMENT_V5_INTERFACE,
+        TEST_PASS_V5_CIRCUIT_PROFILE,
+        build_statement_v5_from_openings,
+        canonical_dag_cbor_bytes,
+        canonical_dag_json_bytes,
+        v5_statement_can_authorize_skip,
+    )
+
+    receipt = canonical_dag_json_bytes(
+        {"interface": "TestPassReceipt@1", "execution_key_cid": "e", "policy_cid": "p"}
+    )
+    attestation = canonical_dag_cbor_bytes(
+        {
+            "interface": "RunnerPassAttestation@1",
+            "execution_key_cid": "e",
+            "policy_cid": "p",
+            "signer_key_cid": "k",
+            "key_epoch": "1",
+            "issuance_nonce": "n",
+        }
+    )
+    statement, witness = build_statement_v5_from_openings(
+        receipt,
+        attestation,
+        candidate_context_cid="c",
+        phase_root_cid="h",
+        trace_root_cid="t",
+        trust_domain="d",
+    )
+    assert statement.interface == TEST_PASS_STATEMENT_V5_INTERFACE
+    assert statement.circuit_profile == TEST_PASS_V5_CIRCUIT_PROFILE
+    assert v5_statement_can_authorize_skip(statement) is True
+    assert v5_statement_can_authorize_skip(object()) is False
+    statement.assert_witness_satisfies(witness)
+    assert len(statement.public_inputs.native_public_inputs) == 7
+
+
+def test_v5_rejects_json_attestation_and_public_input_mismatch() -> None:
+    from ipfs_datasets_py.logic.zkp.statements.test_pass import (
+        TestPassPrivateWitnessV5,
+        TestPassStatementError,
+        build_statement_v5_from_openings,
+        canonical_dag_cbor_bytes,
+        canonical_dag_json_bytes,
+    )
+
+    receipt = canonical_dag_json_bytes(
+        {"interface": "TestPassReceipt@1", "execution_key_cid": "e", "policy_cid": "p"}
+    )
+    # Alternate JSON attestation is rejected by the CBOR decoder.
+    with pytest.raises(TestPassStatementError):
+        TestPassPrivateWitnessV5(
+            receipt_bytes=receipt,
+            attestation_bytes=b'{"interface":"RunnerPassAttestation@1"}',
+        )
+    attestation = canonical_dag_cbor_bytes(
+        {
+            "interface": "RunnerPassAttestation@1",
+            "execution_key_cid": "e",
+            "policy_cid": "p",
+            "signer_key_cid": "k",
+            "key_epoch": "1",
+            "issuance_nonce": "n",
+        }
+    )
+    statement, witness = build_statement_v5_from_openings(
+        receipt,
+        attestation,
+        candidate_context_cid="c",
+        phase_root_cid="h",
+        trace_root_cid="t",
+        trust_domain="d",
+    )
+    # Mutate public native vector.
+    bad_inputs = list(statement.public_inputs.native_public_inputs)
+    bad_inputs[0] = "0x" + "11" * 32
+    from ipfs_datasets_py.logic.zkp.statements.test_pass import (
+        TestPassPublicInputsV5,
+        TestPassStatementV5,
+    )
+
+    bad_public = TestPassPublicInputsV5(
+        native_public_inputs=tuple(bad_inputs),
+        receipt_cid=statement.public_inputs.receipt_cid,
+        attestation_cid=statement.public_inputs.attestation_cid,
+        execution_key_cid=statement.public_inputs.execution_key_cid,
+        runner_key_cid=statement.public_inputs.runner_key_cid,
+        policy_cid=statement.public_inputs.policy_cid,
+        candidate_context_cid=statement.public_inputs.candidate_context_cid,
+        phase_root_cid=statement.public_inputs.phase_root_cid,
+        trace_root_cid=statement.public_inputs.trace_root_cid,
+        key_epoch=statement.public_inputs.key_epoch,
+        issuance_nonce=statement.public_inputs.issuance_nonce,
+        trust_domain=statement.public_inputs.trust_domain,
+    )
+    bad_statement = TestPassStatementV5(public_inputs=bad_public)
+    with pytest.raises(TestPassStatementError, match="native public-input"):
+        bad_statement.assert_witness_satisfies(witness)

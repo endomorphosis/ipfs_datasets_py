@@ -93,6 +93,7 @@ class CertificateVerificationStatus(StrEnum):
     VERIFIED = "verified"
     REJECTED = "rejected"
     UNAVAILABLE = "unavailable"
+    DEFERRED = "deferred"
 
 
 class CertificateVerificationReason(StrEnum):
@@ -118,6 +119,11 @@ class CertificateVerificationReason(StrEnum):
     POLICY_MISMATCH = "policy_mismatch"
     PUBLIC_INPUTS_MISMATCH = "public_inputs_mismatch"
     REPLAY_DETECTED = "replay_detected"
+    LEGACY_FORMAT = "legacy_format"
+    RUNNER_ATTESTATION_REJECTED = "runner_attestation_rejected"
+    NATIVE_RELEASE_DEFERRED = "native_release_deferred"
+    HASH_ONLY_OPENING = "hash_only_opening"
+    SIMULATED_OPENING = "simulated_opening"
 
     # Readable aliases retained for integrations that phrase substitutions as
     # "wrong X" rather than "X mismatch".
@@ -187,7 +193,10 @@ class CertificateVerificationResult:
 
     @property
     def available(self) -> bool:
-        return self.status is not CertificateVerificationStatus.UNAVAILABLE
+        return self.status not in (
+            CertificateVerificationStatus.UNAVAILABLE,
+            CertificateVerificationStatus.DEFERRED,
+        )
 
     @property
     def authoritative(self) -> bool:
@@ -198,6 +207,7 @@ class CertificateVerificationResult:
 
     @property
     def can_authorize_skip(self) -> bool:
+        # V1–V4, hash-only, simulated, deferred and rejected paths never skip.
         return self.authoritative
 
     @property
@@ -206,7 +216,7 @@ class CertificateVerificationResult:
 
     @property
     def test_action(self) -> str:
-        return "skip" if self.authoritative else "run"
+        return "skip" if self.can_authorize_skip else "run"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -942,13 +952,152 @@ def verify_test_execution_certificate(
             certificate_id=certificate_id,
         )
 
+    # V1–V4 certificate path: cryptographic verify may succeed for serialization
+    # exercises, but production skip authority is sealed to the V5 path only.
+    return CertificateVerificationResult(
+        status=CertificateVerificationStatus.REJECTED,
+        reason=CertificateVerificationReason.LEGACY_FORMAT,
+        authority=CertificateAuthority.NON_ATTESTED,
+        detail="V1-V4 certificates cannot authorize skip; use TestPassStatementV5",
+        backend_id=backend_id,
+        certificate_id=certificate_id,
+    )
+
+
+def verify_test_execution_certificate_v5(
+    statement: Any,
+    witness: Any,
+    proof: Any,
+    provider: Any,
+    *,
+    policy_bytes: bytes,
+    pinned_policy_cid: str,
+    pinned_public_key_material: bytes,
+    candidate_context_cid: str | None = None,
+    now: int | None = None,
+) -> CertificateVerificationResult:
+    """V5 authority path: local attestation first, pinned native proof second.
+
+    Rejects booleans, lambdas, generic callables, self-claiming providers,
+    arbitrary proof bytes, V1–V4 statements, hash-only digests and simulated
+    openings.  Only the concrete immutable-manifest-pinned
+    :class:`NativeGroth16V5Provider` can yield ``VERIFIED``.
+    """
+
+    from .statements.test_pass import (
+        TestPassPrivateWitnessV5,
+        TestPassStatementV1,
+        TestPassStatementV5,
+        v5_statement_can_authorize_skip,
+    )
+    from .test_certificate_assurance import (
+        is_locally_verified_runner_assurance,
+        verify_local_runner_attestation_v5,
+    )
+    from .test_pass_groth16_provider import (
+        NativeGroth16V5Proof,
+        NativeGroth16V5Status,
+        is_native_groth16_v5_provider,
+    )
+
+    # Seal every legacy / callback / simulated authority path to RUN.
+    if isinstance(statement, TestPassStatementV1) or (
+        statement is not None and not isinstance(statement, TestPassStatementV5)
+    ):
+        return _reject(
+            CertificateVerificationReason.LEGACY_FORMAT,
+            "only TestPassStatementV5 can authorize reuse",
+        )
+    if proof is True or callable(proof) or proof is False or proof is None:
+        return _reject(
+            CertificateVerificationReason.NON_ATTESTED,
+            "True/lambda/callable/self-claim proofs cannot authorize skip",
+        )
+    if provider is True or callable(provider) or not is_native_groth16_v5_provider(provider):
+        return _reject(
+            CertificateVerificationReason.NON_ATTESTED,
+            "only the concrete NativeGroth16V5Provider can yield VERIFIED",
+        )
+    if not isinstance(statement, TestPassStatementV5) or not isinstance(
+        witness, TestPassPrivateWitnessV5
+    ):
+        return _reject(
+            CertificateVerificationReason.LEGACY_FORMAT,
+            "only TestPassStatementV5 with TestPassPrivateWitnessV5 can authorize reuse",
+        )
+    if not isinstance(proof, NativeGroth16V5Proof):
+        return _reject(
+            CertificateVerificationReason.NON_ATTESTED,
+            "V5 requires NativeGroth16V5Proof; arbitrary proof inputs are rejected",
+        )
+    if not v5_statement_can_authorize_skip(statement):
+        return _reject(
+            CertificateVerificationReason.LEGACY_FORMAT,
+            "statement type cannot authorize skip",
+        )
+
+    # Detect hash-only / simulated openings (no typed interface payload).
+    try:
+        from .statements.test_pass import decode_canonical_dag_json, decode_canonical_dag_cbor
+
+        receipt_map = decode_canonical_dag_json(witness.receipt_bytes, "receipt_bytes")
+        attestation_map = decode_canonical_dag_cbor(
+            witness.attestation_bytes, "attestation_bytes"
+        )
+    except Exception:
+        return _reject(
+            CertificateVerificationReason.HASH_ONLY_OPENING,
+            "hash-only or non-canonical openings cannot authorize skip",
+        )
+    if "simulated" in str(receipt_map).lower() or "simulated" in str(attestation_map).lower():
+        return _reject(
+            CertificateVerificationReason.SIMULATED_OPENING,
+            "simulated openings cannot authorize skip",
+        )
+
+    assurance = verify_local_runner_attestation_v5(
+        statement,
+        witness,
+        policy_bytes=policy_bytes,
+        pinned_policy_cid=pinned_policy_cid,
+        pinned_public_key_material=pinned_public_key_material,
+        candidate_context_cid=candidate_context_cid,
+        now=now,
+    )
+    if not is_locally_verified_runner_assurance(assurance):
+        return _reject(
+            CertificateVerificationReason.RUNNER_ATTESTATION_REJECTED,
+            assurance.reason,
+        )
+
+    # Complete native public-input equality before native verify.
+    if tuple(proof.public_inputs) != statement.public_inputs.native_public_inputs:
+        return _reject(
+            CertificateVerificationReason.PUBLIC_INPUTS_MISMATCH,
+            "proof public inputs differ from TestPassStatementV5",
+        )
+
+    result = provider.verify(statement, proof)
+    if result.status is NativeGroth16V5Status.DEFERRED:
+        return CertificateVerificationResult(
+            status=CertificateVerificationStatus.DEFERRED,
+            reason=CertificateVerificationReason.NATIVE_RELEASE_DEFERRED,
+            authority=CertificateAuthority.NON_ATTESTED,
+            detail=result.reason,
+            backend_id="groth16-native-v5",
+        )
+    if result.status is not NativeGroth16V5Status.READY:
+        return _reject(
+            CertificateVerificationReason.PROOF_INVALID,
+            result.reason,
+            backend_id="groth16-native-v5",
+        )
     return CertificateVerificationResult(
         status=CertificateVerificationStatus.VERIFIED,
         reason=CertificateVerificationReason.VERIFIED,
         authority=CertificateAuthority.AUTHORITATIVE,
-        detail="proof and all local certificate bindings verified",
-        backend_id=backend_id,
-        certificate_id=certificate_id,
+        detail="V5 runner attestation and pinned native Groth16 proof verified",
+        backend_id="groth16-native-v5",
     )
 
 
@@ -964,4 +1113,5 @@ __all__ = [
     "TestPassCircuitBinding",
     "TestPassCircuitBindingError",
     "verify_test_execution_certificate",
+    "verify_test_execution_certificate_v5",
 ]

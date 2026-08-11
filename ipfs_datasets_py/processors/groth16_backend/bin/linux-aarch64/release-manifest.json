@@ -1,0 +1,51 @@
+{
+  "architecture": "linux-aarch64",
+  "binary": {
+    "path": "groth16",
+    "sha256": "1a61cd53f4c7d5d36ac622974d9efa72f07c4a3210671bfe2222bb34600e2eff",
+    "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)"
+  },
+  "profiles": {
+    "test-pass-exact-byte-v5-groth16@1": {
+      "circuit_version": 5,
+      "proving_key_present": false,
+      "public_input_count": 7,
+      "public_inputs": [
+        "receipt_digest_hi",
+        "receipt_digest_lo",
+        "attestation_digest_hi",
+        "attestation_digest_lo",
+        "receipt_len",
+        "attestation_len",
+        "circuit_version"
+      ],
+      "reason": "production proving/verifying keys are not staged; tests use ephemeral setup only",
+      "status": "unavailable",
+      "verifying_key_present": false
+    }
+  },
+  "schema": "ipfs-datasets/groth16-release-manifest@1",
+  "source": {
+    "build_rs_sha256": "04ca30d15b8b59bbce4ac6c38b35700d41889439a5d9edbad1ff5fcabe130102",
+    "build_sh_sha256": "cdb463f74252067423a135457ab8ec54dae45f0fc08ee81fb62b5a19baa3b348",
+    "cargo_lock_sha256": "9d141e5a7de0010169b04d4507dd48a34ea166c172852ef0349eac69d7d836da",
+    "cargo_toml_sha256": "e334184e1ba901f53e3e9e7dbb4717486ce12691b85da74ef04228b13244fc2d",
+    "circuit_rs_sha256": "ea7817c038b24d85b0f11221fb0eaf8d319ae6a034e9cdc1af911344d3a69836",
+    "domain_rs_sha256": "ebf8d163568d1a482bd4ed33f1fecdeb3d8e9b1093019ed43b16bd2e3b6a6fe7",
+    "lib_rs_sha256": "260a7fb627ba569534df3013bcacc2a1c071e2f1b128a7c36e0309341f21e0f4",
+    "main_rs_sha256": "ba2edadfff8c503fe6411b6afeeeab7e4d2ddce0538ea259bfea6469837bee26",
+    "prover_rs_sha256": "f24c2d575f0fa816a4a0a3d7737df17d0d85662c5170db88a898d01f1937014a",
+    "revision": "dba1aa0d346eecfcda49abb80f54e7fa89bdcfd5",
+    "setup_rs_sha256": "819badb4027717b37a12ada0d195e5b24f54c2f0675750283b9862b23d4a7cb7",
+    "v5_capacity_bytes": 128,
+    "v5_circuit_version": 5,
+    "v5_profile_id": "test-pass-exact-byte-v5-groth16@1",
+    "v5_public_input_count": 7,
+    "verifier_rs_sha256": "d7ce651aa3742f5f29a187e31019063c411939656f0cf7121a2aab52e701eb26"
+  },
+  "trusted_setup": {
+    "generated_during_build": false,
+    "generated_during_package_install": false,
+    "v5_requires_explicit_operator_or_test_ceremony": true
+  }
+}

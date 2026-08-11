@@ -17,9 +17,14 @@ from types import MappingProxyType
 from typing import Any, Final
 
 from .. import ZKPProof
-from ..statements.test_pass import TestPassStatementV1
+from ..statements.test_pass import (
+    TEST_PASS_V5_CIRCUIT_PROFILE,
+    TestPassStatementV1,
+    TestPassStatementV5,
+)
 
 TEST_PASS_CIRCUIT_BINDING_INTERFACE: Final = "TestPassCircuitBinding@1"
+TEST_PASS_CIRCUIT_BINDING_V5_INTERFACE: Final = "TestPassCircuitBindingV5@1"
 DEFAULT_MAX_TEST_PASS_PROOF_BYTES: Final = 4 * 1024 * 1024
 REAL_TEST_PASS_BACKENDS: Final = frozenset({"groth16", "provekit"})
 
@@ -53,6 +58,25 @@ class TestPassCircuitBindingError(ValueError):
     """Raised when a verifier-side test-pass binding is unsafe or malformed."""
 
     __test__ = False
+
+
+@dataclass(frozen=True, slots=True)
+class TestPassCircuitBindingV5:
+    """Closed V5 profile; legacy bindings and provider aliases cannot enter."""
+
+    statement: TestPassStatementV5
+    circuit_profile: str = TEST_PASS_V5_CIRCUIT_PROFILE
+    interface: str = TEST_PASS_CIRCUIT_BINDING_V5_INTERFACE
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.statement, TestPassStatementV5):
+            raise TestPassCircuitBindingError("V5 binding requires TestPassStatementV5")
+        if self.circuit_profile != TEST_PASS_V5_CIRCUIT_PROFILE:
+            raise TestPassCircuitBindingError(
+                "V5 binding requires the exact native circuit profile"
+            )
+        if self.interface != TEST_PASS_CIRCUIT_BINDING_V5_INTERFACE:
+            raise TestPassCircuitBindingError("unsupported V5 binding interface")
 
 
 def normalize_backend_id(value: Any) -> str:
@@ -400,8 +424,10 @@ __all__ = [
     "DEFAULT_MAX_TEST_PASS_PROOF_BYTES",
     "REAL_TEST_PASS_BACKENDS",
     "TEST_PASS_CIRCUIT_BINDING_INTERFACE",
+    "TEST_PASS_CIRCUIT_BINDING_V5_INTERFACE",
     "TestPassCircuitBinding",
     "TestPassCircuitBindingError",
+    "TestPassCircuitBindingV5",
     "backend_looks_available",
     "normalize_backend_id",
     "normalize_proof_system_id",
