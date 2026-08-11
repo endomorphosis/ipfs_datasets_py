@@ -345,6 +345,16 @@ class ProofCache:
         if repository is not None:
             repository.register_backend(self._shadow_backend)
 
+    def bind_authority_repository(
+        self,
+        repository: Any,
+        *,
+        backend: Optional[str] = None,
+    ) -> None:
+        """Bind this cache to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
     def _shadow_write(
         self,
         *,
@@ -549,11 +559,38 @@ class ProofCache:
         return payload
 
     def _persist_cache(self, *, replace_existing: bool = False) -> None:
-        """Atomically checkpoint JSON-safe CID entries to disk."""
+        """Atomically checkpoint JSON-safe CID entries to disk.
+
+        After DQK-066 promotion, whole-file JSON rewrites are forbidden; mutable
+        authority lives in DuckDB.  Dual mode still dual-writes for parity.
+        """
 
         if not self.enable_persistence or not self.persistence_path:
             return
         path = Path(self.persistence_path)
+        repo = self.shadow_repository
+        if repo is not None and hasattr(repo, "assert_json_rewrite_allowed"):
+            try:
+                family = None
+                if hasattr(repo, "backend_family"):
+                    try:
+                        family = family_for_backend(self._shadow_backend)
+                    except Exception:
+                        family = None
+                # Only block when the bound repository is fully promoted.
+                if getattr(repo, "is_promoted", False):
+                    repo.assert_json_rewrite_allowed(
+                        family, path=str(path), backend=self._shadow_backend
+                    )
+            except ProofAuthorityJSONRewriteError:
+                with self.lock:
+                    self.stats["persistence_errors"] = (
+                        int(self.stats.get("persistence_errors") or 0) + 1
+                    )
+                    self.stats["json_rewrite_blocks"] = (
+                        int(self.stats.get("json_rewrite_blocks") or 0) + 1
+                    )
+                raise
         temporary_path: Optional[Path] = None
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -591,6 +628,8 @@ class ProofCache:
                         os.close(directory_fd)
                 with self.lock:
                     self.stats["persistence_writes"] += 1
+        except ProofAuthorityJSONRewriteError:
+            raise
         except (OSError, TypeError, ValueError) as exc:
             with self.lock:
                 self.stats["persistence_errors"] += 1
@@ -1172,6 +1211,13 @@ PROOF_SHADOW_INTERFACE = "UnifiedProofShadowRepository@1"
 PROOF_SHADOW_SCHEMA_VERSION = "unified-proof-shadow/v1"
 PROOF_SHADOW_RECEIPT_SCHEMA = "unified-proof-shadow-receipt/v1"
 
+# DQK-066: dual-mode → promoted authority surface (extends shadow repository).
+PROOF_AUTHORITY_INTERFACE = "UnifiedProofAuthorityRepository@1"
+PROOF_AUTHORITY_SCHEMA_VERSION = "unified-proof-authority/v1"
+PROOF_AUTHORITY_OWNER_TASK = "DQK-066"
+PROOF_AUTHORITY_DOMAIN = "proof"
+PROOF_AUTHORITY_RECEIPT_SCHEMA = "unified-proof-authority-receipt/v1"
+
 
 class ProofShadowError(ValueError):
     """Fail-closed rejection for shadow repository operations."""
@@ -1183,6 +1229,22 @@ class ProofShadowTrustError(ProofShadowError):
 
 class ProofShadowIdentityError(ProofShadowError):
     """Raised when solver/toolchain/premise/policy identities are incompatible."""
+
+
+class ProofAuthorityError(ProofShadowError):
+    """Fail-closed rejection for dual/promoted proof authority operations."""
+
+
+class ProofAuthorityJSONRewriteError(ProofAuthorityError):
+    """Raised when a promoted family attempts a whole-file JSON rewrite."""
+
+
+class ProofAuthorityRevocationError(ProofAuthorityError):
+    """Raised when a revoked entry is used as authority."""
+
+
+class ProofAuthorityTamperError(ProofAuthorityError):
+    """Raised when stored entry integrity fails (tamper detection)."""
 
 
 class LegacyProofBackend(StrEnum):
@@ -1370,14 +1432,20 @@ class _CorpusIndexMutation:
 
 
 class UnifiedProofShadowRepository:
-    """Unified repository façade for every legacy proof-cache producer (DQK-065).
+    """Unified repository façade for every legacy proof-cache producer.
 
-    Shadow mode keeps legacy caches as the caller-facing authority while every
-    lookup/write, single-flight claim, attempt, attestation, invalidation, and
-    corpus-index mutation is also applied to the unified DuckDB proof store /
-    coordinator / service.  Hits never cross incompatible solver, toolchain,
-    premise, or policy identities.  Trust mismatches fail closed.
-    Immutable envelope bytes and CIDs are retained by reference only.
+    **DQK-065 (shadow):** legacy caches remain caller-facing authority while
+    every lookup/write, single-flight claim, attempt, attestation,
+    invalidation, and corpus-index mutation is projected into the unified
+    DuckDB proof store / coordinator / service.
+
+    **DQK-066 (dual → promoted):** mutable proof cache, corpus index,
+    single-flight, expiry, invalidation, revocation, access statistics, and
+    scheduler state promote to DuckDB authority.  Promoted families forbid
+    whole-file JSON rewrites.  Hits never cross incompatible solver,
+    toolchain, premise, or policy identities.  Trust mismatches and tampered
+    entries fail closed.  Immutable envelope bytes and CIDs are retained by
+    reference only; the corpus index rebuilds from those envelopes.
     """
 
     def __init__(
@@ -1389,6 +1457,8 @@ class UnifiedProofShadowRepository:
         owner_id: str = "owner:proof-shadow",
         mode: str = "shadow",
         clock: Callable[[], float] | None = None,
+        positive_ttl_seconds: float | None = None,
+        negative_ttl_seconds: float | None = None,
     ) -> None:
         from .duckdb_proof_coordination import (  # noqa: PLC0415
             build_duckdb_proof_coordinator,
@@ -1410,17 +1480,30 @@ class UnifiedProofShadowRepository:
         )
         self._promotion = PromotionState()
         self._owner_id = str(owner_id or "owner:proof-shadow")
+        self._AuthorityMode = AuthorityMode
+
+        store_kwargs: Dict[str, Any] = {}
+        if positive_ttl_seconds is not None:
+            store_kwargs["positive_ttl_seconds"] = float(positive_ttl_seconds)
+        if negative_ttl_seconds is not None:
+            store_kwargs["negative_ttl_seconds"] = float(negative_ttl_seconds)
 
         if service is not None:
             self._service = service
             self._coordinator = service.coordinator
             self._store = service.store
         else:
-            self._store = store if store is not None else build_duckdb_proof_store()
+            self._store = (
+                store
+                if store is not None
+                else build_duckdb_proof_store(**store_kwargs)
+            )
             self._coordinator = (
                 coordinator
                 if coordinator is not None
-                else build_duckdb_proof_coordinator(store=self._store, clock=self._clock)
+                else build_duckdb_proof_coordinator(
+                    store=self._store, clock=self._clock
+                )
             )
             self._service = build_duckdb_proof_service(
                 coordinator=self._coordinator,
@@ -1434,7 +1517,17 @@ class UnifiedProofShadowRepository:
         self._receipts: list[ProofShadowDifferentialReceipt] = []
         self._attestations: list[dict[str, Any]] = []
         self._corpus_index: dict[str, _CorpusIndexMutation] = {}
+        # content_id -> immutable envelope material for index rebuild
+        self._immutable_envelopes: dict[str, Dict[str, Any]] = {}
         self._legacy_payloads: dict[tuple[str, str], Any] = {}
+        # entry_digest -> revocation record
+        self._revocations: dict[str, Dict[str, Any]] = {}
+        # key_digest -> access counters
+        self._access: dict[str, Dict[str, Any]] = {}
+        # plan_id -> scheduler state snapshot
+        self._scheduler_state: dict[str, Dict[str, Any]] = {}
+        self._authority_decisions: list[Dict[str, Any]] = []
+        self._restart_generation: int = 0
         self._stats = {
             "lookups": 0,
             "writes": 0,
@@ -1442,10 +1535,19 @@ class UnifiedProofShadowRepository:
             "attempts": 0,
             "attestations": 0,
             "invalidations": 0,
+            "revocations": 0,
+            "expirations": 0,
+            "tamper_rejections": 0,
+            "json_rewrite_blocks": 0,
             "corpus_index_mutations": 0,
+            "corpus_index_rebuilds": 0,
+            "access_records": 0,
+            "scheduler_records": 0,
             "identity_rejections": 0,
             "trust_rejections": 0,
             "receipts": 0,
+            "restarts": 0,
+            "promotions": 0,
         }
         # Pre-register every expected legacy backend so differential coverage
         # is complete once each has performed at least one operation.
@@ -1458,10 +1560,14 @@ class UnifiedProofShadowRepository:
 
     @property
     def interface(self) -> str:
+        if self.is_authority_mode:
+            return PROOF_AUTHORITY_INTERFACE
         return PROOF_SHADOW_INTERFACE
 
     @property
     def schema_version(self) -> str:
+        if self.is_authority_mode:
+            return PROOF_AUTHORITY_SCHEMA_VERSION
         return PROOF_SHADOW_SCHEMA_VERSION
 
     @property
@@ -1485,10 +1591,52 @@ class UnifiedProofShadowRepository:
         )
 
     @property
+    def is_authority_mode(self) -> bool:
+        """True when dual, promoted, or export-only (DuckDB is authoritative)."""
+
+        mode = self.mode
+        return mode in {
+            self._AuthorityMode.DUAL.value,
+            self._AuthorityMode.PROMOTED.value,
+            self._AuthorityMode.EXPORT_ONLY.value,
+            "db-primary",
+            "db_primary",
+        }
+
+    @property
+    def is_promoted(self) -> bool:
+        mode = self.mode
+        return mode in {
+            self._AuthorityMode.PROMOTED.value,
+            self._AuthorityMode.EXPORT_ONLY.value,
+            "db-primary",
+            "db_primary",
+        }
+
+    @property
+    def duckdb_is_authority(self) -> bool:
+        """Reads of mutable proof state prefer DuckDB in dual/promoted modes."""
+
+        return self.is_authority_mode
+
+    @property
     def authority_dimensions(self) -> Tuple[str, ...]:
         from .duckdb_proof_store import PROOF_AUTHORITY_DIMENSIONS  # noqa: PLC0415
 
         return PROOF_AUTHORITY_DIMENSIONS
+
+    @property
+    def owner_task_id(self) -> str:
+        return PROOF_AUTHORITY_OWNER_TASK if self.is_authority_mode else "DQK-065"
+
+    @property
+    def domain(self) -> str:
+        return PROOF_AUTHORITY_DOMAIN
+
+    @property
+    def restart_generation(self) -> int:
+        with self._lock:
+            return self._restart_generation
 
     def stats(self) -> Dict[str, Any]:
         with self._lock:
@@ -1497,6 +1645,12 @@ class UnifiedProofShadowRepository:
                 "backends": len(self._backends),
                 "receipt_count": len(self._receipts),
                 "corpus_index_size": len(self._corpus_index),
+                "revocation_count": len(self._revocations),
+                "scheduler_state_count": len(self._scheduler_state),
+                "restart_generation": self._restart_generation,
+                "mode": self.mode,
+                "duckdb_is_authority": self.duckdb_is_authority,
+                "is_promoted": self.is_promoted,
                 "store": dict(self._store.stats()),
                 "coordinator": dict(self._coordinator.stats()),
             }
@@ -1792,6 +1946,7 @@ class UnifiedProofShadowRepository:
             # Materialize the unified entry from the store.
             entry = self._store.get(key)
             if entry is None:
+                self._record_access_locked(key.digest, miss=True)
                 self._emit_receipt_locked(
                     backend=parsed,
                     operation="lookup",
@@ -1805,10 +1960,55 @@ class UnifiedProofShadowRepository:
                 )
                 return None
 
+            # Integrity / tamper: rehash entry digests fail closed.
+            try:
+                entry = entry.verify_integrity()
+            except Exception as error:
+                self._stats["tamper_rejections"] += 1
+                self._record_access_locked(key.digest, rejection=True)
+                self._emit_receipt_locked(
+                    backend=parsed,
+                    operation="lookup",
+                    key_digest=key.digest,
+                    legacy_entry_digest="",
+                    store_entry_digest=getattr(entry, "entry_digest", ""),
+                    digests_match=False,
+                    present_in_legacy=False,
+                    present_in_store=True,
+                    reason=f"tamper:{error}",
+                    envelope=getattr(entry, "envelope", None),
+                )
+                raise ProofAuthorityTamperError(
+                    f"proof entry failed integrity rehash: {error}"
+                ) from error
+
+            # Revocation is authoritative in dual/promoted modes.
+            revocation = self._revocations.get(entry.entry_digest) or self._revocations.get(
+                f"key:{key.digest}"
+            )
+            if revocation is not None:
+                self._record_access_locked(key.digest, rejection=True)
+                self._emit_receipt_locked(
+                    backend=parsed,
+                    operation="lookup",
+                    key_digest=key.digest,
+                    legacy_entry_digest="",
+                    store_entry_digest=entry.entry_digest,
+                    digests_match=False,
+                    present_in_legacy=False,
+                    present_in_store=True,
+                    reason=f"revoked:{revocation.get('reason', '')}",
+                    envelope=entry.envelope,
+                )
+                raise ProofAuthorityRevocationError(
+                    f"proof entry revoked: {revocation.get('reason', 'revoked')}"
+                )
+
             # Fail closed if the stored key's identities drift.
             try:
                 self.assert_compatible_identities(key, entry.key)
             except ProofShadowIdentityError:
+                self._record_access_locked(key.digest, rejection=True)
                 self._emit_receipt_locked(
                     backend=parsed,
                     operation="lookup",
@@ -1828,6 +2028,7 @@ class UnifiedProofShadowRepository:
                     entry.require_trust_at_most(max_trust_level)
                 except DuckDBProofStoreAuthorityError as error:
                     self._stats["trust_rejections"] += 1
+                    self._record_access_locked(key.digest, rejection=True)
                     self._emit_receipt_locked(
                         backend=parsed,
                         operation="lookup",
@@ -1846,6 +2047,7 @@ class UnifiedProofShadowRepository:
             legacy_digest = (
                 _legacy_digest(legacy_payload) if legacy_payload is not None else ""
             )
+            self._record_access_locked(key.digest, hit=True)
             self._emit_receipt_locked(
                 backend=parsed,
                 operation="lookup",
@@ -1996,10 +2198,33 @@ class UnifiedProofShadowRepository:
             else:
                 self._store.put(entry, now=now)
 
+            # Retain immutable envelope material for corpus-index rebuilds.
+            if entry.envelope is not None:
+                content_id = str(entry.envelope.content_id or "")
+                if content_id:
+                    self._immutable_envelopes[content_id] = {
+                        "content_id": content_id,
+                        "content_digest": str(entry.envelope.content_digest or ""),
+                        "byte_size": int(entry.envelope.byte_size or 0),
+                        "media_type": str(
+                            getattr(entry.envelope, "media_type", "") or ""
+                        ),
+                        "key_digest": key.digest,
+                        "backend": parsed.value,
+                        "entry_digest": entry.entry_digest,
+                        "created_at": now,
+                    }
+
+            self._record_access_locked(key.digest, write=True)
             legacy_digest = (
                 _legacy_digest(legacy_payload)
                 if legacy_payload is not None
                 else _legacy_digest(payload)
+            )
+            reason = (
+                "authority_write"
+                if self.is_authority_mode
+                else "shadow_write"
             )
             self._emit_receipt_locked(
                 backend=parsed,
@@ -2010,7 +2235,7 @@ class UnifiedProofShadowRepository:
                 digests_match=True,
                 present_in_legacy=True,
                 present_in_store=True,
-                reason="shadow_write",
+                reason=reason,
                 envelope=entry.envelope,
             )
             return entry
@@ -2278,6 +2503,719 @@ class UnifiedProofShadowRepository:
                 "created_at": mutation.created_at,
             }
 
+    # -- DQK-066: dual / promoted authority ----------------------------------
+
+    def family_mode(self, family: "str | Any") -> str:
+        mode = self._promotion.mode_for(family)
+        return mode.value if hasattr(mode, "value") else str(mode)
+
+    def is_family_promoted(self, family: "str | Any") -> bool:
+        return self._promotion.is_promoted(family)
+
+    def assert_json_rewrite_allowed(
+        self,
+        family: "str | Any | None" = None,
+        *,
+        path: str = "",
+        backend: "LegacyProofBackend | str | None" = None,
+    ) -> None:
+        """Fail closed when a whole-file JSON rewrite is attempted post-promotion.
+
+        Acceptance: "No promoted operation rewrites a whole JSON cache".
+        """
+
+        if family is None and backend is not None:
+            family = family_for_backend(backend)
+        if family is None:
+            # Global promotion: any dual-promoted repository blocks rewrites.
+            if self.is_promoted:
+                with self._lock:
+                    self._stats["json_rewrite_blocks"] += 1
+                where = f" ({path})" if path else ""
+                raise ProofAuthorityJSONRewriteError(
+                    f"whole-file JSON rewrite forbidden after promotion{where}"
+                )
+            return
+        try:
+            self._promotion.assert_json_rewrite_allowed(family, path=path)
+        except Exception as error:
+            with self._lock:
+                self._stats["json_rewrite_blocks"] += 1
+            raise ProofAuthorityJSONRewriteError(str(error)) from error
+
+    def promote(
+        self,
+        mode: "str | Any" = "promoted",
+        *,
+        family: "str | Any | None" = None,
+        decision_id: str = "",
+        reason: str = "",
+    ) -> Dict[str, Any]:
+        """Promote repository (or one family) into dual / promoted authority.
+
+        Valid transitions:
+          shadow → dual → promoted (or export_only)
+          dual → promoted
+        """
+
+        AuthorityMode = self._AuthorityMode
+        target = mode if isinstance(mode, AuthorityMode) else AuthorityMode(str(mode))
+        # Accept db-primary alias used by other domains.
+        if str(mode) in {"db-primary", "db_primary"}:
+            target = AuthorityMode.PROMOTED
+        now = float(self._clock())
+        with self._lock:
+            from_mode = self._mode
+            if family is None:
+                # Whole-repository promotion.
+                self._mode = target
+                for backend in LEGACY_PROOF_BACKENDS:
+                    fam = family_for_backend(backend)
+                    self._promotion.set_mode(fam, target)
+            else:
+                self._promotion.set_mode(family, target)
+                # If any family is dual/promoted, surface that on the repo mode
+                # when currently shadow (so dual reads activate).
+                if (
+                    self._mode is AuthorityMode.SHADOW
+                    or self._mode is AuthorityMode.LEGACY
+                ) and target in {
+                    AuthorityMode.DUAL,
+                    AuthorityMode.PROMOTED,
+                    AuthorityMode.EXPORT_ONLY,
+                }:
+                    self._mode = target
+                elif target is AuthorityMode.PROMOTED and self._mode is AuthorityMode.DUAL:
+                    # Keep dual until all families promote; still mark promoted
+                    # for this family.  When *all* are promoted, lift repo mode.
+                    all_promoted = all(
+                        self._promotion.is_promoted(family_for_backend(b))
+                        for b in LEGACY_PROOF_BACKENDS
+                    )
+                    if all_promoted:
+                        self._mode = AuthorityMode.PROMOTED
+
+            decision = {
+                "decision_id": decision_id
+                or (
+                    "sha256:"
+                    + _sha256_text(
+                        _canonical_shadow_json(
+                            {
+                                "from": (
+                                    from_mode.value
+                                    if hasattr(from_mode, "value")
+                                    else str(from_mode)
+                                ),
+                                "to": target.value,
+                                "family": (
+                                    str(family)
+                                    if family is not None
+                                    else "*"
+                                ),
+                                "created_at": now,
+                            }
+                        )
+                    )
+                ),
+                "from_mode": (
+                    from_mode.value
+                    if hasattr(from_mode, "value")
+                    else str(from_mode)
+                ),
+                "to_mode": target.value,
+                "family": str(family) if family is not None else "*",
+                "reason": reason or "promote",
+                "owner_task_id": PROOF_AUTHORITY_OWNER_TASK,
+                "domain": PROOF_AUTHORITY_DOMAIN,
+                "created_at": now,
+                "accepted": True,
+            }
+            self._authority_decisions.append(decision)
+            self._stats["promotions"] += 1
+            return dict(decision)
+
+    def promote_to_dual(
+        self,
+        *,
+        family: "str | Any | None" = None,
+        decision_id: str = "",
+        reason: str = "promote_to_dual",
+    ) -> Dict[str, Any]:
+        return self.promote(
+            self._AuthorityMode.DUAL,
+            family=family,
+            decision_id=decision_id,
+            reason=reason,
+        )
+
+    def promote_to_authority(
+        self,
+        *,
+        family: "str | Any | None" = None,
+        decision_id: str = "",
+        reason: str = "promote_to_authority",
+    ) -> Dict[str, Any]:
+        """Promote to DuckDB-authoritative mode (promoted)."""
+
+        return self.promote(
+            self._AuthorityMode.PROMOTED,
+            family=family,
+            decision_id=decision_id,
+            reason=reason,
+        )
+
+    def authority_decisions(self) -> Tuple[Dict[str, Any], ...]:
+        with self._lock:
+            return tuple(dict(item) for item in self._authority_decisions)
+
+    def revoke(
+        self,
+        backend: "LegacyProofBackend | str",
+        key: Any,
+        *,
+        reason: str,
+        actor_id: str | None = None,
+        revocation_id: str | None = None,
+    ) -> Dict[str, Any]:
+        """Revoke a stored proof entry (mutable authority in dual/promoted).
+
+        Subsequent lookups fail closed with :class:`ProofAuthorityRevocationError`.
+        """
+
+        if not reason or not str(reason).strip():
+            raise ProofAuthorityError("revocation reason is required")
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        now = float(self._clock())
+        with self._lock:
+            entry = self._store.get(key)
+            if entry is None:
+                raise ProofAuthorityError(
+                    "cannot revoke a missing proof entry (fail closed)"
+                )
+            entry = entry.verify_integrity()
+            rid = revocation_id or (
+                "sha256:"
+                + _sha256_text(
+                    _canonical_shadow_json(
+                        {
+                            "entry_digest": entry.entry_digest,
+                            "key_digest": key.digest,
+                            "reason": str(reason).strip(),
+                            "created_at": now,
+                        }
+                    )
+                )
+            )
+            record = {
+                "revocation_id": rid,
+                "entry_digest": entry.entry_digest,
+                "key_digest": key.digest,
+                "backend": parsed.value,
+                "reason": str(reason).strip(),
+                "actor_id": actor_id or self._owner_id,
+                "created_at": now,
+            }
+            self._revocations[entry.entry_digest] = record
+            # Also index by key digest so lookups fail closed even if the
+            # entry_digest is rematerialized under a new write attempt.
+            self._revocations[f"key:{key.digest}"] = record
+            self._stats["revocations"] += 1
+            # Keep the entry in the store so integrity + revocation are both
+            # observable; release any active single-flight claim without
+            # dropping the revoked authority record.
+            try:
+                from .duckdb_proof_coordination import (  # noqa: PLC0415
+                    ClaimStatus,
+                )
+
+                active = None
+                if hasattr(self._coordinator, "active_claim"):
+                    active = self._coordinator.active_claim(key)
+                if active is not None and getattr(active, "acquired", False):
+                    if hasattr(self._coordinator, "release"):
+                        self._coordinator.release(active)
+            except Exception:
+                pass
+            self._legacy_payloads.pop((parsed.value, key.digest), None)
+            self._emit_receipt_locked(
+                backend=parsed,
+                operation="revocation",
+                key_digest=key.digest,
+                legacy_entry_digest="",
+                store_entry_digest=entry.entry_digest,
+                digests_match=True,
+                present_in_legacy=False,
+                present_in_store=True,
+                reason=record["reason"],
+                envelope=entry.envelope,
+            )
+            return dict(record)
+
+    def is_revoked(self, entry_digest: str) -> bool:
+        with self._lock:
+            return entry_digest in self._revocations
+
+    def revocation_for(self, entry_digest: str) -> Dict[str, Any] | None:
+        with self._lock:
+            record = self._revocations.get(entry_digest)
+            return dict(record) if record is not None else None
+
+    def record_access(
+        self,
+        key: Any,
+        *,
+        hit: bool = False,
+        miss: bool = False,
+        write: bool = False,
+        rejection: bool = False,
+    ) -> Dict[str, Any]:
+        digest = key.digest if hasattr(key, "digest") else str(key)
+        with self._lock:
+            return self._record_access_locked(
+                digest, hit=hit, miss=miss, write=write, rejection=rejection
+            )
+
+    def access_statistics(self, key: Any) -> Dict[str, Any]:
+        digest = key.digest if hasattr(key, "digest") else str(key)
+        with self._lock:
+            stats = dict(self._access.get(digest) or {})
+            # Merge store-level access when available.
+            try:
+                store_stats = self._store.access_statistics_for(key)
+                if store_stats is not None:
+                    if hasattr(store_stats, "to_dict"):
+                        store_stats = store_stats.to_dict()
+                    if isinstance(store_stats, Mapping):
+                        for field_name, value in store_stats.items():
+                            stats.setdefault(field_name, value)
+            except Exception:
+                pass
+            stats.setdefault("key_digest", digest)
+            stats.setdefault("hits", 0)
+            stats.setdefault("misses", 0)
+            stats.setdefault("writes", 0)
+            stats.setdefault("rejections", 0)
+            return stats
+
+    def _record_access_locked(
+        self,
+        key_digest: str,
+        *,
+        hit: bool = False,
+        miss: bool = False,
+        write: bool = False,
+        rejection: bool = False,
+    ) -> Dict[str, Any]:
+        now = float(self._clock())
+        record = self._access.setdefault(
+            key_digest,
+            {
+                "key_digest": key_digest,
+                "hits": 0,
+                "misses": 0,
+                "writes": 0,
+                "rejections": 0,
+                "last_access_at": now,
+            },
+        )
+        if hit:
+            record["hits"] = int(record.get("hits") or 0) + 1
+        if miss:
+            record["misses"] = int(record.get("misses") or 0) + 1
+        if write:
+            record["writes"] = int(record.get("writes") or 0) + 1
+        if rejection:
+            record["rejections"] = int(record.get("rejections") or 0) + 1
+        record["last_access_at"] = now
+        self._stats["access_records"] += 1
+        return dict(record)
+
+    def record_scheduler_state(
+        self,
+        plan_id: str,
+        *,
+        status: str,
+        payload: Mapping[str, Any] | None = None,
+        trace_events: Sequence[Mapping[str, Any]] = (),
+    ) -> Dict[str, Any]:
+        """Persist mutable scheduler state under DuckDB authority (DQK-066)."""
+
+        if not plan_id or not str(plan_id).strip():
+            raise ProofAuthorityError("plan_id is required")
+        now = float(self._clock())
+        with self._lock:
+            state = {
+                "plan_id": str(plan_id).strip(),
+                "status": str(status),
+                "payload": dict(payload or {}),
+                "trace_events": [dict(item) for item in trace_events],
+                "updated_at": now,
+                "restart_generation": self._restart_generation,
+            }
+            self._scheduler_state[state["plan_id"]] = state
+            self._stats["scheduler_records"] += 1
+            return dict(state)
+
+    def scheduler_state(self, plan_id: str) -> Dict[str, Any] | None:
+        with self._lock:
+            state = self._scheduler_state.get(str(plan_id))
+            return dict(state) if state is not None else None
+
+    def list_scheduler_states(self) -> Tuple[Dict[str, Any], ...]:
+        with self._lock:
+            return tuple(
+                dict(self._scheduler_state[k])
+                for k in sorted(self._scheduler_state)
+            )
+
+    def expire_stale(
+        self,
+        backend: "LegacyProofBackend | str",
+        key: Any,
+        *,
+        now: float | None = None,
+    ) -> bool:
+        """Force expiry evaluation for a key; drop authority when stale.
+
+        Dual/promoted TTL authority lives in DuckDB; this method re-evaluates
+        store lookup at *now* and records an expiration receipt when the entry
+        is no longer usable due to age.
+        """
+
+        from ..backends.cache_protocol import CacheLookupReason  # noqa: PLC0415
+
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        current = float(self._clock() if now is None else now)
+        with self._lock:
+            lookup = self._store.lookup(key, now=current)
+            reason = getattr(lookup.reason, "value", str(lookup.reason))
+            expired = reason in {
+                CacheLookupReason.EXPIRED.value,
+                "expired",
+                "stale",
+            } or (lookup.hit and not lookup.usable and "expir" in reason)
+            if expired or (lookup.hit and not lookup.usable and reason == "expired"):
+                self._stats["expirations"] += 1
+                if lookup.entry is not None or self._store.get(key, now=current) is not None:
+                    try:
+                        self._store.invalidate(key)
+                    except Exception:
+                        pass
+                self._legacy_payloads.pop((parsed.value, key.digest), None)
+                self._emit_receipt_locked(
+                    backend=parsed,
+                    operation="expiry",
+                    key_digest=key.digest,
+                    legacy_entry_digest="",
+                    store_entry_digest="",
+                    digests_match=True,
+                    present_in_legacy=False,
+                    present_in_store=False,
+                    reason=reason or "expired",
+                )
+                return True
+            # Also treat missing after prior write as not-expired miss.
+            return False
+
+    def rebuild_corpus_index_from_envelopes(self) -> Dict[str, Any]:
+        """Rebuild the mutable corpus index from immutable envelope material.
+
+        Acceptance: "The corpus index rebuilds from immutable envelopes".
+        Envelope content_id / content_digest / byte_size are never rewritten.
+        """
+
+        now = float(self._clock())
+        with self._lock:
+            rebuilt: dict[str, _CorpusIndexMutation] = {}
+            for content_id, material in sorted(self._immutable_envelopes.items()):
+                digest = str(material.get("content_digest") or "")
+                existing = self._corpus_index.get(content_id)
+                if existing is not None and existing.envelope_content_digest:
+                    if existing.envelope_content_digest != digest and digest:
+                        raise ProofAuthorityError(
+                            "corpus index rebuild would rewrite envelope digest "
+                            f"for {content_id}"
+                        )
+                    digest = existing.envelope_content_digest or digest
+                mutation_id = "sha256:" + _sha256_text(
+                    _canonical_shadow_json(
+                        {
+                            "backend": material.get("backend", "common"),
+                            "envelope_content_digest": digest,
+                            "envelope_content_id": content_id,
+                            "key_digest": material.get("key_digest", ""),
+                            "operation": "rebuild",
+                            "created_at": now,
+                        }
+                    )
+                )
+                rebuilt[content_id] = _CorpusIndexMutation(
+                    mutation_id=mutation_id,
+                    backend=str(material.get("backend") or "common"),
+                    key_digest=str(material.get("key_digest") or ""),
+                    envelope_content_id=content_id,
+                    envelope_content_digest=digest,
+                    operation="rebuild",
+                    created_at=now,
+                    payload_digest=_legacy_digest(
+                        {
+                            "content_id": content_id,
+                            "content_digest": digest,
+                            "byte_size": material.get("byte_size", 0),
+                        }
+                    ),
+                )
+            self._corpus_index = rebuilt
+            self._stats["corpus_index_rebuilds"] += 1
+            self._stats["corpus_index_mutations"] += len(rebuilt)
+            return {
+                "rebuilt": len(rebuilt),
+                "envelopes": len(self._immutable_envelopes),
+                "content_ids": tuple(sorted(rebuilt)),
+                "created_at": now,
+            }
+
+    def corpus_index_snapshot(self) -> Tuple[Dict[str, Any], ...]:
+        with self._lock:
+            return tuple(
+                {
+                    "mutation_id": m.mutation_id,
+                    "backend": m.backend,
+                    "key_digest": m.key_digest,
+                    "envelope_content_id": m.envelope_content_id,
+                    "envelope_content_digest": m.envelope_content_digest,
+                    "operation": m.operation,
+                    "created_at": m.created_at,
+                    "payload_digest": m.payload_digest,
+                }
+                for m in (
+                    self._corpus_index[cid]
+                    for cid in sorted(self._corpus_index)
+                )
+            )
+
+    def immutable_envelopes(self) -> Tuple[Dict[str, Any], ...]:
+        with self._lock:
+            return tuple(
+                dict(self._immutable_envelopes[cid])
+                for cid in sorted(self._immutable_envelopes)
+            )
+
+    def run_coordinated(
+        self,
+        backend: "LegacyProofBackend | str",
+        key: Any,
+        producer: Callable[[], Any],
+        *,
+        owner_id: str | None = None,
+        lease_seconds: float | None = None,
+        status: Any = "proved",
+        trust_level: Any | None = None,
+        **write_kwargs: Any,
+    ) -> Any:
+        """Fenced single-flight production with dual/promoted DuckDB authority.
+
+        Concurrent callers coalesce behind one claim.  Stale fences cannot
+        publish.  The published entry becomes DuckDB authority.
+        """
+
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+
+        def _produce_entry() -> Any:
+            produced = producer()
+            if hasattr(produced, "entry_digest") and hasattr(produced, "key"):
+                return produced
+            # Build a unified entry through the normal write path under a claim.
+            claim = self.claim_single_flight(
+                parsed,
+                key,
+                owner_id=owner_id or self._owner_id,
+                lease_seconds=lease_seconds,
+            )
+            if not bool(getattr(claim, "acquired", True)):
+                # Another leader won; wait via get_or_compute's waiter path
+                # by raising so the outer coordinator path is used instead.
+                pass
+            return self.publish_attempt(
+                parsed,
+                claim,
+                produced if isinstance(produced, Mapping) else {"value": produced},
+                key=key,
+                status=status,
+                trust_level=trust_level,
+                **write_kwargs,
+            )
+
+        # Prefer the coordinator's fenced get_or_compute when available.
+        if hasattr(self._coordinator, "get_or_compute"):
+            def _coord_producer() -> Any:
+                produced = producer()
+                if hasattr(produced, "entry_digest") and hasattr(produced, "key"):
+                    return produced
+                # Construct UnifiedProofEntry via temporary write helpers.
+                from .duckdb_proof_migration import (  # noqa: PLC0415
+                    translate_status,
+                    translate_trust,
+                )
+                from .duckdb_proof_store import (  # noqa: PLC0415
+                    ProofOutcomeKind,
+                    UnifiedProofEntry,
+                    outcome_kind_for_status,
+                    polarity_for_outcome,
+                )
+                from ..backends.results import ResultAuthority  # noqa: PLC0415
+                from ..families.models import EvidenceAuthority  # noqa: PLC0415
+                from ..ir_core.claims import FrozenMap  # noqa: PLC0415
+
+                resolved_status = translate_status(status)
+                family = family_for_backend(parsed)
+                resolved_trust = translate_trust(
+                    trust_level,
+                    kernel_accepted=bool(write_kwargs.get("kernel_accepted")),
+                    deterministic_trusted=bool(
+                        write_kwargs.get("deterministic_trusted")
+                    ),
+                    family=family,
+                )
+                outcome = outcome_kind_for_status(resolved_status)
+                polarity = polarity_for_outcome(outcome)
+                if outcome is ProofOutcomeKind.PROOF:
+                    result_authority = ResultAuthority.THEOREM
+                elif outcome is ProofOutcomeKind.COUNTEREXAMPLE:
+                    result_authority = ResultAuthority.SATISFIABILITY
+                else:
+                    result_authority = ResultAuthority.CANDIDATE
+                payload = (
+                    dict(produced)
+                    if isinstance(produced, Mapping)
+                    else {"value": produced}
+                )
+                return UnifiedProofEntry(
+                    key=key,
+                    outcome=outcome,
+                    trust_level=resolved_trust,
+                    status=resolved_status,
+                    result_authority=result_authority,
+                    evidence_authority=EvidenceAuthority.NONE,
+                    result_payload=FrozenMap(payload),
+                    polarity=polarity,
+                    created_at=float(self._clock()),
+                    result_id=key.digest,
+                    diagnostics=(f"authority_backend:{parsed.value}",),
+                )
+
+            kwargs: Dict[str, Any] = {
+                "owner_id": owner_id or self._owner_id,
+            }
+            if lease_seconds is not None:
+                kwargs["lease_seconds"] = lease_seconds
+            result = self._coordinator.get_or_compute(
+                key, _coord_producer, **kwargs
+            )
+            entry = getattr(result, "entry", result)
+            with self._lock:
+                self._stats["claims"] += 1
+                self._stats["attempts"] += 1
+                if entry is not None and hasattr(entry, "entry_digest"):
+                    self._emit_receipt_locked(
+                        backend=parsed,
+                        operation="write",
+                        key_digest=key.digest,
+                        legacy_entry_digest="",
+                        store_entry_digest=getattr(entry, "entry_digest", ""),
+                        digests_match=True,
+                        present_in_legacy=False,
+                        present_in_store=True,
+                        reason="coordinated_write",
+                        envelope=getattr(entry, "envelope", None),
+                    )
+            return result
+
+        # Fallback: explicit claim + publish.
+        return _produce_entry()
+
+    def restart(self) -> Dict[str, Any]:
+        """Simulate process restart: drop in-process fences, retain DuckDB authority.
+
+        Mutable state that survives restart:
+        * proof entries in the unified store
+        * revocations
+        * access statistics
+        * scheduler state
+        * corpus index + immutable envelope material
+        * promotion mode
+
+        Active single-flight claims do not survive; waiters re-claim cleanly.
+        """
+
+        now = float(self._clock())
+        with self._lock:
+            self._restart_generation += 1
+            self._stats["restarts"] += 1
+            # Best-effort: clear coordinator flights if the API exists.
+            for attr in ("_claims", "_flights", "_active_claims"):
+                bag = getattr(self._coordinator, attr, None)
+                if isinstance(bag, dict):
+                    bag.clear()
+            # Reset only non-durable in-process receipt buffers used for
+            # differential coverage of the *current* process generation.
+            # Durable authority (store entries, revocations, access, scheduler,
+            # corpus index, envelopes, promotion) is retained.
+            surviving = {
+                "entries": getattr(self._store, "stats", lambda: {})(),
+                "revocations": len(self._revocations),
+                "access": len(self._access),
+                "scheduler": len(self._scheduler_state),
+                "corpus_index": len(self._corpus_index),
+                "envelopes": len(self._immutable_envelopes),
+                "mode": self.mode,
+                "generation": self._restart_generation,
+                "restarted_at": now,
+            }
+            return surviving
+
+    def detect_tamper(
+        self,
+        backend: "LegacyProofBackend | str",
+        key: Any,
+        *,
+        mutate: Callable[[Any], Any] | None = None,
+    ) -> bool:
+        """Return True when integrity verification fails (tamper detected).
+
+        When *mutate* is provided it receives the stored entry and must return
+        a tampered clone for verification (the store itself is not corrupted
+        unless the mutate path writes back).
+        """
+
+        parsed = LegacyProofBackend.parse(backend)
+        entry = self._store.get(key)
+        if entry is None:
+            raise ProofAuthorityError("no entry to tamper-check")
+        candidate = mutate(entry) if mutate is not None else entry
+        try:
+            candidate.verify_integrity()
+            return False
+        except Exception:
+            with self._lock:
+                self._stats["tamper_rejections"] += 1
+            return True
+
+    def inject_tampered_entry(self, entry: Any) -> None:
+        """Test helper: insert a pre-built entry that may fail integrity later."""
+
+        with self._lock:
+            # Bypass normal put validation paths when the store exposes raw dict.
+            bag = getattr(self._store, "_entries", None)
+            if bag is not None and hasattr(entry, "key"):
+                bag[entry.key.digest] = entry
+                return
+            self._store.put(entry)
+
     # -- differential receipts -----------------------------------------------
 
     def differential_receipts(
@@ -2391,9 +3329,12 @@ class UnifiedProofShadowRepository:
         return receipt
 
 
-# Process-local shadow repository (opt-in; tests / producers bind explicitly).
+# Process-local shadow / authority repository (opt-in; tests / producers bind).
 _global_shadow_repository: Optional[UnifiedProofShadowRepository] = None
 _global_shadow_lock = _threading.RLock()
+
+# Alias: dual/promoted authority repository is the same façade (DQK-066).
+UnifiedProofAuthorityRepository = UnifiedProofShadowRepository
 
 
 def build_proof_shadow_repository(
@@ -2405,6 +3346,8 @@ def build_proof_shadow_repository(
     mode: str = "shadow",
     set_global: bool = False,
     clock: Callable[[], float] | None = None,
+    positive_ttl_seconds: float | None = None,
+    negative_ttl_seconds: float | None = None,
 ) -> UnifiedProofShadowRepository:
     """Construct a :class:`UnifiedProofShadowRepository` with standard defaults."""
 
@@ -2415,9 +3358,47 @@ def build_proof_shadow_repository(
         owner_id=owner_id,
         mode=mode,
         clock=clock,
+        positive_ttl_seconds=positive_ttl_seconds,
+        negative_ttl_seconds=negative_ttl_seconds,
     )
     if set_global:
         set_shadow_repository(repo)
+    return repo
+
+
+def build_proof_authority_repository(
+    *,
+    service: Any | None = None,
+    store: Any | None = None,
+    coordinator: Any | None = None,
+    owner_id: str = "owner:proof-authority",
+    mode: str = "dual",
+    set_global: bool = False,
+    clock: Callable[[], float] | None = None,
+    positive_ttl_seconds: float | None = None,
+    negative_ttl_seconds: float | None = None,
+    promote: bool = False,
+) -> UnifiedProofAuthorityRepository:
+    """Construct a dual-mode (or promoted) proof authority repository (DQK-066).
+
+    Defaults to ``dual`` so DuckDB is authoritative for mutable proof state
+    while legacy caches may still dual-write.  Pass ``promote=True`` or
+    ``mode="promoted"`` to forbid whole-file JSON rewrites immediately.
+    """
+
+    if promote and mode in {"dual", "shadow", "legacy"}:
+        mode = "promoted"
+    repo = build_proof_shadow_repository(
+        service=service,
+        store=store,
+        coordinator=coordinator,
+        owner_id=owner_id,
+        mode=mode,
+        set_global=set_global,
+        clock=clock,
+        positive_ttl_seconds=positive_ttl_seconds,
+        negative_ttl_seconds=negative_ttl_seconds,
+    )
     return repo
 
 
@@ -2433,6 +3414,26 @@ def get_shadow_repository(
         return _global_shadow_repository
 
 
+def get_authority_repository(
+    *, create: bool = False, **kwargs: Any
+) -> Optional[UnifiedProofAuthorityRepository]:
+    """Return the process-local authority repository (alias of shadow global)."""
+
+    if create and "mode" not in kwargs:
+        kwargs["mode"] = "dual"
+    if create:
+        kwargs.setdefault("owner_id", "owner:proof-authority")
+        # Build via authority factory when creating.
+        global _global_shadow_repository
+        with _global_shadow_lock:
+            if _global_shadow_repository is None:
+                _global_shadow_repository = build_proof_authority_repository(
+                    **kwargs
+                )
+            return _global_shadow_repository
+    return get_shadow_repository(create=False)
+
+
 def set_shadow_repository(
     repository: Optional[UnifiedProofShadowRepository],
 ) -> None:
@@ -2443,30 +3444,58 @@ def set_shadow_repository(
         _global_shadow_repository = repository
 
 
+def set_authority_repository(
+    repository: Optional[UnifiedProofAuthorityRepository],
+) -> None:
+    """Install or clear the process-local authority repository."""
+
+    set_shadow_repository(repository)
+
+
 def clear_shadow_repository() -> None:
     """Clear the process-local shadow repository."""
 
     set_shadow_repository(None)
 
 
+def clear_authority_repository() -> None:
+    """Clear the process-local authority repository."""
+
+    clear_shadow_repository()
+
+
 __all__ = [
     "CachedProofResult",
     "LEGACY_PROOF_BACKENDS",
     "LegacyProofBackend",
+    "PROOF_AUTHORITY_DOMAIN",
+    "PROOF_AUTHORITY_INTERFACE",
+    "PROOF_AUTHORITY_OWNER_TASK",
+    "PROOF_AUTHORITY_RECEIPT_SCHEMA",
+    "PROOF_AUTHORITY_SCHEMA_VERSION",
     "PROOF_SHADOW_INTERFACE",
     "PROOF_SHADOW_RECEIPT_SCHEMA",
     "PROOF_SHADOW_SCHEMA_VERSION",
+    "ProofAuthorityError",
+    "ProofAuthorityJSONRewriteError",
+    "ProofAuthorityRevocationError",
+    "ProofAuthorityTamperError",
     "ProofCache",
     "ProofShadowDifferentialReceipt",
     "ProofShadowError",
     "ProofShadowIdentityError",
     "ProofShadowTrustError",
+    "UnifiedProofAuthorityRepository",
     "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
     "build_proof_shadow_repository",
     "cache_proof_result",
+    "clear_authority_repository",
     "clear_shadow_repository",
     "family_for_backend",
+    "get_authority_repository",
     "get_global_cache",
     "get_shadow_repository",
+    "set_authority_repository",
     "set_shadow_repository",
 ]

@@ -248,6 +248,13 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
     # ------------------------------------------------------------------
 
     @property
+
+    def bind_authority_repository(self, repository, *, backend: str = "flogic") -> None:
+        """Bind to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
+
     def normalizer(self):
         """Return the :class:`~ipfs_datasets_py.logic.flogic.semantic_normalizer.SemanticNormalizer`."""
         if self._normalizer is None:
@@ -502,9 +509,13 @@ def get_global_cached_wrapper() -> CachedErgoAIWrapper:
 from ..common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    build_proof_authority_repository,
     build_proof_shadow_repository,
+    get_authority_repository,
     get_shadow_repository,
+    set_authority_repository,
     set_shadow_repository,
 )
 
@@ -519,8 +530,12 @@ __all__ = [
     "LEGACY_PROOF_BACKENDS",
     "LegacyProofBackend",
     "FLOGIC_LEGACY_BACKEND",
+    "UnifiedProofAuthorityRepository",
     "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
     "build_proof_shadow_repository",
+    "get_authority_repository",
     "get_shadow_repository",
+    "set_authority_repository",
     "set_shadow_repository",
 ]

@@ -28,10 +28,14 @@ from ..common.proof_cache import (
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
     ProofCache as _CommonProofCache,
+    UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    build_proof_authority_repository,
     build_proof_shadow_repository,
     get_global_cache,
+    get_authority_repository,
     get_shadow_repository,
+    set_authority_repository,
     set_shadow_repository,
 )
 
@@ -62,8 +66,12 @@ __all__ = [
     'LEGACY_PROOF_BACKENDS',
     'LegacyProofBackend',
     'EXTERNAL_PROVERS_LEGACY_BACKEND',
+    'UnifiedProofAuthorityRepository',
     'UnifiedProofShadowRepository',
+    'build_proof_authority_repository',
     'build_proof_shadow_repository',
+    'get_authority_repository',
     'get_shadow_repository',
+    'set_authority_repository',
     'set_shadow_repository',
 ]

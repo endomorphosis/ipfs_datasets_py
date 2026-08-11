@@ -465,6 +465,13 @@ class PersistentProofCache:
         if repository is not None:
             repository.register_backend(backend)
 
+    def bind_authority_repository(
+        self, repository: Any, *, backend: str = "hammers"
+    ) -> None:
+        """Bind this hammer cache to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
     def _shadow_write(self, key: ProofCacheKey, outcome: ProofCacheOutcome) -> None:
         repo = self._shadow_repository
         if repo is None:
@@ -524,6 +531,20 @@ class PersistentProofCache:
     def _persist_locked(self) -> None:
         if self.path is None:
             return
+        # DQK-066: promoted authority forbids whole-file JSON rewrites.
+        repo = self._shadow_repository
+        if repo is None:
+            try:
+                from ..common.proof_cache import get_shadow_repository
+
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        if repo is not None and getattr(repo, "is_promoted", False):
+            if hasattr(repo, "assert_json_rewrite_allowed"):
+                repo.assert_json_rewrite_allowed(
+                    "hammers", path=str(self.path), backend=self._shadow_backend
+                )
         self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = canonical_json(
             {
@@ -755,13 +776,18 @@ def cache_provenance_metadata(
     return {"proof_cache": provenance.to_dict()}
 
 
-# DQK-065: re-export unified shadow repository surface for hammer producers.
+# DQK-065/066: re-export unified shadow + authority repository surfaces.
 from ..common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    build_proof_authority_repository,
     build_proof_shadow_repository,
+    clear_authority_repository,
+    get_authority_repository,
     get_shadow_repository,
+    set_authority_repository,
     set_shadow_repository,
 )
 
@@ -791,12 +817,17 @@ __all__ = [
     "ProofObligationCacheKey",
     "ProofOutcome",
     "ProofTrust",
+    "UnifiedProofAuthorityRepository",
     "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
     "build_proof_shadow_repository",
     "cache_provenance_metadata",
     "canonical_json",
     "canonicalize_obligation",
+    "clear_authority_repository",
     "content_digest",
+    "get_authority_repository",
     "get_shadow_repository",
+    "set_authority_repository",
     "set_shadow_repository",
 ]
