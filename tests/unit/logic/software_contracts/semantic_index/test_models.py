@@ -7,14 +7,15 @@ import ast
 import pytest
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
-from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import stable_symbol_id, symbol_version_cid
-from ipfs_datasets_py.logic.software_contracts.semantic_index.models import AnalysisConfidence, ArtifactRecord, DependencyEdge, ImpactExplanation, InvalidationObligation, InvalidationPlan, RelationType, RepositoryState, RepositoryStateDelta, SemanticIndexModelError, SourceSpan, SymbolExplanation, SymbolKind, SymbolRecord
+from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import normalize_ast, stable_symbol_id, symbol_version_cid
+from ipfs_datasets_py.logic.software_contracts.semantic_index.models import AnalysisConfidence, ArtifactRecord, DependencyEdge, ImpactExplanation, InvalidationObligation, InvalidationPlan, RelationType, RepositoryState, RepositoryStateDelta, SemanticIndexModelError, SourceSpan, SymbolExplanation, SymbolKind, SymbolRecord, migrate_symbol_record_v1
 
 
 def _symbol(*, span: SourceSpan | None = None) -> SymbolRecord:
     stable = stable_symbol_id("repo:example", "python", "pkg/mod.py", "pkg.mod.answer", SymbolKind.FUNCTION, "pkg")
-    version = symbol_version_cid(stable, ast.parse("def answer(value: int) -> int:\n    return value + 1\n").body[0], {"parameters": ["value"], "return": "int"}, ["public"], {"value": "int", "return": "int"})
-    return SymbolRecord(stable, version, "repo:example", "python", "pkg/mod.py", "pkg.mod.answer", SymbolKind.FUNCTION, "pkg", cid_for_bytes(b"source"), span, AnalysisConfidence.EXACT, {"parameters": ["value"]}, ["public"], {"return": "int"})
+    node = ast.parse("def answer(value: int) -> int:\n    return value + 1\n").body[0]
+    version = symbol_version_cid(stable, node, {"parameters": ["value"], "return": "int"}, ["public"], {"value": "int", "return": "int"})
+    return SymbolRecord(stable, version, "repo:example", "python", "pkg/mod.py", "pkg.mod.answer", SymbolKind.FUNCTION, "pkg", cid_for_bytes(b"source"), span, AnalysisConfidence.EXACT, {"parameters": ["value"], "return": "int"}, ["public"], {"value": "int", "return": "int"}, normalized_ast=node)
 
 
 def test_stable_identity_excludes_spans_bodies_and_formatting() -> None:
@@ -89,22 +90,28 @@ def test_version_identity_preserves_decorator_order_and_repetitions() -> None:
     first = symbol_version_cid(stable, node, decorators=("trace", "trace", "cache"))
     reordered = symbol_version_cid(stable, node, decorators=("cache", "trace", "trace"))
     assert first != reordered
-    record = SymbolRecord(stable, first, "repo:example", "python", "pkg/mod.py", "pkg.mod.decorated", "function", "pkg", decorators=("trace", "trace", "cache"))
+    record = SymbolRecord(stable, first, "repo:example", "python", "pkg/mod.py", "pkg.mod.decorated", "function", "pkg", decorators=("trace", "trace", "cache"), normalized_ast=node)
     assert record.decorators == ("trace", "trace", "cache")
 
 
 def test_symbol_and_state_identity_are_self_verifying_and_metadata_is_deeply_immutable() -> None:
     stable = stable_symbol_id("repo:example", "python", "pkg/mod.py", "pkg.mod.answer", "function", "pkg")
     node = ast.parse("def answer():\n    return 1\n").body[0]
-    version = symbol_version_cid(stable, node)
+    version = symbol_version_cid(stable, node, {"parameters": ["fixed"]})
     symbol = SymbolRecord(
         stable, version, "repo:example", "python", "pkg/mod.py", "pkg.mod.answer",
-        "function", "pkg", metadata={"nested": {"items": ["fixed"]}}, normalized_ast=node,
+        "function", "pkg", signature={"parameters": ["fixed"]}, metadata={"nested": {"items": ["fixed"]}}, normalized_ast=node,
     )
     with pytest.raises(TypeError):
         symbol.metadata["nested"]["items"] = ()
     with pytest.raises(AttributeError):
         symbol.metadata["nested"]["items"].append("mutate")
+    with pytest.raises(TypeError):
+        symbol.signature["parameters"] = ()
+    with pytest.raises(AttributeError):
+        symbol.signature["parameters"].append("mutate")
+    with pytest.raises(TypeError):
+        symbol.annotations["return"] = "str"
 
     forged_kind = symbol.to_dict()
     forged_kind["kind"] = "method"
@@ -120,3 +127,40 @@ def test_symbol_and_state_identity_are_self_verifying_and_metadata_is_deeply_imm
         SymbolRecord.from_dict(forged_version)
     with pytest.raises(SemanticIndexModelError, match="RepositoryState repository_id"):
         RepositoryState("repo:other", [symbol])
+
+
+def test_v2_requires_and_binds_every_version_projection() -> None:
+    symbol = _symbol()
+    baseline = symbol.to_dict()
+    omitted = dict(baseline)
+    omitted.pop("normalized_ast")
+    with pytest.raises(SemanticIndexModelError, match="fields must be exactly"):
+        SymbolRecord.from_dict(omitted)
+    for field, replacement in (
+        ("extractor_name", "forged-extractor"),
+        ("extractor_version", "999"),
+        ("semantic_index_schema", "ipfs-datasets.software-contracts.semantic-index@1"),
+        ("property_role", "getter"),
+        ("signature", {"parameters": ["forged"]}),
+        ("decorators", ["public", "audit"]),
+        ("annotations", {"return": "str"}),
+        ("normalized_ast", normalize_ast(ast.parse("def answer(value):\n    return value + 2\n").body[0])),
+    ):
+        forged = dict(baseline)
+        forged[field] = replacement
+        with pytest.raises(SemanticIndexModelError):
+            SymbolRecord.from_dict(forged)
+
+
+def test_v1_is_restored_only_by_explicit_typed_migration() -> None:
+    symbol = _symbol()
+    legacy = symbol.to_dict()
+    legacy["schema"] = "ipfs-datasets.software-contracts.semantic-symbol@1"
+    legacy.pop("semantic_index_schema")
+    legacy["normalized_ast"] = None
+    with pytest.raises(SemanticIndexModelError):
+        SymbolRecord.from_dict(legacy)
+    migrated = migrate_symbol_record_v1(legacy, normalized_ast=symbol.normalized_ast)
+    assert SymbolRecord.from_dict(migrated.to_dict()) == migrated
+    with pytest.raises(SemanticIndexModelError, match="requires normalized_ast"):
+        migrate_symbol_record_v1(legacy, normalized_ast=None)
