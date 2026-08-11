@@ -3537,6 +3537,339 @@ def open_bundle_reader(
     return CodeEvidenceCorpusAdapter(root, **kwargs)
 
 
+# ---------------------------------------------------------------------------
+# DQK-068: code-evidence consumers write AST / evidence through authority port
+# ---------------------------------------------------------------------------
+
+CODE_EVIDENCE_SHADOW_SCHEMA = (
+    "ipfs_datasets_py/knowledge-graphs-code-evidence-ast-shadow@1"
+)
+CODE_EVIDENCE_SHADOW_INTERFACE = "CodeEvidenceAuthorityShadow@1"
+CODE_EVIDENCE_SHADOW_OWNER_TASK = "DQK-068"
+
+
+class CodeEvidenceAuthorityShadow:
+    """Shadow-publish AST blobs and evidence edges through the authority port.
+
+    JSON code-evidence / analysis-ast-index bundles remain the legacy
+    authority.  Normalized AST catalog projections and evidence edges are
+    written through the domain-neutral authority port so DuckDB receives a
+    differential-parity shadow of the same identity-bearing facts.
+    """
+
+    def __init__(
+        self,
+        authority_port: Any | None = None,
+        *,
+        shadow_writer: Any | None = None,
+        domain: str = "asts",
+        initial_mode: str = "shadow",
+        task_id: str = CODE_EVIDENCE_SHADOW_OWNER_TASK,
+    ) -> None:
+        from ipfs_datasets_py.logic.software_contracts.repository import (
+            ASTAuthorityShadowWriter,
+            build_ast_authority_shadow_writer,
+        )
+
+        self._task_id = str(task_id or CODE_EVIDENCE_SHADOW_OWNER_TASK)
+        if shadow_writer is not None:
+            if not isinstance(shadow_writer, ASTAuthorityShadowWriter):
+                # Accept duck-typed writers that implement write_projection.
+                if not hasattr(shadow_writer, "write_projection"):
+                    raise CodeEvidenceAdapterError(
+                        "shadow_writer must implement write_projection"
+                    )
+            self._writer = shadow_writer
+            self._port = getattr(shadow_writer, "port", authority_port)
+        else:
+            self._writer = build_ast_authority_shadow_writer(
+                authority_port,
+                domain=domain,
+                initial_mode=initial_mode,
+                task_id=self._task_id,
+            )
+            self._port = self._writer.port
+        self._published_keys: list[str] = []
+        self._published_edges: list[dict[str, Any]] = []
+
+    @property
+    def interface(self) -> str:
+        return CODE_EVIDENCE_SHADOW_INTERFACE
+
+    @property
+    def writer(self) -> Any:
+        return self._writer
+
+    @property
+    def port(self) -> Any:
+        return self._port
+
+    def publish_projection(
+        self,
+        projection: Any,
+        *,
+        operation_id: str | None = None,
+        also_write_evidence_edges: bool = True,
+    ) -> dict[str, Any]:
+        """Write one AST catalog projection through the authority port."""
+
+        result = self._writer.write_projection(
+            projection,
+            operation_id=operation_id,
+            also_write_evidence_edges=also_write_evidence_edges,
+        )
+        self._published_keys.append(result["authority_key"])
+        self._published_edges.extend(result.get("evidence_edges") or [])
+        parity = self._writer.emit_parity(result["authority_key"])
+        result["parity"] = parity
+        result["matched"] = bool(parity.get("matched"))
+        return result
+
+    def publish_record(
+        self,
+        record: Any,
+        *,
+        operation_id: str | None = None,
+    ) -> dict[str, Any]:
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_ast_record,
+        )
+
+        projection = project_ast_record(record)
+        return self.publish_projection(projection, operation_id=operation_id)
+
+    def publish_parse_failure(
+        self,
+        *,
+        provenance: Any,
+        language: str,
+        message: str,
+        operation_id: str | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        result = self._writer.write_parse_failure(
+            provenance=provenance,
+            language=language,
+            message=message,
+            operation_id=operation_id,
+            **kwargs,
+        )
+        self._published_keys.append(result["authority_key"])
+        parity = self._writer.emit_parity(result["authority_key"])
+        result["parity"] = parity
+        result["matched"] = bool(parity.get("matched"))
+        return result
+
+    def publish_evidence_edges(
+        self,
+        edges: Sequence[Mapping[str, Any]],
+        *,
+        operation_prefix: str = "op:ce-evidence",
+    ) -> list[dict[str, Any]]:
+        """Write explicit evidence edges through the authority port."""
+
+        writes: list[dict[str, Any]] = []
+        for edge in edges:
+            if not isinstance(edge, Mapping):
+                raise CodeEvidenceAdapterError(
+                    "evidence edges must be mappings"
+                )
+            edge_id = _text(edge.get("edge_id"))
+            if not edge_id:
+                raise CodeEvidenceAdapterError("evidence edge_id is required")
+            body = dict(edge)
+            body.setdefault("schema", CODE_EVIDENCE_EDGE_SCHEMA)
+            body.setdefault("task_id", self._task_id)
+            key = f"evidence:{edge_id}"
+            op = f"{operation_prefix}:{edge_id}"
+            write = self._port.write(key, body, operation_id=op)
+            writes.append(write)
+            self._published_edges.append(body)
+            self._published_keys.append(key)
+        return writes
+
+    def publish_from_bundle_adapter(
+        self,
+        adapter: "CodeEvidenceCorpusAdapter",
+        *,
+        sources: Sequence[Mapping[str, Any] | tuple[Any, ...]] | None = None,
+        repository_id: str = "repository:code-evidence",
+        continue_on_parse_failure: bool = True,
+    ) -> dict[str, Any]:
+        """Shadow-publish AST facts derived from a JSON corpus + optional sources.
+
+        The on-disk bundle remains read-only.  When ``sources`` are provided
+        they are extracted and projected; otherwise evidence edges are taken
+        from the loaded code-evidence graph and written as shadow rows.
+        """
+
+        if not isinstance(adapter, CodeEvidenceCorpusAdapter):
+            raise CodeEvidenceAdapterError(
+                "publish_from_bundle_adapter requires CodeEvidenceCorpusAdapter"
+            )
+        revision = adapter.revision
+        evidence = adapter.load_code_evidence_graph()
+        ast_index = adapter.load_ast_index()
+
+        batch = None
+        if sources is not None:
+            batch = self._writer.extract_and_shadow(
+                sources,
+                repository_id=repository_id,
+                revision=revision,
+                continue_on_parse_failure=continue_on_parse_failure,
+            )
+            for result in batch.results:
+                if result.authority_key:
+                    self._published_keys.append(result.authority_key)
+            self._published_edges.extend(batch.evidence_edges)
+
+        # Project evidence graph edges as authority rows (JSON remains authority).
+        graph_edges = list(evidence.get("edges") or [])
+        edge_payloads: list[dict[str, Any]] = []
+        for raw in graph_edges:
+            if not isinstance(raw, Mapping):
+                continue
+            edge_id = _text(raw.get("edge_id") or raw.get("id"))
+            if not edge_id:
+                continue
+            edge_payloads.append(
+                {
+                    "schema": CODE_EVIDENCE_EDGE_SCHEMA,
+                    "edge_id": edge_id,
+                    "kind": _text(raw.get("kind") or "related_to"),
+                    "source": _text(raw.get("source") or raw.get("from")),
+                    "target": _text(raw.get("target") or raw.get("to")),
+                    "provenance": _text(raw.get("provenance") or "ast"),
+                    "authoritative": bool(raw.get("authoritative", True)),
+                    "revision": revision,
+                    "task_id": self._task_id,
+                }
+            )
+        edge_writes = self.publish_evidence_edges(edge_payloads)
+
+        # Bundle-level dual document for differential parity of the AST index.
+        bundle_key = f"code-evidence-bundle:{revision}"
+        dual = {
+            "schema": CODE_EVIDENCE_SHADOW_SCHEMA,
+            "interface": CODE_EVIDENCE_SHADOW_INTERFACE,
+            "owner_task_id": self._task_id,
+            "kind": "code_evidence_bundle_shadow",
+            "revision": revision,
+            "json_bundle": {
+                "analysis_ast_index": ast_index,
+                "code_evidence_graph": {
+                    "schema": evidence.get("schema"),
+                    "revision": evidence.get("revision"),
+                    "node_count": evidence.get("node_count"),
+                    "edge_count": evidence.get("edge_count"),
+                    "edges": edge_payloads,
+                },
+            },
+            "db_projection": {
+                "analysis_ast_index": ast_index,
+                "code_evidence_graph": {
+                    "schema": evidence.get("schema"),
+                    "revision": evidence.get("revision"),
+                    "node_count": evidence.get("node_count"),
+                    "edge_count": evidence.get("edge_count"),
+                    "edges": edge_payloads,
+                },
+            },
+            "identity": {
+                "revision": revision,
+                "ast_path_count": ast_index.get("path_count"),
+                "evidence_edge_count": len(edge_payloads),
+            },
+        }
+        bundle_write = self._port.write(
+            bundle_key,
+            dual,
+            operation_id=f"op:ce-bundle:{revision}",
+        )
+        self._published_keys.append(bundle_key)
+        parity = self._port.emit_parity_receipt(bundle_key)
+        legacy = self._port.backend.get_legacy(self._port.domain, bundle_key)
+        db = self._port.backend.get_db(self._port.domain, bundle_key)
+        differential_match = (
+            isinstance(legacy, Mapping)
+            and isinstance(db, Mapping)
+            and dict(legacy.get("identity") or {})
+            == dict(db.get("identity") or {})
+            and dict(legacy.get("json_bundle") or {})
+            == dict(db.get("db_projection") or {})
+        )
+
+        batch_report = batch.to_dict() if batch is not None else None
+        batch_ok = True if batch is None else batch.ok
+        return {
+            "ok": batch_ok and bool(bundle_write.get("ok", True)),
+            "revision": revision,
+            "bundle_authority_key": bundle_key,
+            "bundle_write": bundle_write,
+            "parity_matched": bool(getattr(parity, "matched", False)),
+            "differential_match": differential_match,
+            "matched": bool(
+                getattr(parity, "matched", False) and differential_match
+            ),
+            "edge_write_count": len(edge_writes),
+            "published_keys": list(self._published_keys),
+            "batch": batch_report,
+            "atomic_across_filesystems": False,
+        }
+
+    def differential_parity_for_key(self, authority_key: str) -> dict[str, Any]:
+        """Return JSON/DB differential parity for one authority key."""
+
+        from ipfs_datasets_py.logic.software_contracts.repository import (
+            differential_parity,
+        )
+
+        legacy = self._port.backend.get_legacy(self._port.domain, authority_key)
+        db = self._port.backend.get_db(self._port.domain, authority_key)
+        if not isinstance(legacy, Mapping) or not isinstance(db, Mapping):
+            return {
+                "authority_key": authority_key,
+                "matched": False,
+                "reason": "missing_legacy_or_db",
+            }
+        if legacy.get("kind") == "ast_shadow_dual":
+            return {
+                "authority_key": authority_key,
+                **differential_parity(
+                    dict(legacy.get("json_bundle") or {}),
+                    dict(db.get("db_projection") or {}),
+                ),
+            }
+        # Generic dual documents (bundle / registry).
+        left = dict(legacy.get("json_bundle") or legacy)
+        right = dict(db.get("db_projection") or db)
+        left_id = dict(legacy.get("identity") or {})
+        right_id = dict(db.get("identity") or {})
+        matched = left == right and left_id == right_id
+        return {
+            "authority_key": authority_key,
+            "matched": matched,
+            "identity_match": left_id == right_id,
+            "payload_match": left == right,
+        }
+
+    def published_keys(self) -> tuple[str, ...]:
+        return tuple(self._published_keys)
+
+    def published_edges(self) -> tuple[dict[str, Any], ...]:
+        return tuple(self._published_edges)
+
+
+def build_code_evidence_authority_shadow(
+    authority_port: Any | None = None,
+    **kwargs: Any,
+) -> CodeEvidenceAuthorityShadow:
+    """Factory for the code-evidence AST authority shadow publisher."""
+
+    return CodeEvidenceAuthorityShadow(authority_port, **kwargs)
+
+
 __all__ = [
     "ANALYSIS_AST_INDEX_SCHEMA",
     "BUNDLE_ARTIFACTS",
@@ -3544,10 +3877,14 @@ __all__ = [
     "CODE_EVIDENCE_EDGE_SCHEMA",
     "CODE_EVIDENCE_GRAPH_SCHEMA",
     "CODE_EVIDENCE_NODE_SCHEMA",
+    "CODE_EVIDENCE_SHADOW_INTERFACE",
+    "CODE_EVIDENCE_SHADOW_OWNER_TASK",
+    "CODE_EVIDENCE_SHADOW_SCHEMA",
     "CODE_IMPACT_INDEX_SCHEMA",
     "CODE_IMPACT_RESULT_SCHEMA",
     "CONFLICT_GRAPH_SCHEMA",
     "CodeEvidenceAdapterError",
+    "CodeEvidenceAuthorityShadow",
     "CodeEvidenceCorpusAdapter",
     "ENV_BUNDLE_ROOT",
     "GRAPH_KIND_AST",
@@ -3561,6 +3898,7 @@ __all__ = [
     "SEMANTIC_DEPENDENCY_GRAPH_SCHEMA",
     "VALIDATION_RECEIPT_SCHEMA",
     "apply_incremental_update",
+    "build_code_evidence_authority_shadow",
     "build_tiny_fixture_bundle",
     "canonical_json",
     "classify_kind",

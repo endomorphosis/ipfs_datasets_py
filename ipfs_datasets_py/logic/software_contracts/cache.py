@@ -944,8 +944,300 @@ class FormalVerificationCache(AnalysisCache):
 ProofCache = FormalVerificationCache
 
 
+# ---------------------------------------------------------------------------
+# DQK-068: software-contract cache → AST authority shadow
+# ---------------------------------------------------------------------------
+
+AST_CACHE_RESULT_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-ast-cache-result.v1"
+)
+AST_CACHE_SHADOW_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-ast-cache-shadow.v1"
+)
+
+
+def _sanitize_for_structured_cid(value: Any) -> Any:
+    """Coerce floats to ints for software-contract structured CID profiles.
+
+    Catalog projections carry ``created_at`` as float epoch seconds.  The
+    analysis-cache CAS rejects floats, so cache receipts store integer epochs
+    while the authority-port dual document retains the original floats.
+    """
+
+    if isinstance(value, float):
+        if value != value or value in (float("inf"), float("-inf")):
+            raise CacheIntegrityError("non-finite float in AST cache payload")
+        if value == int(value):
+            return int(value)
+        # Preserve sub-second precision as a decimal string when needed.
+        return format(value, ".6f").rstrip("0").rstrip(".")
+    if isinstance(value, dict):
+        return {
+            str(key): _sanitize_for_structured_cid(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [_sanitize_for_structured_cid(item) for item in value]
+    return value
+
+
+class ASTShadowAnalysisCache:
+    """Analysis cache that mirrors AST projections through the authority port.
+
+    The immutable CAS + receipt path remains the legacy authority for analysis
+    results.  When a shadow writer is bound, each successful AST put also
+    projects normalized blobs / symbols / imports / calls / effects /
+    diagnostics through the domain-neutral authority port (JSON bundle
+    authority, DuckDB shadow).
+    """
+
+    def __init__(
+        self,
+        cache: AnalysisCache | None = None,
+        *,
+        root: Path | str | None = None,
+        shadow_writer: Any | None = None,
+        authority_port: Any | None = None,
+    ) -> None:
+        if cache is not None:
+            self._cache = cache
+        elif root is not None:
+            self._cache = AnalysisCache(root)
+        else:
+            raise CacheKeyError(
+                "ASTShadowAnalysisCache requires cache= or root="
+            )
+        if shadow_writer is not None:
+            self._writer = shadow_writer
+        elif authority_port is not None:
+            from ipfs_datasets_py.logic.software_contracts.repository import (
+                build_ast_authority_shadow_writer,
+            )
+
+            self._writer = build_ast_authority_shadow_writer(authority_port)
+        else:
+            self._writer = None
+        self._shadow_receipts: list[dict[str, Any]] = []
+
+    @property
+    def cache(self) -> AnalysisCache:
+        return self._cache
+
+    @property
+    def shadow_writer(self) -> Any | None:
+        return self._writer
+
+    def bind_shadow_writer(self, writer: Any) -> None:
+        self._writer = writer
+
+    def put(
+        self,
+        key: AnalysisCacheKey,
+        result: Mapping[str, Any],
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+    ) -> CacheReceipt:
+        """Store an analysis result in the cache (legacy authority)."""
+
+        return self._cache.put(
+            key, result, outcome=outcome, lease_seconds=lease_seconds
+        )
+
+    def put_ast_record(
+        self,
+        key: AnalysisCacheKey,
+        record: Any,
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+        operation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Cache an ASTRecord and shadow-write its catalog projection."""
+
+        from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_ast_record,
+        )
+
+        if type(record) is not ASTRecord:
+            raise CacheIntegrityError("put_ast_record requires an exact ASTRecord")
+        if key.result_schema != AST_CACHE_RESULT_SCHEMA:
+            raise CacheIntegrityError(
+                f"AST cache keys must use result_schema={AST_CACHE_RESULT_SCHEMA!r}"
+            )
+        projection = project_ast_record(record)
+        return self.put_ast_projection(
+            key,
+            projection,
+            outcome=outcome,
+            lease_seconds=lease_seconds,
+            operation_id=operation_id,
+        )
+
+    def put_ast_projection(
+        self,
+        key: AnalysisCacheKey,
+        projection: Any,
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+        operation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Cache a catalog projection and mirror it through the authority port."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            ASTCatalogProjection,
+        )
+        from ipfs_datasets_py.logic.software_contracts.repository import (
+            json_bundle_from_projection,
+            projection_to_authority_payload,
+        )
+
+        if type(projection) is not ASTCatalogProjection:
+            raise CacheIntegrityError(
+                "put_ast_projection requires an exact ASTCatalogProjection"
+            )
+        if key.result_schema != AST_CACHE_RESULT_SCHEMA:
+            raise CacheIntegrityError(
+                f"AST cache keys must use result_schema={AST_CACHE_RESULT_SCHEMA!r}"
+            )
+        payload = projection_to_authority_payload(projection)
+        # Software-contract CAS rejects floats; coerce created_at epochs to int
+        # so receipts remain content-addressed without losing identity fields.
+        cache_payload = _sanitize_for_structured_cid(payload)
+        cache_bundle = _sanitize_for_structured_cid(
+            json_bundle_from_projection(projection)
+        )
+        result = {
+            "schema": AST_CACHE_RESULT_SCHEMA,
+            "kind": "ast_catalog_projection",
+            "identity": dict(payload["identity"]),
+            "projection": cache_payload,
+            "json_bundle": cache_bundle,
+            "source_cid": projection.source_cid,
+            "ast_cid": projection.ast_cid,
+            "path": projection.source_file.path,
+        }
+        receipt = self._cache.put(
+            key, result, outcome=outcome, lease_seconds=lease_seconds
+        )
+        shadow: dict[str, Any] | None = None
+        parity: dict[str, Any] | None = None
+        if self._writer is not None:
+            shadow = self._writer.write_projection(
+                projection, operation_id=operation_id
+            )
+            parity = self._writer.emit_parity(shadow["authority_key"])
+            self._shadow_receipts.append(
+                {
+                    "schema": AST_CACHE_SHADOW_SCHEMA,
+                    "cache_receipt_cid": receipt.cid,
+                    "authority_key": shadow["authority_key"],
+                    "parity": parity,
+                    "identity": dict(payload["identity"]),
+                }
+            )
+        return {
+            "ok": True,
+            "cache_receipt": receipt,
+            "cache_receipt_cid": receipt.cid,
+            "result": result,
+            "shadow": shadow,
+            "parity": parity,
+            "identity": dict(payload["identity"]),
+        }
+
+    def put_parse_failure(
+        self,
+        key: AnalysisCacheKey,
+        *,
+        provenance: Any,
+        language: str,
+        message: str,
+        outcome: str = OUTCOME_ERROR,
+        lease_seconds: int = 3600,
+        operation_id: str | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Cache a durable parse-failure projection and shadow-write it."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_parse_failure,
+        )
+
+        projection = project_parse_failure(
+            provenance=provenance,
+            language=language,
+            message=message,
+            **kwargs,
+        )
+        if outcome not in LEASED_OUTCOMES:
+            outcome = OUTCOME_ERROR
+        return self.put_ast_projection(
+            key,
+            projection,
+            outcome=outcome,
+            lease_seconds=lease_seconds,
+            operation_id=operation_id,
+        )
+
+    def lookup(self, key: AnalysisCacheKey) -> CacheLookup:
+        return self._cache.lookup(key)
+
+    def get(self, key: AnalysisCacheKey) -> Any | None:
+        return self._cache.get(key)
+
+    def shadow_receipts(self) -> tuple[dict[str, Any], ...]:
+        return tuple(self._shadow_receipts)
+
+
+def build_ast_shadow_analysis_cache(
+    root: Path | str,
+    *,
+    authority_port: Any | None = None,
+    shadow_writer: Any | None = None,
+) -> ASTShadowAnalysisCache:
+    """Construct a cache + optional AST authority shadow binding."""
+
+    return ASTShadowAnalysisCache(
+        root=root,
+        authority_port=authority_port,
+        shadow_writer=shadow_writer,
+    )
+
+
+def ast_cache_key_for_source(
+    *,
+    source_cid: str,
+    analyzer_cid: str,
+    configuration_cid: str,
+    semantics_cid: str,
+    policy_cid: str,
+    solver_cid: str,
+    toolchain_cid: str,
+    dependency_cids: Sequence[str] = (),
+) -> AnalysisCacheKey:
+    """Build a closed AST analysis cache key for one source shard."""
+
+    return AnalysisCacheKey(
+        source_cid=source_cid,
+        dependency_cids=tuple(dependency_cids),
+        analyzer_cid=analyzer_cid,
+        configuration_cid=configuration_cid,
+        semantics_cid=semantics_cid,
+        policy_cid=policy_cid,
+        solver_cid=solver_cid,
+        toolchain_cid=toolchain_cid,
+        result_schema=AST_CACHE_RESULT_SCHEMA,
+    )
+
+
 __all__ = [
     "ALL_OUTCOMES",
+    "ASTShadowAnalysisCache",
+    "AST_CACHE_RESULT_SCHEMA",
+    "AST_CACHE_SHADOW_SCHEMA",
     "AggregateSnapshotReceipt",
     "AnalysisCache",
     "AnalysisCacheError",
@@ -974,5 +1266,7 @@ __all__ = [
     "ProofCache",
     "RECEIPT_SCHEMA",
     "SNAPSHOT_SCHEMA",
+    "ast_cache_key_for_source",
+    "build_ast_shadow_analysis_cache",
     "cache_profile_descriptor",
 ]
