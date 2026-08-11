@@ -1,6 +1,9 @@
 """Audit logging for logic module.
 
 Provides structured audit logging for security and compliance.
+
+DQK-079: mutable file sinks (JSON/JSONL/FileHandler) are disabled by default.
+Only ephemeral console logs remain unless an explicit export permit is held.
 """
 
 import logging
@@ -9,36 +12,71 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from pathlib import Path
 from ipfs_datasets_py.logic.config import get_config
+from ipfs_datasets_py.logic.observability.structured_logging import (
+    ObservabilityMutableFileSinkError,
+    assert_mutable_file_sink_allowed,
+    console_grants_completion_authority,
+    console_grants_progress_authority,
+    get_observability_filesystem_guard,
+    sanitize_publication_view,
+)
 
 
-# Create audit logger
+# Create audit logger — console projection only by default (DQK-079).
 audit_logger = logging.getLogger('logic.audit')
 audit_logger.setLevel(logging.INFO)
+if not any(isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler)
+           for h in audit_logger.handlers):
+    _console = logging.StreamHandler()
+    _console.setLevel(logging.INFO)
+    _console.setFormatter(logging.Formatter('%(message)s'))
+    audit_logger.addHandler(_console)
 
 
 class AuditLogger:
     """Structured audit logger for security events."""
     
-    def __init__(self, log_path: Optional[str] = None):
+    def __init__(self, log_path: Optional[str] = None, *, allow_file_sink: bool = False):
         """Initialize audit logger.
         
         Args:
-            log_path: Path to audit log file. If None, uses config or stderr.
+            log_path: Path to audit log file. Ignored unless *allow_file_sink*
+                is True and an export permit / legacy-allow is active (DQK-079).
+            allow_file_sink: Explicit opt-in for a mutable file sink. Defaults
+                to False; file sinks are not authority after cutover.
         """
-        if log_path is None:
-            config = get_config()
-            log_path = config.security.audit_log_path
-        
-        # Set up file handler if path provided
-        if log_path:
+        self._log_path: Optional[str] = None
+        self._file_sink_enabled = False
+
+        if log_path is None and allow_file_sink:
+            try:
+                config = get_config()
+                log_path = config.security.audit_log_path
+            except Exception:
+                log_path = None
+
+        # DQK-079: do not attach FileHandler unless explicitly permitted.
+        if log_path and allow_file_sink:
             path = Path(log_path)
+            try:
+                assert_mutable_file_sink_allowed(
+                    path, kind="audit_jsonl", operation="attach"
+                )
+            except ObservabilityMutableFileSinkError:
+                # Fail closed: keep console-only projection.
+                logging.getLogger(__name__).debug(
+                    "logic.security audit file sink blocked for %s (DQK-079)",
+                    path,
+                )
+                return
             path.parent.mkdir(parents=True, exist_ok=True)
-            
             handler = logging.FileHandler(path)
             handler.setLevel(logging.INFO)
             formatter = logging.Formatter('%(message)s')
             handler.setFormatter(formatter)
             audit_logger.addHandler(handler)
+            self._log_path = str(path)
+            self._file_sink_enabled = True
     
     @staticmethod
     def log_event(
@@ -70,10 +108,42 @@ class AuditLogger:
         # Add any additional fields
         event.update(kwargs)
         
-        # Log as JSON (legacy file/stderr sink remains authority under DQK-077
-        # shadow mode; typed observability is a non-authoritative projection).
+        # Console / ephemeral log only. DuckDB cutover (DQK-078/079) is the
+        # progress/completion authority; JSON file sinks are not.
         audit_logger.info(json.dumps(event))
         AuditLogger._route_to_observability_shadow(event)
+
+    @staticmethod
+    def publication_view(event: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Sanitized publication view excluding secrets and private payloads."""
+
+        view = sanitize_publication_view(event or {})
+        view["console_grants_progress_authority"] = console_grants_progress_authority()
+        view["console_grants_completion_authority"] = console_grants_completion_authority()
+        return view
+
+    @staticmethod
+    def export_events_json(file_path: str, events: list) -> str:
+        """Explicit deterministic export of security audit events (not authority)."""
+
+        path = Path(file_path)
+        guard = get_observability_filesystem_guard()
+        with guard.permit_export():
+            assert_mutable_file_sink_allowed(path, kind="audit_json", operation="export")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps(
+                    {
+                        "events": list(events),
+                        "export_authority": False,
+                        "owner_task": "DQK-079",
+                    },
+                    indent=2,
+                    sort_keys=True,
+                ),
+                encoding="utf-8",
+            )
+        return str(path)
     
     @staticmethod
     def log_proof_attempt(

@@ -10,19 +10,56 @@ This module provides the main alert management system that:
 
 from __future__ import annotations
 
-import anyio
 import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 import json
 
-from ipfs_datasets_py.alerts.discord_notifier import DiscordNotifier, DiscordEmbed
-from ipfs_datasets_py.alerts.rule_engine import RuleEngine, RuleEvaluationError
+try:
+    import anyio  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover — sealed validator without anyio
+    anyio = None  # type: ignore
+
+try:
+    from ipfs_datasets_py.alerts.discord_notifier import DiscordNotifier, DiscordEmbed
+except ModuleNotFoundError:  # pragma: no cover
+    DiscordNotifier = Any  # type: ignore[misc, assignment]
+    DiscordEmbed = Any  # type: ignore[misc, assignment]
+
+try:
+    from ipfs_datasets_py.alerts.rule_engine import RuleEngine, RuleEvaluationError
+except ModuleNotFoundError:  # pragma: no cover
+    class RuleEvaluationError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class RuleEngine:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+from ipfs_datasets_py.logic.observability.structured_logging import (
+    ObservabilityMutableFileSinkError,
+    assert_mutable_file_sink_allowed,
+    console_grants_completion_authority,
+    console_grants_progress_authority,
+    get_observability_filesystem_guard,
+    sanitize_publication_view,
+)
 
 logger = logging.getLogger(__name__)
+
+# Mutable alert-state authority filenames blocked after DQK-079 cutover.
+_ALERT_STATE_NAMES = frozenset(
+    {
+        "alert-state.json",
+        "alert_state.json",
+        "alerts_state.json",
+        "alert-state.jsonl",
+        "alert_state.jsonl",
+    }
+)
 
 
 @dataclass
@@ -189,7 +226,11 @@ class AlertManager:
     
     def save_rules_to_file(self, config_file: Union[str, Path]):
         """
-        Save alert rules to YAML config file.
+        Save alert rules to YAML config file (explicit config, not alert-state).
+
+        Paths that look like mutable alert-state authority files are rejected
+        by the DQK-079 writer guard. Suppression / trigger state stays
+        in-memory and is projected to DuckDB via observability cutover.
         
         Args:
             config_file: Path to output YAML file
@@ -197,11 +238,21 @@ class AlertManager:
         try:
             import yaml
             
+            path = Path(config_file)
+            # Block alert-state JSON/JSONL authority filenames.
+            if path.name.lower() in _ALERT_STATE_NAMES or (
+                "alert" in path.name.lower()
+                and path.suffix.lower() in {".json", ".jsonl"}
+                and "state" in path.name.lower()
+            ):
+                assert_mutable_file_sink_allowed(
+                    path, kind="alert_state", operation="write"
+                )
+
             config = {
                 'rules': [rule.to_dict() for rule in self.rules.values()]
             }
             
-            path = Path(config_file)
             path.parent.mkdir(parents=True, exist_ok=True)
             
             with open(path, 'w') as f:
@@ -209,10 +260,71 @@ class AlertManager:
             
             logger.info(f"Saved {len(self.rules)} rules to {config_file}")
         
+        except ObservabilityMutableFileSinkError:
+            raise
         except ImportError:
             logger.error("PyYAML required for saving config files")
         except Exception as e:
             logger.error(f"Error saving rules to file: {e}", exc_info=True)
+
+    def save_alert_state(
+        self,
+        path: Union[str, Path],
+        *,
+        explicit_export: bool = False,
+    ) -> None:
+        """Persist alert suppression/trigger state — blocked after DQK-079.
+
+        Alert state is DuckDB authority via observability cutover. Implicit
+        JSON/JSONL alert-state files are rejected. Pass ``explicit_export=True``
+        to perform a non-authoritative deterministic export under a permit.
+        """
+        target = Path(path)
+        if not explicit_export:
+            # Always reject implicit alert-state authority writes.
+            assert_mutable_file_sink_allowed(
+                target, kind="alert_state", operation="write"
+            )
+            return
+
+        guard = get_observability_filesystem_guard()
+        with guard.permit_export():
+            assert_mutable_file_sink_allowed(
+                target, kind="alert_state", operation="export"
+            )
+            payload = {
+                "last_triggered": dict(self.last_triggered),
+                "rule_ids": list(self.rules.keys()),
+                "export_authority": False,
+                "owner_task": "DQK-079",
+            }
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(
+                json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+            )
+
+    def publication_view(self) -> Dict[str, Any]:
+        """Sanitized publication view of alert rules (no secrets / private payloads)."""
+
+        rules = [
+            {
+                "rule_id": r.rule_id,
+                "name": r.name,
+                "severity": r.severity,
+                "enabled": r.enabled,
+            }
+            for r in self.rules.values()
+        ]
+        view = sanitize_publication_view(
+            {
+                "rule_count": len(rules),
+                "rules": rules,
+                # last_triggered is high-cardinality operational state — omit.
+            }
+        )
+        view["console_grants_progress_authority"] = console_grants_progress_authority()
+        view["console_grants_completion_authority"] = console_grants_completion_authority()
+        return view
     
     async def evaluate_event(
         self,

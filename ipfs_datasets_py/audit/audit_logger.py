@@ -3,6 +3,13 @@ Core Audit Logging Implementation
 
 This module provides the core audit logging functionality, defining the central
 AuditLogger class and associated data structures for comprehensive audit logging.
+
+DQK-079: after canary acceptance, implicit JSON/JSONL/file-handler audit sinks
+are disabled. Mutable file handlers are rejected by the process-local
+:class:`~ipfs_datasets_py.logic.observability.structured_logging.ObservabilityFilesystemGuard`
+unless an explicit deterministic export permit is held. Console / in-memory
+projections never grant progress or completion authority. Publication views are
+sanitized before leaving the process.
 """
 
 import os
@@ -24,6 +31,40 @@ try:
     SECURITY_MODULE_AVAILABLE = True
 except ImportError:
     SECURITY_MODULE_AVAILABLE = False
+
+# DQK-079 writer guard + sanitized publication (shared observability package).
+try:
+    from ipfs_datasets_py.logic.observability.structured_logging import (
+        ObservabilityFilesystemGuard,
+        ObservabilityMutableFileSinkError,
+        assert_mutable_file_sink_allowed,
+        build_observability_publication_view,
+        console_grants_completion_authority,
+        console_grants_progress_authority,
+        get_observability_filesystem_guard,
+        sanitize_publication_view,
+    )
+except ImportError:  # pragma: no cover — minimal import environments
+    ObservabilityFilesystemGuard = None  # type: ignore[misc, assignment]
+    ObservabilityMutableFileSinkError = RuntimeError  # type: ignore[misc, assignment]
+
+    def assert_mutable_file_sink_allowed(*_a, **_k):  # type: ignore[misc]
+        return None
+
+    def get_observability_filesystem_guard():  # type: ignore[misc]
+        return None
+
+    def sanitize_publication_view(payload, **_k):  # type: ignore[misc]
+        return {"sanitized": True, "attributes": dict(payload or {})}
+
+    def build_observability_publication_view(records=None, **_k):  # type: ignore[misc]
+        return {"sanitized": True, "records": list(records or [])}
+
+    def console_grants_progress_authority():  # type: ignore[misc]
+        return False
+
+    def console_grants_completion_authority():  # type: ignore[misc]
+        return False
 
 
 class AuditLevel(Enum):
@@ -306,9 +347,82 @@ class AuditLogger:
 
         Args:
             handler: The handler to add
+
+        Raises:
+            ObservabilityMutableFileSinkError: When *handler* is an undeclared
+                mutable file sink and no export permit / legacy-allow is active
+                (DQK-079).
         """
+        # Dynamic writer guard: reject FileAuditHandler / JSONAuditHandler /
+        # logging.FileHandler-backed sinks unless explicitly permitted.
+        assert_mutable_file_sink_allowed(handler=handler, operation="attach")
         with self._lock:
             self.handlers.append(handler)
+
+    def publication_view(
+        self,
+        *,
+        limit: int = 32,
+        include_events: bool = True,
+    ) -> Dict[str, Any]:
+        """Return a sanitized publication view of recent audit events.
+
+        Secrets and high-cardinality private payloads are excluded. Console
+        and in-memory buffers never grant progress/completion authority.
+        """
+        with self._lock:
+            events = list(self._events[-max(1, int(limit)):]) if include_events else []
+        records = [evt.to_dict() for evt in events]
+        view = build_observability_publication_view(
+            records,
+            extra={
+                "session_id": self.session_id,
+                "handler_count": len(self.handlers),
+                "enabled": self.enabled,
+            },
+        )
+        view["console_grants_progress_authority"] = console_grants_progress_authority()
+        view["console_grants_completion_authority"] = console_grants_completion_authority()
+        return view
+
+    def export_events_json(
+        self,
+        file_path: str,
+        *,
+        pretty: bool = True,
+    ) -> str:
+        """Explicit deterministic export of recorded events (not an authority).
+
+        Requires an export permit from the observability filesystem guard.
+        """
+        path = os.fspath(file_path)
+        guard = get_observability_filesystem_guard()
+        if guard is None:
+            raise ObservabilityMutableFileSinkError(
+                "observability filesystem guard unavailable for export",
+                path=path,
+                kind="audit_json",
+                operation="export",
+            )
+        with guard.permit_export():
+            assert_mutable_file_sink_allowed(path, kind="audit_json", operation="export")
+            with self._lock:
+                payload = {
+                    "session_id": self.session_id,
+                    "event_count": len(self._events),
+                    "events": [evt.to_dict() for evt in self._events],
+                    "export_authority": False,
+                    "owner_task": "DQK-079",
+                }
+            parent = os.path.dirname(path)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as handle:
+                if pretty:
+                    json.dump(payload, handle, indent=2, sort_keys=True)
+                else:
+                    json.dump(payload, handle, separators=(",", ":"), sort_keys=True)
+        return path
 
     def remove_handler(self, handler_name: str) -> bool:
         """
@@ -469,15 +583,23 @@ class AuditLogger:
             event.source_module = os.path.basename(frame.filename)
             event.source_function = frame.name
 
-        # Dispatch to handlers. Under DQK-078 dual/db-primary cutover, DuckDB
-        # is the typed observability authority and file/console sinks are
-        # disposable projections. Under DQK-077 shadow mode, legacy file sinks
-        # remain selected authority while the catalog is a non-authoritative
-        # projection.
+        # Dispatch to handlers. Under DQK-079, undeclared mutable file sinks are
+        # rejected by the dynamic writer guard; only console / non-file handlers
+        # and explicit export permits remain. DuckDB (DQK-078 cutover) is the
+        # typed observability authority for progress/completion queries.
         with self._lock:
             for handler in self.handlers:
                 try:
+                    # Re-check file sinks at write time (guard may have tightened).
+                    assert_mutable_file_sink_allowed(
+                        handler=handler, operation="write"
+                    )
                     handler.handle(event)
+                except ObservabilityMutableFileSinkError:
+                    logging.debug(
+                        "Skipping blocked mutable audit file sink %s (DQK-079)",
+                        getattr(handler, "name", type(handler).__name__),
+                    )
                 except Exception as e:
                     logging.error(f"Error in audit handler {handler.name}: {str(e)}")
 
