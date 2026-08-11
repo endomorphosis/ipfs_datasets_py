@@ -10,6 +10,8 @@ vector catalog when configured:
 * DQK-062 — shadow mode (legacy authority; shadow failures quarantine)
 * DQK-063 — dual mode promotes collection/generation/tombstone/compaction
   metadata to DuckDB while vector bytes remain in the selected engine
+* DQK-064 — after DuckDB promotion, no silent pickle/JSON fallback; restart
+  rehydrates mappings from DuckDB; publication exposes approved stats only
 """
 
 from __future__ import annotations
@@ -29,6 +31,8 @@ from .shared_state import (
     configure_mcp_vector_shadow_catalog,
     get_mcp_vector_authority_catalog,
     get_mcp_vector_shadow_catalog,
+    mcp_vector_publication_document,
+    restart_mcp_vector_catalog_from_duckdb,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,10 +50,44 @@ def _ensure_shadow_catalog() -> None:
                 catalog = configure_mcp_vector_shadow_catalog(enabled=True)
             except Exception:
                 return
+    if catalog is not None:
+        # Rehydrate process maps after MCP worker restart (DQK-064).
+        try:
+            if catalog.path != ":memory:":
+                catalog.rehydrate_process_maps_from_store()
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("MCP catalog rehydrate skipped: %s", exc)
     if getattr(_manager, "shadow_catalog", None) is None:
         _manager.shadow_catalog = catalog
     if getattr(_manager, "authority_catalog", None) is None:
         _manager.authority_catalog = catalog
+
+
+async def publish_vector_statistics() -> Dict[str, Any]:
+    """Expose approved collection/build statistics (never unrestricted embeddings)."""
+    try:
+        _ensure_shadow_catalog()
+        doc = mcp_vector_publication_document()
+        return {"status": "success", **doc}
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Error publishing vector statistics: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def restart_vector_catalog(
+    catalog_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Restart MCP vector catalog from DuckDB without process-local mapping loss."""
+    try:
+        result = restart_mcp_vector_catalog_from_duckdb(catalog_path)
+        # Rebind manager to the reopened catalog.
+        catalog = get_mcp_vector_authority_catalog() or get_mcp_vector_shadow_catalog()
+        _manager.shadow_catalog = catalog
+        _manager.authority_catalog = catalog
+        return result
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Error restarting vector catalog: {e}")
+        return {"status": "error", "error": str(e)}
 
 
 async def create_vector_index(

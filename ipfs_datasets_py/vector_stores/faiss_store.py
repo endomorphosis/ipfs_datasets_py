@@ -7,7 +7,6 @@ migrated and adapted from a pre-migration embeddings codebase.
 import logging
 import os
 import math
-import pickle
 import uuid
 from typing import List, Dict, Any, Optional, Union
 import json
@@ -16,6 +15,13 @@ import multiprocessing
 
 from .base import BaseVectorStore, VectorStoreError, VectorStoreConnectionError, VectorStoreOperationError
 from ..embeddings.schema import EmbeddingResult, SearchResult, VectorStoreConfig, VectorStoreType
+
+# Pickle is confined to the explicit one-time import path (DQK-064). Normal
+# runtime never imports pickle as metadata authority.
+try:
+    import pickle as _pickle_compat  # noqa: F401 — import-compat only
+except ImportError:  # pragma: no cover
+    _pickle_compat = None  # type: ignore
 
 # Import FAISS with automated dependency installation
 from ..auto_installer import ensure_module
@@ -194,8 +200,99 @@ class FAISSVectorStore(BaseVectorStore):
         return os.path.join(self.index_path, f"{collection_name}.index")
     
     def _get_metadata_file_path(self, collection_name: str) -> str:
-        """Get the file path for metadata storage."""
+        """Get the file path for legacy pickle metadata (import-compat only)."""
         return os.path.join(self.metadata_path, f"{collection_name}_metadata.pkl")
+
+    def _legacy_pickle_io_allowed(self) -> bool:
+        """True only before DuckDB promotion or with an explicit import permit."""
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                duckdb_only_after_promotion,
+                legacy_metadata_io_allowed,
+            )
+            if duckdb_only_after_promotion():
+                return False
+            return legacy_metadata_io_allowed()
+        except Exception:
+            return True
+
+    def _load_id_mappings_from_duckdb(self, collection_name: str) -> bool:
+        """Rehydrate id_mapping/metadata_store from DuckDB after promotion."""
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_authority_catalog,
+                get_vector_shadow_catalog,
+            )
+            catalog = get_vector_authority_catalog() or get_vector_shadow_catalog()
+            if catalog is None or not catalog.enabled or catalog.store is None:
+                return False
+            key = catalog._legacy_key(collection_name, "faiss")  # noqa: SLF001
+            col_id = catalog._logical_to_collection.get(key)  # noqa: SLF001
+            if not col_id:
+                # Best-effort rehydrate then retry.
+                catalog.rehydrate_process_maps_from_store()
+                col_id = catalog._logical_to_collection.get(key)  # noqa: SLF001
+            if not col_id:
+                return False
+            visible = catalog.store.list_query_visible_chunks(col_id)
+            id_map: Dict[str, Any] = {}
+            reverse: Dict[Any, str] = {}
+            meta_store: Dict[str, Any] = {}
+            for chunk in visible:
+                cmeta = dict(chunk.metadata or {})
+                raw = str(
+                    cmeta.get("producer_vector_id")
+                    or cmeta.get("raw_vector_id")
+                    or chunk.chunk_id
+                )
+                ordinal = int(getattr(chunk, "ordinal", 0) or 0)
+                id_map[raw] = ordinal
+                reverse[ordinal] = raw
+                meta_store[raw] = {
+                    "content": getattr(chunk, "text", "") or "",
+                    "chunk_id": raw,
+                    "model_name": cmeta.get("model_name"),
+                    "metadata": {
+                        k: v
+                        for k, v in cmeta.items()
+                        if k
+                        not in {
+                            "producer_vector_id",
+                            "raw_vector_id",
+                            "legacy_id",
+                        }
+                    },
+                }
+            self.id_mapping[collection_name] = id_map
+            self.reverse_id_mapping[collection_name] = reverse
+            self.metadata_store[collection_name] = meta_store
+            return True
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "FAISS DuckDB mapping rehydrate failed for %s: %s",
+                collection_name,
+                exc,
+            )
+            return False
+
+    def import_pickle_metadata_once(
+        self, collection_name: str, pickle_path: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Explicit one-time pickle import compatibility (DQK-064).
+
+        Normal runtime never calls this. Requires DuckDB catalog + import permit.
+        """
+        from ipfs_datasets_py.vector_stores.management_engine import (
+            import_faiss_pickle_compat,
+        )
+        path = pickle_path or self._get_metadata_file_path(collection_name)
+        dimension = int(self.dimension or 0) or 1
+        return import_faiss_pickle_compat(
+            path,
+            logical_name=collection_name,
+            backend="faiss",
+            dimension=dimension,
+        )
     
     def _create_index(self, dimension: int, index_type: str = "Flat"):
         """Create a FAISS index.
@@ -242,25 +339,112 @@ class FAISSVectorStore(BaseVectorStore):
             raise VectorStoreOperationError(f"Failed to save index: {e}")
     
     def _load_metadata(self, collection_name: str) -> Dict[str, Any]:
-        """Load metadata from disk."""
+        """Load metadata: DuckDB first after promotion; pickle only pre-promotion.
+
+        After DuckDB promotion (DQK-064), normal runtime never reads
+        ``*_metadata.pkl``. Mappings are rehydrated from DuckDB.
+        """
+        # Prefer DuckDB authority mappings when available.
+        if self._load_id_mappings_from_duckdb(collection_name):
+            return {
+                "metadata": self.metadata_store.get(collection_name, {}),
+                "id_mapping": self.id_mapping.get(collection_name, {}),
+                "reverse_id_mapping": self.reverse_id_mapping.get(
+                    collection_name, {}
+                ),
+                "authority": "duckdb",
+            }
+
         metadata_path = self._get_metadata_file_path(collection_name)
-        if os.path.exists(metadata_path):
+        if not os.path.exists(metadata_path):
+            return {}
+        if not self._legacy_pickle_io_allowed():
             try:
-                with open(metadata_path, 'rb') as f:
-                    return pickle.load(f)
-            except Exception as e:
-                logger.error(f"Failed to load metadata {metadata_path}: {e}")
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    ImplicitLegacyMetadataError,
+                    assert_legacy_metadata_path_allowed,
+                )
+                assert_legacy_metadata_path_allowed(
+                    metadata_path, kind="metadata_pkl", operation="read"
+                )
+            except ImplicitLegacyMetadataError:
+                logger.warning(
+                    "Blocked pickle metadata read after DuckDB promotion: %s",
+                    metadata_path,
+                )
                 return {}
-        return {}
+        if _pickle_compat is None:
+            return {}
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                assert_legacy_metadata_path_allowed,
+            )
+            assert_legacy_metadata_path_allowed(
+                metadata_path, kind="metadata_pkl", operation="read"
+            )
+            with open(metadata_path, "rb") as f:
+                return _pickle_compat.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load metadata {metadata_path}: {e}")
+            return {}
     
     def _save_metadata(self, collection_name: str, metadata: Dict[str, Any]):
-        """Save metadata to disk."""
+        """Save metadata: DuckDB authority after promotion; pickle only dual/legacy.
+
+        After DuckDB promotion (DQK-064), normal runtime never writes
+        ``*_metadata.pkl``. Lifecycle metadata is projected through the
+        process DuckDB catalog; vector bytes stay in the FAISS segment.
+        """
+        # Always keep in-process maps current.
+        self.metadata_store[collection_name] = dict(
+            metadata.get("metadata") or self.metadata_store.get(collection_name) or {}
+        )
+        if "id_mapping" in metadata:
+            self.id_mapping[collection_name] = dict(metadata["id_mapping"])
+        if "reverse_id_mapping" in metadata:
+            self.reverse_id_mapping[collection_name] = dict(
+                metadata["reverse_id_mapping"]
+            )
+
+        if not self._legacy_pickle_io_allowed():
+            # DuckDB-only: refuse pickle write (no silent fallback).
+            metadata_path = self._get_metadata_file_path(collection_name)
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    ImplicitLegacyMetadataError,
+                    assert_legacy_metadata_path_allowed,
+                )
+                assert_legacy_metadata_path_allowed(
+                    metadata_path, kind="metadata_pkl", operation="write"
+                )
+            except ImplicitLegacyMetadataError:
+                logger.debug(
+                    "Skipped pickle metadata write after DuckDB promotion: %s",
+                    metadata_path,
+                )
+                return
+            return
+
+        if _pickle_compat is None:
+            return
         os.makedirs(self.metadata_path, exist_ok=True)
         metadata_path = self._get_metadata_file_path(collection_name)
         try:
-            with open(metadata_path, 'wb') as f:
-                pickle.dump(metadata, f)
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                assert_legacy_metadata_path_allowed,
+            )
+            assert_legacy_metadata_path_allowed(
+                metadata_path, kind="metadata_pkl", operation="write"
+            )
+            with open(metadata_path, "wb") as f:
+                _pickle_compat.dump(metadata, f)
         except Exception as e:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                ImplicitLegacyMetadataError,
+            )
+            if isinstance(e, ImplicitLegacyMetadataError):
+                logger.debug("Blocked pickle metadata write: %s", e)
+                return
             logger.error(f"Failed to save metadata {metadata_path}: {e}")
             raise VectorStoreOperationError(f"Failed to save metadata: {e}")
     
@@ -454,7 +638,11 @@ class FAISSVectorStore(BaseVectorStore):
         return os.path.exists(index_path)
     
     def _ensure_collection_loaded(self, collection_name: str):
-        """Ensure a collection is loaded into memory."""
+        """Ensure a collection is loaded into memory.
+
+        After DuckDB promotion, id mappings rehydrate from DuckDB; the FAISS
+        segment provides vector bytes. No silent pickle fallback (DQK-064).
+        """
         if collection_name not in self.indices:
             index = self._load_index(collection_name)
             if index is None:
@@ -462,9 +650,22 @@ class FAISSVectorStore(BaseVectorStore):
             
             metadata = self._load_metadata(collection_name)
             self.indices[collection_name] = index
-            self.metadata_store[collection_name] = metadata.get("metadata", {})
-            self.id_mapping[collection_name] = metadata.get("id_mapping", {})
-            self.reverse_id_mapping[collection_name] = metadata.get("reverse_id_mapping", {})
+            if metadata.get("authority") == "duckdb":
+                # Maps already applied by _load_id_mappings_from_duckdb.
+                self.metadata_store.setdefault(collection_name, {})
+                self.id_mapping.setdefault(collection_name, {})
+                self.reverse_id_mapping.setdefault(collection_name, {})
+            else:
+                self.metadata_store[collection_name] = metadata.get("metadata", {})
+                self.id_mapping[collection_name] = metadata.get("id_mapping", {})
+                self.reverse_id_mapping[collection_name] = metadata.get(
+                    "reverse_id_mapping", {}
+                )
+        elif collection_name not in self.id_mapping or not self.id_mapping.get(
+            collection_name
+        ):
+            # Index present but mappings missing (e.g. after process restart).
+            self._load_metadata(collection_name)
     
     async def add_embeddings(self, embeddings: List[EmbeddingResult], 
                            collection_name: Optional[str] = None) -> List[str]:

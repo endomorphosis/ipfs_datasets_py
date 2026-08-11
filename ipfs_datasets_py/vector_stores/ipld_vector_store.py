@@ -15,10 +15,13 @@ import os
 import json
 import uuid
 import tempfile
-import pickle
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Union
 import anyio
+
+# Pickle is not runtime metadata authority (DQK-064). CAR/IPLD remain
+# content-addressed segment carriers; lifecycle metadata lives in DuckDB.
+
 
 # Import base classes and schemas
 from .base import BaseVectorStore, VectorStoreError, VectorStoreConnectionError, VectorStoreOperationError
@@ -242,11 +245,18 @@ class IPLDVectorStore(BaseVectorStore):
         self.vector_ids[name] = []
 
         try:
-            # Dual/shadow catalog (DQK-063): metadata in DuckDB; bytes in IPLD.
+            # Dual/DuckDB catalog (DQK-063/064): metadata in DuckDB; bytes in IPLD.
             from ipfs_datasets_py.vector_stores.management_engine import (
+                safe_dual_create,
                 safe_shadow_create,
+                duckdb_metadata_is_authority,
             )
-            safe_shadow_create(
+            create_fn = (
+                safe_dual_create
+                if duckdb_metadata_is_authority()
+                else safe_shadow_create
+            )
+            create_kwargs = dict(
                 logical_name=name,
                 backend="ipld",
                 dimension=int(dim),
@@ -256,6 +266,7 @@ class IPLDVectorStore(BaseVectorStore):
                     "producer": "ipld_vector_store",
                     "metric": self.distance_metric,
                     "bytes_location": "immutable_segment",
+                    "publication_approved": True,
                 },
                 model_provider="ipld",
                 model_name="ipld",
@@ -267,6 +278,10 @@ class IPLDVectorStore(BaseVectorStore):
                 ),
                 source_revision=kwargs.get("source_revision", "src-0"),
             )
+            try:
+                create_fn(**create_kwargs, bytes_location="immutable_segment")
+            except TypeError:
+                create_fn(**create_kwargs)
         except Exception as shadow_exc:  # noqa: BLE001
             logger.warning(
                 "IPLD shadow create quarantined (legacy ok): %s", shadow_exc
