@@ -12218,10 +12218,18 @@ class _RuntimeActivationGateAuthorityAdapter:
         snapshot = kwargs.get("snapshot")
         if snapshot is None:
             raise RuntimeError("runtime-activation preflight requires a snapshot")
+        # Restart/hold admission of a completed CAS may re-run preflight long
+        # after the original permit window. Prefer the sealed execution time
+        # when provided so historical verification does not fail on expiry.
+        execution_time = kwargs.get("execution_time")
+        now = execution_time if isinstance(execution_time, datetime) else None
+        if now is None and isinstance(kwargs.get("now"), datetime):
+            now = kwargs.get("now")
         verification = self._independent_verification(
             raw_input=kwargs.get("raw_input"),
             plan_root_cid=str(snapshot.plan_root_cid),
             repository_tree_id=str(snapshot.repository_tree_id),
+            now=now,
         )
         return {
             "schema": self.PROOF_SCHEMA,
@@ -12258,6 +12266,7 @@ class _RuntimeActivationGateAuthorityAdapter:
             raw_input=kwargs.get("raw_input"),
             snapshot=snapshot,
             verifier_attestation=kwargs.get("verifier_attestation"),
+            execution_time=execution_time,
         )
         for field in (
             "activation_receipt_cid",
