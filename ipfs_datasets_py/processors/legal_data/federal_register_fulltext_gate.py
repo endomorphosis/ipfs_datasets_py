@@ -1246,11 +1246,14 @@ class FulltextAttemptReceipt:
             raise MutableCutoffError(
                 f"previous_public_pin must be immutable, got {self.previous_public_pin!r}"
             )
-        # Identity fields are stored as provided (empty allowed at construction);
-        # authorizing evaluation requires exact live identity separately.
+        # Identity fields are stored exactly as provided.  Empty strings remain
+        # structurally representable so evaluation can return typed findings,
+        # but non-string values must never gain authority through ``str()``.
         for name in IDENTITY_FIELDS:
             value = getattr(self, name)
-            object.__setattr__(self, name, str(value or ""))
+            if not isinstance(value, str):
+                raise IdentityError(f"identity field {name} must be a string")
+            object.__setattr__(self, name, value)
         object.__setattr__(self, "notes", str(self.notes or ""))
         object.__setattr__(
             self,
@@ -1363,7 +1366,9 @@ def _require_explicit_authorizing_identity(raw: Mapping[str, Any]) -> None:
         )
     for name, expected in AUTHORIZING_IDENTITY.items():
         value = raw.get(name)
-        if value is None or (isinstance(value, str) and not value.strip()):
+        if not isinstance(value, str):
+            raise IdentityError(f"authorizing identity field {name} must be a string")
+        if not value.strip():
             raise IdentityError(f"authorizing identity field {name} is empty")
         if value != expected:
             raise IdentityError(
@@ -2229,17 +2234,10 @@ def _reject_caller_skew_kwargs(kwargs: Mapping[str, Any]) -> Optional[GateFindin
     for name in forbidden:
         if name in kwargs:
             value = kwargs[name]
-            if value is None:
-                continue
-            if isinstance(value, timedelta) and value == ZERO_FUTURE_SKEW:
-                # Explicit zero is redundant but not a widening override.
-                continue
-            if value == 0 or value == 0.0:
-                continue
             return _finding(
                 FailureKind.CALLER_SKEW,
-                f"authorizing APIs reject caller-supplied skew override {name}="
-                f"{value!r}; fixed zero future skew is mandatory",
+                f"authorizing APIs reject caller-supplied skew argument {name}="
+                f"{value!r}; the verifier owns the fixed zero-skew policy",
                 path=name,
             )
     return None
@@ -2416,7 +2414,17 @@ def _identity_findings_from_mapping(raw: Mapping[str, Any]) -> list[GateFinding]
         if name not in raw:
             continue
         value = raw.get(name)
-        if value is None or (isinstance(value, str) and not str(value).strip()):
+        if not isinstance(value, str):
+            findings.append(
+                _finding(
+                    FailureKind.IDENTITY,
+                    f"identity field {name} must be a string",
+                    path=name,
+                    expected=expected,
+                    actual_type=type(value).__name__,
+                )
+            )
+        elif not value.strip():
             findings.append(
                 _finding(
                     FailureKind.IDENTITY,
@@ -2641,10 +2649,11 @@ def evaluate_fixture_case(
     receipt_raw = raw.get("receipt")
     if not isinstance(receipt_raw, Mapping):
         raise FixtureSchemaError("case.receipt must be a mapping")
-    # Fixture evaluation still requires an explicit verifier clock; default to
-    # the sealed fixture clock only when the case is under structural test
-    # harness control (never invents wall-clock time).
-    clock = now if now is not None else fixture_verifier_now()
+    # Even a fixture helper is a public route to the authorizing evaluator.  It
+    # must not manufacture a verifier-owned instant for a live receipt.  Tests
+    # that need the sealed fixture clock pass ``fixture_verifier_now()``
+    # explicitly; omitted time therefore fails closed in the common evaluator.
+    clock = now
     try:
         return evaluate_fulltext_attempt_receipt(
             receipt_raw, now=clock, raise_on_failure=False, **kwargs

@@ -89,10 +89,17 @@ def test_caller_supplied_nonzero_skew_is_rejected() -> None:
         assert_fulltext_admission(raw, now=_NOW, max_future_skew=timedelta(seconds=1))
 
 
-def test_explicit_zero_skew_kwarg_does_not_widen() -> None:
+def test_explicit_zero_skew_kwarg_is_still_a_rejected_override() -> None:
     raw = _closed(receipt_id="skew-zero")
     result = _eval(raw, max_future_skew=ZERO_FUTURE_SKEW)
-    assert result.passed, result.findings
+    assert not result.passed
+    assert FailureKind.CALLER_SKEW.value in result.failure_kinds
+
+
+def test_fixture_helper_cannot_supply_a_clock_for_a_live_receipt() -> None:
+    result = evaluate_fixture_case({"receipt": _closed(receipt_id="fixture-no-clock")})
+    assert not result.passed
+    assert FailureKind.MISSING_VERIFIER_TIME.value in result.failure_kinds
 
 
 def test_timestamp_one_microsecond_after_verifier_fails() -> None:
@@ -123,6 +130,25 @@ def test_omitted_verifier_time_fails_on_every_authorizing_helper() -> None:
 # ---------------------------------------------------------------------------
 # Identity mutation matrix
 # ---------------------------------------------------------------------------
+
+
+class _SpoofedIdentity:
+    def __init__(self, rendered: str) -> None:
+        self.rendered = rendered
+
+    def __str__(self) -> str:
+        return self.rendered
+
+    def __eq__(self, other: object) -> bool:
+        return other == self.rendered
+
+
+def test_identity_objects_are_not_string_coerced_or_equality_coerced() -> None:
+    raw = _closed(receipt_id="identity-object")
+    raw["producer"] = _SpoofedIdentity(PRODUCER)
+    result = _eval(raw)
+    assert not result.passed
+    assert FailureKind.IDENTITY.value in result.failure_kinds
 
 
 @pytest.mark.parametrize("field", IDENTITY_FIELDS)
