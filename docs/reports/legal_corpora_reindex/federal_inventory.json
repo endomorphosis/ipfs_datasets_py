@@ -1,0 +1,67 @@
+{
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-inventory@1",
+  "schema_version": "federal-register-acquisition-v1",
+  "report_kind": "fixture_recipe",
+  "compact_recipe": true,
+  "expand": true,
+  "task_id": "LCR-052",
+  "goal_id": "LCR-G110",
+  "program_id": "legal-corpora-reindex-v1",
+  "producer": "federal_register_acquisition.py",
+  "code_version": "1",
+  "mode": "fixture",
+  "network_required": false,
+  "observation_cutoff": "2026-08-10T00:00:00Z",
+  "release_point": "fr/cutoff/2026-08-10",
+  "range": {
+    "start": "2026-03-03",
+    "end": "2026-08-10",
+    "inclusive": true,
+    "partition_count": 6,
+    "partition_strategy": "monthly"
+  },
+  "delta": {
+    "legacy_baseline_end_inclusive": "2026-03-02",
+    "delta_start_inclusive": "2026-03-03",
+    "legacy_advertised_count": 993703,
+    "legacy_materialized_count": 993708,
+    "post_endpoint_documents_min": 11784,
+    "covers_delta_window": true,
+    "note": "Explicit delta from legacy endpoint 2026-03-02 through observation cutoff 2026-08-10; official API exposes at least 11784 documents after the legacy endpoint."
+  },
+  "inventory_authority": "federal_register_api",
+  "inventory_source": "FederalRegister.gov API",
+  "inventory_url": "https://www.federalregister.gov/api/v1/documents.json",
+  "dataset_repo_id": "justicedao/ipfs_federal_register",
+  "previous_public_pin": "720668ae016cc400916dda884c9005e03618edfa",
+  "currentness_disclaimer": "Federal Register completeness is cutoff-relative. Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the daily register is permanently current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "fixture": {
+    "docs_per_partition": 3,
+    "per_page": 2,
+    "partition_ids": [
+      "p-2026-03",
+      "p-2026-04",
+      "p-2026-05",
+      "p-2026-06",
+      "p-2026-07",
+      "p-2026-08"
+    ],
+    "generator": "build_fixture_inventory_report"
+  },
+  "acceptance_contract": {
+    "all_partitions_closed": true,
+    "all_pages_closed": true,
+    "duplicate_free_by_official_identity": true,
+    "no_coverage_gap": true,
+    "unexplained_count_drift": 0,
+    "failed_final": 0,
+    "failed_final_zero": true,
+    "secrets_absent": true,
+    "frontier_closed": true,
+    "completeness_oracle_passed": true,
+    "all_expected_outputs_accounted": true
+  },
+  "notes": "Compact sealed Federal Register inventory recipe for LCR-052. Expand via build_fixture_inventory_report() / expand_inventory_payload() to materialize closed partitions, stable page response hashes, and duplicate-free official identity union. Body-text acquisition is deferred to LCR-053.",
+  "secrets_absent": true,
+  "frontier_closed": true
+}
