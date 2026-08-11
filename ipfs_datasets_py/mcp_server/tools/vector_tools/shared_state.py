@@ -4,9 +4,12 @@ Shared state management for MCP vector tools.
 This module maintains state for vector indexes via ServerContext
 or global fallback for backward compatibility.
 
-Also binds the process-local DuckDB vector shadow catalog (DQK-062) so MCP
-create/list/delete entrypoints share mapping/count/query parity with adapter
-producers while legacy authority is retained.
+Also binds the process-local DuckDB vector catalog so MCP create/list/delete
+entrypoints share mapping/count/query parity with adapter producers:
+
+* DQK-062 — shadow mode (legacy authority)
+* DQK-063 — dual mode promotes collection/generation/tombstone/compaction
+  metadata to DuckDB while vector bytes remain in the selected engine
 """
 
 from __future__ import annotations
@@ -26,16 +29,24 @@ def _get_global_manager():
     if _global_manager is None:
         from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndexManager
         _global_manager = IPFSKnnIndexManager()
-        # Ensure a shared shadow catalog is available for MCP producers.
+        # Ensure a shared dual-mode authority catalog for MCP producers (DQK-063).
         try:
             from ipfs_datasets_py.vector_stores.management_engine import (
-                get_vector_shadow_catalog,
-                configure_vector_shadow_catalog,
+                get_vector_authority_catalog,
+                configure_vector_authority_catalog,
             )
-            if get_vector_shadow_catalog() is None:
-                configure_vector_shadow_catalog(enabled=True)
+            if get_vector_authority_catalog() is None:
+                configure_vector_authority_catalog(enabled=True)
         except Exception:
-            pass
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    get_vector_shadow_catalog,
+                    configure_vector_shadow_catalog,
+                )
+                if get_vector_shadow_catalog() is None:
+                    configure_vector_shadow_catalog(enabled=True)
+            except Exception:
+                pass
     return _global_manager
 
 def _reset_global_manager():
@@ -44,20 +55,38 @@ def _reset_global_manager():
     _global_manager = None
     try:
         from ipfs_datasets_py.vector_stores.management_engine import (
-            reset_vector_shadow_catalog,
+            reset_vector_authority_catalog,
         )
-        reset_vector_shadow_catalog()
+        reset_vector_authority_catalog()
     except Exception:
-        pass
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                reset_vector_shadow_catalog,
+            )
+            reset_vector_shadow_catalog()
+        except Exception:
+            pass
 
 
 def configure_mcp_vector_shadow_catalog(
     catalog_path: Union[str, Path, None] = None,
     *,
     enabled: bool = True,
+    dual_mode: bool = True,
 ) -> Any:
-    """Configure the process-local DuckDB shadow catalog for MCP tools."""
+    """Configure the process-local DuckDB catalog for MCP tools.
 
+    When ``dual_mode`` is true (default, DQK-063), the catalog starts in dual
+    authority mode so DuckDB owns lifecycle metadata.
+    """
+
+    if dual_mode:
+        from ipfs_datasets_py.vector_stores.management_engine import (
+            configure_vector_authority_catalog,
+        )
+        return configure_vector_authority_catalog(
+            catalog_path, enabled=enabled, replace=True
+        )
     from ipfs_datasets_py.vector_stores.management_engine import (
         configure_vector_shadow_catalog,
     )
@@ -66,13 +95,35 @@ def configure_mcp_vector_shadow_catalog(
     )
 
 
+def configure_mcp_vector_authority_catalog(
+    catalog_path: Union[str, Path, None] = None,
+    *,
+    enabled: bool = True,
+) -> Any:
+    """Configure dual-mode DuckDB authority catalog for MCP tools (DQK-063)."""
+
+    return configure_mcp_vector_shadow_catalog(
+        catalog_path, enabled=enabled, dual_mode=True
+    )
+
+
 def get_mcp_vector_shadow_catalog() -> Any:
-    """Return the shared DuckDB vector shadow catalog (may be ``None``)."""
+    """Return the shared DuckDB vector catalog (may be ``None``)."""
 
     from ipfs_datasets_py.vector_stores.management_engine import (
+        get_vector_authority_catalog,
         get_vector_shadow_catalog,
     )
-    return get_vector_shadow_catalog()
+    return get_vector_authority_catalog() or get_vector_shadow_catalog()
+
+
+def get_mcp_vector_authority_catalog() -> Any:
+    """Return the dual-mode authority catalog when configured."""
+
+    from ipfs_datasets_py.vector_stores.management_engine import (
+        get_vector_authority_catalog,
+    )
+    return get_vector_authority_catalog()
 
 # Main MCP functions for registration
 async def get_global_manager(context: Optional["ServerContext"] = None) -> Dict[str, Any]:

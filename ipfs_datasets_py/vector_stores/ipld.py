@@ -238,7 +238,7 @@ class IPLDVectorStore:
         # Update the root CID
         self._update_root_cid()
 
-        # Shadow duplicate IPLD store metadata into DuckDB (DQK-062).
+        # Dual/shadow IPLD metadata into DuckDB (DQK-062/063); bytes stay on CID.
         try:
             from ipfs_datasets_py.vector_stores.management_engine import (
                 safe_shadow_create,
@@ -256,6 +256,7 @@ class IPLDVectorStore:
                     "producer": "vector_stores.ipld",
                     "metric": self.metric,
                     "root_cid": self.root_cid,
+                    "bytes_location": "immutable_segment",
                 },
                 model_provider="ipld",
                 model_name="ipld-legacy",

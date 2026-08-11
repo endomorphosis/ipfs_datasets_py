@@ -88,12 +88,29 @@ async def create_vector_store(
         store = ElasticsearchVectorStore(config)
         backend_name = "elasticsearch"
 
-    # Route collection identity through the DuckDB shadow catalog (DQK-062).
+    # Route collection identity through DuckDB shadow/dual catalog (DQK-062/063).
+    # Dual mode promotes lifecycle metadata to DuckDB; vector bytes stay in engine.
     try:
         from ipfs_datasets_py.vector_stores.management_engine import (
+            get_vector_authority_catalog,
+            get_vector_shadow_catalog,
+            safe_dual_create,
             safe_shadow_create,
         )
-        safe_shadow_create(
+        catalog = get_vector_authority_catalog() or get_vector_shadow_catalog()
+        mode = (getattr(catalog, "mode", None) or "").lower() if catalog else ""
+        create_fn = (
+            safe_dual_create
+            if mode in {
+                "dual",
+                "dual-write",
+                "dualwrite",
+                "db-primary",
+                "db_primary",
+            }
+            else safe_shadow_create
+        )
+        create_kwargs = dict(
             logical_name=collection_name,
             backend=backend_name,
             dimension=int(dimension),
@@ -102,6 +119,7 @@ async def create_vector_store(
             metadata_json={
                 "producer": "vector_stores.api",
                 "distance_metric": distance_metric,
+                "bytes_location": "engine",
             },
             model_provider=backend_name,
             model_name=kwargs.get("model_name") or backend_name,
@@ -112,6 +130,10 @@ async def create_vector_store(
             ),
             source_revision=kwargs.get("source_revision", "src-0"),
         )
+        try:
+            create_fn(**create_kwargs, bytes_location="engine")
+        except TypeError:
+            create_fn(**create_kwargs)
     except Exception as shadow_exc:  # noqa: BLE001
         logger.warning(
             "API shadow create quarantined (legacy ok): %s", shadow_exc

@@ -131,25 +131,42 @@ class QdrantVectorStore(BaseVectorStore):
                 **kwargs
             )
             try:
+                # Dual/shadow catalog: DuckDB lifecycle metadata; bytes in Qdrant.
                 from ipfs_datasets_py.vector_stores.management_engine import (
+                    safe_retry_external_mutation,
                     safe_shadow_create,
                 )
-                safe_shadow_create(
-                    logical_name=collection_name,
+
+                def _project(op_id: str):
+                    return safe_shadow_create(
+                        logical_name=collection_name,
+                        backend="qdrant",
+                        dimension=int(dimension),
+                        dtype="float32",
+                        mapping={},
+                        metadata_json={
+                            "producer": "qdrant_store",
+                            "bytes_location": "engine",
+                            "operation_id": op_id,
+                        },
+                        model_provider="qdrant",
+                        model_name="qdrant",
+                        chunking_identity=kwargs.get(
+                            "chunking_identity", "chunk:qdrant@1"
+                        ),
+                        normalization_identity=kwargs.get(
+                            "normalization_identity", "norm:none@1"
+                        ),
+                        source_revision=kwargs.get("source_revision", "src-0"),
+                        operation_id=op_id,
+                    )
+
+                safe_retry_external_mutation(
+                    operation_id=f"qdrant-create:{collection_name}",
                     backend="qdrant",
-                    dimension=int(dimension),
-                    dtype="float32",
-                    mapping={},
-                    metadata_json={"producer": "qdrant_store"},
-                    model_provider="qdrant",
-                    model_name="qdrant",
-                    chunking_identity=kwargs.get(
-                        "chunking_identity", "chunk:qdrant@1"
-                    ),
-                    normalization_identity=kwargs.get(
-                        "normalization_identity", "norm:none@1"
-                    ),
-                    source_revision=kwargs.get("source_revision", "src-0"),
+                    mutate_fn=_project,
+                    max_attempts=3,
+                    backoff_s=0.0,
                 )
             except Exception as shadow_exc:  # noqa: BLE001
                 logger.warning(
@@ -177,8 +194,21 @@ class QdrantVectorStore(BaseVectorStore):
             try:
                 from ipfs_datasets_py.vector_stores.management_engine import (
                     safe_shadow_delete,
+                    safe_retry_external_mutation,
                 )
-                safe_shadow_delete(logical_name=collection_name, backend="qdrant")
+
+                def _delete(op_id: str):
+                    return safe_shadow_delete(
+                        logical_name=collection_name, backend="qdrant"
+                    )
+
+                safe_retry_external_mutation(
+                    operation_id=f"qdrant-delete:{collection_name}",
+                    backend="qdrant",
+                    mutate_fn=_delete,
+                    max_attempts=3,
+                    backoff_s=0.0,
+                )
             except Exception as shadow_exc:  # noqa: BLE001
                 logger.warning(
                     "Qdrant shadow delete quarantined (legacy ok): %s", shadow_exc

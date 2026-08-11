@@ -176,9 +176,10 @@ async def shard_embeddings_by_dimension(
             "metadata": shard_metadata,
         }
 
-        # Shadow shard manifests into the DuckDB vector catalog (DQK-062).
+        # Dual/shadow shard manifests into DuckDB vector catalog (DQK-062/063).
         try:
             from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_authority_catalog,
                 get_vector_shadow_catalog,
                 safe_shadow_create,
             )
@@ -197,6 +198,7 @@ async def shard_embeddings_by_dimension(
                     "producer": "shard_embeddings_engine",
                     "manifest_file": str(manifest_path),
                     "manifest": manifest,
+                    "bytes_location": "immutable_segment",
                 },
                 shard_manifest={
                     "shard_index": 0,
@@ -212,7 +214,10 @@ async def shard_embeddings_by_dimension(
             )
             if shadow is not None:
                 result["shadow"] = shadow.to_dict()
-                catalog = get_vector_shadow_catalog()
+                result["authority"] = shadow.authority
+                catalog = (
+                    get_vector_authority_catalog() or get_vector_shadow_catalog()
+                )
                 if catalog is not None and catalog.enabled:
                     for info in shards_info:
                         catalog.shadow_shard_manifest(
