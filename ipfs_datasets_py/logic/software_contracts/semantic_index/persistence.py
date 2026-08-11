@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 import tempfile
 import threading
-from typing import Any, Final, Iterator, Mapping, Protocol, runtime_checkable
+from typing import Any, Callable, Final, Iterator, Mapping, Protocol, runtime_checkable
 
 from ipfs_datasets_py.logic.software_contracts.cache import (
     CacheIntegrityError,
@@ -49,6 +49,7 @@ except ImportError:  # pragma: no cover
 
 PERSISTENCE_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-index-persistence@1"
 ROOT_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-index-root@1"
+TRANSITION_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-index-root-transition@1"
 
 
 class SemanticIndexPersistenceError(RuntimeError):
@@ -184,16 +185,38 @@ class _RecordStore(ABC):
 class LocalSemanticIndexStore(_RecordStore):
     """Hermetic filesystem persistence with a verified root CAS ref."""
 
-    def __init__(self, root: Path | str, *, max_object_bytes: int = 16 * 1024 * 1024) -> None:
+    def __init__(
+        self,
+        root: Path | str,
+        *,
+        max_object_bytes: int = 16 * 1024 * 1024,
+        interruption_hook: Callable[[str], None] | None = None,
+    ) -> None:
         self.root = Path(root)
         self.cas = ImmutableCAS(self.root / "cas", max_object_bytes=max_object_bytes)
         self.roots_root = self.root / "roots"
         self.roots_root.mkdir(parents=True, exist_ok=True)
+        self.transitions_root = self.root / "transitions"
+        self.transitions_root.mkdir(parents=True, exist_ok=True)
         self._thread_lock = threading.RLock()
         self._lock_path = self.root / ".roots.lock"
+        self._interruption_hook = interruption_hook
 
     def _put_record(self, value: Mapping[str, Any]) -> str:
-        return self.cas.put(dict(value))
+        self._interrupt("before_object_write")
+        cid = self.cas.put(dict(value))
+        self._interrupt("after_object_write")
+        return cid
+
+    def _interrupt(self, point: str) -> None:
+        """Invoke the optional crash-injection hook after durable boundaries.
+
+        The hook is intentionally supplied by callers/tests rather than being
+        controlled by environment state.  Raising from it models abrupt
+        termination while retaining every preceding durable write.
+        """
+        if self._interruption_hook is not None:
+            self._interruption_hook(point)
 
     def _get_record(self, cid: str) -> Mapping[str, Any]:
         try:
@@ -209,18 +232,24 @@ class LocalSemanticIndexStore(_RecordStore):
         # The filename is an identity of the repository label, never the label itself.
         return self.roots_root / f"{cid_for_structured({'repository_id': repository_id})}.json"
 
+    def _transition_path(self, repository_id: str) -> Path:
+        repository_id = _repository_id(repository_id)
+        return self.transitions_root / f"{cid_for_structured({'repository_id': repository_id})}.json"
+
     @contextmanager
     def _locked(self) -> Iterator[None]:
         with self._thread_lock:
+            if fcntl is None:
+                raise SemanticIndexPersistenceError(
+                    "process-safe root CAS requires an interprocess file lock"
+                )
             self._lock_path.parent.mkdir(parents=True, exist_ok=True)
             with self._lock_path.open("a+b") as stream:
-                if fcntl is not None:
-                    fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+                fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
                 try:
                     yield
                 finally:
-                    if fcntl is not None:
-                        fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+                    fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 
     @staticmethod
     def _fsync_directory(path: Path) -> None:
@@ -248,14 +277,17 @@ class LocalSemanticIndexStore(_RecordStore):
         if set(record) != {"schema", "repository_id", "state_cid"} or record.get("schema") != ROOT_SCHEMA or record.get("repository_id") != repository_id:
             raise SemanticIndexPersistenceError("semantic-index root membership is invalid")
         state_cid = _structured_cid(record.get("state_cid"), "root state_cid")
-        # A root is authoritative only if its referenced immutable state verifies.
-        self.load_state(state_cid)
+        # A root is authoritative only if its referenced immutable state
+        # verifies and is for precisely the repository named by the root.
+        if self.load_state(state_cid).repository_id != repository_id:
+            raise SemanticIndexPersistenceError("semantic-index root state belongs to another repository")
         return state_cid
 
     def _replace_root(self, path: Path, payload: bytes) -> None:
         temporary: Path | None = None
         try:
-            with tempfile.NamedTemporaryFile(mode="wb", dir=path.parent, prefix=".root-", delete=False) as stream:
+            prefix = ".transition-" if path.parent == self.transitions_root else ".root-"
+            with tempfile.NamedTemporaryFile(mode="wb", dir=path.parent, prefix=prefix, delete=False) as stream:
                 temporary = Path(stream.name)
                 stream.write(payload)
                 stream.flush()
@@ -267,9 +299,82 @@ class LocalSemanticIndexStore(_RecordStore):
             if temporary is not None:
                 temporary.unlink(missing_ok=True)
 
+    def _write_transition(self, repository_id: str, expected_old_cid: str | None, new_cid: str) -> Path:
+        record = {
+            "schema": TRANSITION_SCHEMA,
+            "repository_id": repository_id,
+            "expected_old_cid": expected_old_cid,
+            "new_cid": new_cid,
+        }
+        path = self._transition_path(repository_id)
+        self._replace_root(path, canonical_dag_json_bytes(record))
+        return path
+
+    def _read_transition(self, path: Path) -> tuple[str, str | None, str]:
+        try:
+            payload = path.read_bytes()
+            record = _decode_record(cid_for_structured(json.loads(payload.decode("utf-8"))), payload)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError, SemanticIndexPersistenceError) as exc:
+            raise SemanticIndexPersistenceError("semantic-index transition is invalid") from exc
+        if set(record) != {"schema", "repository_id", "expected_old_cid", "new_cid"} or record.get("schema") != TRANSITION_SCHEMA:
+            raise SemanticIndexPersistenceError("semantic-index transition membership is invalid")
+        try:
+            repository_id = _repository_id(record.get("repository_id"))
+            expected = record.get("expected_old_cid")
+            if expected is not None:
+                expected = _structured_cid(expected, "transition expected_old_cid")
+            new_cid = _structured_cid(record.get("new_cid"), "transition new_cid")
+        except (TypeError, ValueError, SemanticIndexPersistenceError) as exc:
+            raise SemanticIndexPersistenceError("semantic-index transition is invalid") from exc
+        if path != self._transition_path(repository_id):
+            raise SemanticIndexPersistenceError("semantic-index transition filename is invalid")
+        if self.load_state(new_cid).repository_id != repository_id:
+            raise SemanticIndexPersistenceError("semantic-index transition state belongs to another repository")
+        return repository_id, expected, new_cid
+
+    def _recover_unlocked(
+        self, repository_id: str | None = None, *, cleanup_temps: bool = False
+    ) -> tuple[Path, ...]:
+        """Finish journal reconciliation without ever manufacturing a root."""
+        transitions = sorted(self.transitions_root.glob("*.json"))
+        removed: list[Path] = []
+        for path in transitions:
+            transition_repository, expected, new_cid = self._read_transition(path)
+            current = self._read_root_unlocked(transition_repository)
+            if current not in (expected, new_cid):
+                raise SemanticIndexPersistenceError("semantic-index transition does not match current root")
+            # The replacement is atomic: either the old root or the new root
+            # was fully visible at the crash boundary.  Never replay a journal
+            # entry, because doing so could turn a non-visible write into one.
+            path.unlink()
+            removed.append(path)
+        if cleanup_temps:
+            for directory in (self.roots_root, self.transitions_root):
+                pattern = ".root-*" if directory == self.roots_root else ".transition-*"
+                for path in sorted(directory.glob(pattern)):
+                    if path.is_file():
+                        path.unlink()
+                        removed.append(path)
+                self._fsync_directory(directory)
+        if repository_id is not None:
+            self._read_root_unlocked(_repository_id(repository_id))
+        else:
+            for path in sorted(self.roots_root.glob("*.json")):
+                try:
+                    payload = json.loads(path.read_text(encoding="utf-8"))
+                    root_repository = _repository_id(payload.get("repository_id"))
+                except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                    raise SemanticIndexPersistenceError("cannot safely recover an invalid root") from exc
+                if path != self._root_path(root_repository):
+                    raise SemanticIndexPersistenceError("semantic-index root filename is invalid")
+                self._read_root_unlocked(root_repository)
+        return tuple(removed)
+
     def current_root(self, repository_id: str) -> str | None:
         with self._locked():
-            return self._read_root_unlocked(_repository_id(repository_id))
+            repository_id = _repository_id(repository_id)
+            self._recover_unlocked(repository_id)
+            return self._read_root_unlocked(repository_id)
 
     get_current_root = current_root
 
@@ -278,8 +383,14 @@ class LocalSemanticIndexStore(_RecordStore):
         if expected_old_cid is not None:
             expected_old_cid = _structured_cid(expected_old_cid, "expected_old_cid")
         new_cid = _structured_cid(new_cid, "new_cid")
-        self.load_state(new_cid)
+        if self.load_state(new_cid).repository_id != repository_id:
+            raise SemanticIndexPersistenceError("new root state belongs to another repository")
         with self._locked():
+            self._recover_unlocked(repository_id)
+            # Revalidate under the publication lock: a damaged immutable block
+            # must not become root authority after the initial preflight.
+            if self.load_state(new_cid).repository_id != repository_id:
+                raise SemanticIndexPersistenceError("new root state belongs to another repository")
             current = self._read_root_unlocked(repository_id)
             # Repeated identical publication is intentionally idempotent.
             if current == new_cid:
@@ -288,8 +399,15 @@ class LocalSemanticIndexStore(_RecordStore):
                 raise RootConflictError(
                     f"root conflict for {repository_id!r}: expected {expected_old_cid!r}, found {current!r}"
                 )
+            self._interrupt("before_transition_write")
+            transition = self._write_transition(repository_id, expected_old_cid, new_cid)
+            self._interrupt("after_transition_write")
             payload = canonical_dag_json_bytes({"schema": ROOT_SCHEMA, "repository_id": repository_id, "state_cid": new_cid})
+            self._interrupt("before_root_replace")
             self._replace_root(self._root_path(repository_id), payload)
+            self._interrupt("after_root_replace")
+            transition.unlink()
+            self._fsync_directory(self.transitions_root)
             return new_cid
 
     cas_root = compare_and_swap_root
@@ -297,22 +415,7 @@ class LocalSemanticIndexStore(_RecordStore):
     def recover(self, repository_id: str | None = None) -> tuple[Path, ...]:
         """Validate roots first, then remove only recognized abandoned root temps."""
         with self._locked():
-            if repository_id is not None:
-                self._read_root_unlocked(_repository_id(repository_id))
-            else:
-                for path in sorted(self.roots_root.glob("*.json")):
-                    try:
-                        payload = json.loads(path.read_text(encoding="utf-8"))
-                        self._read_root_unlocked(_repository_id(payload.get("repository_id")))
-                    except (OSError, TypeError, ValueError, SemanticIndexPersistenceError) as exc:
-                        raise SemanticIndexPersistenceError("cannot safely recover an invalid root") from exc
-            removed: list[Path] = []
-            for path in sorted(self.roots_root.glob(".root-*")):
-                if path.is_file():
-                    path.unlink()
-                    removed.append(path)
-            self._fsync_directory(self.roots_root)
-            return tuple(removed)
+            return self._recover_unlocked(repository_id, cleanup_temps=True)
 
 
 class IpfsKitSemanticIndexStore(_RecordStore):
@@ -360,7 +463,8 @@ class IpfsKitSemanticIndexStore(_RecordStore):
         if value is None:
             return None
         state_cid = _structured_cid(value, "backend root CID")
-        self.load_state(state_cid)
+        if self.load_state(state_cid).repository_id != repository_id:
+            raise SemanticIndexPersistenceError("backend root state belongs to another repository")
         return state_cid
 
     get_current_root = current_root
@@ -373,7 +477,18 @@ class IpfsKitSemanticIndexStore(_RecordStore):
         if expected_old_cid is not None:
             expected_old_cid = _structured_cid(expected_old_cid, "expected_old_cid")
         new_cid = _structured_cid(new_cid, "new_cid")
-        self.load_state(new_cid)
+        if self.load_state(new_cid).repository_id != repository_id:
+            raise SemanticIndexPersistenceError("new backend root state belongs to another repository")
+        # Root reads are required for CAS too.  Besides detecting a stale
+        # expected value early, this ensures an already-installed foreign
+        # state is never silently accepted by a backend CAS implementation.
+        current = self.current_root(repository_id)
+        if current == new_cid:
+            return new_cid
+        if current != expected_old_cid:
+            raise RootConflictError(
+                f"root conflict for {repository_id!r}: expected {expected_old_cid!r}, found {current!r}"
+            )
         try:
             result = method(repository_id, expected_old_cid, new_cid)
         except RootConflictError:
@@ -383,6 +498,8 @@ class IpfsKitSemanticIndexStore(_RecordStore):
         actual = new_cid if result in (None, True) else self._returned_cid(result)
         if actual != new_cid:
             raise SemanticIndexPersistenceError("backend root CAS returned a different CID")
+        if self.current_root(repository_id) != new_cid:
+            raise SemanticIndexPersistenceError("backend root CAS did not publish the requested root")
         return new_cid
 
     cas_root = compare_and_swap_root
