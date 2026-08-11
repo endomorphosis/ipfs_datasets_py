@@ -247,7 +247,7 @@ setup(
         'requests',
         'boto3',
         'ipfsspec<0.6.0',
-        "duckdb",
+        "duckdb>=1.5.5,<1.6.0",  # DQK-046 / DQK-002 pinned compatibility window
         "aiosqlite>=0.17.0",  # Async SQLite for metadata/auth
         "pyarrow>=23.0.1,<26.0.0; python_version < '3.14'",
         "fsspec>=2023.1.0,<=2024.6.1",
