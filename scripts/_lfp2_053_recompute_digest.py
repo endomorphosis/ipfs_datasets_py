@@ -1,1 +1,0 @@
-# Removed after LFP2-053 sealed-tool path.
