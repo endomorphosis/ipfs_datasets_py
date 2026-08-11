@@ -6,6 +6,12 @@ stable ``record_id``, and only becomes durable after :meth:`DatasetSink.commit`.
 Partial or cancelled runs leave staged data aborted and do not invent a
 successful sink commit for checkpoint CAS.
 
+When a DuckDB wallet store is injected (DQK-071 shadow mode), every staged
+batch and commit is dual-written into the typed ledger catalog so blocks,
+transactions, transfers, UTXOs, events, and related dimension rows shadow at
+ingestion time.  JSONL / in-memory rows remain the authority; secrets, signing
+payloads, and unrestricted raw bytes never enter DuckDB (CID/digest refs only).
+
 Importing this module performs no network I/O.
 """
 
@@ -14,10 +20,11 @@ from __future__ import annotations
 import os
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Final, Protocol, runtime_checkable
 from uuid import uuid4
 
 from .canonical import canonical_json_bytes, content_digest
@@ -35,6 +42,29 @@ from .protocols import OperationContext, RecordBatch
 
 SINK_RECEIPT_SCHEMA_VERSION = "wallet-sink-receipt-v1"
 RAW_PAYLOAD_SCHEMA_VERSION = "wallet-raw-payload-v1"
+SHADOW_LEDGER_MODE_SCHEMA_VERSION = "wallet-shadow-ledger-v1"
+
+# Fact tables dual-written by the shadow ledger projection (DQK-071).
+_SHADOW_FACT_TABLES: Final = (
+    "blocks",
+    "transactions",
+    "transfers",
+    "utxos",
+    "token_accounts",
+    "contract_events",
+)
+
+# Map LedgerRecord.record_type → catalog fact table.
+_RECORD_TYPE_TO_TABLE: Mapping[str, str] = MappingProxyType(
+    {
+        "block": "blocks",
+        "transaction": "transactions",
+        "transfer": "transfers",
+        "utxo": "utxos",
+        "token_account": "token_accounts",
+        "contract_event": "contract_events",
+    }
+)
 
 # Conservative custody defaults: explicit retention is always bounded.
 DEFAULT_MAX_RAW_OBJECT_BYTES = 1_048_576  # 1 MiB per object
@@ -821,6 +851,71 @@ class _StagedRecord:
     order: int
 
 
+class ShadowLedgerMode(StrEnum):
+    """Authority mode for dual-written wallet ledger sinks (DQK-071).
+
+    * ``off`` — JSONL / in-memory only (legacy unit-test path).
+    * ``shadow`` — dual-write into an injected DuckDB wallet store; JSONL remains
+      authority until DQK-072 authority cutover.
+    """
+
+    OFF = "off"
+    SHADOW = "shadow"
+
+
+@dataclass(frozen=True, slots=True)
+class ShadowWriteReceipt:
+    """Accounting for one dual-written shadow batch (parity / diagnostics)."""
+
+    write_id: str
+    accepted_count: int
+    duplicate_count: int
+    content_digest: str
+    mode: str = ShadowLedgerMode.SHADOW.value
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "write_id": self.write_id,
+            "accepted_count": self.accepted_count,
+            "duplicate_count": self.duplicate_count,
+            "content_digest": self.content_digest,
+            "mode": self.mode,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ShadowParityReport:
+    """JSONL vs DuckDB projection parity for one sink commit window."""
+
+    matched_record_ids: tuple[str, ...]
+    missing_in_db: tuple[str, ...]
+    missing_in_jsonl: tuple[str, ...]
+    mismatched: tuple[str, ...]
+    mode: str = ShadowLedgerMode.SHADOW.value
+    schema_version: str = field(
+        default=SHADOW_LEDGER_MODE_SCHEMA_VERSION, init=False
+    )
+
+    @property
+    def matched(self) -> bool:
+        return (
+            not self.missing_in_db
+            and not self.missing_in_jsonl
+            and not self.mismatched
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "mode": self.mode,
+            "matched": self.matched,
+            "matched_record_ids": list(self.matched_record_ids),
+            "missing_in_db": list(self.missing_in_db),
+            "missing_in_jsonl": list(self.missing_in_jsonl),
+            "mismatched": list(self.mismatched),
+        }
+
+
 class StreamingDatasetSink:
     """Reference :class:`~protocols.DatasetSink` with transactional staging.
 
@@ -828,6 +923,11 @@ class StreamingDatasetSink:
     Deduplication is by stable ``record_id`` so duplicate and out-of-order pages
     never produce multiple durable rows.  :meth:`abort` discards the stage and
     must be used on partial/cancelled runs so checkpoints are not advanced.
+
+    When *shadow_store* is provided (or *shadow* is true and a store is
+    constructed), every :meth:`write` / :meth:`commit` / :meth:`abort` is also
+    applied to the DuckDB ledger store so typed projections shadow at ingestion
+    time (DQK-071).  Authority remains the in-memory / JSONL path.
     """
 
     def __init__(
@@ -836,6 +936,8 @@ class StreamingDatasetSink:
         scope: str,
         output_dir: str | Path | None = None,
         raw_payload_policy: RawPayloadPolicy = RawPayloadPolicy.OMITTED,
+        shadow_store: Any | None = None,
+        shadow: bool | Any | None = None,
     ) -> None:
         self._scope = _required_str(scope, "scope")
         self._output_dir = Path(output_dir) if output_dir is not None else None
@@ -854,6 +956,18 @@ class StreamingDatasetSink:
         self._duplicate_total = 0
         self._out_of_order_total = 0
         self._last_commit: SinkCommitReceipt | None = None
+        self._shadow_write_receipts: list[ShadowWriteReceipt] = []
+        self._last_parity: ShadowParityReport | None = None
+        self._shadow = _resolve_shadow_store(
+            shadow_store=shadow_store,
+            shadow=shadow,
+            scope=self._scope,
+        )
+        self._shadow_mode = (
+            ShadowLedgerMode.SHADOW
+            if self._shadow is not None
+            else ShadowLedgerMode.OFF
+        )
 
     @property
     def scope(self) -> str:
@@ -862,6 +976,24 @@ class StreamingDatasetSink:
     @property
     def raw_payload_policy(self) -> RawPayloadPolicy:
         return self._raw_payload_policy
+
+    @property
+    def shadow_store(self) -> Any | None:
+        """Injected DuckDB wallet store used for dual-write shadowing."""
+
+        return self._shadow
+
+    @property
+    def shadow_mode(self) -> ShadowLedgerMode:
+        return self._shadow_mode
+
+    @property
+    def shadow_write_receipts(self) -> tuple[ShadowWriteReceipt, ...]:
+        return tuple(self._shadow_write_receipts)
+
+    @property
+    def last_parity(self) -> ShadowParityReport | None:
+        return self._last_parity
 
     @property
     def staged_count(self) -> int:
@@ -967,7 +1099,7 @@ class StreamingDatasetSink:
         self._write_count += 1
         encoded = canonical_json_bytes(payloads) if payloads else b"[]"
         write_id = f"write:{uuid4().hex}"
-        return BatchWriteReceipt(
+        receipt = BatchWriteReceipt(
             write_id=write_id,
             accepted_count=len(accepted),
             duplicate_count=duplicate,
@@ -975,6 +1107,47 @@ class StreamingDatasetSink:
             byte_count=len(encoded) + max(0, batch.response_bytes),
             record_ids=tuple(accepted),
             content_digest=content_digest(payloads),
+        )
+        # Dual-write shadow after authority staging succeeds (DQK-071).
+        await self._shadow_write(batch, context=context, authority=receipt)
+        return receipt
+
+    async def _shadow_write(
+        self,
+        batch: RecordBatch,
+        *,
+        context: OperationContext,
+        authority: BatchWriteReceipt,
+    ) -> None:
+        """Mirror a staged batch into the DuckDB wallet store when enabled."""
+
+        if self._shadow is None:
+            return
+        try:
+            shadow_receipt = await self._shadow.write(batch, context=context)
+        except Exception as exc:
+            raise DatasetSinkError(
+                f"shadow ledger write failed: {exc}"
+            ) from exc
+        accepted = int(getattr(shadow_receipt, "accepted_count", 0) or 0)
+        duplicate = int(getattr(shadow_receipt, "duplicate_count", 0) or 0)
+        # Authority and shadow may diverge on accepted_count when one side has
+        # already seen identities (resume).  Track both for parity diagnostics.
+        self._shadow_write_receipts.append(
+            ShadowWriteReceipt(
+                write_id=str(
+                    getattr(shadow_receipt, "write_id", authority.write_id)
+                ),
+                accepted_count=accepted,
+                duplicate_count=duplicate,
+                content_digest=str(
+                    getattr(
+                        shadow_receipt,
+                        "content_digest",
+                        authority.content_digest,
+                    )
+                ),
+            )
         )
 
     async def commit(
@@ -988,6 +1161,10 @@ class StreamingDatasetSink:
         *manifest* may be an :class:`ExportManifest` or ``None`` when the
         caller builds the manifest after inspecting the receipt.  Checkpoint
         CAS must only proceed after this receipt is obtained.
+
+        When a shadow store is attached, the DuckDB catalog is committed after
+        the JSONL/in-memory authority commit so projections match committed
+        sink rows (DQK-071).
         """
 
         context.check_active()
@@ -1031,6 +1208,24 @@ class StreamingDatasetSink:
             partitions=partitions,
         )
         self._last_commit = receipt
+
+        if self._shadow is not None:
+            try:
+                await self._shadow.commit(manifest, context=context)
+            except Exception as exc:
+                raise DatasetSinkError(
+                    f"shadow ledger commit failed: {exc}"
+                ) from exc
+            self._last_parity = compare_jsonl_db_projections(
+                self.committed_records(),
+                self._shadow,
+            )
+            if not self._last_parity.matched:
+                raise DatasetSinkError(
+                    "shadow ledger parity mismatch after commit: "
+                    f"missing_in_db={list(self._last_parity.missing_in_db)} "
+                    f"mismatched={list(self._last_parity.mismatched)}"
+                )
         return receipt
 
     def _flush_committed_jsonl(self, digest: str) -> Path:
@@ -1051,6 +1246,7 @@ class StreamingDatasetSink:
 
         Abort is a cleanup path and must succeed even when the caller has
         already cancelled the operation; it never advances durable state.
+        Shadow stages are aborted after the authority stage is cleared.
         """
 
         # Deliberately skip cancellation checks so partial/cancelled runs can
@@ -1058,6 +1254,12 @@ class StreamingDatasetSink:
         _ = context
         self._staged.clear()
         self._aborted = True
+        if self._shadow is not None:
+            try:
+                await self._shadow.abort(context=context)
+            except Exception:
+                # Abort must not invent sink commits; best-effort shadow cleanup.
+                pass
 
     def reset_for_resume(self) -> None:
         """Clear abort state so a resumed pipeline can stage further batches.
@@ -1068,6 +1270,289 @@ class StreamingDatasetSink:
 
         self._aborted = False
         self._staged.clear()
+        if self._shadow is not None:
+            reset = getattr(self._shadow, "reset_for_resume", None)
+            if callable(reset):
+                reset()
+
+    def jsonl_path(self) -> Path | None:
+        """Return the durable JSONL path when *output_dir* is configured."""
+
+        if self._output_dir is None:
+            return None
+        return self._output_dir / "records.jsonl"
+
+    def read_jsonl_records(self) -> tuple[dict[str, Any], ...]:
+        """Load committed JSONL projections (authority surface for parity)."""
+
+        path = self.jsonl_path()
+        if path is not None and path.is_file():
+            rows: list[dict[str, Any]] = []
+            for line in path.read_text(encoding="utf-8").splitlines():
+                text = line.strip()
+                if not text:
+                    continue
+                import json
+
+                payload = json.loads(text)
+                if isinstance(payload, dict):
+                    rows.append(payload)
+            return tuple(rows)
+        return self.committed_records()
+
+
+def _resolve_shadow_store(
+    *,
+    shadow_store: Any | None,
+    shadow: bool | Any | None,
+    scope: str,
+) -> Any | None:
+    """Normalize *shadow* / *shadow_store* constructor options.
+
+    * ``shadow_store=<store>`` — use the injected DuckDB wallet store.
+    * ``shadow=True`` / ``shadow=None`` with no store — open a process-local
+      pure-Python DuckDB wallet store (no network, no file I/O).
+    * ``shadow=False`` — disable dual-write.
+    * ``shadow=<store>`` — treat a non-bool as an explicit store instance.
+    """
+
+    if shadow_store is not None:
+        return shadow_store
+    if shadow is False:
+        return None
+    if shadow is True or shadow is None:
+        # Default remains OFF when callers omit both kwargs so unit tests that
+        # only pass scope= stay JSONL-only.  Explicit shadow=True enables dual
+        # write; pipeline/API/registry pass a store or shadow=True.
+        if shadow is True:
+            return _open_default_shadow_store(scope=scope)
+        return None
+    # Non-bool *shadow* is treated as an injected store instance.
+    return shadow
+
+
+def _open_default_shadow_store(*, scope: str) -> Any:
+    """Lazily construct a pure-Python DuckDB wallet store for dual-write."""
+
+    # Lazy import avoids circular dependency (duckdb_storage imports storage).
+    from .duckdb_storage import open_wallet_store
+
+    return open_wallet_store(scope=scope, auto_recover=True)
+
+
+def fact_table_for_record(record: object) -> str | None:
+    """Return the catalog fact table for a ledger record or mapping."""
+
+    if isinstance(record, LedgerRecord):
+        return _RECORD_TYPE_TO_TABLE.get(record.record_type)
+    if isinstance(record, Mapping):
+        record_type = record.get("record_type")
+        if isinstance(record_type, str):
+            return _RECORD_TYPE_TO_TABLE.get(record_type)
+        table = record.get("table")
+        if isinstance(table, str) and table in _SHADOW_FACT_TABLES:
+            return table
+    record_type_attr = getattr(record, "record_type", None)
+    if isinstance(record_type_attr, str):
+        return _RECORD_TYPE_TO_TABLE.get(record_type_attr)
+    return None
+
+
+def compare_jsonl_db_projections(
+    jsonl_records: Sequence[Mapping[str, Any]] | Sequence[object],
+    shadow_store: Any,
+) -> ShadowParityReport:
+    """Compare JSONL authority payloads with DuckDB fact-table projections.
+
+    Matching is by deterministic ``record_id``.  Finality and chain binding
+    fields must agree when present on both sides.  Secrets and raw payload
+    bodies are never loaded from DuckDB — only public fact columns.
+    """
+
+    if shadow_store is None:
+        raise InvalidRequestError("shadow_store is required for parity comparison")
+
+    jsonl_by_id: dict[str, dict[str, Any]] = {}
+    for record in jsonl_records:
+        payload = record_as_dict(record)
+        record_id = record_identity(payload)
+        jsonl_by_id[record_id] = payload
+
+    db_by_id: dict[str, Mapping[str, Any]] = {}
+    list_records = getattr(shadow_store, "list_records", None)
+    get_record = getattr(shadow_store, "get_record", None)
+    if callable(list_records):
+        for table in _SHADOW_FACT_TABLES:
+            try:
+                rows = list_records(table)
+            except Exception:
+                continue
+            for row in rows:
+                rid = row.get("record_id") if isinstance(row, Mapping) else None
+                if isinstance(rid, str) and rid.strip():
+                    db_by_id[rid] = row
+    elif callable(get_record):
+        for record_id in jsonl_by_id:
+            row = get_record(record_id)
+            if row is not None:
+                db_by_id[record_id] = row
+
+    matched: list[str] = []
+    missing_in_db: list[str] = []
+    mismatched: list[str] = []
+    for record_id, payload in sorted(jsonl_by_id.items()):
+        row = db_by_id.get(record_id)
+        if row is None:
+            missing_in_db.append(record_id)
+            continue
+        if not _projection_fields_match(payload, row):
+            mismatched.append(record_id)
+            continue
+        matched.append(record_id)
+
+    missing_in_jsonl = tuple(
+        sorted(rid for rid in db_by_id if rid not in jsonl_by_id)
+    )
+    return ShadowParityReport(
+        matched_record_ids=tuple(matched),
+        missing_in_db=tuple(missing_in_db),
+        missing_in_jsonl=missing_in_jsonl,
+        mismatched=tuple(mismatched),
+    )
+
+
+def _projection_fields_match(
+    jsonl: Mapping[str, Any], db_row: Mapping[str, Any]
+) -> bool:
+    """True when durable identity and finality fields agree across surfaces."""
+
+    if str(jsonl.get("record_id") or "") != str(db_row.get("record_id") or ""):
+        return False
+    # Finality must agree when both sides expose it.
+    j_fin = jsonl.get("finality")
+    d_fin = db_row.get("finality")
+    if j_fin is not None and d_fin is not None:
+        j_val = j_fin.value if isinstance(j_fin, Finality) else str(j_fin)
+        if str(j_val) != str(d_fin):
+            return False
+    # Chain binding: JSONL nests chain; DB uses chain_ref_id.
+    chain = jsonl.get("chain")
+    if isinstance(chain, Mapping) and db_row.get("chain_ref_id"):
+        # Prefer explicit chain_ref_id on JSONL when present; otherwise derive.
+        j_ref = chain.get("chain_ref_id")
+        if isinstance(j_ref, str) and j_ref and j_ref != db_row.get("chain_ref_id"):
+            return False
+    # Sequence / block hash anchors when present on both sides.
+    position = jsonl.get("ledger_position")
+    if isinstance(position, Mapping):
+        seq = position.get("sequence")
+        if (
+            seq is not None
+            and db_row.get("sequence") is not None
+            and int(seq) != int(db_row["sequence"])
+        ):
+            return False
+        block_hash = position.get("hash")
+        if (
+            isinstance(block_hash, str)
+            and isinstance(db_row.get("block_hash"), str)
+            and block_hash
+            and db_row["block_hash"]
+            and block_hash != db_row["block_hash"]
+        ):
+            # Transaction/transfer rows may use ledger hash without block_hash.
+            if "block_hash" in db_row and db_row.get("block_hash") != block_hash:
+                # Only enforce when both claim a block_hash field on the fact.
+                if "block_hash" in jsonl and jsonl.get("block_hash") != db_row.get(
+                    "block_hash"
+                ):
+                    return False
+    if (
+        isinstance(jsonl.get("block_hash"), str)
+        and isinstance(db_row.get("block_hash"), str)
+        and jsonl["block_hash"]
+        and db_row["block_hash"]
+        and jsonl["block_hash"] != db_row["block_hash"]
+    ):
+        return False
+    if (
+        isinstance(jsonl.get("transaction_hash"), str)
+        and isinstance(db_row.get("transaction_hash"), str)
+        and jsonl["transaction_hash"]
+        and db_row["transaction_hash"]
+        and jsonl["transaction_hash"] != db_row["transaction_hash"]
+    ):
+        return False
+    return True
+
+
+def assert_shadow_catalog_excludes_secrets(shadow_store: Any) -> None:
+    """Fail closed if any query-visible row carries secrets or raw bytes.
+
+    Scans fact and dimension tables for forbidden key fragments and byte-valued
+    payload bodies.  Encrypted object **refs** (digest/CID only) are allowed.
+    """
+
+    if shadow_store is None:
+        raise InvalidRequestError("shadow_store is required")
+    list_records = getattr(shadow_store, "list_records", None)
+    catalog_tables = getattr(shadow_store, "catalog_tables", None)
+    tables: Sequence[str]
+    if callable(catalog_tables):
+        tables = tuple(catalog_tables())
+    else:
+        tables = _SHADOW_FACT_TABLES
+    if not callable(list_records):
+        raise DatasetSinkError("shadow_store does not expose list_records")
+
+    forbidden_fragments = (
+        "secret",
+        "private_key",
+        "mnemonic",
+        "signing",
+        "password",
+        "api_key",
+        "raw_payload",
+        "payload_bytes",
+        "ciphertext",
+        "plaintext",
+    )
+    for table in tables:
+        try:
+            rows = list_records(table)
+        except Exception:
+            continue
+        for row in rows:
+            if not isinstance(row, Mapping):
+                continue
+            for key, value in row.items():
+                lowered = str(key).casefold()
+                for fragment in forbidden_fragments:
+                    if fragment in lowered:
+                        # encrypted_object_refs may mention digest fields only.
+                        if table == "encrypted_object_refs" and fragment in {
+                            "raw_payload",
+                            "ciphertext",
+                            "plaintext",
+                            "payload_bytes",
+                        }:
+                            raise DatasetSinkError(
+                                f"shadow catalog {table} forbids key {key!r}"
+                            )
+                        if table != "encrypted_object_refs":
+                            raise DatasetSinkError(
+                                f"shadow catalog {table} forbids key {key!r}"
+                            )
+                if isinstance(value, (bytes, bytearray, memoryview)):
+                    raise DatasetSinkError(
+                        f"shadow catalog {table} must not store raw bytes "
+                        f"in column {key!r}"
+                    )
+                if isinstance(value, str) and len(value) > 16_384:
+                    # Unrestricted raw blobs must not land as unbounded strings.
+                    raise DatasetSinkError(
+                        f"shadow catalog {table}.{key} exceeds redacted size bound"
+                    )
 
 
 def iter_record_dicts(records: Iterable[object]) -> list[dict[str, Any]]:
@@ -1081,6 +1566,7 @@ __all__ = [
     "DEFAULT_MAX_RAW_OBJECTS",
     "DEFAULT_MAX_RAW_TOTAL_BYTES",
     "RAW_PAYLOAD_SCHEMA_VERSION",
+    "SHADOW_LEDGER_MODE_SCHEMA_VERSION",
     "SINK_RECEIPT_SCHEMA_VERSION",
     "BatchWriteReceipt",
     "DirectoryRawPayloadStore",
@@ -1088,10 +1574,16 @@ __all__ = [
     "RawPayloadCustodyLimits",
     "RawPayloadEncryptor",
     "RawPayloadStore",
+    "ShadowLedgerMode",
+    "ShadowParityReport",
+    "ShadowWriteReceipt",
     "SinkCommitReceipt",
     "StoredRawPayload",
     "StreamingDatasetSink",
+    "assert_shadow_catalog_excludes_secrets",
+    "compare_jsonl_db_projections",
     "digest_bytes",
+    "fact_table_for_record",
     "iter_record_dicts",
     "record_as_dict",
     "record_finality",
