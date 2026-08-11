@@ -35,12 +35,13 @@ W10a ISI-045
 W11 ISI-046
 W12 ISI-047
 W13 ISI-048
-W14 ISI-043
-W15 ISI-044
-W16 ISI-036
-W17 ISI-038
-W18 ISI-039
-W19 ISI-040
+W14 ISI-049
+W15 ISI-043
+W16 ISI-044
+W17 ISI-036
+W18 ISI-038
+W19 ISI-039
+W20 ISI-040
 ```
 
 ## ISI-000 Inspect and seal semantic-index authorities
@@ -640,7 +641,7 @@ W19 ISI-040
 - Completion: auto
 - Priority: P0
 - Track: extraction-inventory-closure
-- Depends on: ISI-035, ISI-048
+- Depends on: ISI-035, ISI-049
 - Goal id: ISI-G080, ISI-G082
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py, tests/fixtures/software_contracts/incremental_semantic_index/python_constructs
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/test_python_frontend.py
@@ -657,7 +658,7 @@ W19 ISI-040
 - Predicted symbols: PythonSemanticAnalyzer, PythonSemanticAnalysis, analyze_python_source, aggregate_logical_bindings, _projection, _kind
 - Interfaces: PythonSemanticAnalysis@2, PythonFrontendDisposition@1
 - Conflict policy: Repair merged implementation `bf827c9bb` and completion marker `a090afad2` without rewriting the truthful completed ISI-035 record. Treat `PythonASTExtractor` records as the canonical declaration, scope, duplicate-definition, diagnostic, unsupported-construct, import, and effect inventory; a local AST used for version projection may not become a competing inventory. Preserve strict symbol identities and source bytes. Do not edit `python_frontend.py`, scanner/graph production files, identity/CID code, or the distinct ISI-044 relation-closure test/fixture.
-- Preconditions: ISI-048 supplies the independently protected stable repository identity, collision-free snapshot evidence, canonical selected source bytes, and generation fence that ISI-047's declared tests did not prove, and completed ISI-035 is pinned at implementation `bf827c9bb` with completion marker `a090afad2`; its 22 focused tests pass, but independent source/probe audit demonstrates a second weaker declaration walk, non-recursive child projection exclusion, incomplete aliases/model kinds, and loss of nonfatal frontend results at scanner disposition.
+- Preconditions: ISI-049 supplies the durable moved-unborn identity and single-captured-HEAD generation closure left open by ISI-048, while ISI-048 remains pinned at implementation `ee0bc3b542a46b1d5ab52d3a3a9c1209dbbfec28`, merge `a9d4096fdb561b7ecdf42af910c13fe84475ac86`, and completion marker `3a11ef85f03e4a934b97412e3c348d98877c58ad`; completed ISI-035 is pinned at implementation `bf827c9bb` with completion marker `a090afad2`, and its 22 focused tests pass, but independent source/probe audit demonstrates a second weaker declaration walk, non-recursive child projection exclusion, incomplete aliases/model kinds, and loss of nonfatal frontend results at scanner disposition.
 - Effects: Adapts canonical frontend facts into one deterministic logical-binding inventory, including definitions in conditional, try/except, with, and match bodies and honest aggregation of conditional or repeated bindings. Recursively excludes independently addressed function/class bodies from every parent projection while retaining child interfaces. Makes overload declarations authoritative public-signature facets so overload-only edits change the binding version. Builds lexical-scope-aware prefix alias facts for module and local imports and uses them for calls, decorators, bases, class and functional TypedDict (including keyword fields and `total`), dataclass, Enum-family, and Pydantic-style model detection. Separates fatal encoding/parse/resource diagnostics from nonfatal unsupported/confidence evidence so public scans preserve analyzable symbols with their caveats instead of replacing the whole file with an opaque artifact.
 - Acceptance: The semantic logical-binding inventory has a deterministic, tested correspondence to canonical frontend declaration/scope facts rather than an independently discovered second inventory. Definitions inside `except` handlers and `match` cases are present; conditional/rebound facets are not falsely claimed exact. Changing a nested child body under direct or conditional control flow changes that child but not its parent function, class, or module version, while an overload-only signature edit changes the public binding version. `import pkg as p; p.fn()`, local import aliases, and aliased `IntEnum`, `TypedDict`, `dataclass`, and `BaseModel` resolve/classify identically to their direct forms; functional TypedDict keyword fields and `total` participate in version evidence. Dynamic import, eval, metaclass, and nonlocal frontend notices remain attached to returned symbols, and a public scanner probe retains those symbols with conservative/opaque confidence; only malformed/undecodable/resource-exhausted input becomes a whole-file opaque artifact.
 
@@ -795,6 +796,33 @@ W19 ISI-040
 - Preconditions: ISI-047's 22 declared tests pass, but independent immutable audit of its merged implementation produces exactly 13 failures and 20 passes in the protected 33-item adversarial module. The failures prove that unrelated unborn repositories share one identity; unborn untracked inputs are mislabeled; same-HEAD status and index changes evade the generation fence; a nested configured root is not excluded before mode, bounds, or scanning; excluded-only changes alter roots; an empty corrupt `.git` marker downgrades to filesystem mode; a quiet born-HEAD failure is accepted as unborn; empty and non-ASCII successful HEAD output is accepted for identity; non-ASCII symbolic HEAD output leaks `UnicodeDecodeError`; and successful HEAD warnings are accepted. The retained 20 passing probes cover portable born identity, commit-derived tree selection, CID/schema closure, raw/path and artifact domains, exact dirty/deletion/conflict OIDs, ctime race detection, manifest trust, one-read/size/smudge boundaries, typed status/OSError/root failures, remote non-authority, and deterministic scans.
 - Effects: Introduces a durable local bootstrap identity for an automatically identified unborn Git repository without putting clone-local data into any born identity, and preserves explicit caller identity through the first commit. Keeps `git-unborn` as acquisition mode while labeling its staged and untracked entries precisely. Uses one validated captured HEAD result for identity/snapshot decisions, rejects warnings and malformed output, distinguishes genuine unborn state from a born repository whose HEAD query failed quietly, and treats a present corrupt Git marker as typed evidence rather than filesystem absence. Normalizes configured repository-relative exclusion roots and performs raw-byte exact prefix/component filtering before status mode, entry bounds, index/tree enumeration, and scanner input selection. Adds a bounded status/index/HEAD generation fence that detects same-HEAD worktree and index changes without rereading selected content. All Git/decode/OS failures remain typed, captured bytes remain one-read, and restored manifests remain non-authoritative without independently supplied CID-verifying bytes.
 - Acceptance: The protected adversarial module changes from exactly 13 failures/20 passes to 33 passes without modification. Original, clone, and linked worktrees retain one born identity while unrelated born, unborn, and filesystem repositories differ; explicit bootstrap identity and precise unborn staged/untracked evidence survive first commit. Captured commit/tree, worktree status, index stages, mode, exclusions, content, and metadata witness come from one bounded generation or fail typed. Nested configured exclusions, including invalid-byte children in excess of `max_entries`, cannot affect mode, entries, roots, or public scanner results, while an invalid-byte built-in lookalike remains visible. Corrupt markers, quiet born-HEAD failures, successful HEAD warnings, empty/non-ASCII outputs, nonzero/timeouts, traversal warnings, and execution errors never downgrade or leak host exceptions. Every retained path/domain, disposition/OID, ctime, manifest-trust, one-read, oversized, smudge, schema, and deterministic-root assertion remains green; all previously green focused/watch tests remain green; and the broader semantic-index suite retains exactly its pre-existing downstream-assigned failure set.
+
+## ISI-049 Close durable unborn identity and single-generation HEAD capture
+
+- Status: todo
+- Completion: auto
+- Priority: P0
+- Track: snapshot-authority-generation-closure
+- Depends on: ISI-048
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_adversarial.py tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_closure.py tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py tests/unit/logic/software_contracts/semantic_index/test_watch.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/snapshot-authority-generation-closure
+- Parallel lane: isi-snapshot-authority-generation-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: codex-implement
+- Context budget tokens: 42000
+- LLM context budget bytes: 344064
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 5, 6, 12, 13, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py
+- Predicted symbols: repository_identity, snapshot_repository, RepositoryScanner, scan_repository_state, _git_root, _unborn_head_ref
+- Interfaces: RepositorySnapshot@4, SnapshotEntry@3, RepositoryState@2
+- Conflict policy: Repair only production `snapshot.py` and, only if public propagation requires it, `scanner.py`, on top of ISI-048 implementation `ee0bc3b542a46b1d5ab52d3a3a9c1209dbbfec28`, merge `a9d4096fdb561b7ecdf42af910c13fe84475ac86`, and completion marker `3a11ef85f03e4a934b97412e3c348d98877c58ad`. The independent `tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_adversarial.py` is now a protected 35-case external authority: do not edit, replace, rename, delete, skip, xfail, monkeypatch around, special-case test names/paths, or weaken it. Preserve the 33 ISI-048 cases and 22 retained focused cases, reuse `software_contracts.content` as the sole CID/canonicalization authority, and do not edit any fixture, other production module, test, or control file. The exact 19 broader downstream failures may not grow. Do not use a remote URL, current commit, working-tree content, resolved checkout path, device/inode, or process-local randomness as born repository identity; do not silently mix identity evidence from one HEAD generation with snapshot mode/evidence from another.
+- Preconditions: ISI-048's implementation, merge, and marker are pinned at `ee0bc3b542a46b1d5ab52d3a3a9c1209dbbfec28`, `a9d4096fdb561b7ecdf42af910c13fe84475ac86`, and `3a11ef85f03e4a934b97412e3c348d98877c58ad`. On that exact completion, all 33 protected ISI-048 cases and all 22 retained closure/snapshot/scanner/watch cases pass, while the broader semantic-index suite has exactly 19 known downstream failures and 123 passes. Extending only the protected module with two independent public repros yields exactly two new failures and 55 retained focused passes: moving an automatically identified unborn repository before its first commit changes `repository_identity`, and creating the first commit after the identity probe's verified unborn evidence but before the snapshot HEAD decision returns a born snapshot carrying the stale unborn identity instead of raising `GitSnapshotError`.
+- Effects: Replaces resolved-path-derived automatic unborn identity with durable repository-local bootstrap evidence that remains distinct across unrelated unborn repositories and stable when one unborn repository is moved before its first commit, without changing explicit `repository_id` behavior or contaminating portable born-history identity. Captures and validates one HEAD disposition for each snapshot operation and uses that same evidence for repository identity, mode, commit/tree selection, and the generation fence. An unborn-to-born or born-to-unborn transition during acquisition fails with a typed snapshot error; no returned snapshot may combine an unborn identity with a born mode or the reverse. Preserves exact one-read selected bytes, all Git failure/warning/decode handling, raw exclusions, dispositions, and existing state evidence.
+- Acceptance: The protected adversarial module reaches 35/35 without modification, and the full declared focused command reaches 57/57, preserving every 33-case ISI-048 assertion and all 22 retained focused assertions. Two separately initialized unborn repositories still differ, but moving either repository before its first commit preserves its automatically generated identity; explicit caller identity remains unchanged. A first commit injected after verified unborn identity evidence but before later snapshot acquisition can only produce a typed `GitSnapshotError`, never a snapshot whose `repository_id` is derived from unborn evidence while `mode`, `git_commit`, or `git_tree` is born. The broader semantic-index suite retains exactly the known 19 downstream failures and reaches 125 passes; no skip, xfail, test-name/path branch, subprocess monkeypatch bypass, or production test hook satisfies the gate.
 
 ## ISI-036 Unify pytest identity and commit resolution into public state
 

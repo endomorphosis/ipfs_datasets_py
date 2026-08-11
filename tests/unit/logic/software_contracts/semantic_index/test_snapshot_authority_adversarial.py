@@ -111,6 +111,21 @@ def test_unrelated_unborn_repositories_have_distinct_local_bootstrap_ids(
     assert repository_identity(repositories[0]) != repository_identity(repositories[1])
 
 
+def test_automatic_unborn_bootstrap_id_survives_repository_move(
+    tmp_path: Path,
+) -> None:
+    original = tmp_path / "original"
+    relocated_parent = tmp_path / "relocated"
+    relocated = relocated_parent / "repository"
+    _init(original)
+
+    before = repository_identity(original)
+    relocated_parent.mkdir()
+    original.rename(relocated)
+
+    assert repository_identity(relocated) == before
+
+
 def test_explicit_unborn_bootstrap_id_and_inventory_survive_first_commit(
     tmp_path: Path,
 ) -> None:
@@ -167,6 +182,40 @@ def test_captured_commit_derives_its_own_tree_and_head_advance_is_typed(
     with pytest.raises(GitSnapshotError):
         snapshot_repository(tmp_path)
     assert advanced
+
+
+def test_unborn_to_born_transition_between_identity_and_snapshot_is_typed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    (tmp_path / "module.py").write_text("value = 1\n", encoding="utf-8")
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    real_run = module.subprocess.run
+    committed = False
+
+    def run(command, *args, **kwargs):
+        nonlocal committed
+        result = real_run(command, *args, **kwargs)
+        if (
+            not committed
+            and _is_git_command(command, "rev-list", "--max-count=1", "HEAD")
+            and result.returncode != 0
+        ):
+            real_run(["git", "add", "module.py"], cwd=tmp_path, check=True)
+            real_run(
+                ["git", "commit", "-q", "-m", "first"],
+                cwd=tmp_path,
+                check=True,
+            )
+            committed = True
+        return result
+
+    monkeypatch.setattr(module.subprocess, "run", run)
+    with pytest.raises(GitSnapshotError):
+        snapshot_repository(tmp_path)
+    assert committed
 
 
 @pytest.mark.parametrize("mutation", ["working", "index"])
