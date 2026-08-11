@@ -38,7 +38,7 @@ ISI-G000  Deterministic IncrementalSemanticIndex release
 - Outputs: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md, docs/architecture/incremental_semantic_index.objectives.md, docs/architecture/incremental_semantic_index.todo.md
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index tests/cli/test_semantic_index_cli.py
 - Acceptance: Stable and version identities, graph, deltas, invalidation, persistence, explanations, watcher, API, CLI, and all required mutation fixtures pass without importing target repositories or requiring a daemon.
-- Gap task: ISI-000 through ISI-045
+- Gap task: ISI-000 through ISI-046
 - Refinement: Extend `logic/software_contracts`; do not create another analyzer platform or content-identity authority.
 
 ## ISI-G010 Closed models and dual content identities
@@ -177,12 +177,12 @@ ISI-G000  Deterministic IncrementalSemanticIndex release
 - Track: contract-repair
 - Bundle: isi/audited-release
 - Goal: Close the concrete functional, identity, graph, persistence, invalidation, and CLI gaps found by the read-only audit of `dd23a2197e900c2916aab1c4c60077f2bcfdd6e9` before any capsule or coding-agent consumer treats the state as authoritative.
-- Evidence: isi/identity-repair@1, isi/identity-closure@2, isi/literal-admission@1, isi/snapshot-authority@1, isi/extraction-authority@1, isi/python-inventory-closure@1, isi/python-relation-closure@1, isi/public-graph@1, isi/root-binding@1, isi/root-recovery-closure@1, isi/invalidation-e2e@1, isi/release-requalification@1
-- Acceptance criteria: isi/identity-repair@1; isi/identity-closure@2; isi/literal-admission@1; isi/snapshot-authority@1; isi/extraction-authority@1; isi/python-inventory-closure@1; isi/python-relation-closure@1; isi/public-graph@1; isi/root-binding@1; isi/root-recovery-closure@1; isi/invalidation-e2e@1; isi/release-requalification@1
+- Evidence: isi/identity-repair@1, isi/identity-closure@2, isi/literal-admission@1, isi/snapshot-authority@1, isi/snapshot-authority-closure@1, isi/extraction-authority@1, isi/python-inventory-closure@1, isi/python-relation-closure@1, isi/public-graph@1, isi/root-binding@1, isi/root-recovery-closure@1, isi/invalidation-e2e@1, isi/release-requalification@1
+- Acceptance criteria: isi/identity-repair@1; isi/identity-closure@2; isi/literal-admission@1; isi/snapshot-authority@1; isi/snapshot-authority-closure@1; isi/extraction-authority@1; isi/python-inventory-closure@1; isi/python-relation-closure@1; isi/public-graph@1; isi/root-binding@1; isi/root-recovery-closure@1; isi/invalidation-e2e@1; isi/release-requalification@1
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index, ipfs_datasets_py/cli/semantic_index_cli.py, tests/unit/logic/software_contracts/semantic_index, tests/fixtures/software_contracts/incremental_semantic_index, tests/cli/test_semantic_index_cli.py, docs/software_contracts/INCREMENTAL_SEMANTIC_INDEX.md
 - Validation: python -m pytest -q tests/unit/logic/software_contracts tests/cli/test_semantic_index_cli.py
 - Acceptance: Public scans are Git/filesystem-snapshot rooted, identity records are self-verifying, real resolved edges drive bounded invalidation, repository roots cannot cross-bind, dynamic behavior is never falsely exact, the CLI observes current truth, and every original mutation case passes without hand-authored dependency edges.
-- Gap task: ISI-033 through ISI-045
+- Gap task: ISI-033 through ISI-046
 - Refinement: Keep `software_contracts.content`, `repository`, `python_frontend`, `resolver`, and `cache.ImmutableCAS` authoritative; do not broaden into phase-two capsule compilation or an agent harness.
 
 ## ISI-G081 Durable identity contract
@@ -213,13 +213,13 @@ ISI-G000  Deterministic IncrementalSemanticIndex release
 - Track: authority-repair
 - Bundle: isi/authority-repair
 - Goal: Root state construction in exact Git/filesystem bytes, reuse the established non-executing Python frontend, and bind durable current roots to the repository under process-safe recovery.
-- Evidence: isi/git-blob-truth@1, isi/python-authority@1, isi/python-inventory-closure@1, isi/python-relation-closure@1, isi/root-binding@1, isi/root-recovery-closure@1
-- Acceptance criteria: isi/git-blob-truth@1; isi/python-authority@1; isi/python-inventory-closure@1; isi/python-relation-closure@1; isi/root-binding@1; isi/root-recovery-closure@1
+- Evidence: isi/git-blob-truth@1, isi/snapshot-authority-closure@1, isi/python-authority@1, isi/python-inventory-closure@1, isi/python-relation-closure@1, isi/root-binding@1, isi/root-recovery-closure@1
+- Acceptance criteria: isi/git-blob-truth@1; isi/snapshot-authority-closure@1; isi/python-authority@1; isi/python-inventory-closure@1; isi/python-relation-closure@1; isi/root-binding@1; isi/root-recovery-closure@1
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, ipfs_datasets_py/logic/software_contracts/semantic_index/persistence.py
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/semantic_index/test_persistence.py
-- Acceptance: Clean Git scans consume indexed blob bytes and retain commit/tree/snapshot identity; canonical frontend facts drive inventory and exact-target typed relations; dynamic behavior is visibly conservative/opaque without erasing analyzable files; roots reject cross-repository states, process races fail closed, and legacy/current publication orphans recover without disturbing authoritative data.
-- Gap task: ISI-034, ISI-035, ISI-037, ISI-043, ISI-044, ISI-045
-- Refinement: ISI-034 and completed ISI-035/ISI-037 own disjoint primary files in the original authority wave. ISI-043 follows ISI-034 and completed ISI-035; ISI-044 alone follows ISI-043 on the shared extractor file with a distinct relation test/fixture; disjoint ISI-045 follows completed ISI-037 and may run in parallel. `scanner.py` remains owned only by ISI-034 until ISI-036.
+- Acceptance: Clean Git scans consume each selected indexed blob exactly once and retain stable collision-resistant repository plus commit/tree/blob/snapshot identity; malformed or unreadable traversal remains visible, Git failures or incomplete-traversal warnings fail closed, and excluded state cannot alter scan mode; canonical frontend facts drive inventory and exact-target typed relations; dynamic behavior is visibly conservative/opaque without erasing analyzable files; roots reject cross-repository states, process races fail closed, and legacy/current publication orphans recover without disturbing authoritative data.
+- Gap task: ISI-034, ISI-035, ISI-037, ISI-043, ISI-044, ISI-045, ISI-046
+- Refinement: ISI-034 and completed ISI-035/ISI-037 own disjoint primary files in the original authority wave. ISI-046 follows completed ISI-034 on snapshot/scanner; ISI-043 then follows ISI-046 and completed ISI-035; ISI-044 alone follows ISI-043 on the shared extractor file with a distinct relation test/fixture. Disjoint completed ISI-045 follows ISI-037. `scanner.py` remains owned by the sequential ISI-034 -> ISI-046 chain until ISI-036.
 
 ## ISI-G083 Public graph, delta, and invalidation truth
 

@@ -32,12 +32,13 @@ W8  ISI-032
 W9  ISI-033 -> ISI-041 -> ISI-042
 W10 ISI-034 | ISI-035 | ISI-037
 W10a ISI-045
-W11 ISI-043
-W12 ISI-044
-W13 ISI-036
-W14 ISI-038
-W15 ISI-039
-W16 ISI-040
+W11 ISI-046
+W12 ISI-043
+W13 ISI-044
+W14 ISI-036
+W15 ISI-038
+W16 ISI-039
+W17 ISI-040
 ```
 
 ## ISI-000 Inspect and seal semantic-index authorities
@@ -637,7 +638,7 @@ W16 ISI-040
 - Completion: auto
 - Priority: P0
 - Track: extraction-inventory-closure
-- Depends on: ISI-034, ISI-035
+- Depends on: ISI-035, ISI-046
 - Goal id: ISI-G080, ISI-G082
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py, tests/fixtures/software_contracts/incremental_semantic_index/python_constructs
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/test_python_frontend.py
@@ -654,7 +655,7 @@ W16 ISI-040
 - Predicted symbols: PythonSemanticAnalyzer, PythonSemanticAnalysis, analyze_python_source, aggregate_logical_bindings, _projection, _kind
 - Interfaces: PythonSemanticAnalysis@2, PythonFrontendDisposition@1
 - Conflict policy: Repair merged implementation `bf827c9bb` and completion marker `a090afad2` without rewriting the truthful completed ISI-035 record. Treat `PythonASTExtractor` records as the canonical declaration, scope, duplicate-definition, diagnostic, unsupported-construct, import, and effect inventory; a local AST used for version projection may not become a competing inventory. Preserve strict symbol identities and source bytes. Do not edit `python_frontend.py`, scanner/graph production files, identity/CID code, or the distinct ISI-044 relation-closure test/fixture.
-- Preconditions: ISI-034 supplies the canonical selected source bytes and completed ISI-035 is pinned at implementation `bf827c9bb` with completion marker `a090afad2`; its 22 focused tests pass, but independent source/probe audit demonstrates a second weaker declaration walk, non-recursive child projection exclusion, incomplete aliases/model kinds, and loss of nonfatal frontend results at scanner disposition.
+- Preconditions: ISI-046 supplies stable repository identity and canonical selected source bytes, and completed ISI-035 is pinned at implementation `bf827c9bb` with completion marker `a090afad2`; its 22 focused tests pass, but independent source/probe audit demonstrates a second weaker declaration walk, non-recursive child projection exclusion, incomplete aliases/model kinds, and loss of nonfatal frontend results at scanner disposition.
 - Effects: Adapts canonical frontend facts into one deterministic logical-binding inventory, including definitions in conditional, try/except, with, and match bodies and honest aggregation of conditional or repeated bindings. Recursively excludes independently addressed function/class bodies from every parent projection while retaining child interfaces. Makes overload declarations authoritative public-signature facets so overload-only edits change the binding version. Builds lexical-scope-aware prefix alias facts for module and local imports and uses them for calls, decorators, bases, class and functional TypedDict (including keyword fields and `total`), dataclass, Enum-family, and Pydantic-style model detection. Separates fatal encoding/parse/resource diagnostics from nonfatal unsupported/confidence evidence so public scans preserve analyzable symbols with their caveats instead of replacing the whole file with an opaque artifact.
 - Acceptance: The semantic logical-binding inventory has a deterministic, tested correspondence to canonical frontend declaration/scope facts rather than an independently discovered second inventory. Definitions inside `except` handlers and `match` cases are present; conditional/rebound facets are not falsely claimed exact. Changing a nested child body under direct or conditional control flow changes that child but not its parent function, class, or module version, while an overload-only signature edit changes the public binding version. `import pkg as p; p.fn()`, local import aliases, and aliased `IntEnum`, `TypedDict`, `dataclass`, and `BaseModel` resolve/classify identically to their direct forms; functional TypedDict keyword fields and `total` participate in version evidence. Dynamic import, eval, metaclass, and nonlocal frontend notices remain attached to returned symbols, and a public scanner probe retains those symbols with conservative/opaque confidence; only malformed/undecodable/resource-exhausted input becomes a whole-file opaque artifact.
 
@@ -711,6 +712,33 @@ W16 ISI-040
 - Preconditions: Completed ISI-037 is pinned at implementation `aa1e64aba` with completion marker `cb80ff74e`; its 29 focused tests and independent cross-repository and two-process CAS probes pass. Audit demonstrates that recovery recognizes the current `.transition-*` prefix in the transition directory but leaves the legacy `.root-*` form produced by the earlier root-replacement path.
 - Effects: Reconciles valid transition journals as before, then under the process-safe recovery lock recognizes and removes both `.root-*` and `.transition-*` temporary-file forms from their bounded roots/transitions locations. Recovery remains deterministic and idempotent, fsyncs affected directories, preserves the last fully visible verified root, and reports exactly the orphan paths removed.
 - Acceptance: Crash fixtures for every before/after object, transition-write, and root-replace interruption boundary seed both legacy and current temporary prefixes in each bounded publication directory. `recover()` removes and reports every regular-file orphan, a second recovery reports none, and the old or new fully visible root remains authoritative as appropriate. Valid root JSON, valid/reconcilable transition JSON, immutable CAS blocks, unrelated files, directories, and symlinks are not mistaken for temporary orphans. Corrupt authoritative roots/transitions still fail closed, and all existing repository-binding, subprocess-CAS, local hermetic, fake-kit, and cache tests remain green.
+
+## ISI-046 Close stable repository and exact snapshot-byte authority
+
+- Status: todo
+- Completion: auto
+- Priority: P0
+- Track: snapshot-authority-closure
+- Depends on: ISI-034
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_truth
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/snapshot-authority-closure
+- Parallel lane: isi-snapshot-authority-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: codex-implement
+- Context budget tokens: 46000
+- LLM context budget bytes: 376832
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 5, 6, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_truth
+- Predicted symbols: SnapshotEntry, RepositorySnapshot, repository_identity, snapshot_repository, RepositoryScanner, scan_repository_state
+- Interfaces: RepositorySnapshot@3, RepositoryState@2
+- Conflict policy: Repair only the post-merge snapshot/scanner defects in ISI-034 implementation `10482c1c1864ac829ec26ebd97d7c8e97f508cd0`, merge `0348908d40e7cba12542288266083b111c99add5`, and completion marker `92b7cdbd67a3cc57d92db3d90c4280f00ab69248`; preserve the truthful completed ISI-034 record. Reuse bounded Git object patterns from `logic/software_contracts/repository.py` and `content.py` identities. Never put current HEAD/tree/revision into stable repository identity, reread selected content during parsing, silently downgrade Git command failure to another mode, or edit models, Python/pytest analysis, graph, persistence, or control files.
+- Preconditions: ISI-034's 12 focused tests pass, but independent live-candidate audit proves that a no-origin repository hashes current `HEAD` into `repository_id`: two commits over the identical empty tree produced different repository CIDs and would churn every stable symbol ID. Independent non-Git and unborn-Git same-basename repositories instead collide. The merged snapshot also omits commit OID and per-entry blob OID, reads a clean blob once for its CID and again in the scanner, turns malformed working-tree names into a whole-scan exception, silently omits an unreadable filesystem directory, and can treat Git status failure as working mode. Its path projection rewrites valid NFD and backslash-containing POSIX names, can collapse them with other valid names, and places invalid-byte markers in a forgeable valid-path namespace. An excluded untracked `.semantic-index/state` changes `git-clean` to `git-working`, changes the snapshot root, and causes a smudge-filtered source to be parsed from worktree rather than indexed bytes; invalid-byte filesystem names reach CID encoding and crash; no configured store/control exclusion root is accepted by the API.
+- Effects: Derives Git and filesystem repository identity from a stable collision-resistant repository anchor such as the closed root-commit set and normalized common-repository identity, never from a current commit/tree or basename alone; it remains stable across commits while distinguishing unrelated same-basename and unborn repositories. Records the selected commit OID, tree OID, and tracked blob OID/disposition in the canonical snapshot and state-root evidence, with explicit unborn/dirty/untracked forms. Carries every selected regular input's exact bytes from bounded Git-object or race-checked filesystem acquisition into scanner parsing so each content object is read once and the scanner performs no second `cat-file` or filesystem byte read. Converts malformed Git/working/filesystem names and unreadable directories to collision-resistant opaque entries, or a typed fail-closed snapshot disposition when no safe entry can be formed, without silent omission or surrogate-encoding failure. Treats status, revision, tree listing, size, blob read, warnings that imply incomplete traversal, and other Git failures/timeouts as typed fail-closed results. Adds explicit configured store/control exclusions and applies all closed exclusions before Git cleanliness/mode selection as well as during clean, dirty, and filesystem enumeration.
+- Acceptance: A no-origin repository keeps the same `repository_id` and stable symbol IDs across an empty commit, a source-changing commit, and a same-tree commit; two independently initialized same-basename repositories, two unborn same-basename repositories, and two non-Git same-basename directories remain distinct. Snapshot/state evidence exposes the exact commit and tree OIDs plus each tracked blob OID, and changing that evidence changes the snapshot/state root. Instrumented Git and filesystem probes prove exactly one successful content-byte read per selected input across snapshot plus scanner and fail if scanner invokes a second `cat-file` or reopens the path. A smudge-filtered clean worktree parses indexed bytes; adding or mutating only an excluded `.semantic-index` or configured state/control root leaves mode, selected bytes, and snapshot/state root unchanged; mutation at each selection/acquisition/parse boundary is either excluded by immutable captured bytes or represented as a typed raced/opaque input, never mixed. NFD, backslash-containing, invalid UTF-8, and otherwise malformed POSIX names in clean, dirty, and filesystem modes retain domain-separated raw identity as distinct evidence without lookup rewrite, collision with valid names or other malformed entries, or CID encoding failure; unreadable files/directories are not omitted. Nonzero/timeout failures and successful Git commands whose warnings prove incomplete traversal (including an unreadable untracked directory) fail closed with the expected typed error or path-bound opaque artifact. Identical scans and cold/incremental scans retain identical snapshot/state roots.
 
 ## ISI-036 Unify pytest identity and commit resolution into public state
 

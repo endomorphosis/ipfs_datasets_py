@@ -111,6 +111,15 @@ Authority rules:
    `.root-*` form in the transition directory. ISI-043 and ISI-044 close the
    extractor defects sequentially after the canonical-byte gate; disjoint
    ISI-045 closes both temporary-prefix recovery forms in parallel.
+8. ISI-034 completed at marker `92b7cdbd6`, but its live-candidate audit
+   proved that no-origin repository identity incorporates current `HEAD`, so
+   even a same-tree commit changes every stable symbol ID. Its merged snapshot
+   also omits commit/per-entry blob identity and rereads clean content in the
+   scanner after hashing it. ISI-046 preserves ISI-034's truthful completed
+   evidence and closes stable repository identity, exact captured-byte
+   handoff, malformed-path/unreadable-traversal retention, exclusion-before-
+   mode selection, and Git failure/warning disposition before Python inventory
+   repair may start.
 
 ## 3. Proposed package and files
 
@@ -390,12 +399,13 @@ W8  ISI-032
 W9  ISI-033 -> ISI-041 -> ISI-042
 W10 ISI-034 | ISI-035 | ISI-037
 W10a ISI-045
-W11 ISI-043
-W12 ISI-044
-W13 ISI-036
-W14 ISI-038
-W15 ISI-039
-W16 ISI-040
+W11 ISI-046
+W12 ISI-043
+W13 ISI-044
+W14 ISI-036
+W15 ISI-038
+W16 ISI-039
+W17 ISI-040
 ```
 
 Tasks in each parallel wave own disjoint modules and tests. Integration tasks
@@ -403,7 +413,7 @@ depend on their inputs. Supervisor workers must honor `Outputs`, `Predicted
 files`, and `Conflict policy`; plan/objective/taskboard files are read-only
 protected control inputs. Phase-two capsule or coding-agent work must not treat
 the semantic state as authoritative until ISI-042, ISI-034 through ISI-039,
-and post-merge closure tasks ISI-043 through ISI-045 pass. ISI-040 is the
+and post-merge closure tasks ISI-043 through ISI-046 pass. ISI-040 is the
 final incremental-performance and watcher hardening wave.
 
 ## 13. Validation and acceptance
@@ -543,6 +553,15 @@ but recovery does not remove the legacy `.root-*` transition temporary form.
 The bounded follow-up gates below repair those findings without rewriting the
 truthful completion records.
 
+The snapshot repair subsequently merged as implementation `10482c1c1`, merge
+`0348908d4`, and completion marker `92b7cdbd6`. Its 12 focused tests are useful
+but false-green the stable repository boundary: a no-origin repository hashes
+current `HEAD`, so committing an unchanged tree changes repository identity
+and all stable symbol identities. It also records only a tree OID, not the
+selected commit and per-entry blob OIDs, and hashes then rereads clean content
+instead of carrying the selected bytes into parsing. ISI-046 is the mandatory
+post-034 authority closure for these exact findings.
+
 ### 16.2 Repair matrix
 
 | Task | Priority | Production boundary | Required proof | Depends on |
@@ -553,7 +572,8 @@ truthful completion records.
 | ISI-034 | P0 | `snapshot.py`, `scanner.py` | Git-object bytes remain canonical for clean inputs; tree/commit/snapshot identity is state-rooted; races and unreadable inputs are explicit | ISI-042 |
 | ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-042 |
 | ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-042 |
-| ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture | Canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-034, ISI-035 |
+| ISI-046 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner tests/fixture | Stable no-origin repository identity, commit/tree/blob evidence, one-read captured-byte parsing, malformed-name retention, and typed Git failure closure | ISI-034 |
+| ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture | Canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-046 |
 | ISI-044 | P0 | `python_analysis.py`, distinct relation-closure tests/fixture | Exact retained inheritance/composition/schema targets, scope/state effects, bounded calls, and source-bound dynamic/plugin/native confidence | ISI-043 |
 | ISI-045 | P0 | `persistence.py`, persistence tests | Idempotent bounded cleanup of legacy and current root/transition temporary prefixes without disturbing authoritative data | ISI-037 |
 | ISI-036 | P0 | `pytest_analysis.py`, `scanner.py`, `symbol_graph.py`, `index.py` | One Python/pytest identity and version, a resolved public state, and real test/fixture/config edges | ISI-034, ISI-044 |
@@ -583,8 +603,12 @@ typed migration/rejection boundary. It must prove at least:
    infinity;
 2. two signatures whose string defaults differ only by internal whitespace do
    not collapse to the same signature projection;
-3. a clean Git repository with a smudge filter is scanned from the indexed Git
-   blob, and a read race becomes an opaque artifact instead of mixed truth;
+3. a clean Git repository with a smudge filter is scanned from exactly the
+   once-captured indexed Git blob; commit/tree/per-entry blob OIDs enter state
+   evidence; a read race becomes opaque instead of mixed truth; and a
+   no-origin repository keeps its repository/stable symbol identities across
+   commits while unrelated same-basename Git, unborn Git, and filesystem
+   repositories remain distinct; excluded state cannot change mode or bytes;
 4. a direct or conditionally nested method/function body edit changes that
    child without changing its parent or unrelated symbols, while an
    overload-only interface edit does change the logical binding version;
