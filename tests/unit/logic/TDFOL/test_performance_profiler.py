@@ -16,6 +16,7 @@ Task: 12.1 (Profiling Infrastructure)
 """
 
 import json
+import logging
 import os
 import tempfile
 import time
@@ -129,6 +130,8 @@ def test_profile_this_decorator(caplog):
     WHEN: Function is called
     THEN: Profiling output is generated
     """
+    caplog.set_level(logging.INFO)
+
     @profile_this(sort_key='cumulative', top_n=5)
     def test_func(n):
         return sum(i ** 2 for i in range(n))
@@ -162,6 +165,8 @@ def test_memory_profile_this_decorator(caplog):
     WHEN: Function is called
     THEN: Memory usage is reported
     """
+    caplog.set_level(logging.INFO)
+
     @memory_profile_this
     def test_func():
         data = [i for i in range(10000)]
@@ -392,7 +397,12 @@ def test_identify_bottlenecks_from_real_profile(profiler):
     stats = profiler.profile_function(expensive_function, 50, runs=1)
     
     # Identify bottlenecks
-    bottlenecks = profiler.identify_bottlenecks(stats.profile_data, top_n=10)
+    # Exercise classification independent of host timing resolution.
+    bottlenecks = profiler.identify_bottlenecks(
+        stats.profile_data,
+        top_n=10,
+        min_time=0.0,
+    )
     
     assert len(bottlenecks) > 0
     
@@ -442,7 +452,7 @@ def test_analyze_bottleneck_unify_slow(profiler):
     
     assert severity == BottleneckSeverity.CRITICAL
     assert "Unification" in rec
-    assert "indexed KB" in rec.lower() or "caching" in rec.lower()
+    assert "indexed kb" in rec.lower() or "caching" in rec.lower()
 
 
 def test_bottleneck_to_dict():
@@ -878,7 +888,7 @@ def test_full_profiling_workflow(profiler, mock_prover, mock_formula):
     assert isinstance(bottlenecks, list)
     
     # 3. Memory profile
-    mem_stats = profiler.memory_profile(fast_function)
+    mem_stats = profiler.memory_profile(memory_intensive_function, 1000)
     assert mem_stats.peak_mb > 0
     
     # 4. Run benchmarks
@@ -975,7 +985,10 @@ def test_profile_expensive_operation(profiler):
     assert stats.calls_per_run > 0
     
     # Should detect as bottleneck if significant
-    bottlenecks = profiler.identify_bottlenecks(stats.profile_data)
+    bottlenecks = profiler.identify_bottlenecks(
+        stats.profile_data,
+        min_time=0.0,
+    )
     assert len(bottlenecks) > 0
 
 

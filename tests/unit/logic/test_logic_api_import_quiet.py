@@ -1,45 +1,75 @@
 from __future__ import annotations
 
-import importlib
+import os
+import subprocess
 import sys
-import warnings
+import textwrap
+from pathlib import Path
 
-
-def _fresh_import(module_name: str):
-    root = module_name.split(".", 1)[0]
-    for name in list(sys.modules.keys()):
-        if name == root or name.startswith(root + "."):
-            sys.modules.pop(name, None)
-    importlib.invalidate_caches()
-    return importlib.import_module(module_name)
-
-
-def _ipfs_origin_warnings(recorded: list[warnings.WarningMessage]) -> list[warnings.WarningMessage]:
-    return [w for w in recorded if "ipfs_datasets_py" in (getattr(w, "filename", "") or "")]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_logic_api_import_is_quiet_and_lightweight(monkeypatch):
     monkeypatch.delenv("IPFS_DATASETS_PY_WARN_OPTIONAL_IMPORTS", raising=False)
 
-    with warnings.catch_warnings(record=True) as recorded:
-        warnings.simplefilter("always")
-        api = _fresh_import("ipfs_datasets_py.logic.api")
+    import ipfs_datasets_py
+    import ipfs_datasets_py.logic as parent_logic
+    import ipfs_datasets_py.logic.api as parent_api
 
-    ipfs_warnings = _ipfs_origin_warnings(recorded)
-    assert ipfs_warnings == [], [str(w.message) for w in ipfs_warnings]
-
-    expected_exports = {
-        "FOLConverter",
-        "DeonticConverter",
-        "ConversionResult",
-        "ConversionStatus",
-        "ProofResult",
-        "ProofStatus",
+    parent_modules = {
+        "ipfs_datasets_py": ipfs_datasets_py,
+        "ipfs_datasets_py.logic": parent_logic,
+        "ipfs_datasets_py.logic.api": parent_api,
     }
+    script = textwrap.dedent(
+        """
+        import importlib
+        import sys
+        import warnings
 
-    exported = set(getattr(api, "__all__", []))
-    missing_from_all = sorted(expected_exports - exported)
-    assert missing_from_all == [], missing_from_all
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            api = importlib.import_module("ipfs_datasets_py.logic.api")
 
-    # The blessed API surface should not import the heavy integration namespace.
-    assert "ipfs_datasets_py.logic.integration" not in sys.modules
+        ipfs_warnings = [
+            item
+            for item in recorded
+            if "ipfs_datasets_py" in (getattr(item, "filename", "") or "")
+        ]
+        assert ipfs_warnings == [], [str(item.message) for item in ipfs_warnings]
+        expected_exports = {
+            "FOLConverter",
+            "DeonticConverter",
+            "ConversionResult",
+            "ConversionStatus",
+            "ProofResult",
+            "ProofStatus",
+        }
+        exported = set(getattr(api, "__all__", []))
+        missing_from_all = sorted(expected_exports - exported)
+        assert missing_from_all == [], missing_from_all
+        assert "ipfs_datasets_py.logic.integration" not in sys.modules
+        print("ok")
+        """
+    )
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONPATH"] = os.pathsep.join(
+        part
+        for part in (str(REPO_ROOT), env.get("PYTHONPATH", ""))
+        if part
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=str(REPO_ROOT),
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "ok" in completed.stdout
+    for name, module in parent_modules.items():
+        assert sys.modules.get(name) is module

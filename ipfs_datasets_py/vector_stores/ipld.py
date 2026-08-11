@@ -238,6 +238,51 @@ class IPLDVectorStore:
         # Update the root CID
         self._update_root_cid()
 
+        # Dual/DuckDB IPLD metadata (DQK-062/063/064); bytes stay on CID.
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                safe_dual_create,
+                safe_shadow_create,
+                duckdb_metadata_is_authority,
+            )
+            mapping = {str(vid): i for i, vid in enumerate(vector_ids)}
+            create_fn = (
+                safe_dual_create
+                if duckdb_metadata_is_authority()
+                else safe_shadow_create
+            )
+            create_kwargs = dict(
+                logical_name=f"ipld-legacy-{self.dimension}",
+                backend="ipld_legacy",
+                dimension=int(self.dimension),
+                dtype="float32",
+                mapping=mapping,
+                vector_ids=[str(v) for v in vector_ids],
+                vectors=[list(map(float, v)) for v in vectors],
+                metadata_json={
+                    "producer": "vector_stores.ipld",
+                    "metric": self.metric,
+                    "root_cid": self.root_cid,
+                    "bytes_location": "immutable_segment",
+                    "publication_approved": True,
+                },
+                model_provider="ipld",
+                model_name="ipld-legacy",
+                chunking_identity="chunk:ipld-legacy@1",
+                normalization_identity=(
+                    "norm:l2@1" if self.metric == "cosine" else "norm:none@1"
+                ),
+                source_revision="src-ipld-legacy",
+            )
+            try:
+                create_fn(**create_kwargs, bytes_location="immutable_segment")
+            except TypeError:
+                create_fn(**create_kwargs)
+        except Exception as shadow_exc:  # noqa: BLE001
+            logging.warning(
+                "IPLD legacy shadow quarantined (legacy ok): %s", shadow_exc
+            )
+
         return vector_ids
 
     def search(

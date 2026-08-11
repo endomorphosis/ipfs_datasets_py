@@ -1,0 +1,9 @@
+# Bootstrap-only runtime lock for the DuckDB/Quack migration supervisor.
+#
+# Policy scope: CPython 3.12 binary wheels on Linux aarch64 or x86_64.  This
+# deliberately installs only the local DuckDB runtime needed to start the
+# database-backed supervisor.  DQK-082 remains responsible for the final
+# Quack extension/profile compatibility lock and attestation.
+duckdb==1.5.5 \
+    --hash=sha256:f316eae2323d9a851883fdf2dee91c1f9efe251ab33e14a2272f82a913422ed6 \
+    --hash=sha256:7a6d2d11859d82a936ebdcb30ce3d8a1cbb3e990bff05c12abb9b54c44fa7bd1

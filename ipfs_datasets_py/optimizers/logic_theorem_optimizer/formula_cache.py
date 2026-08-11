@@ -67,7 +67,25 @@ class FormulaCache:
             'total_lookups': 0,
             'total_stored': 0,
         }
-    
+        self._shadow_repository = None
+        self._shadow_backend = "optimizer_formula"
+
+    def bind_shadow_repository(
+        self, repository, *, backend: str = "optimizer_formula"
+    ) -> None:
+        """Bind optimizer formula cache to the unified shadow repository (DQK-065)."""
+
+        self._shadow_repository = repository
+        self._shadow_backend = backend
+        if repository is not None:
+            repository.register_backend(backend)
+
+    def bind_authority_repository(self, repository, *, backend: str = "optimizer_formula") -> None:
+        """Bind to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
+
     def _get_formula_key(self, formula: str, prover_name: str = "") -> str:
         """Generate a cache key for a formula (SHA-256 hash).
         
@@ -167,6 +185,46 @@ class FormulaCache:
             f"Formula cached: {formula[:50]}... "
             f"(cache_size: {len(self._cache)}/{self.maxsize})"
         )
+        repo = self._shadow_repository
+        if repo is None:
+            try:
+                from ipfs_datasets_py.logic.common.proof_cache import (
+                    get_authority_repository,
+    get_shadow_repository,
+                )
+
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        if repo is not None:
+            try:
+                unified = repo.project_key(
+                    self._shadow_backend,
+                    formula=formula,
+                    prover_name=prover_name or "optimizer",
+                    solver_identities={"prover": prover_name or "optimizer"},
+                    toolchain={"backend": "optimizer_formula"},
+                    policy={"mode": "shadow", "backend": "optimizer_formula"},
+                )
+                repo.write(
+                    self._shadow_backend,
+                    key=unified,
+                    result_payload={
+                        "is_valid": is_valid,
+                        "confidence": confidence,
+                        "proof_time": proof_time,
+                        "error_message": error_message,
+                    },
+                    status="proved" if is_valid else "unknown",
+                    trust_level="none",
+                    legacy_payload={
+                        "formula": formula,
+                        "prover_name": prover_name,
+                        "is_valid": is_valid,
+                    },
+                )
+            except Exception:
+                pass
     
     def clear(self) -> None:
         """Clear the entire cache."""
@@ -203,3 +261,25 @@ class FormulaCache:
             f"FormulaCache(size={stats['size']}/{stats['maxsize']}, "
             f"hits={stats['hits']}, hit_rate={stats['hit_rate_percent']}%)"
         )
+
+
+from ipfs_datasets_py.logic.common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
+)
+
+OPTIMIZER_FORMULA_LEGACY_BACKEND = LegacyProofBackend.OPTIMIZER_FORMULA

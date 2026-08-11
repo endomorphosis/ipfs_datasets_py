@@ -5,22 +5,20 @@ Tests cover all security features including input validation, ZKP audits,
 resource limits, DoS prevention, and formula sanitization.
 """
 
-import pytest
-import time
 import threading
-from typing import Dict, Any
 
+import pytest
 from ipfs_datasets_py.logic.TDFOL.security_validator import (
-    SecurityValidator,
-    SecurityConfig,
-    SecurityLevel,
-    ThreatType,
-    ValidationResult,
     AuditResult,
     RateLimiter,
+    SecurityConfig,
+    SecurityLevel,
+    SecurityValidator,
+    ThreatType,
+    ValidationResult,
+    audit_proof,
     create_validator,
     validate_formula,
-    audit_proof,
 )
 
 
@@ -343,7 +341,7 @@ class TestRateLimiting:
         limiter = RateLimiter(max_requests=5, time_window=60.0)
         
         # WHEN: Making requests within limit
-        for i in range(5):
+        for _ in range(5):
             allowed, error = limiter.check_rate_limit("user1")
             
             # THEN: All should be allowed
@@ -363,7 +361,7 @@ class TestRateLimiting:
         limiter = RateLimiter(max_requests=5, time_window=60.0)
         
         # WHEN: Different users make requests
-        for i in range(5):
+        for _ in range(5):
             limiter.check_rate_limit("user1")
             limiter.check_rate_limit("user2")
         
@@ -381,8 +379,8 @@ class TestRateLimiting:
         formula = "∀x. P(x)"
         
         # WHEN: Making requests within limit
-        for i in range(5):
-            result = validator.validate_formula(formula, f"test_user")
+        for _ in range(5):
+            result = validator.validate_formula(formula, "test_user")
             assert result.valid
         
         # WHEN: Exceeding limit
@@ -396,28 +394,66 @@ class TestRateLimiting:
 class TestConcurrentRequests:
     """Test concurrent request limiting."""
     
-    def test_concurrent_limit(self):
+    def test_concurrent_limit(self, monkeypatch):
         """Test concurrent request limits."""
         # GIVEN: Validator with low concurrent limit
         config = SecurityConfig(max_concurrent_requests=2)
         validator = SecurityValidator(config)
-        
+
+        # Hold exactly two validations inside the protected section.  Sleeping
+        # before validate_formula() only aligned thread start times and made the
+        # old test depend on OS scheduling: the very short validations could
+        # still run serially and all succeed.
+        slots_filled = threading.Event()
+        release_slots = threading.Event()
+        entered_lock = threading.Lock()
+        result_lock = threading.Lock()
+        entered = 0
         results = []
-        
+
+        original_validate_input = validator._validate_input
+
+        def blocking_validate_input(formula, result):
+            nonlocal entered
+            with entered_lock:
+                entered += 1
+                if entered == config.max_concurrent_requests:
+                    slots_filled.set()
+            if not release_slots.wait(timeout=5):
+                raise RuntimeError("timed out waiting to release concurrent slots")
+            original_validate_input(formula, result)
+
+        monkeypatch.setattr(validator, "_validate_input", blocking_validate_input)
+
         def make_request():
-            time.sleep(0.1)  # Simulate work
             result = validator.validate_formula("∀x. P(x)")
-            results.append(result)
-        
-        # WHEN: Starting multiple concurrent requests
-        threads = [threading.Thread(target=make_request) for _ in range(5)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-        
-        # THEN: Some requests should be rejected
-        assert any(not r.valid for r in results)
+            with result_lock:
+                results.append(result)
+
+        holders = [threading.Thread(target=make_request) for _ in range(2)]
+        overflow = [threading.Thread(target=make_request) for _ in range(3)]
+        try:
+            # WHEN: Two requests provably hold both slots and more requests run
+            for thread in holders:
+                thread.start()
+            assert slots_filled.wait(timeout=5)
+            for thread in overflow:
+                thread.start()
+            for thread in overflow:
+                thread.join(timeout=5)
+                assert not thread.is_alive()
+        finally:
+            release_slots.set()
+            for thread in holders:
+                thread.join(timeout=5)
+
+        # THEN: Every overflow request is rejected and held slots are released.
+        assert len(results) == 5
+        rejected = [result for result in results if not result.valid]
+        assert len(rejected) == 3
+        assert all("Too many concurrent requests" in result.errors for result in rejected)
+        assert all(ThreatType.DOS in result.threats for result in rejected)
+        assert validator.concurrent_requests == 0
 
 
 class TestInputSanitization:

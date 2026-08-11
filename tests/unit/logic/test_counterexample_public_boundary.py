@@ -13,10 +13,10 @@ Covers CounterexampleEnvelope@2 and PublicCounterexampleBoundary@1:
 from __future__ import annotations
 
 import json
+import sys
 from typing import Any
 
 import pytest
-
 from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import (
     COUNTEREXAMPLE_ENVELOPE_INTERFACE,
     COUNTEREXAMPLE_ENVELOPE_SCHEMA,
@@ -73,6 +73,21 @@ def test_interfaces_and_schema_constants() -> None:
     assert PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE == "PublicCounterexampleBoundary@1"
     assert COUNTEREXAMPLE_ENVELOPE_SCHEMA.endswith("@2")
     assert PRIVATE_ARTIFACT_REFERENCE_SCHEMA.endswith("@1")
+
+
+def test_projection_fails_closed_without_supervisor_normalizer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module_name = (
+        "ipfs_accelerate_py.agent_supervisor.proof.formal_counterexamples"
+    )
+    monkeypatch.setitem(sys.modules, module_name, None)
+
+    with pytest.raises(
+        CounterexampleBoundaryError,
+        match="supervisor counterexample normalizer is unavailable",
+    ):
+        project_public_counterexample({"model": {"x": 1}})
 
 
 def test_public_projection_strips_private_channels_and_tokens() -> None:

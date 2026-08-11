@@ -1,0 +1,228 @@
+{
+  "interface": "LogicRuntimeBaseline@2",
+  "schema_version": "logic-runtime-baseline/v2",
+  "version": "1.0.0",
+  "task_id": "LFP2-005",
+  "goal_id": "LFP2-G020",
+  "program_id": "ipfs-datasets-logic-family-parser-v2",
+  "description": "Compact Wave-2 runtime baseline seal. Live materialization via ipfs_datasets_py.logic.conformance.baseline_v2:build_default_baseline_join is authoritative for artifact digests and the owned gap surface.",
+  "materialization": "ipfs_datasets_py.logic.conformance.baseline_v2:build_default_baseline_join",
+  "source_identity": {
+    "program_id": "ipfs-datasets-logic-family-parser-v2",
+    "goal_id": "LFP2-G010",
+    "tasks": {
+      "claim_runtime_audit": "LFP2-001",
+      "raw_boundary_inventory": "LFP2-002",
+      "reachable_capability_graph": "LFP2-003",
+      "conformance_corpus": "LFP2-004"
+    },
+    "join_task_id": "LFP2-005",
+    "join_goal_id": "LFP2-G020",
+    "consistent": true
+  },
+  "capability_lifecycle": {
+    "interface": "CapabilityLifecycle@1",
+    "schema_version": "capability-lifecycle/v1",
+    "version": "1.0.0",
+    "task_id": "LFP2-005",
+    "goal_id": "LFP2-G020",
+    "program_id": "ipfs-datasets-logic-family-parser-v2",
+    "description": "Monotonic capability lifecycle maturity rules. Declaration, parse, compile, execute, replay, and authority remain distinct axes; mocks and metadata-only records cannot satisfy executable or later.",
+    "stages": [
+      "declared",
+      "parsed",
+      "elaborated",
+      "translatable",
+      "compilable",
+      "executable",
+      "replayed",
+      "independently_validated"
+    ],
+    "stage_evidence_obligations": {
+      "declared": "registry_or_matrix_declaration",
+      "parsed": "parser_surface_with_parse_artifact",
+      "elaborated": "typed_elaboration_artifact",
+      "translatable": "reviewed_translation_receipt",
+      "compilable": "compiled_logic_or_parsed_target_artifact",
+      "executable": "non_mock_runner_execution_receipt",
+      "replayed": "evidence_replay_receipt",
+      "independently_validated": "official_kernel_or_independent_validator"
+    },
+    "transitions": [
+      {
+        "from": "declared",
+        "to": "parsed",
+        "evidence_obligation": "parser_surface_with_parse_artifact",
+        "monotonic": true,
+        "skippable": false,
+        "notes": "Hard gate: stage evidence is required to claim this maturity."
+      },
+      {
+        "from": "parsed",
+        "to": "elaborated",
+        "evidence_obligation": "typed_elaboration_artifact",
+        "monotonic": true,
+        "skippable": true,
+        "notes": "Soft gate: may be absent when a later stage is established by independent evidence."
+      },
+      {
+        "from": "elaborated",
+        "to": "translatable",
+        "evidence_obligation": "reviewed_translation_receipt",
+        "monotonic": true,
+        "skippable": true,
+        "notes": "Soft gate: may be absent when a later stage is established by independent evidence."
+      },
+      {
+        "from": "translatable",
+        "to": "compilable",
+        "evidence_obligation": "compiled_logic_or_parsed_target_artifact",
+        "monotonic": true,
+        "skippable": false,
+        "notes": "Hard gate: stage evidence is required to claim this maturity."
+      },
+      {
+        "from": "compilable",
+        "to": "executable",
+        "evidence_obligation": "non_mock_runner_execution_receipt",
+        "monotonic": true,
+        "skippable": false,
+        "notes": "Hard gate: stage evidence is required to claim this maturity."
+      },
+      {
+        "from": "executable",
+        "to": "replayed",
+        "evidence_obligation": "evidence_replay_receipt",
+        "monotonic": true,
+        "skippable": true,
+        "notes": "Soft gate: may be absent when a later stage is established by independent evidence."
+      },
+      {
+        "from": "replayed",
+        "to": "independently_validated",
+        "evidence_obligation": "official_kernel_or_independent_validator",
+        "monotonic": true,
+        "skippable": true,
+        "notes": "Soft gate: may be absent when a later stage is established by independent evidence."
+      }
+    ],
+    "authority_axis": [
+      "none",
+      "candidate",
+      "advisory",
+      "bounded",
+      "over_approximation",
+      "exact",
+      "protocol_symbolic",
+      "authorization_profile",
+      "finite_trace",
+      "kernel"
+    ],
+    "authority_policy": {
+      "authority_is_not_lifecycle": true,
+      "executable_does_not_imply_kernel_authority": true,
+      "advisory_never_promotes_to_kernel": true,
+      "authority_bearing_requires_runtime_or_typed_gap": true
+    },
+    "non_conflatable_pairs": [
+      {
+        "left": "declared",
+        "right": "parsed"
+      },
+      {
+        "left": "parsed",
+        "right": "elaborated"
+      },
+      {
+        "left": "elaborated",
+        "right": "compilable"
+      },
+      {
+        "left": "compilable",
+        "right": "executable"
+      },
+      {
+        "left": "executable",
+        "right": "replayed"
+      },
+      {
+        "left": "replayed",
+        "right": "independently_validated"
+      },
+      {
+        "left": "declared",
+        "right": "executable"
+      },
+      {
+        "left": "parsed",
+        "right": "executable"
+      },
+      {
+        "left": "executable",
+        "right": "authority"
+      },
+      {
+        "left": "declared",
+        "right": "authority"
+      }
+    ],
+    "fail_closed": {
+      "conflicting_claims_rejected": true,
+      "stage_rename_rejected": true,
+      "silent_promotion_rejected": true,
+      "mock_execution_rejected": true
+    }
+  },
+  "artifact_interfaces": {
+    "claim_runtime_audit": "LogicClaimRuntimeAudit@1",
+    "raw_boundary_inventory": "RawLogicBoundaryInventory@1",
+    "reachable_capability_graph": "ReachableCapabilityGraph@1",
+    "conformance_corpus": "LogicConformanceCorpus@2"
+  },
+  "lifecycle_stages": [
+    "declared",
+    "parsed",
+    "elaborated",
+    "translatable",
+    "compilable",
+    "executable",
+    "replayed",
+    "independently_validated"
+  ],
+  "acceptance": {
+    "conflicting_claims_fail_closed": true,
+    "each_reachable_gap_has_one_owner": true,
+    "each_reachable_gap_has_evidence_obligation": true,
+    "lifecycle_stages_not_conflated": true,
+    "authority_distinct_from_lifecycle": true,
+    "source_identity_consistent": true,
+    "unsupported_cartesian_cells_are_not_work": true
+  },
+  "roots": {
+    "datasets_root": "ipfs_datasets_py",
+    "baseline_directory": "docs/architecture/logic/logic_parser_v2_baseline"
+  },
+  "gap_summary": {
+    "gap_count": 147,
+    "owner_histogram": {
+      "LFP2-001": 2,
+      "LFP2-002": 13,
+      "LFP2-003": 130,
+      "LFP2-006": 2
+    },
+    "source_histogram": {
+      "claim_audit": 2,
+      "raw_boundary": 15,
+      "reachable_graph": 130
+    },
+    "unique_owners": [
+      "LFP2-001",
+      "LFP2-002",
+      "LFP2-003",
+      "LFP2-006"
+    ],
+    "each_gap_has_one_owner": true,
+    "each_gap_has_evidence_obligation": true
+  },
+  "joined_content_digest": "sha256:fd8ee29537d4803e05e6ea0ee3bbb74cf0ebd8f800744b6055c85ce5ce173273"
+}

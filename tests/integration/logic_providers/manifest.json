@@ -1,0 +1,409 @@
+{
+  "interface": "ScheduledProviderTier@1",
+  "schema_version": "scheduled-provider-tiers/v1",
+  "task_id": "LFP2-045",
+  "goal_id": "LFP2-G080",
+  "version": "1.0.0",
+  "description": "Pinned process-backed provider validation tier. Hermetic always-on fixtures and scheduled process-backed probes are separate evidence lanes. Metadata-only and mock never establish executable capability.",
+  "acceptance": {
+    "executable_capability_forbidden_for": [
+      "metadata_only",
+      "mock"
+    ],
+    "required_identity_fields": [
+      "command_digest",
+      "environment_digest",
+      "tool_digest",
+      "output_digest"
+    ],
+    "secrets_policy": "redact_sensitive_argv_and_environment_values"
+  },
+  "evidence_lanes": {
+    "hermetic": {
+      "lane_id": "hermetic",
+      "description": "Always-on fixture/hermetic provider tests; no live binary requirement.",
+      "may_claim_executable_capability": false,
+      "record_kinds": [
+        "hermetic_fixture"
+      ]
+    },
+    "scheduled_process": {
+      "lane_id": "scheduled_process",
+      "description": "Optional pinned-binary subprocess tier. Real binaries when available; typed unavailable receipts otherwise.",
+      "may_claim_executable_capability": true,
+      "record_kinds": [
+        "pinned_binary",
+        "live_process",
+        "unavailable"
+      ]
+    }
+  },
+  "providers": [
+    {
+      "provider_id": "z3",
+      "task_id": "LFP2-028",
+      "family": "smt",
+      "interface": "SMTProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_smt_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "z3",
+      "executable_candidates": [
+        "z3"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "cvc5",
+      "task_id": "LFP2-028",
+      "family": "smt",
+      "interface": "SMTProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_smt_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "cvc5",
+      "executable_candidates": [
+        "cvc5"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "tlc",
+      "task_id": "LFP2-029",
+      "family": "state_model",
+      "interface": "StateProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_tla_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "tlc",
+      "executable_candidates": [
+        "tlc",
+        "tlc2",
+        "tla2tools"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "-help"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "apalache",
+      "task_id": "LFP2-029",
+      "family": "state_model",
+      "interface": "StateProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_tla_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "apalache",
+      "executable_candidates": [
+        "apalache-mc",
+        "apalache"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "datalog-authorization",
+      "task_id": "LFP2-030",
+      "family": "authorization",
+      "interface": "RuleProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_secpal_execution_v2.py",
+      "process_backed": false,
+      "toolchain_provider_id": "datalog-authorization",
+      "executable_candidates": [],
+      "scheduled": false,
+      "notes": "In-process reference engine; hermetic lane only."
+    },
+    {
+      "provider_id": "secpal-authorization",
+      "task_id": "LFP2-030",
+      "family": "authorization",
+      "interface": "RuleProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_secpal_execution_v2.py",
+      "process_backed": false,
+      "toolchain_provider_id": "secpal-authorization",
+      "executable_candidates": [],
+      "scheduled": false,
+      "notes": "In-process reference engine; hermetic lane only."
+    },
+    {
+      "provider_id": "souffle",
+      "task_id": "LFP2-030",
+      "family": "authorization",
+      "interface": "RuleProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_secpal_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "souffle",
+      "executable_candidates": [
+        "souffle"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "secpal",
+      "task_id": "LFP2-030",
+      "family": "authorization",
+      "interface": "RuleProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_secpal_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "secpal",
+      "executable_candidates": [
+        "secpal"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "proverif",
+      "task_id": "LFP2-031",
+      "family": "protocol",
+      "interface": "ProtocolProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_protocol_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "proverif",
+      "executable_candidates": [
+        "proverif"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "-help"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "tamarin",
+      "task_id": "LFP2-031",
+      "family": "protocol",
+      "interface": "ProtocolProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_protocol_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "tamarin",
+      "executable_candidates": [
+        "tamarin-prover"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "autohyper",
+      "task_id": "LFP2-032",
+      "family": "hyperproperty",
+      "interface": "HyperProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_hyper_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "autohyper",
+      "executable_candidates": [
+        "AutoHyper",
+        "autohyper"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--help"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "mchyper",
+      "task_id": "LFP2-032",
+      "family": "hyperproperty",
+      "interface": "HyperProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_hyper_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "mchyper",
+      "executable_candidates": [
+        "mchyper",
+        "MCHyper"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--help"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "hyperltl",
+      "task_id": "LFP2-032",
+      "family": "hyperproperty",
+      "interface": "HyperProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_hyper_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "hyperltl",
+      "executable_candidates": [
+        "hyperltl",
+        "hyperltl-sat"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--help"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "vampire",
+      "task_id": "LFP2-033",
+      "family": "atp",
+      "interface": "ATPProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_atp_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "vampire",
+      "executable_candidates": [
+        "vampire"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "eprover",
+      "task_id": "LFP2-033",
+      "family": "atp",
+      "interface": "ATPProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_atp_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "eprover",
+      "executable_candidates": [
+        "eprover"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "lean",
+      "task_id": "LFP2-034",
+      "family": "kernel",
+      "interface": "KernelProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_kernel_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "lean",
+      "executable_candidates": [
+        "lean"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "rocq",
+      "task_id": "LFP2-034",
+      "family": "kernel",
+      "interface": "KernelProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_kernel_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "coq",
+      "executable_candidates": [
+        "coqc",
+        "rocq"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "isabelle",
+      "task_id": "LFP2-034",
+      "family": "kernel",
+      "interface": "KernelProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_kernel_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "isabelle",
+      "executable_candidates": [
+        "isabelle"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "version"
+      ],
+      "scheduled": true
+    },
+    {
+      "provider_id": "ergoai",
+      "task_id": "LFP2-035",
+      "family": "advisor",
+      "interface": "AdvisorProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_advisor_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "ergoai",
+      "executable_candidates": [
+        "ergoai",
+        "runErgo.sh",
+        "runergo"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--help"
+      ],
+      "scheduled": true,
+      "notes": "Advisor proposals remain non-authoritative even when the process is available."
+    },
+    {
+      "provider_id": "symbolicai",
+      "task_id": "LFP2-035",
+      "family": "advisor",
+      "interface": "AdvisorProviderEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_advisor_execution_v2.py",
+      "process_backed": false,
+      "toolchain_provider_id": "symbolicai",
+      "executable_candidates": [],
+      "scheduled": false,
+      "notes": "Advisor-only Python package; never process-backed executable capability."
+    },
+    {
+      "provider_id": "runtime-mtl",
+      "task_id": "LFP2-036",
+      "family": "runtime",
+      "interface": "RuntimeMTLEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_runtime_mtl_execution_v2.py",
+      "process_backed": false,
+      "toolchain_provider_id": "runtime-mtl",
+      "executable_candidates": [],
+      "scheduled": false,
+      "notes": "In-process reference monitor; hermetic lane."
+    },
+    {
+      "provider_id": "runtime-mtl-external",
+      "task_id": "LFP2-036",
+      "family": "runtime",
+      "interface": "RuntimeMTLEvidence@2",
+      "hermetic_module": "tests/integration/logic_providers/test_runtime_mtl_execution_v2.py",
+      "process_backed": true,
+      "toolchain_provider_id": "runtime-mtl-external",
+      "executable_candidates": [
+        "runtime-mtl",
+        "runtime-mtl-external",
+        "mtl-monitor"
+      ],
+      "probe_argv_template": [
+        "{executable}",
+        "--version"
+      ],
+      "scheduled": true
+    }
+  ]
+}

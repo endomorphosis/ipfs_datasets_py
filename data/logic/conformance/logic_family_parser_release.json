@@ -1,0 +1,1037 @@
+{
+  "acceptance": {
+    "all_child_goals_verified_or_explicitly_dispositioned": true,
+    "all_seed_tasks_terminal_after_this_receipt": true,
+    "authority_escalation": 0,
+    "completion_authoritative": false,
+    "declaration_only_gaps_explicit": true,
+    "false_capability": 0,
+    "hard_zero_gates_clear": true,
+    "mutation_authorized": false,
+    "refill_fixed_point": true,
+    "rejects_source_config_environment_drift": true,
+    "reproducible": true,
+    "silent_semantic_loss": 0,
+    "trust_escape": 0,
+    "ui_ux_disposition_explicit": true,
+    "unexplained_matrix_gap": 0,
+    "unknown_matrix_cells": 0
+  },
+  "artifacts": {
+    "authority_audit": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/authority_audit.py",
+      "present": true
+    },
+    "baseline_readme": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/README.md",
+      "present": true
+    },
+    "board_validator": {
+      "kind": "file",
+      "path": "scripts/validate_ipfs_datasets_logic_family_parser_board.py",
+      "present": true
+    },
+    "capability_matrix": {
+      "content_identity": "sha256:5469da1e52b7fd95bea4ecb8eba82f24e06c8bbaeb8f6ee92779219dd27ea86f",
+      "kind": "file",
+      "path": "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/capability_matrix.json",
+      "present": true
+    },
+    "conformance_corpus": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/tests/fixtures/logic_conformance/manifest.json",
+      "present": true
+    },
+    "conformance_report": {
+      "content_identity": "sha256:fbc047bccff60b057576236f41b71ab533e0d0bab9afcee61b9b2acef1be546a",
+      "kind": "file",
+      "path": "ipfs_datasets_py/docs/architecture/logic/logic_parser_conformance_report.json",
+      "present": true
+    },
+    "family_label_audit": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/family_label_audit.json",
+      "present": true
+    },
+    "family_registry": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/families/registry.py",
+      "present": true
+    },
+    "generated_catalog": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/families/generated_catalog.py",
+      "present": true
+    },
+    "objectives": {
+      "kind": "file",
+      "path": "docs/architecture/ipfs_datasets_logic_family_parser.objectives.md",
+      "present": true
+    },
+    "parser_catalog": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/catalog.py",
+      "present": true
+    },
+    "parser_inventory": {
+      "content_identity": "sha256:2770e8af7e49d184c94330ff524eb7d125b1bf3c10cf50c0e6b9519f50e83175",
+      "kind": "file",
+      "path": "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/parser_inventory.json",
+      "present": true
+    },
+    "plan": {
+      "kind": "file",
+      "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
+      "present": true
+    },
+    "provider_catalog": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/families/providers.py",
+      "present": true
+    },
+    "public_api": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/api.py",
+      "present": true
+    },
+    "refill_engine": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/refill.py",
+      "present": true
+    },
+    "scheduler": {
+      "kind": "file",
+      "path": "config/agent_supervisor_ipfs_datasets_logic_family_parser_scheduler.json",
+      "present": true
+    },
+    "syntax_core": {
+      "kind": "directory",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/syntax_core",
+      "present": true
+    },
+    "todo": {
+      "kind": "file",
+      "path": "docs/architecture/ipfs_datasets_logic_family_parser.todo.md",
+      "present": true
+    },
+    "ui_ux_source_gate": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/ui_ux_source_gate.py",
+      "present": true
+    },
+    "verification_api": {
+      "kind": "file",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/verification_api.py",
+      "present": true
+    }
+  },
+  "authority_policy": {
+    "advisor_ceiling": "unverified_candidate",
+    "automatic_promotion": false,
+    "confidence_never_proves_parse_correctness": true,
+    "differential_agreement_never_votes_proof": true,
+    "hammer_ceiling": "candidate",
+    "kernel_requires_official_kernel_and_pinned_imports": true,
+    "official_kernels": [
+      "lean",
+      "rocq",
+      "isabelle"
+    ],
+    "quota_unavailability_never_logic_evidence": true,
+    "release_receipt_grants_completion_authority": false,
+    "release_receipt_grants_mutation_authority": false,
+    "solver_success_is_not_theorem": true
+  },
+  "binding_mode": "current_tree_content_identity",
+  "board": {
+    "board_namespace": "ipfs-datasets-logic-family-parser-v1",
+    "child_goal_count": 10,
+    "immutable_seed_goal_count": 11,
+    "immutable_seed_goals": [
+      "LFP-G000",
+      "LFP-G010",
+      "LFP-G020",
+      "LFP-G030",
+      "LFP-G040",
+      "LFP-G050",
+      "LFP-G060",
+      "LFP-G070",
+      "LFP-G080",
+      "LFP-G090",
+      "LFP-G100"
+    ],
+    "max_lanes": 4,
+    "ops_notes": "LFP-048..LFP-051 are reconciliation/ops appendix tasks outside the sealed 48-task seed DAG; they do not change LFP-047 terminal identity.",
+    "ops_reconciliation_tasks_outside_seed_dag": [
+      "LFP-048",
+      "LFP-049",
+      "LFP-050",
+      "LFP-051"
+    ],
+    "root_goal_id": "LFP-G000",
+    "seed_task_count": 48,
+    "seed_tasks": [
+      "LFP-000",
+      "LFP-001",
+      "LFP-002",
+      "LFP-003",
+      "LFP-004",
+      "LFP-005",
+      "LFP-006",
+      "LFP-007",
+      "LFP-008",
+      "LFP-009",
+      "LFP-010",
+      "LFP-011",
+      "LFP-012",
+      "LFP-013",
+      "LFP-014",
+      "LFP-015",
+      "LFP-016",
+      "LFP-017",
+      "LFP-018",
+      "LFP-019",
+      "LFP-020",
+      "LFP-021",
+      "LFP-022",
+      "LFP-023",
+      "LFP-024",
+      "LFP-025",
+      "LFP-026",
+      "LFP-027",
+      "LFP-028",
+      "LFP-029",
+      "LFP-030",
+      "LFP-031",
+      "LFP-032",
+      "LFP-033",
+      "LFP-034",
+      "LFP-035",
+      "LFP-036",
+      "LFP-037",
+      "LFP-038",
+      "LFP-039",
+      "LFP-040",
+      "LFP-041",
+      "LFP-042",
+      "LFP-043",
+      "LFP-044",
+      "LFP-045",
+      "LFP-046",
+      "LFP-047"
+    ],
+    "terminal_task_id": "LFP-047"
+  },
+  "capability_matrix": {
+    "authority_histogram": {
+      "advisory": 13,
+      "authorization_profile": 6,
+      "bounded": 49,
+      "candidate": 99,
+      "exact": 16,
+      "finite_trace": 12,
+      "kernel": 6,
+      "none": 660,
+      "over_approximation": 3,
+      "protocol_symbolic": 3,
+      "unknown": 0
+    },
+    "availability_histogram": {
+      "declared": 526,
+      "not_declared": 90,
+      "not_probed": 149,
+      "source_missing": 102,
+      "unknown": 0
+    },
+    "cell_count": 867,
+    "content_digest_sha256": "5469da1e52b7fd95bea4ecb8eba82f24e06c8bbaeb8f6ee92779219dd27ea86f",
+    "declaration_only_count": 102,
+    "interface": "LogicCapabilityMatrix@1",
+    "path": "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/capability_matrix.json",
+    "refill_count": 790,
+    "support_histogram": {
+      "advisory": 58,
+      "approximate": 3,
+      "bounded": 29,
+      "declaration_only": 102,
+      "native": 45,
+      "translated": 72,
+      "unknown": 0,
+      "unsupported": 558
+    },
+    "unimplemented_count": 232,
+    "unknown_count": 0,
+    "unsupported_count": 558
+  },
+  "child_goals": [
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/parser_inventory.json",
+        "ipfs_datasets_py/tests/fixtures/logic_conformance/manifest.json",
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/family_label_audit.json",
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/capability_matrix.json",
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/README.md"
+      ],
+      "evidence_tasks": [
+        "LFP-001",
+        "LFP-002",
+        "LFP-003",
+        "LFP-004",
+        "LFP-005"
+      ],
+      "goal_id": "LFP-G010",
+      "interfaces": [
+        "LogicSurfaceInventory@1",
+        "LogicConformanceCorpus@1",
+        "LogicCapabilityMatrix@1",
+        "LogicParserBaselineReceipt@1"
+      ],
+      "primary_artifacts": [
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/parser_inventory.json",
+        "ipfs_datasets_py/tests/fixtures/logic_conformance/manifest.json",
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/family_label_audit.json",
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/capability_matrix.json",
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_baseline/README.md"
+      ],
+      "status": "verified",
+      "title": "Freeze the parser, family, provider, translation, and corpus baseline"
+    },
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/registry.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/profiles.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/aliases.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/translations.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/providers.py"
+      ],
+      "evidence_tasks": [
+        "LFP-006",
+        "LFP-007",
+        "LFP-008",
+        "LFP-009",
+        "LFP-010"
+      ],
+      "goal_id": "LFP-G020",
+      "interfaces": [
+        "LogicFamilyRegistry@2",
+        "SemanticProfile@1",
+        "TranslationContract@2",
+        "ProviderCapabilityCatalog@1"
+      ],
+      "primary_artifacts": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/registry.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/profiles.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/aliases.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/translations.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/providers.py"
+      ],
+      "status": "verified",
+      "title": "Converge canonical family, profile, provider, and translation vocabularies"
+    },
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/syntax_core",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/__init__.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/formalization/views.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/formalization/constraint_contracts.py"
+      ],
+      "evidence_tasks": [
+        "LFP-011",
+        "LFP-012",
+        "LFP-013",
+        "LFP-014",
+        "LFP-015",
+        "LFP-016"
+      ],
+      "goal_id": "LFP-G030",
+      "interfaces": [
+        "SourceDocument@1",
+        "LogicCST@1",
+        "TypedExpression@1",
+        "ParseArtifact@1",
+        "ElaborationArtifact@1",
+        "LazyParserPublication@1",
+        "FormalizationArtifact@2",
+        "ConstraintContract@2"
+      ],
+      "primary_artifacts": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/syntax_core",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/__init__.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/formalization/views.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/formalization/constraint_contracts.py"
+      ],
+      "status": "verified",
+      "title": "Build the source-aware typed syntax and elaboration kernel"
+    },
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/fol.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/smtlib.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/tptp.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/rules.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/flogic.py"
+      ],
+      "evidence_tasks": [
+        "LFP-017",
+        "LFP-018",
+        "LFP-019",
+        "LFP-020",
+        "LFP-021",
+        "LFP-022"
+      ],
+      "goal_id": "LFP-G040",
+      "interfaces": [
+        "CanonicalFOLSyntax@1",
+        "SMTLIB2Frontend@1",
+        "TPTPFrontend@1",
+        "RuleFrontend@1",
+        "FLogicFrontend@1"
+      ],
+      "primary_artifacts": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/fol.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/smtlib.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/tptp.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/rules.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/flogic.py"
+      ],
+      "status": "verified",
+      "title": "Add classical, rule, authorization, and frame-logic frontends"
+    },
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/modal.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/temporal.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/state.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/hyper.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/event_calculus.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/legacy_modal.py"
+      ],
+      "evidence_tasks": [
+        "LFP-023",
+        "LFP-024",
+        "LFP-025",
+        "LFP-026",
+        "LFP-027",
+        "LFP-028"
+      ],
+      "goal_id": "LFP-G050",
+      "interfaces": [
+        "ModalSyntax@1",
+        "TemporalSyntax@1",
+        "StatePropertySyntax@1",
+        "HyperpropertySyntax@1",
+        "EventCalculusSyntax@1",
+        "LegacyLogicImporter@1"
+      ],
+      "primary_artifacts": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/modal.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/temporal.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/state.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/hyper.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/event_calculus.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/legacy_modal.py"
+      ],
+      "status": "verified",
+      "title": "Unify modal, temporal, state, event, normative, and hyperproperty syntax"
+    },
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/protocol.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/program.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/kernel_targets.py"
+      ],
+      "evidence_tasks": [
+        "LFP-029",
+        "LFP-030",
+        "LFP-031",
+        "LFP-032",
+        "LFP-033"
+      ],
+      "goal_id": "LFP-G060",
+      "interfaces": [
+        "ProtocolSyntax@1",
+        "ProgramLogicSyntax@1",
+        "ResourceLogicSyntax@1",
+        "KernelTheoryModel@1"
+      ],
+      "primary_artifacts": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/protocol.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/program.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/kernel_targets.py"
+      ],
+      "status": "verified",
+      "title": "Add protocol, program, resource, refinement, and kernel target surfaces"
+    },
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/security_ir",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/crypto_ir",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/intent_ir",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/legal_ir",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/ui_ux_source_gate.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/software_verification",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts"
+      ],
+      "evidence_tasks": [
+        "LFP-034",
+        "LFP-035",
+        "LFP-036",
+        "LFP-037",
+        "LFP-038",
+        "LFP-039"
+      ],
+      "goal_id": "LFP-G070",
+      "interfaces": [
+        "DomainFormalizationAdapter@2",
+        "DomainLogicCapabilityMatrix@1",
+        "UIUXSourceGate@1"
+      ],
+      "notes": "ui_ux_ir is explicitly declaration-only/source_missing via LFP-038 gate; other domains are bound.",
+      "primary_artifacts": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/security_ir",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/crypto_ir",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/intent_ir",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/legal_ir",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/ui_ux_source_gate.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/software_verification",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts"
+      ],
+      "status": "verified",
+      "title": "Connect Security, Crypto, Intent, Legal, UI, and software-contract IRs"
+    },
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/catalog.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/generated_catalog.py",
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_conformance_report.json",
+        "ipfs_datasets_py/tests/conformance/logic"
+      ],
+      "evidence_tasks": [
+        "LFP-040",
+        "LFP-041",
+        "LFP-042",
+        "LFP-043"
+      ],
+      "goal_id": "LFP-G080",
+      "interfaces": [
+        "LogicParserCatalog@1",
+        "GeneratedProviderTranslationCatalog@1",
+        "LogicConformanceReport@1",
+        "LogicAuthorityAudit@1"
+      ],
+      "primary_artifacts": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/catalog.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/families/generated_catalog.py",
+        "ipfs_datasets_py/docs/architecture/logic/logic_parser_conformance_report.json",
+        "ipfs_datasets_py/tests/conformance/logic"
+      ],
+      "status": "verified",
+      "title": "Prove parser, translation, backend, advisor, and authority conformance"
+    },
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/api.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/verification_api.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/refill.py"
+      ],
+      "evidence_tasks": [
+        "LFP-044",
+        "LFP-045",
+        "LFP-046"
+      ],
+      "goal_id": "LFP-G090",
+      "interfaces": [
+        "LogicAPI@3",
+        "LegacyLogicAdapter@1",
+        "LogicGapRefill@1",
+        "ObjectiveRefillFixedPoint@1",
+        "LogicConsumerClosure@1"
+      ],
+      "primary_artifacts": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/api.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/verification_api.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/refill.py"
+      ],
+      "status": "verified",
+      "title": "Migrate APIs safely and maintain a bounded refill fixed point"
+    },
+    {
+      "bound": true,
+      "evidence_missing": [],
+      "evidence_present": [
+        "ipfs_datasets_py/docs/architecture/logic/LOGIC_FAMILY_PARSER_RELEASE.md",
+        "ipfs_datasets_py/data/logic/conformance/logic_family_parser_release.json"
+      ],
+      "evidence_tasks": [
+        "LFP-047"
+      ],
+      "goal_id": "LFP-G100",
+      "interfaces": [
+        "LogicParserReleaseReceipt@1"
+      ],
+      "notes": "Self-owned release outputs sealed by this receipt.",
+      "primary_artifacts": [
+        "ipfs_datasets_py/docs/architecture/logic/LOGIC_FAMILY_PARSER_RELEASE.md",
+        "ipfs_datasets_py/data/logic/conformance/logic_family_parser_release.json"
+      ],
+      "status": "verified",
+      "title": "Join release evidence and freeze the next-version baseline"
+    }
+  ],
+  "conformance_report": {
+    "content_id": "sha256:fbc047bccff60b057576236f41b71ab533e0d0bab9afcee61b9b2acef1be546a",
+    "goal_id": "LFP-G080",
+    "interface": "LogicConformanceReport@1",
+    "path": "ipfs_datasets_py/docs/architecture/logic/logic_parser_conformance_report.json",
+    "present": true,
+    "summary": {
+      "acceptance_holds": true,
+      "differential_case_count": 15,
+      "disagree_all_inconclusive": true,
+      "disagree_case_count": 5,
+      "e2e_slice_count": 8,
+      "every_translation_has_positive_and_negative_fixtures": true,
+      "hermetic": true,
+      "high_assurance_candidates_reconstruct_or_retain_lower_ceiling": true,
+      "preservation_fixture_count": 4,
+      "reconstruction_case_count": 7,
+      "translation_count": 2,
+      "translation_ids": [
+        "datalog_to_horn_chc",
+        "propositional_to_first_order"
+      ]
+    },
+    "task_id": "LFP-043"
+  },
+  "corpus": {
+    "fixture_count": 10,
+    "interface": "LogicConformanceCorpus@1",
+    "path": "ipfs_datasets_py/tests/fixtures/logic_conformance/manifest.json",
+    "schema_version": "logic-conformance-corpus/v1",
+    "task": "LFP-002",
+    "version": "1.0.0"
+  },
+  "domains": {
+    "crypto_ir": {
+      "adapter_task": "LFP-035",
+      "status": "bound"
+    },
+    "intent_ir": {
+      "adapter_task": "LFP-036",
+      "status": "bound"
+    },
+    "legal_ir": {
+      "adapter_task": "LFP-037",
+      "status": "bound"
+    },
+    "security_ir": {
+      "adapter_task": "LFP-034",
+      "status": "bound"
+    },
+    "software_contracts": {
+      "adapter_task": "LFP-039",
+      "status": "bound"
+    },
+    "software_verification": {
+      "adapter_task": "LFP-039",
+      "status": "bound"
+    },
+    "ui_ux_ir": {
+      "adapter_task": "LFP-038",
+      "status": "declaration_only_source_missing"
+    }
+  },
+  "evidence_subset": [
+    "release",
+    "git_identity",
+    "cid",
+    "registry",
+    "schema",
+    "corpus",
+    "matrix",
+    "provider",
+    "validation",
+    "authority",
+    "fixed_point"
+  ],
+  "explicit_dispositions": [
+    {
+      "approval": "plan_and_LFP-038_operator_policy",
+      "availability": "source_missing",
+      "disposition": "declaration_only",
+      "notes": "Pinned datasets revision lacks the user's untracked ui_ux_ir package. Gate records declaration-only/source_missing and never creates or edits the package. A reviewed import content-triggers exactly one derived adapter task.",
+      "reason": "source_not_in_pinned_revision",
+      "subject": "ui_ux_ir",
+      "support": "declaration_only",
+      "writes_ui_ux_ir": false
+    },
+    {
+      "approval": "plan_version_2_declaration_only_candidates",
+      "disposition": "declaration_only",
+      "family_ids": [
+        "argumentation",
+        "defeasible_logic",
+        "dependent_type",
+        "description_logic",
+        "finite_field_constraint",
+        "fuzzy_weighted",
+        "mu_calculus",
+        "nonmonotonic_logic",
+        "probabilistic",
+        "relevance_paraconsistent",
+        "situation_calculus"
+      ],
+      "notes": "Version-2 declaration-only family IDs are registered for routing hygiene and never claim executable support.",
+      "subject": "declaration_only_families"
+    },
+    {
+      "approval": "plan_version_2_additions",
+      "disposition": "planned_extension",
+      "family_ids": [
+        "doxastic",
+        "epistemic",
+        "intention_agency",
+        "session_process"
+      ],
+      "notes": "Epistemic/doxastic/intention/session families are enumerated for extension but are not v1 executable floors.",
+      "subject": "planned_extension_families"
+    },
+    {
+      "approval": "program_invariants",
+      "authority_ceiling": "advisory",
+      "disposition": "advisory_ceiling",
+      "notes": "ErgoAI, SymbolicAI, and Hammer remain proposal/advisor surfaces. Presence never establishes kernel, theorem, or policy authority.",
+      "provider_ids": [
+        "ergoai",
+        "hammer",
+        "symbolicai"
+      ],
+      "subject": "advisory_providers"
+    },
+    {
+      "approval": "plan_provider_notes",
+      "disposition": "declaration_only",
+      "notes": "SyGuS remains declaration-only in v1 for cvc5.",
+      "provider_id": "cvc5",
+      "subject": "sygus"
+    },
+    {
+      "approval": "capability_matrix_baseline",
+      "count": 558,
+      "disposition": "explicit_unsupported",
+      "notes": "Unsupported cells are retained with explicit disposition; unknown_count is zero so no unexplained matrix gap remains.",
+      "subject": "matrix_unsupported_cells"
+    },
+    {
+      "approval": "LFP-046_fixed_point",
+      "count": 232,
+      "disposition": "explicit_unimplemented_refill_closed",
+      "notes": "Unimplemented cells are typed and owner-scoped. Current-tree refill fixed point admits no new tasks under identical source/config/corpus identities; remaining cells wait for evidence change, not silent promotion.",
+      "subject": "matrix_unimplemented_cells"
+    }
+  ],
+  "hard_zero_gates": {
+    "advisor_authority_escalation_count": 0,
+    "authority_escalation_count": 0,
+    "completion_authority_granted_count": 0,
+    "false_capability_claim_count": 0,
+    "false_solver_capability_claim_count": 0,
+    "kernel_trust_escape_count": 0,
+    "mutation_authority_granted_count": 0,
+    "seed_definition_mutation_count": 0,
+    "silent_node_drop_count": 0,
+    "silent_semantic_loss_count": 0,
+    "trust_escape_count": 0,
+    "unexplained_matrix_gap_count": 0,
+    "unregistered_emitted_family_id_count": 0,
+    "unsupported_semantics_promotion_count": 0
+  },
+  "interface": "LogicParserReleaseReceipt@1",
+  "next_refill_baseline": {
+    "admits_new_tasks_on_identical_identities": false,
+    "current_fixed_point": true,
+    "policy": "Bounded content-addressed objective refill from matrix/conformance gaps only; seed definitions immutable; max 8 derived goals / 24 tasks per epoch excluding 11 seed goals; max 48 open; depth 3; 2 unchanged-failure retries; 3600s cooldown.",
+    "protected_paths_immutable": true,
+    "triggers_for_next_epoch": [
+      "source_identity_drift",
+      "config_identity_drift",
+      "corpus_identity_drift",
+      "reviewed_ui_ux_ir_import",
+      "new_owner_scoped_evidence_gap",
+      "failed_release_floor"
+    ]
+  },
+  "observed_at": "2026-08-09T00:00:00Z",
+  "producer_id": "logic-parser-release-seal@1",
+  "program_goal_id": "LFP-G000",
+  "program_id": "ipfs-datasets-logic-family-parser-v1",
+  "refill_fixed_point": {
+    "completion_authority": false,
+    "consecutive_empty_scans": 2,
+    "fixed_point_receipt_path": "data/agent_supervisor/ipfs_datasets_logic_family_parser/refill/fixed_point_receipt.json",
+    "gap_ledger_path": "data/agent_supervisor/ipfs_datasets_logic_family_parser/refill/gap_ledger.jsonl",
+    "goal_id": "LFP-G090",
+    "immutable_seed_goal_count": 11,
+    "interface": "ObjectiveRefillFixedPoint@1",
+    "is_fixed_point": true,
+    "mutation_authority": false,
+    "scan_identity": {
+      "config_identity": "config:agent_supervisor_ipfs_datasets_logic_family_parser_scheduler",
+      "corpus_identity": "corpus:logic-conformance:current",
+      "repository_id": "repository:ipfs-datasets-logic-family-parser",
+      "source_identity": "source:current-tree:logic-family-parser",
+      "tree_id": "tree:current"
+    },
+    "seed_definitions_mutated": false,
+    "task_id": "LFP-046"
+  },
+  "registries": {
+    "generated_provider_translation_catalog": {
+      "generated_closure_open": false,
+      "interface": "GeneratedProviderTranslationCatalog@1",
+      "task_id": "LFP-040",
+      "translation_count": 2,
+      "translation_ids": [
+        "datalog_to_horn_chc",
+        "propositional_to_first_order"
+      ]
+    },
+    "logic_family_registry": {
+      "baseline_family_count": 35,
+      "baseline_family_ids": [
+        "argumentation",
+        "authorization",
+        "concurrency",
+        "cryptographic_protocol",
+        "datalog",
+        "dcec",
+        "defeasible_logic",
+        "deontic",
+        "dependent_type",
+        "description_logic",
+        "doxastic",
+        "epistemic",
+        "event_calculus",
+        "finite_field_constraint",
+        "first_order",
+        "frame_logic",
+        "fuzzy_weighted",
+        "higher_order",
+        "horn_chc",
+        "hyperproperty",
+        "intention_agency",
+        "modal",
+        "mu_calculus",
+        "nonmonotonic_logic",
+        "probabilistic",
+        "program",
+        "propositional",
+        "refinement",
+        "relevance_paraconsistent",
+        "separation_logic",
+        "session_process",
+        "situation_calculus",
+        "tdfol",
+        "temporal",
+        "transition_system"
+      ],
+      "declaration_only_family_ids": [
+        "argumentation",
+        "defeasible_logic",
+        "dependent_type",
+        "description_logic",
+        "finite_field_constraint",
+        "fuzzy_weighted",
+        "mu_calculus",
+        "nonmonotonic_logic",
+        "probabilistic",
+        "relevance_paraconsistent",
+        "situation_calculus"
+      ],
+      "foundation_family_count": 21,
+      "foundation_family_ids": [
+        "authorization",
+        "concurrency",
+        "cryptographic_protocol",
+        "datalog",
+        "dcec",
+        "deontic",
+        "event_calculus",
+        "first_order",
+        "frame_logic",
+        "higher_order",
+        "horn_chc",
+        "hyperproperty",
+        "modal",
+        "mu_calculus",
+        "program",
+        "propositional",
+        "refinement",
+        "separation_logic",
+        "tdfol",
+        "temporal",
+        "transition_system"
+      ],
+      "interface": "LogicFamilyRegistry@2",
+      "planned_extension_family_ids": [
+        "doxastic",
+        "epistemic",
+        "intention_agency",
+        "session_process"
+      ],
+      "translation_count": 2,
+      "translation_ids": [
+        "datalog_to_horn_chc",
+        "propositional_to_first_order"
+      ],
+      "version": "2.0.0"
+    },
+    "parser_catalog": {
+      "interface": "LogicParserCatalog@1",
+      "module_stems": [
+        "event_calculus",
+        "flogic",
+        "fol",
+        "hyper",
+        "legacy_modal",
+        "modal",
+        "program",
+        "protocol",
+        "resource",
+        "rules",
+        "smtlib",
+        "state",
+        "tamarin",
+        "temporal",
+        "tptp"
+      ],
+      "task_id": "LFP-040"
+    },
+    "provider_capability_catalog": {
+      "advisory_provider_ids": [
+        "ergoai",
+        "hammer",
+        "symbolicai"
+      ],
+      "baseline_provider_ids": [
+        "apalache",
+        "cvc5",
+        "datalog_secpal",
+        "eprover",
+        "ergoai",
+        "hammer",
+        "hyperltl_autohyper_mchyper",
+        "isabelle",
+        "lean",
+        "proverif",
+        "rocq",
+        "runtime_mtl",
+        "symbolicai",
+        "tamarin",
+        "tla_tlc",
+        "vampire",
+        "z3"
+      ],
+      "executable_provider_ids": [
+        "apalache",
+        "cvc5",
+        "datalog_secpal",
+        "eprover",
+        "hammer",
+        "hyperltl_autohyper_mchyper",
+        "isabelle",
+        "lean",
+        "proverif",
+        "rocq",
+        "runtime_mtl",
+        "tamarin",
+        "tla_tlc",
+        "vampire",
+        "z3"
+      ],
+      "presence_is_not_availability": true,
+      "presence_is_not_proof": true
+    }
+  },
+  "release_goal_id": "LFP-G100",
+  "schema_version": "logic-parser-release-receipt/v1",
+  "source": {
+    "accelerator_required_ancestor": "34420f615d3eebfefa3cc1a3e4ebf8f51b16afac",
+    "binding_mode": "current_tree_content_identity",
+    "datasets_path": "ipfs_datasets_py",
+    "ipfs_datasets_planning_revision": "a2f5400b7cb89c8481819379a1b7b9959fe81d45",
+    "planning_revision_is_runtime_completion_evidence": false,
+    "supervisor_tree_id": "aec979faa0d46ddebd8eb76a099cd2a5036f8b3e"
+  },
+  "task_id": "LFP-047",
+  "trust_boundary": {
+    "advisor_cannot_escalate": true,
+    "automatic_promotion": false,
+    "completion_authoritative": false,
+    "kernel_trust_escape_forbidden": true,
+    "mutation_authorized": false,
+    "protected_control_plane_read_only": true,
+    "release_receipt_is_evidence_only": true
+  },
+  "ui_ux_source_gate": {
+    "derived_task_count": 0,
+    "disposition": "declaration_only",
+    "interface": "UIUXSourceGate@1",
+    "package_relative_path": "ipfs_datasets_py/logic/ui_ux_ir",
+    "presence": "absent",
+    "task_id": "LFP-038",
+    "writes_ui_ux_ir": false
+  },
+  "validation": {
+    "commands": [
+      "cd ipfs_datasets_py && python -m pytest -q tests/unit/logic/syntax_core tests/unit/logic/parsers tests/unit/logic/families tests/unit/logic/formalization tests/unit/logic/backends tests/unit/logic/security_ir tests/unit/logic/crypto_ir tests/unit/logic/intent_ir tests/unit/logic/legal_ir tests/unit/logic/software_verification tests/unit/logic/software_contracts tests/unit/logic/conformance/test_refill.py tests/conformance/logic tests/fuzz/logic",
+      "python scripts/validate_ipfs_datasets_logic_family_parser_board.py --check-all"
+    ],
+    "environment": {
+      "home_prefix": "ipfs-accelerate-validation-home-",
+      "notes": "Judge external-tool availability against the sealed validation environment only. Missing optional provers are capability gaps, never false capability claims.",
+      "path": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin",
+      "python": "/usr/bin/python3.12"
+    },
+    "targets": {
+      "board_validator": "scripts/validate_ipfs_datasets_logic_family_parser_board.py",
+      "conformance_logic": "tests/conformance/logic",
+      "fuzz_logic": "tests/fuzz/logic",
+      "unit_logic_suites": [
+        "tests/unit/logic/syntax_core",
+        "tests/unit/logic/parsers",
+        "tests/unit/logic/families",
+        "tests/unit/logic/formalization",
+        "tests/unit/logic/backends",
+        "tests/unit/logic/security_ir",
+        "tests/unit/logic/crypto_ir",
+        "tests/unit/logic/intent_ir",
+        "tests/unit/logic/legal_ir",
+        "tests/unit/logic/software_verification",
+        "tests/unit/logic/software_contracts",
+        "tests/unit/logic/conformance/test_refill.py"
+      ]
+    }
+  },
+  "version": "1.0.0"
+}

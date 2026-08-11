@@ -9,6 +9,10 @@ control plane testable without coupling to transport or optional backends.
 
 Contract: ``kg-service-contract/v1``
 (``docs/architecture/knowledge_graphs_service_contract.md``).
+
+DQK-061: production graph control starts from DuckDB plus immutable
+Parquet/IPLD payloads. Legacy ``catalog.sqlite`` and mutable control JSON are
+absent from the runtime path (explicit import/export only).
 """
 
 from __future__ import annotations
@@ -42,6 +46,19 @@ from ipfs_datasets_py.knowledge_graphs.catalog import (
     bootstrap_revision_id,
     open_catalog,
     request_hash,
+)
+from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+    DuckDBCatalogFacade,
+    GraphShadowAuthority,
+    GRAPH_DUCKDB_ONLY_OWNER_TASK,
+    GRAPH_PUBLICATION_TYPE,
+    configure_duckdb_only_graph_authority,
+    duckdb_only_graph_control,
+    get_graph_authority,
+    get_graph_filesystem_guard,
+    get_graph_shadow_authority,
+    new_graph_operation_id,
+    open_duckdb_catalog,
 )
 
 # ---------------------------------------------------------------------------
@@ -934,11 +951,14 @@ class GraphService:
 
     A second :class:`GraphService` opened against the same catalog and storage
     paths reopens committed graphs after restart (OSR-6).
+
+    After DQK-061, prefer :meth:`open_duckdb_only` so control metadata lives in
+    DuckDB and payload bytes remain immutable Parquet/IPLD (no ``catalog.sqlite``).
     """
 
     def __init__(
         self,
-        catalog: GraphCatalog,
+        catalog: Any,
         *,
         storage: Optional[GraphStorage] = None,
         authorizer: Optional[Authorizer] = None,
@@ -948,6 +968,7 @@ class GraphService:
         close_catalog_on_close: bool = False,
         close_storage_on_close: bool = False,
         holder_id: Optional[str] = None,
+        shadow_authority: Optional[GraphShadowAuthority] = None,
     ) -> None:
         if catalog is None:
             raise ValueError("catalog is required")
@@ -967,6 +988,75 @@ class GraphService:
         self._closed = False
         # Intentionally no ambient / current graph handle.
         self._open_handles: Dict[str, JSONDict] = {}
+        # DQK-059/061: optional DuckDB authority (SQLite optional after cutover).
+        self._shadow_authority: Optional[GraphShadowAuthority] = None
+        self._mutation_receipts: List[Any] = []
+        self._duckdb_only: bool = bool(
+            getattr(catalog, "backend_kind", None) == "duckdb"
+            or getattr(catalog, "legacy_sqlite_absent", False)
+        )
+        if shadow_authority is not None:
+            self.attach_shadow_authority(shadow_authority)
+        elif getattr(catalog, "shadow_authority", None) is not None:
+            self._shadow_authority = catalog.shadow_authority
+        else:
+            process_shadow = get_graph_authority() or get_graph_shadow_authority()
+            if process_shadow is not None:
+                self.attach_shadow_authority(process_shadow)
+
+    def attach_shadow_authority(
+        self, authority: Optional[GraphShadowAuthority]
+    ) -> None:
+        """Bind DuckDB shadow authority to the service and its SQLite catalog."""
+
+        self._shadow_authority = authority
+        if authority is not None and hasattr(self._catalog, "attach_shadow_authority"):
+            self._catalog.attach_shadow_authority(authority)
+
+    @property
+    def shadow_authority(self) -> Optional[GraphShadowAuthority]:
+        return self._shadow_authority
+
+    @property
+    def mutation_receipts(self) -> List[Any]:
+        """Shadow authority receipts observed by this service (DQK-059)."""
+
+        if self._shadow_authority is None:
+            return list(self._mutation_receipts)
+        return list(self._shadow_authority.list_mutation_receipts())
+
+    def _record_service_shadow(
+        self,
+        *,
+        kind: str,
+        target: Any,
+        payload: Mapping[str, Any],
+        operation_id: Optional[str] = None,
+        content_cid: str = "",
+        content_checksum: str = "",
+    ) -> None:
+        """Best-effort service-layer shadow projection; never raises."""
+
+        shadow = self._shadow_authority
+        if shadow is None:
+            return
+        try:
+            tenant = getattr(target, "tenant", None) or payload.get("tenant") or "unknown"
+            graph_id = (
+                getattr(target, "graph_id", None) or payload.get("graph_id") or "unknown"
+            )
+            receipt = shadow.record_operation(
+                producer="service",
+                kind=kind,
+                key=f"service:{tenant}/{graph_id}:{kind}",
+                payload=dict(payload),
+                operation_id=operation_id or new_graph_operation_id(f"service.{kind}"),
+                content_cid=content_cid,
+                content_checksum=content_checksum,
+            )
+            self._mutation_receipts.append(receipt)
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # Construction helpers
@@ -983,20 +1073,49 @@ class GraphService:
         audit: Optional[AuditSink] = None,
         faults: Optional[FaultInjector] = None,
         holder_id: Optional[str] = None,
+        shadow_authority: Optional[GraphShadowAuthority] = None,
         **catalog_kwargs: Any,
     ) -> "GraphService":
         """Open a long-lived service bound to durable catalog (+ payload) paths.
 
         Does **not** create a default graph. Callers must ``create`` or ``open``
         an explicit :class:`GraphTarget`.
+
+        When *catalog_path* ends with ``.duckdb`` (or process authority is already
+        DuckDB-only), opens the DuckDB control catalog without creating SQLite.
         """
+        cat_path = Path(catalog_path)
+        process_auth = shadow_authority or get_graph_authority() or get_graph_shadow_authority()
+        # Prefer DuckDB control path when the path itself is a DuckDB file.
+        if cat_path.suffix.lower() == ".duckdb":
+            return cls.open_duckdb_only(
+                cat_path,
+                storage_path=storage_path,
+                authorizer=authorizer,
+                clock=clock,
+                audit=audit,
+                faults=faults,
+                holder_id=holder_id,
+                shadow_authority=process_auth,
+                configure_process_authority=process_auth is None,
+            )
+        # After DuckDB-only promotion, refuse implicit SQLite catalog opens.
+        if process_auth is not None and not getattr(
+            process_auth, "legacy_io_allowed", True
+        ):
+            get_graph_filesystem_guard().assert_allowed(
+                cat_path, kind="catalog_sqlite", operation="write"
+            )
+        elif duckdb_only_graph_control():
+            get_graph_filesystem_guard().assert_allowed(
+                cat_path, kind="catalog_sqlite", operation="write"
+            )
         catalog = open_catalog(catalog_path, **catalog_kwargs)
         if storage_path is not None:
             storage: GraphStorage = FileGraphStorage(storage_path)
             close_storage = True
         else:
             # Co-locate payload storage next to the catalog for durable reopen.
-            cat_path = Path(catalog_path)
             default_store = cat_path.parent / f"{cat_path.stem}.payloads"
             storage = FileGraphStorage(default_store)
             close_storage = True
@@ -1010,11 +1129,99 @@ class GraphService:
             close_catalog_on_close=True,
             close_storage_on_close=close_storage,
             holder_id=holder_id,
+            shadow_authority=shadow_authority,
         )
 
+    @classmethod
+    def open_duckdb_only(
+        cls,
+        duckdb_catalog_path: PathLike,
+        *,
+        storage_path: Optional[PathLike] = None,
+        authorizer: Optional[Authorizer] = None,
+        clock: Optional[Clock] = None,
+        audit: Optional[AuditSink] = None,
+        faults: Optional[FaultInjector] = None,
+        holder_id: Optional[str] = None,
+        shadow_authority: Optional[GraphShadowAuthority] = None,
+        configure_process_authority: bool = True,
+    ) -> "GraphService":
+        """Start graph service from DuckDB + immutable payloads (DQK-061).
+
+        Legacy ``catalog.sqlite`` is not created or opened. Control metadata
+        lives only in DuckDB; payload storage is Parquet/IPLD-compatible
+        revision snapshots (or hybrid object cache for content bytes).
+        """
+        duck_path = Path(duckdb_catalog_path)
+        auth = shadow_authority
+        if auth is None and configure_process_authority:
+            auth = get_graph_authority() or get_graph_shadow_authority()
+            if auth is None:
+                auth = configure_duckdb_only_graph_authority(
+                    duck_path,
+                    duckdb_tx_path=duck_path.parent / f"{duck_path.stem}.tx.duckdb",
+                    duckdb_crypto_path=duck_path.parent
+                    / f"{duck_path.stem}.crypto.duckdb",
+                )
+            else:
+                # Ensure legacy control I/O stays blocked.
+                if hasattr(auth, "set_legacy_io_allowed"):
+                    auth.set_legacy_io_allowed(False)
+        catalog = open_duckdb_catalog(duck_path, shadow_authority=auth)
+        if storage_path is not None:
+            storage: GraphStorage = FileGraphStorage(storage_path)
+            close_storage = True
+        else:
+            default_store = duck_path.parent / f"{duck_path.stem}.payloads"
+            storage = FileGraphStorage(default_store)
+            close_storage = True
+        svc = cls(
+            catalog,
+            storage=storage,
+            authorizer=authorizer,
+            clock=clock,
+            audit=audit,
+            faults=faults,
+            close_catalog_on_close=True,
+            close_storage_on_close=close_storage,
+            holder_id=holder_id,
+            shadow_authority=auth,
+        )
+        svc._duckdb_only = True
+        return svc
+
     @property
-    def catalog(self) -> GraphCatalog:
+    def catalog(self) -> Any:
         return self._catalog
+
+    @property
+    def is_duckdb_only(self) -> bool:
+        """True when this service has no legacy SQLite control catalog."""
+
+        return bool(self._duckdb_only) or isinstance(
+            self._catalog, DuckDBCatalogFacade
+        )
+
+    def publication_document(self) -> JSONDict:
+        """Sanitized graph views for the publication database (DQK-061)."""
+
+        shadow = self._shadow_authority
+        if shadow is not None and hasattr(shadow, "publication_document"):
+            doc = dict(shadow.publication_document())
+            doc["service_duckdb_only"] = self.is_duckdb_only
+            doc["legacy_sqlite_absent"] = self.is_duckdb_only
+            return doc
+        return {
+            "publication_type": GRAPH_PUBLICATION_TYPE,
+            "owner_task": GRAPH_DUCKDB_ONLY_OWNER_TASK,
+            "approved_sanitized_graph_views": [],
+            "leases_excluded": True,
+            "writer_state_excluded": True,
+            "raw_payloads_excluded": True,
+            "sqlite_authority": False,
+            "service_duckdb_only": self.is_duckdb_only,
+            "legacy_sqlite_absent": self.is_duckdb_only,
+        }
 
     @property
     def storage(self) -> GraphStorage:
@@ -1364,6 +1571,35 @@ class GraphService:
                     "at": self._clock.now_iso(),
                 }
             )
+            # DQK-059: service-layer shadow receipt (catalog mutators also emit).
+            if op in {
+                "create",
+                "delete",
+                "branch",
+                "write",
+                "begin_tx",
+                "commit_tx",
+                "rollback_tx",
+            }:
+                self._record_service_shadow(
+                    kind=op,
+                    target=target or request.target,
+                    payload={
+                        "operation": op,
+                        "result": payload if isinstance(payload, Mapping) else {},
+                        "request_id": request_id,
+                        "idempotency_key": request.idempotency_key,
+                    },
+                    operation_id=request.idempotency_key
+                    or new_graph_operation_id(f"service.{op}"),
+                    content_cid=str(
+                        (payload or {}).get("manifest_cid")
+                        or (payload or {}).get("revision")
+                        or ""
+                    )
+                    if isinstance(payload, Mapping)
+                    else "",
+                )
             return LifecycleResult(
                 status="success",
                 operation=op,
@@ -2504,4 +2740,5 @@ __all__ = [
     "InMemoryGraphStorage",
     "FileGraphStorage",
     "GraphService",
+    "GRAPH_PUBLICATION_TYPE",
 ]

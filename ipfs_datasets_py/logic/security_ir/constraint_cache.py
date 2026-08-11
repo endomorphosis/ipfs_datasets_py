@@ -654,6 +654,8 @@ class SecurityConstraintCache:
     _lock: threading.RLock = field(
         default_factory=threading.RLock, init=False, repr=False
     )
+    _shadow_repository: Any = field(default=None, init=False, repr=False)
+    _shadow_backend: str = field(default="security_ir", init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.root is not None:
@@ -666,6 +668,68 @@ class SecurityConstraintCache:
         if self.root is not None:
             self.root.mkdir(parents=True, exist_ok=True)
             self.reload()
+
+    def bind_shadow_repository(
+        self, repository: Any, *, backend: str = "security_ir"
+    ) -> None:
+        """Bind security constraint cache to the unified shadow repository (DQK-065)."""
+
+        object.__setattr__(self, "_shadow_repository", repository)
+        object.__setattr__(self, "_shadow_backend", backend)
+        if repository is not None:
+            repository.register_backend(backend)
+
+    def bind_authority_repository(self, repository, *, backend: str = "security_ir") -> None:
+        """Bind to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
+
+    def _shadow_write(self, record: "SecurityConstraintRecord") -> None:
+        repo = self._shadow_repository
+        if repo is None:
+            try:
+                from ..common.proof_cache import get_shadow_repository
+
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        if repo is None:
+            return
+        try:
+            payload = record.to_dict()
+            envelope_bytes = _canonical_bytes(payload)
+            key = repo.project_key(
+                self._shadow_backend,
+                formula=record.profile,
+                cid=record.content_cid,
+                prover_name="security_ir",
+                solver_identities={"profile": record.profile},
+                toolchain={"backend": "security_ir"},
+                policy={"profile": record.profile, "mode": "shadow"},
+                ir={
+                    "content_cid": record.content_cid,
+                    "content_digest": record.content_digest,
+                    "profile": record.profile,
+                },
+            )
+            repo.write(
+                self._shadow_backend,
+                key=key,
+                result_payload={
+                    "content_cid": record.content_cid,
+                    "content_digest": record.content_digest,
+                    "profile": record.profile,
+                },
+                status="unknown",
+                trust_level="none",
+                envelope_bytes=envelope_bytes,
+                envelope_content_id=record.content_cid,
+                legacy_payload=payload,
+                result_id=record.content_cid,
+            )
+        except Exception:
+            pass
 
     @property
     def interface(self) -> str:
@@ -766,8 +830,25 @@ class SecurityConstraintCache:
             self._records[record.content_cid] = record
             self._profile_index[record.profile] = record.content_cid
             self._persist_record(record)
-            self._persist_index()
-            return record
+            # DQK-067: skip mutable index.json when export-only/promoted;
+            # in-memory + DuckDB authority remain sufficient.
+            try:
+                from ..common.proof_cache import legacy_json_persistence_allowed
+
+                repo = self._shadow_repository
+                if repo is None:
+                    from ..common.proof_cache import get_shadow_repository
+
+                    repo = get_shadow_repository(create=False)
+                if legacy_json_persistence_allowed(repo):
+                    self._persist_index()
+            except Exception:
+                try:
+                    self._persist_index()
+                except Exception:
+                    pass
+        self._shadow_write(record)
+        return record
 
     def get(self, content_cid: str) -> SecurityConstraintRecord:
         """Load one constraint set by content CID (memory first, then disk)."""
@@ -965,6 +1046,36 @@ class SecurityConstraintCache:
         path = self._index_path()
         if path is None:
             return
+        # DQK-067: after promotion/export-only, mutable index.json is not
+        # authority.  Runtime path refuses whole-file rewrites; use explicit
+        # export_index_json_compat for compatibility dumps.
+        repo = self._shadow_repository
+        if repo is None:
+            try:
+                from ..common.proof_cache import get_shadow_repository
+
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        try:
+            from ..common.proof_cache import (
+                assert_direct_json_persistence_forbidden,
+                legacy_json_persistence_allowed,
+            )
+
+            if not legacy_json_persistence_allowed(repo):
+                assert_direct_json_persistence_forbidden(
+                    repo,
+                    path=str(path),
+                    backend=self._shadow_backend,
+                    family="common",
+                )
+        except ImportError:
+            if repo is not None and getattr(repo, "is_promoted", False):
+                if hasattr(repo, "assert_json_rewrite_allowed"):
+                    repo.assert_json_rewrite_allowed(
+                        "common", path=str(path), backend=self._shadow_backend
+                    )
         payload = {
             "interface": SECURITY_CONSTRAINT_CACHE_INTERFACE,
             "profiles": {
@@ -975,6 +1086,34 @@ class SecurityConstraintCache:
             "schema_version": SECURITY_CONSTRAINT_INDEX_SCHEMA_VERSION,
         }
         _atomic_write_json(path, payload)
+
+    def export_index_json_compat(self, path: Path | str | None = None) -> dict[str, Any]:
+        """Explicit legacy index.json export (DQK-067 compatibility only)."""
+
+        target = Path(path) if path is not None else self._index_path()
+        if target is None:
+            raise SecurityConstraintCacheError(
+                "export_index_json_compat requires a path or cache root"
+            )
+        payload = {
+            "interface": SECURITY_CONSTRAINT_CACHE_INTERFACE,
+            "profiles": {
+                profile: cid
+                for profile, cid in sorted(self._profile_index.items())
+            },
+            "record_cids": sorted(self._records),
+            "schema_version": SECURITY_CONSTRAINT_INDEX_SCHEMA_VERSION,
+            "export_only": True,
+            "legacy_file_authoritative": False,
+            "owner_task_id": "DQK-067",
+        }
+        _atomic_write_json(Path(target), payload)
+        return {
+            "path": str(target),
+            "operation": "export_index_json_compat",
+            "record_count": len(self._records),
+            "legacy_file_authoritative": False,
+        }
 
     def _load_record_file(self, path: Path) -> SecurityConstraintRecord:
         try:
@@ -1038,20 +1177,52 @@ def get_security_constraints(
     return cache.get(content_cid)
 
 
+from ..common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
+)
+
+SECURITY_IR_LEGACY_BACKEND = LegacyProofBackend.SECURITY_IR
+
 __all__ = [
     "KNOWN_SECURITY_EXTENSION_VOCABULARIES",
     "SECURITY_CONSTRAINT_CACHE_INTERFACE",
     "SECURITY_CONSTRAINT_CACHE_SCHEMA_VERSION",
     "SECURITY_CONSTRAINT_INDEX_SCHEMA_VERSION",
     "SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION",
+    "SECURITY_IR_LEGACY_BACKEND",
+    "LEGACY_PROOF_BACKENDS",
+    "LegacyProofBackend",
     "SecurityConstraintCache",
     "SecurityConstraintCacheError",
     "SecurityConstraintCacheV1",
     "SecurityConstraintIntegrityError",
     "SecurityConstraintRecord",
     "UnknownSecurityExtensionError",
+    "UnifiedProofAuthorityRepository",
+    "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
+    "build_proof_shadow_repository",
     "get_security_constraints",
+    "get_authority_repository",
+    "get_shadow_repository",
     "known_extension_vocabularies",
     "put_security_constraints",
+    "set_authority_repository",
+    "set_shadow_repository",
     "validate_extensions_known",
 ]
