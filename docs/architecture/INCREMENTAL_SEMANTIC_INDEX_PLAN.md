@@ -120,6 +120,15 @@ Authority rules:
    handoff, malformed-path/unreadable-traversal retention, exclusion-before-
    mode selection, and Git failure/warning disposition before Python inventory
    repair may start.
+9. Two ISI-046 provider proposals were correctly rejected by the proposal
+   gate because they renamed and weakened the existing post-snapshot mutation
+   test. The repair must keep that assertion: acquisition may read content
+   exactly once and carry those bytes, while a non-content acquisition witness
+   permits the scanner to detect a later working-file replacement and emit an
+   opaque raced input without reopening the file for content. Rejected
+   candidates also proved that host device/inode identity is not a durable
+   committed-Git identity, dirty snapshots must not discard commit/tree/blob
+   evidence, and malformed/reserved raw names need collision-free domains.
 
 ## 3. Proposed package and files
 
@@ -560,7 +569,13 @@ current `HEAD`, so committing an unchanged tree changes repository identity
 and all stable symbol identities. It also records only a tree OID, not the
 selected commit and per-entry blob OIDs, and hashes then rereads clean content
 instead of carrying the selected bytes into parsing. ISI-046 is the mandatory
-post-034 authority closure for these exact findings.
+post-034 authority closure for these exact findings. Rejected ISI-046
+candidates `febc4e096` and `607d6f09c` supplied useful partial evidence but
+were not merged: both weakened an existing race assertion, and audit still
+found non-portable committed-repository identity, non-atomic commit/tree
+selection, incomplete dirty-snapshot evidence, and raw/artifact namespace
+collisions. The replacement attempt must preserve every existing test and add
+the missing closure probes.
 
 ### 16.2 Repair matrix
 
@@ -572,7 +587,7 @@ post-034 authority closure for these exact findings.
 | ISI-034 | P0 | `snapshot.py`, `scanner.py` | Git-object bytes remain canonical for clean inputs; tree/commit/snapshot identity is state-rooted; races and unreadable inputs are explicit | ISI-042 |
 | ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-042 |
 | ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-042 |
-| ISI-046 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner tests/fixture | Stable no-origin repository identity, commit/tree/blob evidence, one-read captured-byte parsing, malformed-name retention, and typed Git failure closure | ISI-034 |
+| ISI-046 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner tests/fixture | Portable committed-Git identity across commits/clones/linked worktrees, atomic commit/tree/blob evidence including dirty forms, one-read captured-byte parsing with metadata-only race rejection, collision-free malformed-name retention, and typed Git failure closure without weakening tests | ISI-034 |
 | ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture | Canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-046 |
 | ISI-044 | P0 | `python_analysis.py`, distinct relation-closure tests/fixture | Exact retained inheritance/composition/schema targets, scope/state effects, bounded calls, and source-bound dynamic/plugin/native confidence | ISI-043 |
 | ISI-045 | P0 | `persistence.py`, persistence tests | Idempotent bounded cleanup of legacy and current root/transition temporary prefixes without disturbing authoritative data | ISI-037 |
