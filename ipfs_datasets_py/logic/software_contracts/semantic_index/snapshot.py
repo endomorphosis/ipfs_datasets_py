@@ -24,11 +24,12 @@ from ipfs_datasets_py.logic.software_contracts.content import (
 )
 
 
-SNAPSHOT_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-repository-snapshot@1"
+SNAPSHOT_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-repository-snapshot@2"
 SNAPSHOT_ENTRY_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-snapshot-entry@1"
 REPOSITORY_ID_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-repository-identity@1"
 DEFAULT_MAX_FILE_BYTES: Final[int] = 8 * 1024 * 1024
 DEFAULT_MAX_ENTRIES: Final[int] = 100_000
+GIT_COMMAND_TIMEOUT_SECONDS: Final[float] = 10.0
 
 # These are policy exclusions, not Git ignores.  They make the non-Git path
 # hermetic and ensure a scanner never accidentally treats its own state or a
@@ -54,14 +55,27 @@ class SnapshotError(ValueError):
     """Raised when a snapshot record or request is invalid."""
 
 
+class GitCommandTimeout(SnapshotError):
+    """Raised when Git cannot provide a bounded snapshot input in time."""
+
+
 def _path(value: str) -> str:
     if type(value) is not str or not value or value != value.strip():
         raise SnapshotError("path must be nonempty trimmed text")
     value = unicodedata.normalize("NFC", value).replace("\\", "/")
-    value = posixpath.normpath(value)
-    if value in {".", ".."} or value.startswith("../") or value.startswith("/"):
+    normalized = posixpath.normpath(value)
+    if value != normalized or value in {".", ".."} or value.startswith("../") or value.startswith("/") or any(ord(char) < 32 for char in value):
         raise SnapshotError("path must be repository-relative")
     return value
+
+
+def _malformed_path(encoded_path: bytes) -> str:
+    """Return a collision-resistant, serializable witness for an invalid name."""
+    return "@malformed-path/" + encoded_path.hex()
+
+
+def _ignored_path(path: str) -> bool:
+    return any(component in _IGNORED_DIRECTORIES for component in path.split("/"))
 
 
 def _text(value: str, name: str) -> str:
@@ -126,11 +140,17 @@ class RepositorySnapshot:
     mode: str
     max_file_bytes: int = DEFAULT_MAX_FILE_BYTES
     max_entries: int = DEFAULT_MAX_ENTRIES
+    git_tree: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "repository_id", _text(self.repository_id, "repository_id"))
         if self.mode not in {"git-clean", "git-working", "filesystem"}:
             raise SnapshotError("unsupported snapshot mode")
+        if self.git_tree is not None:
+            if self.mode != "git-clean" or len(self.git_tree) not in {40, 64} or any(char not in "0123456789abcdef" for char in self.git_tree):
+                raise SnapshotError("git_tree must be a Git object-format tree identifier for git-clean snapshots")
+        elif self.mode == "git-clean":
+            raise SnapshotError("git-clean snapshots require git_tree")
         if type(self.max_file_bytes) is not int or self.max_file_bytes < 1:
             raise SnapshotError("max_file_bytes must be a positive integer")
         if type(self.max_entries) is not int or self.max_entries < 1:
@@ -149,7 +169,8 @@ class RepositorySnapshot:
         # input manifests from a clean and a working scan are interchangeable.
         return {"schema": SNAPSHOT_SCHEMA, "repository_id": self.repository_id,
                 "entries": [entry.to_dict() for entry in self.entries],
-                "max_file_bytes": self.max_file_bytes, "max_entries": self.max_entries}
+                "max_file_bytes": self.max_file_bytes, "max_entries": self.max_entries,
+                "git_tree": self.git_tree}
 
     @property
     def snapshot_cid(self) -> str:
@@ -163,18 +184,22 @@ class RepositorySnapshot:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "RepositorySnapshot":
-        expected = {"schema", "repository_id", "entries", "mode", "max_file_bytes", "max_entries", "snapshot_cid"}
+        expected = {"schema", "repository_id", "entries", "mode", "max_file_bytes", "max_entries", "git_tree", "snapshot_cid"}
         if set(value) != expected or value.get("schema") != SNAPSHOT_SCHEMA:
             raise SnapshotError("unsupported RepositorySnapshot schema")
-        result = cls(repository_id=value["repository_id"], entries=tuple(SnapshotEntry.from_dict(item) for item in value["entries"]), mode=value["mode"], max_file_bytes=value["max_file_bytes"], max_entries=value["max_entries"])
+        result = cls(repository_id=value["repository_id"], entries=tuple(SnapshotEntry.from_dict(item) for item in value["entries"]), mode=value["mode"], max_file_bytes=value["max_file_bytes"], max_entries=value["max_entries"], git_tree=value["git_tree"])
         if value["snapshot_cid"] != result.snapshot_cid:
             raise SnapshotError("RepositorySnapshot snapshot_cid does not verify")
         return result
 
 
 def _git(root: Path, args: Sequence[str]) -> subprocess.CompletedProcess[bytes]:
-    return subprocess.run(["git", *args], cwd=str(root), stdin=subprocess.DEVNULL,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    try:
+        return subprocess.run(["git", *args], cwd=str(root), stdin=subprocess.DEVNULL,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+                              timeout=GIT_COMMAND_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as exc:
+        raise GitCommandTimeout("git command timed out") from exc
 
 
 def _git_root(root: Path) -> Path | None:
@@ -195,11 +220,19 @@ def repository_identity(repository: str | os.PathLike[str], *, repository_id: st
     git_root = _git_root(root)
     label = (git_root or root).name
     remote = ""
+    head = ""
     if git_root is not None:
         result = _git(git_root, ("config", "--get", "remote.origin.url"))
         if not result.returncode:
             remote = result.stdout.decode("utf-8", "replace").strip()
-    return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "git" if git_root else "filesystem", "label": label, "origin": remote})
+        # A repository without an origin has no portable external identity.
+        # Its immutable HEAD is a conservative identity anchor: unrelated
+        # same-basename repositories therefore cannot collide by label alone.
+        if not remote:
+            result = _git(git_root, ("rev-parse", "HEAD"))
+            if not result.returncode:
+                head = result.stdout.decode("ascii", "strict").strip()
+    return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "git" if git_root else "filesystem", "label": label, "origin": remote, "head": head})
 
 
 def _kind(path: str) -> str:
@@ -264,8 +297,8 @@ def _working_entry(root: Path, path: str, *, max_file_bytes: int) -> SnapshotEnt
     return _entry_from_bytes(path, data, max_file_bytes=max_file_bytes)
 
 
-def _clean_git_entries(root: Path, *, max_file_bytes: int, max_entries: int) -> Iterable[SnapshotEntry]:
-    listed = _git(root, ("ls-tree", "-r", "-z", "HEAD"))
+def _clean_git_entries(root: Path, tree: str, *, max_file_bytes: int, max_entries: int) -> Iterable[SnapshotEntry]:
+    listed = _git(root, ("ls-tree", "-r", "-z", tree))
     if listed.returncode:
         raise SnapshotError("git ls-tree failed")
     records = [item for item in listed.stdout.split(b"\0") if item]
@@ -276,7 +309,10 @@ def _clean_git_entries(root: Path, *, max_file_bytes: int, max_entries: int) -> 
             metadata, encoded_path = record.split(b"\t", 1)
             mode, object_type, oid = metadata.decode("ascii").split()
             path = _path(encoded_path.decode("utf-8", "strict"))
-        except (ValueError, UnicodeDecodeError):
+        except (ValueError, UnicodeDecodeError, SnapshotError):
+            yield _opaque(_malformed_path(encoded_path), "malformed_path")
+            continue
+        if _ignored_path(path):
             continue
         if mode == "120000" or object_type != "blob":
             yield _opaque(path, "symlink_or_nonregular")
@@ -302,10 +338,21 @@ def _working_paths(root: Path, *, max_entries: int) -> list[str]:
     listed = _git(root, ("ls-files", "-z", "--cached", "--others", "--exclude-standard"))
     if listed.returncode:
         raise SnapshotError("git ls-files failed")
-    paths = sorted({_path(item.decode("utf-8", "strict")) for item in listed.stdout.split(b"\0") if item})
-    if len(paths) > max_entries:
+    paths: set[str] = set()
+    for item in listed.stdout.split(b"\0"):
+        if not item:
+            continue
+        try:
+            path = _path(item.decode("utf-8", "strict"))
+        except (UnicodeDecodeError, SnapshotError):
+            paths.add(_malformed_path(item))
+            continue
+        if not _ignored_path(path):
+            paths.add(path)
+    result = sorted(paths)
+    if len(result) > max_entries:
         raise SnapshotError("selected entries exceed max_entries")
-    return paths
+    return result
 
 
 def _filesystem_paths(root: Path, *, max_entries: int) -> list[str]:
@@ -321,9 +368,9 @@ def _filesystem_paths(root: Path, *, max_entries: int) -> list[str]:
             relative = child.relative_to(root).as_posix()
             try:
                 if child.is_dir() and not child.is_symlink():
-                    if child.name not in _IGNORED_DIRECTORIES:
+                    if not _ignored_path(relative):
                         stack.append(child)
-                else:
+                elif not _ignored_path(relative):
                     paths.append(_path(relative))
             except OSError:
                 paths.append(_path(relative))
@@ -348,14 +395,22 @@ def snapshot_repository(repository: str | os.PathLike[str], *, repository_id: st
     if git_root is not None:
         status = _git(git_root, ("status", "--porcelain", "--untracked-files=all"))
         if not status.returncode and not status.stdout:
-            entries = tuple(_clean_git_entries(git_root, max_file_bytes=max_file_bytes, max_entries=max_entries))
-            return RepositorySnapshot(identity, entries, "git-clean", max_file_bytes, max_entries)
+            tree_result = _git(git_root, ("rev-parse", "HEAD^{tree}"))
+            if tree_result.returncode:
+                raise SnapshotError("git HEAD tree is unavailable")
+            tree = tree_result.stdout.decode("ascii", "strict").strip()
+            entries = tuple(_clean_git_entries(git_root, tree, max_file_bytes=max_file_bytes, max_entries=max_entries))
+            return RepositorySnapshot(identity, entries, "git-clean", max_file_bytes, max_entries, tree)
         paths = _working_paths(git_root, max_entries=max_entries)
-        entries = tuple(_working_entry(git_root, path, max_file_bytes=max_file_bytes) for path in paths)
+        entries = tuple(
+            _opaque(path, "malformed_path") if path.startswith("@malformed-path/")
+            else _working_entry(git_root, path, max_file_bytes=max_file_bytes)
+            for path in paths
+        )
         return RepositorySnapshot(identity, entries, "git-working", max_file_bytes, max_entries)
     paths = _filesystem_paths(root, max_entries=max_entries)
     entries = tuple(_working_entry(root, path, max_file_bytes=max_file_bytes) for path in paths)
     return RepositorySnapshot(identity, entries, "filesystem", max_file_bytes, max_entries)
 
 
-__all__ = ["DEFAULT_MAX_ENTRIES", "DEFAULT_MAX_FILE_BYTES", "RepositorySnapshot", "SNAPSHOT_ENTRY_SCHEMA", "SNAPSHOT_SCHEMA", "SnapshotEntry", "SnapshotError", "repository_identity", "snapshot_repository"]
+__all__ = ["DEFAULT_MAX_ENTRIES", "DEFAULT_MAX_FILE_BYTES", "GIT_COMMAND_TIMEOUT_SECONDS", "GitCommandTimeout", "RepositorySnapshot", "SNAPSHOT_ENTRY_SCHEMA", "SNAPSHOT_SCHEMA", "SnapshotEntry", "SnapshotError", "repository_identity", "snapshot_repository"]

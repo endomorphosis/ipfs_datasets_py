@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import os
 import stat
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
@@ -32,6 +31,8 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.pytest_analysis im
 from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import (
     RepositorySnapshot,
     SnapshotEntry,
+    _git,
+    _git_root,
     snapshot_repository,
 )
 
@@ -92,16 +93,13 @@ def _read_regular_file(root: Path, entry: SnapshotEntry) -> bytes | None:
 
 def _input_root(repository: Path) -> Path:
     """Use the Git worktree root when a caller supplied one of its subpaths."""
-    try:
-        result = subprocess.run(
-            ["git", "-C", os.fspath(repository), "rev-parse", "--show-toplevel"],
-            check=False, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-        )
-        if result.returncode == 0:
-            return Path(result.stdout.decode("utf-8", "strict").strip()).resolve()
-    except (OSError, UnicodeDecodeError):
-        pass
-    return repository
+    return _git_root(repository) or repository
+
+
+def _read_git_blob(root: Path, tree: str, entry: SnapshotEntry) -> bytes | None:
+    """Read an immutable blob selected by a clean snapshot's tree object."""
+    result = _git(root, ("cat-file", "blob", f"{tree}:{entry.path}"))
+    return result.stdout if result.returncode == 0 else None
 
 
 @dataclass(slots=True)
@@ -130,9 +128,15 @@ class RepositoryScanner:
         for entry in current.entries:
             if entry.is_opaque or entry.source_cid is None:
                 continue
-            data = _read_regular_file(root, entry)
+            # A clean snapshot is anchored to an immutable tree.  Never read
+            # its path from the worktree: smudge filters and a post-selection
+            # mutation would otherwise parse bytes not represented by the CID.
+            data = (_read_git_blob(root, current.git_tree, entry)
+                    if current.mode == "git-clean" and current.git_tree is not None
+                    else _read_regular_file(root, entry))
             if data is None:
-                unavailable[entry.path] = "source_unavailable_or_raced"
+                unavailable[entry.path] = ("git_blob_unavailable" if current.mode == "git-clean"
+                                           else "source_unavailable_or_raced")
             elif cid_for_bytes(data) != entry.source_cid:
                 unavailable[entry.path] = "source_cid_mismatch"
             else:
