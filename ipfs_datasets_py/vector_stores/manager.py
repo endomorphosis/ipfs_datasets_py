@@ -93,6 +93,55 @@ class VectorStoreManager:
         self.authority_catalog = authority_catalog or shadow_catalog
         
         logger.info("Initialized VectorStoreManager")
+
+    def rehydrate_from_duckdb(self) -> Dict[str, Any]:
+        """Rebuild process-local store mappings from DuckDB (DQK-064 restart)."""
+
+        catalog = self.authority_catalog or self.shadow_catalog
+        if catalog is None:
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    get_vector_authority_catalog,
+                    get_vector_shadow_catalog,
+                )
+                catalog = (
+                    get_vector_authority_catalog() or get_vector_shadow_catalog()
+                )
+            except Exception:
+                catalog = None
+        if catalog is None:
+            return {"status": "error", "error": "no_catalog"}
+        summary = catalog.rehydrate_process_maps_from_store()
+        return {
+            "status": "success",
+            "authority": catalog._authority_label(),
+            "mode": catalog.mode,
+            "legacy_io_allowed": catalog.legacy_io_allowed,
+            "rehydrate": summary,
+        }
+
+    def publication_document(self) -> Dict[str, Any]:
+        """Approved collection/build statistics (no unrestricted embeddings)."""
+
+        catalog = self.authority_catalog or self.shadow_catalog
+        if catalog is None:
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    get_vector_authority_catalog,
+                    get_vector_shadow_catalog,
+                )
+                catalog = (
+                    get_vector_authority_catalog() or get_vector_shadow_catalog()
+                )
+            except Exception:
+                catalog = None
+        if catalog is None:
+            return {
+                "publication_type": "vector_quack_publication_v1",
+                "approved_collection_build_statistics": [],
+                "embeddings_excluded": True,
+            }
+        return catalog.publication_document()
     
     def register_store(
         self,

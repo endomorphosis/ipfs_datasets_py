@@ -88,26 +88,20 @@ async def create_vector_store(
         store = ElasticsearchVectorStore(config)
         backend_name = "elasticsearch"
 
-    # Route collection identity through DuckDB shadow/dual catalog (DQK-062/063).
-    # Dual mode promotes lifecycle metadata to DuckDB; vector bytes stay in engine.
+    # Route collection identity through DuckDB catalog (DQK-062/063/064).
+    # After promotion, no silent pickle/JSON fallback; bytes stay in engine.
     try:
         from ipfs_datasets_py.vector_stores.management_engine import (
             get_vector_authority_catalog,
             get_vector_shadow_catalog,
             safe_dual_create,
             safe_shadow_create,
+            duckdb_metadata_is_authority,
         )
         catalog = get_vector_authority_catalog() or get_vector_shadow_catalog()
-        mode = (getattr(catalog, "mode", None) or "").lower() if catalog else ""
         create_fn = (
             safe_dual_create
-            if mode in {
-                "dual",
-                "dual-write",
-                "dualwrite",
-                "db-primary",
-                "db_primary",
-            }
+            if duckdb_metadata_is_authority()
             else safe_shadow_create
         )
         create_kwargs = dict(
@@ -120,6 +114,7 @@ async def create_vector_store(
                 "producer": "vector_stores.api",
                 "distance_metric": distance_metric,
                 "bytes_location": "engine",
+                "publication_approved": True,
             },
             model_provider=backend_name,
             model_name=kwargs.get("model_name") or backend_name,

@@ -347,11 +347,13 @@ class IPFSKnnIndex:
 
             self._metadata.extend(metadata)
 
-        # Dual/shadow IPFS KNN id mappings into DuckDB (DQK-062/063).
+        # Dual/DuckDB IPFS KNN id mappings (DQK-062/063/064). Process-local
+        # mappings rehydrate from DuckDB after restart; no pickle authority.
         try:
             from ipfs_datasets_py.vector_stores.management_engine import (
                 get_vector_authority_catalog,
                 get_vector_shadow_catalog,
+                duckdb_metadata_is_authority,
             )
             catalog = (
                 get_vector_authority_catalog() or get_vector_shadow_catalog()
@@ -362,13 +364,30 @@ class IPFSKnnIndex:
                     vid = str(meta.get("id", i))
                     mapping[vid] = i
                 logical = getattr(self, "index_id", None) or "ipfs-knn"
-                catalog.shadow_knn_mapping(
-                    logical_name=str(logical),
-                    mapping=mapping,
-                    dimension=int(self.dimension),
-                    dtype="float32",
-                    source_revision=f"knn-{self.metric}",
-                )
+                if duckdb_metadata_is_authority() and hasattr(
+                    catalog, "dual_create"
+                ):
+                    catalog.dual_create(
+                        logical_name=str(logical),
+                        backend="ipfs_knn",
+                        dimension=int(self.dimension),
+                        dtype="float32",
+                        mapping=mapping,
+                        metadata_json={
+                            "producer": "ipfs_knn_index",
+                            "publication_approved": True,
+                        },
+                        source_revision=f"knn-{self.metric}",
+                        bytes_location="engine",
+                    )
+                else:
+                    catalog.shadow_knn_mapping(
+                        logical_name=str(logical),
+                        mapping=mapping,
+                        dimension=int(self.dimension),
+                        dtype="float32",
+                        source_revision=f"knn-{self.metric}",
+                    )
         except Exception:
             pass
 
