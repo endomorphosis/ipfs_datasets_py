@@ -3,14 +3,24 @@
 Control metadata only: tenant/graph lifecycle, branches, immutable revision
 records, head compare-and-swap, tombstones, writer leases, idempotency keys,
 and pin roots. Graph payloads remain storage-adapter owned.
+
+DQK-059 adds optional DuckDB **shadow authority** routing: SQLite remains the
+sole authority while producers dual-project control-plane mutations through the
+domain-neutral :class:`~ipfs_datasets_py.duckdb_control.authority_transition.AuthorityTransitionPort`
+and a DuckDB catalog mirror that emits parity receipts. Parquet/IPLD payload
+bytes, checksums, and CIDs are never rewritten by the shadow path.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
+import logging
 import sqlite3
 import threading
+import uuid
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Union
 
@@ -46,6 +56,21 @@ from .models import (
 )
 
 PathLike = Union[str, Path]
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# DQK-059 shadow authority constants
+# ---------------------------------------------------------------------------
+
+GRAPH_SHADOW_DOMAIN: str = "graphs"
+GRAPH_SHADOW_SCHEMA: str = (
+    "ipfs_datasets_py/knowledge-graphs-duckdb-shadow-authority@1"
+)
+GRAPH_SHADOW_OWNER_TASK: str = "DQK-059"
+
+_process_shadow_lock = threading.RLock()
+_process_shadow_authority: Optional["GraphShadowAuthority"] = None
 
 _SCHEMA_VERSION = 1
 
@@ -170,6 +195,7 @@ class GraphCatalog:
         path: PathLike,
         *,
         busy_timeout_ms: int = 30_000,
+        shadow_authority: Optional["GraphShadowAuthority"] = None,
     ) -> None:
         self._path = Path(path)
         if self._path.parent and str(self._path.parent) not in ("", "."):
@@ -184,8 +210,51 @@ class GraphCatalog:
         )
         self._conn.row_factory = sqlite3.Row
         self._closed = False
+        self._shadow_authority: Optional["GraphShadowAuthority"] = shadow_authority
         self._configure_connection()
         self._initialize_schema()
+
+    # ------------------------------------------------------------------
+    # DQK-059 shadow authority binding
+    # ------------------------------------------------------------------
+
+    @property
+    def shadow_authority(self) -> Optional["GraphShadowAuthority"]:
+        return self._shadow_authority
+
+    def attach_shadow_authority(
+        self, authority: Optional["GraphShadowAuthority"]
+    ) -> None:
+        """Bind or clear the DuckDB shadow authority (SQLite remains authority)."""
+
+        self._shadow_authority = authority
+
+    def _notify_shadow(
+        self,
+        operation: str,
+        result: Any,
+        args: tuple[Any, ...],
+        kwargs: Mapping[str, Any],
+    ) -> None:
+        """Best-effort shadow projection; never raises to catalog callers."""
+
+        shadow = self._shadow_authority
+        if shadow is None:
+            return
+        try:
+            shadow.record_catalog_mutation(
+                operation,
+                result=result,
+                catalog=self,
+                args=args,
+                kwargs=dict(kwargs),
+            )
+        except Exception as exc:  # noqa: BLE001 — quarantine, keep SQLite authority
+            logger.warning(
+                "graph catalog shadow quarantined (legacy ok) op=%s: %s",
+                operation,
+                exc,
+            )
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -1853,7 +1922,1603 @@ def open_catalog(path: PathLike, **kwargs: Any) -> GraphCatalog:
     return GraphCatalog(path, **kwargs)
 
 
+# ---------------------------------------------------------------------------
+# DQK-059: Graph shadow authority (SQLite authority, DuckDB parity)
+# ---------------------------------------------------------------------------
+
+
+def new_graph_operation_id(prefix: str = "op") -> str:
+    """Allocate a fresh idempotent producer operation id."""
+
+    return f"{prefix}:{uuid.uuid4().hex}"
+
+
+def _canonical_json_bytes(payload: Any) -> bytes:
+    return json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+        allow_nan=False,
+        default=str,
+    ).encode("utf-8")
+
+
+def _digest(payload: Any) -> str:
+    return "sha256:" + hashlib.sha256(_canonical_json_bytes(payload)).hexdigest()
+
+
+def _record_to_dict(value: Any) -> Any:
+    if value is None:
+        return None
+    if hasattr(value, "to_dict") and callable(value.to_dict):
+        return value.to_dict()
+    if isinstance(value, Mapping):
+        return dict(value)
+    if isinstance(value, (list, tuple)):
+        return [_record_to_dict(v) for v in value]
+    return value
+
+
+@dataclass
+class GraphParityView:
+    """SQLite vs DuckDB control-plane parity for one graph identity."""
+
+    tenant: str
+    graph_id: str
+    matched: bool
+    branch_matched: bool
+    lease_matched: bool
+    pin_matched: bool
+    tombstone_matched: bool
+    revision_matched: bool
+    legacy: Dict[str, Any] = field(default_factory=dict)
+    shadow: Dict[str, Any] = field(default_factory=dict)
+    mismatch_reason: str = ""
+    quarantined: bool = False
+    authority: str = "legacy"
+    operation_id: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "schema": GRAPH_SHADOW_SCHEMA,
+            "tenant": self.tenant,
+            "graph_id": self.graph_id,
+            "matched": self.matched,
+            "branch_matched": self.branch_matched,
+            "lease_matched": self.lease_matched,
+            "pin_matched": self.pin_matched,
+            "tombstone_matched": self.tombstone_matched,
+            "revision_matched": self.revision_matched,
+            "legacy": dict(self.legacy),
+            "shadow": dict(self.shadow),
+            "mismatch_reason": self.mismatch_reason,
+            "quarantined": self.quarantined,
+            "authority": self.authority,
+            "operation_id": self.operation_id,
+        }
+
+
+@dataclass
+class GraphMutationReceipt:
+    """Idempotent producer receipt with authority-port parity binding."""
+
+    operation_id: str
+    producer: str
+    kind: str
+    key: str
+    parity_matched: bool
+    parity_receipt_cid: str
+    mode: str
+    payload_digest: str
+    authority: str = "legacy"
+    idempotent_replay: bool = False
+    outbox_id: str = ""
+    quarantined: bool = False
+    quarantine_id: str = ""
+    error: str = ""
+    content_cid: str = ""
+    content_checksum: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "schema": GRAPH_SHADOW_SCHEMA,
+            "operation_id": self.operation_id,
+            "producer": self.producer,
+            "kind": self.kind,
+            "key": self.key,
+            "parity_matched": self.parity_matched,
+            "parity_receipt_cid": self.parity_receipt_cid,
+            "mode": self.mode,
+            "payload_digest": self.payload_digest,
+            "authority": self.authority,
+            "idempotent_replay": self.idempotent_replay,
+            "outbox_id": self.outbox_id,
+            "quarantined": self.quarantined,
+            "quarantine_id": self.quarantine_id,
+            "error": self.error,
+            "content_cid": self.content_cid,
+            "content_checksum": self.content_checksum,
+        }
+
+
+class GraphShadowAuthority:
+    """DuckDB shadow authority for knowledge-graph producers (DQK-059).
+
+    * **SQLite / JSON / in-memory is authority** — caller-visible results never
+      switch to DuckDB.
+    * **DuckDB is a shadow projection** of catalog, transaction/MVCC/WAL control
+      state, hybrid storage metadata, engine inventory, and crypto-flow
+      snapshots.
+    * **Every mutation** is bound to an idempotent ``operation_id`` and a parity
+      receipt on the domain-neutral authority port.
+    * **Immutable content** (Parquet/IPLD bytes, checksums, CIDs) is projected by
+      reference only and never rewritten.
+    * **Shadow failures quarantine** without changing legacy authority.
+    """
+
+    DOMAIN = GRAPH_SHADOW_DOMAIN
+    SCHEMA = GRAPH_SHADOW_SCHEMA
+    OWNER_TASK = GRAPH_SHADOW_OWNER_TASK
+
+    def __init__(
+        self,
+        *,
+        duckdb_catalog_path: PathLike | None = None,
+        duckdb_tx_path: PathLike | None = None,
+        duckdb_crypto_path: PathLike | None = None,
+        enabled: bool = True,
+        authority_port: Any = None,
+        writer_id: str = "writer:graph-shadow-authority",
+        domain: str = GRAPH_SHADOW_DOMAIN,
+    ) -> None:
+        self._enabled = bool(enabled)
+        self._domain = domain
+        self._writer_id = writer_id
+        self._lock = threading.RLock()
+        self._closed = False
+        self._port = authority_port
+        self._duck_catalog: Any = None
+        self._duck_tx: Any = None
+        self._duck_crypto: Any = None
+        self._catalog_path = (
+            None
+            if duckdb_catalog_path in (None, ":memory:")
+            else str(Path(duckdb_catalog_path))
+        )
+        self._tx_path = (
+            ":memory:"
+            if duckdb_tx_path in (None, ":memory:")
+            else str(Path(duckdb_tx_path))
+        )
+        self._crypto_path = (
+            ":memory:"
+            if duckdb_crypto_path in (None, ":memory:")
+            else str(Path(duckdb_crypto_path))
+        )
+        self._mutation_index: Dict[str, GraphMutationReceipt] = {}
+        self._content_fingerprints: Dict[str, Dict[str, str]] = {}
+        self._legacy_snapshots: Dict[str, Dict[str, Any]] = {}
+        if self._enabled:
+            self._open_stores(duckdb_catalog_path)
+            if self._port is None:
+                self._port = self._build_default_port()
+
+    # -- lifecycle ----------------------------------------------------------
+
+    def _build_default_port(self) -> Any:
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+            MemoryAuthorityBackend,
+            build_authority_port,
+        )
+
+        return build_authority_port(
+            MemoryAuthorityBackend(),
+            domain=self._domain,
+            initial_mode=AuthorityMode.SHADOW,
+            writer_id=self._writer_id,
+        )
+
+    def _open_stores(self, duckdb_catalog_path: PathLike | None) -> None:
+        try:
+            from ipfs_datasets_py.knowledge_graphs.catalog.duckdb_store import (
+                DuckDBGraphCatalog,
+            )
+
+            cat_path = (
+                ":memory:"
+                if duckdb_catalog_path in (None, ":memory:")
+                else Path(duckdb_catalog_path)
+            )
+            if cat_path != ":memory:":
+                Path(cat_path).parent.mkdir(parents=True, exist_ok=True)
+            self._duck_catalog = DuckDBGraphCatalog(cat_path)
+            self._catalog_path = (
+                None if cat_path == ":memory:" else str(Path(cat_path))
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("DuckDB graph catalog shadow unavailable: %s", exc)
+            self._duck_catalog = None
+
+        try:
+            from ipfs_datasets_py.knowledge_graphs.transactions.duckdb_state import (
+                DuckDBTransactionState,
+            )
+
+            self._duck_tx = DuckDBTransactionState(self._tx_path)
+            # Shadow owner fence so MVCC/WAL control mutations can be projected.
+            self._duck_tx.claim_owner(
+                owner_id=self._writer_id,
+                process_birth=f"shadow:{uuid.uuid4().hex[:12]}",
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("DuckDB transaction state shadow unavailable: %s", exc)
+            self._duck_tx = None
+
+        try:
+            from ipfs_datasets_py.knowledge_graphs.crypto_flows.duckdb_store import (
+                DuckDBGraphSnapshotStore,
+            )
+
+            self._duck_crypto = DuckDBGraphSnapshotStore(self._crypto_path)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("DuckDB crypto-flow shadow unavailable: %s", exc)
+            self._duck_crypto = None
+
+    @property
+    def enabled(self) -> bool:
+        return self._enabled and not self._closed
+
+    @property
+    def authority_port(self) -> Any:
+        return self._port
+
+    @property
+    def mode(self) -> str:
+        if self._port is None:
+            return "disabled"
+        try:
+            return self._port.mode.value
+        except Exception:  # noqa: BLE001
+            return "unknown"
+
+    @property
+    def duckdb_catalog(self) -> Any:
+        return self._duck_catalog
+
+    @property
+    def duckdb_transaction_state(self) -> Any:
+        return self._duck_tx
+
+    @property
+    def duckdb_crypto_store(self) -> Any:
+        return self._duck_crypto
+
+    def close(self) -> None:
+        with self._lock:
+            for store_attr in ("_duck_catalog", "_duck_tx", "_duck_crypto"):
+                store = getattr(self, store_attr, None)
+                if store is not None:
+                    try:
+                        store.close()
+                    except Exception:  # noqa: BLE001
+                        pass
+                    setattr(self, store_attr, None)
+            self._closed = True
+
+    def reopen(self) -> "GraphShadowAuthority":
+        """Close and reopen file-backed DuckDB stores (restart simulation)."""
+
+        with self._lock:
+            if self._catalog_path is None and self._tx_path == ":memory:":
+                raise RuntimeError("cannot restart an in-memory-only shadow authority")
+            mutations = dict(self._mutation_index)
+            fingerprints = dict(self._content_fingerprints)
+            snapshots = dict(self._legacy_snapshots)
+            port = self._port
+            cat_path = self._catalog_path
+            tx_path = self._tx_path
+            crypto_path = self._crypto_path
+            self.close()
+            self._closed = False
+            self._enabled = True
+            self._port = port
+            self._tx_path = tx_path
+            self._crypto_path = crypto_path
+            self._open_stores(cat_path if cat_path is not None else ":memory:")
+            self._mutation_index = mutations
+            self._content_fingerprints = fingerprints
+            self._legacy_snapshots = snapshots
+            return self
+
+    # -- quarantine ---------------------------------------------------------
+
+    def _quarantine(
+        self,
+        *,
+        key: str,
+        operation_id: str,
+        reason: str,
+        legacy_digest: str = "",
+        db_digest: str = "",
+    ) -> str:
+        if self._port is None:
+            return ""
+        try:
+            rec = self._port.quarantine_disagreement(
+                key=key,
+                operation_id=operation_id or new_graph_operation_id("shadow"),
+                reason=(reason or "shadow_failure")[:500],
+                legacy_digest=legacy_digest or None,
+                db_digest=db_digest or None,
+            )
+            return getattr(rec, "quarantine_id", "") or ""
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("graph shadow quarantine failed: %s", exc)
+            return ""
+
+    def list_open_quarantines(self) -> List[Dict[str, Any]]:
+        if self._port is None:
+            return []
+        try:
+            records = self._port.backend.list_open_quarantine(self._domain)
+            return [
+                {
+                    "quarantine_id": r.quarantine_id,
+                    "key": r.key,
+                    "reason": r.reason,
+                    "operation_id": r.operation_id,
+                    "resolved": r.resolved,
+                }
+                for r in records
+            ]
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("list_open_quarantines failed: %s", exc)
+            return []
+
+    def list_mutation_receipts(self) -> List[GraphMutationReceipt]:
+        with self._lock:
+            return list(self._mutation_index.values())
+
+    def get_mutation_receipt(
+        self, operation_id: str
+    ) -> Optional[GraphMutationReceipt]:
+        with self._lock:
+            return self._mutation_index.get(operation_id)
+
+    # -- core write path ----------------------------------------------------
+
+    def record_operation(
+        self,
+        *,
+        producer: str,
+        kind: str,
+        key: str,
+        payload: Mapping[str, Any],
+        operation_id: str | None = None,
+        content_cid: str = "",
+        content_checksum: str = "",
+        content_bytes: bytes | None = None,
+    ) -> GraphMutationReceipt:
+        """Record one idempotent producer operation with a parity receipt.
+
+        When *content_bytes* is provided, the SHA-256 and optional CID are
+        fingerprinted so later checks prove the shadow path never rewrote
+        Parquet/IPLD payload bytes.
+        """
+
+        op_id = operation_id or new_graph_operation_id(f"{producer}.{kind}")
+        with self._lock:
+            prior = self._mutation_index.get(op_id)
+            if prior is not None:
+                return GraphMutationReceipt(
+                    operation_id=prior.operation_id,
+                    producer=prior.producer,
+                    kind=prior.kind,
+                    key=prior.key,
+                    parity_matched=prior.parity_matched,
+                    parity_receipt_cid=prior.parity_receipt_cid,
+                    mode=prior.mode,
+                    payload_digest=prior.payload_digest,
+                    authority=prior.authority,
+                    idempotent_replay=True,
+                    outbox_id=prior.outbox_id,
+                    quarantined=prior.quarantined,
+                    quarantine_id=prior.quarantine_id,
+                    error=prior.error,
+                    content_cid=prior.content_cid,
+                    content_checksum=prior.content_checksum,
+                )
+
+            if not self.enabled or self._port is None:
+                receipt = GraphMutationReceipt(
+                    operation_id=op_id,
+                    producer=producer,
+                    kind=kind,
+                    key=key,
+                    parity_matched=True,
+                    parity_receipt_cid="",
+                    mode="disabled",
+                    payload_digest=_digest(dict(payload)),
+                    authority="legacy",
+                    content_cid=content_cid,
+                    content_checksum=content_checksum,
+                )
+                self._mutation_index[op_id] = receipt
+                return receipt
+
+            body = {
+                "schema": GRAPH_SHADOW_SCHEMA,
+                "owner_task": GRAPH_SHADOW_OWNER_TASK,
+                "producer": producer,
+                "kind": kind,
+                "key": key,
+                "payload": dict(payload),
+                "content_cid": content_cid or "",
+                "content_checksum": content_checksum or "",
+            }
+            if content_bytes is not None:
+                checksum = "sha256:" + hashlib.sha256(content_bytes).hexdigest()
+                body["content_checksum"] = checksum
+                body["content_size"] = len(content_bytes)
+                self._content_fingerprints[key] = {
+                    "checksum": checksum,
+                    "size": str(len(content_bytes)),
+                    "cid": content_cid or "",
+                }
+                content_checksum = checksum
+            elif content_checksum:
+                self._content_fingerprints[key] = {
+                    "checksum": content_checksum,
+                    "size": str(payload.get("size", "")),
+                    "cid": content_cid or "",
+                }
+
+            try:
+                write_result = self._port.write(key, body, operation_id=op_id)
+                parity = self._port.emit_parity_receipt(key, operation_id=op_id)
+                receipt = GraphMutationReceipt(
+                    operation_id=op_id,
+                    producer=producer,
+                    kind=kind,
+                    key=key,
+                    parity_matched=bool(parity.matched),
+                    parity_receipt_cid=str(
+                        getattr(parity, "receipt_cid", "") or ""
+                    ),
+                    mode=str(write_result.get("mode") or self.mode),
+                    payload_digest=str(
+                        write_result.get("payload_digest") or _digest(body)
+                    ),
+                    authority=str(write_result.get("authority") or "legacy"),
+                    idempotent_replay=bool(write_result.get("idempotent_replay")),
+                    outbox_id=str(write_result.get("outbox_id") or ""),
+                    content_cid=content_cid or "",
+                    content_checksum=content_checksum or body.get("content_checksum", ""),
+                )
+                if not receipt.parity_matched:
+                    qid = self._quarantine(
+                        key=key,
+                        operation_id=op_id,
+                        reason=getattr(parity, "mismatch_reason", "")
+                        or "parity_mismatch",
+                        legacy_digest=getattr(parity, "legacy_digest", ""),
+                        db_digest=getattr(parity, "db_digest", ""),
+                    )
+                    receipt.quarantined = True
+                    receipt.quarantine_id = qid
+                self._mutation_index[op_id] = receipt
+                return receipt
+            except Exception as exc:  # noqa: BLE001
+                qid = self._quarantine(
+                    key=key,
+                    operation_id=op_id,
+                    reason=f"record_operation_failed: {exc}",
+                )
+                receipt = GraphMutationReceipt(
+                    operation_id=op_id,
+                    producer=producer,
+                    kind=kind,
+                    key=key,
+                    parity_matched=False,
+                    parity_receipt_cid="",
+                    mode=self.mode,
+                    payload_digest=_digest(body),
+                    authority="legacy",
+                    quarantined=True,
+                    quarantine_id=qid,
+                    error=str(exc),
+                    content_cid=content_cid or "",
+                    content_checksum=content_checksum or "",
+                )
+                self._mutation_index[op_id] = receipt
+                return receipt
+
+    def content_fingerprint(self, key: str) -> Optional[Dict[str, str]]:
+        with self._lock:
+            fp = self._content_fingerprints.get(key)
+            return dict(fp) if fp is not None else None
+
+    def assert_content_unchanged(
+        self,
+        key: str,
+        *,
+        content_bytes: bytes | None = None,
+        content_cid: str = "",
+        content_checksum: str = "",
+    ) -> bool:
+        """Return True when the stored fingerprint still matches the content."""
+
+        fp = self.content_fingerprint(key)
+        if fp is None:
+            return True
+        if content_bytes is not None:
+            checksum = "sha256:" + hashlib.sha256(content_bytes).hexdigest()
+            if fp.get("checksum") and fp["checksum"] != checksum:
+                return False
+            if fp.get("size") and fp["size"] != str(len(content_bytes)):
+                return False
+        if content_checksum and fp.get("checksum") and fp["checksum"] != content_checksum:
+            return False
+        if content_cid and fp.get("cid") and fp["cid"] != content_cid:
+            return False
+        return True
+
+    # -- catalog producer ---------------------------------------------------
+
+    def _graph_key(self, tenant: str, graph_id: str) -> str:
+        return f"graph:{tenant}/{graph_id}"
+
+    def snapshot_from_sqlite(
+        self, catalog: "GraphCatalog", tenant: str, graph_id: str
+    ) -> Dict[str, Any]:
+        """Build a normalized control-plane snapshot from SQLite authority."""
+
+        try:
+            graph = catalog.get_graph(tenant, graph_id, allow_tombstoned=True)
+        except CatalogError:
+            return {
+                "tenant": tenant,
+                "graph_id": graph_id,
+                "exists": False,
+                "branches": {},
+                "leases": {},
+                "pins": [],
+                "tombstones": [],
+                "revisions": {},
+            }
+        desc = catalog.describe_graph(
+            tenant, graph_id, include_tombstoned_branches=True
+        )
+        branches: Dict[str, Any] = {}
+        for b in desc.branches:
+            # describe_graph returns mapping payloads, not BranchRecord objects.
+            if isinstance(b, Mapping):
+                name = str(b.get("branch") or "")
+                if not name:
+                    continue
+                branches[name] = {
+                    "head_revision": b.get("head_revision"),
+                    "status": b.get("status"),
+                }
+            else:
+                name = str(getattr(b, "branch", "") or "")
+                if not name:
+                    continue
+                branches[name] = {
+                    "head_revision": getattr(b, "head_revision", None),
+                    "status": getattr(b, "status", None),
+                }
+        leases: Dict[str, Any] = {}
+        for branch_name in branches:
+            lease = catalog.get_lease(tenant, graph_id, branch_name)
+            if lease is not None:
+                leases[branch_name] = {
+                    "lease_id": lease.lease_id,
+                    "holder": lease.holder,
+                    "epoch": int(lease.epoch),
+                }
+        pins = [
+            {
+                "revision_id": p.revision_id,
+                "root_cid": p.root_cid,
+                "pin_kind": p.pin_kind,
+            }
+            for p in catalog.list_pin_roots(tenant, graph_id)
+        ]
+        tombs = [
+            {
+                "entity_type": t.entity_type,
+                "branch": t.branch,
+                "reason": t.reason,
+            }
+            for t in catalog.list_tombstones(tenant, graph_id=graph_id)
+        ]
+        revisions: Dict[str, Any] = {}
+        for branch_name, meta in branches.items():
+            rev_id = meta.get("head_revision")
+            if not rev_id:
+                continue
+            try:
+                rev = catalog.get_revision(tenant, graph_id, rev_id)
+            except CatalogError:
+                continue
+            revisions[rev_id] = {
+                "parent_revision": rev.parent_revision,
+                "manifest_cid": rev.manifest_cid,
+                "checksum": rev.checksum,
+                "pin_root": rev.pin_root,
+                "storage_profile": rev.storage_profile,
+            }
+        return {
+            "tenant": tenant,
+            "graph_id": graph_id,
+            "exists": True,
+            "status": graph.status,
+            "default_branch": graph.default_branch,
+            "storage_profile": graph.storage_profile,
+            "graph_kind": graph.graph_kind,
+            "branches": branches,
+            "leases": leases,
+            "pins": sorted(pins, key=lambda p: (p["revision_id"], p["root_cid"])),
+            "tombstones": tombs,
+            "revisions": revisions,
+        }
+
+    def snapshot_from_duckdb(self, tenant: str, graph_id: str) -> Dict[str, Any]:
+        """Build a normalized control-plane snapshot from the DuckDB mirror."""
+
+        duck = self._duck_catalog
+        empty = {
+            "tenant": tenant,
+            "graph_id": graph_id,
+            "exists": False,
+            "branches": {},
+            "leases": {},
+            "pins": [],
+            "tombstones": [],
+            "revisions": {},
+        }
+        if duck is None:
+            return empty
+        # Read via raw SQL so tombstoned graphs remain visible for parity.
+        try:
+            with duck._txn() as conn:  # noqa: SLF001 — shadow parity only
+                grow = duck._fetchone(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM graphs WHERE tenant = ? AND graph_id = ?",
+                    [tenant, graph_id],
+                )
+                if grow is None:
+                    return empty
+                branch_rows = duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM branches WHERE tenant = ? AND graph_id = ? "
+                    "ORDER BY branch",
+                    [tenant, graph_id],
+                )
+                lease_rows = duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM leases WHERE tenant = ? AND graph_id = ?",
+                    [tenant, graph_id],
+                )
+                pin_rows = duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM pin_roots WHERE tenant = ? AND graph_id = ? "
+                    "ORDER BY revision_id, root_cid, pin_kind",
+                    [tenant, graph_id],
+                )
+                tomb_rows = duck._fetchall(  # noqa: SLF001
+                    conn,
+                    "SELECT * FROM tombstones WHERE tenant = ? AND graph_id = ? "
+                    "ORDER BY kind, name",
+                    [tenant, graph_id],
+                )
+                rev_ids = {
+                    str(r.get("head_revision"))
+                    for r in branch_rows
+                    if r.get("head_revision")
+                }
+                revisions: Dict[str, Any] = {}
+                for rev_id in rev_ids:
+                    row = duck._fetchone(  # noqa: SLF001
+                        conn,
+                        "SELECT * FROM revisions WHERE tenant = ? AND graph_id = ? "
+                        "AND revision_id = ?",
+                        [tenant, graph_id, rev_id],
+                    )
+                    if row is None:
+                        continue
+                    revisions[rev_id] = {
+                        "parent_revision": row.get("parent_revision"),
+                        "manifest_cid": row.get("manifest_cid"),
+                        "checksum": row.get("checksum"),
+                        "pin_root": row.get("pin_root"),
+                        "storage_profile": row.get("storage_profile"),
+                    }
+        except Exception:
+            return empty
+
+        branches = {
+            str(r["branch"]): {
+                "head_revision": r.get("head_revision"),
+                "status": r.get("status"),
+            }
+            for r in branch_rows
+        }
+        leases = {
+            str(r["branch"]): {
+                "lease_id": r.get("lease_id"),
+                "holder": r.get("holder"),
+                "epoch": int(r.get("epoch") or 0),
+            }
+            for r in lease_rows
+        }
+        pins = [
+            {
+                "revision_id": r.get("revision_id"),
+                "root_cid": r.get("root_cid"),
+                "pin_kind": r.get("pin_kind"),
+            }
+            for r in pin_rows
+        ]
+        tombs = [
+            {
+                "entity_type": row.get("kind") or row.get("entity_type"),
+                "branch": (
+                    row.get("name")
+                    if (row.get("kind") == "branch" and row.get("name"))
+                    else None
+                ),
+                "reason": row.get("reason"),
+            }
+            for row in tomb_rows
+        ]
+        return {
+            "tenant": tenant,
+            "graph_id": graph_id,
+            "exists": True,
+            "status": grow.get("status"),
+            "default_branch": grow.get("default_branch"),
+            "storage_profile": grow.get("storage_profile"),
+            "graph_kind": grow.get("graph_kind"),
+            "branches": branches,
+            "leases": leases,
+            "pins": sorted(
+                pins, key=lambda p: (p["revision_id"] or "", p["root_cid"] or "")
+            ),
+            "tombstones": tombs,
+            "revisions": revisions,
+        }
+
+    def compare_parity(
+        self,
+        *,
+        tenant: str,
+        graph_id: str,
+        legacy: Mapping[str, Any],
+        shadow: Mapping[str, Any],
+        operation_id: str = "",
+    ) -> GraphParityView:
+        leg_branches = dict(legacy.get("branches") or {})
+        sh_branches = dict(shadow.get("branches") or {})
+        branch_matched = leg_branches == sh_branches
+
+        leg_leases = {
+            k: {
+                "holder": v.get("holder"),
+                "epoch": v.get("epoch"),
+            }
+            for k, v in dict(legacy.get("leases") or {}).items()
+        }
+        sh_leases = {
+            k: {
+                "holder": v.get("holder"),
+                "epoch": v.get("epoch"),
+            }
+            for k, v in dict(shadow.get("leases") or {}).items()
+        }
+        # Lease ids may differ across backends if regenerated; compare fencing.
+        lease_matched = leg_leases == sh_leases
+
+        leg_pins = {
+            (p.get("revision_id"), p.get("root_cid"), p.get("pin_kind"))
+            for p in (legacy.get("pins") or [])
+        }
+        sh_pins = {
+            (p.get("revision_id"), p.get("root_cid"), p.get("pin_kind"))
+            for p in (shadow.get("pins") or [])
+        }
+        pin_matched = leg_pins == sh_pins
+
+        # Tombstones: compare entity types present (DuckDB schema differs).
+        leg_tombs = sorted(
+            (t.get("entity_type"), t.get("branch"))
+            for t in (legacy.get("tombstones") or [])
+        )
+        sh_tombs = sorted(
+            (t.get("entity_type"), t.get("branch"))
+            for t in (shadow.get("tombstones") or [])
+        )
+        if not sh_tombs and leg_tombs and not shadow.get("exists"):
+            tombstone_matched = False
+        elif not sh_tombs and leg_tombs:
+            # DuckDB mirror may lag delete APIs; require graph status parity.
+            tombstone_matched = legacy.get("status") == shadow.get("status")
+        else:
+            tombstone_matched = leg_tombs == sh_tombs or (
+                legacy.get("status") == shadow.get("status")
+                and legacy.get("status") == "tombstoned"
+            )
+
+        leg_revs = dict(legacy.get("revisions") or {})
+        sh_revs = dict(shadow.get("revisions") or {})
+        revision_matched = True
+        for rev_id, leg in leg_revs.items():
+            sh = sh_revs.get(rev_id)
+            if sh is None:
+                revision_matched = False
+                break
+            for field_name in (
+                "manifest_cid",
+                "checksum",
+                "pin_root",
+                "parent_revision",
+                "storage_profile",
+            ):
+                if leg.get(field_name) != sh.get(field_name):
+                    revision_matched = False
+                    break
+            if not revision_matched:
+                break
+
+        exists_matched = bool(legacy.get("exists")) == bool(shadow.get("exists"))
+        status_matched = legacy.get("status") == shadow.get("status")
+        matched = (
+            exists_matched
+            and status_matched
+            and branch_matched
+            and lease_matched
+            and pin_matched
+            and tombstone_matched
+            and revision_matched
+        )
+        reason = ""
+        if not matched:
+            parts = []
+            if not exists_matched:
+                parts.append("exists")
+            if not status_matched:
+                parts.append("status")
+            if not branch_matched:
+                parts.append("branch")
+            if not lease_matched:
+                parts.append("lease")
+            if not pin_matched:
+                parts.append("pin")
+            if not tombstone_matched:
+                parts.append("tombstone")
+            if not revision_matched:
+                parts.append("revision")
+            reason = "mismatch:" + ",".join(parts)
+        return GraphParityView(
+            tenant=tenant,
+            graph_id=graph_id,
+            matched=matched,
+            branch_matched=branch_matched,
+            lease_matched=lease_matched,
+            pin_matched=pin_matched,
+            tombstone_matched=tombstone_matched,
+            revision_matched=revision_matched,
+            legacy=dict(legacy),
+            shadow=dict(shadow),
+            mismatch_reason=reason,
+            authority="legacy",
+            operation_id=operation_id,
+        )
+
+    def parity_for(
+        self, catalog: "GraphCatalog", tenant: str, graph_id: str
+    ) -> GraphParityView:
+        legacy = self.snapshot_from_sqlite(catalog, tenant, graph_id)
+        shadow = self.snapshot_from_duckdb(tenant, graph_id)
+        return self.compare_parity(
+            tenant=tenant, graph_id=graph_id, legacy=legacy, shadow=shadow
+        )
+
+    def parity_across_restart(
+        self, catalog: "GraphCatalog", tenant: str, graph_id: str
+    ) -> GraphParityView:
+        """Reopen DuckDB stores and re-check SQLite/DuckDB parity."""
+
+        self.reopen()
+        return self.parity_for(catalog, tenant, graph_id)
+
+    def _mirror_catalog_mutation(
+        self,
+        operation: str,
+        *,
+        catalog: "GraphCatalog",
+        args: tuple[Any, ...],
+        kwargs: Dict[str, Any],
+        result: Any,
+    ) -> None:
+        duck = self._duck_catalog
+        if duck is None:
+            return
+        tenant = args[0] if args else kwargs.get("tenant")
+        graph_id = args[1] if len(args) > 1 else kwargs.get("graph_id")
+        if not tenant or not graph_id:
+            if hasattr(result, "tenant") and hasattr(result, "graph_id"):
+                tenant = result.tenant
+                graph_id = result.graph_id
+            else:
+                return
+        try:
+            if operation == "create_graph":
+                branch = kwargs.get("branch") or getattr(
+                    result, "default_branch", DEFAULT_BRANCH
+                )
+                duck.create_graph(
+                    tenant,
+                    graph_id,
+                    storage_profile=getattr(result, "storage_profile", None)
+                    or kwargs.get("storage_profile")
+                    or "parquet",
+                    graph_kind=getattr(result, "graph_kind", None)
+                    or kwargs.get("graph_kind")
+                    or "knowledge_graph",
+                    default_branch=branch,
+                    metadata=getattr(result, "metadata", None)
+                    or kwargs.get("metadata"),
+                    idempotency_key=kwargs.get("idempotency_key"),
+                )
+            elif operation == "put_revision":
+                revision_id = args[2] if len(args) > 2 else kwargs.get("revision_id")
+                duck.put_revision(
+                    tenant,
+                    graph_id,
+                    revision_id,
+                    parent_revision=kwargs.get("parent_revision"),
+                    storage_profile=kwargs.get("storage_profile")
+                    or getattr(result, "storage_profile", "parquet"),
+                    manifest_cid=kwargs.get("manifest_cid"),
+                    pin_root=kwargs.get("pin_root"),
+                    checksum=kwargs.get("checksum"),
+                    metadata=kwargs.get("metadata"),
+                )
+            elif operation == "cas_set_head":
+                branch = args[2] if len(args) > 2 else kwargs.get("branch")
+                duck.cas_set_head(
+                    tenant,
+                    graph_id,
+                    branch,
+                    expected_revision=kwargs.get("expected_revision"),
+                    new_revision=kwargs["new_revision"],
+                    lease_id=kwargs.get("lease_id"),
+                    lease_epoch=kwargs.get("lease_epoch"),
+                    idempotency_key=kwargs.get("idempotency_key"),
+                )
+            elif operation == "acquire_lease":
+                branch = args[2] if len(args) > 2 else kwargs.get("branch")
+                duck.acquire_lease(
+                    tenant,
+                    graph_id,
+                    branch,
+                    holder=kwargs.get("holder") or result.holder,
+                    ttl_seconds=float(kwargs.get("ttl_seconds") or 60.0),
+                    lease_id=kwargs.get("lease_id") or result.lease_id,
+                )
+            elif operation == "set_pin_root":
+                revision_id = args[2] if len(args) > 2 else kwargs.get("revision_id")
+                root_cid = args[3] if len(args) > 3 else kwargs.get("root_cid")
+                pin_kind = kwargs.get("pin_kind") or getattr(
+                    result, "pin_kind", "manifest"
+                )
+                duck.set_pin_root(
+                    tenant,
+                    graph_id,
+                    revision_id,
+                    root_cid,
+                    pin_kind=pin_kind,
+                )
+                # Mirror SQLite COALESCE(pin_root) update on the revision row.
+                with duck._txn() as conn:  # noqa: SLF001
+                    conn.execute(
+                        "UPDATE revisions SET pin_root = COALESCE(pin_root, ?) "
+                        "WHERE tenant = ? AND graph_id = ? AND revision_id = ?",
+                        [root_cid, tenant, graph_id, revision_id],
+                    )
+            elif operation == "delete_graph":
+                with duck._txn() as conn:  # noqa: SLF001
+                    now = utc_now_iso()
+                    conn.execute(
+                        "UPDATE graphs SET status = 'tombstoned', "
+                        "updated_at = ?, tombstoned_at = ? "
+                        "WHERE tenant = ? AND graph_id = ?",
+                        [now, now, tenant, graph_id],
+                    )
+                    conn.execute(
+                        "UPDATE branches SET status = 'tombstoned', "
+                        "updated_at = ?, tombstoned_at = ? "
+                        "WHERE tenant = ? AND graph_id = ? AND status = 'active'",
+                        [now, now, tenant, graph_id],
+                    )
+                    conn.execute(
+                        "DELETE FROM tombstones WHERE tenant = ? AND graph_id = ? "
+                        "AND kind = 'graph' AND name = ''",
+                        [tenant, graph_id],
+                    )
+                    conn.execute(
+                        "INSERT INTO tombstones "
+                        "(tenant, graph_id, kind, name, tombstoned_at, reason) "
+                        "VALUES (?, ?, 'graph', '', ?, ?)",
+                        [
+                            tenant,
+                            graph_id,
+                            now,
+                            kwargs.get("reason")
+                            or getattr(result, "reason", None),
+                        ],
+                    )
+                    conn.execute(
+                        "DELETE FROM leases WHERE tenant = ? AND graph_id = ?",
+                        [tenant, graph_id],
+                    )
+            elif operation == "create_branch":
+                branch = args[2] if len(args) > 2 else kwargs.get("branch")
+                head = getattr(result, "head_revision", None)
+                if head:
+                    with duck._txn() as conn:  # noqa: SLF001
+                        now = utc_now_iso()
+                        existing = duck._fetchone(  # noqa: SLF001
+                            conn,
+                            "SELECT * FROM branches WHERE tenant = ? AND "
+                            "graph_id = ? AND branch = ?",
+                            [tenant, graph_id, branch],
+                        )
+                        if existing is None:
+                            conn.execute(
+                                "INSERT INTO branches "
+                                "(tenant, graph_id, branch, head_revision, status, "
+                                "created_at, updated_at, tombstoned_at) "
+                                "VALUES (?, ?, ?, ?, 'active', ?, ?, NULL)",
+                                [tenant, graph_id, branch, head, now, now],
+                            )
+            elif operation == "delete_branch":
+                branch = args[2] if len(args) > 2 else kwargs.get("branch")
+                with duck._txn() as conn:  # noqa: SLF001
+                    now = utc_now_iso()
+                    conn.execute(
+                        "UPDATE branches SET status = 'tombstoned', "
+                        "updated_at = ?, tombstoned_at = ? "
+                        "WHERE tenant = ? AND graph_id = ? AND branch = ?",
+                        [now, now, tenant, graph_id, branch],
+                    )
+                    conn.execute(
+                        "DELETE FROM tombstones WHERE tenant = ? AND graph_id = ? "
+                        "AND kind = 'branch' AND name = ?",
+                        [tenant, graph_id, branch],
+                    )
+                    conn.execute(
+                        "INSERT INTO tombstones "
+                        "(tenant, graph_id, kind, name, tombstoned_at, reason) "
+                        "VALUES (?, ?, 'branch', ?, ?, ?)",
+                        [
+                            tenant,
+                            graph_id,
+                            branch,
+                            now,
+                            kwargs.get("reason")
+                            or getattr(result, "reason", None),
+                        ],
+                    )
+            elif operation == "release_lease":
+                branch = args[2] if len(args) > 2 else kwargs.get("branch")
+                lease_id = kwargs.get("lease_id")
+                if lease_id:
+                    try:
+                        duck.release_lease(lease_id)
+                    except Exception:
+                        with duck._txn() as conn:  # noqa: SLF001
+                            conn.execute(
+                                "DELETE FROM leases WHERE tenant = ? AND "
+                                "graph_id = ? AND branch = ?",
+                                [tenant, graph_id, branch],
+                            )
+            elif operation == "renew_lease":
+                branch = args[2] if len(args) > 2 else kwargs.get("branch")
+                if hasattr(result, "lease_id"):
+                    try:
+                        duck.renew_lease(
+                            result.lease_id,
+                            ttl_seconds=float(kwargs.get("ttl_seconds") or 60.0),
+                        )
+                    except Exception:
+                        # Best-effort re-acquire with same fencing.
+                        duck.acquire_lease(
+                            tenant,
+                            graph_id,
+                            branch,
+                            holder=result.holder,
+                            ttl_seconds=float(kwargs.get("ttl_seconds") or 60.0),
+                            lease_id=result.lease_id,
+                        )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "duckdb catalog mirror failed op=%s %s/%s: %s",
+                operation,
+                tenant,
+                graph_id,
+                exc,
+            )
+            raise
+
+    def record_catalog_mutation(
+        self,
+        operation: str,
+        *,
+        result: Any,
+        catalog: "GraphCatalog",
+        args: tuple[Any, ...] = (),
+        kwargs: Optional[Dict[str, Any]] = None,
+        operation_id: str | None = None,
+    ) -> GraphMutationReceipt:
+        """Mirror a SQLite catalog mutation into DuckDB and emit parity."""
+
+        kwargs = dict(kwargs or {})
+        tenant = args[0] if args else kwargs.get("tenant")
+        graph_id = args[1] if len(args) > 1 else kwargs.get("graph_id")
+        if (not tenant or not graph_id) and result is not None:
+            tenant = getattr(result, "tenant", tenant)
+            graph_id = getattr(result, "graph_id", graph_id)
+        tenant = str(tenant or "unknown")
+        graph_id = str(graph_id or "unknown")
+        key = self._graph_key(tenant, graph_id)
+        op_id = (
+            operation_id
+            or kwargs.get("idempotency_key")
+            or new_graph_operation_id(f"catalog.{operation}")
+        )
+
+        with self._lock:
+            try:
+                self._mirror_catalog_mutation(
+                    operation,
+                    catalog=catalog,
+                    args=args,
+                    kwargs=kwargs,
+                    result=result,
+                )
+            except Exception as exc:  # noqa: BLE001
+                qid = self._quarantine(
+                    key=key,
+                    operation_id=str(op_id),
+                    reason=f"mirror_failed:{operation}:{exc}",
+                )
+                receipt = GraphMutationReceipt(
+                    operation_id=str(op_id),
+                    producer="catalog",
+                    kind=operation,
+                    key=key,
+                    parity_matched=False,
+                    parity_receipt_cid="",
+                    mode=self.mode,
+                    payload_digest="",
+                    authority="legacy",
+                    quarantined=True,
+                    quarantine_id=qid,
+                    error=str(exc),
+                )
+                self._mutation_index[str(op_id)] = receipt
+                return receipt
+
+            legacy = self.snapshot_from_sqlite(catalog, tenant, graph_id)
+            self._legacy_snapshots[key] = legacy
+            shadow = self.snapshot_from_duckdb(tenant, graph_id)
+            view = self.compare_parity(
+                tenant=tenant,
+                graph_id=graph_id,
+                legacy=legacy,
+                shadow=shadow,
+                operation_id=str(op_id),
+            )
+            payload = {
+                "operation": operation,
+                "result": _record_to_dict(result),
+                "legacy": legacy,
+                "shadow": shadow,
+                "parity": view.to_dict(),
+            }
+            # Prefer content CIDs/checksums from revision results when present.
+            content_cid = ""
+            content_checksum = ""
+            if hasattr(result, "manifest_cid") and result.manifest_cid:
+                content_cid = str(result.manifest_cid)
+            if hasattr(result, "checksum") and result.checksum:
+                content_checksum = str(result.checksum)
+            if hasattr(result, "root_cid") and result.root_cid:
+                content_cid = content_cid or str(result.root_cid)
+            receipt = self.record_operation(
+                producer="catalog",
+                kind=operation,
+                key=key,
+                payload=payload,
+                operation_id=str(op_id),
+                content_cid=content_cid,
+                content_checksum=content_checksum,
+            )
+            if not view.matched and not receipt.quarantined:
+                qid = self._quarantine(
+                    key=key,
+                    operation_id=str(op_id),
+                    reason=view.mismatch_reason or "sqlite_duckdb_parity",
+                )
+                receipt.quarantined = True
+                receipt.quarantine_id = qid
+                receipt.parity_matched = False
+                self._mutation_index[str(op_id)] = receipt
+            return receipt
+
+    # -- transaction / WAL / MVCC producer ----------------------------------
+
+    def record_transaction_mutation(
+        self,
+        *,
+        kind: str,
+        txn_id: str,
+        payload: Mapping[str, Any],
+        operation_id: str | None = None,
+        wal_cid: str = "",
+    ) -> GraphMutationReceipt:
+        """Project transaction manager control state into DuckDB shadow."""
+
+        key = f"txn:{txn_id}"
+        op_id = operation_id or new_graph_operation_id(f"txn.{kind}")
+        duck = self._duck_tx
+        if duck is not None:
+            try:
+                if kind in {"begin", "add_operation", "add_read"}:
+                    # Active transaction envelope for MVCC visibility.
+                    from ipfs_datasets_py.knowledge_graphs.transactions.types import (
+                        IsolationLevel,
+                        Transaction,
+                        TransactionState,
+                    )
+
+                    raw = dict(payload)
+                    if "txn_id" in raw:
+                        # Prefer structured put when a full envelope is provided.
+                        try:
+                            state_name = str(raw.get("state") or "ACTIVE")
+                            isolation_name = str(
+                                raw.get("isolation_level") or "REPEATABLE_READ"
+                            )
+                            txn = Transaction(
+                                txn_id=str(raw["txn_id"]),
+                                isolation_level=IsolationLevel[isolation_name]
+                                if isolation_name in IsolationLevel.__members__
+                                else IsolationLevel.REPEATABLE_READ,
+                                state=TransactionState[state_name]
+                                if state_name in TransactionState.__members__
+                                else TransactionState.ACTIVE,
+                                operations=[],
+                                read_set=list(raw.get("read_set") or []),
+                                write_set=list(raw.get("write_set") or []),
+                                start_time=float(raw.get("start_time") or 0.0),
+                                snapshot_cid=raw.get("snapshot_cid"),
+                                wal_entries=list(raw.get("wal_entries") or []),
+                            )
+                            duck.put_active_transaction(txn)
+                        except Exception:
+                            pass
+                if kind == "commit":
+                    if wal_cid:
+                        duck.set_wal_head_cid(wal_cid)
+                        duck.bump_wal_entry_count(1)
+                        duck.record_wal_applied_key(txn_id, wal_cid)
+                    duck.remove_active_transaction(txn_id)
+                if kind == "rollback":
+                    duck.remove_active_transaction(txn_id)
+                if kind == "wal_append" and wal_cid:
+                    duck.set_wal_head_cid(wal_cid)
+                    duck.bump_wal_entry_count(1)
+                    duck.record_wal_applied_key(
+                        str(payload.get("replay_key") or txn_id), wal_cid
+                    )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("txn shadow mirror failed: %s", exc)
+        body = dict(payload)
+        if wal_cid:
+            body["wal_cid"] = wal_cid
+        return self.record_operation(
+            producer="transactions",
+            kind=kind,
+            key=key,
+            payload=body,
+            operation_id=op_id,
+            content_cid=wal_cid,
+        )
+
+    # -- storage / hybrid producer ------------------------------------------
+
+    def record_storage_mutation(
+        self,
+        *,
+        kind: str,
+        cid: str,
+        payload: Mapping[str, Any],
+        operation_id: str | None = None,
+        content_bytes: bytes | None = None,
+        checksum: str = "",
+    ) -> GraphMutationReceipt:
+        """Project hybrid cache metadata; fingerprint payload bytes unchanged."""
+
+        key = f"storage:{cid}"
+        body = dict(payload)
+        body["cid"] = cid
+        return self.record_operation(
+            producer="storage",
+            kind=kind,
+            key=key,
+            payload=body,
+            operation_id=operation_id,
+            content_cid=cid,
+            content_checksum=checksum,
+            content_bytes=content_bytes,
+        )
+
+    # -- graph engine producer ----------------------------------------------
+
+    def record_engine_mutation(
+        self,
+        *,
+        kind: str,
+        entity_id: str,
+        payload: Mapping[str, Any],
+        operation_id: str | None = None,
+        content_cid: str = "",
+    ) -> GraphMutationReceipt:
+        key = f"engine:{entity_id}"
+        return self.record_operation(
+            producer="engine",
+            kind=kind,
+            key=key,
+            payload=dict(payload),
+            operation_id=operation_id,
+            content_cid=content_cid,
+        )
+
+    # -- crypto-flow producer -----------------------------------------------
+
+    def record_crypto_snapshot(
+        self,
+        snapshot: Any,
+        *,
+        operation_id: str | None = None,
+        overwrite: bool = False,
+    ) -> GraphMutationReceipt:
+        """Shadow-project an immutable crypto-flow snapshot into DuckDB."""
+
+        snap_id = str(getattr(snapshot, "snapshot_id", "") or "")
+        key = f"crypto:{snap_id}"
+        op_id = operation_id or new_graph_operation_id("crypto.put")
+        payload = (
+            snapshot.to_dict()
+            if hasattr(snapshot, "to_dict")
+            else dict(snapshot)
+        )
+        graph_cid = ""
+        graph_digest = ""
+        if hasattr(snapshot, "graph_cid"):
+            graph_cid = str(snapshot.graph_cid)
+        if hasattr(snapshot, "graph_digest"):
+            graph_digest = str(snapshot.graph_digest)
+        duck = self._duck_crypto
+        if duck is not None:
+            try:
+                duck.put(snapshot, overwrite=overwrite)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("crypto-flow duckdb put failed: %s", exc)
+        return self.record_operation(
+            producer="crypto_flows",
+            kind="put_snapshot",
+            key=key,
+            payload={
+                "snapshot_id": snap_id,
+                "graph_cid": graph_cid,
+                "graph_digest": graph_digest,
+                "completeness": getattr(
+                    getattr(snapshot, "completeness", None),
+                    "value",
+                    str(getattr(snapshot, "completeness", "")),
+                ),
+                "identity": {
+                    "snapshot_id": snap_id,
+                    "graph_cid": graph_cid,
+                    "graph_digest": graph_digest,
+                },
+                "attributes": payload.get("attributes") or {},
+            },
+            operation_id=op_id,
+            content_cid=graph_cid,
+            content_checksum=graph_digest,
+        )
+
+    def crypto_history_parity(
+        self, snapshot_ids: Sequence[str], legacy_store: Any
+    ) -> Dict[str, Any]:
+        """Compare crypto-flow history identity between legacy and DuckDB."""
+
+        duck = self._duck_crypto
+        results: List[Dict[str, Any]] = []
+        matched = True
+        for sid in snapshot_ids:
+            leg = legacy_store.get(sid)
+            leg_identity = {
+                "snapshot_id": leg.snapshot_id,
+                "graph_digest": leg.graph_digest,
+                "graph_cid": leg.graph_cid,
+            }
+            sh_identity: Dict[str, Any] = {}
+            if duck is not None:
+                try:
+                    sh = duck.get(sid)
+                    sh_identity = {
+                        "snapshot_id": sh.snapshot_id,
+                        "graph_digest": sh.graph_digest,
+                        "graph_cid": sh.graph_cid,
+                    }
+                except Exception as exc:  # noqa: BLE001
+                    sh_identity = {"error": str(exc)}
+            pair_matched = leg_identity == sh_identity
+            matched = matched and pair_matched
+            results.append(
+                {
+                    "snapshot_id": sid,
+                    "matched": pair_matched,
+                    "legacy": leg_identity,
+                    "shadow": sh_identity,
+                }
+            )
+        return {
+            "matched": matched,
+            "count": len(results),
+            "entries": results,
+            "authority": "legacy",
+        }
+
+
+# ---------------------------------------------------------------------------
+# Process-local registry + catalog mutator hooks
+# ---------------------------------------------------------------------------
+
+
+def configure_graph_shadow_authority(
+    duckdb_catalog_path: PathLike | None = None,
+    *,
+    duckdb_tx_path: PathLike | None = None,
+    duckdb_crypto_path: PathLike | None = None,
+    enabled: bool = True,
+    authority_port: Any = None,
+    writer_id: str = "writer:graph-shadow-authority",
+) -> GraphShadowAuthority:
+    """Install a process-local graph shadow authority (DQK-059)."""
+
+    global _process_shadow_authority
+    with _process_shadow_lock:
+        if _process_shadow_authority is not None:
+            try:
+                _process_shadow_authority.close()
+            except Exception:  # noqa: BLE001
+                pass
+        auth = GraphShadowAuthority(
+            duckdb_catalog_path=duckdb_catalog_path,
+            duckdb_tx_path=duckdb_tx_path,
+            duckdb_crypto_path=duckdb_crypto_path,
+            enabled=enabled,
+            authority_port=authority_port,
+            writer_id=writer_id,
+        )
+        _process_shadow_authority = auth
+        return auth
+
+
+def get_graph_shadow_authority() -> Optional[GraphShadowAuthority]:
+    with _process_shadow_lock:
+        return _process_shadow_authority
+
+
+def reset_graph_shadow_authority() -> None:
+    global _process_shadow_authority
+    with _process_shadow_lock:
+        if _process_shadow_authority is not None:
+            try:
+                _process_shadow_authority.close()
+            except Exception:  # noqa: BLE001
+                pass
+        _process_shadow_authority = None
+
+
+def safe_shadow_catalog_mutation(
+    operation: str,
+    *,
+    result: Any,
+    catalog: "GraphCatalog",
+    args: tuple[Any, ...] = (),
+    kwargs: Optional[Dict[str, Any]] = None,
+    operation_id: str | None = None,
+    shadow: Optional[GraphShadowAuthority] = None,
+) -> Optional[GraphMutationReceipt]:
+    """Best-effort catalog shadow helper used by producers and tests."""
+
+    auth = shadow or catalog.shadow_authority or get_graph_shadow_authority()
+    if auth is None:
+        return None
+    try:
+        return auth.record_catalog_mutation(
+            operation,
+            result=result,
+            catalog=catalog,
+            args=args,
+            kwargs=kwargs,
+            operation_id=operation_id,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("safe_shadow_catalog_mutation failed: %s", exc)
+        return None
+
+
+_CATALOG_SHADOW_MUTATORS: tuple[str, ...] = (
+    "create_graph",
+    "delete_graph",
+    "create_branch",
+    "delete_branch",
+    "put_revision",
+    "cas_set_head",
+    "acquire_lease",
+    "renew_lease",
+    "release_lease",
+    "set_pin_root",
+)
+
+
+def _install_catalog_shadow_hooks() -> None:
+    """Wrap GraphCatalog mutators so SQLite remains authority with DuckDB shadow."""
+
+    for name in _CATALOG_SHADOW_MUTATORS:
+        original = getattr(GraphCatalog, name)
+
+        def _make(op_name: str, orig: Any) -> Any:
+            def wrapped(self: "GraphCatalog", *args: Any, **kwargs: Any) -> Any:
+                result = orig(self, *args, **kwargs)
+                self._notify_shadow(op_name, result, args, kwargs)
+                return result
+
+            wrapped.__name__ = op_name
+            wrapped.__doc__ = orig.__doc__
+            wrapped.__qualname__ = f"GraphCatalog.{op_name}"
+            return wrapped
+
+        setattr(GraphCatalog, name, _make(name, original))
+
+
+_install_catalog_shadow_hooks()
+
+
 __all__ = [
+    "GRAPH_SHADOW_DOMAIN",
+    "GRAPH_SHADOW_OWNER_TASK",
+    "GRAPH_SHADOW_SCHEMA",
     "GraphCatalog",
+    "GraphMutationReceipt",
+    "GraphParityView",
+    "GraphShadowAuthority",
+    "configure_graph_shadow_authority",
+    "get_graph_shadow_authority",
+    "new_graph_operation_id",
     "open_catalog",
+    "reset_graph_shadow_authority",
+    "safe_shadow_catalog_mutation",
 ]

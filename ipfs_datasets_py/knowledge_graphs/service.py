@@ -43,6 +43,11 @@ from ipfs_datasets_py.knowledge_graphs.catalog import (
     open_catalog,
     request_hash,
 )
+from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+    GraphShadowAuthority,
+    get_graph_shadow_authority,
+    new_graph_operation_id,
+)
 
 # ---------------------------------------------------------------------------
 # Contract constants
@@ -948,6 +953,7 @@ class GraphService:
         close_catalog_on_close: bool = False,
         close_storage_on_close: bool = False,
         holder_id: Optional[str] = None,
+        shadow_authority: Optional[GraphShadowAuthority] = None,
     ) -> None:
         if catalog is None:
             raise ValueError("catalog is required")
@@ -967,6 +973,71 @@ class GraphService:
         self._closed = False
         # Intentionally no ambient / current graph handle.
         self._open_handles: Dict[str, JSONDict] = {}
+        # DQK-059: optional DuckDB shadow authority (SQLite catalog remains authority).
+        self._shadow_authority: Optional[GraphShadowAuthority] = None
+        self._mutation_receipts: List[Any] = []
+        if shadow_authority is not None:
+            self.attach_shadow_authority(shadow_authority)
+        elif catalog.shadow_authority is not None:
+            self._shadow_authority = catalog.shadow_authority
+        else:
+            process_shadow = get_graph_shadow_authority()
+            if process_shadow is not None:
+                self.attach_shadow_authority(process_shadow)
+
+    def attach_shadow_authority(
+        self, authority: Optional[GraphShadowAuthority]
+    ) -> None:
+        """Bind DuckDB shadow authority to the service and its SQLite catalog."""
+
+        self._shadow_authority = authority
+        if authority is not None and hasattr(self._catalog, "attach_shadow_authority"):
+            self._catalog.attach_shadow_authority(authority)
+
+    @property
+    def shadow_authority(self) -> Optional[GraphShadowAuthority]:
+        return self._shadow_authority
+
+    @property
+    def mutation_receipts(self) -> List[Any]:
+        """Shadow authority receipts observed by this service (DQK-059)."""
+
+        if self._shadow_authority is None:
+            return list(self._mutation_receipts)
+        return list(self._shadow_authority.list_mutation_receipts())
+
+    def _record_service_shadow(
+        self,
+        *,
+        kind: str,
+        target: Any,
+        payload: Mapping[str, Any],
+        operation_id: Optional[str] = None,
+        content_cid: str = "",
+        content_checksum: str = "",
+    ) -> None:
+        """Best-effort service-layer shadow projection; never raises."""
+
+        shadow = self._shadow_authority
+        if shadow is None:
+            return
+        try:
+            tenant = getattr(target, "tenant", None) or payload.get("tenant") or "unknown"
+            graph_id = (
+                getattr(target, "graph_id", None) or payload.get("graph_id") or "unknown"
+            )
+            receipt = shadow.record_operation(
+                producer="service",
+                kind=kind,
+                key=f"service:{tenant}/{graph_id}:{kind}",
+                payload=dict(payload),
+                operation_id=operation_id or new_graph_operation_id(f"service.{kind}"),
+                content_cid=content_cid,
+                content_checksum=content_checksum,
+            )
+            self._mutation_receipts.append(receipt)
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # Construction helpers
@@ -983,6 +1054,7 @@ class GraphService:
         audit: Optional[AuditSink] = None,
         faults: Optional[FaultInjector] = None,
         holder_id: Optional[str] = None,
+        shadow_authority: Optional[GraphShadowAuthority] = None,
         **catalog_kwargs: Any,
     ) -> "GraphService":
         """Open a long-lived service bound to durable catalog (+ payload) paths.
@@ -1010,6 +1082,7 @@ class GraphService:
             close_catalog_on_close=True,
             close_storage_on_close=close_storage,
             holder_id=holder_id,
+            shadow_authority=shadow_authority,
         )
 
     @property
@@ -1364,6 +1437,35 @@ class GraphService:
                     "at": self._clock.now_iso(),
                 }
             )
+            # DQK-059: service-layer shadow receipt (catalog mutators also emit).
+            if op in {
+                "create",
+                "delete",
+                "branch",
+                "write",
+                "begin_tx",
+                "commit_tx",
+                "rollback_tx",
+            }:
+                self._record_service_shadow(
+                    kind=op,
+                    target=target or request.target,
+                    payload={
+                        "operation": op,
+                        "result": payload if isinstance(payload, Mapping) else {},
+                        "request_id": request_id,
+                        "idempotency_key": request.idempotency_key,
+                    },
+                    operation_id=request.idempotency_key
+                    or new_graph_operation_id(f"service.{op}"),
+                    content_cid=str(
+                        (payload or {}).get("manifest_cid")
+                        or (payload or {}).get("revision")
+                        or ""
+                    )
+                    if isinstance(payload, Mapping)
+                    else "",
+                )
             return LifecycleResult(
                 status="success",
                 operation=op,
