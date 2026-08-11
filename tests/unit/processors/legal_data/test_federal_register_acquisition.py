@@ -142,6 +142,7 @@ def test_documents_api_url_is_official_and_bounded() -> None:
     )
     assert "per_page=100" in url
     assert "page=1" in url
+    assert "abstract" not in url
 
 
 # ---------------------------------------------------------------------------

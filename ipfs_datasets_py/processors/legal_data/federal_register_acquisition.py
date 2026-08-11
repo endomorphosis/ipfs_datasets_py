@@ -995,7 +995,6 @@ def build_documents_api_url(
         "publication_date",
         "title",
         "type",
-        "abstract",
         "html_url",
         "pdf_url",
         "full_text_xml_url",
