@@ -6,14 +6,20 @@ stable ``record_id``, and only becomes durable after :meth:`DatasetSink.commit`.
 Partial or cancelled runs leave staged data aborted and do not invent a
 successful sink commit for checkpoint CAS.
 
+Shadow mode (DQK-071) dual-writes normalized ledger facts into an injected
+DuckDB wallet store while JSONL / in-memory sinks remain authoritative.  Secrets,
+signing payloads, and unrestricted raw bytes never enter the shadow catalog.
+
 Importing this module performs no network I/O.
 """
 
 from __future__ import annotations
 
 import os
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
 from types import MappingProxyType
@@ -29,12 +35,60 @@ from .models import (
     LedgerRecord,
     RawPayloadPolicy,
     RawPayloadRef,
+    ensure_secret_safe,
 )
 from .protocols import OperationContext, RecordBatch
 
 
 SINK_RECEIPT_SCHEMA_VERSION = "wallet-sink-receipt-v1"
 RAW_PAYLOAD_SCHEMA_VERSION = "wallet-raw-payload-v1"
+SHADOW_SINK_INTERFACE = "ShadowStreamingDatasetSink@1"
+WALLET_LEDGER_AUTHORITY_DOMAIN = "wallet-ledger"
+
+# Closed set of substrings/keys that must never appear in DuckDB shadow rows.
+_SHADOW_FORBIDDEN_KEY_RE = re.compile(
+    r"(secret|password|private[_-]?key|signing[_-]?key|seed|mnemonic|"
+    r"api[_-]?key|authorization|raw[_-]?payload[_-]?bytes|payload[_-]?bytes|"
+    r"ciphertext|plaintext|pem|wallet[_-]?seed)",
+    re.IGNORECASE,
+)
+_SHADOW_FORBIDDEN_VALUE_RE = re.compile(
+    r"(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"
+    r"fake-secret-private-key-material|"
+    r"example-wallet-fixture-api-token|"
+    r"Bearer placeholder-auth-material)",
+    re.IGNORECASE,
+)
+
+
+class WalletLedgerAuthorityMode(StrEnum):
+    """Authority mode for wallet ledger ingestion producers (DQK-071/072).
+
+    * ``legacy`` — JSONL / in-memory sink only; DuckDB is unused.
+    * ``shadow`` — legacy is authority; DuckDB receives a shadow projection at
+      every write/commit boundary (this task).
+    """
+
+    LEGACY = "legacy"
+    SHADOW = "shadow"
+
+    @classmethod
+    def parse(cls, value: str | WalletLedgerAuthorityMode) -> WalletLedgerAuthorityMode:
+        if isinstance(value, WalletLedgerAuthorityMode):
+            return value
+        key = str(value).strip().lower().replace("_", "-")
+        mapping = {
+            "legacy": cls.LEGACY,
+            "shadow": cls.SHADOW,
+            "shadow-mode": cls.SHADOW,
+            "shadowmode": cls.SHADOW,
+        }
+        if key not in mapping:
+            raise InvalidRequestError(
+                f"unknown wallet ledger authority mode {value!r}; "
+                f"expected one of {sorted(mapping)}"
+            )
+        return mapping[key]
 
 # Conservative custody defaults: explicit retention is always bounded.
 DEFAULT_MAX_RAW_OBJECT_BYTES = 1_048_576  # 1 MiB per object
@@ -1076,23 +1130,473 @@ def iter_record_dicts(records: Iterable[object]) -> list[dict[str, Any]]:
     return [record_as_dict(record) for record in records]
 
 
+# ---------------------------------------------------------------------------
+# Shadow dual-write sink (DQK-071)
+# ---------------------------------------------------------------------------
+
+
+def assert_shadow_row_is_public(row: Mapping[str, Any], *, table: str) -> None:
+    """Fail closed when a DuckDB-bound row carries secret or raw-byte material.
+
+    Shadow projections must only contain public ledger facts and content-
+    addressed refs (digest/CID).  Unrestricted raw payloads, signing material,
+    and secret-bearing keys are rejected before they can enter the catalog.
+    """
+
+    if not isinstance(row, Mapping):
+        raise DatasetSinkError(f"shadow row for {table!r} must be a mapping")
+    try:
+        ensure_secret_safe(row)
+    except (ValueError, TypeError, InvalidRequestError) as exc:
+        raise DatasetSinkError(
+            f"shadow catalog refuses secret-shaped data in table {table!r}: {exc}"
+        ) from exc
+    stack: list[Any] = [row]
+    seen = 0
+    while stack:
+        seen += 1
+        if seen > 10_000:
+            raise DatasetSinkError("shadow row exceeds secret-safety walk budget")
+        current = stack.pop()
+        if isinstance(current, Mapping):
+            for key, value in current.items():
+                key_text = str(key)
+                if _SHADOW_FORBIDDEN_KEY_RE.search(key_text):
+                    raise DatasetSinkError(
+                        f"shadow catalog refuses secret-bearing key {key_text!r} "
+                        f"in table {table!r}"
+                    )
+                if isinstance(value, (bytes, bytearray, memoryview)):
+                    raise DatasetSinkError(
+                        f"shadow catalog refuses unrestricted raw bytes in "
+                        f"table {table!r} column {key_text!r}"
+                    )
+                if isinstance(value, str) and _SHADOW_FORBIDDEN_VALUE_RE.search(value):
+                    raise DatasetSinkError(
+                        f"shadow catalog refuses secret-shaped value in "
+                        f"table {table!r} column {key_text!r}"
+                    )
+                if isinstance(value, (Mapping, list, tuple)):
+                    stack.append(value)
+        elif isinstance(current, (list, tuple)):
+            stack.extend(current)
+        elif isinstance(current, (bytes, bytearray, memoryview)):
+            raise DatasetSinkError(
+                f"shadow catalog refuses unrestricted raw bytes in table {table!r}"
+            )
+        elif isinstance(current, str) and _SHADOW_FORBIDDEN_VALUE_RE.search(current):
+            raise DatasetSinkError(
+                f"shadow catalog refuses secret-shaped value in table {table!r}"
+            )
+
+
+def assert_shadow_catalog_is_public(store: Any) -> None:
+    """Scan a DuckDB wallet store catalog for secret/raw-byte contamination."""
+
+    list_records = getattr(store, "list_records", None)
+    catalog_tables = getattr(store, "catalog_tables", None)
+    if not callable(list_records) or not callable(catalog_tables):
+        raise DatasetSinkError("shadow store does not expose catalog list APIs")
+    for table in catalog_tables():
+        for row in list_records(table):
+            assert_shadow_row_is_public(row, table=table)
+
+
+def _project_records_for_shadow(
+    records: Sequence[object],
+) -> list[object]:
+    """Return records safe to stage into the DuckDB shadow store.
+
+    LedgerRecord values project through the privacy-safe schema.  Mapping
+    fixtures are scrubbed of forbidden keys before staging.
+    """
+
+    projected: list[object] = []
+    for record in records:
+        if isinstance(record, LedgerRecord):
+            # DuckDBWalletStore.project path already redacts raw bytes.
+            projected.append(record)
+            continue
+        if isinstance(record, Mapping):
+            payload = dict(record)
+            # Never forward unrestricted raw bodies into the shadow catalog.
+            for banned in (
+                "raw_payload_bytes",
+                "payload_bytes",
+                "body",
+                "ciphertext",
+                "plaintext",
+                "private_key",
+                "signing_key",
+                "seed",
+                "mnemonic",
+                "secret",
+            ):
+                payload.pop(banned, None)
+            # Drop nested raw bytes while keeping digest/CID refs.
+            raw = payload.get("raw_payload")
+            if isinstance(raw, Mapping):
+                cleaned = {
+                    k: v
+                    for k, v in raw.items()
+                    if k
+                    in {
+                        "digest",
+                        "cid",
+                        "media_type",
+                        "byte_length",
+                        "schema_version",
+                    }
+                }
+                payload["raw_payload"] = cleaned
+            assert_shadow_row_is_public(payload, table=str(payload.get("table") or "blocks"))
+            projected.append(payload)
+            continue
+        # Other record types: only allow if they serialize without secrets.
+        if hasattr(record, "to_dict") and callable(record.to_dict):
+            payload = record.to_dict()
+            if isinstance(payload, Mapping):
+                assert_shadow_row_is_public(payload, table="records")
+            projected.append(record)
+            continue
+        raise DatasetSinkError(
+            f"shadow sink cannot project record type {type(record).__name__}"
+        )
+    return projected
+
+
+class ShadowStreamingDatasetSink:
+    """Dual-write dataset sink: legacy authority + DuckDB shadow (DQK-071).
+
+    Caller-visible receipts and JSONL exports always come from the primary
+    :class:`StreamingDatasetSink`.  When *authority_mode* is
+    :attr:`WalletLedgerAuthorityMode.SHADOW` and a DuckDB wallet store is
+    injected, every write/commit/abort is mirrored into that store so blocks,
+    transactions, transfers, UTXOs, events, and related fact tables shadow at
+    ingestion time.
+    """
+
+    def __init__(
+        self,
+        *,
+        scope: str,
+        output_dir: str | Path | None = None,
+        raw_payload_policy: RawPayloadPolicy = RawPayloadPolicy.OMITTED,
+        primary: StreamingDatasetSink | None = None,
+        duckdb_store: Any | None = None,
+        authority_mode: WalletLedgerAuthorityMode | str = WalletLedgerAuthorityMode.SHADOW,
+        fail_on_shadow_error: bool = True,
+    ) -> None:
+        mode = WalletLedgerAuthorityMode.parse(authority_mode)
+        if primary is not None:
+            if not isinstance(primary, StreamingDatasetSink):
+                raise InvalidRequestError("primary must be a StreamingDatasetSink")
+            self._primary = primary
+            # Keep scope/policy aligned with the outer constructor args when
+            # the caller supplied an already-configured primary.
+            if primary.scope != _required_str(scope, "scope"):
+                raise InvalidRequestError("primary sink scope does not match scope")
+        else:
+            self._primary = StreamingDatasetSink(
+                scope=scope,
+                output_dir=output_dir,
+                raw_payload_policy=raw_payload_policy,
+            )
+        self._duckdb = duckdb_store
+        self._authority_mode = mode
+        self._fail_on_shadow_error = bool(fail_on_shadow_error)
+        self._shadow_writes = 0
+        self._shadow_commits = 0
+        self._shadow_aborts = 0
+        self._shadow_errors: list[str] = []
+        if mode is WalletLedgerAuthorityMode.SHADOW and duckdb_store is None:
+            # Shadow mode without a store is a no-op mirror (legacy-only path).
+            # Callers that want dual-write must inject open_wallet_store(...).
+            pass
+        if duckdb_store is not None:
+            write = getattr(duckdb_store, "write", None)
+            commit = getattr(duckdb_store, "commit", None)
+            if not callable(write) or not callable(commit):
+                raise InvalidRequestError(
+                    "duckdb_store must implement write/commit DatasetSink surface"
+                )
+
+    @property
+    def interface(self) -> str:
+        return SHADOW_SINK_INTERFACE
+
+    @property
+    def authority_mode(self) -> WalletLedgerAuthorityMode:
+        return self._authority_mode
+
+    @property
+    def primary(self) -> StreamingDatasetSink:
+        return self._primary
+
+    @property
+    def duckdb_store(self) -> Any | None:
+        return self._duckdb
+
+    @property
+    def shadow_enabled(self) -> bool:
+        return (
+            self._authority_mode is WalletLedgerAuthorityMode.SHADOW
+            and self._duckdb is not None
+        )
+
+    @property
+    def scope(self) -> str:
+        return self._primary.scope
+
+    @property
+    def raw_payload_policy(self) -> RawPayloadPolicy:
+        return self._primary.raw_payload_policy
+
+    @property
+    def staged_count(self) -> int:
+        return self._primary.staged_count
+
+    @property
+    def committed_count(self) -> int:
+        return self._primary.committed_count
+
+    @property
+    def duplicate_total(self) -> int:
+        return self._primary.duplicate_total
+
+    @property
+    def out_of_order_total(self) -> int:
+        return self._primary.out_of_order_total
+
+    @property
+    def is_aborted(self) -> bool:
+        return self._primary.is_aborted
+
+    @property
+    def last_commit(self) -> SinkCommitReceipt | None:
+        return self._primary.last_commit
+
+    @property
+    def shadow_write_count(self) -> int:
+        return self._shadow_writes
+
+    @property
+    def shadow_commit_count(self) -> int:
+        return self._shadow_commits
+
+    @property
+    def shadow_errors(self) -> tuple[str, ...]:
+        return tuple(self._shadow_errors)
+
+    def seen_record_ids(self) -> frozenset[str]:
+        return self._primary.seen_record_ids()
+
+    def staged_records(self) -> tuple[dict[str, Any], ...]:
+        return self._primary.staged_records()
+
+    def committed_records(self) -> tuple[dict[str, Any], ...]:
+        return self._primary.committed_records()
+
+    def finality_counts(
+        self, records: Sequence[_StagedRecord] | None = None
+    ) -> Mapping[Finality, int]:
+        return self._primary.finality_counts(records)
+
+    def position_bounds(
+        self, records: Sequence[_StagedRecord] | None = None
+    ) -> tuple[int | None, int | None]:
+        return self._primary.position_bounds(records)
+
+    def shadow_stats(self) -> Mapping[str, Any]:
+        stats: dict[str, Any] = {
+            "authority_mode": self._authority_mode.value,
+            "shadow_enabled": self.shadow_enabled,
+            "shadow_writes": self._shadow_writes,
+            "shadow_commits": self._shadow_commits,
+            "shadow_aborts": self._shadow_aborts,
+            "shadow_errors": list(self._shadow_errors),
+            "primary_committed": self._primary.committed_count,
+            "primary_staged": self._primary.staged_count,
+        }
+        if self._duckdb is not None and hasattr(self._duckdb, "stats"):
+            stats["duckdb"] = dict(self._duckdb.stats())
+        return MappingProxyType(stats)
+
+    async def write(
+        self,
+        batch: RecordBatch,
+        *,
+        context: OperationContext,
+    ) -> BatchWriteReceipt:
+        """Stage into the primary sink, then mirror into DuckDB when shadowed."""
+
+        receipt = await self._primary.write(batch, context=context)
+        if self.shadow_enabled:
+            await self._shadow_write(batch, context=context, primary_receipt=receipt)
+        return receipt
+
+    async def _shadow_write(
+        self,
+        batch: RecordBatch,
+        *,
+        context: OperationContext,
+        primary_receipt: BatchWriteReceipt,
+    ) -> None:
+        assert self._duckdb is not None
+        try:
+            safe_records = _project_records_for_shadow(batch.records)
+            shadow_batch = RecordBatch(
+                tuple(safe_records),
+                next_cursor=batch.next_cursor,
+                response_bytes=batch.response_bytes,
+            )
+            # Idempotency key ties the shadow stage to the primary write so
+            # crash-replay of the same page does not duplicate fact rows.
+            idempotency_key = f"shadow:{primary_receipt.write_id}"
+            write = self._duckdb.write
+            try:
+                await write(
+                    shadow_batch,
+                    context=context,
+                    idempotency_key=idempotency_key,
+                )
+            except TypeError:
+                # Stores that do not accept idempotency_key still dual-write.
+                await write(shadow_batch, context=context)
+            self._shadow_writes += 1
+        except Exception as exc:
+            message = f"shadow_write_failed:{type(exc).__name__}:{exc}"
+            self._shadow_errors.append(message)
+            if self._fail_on_shadow_error:
+                raise DatasetSinkError(message) from exc
+
+    async def commit(
+        self,
+        manifest: object,
+        *,
+        context: OperationContext,
+    ) -> SinkCommitReceipt:
+        """Commit primary authority first, then promote the DuckDB shadow."""
+
+        receipt = await self._primary.commit(manifest, context=context)
+        if self.shadow_enabled:
+            await self._shadow_commit(manifest, context=context)
+        return receipt
+
+    async def _shadow_commit(
+        self,
+        manifest: object,
+        *,
+        context: OperationContext,
+    ) -> None:
+        assert self._duckdb is not None
+        try:
+            await self._duckdb.commit(manifest, context=context)
+            # Post-commit gate: never leave secret-bearing rows in the catalog.
+            assert_shadow_catalog_is_public(self._duckdb)
+            self._shadow_commits += 1
+        except Exception as exc:
+            message = f"shadow_commit_failed:{type(exc).__name__}:{exc}"
+            self._shadow_errors.append(message)
+            if self._fail_on_shadow_error:
+                raise DatasetSinkError(message) from exc
+
+    async def abort(self, *, context: OperationContext) -> None:
+        await self._primary.abort(context=context)
+        if self.shadow_enabled and self._duckdb is not None:
+            try:
+                await self._duckdb.abort(context=context)
+                self._shadow_aborts += 1
+            except Exception as exc:
+                message = f"shadow_abort_failed:{type(exc).__name__}:{exc}"
+                self._shadow_errors.append(message)
+                if self._fail_on_shadow_error:
+                    raise DatasetSinkError(message) from exc
+
+    def reset_for_resume(self) -> None:
+        self._primary.reset_for_resume()
+        if self._duckdb is not None and hasattr(self._duckdb, "reset_for_resume"):
+            self._duckdb.reset_for_resume()
+
+    def parity_record_ids(self) -> Mapping[str, frozenset[str]]:
+        """Compare primary record_ids with DuckDB fact-table primary keys."""
+
+        primary_ids = self._primary.seen_record_ids()
+        shadow_ids: set[str] = set()
+        if self._duckdb is not None and hasattr(self._duckdb, "list_records"):
+            for table in (
+                "blocks",
+                "transactions",
+                "transfers",
+                "utxos",
+                "token_accounts",
+                "contract_events",
+            ):
+                try:
+                    for row in self._duckdb.list_records(table):
+                        rid = row.get("record_id")
+                        if isinstance(rid, str) and rid:
+                            shadow_ids.add(rid)
+                except Exception:
+                    continue
+        return MappingProxyType(
+            {
+                "primary": frozenset(primary_ids),
+                "shadow": frozenset(shadow_ids),
+                "matched": frozenset(primary_ids) & frozenset(shadow_ids),
+                "primary_only": frozenset(primary_ids) - frozenset(shadow_ids),
+                "shadow_only": frozenset(shadow_ids) - frozenset(primary_ids),
+            }
+        )
+
+
+def open_shadow_sink(
+    *,
+    scope: str,
+    output_dir: str | Path | None = None,
+    raw_payload_policy: RawPayloadPolicy = RawPayloadPolicy.OMITTED,
+    duckdb_store: Any | None = None,
+    authority_mode: WalletLedgerAuthorityMode | str = WalletLedgerAuthorityMode.SHADOW,
+    fail_on_shadow_error: bool = True,
+    primary: StreamingDatasetSink | None = None,
+) -> ShadowStreamingDatasetSink:
+    """Factory for :class:`ShadowStreamingDatasetSink` with standard defaults."""
+
+    return ShadowStreamingDatasetSink(
+        scope=scope,
+        output_dir=output_dir,
+        raw_payload_policy=raw_payload_policy,
+        primary=primary,
+        duckdb_store=duckdb_store,
+        authority_mode=authority_mode,
+        fail_on_shadow_error=fail_on_shadow_error,
+    )
+
+
 __all__ = [
     "DEFAULT_MAX_RAW_OBJECT_BYTES",
     "DEFAULT_MAX_RAW_OBJECTS",
     "DEFAULT_MAX_RAW_TOTAL_BYTES",
     "RAW_PAYLOAD_SCHEMA_VERSION",
+    "SHADOW_SINK_INTERFACE",
     "SINK_RECEIPT_SCHEMA_VERSION",
+    "WALLET_LEDGER_AUTHORITY_DOMAIN",
     "BatchWriteReceipt",
     "DirectoryRawPayloadStore",
     "InMemoryRawPayloadStore",
     "RawPayloadCustodyLimits",
     "RawPayloadEncryptor",
     "RawPayloadStore",
+    "ShadowStreamingDatasetSink",
     "SinkCommitReceipt",
     "StoredRawPayload",
     "StreamingDatasetSink",
+    "WalletLedgerAuthorityMode",
+    "assert_shadow_catalog_is_public",
+    "assert_shadow_row_is_public",
     "digest_bytes",
     "iter_record_dicts",
+    "open_shadow_sink",
     "record_as_dict",
     "record_finality",
     "record_identity",

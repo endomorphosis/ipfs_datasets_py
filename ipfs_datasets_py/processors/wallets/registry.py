@@ -18,6 +18,13 @@ CRYPTOIR-G600 cutover notes:
   them never enables key storage or unguarded signing.
 * Signing/broadcast must go through :class:`GuardService` with consumed
   admissibility capabilities — there is no ``approved=true`` escape hatch.
+
+DQK-071 shadow ledger notes:
+
+* Registry construction accepts ``duckdb_store`` / ``authority_mode`` options so
+  multi-chain processors receive the same DuckDB shadow catalog for blocks,
+  transactions, transfers, UTXOs, events, cursors, finality, and reorgs.
+* Shadow dual-write never enables signing or secret retention.
 """
 
 from __future__ import annotations
@@ -30,6 +37,7 @@ from typing import Any
 
 from .errors import InvalidRequestError, UnsupportedCapabilityError, WalletProcessorError
 from .protocols import Capabilities, Capability
+from .storage import WalletLedgerAuthorityMode
 
 
 # ---------------------------------------------------------------------------
@@ -861,6 +869,78 @@ for _spec in _FAMILY_SPECS:
 # ---------------------------------------------------------------------------
 
 
+def _apply_shadow_ledger(
+    processor: Any,
+    *,
+    duckdb_store: Any | None,
+    authority_mode: WalletLedgerAuthorityMode | str,
+    fail_on_shadow_error: bool,
+) -> Any:
+    """Attach DuckDB shadow configuration onto a constructed processor.
+
+    Supports :class:`~pipeline.WalletLedgerProcessor` via
+    :meth:`attach_duckdb_store`.  Chain facades without a ledger pipeline receive
+    a lightweight ``shadow_ledger`` attribute bag so API/registry callers can
+    still inspect the injected store without enabling signing.
+    """
+
+    if duckdb_store is None:
+        return processor
+    mode = WalletLedgerAuthorityMode.parse(authority_mode)
+    if hasattr(processor, "attach_duckdb_store"):
+        processor.attach_duckdb_store(
+            duckdb_store,
+            authority_mode=mode,
+            fail_on_shadow_error=fail_on_shadow_error,
+        )
+        return processor
+    # Annotate non-pipeline processors so multi-chain paths share the store.
+    try:
+        object.__setattr__(processor, "duckdb_store", duckdb_store)
+    except Exception:
+        try:
+            processor.duckdb_store = duckdb_store  # type: ignore[attr-defined]
+        except Exception:
+            pass
+    try:
+        object.__setattr__(processor, "authority_mode", mode)
+    except Exception:
+        try:
+            processor.authority_mode = mode  # type: ignore[attr-defined]
+        except Exception:
+            pass
+    try:
+        object.__setattr__(
+            processor,
+            "shadow_ledger",
+            MappingProxyType(
+                {
+                    "enabled": mode is WalletLedgerAuthorityMode.SHADOW,
+                    "authority_mode": mode.value,
+                    "duckdb_store_bound": True,
+                    "fail_on_shadow_error": bool(fail_on_shadow_error),
+                    "supports_sign": False,
+                    "supports_broadcast": False,
+                }
+            ),
+        )
+    except Exception:
+        try:
+            processor.shadow_ledger = MappingProxyType(  # type: ignore[attr-defined]
+                {
+                    "enabled": mode is WalletLedgerAuthorityMode.SHADOW,
+                    "authority_mode": mode.value,
+                    "duckdb_store_bound": True,
+                    "fail_on_shadow_error": bool(fail_on_shadow_error),
+                    "supports_sign": False,
+                    "supports_broadcast": False,
+                }
+            )
+        except Exception:
+            pass
+    return processor
+
+
 class WalletProcessorRegistry:
     """Lazy factory for wallet processor families.
 
@@ -872,6 +952,8 @@ class WalletProcessorRegistry:
     * Exactly one generic adapter (core ``ProcessorProtocol``) lives under
       ``adapters/processor_protocol.py``; this registry does **not** wire the
       rejected legacy ``can_process`` surface.
+    * Optional DuckDB shadow ledger injection (DQK-071) dual-writes public
+      ledger facts without enabling signing or secret retention.
     """
 
     def __init__(
@@ -879,6 +961,9 @@ class WalletProcessorRegistry:
         *,
         specs: Sequence[ProcessorFamilySpec] | None = None,
         builders: Mapping[str, _Builder] | None = None,
+        duckdb_store: Any | None = None,
+        authority_mode: WalletLedgerAuthorityMode | str = WalletLedgerAuthorityMode.SHADOW,
+        fail_on_shadow_error: bool = True,
     ) -> None:
         family_specs = tuple(specs) if specs is not None else _FAMILY_SPECS
         self._specs: dict[str, ProcessorFamilySpec] = {
@@ -892,6 +977,9 @@ class WalletProcessorRegistry:
         self._builders: dict[str, _Builder] = dict(builders or _BUILDERS)
         self._instance_cache: MutableMapping[tuple[str, str | None], Any] = {}
         self._cache_enabled = False
+        self._duckdb_store = duckdb_store
+        self._authority_mode = WalletLedgerAuthorityMode.parse(authority_mode)
+        self._fail_on_shadow_error = bool(fail_on_shadow_error)
 
     # -- catalogue ---------------------------------------------------------
 
@@ -973,6 +1061,53 @@ class WalletProcessorRegistry:
                 return False
         return True
 
+    # -- shadow ledger -----------------------------------------------------
+
+    @property
+    def duckdb_store(self) -> Any | None:
+        return self._duckdb_store
+
+    @property
+    def authority_mode(self) -> WalletLedgerAuthorityMode:
+        return self._authority_mode
+
+    def attach_duckdb_store(
+        self,
+        duckdb_store: Any,
+        *,
+        authority_mode: WalletLedgerAuthorityMode | str | None = None,
+        fail_on_shadow_error: bool | None = None,
+    ) -> None:
+        """Bind a process-wide DuckDB shadow store for subsequent constructions."""
+
+        if duckdb_store is None:
+            raise InvalidRequestError("duckdb_store is required")
+        self._duckdb_store = duckdb_store
+        if authority_mode is not None:
+            self._authority_mode = WalletLedgerAuthorityMode.parse(authority_mode)
+        if fail_on_shadow_error is not None:
+            self._fail_on_shadow_error = bool(fail_on_shadow_error)
+        # Cached instances must be rebuilt with the new store.
+        self._instance_cache.clear()
+
+    def shadow_ledger_config(self) -> Mapping[str, Any]:
+        """Inspectable shadow-ledger binding (no secrets, no signing)."""
+
+        return MappingProxyType(
+            {
+                "enabled": (
+                    self._authority_mode is WalletLedgerAuthorityMode.SHADOW
+                    and self._duckdb_store is not None
+                ),
+                "authority_mode": self._authority_mode.value,
+                "duckdb_store_bound": self._duckdb_store is not None,
+                "fail_on_shadow_error": self._fail_on_shadow_error,
+                "domain": "wallet-ledger",
+                "supports_sign": False,
+                "supports_broadcast": False,
+            }
+        )
+
     # -- resolution --------------------------------------------------------
 
     def resolve_family_for_network(
@@ -1043,6 +1178,13 @@ class WalletProcessorRegistry:
 
         Chain modules are imported only on this call path.  Optional dependency
         failures identify the pip extra and never auto-install packages.
+
+        Shadow ledger options (DQK-071), all optional:
+
+        * ``duckdb_store`` — overrides the registry-level DuckDB store
+        * ``authority_mode`` — ``legacy`` or ``shadow`` (default)
+        * ``fail_on_shadow_error`` — fail closed on shadow dual-write errors
+        * ``enable_shadow`` — when false, force legacy mode for this call
         """
 
         resolved = self.resolve_family(family)
@@ -1077,11 +1219,37 @@ class WalletProcessorRegistry:
                     f"{require_capability.value!r}"
                 )
 
+        # Pull shadow options out so builders never see them as chain kwargs.
+        call_options = dict(options)
+        duckdb_store = call_options.pop("duckdb_store", self._duckdb_store)
+        authority_mode = call_options.pop("authority_mode", self._authority_mode)
+        fail_on_shadow_error = call_options.pop(
+            "fail_on_shadow_error", self._fail_on_shadow_error
+        )
+        enable_shadow = call_options.pop("enable_shadow", None)
+        if enable_shadow is False:
+            authority_mode = WalletLedgerAuthorityMode.LEGACY
+            duckdb_store = None
+        elif enable_shadow is True and duckdb_store is None:
+            duckdb_store = self._duckdb_store
+
         cache_key = (resolved, network)
         if self._cache_enabled and cache_key in self._instance_cache:
-            return self._instance_cache[cache_key]
+            cached = self._instance_cache[cache_key]
+            return _apply_shadow_ledger(
+                cached,
+                duckdb_store=duckdb_store,
+                authority_mode=authority_mode,
+                fail_on_shadow_error=bool(fail_on_shadow_error),
+            )
 
-        processor = builder(spec, network, MappingProxyType(dict(options)))
+        processor = builder(spec, network, MappingProxyType(call_options))
+        processor = _apply_shadow_ledger(
+            processor,
+            duckdb_store=duckdb_store,
+            authority_mode=authority_mode,
+            fail_on_shadow_error=bool(fail_on_shadow_error),
+        )
         if self._cache_enabled:
             self._instance_cache[cache_key] = processor
         return processor

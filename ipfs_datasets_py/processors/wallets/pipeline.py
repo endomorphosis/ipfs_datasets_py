@@ -9,6 +9,10 @@ Partial or cancelled runs produce :class:`PartialRunReceipt` values without
 advancing the durable checkpoint.  Successful batches commit the sink first,
 then compare-and-set the checkpoint (sink-before-CAS invariant).
 
+Shadow mode (DQK-071) injects the DuckDB ledger/checkpoint store so blocks,
+transactions, transfers, UTXOs, events, cursors, finality, and reorgs shadow at
+ingestion time while JSONL sinks remain authoritative.
+
 Importing this module performs no network I/O.
 """
 
@@ -24,11 +28,14 @@ from .checkpoints import (
     CheckpointCommitCoordinator,
     CheckpointIdentity,
     CheckpointRecord,
+    CheckpointStoreLike,
     HashAnchor,
     InMemoryCheckpointStore,
+    ShadowCheckpointStore,
     SinkCommitReceipt as CheckpointSinkReceipt,
     build_checkpoint,
     new_revision,
+    open_shadow_checkpoint_store,
     validate_resume,
 )
 from .errors import (
@@ -68,8 +75,11 @@ from .storage import (
     InMemoryRawPayloadStore,
     RawPayloadEncryptor,
     RawPayloadStore,
+    ShadowStreamingDatasetSink,
     SinkCommitReceipt,
     StreamingDatasetSink,
+    WalletLedgerAuthorityMode,
+    open_shadow_sink,
 )
 
 
@@ -294,8 +304,9 @@ class WalletLedgerProcessor:
     """Streaming wallet and ledger-range processor with sink/checkpoint coupling.
 
     Dependencies are injected: provider, normalizer, sink factory, checkpoint
-    store, optional raw-payload store, and optional exporter.  The processor
-    itself performs no ambient network or filesystem discovery on import.
+    store, optional raw-payload store, optional DuckDB shadow store, and optional
+    exporter.  The processor itself performs no ambient network or filesystem
+    discovery on import.
     """
 
     def __init__(
@@ -305,9 +316,12 @@ class WalletLedgerProcessor:
         wallet_provider: WalletProvider | None = None,
         ledger_provider: LedgerProvider | None = None,
         normalizer: ChainNormalizer,
-        checkpoint_store: InMemoryCheckpointStore | None = None,
+        checkpoint_store: CheckpointStoreLike | None = None,
         raw_payload_store: RawPayloadStore | None = None,
         raw_payload_encryptor: RawPayloadEncryptor | None = None,
+        duckdb_store: Any | None = None,
+        authority_mode: WalletLedgerAuthorityMode | str = WalletLedgerAuthorityMode.SHADOW,
+        fail_on_shadow_error: bool = True,
         provider_name: str = "wallet-ledger-processor",
         normalizer_version: str = DEFAULT_PROCESSOR_VERSION,
         normalized_schema_major: int = DEFAULT_NORMALIZED_SCHEMA_MAJOR,
@@ -324,13 +338,25 @@ class WalletLedgerProcessor:
         self._wallet_provider = wallet_provider
         self._ledger_provider = ledger_provider
         self._normalizer = normalizer
+        self._duckdb_store = duckdb_store
+        self._authority_mode = WalletLedgerAuthorityMode.parse(authority_mode)
+        self._fail_on_shadow_error = bool(fail_on_shadow_error)
+
         # Use explicit None checks: InMemory* stores implement __len__ and are
         # falsy when empty, which would incorrectly replace injected instances.
-        self._checkpoint_store = (
-            checkpoint_store
-            if checkpoint_store is not None
-            else InMemoryCheckpointStore()
-        )
+        if checkpoint_store is not None:
+            self._checkpoint_store: CheckpointStoreLike = checkpoint_store
+        elif (
+            self._authority_mode is WalletLedgerAuthorityMode.SHADOW
+            and duckdb_store is not None
+        ):
+            self._checkpoint_store = open_shadow_checkpoint_store(
+                duckdb_store=duckdb_store,
+                authority_mode=self._authority_mode,
+                fail_on_shadow_error=self._fail_on_shadow_error,
+            )
+        else:
+            self._checkpoint_store = InMemoryCheckpointStore()
         self._coordinator = CheckpointCommitCoordinator(self._checkpoint_store)
         if not isinstance(raw_payload_policy, RawPayloadPolicy):
             raise InvalidRequestError("raw_payload_policy must be a RawPayloadPolicy")
@@ -376,6 +402,8 @@ class WalletLedgerProcessor:
             raise InvalidRequestError("normalized_schema_major must be a positive integer")
         self._normalized_schema_major = normalized_schema_major
         self._clock = clock or _utc_now
+        # Last sink used by ingest (for parity inspection after a run).
+        self._last_sink: StreamingDatasetSink | ShadowStreamingDatasetSink | None = None
 
         features = {Capability.DATASET_EXPORT}
         if wallet_provider is not None:
@@ -392,6 +420,11 @@ class WalletLedgerProcessor:
                 "normalizer_version": self._normalizer_version,
                 "normalized_schema_major": self._normalized_schema_major,
                 "raw_payload_policy": self._raw_payload_policy.value,
+                "authority_mode": self._authority_mode.value,
+                "shadow_ledger": (
+                    self._authority_mode is WalletLedgerAuthorityMode.SHADOW
+                    and duckdb_store is not None
+                ),
             },
         )
 
@@ -404,8 +437,103 @@ class WalletLedgerProcessor:
         return self._chain
 
     @property
-    def checkpoint_store(self) -> InMemoryCheckpointStore:
+    def checkpoint_store(self) -> CheckpointStoreLike:
         return self._checkpoint_store
+
+    @property
+    def duckdb_store(self) -> Any | None:
+        return self._duckdb_store
+
+    @property
+    def authority_mode(self) -> WalletLedgerAuthorityMode:
+        return self._authority_mode
+
+    @property
+    def last_sink(self) -> StreamingDatasetSink | ShadowStreamingDatasetSink | None:
+        return self._last_sink
+
+    def attach_duckdb_store(
+        self,
+        duckdb_store: Any,
+        *,
+        authority_mode: WalletLedgerAuthorityMode | str | None = None,
+        fail_on_shadow_error: bool | None = None,
+    ) -> None:
+        """Inject or replace the DuckDB shadow store after construction.
+
+        Used by API/registry wiring so multi-chain processors share one ledger
+        catalog without rebuilding providers.
+        """
+
+        if duckdb_store is None:
+            raise InvalidRequestError("duckdb_store is required")
+        self._duckdb_store = duckdb_store
+        if authority_mode is not None:
+            self._authority_mode = WalletLedgerAuthorityMode.parse(authority_mode)
+        if fail_on_shadow_error is not None:
+            self._fail_on_shadow_error = bool(fail_on_shadow_error)
+        # Wrap existing primary checkpoint store when not already shadowed.
+        if isinstance(self._checkpoint_store, ShadowCheckpointStore):
+            # Rebuild with new duckdb handle.
+            primary = self._checkpoint_store.primary
+            self._checkpoint_store = open_shadow_checkpoint_store(
+                primary=primary,
+                duckdb_store=duckdb_store,
+                authority_mode=self._authority_mode,
+                fail_on_shadow_error=self._fail_on_shadow_error,
+            )
+        elif self._authority_mode is WalletLedgerAuthorityMode.SHADOW:
+            primary = (
+                self._checkpoint_store
+                if isinstance(self._checkpoint_store, InMemoryCheckpointStore)
+                else InMemoryCheckpointStore()
+            )
+            self._checkpoint_store = open_shadow_checkpoint_store(
+                primary=primary,
+                duckdb_store=duckdb_store,
+                authority_mode=self._authority_mode,
+                fail_on_shadow_error=self._fail_on_shadow_error,
+            )
+        self._coordinator = CheckpointCommitCoordinator(self._checkpoint_store)
+        meta = dict(self._capabilities.metadata)
+        meta["authority_mode"] = self._authority_mode.value
+        meta["shadow_ledger"] = (
+            self._authority_mode is WalletLedgerAuthorityMode.SHADOW
+            and self._duckdb_store is not None
+        )
+        self._capabilities = Capabilities(
+            provider=self._capabilities.provider,
+            chain_namespaces=self._capabilities.chain_namespaces,
+            features=self._capabilities.features,
+            metadata=meta,
+        )
+
+    def _make_sink(
+        self,
+        *,
+        scope: str,
+        export_dir: str | None,
+        sink: StreamingDatasetSink | ShadowStreamingDatasetSink | None,
+    ) -> StreamingDatasetSink | ShadowStreamingDatasetSink:
+        if sink is not None:
+            return sink
+        if (
+            self._authority_mode is WalletLedgerAuthorityMode.SHADOW
+            and self._duckdb_store is not None
+        ):
+            return open_shadow_sink(
+                scope=scope,
+                output_dir=export_dir,
+                raw_payload_policy=self._raw_payload_policy,
+                duckdb_store=self._duckdb_store,
+                authority_mode=self._authority_mode,
+                fail_on_shadow_error=self._fail_on_shadow_error,
+            )
+        return StreamingDatasetSink(
+            scope=scope,
+            output_dir=export_dir,
+            raw_payload_policy=self._raw_payload_policy,
+        )
 
     def identity_for(self, scope: str) -> CheckpointIdentity:
         return CheckpointIdentity(
@@ -420,7 +548,7 @@ class WalletLedgerProcessor:
         self,
         request: BoundedRequest,
         *,
-        sink: StreamingDatasetSink | None = None,
+        sink: StreamingDatasetSink | ShadowStreamingDatasetSink | None = None,
         observed_anchor: HashAnchor | None = None,
         export_formats: Sequence[ExportFormat | str] = (),
         export_dir: str | None = None,
@@ -450,7 +578,7 @@ class WalletLedgerProcessor:
         self,
         request: BoundedRequest,
         *,
-        sink: StreamingDatasetSink | None = None,
+        sink: StreamingDatasetSink | ShadowStreamingDatasetSink | None = None,
         observed_anchor: HashAnchor | None = None,
         export_formats: Sequence[ExportFormat | str] = (),
         export_dir: str | None = None,
@@ -487,18 +615,19 @@ class WalletLedgerProcessor:
         self,
         plan: IngestPlan,
         *,
-        sink: StreamingDatasetSink | None,
+        sink: StreamingDatasetSink | ShadowStreamingDatasetSink | None,
         export_dir: str | None,
     ) -> PipelineRunReceipt:
         context = plan.request.context
         context.check_active()
         identity = plan.identity
         own_sink = sink is None
-        active_sink = sink or StreamingDatasetSink(
+        active_sink = self._make_sink(
             scope=plan.request.scope,
-            output_dir=export_dir,
-            raw_payload_policy=self._raw_payload_policy,
+            export_dir=export_dir,
+            sink=sink,
         )
+        self._last_sink = active_sink
 
         checkpoint_before = await self._checkpoint_store.load(
             identity.key, context=context

@@ -77,6 +77,7 @@ from .registry import (
     default_registry,
 )
 from .security import SecretReference, endpoint_fingerprint
+from .storage import WalletLedgerAuthorityMode
 
 
 API_RECEIPT_SCHEMA_VERSION = "wallet-api-receipt-v1"
@@ -813,6 +814,15 @@ class WalletProcessorAPI:
         Host/secret allowlists applied when ``trust`` is untrusted.
     trust:
         Default trust level for this API instance (MCP tools force untrusted).
+    duckdb_store:
+        Optional DuckDB wallet ledger store used for shadow dual-write at
+        ingestion time (DQK-071).
+    authority_mode:
+        ``legacy`` or ``shadow`` (default).  Shadow mode mirrors ledger facts
+        and checkpoints into *duckdb_store* while JSONL remains authoritative.
+    fail_on_shadow_error:
+        When true (default), shadow dual-write failures fail closed so parity
+        tests and production canaries never silently diverge.
     """
 
     # Explicit denylist of custody/signing verbs — never implemented.
@@ -826,6 +836,9 @@ class WalletProcessorAPI:
         trust_policy: TrustPolicy | None = None,
         trust: TrustLevel = TrustLevel.TRUSTED,
         clock: Any | None = None,
+        duckdb_store: Any | None = None,
+        authority_mode: WalletLedgerAuthorityMode | str = WalletLedgerAuthorityMode.SHADOW,
+        fail_on_shadow_error: bool = True,
     ) -> None:
         self._registry = registry if registry is not None else default_registry()
         self._processor = processor
@@ -833,6 +846,20 @@ class WalletProcessorAPI:
         self._trust = trust if isinstance(trust, TrustLevel) else TrustLevel(str(trust))
         self._clock = clock or _utc_now
         self._jobs: dict[str, _JobRecord] = {}
+        self._duckdb_store = duckdb_store
+        self._authority_mode = WalletLedgerAuthorityMode.parse(authority_mode)
+        self._fail_on_shadow_error = bool(fail_on_shadow_error)
+        # Wire shadow ledger into an already-injected processor when present.
+        if (
+            processor is not None
+            and duckdb_store is not None
+            and hasattr(processor, "attach_duckdb_store")
+        ):
+            processor.attach_duckdb_store(
+                duckdb_store,
+                authority_mode=self._authority_mode,
+                fail_on_shadow_error=self._fail_on_shadow_error,
+            )
 
     # -- discovery ------------------------------------------------------------
 
@@ -1204,6 +1231,39 @@ class WalletProcessorAPI:
 
     # -- internal helpers -----------------------------------------------------
 
+    @property
+    def duckdb_store(self) -> Any | None:
+        return self._duckdb_store
+
+    @property
+    def authority_mode(self) -> WalletLedgerAuthorityMode:
+        return self._authority_mode
+
+    def attach_duckdb_store(
+        self,
+        duckdb_store: Any,
+        *,
+        authority_mode: WalletLedgerAuthorityMode | str | None = None,
+        fail_on_shadow_error: bool | None = None,
+    ) -> None:
+        """Inject the DuckDB shadow ledger into this API and its processor."""
+
+        if duckdb_store is None:
+            raise InvalidRequestError("duckdb_store is required")
+        self._duckdb_store = duckdb_store
+        if authority_mode is not None:
+            self._authority_mode = WalletLedgerAuthorityMode.parse(authority_mode)
+        if fail_on_shadow_error is not None:
+            self._fail_on_shadow_error = bool(fail_on_shadow_error)
+        if self._processor is not None and hasattr(
+            self._processor, "attach_duckdb_store"
+        ):
+            self._processor.attach_duckdb_store(
+                duckdb_store,
+                authority_mode=self._authority_mode,
+                fail_on_shadow_error=self._fail_on_shadow_error,
+            )
+
     def _require_processor(self, chain: ChainRef) -> WalletLedgerProcessor:
         if self._processor is None:
             raise UnsupportedCapabilityError(
@@ -1214,6 +1274,17 @@ class WalletProcessorAPI:
         if self._processor.chain.identity_dict() != chain.identity_dict():
             raise InvalidRequestError(
                 "injected processor chain does not match request chain"
+            )
+        # Ensure shadow store stays attached across resume/rebuild paths.
+        if (
+            self._duckdb_store is not None
+            and getattr(self._processor, "duckdb_store", None) is None
+            and hasattr(self._processor, "attach_duckdb_store")
+        ):
+            self._processor.attach_duckdb_store(
+                self._duckdb_store,
+                authority_mode=self._authority_mode,
+                fail_on_shadow_error=self._fail_on_shadow_error,
             )
         return self._processor
 
