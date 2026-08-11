@@ -2,19 +2,27 @@
 
 Stores never mutate a published :class:`GraphSnapshot`.  Updates are new
 snapshot identities.  Content identity is deterministic and content-addressed.
+
+DQK-059 routes producers through the authority port in shadow mode: the
+in-memory / JSON store remains authoritative while DuckDB receives parity
+receipts and durable shadow projections. Graph digests and CIDs are never
+rewritten by the shadow path.
 """
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable
+from typing import Any, Optional, Protocol, runtime_checkable
 
 from .model import (
     CryptoFlowValidationError,
     GraphSnapshot,
     merge_provider_ids,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SnapshotStoreError(LookupError):
@@ -56,6 +64,16 @@ class InMemoryGraphSnapshotStore:
 
     _by_id: dict[str, GraphSnapshot] = field(default_factory=dict, init=False, repr=False)
     _by_digest: dict[str, str] = field(default_factory=dict, init=False, repr=False)
+    _shadow_authority: Any = field(default=None, init=False, repr=False)
+
+    def attach_shadow_authority(self, authority: Any) -> None:
+        """Bind DuckDB shadow authority (memory remains authoritative)."""
+
+        self._shadow_authority = authority
+
+    @property
+    def shadow_authority(self) -> Any:
+        return self._shadow_authority
 
     def put(self, snapshot: GraphSnapshot, *, overwrite: bool = False) -> str:
         if not isinstance(snapshot, GraphSnapshot):
@@ -72,7 +90,33 @@ class InMemoryGraphSnapshotStore:
             )
         self._by_id[stored.snapshot_id] = stored
         self._by_digest[stored.graph_digest] = stored.snapshot_id
+        self._emit_shadow(stored, overwrite=overwrite)
         return stored.snapshot_id
+
+    def _emit_shadow(self, snapshot: GraphSnapshot, *, overwrite: bool = False) -> None:
+        shadow = self._shadow_authority
+        # ``False`` is an explicit suppress token used by dual-write wrappers.
+        if shadow is False:
+            return
+        if shadow is None:
+            try:
+                from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                    get_graph_shadow_authority,
+                )
+
+                shadow = get_graph_shadow_authority()
+            except Exception:
+                shadow = None
+        if shadow is None:
+            return
+        try:
+            shadow.record_crypto_snapshot(snapshot, overwrite=overwrite)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "crypto-flow shadow quarantined (legacy ok) id=%s: %s",
+                snapshot.snapshot_id,
+                exc,
+            )
 
     def get(self, snapshot_id: str) -> GraphSnapshot:
         if not isinstance(snapshot_id, str) or not snapshot_id.strip():
@@ -113,8 +157,96 @@ class InMemoryGraphSnapshotStore:
         }
 
 
+@dataclass
+class ShadowingGraphSnapshotStore:
+    """Authority-port dual store: legacy authoritative, DuckDB shadow (DQK-059).
+
+    Writes always commit to *legacy* first. DuckDB projection and parity
+    receipts are best-effort and never replace legacy results.
+    """
+
+    legacy: GraphSnapshotStore
+    shadow_authority: Any = None
+    _receipts: list[Any] = field(default_factory=list, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        # Do not attach onto *legacy* — this wrapper owns dual-write so the
+        # in-memory put does not double-emit shadow receipts.
+        object.__setattr__(self, "_receipts", list(self._receipts))
+
+    def attach_shadow_authority(self, authority: Any) -> None:
+        self.shadow_authority = authority
+
+    @property
+    def mutation_receipts(self) -> list[Any]:
+        if self.shadow_authority is not None:
+            return [
+                r
+                for r in self.shadow_authority.list_mutation_receipts()
+                if r.producer == "crypto_flows"
+            ]
+        return list(self._receipts)
+
+    def put(
+        self,
+        snapshot: GraphSnapshot,
+        *,
+        overwrite: bool = False,
+        operation_id: Optional[str] = None,
+    ) -> str:
+        # Suppress nested legacy auto-shadow so only this wrapper records once.
+        prior = getattr(self.legacy, "_shadow_authority", None)
+        if hasattr(self.legacy, "_shadow_authority"):
+            self.legacy._shadow_authority = False
+        try:
+            key = self.legacy.put(snapshot, overwrite=overwrite)
+        finally:
+            if hasattr(self.legacy, "_shadow_authority"):
+                self.legacy._shadow_authority = prior
+        shadow = self.shadow_authority
+        if shadow is None:
+            try:
+                from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                    get_graph_shadow_authority,
+                )
+
+                shadow = get_graph_shadow_authority()
+            except Exception:
+                shadow = None
+        if shadow is not None:
+            try:
+                receipt = shadow.record_crypto_snapshot(
+                    snapshot, overwrite=overwrite, operation_id=operation_id
+                )
+                self._receipts.append(receipt)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("ShadowingGraphSnapshotStore shadow failed: %s", exc)
+        return key
+
+    def get(self, snapshot_id: str) -> GraphSnapshot:
+        return self.legacy.get(snapshot_id)
+
+    def get_by_digest(self, graph_digest: str) -> GraphSnapshot:
+        return self.legacy.get_by_digest(graph_digest)
+
+    def list_ids(self) -> tuple[str, ...]:
+        return self.legacy.list_ids()
+
+    def contains(self, snapshot_id: str) -> bool:
+        return self.legacy.contains(snapshot_id)
+
+    def history_parity(self) -> Mapping[str, Any]:
+        """Compare full crypto-flow history identity legacy vs DuckDB."""
+
+        shadow = self.shadow_authority
+        if shadow is None:
+            return {"matched": True, "count": 0, "entries": [], "authority": "legacy"}
+        return shadow.crypto_history_parity(self.list_ids(), self.legacy)
+
+
 __all__ = [
     "GraphSnapshotStore",
     "InMemoryGraphSnapshotStore",
+    "ShadowingGraphSnapshotStore",
     "SnapshotStoreError",
 ]

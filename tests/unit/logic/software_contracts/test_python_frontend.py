@@ -9,15 +9,14 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
 from ipfs_datasets_py.logic.software_contracts.python_frontend import (
+    DEFAULT_MAX_AST_DEPTH,
     ASTBlobRecord,
     PythonASTExtractor,
     build_python_ast_blob_record,
 )
-
 
 REPRESENTATIVE_SOURCE = """\
 from collections import defaultdict as dd
@@ -342,12 +341,37 @@ def test_resource_and_encoding_failures_are_durable_unsupported_records() -> Non
         "value = " + "+".join(["1"] * 500) + "\n",
         path="deep.py",
     )
-    assert [item.construct for item in deeply_nested.unsupported] == [
-        "frontend_traversal"
-    ]
-    assert [item.code for item in deeply_nested.diagnostics] == [
-        "python.resource_limit"
-    ]
+    assert [item.construct for item in deeply_nested.unsupported] == ["frontend_traversal"]
+    assert [item.code for item in deeply_nested.diagnostics] == ["python.resource_limit"]
+
+
+def test_frontend_depth_budget_is_independent_of_raised_recursion_limit() -> None:
+    source = "value = " + "+".join(["1"] * 500) + "\n"
+    baseline = PythonASTExtractor().extract(source, path="deep.py")
+    original_limit = sys.getrecursionlimit()
+    try:
+        sys.setrecursionlimit(max(original_limit, 3_000))
+        raised_limit = PythonASTExtractor().extract(source, path="deep.py")
+    finally:
+        sys.setrecursionlimit(original_limit)
+
+    assert raised_limit == baseline
+    assert [item.construct for item in raised_limit.unsupported] == ["frontend_traversal"]
+    assert [item.code for item in raised_limit.diagnostics] == ["python.resource_limit"]
+
+
+def test_frontend_depth_budget_is_wired_through_public_constructors() -> None:
+    source = "value = " + "+".join(["1"] * 20) + "\n"
+    direct = PythonASTExtractor(max_ast_depth=8).extract(source)
+    compatible = build_python_ast_blob_record(source, max_ast_depth=8)
+
+    assert compatible == direct
+    assert [item.construct for item in direct.unsupported] == ["frontend_traversal"]
+    assert "deterministic limit of 8" in direct.unsupported[0].reason
+
+    for invalid in (0, True, DEFAULT_MAX_AST_DEPTH + 1):
+        with pytest.raises(ValueError, match="max_ast_depth"):
+            PythonASTExtractor(max_ast_depth=invalid)  # type: ignore[arg-type]
 
 
 def test_utf8_byte_spans_are_exact_across_unicode_and_crlf() -> None:
@@ -359,11 +383,9 @@ def test_utf8_byte_spans_are_exact_across_unicode_and_crlf() -> None:
         for item in record.references
         if item.name == "café" and item.context == "read"
     )
-    assert source_bytes[read.span.start_byte : read.span.end_byte] == "café".encode(
-        "utf-8"
-    )
+    assert source_bytes[read.span.start_byte : read.span.end_byte] == "café".encode()
     assert read.span.start_line == 2
-    assert read.span.start_column == len("print(".encode("utf-8"))
+    assert read.span.start_column == len(b"print(")
 
 
 def test_analyzed_source_is_never_imported_or_executed(tmp_path: Path) -> None:

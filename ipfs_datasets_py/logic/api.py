@@ -696,6 +696,8 @@ _BW133_CONFLICT_LAZY_NAMES = {
 # Additive software-verification facade (LFV-G070 / LogicVerificationAPI@1).
 # Symbols are exposed via __getattr__ only so the frozen exact_exports contract
 # in tests/fixtures/logic/api_v1/manifest.json remains unchanged.
+# LFP-044 adds CanonicalLogicDiscovery@1 / VerificationAPI@2 dual-read helpers
+# through the same lazy path so exact_exports remain frozen.
 _VERIFICATION_API_EXPORT_NAMES = {
     "LogicVerificationAPI",
     "VerificationResponse",
@@ -716,6 +718,19 @@ _VERIFICATION_API_EXPORT_NAMES = {
     "probe_provider",
     "install_provider",
     "verification_api",
+    # LFP-044 dual-read / canonical-write migration surface
+    "CanonicalLogicDiscovery",
+    "CANONICAL_LOGIC_DISCOVERY_INTERFACE",
+    "VERIFICATION_API_V2_INTERFACE",
+    "MIGRATION_OPERATIONS",
+    "get_canonical_discovery",
+    "list_namespaces",
+    "list_namespace_identities",
+    "dual_read_label",
+    "canonical_write_label",
+    "migrate_artifact",
+    "inspect_translation_loss",
+    "inspect_provider_authority",
 }
 
 

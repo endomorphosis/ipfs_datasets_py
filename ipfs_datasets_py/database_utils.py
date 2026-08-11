@@ -15,15 +15,28 @@ DuckDB is used for:
 - Parquet file operations
 - Large-scale data processing
 - Time-series metrics
+
+Authority transition (DQK-046):
+- Domain-neutral legacy/shadow/dual/db-primary/export-only port
+- Wired through :func:`build_authority_transition_port` so dataset factories
+  share one outbox, parity, quarantine, and CAS-protected promote/rollback
+  surface. Cross-filesystem mutations are never claimed to be atomic.
 """
+
+from __future__ import annotations
+
 
 import os
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
 from contextlib import asynccontextmanager
 import sqlite3
-import anyio
+
+try:
+    import anyio
+except ImportError:  # sealed DQK validator wheels omit anyio
+    anyio = None  # type: ignore[assignment]
 
 try:
     import duckdb
@@ -31,6 +44,27 @@ except ImportError:
     duckdb = None
 
 logger = logging.getLogger(__name__)
+
+# Re-export authority-transition pin so package metadata self-checks and
+# factory callers share one compatibility window (DQK-046 / DQK-002).
+try:
+    from ipfs_datasets_py.duckdb_control.authority_transition import (
+        DUCKDB_COMPATIBILITY_SPEC as AUTHORITY_DUCKDB_COMPATIBILITY_SPEC,
+        DUCKDB_COMPATIBILITY_WINDOW as AUTHORITY_DUCKDB_COMPATIBILITY_WINDOW,
+        PINNED_DUCKDB_VERSION as AUTHORITY_PINNED_DUCKDB_VERSION,
+        AuthorityMode,
+        AuthorityTransitionPort,
+        MemoryAuthorityBackend,
+        build_authority_port,
+    )
+except ImportError:  # pragma: no cover - partial checkouts during bootstrap
+    AUTHORITY_DUCKDB_COMPATIBILITY_SPEC = "duckdb>=1.5.5,<1.6.0"
+    AUTHORITY_DUCKDB_COMPATIBILITY_WINDOW = ">=1.5.5,<1.6.0"
+    AUTHORITY_PINNED_DUCKDB_VERSION = "1.5.5"
+    AuthorityMode = None  # type: ignore[assignment,misc]
+    AuthorityTransitionPort = None  # type: ignore[assignment,misc]
+    MemoryAuthorityBackend = None  # type: ignore[assignment,misc]
+    build_authority_port = None  # type: ignore[assignment]
 
 
 class AsyncSQLiteCursor:
@@ -580,6 +614,109 @@ class DuckDBManager:
             self._conn = None
 
 
+def build_authority_transition_port(
+    domain: str,
+    *,
+    initial_mode: Union[str, Any] = "legacy",
+    writer_id: str = "writer:database-utils",
+    backend: Any = None,
+) -> Any:
+    """Install the domain-neutral authority-transition port (DQK-046).
+
+    Dataset database factories (SQLite metadata + DuckDB analytics) share this
+    port for shadow/dual/db-primary/export-only cutover.  The port never claims
+    cross-filesystem atomicity; dual writes use a transactional outbox with
+    idempotent recovery.
+
+    Args:
+        domain: Logical namespace (e.g. ``graphs``, ``vectors``, ``proofs``).
+        initial_mode: One of legacy/shadow/dual/db-primary/export-only.
+        writer_id: Fence writer identity for CAS-protected promote/rollback.
+        backend: Optional durable backend; defaults to an in-memory hermetic store.
+
+    Returns:
+        :class:`~ipfs_datasets_py.duckdb_control.authority_transition.AuthorityTransitionPort`
+    """
+    if build_authority_port is None:
+        raise ImportError(
+            "authority_transition port is unavailable; ensure "
+            "ipfs_datasets_py.duckdb_control.authority_transition is installed"
+        )
+    mode = initial_mode
+    if AuthorityMode is not None and not isinstance(initial_mode, AuthorityMode):
+        mode = AuthorityMode.parse(str(initial_mode))
+    return build_authority_port(
+        backend if backend is not None else MemoryAuthorityBackend(),
+        domain=domain,
+        initial_mode=mode,
+        writer_id=writer_id,
+    )
+
+
+class DatabaseFactory:
+    """Factory for datasets SQLite/DuckDB managers plus the authority port.
+
+    Keeps a single process-local registry of authority-transition ports keyed
+    by domain so dual-write outbox recovery is shared across callers.
+    """
+
+    def __init__(self, data_dir: Optional[Path] = None):
+        self._config = DatabaseConfig()
+        if data_dir is not None:
+            self._config.data_dir = Path(data_dir)
+            self._config.sqlite_path = self._config.data_dir / "metadata.db"
+            self._config.duckdb_path = self._config.data_dir / "analytics.db"
+        self._authority_ports: Dict[str, Any] = {}
+
+    @property
+    def data_dir(self) -> Path:
+        return self._config.data_dir
+
+    def create_sqlite_manager(self, db_path: Optional[Path] = None) -> "SQLiteManager":
+        return SQLiteManager(db_path=db_path or self._config.sqlite_path)
+
+    def create_duckdb_manager(self, db_path: Optional[Path] = None) -> "DuckDBManager":
+        return DuckDBManager(db_path=db_path or self._config.duckdb_path)
+
+    def get_or_create_authority_port(
+        self,
+        domain: str,
+        *,
+        initial_mode: Union[str, Any] = "legacy",
+        writer_id: str = "writer:database-factory",
+    ) -> Any:
+        """Return the shared authority-transition port for *domain*."""
+        if domain not in self._authority_ports:
+            self._authority_ports[domain] = build_authority_transition_port(
+                domain,
+                initial_mode=initial_mode,
+                writer_id=writer_id,
+            )
+        return self._authority_ports[domain]
+
+    def duckdb_compatibility(self) -> Dict[str, str]:
+        """Pinned DuckDB compatibility window shared with package metadata."""
+        return {
+            "pinned_version": AUTHORITY_PINNED_DUCKDB_VERSION,
+            "compatibility_window": AUTHORITY_DUCKDB_COMPATIBILITY_WINDOW,
+            "compatibility_spec": AUTHORITY_DUCKDB_COMPATIBILITY_SPEC,
+        }
+
+
+# Process-local default factory used by convenience helpers.
+_default_database_factory: Optional[DatabaseFactory] = None
+
+
+def get_database_factory(data_dir: Optional[Path] = None) -> DatabaseFactory:
+    """Return the process-local :class:`DatabaseFactory` (optionally re-rooted)."""
+    global _default_database_factory
+    if data_dir is not None:
+        return DatabaseFactory(data_dir=data_dir)
+    if _default_database_factory is None:
+        _default_database_factory = DatabaseFactory()
+    return _default_database_factory
+
+
 async def initialize_databases(create_default_users: bool = False):
     """
     Initialize both SQLite and DuckDB databases.
@@ -591,19 +728,22 @@ async def initialize_databases(create_default_users: bool = False):
     """
     logger.info("Initializing databases...")
     
+    factory = get_database_factory()
     # Initialize SQLite
-    sqlite_manager = SQLiteManager()
+    sqlite_manager = factory.create_sqlite_manager()
     await sqlite_manager.initialize_schema(create_default_users=create_default_users)
     logger.info("SQLite database initialized")
     
     # Initialize DuckDB
-    duckdb_manager = DuckDBManager()
+    duckdb_manager = factory.create_duckdb_manager()
     duckdb_manager.initialize_schema()
     logger.info("DuckDB database initialized")
     
     return {
         "sqlite": sqlite_manager,
-        "duckdb": duckdb_manager
+        "duckdb": duckdb_manager,
+        "factory": factory,
+        "duckdb_compatibility": factory.duckdb_compatibility(),
     }
 
 

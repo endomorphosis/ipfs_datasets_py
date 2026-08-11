@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import cProfile
 import functools
+import inspect
 import io
 import json
 import logging
@@ -99,6 +100,19 @@ THRESHOLD_CACHE_HIT_RATE = 0.80  # Should achieve >80% cache hit rate
 DEFAULT_PROFILE_RUNS = 10
 DEFAULT_SORT_KEY = 'cumulative'
 DEFAULT_TOP_N = 20
+
+
+def _callable_name(func: Callable[..., Any]) -> str:
+    """Return a stable display name for functions and callable objects."""
+    name = getattr(func, '__name__', None)
+    if isinstance(name, str) and name:
+        return name
+
+    mock_name = getattr(func, '_mock_name', None)
+    if isinstance(mock_name, str) and mock_name:
+        return mock_name
+
+    return type(func).__name__
 
 
 # ============================================================================
@@ -602,8 +616,9 @@ class PerformanceProfiler:
         if profile_data:
             total_calls = sum(stats[0] for stats in profile_data.stats.values())
         
+        function_name = _callable_name(func)
         stats = ProfilingStats(
-            function_name=func.__name__,
+            function_name=function_name,
             total_time=sum(times),
             mean_time=mean_time,
             median_time=median_time,
@@ -617,13 +632,13 @@ class PerformanceProfiler:
         
         # Add to history
         self.history.append({
-            'function': func.__name__,
+            'function': function_name,
             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
             'stats': stats.to_dict()
         })
         
         logger.info(
-            f"Profiled {func.__name__}: "
+            f"Profiled {function_name}: "
             f"{stats.mean_time_ms:.2f}ms ±{stats.std_dev * 1000:.2f}ms "
             f"({runs} runs)"
         )
@@ -657,13 +672,19 @@ class PerformanceProfiler:
             >>> if not stats.meets_threshold:
             ...     print("Warning: Prover too slow!")
         """
-        if not hasattr(prover, method):
+        missing = object()
+        if inspect.getattr_static(prover, method, missing) is missing:
             raise TDFOLError(
                 f"Prover has no method '{method}'",
                 suggestion="Use 'prove', 'forward_chain', or 'backward_chain'"
             )
         
         prove_func = getattr(prover, method)
+        if not callable(prove_func):
+            raise TDFOLError(
+                f"Prover attribute '{method}' is not callable",
+                suggestion="Use 'prove', 'forward_chain', or 'backward_chain'"
+            )
         
         # Profile the proving operation
         return self.profile_function(prove_func, formula, runs=runs)
@@ -1198,24 +1219,23 @@ class PerformanceProfiler:
             ""
         ]
         
-        # History summary
-        if self.history:
+        # Keep the report schema stable even when no profiles have run yet.
+        lines.extend([
+            "Profile History",
+            "-" * 80,
+            f"Total profiles: {len(self.history)}",
+            ""
+        ])
+
+        for entry in self.history[-5:]:  # Last 5
+            stats = entry['stats']
             lines.extend([
-                "Profile History",
-                "-" * 80,
-                f"Total profiles: {len(self.history)}",
+                f"Function: {entry['function']}",
+                f"Timestamp: {entry['timestamp']}",
+                f"Mean time: {stats['mean_time'] * 1000:.2f}ms",
+                f"Runs: {stats['runs']}",
                 ""
             ])
-            
-            for entry in self.history[-5:]:  # Last 5
-                stats = entry['stats']
-                lines.extend([
-                    f"Function: {entry['function']}",
-                    f"Timestamp: {entry['timestamp']}",
-                    f"Mean time: {stats['mean_time'] * 1000:.2f}ms",
-                    f"Runs: {stats['runs']}",
-                    ""
-                ])
         
         return "\n".join(lines)
     

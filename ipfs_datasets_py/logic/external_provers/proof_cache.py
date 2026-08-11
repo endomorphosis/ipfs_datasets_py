@@ -22,12 +22,39 @@ Migration:
 
 import warnings
 
-# Import from unified location
+# Import from unified location (DQK-065/066/067)
 from ..common.proof_cache import (
-    ProofCache,
     CachedProofResult,
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofCache as _CommonProofCache,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
     get_global_cache,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
 )
+
+EXTERNAL_PROVERS_LEGACY_BACKEND = LegacyProofBackend.EXTERNAL_PROVERS
+
+
+class ProofCache(_CommonProofCache):
+    """External-prover façade over the unified proof cache (DQK-065 shadow-ready)."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("shadow_backend", EXTERNAL_PROVERS_LEGACY_BACKEND.value)
+        super().__init__(*args, **kwargs)
+
 
 # Emit deprecation warning
 warnings.warn(
@@ -42,4 +69,21 @@ __all__ = [
     'ProofCache',
     'CachedProofResult',
     'get_global_cache',
+    'LEGACY_PROOF_BACKENDS',
+    'LegacyProofBackend',
+    'EXTERNAL_PROVERS_LEGACY_BACKEND',
+    'ProofAuthorityJSONRewriteError',
+    'ProofJSONCompatibilityError',
+    'ProofPublicationPolicyError',
+    'UnifiedProofAuthorityRepository',
+    'UnifiedProofShadowRepository',
+    'assert_compatibility_shims_import_unified_repository',
+    'assert_direct_json_persistence_forbidden',
+    'build_proof_authority_repository',
+    'build_proof_shadow_repository',
+    'get_authority_repository',
+    'get_shadow_repository',
+    'legacy_json_persistence_allowed',
+    'set_authority_repository',
+    'set_shadow_repository',
 ]

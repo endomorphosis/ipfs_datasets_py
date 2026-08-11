@@ -58,12 +58,68 @@ class DatasetConverter:
             # TODO: Implement dataset conversion logic
             # This is a placeholder for Phase 2 implementation
             
-            return {
+            result = {
                 "status": "success",
                 "source": source,
                 "target_format": target_format,
                 "message": "Dataset converted successfully"
             }
+            # DQK-089: optional admitted-lake shadow projection (legacy remains authority).
+            try:
+                from ipfs_datasets_py.ducklake.adapters import (
+                    ParquetProducerId,
+                    maybe_shadow_project,
+                )
+
+                target = (target_format or "").lower()
+                source_kind = "parquet" if target == "parquet" else "dataset"
+                shadow = maybe_shadow_project(
+                    producer_id=ParquetProducerId.DATASET_CONVERTER.value,
+                    dataset_id=f"converted:{source}:{target_format}",
+                    source_uri=str(source),
+                    source_kind=source_kind,
+                    schema_fields=(),
+                    operation_id=f"op:dataset_converter:{source}:{target_format}",
+                )
+                if shadow is not None:
+                    result["ducklake_shadow"] = shadow.to_dict()
+            except Exception as shadow_exc:  # noqa: BLE001 — never block legacy convert
+                self.logger.debug(
+                    "ducklake shadow projection skipped: %s", shadow_exc
+                )
+            # DQK-100: cutover discovery fence (no-op until lake authority promoted).
+            try:
+                from ipfs_datasets_py.ducklake.cutover import (
+                    maybe_enforce_lake_discovery,
+                )
+                from ipfs_datasets_py.ducklake.adapters import (
+                    ParquetProducerId as _PPId,
+                )
+
+                cutover = maybe_enforce_lake_discovery(
+                    producer_id=_PPId.DATASET_CONVERTER.value,
+                    source_uri=str(source),
+                    path=str(source),
+                    uses_mutable_sidecar=str(source).endswith(
+                        (".json", ".manifest", ".manifest.json")
+                    ),
+                )
+                if cutover is not None:
+                    result["ducklake_cutover"] = cutover
+            except Exception as cutover_exc:
+                from ipfs_datasets_py.ducklake.cutover import (
+                    CutoverBlockedError,
+                    is_lake_authority_active,
+                )
+
+                if is_lake_authority_active() and isinstance(
+                    cutover_exc, CutoverBlockedError
+                ):
+                    raise
+                self.logger.debug(
+                    "ducklake cutover discovery fence skipped: %s", cutover_exc
+                )
+            return result
         except Exception as e:
             self.logger.error(f"Error converting dataset: {e}")
             return {

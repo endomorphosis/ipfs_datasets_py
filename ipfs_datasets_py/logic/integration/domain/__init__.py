@@ -1,7 +1,7 @@
-"""
-Domain-specific integrations for logic module.
+"""Domain-specific integrations for the logic module.
 
-Provides domain-specific tools for legal, medical, and contract domains.
+Package exports are resolved lazily so importing one lightweight domain module
+does not initialize unrelated prover bridges or optional SymbolicAI runtimes.
 
 Components:
 - Legal: Domain knowledge, symbolic analysis, bulk processing
@@ -11,36 +11,44 @@ Components:
 - Document: Consistency checking
 """
 
-# Only import the classes that actually exist
-try:
-    from .legal_domain_knowledge import LegalDomainKnowledge
-except ImportError:
-    LegalDomainKnowledge = None
+from __future__ import annotations
 
-try:
-    from .legal_symbolic_analyzer import LegalSymbolicAnalyzer
-except ImportError:
-    LegalSymbolicAnalyzer = None
+import importlib
+from typing import Any
 
-try:
-    from .deontic_query_engine import DeonticQueryEngine
-except ImportError:
-    DeonticQueryEngine = None
+_LAZY_EXPORTS = {
+    "LegalDomainKnowledge": (".legal_domain_knowledge", "LegalDomainKnowledge"),
+    "LegalSymbolicAnalyzer": (".legal_symbolic_analyzer", "LegalSymbolicAnalyzer"),
+    "DeonticQueryEngine": (".deontic_query_engine", "DeonticQueryEngine"),
+    "TemporalDeonticAPI": (".temporal_deontic_api", "TemporalDeonticAPI"),
+    "DocumentConsistencyChecker": (
+        ".document_consistency_checker",
+        "DocumentConsistencyChecker",
+    ),
+}
 
-try:
-    from .temporal_deontic_api import TemporalDeonticAPI
-except ImportError:
-    TemporalDeonticAPI = None
 
-try:
-    from .document_consistency_checker import DocumentConsistencyChecker
-except ImportError:
-    DocumentConsistencyChecker = None
+def __getattr__(name: str) -> Any:
+    target = _LAZY_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module_name, attribute_name = target
+    try:
+        value = getattr(importlib.import_module(module_name, __name__), attribute_name)
+    except ImportError:
+        value = None
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_LAZY_EXPORTS))
 
 __all__ = [
-    'LegalDomainKnowledge',
-    'LegalSymbolicAnalyzer',
-    'DeonticQueryEngine',
-    'TemporalDeonticAPI',
-    'DocumentConsistencyChecker',
+    "LegalDomainKnowledge",
+    "LegalSymbolicAnalyzer",
+    "DeonticQueryEngine",
+    "TemporalDeonticAPI",
+    "DocumentConsistencyChecker",
 ]

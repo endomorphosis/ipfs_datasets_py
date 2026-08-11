@@ -37,7 +37,9 @@ SECURITY_ARTIFACT_MIGRATION_RECEIPT_VERSION: Final = (
 DEFAULT_INVENTORY_PATH: Final = (
     "docs/security_verification/security_ir_artifact_inventory.json"
 )
-DEFAULT_MANIFEST_PATH: Final = "security_ir_artifacts/migrations/manifest.json"
+DEFAULT_MANIFEST_PATH: Final = (
+    "archive/data/security_ir_artifacts/migrations/manifest.json"
+)
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _OBSERVATIONAL_INVENTORY_FIELDS: Final = frozenset(

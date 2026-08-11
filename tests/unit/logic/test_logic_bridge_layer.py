@@ -1,18 +1,10 @@
 from __future__ import annotations
 
-import importlib
 import json
+import subprocess
 import sys
+from pathlib import Path
 from types import SimpleNamespace
-
-
-def _fresh_import(module_name: str):
-    root = module_name.split(".", 1)[0]
-    for name in list(sys.modules.keys()):
-        if name == root or name.startswith(root + "."):
-            sys.modules.pop(name, None)
-    importlib.invalidate_caches()
-    return importlib.import_module(module_name)
 
 
 def test_bridge_manifest_exposes_optimizer_lanes() -> None:
@@ -56,11 +48,42 @@ def test_bridge_manifest_exposes_optimizer_lanes() -> None:
 
 
 def test_bridge_import_is_lightweight() -> None:
-    bridge = _fresh_import("ipfs_datasets_py.logic.bridge")
+    # Import isolation must not evict the package tree from this pytest
+    # process: already-collected tests may hold references to those module and
+    # class objects.  Probe a genuinely fresh interpreter instead.
+    parent_modules_before = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "ipfs_datasets_py" or name.startswith("ipfs_datasets_py.")
+    }
+    repo_root = Path(__file__).resolve().parents[3]
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import importlib, sys; "
+                "assert 'ipfs_datasets_py' not in sys.modules; "
+                "bridge = importlib.import_module('ipfs_datasets_py.logic.bridge'); "
+                "assert 'LegalIRDocument' in bridge.__all__; "
+                "assert 'ipfs_datasets_py.logic.integration' not in sys.modules; "
+                "assert 'ipfs_datasets_py.logic.external_provers' not in sys.modules"
+            ),
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
 
-    assert "LegalIRDocument" in bridge.__all__
-    assert "ipfs_datasets_py.logic.integration" not in sys.modules
-    assert "ipfs_datasets_py.logic.external_provers" not in sys.modules
+    assert completed.returncode == 0, completed.stderr
+    parent_modules_after = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "ipfs_datasets_py" or name.startswith("ipfs_datasets_py.")
+    }
+    assert parent_modules_after == parent_modules_before
 
 
 def test_bare_usc_citation_contract_distribution_prunes_auxiliary_lanes() -> None:

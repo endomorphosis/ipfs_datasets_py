@@ -5,6 +5,11 @@ Provides shard_embeddings_by_dimension, shard_embeddings_by_cluster,
 and merge_embedding_shards for large-scale vector processing.
 
 MCP tool wrapper: ipfs_datasets_py.mcp_server.tools.embedding_tools.shard_embeddings
+
+After DuckDB promotion (DQK-064), normal runtime never writes shard JSON or
+mutable sharding/clustering manifests; shard metadata is projected into the
+DuckDB vector catalog. Explicit import/export permits remain the only path
+for legacy JSON I/O.
 """
 
 from typing import List, Dict, Any, Optional, Union
@@ -17,6 +22,39 @@ import time
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+
+def _legacy_shard_json_io_allowed() -> bool:
+    """Return False after DuckDB promotion when no import/export permit is held."""
+    try:
+        from ipfs_datasets_py.vector_stores.management_engine import (
+            duckdb_only_after_promotion,
+            legacy_metadata_io_allowed,
+        )
+        if duckdb_only_after_promotion():
+            return False
+        return legacy_metadata_io_allowed()
+    except Exception:
+        return True
+
+
+def _guarded_json_write(path: Path, payload: Any) -> bool:
+    """Write JSON only when legacy I/O is allowed; return True if written."""
+    try:
+        from ipfs_datasets_py.vector_stores.management_engine import (
+            ImplicitLegacyMetadataError,
+            assert_legacy_metadata_path_allowed,
+        )
+        assert_legacy_metadata_path_allowed(path, operation="write")
+    except ImplicitLegacyMetadataError:
+        logger.debug("Blocked legacy shard/manifest JSON write: %s", path)
+        return False
+    except Exception:
+        if not _legacy_shard_json_io_allowed():
+            return False
+    with open(path, "w") as f:
+        json.dump(payload, f, indent=2)
+    return True
 
 
 async def shard_embeddings_by_dimension(
@@ -103,25 +141,25 @@ async def shard_embeddings_by_dimension(
 
                     dim_shard_filename = f"shard_{shard_idx:04d}_dim_{dim_chunk_idx:04d}.json"
                     dim_shard_path = output_path / dim_shard_filename
-
-                    with open(dim_shard_path, 'w') as f:
-                        json.dump({
-                            "embeddings": chunked_embeddings,
-                            "shard_info": {
-                                "shard_index": shard_idx,
-                                "dimension_chunk_index": dim_chunk_idx,
-                                "embedding_count": len(chunked_embeddings),
-                                "dimension_range": [dim_start, dim_end],
-                                "dimension_size": dim_end - dim_start,
-                            },
-                            "metadata": shard_metadata,
-                        }, f, indent=2)
+                    dim_payload = {
+                        "embeddings": chunked_embeddings,
+                        "shard_info": {
+                            "shard_index": shard_idx,
+                            "dimension_chunk_index": dim_chunk_idx,
+                            "embedding_count": len(chunked_embeddings),
+                            "dimension_range": [dim_start, dim_end],
+                            "dimension_size": dim_end - dim_start,
+                        },
+                        "metadata": shard_metadata,
+                    }
+                    written = _guarded_json_write(dim_shard_path, dim_payload)
 
                     dimension_shards.append({
                         "filename": dim_shard_filename,
-                        "path": str(dim_shard_path),
+                        "path": str(dim_shard_path) if written else None,
                         "dimension_range": [dim_start, dim_end],
                         "embedding_count": len(chunked_embeddings),
+                        "json_written": written,
                     })
 
                 shards_info.append({
@@ -134,26 +172,26 @@ async def shard_embeddings_by_dimension(
             else:
                 shard_filename = f"shard_{shard_idx:04d}.json"
                 shard_path = output_path / shard_filename
-
-                with open(shard_path, 'w') as f:
-                    json.dump({
-                        "embeddings": shard_embeddings,
-                        "shard_info": {
-                            "shard_index": shard_idx,
-                            "embedding_range": [start_idx, end_idx],
-                            "embedding_count": len(shard_embeddings),
-                            "full_dimension": embedding_dim,
-                        },
-                        "metadata": shard_metadata,
-                    }, f, indent=2)
+                shard_payload = {
+                    "embeddings": shard_embeddings,
+                    "shard_info": {
+                        "shard_index": shard_idx,
+                        "embedding_range": [start_idx, end_idx],
+                        "embedding_count": len(shard_embeddings),
+                        "full_dimension": embedding_dim,
+                    },
+                    "metadata": shard_metadata,
+                }
+                written = _guarded_json_write(shard_path, shard_payload)
 
                 shards_info.append({
                     "shard_index": shard_idx,
                     "filename": shard_filename,
-                    "path": str(shard_path),
+                    "path": str(shard_path) if written else None,
                     "embedding_range": [start_idx, end_idx],
                     "embedding_count": len(shard_embeddings),
                     "type": "standard",
+                    "json_written": written,
                 })
 
         manifest = {
@@ -163,18 +201,96 @@ async def shard_embeddings_by_dimension(
             "output_directory": str(output_path),
         }
         manifest_path = output_path / "sharding_manifest.json"
-        with open(manifest_path, 'w') as f:
-            json.dump(manifest, f, indent=2)
+        manifest_written = _guarded_json_write(manifest_path, manifest)
 
-        return {
+        result = {
             "status": "success",
             "output_directory": str(output_path),
             "total_shards": len(shards_info),
             "total_embeddings": total_embeddings,
             "shards": shards_info,
-            "manifest_file": str(manifest_path),
+            "manifest_file": str(manifest_path) if manifest_written else None,
+            "manifest_json_written": manifest_written,
             "metadata": shard_metadata,
         }
+
+        # Dual/shadow shard manifests into DuckDB vector catalog (DQK-062/063/064).
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_authority_catalog,
+                get_vector_shadow_catalog,
+                safe_dual_create,
+                safe_shadow_create,
+                duckdb_metadata_is_authority,
+            )
+            logical = Path(output_directory).name or "embedding-shards"
+            mapping = {
+                f"shard_{info.get('shard_index', i)}": i
+                for i, info in enumerate(shards_info)
+            }
+            create_fn = (
+                safe_dual_create
+                if duckdb_metadata_is_authority()
+                else safe_shadow_create
+            )
+            create_kwargs = dict(
+                logical_name=logical,
+                backend="shard_embeddings",
+                dimension=int(embedding_dim),
+                dtype="float32",
+                mapping=mapping,
+                metadata_json={
+                    "producer": "shard_embeddings_engine",
+                    "manifest_file": (
+                        str(manifest_path) if manifest_written else None
+                    ),
+                    "manifest": manifest,
+                    "bytes_location": "immutable_segment",
+                    "publication_approved": True,
+                },
+                shard_manifest={
+                    "shard_index": 0,
+                    "vector_count": total_embeddings,
+                    "shard_id": f"shard_manifest_{logical}",
+                    "total_shards": len(shards_info),
+                },
+                model_provider="embeddings",
+                model_name="shard-embeddings",
+                chunking_identity="chunk:shard@1",
+                normalization_identity="norm:none@1",
+                source_revision="src-shard-1",
+            )
+            try:
+                shadow = create_fn(**create_kwargs, bytes_location="immutable_segment")
+            except TypeError:
+                shadow = create_fn(**create_kwargs)
+            if shadow is not None:
+                result["shadow"] = shadow.to_dict()
+                result["authority"] = shadow.authority
+                catalog = (
+                    get_vector_authority_catalog() or get_vector_shadow_catalog()
+                )
+                if catalog is not None and catalog.enabled:
+                    for info in shards_info:
+                        catalog.shadow_shard_manifest(
+                            logical_name=logical,
+                            backend="shard_embeddings",
+                            shard_manifest={
+                                "shard_index": int(info.get("shard_index", 0)),
+                                "vector_count": int(
+                                    info.get("embedding_count", 0)
+                                ),
+                                "path": info.get("path") or info.get("filename"),
+                                "type": info.get("type"),
+                            },
+                        )
+        except Exception as shadow_exc:  # noqa: BLE001
+            logger.warning(
+                "Shard embeddings shadow quarantined (legacy ok): %s",
+                shadow_exc,
+            )
+
+        return result
 
     except Exception as e:
         logger.error(f"Embedding sharding failed: {e}")
@@ -252,25 +368,25 @@ async def shard_embeddings_by_cluster(
 
                 shard_filename = f"cluster_{cluster_id:04d}_shard_{shard_idx:04d}.json"
                 shard_path = output_path / shard_filename
-
-                with open(shard_path, 'w') as f:
-                    json.dump({
-                        "embeddings": shard_embeddings,
-                        "shard_info": {
-                            "cluster_id": cluster_id,
-                            "shard_index": shard_idx,
-                            "embedding_count": len(shard_embeddings),
-                            "original_indices": original_indices,
-                            "clustering_method": clustering_method,
-                        },
-                    }, f, indent=2)
+                payload = {
+                    "embeddings": shard_embeddings,
+                    "shard_info": {
+                        "cluster_id": cluster_id,
+                        "shard_index": shard_idx,
+                        "embedding_count": len(shard_embeddings),
+                        "original_indices": original_indices,
+                        "clustering_method": clustering_method,
+                    },
+                }
+                written = _guarded_json_write(shard_path, payload)
 
                 cluster_shards.append({
                     "cluster_id": cluster_id,
                     "shard_index": shard_idx,
                     "filename": shard_filename,
-                    "path": str(shard_path),
+                    "path": str(shard_path) if written else None,
                     "embedding_count": len(shard_embeddings),
+                    "json_written": written,
                 })
 
         manifest = {
@@ -285,8 +401,7 @@ async def shard_embeddings_by_cluster(
             "output_directory": str(output_path),
         }
         manifest_path = output_path / "clustering_manifest.json"
-        with open(manifest_path, 'w') as f:
-            json.dump(manifest, f, indent=2)
+        manifest_written = _guarded_json_write(manifest_path, manifest)
 
         return {
             "status": "success",
@@ -294,7 +409,8 @@ async def shard_embeddings_by_cluster(
             "total_clusters": num_clusters,
             "total_shards": len(cluster_shards),
             "cluster_shards": cluster_shards,
-            "manifest_file": str(manifest_path),
+            "manifest_file": str(manifest_path) if manifest_written else None,
+            "manifest_json_written": manifest_written,
             "note": "Clustering simulation - full implementation requires ML libraries",
         }
 

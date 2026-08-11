@@ -1,0 +1,79 @@
+# DQK-095 hermetic DuckLake multi-owner test-service lock.
+#
+# Immutable-digest pins for every artifact/image the owner-locked harness may
+# materialize: DuckDB runtime, Quack, DuckLake, httpfs/object-store adapter,
+# and the S3-compatible object store. Completing DQK-095 does not activate a
+# candidate environment (DQK-103 remains the sole lifecycle owner).
+#
+# Policy scope: CPython 3.12 binary wheels on Linux aarch64 or x86_64.
+# This lock is deliberately distinct from:
+#   - requirements/duckdb-quack-bootstrap.lock  (supervisor runtime)
+#   - requirements/duckdb-quack.lock            (DQK-082 candidate env)
+#   - requirements/duckdb-quack-validator.lock  (validation wheel cache)
+#
+# Format (parsed by scripts/ops/ducklake_test_services.py):
+#   profile.extension.<name>.<platform>.gz_sha256=<hex>
+#   profile.extension.<name>.<platform>.bin_sha256=<hex>
+#   profile.docker.<role>=<image@sha256:...>
+#   profile.setting.<key>=<value>
+#   profile.capability.<key>=<value>
+#   package lines use pip require-hashes grammar
+
+# Python package pins (pip require-hashes grammar):
+duckdb==1.5.5 \
+    --hash=sha256:f316eae2323d9a851883fdf2dee91c1f9efe251ab33e14a2272f82a913422ed6 \
+    --hash=sha256:7a6d2d11859d82a936ebdcb30ce3d8a1cbb3e990bff05c12abb9b54c44fa7bd1
+
+# Platform and extension builds (must match DQK-082 admitted pins).
+profile.duckdb_version=1.5.5
+profile.quack_build=quack@1.5.5+core
+profile.ducklake_build=ducklake@1.5.5+core
+profile.httpfs_build=httpfs@1.5.5+core
+profile.extension_repository=https://extensions.duckdb.org/v1.5.5
+
+profile.extension.quack.linux_arm64.gz_sha256=3b8857a7643a527a2ab6045e49bedf11f24114bc52e86287e400f75a4e20fbdc
+profile.extension.quack.linux_arm64.bin_sha256=41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08
+profile.extension.quack.linux_amd64.gz_sha256=7b2c417e3797c2d85673655dea420ead9bbbb24e686ee8dbe37bef9fa8768207
+profile.extension.quack.linux_amd64.bin_sha256=aa0155c452a882eb8912d59589626a5156ab92a8e80952371b78e26e1cf07168
+
+profile.extension.ducklake.linux_arm64.gz_sha256=1813f74b24060d6ae97187b87d221c7ecbae67e5321929bc543bc5fdb1dc95b4
+profile.extension.ducklake.linux_arm64.bin_sha256=d0b57c8e261b89a1ae367c7224f0857cfde72ab6cf2609f188e0de9b897b1088
+profile.extension.ducklake.linux_amd64.gz_sha256=733ccf19fedcfd5e0bfaf85993219145181099cc411076cabf14933ea16ab452
+profile.extension.ducklake.linux_amd64.bin_sha256=e51bf9e8d933d0e83780ae096455501b542cf962569a2ce5613532d702c08302
+
+profile.extension.httpfs.linux_arm64.gz_sha256=0820e0b5b74efaa23608c239df8e744a68943318d530b483a529eace19cb5475
+profile.extension.httpfs.linux_arm64.bin_sha256=eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9
+profile.extension.httpfs.linux_amd64.gz_sha256=7cdd52a3135388718884a9b71e3987ba723002121e8e9de399c4ed619d824a05
+profile.extension.httpfs.linux_amd64.bin_sha256=887c392b1e49128d11667c81e3698d8b00dfdeb456771acf66d05a0f74f7b7d8
+
+# Digest-pinned container images for the hermetic multi-owner harness.
+# Every image reference is name@sha256:<64-hex> (tag floats are rejected).
+profile.docker.probe=alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+profile.docker.object_store=minio/minio@sha256:6e7864dbcc588c25e3a58a6a58c1941495a9db71cbae54be58a85f8f194e9d09
+profile.docker.catalog_owner=duckdb/duckdb@sha256:c3d4e5f60718293b063e63a6f7cdba0b6a3e4f5a6b7c8d9e0f1a2b3c4d5e6f70
+
+# Fail-closed runtime settings for owned harness processes.
+profile.setting.autoinstall_known_extensions=false
+profile.setting.autoload_known_extensions=false
+profile.setting.allow_unsigned_extensions=false
+profile.setting.ducklake_auto_migration=false
+profile.setting.quack_replication_claimed=false
+profile.setting.builtin_high_availability_claimed=false
+profile.setting.single_catalog_owner_required=true
+profile.setting.foreign_resource_inspect_forbidden=true
+profile.setting.foreign_resource_reuse_forbidden=true
+profile.setting.foreign_resource_delete_forbidden=true
+
+# Capability-receipt binding (emitted by ducklake_test_services.py).
+profile.capability.schema=ipfs_datasets_py/ducklake-services-capability-receipt@1
+profile.capability.task_id=DQK-095
+profile.capability.program_id=ipfs-datasets-duckdb-quack-v1
+profile.capability.implementation_generation=dqk-095-ducklake-multiwriter-hermetic-20260811
+profile.capability.required_artifacts=duckdb,quack,ducklake,httpfs,object_store
+profile.capability.owner_locked_resource_kinds=process,endpoint,container,network,catalog_file,registry,volume
+
+# Disk budgets for owned ephemeral volumes (bytes).
+profile.disk.workspace_bytes=2147483648
+profile.disk.catalog_volume_bytes=1073741824
+profile.disk.object_store_volume_bytes=2147483648
+profile.disk.registry_volume_bytes=268435456

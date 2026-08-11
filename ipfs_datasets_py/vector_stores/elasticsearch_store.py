@@ -147,6 +147,49 @@ class ElasticsearchVectorStore(BaseVectorStore):
                 index=index_name,
                 body=mapping
             )
+            try:
+                # Dual/shadow catalog: DuckDB lifecycle metadata; bytes in ES.
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    safe_retry_external_mutation,
+                    safe_shadow_create,
+                )
+
+                def _project(op_id: str):
+                    return safe_shadow_create(
+                        logical_name=index_name,
+                        backend="elasticsearch",
+                        dimension=int(dimension),
+                        dtype="float32",
+                        mapping={},
+                        metadata_json={
+                            "producer": "elasticsearch_store",
+                            "bytes_location": "engine",
+                            "operation_id": op_id,
+                        },
+                        model_provider="elasticsearch",
+                        model_name="elasticsearch",
+                        chunking_identity=kwargs.get(
+                            "chunking_identity", "chunk:elasticsearch@1"
+                        ),
+                        normalization_identity=kwargs.get(
+                            "normalization_identity", "norm:none@1"
+                        ),
+                        source_revision=kwargs.get("source_revision", "src-0"),
+                        operation_id=op_id,
+                    )
+
+                safe_retry_external_mutation(
+                    operation_id=f"es-create:{index_name}",
+                    backend="elasticsearch",
+                    mutate_fn=_project,
+                    max_attempts=3,
+                    backoff_s=0.0,
+                )
+            except Exception as shadow_exc:  # noqa: BLE001
+                logger.warning(
+                    "Elasticsearch shadow create quarantined (legacy ok): %s",
+                    shadow_exc,
+                )
             
             logger.info(f"Created Elasticsearch index: {index_name}")
             return response.get("acknowledged", False)
@@ -167,6 +210,29 @@ class ElasticsearchVectorStore(BaseVectorStore):
         
         try:
             response = await self.client.indices.delete(index=index_name)
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    safe_retry_external_mutation,
+                    safe_shadow_delete,
+                )
+
+                def _delete(op_id: str):
+                    return safe_shadow_delete(
+                        logical_name=index_name, backend="elasticsearch"
+                    )
+
+                safe_retry_external_mutation(
+                    operation_id=f"es-delete:{index_name}",
+                    backend="elasticsearch",
+                    mutate_fn=_delete,
+                    max_attempts=3,
+                    backoff_s=0.0,
+                )
+            except Exception as shadow_exc:  # noqa: BLE001
+                logger.warning(
+                    "Elasticsearch shadow delete quarantined (legacy ok): %s",
+                    shadow_exc,
+                )
             logger.info(f"Deleted Elasticsearch index: {index_name}")
             return response.get("acknowledged", False)
         except NotFoundError:
