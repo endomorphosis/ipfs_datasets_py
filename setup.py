@@ -762,6 +762,7 @@ setup(
     author="IPFS Datasets Contributors",
     entry_points={
         'console_scripts': [
+            'semantic-index=ipfs_datasets_py.cli.semantic_index_cli:main',
             'ipfs-datasets=ipfs_datasets_cli:cli_main',
             'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
             'netherlands-laws=ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main',
