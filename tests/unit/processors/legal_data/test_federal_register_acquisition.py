@@ -858,6 +858,7 @@ def test_api_abstract_accepts_observed_official_length_but_remains_bounded() -> 
         page_id="p-2026-03/page-4",
     )
     assert document.abstract == observed
+    assert acquisition.MAX_ABSTRACT_CHARS == 4096
 
     with pytest.raises(FederalRegisterAcquisitionError, match="abstract exceeds"):
         acquisition.InventoryDocument.from_api_result(
