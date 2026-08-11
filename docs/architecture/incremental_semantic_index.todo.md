@@ -408,7 +408,7 @@ W8  ISI-032
 
 ## ISI-031 Prove the full mutation and persistence fixture matrix
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: acceptance
