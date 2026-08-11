@@ -51,6 +51,8 @@ from typing import (
 
 from ipfs_datasets_py.processors.legal_data.federal_register_completeness import (
     SCHEMA_VERSION as COMPLETENESS_SCHEMA_VERSION,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_completeness import (
     CompletenessResult,
     CompletenessVerdict,
     DatePartition,
@@ -1531,6 +1533,58 @@ def atomic_write_json(path: PathLike, payload: Mapping[str, Any]) -> None:
                 pass
         raise
     finally:
+        os.close(parent_fd)
+
+
+def atomic_create_json(path: PathLike, payload: Mapping[str, Any]) -> None:
+    """Atomically create *path* without replacing any existing file."""
+
+    target = Path(path).absolute()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    resolved_parent = target.parent.resolve(strict=True)
+    if resolved_parent != target.parent:
+        raise CheckpointError("JSON output parent must be a canonical real directory")
+    text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    assert_no_secrets(payload, context=f"checkpoint:{target.name}")
+    parent_fd = os.open(
+        resolved_parent,
+        os.O_RDONLY
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_DIRECTORY", 0),
+    )
+    tmp_name = ""
+    fd = -1
+    try:
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f".{target.name}.",
+            suffix=".tmp",
+            dir=str(resolved_parent),
+        )
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            fd = -1  # ownership transferred to the file object
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            os.link(tmp_name, target, follow_symlinks=False)
+        except FileExistsError as exc:
+            raise CheckpointError(
+                f"refusing to replace existing JSON output: {target}"
+            ) from exc
+        os.fsync(parent_fd)
+    except Exception:
+        if fd >= 0:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+        raise
+    finally:
+        if tmp_name:
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
         os.close(parent_fd)
 
 
@@ -4243,6 +4297,7 @@ __all__ = [
     "acquire_partition",
     "assert_inventory_closed",
     "assert_no_secrets",
+    "atomic_create_json",
     "atomic_write_json",
     "build_compact_inventory_recipe",
     "build_completion_receipt",

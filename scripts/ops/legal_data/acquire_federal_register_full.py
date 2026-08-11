@@ -33,13 +33,14 @@ if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import (  # noqa: E402
+    GOAL_ID,
     SCHEMA_VERSION,
     TASK_ID,
-    GOAL_ID,
     AcquisitionConfig,
     AcquisitionMode,
     FederalRegisterAcquisitionError,
     acquire_federal_register_inventory,
+    atomic_create_json,
     atomic_write_json,
     build_compact_inventory_recipe,
     build_fixture_inventory_report,
@@ -183,14 +184,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 raw_disk = load_json_object(report_path)
 
             if args.write:
-                if raw_disk is not None and raw_disk.get("mode") == "live":
-                    raise FederalRegisterAcquisitionError(
-                        "refusing to replace a committed live inventory with "
-                        "fixture evidence"
-                    )
                 # Prefer the compact admission-friendly recipe on disk; full
                 # expansion is available via --print-json or runtime check.
-                atomic_write_json(report_path, recipe)
+                # Creation is a kernel-enforced no-replace operation so a
+                # concurrent live receipt can never be overwritten.
+                atomic_create_json(report_path, recipe)
                 print(f"wrote inventory recipe: {report_path}", file=sys.stderr)
                 raw_disk = recipe
 

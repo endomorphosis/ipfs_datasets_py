@@ -38,6 +38,7 @@ from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import 
     acquire_federal_register_inventory,
     assert_inventory_closed,
     assert_no_secrets,
+    atomic_create_json,
     build_compact_inventory_recipe,
     build_completion_receipt,
     build_default_fixture_recipe,
@@ -47,8 +48,8 @@ from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import 
     default_report_path,
     expand_inventory_payload,
     find_secret_surfaces,
-    is_inventory_recipe,
     inspect_inventory_report_structure,
+    is_inventory_recipe,
     plan_delta_partitions,
     plan_full_history_partitions,
     plan_monthly_partitions,
@@ -1168,3 +1169,28 @@ def test_on_disk_live_federal_inventory_passes_non_authorizing_structure_check()
     assert result["acceptance"]["no_coverage_gap"] is True
     assert result["acceptance"]["duplicate_free_by_official_identity"] is True
     assert result["acceptance"]["secrets_absent"] is True
+
+
+def test_atomic_fixture_create_never_replaces_a_concurrent_target(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "federal_inventory.json"
+    concurrent_live_bytes = b'{"mode":"live","sentinel":"preserve-me"}\n'
+    real_link = acquisition.os.link
+
+    def install_live_then_link(
+        source: str,
+        destination: Path,
+        *,
+        follow_symlinks: bool,
+    ) -> None:
+        Path(destination).write_bytes(concurrent_live_bytes)
+        real_link(source, destination, follow_symlinks=follow_symlinks)
+
+    monkeypatch.setattr(acquisition.os, "link", install_live_then_link)
+
+    with pytest.raises(acquisition.CheckpointError, match="refusing to replace"):
+        atomic_create_json(target, build_compact_inventory_recipe())
+
+    assert target.read_bytes() == concurrent_live_bytes
