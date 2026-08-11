@@ -91,6 +91,41 @@ def test_unrelated_same_basename_git_repositories_have_distinct_identity(tmp_pat
     assert repository_identity(roots[0]) != repository_identity(roots[1])
 
 
+def test_no_origin_identity_is_root_history_stable_and_unborn_is_typed(tmp_path: Path) -> None:
+    unborn = tmp_path / "unborn"
+    unborn.mkdir()
+    _git(unborn, "init")
+    snapshot = snapshot_repository(unborn, repository_id="repo:caller")
+    assert snapshot.mode == "git-unborn"
+    assert snapshot.repository_id == "repo:caller"
+    _git(unborn, "config", "user.email", "test@example.invalid")
+    _git(unborn, "config", "user.name", "Test")
+    (unborn / "module.py").write_text("value = 1\n", encoding="utf-8")
+    _git(unborn, "add", ".")
+    _git(unborn, "commit", "-m", "initial")
+    first_identity = repository_identity(unborn)
+    _git(unborn, "commit", "--allow-empty", "-m", "empty")
+    assert repository_identity(unborn) == first_identity
+    assert snapshot_repository(unborn, repository_id="repo:caller").repository_id == "repo:caller"
+
+
+def test_excluded_change_does_not_change_clean_selection_or_snapshot(tmp_path: Path) -> None:
+    _git(tmp_path, "init")
+    _git(tmp_path, "config", "user.email", "test@example.invalid")
+    _git(tmp_path, "config", "user.name", "Test")
+    (tmp_path / "module.py").write_text("value = 1\n", encoding="utf-8")
+    (tmp_path / ".semantic-index").mkdir()
+    control = tmp_path / ".semantic-index" / "state"
+    control.write_text("one", encoding="utf-8")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-m", "initial")
+    first = snapshot_repository(tmp_path)
+    control.write_text("two", encoding="utf-8")
+    second = snapshot_repository(tmp_path)
+    assert second.mode == "git-clean"
+    assert second.snapshot_cid == first.snapshot_cid
+
+
 def test_malformed_git_name_is_retained_as_opaque_artifact(tmp_path: Path) -> None:
     _git(tmp_path, "init")
     _git(tmp_path, "config", "user.email", "test@example.invalid")

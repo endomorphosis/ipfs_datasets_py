@@ -10,7 +10,6 @@ CID-verified snapshot inputs.
 from __future__ import annotations
 
 import os
-import stat
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
@@ -28,13 +27,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis im
     PythonSemanticAnalyzer,
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_index.pytest_analysis import PytestAnalyzer
-from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import (
-    RepositorySnapshot,
-    SnapshotEntry,
-    _git,
-    _git_root,
-    snapshot_repository,
-)
+from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import RepositorySnapshot, SnapshotEntry, _git_root, snapshot_repository
 
 
 SCANNER_NAME = "semantic-repository-scanner"
@@ -49,9 +42,21 @@ def _artifact_id(path: str) -> str:
     return "artifact:" + path
 
 
+def _artifact_path(entry: SnapshotEntry) -> str:
+    """Models intentionally admit only normalized source paths.
+
+    Raw snapshot names are nevertheless retained verbatim in entry evidence;
+    unsafe names get a private display path and a raw-name-derived identity.
+    """
+    import unicodedata
+    if "\\" not in entry.path and unicodedata.normalize("NFC", entry.path) == entry.path:
+        return entry.path
+    return "@snapshot-entry/" + (entry.raw_path_hex or "")
+
+
 def _opaque_artifact(entry: SnapshotEntry, reason: str, *, source_cid: str | None = None) -> ArtifactRecord:
     return ArtifactRecord(
-        _artifact_id(entry.path), "opaque", entry.path,
+        _artifact_id("raw/" + (entry.raw_path_hex or entry.path.encode().hex())), "opaque", _artifact_path(entry),
         entry.source_cid if source_cid is None else source_cid,
         AnalysisConfidence.OPAQUE,
         {"snapshot_kind": entry.kind, "opaque_reason": reason},
@@ -60,35 +65,9 @@ def _opaque_artifact(entry: SnapshotEntry, reason: str, *, source_cid: str | Non
 
 def _typed_artifact(entry: SnapshotEntry) -> ArtifactRecord:
     return ArtifactRecord(
-        _artifact_id(entry.path), entry.kind, entry.path, entry.source_cid,
+        _artifact_id("raw/" + (entry.raw_path_hex or entry.path.encode().hex())), entry.kind, _artifact_path(entry), entry.source_cid,
         AnalysisConfidence.EXACT, {"snapshot_kind": entry.kind},
     )
-
-
-def _read_regular_file(root: Path, entry: SnapshotEntry) -> bytes | None:
-    """Read a manifest entry without following a replacement symlink."""
-    path = root / entry.path
-    try:
-        before = path.stat(follow_symlinks=False)
-        if not stat.S_ISREG(before.st_mode):
-            return None
-        nofollow = getattr(os, "O_NOFOLLOW", None)
-        if nofollow is None:
-            return None
-        descriptor = os.open(path, os.O_RDONLY | nofollow)
-        with os.fdopen(descriptor, "rb") as handle:
-            opened = os.fstat(handle.fileno())
-            if not stat.S_ISREG(opened.st_mode):
-                return None
-            data = handle.read()
-        after = path.stat(follow_symlinks=False)
-    except OSError:
-        return None
-    if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
-        after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns
-    ):
-        return None
-    return data
 
 
 def _input_root(repository: Path) -> Path:
@@ -96,10 +75,15 @@ def _input_root(repository: Path) -> Path:
     return _git_root(repository) or repository
 
 
-def _read_git_blob(root: Path, tree: str, entry: SnapshotEntry) -> bytes | None:
-    """Read an immutable blob selected by a clean snapshot's tree object."""
-    result = _git(root, ("cat-file", "blob", f"{tree}:{entry.path}"))
-    return result.stdout if result.returncode == 0 else None
+def _witness_matches(root: Path, entry: SnapshotEntry) -> bool:
+    """Detect replacement without opening a selected input for content."""
+    if entry.witness is None:
+        return True
+    try:
+        observed = (root / os.fsdecode(bytes.fromhex(entry.raw_path_hex or ""))).stat(follow_symlinks=False)
+    except (OSError, ValueError):
+        return False
+    return entry.witness == (observed.st_dev, observed.st_ino, observed.st_size, observed.st_mtime_ns)
 
 
 @dataclass(slots=True)
@@ -128,19 +112,15 @@ class RepositoryScanner:
         for entry in current.entries:
             if entry.is_opaque or entry.source_cid is None:
                 continue
-            # A clean snapshot is anchored to an immutable tree.  Never read
-            # its path from the worktree: smudge filters and a post-selection
-            # mutation would otherwise parse bytes not represented by the CID.
-            data = (_read_git_blob(root, current.git_tree, entry)
-                    if current.mode == "git-clean" and current.git_tree is not None
-                    else _read_regular_file(root, entry))
-            if data is None:
-                unavailable[entry.path] = ("git_blob_unavailable" if current.mode == "git-clean"
-                                           else "source_unavailable_or_raced")
-            elif cid_for_bytes(data) != entry.source_cid:
+            # Content bytes were captured by snapshot acquisition.  The
+            # witness check deliberately reads metadata only; it preserves the
+            # historical race signal without a second content-byte read.
+            if current.mode != "git-clean" and not _witness_matches(root, entry):
                 unavailable[entry.path] = "source_cid_mismatch"
+            elif entry.captured_bytes is None:
+                unavailable[entry.path] = "source_bytes_unavailable"
             else:
-                sources[entry.path] = data
+                sources[entry.path] = entry.captured_bytes
         return self.scan_snapshot(current, sources, previous_state=previous_state, unavailable=unavailable)
 
     def scan_snapshot(
@@ -175,6 +155,15 @@ class RepositoryScanner:
         verified: dict[str, bytes] = {}
         failures = dict(unavailable or {})
         entries_by_path = {entry.path: entry for entry in snapshot.entries}
+        # State roots must bind the complete acquisition authority, not merely
+        # the parsed source subset.  This has a fixed identity so a real file
+        # named @snapshot-evidence cannot collide with it.
+        artifacts.append(ArtifactRecord(
+            "artifact:snapshot-evidence", "snapshot-evidence", "@snapshot-evidence",
+            snapshot.snapshot_cid, AnalysisConfidence.EXACT,
+            {"snapshot": snapshot.to_dict(), "acquisition": snapshot.mode,
+             "exclusions": list(snapshot.exclusions)},
+        ))
         for entry in snapshot.entries:
             if entry.is_opaque:
                 artifacts.append(_opaque_artifact(entry, entry.opaque_reason or "opaque_snapshot"))
@@ -201,6 +190,9 @@ class RepositoryScanner:
         pytest_sources: dict[str, bytes] = {}
         for path, raw in sorted(verified.items()):
             entry = entries_by_path[path]
+            if _artifact_path(entry) != entry.path:
+                artifacts.append(_opaque_artifact(entry, "raw_path_not_model_safe"))
+                continue
             if entry.kind == "python":
                 analysis = python.analyze(raw, path)
                 if analysis.diagnostics:
