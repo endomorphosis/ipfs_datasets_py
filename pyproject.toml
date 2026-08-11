@@ -287,6 +287,7 @@ netherlands-laws = "ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.
 ipfs-netherlands-laws = "ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main"
 ipfs-datasets-sms-bridge = "ipfs_datasets_py.messaging.sms_bridge:main"
 ipfs-datasets-install-provers = "ipfs_datasets_py.logic.integration.bridges.prover_installer:main"
+semantic-index = "ipfs_datasets_py.cli.semantic_index_cli:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
