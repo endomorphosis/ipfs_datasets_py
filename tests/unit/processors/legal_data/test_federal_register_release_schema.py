@@ -35,7 +35,6 @@ from ipfs_datasets_py.processors.legal_data.federal_register_release_schema impo
     ArtifactFamily,
     ArtifactPathError,
     BoundKind,
-    CentroidRecord,
     CorrectionRelation,
     CorpusRecord,
     DocumentIdentityError,
@@ -555,6 +554,21 @@ def test_unknown_or_malformed_document_number_series_fail_closed(
         validate_document_number(document_number)
     with pytest.raises(DocumentIdentityError):
         validate_legal_id(f"fr:{document_number}:2026-03-15")
+
+
+@pytest.mark.parametrize("surrounding", (" 2024-19189", "2024-19189 "))
+def test_document_number_rejects_surrounding_whitespace(surrounding: str):
+    with pytest.raises(DocumentIdentityError):
+        validate_document_number(surrounding)
+
+
+@pytest.mark.parametrize(
+    "legal_id",
+    (" fr:2024-19189:2026-03-15", "fr:2024-19189:2026-03-15 "),
+)
+def test_legal_id_rejects_surrounding_whitespace(legal_id: str):
+    with pytest.raises(DocumentIdentityError):
+        validate_legal_id(legal_id)
 
 
 def test_legal_id_must_match_document_number_and_publication_date_fields():

@@ -21,7 +21,6 @@ from ipfs_datasets_py.processors.legal_data.federal_register_completeness import
     DatePartitionError,
     FailedFinalError,
     FailureKind,
-    FederalRegisterCompletenessError,
     MetadataAsBodyError,
     OpenPageError,
     PageStatus,
@@ -61,6 +60,7 @@ from ipfs_datasets_py.processors.legal_data.federal_register_source_policy impor
     default_source_policy,
     is_mutable_cutoff,
     official_authority_catalog,
+    parse_legal_id,
     require_immutable_observation_cutoff,
     validate_body_text_disposition_fields,
     validate_document_number,
@@ -244,6 +244,23 @@ def test_unknown_or_malformed_document_number_series_fail_closed(
 ) -> None:
     with pytest.raises(DocumentIdentityError):
         validate_document_number(document_number)
+
+
+@pytest.mark.parametrize("surrounding", (" 2024-19189", "2024-19189 "))
+def test_document_identity_rejects_surrounding_whitespace(surrounding: str):
+    with pytest.raises(DocumentIdentityError):
+        validate_document_number(surrounding)
+    with pytest.raises(DocumentIdentityError):
+        parse_legal_id(f"fr:{surrounding}:2026-03-15")
+
+
+@pytest.mark.parametrize(
+    "legal_id",
+    (" fr:2024-19189:2026-03-15", "fr:2024-19189:2026-03-15 "),
+)
+def test_legal_id_rejects_surrounding_whitespace(legal_id: str):
+    with pytest.raises(DocumentIdentityError):
+        parse_legal_id(legal_id)
 
 
 def test_metadata_cannot_be_represented_as_body_text() -> None:

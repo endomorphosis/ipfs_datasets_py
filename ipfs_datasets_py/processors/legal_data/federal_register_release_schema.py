@@ -710,6 +710,10 @@ def validate_entry_cid(value: Any, *, name: str = "entry_cid") -> str:
 def validate_document_number(value: Any, *, name: str = "document_number") -> str:
     """Validate an official Federal Register document-number shape."""
 
+    if not isinstance(value, str) or value != value.strip():
+        raise DocumentIdentityError(
+            f"{name} must use exact canonical bytes without surrounding whitespace"
+        )
     text = _require_non_empty_str(value, name, maximum=32)
     if _POSITIONAL_ID_RE.fullmatch(text):
         raise PositionalIdentityError(
@@ -786,6 +790,10 @@ def validate_legal_id(value: Any, *, name: str = "legal_id") -> str:
     the durable publication identity independent of content version.
     """
 
+    if not isinstance(value, str) or value != value.strip():
+        raise DocumentIdentityError(
+            f"{name} must use exact canonical bytes without surrounding whitespace"
+        )
     text = _require_non_empty_str(value, name)
     if _POSITIONAL_ID_RE.fullmatch(text):
         raise PositionalIdentityError(
@@ -801,7 +809,9 @@ def validate_legal_id(value: Any, *, name: str = "legal_id") -> str:
             f"{name} must match fr:<document_number>:<publication_date>"
             f"[:qualifier...]; got {value!r}"
         )
-    document_number = validate_document_number(match.group(1), name=f"{name}.document_number")
+    document_number = validate_document_number(
+        match.group(1), name=f"{name}.document_number"
+    )
     publication_date = validate_publication_date(
         match.group(2), name=f"{name}.publication_date"
     )
@@ -2043,7 +2053,9 @@ class SourceReceiptRecord:
         )
         if self.api_total is not None:
             object.__setattr__(
-                self, "api_total", _require_non_negative_int(self.api_total, "api_total")
+                self,
+                "api_total",
+                _require_non_negative_int(self.api_total, "api_total"),
             )
         if not isinstance(self.page_cursors, (list, tuple)):
             raise FederalRegisterReleaseSchemaError("page_cursors must be a sequence")
@@ -2089,7 +2101,9 @@ class SourceReceiptRecord:
             dispositions[availability.value] = _require_non_negative_int(
                 count, f"body_text_dispositions[{key}]"
             )
-        object.__setattr__(self, "body_text_dispositions", MappingProxyType(dispositions))
+        object.__setattr__(
+            self, "body_text_dispositions", MappingProxyType(dispositions)
+        )
         if not isinstance(self.payload, Mapping):
             raise FederalRegisterReleaseSchemaError("payload must be a mapping")
         object.__setattr__(self, "payload", MappingProxyType(dict(self.payload)))
@@ -3696,7 +3710,11 @@ def example_source_receipt_payload(
         "receipt_id": f"fr-partition-{year_month}",
         "year_month": year_month,
         "partition_start": f"{year_month}-01",
-        "partition_end": f"{year_month}-31" if year_month.endswith("-03") else f"{year_month}-28",
+        "partition_end": (
+            f"{year_month}-31"
+            if year_month.endswith("-03")
+            else f"{year_month}-28"
+        ),
         "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
         "release_point": f"fr/cutoff/{DEFAULT_OBSERVATION_CUTOFF[:10]}",
         "observation_time": "2026-08-10T12:00:00Z",

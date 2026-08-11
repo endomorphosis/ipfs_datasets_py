@@ -399,7 +399,9 @@ def parse_utc_timestamp(value: Any, *, name: str = "timestamp") -> datetime:
         try:
             dt = datetime.fromisoformat(text)
         except ValueError as exc:
-            raise TimestampError(f"{name} must be ISO-8601 datetime: {value!r}") from exc
+            raise TimestampError(
+                f"{name} must be ISO-8601 datetime: {value!r}"
+            ) from exc
     else:
         raise TimestampError(f"{name} must be a datetime or ISO-8601 string")
     if dt.tzinfo is None:
@@ -487,7 +489,9 @@ def validate_calendar_date(value: Any, *, name: str = "date") -> str:
     try:
         date(year, month, day)
     except ValueError as exc:
-        raise DocumentIdentityError(f"{name} is not a valid calendar date: {value!r}") from exc
+        raise DocumentIdentityError(
+            f"{name} is not a valid calendar date: {value!r}"
+        ) from exc
     return text
 
 
@@ -533,6 +537,10 @@ def validate_document_number(value: Any, *, name: str = "document_number") -> st
     folded into the underlying document number.
     """
 
+    if not isinstance(value, str) or value != value.strip():
+        raise DocumentIdentityError(
+            f"{name} must use exact canonical bytes without surrounding whitespace"
+        )
     text = _require_non_empty_str(value, name, maximum=32)
     if not _DOCUMENT_NUMBER_RE.fullmatch(text):
         raise DocumentIdentityError(
@@ -566,9 +574,17 @@ def build_legal_id(
     return f"fr:{doc}:{pub}:{q}"
 
 
-def parse_legal_id(value: Any, *, name: str = "legal_id") -> tuple[str, str, Optional[str]]:
+def parse_legal_id(
+    value: Any,
+    *,
+    name: str = "legal_id",
+) -> tuple[str, str, Optional[str]]:
     """Parse ``fr:<document_number>:<publication_date>[:qualifier...]``."""
 
+    if not isinstance(value, str) or value != value.strip():
+        raise DocumentIdentityError(
+            f"{name} must use exact canonical bytes without surrounding whitespace"
+        )
     text = _require_non_empty_str(value, name)
     parts = text.split(":")
     if len(parts) < 3 or parts[0].lower() != "fr":
@@ -812,7 +828,11 @@ class FederalRegisterSourcePolicy:
         object.__setattr__(
             self,
             "dataset_repo_id",
-            _require_non_empty_str(self.dataset_repo_id, "dataset_repo_id", maximum=256),
+            _require_non_empty_str(
+                self.dataset_repo_id,
+                "dataset_repo_id",
+                maximum=256,
+            ),
         )
         object.__setattr__(
             self,
@@ -823,7 +843,8 @@ class FederalRegisterSourcePolicy:
         )
         if is_mutable_cutoff(self.previous_public_pin):
             raise MutableCutoffError(
-                f"previous_public_pin must be immutable, got {self.previous_public_pin!r}"
+                "previous_public_pin must be immutable, got "
+                f"{self.previous_public_pin!r}"
             )
         object.__setattr__(
             self,
