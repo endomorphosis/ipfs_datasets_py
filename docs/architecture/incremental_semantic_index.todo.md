@@ -687,7 +687,7 @@ W16 ISI-040
 
 ## ISI-045 Recover legacy and current persistence temporary orphans
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: persistence-recovery-closure
