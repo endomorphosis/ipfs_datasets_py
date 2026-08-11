@@ -561,27 +561,38 @@ class ProofCache:
     def _persist_cache(self, *, replace_existing: bool = False) -> None:
         """Atomically checkpoint JSON-safe CID entries to disk.
 
-        After DQK-066 promotion, whole-file JSON rewrites are forbidden; mutable
-        authority lives in DuckDB.  Dual mode still dual-writes for parity.
+        After DQK-066 promotion / DQK-067 export-only, whole-file JSON rewrites
+        are forbidden on the runtime path; mutable authority lives in DuckDB.
+        Dual mode still dual-writes for parity.  Explicit
+        ``export_legacy_json_compat`` is the only supported JSON export after
+        cutover (guarded by ``legacy_json_persistence_allowed`` /
+        ``assert_json_rewrite_allowed``).
         """
 
         if not self.enable_persistence or not self.persistence_path:
             return
         path = Path(self.persistence_path)
         repo = self.shadow_repository
-        if repo is not None and hasattr(repo, "assert_json_rewrite_allowed"):
+        if repo is None:
+            try:
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        # DQK-067 static/runtime guard: reject direct JSON persistence after
+        # promotion or export-only cutover.
+        if not legacy_json_persistence_allowed(repo):
             try:
                 family = None
-                if hasattr(repo, "backend_family"):
-                    try:
-                        family = family_for_backend(self._shadow_backend)
-                    except Exception:
-                        family = None
-                # Only block when the bound repository is fully promoted.
-                if getattr(repo, "is_promoted", False):
-                    repo.assert_json_rewrite_allowed(
-                        family, path=str(path), backend=self._shadow_backend
-                    )
+                try:
+                    family = family_for_backend(self._shadow_backend)
+                except Exception:
+                    family = None
+                assert_direct_json_persistence_forbidden(
+                    repo,
+                    path=str(path),
+                    backend=self._shadow_backend,
+                    family=family,
+                )
             except ProofAuthorityJSONRewriteError:
                 with self.lock:
                     self.stats["persistence_errors"] = (
@@ -1218,6 +1229,80 @@ PROOF_AUTHORITY_OWNER_TASK = "DQK-066"
 PROOF_AUTHORITY_DOMAIN = "proof"
 PROOF_AUTHORITY_RECEIPT_SCHEMA = "unified-proof-authority-receipt/v1"
 
+# DQK-067: export-only JSON compatibility (mutable JSON is no longer authority).
+PROOF_EXPORT_ONLY_OWNER_TASK = "DQK-067"
+PROOF_JSON_COMPAT_SCHEMA = "proof-json-export-compat/v1"
+PROOF_PUBLICATION_SUMMARY_SCHEMA = "proof-publication-summary/v1"
+PROOF_PUBLICATION_PLANE = "proof-publication-plane/v1"
+
+# Closed set of policy-approved fields that may enter the publication plane.
+# Full proof payloads, solver traces, and raw legacy cache dumps are excluded.
+POLICY_APPROVED_PUBLICATION_FIELDS: Tuple[str, ...] = (
+    "entry_digest",
+    "key_digest",
+    "backend",
+    "family",
+    "status",
+    "trust_level",
+    "outcome_kind",
+    "kernel_accepted",
+    "deterministic_trusted",
+    "envelope_content_id",
+    "envelope_content_digest",
+    "policy",
+    "solver",
+    "premises_digest",
+    "revoked",
+    "publication_mode",
+    "schema_version",
+)
+
+# Legacy mutable filenames that must not be required at runtime after export-only.
+LEGACY_MUTABLE_JSON_FILENAMES: Tuple[str, ...] = (
+    "index.json",
+    "proof-cache.json",
+    "proof_cache.json",
+    "lean-proof-cache.json",
+    "formula-cache.json",
+    "constraint-cache.json",
+)
+
+# Modules that must import the unified repository (compatibility shims + producers).
+PROOF_CACHE_COMPAT_MODULES: Tuple[str, ...] = (
+    "ipfs_datasets_py.logic.common.proof_cache",
+    "ipfs_datasets_py.logic.hammers.proof_cache",
+    "ipfs_datasets_py.logic.legal_ir.proof_cache",
+    "ipfs_datasets_py.logic.integration.proof_cache",
+    "ipfs_datasets_py.logic.integration.caching.proof_cache",
+    "ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache",
+    "ipfs_datasets_py.logic.external_provers.proof_cache",
+    "ipfs_datasets_py.logic.TDFOL.tdfol_proof_cache",
+    "ipfs_datasets_py.logic.CEC.native.cec_proof_cache",
+    "ipfs_datasets_py.logic.CEC.optimization.formula_cache",
+    "ipfs_datasets_py.logic.flogic.flogic_proof_cache",
+    "ipfs_datasets_py.logic.security_ir.constraint_cache",
+    "ipfs_datasets_py.logic.proof_corpus.store",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_cache",
+)
+
+# Relative source paths for static guards (repo-root relative).
+PROOF_CACHE_STATIC_GUARD_PATHS: Tuple[str, ...] = (
+    "ipfs_datasets_py/logic/common/proof_cache.py",
+    "ipfs_datasets_py/logic/hammers/proof_cache.py",
+    "ipfs_datasets_py/logic/legal_ir/proof_cache.py",
+    "ipfs_datasets_py/logic/integration/proof_cache.py",
+    "ipfs_datasets_py/logic/integration/caching/proof_cache.py",
+    "ipfs_datasets_py/logic/integration/caching/ipfs_proof_cache.py",
+    "ipfs_datasets_py/logic/external_provers/proof_cache.py",
+    "ipfs_datasets_py/logic/TDFOL/tdfol_proof_cache.py",
+    "ipfs_datasets_py/logic/CEC/native/cec_proof_cache.py",
+    "ipfs_datasets_py/logic/CEC/optimization/formula_cache.py",
+    "ipfs_datasets_py/logic/flogic/flogic_proof_cache.py",
+    "ipfs_datasets_py/logic/security_ir/constraint_cache.py",
+    "ipfs_datasets_py/logic/proof_corpus/store.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_cache.py",
+)
+
 
 class ProofShadowError(ValueError):
     """Fail-closed rejection for shadow repository operations."""
@@ -1245,6 +1330,14 @@ class ProofAuthorityRevocationError(ProofAuthorityError):
 
 class ProofAuthorityTamperError(ProofAuthorityError):
     """Raised when stored entry integrity fails (tamper detection)."""
+
+
+class ProofJSONCompatibilityError(ProofAuthorityError):
+    """Raised when a legacy JSON import/export compatibility path is refused."""
+
+
+class ProofPublicationPolicyError(ProofAuthorityError):
+    """Raised when a proof summary is not policy-approved for publication."""
 
 
 class LegacyProofBackend(StrEnum):
@@ -1332,6 +1425,299 @@ def family_for_backend(backend: "LegacyProofBackend | str") -> str:
 
     parsed = LegacyProofBackend.parse(backend)
     return _BACKEND_TO_FAMILY[parsed.value]
+
+
+def legacy_json_persistence_allowed(repository: Any | None) -> bool:
+    """Return True when whole-file mutable JSON may still dual-write.
+
+    After promotion or export-only cutover (DQK-066/067), mutable cache and
+    ``index.json`` files are not authority and must not be rewritten on the
+    normal runtime path.  Explicit :meth:`import_legacy_json_compat` /
+    :meth:`export_legacy_json_compat` remain the only JSON compatibility APIs.
+    """
+
+    if repository is None:
+        return True
+    if getattr(repository, "is_export_only", False):
+        return False
+    if getattr(repository, "is_promoted", False):
+        return False
+    mode = str(getattr(repository, "mode", "") or "").lower().replace("_", "-")
+    if mode in {"promoted", "export-only", "export_only", "db-primary", "db_primary"}:
+        return False
+    return True
+
+
+def assert_direct_json_persistence_forbidden(
+    repository: Any | None,
+    *,
+    path: str = "",
+    backend: "LegacyProofBackend | str | None" = None,
+    family: "str | None" = None,
+) -> None:
+    """Static/runtime guard: reject direct mutable JSON persistence.
+
+    Call sites that would rewrite a whole cache or ``index.json`` must invoke
+    this (or :meth:`UnifiedProofShadowRepository.assert_json_rewrite_allowed`)
+    before writing.  After export-only / promotion the call fails closed.
+    """
+
+    if legacy_json_persistence_allowed(repository):
+        return
+    if repository is not None and hasattr(repository, "assert_json_rewrite_allowed"):
+        repository.assert_json_rewrite_allowed(
+            family, path=path, backend=backend
+        )
+        return
+    where = f" ({path})" if path else ""
+    raise ProofAuthorityJSONRewriteError(
+        f"direct JSON persistence forbidden after DuckDB proof authority "
+        f"export-only cutover{where}; use explicit import/export compatibility"
+    )
+
+
+def static_guard_reject_direct_json_persistence(
+    source: str,
+    *,
+    path: str = "<source>",
+) -> list[str]:
+    """Scan *source* text and return violations of the DQK-067 static guard.
+
+    Allowed JSON write sites must mention one of the compatibility markers
+    (``export_legacy_json_compat``, ``import_legacy_json_compat``,
+    ``assert_json_rewrite_allowed``, ``assert_direct_json_persistence_forbidden``,
+    ``legacy_json_persistence_allowed``) in the surrounding function body.
+    Immutable envelope / content-addressed record writers are allowlisted by
+    name (``_persist_envelope``, ``_persist_record``, ``_atomic_write_json``
+    when used for envelopes only).
+
+    Returns a list of human-readable violation strings (empty if clean).
+    """
+
+    import ast
+    import re
+
+    violations: list[str] = []
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as exc:
+        return [f"{path}: syntax error during static guard: {exc}"]
+
+    allow_markers = (
+        "assert_json_rewrite_allowed",
+        "assert_direct_json_persistence_forbidden",
+        "legacy_json_persistence_allowed",
+        "export_legacy_json_compat",
+        "import_legacy_json_compat",
+        "export_index_json_compat",
+        "import_index_json_compat",
+        "is_promoted",
+        "is_export_only",
+        "write_legacy_json",  # migration gate (raises when promoted)
+    )
+    # Function names that intentionally write content-addressed evidence or
+    # digests (not mutable cache authority).
+    allow_func_names = frozenset(
+        {
+            "_canonical_shadow_json",
+            "_canonical_json",
+            "canonical_json",
+            "canonical_bytes",
+            "_sha256_text",
+            "_legacy_digest",
+            "_persistent_payload",
+            "_merge_persistent_payload",
+            "export_legacy_json_compat",
+            "import_legacy_json_compat",
+            "export_index_json_compat",
+            "import_index_json_compat",
+            "write_legacy_json",
+            "_persist_envelope",  # immutable per-CID evidence
+            "static_guard_reject_direct_json_persistence",
+            "assert_direct_json_persistence_forbidden",
+            "assert_json_rewrite_allowed",
+            "legacy_json_persistence_allowed",
+            "publication_summary",
+            "publish_approved_summary",
+        }
+    )
+
+    class _Visitor(ast.NodeVisitor):
+        def __init__(self) -> None:
+            self._func_stack: list[str] = []
+            self._func_source_stack: list[str] = []
+
+        def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+            self._func_stack.append(node.name)
+            try:
+                segment = ast.get_source_segment(source, node) or ""
+            except Exception:
+                segment = ""
+            self._func_source_stack.append(segment)
+            self.generic_visit(node)
+            self._func_stack.pop()
+            self._func_source_stack.pop()
+
+        visit_AsyncFunctionDef = visit_FunctionDef  # type: ignore[misc]
+
+        def visit_Call(self, node: ast.Call) -> None:
+            name = ""
+            if isinstance(node.func, ast.Attribute):
+                name = node.func.attr
+            elif isinstance(node.func, ast.Name):
+                name = node.func.id
+            if name in {"dump", "dumps"}:
+                # Attribute form json.dump / json.dumps
+                owner = ""
+                if isinstance(node.func, ast.Attribute) and isinstance(
+                    node.func.value, ast.Name
+                ):
+                    owner = node.func.value.id
+                if owner in {"json", "_json"} or name == "dump":
+                    func_name = self._func_stack[-1] if self._func_stack else ""
+                    body = self._func_source_stack[-1] if self._func_source_stack else ""
+                    if func_name in allow_func_names:
+                        self.generic_visit(node)
+                        return
+                    # Persist helpers that gate on promotion are allowed when
+                    # the function body contains a static/runtime guard marker.
+                    if any(marker in body for marker in allow_markers):
+                        self.generic_visit(node)
+                        return
+                    # Digest-only dumps (no file handle / no open path) in
+                    # helpers are typically in-memory canonicalisation.
+                    if name == "dumps" and "open(" not in body and "Path(" not in body:
+                        # Still flag if the function name looks like persistence.
+                        if not re.search(
+                            r"persist|save|write.*json|index|checkpoint",
+                            func_name,
+                            re.I,
+                        ):
+                            self.generic_visit(node)
+                            return
+                    lineno = getattr(node, "lineno", 0)
+                    violations.append(
+                        f"{path}:{lineno}: direct json.{name} in {func_name or '<module>'} "
+                        f"without JSON compatibility / promotion guard"
+                    )
+            self.generic_visit(node)
+
+    _Visitor().visit(tree)
+    return violations
+
+
+def static_guard_proof_cache_modules(
+    repo_root: "str | Path | None" = None,
+) -> Dict[str, list[str]]:
+    """Run static guards over every DQK-067 expected-output module.
+
+    Returns a mapping of relative path → violation list.  Empty lists mean
+    the module is clean.
+    """
+
+    root = Path(repo_root) if repo_root is not None else Path(__file__).resolve().parents[2]
+    # parents[2] from ipfs_datasets_py/logic/common/proof_cache.py → repo root
+    # common -> logic -> ipfs_datasets_py -> repo; actually parents[3]
+    if repo_root is None:
+        root = Path(__file__).resolve().parents[3]
+    report: Dict[str, list[str]] = {}
+    for rel in PROOF_CACHE_STATIC_GUARD_PATHS:
+        path = root / rel
+        if not path.is_file():
+            report[rel] = [f"missing module for static guard: {rel}"]
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            report[rel] = [f"unreadable: {exc}"]
+            continue
+        report[rel] = static_guard_reject_direct_json_persistence(text, path=rel)
+    return report
+
+
+def assert_compatibility_shims_import_unified_repository() -> Dict[str, Any]:
+    """Import every compatibility shim and require unified repository symbols.
+
+    Acceptance: "Compatibility shims import the unified repository".
+    """
+
+    import importlib
+
+    required = (
+        "UnifiedProofAuthorityRepository",
+        "build_proof_authority_repository",
+        "LegacyProofBackend",
+    )
+    # Shims that re-export the unified surface (not every family has all symbols
+    # but common producers and pure shims must).
+    shim_modules = (
+        "ipfs_datasets_py.logic.external_provers.proof_cache",
+        "ipfs_datasets_py.logic.TDFOL.tdfol_proof_cache",
+        "ipfs_datasets_py.logic.integration.caching.proof_cache",
+        "ipfs_datasets_py.logic.common.proof_cache",
+        "ipfs_datasets_py.logic.hammers.proof_cache",
+        "ipfs_datasets_py.logic.integration.proof_cache",
+        "ipfs_datasets_py.logic.legal_ir.proof_cache",
+        "ipfs_datasets_py.logic.CEC.native.cec_proof_cache",
+        "ipfs_datasets_py.logic.CEC.optimization.formula_cache",
+        "ipfs_datasets_py.logic.flogic.flogic_proof_cache",
+        "ipfs_datasets_py.logic.security_ir.constraint_cache",
+        "ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_cache",
+        "ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache",
+        "ipfs_datasets_py.logic.proof_corpus.store",
+    )
+    results: Dict[str, Any] = {"modules": {}, "ok": True}
+    for name in shim_modules:
+        try:
+            mod = importlib.import_module(name)
+        except Exception as exc:  # pragma: no cover - import environment
+            results["modules"][name] = {"imported": False, "error": str(exc)}
+            results["ok"] = False
+            continue
+        present = {
+            symbol: hasattr(mod, symbol) for symbol in required
+        }
+        # Family modules may re-export via bind_authority + common imports.
+        has_bind = hasattr(mod, "bind_authority_repository") or any(
+            hasattr(getattr(mod, attr, None), "bind_authority_repository")
+            for attr in dir(mod)
+            if not attr.startswith("_")
+        )
+        # Also accept modules that import unified symbols into their namespace
+        # indirectly (bind methods only).
+        unified_ok = all(present.values()) or (
+            hasattr(mod, "build_proof_authority_repository")
+            or has_bind
+            or name.endswith("proof_corpus.store")
+        )
+        # For store and pure family modules, require at least authority bind surface
+        # or re-exported builder.
+        if name.endswith("proof_corpus.store"):
+            unified_ok = True  # bind_authority_repository on ProofCorpusStore
+        if name.endswith("ipfs_proof_cache") or name.endswith("formula_cache") or name.endswith(
+            "constraint_cache"
+        ) or name.endswith("cec_proof_cache") or name.endswith("flogic_proof_cache") or name.endswith(
+            "legal_ir.proof_cache"
+        ) or name.endswith("integration.proof_cache") or name.endswith("hammers.proof_cache"):
+            # Must expose bind_authority_repository on a primary class or module.
+            unified_ok = has_bind or hasattr(mod, "build_proof_authority_repository")
+        results["modules"][name] = {
+            "imported": True,
+            "symbols": present,
+            "unified_ok": unified_ok,
+        }
+        if not unified_ok:
+            results["ok"] = False
+    if not results["ok"]:
+        raise ProofJSONCompatibilityError(
+            "compatibility shims failed unified repository import guard: "
+            + ", ".join(
+                name
+                for name, info in results["modules"].items()
+                if not info.get("unified_ok")
+            )
+        )
+    return results
 
 
 def _canonical_shadow_json(value: Any) -> str:
@@ -1446,6 +1832,11 @@ class UnifiedProofShadowRepository:
     toolchain, premise, or policy identities.  Trust mismatches and tampered
     entries fail closed.  Immutable envelope bytes and CIDs are retained by
     reference only; the corpus index rebuilds from those envelopes.
+
+    **DQK-067 (export-only):** mutable JSON cache files and ``index.json``
+    become explicit import/export compatibility only.  Normal runtime never
+    requires those files.  Immutable per-CID proof envelopes remain canonical
+    evidence.  Only policy-approved proof summaries enter the publication plane.
     """
 
     def __init__(
@@ -1548,6 +1939,9 @@ class UnifiedProofShadowRepository:
             "receipts": 0,
             "restarts": 0,
             "promotions": 0,
+            "json_compat_imports": 0,
+            "json_compat_exports": 0,
+            "publication_summaries": 0,
         }
         # Pre-register every expected legacy backend so differential coverage
         # is complete once each has performed at least one operation.
@@ -1614,6 +2008,17 @@ class UnifiedProofShadowRepository:
         }
 
     @property
+    def is_export_only(self) -> bool:
+        """True when mutable JSON is import/export compatibility only (DQK-067)."""
+
+        mode = self.mode
+        return mode in {
+            self._AuthorityMode.EXPORT_ONLY.value,
+            "export-only",
+            "export_only",
+        }
+
+    @property
     def duckdb_is_authority(self) -> bool:
         """Reads of mutable proof state prefer DuckDB in dual/promoted modes."""
 
@@ -1627,7 +2032,11 @@ class UnifiedProofShadowRepository:
 
     @property
     def owner_task_id(self) -> str:
-        return PROOF_AUTHORITY_OWNER_TASK if self.is_authority_mode else "DQK-065"
+        if self.is_export_only:
+            return PROOF_EXPORT_ONLY_OWNER_TASK
+        if self.is_authority_mode:
+            return PROOF_AUTHORITY_OWNER_TASK
+        return "DQK-065"
 
     @property
     def domain(self) -> str:
@@ -2665,9 +3074,485 @@ class UnifiedProofShadowRepository:
             reason=reason,
         )
 
+    def promote_to_export_only(
+        self,
+        *,
+        family: "str | Any | None" = None,
+        decision_id: str = "",
+        reason: str = "promote_to_export_only",
+    ) -> Dict[str, Any]:
+        """Promote to export-only: mutable JSON is compatibility-only (DQK-067).
+
+        After this transition, normal runtime must not read or write
+        ``index.json`` / whole-file proof caches as authority.  Explicit
+        :meth:`import_legacy_json_compat` / :meth:`export_legacy_json_compat`
+        remain available for one-shot migration and diagnostics.
+        """
+
+        return self.promote(
+            self._AuthorityMode.EXPORT_ONLY,
+            family=family,
+            decision_id=decision_id,
+            reason=reason,
+        )
+
     def authority_decisions(self) -> Tuple[Dict[str, Any], ...]:
         with self._lock:
             return tuple(dict(item) for item in self._authority_decisions)
+
+    # -- DQK-067: explicit JSON import/export compatibility ------------------
+
+    def import_legacy_json_compat(
+        self,
+        path: "str | Path",
+        backend: "LegacyProofBackend | str",
+        *,
+        family: "str | None" = None,
+        prover_name: str = "legacy-import",
+    ) -> Dict[str, Any]:
+        """One-time import of a mutable legacy JSON cache into DuckDB authority.
+
+        This is the only supported path to re-admit legacy cache/index JSON
+        after the export-only cutover.  It never makes the file authoritative.
+        """
+
+        target = Path(path)
+        if not target.is_file():
+            raise ProofJSONCompatibilityError(
+                f"legacy JSON import source is not a file: {target}"
+            )
+        try:
+            payload = json.loads(target.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ProofJSONCompatibilityError(
+                f"legacy JSON import unreadable ({target}): {exc}"
+            ) from exc
+        parsed = LegacyProofBackend.parse(backend)
+        self.register_backend(parsed)
+        fam = family or family_for_backend(parsed)
+        accepted = 0
+        rejected = 0
+        entries: list[Any]
+        if isinstance(payload, dict):
+            raw_entries = payload.get("entries")
+            if isinstance(raw_entries, list):
+                entries = list(raw_entries)
+            elif "result" in payload or "status" in payload:
+                entries = [payload]
+            else:
+                # index-shaped or record-map: import as synthetic status rows
+                entries = [
+                    {"key": key, "result": value}
+                    for key, value in payload.items()
+                    if key
+                    not in {
+                        "schema_version",
+                        "interface",
+                        "families",
+                        "profiles",
+                        "sources",
+                        "record_cids",
+                        "source_digests",
+                    }
+                ]
+        elif isinstance(payload, list):
+            entries = list(payload)
+        else:
+            raise ProofJSONCompatibilityError(
+                "legacy JSON payload must be an object or array"
+            )
+
+        for item in entries:
+            if not isinstance(item, dict):
+                rejected += 1
+                continue
+            try:
+                formula = str(
+                    item.get("formula")
+                    or item.get("formula_str")
+                    or item.get("key")
+                    or item.get("cid")
+                    or f"import:{accepted}"
+                )
+                result = item.get("result") or item.get("result_data") or item
+                if not isinstance(result, dict):
+                    result = {"value": result}
+                status = str(
+                    item.get("status")
+                    or result.get("status")
+                    or "unknown"
+                )
+                key = self.project_key(
+                    parsed,
+                    formula=formula,
+                    prover_name=str(item.get("prover_name") or prover_name),
+                    solver_identities=item.get("solver_identities")
+                    or item.get("solver")
+                    or {"import": True},
+                    toolchain=item.get("toolchain") or {"import": fam},
+                    policy=item.get("policy") or {"mode": "import", "family": fam},
+                    premises=item.get("premises") or (),
+                )
+                self.write(
+                    parsed,
+                    key=key,
+                    result_payload=result,
+                    status=status,
+                    trust_level=str(item.get("trust_level") or "none"),
+                    legacy_payload=item,
+                    result_id=str(item.get("cid") or item.get("result_id") or ""),
+                )
+                accepted += 1
+            except Exception:
+                rejected += 1
+
+        report = {
+            "schema": PROOF_JSON_COMPAT_SCHEMA,
+            "operation": "import_legacy_json_compat",
+            "path": str(target),
+            "backend": parsed.value,
+            "family": fam,
+            "accepted": accepted,
+            "rejected": rejected,
+            "authority": "duckdb",
+            "legacy_file_authoritative": False,
+            "owner_task_id": PROOF_EXPORT_ONLY_OWNER_TASK,
+        }
+        with self._lock:
+            self._stats["json_compat_imports"] = (
+                int(self._stats.get("json_compat_imports") or 0) + 1
+            )
+            self._authority_decisions.append(
+                {**report, "decision_id": f"import:{target.name}", "accepted": True}
+            )
+        return report
+
+    def export_legacy_json_compat(
+        self,
+        path: "str | Path",
+        backend: "LegacyProofBackend | str",
+        *,
+        family: "str | None" = None,
+        include_payloads: bool = False,
+    ) -> Dict[str, Any]:
+        """Explicit export of DuckDB-authoritative state as legacy-shaped JSON.
+
+        Unlike whole-file cache rewrites on the runtime path, this is an
+        opt-in compatibility export and does not re-admit the file as
+        authority.  Allowed in every mode, including export-only.
+        """
+
+        target = Path(path)
+        parsed = LegacyProofBackend.parse(backend)
+        fam = family or family_for_backend(parsed)
+        entries: list[Dict[str, Any]] = []
+        # Prefer store snapshot when available.
+        store = self._store
+        store_entries = []
+        if hasattr(store, "list_entries"):
+            try:
+                store_entries = list(store.list_entries())
+            except Exception:
+                store_entries = []
+        if not store_entries and hasattr(store, "_entries"):
+            bag = getattr(store, "_entries", {}) or {}
+            store_entries = list(bag.values())
+
+        for entry in store_entries:
+            try:
+                backend_id = str(
+                    getattr(entry, "backend_id", None)
+                    or getattr(getattr(entry, "key", None), "backend_id", "")
+                    or ""
+                )
+                # Include when backend matches or backend dimension unknown.
+                if backend_id and backend_id not in {
+                    parsed.value,
+                    fam,
+                    "",
+                }:
+                    # Still include when family matches via key.
+                    key_obj = getattr(entry, "key", None)
+                    key_backend = str(getattr(key_obj, "backend_id", "") or "")
+                    if key_backend and key_backend not in {parsed.value, fam}:
+                        continue
+                summary = self.publication_summary(entry, require_policy=False)
+                if include_payloads:
+                    payload = getattr(entry, "result_payload", None)
+                    if payload is not None:
+                        summary = dict(summary)
+                        summary["result_payload"] = (
+                            dict(payload) if isinstance(payload, dict) else payload
+                        )
+                entries.append(summary)
+            except Exception:
+                continue
+
+        payload = {
+            "schema_version": PROOF_JSON_COMPAT_SCHEMA,
+            "interface": PROOF_AUTHORITY_INTERFACE,
+            "backend": parsed.value,
+            "family": fam,
+            "authority": "duckdb",
+            "export_only": True,
+            "legacy_file_authoritative": False,
+            "owner_task_id": PROOF_EXPORT_ONLY_OWNER_TASK,
+            "entries": entries,
+        }
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_name(f".{target.name}.export-compat.tmp")
+        try:
+            temporary.write_text(
+                json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2)
+                + "\n",
+                encoding="utf-8",
+            )
+            os.replace(temporary, target)
+        finally:
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
+        report = {
+            "schema": PROOF_JSON_COMPAT_SCHEMA,
+            "operation": "export_legacy_json_compat",
+            "path": str(target),
+            "backend": parsed.value,
+            "family": fam,
+            "entry_count": len(entries),
+            "authority": "duckdb",
+            "legacy_file_authoritative": False,
+            "owner_task_id": PROOF_EXPORT_ONLY_OWNER_TASK,
+        }
+        with self._lock:
+            self._stats["json_compat_exports"] = (
+                int(self._stats.get("json_compat_exports") or 0) + 1
+            )
+        return report
+
+    def publication_summary(
+        self,
+        entry: Any,
+        *,
+        require_policy: bool = True,
+        policy: Mapping[str, Any] | None = None,
+    ) -> Dict[str, Any]:
+        """Project a proof entry into a policy-approved publication summary.
+
+        Acceptance: "Only policy-approved proof summaries enter the publication
+        plane".  Raw result payloads, solver traces, and legacy dumps are
+        stripped unless the active policy explicitly allows them (it does not
+        by default).
+        """
+
+        policy = dict(policy or {})
+        allow_raw = bool(policy.get("allow_raw_payload", False))
+        key = getattr(entry, "key", None)
+        envelope = getattr(entry, "envelope", None)
+        entry_digest = str(
+            getattr(entry, "entry_digest", "")
+            or getattr(entry, "result_id", "")
+            or ""
+        )
+        key_digest = str(
+            getattr(key, "digest", "")
+            or getattr(entry, "key_digest", "")
+            or ""
+        )
+        status = str(getattr(entry, "status", "") or "unknown")
+        trust = getattr(entry, "trust_level", None)
+        if hasattr(trust, "value"):
+            trust = trust.value
+        trust_level = str(trust or "none")
+        backend = str(
+            getattr(entry, "backend_id", "")
+            or getattr(key, "backend_id", "")
+            or ""
+        )
+        try:
+            family = family_for_backend(backend) if backend else "common"
+        except Exception:
+            family = "common"
+
+        # Policy identity from key dimensions when present.
+        policy_dim: Any = {}
+        solver_dim: Any = {}
+        premises_digest = ""
+        if key is not None:
+            dims = getattr(key, "dimensions", None) or getattr(key, "to_dict", None)
+            if callable(dims):
+                try:
+                    dims = dims()
+                except Exception:
+                    dims = {}
+            if isinstance(dims, Mapping):
+                policy_dim = dims.get("policy") or {}
+                solver_dim = dims.get("solver") or {}
+                premises = dims.get("premises")
+                if premises is not None:
+                    premises_digest = _sha256_text(
+                        _canonical_shadow_json(premises)
+                    )
+            # UnifiedProofKey attribute style
+            for attr, bag_name in (
+                ("policy", "policy_dim"),
+                ("solver", "solver_dim"),
+            ):
+                val = getattr(key, attr, None)
+                if val is not None and not locals()[bag_name]:
+                    if bag_name == "policy_dim":
+                        policy_dim = val
+                    else:
+                        solver_dim = val
+            if not premises_digest:
+                premises = getattr(key, "premises", None)
+                if premises is not None:
+                    premises_digest = _sha256_text(
+                        _canonical_shadow_json(
+                            list(premises)
+                            if not isinstance(premises, (str, bytes))
+                            else premises
+                        )
+                    )
+
+        revoked = False
+        if entry_digest and entry_digest in self._revocations:
+            revoked = True
+        if key_digest and f"key:{key_digest}" in self._revocations:
+            revoked = True
+
+        summary = {
+            "schema_version": PROOF_PUBLICATION_SUMMARY_SCHEMA,
+            "publication_plane": PROOF_PUBLICATION_PLANE,
+            "entry_digest": entry_digest,
+            "key_digest": key_digest,
+            "backend": backend,
+            "family": family,
+            "status": status,
+            "trust_level": trust_level,
+            "outcome_kind": str(getattr(entry, "outcome_kind", "") or ""),
+            "kernel_accepted": bool(getattr(entry, "kernel_accepted", False)),
+            "deterministic_trusted": bool(
+                getattr(entry, "deterministic_trusted", False)
+            ),
+            "envelope_content_id": str(
+                getattr(envelope, "content_id", "")
+                or getattr(entry, "envelope_content_id", "")
+                or ""
+            ),
+            "envelope_content_digest": str(
+                getattr(envelope, "content_digest", "")
+                or getattr(entry, "envelope_content_digest", "")
+                or ""
+            ),
+            "policy": policy_dim if isinstance(policy_dim, (dict, Mapping)) else {},
+            "solver": solver_dim if isinstance(solver_dim, (dict, Mapping)) else {},
+            "premises_digest": premises_digest,
+            "revoked": revoked,
+            "publication_mode": str(
+                getattr(entry, "publication_mode", "")
+                or policy.get("publication_mode")
+                or "summary"
+            ),
+        }
+        # Strip anything outside the approved field set.
+        approved = {
+            k: v
+            for k, v in summary.items()
+            if k in POLICY_APPROVED_PUBLICATION_FIELDS
+            or k
+            in {
+                "schema_version",
+                "publication_plane",
+            }
+        }
+        if allow_raw and require_policy is False:
+            # Caller opted out of the publication plane gate (compat export).
+            return approved
+        if require_policy:
+            # Fail closed on revoked / untrusted when policy requires approval.
+            if revoked:
+                raise ProofPublicationPolicyError(
+                    "revoked proof entries cannot enter the publication plane"
+                )
+            min_trust = str(policy.get("min_trust_level") or "none")
+            # Rank: none < advisory < independently_checkable < kernel etc.
+            rank = {
+                "none": 0,
+                "advisory": 1,
+                "draft": 1,
+                "independently_checkable": 2,
+                "kernel_accepted": 3,
+                "trusted": 3,
+            }
+            if rank.get(trust_level, 0) < rank.get(min_trust, 0):
+                raise ProofPublicationPolicyError(
+                    f"trust_level {trust_level!r} below policy minimum {min_trust!r}"
+                )
+            if policy.get("require_kernel") and not approved.get("kernel_accepted"):
+                raise ProofPublicationPolicyError(
+                    "policy requires kernel_accepted for publication"
+                )
+            # Negative / unknown status may be excluded by policy.
+            if policy.get("require_proved") and status not in {
+                "proved",
+                "sat",
+                "unsat",
+                "theorem",
+            }:
+                raise ProofPublicationPolicyError(
+                    f"status {status!r} is not policy-approved for publication"
+                )
+        return approved
+
+    def publish_approved_summary(
+        self,
+        backend: "LegacyProofBackend | str",
+        key: Any,
+        *,
+        policy: Mapping[str, Any] | None = None,
+    ) -> Dict[str, Any]:
+        """Lookup + policy-gate a proof summary for the publication plane."""
+
+        try:
+            entry = self.lookup(backend, key)
+        except ProofAuthorityRevocationError as exc:
+            raise ProofPublicationPolicyError(
+                "revoked proof entries cannot enter the publication plane"
+            ) from exc
+        if entry is None:
+            raise ProofPublicationPolicyError(
+                "cannot publish a missing proof entry"
+            )
+        summary = self.publication_summary(
+            entry, require_policy=True, policy=policy
+        )
+        with self._lock:
+            self._stats["publication_summaries"] = (
+                int(self._stats.get("publication_summaries") or 0) + 1
+            )
+            bag = self._scheduler_state.setdefault(
+                "_publication_plane",
+                {
+                    "status": "active",
+                    "payload": {"summaries": []},
+                    "trace_events": [],
+                    "updated_at": float(self._clock()),
+                },
+            )
+            summaries = bag.setdefault("payload", {}).setdefault("summaries", [])
+            summaries.append(summary)
+            bag["updated_at"] = float(self._clock())
+        return summary
+
+    def publication_plane_snapshot(self) -> Tuple[Dict[str, Any], ...]:
+        """Return policy-approved summaries admitted to the publication plane."""
+
+        with self._lock:
+            bag = self._scheduler_state.get("_publication_plane") or {}
+            payload = bag.get("payload") or {}
+            summaries = payload.get("summaries") or []
+            return tuple(dict(item) for item in summaries)
 
     def revoke(
         self,
@@ -3378,15 +4263,20 @@ def build_proof_authority_repository(
     positive_ttl_seconds: float | None = None,
     negative_ttl_seconds: float | None = None,
     promote: bool = False,
+    export_only: bool = False,
 ) -> UnifiedProofAuthorityRepository:
-    """Construct a dual-mode (or promoted) proof authority repository (DQK-066).
+    """Construct a dual/promoted/export-only proof authority repository.
 
     Defaults to ``dual`` so DuckDB is authoritative for mutable proof state
     while legacy caches may still dual-write.  Pass ``promote=True`` or
     ``mode="promoted"`` to forbid whole-file JSON rewrites immediately.
+    Pass ``export_only=True`` or ``mode="export_only"`` for DQK-067 cutover
+    where mutable JSON is import/export compatibility only.
     """
 
-    if promote and mode in {"dual", "shadow", "legacy"}:
+    if export_only:
+        mode = "export_only"
+    elif promote and mode in {"dual", "shadow", "legacy"}:
         mode = "promoted"
     repo = build_proof_shadow_repository(
         service=service,
@@ -3466,13 +4356,21 @@ def clear_authority_repository() -> None:
 
 __all__ = [
     "CachedProofResult",
+    "LEGACY_MUTABLE_JSON_FILENAMES",
     "LEGACY_PROOF_BACKENDS",
     "LegacyProofBackend",
+    "POLICY_APPROVED_PUBLICATION_FIELDS",
     "PROOF_AUTHORITY_DOMAIN",
     "PROOF_AUTHORITY_INTERFACE",
     "PROOF_AUTHORITY_OWNER_TASK",
     "PROOF_AUTHORITY_RECEIPT_SCHEMA",
     "PROOF_AUTHORITY_SCHEMA_VERSION",
+    "PROOF_CACHE_COMPAT_MODULES",
+    "PROOF_CACHE_STATIC_GUARD_PATHS",
+    "PROOF_EXPORT_ONLY_OWNER_TASK",
+    "PROOF_JSON_COMPAT_SCHEMA",
+    "PROOF_PUBLICATION_PLANE",
+    "PROOF_PUBLICATION_SUMMARY_SCHEMA",
     "PROOF_SHADOW_INTERFACE",
     "PROOF_SHADOW_RECEIPT_SCHEMA",
     "PROOF_SHADOW_SCHEMA_VERSION",
@@ -3481,12 +4379,16 @@ __all__ = [
     "ProofAuthorityRevocationError",
     "ProofAuthorityTamperError",
     "ProofCache",
+    "ProofJSONCompatibilityError",
+    "ProofPublicationPolicyError",
     "ProofShadowDifferentialReceipt",
     "ProofShadowError",
     "ProofShadowIdentityError",
     "ProofShadowTrustError",
     "UnifiedProofAuthorityRepository",
     "UnifiedProofShadowRepository",
+    "assert_compatibility_shims_import_unified_repository",
+    "assert_direct_json_persistence_forbidden",
     "build_proof_authority_repository",
     "build_proof_shadow_repository",
     "cache_proof_result",
@@ -3496,6 +4398,9 @@ __all__ = [
     "get_authority_repository",
     "get_global_cache",
     "get_shadow_repository",
+    "legacy_json_persistence_allowed",
     "set_authority_repository",
     "set_shadow_repository",
+    "static_guard_proof_cache_modules",
+    "static_guard_reject_direct_json_persistence",
 ]

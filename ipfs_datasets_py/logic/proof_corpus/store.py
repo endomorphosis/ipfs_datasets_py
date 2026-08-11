@@ -19,6 +19,10 @@ Full query/rebuild APIs live in LIG-012 (``query.py`` / ``index.py``).
 **DQK-066:** the mutable corpus index may promote to DuckDB authority.  When
 promoted, whole-file ``index.json`` rewrites are forbidden; the index rebuilds
 from immutable per-CID envelopes.  Envelope bytes and CIDs remain canonical.
+
+**DQK-067:** ``index.json`` is explicit import/export compatibility only.
+Normal runtime operates with the legacy index file absent; immutable per-CID
+envelopes remain the sole content-addressed evidence on disk.
 """
 
 from __future__ import annotations
@@ -207,18 +211,28 @@ class ProofCorpusStore:
         path = self._index_path()
         if path is None:
             return
-        # DQK-066: after promotion, whole-file index.json rewrites are forbidden.
-        # Mutable index authority lives in DuckDB; rebuild from envelopes instead.
+        # DQK-066/067: after promotion or export-only, whole-file index.json
+        # rewrites are forbidden on the runtime path.  Mutable index authority
+        # lives in DuckDB; rebuild from envelopes instead.  Explicit
+        # export_index_json_compat remains the compatibility export API.
         repo = self._authority_repository
-        if repo is not None and getattr(repo, "is_promoted", False):
+        blocked = False
+        try:
+            from ..common.proof_cache import legacy_json_persistence_allowed
+
+            blocked = not legacy_json_persistence_allowed(repo)
+        except Exception:
+            blocked = bool(repo is not None and getattr(repo, "is_promoted", False))
+        if blocked:
             self._json_rewrite_blocks += 1
-            if hasattr(repo, "assert_json_rewrite_allowed"):
+            if repo is not None and hasattr(repo, "assert_json_rewrite_allowed"):
                 repo.assert_json_rewrite_allowed(
                     "common", path=str(path) if path else "index.json"
                 )
             raise ProofCorpusStoreError(
                 "whole-file JSON index rewrite forbidden after proof authority "
-                "promotion; rebuild the index from immutable envelopes"
+                "export-only cutover; rebuild from immutable envelopes or use "
+                "export_index_json_compat"
             )
         with self._lock:
             families = {
@@ -690,11 +704,19 @@ class ProofCorpusStore:
                 if hasattr(repo, "rebuild_corpus_index_from_envelopes"):
                     authority_report = repo.rebuild_corpus_index_from_envelopes()
 
-            # When not promoted, refresh on-disk index.json from rebuilt state.
-            # When promoted, skip whole-file rewrite (authority is DuckDB).
-            if not (
-                repo is not None and getattr(repo, "is_promoted", False)
-            ):
+            # When not promoted/export-only, refresh on-disk index.json from
+            # rebuilt state.  After DQK-067 cutover, skip whole-file rewrite
+            # (authority is DuckDB; use export_index_json_compat explicitly).
+            allow_json = True
+            try:
+                from ..common.proof_cache import legacy_json_persistence_allowed
+
+                allow_json = legacy_json_persistence_allowed(repo)
+            except Exception:
+                allow_json = not (
+                    repo is not None and getattr(repo, "is_promoted", False)
+                )
+            if allow_json:
                 path = self._index_path()
                 if path is not None:
                     families = {
@@ -726,7 +748,87 @@ class ProofCorpusStore:
                 "promoted": bool(
                     repo is not None and getattr(repo, "is_promoted", False)
                 ),
+                "export_only": bool(
+                    repo is not None and getattr(repo, "is_export_only", False)
+                ),
             }
+
+    def export_index_json_compat(self, path: Path | str | None = None) -> dict[str, Any]:
+        """Explicit export of the secondary index as legacy ``index.json``.
+
+        Allowed after DQK-067 export-only cutover.  The written file is never
+        re-admitted as authority; DuckDB + immutable envelopes remain canonical.
+        """
+
+        target = Path(path) if path is not None else self._index_path()
+        if target is None:
+            raise ProofCorpusStoreError(
+                "export_index_json_compat requires a path or a store root"
+            )
+        with self._lock:
+            families = {
+                family: sorted(cids)
+                for family, cids in sorted(self._family_index.items())
+            }
+            sources = {
+                digest: dict(sorted(profiles.items()))
+                for digest, profiles in sorted(self._source_index.items())
+            }
+            payload = {
+                "families": families,
+                "interface": PROOF_CORPUS_STORE_INTERFACE,
+                "profiles": dict(sorted(self._profile_index.items())),
+                "schema_version": PROOF_CORPUS_INDEX_SCHEMA_VERSION,
+                "sources": sources,
+                "store_schema_version": PROOF_CORPUS_STORE_SCHEMA_VERSION,
+                "export_only": True,
+                "legacy_file_authoritative": False,
+                "owner_task_id": "DQK-067",
+            }
+        _atomic_write_json(target, payload)
+        return {
+            "path": str(target),
+            "families": len(families),
+            "profiles": len(payload["profiles"]),
+            "operation": "export_index_json_compat",
+            "legacy_file_authoritative": False,
+        }
+
+    def import_index_json_compat(self, path: Path | str | None = None) -> dict[str, Any]:
+        """One-time import of a legacy ``index.json`` (rebuild preferred).
+
+        Validates the index against on-disk envelopes when present, then
+        refreshes in-memory secondary indexes.  Does not make the file
+        authoritative after import.
+        """
+
+        target = Path(path) if path is not None else self._index_path()
+        if target is None or not Path(target).is_file():
+            raise ProofCorpusStoreError(
+                f"import_index_json_compat source is not a file: {target}"
+            )
+        # Prefer full reload which validates index against envelopes.
+        if self.root is not None and Path(target) == self._index_path():
+            count = self.reload()
+            return {
+                "path": str(target),
+                "loaded": count,
+                "operation": "import_index_json_compat",
+                "legacy_file_authoritative": False,
+            }
+        # Foreign path: load envelopes from root then overlay index profiles.
+        try:
+            payload = json.loads(Path(target).read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ProofCorpusStoreError(
+                f"import_index_json_compat unreadable: {exc}"
+            ) from exc
+        report = self.rebuild_index_from_envelopes()
+        report["imported_index"] = str(target)
+        report["operation"] = "import_index_json_compat"
+        report["legacy_file_authoritative"] = False
+        report["index_schema"] = payload.get("schema_version")
+        return report
 
 
 def put_envelope(
@@ -770,10 +872,43 @@ def put_family_fixtures(
     return intent_env, legal_env, security_env
 
 
+# DQK-065/066/067: re-export unified repository symbols so static/import
+# guards observe the store as a compatibility surface over DuckDB authority.
+from ..common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
+)
+
 __all__ = [
     "ProofCorpusStore",
     "ProofCorpusStoreError",
     "ProofCorpusStoreIntegrityError",
+    "LEGACY_PROOF_BACKENDS",
+    "LegacyProofBackend",
+    "ProofAuthorityJSONRewriteError",
+    "ProofJSONCompatibilityError",
+    "UnifiedProofAuthorityRepository",
+    "UnifiedProofShadowRepository",
+    "assert_direct_json_persistence_forbidden",
+    "build_proof_authority_repository",
+    "build_proof_shadow_repository",
+    "get_authority_repository",
+    "get_shadow_repository",
+    "legacy_json_persistence_allowed",
+    "set_authority_repository",
+    "set_shadow_repository",
     "get_envelope",
     "put_envelope",
     "put_family_fixtures",

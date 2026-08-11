@@ -531,7 +531,8 @@ class PersistentProofCache:
     def _persist_locked(self) -> None:
         if self.path is None:
             return
-        # DQK-066: promoted authority forbids whole-file JSON rewrites.
+        # DQK-066/067: promoted and export-only forbid whole-file JSON rewrites
+        # on the runtime path; explicit export_legacy_json_compat remains.
         repo = self._shadow_repository
         if repo is None:
             try:
@@ -540,11 +541,25 @@ class PersistentProofCache:
                 repo = get_shadow_repository(create=False)
             except Exception:
                 repo = None
-        if repo is not None and getattr(repo, "is_promoted", False):
-            if hasattr(repo, "assert_json_rewrite_allowed"):
-                repo.assert_json_rewrite_allowed(
-                    "hammers", path=str(self.path), backend=self._shadow_backend
+        try:
+            from ..common.proof_cache import (
+                assert_direct_json_persistence_forbidden,
+                legacy_json_persistence_allowed,
+            )
+
+            if not legacy_json_persistence_allowed(repo):
+                assert_direct_json_persistence_forbidden(
+                    repo,
+                    path=str(self.path),
+                    backend=self._shadow_backend,
+                    family="hammers",
                 )
+        except ImportError:
+            if repo is not None and getattr(repo, "is_promoted", False):
+                if hasattr(repo, "assert_json_rewrite_allowed"):
+                    repo.assert_json_rewrite_allowed(
+                        "hammers", path=str(self.path), backend=self._shadow_backend
+                    )
         self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = canonical_json(
             {
@@ -780,13 +795,19 @@ def cache_provenance_metadata(
 from ..common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
     UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
     build_proof_authority_repository,
     build_proof_shadow_repository,
     clear_authority_repository,
     get_authority_repository,
     get_shadow_repository,
+    legacy_json_persistence_allowed,
     set_authority_repository,
     set_shadow_repository,
 )

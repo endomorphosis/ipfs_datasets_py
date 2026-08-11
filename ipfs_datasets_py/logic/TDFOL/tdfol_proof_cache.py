@@ -21,19 +21,25 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Optional
 
-# Import from unified location
+# Import from unified location (DQK-065/066/067)
 from ..common.proof_cache import (
     CachedProofResult as CachedProofEntry,
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
     ProofCache as _CommonProofCache,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
     UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
     build_proof_authority_repository,
     build_proof_shadow_repository,
     get_global_cache,
     get_authority_repository,
     get_shadow_repository,
+    legacy_json_persistence_allowed,
     set_authority_repository,
     set_shadow_repository,
 )
@@ -106,12 +112,18 @@ __all__ = [
     'LEGACY_PROOF_BACKENDS',
     'LegacyProofBackend',
     'TDFOL_LEGACY_BACKEND',
+    'ProofAuthorityJSONRewriteError',
+    'ProofJSONCompatibilityError',
+    'ProofPublicationPolicyError',
     'UnifiedProofAuthorityRepository',
     'UnifiedProofShadowRepository',
+    'assert_compatibility_shims_import_unified_repository',
+    'assert_direct_json_persistence_forbidden',
     'build_proof_authority_repository',
     'build_proof_shadow_repository',
     'get_authority_repository',
     'get_shadow_repository',
+    'legacy_json_persistence_allowed',
     'set_authority_repository',
     'set_shadow_repository',
 ]
