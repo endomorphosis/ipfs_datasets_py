@@ -192,7 +192,7 @@ W8  ISI-032
 
 ## ISI-010 Assemble deterministic repository states
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: scanner
