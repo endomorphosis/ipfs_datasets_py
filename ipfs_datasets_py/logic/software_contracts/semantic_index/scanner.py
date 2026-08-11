@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping
+from typing import Iterable, Mapping
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
 from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import symbol_version_cid
@@ -48,10 +48,17 @@ def _artifact_path(entry: SnapshotEntry) -> str:
     Raw snapshot names are nevertheless retained verbatim in entry evidence;
     unsafe names get a private display path and a raw-name-derived identity.
     """
+    # SnapshotEntry has already proved that a safe path is the exact UTF-8
+    # decoding of its raw bytes.  Models reject backslash/NFD projections, so
+    # those remain opaque without ever being used as a lookup key.
     import unicodedata
-    if "\\" not in entry.path and unicodedata.normalize("NFC", entry.path) == entry.path:
+    try:
+        safe = bytes.fromhex(entry.raw_path_hex or "").decode("utf-8", "strict") == entry.path
+    except (ValueError, UnicodeDecodeError):
+        safe = False
+    if safe and "\\" not in entry.path and unicodedata.normalize("NFC", entry.path) == entry.path:
         return entry.path
-    return "@snapshot-entry/" + (entry.raw_path_hex or "")
+    return "@snapshot-entry/raw/" + (entry.raw_path_hex or "")
 
 
 def _opaque_artifact(entry: SnapshotEntry, reason: str, *, source_cid: str | None = None) -> ArtifactRecord:
@@ -59,14 +66,17 @@ def _opaque_artifact(entry: SnapshotEntry, reason: str, *, source_cid: str | Non
         _artifact_id("raw/" + (entry.raw_path_hex or entry.path.encode().hex())), "opaque", _artifact_path(entry),
         entry.source_cid if source_cid is None else source_cid,
         AnalysisConfidence.OPAQUE,
-        {"snapshot_kind": entry.kind, "opaque_reason": reason},
+        {"snapshot_kind": entry.kind, "opaque_reason": reason,
+         "raw_path_hex": entry.raw_path_hex, "disposition": entry.disposition},
     )
 
 
 def _typed_artifact(entry: SnapshotEntry) -> ArtifactRecord:
     return ArtifactRecord(
         _artifact_id("raw/" + (entry.raw_path_hex or entry.path.encode().hex())), entry.kind, _artifact_path(entry), entry.source_cid,
-        AnalysisConfidence.EXACT, {"snapshot_kind": entry.kind},
+        AnalysisConfidence.EXACT, {"snapshot_kind": entry.kind,
+                                   "raw_path_hex": entry.raw_path_hex,
+                                   "disposition": entry.disposition},
     )
 
 
@@ -83,7 +93,8 @@ def _witness_matches(root: Path, entry: SnapshotEntry) -> bool:
         observed = (root / os.fsdecode(bytes.fromhex(entry.raw_path_hex or ""))).stat(follow_symlinks=False)
     except (OSError, ValueError):
         return False
-    return entry.witness == (observed.st_dev, observed.st_ino, observed.st_size, observed.st_mtime_ns)
+    return entry.witness == (observed.st_dev, observed.st_ino, observed.st_size,
+                             observed.st_mtime_ns, observed.st_ctime_ns)
 
 
 @dataclass(slots=True)
@@ -94,6 +105,7 @@ class RepositoryScanner:
     namespace: str | None = None
     extractor_name: str = SCANNER_NAME
     extractor_version: str = SCANNER_VERSION
+    exclusions: Iterable[str] | None = None
 
     def scan(
         self,
@@ -103,7 +115,7 @@ class RepositoryScanner:
         snapshot: RepositorySnapshot | None = None,
     ) -> RepositoryState:
         root = Path(repository).resolve()
-        current = snapshot or snapshot_repository(root, repository_id=self.repository_id)
+        current = snapshot or snapshot_repository(root, repository_id=self.repository_id, exclusions=self.exclusions)
         root = _input_root(root)
         if self.repository_id is not None and current.repository_id != self.repository_id:
             raise RepositoryScannerError("snapshot repository_id does not match scanner repository_id")
@@ -116,11 +128,11 @@ class RepositoryScanner:
             # witness check deliberately reads metadata only; it preserves the
             # historical race signal without a second content-byte read.
             if current.mode != "git-clean" and not _witness_matches(root, entry):
-                unavailable[entry.path] = "source_cid_mismatch"
+                unavailable[entry.source_key] = "source_cid_mismatch"
             elif entry.captured_bytes is None:
-                unavailable[entry.path] = "source_bytes_unavailable"
+                unavailable[entry.source_key] = "source_bytes_unavailable"
             else:
-                sources[entry.path] = entry.captured_bytes
+                sources[entry.source_key] = entry.captured_bytes
         return self.scan_snapshot(current, sources, previous_state=previous_state, unavailable=unavailable)
 
     def scan_snapshot(
@@ -154,7 +166,7 @@ class RepositoryScanner:
         edges = []
         verified: dict[str, bytes] = {}
         failures = dict(unavailable or {})
-        entries_by_path = {entry.path: entry for entry in snapshot.entries}
+        entries_by_key = {entry.source_key: entry for entry in snapshot.entries}
         # State roots must bind the complete acquisition authority, not merely
         # the parsed source subset.  This has a fixed identity so a real file
         # named @snapshot-evidence cannot collide with it.
@@ -168,28 +180,33 @@ class RepositoryScanner:
             if entry.is_opaque:
                 artifacts.append(_opaque_artifact(entry, entry.opaque_reason or "opaque_snapshot"))
                 continue
-            supplied = sources.get(entry.path)
+            # Raw-domain keys are required for unsafe names.  A safe display
+            # path remains a compatibility convenience for external callers.
+            supplied = sources.get(entry.source_key)
+            if supplied is None and _artifact_path(entry) == entry.path:
+                supplied = sources.get(entry.path)
             if supplied is None:
-                failures.setdefault(entry.path, "source_bytes_unavailable")
+                failures.setdefault(entry.source_key, "source_bytes_unavailable")
                 continue
             raw = supplied.encode("utf-8") if isinstance(supplied, str) else supplied
             if type(raw) is not bytes:
                 raise RepositoryScannerError("source values must be str or bytes")
             if cid_for_bytes(raw) != entry.source_cid:
-                failures.setdefault(entry.path, "source_cid_mismatch")
+                failures.setdefault(entry.source_key, "source_cid_mismatch")
                 continue
-            verified[entry.path] = raw
+            verified[entry.source_key] = raw
 
-        for path in sorted(failures):
-            entry = entries_by_path.get(path)
+        for key in sorted(failures):
+            entry = entries_by_key.get(key)
             if entry is not None:
-                artifacts.append(_opaque_artifact(entry, failures[path]))
+                artifacts.append(_opaque_artifact(entry, failures[key]))
 
         python = PythonSemanticAnalyzer(repository_id=snapshot.repository_id, namespace=self.namespace)
         pytest = PytestAnalyzer(repository_id=snapshot.repository_id, namespace="pytest")
         pytest_sources: dict[str, bytes] = {}
-        for path, raw in sorted(verified.items()):
-            entry = entries_by_path[path]
+        for key, raw in sorted(verified.items()):
+            entry = entries_by_key[key]
+            path = entry.path
             if _artifact_path(entry) != entry.path:
                 artifacts.append(_opaque_artifact(entry, "raw_path_not_model_safe"))
                 continue
@@ -240,9 +257,10 @@ def scan_repository_state(
     repository_id: str | None = None,
     namespace: str | None = None,
     previous_state: RepositoryState | None = None,
+    exclusions: Iterable[str] | None = None,
 ) -> RepositoryState:
     """Convenience entry point for a cold or incremental repository scan."""
-    return RepositoryScanner(repository_id=repository_id, namespace=namespace).scan(repository, previous_state=previous_state)
+    return RepositoryScanner(repository_id=repository_id, namespace=namespace, exclusions=exclusions).scan(repository, previous_state=previous_state)
 
 
 __all__ = ["SCANNER_NAME", "SCANNER_VERSION", "RepositoryScanner", "RepositoryScannerError", "scan_repository_state"]
