@@ -846,6 +846,27 @@ def test_api_document_fields_reject_lossy_type_coercion(
         )
 
 
+def test_api_abstract_accepts_observed_official_length_but_remains_bounded() -> None:
+    base = {
+        "document_number": "2026-04517",
+        "publication_date": "2026-03-09",
+    }
+    observed = "a" * 2_196
+    document = acquisition.InventoryDocument.from_api_result(
+        base | {"abstract": observed},
+        partition_id="p-2026-03",
+        page_id="p-2026-03/page-4",
+    )
+    assert document.abstract == observed
+
+    with pytest.raises(FederalRegisterAcquisitionError, match="abstract exceeds"):
+        acquisition.InventoryDocument.from_api_result(
+            base | {"abstract": "a" * (acquisition.MAX_ABSTRACT_CHARS + 1)},
+            partition_id="p-2026-03",
+            page_id="p-2026-03/page-4",
+        )
+
+
 @pytest.mark.parametrize(
     "body",
     (

@@ -121,6 +121,7 @@ DEFAULT_RETRY_BACKOFF_SECONDS: Final = 0.5
 DEFAULT_REQUEST_TIMEOUT_SECONDS: Final = 30.0
 MAX_API_RESPONSE_BYTES: Final = 32 * 1024 * 1024
 MAX_CHECKPOINT_BYTES: Final = 64 * 1024 * 1024
+MAX_ABSTRACT_CHARS: Final = 16 * 1024
 DEFAULT_RATE_LIMIT_SECONDS: Final = 0.25
 DEFAULT_USER_AGENT: Final = (
     "ipfs-datasets-py-legal-corpora-reindex/1.0 "
@@ -639,7 +640,7 @@ class InventoryDocument:
         object.__setattr__(self, "agencies", agencies)
         for field_name, maximum in (
             ("title", 2048),
-            ("abstract", 2048),
+            ("abstract", MAX_ABSTRACT_CHARS),
             ("document_type", 128),
             ("page_id", 128),
             ("partition_id", 128),
@@ -740,7 +741,7 @@ class InventoryDocument:
             ),
             agencies=tuple(agency_names),
             disposition=disposition,
-            abstract=_optional_text("abstract", maximum=2048),
+            abstract=_optional_text("abstract", maximum=MAX_ABSTRACT_CHARS),
             page_id=page_id,
             partition_id=partition_id,
         )
