@@ -6,11 +6,16 @@ stable ``record_id``, and only becomes durable after :meth:`DatasetSink.commit`.
 Partial or cancelled runs leave staged data aborted and do not invent a
 successful sink commit for checkpoint CAS.
 
-When a DuckDB wallet store is injected (DQK-071 shadow mode), every staged
-batch and commit is dual-written into the typed ledger catalog so blocks,
-transactions, transfers, UTXOs, events, and related dimension rows shadow at
-ingestion time.  JSONL / in-memory rows remain the authority; secrets, signing
-payloads, and unrestricted raw bytes never enter DuckDB (CID/digest refs only).
+Authority modes (DQK-071 / DQK-072):
+
+* ``off`` — JSONL / in-memory only (legacy unit-test path).
+* ``shadow`` — dual-write into DuckDB; JSONL / in-memory remain authority
+  (DQK-071).
+* ``dual`` / ``db-primary`` — DuckDB is authoritative for normalized ledger
+  state; JSONL, Parquet, Arrow and CAR are outbox-driven exports (DQK-072).
+
+Secrets, signing payloads, and unrestricted raw bytes never enter DuckDB
+(CID/digest refs only).
 
 Importing this module performs no network I/O.
 """
@@ -43,8 +48,10 @@ from .protocols import OperationContext, RecordBatch
 SINK_RECEIPT_SCHEMA_VERSION = "wallet-sink-receipt-v1"
 RAW_PAYLOAD_SCHEMA_VERSION = "wallet-raw-payload-v1"
 SHADOW_LEDGER_MODE_SCHEMA_VERSION = "wallet-shadow-ledger-v1"
+AUTHORITY_LEDGER_MODE_SCHEMA_VERSION = "wallet-authority-ledger-v1"
+EXPORT_OUTBOX_SCHEMA_VERSION = "wallet-export-outbox-v1"
 
-# Fact tables dual-written by the shadow ledger projection (DQK-071).
+# Fact tables dual-written by the shadow/dual ledger projection (DQK-071/072).
 _SHADOW_FACT_TABLES: Final = (
     "blocks",
     "transactions",
@@ -53,6 +60,7 @@ _SHADOW_FACT_TABLES: Final = (
     "token_accounts",
     "contract_events",
 )
+_AUTHORITY_FACT_TABLES: Final = _SHADOW_FACT_TABLES
 
 # Map LedgerRecord.record_type → catalog fact table.
 _RECORD_TYPE_TO_TABLE: Mapping[str, str] = MappingProxyType(
@@ -852,15 +860,209 @@ class _StagedRecord:
 
 
 class ShadowLedgerMode(StrEnum):
-    """Authority mode for dual-written wallet ledger sinks (DQK-071).
+    """Authority mode for dual-written wallet ledger sinks (DQK-071 / DQK-072).
 
     * ``off`` — JSONL / in-memory only (legacy unit-test path).
-    * ``shadow`` — dual-write into an injected DuckDB wallet store; JSONL remains
-      authority until DQK-072 authority cutover.
+    * ``shadow`` — dual-write into DuckDB; JSONL / in-memory remain authority
+      (DQK-071).
+    * ``dual`` — dual writes with DuckDB as ledger/checkpoint authority and a
+      crash-recoverable export outbox for JSONL/Parquet/Arrow/CAR (DQK-072).
+    * ``db-primary`` — DuckDB is sole authority; file formats are outbox exports
+      only and never re-admitted as operational truth.
     """
 
     OFF = "off"
     SHADOW = "shadow"
+    DUAL = "dual"
+    DB_PRIMARY = "db-primary"
+
+    @classmethod
+    def parse(cls, value: "ShadowLedgerMode | str | None") -> "ShadowLedgerMode":
+        if value is None:
+            return cls.OFF
+        if isinstance(value, cls):
+            return value
+        text = str(value).strip().lower().replace("_", "-")
+        aliases = {
+            "off": cls.OFF,
+            "none": cls.OFF,
+            "legacy": cls.OFF,
+            "shadow": cls.SHADOW,
+            "dual": cls.DUAL,
+            "dual-write": cls.DUAL,
+            "dualwrite": cls.DUAL,
+            "db-primary": cls.DB_PRIMARY,
+            "dbprimary": cls.DB_PRIMARY,
+            "duckdb-primary": cls.DB_PRIMARY,
+            "authority": cls.DUAL,
+        }
+        if text not in aliases:
+            raise InvalidRequestError(
+                f"unknown ledger authority mode {value!r}; expected one of "
+                f"{sorted({m.value for m in cls})}"
+            )
+        return aliases[text]
+
+    @property
+    def duckdb_is_authority(self) -> bool:
+        """True when DuckDB is the operational truth for ledger rows."""
+
+        return self in {ShadowLedgerMode.DUAL, ShadowLedgerMode.DB_PRIMARY}
+
+    @property
+    def dual_writes(self) -> bool:
+        """True when both DuckDB and a legacy projection path are active."""
+
+        return self in {
+            ShadowLedgerMode.SHADOW,
+            ShadowLedgerMode.DUAL,
+            ShadowLedgerMode.DB_PRIMARY,
+        }
+
+
+class ExportOutboxStatus(StrEnum):
+    """Lifecycle for outbox-driven JSONL/Parquet/Arrow/CAR exports."""
+
+    PENDING = "pending"
+    IN_FLIGHT = "in_flight"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+@dataclass(frozen=True, slots=True)
+class ExportOutboxEntry:
+    """One durable export job drained after DuckDB authority commit (DQK-072)."""
+
+    outbox_id: str
+    commit_id: str
+    scope: str
+    formats: tuple[str, ...]
+    record_ids: tuple[str, ...]
+    content_digest: str
+    status: ExportOutboxStatus = ExportOutboxStatus.PENDING
+    output_dir: str | None = None
+    error: str | None = None
+    schema_version: str = field(default=EXPORT_OUTBOX_SCHEMA_VERSION, init=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "outbox_id", _required_str(self.outbox_id, "outbox_id"))
+        object.__setattr__(self, "commit_id", _required_str(self.commit_id, "commit_id"))
+        object.__setattr__(self, "scope", _required_str(self.scope, "scope"))
+        object.__setattr__(self, "formats", tuple(self.formats))
+        object.__setattr__(self, "record_ids", tuple(self.record_ids))
+        object.__setattr__(
+            self, "content_digest", _required_str(self.content_digest, "content_digest")
+        )
+        if not isinstance(self.status, ExportOutboxStatus):
+            object.__setattr__(
+                self, "status", ExportOutboxStatus(str(self.status))
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {
+            "schema_version": self.schema_version,
+            "outbox_id": self.outbox_id,
+            "commit_id": self.commit_id,
+            "scope": self.scope,
+            "formats": list(self.formats),
+            "record_ids": list(self.record_ids),
+            "content_digest": self.content_digest,
+            "status": self.status.value,
+        }
+        if self.output_dir is not None:
+            result["output_dir"] = self.output_dir
+        if self.error is not None:
+            result["error"] = self.error
+        return result
+
+    def with_status(
+        self,
+        status: ExportOutboxStatus,
+        *,
+        error: str | None = None,
+        output_dir: str | None = None,
+    ) -> "ExportOutboxEntry":
+        return ExportOutboxEntry(
+            outbox_id=self.outbox_id,
+            commit_id=self.commit_id,
+            scope=self.scope,
+            formats=self.formats,
+            record_ids=self.record_ids,
+            content_digest=self.content_digest,
+            status=status,
+            output_dir=output_dir if output_dir is not None else self.output_dir,
+            error=error,
+        )
+
+
+class ExportOutbox:
+    """Process-local export outbox for dual-mode authority cutover (DQK-072).
+
+    Entries are enqueued only after a successful DuckDB authority commit so
+    kill/restart at export boundaries can drain idempotently without inventing
+    or losing ledger rows.  File formats are never operational authority.
+    """
+
+    def __init__(self) -> None:
+        self._entries: dict[str, ExportOutboxEntry] = {}
+        self._order: list[str] = []
+
+    def __len__(self) -> int:
+        return len(self._entries)
+
+    def enqueue(self, entry: ExportOutboxEntry) -> ExportOutboxEntry:
+        if not isinstance(entry, ExportOutboxEntry):
+            raise InvalidRequestError("entry must be an ExportOutboxEntry")
+        existing = self._entries.get(entry.outbox_id)
+        if existing is not None:
+            # Idempotent: identical commit+digest is a no-op; conflict fails closed.
+            if (
+                existing.commit_id != entry.commit_id
+                or existing.content_digest != entry.content_digest
+            ):
+                raise DatasetSinkError(
+                    f"export outbox id {entry.outbox_id!r} reused with different payload"
+                )
+            return existing
+        self._entries[entry.outbox_id] = entry
+        self._order.append(entry.outbox_id)
+        return entry
+
+    def get(self, outbox_id: str) -> ExportOutboxEntry | None:
+        return self._entries.get(outbox_id)
+
+    def pending(self) -> tuple[ExportOutboxEntry, ...]:
+        return tuple(
+            self._entries[oid]
+            for oid in self._order
+            if self._entries[oid].status
+            in {ExportOutboxStatus.PENDING, ExportOutboxStatus.IN_FLIGHT, ExportOutboxStatus.FAILED}
+        )
+
+    def completed(self) -> tuple[ExportOutboxEntry, ...]:
+        return tuple(
+            self._entries[oid]
+            for oid in self._order
+            if self._entries[oid].status is ExportOutboxStatus.COMPLETED
+        )
+
+    def mark(
+        self,
+        outbox_id: str,
+        status: ExportOutboxStatus,
+        *,
+        error: str | None = None,
+        output_dir: str | None = None,
+    ) -> ExportOutboxEntry:
+        current = self._entries.get(outbox_id)
+        if current is None:
+            raise DatasetSinkError(f"unknown export outbox id {outbox_id!r}")
+        updated = current.with_status(status, error=error, output_dir=output_dir)
+        self._entries[outbox_id] = updated
+        return updated
+
+    def list_entries(self) -> tuple[ExportOutboxEntry, ...]:
+        return tuple(self._entries[oid] for oid in self._order)
 
 
 @dataclass(frozen=True, slots=True)
@@ -926,8 +1128,14 @@ class StreamingDatasetSink:
 
     When *shadow_store* is provided (or *shadow* is true and a store is
     constructed), every :meth:`write` / :meth:`commit` / :meth:`abort` is also
-    applied to the DuckDB ledger store so typed projections shadow at ingestion
-    time (DQK-071).  Authority remains the in-memory / JSONL path.
+    applied to the DuckDB ledger store (DQK-071 shadow / DQK-072 dual).
+
+    Authority:
+
+    * ``shadow`` — in-memory / JSONL remains authority; DuckDB is dual-written.
+    * ``dual`` / ``db-primary`` — DuckDB is authority; JSONL and other file
+      formats are projected only through the export outbox after a durable
+      DuckDB commit (kill/restart loses or duplicates no ledger record).
     """
 
     def __init__(
@@ -938,6 +1146,9 @@ class StreamingDatasetSink:
         raw_payload_policy: RawPayloadPolicy = RawPayloadPolicy.OMITTED,
         shadow_store: Any | None = None,
         shadow: bool | Any | None = None,
+        authority_mode: ShadowLedgerMode | str | None = None,
+        export_formats: Sequence[str] = (),
+        export_outbox: ExportOutbox | None = None,
     ) -> None:
         self._scope = _required_str(scope, "scope")
         self._output_dir = Path(output_dir) if output_dir is not None else None
@@ -958,16 +1169,23 @@ class StreamingDatasetSink:
         self._last_commit: SinkCommitReceipt | None = None
         self._shadow_write_receipts: list[ShadowWriteReceipt] = []
         self._last_parity: ShadowParityReport | None = None
+        self._export_formats = tuple(str(fmt) for fmt in export_formats)
+        self._export_outbox = export_outbox if export_outbox is not None else ExportOutbox()
+        self._crash_boundary: str | None = None
         self._shadow = _resolve_shadow_store(
             shadow_store=shadow_store,
             shadow=shadow,
             scope=self._scope,
         )
-        self._shadow_mode = (
-            ShadowLedgerMode.SHADOW
-            if self._shadow is not None
-            else ShadowLedgerMode.OFF
+        self._shadow_mode = _resolve_ledger_mode(
+            authority_mode=authority_mode,
+            shadow=shadow,
+            has_store=self._shadow is not None,
         )
+        if self._shadow_mode.dual_writes and self._shadow is None:
+            # Dual / shadow / db-primary without a store opens a process-local
+            # pure-Python DuckDB wallet store so authority is never file-only.
+            self._shadow = _open_default_shadow_store(scope=self._scope)
 
     @property
     def scope(self) -> str:
@@ -979,13 +1197,31 @@ class StreamingDatasetSink:
 
     @property
     def shadow_store(self) -> Any | None:
-        """Injected DuckDB wallet store used for dual-write shadowing."""
+        """Injected DuckDB wallet store used for dual-write / dual-mode authority."""
 
         return self._shadow
 
     @property
+    def authority_store(self) -> Any | None:
+        """DuckDB store when it is operational authority (dual / db-primary)."""
+
+        if self._shadow_mode.duckdb_is_authority:
+            return self._shadow
+        return None
+
+    @property
     def shadow_mode(self) -> ShadowLedgerMode:
         return self._shadow_mode
+
+    @property
+    def authority_mode(self) -> ShadowLedgerMode:
+        """Alias for :attr:`shadow_mode` (DQK-072 dual-mode naming)."""
+
+        return self._shadow_mode
+
+    @property
+    def export_outbox(self) -> ExportOutbox:
+        return self._export_outbox
 
     @property
     def shadow_write_receipts(self) -> tuple[ShadowWriteReceipt, ...]:
@@ -1046,13 +1282,33 @@ class StreamingDatasetSink:
             return None, None
         return min(sequences), max(sequences)
 
+    def set_crash_boundary(self, boundary: str | None) -> None:
+        """Inject a crash at a named boundary (tests / chaos only).
+
+        Supported boundaries: ``before_page_commit``, ``before_block_commit``,
+        ``before_export_outbox``, ``after_db_commit``, ``before_jsonl_flush``.
+        The boundary fires once then clears so resume can complete.
+        """
+
+        self._crash_boundary = boundary
+
+    def _maybe_crash(self, boundary: str) -> None:
+        if self._crash_boundary is not None and self._crash_boundary == boundary:
+            self._crash_boundary = None
+            raise DatasetSinkError(f"crash injected at boundary {boundary!r}")
+
     async def write(
         self,
         batch: RecordBatch,
         *,
         context: OperationContext,
     ) -> BatchWriteReceipt:
-        """Stage one bounded batch, dropping already-seen record identities."""
+        """Stage one bounded batch, dropping already-seen record identities.
+
+        Dual / db-primary mode stages DuckDB first (authority), then mirrors
+        into the in-memory working set so kill/restart recovers from DuckDB.
+        Shadow mode stages memory first and dual-writes DuckDB (DQK-071).
+        """
 
         context.check_active()
         if self._aborted:
@@ -1060,6 +1316,35 @@ class StreamingDatasetSink:
         if not isinstance(batch, RecordBatch):
             raise DatasetSinkError("batch must be a RecordBatch")
         batch.enforce(context.limits)
+
+        # Dual-mode: DuckDB is authority — write there first so a crash before
+        # memory promotion still leaves a recoverable stage or durable row set.
+        authority_first = (
+            self._shadow_mode.duckdb_is_authority and self._shadow is not None
+        )
+        db_receipt: BatchWriteReceipt | None = None
+        if authority_first:
+            try:
+                db_receipt = await self._shadow.write(batch, context=context)
+            except Exception as exc:
+                raise DatasetSinkError(
+                    f"authority ledger write failed: {exc}"
+                ) from exc
+            self._shadow_write_receipts.append(
+                ShadowWriteReceipt(
+                    write_id=str(getattr(db_receipt, "write_id", "write:db")),
+                    accepted_count=int(
+                        getattr(db_receipt, "accepted_count", 0) or 0
+                    ),
+                    duplicate_count=int(
+                        getattr(db_receipt, "duplicate_count", 0) or 0
+                    ),
+                    content_digest=str(
+                        getattr(db_receipt, "content_digest", content_digest([]))
+                    ),
+                    mode=self._shadow_mode.value,
+                )
+            )
 
         accepted: list[str] = []
         duplicate = 0
@@ -1098,9 +1383,13 @@ class StreamingDatasetSink:
         self._out_of_order_total += out_of_order
         self._write_count += 1
         encoded = canonical_json_bytes(payloads) if payloads else b"[]"
-        write_id = f"write:{uuid4().hex}"
+        write_id = (
+            str(getattr(db_receipt, "write_id", None))
+            if db_receipt is not None
+            else f"write:{uuid4().hex}"
+        )
         receipt = BatchWriteReceipt(
-            write_id=write_id,
+            write_id=write_id or f"write:{uuid4().hex}",
             accepted_count=len(accepted),
             duplicate_count=duplicate,
             out_of_order_count=out_of_order,
@@ -1108,8 +1397,9 @@ class StreamingDatasetSink:
             record_ids=tuple(accepted),
             content_digest=content_digest(payloads),
         )
-        # Dual-write shadow after authority staging succeeds (DQK-071).
-        await self._shadow_write(batch, context=context, authority=receipt)
+        # Shadow mode: dual-write DuckDB after memory staging (DQK-071).
+        if not authority_first:
+            await self._shadow_write(batch, context=context, authority=receipt)
         return receipt
 
     async def _shadow_write(
@@ -1147,6 +1437,7 @@ class StreamingDatasetSink:
                         authority.content_digest,
                     )
                 ),
+                mode=self._shadow_mode.value,
             )
         )
 
@@ -1162,9 +1453,10 @@ class StreamingDatasetSink:
         caller builds the manifest after inspecting the receipt.  Checkpoint
         CAS must only proceed after this receipt is obtained.
 
-        When a shadow store is attached, the DuckDB catalog is committed after
-        the JSONL/in-memory authority commit so projections match committed
-        sink rows (DQK-071).
+        Dual / db-primary (DQK-072): DuckDB commits first (authority).  JSONL
+        flush and multi-format exports are enqueued on the export outbox and
+        only materialize after the authority commit succeeds.  Shadow mode
+        (DQK-071) still commits memory/JSONL first, then DuckDB.
         """
 
         context.check_active()
@@ -1177,11 +1469,30 @@ class StreamingDatasetSink:
         if isinstance(manifest, ExportManifest):
             export_manifest = manifest
 
+        authority_first = (
+            self._shadow_mode.duckdb_is_authority and self._shadow is not None
+        )
+
+        if authority_first:
+            self._maybe_crash("before_page_commit")
+            self._maybe_crash("before_block_commit")
+            try:
+                db_receipt = await self._shadow.commit(manifest, context=context)
+            except Exception as exc:
+                raise DatasetSinkError(
+                    f"authority ledger commit failed: {exc}"
+                ) from exc
+            self._maybe_crash("after_db_commit")
+            commit_id = str(
+                getattr(db_receipt, "commit_id", None) or f"commit:{uuid4().hex}"
+            )
+        else:
+            commit_id = f"commit:{uuid4().hex}"
+
         promoting = list(self._staged)
         self._committed.extend(promoting)
         self._staged.clear()
         self._commit_count += 1
-        commit_id = f"commit:{uuid4().hex}"
 
         partitions: tuple[ExportPartition, ...] = ()
         if export_manifest is not None:
@@ -1196,7 +1507,10 @@ class StreamingDatasetSink:
                     )
 
         digest = content_digest([item.payload for item in self._committed])
-        if self._output_dir is not None:
+
+        # Shadow mode: flush JSONL as authority surface immediately.
+        # Dual mode: JSONL is outbox-driven (not authority).
+        if self._output_dir is not None and not authority_first:
             self._flush_committed_jsonl(digest)
 
         receipt = SinkCommitReceipt(
@@ -1209,7 +1523,7 @@ class StreamingDatasetSink:
         )
         self._last_commit = receipt
 
-        if self._shadow is not None:
+        if not authority_first and self._shadow is not None:
             try:
                 await self._shadow.commit(manifest, context=context)
             except Exception as exc:
@@ -1226,10 +1540,44 @@ class StreamingDatasetSink:
                     f"missing_in_db={list(self._last_parity.missing_in_db)} "
                     f"mismatched={list(self._last_parity.mismatched)}"
                 )
+        elif authority_first and self._shadow is not None:
+            # Dual mode: parity still required between memory working set and DB.
+            self._last_parity = compare_jsonl_db_projections(
+                self.committed_records(),
+                self._shadow,
+            )
+            if not self._last_parity.matched:
+                raise DatasetSinkError(
+                    "authority ledger parity mismatch after commit: "
+                    f"missing_in_db={list(self._last_parity.missing_in_db)} "
+                    f"mismatched={list(self._last_parity.mismatched)}"
+                )
+            self._enqueue_export_outbox(receipt)
+
         return receipt
+
+    def _enqueue_export_outbox(self, receipt: SinkCommitReceipt) -> ExportOutboxEntry:
+        """Enqueue outbox-driven export after a durable DuckDB commit."""
+
+        self._maybe_crash("before_export_outbox")
+        formats = self._export_formats or ("jsonl",)
+        if self._output_dir is not None and "jsonl" not in formats:
+            formats = ("jsonl",) + tuple(formats)
+        entry = ExportOutboxEntry(
+            outbox_id=f"outbox:{receipt.commit_id}",
+            commit_id=receipt.commit_id,
+            scope=receipt.scope,
+            formats=tuple(formats),
+            record_ids=tuple(item.record_id for item in self._committed),
+            content_digest=receipt.content_digest,
+            status=ExportOutboxStatus.PENDING,
+            output_dir=str(self._output_dir) if self._output_dir is not None else None,
+        )
+        return self._export_outbox.enqueue(entry)
 
     def _flush_committed_jsonl(self, digest: str) -> Path:
         assert self._output_dir is not None
+        self._maybe_crash("before_jsonl_flush")
         path = self._output_dir / "records.jsonl"
         tmp = path.with_suffix(".jsonl.tmp")
         lines = [
@@ -1241,20 +1589,157 @@ class StreamingDatasetSink:
         (self._output_dir / "content.digest").write_text(digest + "\n", encoding="utf-8")
         return path
 
+    def drain_export_outbox(
+        self,
+        *,
+        formats: Sequence[str] | None = None,
+        output_dir: str | Path | None = None,
+    ) -> tuple[ExportOutboxEntry, ...]:
+        """Materialize pending outbox exports from DuckDB authority rows.
+
+        Idempotent: completed entries are skipped.  File formats never become
+        operational authority — they are one-way projections of DuckDB state.
+        """
+
+        from .export import drain_wallet_export_outbox
+
+        out_dir = Path(output_dir) if output_dir is not None else self._output_dir
+        return drain_wallet_export_outbox(
+            self,
+            formats=formats,
+            output_dir=out_dir,
+        )
+
+    def recover_authority(self) -> Mapping[str, Any]:
+        """Recover DuckDB open/committing stages and rehydrate the working set.
+
+        Safe at page/block/reorg/export boundaries: open stages abort (no
+        durable mutation), committing stages finalize with INSERT-OR-IGNORE,
+        and the in-memory projection is rebuilt from durable fact tables so
+        resume neither loses nor duplicates committed records.
+        """
+
+        report: dict[str, Any] = {
+            "mode": self._shadow_mode.value,
+            "recovered": False,
+            "record_count": self.committed_count,
+        }
+        if self._shadow is None:
+            return MappingProxyType(report)
+        recover = getattr(self._shadow, "recover", None)
+        recovery: Mapping[str, Any] = {}
+        if callable(recover):
+            recovery = dict(recover())
+            report["recovery"] = dict(recovery)
+            report["recovered"] = True
+        if self._shadow_mode.duckdb_is_authority:
+            rehydrated = self.rehydrate_from_authority()
+            report["record_count"] = rehydrated
+            report["rehydrated"] = True
+        # Re-open for resume after recover aborted open stages.
+        self._aborted = False
+        self._staged.clear()
+        reset = getattr(self._shadow, "reset_for_resume", None)
+        if callable(reset):
+            reset()
+        return MappingProxyType(report)
+
+    def rehydrate_from_authority(self) -> int:
+        """Rebuild in-memory committed rows from DuckDB fact tables."""
+
+        if self._shadow is None:
+            return len(self._committed)
+        list_records = getattr(self._shadow, "list_records", None)
+        if not callable(list_records):
+            return len(self._committed)
+        rows_by_id: dict[str, dict[str, Any]] = {}
+        for table in _AUTHORITY_FACT_TABLES:
+            try:
+                rows = list_records(table)
+            except Exception:
+                continue
+            for row in rows:
+                if not isinstance(row, Mapping):
+                    continue
+                rid = row.get("record_id")
+                if isinstance(rid, str) and rid.strip() and rid not in rows_by_id:
+                    rows_by_id[rid] = dict(row)
+        # Preserve prior payload_json shapes when present; otherwise store the
+        # typed catalog row as the working-set projection.
+        rebuilt: list[_StagedRecord] = []
+        seen: set[str] = set()
+        order = 0
+        for rid, row in sorted(rows_by_id.items()):
+            seen.add(rid)
+            finality_raw = row.get("finality")
+            try:
+                finality = (
+                    finality_raw
+                    if isinstance(finality_raw, Finality)
+                    else Finality(str(finality_raw or Finality.UNKNOWN.value))
+                )
+            except Exception:
+                finality = Finality.UNKNOWN
+            sequence = row.get("sequence")
+            if not isinstance(sequence, int) or isinstance(sequence, bool):
+                sequence = None
+            rebuilt.append(
+                _StagedRecord(
+                    record_id=rid,
+                    payload=dict(row),
+                    finality=finality,
+                    sequence=sequence,
+                    order=order,
+                )
+            )
+            order += 1
+        self._committed = rebuilt
+        self._seen = seen
+        self._staged.clear()
+        sequences = [item.sequence for item in rebuilt if item.sequence is not None]
+        self._last_sequence = max(sequences) if sequences else None
+        return len(rebuilt)
+
+    def authority_record_ids(self) -> frozenset[str]:
+        """Return durable record identities from DuckDB when authoritative."""
+
+        if self._shadow is None or not self._shadow_mode.duckdb_is_authority:
+            return frozenset(self._seen)
+        list_records = getattr(self._shadow, "list_records", None)
+        if not callable(list_records):
+            return frozenset(self._seen)
+        ids: set[str] = set()
+        for table in _AUTHORITY_FACT_TABLES:
+            try:
+                rows = list_records(table)
+            except Exception:
+                continue
+            for row in rows:
+                if isinstance(row, Mapping):
+                    rid = row.get("record_id")
+                    if isinstance(rid, str) and rid.strip():
+                        ids.add(rid)
+        return frozenset(ids)
+
     async def abort(self, *, context: OperationContext) -> None:
         """Discard uncommitted staged data without inventing a sink commit.
 
         Abort is a cleanup path and must succeed even when the caller has
         already cancelled the operation; it never advances durable state.
-        Shadow stages are aborted after the authority stage is cleared.
+        Dual-mode aborts DuckDB open stages first (authority), then memory.
         """
 
         # Deliberately skip cancellation checks so partial/cancelled runs can
         # always drop staged data without raising OperationCancelledError.
         _ = context
+        if self._shadow is not None and self._shadow_mode.duckdb_is_authority:
+            try:
+                await self._shadow.abort(context=context)
+            except Exception:
+                pass
         self._staged.clear()
         self._aborted = True
-        if self._shadow is not None:
+        if self._shadow is not None and not self._shadow_mode.duckdb_is_authority:
             try:
                 await self._shadow.abort(context=context)
             except Exception:
@@ -1265,7 +1750,8 @@ class StreamingDatasetSink:
         """Clear abort state so a resumed pipeline can stage further batches.
 
         Committed rows and the seen-identity set are retained so resume never
-        re-emits already durable records.
+        re-emits already durable records.  Dual mode rehydrates seen ids from
+        DuckDB authority when available.
         """
 
         self._aborted = False
@@ -1274,6 +1760,9 @@ class StreamingDatasetSink:
             reset = getattr(self._shadow, "reset_for_resume", None)
             if callable(reset):
                 reset()
+            if self._shadow_mode.duckdb_is_authority:
+                # Keep memory aligned with durable authority after resume.
+                self.rehydrate_from_authority()
 
     def jsonl_path(self) -> Path | None:
         """Return the durable JSONL path when *output_dir* is configured."""
@@ -1283,7 +1772,12 @@ class StreamingDatasetSink:
         return self._output_dir / "records.jsonl"
 
     def read_jsonl_records(self) -> tuple[dict[str, Any], ...]:
-        """Load committed JSONL projections (authority surface for parity)."""
+        """Load committed JSONL projections (export surface; dual-mode outbox).
+
+        Dual / db-primary: JSONL is not authority.  When the outbox has not
+        been drained yet, return the in-memory projection of DuckDB authority
+        so parity checks remain available without re-admitting files as truth.
+        """
 
         path = self.jsonl_path()
         if path is not None and path.is_file():
@@ -1329,6 +1823,25 @@ def _resolve_shadow_store(
         return None
     # Non-bool *shadow* is treated as an injected store instance.
     return shadow
+
+
+def _resolve_ledger_mode(
+    *,
+    authority_mode: ShadowLedgerMode | str | None,
+    shadow: bool | Any | None,
+    has_store: bool,
+) -> ShadowLedgerMode:
+    """Resolve ledger authority mode for a sink constructor."""
+
+    if authority_mode is not None:
+        return ShadowLedgerMode.parse(authority_mode)
+    if shadow is False:
+        return ShadowLedgerMode.OFF
+    if has_store or shadow is True:
+        # Explicit store without mode defaults to shadow (DQK-071) so existing
+        # callers keep memory/JSONL authority until they opt into dual mode.
+        return ShadowLedgerMode.SHADOW
+    return ShadowLedgerMode.OFF
 
 
 def _open_default_shadow_store(*, scope: str) -> Any:
@@ -1562,14 +2075,19 @@ def iter_record_dicts(records: Iterable[object]) -> list[dict[str, Any]]:
 
 
 __all__ = [
+    "AUTHORITY_LEDGER_MODE_SCHEMA_VERSION",
     "DEFAULT_MAX_RAW_OBJECT_BYTES",
     "DEFAULT_MAX_RAW_OBJECTS",
     "DEFAULT_MAX_RAW_TOTAL_BYTES",
+    "EXPORT_OUTBOX_SCHEMA_VERSION",
     "RAW_PAYLOAD_SCHEMA_VERSION",
     "SHADOW_LEDGER_MODE_SCHEMA_VERSION",
     "SINK_RECEIPT_SCHEMA_VERSION",
     "BatchWriteReceipt",
     "DirectoryRawPayloadStore",
+    "ExportOutbox",
+    "ExportOutboxEntry",
+    "ExportOutboxStatus",
     "InMemoryRawPayloadStore",
     "RawPayloadCustodyLimits",
     "RawPayloadEncryptor",

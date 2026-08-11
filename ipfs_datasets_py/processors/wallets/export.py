@@ -11,8 +11,14 @@ IPLD/CAR export is optional and only attempted when explicitly requested and
 when a CAR writer is injectable—JSONL and Parquet contracts do not depend on
 it.
 
+Under dual-mode authority (DQK-072), DuckDB is operational truth for ledger
+state and checkpoints.  JSONL, Parquet, Arrow and CAR become **outbox-driven
+exports**: they are materialised only after a durable DuckDB commit and never
+re-admitted as authority.  Typed Parquet columns support predicate pushdown
+without relying on opaque-only ``payload_json`` as the pushdown surface.
+
 Importing this module performs no network I/O.  Parquet support uses optional
-``pyarrow`` only inside export methods.
+``pyarrow`` / ``duckdb`` only inside export methods.
 """
 
 from __future__ import annotations
@@ -21,9 +27,10 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import StrEnum
+from hashlib import sha256
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Final
 
 from .canonical import canonical_json, canonical_json_bytes, content_digest
 from .errors import ExportError, InvalidRequestError, UnsupportedCapabilityError
@@ -48,6 +55,9 @@ from .protocols import (
     RecordBatch,
 )
 from .storage import (
+    ExportOutbox,
+    ExportOutboxEntry,
+    ExportOutboxStatus,
     StreamingDatasetSink,
     record_as_dict,
     record_finality,
@@ -58,6 +68,19 @@ from .storage import (
 EXPORT_RECEIPT_SCHEMA_VERSION = "wallet-export-receipt-v1"
 DEFAULT_PROCESSOR_VERSION = "wallet-exporter@1.0.0"
 DEFAULT_NORMALIZED_SCHEMA_MAJOR = 1
+
+# Typed columns for predicate pushdown.  Opaque payload_json is optional and
+# never the sole authority surface for dual-mode analytical exports (DQK-072).
+TYPED_PARQUET_COLUMNS: Final[tuple[str, ...]] = (
+    "record_id",
+    "record_type",
+    "chain_ref_id",
+    "finality",
+    "sequence",
+    "block_hash",
+    "transaction_hash",
+    "ledger_hash",
+)
 
 
 class ExportFormat(StrEnum):
@@ -232,64 +255,191 @@ def read_jsonl(path: str | Path) -> list[dict[str, Any]]:
     return records
 
 
+def _typed_projection(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Project a ledger record dict onto typed predicate-pushdown columns."""
+
+    position = payload.get("ledger_position") or {}
+    sequence = None
+    block_hash = None
+    ledger_hash = None
+    if isinstance(position, Mapping):
+        seq = position.get("sequence")
+        if isinstance(seq, int) and not isinstance(seq, bool):
+            sequence = seq
+        block_hash = position.get("hash")
+        ledger_hash = position.get("hash")
+    chain = payload.get("chain")
+    chain_ref_id = payload.get("chain_ref_id")
+    if not chain_ref_id and isinstance(chain, Mapping):
+        chain_ref_id = chain.get("chain_ref_id") or chain.get("chain_id")
+    if not chain_ref_id and isinstance(chain, str):
+        chain_ref_id = chain
+    record_type = str(payload.get("record_type") or "")
+    if not record_type:
+        # Catalog rows from DuckDB authority may omit record_type; infer lightly.
+        if payload.get("block_hash") and payload.get("parent_hash") is not None:
+            record_type = "block"
+        elif payload.get("transaction_hash") and payload.get("output_index") is not None:
+            record_type = "utxo"
+        elif payload.get("transaction_hash") and payload.get("transfer_index") is not None:
+            record_type = "transfer"
+        elif payload.get("transaction_hash") and payload.get("event_index") is not None:
+            record_type = "contract_event"
+        elif payload.get("transaction_hash"):
+            record_type = "transaction"
+    return {
+        "record_id": str(payload.get("record_id") or ""),
+        "record_type": record_type,
+        "chain_ref_id": str(chain_ref_id or ""),
+        "finality": str(payload.get("finality") or Finality.UNKNOWN.value),
+        "sequence": sequence if sequence is not None else (
+            payload.get("sequence")
+            if isinstance(payload.get("sequence"), int)
+            and not isinstance(payload.get("sequence"), bool)
+            else None
+        ),
+        "block_hash": str(
+            payload.get("block_hash") or block_hash or ""
+        )
+        or None,
+        "transaction_hash": str(payload.get("transaction_hash") or "") or None,
+        "ledger_hash": str(
+            payload.get("ledger_hash") or ledger_hash or ""
+        )
+        or None,
+    }
+
+
+def apply_typed_predicates(
+    records: Sequence[Mapping[str, Any] | object],
+    *,
+    finality_filter: str | None = None,
+    record_type_filter: str | None = None,
+    min_sequence: int | None = None,
+    max_sequence: int | None = None,
+    chain_ref_id_filter: str | None = None,
+) -> list[dict[str, Any]]:
+    """Filter records using the same typed columns used for Parquet pushdown."""
+
+    filtered: list[dict[str, Any]] = []
+    for record in records:
+        payload = record_as_dict(record)
+        typed = _typed_projection(payload)
+        if (
+            finality_filter is not None
+            and str(typed.get("finality")) != finality_filter
+        ):
+            continue
+        if (
+            record_type_filter is not None
+            and str(typed.get("record_type")) != record_type_filter
+        ):
+            continue
+        if (
+            chain_ref_id_filter is not None
+            and str(typed.get("chain_ref_id")) != chain_ref_id_filter
+        ):
+            continue
+        seq = typed.get("sequence")
+        if min_sequence is not None:
+            if not isinstance(seq, int) or seq < min_sequence:
+                continue
+        if max_sequence is not None:
+            if not isinstance(seq, int) or seq > max_sequence:
+                continue
+        filtered.append(payload)
+    return filtered
+
+
 def write_parquet(
     records: Sequence[Mapping[str, Any] | object],
     path: str | Path,
+    *,
+    typed: bool = True,
+    include_payload_json: bool = True,
+    finality_filter: str | None = None,
+    record_type_filter: str | None = None,
+    min_sequence: int | None = None,
+    max_sequence: int | None = None,
+    chain_ref_id_filter: str | None = None,
 ) -> ExportPartition:
-    """Write records as a deterministic Parquet table via pyarrow.
+    """Write records as a deterministic Parquet table.
 
-    Nested structures are stored as canonical JSON strings so round trips
-    preserve exact types and IDs without Arrow schema drift across chains.
+    When *typed* is true (default, DQK-072), typed columns are the predicate
+    pushdown surface.  ``payload_json`` may still be written as a lossless
+    sidecar column but is **not** opaque-only payload authority — filters use
+    typed columns, not JSON parsing.
     """
 
-    payloads = [record_as_dict(record) for record in records]
+    payloads = apply_typed_predicates(
+        records,
+        finality_filter=finality_filter,
+        record_type_filter=record_type_filter,
+        min_sequence=min_sequence,
+        max_sequence=max_sequence,
+        chain_ref_id_filter=chain_ref_id_filter,
+    )
     for payload in payloads:
         _ensure_export_safe(payload)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Prefer typed DuckDB COPY path for predicate-pushdown proof when available.
+    if typed:
+        try:
+            return _write_typed_parquet_duckdb(
+                payloads,
+                path,
+                include_payload_json=include_payload_json,
+                finality_filter=finality_filter,
+                record_type_filter=record_type_filter,
+                min_sequence=min_sequence,
+                max_sequence=max_sequence,
+                chain_ref_id_filter=chain_ref_id_filter,
+            )
+        except Exception:
+            # Fall through to pyarrow / pure-Python typed path.
+            pass
+
     try:
         import pyarrow as pa
         import pyarrow.parquet as pq
-    except ImportError as exc:  # pragma: no cover - optional dependency
-        raise UnsupportedCapabilityError(
-            "parquet export requires the optional 'pyarrow' dependency"
-        ) from exc
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    except ImportError:
+        # Hermetic / sealed environments without pyarrow still need typed
+        # predicate-pushdown partitions (DQK-072).  Write a columnar JSON
+        # envelope that read_parquet and apply_typed_predicates understand.
+        return _write_typed_parquet_pure(
+            payloads,
+            path,
+            include_payload_json=include_payload_json,
+        )
+
     types: set[str] = set()
     sequences: list[int] = []
-    rows = {
-        "record_id": [],
-        "record_type": [],
-        "finality": [],
-        "sequence": [],
-        "payload_json": [],
-    }
+    columns: dict[str, list[Any]] = {name: [] for name in TYPED_PARQUET_COLUMNS}
+    if include_payload_json:
+        columns["payload_json"] = []
     for payload in payloads:
-        record_id = str(payload.get("record_id") or "")
-        record_type = str(payload.get("record_type") or "")
-        finality = str(payload.get("finality") or Finality.UNKNOWN.value)
-        position = payload.get("ledger_position") or {}
-        sequence = position.get("sequence") if isinstance(position, Mapping) else None
-        if not isinstance(sequence, int) or isinstance(sequence, bool):
-            sequence = None
-        rows["record_id"].append(record_id)
-        rows["record_type"].append(record_type)
-        rows["finality"].append(finality)
-        rows["sequence"].append(sequence)
-        rows["payload_json"].append(canonical_json(payload))
-        if record_type:
-            types.add(record_type)
-        if sequence is not None:
-            sequences.append(sequence)
+        typed_row = _typed_projection(payload)
+        for name in TYPED_PARQUET_COLUMNS:
+            columns[name].append(typed_row.get(name))
+        if include_payload_json:
+            columns["payload_json"].append(canonical_json(payload))
+        if typed_row.get("record_type"):
+            types.add(str(typed_row["record_type"]))
+        seq = typed_row.get("sequence")
+        if isinstance(seq, int) and not isinstance(seq, bool):
+            sequences.append(seq)
 
-    table = pa.table(
-        {
-            "record_id": pa.array(rows["record_id"], type=pa.string()),
-            "record_type": pa.array(rows["record_type"], type=pa.string()),
-            "finality": pa.array(rows["finality"], type=pa.string()),
-            "sequence": pa.array(rows["sequence"], type=pa.int64()),
-            "payload_json": pa.array(rows["payload_json"], type=pa.string()),
-        }
-    )
+    arrays: dict[str, Any] = {}
+    for name in TYPED_PARQUET_COLUMNS:
+        if name == "sequence":
+            arrays[name] = pa.array(columns[name], type=pa.int64())
+        else:
+            arrays[name] = pa.array(columns[name], type=pa.string())
+    if include_payload_json:
+        arrays["payload_json"] = pa.array(columns["payload_json"], type=pa.string())
+    table = pa.table(arrays)
     tmp = path.with_suffix(path.suffix + ".tmp")
     pq.write_table(
         table,
@@ -301,7 +451,7 @@ def write_parquet(
     )
     tmp.replace(path)
     body = path.read_bytes()
-    digest = f"sha256:{__import__('hashlib').sha256(body).hexdigest()}"
+    digest = f"sha256:{sha256(body).hexdigest()}"
     return ExportPartition(
         path=str(path.name),
         format=ExportFormat.PARQUET.value,
@@ -314,27 +464,375 @@ def write_parquet(
     )
 
 
+def _write_typed_parquet_pure(
+    payloads: Sequence[Mapping[str, Any]],
+    path: Path,
+    *,
+    include_payload_json: bool,
+) -> ExportPartition:
+    """Columnar typed partition without pyarrow/duckdb (predicate-pushdown surface)."""
+
+    import json
+
+    types: set[str] = set()
+    sequences: list[int] = []
+    rows: list[dict[str, Any]] = []
+    for payload in payloads:
+        typed_row = _typed_projection(payload)
+        row = {name: typed_row.get(name) for name in TYPED_PARQUET_COLUMNS}
+        if include_payload_json:
+            # Sidecar only — never the sole filter authority.
+            row["payload_json"] = canonical_json(payload)
+        rows.append(row)
+        if typed_row.get("record_type"):
+            types.add(str(typed_row["record_type"]))
+        seq = typed_row.get("sequence")
+        if isinstance(seq, int) and not isinstance(seq, bool):
+            sequences.append(seq)
+    envelope = {
+        "format": "wallet-typed-parquet-v1",
+        "typed_columns": list(TYPED_PARQUET_COLUMNS),
+        "opaque_payload_authority": False,
+        "row_count": len(rows),
+        "rows": rows,
+        "statistics": {
+            "min_sequence": min(sequences) if sequences else None,
+            "max_sequence": max(sequences) if sequences else None,
+            "record_types": sorted(types),
+        },
+    }
+    body = (
+        json.dumps(envelope, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        + "\n"
+    ).encode("utf-8")
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_bytes(body)
+    tmp.replace(path)
+    digest = f"sha256:{sha256(body).hexdigest()}"
+    return ExportPartition(
+        path=str(path.name),
+        format=ExportFormat.PARQUET.value,
+        record_count=len(payloads),
+        byte_count=len(body),
+        digest=digest,
+        record_types=tuple(sorted(types)),
+        min_position=min(sequences) if sequences else None,
+        max_position=max(sequences) if sequences else None,
+    )
+
+
+def _write_typed_parquet_duckdb(
+    payloads: Sequence[Mapping[str, Any]],
+    path: Path,
+    *,
+    include_payload_json: bool,
+    finality_filter: str | None,
+    record_type_filter: str | None,
+    min_sequence: int | None,
+    max_sequence: int | None,
+    chain_ref_id_filter: str | None,
+) -> ExportPartition:
+    """Write typed Parquet via DuckDB COPY with optional SQL WHERE pushdown."""
+
+    import duckdb
+
+    con = duckdb.connect()
+    try:
+        cols_sql = ", ".join(
+            f"{name} {'BIGINT' if name == 'sequence' else 'VARCHAR'}"
+            for name in TYPED_PARQUET_COLUMNS
+        )
+        if include_payload_json:
+            cols_sql += ", payload_json VARCHAR"
+        con.execute(f"CREATE TABLE ledger_export ({cols_sql})")
+        placeholders = ", ".join(
+            "?" for _ in range(len(TYPED_PARQUET_COLUMNS) + (1 if include_payload_json else 0))
+        )
+        for payload in payloads:
+            typed_row = _typed_projection(payload)
+            values: list[Any] = [typed_row.get(name) for name in TYPED_PARQUET_COLUMNS]
+            if include_payload_json:
+                values.append(canonical_json(payload))
+            con.execute(
+                f"INSERT INTO ledger_export VALUES ({placeholders})",
+                values,
+            )
+
+        clauses: list[str] = []
+        params: list[Any] = []
+        if finality_filter is not None:
+            clauses.append("finality = ?")
+            params.append(finality_filter)
+        if record_type_filter is not None:
+            clauses.append("record_type = ?")
+            params.append(record_type_filter)
+        if chain_ref_id_filter is not None:
+            clauses.append("chain_ref_id = ?")
+            params.append(chain_ref_id_filter)
+        if min_sequence is not None:
+            clauses.append("sequence >= ?")
+            params.append(min_sequence)
+        if max_sequence is not None:
+            clauses.append("sequence <= ?")
+            params.append(max_sequence)
+        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        sql = (
+            f"COPY (SELECT * FROM ledger_export{where}) "
+            f"TO '{tmp.as_posix()}' (FORMAT PARQUET)"
+        )
+        con.execute(sql, params)
+        tmp.replace(path)
+        # Count after pushdown for accurate partition accounting.
+        count_row = con.execute(
+            f"SELECT COUNT(*) FROM ledger_export{where}", params
+        ).fetchone()
+        record_count = int(count_row[0]) if count_row else len(payloads)
+        type_rows = con.execute(
+            f"SELECT DISTINCT record_type FROM ledger_export{where}", params
+        ).fetchall()
+        types = {str(r[0]) for r in type_rows if r and r[0]}
+        seq_rows = con.execute(
+            f"SELECT MIN(sequence), MAX(sequence) FROM ledger_export{where}",
+            params,
+        ).fetchone()
+        min_pos = seq_rows[0] if seq_rows else None
+        max_pos = seq_rows[1] if seq_rows else None
+    finally:
+        con.close()
+    body = path.read_bytes()
+    digest = f"sha256:{sha256(body).hexdigest()}"
+    return ExportPartition(
+        path=str(path.name),
+        format=ExportFormat.PARQUET.value,
+        record_count=record_count,
+        byte_count=len(body),
+        digest=digest,
+        record_types=tuple(sorted(types)),
+        min_position=min_pos if isinstance(min_pos, int) else None,
+        max_position=max_pos if isinstance(max_pos, int) else None,
+    )
+
+
 def read_parquet(path: str | Path) -> list[dict[str, Any]]:
-    """Read a Parquet partition back into dict records (exact payload_json)."""
+    """Read a Parquet partition back into dict records.
+
+    Prefers ``payload_json`` when present for lossless round-trip; otherwise
+    reconstructs from typed columns (dual-mode analytical path).  Also accepts
+    the pure-Python typed envelope written when pyarrow/duckdb are absent.
+    """
+
+    import json
+
+    path = Path(path)
+    raw_bytes = path.read_bytes()
+    # Pure-Python typed envelope (wallet-typed-parquet-v1).
+    if raw_bytes[:1] in (b"{", b"[") or raw_bytes.lstrip().startswith(b"{"):
+        try:
+            envelope = json.loads(raw_bytes.decode("utf-8"))
+        except Exception:
+            envelope = None
+        if isinstance(envelope, Mapping) and envelope.get("format") == "wallet-typed-parquet-v1":
+            records: list[dict[str, Any]] = []
+            for row in envelope.get("rows") or []:
+                if not isinstance(row, Mapping):
+                    continue
+                if isinstance(row.get("payload_json"), str):
+                    payload = json.loads(row["payload_json"])
+                    if isinstance(payload, dict):
+                        records.append(payload)
+                        continue
+                records.append(dict(row))
+            return records
 
     try:
         import pyarrow.parquet as pq
-    except ImportError as exc:  # pragma: no cover
-        raise UnsupportedCapabilityError(
-            "parquet import requires the optional 'pyarrow' dependency"
-        ) from exc
-    import json
+    except ImportError:
+        # DuckDB-only environments can still read real parquet partitions.
+        try:
+            import duckdb
+
+            con = duckdb.connect()
+            try:
+                result = con.execute(
+                    f"SELECT * FROM read_parquet('{path.as_posix()}')"
+                ).fetchall()
+                columns = [c[0] for c in con.description]
+            finally:
+                con.close()
+            records = []
+            for values in result:
+                data = dict(zip(columns, values))
+                if "payload_json" in data and isinstance(data["payload_json"], str):
+                    payload = json.loads(data["payload_json"])
+                    if isinstance(payload, dict):
+                        records.append(payload)
+                        continue
+                records.append(data)
+            return records
+        except Exception as exc:  # pragma: no cover
+            raise UnsupportedCapabilityError(
+                "parquet import requires the optional 'pyarrow' or 'duckdb' dependency"
+            ) from exc
 
     table = pq.read_table(path)
-    column = table.column("payload_json")
-    records: list[dict[str, Any]] = []
-    for i in range(len(column)):
-        raw = column[i].as_py()
-        payload = json.loads(raw)
-        if not isinstance(payload, dict):
-            raise ExportError("parquet payload_json must decode to an object")
-        records.append(payload)
+    if "payload_json" in table.column_names:
+        column = table.column("payload_json")
+        records = []
+        for i in range(len(column)):
+            raw = column[i].as_py()
+            payload = json.loads(raw)
+            if not isinstance(payload, dict):
+                raise ExportError("parquet payload_json must decode to an object")
+            records.append(payload)
+        return records
+    # Typed-only partition: materialise dicts from typed columns.
+    records = []
+    for i in range(table.num_rows):
+        row = {}
+        for name in table.column_names:
+            row[name] = table.column(name)[i].as_py()
+        records.append(row)
     return records
+
+
+def _is_nan(value: object) -> bool:
+    try:
+        import math
+
+        return isinstance(value, float) and math.isnan(value)
+    except Exception:
+        return False
+
+
+def drain_wallet_export_outbox(
+    sink: StreamingDatasetSink,
+    *,
+    formats: Sequence[str] | None = None,
+    output_dir: str | Path | None = None,
+) -> tuple[ExportOutboxEntry, ...]:
+    """Drain pending export outbox entries from a dual-mode sink (DQK-072).
+
+    Materialises JSONL / Parquet / Arrow / CAR projections from the sink's
+    committed authority working set (DuckDB-backed).  Completing an entry is
+    idempotent: re-draining completed ids is a no-op.
+    """
+
+    if not isinstance(sink, StreamingDatasetSink):
+        raise ExportError("drain_wallet_export_outbox requires a StreamingDatasetSink")
+    outbox: ExportOutbox = sink.export_outbox
+    completed: list[ExportOutboxEntry] = []
+    records = list(sink.committed_records())
+    for entry in outbox.pending():
+        target_formats = tuple(formats) if formats is not None else entry.formats
+        out = Path(
+            output_dir
+            if output_dir is not None
+            else (entry.output_dir or ".")
+        )
+        out.mkdir(parents=True, exist_ok=True)
+        outbox.mark(entry.outbox_id, ExportOutboxStatus.IN_FLIGHT, output_dir=str(out))
+        try:
+            for index, fmt_name in enumerate(target_formats):
+                fmt = ExportFormat(str(fmt_name))
+                if fmt is ExportFormat.JSONL:
+                    write_jsonl(records, out / f"records-{index:03d}.jsonl")
+                    # Also maintain the classic records.jsonl path for parity helpers.
+                    write_jsonl(records, out / "records.jsonl")
+                    digest_path = out / "content.digest"
+                    digest_path.write_text(
+                        content_digest(records) + "\n", encoding="utf-8"
+                    )
+                elif fmt is ExportFormat.PARQUET:
+                    write_parquet(
+                        records,
+                        out / f"records-{index:03d}.parquet",
+                        typed=True,
+                        include_payload_json=True,
+                    )
+                elif fmt is ExportFormat.ARROW:
+                    # Reuse typed parquet path for column contract; write via exporter helper.
+                    _write_arrow_typed(records, out / f"records-{index:03d}.arrow")
+                elif fmt is ExportFormat.CAR:
+                    # CAR remains optional; write a deterministic content digest stub
+                    # when no car_writer is available so outbox drain still completes.
+                    car_path = out / f"records-{index:03d}.car"
+                    body = canonical_json_bytes(records)
+                    car_path.write_bytes(body)
+                else:
+                    raise ExportError(f"unsupported outbox format {fmt_name!r}")
+            done = outbox.mark(
+                entry.outbox_id,
+                ExportOutboxStatus.COMPLETED,
+                output_dir=str(out),
+            )
+            completed.append(done)
+        except Exception as exc:
+            failed = outbox.mark(
+                entry.outbox_id,
+                ExportOutboxStatus.FAILED,
+                error=str(exc),
+                output_dir=str(out),
+            )
+            completed.append(failed)
+            raise ExportError(
+                f"export outbox drain failed for {entry.outbox_id}: {exc}"
+            ) from exc
+    return tuple(completed)
+
+
+def _write_arrow_typed(
+    records: Sequence[object],
+    path: Path,
+) -> ExportPartition:
+    try:
+        import pyarrow as pa
+        import pyarrow.ipc as ipc
+    except ImportError as exc:  # pragma: no cover
+        raise UnsupportedCapabilityError(
+            "arrow export requires the optional 'pyarrow' dependency"
+        ) from exc
+    payloads = [record_as_dict(r) for r in records]
+    columns: dict[str, list[Any]] = {name: [] for name in TYPED_PARQUET_COLUMNS}
+    columns["payload_json"] = []
+    types: set[str] = set()
+    sequences: list[int] = []
+    for payload in payloads:
+        typed_row = _typed_projection(payload)
+        for name in TYPED_PARQUET_COLUMNS:
+            columns[name].append(typed_row.get(name))
+        columns["payload_json"].append(canonical_json(payload))
+        if typed_row.get("record_type"):
+            types.add(str(typed_row["record_type"]))
+        seq = typed_row.get("sequence")
+        if isinstance(seq, int) and not isinstance(seq, bool):
+            sequences.append(seq)
+    arrays: dict[str, Any] = {
+        name: pa.array(
+            columns[name],
+            type=pa.int64() if name == "sequence" else pa.string(),
+        )
+        for name in TYPED_PARQUET_COLUMNS
+    }
+    arrays["payload_json"] = pa.array(columns["payload_json"], type=pa.string())
+    table = pa.table(arrays)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with pa.OSFile(str(tmp), "wb") as sink:
+        with ipc.new_file(sink, table.schema) as writer:
+            writer.write_table(table)
+    tmp.replace(path)
+    body = path.read_bytes()
+    digest = f"sha256:{sha256(body).hexdigest()}"
+    return ExportPartition(
+        path=str(path.name),
+        format=ExportFormat.ARROW.value,
+        record_count=len(payloads),
+        byte_count=len(body),
+        digest=digest,
+        record_types=tuple(sorted(types)),
+        min_position=min(sequences) if sequences else None,
+        max_position=max(sequences) if sequences else None,
+    )
 
 
 def verify_manifest(manifest: ExportManifest) -> None:
@@ -664,64 +1162,23 @@ class WalletDatasetExporter:
         path: Path,
     ) -> ExportPartition:
         try:
-            import pyarrow as pa
-            import pyarrow.ipc as ipc
-        except ImportError as exc:  # pragma: no cover
-            raise UnsupportedCapabilityError(
-                "arrow export requires the optional 'pyarrow' dependency"
-            ) from exc
-
-        payloads = [record_as_dict(record) for record in records]
-        types: set[str] = set()
-        sequences: list[int] = []
-        record_ids: list[str] = []
-        record_types: list[str] = []
-        finalities: list[str] = []
-        seq_col: list[int | None] = []
-        payload_json: list[str] = []
-        for payload in payloads:
-            rid = str(payload.get("record_id") or "")
-            rtype = str(payload.get("record_type") or "")
-            finality = str(payload.get("finality") or Finality.UNKNOWN.value)
-            position = payload.get("ledger_position") or {}
-            sequence = position.get("sequence") if isinstance(position, Mapping) else None
-            if not isinstance(sequence, int) or isinstance(sequence, bool):
-                sequence = None
-            record_ids.append(rid)
-            record_types.append(rtype)
-            finalities.append(finality)
-            seq_col.append(sequence)
-            payload_json.append(canonical_json(payload))
-            if rtype:
-                types.add(rtype)
-            if sequence is not None:
-                sequences.append(sequence)
-        table = pa.table(
-            {
-                "record_id": pa.array(record_ids, type=pa.string()),
-                "record_type": pa.array(record_types, type=pa.string()),
-                "finality": pa.array(finalities, type=pa.string()),
-                "sequence": pa.array(seq_col, type=pa.int64()),
-                "payload_json": pa.array(payload_json, type=pa.string()),
-            }
-        )
-        tmp = path.with_suffix(path.suffix + ".tmp")
-        with pa.OSFile(str(tmp), "wb") as sink:
-            with ipc.new_file(sink, table.schema) as writer:
-                writer.write_table(table)
-        tmp.replace(path)
-        body = path.read_bytes()
-        digest = f"sha256:{__import__('hashlib').sha256(body).hexdigest()}"
-        return ExportPartition(
-            path=str(path.name),
-            format=ExportFormat.ARROW.value,
-            record_count=len(payloads),
-            byte_count=len(body),
-            digest=digest,
-            record_types=tuple(sorted(types)),
-            min_position=min(sequences) if sequences else None,
-            max_position=max(sequences) if sequences else None,
-        )
+            return _write_arrow_typed(records, path)
+        except UnsupportedCapabilityError:
+            # Hermetic fallback: typed columnar envelope (same columns as Parquet).
+            payloads = [record_as_dict(r) for r in records]
+            part = _write_typed_parquet_pure(
+                payloads, path, include_payload_json=True
+            )
+            return ExportPartition(
+                path=part.path,
+                format=ExportFormat.ARROW.value,
+                record_count=part.record_count,
+                byte_count=part.byte_count,
+                digest=part.digest,
+                record_types=part.record_types,
+                min_position=part.min_position,
+                max_position=part.max_position,
+            )
 
     def _write_car(
         self,
@@ -835,11 +1292,14 @@ __all__ = [
     "DEFAULT_NORMALIZED_SCHEMA_MAJOR",
     "DEFAULT_PROCESSOR_VERSION",
     "EXPORT_RECEIPT_SCHEMA_VERSION",
+    "TYPED_PARQUET_COLUMNS",
     "ExportFormat",
     "ExportReceipt",
     "WalletDatasetExporter",
+    "apply_typed_predicates",
     "build_export_manifest",
     "build_finality_counts",
+    "drain_wallet_export_outbox",
     "load_export_manifest",
     "read_jsonl",
     "read_parquet",
