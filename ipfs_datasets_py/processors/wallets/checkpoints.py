@@ -10,9 +10,12 @@ When a DuckDB wallet store is injected:
 * **shadow** (DQK-071) — every successful CAS, rewind, and reorg is dual-written
   so cursors and reorg history shadow at ingestion time.  The in-memory map
   remains authority.
-* **dual** / **db-primary** (DQK-072) — DuckDB is authoritative for checkpoint
-  tips; the in-memory map is a working-set projection.  Stale cursor CAS against
-  a newer DuckDB revision fails closed without mutating the tip.
+* **dual** (DQK-072) — DuckDB is authoritative for checkpoint tips; the
+  in-memory map is a working-set projection.  Stale cursor CAS against a newer
+  DuckDB revision fails closed without mutating the tip.
+* **db-primary** (DQK-073) — DuckDB is sole checkpoint authority.  In-memory
+  tips are never operational truth: load/CAS always consult DuckDB first and
+  never fall back to a memory-only tip after process restart.
 
 Importing this module performs no I/O.
 """
@@ -417,9 +420,12 @@ class InMemoryCheckpointStore:
 
     * **shadow** (DQK-071) — memory is authority; successful CAS dual-writes
       DuckDB.
-    * **dual** / **db-primary** (DQK-072) — DuckDB is authority; CAS is applied
-      to DuckDB first and memory is a projection.  Stale *expected_revision*
-      values fail closed (return ``False``) without mutating either tip.
+    * **dual** (DQK-072) — DuckDB is authority; CAS is applied to DuckDB first
+      and memory is a projection.  Stale *expected_revision* values fail closed
+      (return ``False``) without mutating either tip.
+    * **db-primary** (DQK-073) — DuckDB is sole authority.  The in-memory map
+      is a non-authoritative working-set projection that is rehydrated from
+      DuckDB on every load and never consulted as a resume tip.
     """
 
     def __init__(
@@ -447,6 +453,14 @@ class InMemoryCheckpointStore:
             shadow=shadow,
             has_store=self._shadow is not None,
         )
+        # dual / db-primary without a store still needs a durable DuckDB port
+        # so in-memory never becomes sole authority after promotion (DQK-073).
+        if self._authority_mode.duckdb_is_authority and self._shadow is None:
+            from .duckdb_storage import open_wallet_store
+
+            self._shadow = open_wallet_store(
+                scope="wallet-checkpoint-authority", auto_recover=True
+            )
 
     @property
     def cas_attempts(self) -> int:
@@ -471,6 +485,23 @@ class InMemoryCheckpointStore:
         return self._authority_mode
 
     @property
+    def memory_is_authority(self) -> bool:
+        """True only when the in-memory map is operational checkpoint truth.
+
+        Under dual / db-primary (DQK-072 / DQK-073) this is always ``False``.
+        """
+
+        return not self._authority_mode.duckdb_is_authority
+
+    @property
+    def duckdb_only(self) -> bool:
+        """True when DuckDB is sole checkpoint authority (DQK-073)."""
+
+        return bool(getattr(self._authority_mode, "duckdb_only", False)) or (
+            self._authority_mode is ShadowLedgerMode.DB_PRIMARY
+        )
+
+    @property
     def shadow_cas_successes(self) -> int:
         return self._shadow_cas_successes
 
@@ -486,6 +517,16 @@ class InMemoryCheckpointStore:
 
     def keys(self) -> frozenset[str]:
         return frozenset(self._entries)
+
+    def clear_memory_projection(self) -> None:
+        """Drop the non-authoritative in-memory projection (restart simulation).
+
+        Under dual / db-primary, subsequent :meth:`load` calls rehydrate from
+        DuckDB.  Under shadow / off this clears operational tips and should only
+        be used by tests that re-seed authority.
+        """
+
+        self._entries.clear()
 
     def attach_shadow(
         self,
@@ -517,7 +558,11 @@ class InMemoryCheckpointStore:
         return self._authority_mode
 
     def promote_to_db_primary(self) -> ShadowLedgerMode:
-        """Promote dual → db-primary (DuckDB sole checkpoint authority)."""
+        """Promote dual → db-primary (DuckDB sole checkpoint authority).
+
+        After promotion the in-memory map is a non-authoritative projection
+        only (DQK-073).  Stale process-local tips never override DuckDB.
+        """
 
         if self._shadow is None:
             raise CheckpointError("cannot promote checkpoints without a DuckDB store")
@@ -535,19 +580,36 @@ class InMemoryCheckpointStore:
         """Load the checkpoint for an exact ingestion scope key or raw scope.
 
         Dual / db-primary: DuckDB tip is authority; memory is rehydrated from
-        the durable head.  Shadow / off: memory map is authority.
+        the durable head and is never consulted when DuckDB lacks a tip
+        (DQK-073 removes in-memory checkpoint authority).  Shadow / off:
+        memory map is authority.
         """
 
         context.check_active()
         _required_str(scope, "scope")
-        if self._authority_mode.duckdb_is_authority and self._shadow is not None:
+        if self._authority_mode.duckdb_is_authority:
+            if self._shadow is None:
+                raise CheckpointError(
+                    "DuckDB checkpoint authority requires a wallet store; "
+                    "in-memory tips are not operational truth under "
+                    f"{self._authority_mode.value}"
+                )
             load_fn = getattr(self._shadow, "load", None)
-            if callable(load_fn):
-                record = await load_fn(scope, context=context)
-                if isinstance(record, CheckpointRecord):
-                    self._entries[record.identity.key] = record
-                    return record
-                return None
+            if not callable(load_fn):
+                raise CheckpointError(
+                    "authority checkpoint store does not implement load"
+                )
+            record = await load_fn(scope, context=context)
+            if isinstance(record, CheckpointRecord):
+                self._entries[record.identity.key] = record
+                return record
+            # No durable tip: drop any stale memory projection for this scope
+            # so process-local ghosts cannot re-admit as authority.
+            for key in list(self._entries):
+                candidate = self._entries[key]
+                if candidate.identity.matches_scope_key(scope) or key == scope:
+                    del self._entries[key]
+            return None
         record = None
         if scope in self._entries:
             record = self._entries[scope]
@@ -935,6 +997,13 @@ def _resolve_checkpoint_mode(
     return ShadowLedgerMode.OFF
 
 
+def memory_checkpoint_is_authority(mode: ShadowLedgerMode | str | None) -> bool:
+    """Return whether in-memory checkpoint tips are still operational truth."""
+
+    parsed = ShadowLedgerMode.parse(mode)
+    return not parsed.duckdb_is_authority
+
+
 def append_anchor_history(
     history: Sequence[HashAnchor],
     anchor: HashAnchor,
@@ -1017,6 +1086,7 @@ __all__ = [
     "assert_hash_anchor_present",
     "build_checkpoint",
     "checkpoint_content_fingerprint",
+    "memory_checkpoint_is_authority",
     "new_revision",
     "validate_resume",
 ]

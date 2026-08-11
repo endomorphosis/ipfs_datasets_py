@@ -17,6 +17,12 @@ exports**: they are materialised only after a durable DuckDB commit and never
 re-admitted as authority.  Typed Parquet columns support predicate pushdown
 without relying on opaque-only ``payload_json`` as the pushdown surface.
 
+Under db-primary (DQK-073), implicit ``records.jsonl`` / ``.meta.json`` / JSON
+manifest authority is removed.  Explicit :func:`drain_wallet_export_outbox`,
+:class:`WalletDatasetExporter`, and :func:`import_legacy_jsonl_explicit` are
+the only paths that touch legacy files (under an export/import permit).
+Quack publications expose redacted public ledger analytics only.
+
 Importing this module performs no network I/O.  Parquet support uses optional
 ``pyarrow`` / ``duckdb`` only inside export methods.
 """
@@ -58,7 +64,10 @@ from .storage import (
     ExportOutbox,
     ExportOutboxEntry,
     ExportOutboxStatus,
+    ShadowLedgerMode,
     StreamingDatasetSink,
+    build_wallet_ledger_quack_publication,
+    get_wallet_ledger_filesystem_guard,
     record_as_dict,
     record_finality,
     record_sequence,
@@ -711,74 +720,147 @@ def drain_wallet_export_outbox(
     formats: Sequence[str] | None = None,
     output_dir: str | Path | None = None,
 ) -> tuple[ExportOutboxEntry, ...]:
-    """Drain pending export outbox entries from a dual-mode sink (DQK-072).
+    """Drain pending export outbox entries from a dual/db-primary sink.
 
     Materialises JSONL / Parquet / Arrow / CAR projections from the sink's
     committed authority working set (DuckDB-backed).  Completing an entry is
     idempotent: re-draining completed ids is a no-op.
+
+    Under db-primary (DQK-073) this is an **explicit** export path: guarded
+    legacy files are written only while holding an export permit and never
+    re-admitted as operational authority.
     """
 
     if not isinstance(sink, StreamingDatasetSink):
         raise ExportError("drain_wallet_export_outbox requires a StreamingDatasetSink")
     outbox: ExportOutbox = sink.export_outbox
     completed: list[ExportOutboxEntry] = []
+    # Prefer DuckDB authority rows when available (never re-read records.jsonl).
+    if getattr(sink, "duckdb_only", False) or getattr(
+        sink, "authority_mode", ShadowLedgerMode.OFF
+    ).duckdb_is_authority:
+        rehydrate = getattr(sink, "rehydrate_from_authority", None)
+        if callable(rehydrate):
+            rehydrate()
     records = list(sink.committed_records())
-    for entry in outbox.pending():
-        target_formats = tuple(formats) if formats is not None else entry.formats
-        out = Path(
-            output_dir
-            if output_dir is not None
-            else (entry.output_dir or ".")
-        )
-        out.mkdir(parents=True, exist_ok=True)
-        outbox.mark(entry.outbox_id, ExportOutboxStatus.IN_FLIGHT, output_dir=str(out))
-        try:
-            for index, fmt_name in enumerate(target_formats):
-                fmt = ExportFormat(str(fmt_name))
-                if fmt is ExportFormat.JSONL:
-                    write_jsonl(records, out / f"records-{index:03d}.jsonl")
-                    # Also maintain the classic records.jsonl path for parity helpers.
-                    write_jsonl(records, out / "records.jsonl")
-                    digest_path = out / "content.digest"
-                    digest_path.write_text(
-                        content_digest(records) + "\n", encoding="utf-8"
-                    )
-                elif fmt is ExportFormat.PARQUET:
-                    write_parquet(
-                        records,
-                        out / f"records-{index:03d}.parquet",
-                        typed=True,
-                        include_payload_json=True,
-                    )
-                elif fmt is ExportFormat.ARROW:
-                    # Reuse typed parquet path for column contract; write via exporter helper.
-                    _write_arrow_typed(records, out / f"records-{index:03d}.arrow")
-                elif fmt is ExportFormat.CAR:
-                    # CAR remains optional; write a deterministic content digest stub
-                    # when no car_writer is available so outbox drain still completes.
-                    car_path = out / f"records-{index:03d}.car"
-                    body = canonical_json_bytes(records)
-                    car_path.write_bytes(body)
-                else:
-                    raise ExportError(f"unsupported outbox format {fmt_name!r}")
-            done = outbox.mark(
-                entry.outbox_id,
-                ExportOutboxStatus.COMPLETED,
-                output_dir=str(out),
+    guard = getattr(sink, "filesystem_guard", None) or get_wallet_ledger_filesystem_guard()
+    process_guard = get_wallet_ledger_filesystem_guard()
+
+    def _drain_body() -> tuple[ExportOutboxEntry, ...]:
+        local_completed: list[ExportOutboxEntry] = []
+        for entry in outbox.pending():
+            target_formats = tuple(formats) if formats is not None else entry.formats
+            out = Path(
+                output_dir
+                if output_dir is not None
+                else (entry.output_dir or ".")
             )
-            completed.append(done)
-        except Exception as exc:
-            failed = outbox.mark(
-                entry.outbox_id,
-                ExportOutboxStatus.FAILED,
-                error=str(exc),
-                output_dir=str(out),
+            out.mkdir(parents=True, exist_ok=True)
+            outbox.mark(
+                entry.outbox_id, ExportOutboxStatus.IN_FLIGHT, output_dir=str(out)
             )
-            completed.append(failed)
-            raise ExportError(
-                f"export outbox drain failed for {entry.outbox_id}: {exc}"
-            ) from exc
+            try:
+                for index, fmt_name in enumerate(target_formats):
+                    fmt = ExportFormat(str(fmt_name))
+                    if fmt is ExportFormat.JSONL:
+                        write_jsonl(records, out / f"records-{index:03d}.jsonl")
+                        # Classic records.jsonl path is an explicit export artifact.
+                        write_jsonl(records, out / "records.jsonl")
+                        digest_path = out / "content.digest"
+                        digest_path.write_text(
+                            content_digest(records) + "\n", encoding="utf-8"
+                        )
+                    elif fmt is ExportFormat.PARQUET:
+                        write_parquet(
+                            records,
+                            out / f"records-{index:03d}.parquet",
+                            typed=True,
+                            include_payload_json=True,
+                        )
+                    elif fmt is ExportFormat.ARROW:
+                        _write_arrow_typed(
+                            records, out / f"records-{index:03d}.arrow"
+                        )
+                    elif fmt is ExportFormat.CAR:
+                        car_path = out / f"records-{index:03d}.car"
+                        body = canonical_json_bytes(records)
+                        car_path.write_bytes(body)
+                    else:
+                        raise ExportError(f"unsupported outbox format {fmt_name!r}")
+                done = outbox.mark(
+                    entry.outbox_id,
+                    ExportOutboxStatus.COMPLETED,
+                    output_dir=str(out),
+                )
+                local_completed.append(done)
+            except Exception as exc:
+                failed = outbox.mark(
+                    entry.outbox_id,
+                    ExportOutboxStatus.FAILED,
+                    error=str(exc),
+                    output_dir=str(out),
+                )
+                local_completed.append(failed)
+                raise ExportError(
+                    f"export outbox drain failed for {entry.outbox_id}: {exc}"
+                ) from exc
+        return tuple(local_completed)
+
+    with guard.permit_export():
+        with process_guard.permit_export():
+            completed_tuple = _drain_body()
+    completed.extend(completed_tuple)
     return tuple(completed)
+
+
+def import_legacy_jsonl_explicit(
+    path: str | Path,
+    *,
+    sink: StreamingDatasetSink | None = None,
+) -> list[dict[str, Any]]:
+    """One-time explicit import of a legacy ``records.jsonl`` export.
+
+    Holds an import permit so guarded paths may be read after DuckDB promotion.
+    The returned rows are **not** operational authority until the caller writes
+    them through a DuckDB-backed sink commit.
+    """
+
+    path = Path(path)
+    guard = (
+        sink.filesystem_guard
+        if sink is not None and hasattr(sink, "filesystem_guard")
+        else get_wallet_ledger_filesystem_guard()
+    )
+    process_guard = get_wallet_ledger_filesystem_guard()
+    with guard.permit_import():
+        with process_guard.permit_import():
+            guard.assert_allowed(path, kind="records_jsonl", operation="read")
+            return read_jsonl(path)
+
+
+def wallet_ledger_quack_publication(
+    sink: StreamingDatasetSink | Any,
+    *,
+    scope: str | None = None,
+    authority_mode: ShadowLedgerMode | str | None = None,
+) -> Mapping[str, Any]:
+    """Build a Quack publication document from a sink or DuckDB wallet store.
+
+    Only redacted public ledger analytics are included (DQK-073).
+    """
+
+    if isinstance(sink, StreamingDatasetSink):
+        return sink.quack_publication_document()
+    store = sink
+    mode = authority_mode
+    if mode is None:
+        mode = ShadowLedgerMode.DB_PRIMARY
+    return build_wallet_ledger_quack_publication(
+        store,
+        committed_records=(),
+        scope=scope or "",
+        authority_mode=mode,
+    )
 
 
 def _write_arrow_typed(
@@ -1122,23 +1204,33 @@ class WalletDatasetExporter:
             raise ExportError(str(exc)) from exc
 
         verify_manifest(manifest)
-        # Persist manifest next to partitions for offline verification.
+        # Explicit export artifacts only (never operational authority, DQK-073).
+        guard = get_wallet_ledger_filesystem_guard()
+        if isinstance(sink, StreamingDatasetSink):
+            guard = sink.filesystem_guard
         manifest_path = self._output_dir / "export-manifest.json"
-        manifest_path.write_text(manifest.to_canonical_json() + "\n", encoding="utf-8")
-        # Persist full multi-format partition index (including sidecars).
         index_path = self._output_dir / "export-partitions.json"
-        index_path.write_bytes(
-            canonical_json_bytes(
-                {
-                    "formats": written_formats,
-                    "partitions": [part.to_dict() for part in partitions],
-                    "provider_capabilities": list(self._provider_capabilities),
-                    "processor_version": self._processor_version,
-                    "normalized_schema_major": self._normalized_schema_major,
-                    "manifest_schema": EXPORT_MANIFEST_SCHEMA_VERSION,
-                }
-            )
-        )
+        with guard.permit_export():
+            with get_wallet_ledger_filesystem_guard().permit_export():
+                # Persist manifest next to partitions for offline verification.
+                manifest_path.write_text(
+                    manifest.to_canonical_json() + "\n", encoding="utf-8"
+                )
+                # Persist full multi-format partition index (including sidecars).
+                index_path.write_bytes(
+                    canonical_json_bytes(
+                        {
+                            "formats": written_formats,
+                            "partitions": [part.to_dict() for part in partitions],
+                            "provider_capabilities": list(self._provider_capabilities),
+                            "processor_version": self._processor_version,
+                            "normalized_schema_major": self._normalized_schema_major,
+                            "manifest_schema": EXPORT_MANIFEST_SCHEMA_VERSION,
+                            "authority": "export-artifact-only",
+                            "owner_task": "DQK-073",
+                        }
+                    )
+                )
 
         if sink is not None:
             await sink.commit(manifest, context=context)
@@ -1300,11 +1392,13 @@ __all__ = [
     "build_export_manifest",
     "build_finality_counts",
     "drain_wallet_export_outbox",
+    "import_legacy_jsonl_explicit",
     "load_export_manifest",
     "read_jsonl",
     "read_parquet",
     "round_trip_records",
     "verify_manifest",
+    "wallet_ledger_quack_publication",
     "write_jsonl",
     "write_parquet",
 ]
