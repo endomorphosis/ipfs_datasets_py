@@ -205,9 +205,58 @@ class PipelineJSONLogger:
             payload = with_schema(payload)
         
         try:
+            # Legacy logger sink remains selected authority under DQK-077 shadow.
             self.logger.log(level, json.dumps(payload, default=str))
         except (TypeError, ValueError, RuntimeError, OSError) as exc:
             self.logger.debug(f"JSON logging failed: {exc}")
+
+        self._route_to_observability_shadow(event_type, payload, level)
+
+    def _route_to_observability_shadow(
+        self,
+        event_type: str,
+        payload: Dict[str, Any],
+        level: int,
+    ) -> None:
+        """Project pipeline JSON logs into the typed shadow catalog (DQK-077)."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ObservabilityProducer,
+                derive_stable_event_id,
+                record_observability_event,
+            )
+        except Exception:
+            return
+
+        run_id = str(payload.get("run_id") or "")
+        seed = f"{self.domain}:{run_id}:{event_type}:{payload.get('timestamp') or ''}"
+        event_id = derive_stable_event_id(
+            producer=ObservabilityProducer.PIPELINE_JSON.value,
+            action=event_type,
+            actor=self.domain or "pipeline",
+            detail=seed,
+            seed=seed,
+        )
+        outcome = "info"
+        if event_type.endswith(".failed") or level >= logging.ERROR:
+            outcome = "failed"
+        elif event_type.endswith(".completed"):
+            outcome = "succeeded"
+
+        record_observability_event(
+            producer=ObservabilityProducer.PIPELINE_JSON,
+            action=event_type,
+            actor=str(self.domain or "pipeline"),
+            outcome=outcome,
+            detail=event_type,
+            attributes=dict(payload),
+            event_id=event_id,
+            operation_id=f"op-pipeline-{event_id}",
+            resource=run_id or self.domain,
+            raw_payload=payload,
+            recorded_at=str(payload.get("timestamp") or "") or None,
+        )
     
     def start_run(
         self,

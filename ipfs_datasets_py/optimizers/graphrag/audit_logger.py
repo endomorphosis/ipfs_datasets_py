@@ -262,9 +262,58 @@ class AuditLogger:
         """Add event to storage and optionally write to disk."""
         self.events.append(event)
         
-        # Optionally write to incremental log file
+        # Optionally write to incremental log file (legacy sink remains the
+        # selected authority under DQK-077 shadow mode).
         if self.enable_file_logging:
             self._write_event_to_file(event)
+
+        self._route_to_observability_shadow(event)
+
+    def _route_to_observability_shadow(self, event: AuditEvent) -> None:
+        """Project GraphRAG audit events into the typed shadow catalog (DQK-077)."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ObservabilityProducer,
+                derive_stable_event_id,
+                record_observability_event,
+            )
+        except Exception:
+            return
+
+        event_type = (
+            event.event_type.value
+            if isinstance(event.event_type, EventType)
+            else str(event.event_type)
+        )
+        seed = f"{self.session_id}:{event_type}:{event.round_num}:{event.timestamp}"
+        event_id = derive_stable_event_id(
+            producer=ObservabilityProducer.GRAPHRAG_AUDIT.value,
+            action=event_type,
+            actor=self.session_id,
+            detail=seed,
+            seed=seed,
+        )
+        attributes = {
+            "session_id": self.session_id,
+            "round_num": int(event.round_num),
+            "event_type": event_type,
+            "event_data": dict(event.event_data or {}),
+            "metadata": dict(event.metadata or {}),
+        }
+        record_observability_event(
+            producer=ObservabilityProducer.GRAPHRAG_AUDIT,
+            action=event_type,
+            actor=self.session_id or "graphrag",
+            outcome="info",
+            detail=event_type,
+            attributes=attributes,
+            event_id=event_id,
+            operation_id=f"op-graphrag-audit-{event_id}",
+            resource=f"round:{event.round_num}",
+            raw_payload=event.to_dict() if hasattr(event, "to_dict") else attributes,
+            recorded_at=event.timestamp,
+        )
     
     def _write_event_to_file(self, event: AuditEvent) -> None:
         """Append event to incremental log file (JSONL format)."""

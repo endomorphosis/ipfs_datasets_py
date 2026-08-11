@@ -469,7 +469,9 @@ class AuditLogger:
             event.source_module = os.path.basename(frame.filename)
             event.source_function = frame.name
 
-        # Dispatch to handlers
+        # Dispatch to handlers (legacy file sinks remain selected authority
+        # under DQK-077 shadow mode; typed catalog is a non-authoritative
+        # projection when the observability shadow repository is configured).
         with self._lock:
             for handler in self.handlers:
                 try:
@@ -481,7 +483,59 @@ class AuditLogger:
             self.notify_listeners(event)
             self._events.append(event)
 
+        self._route_to_observability_shadow(event)
+
         return event.event_id
+
+    def _route_to_observability_shadow(self, event: "AuditEvent") -> None:
+        """Project a recorded event into the typed observability shadow (DQK-077)."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ObservabilityProducer,
+                record_observability_event,
+            )
+        except Exception:
+            return
+
+        status = str(event.status or "success").lower()
+        outcome = {
+            "success": "succeeded",
+            "failure": "failed",
+            "failed": "failed",
+            "error": "error",
+            "denied": "denied",
+            "allowed": "allowed",
+        }.get(status, "info")
+
+        details = dict(event.details or {})
+        if event.level is not None:
+            details.setdefault("level", getattr(event.level, "name", str(event.level)))
+        if event.category is not None:
+            details.setdefault(
+                "category", getattr(event.category, "name", str(event.category))
+            )
+        if event.tags:
+            details.setdefault("tags", list(event.tags))
+        if event.session_id:
+            details.setdefault("session_id", event.session_id)
+        if event.client_ip:
+            details.setdefault("client_ip", event.client_ip)
+
+        resource = event.resource_id or event.resource_type or ""
+        record_observability_event(
+            producer=ObservabilityProducer.AUDIT_LOGGER,
+            action=event.action or "audit.event",
+            actor=event.user or "system",
+            outcome=outcome,
+            detail=str(details.get("message") or event.action or ""),
+            attributes=details,
+            event_id=event.event_id,
+            operation_id=f"op-audit-{event.event_id}",
+            resource=str(resource or ""),
+            raw_payload=event.to_dict(),
+            recorded_at=event.timestamp,
+        )
 
     # Convenience methods for different audit levels
 

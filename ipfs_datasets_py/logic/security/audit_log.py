@@ -70,8 +70,10 @@ class AuditLogger:
         # Add any additional fields
         event.update(kwargs)
         
-        # Log as JSON
+        # Log as JSON (legacy file/stderr sink remains authority under DQK-077
+        # shadow mode; typed observability is a non-authoritative projection).
         audit_logger.info(json.dumps(event))
+        AuditLogger._route_to_observability_shadow(event)
     
     @staticmethod
     def log_proof_attempt(
@@ -183,6 +185,51 @@ class AuditLogger:
             severity='low',
             message=f'Input validation failed: {validation_type}',
             details={'validation_type': validation_type, 'error': error_message}
+        )
+
+    @staticmethod
+    def _route_to_observability_shadow(event: Dict[str, Any]) -> None:
+        """Project a security audit event into the typed shadow catalog (DQK-077)."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ObservabilityProducer,
+                derive_stable_event_id,
+                record_observability_event,
+            )
+        except Exception:
+            return
+
+        event_type = str(event.get("event_type") or "security.event")
+        user_id = str(event.get("user_id") or "system")
+        success = bool(event.get("success", False))
+        event_id = derive_stable_event_id(
+            producer=ObservabilityProducer.LOGIC_SECURITY_AUDIT.value,
+            action=event_type,
+            actor=user_id,
+            detail=str(event.get("timestamp") or ""),
+            seed=str(event.get("event_id") or "") or None,
+        )
+        details = event.get("details") if isinstance(event.get("details"), dict) else {}
+        attributes = {
+            "event_type": event_type,
+            "success": success,
+            **{k: v for k, v in event.items() if k not in {"details", "event_type", "user_id", "success"}},
+        }
+        if details:
+            attributes["details"] = details
+
+        record_observability_event(
+            producer=ObservabilityProducer.LOGIC_SECURITY_AUDIT,
+            action=event_type,
+            actor=user_id,
+            outcome="succeeded" if success else "failed",
+            detail=str((details or {}).get("message") or event_type),
+            attributes=attributes,
+            event_id=event_id,
+            operation_id=f"op-logic-sec-{event_id}",
+            raw_payload=event,
+            recorded_at=str(event.get("timestamp") or "") or None,
         )
 
 

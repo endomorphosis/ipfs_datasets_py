@@ -291,7 +291,9 @@ class AlertManager:
         if rule.embed_config:
             embed = self._create_embed(rule, event)
         
-        # Send notification
+        # Send notification (legacy Discord/file sinks remain authority under
+        # DQK-077 shadow mode; typed observability is a non-authoritative
+        # projection).
         try:
             send_result = await self.notifier.send_message(
                 text=message,
@@ -299,7 +301,7 @@ class AlertManager:
                 embed=embed
             )
             
-            return {
+            result = {
                 'rule_id': rule.rule_id,
                 'rule_name': rule.name,
                 'severity': rule.severity,
@@ -308,14 +310,67 @@ class AlertManager:
                 'notification_result': send_result,
                 'timestamp': datetime.now().isoformat()
             }
+            self._route_alert_to_observability_shadow(rule, event, result)
+            return result
         
         except Exception as e:
             logger.error(f"Error sending notification: {e}", exc_info=True)
-            return {
+            result = {
                 'rule_id': rule.rule_id,
                 'status': 'error',
                 'error': f"Failed to send notification: {e}"
             }
+            self._route_alert_to_observability_shadow(rule, event, result)
+            return result
+
+    def _route_alert_to_observability_shadow(
+        self,
+        rule: AlertRule,
+        event: Dict[str, Any],
+        result: Dict[str, Any],
+    ) -> None:
+        """Project triggered alerts into the typed shadow catalog (DQK-077)."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ObservabilityProducer,
+                derive_stable_event_id,
+                record_observability_event,
+            )
+        except Exception:
+            return
+
+        ts = str(result.get("timestamp") or "")
+        seed = f"alert:{rule.rule_id}:{ts}:{result.get('status')}"
+        event_id = derive_stable_event_id(
+            producer=ObservabilityProducer.ALERT_MANAGER.value,
+            action=f"alert.{rule.severity}",
+            actor="alert-manager",
+            detail=seed,
+            seed=seed,
+        )
+        attributes = {
+            "rule_id": rule.rule_id,
+            "rule_name": rule.name,
+            "severity": rule.severity,
+            "status": result.get("status"),
+            "message": result.get("message") or "",
+            "event_keys": sorted(str(k) for k in event.keys())[:32],
+        }
+        outcome = "error" if result.get("status") == "error" else "info"
+        record_observability_event(
+            producer=ObservabilityProducer.ALERT_MANAGER,
+            action=f"alert.{rule.severity}",
+            actor="alert-manager",
+            outcome=outcome,
+            detail=str(result.get("message") or rule.name),
+            attributes=attributes,
+            event_id=event_id,
+            operation_id=f"op-alert-{event_id}",
+            resource=rule.rule_id,
+            raw_payload={"rule": rule.to_dict(), "result": result, "event": event},
+            recorded_at=ts or None,
+        )
     
     def _is_suppressed(self, rule_id: str, suppression_window: int) -> bool:
         """Check if a rule is currently suppressed."""

@@ -163,6 +163,7 @@ class LoggingAuditor:
         Returns:
             Formatted report string
         """
+        self._route_report_to_observability_shadow()
         report_lines = [
             "# Optimizer Module Logging Audit Report",
             "",
@@ -234,6 +235,52 @@ class LoggingAuditor:
         ])
         
         return "\n".join(report_lines)
+
+    def _route_report_to_observability_shadow(self) -> None:
+        """Project logging-audit summary into the typed shadow catalog (DQK-077)."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ObservabilityProducer,
+                derive_stable_event_id,
+                record_observability_event,
+            )
+        except Exception:
+            return
+
+        files_with_logger = sum(1 for r in self.results if r.has_logger_init)
+        methods_with_logging = sum(len(r.methods_with_logging) for r in self.results)
+        methods_without_logging = sum(
+            len(r.methods_without_logging) for r in self.results
+        )
+        summary = {
+            "root_dir": str(self.root_dir),
+            "files_scanned": len(self.results),
+            "files_with_logger": files_with_logger,
+            "methods_with_logging": methods_with_logging,
+            "methods_without_logging": methods_without_logging,
+        }
+        seed = f"logging-audit:{self.root_dir}:{len(self.results)}:{methods_with_logging}"
+        event_id = derive_stable_event_id(
+            producer=ObservabilityProducer.LOGGING_AUDIT.value,
+            action="logging_audit.report",
+            actor="logging-auditor",
+            detail=seed,
+            seed=seed,
+        )
+        # Legacy report print/file remains authority; typed catalog is shadow.
+        record_observability_event(
+            producer=ObservabilityProducer.LOGGING_AUDIT,
+            action="logging_audit.report",
+            actor="logging-auditor",
+            outcome="succeeded",
+            detail=f"Scanned {len(self.results)} files",
+            attributes=summary,
+            event_id=event_id,
+            operation_id=f"op-logging-audit-{event_id}",
+            resource=str(self.root_dir),
+            raw_payload=summary,
+        )
 
 
 def main() -> List[LoggingAuditResult]:
