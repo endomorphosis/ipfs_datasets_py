@@ -19,9 +19,13 @@ __all__ = [
     "get_global_cache",
     "LEGACY_PROOF_BACKENDS",
     "LegacyProofBackend",
+    "UnifiedProofAuthorityRepository",
     "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
     "build_proof_shadow_repository",
+    "get_authority_repository",
     "get_shadow_repository",
+    "set_authority_repository",
     "set_shadow_repository",
     "INTEGRATION_CACHING_LEGACY_BACKEND",
 ]
@@ -30,9 +34,13 @@ __all__ = [
 from ...common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    build_proof_authority_repository,
     build_proof_shadow_repository,
+    get_authority_repository,
     get_shadow_repository,
+    set_authority_repository,
     set_shadow_repository,
 )
 

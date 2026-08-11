@@ -679,6 +679,12 @@ class SecurityConstraintCache:
         if repository is not None:
             repository.register_backend(backend)
 
+    def bind_authority_repository(self, repository, *, backend: str = "security_ir") -> None:
+        """Bind to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
+
     def _shadow_write(self, record: "SecurityConstraintRecord") -> None:
         repo = self._shadow_repository
         if repo is None:
@@ -1100,9 +1106,13 @@ def get_security_constraints(
 from ..common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    build_proof_authority_repository,
     build_proof_shadow_repository,
+    get_authority_repository,
     get_shadow_repository,
+    set_authority_repository,
     set_shadow_repository,
 )
 
@@ -1123,12 +1133,16 @@ __all__ = [
     "SecurityConstraintIntegrityError",
     "SecurityConstraintRecord",
     "UnknownSecurityExtensionError",
+    "UnifiedProofAuthorityRepository",
     "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
     "build_proof_shadow_repository",
     "get_security_constraints",
+    "get_authority_repository",
     "get_shadow_repository",
     "known_extension_vocabularies",
     "put_security_constraints",
+    "set_authority_repository",
     "set_shadow_repository",
     "validate_extensions_known",
 ]
