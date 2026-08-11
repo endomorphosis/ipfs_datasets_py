@@ -354,7 +354,7 @@ W8  ISI-032
 
 ## ISI-023 Publish the required Python API and facade
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: public-api
