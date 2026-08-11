@@ -89,17 +89,19 @@ DEFAULT_FIXTURE_RELATIVE_PATH: Final = Path(
 _SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
 # Federal Register document numbers are not uniformly ``YYYY-NNNNN``.  The
 # official service retains historical two-character series (for example
-# ``93-32034`` and ``E9-5927``) and prefixes corrected/republished modern
-# documents (for example ``C1-2010-31877`` and ``R1-2015-00001``).  Keep this
-# a closed grammar: the accepted two-character series are the exact set
-# exercised by the FederalRegister.gov source implementation, not a generic
-# alphanumeric escape hatch.
+# ``94-184`` and ``E9-9``) and prefixes corrected/republished modern documents
+# (for example ``C1-2010-31877`` and ``R1-2017-02032``).  Historical series may
+# have one- to six-digit tails; modern and revision forms retain their stricter
+# four- to six-digit tails.  Keep this a closed grammar: the accepted
+# two-character series are the exact known set enumerated by the
+# FederalRegister.gov source tests, not a generic alphanumeric escape hatch.
 _HISTORICAL_DOCUMENT_SERIES_PATTERN: Final = (
     r"(?:0[0-9]|20|9[2-9]|C[0-9]|E[13-9]|R[0-9]|X[019]|Z[4-9])"
 )
 _DOCUMENT_NUMBER_PATTERN: Final = (
     rf"(?:[CR][0-9]-[0-9]{{4}}-[0-9]{{4,6}}|"
-    rf"(?:[0-9]{{4}}|{_HISTORICAL_DOCUMENT_SERIES_PATTERN})-[0-9]{{4,6}})"
+    rf"[0-9]{{4}}-[0-9]{{4,6}}|"
+    rf"{_HISTORICAL_DOCUMENT_SERIES_PATTERN}-[0-9]{{1,6}})"
 )
 _DOCUMENT_NUMBER_RE = re.compile(rf"^{_DOCUMENT_NUMBER_PATTERN}$")
 _PUBLICATION_DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")

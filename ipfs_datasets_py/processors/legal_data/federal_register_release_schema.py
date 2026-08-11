@@ -51,7 +51,7 @@ from typing import Any, Final, Iterable, Mapping, Optional
 
 SCHEMA_VERSION: Final = "federal-register-sparse-graphrag-release-schema-v2"
 RELEASE_PROFILE: Final = "federal-register-ir-graphrag/v2"
-ADR_PATH: Final = "docs/architecture/federal_register_sparse_graphrag_schema.md"
+ADR_PATH: Final = "docs/architecture/federal_register_document_number_grammar.md"
 DEFAULT_DATASET_REPO_ID: Final = "justicedao/ipfs_federal_register"
 PREVIOUS_PUBLIC_PIN: Final = "720668ae016cc400916dda884c9005e03618edfa"
 DEFAULT_EMBEDDING_MODEL_ID: Final = "thenlper/gte-small"
@@ -129,8 +129,9 @@ _CID_V1_RE = re.compile(r"^b[a-z2-7]{20,}$")
 _ENTRY_CID_RE = re.compile(
     r"^(?:b[a-z2-7]{20,}|sha256:[0-9a-f]{64}|[0-9a-f]{64})$"
 )
-# FederalRegister.gov retains historical two-character document series and
-# identity-bearing correction/republication prefixes.  This is deliberately
+# FederalRegister.gov retains historical two-character document series with
+# one- to six-digit tails and identity-bearing correction/republication
+# prefixes whose modern tails remain four to six digits.  This is deliberately
 # the same closed grammar as the LCR-049 source-policy boundary rather than a
 # generic alphanumeric identifier.
 _HISTORICAL_DOCUMENT_SERIES_PATTERN: Final = (
@@ -138,7 +139,8 @@ _HISTORICAL_DOCUMENT_SERIES_PATTERN: Final = (
 )
 _DOCUMENT_NUMBER_PATTERN: Final = (
     rf"(?:[CR][0-9]-[0-9]{{4}}-[0-9]{{4,6}}|"
-    rf"(?:[0-9]{{4}}|{_HISTORICAL_DOCUMENT_SERIES_PATTERN})-[0-9]{{4,6}})"
+    rf"[0-9]{{4}}-[0-9]{{4,6}}|"
+    rf"{_HISTORICAL_DOCUMENT_SERIES_PATTERN}-[0-9]{{1,6}})"
 )
 # fr:<document_number>:<publication_date>[:qualifier...]
 _LEGAL_ID_RE = re.compile(

@@ -4,15 +4,15 @@
 | --- | --- |
 | Interface | `FederalRegisterSparseGraphRagReleaseSchema@2` |
 | Task | `LCR-050` |
-| Status | accepted |
+| Status | superseded |
 | Date proposed | 2026-08-10 |
 | Date accepted | 2026-08-10 |
 | Decision owners | legal-ir / federal-foundation-schema |
 | Consulted | Legal Corpora Reindex plan; US Code v2 schema; state-law v2 schema; content-identity ADR |
 | Source of truth | `ipfs_datasets_py/processors/legal_data/federal_register_release_schema.py` |
-| Last verified | 2026-08-10 |
+| Last verified | 2026-08-11 |
 | Supersedes | none (additive over legacy `justicedao/ipfs_federal_register` sample layout) |
-| Superseded by | none |
+| Superseded by | [Federal Register document-number grammar successor](federal_register_document_number_grammar.md) |
 | Origin | Sealed plan decisions for document-number identity, publication/correction identity, official URLs/hashes, text availability, physical 4,096 bounds, semantic-family closure, and immutable publication pins (`LCR-G100`) |
 
 > **Status discipline:** Change `Status` deliberately. Once `accepted`, do not

@@ -116,7 +116,7 @@ def _git_sha(seed: str = "model") -> str:
 def test_schema_constants_match_sealed_policy():
     assert SCHEMA_VERSION == "federal-register-sparse-graphrag-release-schema-v2"
     assert RELEASE_PROFILE == "federal-register-ir-graphrag/v2"
-    assert ADR_PATH.endswith("federal_register_sparse_graphrag_schema.md")
+    assert ADR_PATH.endswith("federal_register_document_number_grammar.md")
     assert DEFAULT_DATASET_REPO_ID == "justicedao/ipfs_federal_register"
     assert PREVIOUS_PUBLIC_PIN == "720668ae016cc400916dda884c9005e03618edfa"
     assert DEFAULT_EMBEDDING_MODEL_ID == "thenlper/gte-small"
@@ -452,13 +452,22 @@ def test_legal_id_requires_fr_shape_and_document_number():
     (
         "2024-19189",
         "93-32034",
+        "94-184",
+        "00-1",
+        "00-10",
         "E9-5927",
+        "E9-9",
         "C1-12345",
+        "C0-1",
+        "C6-102",
         "C1-2010-31877",
-        "R1-2015-00001",
+        "C3-2014-04105",
+        "R1-2017-02032",
+        "R2-2023-00490",
         "00-12345",
         "20-12345",
         "X0-12345",
+        "Z9-9",
         "Z9-12345",
     ),
 )
@@ -470,29 +479,70 @@ def test_official_historical_and_revision_document_numbers_are_durable(
     assert validate_legal_id(legal_id) == legal_id
 
 
+@pytest.mark.parametrize(
+    ("document_number", "publication_date"),
+    (
+        ("00-1", "2000-01-20"),
+        ("00-10", "2000-01-04"),
+        ("94-184", "1994-01-06"),
+        ("C0-1", "2000-02-22"),
+        ("E9-9", "2009-01-07"),
+        ("Z9-9", "2009-01-29"),
+    ),
+)
+def test_canonical_short_historical_legal_ids_keep_official_identity(
+    document_number: str,
+    publication_date: str,
+):
+    """Exercise sealed document-number/date pairs returned by the official API."""
+
+    legal_id = f"fr:{document_number}:{publication_date}"
+    assert validate_document_number(document_number) == document_number
+    assert validate_legal_id(legal_id) == legal_id
+
+
 def test_corpus_record_preserves_revision_document_number_identity():
-    payload = example_corpus_payload()
-    payload["document_number"] = "C1-2026-02383"
-    payload["legal_id"] = "fr:C1-2026-02383:2026-03-15"
+    payload = example_corpus_payload(
+        document_number="C1-2026-02383",
+        publication_date="2026-03-10",
+        document_type="notice",
+    )
+    payload["correction_relation"] = "corrects"
+    payload["related_document_number"] = "2026-02383"
 
     record = CorpusRecord.from_mapping(payload)
 
     assert record.document_number == "C1-2026-02383"
-    assert record.legal_id == "fr:C1-2026-02383:2026-03-15"
+    assert record.legal_id == "fr:C1-2026-02383:2026-03-10"
+    assert record.document_type is DocumentType.NOTICE
+    assert record.correction_relation is CorrectionRelation.CORRECTS
+    assert record.related_document_number == "2026-02383"
 
 
 @pytest.mark.parametrize(
     "document_number",
     (
         "CDC-2024-0015",
+        "A0-1",
+        "10-1",
         "21-12345",
         "91-12345",
         "E2-12345",
+        "E2-1",
         "X2-12345",
+        "X2-1",
         "Z3-12345",
+        "Z3-1",
         "C1-C1-12345",
         "c1-2010-31877",
+        "2024-1",
+        "2024-12",
         "2024-123",
+        "C1-2024-1",
+        "C1-2024-12",
+        "C1-2024-123",
+        "R2-2023-490",
+        "E9-1234567",
         "2024-1234567",
         "1935-12345",
         "2101-12345",

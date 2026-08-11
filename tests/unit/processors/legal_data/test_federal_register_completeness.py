@@ -159,13 +159,22 @@ def test_document_identity_and_official_urls() -> None:
     (
         "2024-19189",
         "93-32034",
+        "94-184",
+        "00-1",
+        "00-10",
         "E9-5927",
+        "E9-9",
         "C1-12345",
+        "C0-1",
+        "C6-102",
         "C1-2010-31877",
-        "R1-2015-00001",
+        "C3-2014-04105",
+        "R1-2017-02032",
+        "R2-2023-00490",
         "00-12345",
         "20-12345",
         "X0-12345",
+        "Z9-9",
         "Z9-12345",
     ),
 )
@@ -179,17 +188,52 @@ def test_official_historical_and_revision_document_numbers_are_preserved(
 
 
 @pytest.mark.parametrize(
+    ("document_number", "publication_date"),
+    (
+        ("00-1", "2000-01-20"),
+        ("00-10", "2000-01-04"),
+        ("94-184", "1994-01-06"),
+        ("C0-1", "2000-02-22"),
+        ("E9-9", "2009-01-07"),
+        ("Z9-9", "2009-01-29"),
+    ),
+)
+def test_canonical_short_historical_document_numbers_keep_official_identity(
+    document_number: str,
+    publication_date: str,
+) -> None:
+    """Exercise sealed document-number/date pairs returned by the official API."""
+
+    assert validate_document_number(document_number) == document_number
+    assert build_legal_id(document_number, publication_date) == (
+        f"fr:{document_number}:{publication_date}"
+    )
+
+
+@pytest.mark.parametrize(
     "document_number",
     (
         "CDC-2024-0015",
+        "A0-1",
+        "10-1",
         "21-12345",
         "91-12345",
         "E2-12345",
+        "E2-1",
         "X2-12345",
+        "X2-1",
         "Z3-12345",
+        "Z3-1",
         "C1-C1-12345",
         "c1-2010-31877",
+        "2024-1",
+        "2024-12",
         "2024-123",
+        "C1-2024-1",
+        "C1-2024-12",
+        "C1-2024-123",
+        "R2-2023-490",
+        "E9-1234567",
         "2024-1234567",
         "1935-12345",
         "2101-12345",
