@@ -771,7 +771,7 @@ W19 ISI-040
 
 ## ISI-048 Satisfy the protected snapshot authority adversarial gate
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: snapshot-authority-protected-gate
