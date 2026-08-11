@@ -102,6 +102,17 @@ def test_interrupted_root_publication_preserves_previous_root_and_recovers(tmp_p
     store.compare_and_swap_root("repo", old, new)
 
 
+def _temporary_orphans(store: LocalSemanticIndexStore, suffix: str) -> tuple[Path, ...]:
+    """Seed every supported prefix in each directory recovery owns."""
+    paths: list[Path] = []
+    for directory in (store.roots_root, store.transitions_root):
+        for prefix in (".root-", ".transition-"):
+            path = directory / f"{prefix}{suffix}"
+            path.write_bytes(b"interrupted publication")
+            paths.append(path)
+    return tuple(paths)
+
+
 def test_root_cas_allows_one_distinct_racer_and_identical_writers_are_benign(tmp_path: Path) -> None:
     store = LocalSemanticIndexStore(tmp_path)
     old = store.store_state(state("repo", "1"))
@@ -177,6 +188,7 @@ def test_interruption_boundaries_recover_only_the_last_visible_root(
             raise InterruptedError(point)
 
     interrupted = LocalSemanticIndexStore(tmp_path, interruption_hook=interrupt)
+    new: str | None = None
     if point.endswith("object_write"):
         with pytest.raises(InterruptedError):
             interrupted.store_state(state("repo", "2"))
@@ -185,9 +197,74 @@ def test_interruption_boundaries_recover_only_the_last_visible_root(
         with pytest.raises(InterruptedError):
             interrupted.compare_and_swap_root("repo", old, new)
     recovered = LocalSemanticIndexStore(tmp_path)
-    recovered.recover("repo")
+    # A crash can leave either the original `.root-` temporary form or the
+    # newer `.transition-` one behind in either bounded publication directory.
+    # Exercise every boundary with both forms, rather than only the point that
+    # currently happens to create the temporary.
+    orphans = _temporary_orphans(recovered, point)
+    removed = recovered.recover("repo")
+    assert set(orphans) <= set(removed)
+    assert recovered.recover("repo") == ()
     expected = old if point.endswith("object_write") else (new if visible_new else old)
     assert recovered.current_root("repo") == expected
+    assert recovered.cas.path_for(old).is_file()
+    if new is not None:
+        assert recovered.cas.path_for(new).is_file()
+
+
+def test_recovery_removes_only_bounded_regular_temporary_orphans(tmp_path: Path) -> None:
+    store = LocalSemanticIndexStore(tmp_path)
+    old = store.store_state(state("repo", "1"))
+    new = store.store_state(state("repo", "2"))
+    store.compare_and_swap_root("repo", None, old)
+    # This is a real, canonical journal.  Recovery reconciles it as a journal,
+    # rather than recognizing it through temporary-prefix cleanup.
+    transition = store._write_transition("repo", old, new)
+    orphans = _temporary_orphans(store, "regular")
+    unrelated = (
+        store.roots_root / "unrelated.txt",
+        store.transitions_root / ".unrelated-keep",
+    )
+    for path in unrelated:
+        path.write_bytes(b"keep")
+    directories = (
+        store.roots_root / ".root-directory",
+        store.transitions_root / ".transition-directory",
+    )
+    for path in directories:
+        path.mkdir()
+    links = (
+        store.roots_root / ".transition-link",
+        store.transitions_root / ".root-link",
+    )
+    for path in links:
+        path.symlink_to(unrelated[0])
+
+    assert store.recover() == (transition, *orphans)
+    assert store.recover() == ()
+    assert store.current_root("repo") == old
+    assert store.cas.path_for(old).is_file()
+    assert store.cas.path_for(new).is_file()
+    assert all(path.exists() for path in unrelated + directories)
+    assert all(path.is_symlink() for path in links)
+
+
+@pytest.mark.parametrize("corrupt", ("root", "transition"))
+def test_recovery_fails_closed_before_cleaning_corrupt_authority(
+    tmp_path: Path, corrupt: str
+) -> None:
+    store = LocalSemanticIndexStore(tmp_path)
+    old = store.store_state(state("repo"))
+    store.compare_and_swap_root("repo", None, old)
+    orphan = _temporary_orphans(store, corrupt)[0]
+    if corrupt == "root":
+        store._root_path("repo").write_bytes(b"not canonical")
+    else:
+        store._transition_path("repo").write_bytes(b"not canonical")
+
+    with pytest.raises(SemanticIndexPersistenceError):
+        store.recover()
+    assert orphan.exists()
 
 
 def test_corrupt_transition_fails_closed(tmp_path: Path) -> None:
