@@ -1,9 +1,10 @@
 # Incremental Semantic Index implementation plan
 
-Status: active implementation plan  
+Status: active implementation and contract-repair plan
 Reviewed repository: `endomorphosis/ipfs_datasets_py`  
 Reviewed commit: `a2f5400b7cb89c8481819379a1b7b9959fe81d45`  
 Reviewed tree: `7dde1f0a86e64576ac316c674c1b4a0995da909c`  
+Post-implementation audit baseline: `dd23a2197e900c2916aab1c4c60077f2bcfdd6e9`
 Plan date: 2026-08-11  
 Supervisor task prefix: `ISI-`
 
@@ -80,6 +81,13 @@ Authority rules:
    never exposed as stable logical identities.
 4. Watch events never establish state. Every callback follows a deterministic
    Git-tree or sorted filesystem snapshot scan.
+5. The audit at `dd23a2197e900c2916aab1c4c60077f2bcfdd6e9` found that
+   tasks ISI-001 through ISI-032 provide a useful scaffold but do not yet
+   satisfy these authority rules end to end. In particular, the public scan
+   returns pre-resolution edges, the new extractor bypasses stronger
+   `python_frontend` facts, and clean Git blobs are reread from the worktree.
+   ISI-033 through ISI-040 below are therefore release gates, not optional
+   enhancements.
 
 ## 3. Proposed package and files
 
@@ -356,12 +364,20 @@ W5  ISI-020
 W6  ISI-023
 W7  ISI-030 | ISI-031
 W8  ISI-032
+W9  ISI-033
+W10 ISI-034 | ISI-035 | ISI-037
+W11 ISI-036
+W12 ISI-038
+W13 ISI-039
+W14 ISI-040
 ```
 
-Wave-1 tasks own disjoint modules and tests. Integration tasks depend on their
-inputs. Supervisor workers must honor `Outputs`, `Predicted files`, and
-`Conflict policy`; plan/objective/taskboard files are read-only protected
-control inputs.
+Tasks in each parallel wave own disjoint modules and tests. Integration tasks
+depend on their inputs. Supervisor workers must honor `Outputs`, `Predicted
+files`, and `Conflict policy`; plan/objective/taskboard files are read-only
+protected control inputs. Phase-two capsule or coding-agent work must not treat
+the semantic state as authoritative until ISI-033 through ISI-039 pass. ISI-040
+is the final incremental-performance and watcher hardening wave.
 
 ## 13. Validation and acceptance
 
@@ -405,6 +421,13 @@ Then run syntax/CLI smoke checks and the repository's proportionate packaging
 check. Full-suite failures outside touched paths are reported separately and
 must not be hidden by exclusions or weakened assertions.
 
+The 245-passed/3-skipped regression at the audit baseline proves compatibility
+with its tests, not the original semantic contract: several acceptance tests
+construct dependency edges by hand and therefore bypass the public scanner.
+Release qualification requires public `scan_repository ->
+diff_repository_states -> calculate_invalidation` reproductions with no
+hand-authored `DependencyEdge` fixtures.
+
 ## 14. Known analysis limits
 
 Python name binding, descriptors, dispatch, import hooks, metaclasses,
@@ -441,3 +464,100 @@ The capsule key is `(stable_symbol_id, version_cid, semantic_index_schema,
 extractor_version)`. Capsule consumers rerun only obligations emitted by the
 plan, retrieve raw source whenever confidence is `opaque`, and never infer
 completion from a heuristic edge.
+
+At the audit baseline this protocol is documentation-only: `SourceSliceRef`
+and the protocol methods are not a concrete exported adapter, and the stored
+state does not contain a resolved graph. ISI-039 must either implement this
+exact public immutable view or replace the documentation with the exact
+implemented API. A phase-two consumer must not call private visitors or infer
+this view from unresolved `lexical:*` targets.
+
+## 16. Post-implementation contract audit and repair program
+
+### 16.1 Audit verdict
+
+The implementation at
+`dd23a2197e900c2916aab1c4c60077f2bcfdd6e9` is not yet an accepted
+`IncrementalSemanticIndex`. The sole CIDv1/canonical DAG-JSON authority is
+correctly reused, imports are hermetic under the documented opt-outs, and the
+local immutable-object path has useful integrity checks. The remaining gaps
+are functional and soundness gaps rather than cosmetic cleanup:
+
+- legal Python literals (`float`, `bytes`, `complex`, and `Ellipsis`), repeated
+  decorators, overloads, and full property accessor sets can fail a scan;
+- durable symbol records validate CID syntax but cannot recompute their stable
+  and version identities, and nested metadata remains mutable;
+- clean Git snapshot bytes are discarded and reread from the worktree, while
+  commit/tree identity and snapshot membership are absent from state roots;
+- the direct AST walk omits or misclassifies required constructs and can report
+  native/dynamic behavior as `exact`;
+- Python and pytest create different identities for the same test or fixture,
+  so real test calls do not produce `tested_by` edges and fixture body changes
+  do not change the pytest symbol version;
+- the public state contains unresolved lexical targets; resolution performed
+  only by explanation code is not committed by the state root;
+- persistence roots are keyed by a repository label but do not verify that the
+  loaded state belongs to that repository;
+- delta/invalidation/explanation rules can over-invalidate, under-invalidate,
+  accept a fabricated delta, invent proof obligations, or traverse relation
+  directions incorrectly; and
+- the CLI can index its own default store, reuse a stale current root for
+  impact/explain/watch, leave watch results unpublished, and report a missing
+  state root as success.
+
+### 16.2 Repair matrix
+
+| Task | Priority | Production boundary | Required proof | Depends on |
+| --- | --- | --- | --- | --- |
+| ISI-033 | P0 | `models.py`, `identity.py` | Total literal canonicalization, self-verifying/deeply immutable durable identity records, repository membership, ordered decorators, and aggregate legal bindings | ISI-032 |
+| ISI-034 | P0 | `snapshot.py`, `scanner.py` | Git-object bytes remain canonical for clean inputs; tree/commit/snapshot identity is state-rooted; races and unreadable inputs are explicit | ISI-033 |
+| ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-033 |
+| ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-033 |
+| ISI-036 | P0 | `pytest_analysis.py`, `scanner.py`, `symbol_graph.py`, `index.py` | One Python/pytest identity and version, a resolved public state, and real test/fixture/config edges | ISI-034, ISI-035 |
+| ISI-038 | P0 | `delta.py`, `invalidation.py`, `explain.py` | Recomputed deltas, edge-aware facets and rule direction, bounded real invalidation, retrievable raw-source evidence | ISI-036, ISI-037 |
+| ISI-039 | P0 | CLI, acceptance fixtures/tests, public contract documentation | All original cases through public APIs; no hand-made graph; fresh and non-self-indexing CLI; exact capsule consumer surface | ISI-038 |
+| ISI-040 | P1 | `watch.py`, `scanner.py` | Verified symbol-level reuse plus cancellable, bounded polling whose notifications never become authority | ISI-039 |
+
+The exact outputs, validation commands, task-sized effects, and acceptance
+reproductions are authoritative in
+`docs/architecture/incremental_semantic_index.todo.md`. The associated goal and
+subgoal hierarchy is in
+`docs/architecture/incremental_semantic_index.objectives.md`.
+
+### 16.3 Non-negotiable reproductions
+
+The repair program must keep the strict DAG-JSON authority unchanged and encode
+otherwise-illegal AST literal values through a tagged canonical projection
+(for example hexadecimal float components and byte hex), not by teaching the
+CID authority to accept non-DAG-JSON values. It must prove at least:
+
+1. scanning legal float/bytes/complex/Ellipsis literals, repeated decorators,
+   overload declarations, and property getter/setter/deleter sets never fails;
+2. two signatures whose string defaults differ only by internal whitespace do
+   not collapse to the same signature projection;
+3. a clean Git repository with a smudge filter is scanned from the indexed Git
+   blob, and a read race becomes an opaque artifact instead of mixed truth;
+4. a method-body edit changes that method without changing unrelated methods
+   or automatically versioning the entire module;
+5. `from ctypes import CDLL` and unresolved native behavior cannot remain
+   `exact`, while conditional/nested definitions and required Pydantic,
+   TypedDict, Enum, composition, global/state, catch, and context facts remain
+   present or explicitly opaque;
+6. the state returned by the public scan contains resolved call targets and a
+   production function's signature change reaches its caller and real pytest
+   tests without hand-authored edges;
+7. fixture body changes, autouse/usefixtures/scoped fixtures, and parametrized
+   argument names have correct identity, version, and dependency behavior;
+8. loading repository B's valid state CID through repository A's root is
+   rejected, and two separate writer processes cannot both replace one
+   expected root;
+9. combined body/signature changes retain both facets, edge-only changes
+   invalidate their affected subjects, non-schema annotations do not trigger
+   schema invalidation, and proofs are rerun only through recorded proof edges;
+10. identical-content files cannot contaminate file impact merely by sharing a
+    source CID, and every opaque obligation names retrievable raw source;
+11. the default CLI store cannot dirty or index the target repository; after a
+    stored scan, an edit is visible to `impact`, `explain`, and `watch --once`;
+    watch publication and missing-root exit semantics are deterministic; and
+12. the final fixture matrix contains no manually constructed dependency edge
+    in a public end-to-end acceptance case.
