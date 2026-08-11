@@ -58,12 +58,36 @@ class DatasetConverter:
             # TODO: Implement dataset conversion logic
             # This is a placeholder for Phase 2 implementation
             
-            return {
+            result = {
                 "status": "success",
                 "source": source,
                 "target_format": target_format,
                 "message": "Dataset converted successfully"
             }
+            # DQK-089: optional admitted-lake shadow projection (legacy remains authority).
+            try:
+                from ipfs_datasets_py.ducklake.adapters import (
+                    ParquetProducerId,
+                    maybe_shadow_project,
+                )
+
+                target = (target_format or "").lower()
+                source_kind = "parquet" if target == "parquet" else "dataset"
+                shadow = maybe_shadow_project(
+                    producer_id=ParquetProducerId.DATASET_CONVERTER.value,
+                    dataset_id=f"converted:{source}:{target_format}",
+                    source_uri=str(source),
+                    source_kind=source_kind,
+                    schema_fields=(),
+                    operation_id=f"op:dataset_converter:{source}:{target_format}",
+                )
+                if shadow is not None:
+                    result["ducklake_shadow"] = shadow.to_dict()
+            except Exception as shadow_exc:  # noqa: BLE001 — never block legacy convert
+                self.logger.debug(
+                    "ducklake shadow projection skipped: %s", shadow_exc
+                )
+            return result
         except Exception as e:
             self.logger.error(f"Error converting dataset: {e}")
             return {
