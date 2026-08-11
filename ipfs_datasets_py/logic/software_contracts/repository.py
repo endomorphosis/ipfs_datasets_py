@@ -2584,13 +2584,51 @@ AST_AUTHORITY_JSON_EXPORT_SCHEMA: Final[str] = (
     "ipfs_datasets_py/software-contracts-ast-json-outbox-export@1"
 )
 AST_AUTHORITY_DEFAULT_SOURCE: Final[str] = "duckdb"
+# DQK-069 dual remains the authority-port default for dual-write soak tests.
+# DQK-070 greenfield cutover uses AST_ONLY_DEFAULT_MODE (db-primary).
 AST_AUTHORITY_DEFAULT_MODE: Final[str] = "dual"
+AST_ONLY_DEFAULT_MODE: Final[str] = "db-primary"
 AST_INVALIDATION_RECORD_SCHEMA: Final[str] = (
     "ipfs_datasets_py/software-contracts-ast-invalidation@1"
 )
 AST_CONSUMER_DECISION_SCHEMA: Final[str] = (
     "ipfs_datasets_py/software-contracts-ast-consumer-decision@1"
 )
+
+# ---------------------------------------------------------------------------
+# DQK-070: remove analysis-bundle file authority
+# ---------------------------------------------------------------------------
+#
+# Operational consumers read only the DuckDB surface.  analysis_ast_index,
+# objective, dependency, conflict, and code-evidence JSON files are never
+# polled or loaded as operational state.  Filesystem bundle writes occur only
+# through the closed set of named export commands below.
+
+AST_ONLY_OWNER_TASK: Final[str] = "DQK-070"
+AST_ONLY_INTERFACE: Final[str] = "ASTAuthorityRepository@1"
+AST_COMPATIBILITY_EXPORT_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/software-contracts-ast-compatibility-export@1"
+)
+AST_PUBLICATION_VIEW_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/software-contracts-ast-publication-view@1"
+)
+AST_NAMED_EXPORT_COMMANDS: Final[frozenset[str]] = frozenset(
+    {
+        "export_json_bundle",
+        "export_compatibility_bundle",
+        "write_compatibility_export",
+    }
+)
+AST_LEGACY_BUNDLE_ARTIFACTS: Final[Mapping[str, str]] = {
+    "manifest": "manifest.json",
+    "objective_graph": "objective_graph.json",
+    "semantic_dependency_graph": "semantic_dependency_graph.json",
+    "analysis_ast_index": "analysis_ast_index.json",
+    "conflict_graph": "conflict_graph.json",
+    "code_evidence_graph": "code_evidence_graph.json",
+    "code_impact_index": "code_impact_index.json",
+}
+AST_DEFAULT_TENANT_ID: Final[str] = "tenant:default"
 
 
 class ASTAuthorityError(ASTShadowError):
@@ -2659,13 +2697,15 @@ def _decision_digest(payload: Mapping[str, Any]) -> str:
 
 
 class ASTAuthorityRepository:
-    """Dual-write AST repository with DuckDB as the default consumer source.
+    """DuckDB-primary AST repository (DQK-069 dual + DQK-070 bundle removal).
 
-    Writes go through the authority port in dual mode (crash-recoverable
+    Writes go through the authority port (dual or db-primary, crash-recoverable
     outbox).  Reads for conflict / dependency / impact / validation-selection
-    / code-evidence always prefer the DuckDB surface (``port.read`` under dual
-    or db-primary).  JSON bundles are emitted only as deterministic outbox
-    exports.
+    / code-evidence / objective always prefer the DuckDB surface.  Legacy
+    analysis-bundle JSON files are never polled or loaded as operational
+    state; filesystem bundle writes occur only through named export commands
+    (``export_json_bundle``, ``export_compatibility_bundle``,
+    ``write_compatibility_export``).
     """
 
     def __init__(
@@ -2676,6 +2716,8 @@ class ASTAuthorityRepository:
         writer_id: str = "writer:ast-authority",
         task_id: str = AST_AUTHORITY_OWNER_TASK,
         default_source: str = AST_AUTHORITY_DEFAULT_SOURCE,
+        tenant_id: str = AST_DEFAULT_TENANT_ID,
+        allow_legacy_bundle_load: bool = False,
     ) -> None:
         if authority_port is None:
             raise ASTAuthorityError("authority_port is required")
@@ -2687,6 +2729,9 @@ class ASTAuthorityRepository:
         self._writer_id = str(writer_id or "writer:ast-authority")
         self._task_id = str(task_id or AST_AUTHORITY_OWNER_TASK)
         self._default_source = str(default_source)
+        self._tenant_id = str(tenant_id or AST_DEFAULT_TENANT_ID)
+        # DQK-070: operational consumers must not load on-disk JSON bundles.
+        self._allow_legacy_bundle_load = bool(allow_legacy_bundle_load)
         self._lock = threading.RLock()
         if ast_store is None:
             from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
@@ -2708,6 +2753,12 @@ class ASTAuthorityRepository:
         self._validation_targets: dict[str, list[str]] = {}
         self._conflict_edges: list[dict[str, Any]] = []
         self._export_digests: dict[str, str] = {}  # authority_key -> digest
+        # DQK-070: repository / tenant scopes for publication views.
+        self._blob_repository: dict[str, str] = {}  # blob_id -> repository_id
+        self._blob_tenant: dict[str, str] = {}  # blob_id -> tenant_id
+        self._objectives: dict[str, dict[str, Any]] = {}  # goal_id -> objective
+        self._named_export_invocations: list[str] = []
+        self._filesystem_bundle_writes: int = 0
         self._stats = {
             "writes": 0,
             "invalidations": 0,
@@ -2716,6 +2767,8 @@ class ASTAuthorityRepository:
             "parity_checks": 0,
             "parity_matches": 0,
             "outbox_exports": 0,
+            "named_exports": 0,
+            "publication_views": 0,
         }
 
     # -- properties ---------------------------------------------------------
@@ -2743,17 +2796,85 @@ class ASTAuthorityRepository:
         return self._default_source
 
     @property
+    def tenant_id(self) -> str:
+        return self._tenant_id
+
+    @property
     def mode(self) -> str:
         mode = getattr(self._port, "mode", None)
         if mode is None:
             return AST_AUTHORITY_DEFAULT_MODE
         return getattr(mode, "value", str(mode))
 
+    @property
+    def named_export_commands(self) -> frozenset[str]:
+        return AST_NAMED_EXPORT_COMMANDS
+
+    @property
+    def allow_legacy_bundle_load(self) -> bool:
+        """Whether operational paths may load on-disk JSON (always False post-DQK-070)."""
+
+        return False if not self._allow_legacy_bundle_load else True
+
     def stats(self) -> dict[str, int]:
         with self._lock:
-            return dict(self._stats)
+            out = dict(self._stats)
+            out["filesystem_bundle_writes"] = self._filesystem_bundle_writes
+            return out
 
-    # -- dual write ---------------------------------------------------------
+    def reject_legacy_bundle_load(self, *, artifact: str = "analysis_ast_index") -> None:
+        """Fail closed when an operational path attempts to load legacy JSON."""
+
+        if not self._allow_legacy_bundle_load:
+            raise ASTAuthorityError(
+                f"DQK-070 forbids loading legacy bundle artifact {artifact!r} "
+                "as operational state; use DuckDB consumer queries or named "
+                f"export commands {sorted(AST_NAMED_EXPORT_COMMANDS)}"
+            )
+
+    def promote_to_db_primary(
+        self,
+        *,
+        decision_id: str | None = None,
+        require_parity: bool = False,
+    ) -> dict[str, Any]:
+        """Promote the authority port dual → db-primary (DQK-070 cutover)."""
+
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+        )
+
+        mode = getattr(self._port, "mode", None)
+        mode_value = getattr(mode, "value", str(mode) if mode is not None else "")
+        if mode_value in {"db-primary", "export-only"}:
+            return {
+                "ok": True,
+                "already": True,
+                "mode": mode_value,
+                "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+            }
+        decision = decision_id or f"dec:ast-auth:{self._task_id}:to-db-primary"
+        try:
+            receipt = self._port.promote(
+                AuthorityMode.DB_PRIMARY,
+                require_parity=require_parity,
+                decision_id=decision,
+            )
+        except Exception as exc:
+            raise ASTAuthorityError(
+                f"promote_to_db_primary failed: {exc}"
+            ) from exc
+        return {
+            "ok": True,
+            "already": False,
+            "mode": self.mode,
+            "decision_id": decision,
+            "receipt": getattr(receipt, "as_mapping", lambda: receipt)(),
+            "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+            "legacy_bundles_operational": False,
+        }
+
+    # -- dual / db-primary write --------------------------------------------
 
     def write_projection(
         self,
@@ -2761,8 +2882,13 @@ class ASTAuthorityRepository:
         *,
         operation_id: str | None = None,
         also_write_evidence_edges: bool = True,
+        tenant_id: str | None = None,
     ) -> dict[str, Any]:
-        """Dual-write one catalog projection; DuckDB is consumer authority."""
+        """Write one catalog projection; DuckDB is consumer authority.
+
+        Does **not** write analysis-bundle JSON files.  Deterministic JSON
+        exports are available only through named export commands.
+        """
 
         from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
             ASTCatalogProjection,
@@ -2773,9 +2899,14 @@ class ASTAuthorityRepository:
                 "write_projection requires an exact ASTCatalogProjection"
             )
         key = authority_key_for_projection(projection)
+        # In-memory export payload for dual-mode parity; never a filesystem write.
         json_export = deterministic_json_bundle_export(projection)
         db_payload = projection_to_authority_payload(projection)
-        # Dual document: DB projection is authority; JSON is outbox export only.
+        identity = dict(db_payload["identity"])
+        scope_tenant = str(tenant_id or self._tenant_id)
+        identity["tenant_id"] = scope_tenant
+        # Authority document: DuckDB is operational; json_bundle is non-authority
+        # outbox material only (never a filesystem artifact write).
         dual = {
             "schema": AST_AUTHORITY_SCHEMA,
             "interface": AST_AUTHORITY_INTERFACE,
@@ -2783,9 +2914,12 @@ class ASTAuthorityRepository:
             "kind": "ast_authority_dual",
             "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
             "operational_authority": "duckdb",
-            "identity": dict(db_payload["identity"]),
+            "legacy_bundle_operational": False,
+            "identity": identity,
             "json_bundle": json_export,
             "db_projection": db_payload,
+            "tenant_id": scope_tenant,
+            "repository_id": identity.get("repository_id") or "",
             "invalidated": False,
         }
         op_id = operation_id or f"op:ast-auth:{projection.blob_id}"
@@ -2800,7 +2934,9 @@ class ASTAuthorityRepository:
                 )
             self._store.put_projection(projection)
             write_result = self._port.write(key, dual, operation_id=op_id)
-            self._index_projection_locked(projection, key, json_export)
+            self._index_projection_locked(
+                projection, key, json_export, tenant_id=scope_tenant
+            )
             evidence_edges: tuple[dict[str, Any], ...] = ()
             if also_write_evidence_edges:
                 evidence_edges = evidence_edges_from_projection(
@@ -2809,13 +2945,14 @@ class ASTAuthorityRepository:
                 for edge in evidence_edges:
                     self._write_edge_locked(edge)
             self._stats["writes"] += 1
-            self._stats["outbox_exports"] += 1
+            # Outbox export material is retained in-memory only; filesystem
+            # bundle writes are counted exclusively by named export commands.
         return {
             "ok": bool(write_result.get("ok", True)),
             "authority_key": key,
             "operation_id": write_result.get("operation_id", op_id),
             "mode": write_result.get("mode"),
-            "authority": write_result.get("authority") or "dual",
+            "authority": write_result.get("authority") or "duckdb",
             "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
             "payload_digest": write_result.get("payload_digest"),
             "json_bundle": json_export,
@@ -2825,6 +2962,10 @@ class ASTAuthorityRepository:
             "write_result": write_result,
             "atomic_across_filesystems": False,
             "operational_authority": "duckdb",
+            "legacy_bundle_operational": False,
+            "filesystem_bundle_written": False,
+            "tenant_id": scope_tenant,
+            "repository_id": identity.get("repository_id") or "",
         }
 
     def write_record(
@@ -2874,6 +3015,8 @@ class ASTAuthorityRepository:
         projection: Any,
         authority_key: str,
         json_export: Mapping[str, Any],
+        *,
+        tenant_id: str | None = None,
     ) -> None:
         blob_id = projection.blob_id
         self._active_blob_keys[blob_id] = authority_key
@@ -2881,6 +3024,12 @@ class ASTAuthorityRepository:
         self._invalidated_blobs.discard(blob_id)
         export_digest = _decision_digest(json_export)
         self._export_digests[authority_key] = export_digest
+        repo_id = str(
+            getattr(projection.source_revision, "repository_id", "") or ""
+        )
+        scope_tenant = str(tenant_id or self._tenant_id)
+        self._blob_repository[blob_id] = repo_id
+        self._blob_tenant[blob_id] = scope_tenant
         for symbol in projection.symbols:
             qn = symbol.qualified_name
             self._symbol_index.setdefault(qn, set()).add(blob_id)
@@ -2894,6 +3043,8 @@ class ASTAuthorityRepository:
                     "target": f"module:{item.module}",
                     "kind": "import",
                     "blob_id": blob_id,
+                    "repository_id": repo_id,
+                    "tenant_id": scope_tenant,
                 }
             )
         for item in projection.calls:
@@ -2903,6 +3054,8 @@ class ASTAuthorityRepository:
                     "target": f"call:{item.callee_name}",
                     "kind": "call",
                     "blob_id": blob_id,
+                    "repository_id": repo_id,
+                    "tenant_id": scope_tenant,
                 }
             )
         for symbol in projection.symbols:
@@ -2912,6 +3065,8 @@ class ASTAuthorityRepository:
                     "target": f"symbol:{symbol.qualified_name}",
                     "kind": "defines",
                     "blob_id": blob_id,
+                    "repository_id": repo_id,
+                    "tenant_id": scope_tenant,
                 }
             )
 
@@ -3064,6 +3219,8 @@ class ASTAuthorityRepository:
                 self._path_to_blob.pop(path, None)
         self._active_blob_keys.pop(blob_id, None)
         self._edge_by_blob.pop(blob_id, None)
+        self._blob_repository.pop(blob_id, None)
+        self._blob_tenant.pop(blob_id, None)
         self._invalidated_blobs.add(blob_id)
         self._export_digests.pop(authority_key, None)
         self._stats["invalidations"] += 1
@@ -3196,19 +3353,507 @@ class ASTAuthorityRepository:
             return self._store.get(blob_id)
 
     def export_json_bundle(self, authority_key: str) -> dict[str, Any] | None:
-        """Return the deterministic outbox JSON export (non-authoritative)."""
+        """Named export command: deterministic outbox JSON (non-authoritative).
 
+        Rebuilds from the DuckDB projection when the dual document no longer
+        carries a ``json_bundle`` field (db-primary / export-only cutover).
+        Never writes filesystem artifacts.
+        """
+
+        with self._lock:
+            self._stats["named_exports"] += 1
+            self._named_export_invocations.append("export_json_bundle")
         payload = self.read(authority_key)
         if not isinstance(payload, Mapping):
             return None
         export = payload.get("json_bundle")
         if not isinstance(export, Mapping):
-            return None
-        # Ensure export is not claimed as authority.
+            # Rebuild from db_projection or live store.
+            db_side = payload.get("db_projection")
+            blob_id = ""
+            if isinstance(db_side, Mapping):
+                identity = dict(db_side.get("identity") or {})
+                blob_id = str(identity.get("blob_id") or "")
+            if not blob_id:
+                blob_id = str(
+                    (payload.get("identity") or {}).get("blob_id") or ""
+                )
+            projection = self._store.get(blob_id) if blob_id else None
+            if projection is not None:
+                export = deterministic_json_bundle_export(projection)
+            elif isinstance(db_side, Mapping):
+                export = {
+                    "schema": AST_AUTHORITY_JSON_EXPORT_SCHEMA,
+                    "kind": "ast_json_outbox_export",
+                    "operational_authority": False,
+                    "authority_source": AST_AUTHORITY_DEFAULT_SOURCE,
+                    "identity": dict(db_side.get("identity") or {}),
+                    "source_revision": db_side.get("source_revision"),
+                    "source_file": db_side.get("source_file"),
+                    "ast_blob": db_side.get("ast_blob"),
+                    "symbols": list(db_side.get("symbols") or []),
+                    "imports": list(db_side.get("imports") or []),
+                    "calls": list(db_side.get("calls") or []),
+                    "effects": list(db_side.get("effects") or []),
+                    "diagnostics": list(db_side.get("diagnostics") or []),
+                    "nodes": list(db_side.get("nodes") or []),
+                    "scopes": list(db_side.get("scopes") or []),
+                    "references": list(db_side.get("references") or []),
+                    "interfaces": list(db_side.get("interfaces") or []),
+                    "invalidations": list(db_side.get("invalidations") or []),
+                    "table_row_counts": dict(
+                        db_side.get("table_row_counts") or {}
+                    ),
+                }
+            else:
+                return None
         result = dict(export)
         result["operational_authority"] = False
         result["authority_source"] = AST_AUTHORITY_DEFAULT_SOURCE
+        result["named_export_command"] = "export_json_bundle"
+        result["legacy_bundle_operational"] = False
         return result
+
+    def export_compatibility_bundle(
+        self,
+        destination: Path | str,
+        *,
+        repository_id: str | None = None,
+        tenant_id: str | None = None,
+        revision: str = "export",
+    ) -> dict[str, Any]:
+        """Named export command: write compatibility multi-graph JSON bundle.
+
+        This is the **only** supported path for writing analysis_ast_index,
+        objective, dependency, conflict, and code-evidence JSON files.
+        Operational consumers must not read these files back as authority.
+        """
+
+        with self._lock:
+            self._named_export_invocations.append("export_compatibility_bundle")
+        result = self.write_compatibility_export(
+            destination,
+            repository_id=repository_id,
+            tenant_id=tenant_id,
+            revision=revision,
+        )
+        result["named_export_command"] = "export_compatibility_bundle"
+        if isinstance(result.get("manifest"), dict):
+            result["manifest"] = dict(result["manifest"])
+            result["manifest"]["named_export_command"] = (
+                "export_compatibility_bundle"
+            )
+        return result
+
+    def write_compatibility_export(
+        self,
+        destination: Path | str,
+        *,
+        repository_id: str | None = None,
+        tenant_id: str | None = None,
+        revision: str = "export",
+    ) -> dict[str, Any]:
+        """Named export command: materialize a non-authoritative JSON bundle."""
+
+        dest = Path(destination)
+        dest.mkdir(parents=True, exist_ok=True)
+        scope_tenant = str(tenant_id or self._tenant_id)
+        with self._lock:
+            self._stats["named_exports"] += 1
+            self._named_export_invocations.append("write_compatibility_export")
+            self._filesystem_bundle_writes += 1
+            view = self._publication_view_locked(
+                repository_id=repository_id,
+                tenant_id=scope_tenant,
+            )
+            # Build closed multi-graph compatibility artifacts from DuckDB.
+            paths: list[dict[str, Any]] = []
+            for node in view["nodes"]:
+                paths.append(
+                    {
+                        "path": node["path"],
+                        "blob_id": node["blob_id"],
+                        "ast_cid": node.get("ast_cid"),
+                        "source_cid": node.get("source_cid"),
+                        "symbols": list(node.get("symbols") or []),
+                        "repository_id": node.get("repository_id"),
+                        "tenant_id": node.get("tenant_id"),
+                    }
+                )
+            ast_index = {
+                "schema": "ipfs_accelerate_py/agent-supervisor/analysis-ast-index@1",
+                "revision": revision,
+                "path_count": len(paths),
+                "paths": paths,
+                "operational_authority": False,
+                "named_export_command": "write_compatibility_export",
+            }
+            objectives = [
+                dict(item)
+                for item in self._objectives.values()
+                if (
+                    repository_id is None
+                    or item.get("repository_id") == repository_id
+                )
+                and (
+                    scope_tenant is None
+                    or item.get("tenant_id") in {None, "", scope_tenant}
+                )
+            ]
+            objective_graph = {
+                "schema": "ipfs_accelerate_py.agent_supervisor.objective_graph",
+                "revision": revision,
+                "goals": objectives,
+                "goal_count": len(objectives),
+                "operational_authority": False,
+                "named_export_command": "write_compatibility_export",
+            }
+            dep_edges = [
+                {
+                    "source": e.get("source"),
+                    "target": e.get("target"),
+                    "kind": e.get("kind"),
+                }
+                for e in view["dependency_edges"]
+            ]
+            semantic = {
+                "schema": (
+                    "ipfs_accelerate_py/agent-supervisor/"
+                    "semantic-dependency-graph@1"
+                ),
+                "revision": revision,
+                "nodes": [
+                    {"node_id": n["path"], "kind": "tree", "path": n["path"]}
+                    for n in view["nodes"]
+                ],
+                "edges": dep_edges,
+                "node_count": len(view["nodes"]),
+                "edge_count": len(dep_edges),
+                "operational_authority": False,
+                "named_export_command": "write_compatibility_export",
+            }
+            conflict_graph = {
+                "schema": "ipfs_accelerate_py.agent_supervisor.conflict_graph@1",
+                "revision": revision,
+                "edges": list(view["conflict_edges"]),
+                "symbol_conflicts": list(view["symbol_conflicts"]),
+                "operational_authority": False,
+                "named_export_command": "write_compatibility_export",
+            }
+            evidence_graph = {
+                "schema": (
+                    "ipfs_accelerate_py.agent_supervisor.code-evidence-graph@1"
+                ),
+                "revision": revision,
+                "nodes": list(view["nodes"]),
+                "edges": list(view["evidence_edges"]),
+                "node_count": len(view["nodes"]),
+                "edge_count": len(view["evidence_edges"]),
+                "operational_authority": False,
+                "named_export_command": "write_compatibility_export",
+            }
+            impact_index = {
+                "schema": (
+                    "ipfs_accelerate_py.agent_supervisor.code-impact-index@1"
+                ),
+                "revision": revision,
+                "path_dependencies": {
+                    n["path"]: [
+                        e["target"]
+                        for e in view["dependency_edges"]
+                        if e.get("source") == n["path"]
+                    ]
+                    for n in view["nodes"]
+                },
+                "validation_targets": dict(self._validation_targets),
+                "operational_authority": False,
+                "named_export_command": "write_compatibility_export",
+            }
+            files = {
+                "analysis_ast_index": ast_index,
+                "objective_graph": objective_graph,
+                "semantic_dependency_graph": semantic,
+                "conflict_graph": conflict_graph,
+                "code_evidence_graph": evidence_graph,
+                "code_impact_index": impact_index,
+            }
+            written: dict[str, str] = {}
+            checksums: dict[str, str] = {}
+            for name, payload in files.items():
+                rel = AST_LEGACY_BUNDLE_ARTIFACTS[name]
+                path = dest / rel
+                encoded = json.dumps(
+                    payload,
+                    ensure_ascii=False,
+                    allow_nan=False,
+                    separators=(",", ":"),
+                    sort_keys=True,
+                )
+                path.write_text(encoded + "\n", encoding="utf-8")
+                written[name] = str(path)
+                import hashlib
+
+                checksums[name] = (
+                    "sha256:"
+                    + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+                )
+            manifest = {
+                "schema": AST_COMPATIBILITY_EXPORT_SCHEMA,
+                "kind": "ast_compatibility_bundle_export",
+                "revision": revision,
+                "owner_task_id": AST_ONLY_OWNER_TASK,
+                "operational_authority": False,
+                "named_export_command": "write_compatibility_export",
+                "repository_id": repository_id,
+                "tenant_id": scope_tenant,
+                "artifacts": {
+                    name: AST_LEGACY_BUNDLE_ARTIFACTS[name] for name in files
+                },
+                "artifact_checksums": checksums,
+                "counts": {
+                    "ast_paths": ast_index["path_count"],
+                    "objectives": objective_graph["goal_count"],
+                    "evidence_nodes": evidence_graph["node_count"],
+                    "evidence_edges": evidence_graph["edge_count"],
+                },
+            }
+            manifest_path = dest / AST_LEGACY_BUNDLE_ARTIFACTS["manifest"]
+            manifest_path.write_text(
+                json.dumps(
+                    manifest,
+                    ensure_ascii=False,
+                    allow_nan=False,
+                    separators=(",", ":"),
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            written["manifest"] = str(manifest_path)
+        return {
+            "ok": True,
+            "schema": AST_COMPATIBILITY_EXPORT_SCHEMA,
+            "named_export_command": "write_compatibility_export",
+            "destination": str(dest),
+            "written": written,
+            "checksums": checksums,
+            "manifest": manifest,
+            "operational_authority": False,
+            "legacy_bundle_operational": False,
+            "repository_id": repository_id,
+            "tenant_id": scope_tenant,
+        }
+
+    def publication_view(
+        self,
+        *,
+        repository_id: str | None = None,
+        tenant_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Sanitized publication view filtered by repository and tenant.
+
+        Intended for the DQK-058 publication plane: only identity-bearing,
+        non-secret AST/evidence aggregates cross the boundary, and only for
+        the requested repository + tenant scope.
+        """
+
+        with self._lock:
+            self._stats["publication_views"] += 1
+            self._stats["consumer_reads"] += 1
+            return self._publication_view_locked(
+                repository_id=repository_id,
+                tenant_id=tenant_id,
+            )
+
+    def _publication_view_locked(
+        self,
+        *,
+        repository_id: str | None = None,
+        tenant_id: str | None = None,
+    ) -> dict[str, Any]:
+        scope_tenant = tenant_id  # None means all tenants when not provided
+        nodes: list[dict[str, Any]] = []
+        for blob_id, authority_key in sorted(self._active_blob_keys.items()):
+            if blob_id in self._invalidated_blobs:
+                continue
+            blob_repo = self._blob_repository.get(blob_id, "")
+            blob_tenant = self._blob_tenant.get(blob_id, self._tenant_id)
+            if repository_id is not None and blob_repo != repository_id:
+                continue
+            if scope_tenant is not None and blob_tenant != scope_tenant:
+                continue
+            projection = self._store.get(blob_id)
+            if projection is None:
+                continue
+            symbols = [s.qualified_name for s in projection.symbols]
+            nodes.append(
+                {
+                    "node_id": f"tree:{projection.source_file.path}",
+                    "kind": "tree",
+                    "path": projection.source_file.path,
+                    "blob_id": blob_id,
+                    "ast_cid": projection.ast_cid,
+                    "source_cid": projection.source_cid,
+                    "symbols": symbols,
+                    "authority_key": authority_key,
+                    "repository_id": blob_repo,
+                    "tenant_id": blob_tenant,
+                    "source": AST_AUTHORITY_DEFAULT_SOURCE,
+                }
+            )
+        allowed_blobs = {n["blob_id"] for n in nodes}
+        allowed_paths = {n["path"] for n in nodes}
+        evidence_edges = [
+            dict(edge)
+            for edge_id, edge in sorted(self._active_edges.items())
+            if not edge.get("invalidated")
+            and edge_id not in self._invalidated_edges
+            and (
+                repository_id is None
+                or edge.get("repository_id") in {None, "", repository_id}
+                or any(
+                    edge.get("source_cid") == n.get("source_cid")
+                    for n in nodes
+                )
+            )
+        ]
+        dependency_edges = [
+            {
+                "source": e["source"],
+                "target": e["target"],
+                "kind": e["kind"],
+                "blob_id": e.get("blob_id"),
+                "repository_id": e.get("repository_id"),
+                "tenant_id": e.get("tenant_id"),
+            }
+            for e in self._impact_edges
+            if e.get("blob_id") in allowed_blobs
+            or e.get("source") in allowed_paths
+        ]
+        conflict_edges = [
+            dict(edge)
+            for edge in self._conflict_edges
+            if edge.get("edge_id") not in self._invalidated_edges
+            and (
+                edge.get("left") in allowed_paths
+                or edge.get("right") in allowed_paths
+                or not allowed_paths
+            )
+        ]
+        symbol_conflicts: list[dict[str, Any]] = []
+        for symbol, blob_ids in sorted(self._symbol_index.items()):
+            live = sorted(
+                bid
+                for bid in blob_ids
+                if bid in allowed_blobs and bid not in self._invalidated_blobs
+            )
+            if len(live) > 1:
+                symbol_conflicts.append(
+                    {
+                        "kind": "duplicate_symbol",
+                        "symbol": symbol,
+                        "blob_ids": live,
+                        "blocks_concurrency": True,
+                    }
+                )
+        objectives = [
+            dict(item)
+            for item in self._objectives.values()
+            if (
+                repository_id is None
+                or item.get("repository_id") == repository_id
+            )
+            and (
+                scope_tenant is None
+                or item.get("tenant_id") in {None, "", scope_tenant}
+            )
+        ]
+        view = {
+            "schema": AST_PUBLICATION_VIEW_SCHEMA,
+            "kind": "ast_publication_view",
+            "owner_task_id": AST_ONLY_OWNER_TASK,
+            "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+            "operational_authority": "duckdb",
+            "legacy_bundle_operational": False,
+            "filter": {
+                "repository_id": repository_id,
+                "tenant_id": scope_tenant,
+            },
+            "node_count": len(nodes),
+            "nodes": nodes,
+            "evidence_edges": evidence_edges,
+            "dependency_edges": dependency_edges,
+            "conflict_edges": conflict_edges,
+            "symbol_conflicts": symbol_conflicts,
+            "objectives": objectives,
+            # Publication plane must never see raw source bytes or secrets.
+            "excluded_surfaces": (
+                "source_bytes",
+                "raw_payload",
+                "secrets",
+                "authority_tokens",
+                "legacy_json_bundle_files",
+            ),
+        }
+        view["view_digest"] = _decision_digest(view)
+        return view
+
+    def register_objective(
+        self,
+        goal_id: str,
+        *,
+        title: str = "",
+        repository_id: str | None = None,
+        tenant_id: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Register an objective goal in DuckDB-backed operational state."""
+
+        body = {
+            "goal_id": str(goal_id),
+            "title": str(title or goal_id),
+            "repository_id": repository_id,
+            "tenant_id": str(tenant_id or self._tenant_id),
+            "metadata": dict(metadata or {}),
+            "source": AST_AUTHORITY_DEFAULT_SOURCE,
+        }
+        with self._lock:
+            self._objectives[str(goal_id)] = body
+        return dict(body)
+
+    def objective_query(
+        self,
+        *,
+        repository_id: str | None = None,
+        tenant_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Objective consumer view over DuckDB state (never loads JSON)."""
+
+        with self._lock:
+            self._stats["consumer_reads"] += 1
+            goals = [
+                dict(item)
+                for item in self._objectives.values()
+                if (
+                    repository_id is None
+                    or item.get("repository_id") == repository_id
+                )
+                and (
+                    tenant_id is None
+                    or item.get("tenant_id") in {None, "", tenant_id}
+                )
+            ]
+            decision = {
+                "schema": AST_CONSUMER_DECISION_SCHEMA,
+                "family": "objective",
+                "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+                "mode": self.mode,
+                "goal_count": len(goals),
+                "goals": goals,
+                "legacy_bundle_operational": False,
+            }
+            decision["decision_digest"] = _decision_digest(decision)
+            return decision
 
     # -- consumer surfaces (DuckDB default) ---------------------------------
 
@@ -3701,8 +4346,15 @@ def build_ast_authority_repository(
     writer_id: str = "writer:ast-authority",
     task_id: str = AST_AUTHORITY_OWNER_TASK,
     default_source: str = AST_AUTHORITY_DEFAULT_SOURCE,
+    tenant_id: str = AST_DEFAULT_TENANT_ID,
+    promote_to_db_primary: bool = False,
 ) -> ASTAuthorityRepository:
-    """Construct a dual-write AST authority repository (DuckDB default source)."""
+    """Construct an AST authority repository (DuckDB default source).
+
+    Greenfield ports default to ``db-primary`` (DQK-070).  When an existing
+    port is supplied its mode is preserved unless ``promote_to_db_primary`` is
+    set, so DQK-069 dual-mode tests remain stable.
+    """
 
     if authority_port is None:
         from ipfs_datasets_py.duckdb_control.authority_transition import (
@@ -3720,17 +4372,23 @@ def build_ast_authority_repository(
         mode = getattr(authority_port, "mode", None)
         mode_value = getattr(mode, "value", str(mode) if mode is not None else "")
         if mode_value == "shadow":
-            # Find a key for parity if any writes exist; otherwise promote
-            # without parity requirement for empty domains.
             try:
                 authority_port.promote(
                     "dual",
                     require_parity=False,
                     decision_id=f"dec:ast-auth:{task_id}:to-dual",
                 )
+                mode_value = "dual"
             except Exception:
-                # If promotion is blocked (open quarantine etc.), leave mode
-                # as-is; dual writes still require dual mode from the caller.
+                pass
+        if promote_to_db_primary and mode_value == "dual":
+            try:
+                authority_port.promote(
+                    "db-primary",
+                    require_parity=False,
+                    decision_id=f"dec:ast-auth:{task_id}:to-db-primary",
+                )
+            except Exception:
                 pass
     return ASTAuthorityRepository(
         authority_port,
@@ -3738,6 +4396,7 @@ def build_ast_authority_repository(
         writer_id=writer_id,
         task_id=task_id,
         default_source=default_source,
+        tenant_id=tenant_id,
     )
 
 
@@ -3777,10 +4436,18 @@ __all__ = [
     "AST_AUTHORITY_JSON_EXPORT_SCHEMA",
     "AST_AUTHORITY_OWNER_TASK",
     "AST_AUTHORITY_SCHEMA",
+    "AST_COMPATIBILITY_EXPORT_SCHEMA",
     "AST_CONSUMER_DECISION_SCHEMA",
+    "AST_DEFAULT_TENANT_ID",
     "AST_EVIDENCE_EDGE_SCHEMA",
     "AST_INVALIDATION_RECORD_SCHEMA",
     "AST_JSON_BUNDLE_SCHEMA",
+    "AST_LEGACY_BUNDLE_ARTIFACTS",
+    "AST_NAMED_EXPORT_COMMANDS",
+    "AST_ONLY_DEFAULT_MODE",
+    "AST_ONLY_INTERFACE",
+    "AST_ONLY_OWNER_TASK",
+    "AST_PUBLICATION_VIEW_SCHEMA",
     "AST_SHADOW_INTERFACE",
     "AST_SHADOW_OWNER_TASK",
     "AST_SHADOW_SCHEMA",
