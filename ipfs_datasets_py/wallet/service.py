@@ -27,6 +27,12 @@ from .crypto import (
     unwrap_key,
     wrap_key,
 )
+from .duckdb_repository import (
+    MutationKind,
+    MutationReceipt,
+    WalletDuckDBRepository,
+    new_operation_id,
+)
 from .exceptions import (
     AccessDeniedError,
     ApprovalRequiredError,
@@ -234,10 +240,12 @@ class DataWalletService:
         proof_backend: Optional[ProofBackend] = None,
         allow_simulated_proofs: bool = True,
         world_id_hmac_key: Optional[bytes] = None,
+        event_port: Optional[WalletDuckDBRepository] = None,
     ) -> None:
         self.storage = storage_backend or LocalEncryptedBlobStore(storage_dir)
         self.proof_backend = proof_backend or SimulatedProofBackend()
         self.allow_simulated_proofs = allow_simulated_proofs
+        self.event_port = event_port
         self.wallets: Dict[str, Wallet] = {}
         self.records: Dict[str, DataRecord] = {}
         self.versions: Dict[str, DataVersion] = {}
@@ -274,6 +282,57 @@ class DataWalletService:
         self.world_id_raw_nullifier_index = self.world_id_binding_store.replay_commitments
         self.audit_events: Dict[str, List[AuditEvent]] = {}
         self._principal_secrets: Dict[str, bytes] = {}
+        self._mutation_receipts: List[MutationReceipt] = []
+
+    def attach_event_port(self, event_port: Optional[WalletDuckDBRepository]) -> None:
+        """Attach or replace the DuckDB shadow event port (DQK-074)."""
+
+        self.event_port = event_port
+
+    @property
+    def mutation_receipts(self) -> List[MutationReceipt]:
+        """Idempotent mutation receipts emitted while an event port is attached."""
+
+        return list(self._mutation_receipts)
+
+    def _append_audit(
+        self,
+        events: List[AuditEvent],
+        *,
+        wallet_id: str,
+        actor_did: str,
+        action: str,
+        resource: str,
+        decision: str,
+        details: Dict[str, Any] | None = None,
+        grant_id: str | None = None,
+        operation_id: str | None = None,
+    ) -> AuditEvent:
+        """Append an audit event and record an idempotent mutation + parity receipt."""
+
+        event = append_audit_event(
+            events,
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action=action,
+            resource=resource,
+            decision=decision,
+            details=details,
+            grant_id=grant_id,
+        )
+        if self.event_port is not None:
+            receipt = self.event_port.record_service_mutation(
+                wallet_id=wallet_id,
+                action=action,
+                resource=resource,
+                actor_did=actor_did,
+                decision=decision,
+                details=details,
+                operation_id=operation_id or new_operation_id("svc"),
+                service=self,
+            )
+            self._mutation_receipts.append(receipt)
+        return event
 
     def create_wallet(
         self,
@@ -306,7 +365,7 @@ class DataWalletService:
         self.audit_events[wallet.wallet_id] = []
         self._ensure_principal_secret(owner_did)
         self._ensure_principal_secret(device)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet.wallet_id],
             wallet_id=wallet.wallet_id,
             actor_did=owner_did,
@@ -398,7 +457,7 @@ class DataWalletService:
         wallet.controller_dids.append(controller_did)
         self._sync_governance_policy_controllers(wallet)
         self._touch_wallet(wallet)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -434,7 +493,7 @@ class DataWalletService:
         wallet.controller_dids = [did for did in wallet.controller_dids if did != controller_did]
         self._sync_governance_policy_controllers(wallet)
         self._touch_wallet(wallet)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -470,7 +529,7 @@ class DataWalletService:
             self._ensure_principal_secret(device_did)
         wallet.device_dids.append(device_did)
         self._touch_wallet(wallet)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -503,7 +562,7 @@ class DataWalletService:
         )
         wallet.device_dids = [did for did in wallet.device_dids if did != device_did]
         self._touch_wallet(wallet)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -562,7 +621,7 @@ class DataWalletService:
             governance_policy=policy,
         )
         self._touch_wallet(wallet)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -614,7 +673,7 @@ class DataWalletService:
         wallet.controller_dids.append(controller_did)
         self._sync_governance_policy_controllers(wallet)
         self._touch_wallet(wallet)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -700,7 +759,7 @@ class DataWalletService:
         if not created:
             return binding
         self._touch_wallet(wallet)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -815,7 +874,7 @@ class DataWalletService:
         binding = self.world_id_binding_store.revoke(binding_id, reason=reason)
         if binding.proof_receipt_id and binding.proof_receipt_id in self.proofs:
             self.proofs[binding.proof_receipt_id].verification_status = "revoked"
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -882,7 +941,7 @@ class DataWalletService:
             updated_at=now,
         )
         self.recovery_bundles[record.bundle_id] = record
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -955,7 +1014,7 @@ class DataWalletService:
             updated_at=now,
         )
         self.missing_person_dead_drops[wallet_id] = record
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -1010,7 +1069,7 @@ class DataWalletService:
         record.last_error = ""
         record.last_dispatched_reason = str(dispatched_reason or "")
         record.updated_at = now
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -1039,7 +1098,7 @@ class DataWalletService:
         record.last_error = str(error or "")
         record.last_dispatched_reason = str(dispatched_reason or "")
         record.updated_at = now
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -1122,7 +1181,7 @@ class DataWalletService:
             metadata={**(existing.metadata if existing else {}), **dict(metadata or {})},
         )
         self.saved_services[record.saved_service_id] = record
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -1201,7 +1260,7 @@ class DataWalletService:
             metadata=dict(metadata or {}),
         )
         self.service_interactions[record.interaction_id] = record
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -1287,7 +1346,7 @@ class DataWalletService:
             updated_at=now,
         )
         self.service_plans[record.plan_id] = record
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -1361,7 +1420,7 @@ class DataWalletService:
         if private_notes_record_id is not None:
             record.private_notes_record_id = str(private_notes_record_id or "")
         record.updated_at = utc_now()
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -1494,7 +1553,7 @@ class DataWalletService:
             ),
             None,
         )
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=issuer,
@@ -1508,7 +1567,7 @@ class DataWalletService:
                 "related_grant_ids": [grant.grant_id],
             },
         )
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=issuer,
@@ -1558,7 +1617,7 @@ class DataWalletService:
             updated_at=now,
         )
         self.record_metadata[key] = next_record
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -1677,7 +1736,7 @@ class DataWalletService:
             if request.status in {"pending", "approved"} and resource in request.resources:
                 request.status = "revoked"
 
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -1765,7 +1824,7 @@ class DataWalletService:
             self._assert_controller(wallet, requested_by)
             raise AccessDeniedError(f"{requested_by} is not allowed to request approval")
         self.approval_requests[request.approval_id] = request
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=requested_by,
@@ -1793,7 +1852,7 @@ class DataWalletService:
         if request.wallet_id != wallet_id:
             raise MissingRecordError(f"Approval request not found for wallet: {approval_id}")
         approve_request(request, approver_did=approver_did)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=approver_did,
@@ -1838,7 +1897,7 @@ class DataWalletService:
         self.access_requests[request.request_id] = request
         wallet.updated_at = utc_now()
         wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=requester_did,
@@ -1977,7 +2036,7 @@ class DataWalletService:
         request.invocation_id = invocation.invocation_id if invocation else None
         wallet.updated_at = utc_now()
         wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2013,7 +2072,7 @@ class DataWalletService:
             request.details = {**request.details, "rejection_reason": reason}
         wallet.updated_at = utc_now()
         wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2045,7 +2104,7 @@ class DataWalletService:
             request.details = {**request.details, "revocation_reason": reason}
         wallet.updated_at = utc_now()
         wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2163,7 +2222,7 @@ class DataWalletService:
         self.versions[version_id] = version
         wallet.updated_at = utc_now()
         wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -2244,7 +2303,7 @@ class DataWalletService:
         receipt = self._create_grant_receipt(wallet_id, grant)
         wallet.updated_at = utc_now()
         wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=issuer_did,
@@ -2315,7 +2374,7 @@ class DataWalletService:
             data_type=data_type,
         )
         self.invocations[invocation.invocation_id] = invocation
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2357,7 +2416,7 @@ class DataWalletService:
             data_type=data_type,
         )
         self.invocations[invocation.invocation_id] = invocation
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2395,7 +2454,7 @@ class DataWalletService:
                 request.details = {**request.details, "revoked_by_grant_id": grant_id}
         wallet.updated_at = utc_now()
         wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2477,7 +2536,7 @@ class DataWalletService:
             "rotate_keys": rotate_keys,
             "reason": reason,
         }
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2522,7 +2581,7 @@ class DataWalletService:
             dek,
             self._payload_aad(wallet_id, record_id, version.version_id, record.data_type),
         )
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2654,7 +2713,7 @@ class DataWalletService:
         record.updated_at = utc_now()
         wallet.updated_at = utc_now()
         wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2696,7 +2755,7 @@ class DataWalletService:
         raw = self.decrypt_record(wallet_id, record_id, actor_did=self._wallet(wallet_id).owner_did)
         payload = json.loads(raw.decode("utf-8"))
         claim = make_coarse_location_claim(record_id, payload["lat"], payload["lon"], precision)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2784,7 +2843,7 @@ class DataWalletService:
             raise DataWalletError("Proof verification failed")
         self.proofs[receipt.proof_id] = receipt
         self.versions[record.current_version_id].proof_receipt_ids.append(receipt.proof_id)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2890,7 +2949,7 @@ class DataWalletService:
             raise DataWalletError("Proof verification failed")
         self.proofs[receipt.proof_id] = receipt
         self.versions[record.current_version_id].proof_receipt_ids.append(receipt.proof_id)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -2947,7 +3006,7 @@ class DataWalletService:
             circuit_id="document-privacy-profile-v1",
         )
         self.proofs[proof.proof_id] = proof
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor,
@@ -3055,7 +3114,7 @@ class DataWalletService:
         )
         self.derived_artifacts[artifact.artifact_id] = artifact
         self.versions[self._record(wallet_id, record_id).current_version_id].derived_artifact_ids.append(artifact.artifact_id)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -3140,7 +3199,7 @@ class DataWalletService:
         )
         self.derived_artifacts[artifact.artifact_id] = artifact
         self.versions[record.current_version_id].derived_artifact_ids.append(artifact.artifact_id)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -3254,7 +3313,7 @@ class DataWalletService:
         )
         self.derived_artifacts[artifact.artifact_id] = artifact
         self.versions[record.current_version_id].derived_artifact_ids.append(artifact.artifact_id)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -3387,7 +3446,7 @@ class DataWalletService:
             self.versions[self._record(wallet_id, record_id).current_version_id].derived_artifact_ids.append(
                 artifact.artifact_id
             )
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -3495,7 +3554,7 @@ class DataWalletService:
         )
         self.derived_artifacts[artifact.artifact_id] = artifact
         self.versions[record.current_version_id].derived_artifact_ids.append(artifact.artifact_id)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -3585,7 +3644,7 @@ class DataWalletService:
         )
         self.derived_artifacts[artifact.artifact_id] = artifact
         self.versions[record.current_version_id].derived_artifact_ids.append(artifact.artifact_id)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -3731,7 +3790,7 @@ class DataWalletService:
             self.versions[self._record(wallet_id, record_id).current_version_id].derived_artifact_ids.append(
                 artifact.artifact_id
             )
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -4330,7 +4389,7 @@ class DataWalletService:
             expires_at=expires_at,
         )
         self.analytics_consents[consent.consent_id] = consent
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -4405,7 +4464,7 @@ class DataWalletService:
         consent = self._analytics_consent(wallet_id, consent_id)
         consent.status = "revoked"
         consent.revoked_at = utc_now()
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -4485,7 +4544,7 @@ class DataWalletService:
             proof_id=proof.proof_id,
         )
         self.analytics_contributions[contribution.contribution_id] = contribution
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -4980,7 +5039,7 @@ class DataWalletService:
         bundle_hash = self.export_bundle_hash(bundle)
         bundle["bundle_hash"] = bundle_hash
         bundle["bundle_id"] = f"export-{bundle_hash[:24]}"
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -5097,7 +5156,7 @@ class DataWalletService:
             self.proofs[sanitized_proof["proof_id"]] = ProofReceipt(**sanitized_proof)
             imported_proofs += 1
 
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=str(bundle.get("actor_did") or "did:unknown:export-recipient"),
@@ -5484,7 +5543,7 @@ class DataWalletService:
         """Verify encrypted payload and metadata replicas without decrypting."""
 
         report = self._record_storage_report(wallet_id, record_id, include_metadata=include_metadata)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=self._wallet(wallet_id).owner_did,
@@ -5520,7 +5579,7 @@ class DataWalletService:
                 for record_id in record_ids
             ],
         )
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=wallet.owner_did,
@@ -5550,7 +5609,7 @@ class DataWalletService:
         self._assert_controller(wallet, actor_did)
         report = self._record_storage_repair_report(wallet_id, record_id, include_metadata=include_metadata)
         self._touch_wallet(wallet)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -5589,7 +5648,7 @@ class DataWalletService:
             ],
         )
         self._touch_wallet(wallet)
-        append_audit_event(
+        self._append_audit(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
@@ -5684,7 +5743,7 @@ class DataWalletService:
         self.proofs[receipt.proof_id] = receipt
         binding.proof_receipt_id = receipt.proof_id
         binding.updated_at = utc_now()
-        append_audit_event(
+        self._append_audit(
             self.audit_events[binding.wallet_id],
             wallet_id=binding.wallet_id,
             actor_did=actor_did,
@@ -6209,7 +6268,7 @@ class DataWalletService:
         for wallet_id in wallet_ids:
             if wallet_id not in self.audit_events:
                 continue
-            append_audit_event(
+            self._append_audit(
                 self.audit_events[wallet_id],
                 wallet_id=wallet_id,
                 actor_did=actor_did,
