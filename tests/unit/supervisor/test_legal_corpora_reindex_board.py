@@ -2,15 +2,120 @@
 
 from __future__ import annotations
 
+import configparser
+import hashlib
 import json
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 VALIDATOR = REPO_ROOT / "scripts/validate_legal_corpora_reindex_board.py"
+VALIDATION_PYTHONPATH = (
+    "/opt/ipfs-accelerate-legal-validation-7ffe92439767/site-packages"
+)
+PLAYWRIGHT_BROWSERS_PATH = (
+    "/opt/ipfs-accelerate-legal-playwright-3c176393527b"
+)
+VALIDATION_MODULES = (
+    "aiohttp",
+    "anyio",
+    "bs4",
+    "cachetools",
+    "cryptography",
+    "datasets",
+    "duckdb",
+    "faiss",
+    "fsspec",
+    "httpx",
+    "huggingface_hub",
+    "hypothesis",
+    "jsonschema",
+    "multiformats",
+    "networkx",
+    "numpy",
+    "pandas",
+    "playwright",
+    "pyarrow",
+    "pydantic",
+    "pydantic_settings",
+    "pypdf",
+    "PyPDF2",
+    "pytest",
+    "pytest_asyncio",
+    "pytest_benchmark",
+    "pytest_cov",
+    "pytest_mock",
+    "pytest_parallel",
+    "pytest_timeout",
+    "xdist",
+    "yaml",
+    "rdflib",
+    "requests",
+    "sklearn",
+    "scipy",
+    "sentence_transformers",
+    "torch",
+    "tqdm",
+    "transformers",
+    "trio",
+    "urllib3",
+)
+VALIDATION_REQUIREMENTS = (
+    "aiohttp==3.14.3",
+    "anyio==4.14.2",
+    "beautifulsoup4==4.15.0",
+    "cachetools==7.1.7",
+    "cryptography==50.0.0",
+    "datasets==4.8.4",
+    "duckdb==1.5.2",
+    "faiss-cpu==1.13.2",
+    "fsspec==2024.6.1",
+    "httpx==0.28.1",
+    "huggingface-hub==0.36.2",
+    "hypothesis==6.152.1",
+    "jsonschema==4.26.0",
+    "multiformats==0.3.1.post4",
+    "networkx==3.6.1",
+    "numpy==1.26.4",
+    "pandas==2.3.3",
+    "playwright==1.58.0",
+    "pyarrow==23.0.1",
+    "pydantic==2.13.4",
+    "pydantic-settings==2.14.2",
+    "pypdf==6.10.2",
+    "PyPDF2==3.0.1",
+    "pytest==9.0.3",
+    "pytest-asyncio==1.4.0",
+    "pytest-benchmark==5.2.3",
+    "pytest-cov==7.1.0",
+    "pytest-mock==3.15.1",
+    "pytest-parallel==0.1.1",
+    "pytest-timeout==2.4.0",
+    "pytest-xdist==3.8.0",
+    "PyYAML==6.0.3",
+    "rdflib==7.6.0",
+    "requests==2.34.2",
+    "scikit-learn==1.9.0",
+    "scipy==1.17.1",
+    "sentence-transformers==5.4.1",
+    "torch==2.2.2",
+    "tqdm==4.69.1",
+    "transformers==4.57.6",
+    "trio==0.33.0",
+    "urllib3==2.7.0",
+)
+SEALED_VALIDATION_CONTROLS = {
+    "pyproject.toml",
+    "pytest.ini",
+    "requirements-agent-supervisor-validation.txt",
+}
 CONTROL_FILES = (
+    *sorted(SEALED_VALIDATION_CONTROLS),
     "docs/architecture/LEGAL_CORPORA_REINDEX_PLAN.md",
     "docs/architecture/legal_corpora_reindex.objectives.md",
     "docs/architecture/legal_corpora_reindex.todo.md",
@@ -257,6 +362,93 @@ def test_validation_runtime_deployment_drift_is_rejected(tmp_path: Path) -> None
         "scheduler validation_runtime must remain the exact sealed deployment"
         in error
         for error in report["errors"]
+    )
+
+
+def test_validation_runtime_and_controls_are_the_exact_sealed_contract() -> None:
+    config = json.loads(
+        (
+            REPO_ROOT
+            / "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert config["validation_runtime"] == {
+        "python_executable": "/usr/bin/python3.12",
+        "pythonpath_entries": [VALIDATION_PYTHONPATH],
+        "required_modules": list(VALIDATION_MODULES),
+        "playwright_browsers_path": PLAYWRIGHT_BROWSERS_PATH,
+    }
+    assert SEALED_VALIDATION_CONTROLS <= set(config["protected_paths"])
+
+
+def test_authoritative_validation_dependency_manifest_is_exact() -> None:
+    pyproject = tomllib.loads(
+        (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    )
+    contract = pyproject["tool"]["ipfs-accelerate-py"]["agent-supervisor"][
+        "validation-dependencies"
+    ]
+    assert contract == {
+        "schema": (
+            "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
+        ),
+        "scope": "complete-authoritative-validation-environment",
+        "files": ["requirements-agent-supervisor-validation.txt"],
+    }
+    requirements_path = REPO_ROOT / "requirements-agent-supervisor-validation.txt"
+    requirements_bytes = requirements_path.read_bytes()
+    assert hashlib.sha256(requirements_bytes).hexdigest() == (
+        "d84de7ee9fa44796973e3656680583d1e8a69142018d9b724b666a7d561ffa38"
+    )
+    requirements = tuple(
+        line
+        for line in requirements_bytes.decode("utf-8").splitlines()
+        if line and not line.startswith("#")
+    )
+    assert requirements == VALIDATION_REQUIREMENTS
+
+
+def test_authoritative_pytest_plugins_and_async_modes_are_explicit() -> None:
+    parser = configparser.ConfigParser(interpolation=None)
+    with (REPO_ROOT / "pytest.ini").open(encoding="utf-8") as stream:
+        parser.read_file(stream)
+
+    pytest_config = parser["pytest"]
+    addopts = pytest_config.get("addopts", "").split()
+    assert addopts[-8:] == [
+        "-p",
+        "no:anyio",
+        "-p",
+        "no:asyncio",
+        "-p",
+        "anyio.pytest_plugin",
+        "-p",
+        "pytest_asyncio.plugin",
+    ]
+    assert addopts.count("no:anyio") == 1
+    assert addopts.count("no:asyncio") == 1
+    assert addopts.count("anyio.pytest_plugin") == 1
+    assert addopts.count("pytest_asyncio.plugin") == 1
+    assert pytest_config.get("pythonpath") == "."
+    assert pytest_config.get("asyncio_mode") == "strict"
+    assert pytest_config.get("anyio_mode") == "strict"
+
+
+@pytest.mark.parametrize("relative", sorted(SEALED_VALIDATION_CONTROLS))
+def test_sealed_validation_control_drift_is_rejected(
+    tmp_path: Path,
+    relative: str,
+) -> None:
+    root = _copy_control_plane(tmp_path / "repo")
+    path = root / relative
+    path.write_bytes(path.read_bytes() + b"\n# unauthorized drift\n")
+
+    result, report = _run_validator(root)
+    assert result.returncode == 1
+    assert (
+        f"sealed validation control {relative} SHA-256 mismatch"
+        in report["errors"]
     )
 
 

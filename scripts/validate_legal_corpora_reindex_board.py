@@ -27,6 +27,17 @@ TASKBOARD_RELATIVE = "docs/architecture/legal_corpora_reindex.todo.md"
 VALIDATOR_RELATIVE = "scripts/validate_legal_corpora_reindex_board.py"
 LANE_MATRIX_RELATIVE = "data/agent_supervisor/legal_corpora_reindex/bundles/lane_matrix.json"
 RELEASE_POLICY_RELATIVE = "data/agent_supervisor/legal_corpora_reindex/bundles/release_policy.json"
+SEALED_VALIDATION_CONTROL_SHA256 = {
+    "pyproject.toml": (
+        "cb5dedd445730e4d7c09f941286fed246f17dd3720470f62b4381f4cd02e1174"
+    ),
+    "pytest.ini": (
+        "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+    ),
+    "requirements-agent-supervisor-validation.txt": (
+        "d84de7ee9fa44796973e3656680583d1e8a69142018d9b724b666a7d561ffa38"
+    ),
+}
 
 SEALED_TASK_IDS = tuple(f"{TASK_PREFIX}{number:03d}" for number in range(70))
 SEALED_GOAL_IDS = (
@@ -813,8 +824,23 @@ def _validate_cohorts(
 def _validate_config(
     config: Mapping[str, Any],
     *,
+    root: Path,
     errors: list[str],
 ) -> None:
+    for relative, expected_sha256 in SEALED_VALIDATION_CONTROL_SHA256.items():
+        path = root / relative
+        try:
+            observed_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            errors.append(
+                f"sealed validation control {relative} is unavailable: "
+                f"{type(exc).__name__}"
+            )
+            continue
+        if observed_sha256 != expected_sha256:
+            errors.append(
+                f"sealed validation control {relative} SHA-256 mismatch"
+            )
     expected_scalars = {
         "schema": "ipfs_accelerate_py.agent_supervisor.legal_corpora_reindex.scheduler_config@1",
         "taskboard_path": TASKBOARD_RELATIVE,
@@ -934,13 +960,55 @@ def _validate_config(
     expected_validation_runtime = {
         "python_executable": "/usr/bin/python3.12",
         "pythonpath_entries": [
-            "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages",
-            (
-                "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/"
-                "site-packages"
-            ),
+            "/opt/ipfs-accelerate-legal-validation-7ffe92439767/site-packages",
         ],
-        "required_modules": ["huggingface_hub", "numpy", "pyarrow", "duckdb"],
+        "required_modules": [
+            "aiohttp",
+            "anyio",
+            "bs4",
+            "cachetools",
+            "cryptography",
+            "datasets",
+            "duckdb",
+            "faiss",
+            "fsspec",
+            "httpx",
+            "huggingface_hub",
+            "hypothesis",
+            "jsonschema",
+            "multiformats",
+            "networkx",
+            "numpy",
+            "pandas",
+            "playwright",
+            "pyarrow",
+            "pydantic",
+            "pydantic_settings",
+            "pypdf",
+            "PyPDF2",
+            "pytest",
+            "pytest_asyncio",
+            "pytest_benchmark",
+            "pytest_cov",
+            "pytest_mock",
+            "pytest_parallel",
+            "pytest_timeout",
+            "xdist",
+            "yaml",
+            "rdflib",
+            "requests",
+            "sklearn",
+            "scipy",
+            "sentence_transformers",
+            "torch",
+            "tqdm",
+            "transformers",
+            "trio",
+            "urllib3",
+        ],
+        "playwright_browsers_path": (
+            "/opt/ipfs-accelerate-legal-playwright-3c176393527b"
+        ),
     }
     if validation_runtime != expected_validation_runtime:
         errors.append(
@@ -950,6 +1018,9 @@ def _validate_config(
 
     protected = config.get("protected_paths")
     required_protected = {
+        "pyproject.toml",
+        "pytest.ini",
+        "requirements-agent-supervisor-validation.txt",
         PLAN_RELATIVE,
         OBJECTIVES_RELATIVE,
         TASKBOARD_RELATIVE,
@@ -991,7 +1062,7 @@ def _validate_config(
             paired_contract = {
                 "sibling_path": "../ipfs_accelerate_py",
                 "repository_name": "ipfs_accelerate_py",
-                "required_revision": "3302afb3b6154fceeafcdddfa99c28bb3665b6f0",
+                "required_revision": "af14cd2d3e6ca63b712bd8e6b467ad93b397252a",
                 "require_clean_worktree": True,
                 "require_exact_revision": True,
             }
@@ -1961,7 +2032,7 @@ def validate(root: Path) -> dict[str, Any]:
 
     config = _load_json(config_path, errors, "scheduler config")
     if config:
-        _validate_config(config, errors=errors)
+        _validate_config(config, root=root, errors=errors)
     release_policy = _load_json(
         root / RELEASE_POLICY_RELATIVE,
         errors,

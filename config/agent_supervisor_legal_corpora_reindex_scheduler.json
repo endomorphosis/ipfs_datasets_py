@@ -14,7 +14,7 @@
     "paired_accelerator": {
       "sibling_path": "../ipfs_accelerate_py",
       "repository_name": "ipfs_accelerate_py",
-      "required_revision": "3302afb3b6154fceeafcdddfa99c28bb3665b6f0",
+      "required_revision": "af14cd2d3e6ca63b712bd8e6b467ad93b397252a",
       "require_clean_worktree": true,
       "require_exact_revision": true
     },
@@ -40,15 +40,53 @@
   "validation_runtime": {
     "python_executable": "/usr/bin/python3.12",
     "pythonpath_entries": [
-      "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages",
-      "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/site-packages"
+      "/opt/ipfs-accelerate-legal-validation-7ffe92439767/site-packages"
     ],
     "required_modules": [
+      "aiohttp",
+      "anyio",
+      "bs4",
+      "cachetools",
+      "cryptography",
+      "datasets",
+      "duckdb",
+      "faiss",
+      "fsspec",
+      "httpx",
       "huggingface_hub",
+      "hypothesis",
+      "jsonschema",
+      "multiformats",
+      "networkx",
       "numpy",
+      "pandas",
+      "playwright",
       "pyarrow",
-      "duckdb"
-    ]
+      "pydantic",
+      "pydantic_settings",
+      "pypdf",
+      "PyPDF2",
+      "pytest",
+      "pytest_asyncio",
+      "pytest_benchmark",
+      "pytest_cov",
+      "pytest_mock",
+      "pytest_parallel",
+      "pytest_timeout",
+      "xdist",
+      "yaml",
+      "rdflib",
+      "requests",
+      "sklearn",
+      "scipy",
+      "sentence_transformers",
+      "torch",
+      "tqdm",
+      "transformers",
+      "trio",
+      "urllib3"
+    ],
+    "playwright_browsers_path": "/opt/ipfs-accelerate-legal-playwright-3c176393527b"
   },
   "initial_projection": {
     "task_count": 70,
@@ -117,6 +155,9 @@
   "worktree_submodule_paths": [],
   "protected_paths": [
     ".gitignore",
+    "pyproject.toml",
+    "pytest.ini",
+    "requirements-agent-supervisor-validation.txt",
     "docs/architecture/LEGAL_CORPORA_REINDEX_PLAN.md",
     "docs/architecture/legal_corpora_reindex.objectives.md",
     "docs/architecture/legal_corpora_reindex.todo.md",

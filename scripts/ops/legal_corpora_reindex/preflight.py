@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import stat
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -44,6 +45,412 @@ from scripts.ops.legal_corpora_reindex.status import (
 
 DEFAULT_CONFIG = Path("config/agent_supervisor_legal_corpora_reindex_scheduler.json")
 TRUSTED_GIT = Path("/usr/bin/git")
+
+VALIDATION_REQUIRED_MODULES = (
+    "aiohttp",
+    "anyio",
+    "bs4",
+    "cachetools",
+    "cryptography",
+    "datasets",
+    "duckdb",
+    "faiss",
+    "fsspec",
+    "httpx",
+    "huggingface_hub",
+    "hypothesis",
+    "jsonschema",
+    "multiformats",
+    "networkx",
+    "numpy",
+    "pandas",
+    "playwright",
+    "pyarrow",
+    "pydantic",
+    "pydantic_settings",
+    "pypdf",
+    "PyPDF2",
+    "pytest",
+    "pytest_asyncio",
+    "pytest_benchmark",
+    "pytest_cov",
+    "pytest_mock",
+    "pytest_parallel",
+    "pytest_timeout",
+    "xdist",
+    "yaml",
+    "rdflib",
+    "requests",
+    "sklearn",
+    "scipy",
+    "sentence_transformers",
+    "torch",
+    "tqdm",
+    "transformers",
+    "trio",
+    "urllib3",
+)
+VALIDATION_PYTHON_ROOT = Path(
+    "/opt/ipfs-accelerate-legal-validation-7ffe92439767"
+)
+VALIDATION_PLAYWRIGHT_ROOT = Path(
+    "/opt/ipfs-accelerate-legal-playwright-3c176393527b"
+)
+SEALED_VALIDATION_DEPLOYMENTS = (
+    {
+        "name": "validation_python",
+        "root": VALIDATION_PYTHON_ROOT,
+        "schema": "ipfs-accelerate-legal-validation-deployment@1",
+        "receipt_sha256": (
+            "654d64e130c9b8e748ea76c3947eb47cc52bea64adb40f2592f7204dfe503ad0"
+        ),
+        "manifest_sha256": (
+            "7ffe92439767e99c849a4f7aad0ee5d64e19ab9f754b5f0915f00571ac51f85a"
+        ),
+    },
+    {
+        "name": "validation_playwright",
+        "root": VALIDATION_PLAYWRIGHT_ROOT,
+        "schema": "ipfs-accelerate-legal-playwright-deployment@1",
+        "receipt_sha256": (
+            "8b497a041d80cf64b4b792c0b9dee34970cdf0202b7801db7577540de4daea3f"
+        ),
+        "manifest_sha256": (
+            "3c176393527b23c59dbf859e86626b32abcca006535679cbc27e69c3b09e7a78"
+        ),
+    },
+)
+_MAX_DEPLOYMENT_RECEIPT_BYTES = 64 * 1024
+_MAX_DEPLOYMENT_MANIFEST_BYTES = 8 * 1024 * 1024
+_MAX_DEPLOYMENT_MANIFEST_ENTRIES = 100_000
+_MAX_DEPLOYMENT_ERRORS = 20
+
+
+def _sealed_file_bytes(
+    path: Path,
+    *,
+    maximum_bytes: int,
+) -> tuple[bytes, list[str]]:
+    """Read one root-owned, immutable regular file without following links."""
+
+    errors: list[str] = []
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        return b"", [f"cannot securely open {path}: {type(exc).__name__}: {exc}"]
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            errors.append(f"sealed file is not regular: {path}")
+        if metadata.st_uid != 0 or metadata.st_gid != 0:
+            errors.append(f"sealed file is not owned by root:root: {path}")
+        if stat.S_IMODE(metadata.st_mode) & 0o222:
+            errors.append(f"sealed file has a writable mode: {path}")
+        if metadata.st_nlink != 1:
+            errors.append(f"sealed file has an unexpected hard link: {path}")
+        if metadata.st_size > maximum_bytes:
+            errors.append(
+                f"sealed file exceeds the bounded size limit: {path}"
+            )
+            return b"", errors
+        chunks: list[bytes] = []
+        remaining = maximum_bytes + 1
+        while remaining:
+            chunk = os.read(descriptor, min(1024 * 1024, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        payload = b"".join(chunks)
+        if len(payload) > maximum_bytes:
+            errors.append(
+                f"sealed file changed beyond the bounded size limit: {path}"
+            )
+            return b"", errors
+        if len(payload) != metadata.st_size:
+            errors.append(f"sealed file changed while it was read: {path}")
+        return payload, errors
+    except OSError as exc:
+        return b"", [*errors, f"cannot read {path}: {type(exc).__name__}: {exc}"]
+    finally:
+        os.close(descriptor)
+
+
+def _manifest_inventory(
+    encoded: bytes,
+) -> tuple[dict[str, tuple[str, int, int]], list[str]]:
+    """Parse the bounded canonical manifest into path/type/mode/size facts."""
+
+    inventory: dict[str, tuple[str, int, int]] = {}
+    errors: list[str] = []
+    try:
+        text = encoded.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        return {}, [f"payload manifest is not UTF-8: {exc}"]
+    if not text.endswith("\n"):
+        errors.append("payload manifest is not newline terminated")
+    lines = text.splitlines()
+    if not lines or len(lines) > _MAX_DEPLOYMENT_MANIFEST_ENTRIES:
+        errors.append("payload manifest has an invalid bounded entry count")
+        return {}, errors
+    previous_path = ""
+    for index, line in enumerate(lines, start=1):
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError as exc:
+            errors.append(f"payload manifest line {index} is invalid JSON: {exc}")
+            break
+        if not isinstance(record, dict):
+            errors.append(f"payload manifest line {index} is not an object")
+            break
+        path_value = record.get("path")
+        kind = record.get("type")
+        mode_value = record.get("mode")
+        byte_count = record.get("bytes")
+        path = PurePosixPath(path_value) if isinstance(path_value, str) else None
+        if (
+            path is None
+            or path.is_absolute()
+            or not path.parts
+            or any(part in {"", ".", ".."} for part in path.parts)
+            or path.as_posix() != path_value
+        ):
+            errors.append(f"payload manifest line {index} has an unsafe path")
+            break
+        if path_value <= previous_path or path_value in inventory:
+            errors.append(
+                f"payload manifest line {index} is duplicated or out of order"
+            )
+            break
+        previous_path = path_value
+        if kind not in {"file", "directory"}:
+            errors.append(f"payload manifest line {index} has an invalid type")
+            break
+        if (
+            not isinstance(mode_value, str)
+            or len(mode_value) != 4
+            or any(character not in "01234567" for character in mode_value)
+        ):
+            errors.append(f"payload manifest line {index} has an invalid mode")
+            break
+        mode = int(mode_value, 8)
+        if mode & 0o222:
+            errors.append(f"payload manifest line {index} declares a writable mode")
+            break
+        if isinstance(byte_count, bool) or not isinstance(byte_count, int):
+            errors.append(f"payload manifest line {index} has invalid bytes")
+            break
+        if byte_count < 0 or (kind == "directory" and byte_count != 0):
+            errors.append(f"payload manifest line {index} has invalid bytes")
+            break
+        sha256 = record.get("sha256")
+        if kind == "file" and (
+            not isinstance(sha256, str)
+            or len(sha256) != 64
+            or any(character not in "0123456789abcdef" for character in sha256)
+        ):
+            errors.append(f"payload manifest line {index} has an invalid SHA-256")
+            break
+        if kind == "directory" and "sha256" in record:
+            errors.append(
+                f"payload manifest line {index} hashes a directory unexpectedly"
+            )
+            break
+        inventory[path_value] = (kind, mode, byte_count)
+    return inventory, errors
+
+
+def _sealed_tree_inventory(
+    root: Path,
+) -> tuple[dict[str, tuple[str, int, int]], list[str]]:
+    """Audit immutable tree metadata without trusting manifest path names."""
+
+    inventory: dict[str, tuple[str, int, int]] = {}
+    errors: list[str] = []
+    try:
+        if root.resolve(strict=True) != root:
+            errors.append(f"deployment root is not its canonical path: {root}")
+        root_metadata = root.lstat()
+    except OSError as exc:
+        return {}, [f"deployment root is unavailable: {root}: {exc}"]
+    if not stat.S_ISDIR(root_metadata.st_mode):
+        return {}, [f"deployment root is not a directory: {root}"]
+    if root_metadata.st_uid != 0 or root_metadata.st_gid != 0:
+        errors.append(f"deployment root is not owned by root:root: {root}")
+    if stat.S_IMODE(root_metadata.st_mode) & 0o222:
+        errors.append(f"deployment root has a writable mode: {root}")
+
+    pending = [(root, "")]
+    while pending:
+        directory, relative_directory = pending.pop()
+        try:
+            entries = list(os.scandir(directory))
+        except OSError as exc:
+            errors.append(f"cannot audit deployment directory {directory}: {exc}")
+            if len(errors) >= _MAX_DEPLOYMENT_ERRORS:
+                break
+            continue
+        for entry in entries:
+            relative = (
+                f"{relative_directory}/{entry.name}"
+                if relative_directory
+                else entry.name
+            )
+            try:
+                metadata = entry.stat(follow_symlinks=False)
+            except OSError as exc:
+                errors.append(f"cannot stat deployment path {relative}: {exc}")
+                if len(errors) >= _MAX_DEPLOYMENT_ERRORS:
+                    break
+                continue
+            kind = (
+                "directory"
+                if stat.S_ISDIR(metadata.st_mode)
+                else "file"
+                if stat.S_ISREG(metadata.st_mode)
+                else ""
+            )
+            if not kind:
+                errors.append(
+                    f"deployment path is a symlink or nonregular object: {relative}"
+                )
+            if metadata.st_uid != 0 or metadata.st_gid != 0:
+                errors.append(f"deployment path is not root-owned: {relative}")
+            mode = stat.S_IMODE(metadata.st_mode)
+            if mode & 0o222:
+                errors.append(f"deployment path has a writable mode: {relative}")
+            if kind == "file" and metadata.st_nlink != 1:
+                errors.append(f"deployment file is hard-linked: {relative}")
+            if relative not in {"DEPLOYMENT.json", "PAYLOAD_MANIFEST.jsonl"}:
+                inventory[relative] = (
+                    kind,
+                    mode,
+                    metadata.st_size if kind == "file" else 0,
+                )
+            if kind == "directory":
+                pending.append((Path(entry.path), relative))
+            if len(errors) >= _MAX_DEPLOYMENT_ERRORS:
+                break
+        if len(errors) >= _MAX_DEPLOYMENT_ERRORS:
+            break
+    return inventory, errors
+
+
+def _verify_sealed_validation_deployment(
+    deployment: dict[str, object],
+) -> dict[str, Any]:
+    """Verify one exact immutable deployment and its manifest inventory."""
+
+    name = str(deployment["name"])
+    root = deployment["root"]
+    if not isinstance(root, Path):
+        raise TypeError("sealed deployment root must be a Path")
+    expected_receipt_sha256 = str(deployment["receipt_sha256"])
+    expected_manifest_sha256 = str(deployment["manifest_sha256"])
+    receipt_path = root / "DEPLOYMENT.json"
+    manifest_path = root / "PAYLOAD_MANIFEST.jsonl"
+    receipt_bytes, receipt_errors = _sealed_file_bytes(
+        receipt_path,
+        maximum_bytes=_MAX_DEPLOYMENT_RECEIPT_BYTES,
+    )
+    manifest_bytes, manifest_errors = _sealed_file_bytes(
+        manifest_path,
+        maximum_bytes=_MAX_DEPLOYMENT_MANIFEST_BYTES,
+    )
+    errors = [*receipt_errors, *manifest_errors]
+    receipt_sha256 = hashlib.sha256(receipt_bytes).hexdigest()
+    manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    if receipt_sha256 != expected_receipt_sha256:
+        errors.append(f"{name} deployment receipt SHA-256 does not match")
+    if manifest_sha256 != expected_manifest_sha256:
+        errors.append(f"{name} payload manifest SHA-256 does not match")
+
+    receipt: dict[str, Any] = {}
+    if receipt_bytes:
+        try:
+            parsed_receipt = json.loads(receipt_bytes)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            errors.append(f"{name} deployment receipt is malformed: {exc}")
+        else:
+            if isinstance(parsed_receipt, dict):
+                receipt = parsed_receipt
+            else:
+                errors.append(f"{name} deployment receipt is not an object")
+    if receipt:
+        if receipt.get("schema") != deployment["schema"]:
+            errors.append(f"{name} deployment receipt schema does not match")
+        payload = receipt.get("payload")
+        if not isinstance(payload, dict):
+            errors.append(f"{name} deployment receipt payload is malformed")
+            payload = {}
+        if payload.get("manifest_sha256") != expected_manifest_sha256:
+            errors.append(f"{name} receipt does not bind the exact manifest")
+        if payload.get("manifest_schema") != (
+            "canonical-json-lines path/type/mode/bytes/sha256@1"
+        ):
+            errors.append(f"{name} receipt manifest schema is malformed")
+        for field in (
+            "symlink_count",
+            "nonregular_count",
+            "hardlinked_file_count",
+        ):
+            if payload.get(field) != 0:
+                errors.append(f"{name} receipt does not attest zero {field}")
+        verification = receipt.get("verification")
+        if not isinstance(verification, dict) or verification.get("passed") is not True:
+            errors.append(f"{name} deployment receipt is not verified")
+    else:
+        payload = {}
+
+    manifest_inventory, manifest_parse_errors = _manifest_inventory(manifest_bytes)
+    tree_inventory, tree_errors = _sealed_tree_inventory(root)
+    errors.extend(manifest_parse_errors)
+    errors.extend(tree_errors)
+    if manifest_inventory != tree_inventory:
+        errors.append(f"{name} deployed tree does not match its exact manifest")
+    if payload:
+        expected_entries = payload.get("entry_count")
+        expected_files = payload.get("file_count")
+        expected_directories = payload.get("directory_count")
+        expected_bytes = payload.get("bytes")
+        actual_files = sum(
+            kind == "file" for kind, _mode, _bytes in tree_inventory.values()
+        )
+        actual_directories = sum(
+            kind == "directory" for kind, _mode, _bytes in tree_inventory.values()
+        )
+        actual_bytes = sum(
+            byte_count
+            for kind, _mode, byte_count in tree_inventory.values()
+            if kind == "file"
+        )
+        if expected_entries != len(tree_inventory):
+            errors.append(f"{name} receipt entry count does not match the tree")
+        if expected_files != actual_files:
+            errors.append(f"{name} receipt file count does not match the tree")
+        if expected_directories != actual_directories:
+            errors.append(f"{name} receipt directory count does not match the tree")
+        if expected_bytes != actual_bytes:
+            errors.append(f"{name} receipt byte count does not match the tree")
+
+    errors = errors[:_MAX_DEPLOYMENT_ERRORS]
+    return {
+        "name": name,
+        "root": str(root),
+        "valid": not errors,
+        "errors": errors,
+        "receipt_path": str(receipt_path),
+        "receipt_sha256": receipt_sha256,
+        "expected_receipt_sha256": expected_receipt_sha256,
+        "manifest_path": str(manifest_path),
+        "manifest_sha256": manifest_sha256,
+        "expected_manifest_sha256": expected_manifest_sha256,
+        "manifest_entry_count": len(manifest_inventory),
+        "tree_entry_count": len(tree_inventory),
+    }
 
 
 def _run(argv: list[str], cwd: Path, timeout: float = 30.0) -> dict[str, Any]:
@@ -223,13 +630,14 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
         "IPFS_ACCELERATE_AGENT_CODEX_MODEL": "gpt-5.6-terra",
         "IPFS_ACCELERATE_AGENT_CODEX_REASONING_EFFORT": "medium",
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON": "/usr/bin/python3.12",
-        "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": (
-            "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages:"
-            "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/"
-            "site-packages"
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": str(
+            VALIDATION_PYTHON_ROOT / "site-packages"
         ),
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON_MODULES": (
-            "huggingface_hub,numpy,pyarrow,duckdb"
+            ",".join(VALIDATION_REQUIRED_MODULES)
+        ),
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PLAYWRIGHT_BROWSERS_PATH": (
+            str(VALIDATION_PLAYWRIGHT_ROOT)
         ),
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
@@ -267,6 +675,17 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
             errors.append(f"launch plan unexpectedly disables {forbidden[5:]}")
     if plan.get("lanes") != 4 or plan.get("strict_task_sharding") is not True:
         errors.append("launch plan is not a four-lane strict shard")
+
+    validation_deployments = [
+        _verify_sealed_validation_deployment(deployment)
+        for deployment in SEALED_VALIDATION_DEPLOYMENTS
+    ]
+    for deployment in validation_deployments:
+        if not deployment["valid"]:
+            errors.append(
+                "sealed validation deployment is invalid: "
+                f"{deployment['name']}: {deployment['errors']}"
+            )
 
     paired_config = board.payload.get("source_binding", {}).get(
         "paired_accelerator", {}
@@ -316,13 +735,7 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
             "Hugging Face credentials are unavailable or do not show justicedao access"
         )
 
-    required_modules = (
-        "huggingface_hub",
-        "numpy",
-        "pyarrow",
-        "duckdb",
-        "pytest",
-    )
+    required_modules = VALIDATION_REQUIRED_MODULES
     effective_launch_environment = configured_board_launch_environment(
         {
             str(key): str(value)
@@ -330,17 +743,21 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
         },
         inherited_environment=os.environ,
     )
+    effective_controlled_environment = {
+        key: effective_launch_environment.get(key) for key in expected_environment
+    }
+    if effective_controlled_environment != expected_environment:
+        errors.append(
+            "effective launch environment does not preserve the sealed "
+            "validation contract"
+        )
     imports, validation_python_preflight = _probe_python_modules(
-        (*required_modules, "datasets"),
+        required_modules,
         environment=effective_launch_environment,
     )
     for module in required_modules:
         if not imports[module]:
             errors.append(f"required Python module is missing: {module}")
-    if not imports["datasets"]:
-        warnings.append(
-            "optional `datasets` package is absent; direct-Hub builders must use pyarrow/huggingface_hub or install a pinned build environment"
-        )
 
     ignore_checks: list[dict[str, Any]] = []
     for field in ("state", "worktrees", "merge_queue", "logs"):
@@ -391,6 +808,7 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
         "warnings": warnings,
         "configured_board": configured,
         "launch_plan": plan,
+        "sealed_validation_deployments": validation_deployments,
         "runtime_namespace": {
             "root": str(runtime_root),
             "colliding_processes": collisions,

@@ -30,6 +30,11 @@ shared-formal-verification-bindings = [
 optional-formal-verification-bindings = ["symbolicai"]
 external-native-tools-policy = "explicit-transactional-lazy-installer-only"
 
+[tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
+schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
+scope = "complete-authoritative-validation-environment"
+files = ["requirements-agent-supervisor-validation.txt"]
+
 [project.optional-dependencies]
 # IPLD / CAR format extras
 ipld = [

@@ -16,6 +16,57 @@ from scripts.ops.legal_corpora_reindex.status import (
     _outer_command,
 )
 
+VALIDATION_PYTHONPATH = (
+    "/opt/ipfs-accelerate-legal-validation-7ffe92439767/site-packages"
+)
+PLAYWRIGHT_BROWSERS_PATH = (
+    "/opt/ipfs-accelerate-legal-playwright-3c176393527b"
+)
+VALIDATION_MODULES = (
+    "aiohttp",
+    "anyio",
+    "bs4",
+    "cachetools",
+    "cryptography",
+    "datasets",
+    "duckdb",
+    "faiss",
+    "fsspec",
+    "httpx",
+    "huggingface_hub",
+    "hypothesis",
+    "jsonschema",
+    "multiformats",
+    "networkx",
+    "numpy",
+    "pandas",
+    "playwright",
+    "pyarrow",
+    "pydantic",
+    "pydantic_settings",
+    "pypdf",
+    "PyPDF2",
+    "pytest",
+    "pytest_asyncio",
+    "pytest_benchmark",
+    "pytest_cov",
+    "pytest_mock",
+    "pytest_parallel",
+    "pytest_timeout",
+    "xdist",
+    "yaml",
+    "rdflib",
+    "requests",
+    "sklearn",
+    "scipy",
+    "sentence_transformers",
+    "torch",
+    "tqdm",
+    "transformers",
+    "trio",
+    "urllib3",
+)
+
 
 def _paired(repo: Path, relative: str) -> list[str]:
     return [
@@ -83,39 +134,61 @@ def test_legacy_module_and_direct_outer_shapes_remain_recognized(
     )
 
 
-def test_validation_probe_rejects_hostile_inherited_runtime_path() -> None:
+def test_configured_board_launch_environment_is_exact_and_clears_hostile_values() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     accelerator_root = (repo_root.parent / "ipfs_accelerate_py").resolve()
     source = r"""
 import json
 import sys
+from pathlib import Path
 
 dataset_root, accelerator_root = sys.argv[1:]
 sys.path[:0] = [dataset_root, accelerator_root]
-from ipfs_accelerate_py.agent_supervisor.runtime.configured_board_scheduler import configured_board_launch_environment
-from scripts.ops.legal_corpora_reindex.preflight import _probe_python_modules
+from ipfs_accelerate_py.agent_supervisor.runtime.configured_board_scheduler import (
+    SCHEDULER_CONTROLLED_ENV_NAMES,
+    configured_board_launch_environment,
+    configured_board_launch_plan,
+    load_configured_board,
+)
 
-plan = {
-    "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON": "/usr/bin/python3.12",
-    "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": (
-        "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages:"
-        "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/site-packages"
-    ),
-    "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON_MODULES": (
-        "huggingface_hub,numpy,pyarrow,duckdb"
-    ),
-    "PYTHONDONTWRITEBYTECODE": "1",
-    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
-}
+board = load_configured_board(
+    Path(dataset_root)
+    / "config/agent_supervisor_legal_corpora_reindex_scheduler.json",
+    repo_root=dataset_root,
+)
+plan = configured_board_launch_plan(
+    board,
+    implement=True,
+    detach=True,
+    stamp="TEST",
+)
+hostile = {name: f"hostile-{index}" for index, name in enumerate(SCHEDULER_CONTROLLED_ENV_NAMES)}
+hostile["UNCONTROLLED_SENTINEL"] = "preserved"
 effective = configured_board_launch_environment(
-    plan,
-    inherited_environment={"IPFS_ACCELERATE_AGENT_VALIDATION_PATH": "/tmp"},
+    plan["environment"],
+    inherited_environment=hostile,
 )
-imports, receipt = _probe_python_modules(
-    ("huggingface_hub", "numpy", "pyarrow", "duckdb"),
-    environment=effective,
+cleared = configured_board_launch_environment(
+    {},
+    inherited_environment=hostile,
 )
-print(json.dumps({"imports": imports, "reason": receipt.get("reason")}, sort_keys=True))
+print(
+    json.dumps(
+        {
+            "schema": plan["schema"],
+            "plan_environment": plan["environment"],
+            "effective_controlled": {
+                name: effective.get(name) for name in SCHEDULER_CONTROLLED_ENV_NAMES
+            },
+            "cleared_controlled": {
+                name: cleared.get(name) for name in SCHEDULER_CONTROLLED_ENV_NAMES
+            },
+            "effective_sentinel": effective.get("UNCONTROLLED_SENTINEL"),
+            "cleared_sentinel": cleared.get("UNCONTROLLED_SENTINEL"),
+        },
+        sort_keys=True,
+    )
+)
 """
     environment = os.environ.copy()
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
@@ -140,12 +213,31 @@ print(json.dumps({"imports": imports, "reason": receipt.get("reason")}, sort_key
 
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
-    assert payload == {
-        "imports": {
-            "huggingface_hub": False,
-            "numpy": False,
-            "pyarrow": False,
-            "duckdb": False,
-        },
-        "reason": "validation_python_module_probe_unavailable",
+    expected_environment = {
+        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER": "grok_cli",
+        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_FALLBACK_PROVIDER": "codex",
+        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_FALLBACK_TRIGGER": (
+            "primary_quota_exhausted"
+        ),
+        "IPFS_ACCELERATE_AGENT_GROK_MODEL": "grok-4.5",
+        "IPFS_ACCELERATE_AGENT_CODEX_MODEL": "gpt-5.6-terra",
+        "IPFS_ACCELERATE_AGENT_CODEX_REASONING_EFFORT": "medium",
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON": "/usr/bin/python3.12",
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": VALIDATION_PYTHONPATH,
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON_MODULES": ",".join(
+            VALIDATION_MODULES
+        ),
+        "IPFS_ACCELERATE_AGENT_VALIDATION_PLAYWRIGHT_BROWSERS_PATH": (
+            PLAYWRIGHT_BROWSERS_PATH
+        ),
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
     }
+    assert payload["schema"] == (
+        "ipfs_accelerate_py/agent-supervisor/configured-board-launch-plan@1"
+    )
+    assert payload["plan_environment"] == expected_environment
+    assert payload["effective_controlled"] == expected_environment
+    assert set(payload["cleared_controlled"].values()) == {None}
+    assert payload["effective_sentinel"] == "preserved"
+    assert payload["cleared_sentinel"] == "preserved"
