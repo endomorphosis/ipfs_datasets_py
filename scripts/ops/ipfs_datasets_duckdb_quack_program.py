@@ -2976,6 +2976,7 @@ def _repository_control_plane_tip_paths() -> frozenset[str]:
 
     return frozenset(_implementation_protected_paths()) | frozenset(
         {
+            "ipfs_datasets_py/database_utils.py",
             "ipfs_datasets_py/duckdb_control/generation_rollover.py",
             "ipfs_datasets_py/duckdb_control/inventory_refinement.py",
             "scripts/ops/ipfs_datasets_duckdb_quack_lifecycle.py",
