@@ -200,6 +200,130 @@ def test_concurrent_unborn_identity_reader_never_observes_partial_publication(
     assert repository_identity(tmp_path) == identities["first"]
 
 
+def test_unborn_reader_waits_for_visible_final_to_be_directory_durable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    real_fsync = module.os.fsync
+    final_directory_sync_entered = threading.Event()
+    release_directory_sync = threading.Event()
+
+    def block_visible_final_directory_sync(descriptor: int) -> None:
+        mode = os.fstat(descriptor).st_mode
+        if stat.S_ISDIR(mode) and marker.is_file():
+            final_directory_sync_entered.set()
+            if not release_directory_sync.wait(5):
+                raise OSError("audit metadata-directory sync timed out")
+        real_fsync(descriptor)
+
+    monkeypatch.setattr(module.os, "fsync", block_visible_final_directory_sync)
+    identities: dict[str, str] = {}
+    errors: dict[str, Exception] = {}
+    first_finished = threading.Event()
+    second_finished = threading.Event()
+
+    def identify(name: str, finished: threading.Event) -> None:
+        try:
+            identities[name] = repository_identity(tmp_path)
+        except Exception as exc:  # pragma: no branch - asserted below
+            errors[name] = exc
+        finally:
+            finished.set()
+
+    first = threading.Thread(
+        target=identify,
+        args=("first", first_finished),
+        daemon=True,
+    )
+    second = threading.Thread(
+        target=identify,
+        args=("second", second_finished),
+        daemon=True,
+    )
+    first.start()
+    sync_was_reached = False
+    final_was_visible = False
+    second_started = False
+    reader_finished_before_release = False
+    try:
+        if first_finished.wait(0.25):
+            sync_was_reached = final_directory_sync_entered.is_set()
+        else:
+            sync_was_reached = final_directory_sync_entered.wait(5)
+        final_was_visible = marker.is_file()
+        if sync_was_reached:
+            second.start()
+            second_started = True
+            reader_finished_before_release = second_finished.wait(0.5)
+    finally:
+        release_directory_sync.set()
+        first.join(5)
+        if second_started:
+            second.join(5)
+
+    assert sync_was_reached
+    assert final_was_visible
+    assert second_started
+    assert not reader_finished_before_release
+    assert not first.is_alive()
+    assert not second.is_alive()
+    assert errors == {}
+    assert identities["first"] == identities["second"]
+    assert repository_identity(tmp_path) == identities["first"]
+
+
+def test_unborn_directory_sync_failure_is_typed_and_retry_reestablishes_durability(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    real_fsync = module.os.fsync
+    directory_sync_attempts = 0
+    successful_directory_syncs = 0
+    final_visibility: list[bool] = []
+
+    def fail_first_visible_final_directory_sync(descriptor: int) -> None:
+        nonlocal directory_sync_attempts, successful_directory_syncs
+        mode = os.fstat(descriptor).st_mode
+        if stat.S_ISDIR(mode) and marker.is_file():
+            directory_sync_attempts += 1
+            final_visibility.append(True)
+            if directory_sync_attempts == 1:
+                raise OSError("audit metadata-directory sync failure")
+            real_fsync(descriptor)
+            successful_directory_syncs += 1
+            return
+        real_fsync(descriptor)
+
+    monkeypatch.setattr(module.os, "fsync", fail_first_visible_final_directory_sync)
+    first_error: Exception | None = None
+    try:
+        repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        first_error = exc
+
+    attempts_after_failure = directory_sync_attempts
+    assert isinstance(first_error, GitSnapshotError)
+    assert attempts_after_failure >= 1
+    assert all(final_visibility)
+    assert marker.is_file()
+    token = marker.read_bytes()
+    assert len(token) == 64
+    assert all(byte in b"0123456789abcdef" for byte in token)
+
+    recovered = repository_identity(tmp_path)
+    assert directory_sync_attempts > attempts_after_failure
+    assert successful_directory_syncs >= 1
+    assert repository_identity(tmp_path) == recovered
+
+
 def test_unborn_restart_cleans_stale_temporary_and_avoids_pid_reuse_collision(
     tmp_path: Path,
 ) -> None:
@@ -462,24 +586,97 @@ def test_unborn_bootstrap_publication_syncs_file_and_git_metadata_directory(
     _init(tmp_path)
     import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
 
+    marker = _bootstrap_marker(tmp_path)
     real_fsync = module.os.fsync
-    synced_kinds: list[str] = []
+    real_unlink = module.os.unlink
+    events: list[str] = []
 
     def record_sync(descriptor: int) -> None:
         mode = os.fstat(descriptor).st_mode
         if stat.S_ISREG(mode):
-            synced_kinds.append("file")
+            events.append("file_sync")
         elif stat.S_ISDIR(mode):
-            synced_kinds.append("directory")
+            events.append("directory_sync")
         real_fsync(descriptor)
 
+    def record_unlink(path, *args, **kwargs) -> None:
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if candidate.parent == marker.parent and marker.name in candidate.name:
+            events.append("temporary_unlink")
+        real_unlink(path, *args, **kwargs)
+
     monkeypatch.setattr(module.os, "fsync", record_sync)
+    monkeypatch.setattr(module.os, "unlink", record_unlink)
     first = repository_identity(tmp_path)
 
-    assert "file" in synced_kinds
-    assert "directory" in synced_kinds
-    assert stat.S_IMODE(_bootstrap_marker(tmp_path).stat().st_mode) == 0o600
+    assert "file_sync" in events
+    assert "temporary_unlink" in events
+    cleanup_index = events.index("temporary_unlink")
+    assert "directory_sync" in events[:cleanup_index]
+    assert "directory_sync" in events[cleanup_index + 1 :]
+    assert stat.S_IMODE(marker.stat().st_mode) == 0o600
     assert repository_identity(tmp_path) == first
+
+
+def test_existing_unborn_marker_rejects_symlink_fifo_and_nonprivate_file(
+    tmp_path: Path,
+) -> None:
+    program = "\n".join(
+        (
+            "import sys",
+            "from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import GitSnapshotError, repository_identity",
+            "try:",
+            "    repository_identity(sys.argv[1])",
+            "except GitSnapshotError:",
+            "    raise SystemExit(21)",
+            "except Exception as exc:",
+            "    print(f'{type(exc).__name__}: {exc}', file=sys.stderr)",
+            "    raise SystemExit(22)",
+            "print('unsafe marker was accepted', file=sys.stderr)",
+            "raise SystemExit(23)",
+        )
+    )
+    environment = dict(os.environ)
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    results: dict[str, object] = {}
+    diagnostics: dict[str, str] = {}
+
+    for scenario in ("symlink", "fifo", "nonprivate"):
+        repository = tmp_path / scenario
+        _init(repository)
+        marker = _bootstrap_marker(repository)
+        if scenario == "symlink":
+            target = marker.parent / "audit-bootstrap-token-target"
+            target.write_bytes(b"a" * 64)
+            target.chmod(0o600)
+            marker.symlink_to(target.name)
+        elif scenario == "fifo":
+            os.mkfifo(marker, 0o600)
+        else:
+            marker.write_bytes(b"b" * 64)
+            marker.chmod(0o644)
+
+        try:
+            completed = subprocess.run(
+                [sys.executable, "-B", "-c", program, str(repository)],
+                check=False,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=environment,
+                timeout=2,
+            )
+        except subprocess.TimeoutExpired:
+            results[scenario] = "timeout"
+        else:
+            results[scenario] = completed.returncode
+            diagnostics[scenario] = completed.stderr.decode("utf-8", "replace")
+
+    assert results == {
+        "symlink": 21,
+        "fifo": 21,
+        "nonprivate": 21,
+    }, diagnostics
 
 
 def test_explicit_unborn_identity_avoids_bootstrap_metadata_mutation(
