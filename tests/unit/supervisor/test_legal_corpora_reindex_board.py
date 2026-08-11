@@ -242,6 +242,24 @@ def test_cohort_partition_and_refill_policy_drift_are_rejected(tmp_path: Path) -
     assert any("generated_task_number_floor must be 70" in error for error in report["errors"])
 
 
+def test_validation_runtime_deployment_drift_is_rejected(tmp_path: Path) -> None:
+    root = _copy_control_plane(tmp_path / "repo")
+    config_path = root / "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["validation_runtime"]["pythonpath_entries"] = [
+        "/home/operator/.local/lib/python3.12/site-packages"
+    ]
+    config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+
+    result, report = _run_validator(root)
+    assert result.returncode == 1
+    assert any(
+        "scheduler validation_runtime must remain the exact sealed deployment"
+        in error
+        for error in report["errors"]
+    )
+
+
 def test_controlled_reseal_task_contract_drift_is_rejected(tmp_path: Path) -> None:
     root = _copy_control_plane(tmp_path / "repo")
     taskboard = root / "docs/architecture/legal_corpora_reindex.todo.md"

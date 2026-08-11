@@ -200,7 +200,7 @@ The 51 jurisdictions are partitioned into file-disjoint scrape cohorts:
 
 Each cohort uses an isolated output/checkpoint root, may parallelize only across different official domains, and owns only its state modules, cohort tests, and cohort receipt. Shared registry/build files are changed only by later integration tasks. A cohort with a failed jurisdiction does not report success. It emits evidence and the supervisor refines the corresponding acquisition subgoal into jurisdiction-specific repair tasks.
 
-Lane ownership is the pinned supervisor runtime's SHA-256 rule: `int(sha256(full_task_id)[:8], 16) % 4`. State and Federal Register tasks share four total lanes so this program does not launch eight workers on an already busy host. `LCR-001`–`008` and `LCR-048`–`051` begin file-disjoint foundation work across all lanes. The merge queue serializes accepted commits; task dependencies serialize shared files. Preflight binds a clean paired `ipfs_accelerate_py` worktree at `3a33f78ee9689efa3ae8d87a43f0d1229e45f948` and verifies the same full-task-ID hash rule used by the runtime.
+Lane ownership is the pinned supervisor runtime's SHA-256 rule: `int(sha256(full_task_id)[:8], 16) % 4`. State and Federal Register tasks share four total lanes so this program does not launch eight workers on an already busy host. `LCR-001`–`008` and `LCR-048`–`051` begin file-disjoint foundation work across all lanes. The merge queue serializes accepted commits; task dependencies serialize shared files. Preflight binds a clean paired `ipfs_accelerate_py` worktree at `3302afb3b6154fceeafcdddfa99c28bb3665b6f0` and verifies the same full-task-ID hash rule used by the runtime.
 
 ## 6. Refill and anti-stall policy
 

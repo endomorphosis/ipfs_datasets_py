@@ -4,6 +4,8 @@ This directory operates the sealed four-lane `LCR-` board. Run it only from the 
 
 Set `IPFS_ACCELERATE_ROOT` to the clean `ipfs_accelerate_py` checkout containing the current configured-board scheduler. In the paired worktree layout it defaults to `../ipfs_accelerate_py`.
 
+The board also binds authoritative Python validation to `/usr/bin/python3.12` plus the root-owned, read-only package deployment at `/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages`. That deployment was copied from the pinned local authority-validation image `sha256:74c4a6ff67f397f8a10b058851d218896b2f1ee0f2cddf47741219b734de93a6`. Preflight uses the daemon's sealed dependency probe and refuses launch if the deployment is absent, writable, or cannot import `pytest`, `huggingface_hub`, `numpy`, and `pyarrow`; a mutable user site is not an acceptable substitute.
+
 ## Validate and render
 
 ```bash
@@ -11,12 +13,12 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 ACCELERATOR_ROOT="${IPFS_ACCELERATE_ROOT:-$(cd "$REPO_ROOT/../ipfs_accelerate_py" && pwd)}"
 export PYTHONPATH="$ACCELERATOR_ROOT${PYTHONPATH:+:$PYTHONPATH}"
 
-python3 -P scripts/ops/legal_corpora_reindex/preflight.py \
+/usr/bin/python3.12 -I -S -B scripts/ops/legal_corpora_reindex/preflight.py \
   --repo-root "$REPO_ROOT" \
   --config config/agent_supervisor_legal_corpora_reindex_scheduler.json \
   --json
 
-python3 -P scripts/ops/agent_supervisor/configured_board_scheduler.py \
+/usr/bin/python3.12 -I -S -B scripts/ops/agent_supervisor/configured_board_scheduler.py \
   --repo-root "$REPO_ROOT" \
   --config config/agent_supervisor_legal_corpora_reindex_scheduler.json \
   launch --implement --dry-run
@@ -27,7 +29,7 @@ The preflight rejects dirty or wrong-branch control planes, missing tracked file
 ## Launch
 
 ```bash
-python3 -P scripts/ops/agent_supervisor/configured_board_scheduler.py \
+/usr/bin/python3.12 -I -S -B scripts/ops/agent_supervisor/configured_board_scheduler.py \
   --repo-root "$REPO_ROOT" \
   --config config/agent_supervisor_legal_corpora_reindex_scheduler.json \
   launch --implement

@@ -905,6 +905,20 @@ def _validate_config(
         if isinstance(concurrency, bool) or not isinstance(concurrency, int) or concurrency < 4:
             errors.append("scheduler provider.max_concurrency must be an integer >= 4")
 
+    validation_runtime = config.get("validation_runtime")
+    expected_validation_runtime = {
+        "python_executable": "/usr/bin/python3.12",
+        "pythonpath_entries": [
+            "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages"
+        ],
+        "required_modules": ["huggingface_hub", "numpy", "pyarrow"],
+    }
+    if validation_runtime != expected_validation_runtime:
+        errors.append(
+            "scheduler validation_runtime must remain the exact sealed "
+            f"deployment contract {expected_validation_runtime!r}"
+        )
+
     protected = config.get("protected_paths")
     required_protected = {
         PLAN_RELATIVE,
@@ -913,6 +927,17 @@ def _validate_config(
         CONFIG_RELATIVE,
         VALIDATOR_RELATIVE,
         "tests/unit/supervisor/test_legal_corpora_reindex_board.py",
+        "tests/unit/supervisor/test_paired_accelerator_bootstrap.py",
+        "tests/unit/scripts/test_legal_corpora_reindex_process_identity.py",
+        "scripts/ops/agent_supervisor/configured_board_scheduler.py",
+        "scripts/ops/agent_supervisor/implementation_daemon_entry.py",
+        "scripts/ops/agent_supervisor/implementation_supervisor_entry.py",
+        "scripts/ops/agent_supervisor/multi_supervisor_entry.py",
+        "scripts/ops/agent_supervisor/paired_accelerator_bootstrap.py",
+        "scripts/ops/legal_corpora_reindex/README.md",
+        "scripts/ops/legal_corpora_reindex/preflight.py",
+        "scripts/ops/legal_corpora_reindex/status.py",
+        "scripts/ops/legal_corpora_reindex/status.sh",
     }
     protected_is_string_list = isinstance(protected, list) and all(
         isinstance(path, str) for path in protected
@@ -937,7 +962,7 @@ def _validate_config(
             paired_contract = {
                 "sibling_path": "../ipfs_accelerate_py",
                 "repository_name": "ipfs_accelerate_py",
-                "required_revision": "3a33f78ee9689efa3ae8d87a43f0d1229e45f948",
+                "required_revision": "3302afb3b6154fceeafcdddfa99c28bb3665b6f0",
                 "require_clean_worktree": True,
                 "require_exact_revision": True,
             }

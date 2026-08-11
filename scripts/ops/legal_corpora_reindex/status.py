@@ -6,18 +6,74 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
-import re
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from collections.abc import Mapping
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Mapping
-
+from typing import Any
 
 DEFAULT_CONFIG = Path("config/agent_supervisor_legal_corpora_reindex_scheduler.json")
-FATAL_STATUS = {"launch_failed", "max_restarts_reached", "child_exited", "termination_blocked"}
+FATAL_STATUS = {
+    "launch_failed",
+    "max_restarts_reached",
+    "child_exited",
+    "termination_blocked",
+}
+TRUSTED_PAIRED_PYTHON = "/usr/bin/python3.12"
+PAIRED_PYTHON_FLAGS = ("-I", "-S", "-B")
+IMPLEMENTATION_SUPERVISOR_ENTRY = (
+    "scripts/ops/agent_supervisor/implementation_supervisor_entry.py"
+)
+IMPLEMENTATION_DAEMON_ENTRY = (
+    "scripts/ops/agent_supervisor/implementation_daemon_entry.py"
+)
+MULTI_SUPERVISOR_ENTRY = "scripts/ops/agent_supervisor/multi_supervisor_entry.py"
+IMPLEMENTATION_DAEMON_MODULE = (
+    "ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon"
+)
+MULTI_SUPERVISOR_MODULE = (
+    "ipfs_accelerate_py.agent_supervisor.runtime.multi_supervisor_runner"
+)
+
+
+def _paired_entry_command(
+    argv: list[str], repo_root: Path, relative_entry: str
+) -> bool:
+    expected = [
+        TRUSTED_PAIRED_PYTHON,
+        *PAIRED_PYTHON_FLAGS,
+        str((repo_root / relative_entry).resolve()),
+    ]
+    return argv[: len(expected)] == expected
+
+
+def _module_command(argv: list[str], module: str) -> bool:
+    return any(
+        argv[index : index + 2] == ["-m", module]
+        for index in range(max(0, len(argv) - 1))
+    )
+
+
+def _master_command(argv: list[str], repo_root: Path) -> bool:
+    return _paired_entry_command(
+        argv, repo_root, MULTI_SUPERVISOR_ENTRY
+    ) or _module_command(argv, MULTI_SUPERVISOR_MODULE)
+
+
+def _outer_command(argv: list[str], repo_root: Path) -> bool:
+    entry = str((repo_root / IMPLEMENTATION_SUPERVISOR_ENTRY).resolve())
+    return (
+        _paired_entry_command(argv, repo_root, IMPLEMENTATION_SUPERVISOR_ENTRY)
+        or entry in argv
+    )
+
+
+def _daemon_command(argv: list[str], repo_root: Path) -> bool:
+    return _paired_entry_command(
+        argv, repo_root, IMPLEMENTATION_DAEMON_ENTRY
+    ) or _module_command(argv, IMPLEMENTATION_DAEMON_MODULE)
 
 
 def _load_json(path: Path) -> dict[str, Any] | None:
@@ -50,7 +106,9 @@ def _proc_ppid(pid: int | None) -> int | None:
     if not pid:
         return None
     try:
-        return int((Path("/proc") / str(pid) / "stat").read_text(encoding="utf-8").split()[3])
+        return int(
+            (Path("/proc") / str(pid) / "stat").read_text(encoding="utf-8").split()[3]
+        )
     except (OSError, ValueError, IndexError):
         return None
 
@@ -80,7 +138,7 @@ def _parse_time(value: Any) -> float | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     return parsed.timestamp()
 
 
@@ -147,7 +205,8 @@ def _progress_signature(task: Mapping[str, Any]) -> str:
         "implementation_in_progress": task.get("implementation_in_progress"),
         "completed_task_ids": sorted(task.get("completed_task_ids") or []),
         "task_statuses": task.get("task_statuses") or {},
-        "implementation_attempts_by_cid": task.get("implementation_attempts_by_cid") or {},
+        "implementation_attempts_by_cid": task.get("implementation_attempts_by_cid")
+        or {},
         "last_implementation_finished_at": task.get("last_implementation_finished_at"),
         "last_implementation_returncode": task.get("last_implementation_returncode"),
         "last_implementation_commit": task.get("last_implementation_commit"),
@@ -156,7 +215,9 @@ def _progress_signature(task: Mapping[str, Any]) -> str:
         "last_merge_commit": task.get("last_merge_commit"),
         "selection_idle_reason": task.get("selection_idle_reason"),
     }
-    encoded = json.dumps(fields, sort_keys=True, separators=(",", ":"), default=str).encode()
+    encoded = json.dumps(
+        fields, sort_keys=True, separators=(",", ":"), default=str
+    ).encode()
     return hashlib.sha256(encoded).hexdigest()
 
 
@@ -170,7 +231,12 @@ def _queue_summary(path: Path) -> dict[str, Any]:
             continue
         state = _string(payload, "status", "state") or "unknown"
         counts[state] = counts.get(state, 0) + 1
-    return {"path": str(path), "exists": path.is_dir(), "counts": counts, "malformed": malformed}
+    return {
+        "path": str(path),
+        "exists": path.is_dir(),
+        "counts": counts,
+        "malformed": malformed,
+    }
 
 
 def _git_tip(repo_root: Path, branch: str) -> str:
@@ -215,32 +281,55 @@ def _lane_sample(
     identity = _load_json(identity_path) or {}
     reasons: list[str] = []
     notes: list[str] = []
+    paired_required = bool(
+        (config.get("source_binding") or {}).get("paired_accelerator")
+    )
     startup_grace = float(config["watchdog_startup_grace_seconds"])
-    starting = bool(master_pid and _alive(master_pid) and master_age is not None and master_age <= startup_grace)
+    starting = bool(
+        master_pid
+        and _alive(master_pid)
+        and master_age is not None
+        and master_age <= startup_grace
+    )
 
     expected_outer = [
-        proc for proc in processes
-        if str(entry_path) in proc["argv"]
+        proc
+        for proc in processes
+        if _outer_command(proc["argv"], repo_root)
         and _arg_value(proc["argv"], "--state-dir") == str(lane_dir)
         and _arg_value(proc["argv"], "--state-prefix") == prefix
     ]
     expected_daemons = [
-        proc for proc in processes
-        if "ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon" in proc["argv"]
+        proc
+        for proc in processes
+        if _daemon_command(proc["argv"], repo_root)
         and _arg_value(proc["argv"], "--state-dir") == str(lane_dir)
         and _arg_value(proc["argv"], "--state-prefix") == prefix
     ]
     if len(expected_outer) > 1:
-        reasons.append(f"duplicate outer supervisors: {[item['pid'] for item in expected_outer]}")
+        reasons.append(
+            f"duplicate outer supervisors: {[item['pid'] for item in expected_outer]}"
+        )
     if len(expected_daemons) > 1:
-        reasons.append(f"duplicate managed daemons: {[item['pid'] for item in expected_daemons]}")
+        reasons.append(
+            f"duplicate managed daemons: {[item['pid'] for item in expected_daemons]}"
+        )
     if not _alive(outer_pid) and not starting:
         reasons.append("outer supervisor PID is missing or dead")
     if not _alive(daemon_pid) and not starting:
         reasons.append("managed daemon PID is missing or dead")
     if _alive(outer_pid):
-        if str(entry_path) not in outer_argv:
-            reasons.append("outer PID command does not name the sealed implementation entry")
+        outer_identity_valid = (
+            _paired_entry_command(
+                outer_argv, repo_root, IMPLEMENTATION_SUPERVISOR_ENTRY
+            )
+            if paired_required
+            else _outer_command(outer_argv, repo_root)
+        )
+        if not outer_identity_valid:
+            reasons.append(
+                "outer PID command does not name the sealed implementation entry"
+            )
         for key, expected in (
             ("--todo-path", str(todo_path)),
             ("--state-dir", str(lane_dir)),
@@ -257,8 +346,13 @@ def _lane_sample(
         if master_pid and not _pid_descends_from(outer_pid or 0, master_pid):
             reasons.append("outer supervisor is orphaned from the configured master")
     if _alive(daemon_pid):
-        if "ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon" not in daemon_argv:
-            reasons.append("managed PID is not the implementation daemon module")
+        daemon_identity_valid = (
+            _paired_entry_command(daemon_argv, repo_root, IMPLEMENTATION_DAEMON_ENTRY)
+            if paired_required
+            else _daemon_command(daemon_argv, repo_root)
+        )
+        if not daemon_identity_valid:
+            reasons.append("managed PID is not a recognized implementation daemon")
         for key, expected in (
             ("--todo-path", str(todo_path)),
             ("--state-dir", str(lane_dir)),
@@ -268,7 +362,12 @@ def _lane_sample(
         ):
             if _arg_value(daemon_argv, key) != expected:
                 reasons.append(f"managed command mismatch for {key}")
-        if outer_pid and not _pid_descends_from(daemon_pid or 0, outer_pid) and master_pid and not _pid_descends_from(daemon_pid or 0, master_pid):
+        if (
+            outer_pid
+            and not _pid_descends_from(daemon_pid or 0, outer_pid)
+            and master_pid
+            and not _pid_descends_from(daemon_pid or 0, master_pid)
+        ):
             reasons.append("managed daemon is orphaned from the lane process tree")
 
     identity_pid = _int(identity, "pid", "child_pid")
@@ -290,9 +389,13 @@ def _lane_sample(
     elif heartbeat_age is None and not starting:
         reasons.append("supervisor heartbeat is missing or malformed")
     elif heartbeat_age is not None and heartbeat_age > heartbeat_limit and not starting:
-        reasons.append(f"supervisor heartbeat is stale ({heartbeat_age:.1f}s > {heartbeat_limit:.1f}s)")
+        reasons.append(
+            f"supervisor heartbeat is stale ({heartbeat_age:.1f}s > {heartbeat_limit:.1f}s)"
+        )
 
-    supervisor_state = _string(status, "status", "state") or ("starting" if starting else "unknown")
+    supervisor_state = _string(status, "status", "state") or (
+        "starting" if starting else "unknown"
+    )
     if supervisor_state in FATAL_STATUS:
         reasons.append(f"fatal supervisor state: {supervisor_state}")
     if status.get("stalled_without_active_worker") is True:
@@ -319,7 +422,9 @@ def _lane_sample(
     if blocked:
         reasons.append(f"{blocked} blocked task(s)")
     worker_pids: list[int] = []
-    for value in task.get("active_worker_pids") or status.get("active_worker_pids") or []:
+    for value in (
+        task.get("active_worker_pids") or status.get("active_worker_pids") or []
+    ):
         try:
             worker_pids.append(int(value))
         except (TypeError, ValueError):
@@ -329,12 +434,17 @@ def _lane_sample(
         for process in processes
         if active_worktree
         and _arg_value(process["argv"], "--cwd") == active_worktree
-        and any("grok" in Path(token).name or "codex" in Path(token).name for token in process["argv"][:2])
+        and any(
+            "grok" in Path(token).name or "codex" in Path(token).name
+            for token in process["argv"][:2]
+        )
     ]
-    live_workers = sorted({
-        *[pid for pid in worker_pids if _alive(pid)],
-        *[pid for pid in provider_workers if _alive(pid)],
-    })
+    live_workers = sorted(
+        {
+            *[pid for pid in worker_pids if _alive(pid)],
+            *[pid for pid in provider_workers if _alive(pid)],
+        }
+    )
     declared_workers = max(
         len(worker_pids),
         len(provider_workers),
@@ -346,7 +456,9 @@ def _lane_sample(
 
     active_started = _string(task, "active_task_started_at", "active_phase_started_at")
     active_age = _age(active_started)
-    if active_age is not None and active_age > float(config["implementation_max_timeout_seconds"]):
+    if active_age is not None and active_age > float(
+        config["implementation_max_timeout_seconds"]
+    ):
         reasons.append("active task exceeds implementation hard timeout")
     active_log_text = _string(task, "active_log_path")
     active_log = Path(active_log_text) if active_log_text else None
@@ -362,14 +474,27 @@ def _lane_sample(
             float(config.get("health_policy", {}).get("progress_stall_seconds", 900)),
         )
     ):
-        reasons.append("active implementation log is stale, even if a provider PID remains live")
+        reasons.append(
+            "active implementation log is stale, even if a provider PID remains live"
+        )
 
-    progress_age = _age(_string(task, "last_progress_at", "heartbeat_at"), task_path if task else None)
-    idle_grace = max(2 * float(config["daemon_interval_seconds"]), 3 * float(config["check_interval_seconds"]))
+    progress_age = _age(
+        _string(task, "last_progress_at", "heartbeat_at"), task_path if task else None
+    )
+    idle_grace = max(
+        2 * float(config["daemon_interval_seconds"]),
+        3 * float(config["check_interval_seconds"]),
+    )
     idle_reason = _string(task, "selection_idle_reason", "idle_reason")
-    if ready > 0 and not active_task and not implementation_in_progress and not live_workers and not starting:
-        if progress_age is None or progress_age > idle_grace:
-            reasons.append(f"{ready} eligible task(s) ready without active work past grace")
+    if (
+        ready > 0
+        and not active_task
+        and not implementation_in_progress
+        and not live_workers
+        and not starting
+        and (progress_age is None or progress_age > idle_grace)
+    ):
+        reasons.append(f"{ready} eligible task(s) ready without active work past grace")
     if idle_reason == "provider_capacity_backoff":
         retry_at = _parse_time(task.get("retry_at") or status.get("retry_at"))
         if retry_at is None or retry_at <= time.time():
@@ -378,7 +503,9 @@ def _lane_sample(
             notes.append("typed provider capacity backoff is active")
 
     last_merge_returncode = task.get("last_merge_returncode")
-    if last_merge_returncode not in (None, 0, "0") and task.get("last_merge_commit") in (None, ""):
+    if last_merge_returncode not in (None, 0, "0") and task.get(
+        "last_merge_commit"
+    ) in (None, ""):
         reasons.append("latest merge failed without a reconciled merge commit")
     for path_key in ("current_status_path", "progress_path"):
         raw = _string(status, path_key)
@@ -407,8 +534,21 @@ def _lane_sample(
             "identity": str(identity_path),
             "incident": str(incident_path),
         },
-        "outer": {"pid": outer_pid, "alive": _alive(outer_pid), "ppid": _proc_ppid(outer_pid), "argv": outer_argv, "matches": [item["pid"] for item in expected_outer]},
-        "daemon": {"pid": daemon_pid, "alive": _alive(daemon_pid), "ppid": _proc_ppid(daemon_pid), "argv": daemon_argv, "identity_pid": identity_pid, "matches": [item["pid"] for item in expected_daemons]},
+        "outer": {
+            "pid": outer_pid,
+            "alive": _alive(outer_pid),
+            "ppid": _proc_ppid(outer_pid),
+            "argv": outer_argv,
+            "matches": [item["pid"] for item in expected_outer],
+        },
+        "daemon": {
+            "pid": daemon_pid,
+            "alive": _alive(daemon_pid),
+            "ppid": _proc_ppid(daemon_pid),
+            "argv": daemon_argv,
+            "identity_pid": identity_pid,
+            "matches": [item["pid"] for item in expected_daemons],
+        },
         "supervisor": {
             "state": supervisor_state,
             "updated_at": heartbeat,
@@ -417,7 +557,8 @@ def _lane_sample(
             "last_exit_code": status.get("last_exit_code"),
             "last_recycle_reason": status.get("last_recycle_reason"),
             "worker_phase": _string(status, "worker_phase"),
-            "stalled_without_active_worker": status.get("stalled_without_active_worker") is True,
+            "stalled_without_active_worker": status.get("stalled_without_active_worker")
+            is True,
         },
         "tasks": {
             "task_count": task_count,
@@ -436,7 +577,14 @@ def _lane_sample(
             "progress_age_seconds": progress_age,
             "progress_signature": _progress_signature(task),
         },
-        "workers": {"declared": declared_workers, "pids": worker_pids, "provider_pids": provider_workers, "live_pids": live_workers, "active_log": str(active_log) if active_log else "", "active_log_age_seconds": active_log_age},
+        "workers": {
+            "declared": declared_workers,
+            "pids": worker_pids,
+            "provider_pids": provider_workers,
+            "live_pids": live_workers,
+            "active_log": str(active_log) if active_log else "",
+            "active_log_age_seconds": active_log_age,
+        },
     }
 
 
@@ -444,10 +592,11 @@ def sample(repo_root: Path, config_path: Path) -> dict[str, Any]:
     config = json.loads(config_path.read_text(encoding="utf-8"))
     runtime = config["runtime_paths"]
     state_root = repo_root / runtime["state"]
-    logs_root = repo_root / runtime["logs"]
     merge_queue = repo_root / runtime["merge_queue"]
     todo_path = repo_root / config["taskboard_path"]
-    entry_path = repo_root / "scripts/ops/agent_supervisor/implementation_supervisor_entry.py"
+    entry_path = (
+        repo_root / "scripts/ops/agent_supervisor/implementation_supervisor_entry.py"
+    )
     master_pid_path = state_root / "configured-board-master.pid"
     master_pid = _read_pid(master_pid_path)
     master_argv = _proc_argv(master_pid)
@@ -456,8 +605,16 @@ def sample(repo_root: Path, config_path: Path) -> dict[str, Any]:
     master_log = Path(master_log_text) if master_log_text else None
     master_log_age = _age(path=master_log) if master_log else None
     master_reasons: list[str] = []
+    paired_required = bool(
+        (config.get("source_binding") or {}).get("paired_accelerator")
+    )
     if _alive(master_pid):
-        if "ipfs_accelerate_py.agent_supervisor.runtime.multi_supervisor_runner" not in master_argv:
+        master_identity_valid = (
+            _paired_entry_command(master_argv, repo_root, MULTI_SUPERVISOR_ENTRY)
+            if paired_required
+            else _master_command(master_argv, repo_root)
+        )
+        if not master_identity_valid:
             master_reasons.append("master PID is not the multi-supervisor runner")
         for key, expected in (
             ("--repo-root", str(repo_root)),
@@ -467,9 +624,13 @@ def sample(repo_root: Path, config_path: Path) -> dict[str, Any]:
         ):
             if _arg_value(master_argv, key) != expected:
                 master_reasons.append(f"master command mismatch for {key}")
-        if master_log_age is not None and master_age is not None and master_age > float(config["watchdog_startup_grace_seconds"]):
-            if master_log_age > max(3 * float(config["poll_interval_seconds"]), 30.0):
-                master_reasons.append("master log is stale")
+        if (
+            master_log_age is not None
+            and master_age is not None
+            and master_age > float(config["watchdog_startup_grace_seconds"])
+            and master_log_age > max(3 * float(config["poll_interval_seconds"]), 30.0)
+        ):
+            master_reasons.append("master log is stale")
 
     processes = _all_processes()
     lanes = [
@@ -495,12 +656,11 @@ def sample(repo_root: Path, config_path: Path) -> dict[str, Any]:
         if config["board_namespace"] in joined or runtime_text in joined:
             scoped.append(process)
     recognized_provider_pids = {
-        pid
-        for lane in lanes
-        for pid in lane["workers"]["provider_pids"]
+        pid for lane in lanes for pid in lane["workers"]["provider_pids"]
     }
     unowned = [
-        process for process in scoped
+        process
+        for process in scoped
         if process["pid"] not in recognized_provider_pids
         and (not master_pid or not _pid_descends_from(process["pid"], master_pid))
     ]
@@ -522,8 +682,14 @@ def sample(repo_root: Path, config_path: Path) -> dict[str, Any]:
         overall = "completed"
     elif not _alive(master_pid):
         overall = "not_started" if not state_root.exists() else "unhealthy"
-        master_reasons.append("configured master is not alive and terminal completion is not proven")
-    elif master_reasons or unowned or any(lane["health"] == "unhealthy" for lane in lanes):
+        master_reasons.append(
+            "configured master is not alive and terminal completion is not proven"
+        )
+    elif (
+        master_reasons
+        or unowned
+        or any(lane["health"] == "unhealthy" for lane in lanes)
+    ):
         overall = "unhealthy"
     elif any(lane["health"] == "starting" for lane in lanes):
         overall = "starting"
@@ -532,7 +698,7 @@ def sample(repo_root: Path, config_path: Path) -> dict[str, Any]:
 
     return {
         "schema": "ipfs_datasets_py/legal-corpora-reindex-status@1",
-        "as_of": datetime.now(timezone.utc).isoformat(),
+        "as_of": datetime.now(UTC).isoformat(),
         "overall_health": overall,
         "repo_root": str(repo_root),
         "board_namespace": config["board_namespace"],
@@ -553,32 +719,44 @@ def sample(repo_root: Path, config_path: Path) -> dict[str, Any]:
     }
 
 
-def _observation(first: Mapping[str, Any], second: Mapping[str, Any], seconds: float) -> dict[str, Any]:
+def _observation(
+    first: Mapping[str, Any], second: Mapping[str, Any], seconds: float
+) -> dict[str, Any]:
     lane_observations: list[dict[str, Any]] = []
     for before, after in zip(first.get("lanes", []), second.get("lanes", [])):
         before_time = before["supervisor"]["updated_at"]
         after_time = after["supervisor"]["updated_at"]
         before_sig = before["tasks"]["progress_signature"]
         after_sig = after["tasks"]["progress_signature"]
-        lane_observations.append({
-            "index": after["index"],
-            "heartbeat_advanced": bool(before_time and after_time and before_time != after_time),
-            "durable_progress_changed": before_sig != after_sig,
-            "before_health": before["health"],
-            "after_health": after["health"],
-        })
+        lane_observations.append(
+            {
+                "index": after["index"],
+                "heartbeat_advanced": bool(
+                    before_time and after_time and before_time != after_time
+                ),
+                "durable_progress_changed": before_sig != after_sig,
+                "before_health": before["health"],
+                "after_health": after["health"],
+            }
+        )
     master_before = first.get("master", {}).get("log_age_seconds")
     master_after = second.get("master", {}).get("log_age_seconds")
     return {
         "seconds": seconds,
-        "master_log_advanced": bool(master_before is not None and master_after is not None and master_after < master_before),
+        "master_log_advanced": bool(
+            master_before is not None
+            and master_after is not None
+            and master_after < master_before
+        ),
         "lanes": lane_observations,
     }
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[3])
+    parser.add_argument(
+        "--repo-root", type=Path, default=Path(__file__).resolve().parents[3]
+    )
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--observe-seconds", type=float, default=0.0)
@@ -595,7 +773,8 @@ def main(argv: list[str] | None = None) -> int:
             report["observation"] = _observation(first, report, seconds)
             if report["overall_health"] in {"healthy", "starting"}:
                 stalled_lanes = [
-                    item["index"] for item in report["observation"]["lanes"]
+                    item["index"]
+                    for item in report["observation"]["lanes"]
                     if item["after_health"] == "healthy"
                     and not item["heartbeat_advanced"]
                     and not item["durable_progress_changed"]
@@ -605,10 +784,10 @@ def main(argv: list[str] | None = None) -> int:
                     report.setdefault("observation_errors", []).append(
                         f"no heartbeat or durable progress across observation for lanes {stalled_lanes}"
                     )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - status CLI must report malformed state
         report = {
             "schema": "ipfs_datasets_py/legal-corpora-reindex-status@1",
-            "as_of": datetime.now(timezone.utc).isoformat(),
+            "as_of": datetime.now(UTC).isoformat(),
             "overall_health": "malformed",
             "errors": [f"{type(exc).__name__}: {exc}"],
         }

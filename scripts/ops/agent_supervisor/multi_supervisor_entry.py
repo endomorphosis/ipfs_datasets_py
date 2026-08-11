@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stable module entry point for multi-supervisor implementation tracks."""
+"""Isolated, paired-source entry point for the detached multi-supervisor."""
 
 import os
 import stat
@@ -8,42 +8,35 @@ import sys
 import types
 from pathlib import Path, PurePosixPath
 
+if not (
+    sys.flags.isolated == 1
+    and sys.flags.ignore_environment == 1
+    and sys.flags.no_site == 1
+    and sys.flags.no_user_site == 1
+    and sys.flags.safe_path
+    and sys.dont_write_bytecode
+):
+    raise RuntimeError("multi-supervisor entry requires Python -I -S -B")
+_PYTHON = Path(sys.executable).resolve(strict=True)
+_PYTHON_STAT = _PYTHON.stat()
+if (
+    _PYTHON != Path("/usr/bin/python3.12")
+    or _PYTHON_STAT.st_uid != 0
+    or _PYTHON_STAT.st_mode & 0o022
+):
+    raise RuntimeError("multi-supervisor entry requires trusted system Python")
+
 _ENTRY_PATH = Path(__file__).resolve()
 REPO_ROOT = _ENTRY_PATH.parents[3]
-_PAIRED_MODE = os.environ.get("IPFS_ACCELERATE_PAIRED_ATTESTATION_REQUIRED") == "1"
-_GIT = Path("/usr/bin/git")
-if _PAIRED_MODE:
-    if not (
-        sys.flags.isolated == 1
-        and sys.flags.ignore_environment == 1
-        and sys.flags.no_site == 1
-        and sys.flags.no_user_site == 1
-        and sys.flags.safe_path
-        and sys.dont_write_bytecode
-    ):
-        raise RuntimeError("implementation supervisor entry requires Python -I -S -B")
-    _PYTHON = Path(sys.executable).resolve(strict=True)
-    _PYTHON_STAT = _PYTHON.stat()
-    if (
-        _PYTHON != Path("/usr/bin/python3.12")
-        or _PYTHON_STAT.st_uid != 0
-        or _PYTHON_STAT.st_mode & 0o022
-    ):
-        raise RuntimeError(
-            "implementation supervisor entry requires trusted system Python"
-        )
-
-    _GIT = _GIT.resolve(strict=True)
-    _GIT_STAT = _GIT.stat()
-    if (
-        _GIT != Path("/usr/bin/git")
-        or not stat.S_ISREG(_GIT_STAT.st_mode)
-        or _GIT_STAT.st_uid != 0
-        or _GIT_STAT.st_mode & 0o022
-    ):
-        raise RuntimeError(
-            "implementation supervisor entry requires trusted system Git"
-        )
+_GIT = Path("/usr/bin/git").resolve(strict=True)
+_GIT_STAT = _GIT.stat()
+if (
+    _GIT != Path("/usr/bin/git")
+    or not stat.S_ISREG(_GIT_STAT.st_mode)
+    or _GIT_STAT.st_uid != 0
+    or _GIT_STAT.st_mode & 0o022
+):
+    raise RuntimeError("multi-supervisor entry requires trusted system Git")
 
 
 def _git_bytes(*arguments: str) -> bytes:
@@ -149,46 +142,44 @@ def _attest_tracked_source(path: Path) -> bytes:
     return source
 
 
-_PAIRED_BINDING = None
-if _PAIRED_MODE:
-    _ENTRY_SOURCE = _attest_tracked_source(_ENTRY_PATH)
-    _BOOTSTRAP_PATH = _ENTRY_PATH.parent / "paired_accelerator_bootstrap.py"
-    _BOOTSTRAP_SOURCE = _attest_tracked_source(_BOOTSTRAP_PATH)
-    _BOOTSTRAP_MODULE = types.ModuleType("_paired_accelerator_bootstrap_source")
-    _BOOTSTRAP_MODULE.__file__ = str(_BOOTSTRAP_PATH)
-    _BOOTSTRAP_MODULE.__package__ = ""
-    sys.modules[_BOOTSTRAP_MODULE.__name__] = _BOOTSTRAP_MODULE
-    # Execute only the exact helper bytes already compared with the current HEAD blob.
-    exec(  # noqa: S102
-        compile(
-            _BOOTSTRAP_SOURCE,
-            str(_BOOTSTRAP_PATH),
-            "exec",
-            dont_inherit=True,
-        ),
-        _BOOTSTRAP_MODULE.__dict__,
-    )
-    attest_imported_module = _BOOTSTRAP_MODULE.attest_imported_module
-    bootstrap_from_environment = _BOOTSTRAP_MODULE.bootstrap_from_environment
-    _PAIRED_BINDING = bootstrap_from_environment(REPO_ROOT)
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(1 if _PAIRED_BINDING is not None else 0, str(REPO_ROOT))
+_ENTRY_SOURCE = _attest_tracked_source(_ENTRY_PATH)
+_BOOTSTRAP_PATH = _ENTRY_PATH.parent / "paired_accelerator_bootstrap.py"
+_BOOTSTRAP_SOURCE = _attest_tracked_source(_BOOTSTRAP_PATH)
+_BOOTSTRAP_MODULE = types.ModuleType("_paired_accelerator_bootstrap_source")
+_BOOTSTRAP_MODULE.__file__ = str(_BOOTSTRAP_PATH)
+_BOOTSTRAP_MODULE.__package__ = ""
+sys.modules[_BOOTSTRAP_MODULE.__name__] = _BOOTSTRAP_MODULE
+# Execute only the exact helper bytes already compared with the current HEAD blob.
+exec(  # noqa: S102
+    compile(
+        _BOOTSTRAP_SOURCE,
+        str(_BOOTSTRAP_PATH),
+        "exec",
+        dont_inherit=True,
+    ),
+    _BOOTSTRAP_MODULE.__dict__,
+)
+attest_imported_module = _BOOTSTRAP_MODULE.attest_imported_module
+bootstrap_from_environment = _BOOTSTRAP_MODULE.bootstrap_from_environment
 
-from ipfs_accelerate_py.agent_supervisor.todo_daemon import (
-    implementation_supervisor as _implementation_supervisor,
+_PAIRED_BINDING = bootstrap_from_environment(REPO_ROOT)
+if _PAIRED_BINDING is None:
+    raise RuntimeError("multi-supervisor entry requires a paired binding")
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(1, str(REPO_ROOT))
+
+from ipfs_accelerate_py.agent_supervisor.runtime import (
+    multi_supervisor_runner as _multi_supervisor,
 )
 
-if _PAIRED_MODE:
-    attest_imported_module(
-        _PAIRED_BINDING,
-        _implementation_supervisor.__file__,
-        expected_relative=(
-            "ipfs_accelerate_py/agent_supervisor/todo_daemon/"
-            "implementation_supervisor.py"
-        ),
-    )
-main = _implementation_supervisor.main
+attest_imported_module(
+    _PAIRED_BINDING,
+    _multi_supervisor.__file__,
+    expected_relative=(
+        "ipfs_accelerate_py/agent_supervisor/runtime/multi_supervisor_runner.py"
+    ),
+)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(_multi_supervisor.main(sys.argv[1:]))

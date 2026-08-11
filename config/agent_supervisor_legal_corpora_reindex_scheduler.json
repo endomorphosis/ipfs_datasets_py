@@ -14,7 +14,7 @@
     "paired_accelerator": {
       "sibling_path": "../ipfs_accelerate_py",
       "repository_name": "ipfs_accelerate_py",
-      "required_revision": "3a33f78ee9689efa3ae8d87a43f0d1229e45f948",
+      "required_revision": "3302afb3b6154fceeafcdddfa99c28bb3665b6f0",
       "require_clean_worktree": true,
       "require_exact_revision": true
     },
@@ -24,6 +24,17 @@
     "record_recursive_repository_forest_at_launch": true,
     "changed_revision_requires_fresh_inventory_and_baseline": true,
     "planning_revision_is_runtime_completion_evidence": false
+  },
+  "validation_runtime": {
+    "python_executable": "/usr/bin/python3.12",
+    "pythonpath_entries": [
+      "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages"
+    ],
+    "required_modules": [
+      "huggingface_hub",
+      "numpy",
+      "pyarrow"
+    ]
   },
   "initial_projection": {
     "task_count": 70,
@@ -98,12 +109,17 @@
     "config/agent_supervisor_legal_corpora_reindex_scheduler.json",
     "scripts/validate_legal_corpora_reindex_board.py",
     "scripts/ops/agent_supervisor/configured_board_scheduler.py",
+    "scripts/ops/agent_supervisor/implementation_daemon_entry.py",
     "scripts/ops/agent_supervisor/implementation_supervisor_entry.py",
+    "scripts/ops/agent_supervisor/multi_supervisor_entry.py",
+    "scripts/ops/agent_supervisor/paired_accelerator_bootstrap.py",
     "scripts/ops/legal_corpora_reindex/preflight.py",
     "scripts/ops/legal_corpora_reindex/status.py",
     "scripts/ops/legal_corpora_reindex/status.sh",
     "scripts/ops/legal_corpora_reindex/README.md",
     "tests/unit/supervisor/test_legal_corpora_reindex_board.py",
+    "tests/unit/supervisor/test_paired_accelerator_bootstrap.py",
+    "tests/unit/scripts/test_legal_corpora_reindex_process_identity.py",
     "data/agent_supervisor/legal_corpora_reindex/bundles/lane_matrix.json",
     "data/agent_supervisor/legal_corpora_reindex/bundles/release_policy.json"
   ],
