@@ -5,8 +5,11 @@ Business logic lives in ``vector_store_management_engine.py`` /
 ``ipfs_datasets_py.vector_stores.management_engine``.
 
 Create/list/delete entrypoints route lifecycle metadata through the DuckDB
-vector shadow catalog when configured (DQK-062); legacy backends remain
-authoritative and shadow failures quarantine without changing results.
+vector catalog when configured:
+
+* DQK-062 — shadow mode (legacy authority; shadow failures quarantine)
+* DQK-063 — dual mode promotes collection/generation/tombstone/compaction
+  metadata to DuckDB while vector bytes remain in the selected engine
 """
 
 from __future__ import annotations
@@ -22,7 +25,9 @@ from .vector_store_management_engine import (  # noqa: F401
     EMBEDDINGS_AVAILABLE,
 )
 from .shared_state import (
+    configure_mcp_vector_authority_catalog,
     configure_mcp_vector_shadow_catalog,
+    get_mcp_vector_authority_catalog,
     get_mcp_vector_shadow_catalog,
 )
 
@@ -31,15 +36,20 @@ _manager = VectorStoreManager()
 
 
 def _ensure_shadow_catalog() -> None:
-    """Bind the MCP manager to the process-local shadow catalog when present."""
-    catalog = get_mcp_vector_shadow_catalog()
+    """Bind the MCP manager to the process-local dual/shadow catalog."""
+    catalog = get_mcp_vector_authority_catalog() or get_mcp_vector_shadow_catalog()
     if catalog is None:
         try:
-            catalog = configure_mcp_vector_shadow_catalog(enabled=True)
+            catalog = configure_mcp_vector_authority_catalog(enabled=True)
         except Exception:
-            return
+            try:
+                catalog = configure_mcp_vector_shadow_catalog(enabled=True)
+            except Exception:
+                return
     if getattr(_manager, "shadow_catalog", None) is None:
         _manager.shadow_catalog = catalog
+    if getattr(_manager, "authority_catalog", None) is None:
+        _manager.authority_catalog = catalog
 
 
 async def create_vector_index(

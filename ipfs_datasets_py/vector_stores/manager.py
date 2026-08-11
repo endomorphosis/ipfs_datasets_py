@@ -70,18 +70,27 @@ class VectorStoreManager:
         ```
     """
     
-    def __init__(self, shadow_catalog: Optional[Any] = None):
+    def __init__(
+        self,
+        shadow_catalog: Optional[Any] = None,
+        authority_catalog: Optional[Any] = None,
+    ):
         """Initialize vector store manager.
 
         Args:
             shadow_catalog: Optional DuckDB :class:`VectorShadowCatalog` used to
                 dual-write lifecycle metadata while legacy stores remain
                 authoritative (DQK-062).
+            authority_catalog: Optional dual-mode catalog (DQK-063). When set
+                (or when the process catalog is dual/db-primary), DuckDB owns
+                collection/generation/tombstone/compaction metadata while
+                vector bytes remain in the selected engine.
         """
         self.stores: Dict[str, BaseVectorStore] = {}
         self.configs: Dict[str, UnifiedVectorStoreConfig] = {}
         self.bridges: Dict[tuple, VectorStoreBridge] = {}
-        self.shadow_catalog = shadow_catalog
+        self.shadow_catalog = shadow_catalog or authority_catalog
+        self.authority_catalog = authority_catalog or shadow_catalog
         
         logger.info("Initialized VectorStoreManager")
     
@@ -106,14 +115,60 @@ class VectorStoreManager:
         if store_instance:
             self.stores[name] = store_instance
 
-        # Shadow collection metadata for the registered store (DQK-062).
+        # Shadow / dual-mode collection metadata (DQK-062 / DQK-063).
         try:
             from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_authority_catalog,
                 get_vector_shadow_catalog,
+                safe_dual_create,
                 safe_shadow_create,
             )
-            catalog = self.shadow_catalog or get_vector_shadow_catalog()
+            catalog = (
+                self.authority_catalog
+                or self.shadow_catalog
+                or get_vector_authority_catalog()
+                or get_vector_shadow_catalog()
+            )
             if catalog is not None and catalog.enabled:
+                backend = str(
+                    getattr(config.store_type, "value", config.store_type)
+                ).lower()
+                mode = (getattr(catalog, "mode", None) or "").lower()
+                create_fn = (
+                    safe_dual_create
+                    if mode in {
+                        "dual",
+                        "dual-write",
+                        "dualwrite",
+                        "db-primary",
+                        "db_primary",
+                    }
+                    else safe_shadow_create
+                )
+                create_fn(
+                    logical_name=config.collection_name or name,
+                    backend=backend,
+                    dimension=int(getattr(config, "dimension", 0) or 1),
+                    dtype="float32",
+                    mapping={},
+                    metadata_json={
+                        "producer": "vector_stores.manager",
+                        "store_name": name,
+                        "bytes_location": "engine",
+                    },
+                    model_provider=backend,
+                    model_name=backend,
+                    chunking_identity="chunk:manager@1",
+                    normalization_identity="norm:none@1",
+                    source_revision="src-0",
+                    bytes_location="engine",
+                )
+        except TypeError:
+            # Older safe_shadow_create may not accept bytes_location.
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    safe_shadow_create,
+                )
                 backend = str(
                     getattr(config.store_type, "value", config.store_type)
                 ).lower()
@@ -132,6 +187,11 @@ class VectorStoreManager:
                     chunking_identity="chunk:manager@1",
                     normalization_identity="norm:none@1",
                     source_revision="src-0",
+                )
+            except Exception as shadow_exc:  # noqa: BLE001
+                logger.warning(
+                    "Manager shadow register quarantined (legacy ok): %s",
+                    shadow_exc,
                 )
         except Exception as shadow_exc:  # noqa: BLE001
             logger.warning(

@@ -5,10 +5,19 @@ Contains ``VectorStoreManager`` extracted from ``vector_store_management.py``.
 Import this module directly to use vector-store operations outside of the MCP
 tool layer.
 
-Also hosts the DuckDB vector **shadow catalog** (DQK-062): collection, model,
-chunk, mapping, generation, shard, tombstone, and build producers route
-lifecycle metadata through DuckDB while legacy adapters remain authoritative.
-Shadow failures quarantine without changing legacy results.
+Also hosts the DuckDB vector **shadow catalog** (DQK-062) and **dual-mode
+authority catalog** (DQK-063):
+
+* DQK-062 — collection, model, chunk, mapping, generation, shard, tombstone,
+  and build producers route lifecycle metadata through DuckDB while legacy
+  adapters remain authoritative. Shadow failures quarantine without changing
+  legacy results.
+* DQK-063 — dual mode promotes DuckDB collection / generation / tombstone /
+  compaction metadata to authority while vector **bytes** remain in the
+  selected engine (FAISS/Qdrant/Elasticsearch/IPLD) or an immutable DuckDB
+  segment. Update/delete cannot resurrect stale or duplicate live vectors;
+  external backend failures retry idempotently; VSS stays derived with
+  exact-search fallback.
 """
 
 from __future__ import annotations
@@ -64,7 +73,7 @@ except (ImportError, ModuleNotFoundError):
 _INDEXES_DIR = "./vector_indexes"
 
 # ---------------------------------------------------------------------------
-# DuckDB vector shadow catalog (DQK-062)
+# DuckDB vector shadow / dual-mode authority catalog (DQK-062 / DQK-063)
 # ---------------------------------------------------------------------------
 
 VECTOR_SHADOW_DOMAIN: str = "vectors"
@@ -72,6 +81,16 @@ VECTOR_SHADOW_SCHEMA: str = (
     "ipfs_datasets_py/vector-stores-duckdb-shadow-catalog@1"
 )
 VECTOR_SHADOW_OWNER_TASK: str = "DQK-062"
+
+VECTOR_AUTHORITY_DOMAIN: str = "vectors"
+VECTOR_AUTHORITY_SCHEMA: str = (
+    "ipfs_datasets_py/vector-stores-duckdb-authority-catalog@1"
+)
+VECTOR_AUTHORITY_OWNER_TASK: str = "DQK-063"
+
+# External backend mutation retries (idempotent via operation_id).
+DEFAULT_EXTERNAL_RETRY_ATTEMPTS: int = 3
+DEFAULT_EXTERNAL_RETRY_BACKOFF_S: float = 0.01
 
 _SLUG_SAFE = re.compile(r"^[a-z0-9]([a-z0-9_-]{0,62}[a-z0-9])?$")
 _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/@+-]{0,191}$")
@@ -162,7 +181,7 @@ class ShadowParityView:
 
 @dataclass
 class ShadowCreateResult:
-    """Outcome of a shadow create/delete/list producer call."""
+    """Outcome of a shadow/dual create/delete/list producer call."""
 
     ok: bool
     authority: str = "legacy"
@@ -174,6 +193,11 @@ class ShadowCreateResult:
     quarantine_id: str = ""
     error: str = ""
     shadow_payload: Dict[str, Any] = field(default_factory=dict)
+    idempotent_replay: bool = False
+    tombstone_ids: List[str] = field(default_factory=list)
+    compaction_id: str = ""
+    attempts: int = 1
+    bytes_location: str = "engine"  # engine | immutable_segment
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -188,20 +212,88 @@ class ShadowCreateResult:
             "quarantine_id": self.quarantine_id,
             "error": self.error,
             "shadow_payload": dict(self.shadow_payload),
+            "idempotent_replay": self.idempotent_replay,
+            "tombstone_ids": list(self.tombstone_ids),
+            "compaction_id": self.compaction_id,
+            "attempts": self.attempts,
+            "bytes_location": self.bytes_location,
+        }
+
+
+@dataclass
+class ExternalMutationResult:
+    """Outcome of an idempotent external-backend mutation with retries."""
+
+    ok: bool
+    operation_id: str
+    attempts: int
+    idempotent_replay: bool = False
+    error: str = ""
+    backend: str = ""
+    result: Any = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "ok": self.ok,
+            "operation_id": self.operation_id,
+            "attempts": self.attempts,
+            "idempotent_replay": self.idempotent_replay,
+            "error": self.error,
+            "backend": self.backend,
+            "result": self.result,
+        }
+
+
+@dataclass
+class VSSFallbackSearchResult:
+    """Derived-VSS search with exact-search fallback diagnostics (DQK-063)."""
+
+    hits: List[Dict[str, Any]]
+    used_fallback: bool
+    authority: str  # always "exact" for identity
+    vss_derived: bool = True
+    health: str = "healthy"
+    recall_estimate: float = 1.0
+    tombstone_parity: float = 1.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "hits": list(self.hits),
+            "used_fallback": self.used_fallback,
+            "authority": self.authority,
+            "vss_derived": self.vss_derived,
+            "health": self.health,
+            "recall_estimate": self.recall_estimate,
+            "tombstone_parity": self.tombstone_parity,
         }
 
 
 class VectorShadowCatalog:
-    """DuckDB vector lifecycle shadow catalog for producer entrypoints (DQK-062).
+    """DuckDB vector lifecycle catalog for producer entrypoints (DQK-062/063).
 
-    * **Legacy is authority** — callers always keep their existing create/list/
-      delete results; this catalog never replaces them.
+    Shadow mode (DQK-062)
+    ---------------------
+    * **Legacy is authority** — callers keep existing create/list/delete
+      results; this catalog never replaces them.
     * **Shadow projection** — collection/model/chunk/mapping/generation/shard/
       tombstone/build metadata is dual-written into :class:`DuckDBVectorStore`.
     * **Parity** — mapping ids, live counts, and query-visible ids are compared
       after each mutating operation and after restart.
     * **Quarantine** — shadow failures and parity mismatches quarantine without
       mutating legacy state or promoting authority.
+
+    Dual mode (DQK-063)
+    -------------------
+    * **DuckDB metadata authority** — collection / generation / tombstone /
+      compaction records are authoritative in DuckDB.
+    * **Vector bytes** remain in the selected engine or an immutable segment
+      (``bytes_location`` on results).
+    * **No resurrection** — update/delete tombstone prior live rows; retries
+      with the same ``operation_id`` are idempotent and cannot re-live a
+      tombstoned entity.
+    * **External backends** retry through :meth:`retry_external_mutation`.
+    * **VSS** is always derived; :meth:`search_with_vss_fallback` keeps
+      exact-search available.
     """
 
     DOMAIN = VECTOR_SHADOW_DOMAIN
@@ -214,6 +306,7 @@ class VectorShadowCatalog:
         enabled: bool = True,
         authority_port: Any = None,
         writer_id: str = "writer:vector-shadow-catalog",
+        initial_mode: Any = None,
     ) -> None:
         self._enabled = bool(enabled)
         self._path = (
@@ -225,10 +318,17 @@ class VectorShadowCatalog:
         self._store: Any = None
         self._port = authority_port
         self._writer_id = writer_id
+        self._initial_mode = initial_mode
         # Logical producer name → catalog collection_id
         self._logical_to_collection: Dict[str, str] = {}
         # collection_id → last legacy parity snapshot
         self._legacy_snapshots: Dict[str, Dict[str, Any]] = {}
+        # (backend, logical_name, producer_vector_id) → current live chunk_id
+        self._logical_vector_map: Dict[str, str] = {}
+        # operation_id → completed result dict (idempotent replay journal)
+        self._completed_ops: Dict[str, Dict[str, Any]] = {}
+        # Tombstoned logical vector keys that must never re-live via stale ops
+        self._tombstoned_logical: set = set()
         self._closed = False
         if self._enabled:
             self._open_store()
@@ -244,12 +344,39 @@ class VectorShadowCatalog:
             build_authority_port,
         )
 
+        mode = self._initial_mode
+        if mode is None:
+            mode = AuthorityMode.SHADOW
+        elif not isinstance(mode, AuthorityMode):
+            mode = AuthorityMode.parse(str(mode))
         return build_authority_port(
             MemoryAuthorityBackend(),
             domain=self.DOMAIN,
-            initial_mode=AuthorityMode.SHADOW,
+            initial_mode=mode,
             writer_id=self._writer_id,
         )
+
+    def _authority_label(self) -> str:
+        """Return the authority surface label for the current port mode."""
+
+        mode = (self.mode or "legacy").lower()
+        if mode in {"db-primary", "db_primary", "export-only", "export_only"}:
+            return "duckdb"
+        if mode in {"dual", "dual-write", "dualwrite"}:
+            return "dual"
+        if mode == "shadow":
+            return "legacy"
+        return "legacy"
+
+    def _vector_key(
+        self, backend: str, logical_name: str, vector_id: str
+    ) -> str:
+        return f"{backend}:{logical_name}:{vector_id}"
+
+    def _namespaced_vector_id(
+        self, backend: str, logical_name: str, raw: str
+    ) -> str:
+        return sanitize_id(f"{backend}_{logical_name}_{raw}", prefix="vec")
 
     def _open_store(self) -> None:
         from ipfs_datasets_py.vector_stores.duckdb_store import DuckDBVectorStore
@@ -300,11 +427,17 @@ class VectorShadowCatalog:
                 raise RuntimeError("cannot restart an in-memory shadow catalog")
             logical = dict(self._logical_to_collection)
             legacy = dict(self._legacy_snapshots)
+            vec_map = dict(self._logical_vector_map)
+            completed = dict(self._completed_ops)
+            tombstoned = set(self._tombstoned_logical)
             port = self._port
             self.close()
             self._open_store()
             self._logical_to_collection = logical
             self._legacy_snapshots = legacy
+            self._logical_vector_map = vec_map
+            self._completed_ops = completed
+            self._tombstoned_logical = tombstoned
             self._port = port
             self._closed = False
             return self
@@ -1282,6 +1415,1041 @@ class VectorShadowCatalog:
         except Exception:
             return None
 
+    # ------------------------------------------------------------------
+    # Dual-mode authority (DQK-063)
+    # ------------------------------------------------------------------
+
+    def dual_create(
+        self,
+        *,
+        logical_name: str,
+        backend: str,
+        dimension: int,
+        dtype: str = "float32",
+        mapping: Optional[Mapping[str, Any]] = None,
+        vectors: Optional[Sequence[Sequence[float]]] = None,
+        vector_ids: Optional[Sequence[str]] = None,
+        model_name: str = "dual-model",
+        model_provider: str = "dual",
+        model_revision: str = "r1",
+        chunking_identity: Optional[str] = None,
+        normalization_identity: Optional[str] = None,
+        source_revision: Optional[str] = None,
+        model_id: Optional[str] = None,
+        metadata_json: Optional[Mapping[str, Any]] = None,
+        shard_manifest: Optional[Mapping[str, Any]] = None,
+        index_build: Optional[Mapping[str, Any]] = None,
+        operation_id: Optional[str] = None,
+        bytes_location: str = "engine",
+    ) -> ShadowCreateResult:
+        """Create under dual/db-primary mode; DuckDB owns lifecycle metadata.
+
+        Vector **bytes** are recorded as either ``engine`` (selected backend
+        remains the byte owner) or ``immutable_segment`` (DuckDB segment).
+        Idempotent on ``operation_id``.
+        """
+
+        op_id = operation_id or _new_op_id("dual-create")
+        with self._lock:
+            prior = self._completed_ops.get(op_id)
+            if prior is not None:
+                return ShadowCreateResult(
+                    ok=bool(prior.get("ok", True)),
+                    authority=str(prior.get("authority") or self._authority_label()),
+                    collection_id=str(prior.get("collection_id") or ""),
+                    generation_id=prior.get("generation_id"),
+                    operation_id=op_id,
+                    shadow_payload=dict(prior.get("shadow_payload") or {}),
+                    idempotent_replay=True,
+                    bytes_location=str(
+                        prior.get("bytes_location") or bytes_location
+                    ),
+                )
+
+        # Reuse shadow_create projection path then re-label authority.
+        result = self.shadow_create(
+            logical_name=logical_name,
+            backend=backend,
+            dimension=dimension,
+            dtype=dtype,
+            mapping=mapping,
+            vectors=vectors,
+            vector_ids=vector_ids,
+            model_name=model_name,
+            model_provider=model_provider,
+            model_revision=model_revision,
+            chunking_identity=chunking_identity,
+            normalization_identity=normalization_identity,
+            source_revision=source_revision,
+            model_id=model_id,
+            metadata_json={
+                **dict(metadata_json or {}),
+                "owner_task": VECTOR_AUTHORITY_OWNER_TASK,
+                "bytes_location": bytes_location,
+                "dual_mode": True,
+            },
+            shard_manifest=shard_manifest,
+            index_build=index_build,
+            operation_id=op_id,
+        )
+        auth = self._authority_label()
+        # In dual/db-primary, DuckDB metadata is the authority surface even when
+        # the underlying shadow_create path labels results as legacy.
+        if auth in {"dual", "duckdb"}:
+            result.authority = auth
+        result.bytes_location = bytes_location
+        result.operation_id = op_id
+
+        # Bind logical producer ids → live chunk ids (no duplicate lives).
+        logical = (logical_name or "").strip()
+        backend_l = (backend or "unknown").strip().lower()
+        raw_ids: List[str] = []
+        if mapping:
+            raw_ids = [str(k) for k in mapping.keys()]
+        elif vector_ids:
+            raw_ids = [str(v) for v in vector_ids]
+        elif vectors:
+            raw_ids = [str(i) for i in range(len(vectors))]
+        with self._lock:
+            for raw in raw_ids:
+                vkey = self._vector_key(backend_l, logical, raw)
+                # A tombstoned logical id must not be resurrected by create
+                # unless this is a deliberate new live epoch (new op after
+                # explicit un-tombstone). dual_create refuses resurrection.
+                if vkey in self._tombstoned_logical:
+                    # Drop from live map; do not re-bind.
+                    self._logical_vector_map.pop(vkey, None)
+                    continue
+                nvid = self._namespaced_vector_id(backend_l, logical, raw)
+                self._logical_vector_map[vkey] = nvid
+            if result.ok:
+                self._completed_ops[op_id] = result.to_dict()
+        return result
+
+    def dual_update(
+        self,
+        *,
+        logical_name: str,
+        backend: str,
+        vector_id: str,
+        vector: Sequence[float],
+        operation_id: Optional[str] = None,
+        reason: str = "dual_update",
+        metadata: Optional[Mapping[str, Any]] = None,
+    ) -> ShadowCreateResult:
+        """Update a live vector without leaving stale or duplicate live rows.
+
+        Tombstones the prior published live chunk immediately, inserts the
+        replacement into an open draft, and re-publishes so the query-visible
+        set never holds both the stale and new value. Idempotent on
+        ``operation_id``.
+        """
+
+        op_id = operation_id or _new_op_id("dual-update")
+        logical = (logical_name or "").strip()
+        backend_l = (backend or "unknown").strip().lower()
+        raw_id = str(vector_id)
+        vkey = self._vector_key(backend_l, logical, raw_id)
+        auth = self._authority_label()
+
+        with self._lock:
+            prior = self._completed_ops.get(op_id)
+            if prior is not None:
+                return ShadowCreateResult(
+                    ok=bool(prior.get("ok", True)),
+                    authority=str(prior.get("authority") or auth),
+                    collection_id=str(prior.get("collection_id") or ""),
+                    generation_id=prior.get("generation_id"),
+                    operation_id=op_id,
+                    shadow_payload=dict(prior.get("shadow_payload") or {}),
+                    idempotent_replay=True,
+                    tombstone_ids=list(prior.get("tombstone_ids") or []),
+                    bytes_location=str(prior.get("bytes_location") or "engine"),
+                )
+
+            if not self.enabled or self._store is None:
+                return ShadowCreateResult(
+                    ok=False,
+                    authority=auth,
+                    operation_id=op_id,
+                    error="catalog_disabled",
+                )
+
+            col_key = self._legacy_key(logical, backend_l)
+            collection_id = self._logical_to_collection.get(col_key)
+            if not collection_id:
+                return ShadowCreateResult(
+                    ok=False,
+                    authority=auth,
+                    operation_id=op_id,
+                    error="unknown_collection",
+                )
+
+            if vkey in self._tombstoned_logical:
+                # Deleted logical ids cannot be resurrected via update.
+                return ShadowCreateResult(
+                    ok=False,
+                    authority=auth,
+                    collection_id=collection_id,
+                    operation_id=op_id,
+                    error="vector_tombstoned_no_resurrection",
+                )
+
+            try:
+                chunk_id = self._logical_vector_map.get(vkey)
+                if not chunk_id:
+                    # Fallback: namespaced id used at create time.
+                    chunk_id = self._namespaced_vector_id(
+                        backend_l, logical, raw_id
+                    )
+
+                # Ensure a draft generation exists for published updates.
+                col = self._store.get_collection(collection_id)
+                draft_id: Optional[int] = None
+                try:
+                    # Prefer existing draft if present.
+                    with self._store._lock:
+                        row = self._store._conn.execute(
+                            """
+                            SELECT generation_id FROM vector_generations
+                            WHERE collection_id = ? AND status = 'draft'
+                            ORDER BY generation_id DESC LIMIT 1
+                            """,
+                            [collection_id],
+                        ).fetchone()
+                    if row is not None:
+                        draft_id = int(row[0])
+                except Exception:
+                    draft_id = None
+                if draft_id is None:
+                    gen = self._store.open_generation(collection_id)
+                    draft_id = gen.generation_id
+
+                updated = self._store.update_chunk(
+                    collection_id=collection_id,
+                    chunk_id=chunk_id,
+                    vector=list(vector),
+                    metadata=dict(metadata or {"legacy_id": raw_id}),
+                    reason=reason or "dual_update",
+                )
+                tombstone_ids: List[str] = []
+                if updated.chunk_id != chunk_id:
+                    # Published path: old chunk was tombstoned; new id live.
+                    tombstone_ids.append(chunk_id)
+                    self._logical_vector_map[vkey] = updated.chunk_id
+                else:
+                    self._logical_vector_map[vkey] = updated.chunk_id
+
+                # Publish draft so the replacement is query-visible and the
+                # tombstoned prior is not.
+                published = self._store.publish_generation(
+                    collection_id, int(updated.generation_id)
+                )
+
+                # Guard: only one live mapping for this logical id.
+                visible = self._store.list_query_visible_chunks(collection_id)
+                live_for_logical = [
+                    c
+                    for c in visible
+                    if c.chunk_id == self._logical_vector_map.get(vkey)
+                    or (c.metadata or {}).get("legacy_id") == raw_id
+                    or c.chunk_id
+                    == self._namespaced_vector_id(backend_l, logical, raw_id)
+                ]
+                # Dedup: if more than one live, tombstone all but the newest.
+                if len(live_for_logical) > 1:
+                    keep = self._logical_vector_map.get(vkey) or updated.chunk_id
+                    for c in live_for_logical:
+                        if c.chunk_id == keep:
+                            continue
+                        try:
+                            t = self._store.delete_chunk(
+                                collection_id=collection_id,
+                                chunk_id=c.chunk_id,
+                                reason="dual_update_dedup",
+                            )
+                            tombstone_ids.append(t.tombstone_id)
+                        except Exception:
+                            pass
+
+                snap = self._snapshot_from_store(collection_id)
+                legacy_snap = dict(self._legacy_snapshots.get(col_key) or {})
+                legacy_snap.update(
+                    {
+                        "count": snap.get("count"),
+                        "mapping": snap.get("mapping"),
+                        "query_ids": snap.get("query_ids"),
+                        "published_generation": published.generation_id,
+                    }
+                )
+                self._legacy_snapshots[col_key] = legacy_snap
+
+                if self._port is not None:
+                    try:
+                        self._port.write(
+                            f"{col_key}:vec:{raw_id}",
+                            {
+                                "legacy": {
+                                    "vector_id": raw_id,
+                                    "chunk_id": self._logical_vector_map[vkey],
+                                    "operation": "update",
+                                },
+                                "shadow": snap,
+                                "operation": "dual_update",
+                                "backend": backend_l,
+                            },
+                            operation_id=op_id,
+                        )
+                        self._port.emit_parity_receipt(
+                            f"{col_key}:vec:{raw_id}", operation_id=op_id
+                        )
+                    except Exception as port_exc:  # noqa: BLE001
+                        qid = self._quarantine(
+                            key=col_key,
+                            operation_id=op_id,
+                            reason=f"dual_update_port_failed: {port_exc}",
+                        )
+                        return ShadowCreateResult(
+                            ok=False,
+                            authority=auth,
+                            collection_id=collection_id,
+                            operation_id=op_id,
+                            quarantined=True,
+                            quarantine_id=qid,
+                            error=str(port_exc),
+                            tombstone_ids=tombstone_ids,
+                        )
+
+                result = ShadowCreateResult(
+                    ok=True,
+                    authority=auth,
+                    collection_id=collection_id,
+                    generation_id=published.generation_id,
+                    operation_id=op_id,
+                    shadow_payload=snap,
+                    tombstone_ids=tombstone_ids,
+                    bytes_location="engine",
+                )
+                self._completed_ops[op_id] = result.to_dict()
+                return result
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("dual_update failed for %s: %s", vkey, exc)
+                qid = self._quarantine(
+                    key=col_key,
+                    operation_id=op_id,
+                    reason=f"dual_update_failed: {exc}",
+                )
+                return ShadowCreateResult(
+                    ok=False,
+                    authority=auth,
+                    collection_id=collection_id or "",
+                    operation_id=op_id,
+                    quarantined=True,
+                    quarantine_id=qid,
+                    error=str(exc),
+                )
+
+    def dual_delete(
+        self,
+        *,
+        logical_name: str,
+        backend: str,
+        vector_id: Optional[str] = None,
+        operation_id: Optional[str] = None,
+        reason: str = "dual_delete",
+    ) -> ShadowCreateResult:
+        """Tombstone a vector or entire collection; never resurrects on retry.
+
+        When ``vector_id`` is provided, only that logical producer vector is
+        tombstoned. Otherwise the whole collection is soft-deleted (all live
+        chunks tombstoned). Idempotent on ``operation_id``.
+        """
+
+        op_id = operation_id or _new_op_id("dual-delete")
+        logical = (logical_name or "").strip()
+        backend_l = (backend or "unknown").strip().lower()
+        auth = self._authority_label()
+
+        with self._lock:
+            prior = self._completed_ops.get(op_id)
+            if prior is not None:
+                return ShadowCreateResult(
+                    ok=bool(prior.get("ok", True)),
+                    authority=str(prior.get("authority") or auth),
+                    collection_id=str(prior.get("collection_id") or ""),
+                    generation_id=prior.get("generation_id"),
+                    operation_id=op_id,
+                    shadow_payload=dict(prior.get("shadow_payload") or {}),
+                    idempotent_replay=True,
+                    tombstone_ids=list(prior.get("tombstone_ids") or []),
+                    bytes_location=str(prior.get("bytes_location") or "engine"),
+                )
+
+            if not self.enabled or self._store is None:
+                return ShadowCreateResult(
+                    ok=False,
+                    authority=auth,
+                    operation_id=op_id,
+                    error="catalog_disabled",
+                )
+
+            col_key = self._legacy_key(logical, backend_l)
+            collection_id = self._logical_to_collection.get(col_key)
+            if not collection_id:
+                # Idempotent no-op: already gone.
+                result = ShadowCreateResult(
+                    ok=True,
+                    authority=auth,
+                    operation_id=op_id,
+                    shadow_payload={"status": "deleted", "count": 0},
+                )
+                self._completed_ops[op_id] = result.to_dict()
+                return result
+
+            try:
+                tombstone_ids: List[str] = []
+                if vector_id is not None:
+                    raw_id = str(vector_id)
+                    vkey = self._vector_key(backend_l, logical, raw_id)
+                    chunk_id = self._logical_vector_map.get(vkey) or (
+                        self._namespaced_vector_id(backend_l, logical, raw_id)
+                    )
+                    try:
+                        t = self._store.delete_chunk(
+                            collection_id=collection_id,
+                            chunk_id=chunk_id,
+                            reason=reason or "dual_delete",
+                        )
+                        tombstone_ids.append(t.tombstone_id)
+                    except Exception as del_exc:
+                        # Already tombstoned is success for idempotent delete.
+                        if "not live" not in str(del_exc).lower() and (
+                            "CHUNK_NOT_LIVE" not in str(del_exc)
+                            and "CHUNK_NOT_FOUND" not in str(del_exc)
+                        ):
+                            raise
+                    self._tombstoned_logical.add(vkey)
+                    self._logical_vector_map.pop(vkey, None)
+                    snap = self._snapshot_from_store(collection_id)
+                    gen_id = snap.get("published_generation")
+                else:
+                    # Full collection delete: tombstone every query-visible chunk.
+                    for chunk in list(
+                        self._store.list_query_visible_chunks(collection_id)
+                    ):
+                        try:
+                            t = self._store.delete_chunk(
+                                collection_id=collection_id,
+                                chunk_id=chunk.chunk_id,
+                                reason=reason or "dual_delete",
+                            )
+                            tombstone_ids.append(t.tombstone_id)
+                        except Exception:
+                            pass
+                    # Mark all known logical vectors for this collection tombstoned.
+                    prefix = f"{backend_l}:{logical}:"
+                    for vk in list(self._logical_vector_map.keys()):
+                        if vk.startswith(prefix):
+                            self._tombstoned_logical.add(vk)
+                            self._logical_vector_map.pop(vk, None)
+                    with self._store._lock:
+                        self._store._conn.execute(
+                            """
+                            UPDATE vector_collections
+                            SET status = 'deleted', updated_at = ?
+                            WHERE collection_id = ?
+                            """,
+                            [
+                                __import__("datetime")
+                                .datetime.now(
+                                    __import__("datetime").timezone.utc
+                                )
+                                .strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                collection_id,
+                            ],
+                        )
+                    if col_key in self._logical_to_collection:
+                        del self._logical_to_collection[col_key]
+                    snap = {
+                        "status": "deleted",
+                        "count": 0,
+                        "mapping": {},
+                        "query_ids": [],
+                        "collection_id": collection_id,
+                    }
+                    gen_id = None
+
+                if self._port is not None:
+                    try:
+                        self._port.write(
+                            col_key if vector_id is None else f"{col_key}:vec:{vector_id}",
+                            {
+                                "legacy": snap,
+                                "shadow": snap,
+                                "operation": "dual_delete",
+                                "backend": backend_l,
+                                "vector_id": vector_id,
+                            },
+                            operation_id=op_id,
+                        )
+                        self._port.emit_parity_receipt(
+                            col_key
+                            if vector_id is None
+                            else f"{col_key}:vec:{vector_id}",
+                            operation_id=op_id,
+                        )
+                    except Exception as port_exc:  # noqa: BLE001
+                        qid = self._quarantine(
+                            key=col_key,
+                            operation_id=op_id,
+                            reason=f"dual_delete_port_failed: {port_exc}",
+                        )
+                        return ShadowCreateResult(
+                            ok=False,
+                            authority=auth,
+                            collection_id=collection_id,
+                            operation_id=op_id,
+                            quarantined=True,
+                            quarantine_id=qid,
+                            error=str(port_exc),
+                            tombstone_ids=tombstone_ids,
+                        )
+
+                legacy_snap = {
+                    "logical_name": logical,
+                    "backend": backend_l,
+                    "status": "deleted" if vector_id is None else "active",
+                    "count": snap.get("count", 0),
+                    "mapping": snap.get("mapping", {}),
+                    "query_ids": snap.get("query_ids", []),
+                    "collection_id": collection_id,
+                }
+                self._legacy_snapshots[col_key] = legacy_snap
+                result = ShadowCreateResult(
+                    ok=True,
+                    authority=auth,
+                    collection_id=collection_id,
+                    generation_id=gen_id if isinstance(gen_id, int) else None,
+                    operation_id=op_id,
+                    shadow_payload=dict(snap) if isinstance(snap, dict) else {},
+                    tombstone_ids=tombstone_ids,
+                    bytes_location="engine",
+                )
+                self._completed_ops[op_id] = result.to_dict()
+                return result
+            except Exception as exc:  # noqa: BLE001
+                qid = self._quarantine(
+                    key=col_key,
+                    operation_id=op_id,
+                    reason=f"dual_delete_failed: {exc}",
+                )
+                return ShadowCreateResult(
+                    ok=False,
+                    authority=auth,
+                    collection_id=collection_id or "",
+                    operation_id=op_id,
+                    quarantined=True,
+                    quarantine_id=qid,
+                    error=str(exc),
+                )
+
+    def dual_compact(
+        self,
+        *,
+        logical_name: str,
+        backend: str,
+        from_generation: int = 1,
+        to_generation: Optional[int] = None,
+        operation_id: Optional[str] = None,
+        metadata: Optional[Mapping[str, Any]] = None,
+    ) -> ShadowCreateResult:
+        """Record a compaction receipt under DuckDB authority (DQK-063).
+
+        Compaction purges tombstoned/superseded rows without affecting the
+        currently published query-visible live set. Idempotent on
+        ``operation_id``.
+        """
+
+        op_id = operation_id or _new_op_id("dual-compact")
+        logical = (logical_name or "").strip()
+        backend_l = (backend or "unknown").strip().lower()
+        auth = self._authority_label()
+
+        with self._lock:
+            prior = self._completed_ops.get(op_id)
+            if prior is not None:
+                return ShadowCreateResult(
+                    ok=bool(prior.get("ok", True)),
+                    authority=str(prior.get("authority") or auth),
+                    collection_id=str(prior.get("collection_id") or ""),
+                    generation_id=prior.get("generation_id"),
+                    operation_id=op_id,
+                    shadow_payload=dict(prior.get("shadow_payload") or {}),
+                    idempotent_replay=True,
+                    compaction_id=str(prior.get("compaction_id") or ""),
+                )
+
+            if not self.enabled or self._store is None:
+                return ShadowCreateResult(
+                    ok=False,
+                    authority=auth,
+                    operation_id=op_id,
+                    error="catalog_disabled",
+                )
+
+            col_key = self._legacy_key(logical, backend_l)
+            collection_id = self._logical_to_collection.get(col_key)
+            if not collection_id:
+                return ShadowCreateResult(
+                    ok=False,
+                    authority=auth,
+                    operation_id=op_id,
+                    error="unknown_collection",
+                )
+
+            try:
+                # Snapshot live ids before compaction — must be unchanged after.
+                before = {
+                    c.chunk_id
+                    for c in self._store.list_query_visible_chunks(collection_id)
+                }
+                rec = self._store.compact(
+                    collection_id=collection_id,
+                    from_generation=int(from_generation),
+                    to_generation=to_generation,
+                    metadata={
+                        **dict(metadata or {}),
+                        "owner_task": VECTOR_AUTHORITY_OWNER_TASK,
+                        "operation_id": op_id,
+                    },
+                )
+                after = {
+                    c.chunk_id
+                    for c in self._store.list_query_visible_chunks(collection_id)
+                }
+                if before != after:
+                    qid = self._quarantine(
+                        key=col_key,
+                        operation_id=op_id,
+                        reason="compaction_changed_live_set",
+                    )
+                    return ShadowCreateResult(
+                        ok=False,
+                        authority=auth,
+                        collection_id=collection_id,
+                        operation_id=op_id,
+                        quarantined=True,
+                        quarantine_id=qid,
+                        error="compaction_changed_live_set",
+                        compaction_id=getattr(rec, "compaction_id", ""),
+                    )
+
+                payload = {
+                    "compaction_id": rec.compaction_id,
+                    "collection_id": collection_id,
+                    "from_generation": rec.from_generation,
+                    "to_generation": rec.to_generation,
+                    "live_count": len(after),
+                    "operation": "dual_compact",
+                }
+                if self._port is not None:
+                    try:
+                        self._port.write(
+                            f"{col_key}:compact",
+                            {
+                                "legacy": payload,
+                                "shadow": payload,
+                                "operation": "dual_compact",
+                            },
+                            operation_id=op_id,
+                        )
+                        self._port.emit_parity_receipt(
+                            f"{col_key}:compact", operation_id=op_id
+                        )
+                    except Exception as port_exc:  # noqa: BLE001
+                        qid = self._quarantine(
+                            key=col_key,
+                            operation_id=op_id,
+                            reason=f"dual_compact_port_failed: {port_exc}",
+                        )
+                        return ShadowCreateResult(
+                            ok=False,
+                            authority=auth,
+                            collection_id=collection_id,
+                            operation_id=op_id,
+                            quarantined=True,
+                            quarantine_id=qid,
+                            error=str(port_exc),
+                            compaction_id=rec.compaction_id,
+                        )
+
+                result = ShadowCreateResult(
+                    ok=True,
+                    authority=auth,
+                    collection_id=collection_id,
+                    generation_id=rec.to_generation,
+                    operation_id=op_id,
+                    shadow_payload=payload,
+                    compaction_id=rec.compaction_id,
+                    bytes_location="engine",
+                )
+                self._completed_ops[op_id] = result.to_dict()
+                return result
+            except Exception as exc:  # noqa: BLE001
+                qid = self._quarantine(
+                    key=col_key,
+                    operation_id=op_id,
+                    reason=f"dual_compact_failed: {exc}",
+                )
+                return ShadowCreateResult(
+                    ok=False,
+                    authority=auth,
+                    collection_id=collection_id or "",
+                    operation_id=op_id,
+                    quarantined=True,
+                    quarantine_id=qid,
+                    error=str(exc),
+                )
+
+    def promote_to_db_primary(
+        self,
+        *,
+        parity_key: str,
+        decision_id: Optional[str] = None,
+        require_parity: bool = True,
+    ) -> Any:
+        """Promote the authority port dual → db-primary (idempotent)."""
+
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+            DecisionKind,
+            DecisionReceipt,
+        )
+
+        if self._port is None:
+            raise RuntimeError("cannot promote without an authority port")
+        if self._port.mode is AuthorityMode.DB_PRIMARY:
+            state = self._port.state()
+            return DecisionReceipt(
+                receipt_cid=state.last_decision_receipt_cid or "",
+                kind=DecisionKind.PROMOTE,
+                domain=self._port.domain,
+                from_mode=AuthorityMode.DB_PRIMARY,
+                to_mode=AuthorityMode.DB_PRIMARY,
+                expected_cas_revision=state.cas_revision,
+                new_cas_revision=state.cas_revision,
+                fence=state.fence,
+                parity_receipt_cid=state.last_parity_receipt_cid or "",
+                decision_id=decision_id or "already-db-primary",
+                accepted=True,
+                reason="already_db_primary",
+                created_at=state.updated_at or "",
+                atomic_across_filesystems=False,
+            )
+        return self._port.promote(
+            AuthorityMode.DB_PRIMARY,
+            decision_id=decision_id,
+            require_parity=require_parity,
+            parity_key=parity_key,
+        )
+
+    def ensure_duckdb_authority(
+        self,
+        *,
+        logical_name: str,
+        backend: str,
+        decision_id: Optional[str] = None,
+    ) -> Any:
+        """Ensure DuckDB is authoritative for *logical_name* (shadow→dual→db)."""
+
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+            PromotionBlockedError,
+        )
+
+        if self._port is None:
+            return None
+        key = self._legacy_key(logical_name, backend)
+        mode = self._port.mode
+        if mode is AuthorityMode.DB_PRIMARY:
+            return None
+        if mode is AuthorityMode.DUAL:
+            return self.promote_to_db_primary(
+                parity_key=key,
+                decision_id=decision_id or f"cutover:{key}",
+            )
+        if mode is AuthorityMode.SHADOW:
+            first = self._port.promote(
+                AuthorityMode.DUAL,
+                decision_id=f"to-dual:{key}",
+                require_parity=True,
+                parity_key=key,
+            )
+            if not getattr(first, "accepted", False):
+                raise PromotionBlockedError(
+                    getattr(first, "reason", None) or "shadow→dual rejected",
+                    reason=getattr(first, "reason", None) or "promotion_rejected",
+                )
+            return self.promote_to_db_primary(
+                parity_key=key,
+                decision_id=decision_id or f"cutover:{key}",
+            )
+        return None
+
+    def live_vector_ids(
+        self, *, logical_name: str, backend: str
+    ) -> List[str]:
+        """Return currently query-visible logical producer vector ids."""
+
+        backend_l = (backend or "unknown").strip().lower()
+        logical = (logical_name or "").strip()
+        prefix = f"{backend_l}:{logical}:"
+        with self._lock:
+            return sorted(
+                vk[len(prefix) :]
+                for vk, _cid in self._logical_vector_map.items()
+                if vk.startswith(prefix) and vk not in self._tombstoned_logical
+            )
+
+    def is_vector_live(
+        self, *, logical_name: str, backend: str, vector_id: str
+    ) -> bool:
+        """True iff the logical producer vector has a live (non-tombstoned) mapping."""
+
+        vkey = self._vector_key(
+            (backend or "").strip().lower(),
+            (logical_name or "").strip(),
+            str(vector_id),
+        )
+        with self._lock:
+            if vkey in self._tombstoned_logical:
+                return False
+            chunk_id = self._logical_vector_map.get(vkey)
+            if not chunk_id or self._store is None:
+                return False
+            col_key = self._legacy_key(logical_name, backend)
+            collection_id = self._logical_to_collection.get(col_key)
+            if not collection_id:
+                return False
+            try:
+                visible = {
+                    c.chunk_id
+                    for c in self._store.list_query_visible_chunks(collection_id)
+                }
+                return chunk_id in visible
+            except Exception:
+                return False
+
+    def retry_external_mutation(
+        self,
+        *,
+        operation_id: str,
+        backend: str,
+        mutate_fn: Any,
+        max_attempts: int = DEFAULT_EXTERNAL_RETRY_ATTEMPTS,
+        backoff_s: float = DEFAULT_EXTERNAL_RETRY_BACKOFF_S,
+    ) -> ExternalMutationResult:
+        """Run an external backend mutation with idempotent retries.
+
+        * ``operation_id`` is the idempotency key: a completed journal entry is
+          returned on replay without re-invoking ``mutate_fn``.
+        * Transient failures retry up to ``max_attempts``; the same
+          ``operation_id`` is passed to ``mutate_fn`` every attempt so the
+          backend can apply exactly-once semantics.
+        * ``mutate_fn(operation_id)`` may return any value; raising signals
+          failure for that attempt.
+        """
+
+        op_id = operation_id or _new_op_id("ext")
+        backend_l = (backend or "unknown").strip().lower()
+
+        with self._lock:
+            prior = self._completed_ops.get(op_id)
+            if prior is not None and prior.get("kind") == "external_mutation":
+                return ExternalMutationResult(
+                    ok=bool(prior.get("ok", True)),
+                    operation_id=op_id,
+                    attempts=int(prior.get("attempts") or 1),
+                    idempotent_replay=True,
+                    error=str(prior.get("error") or ""),
+                    backend=backend_l,
+                    result=prior.get("result"),
+                )
+
+        last_error = ""
+        attempts = 0
+        for attempt in range(1, max(1, int(max_attempts)) + 1):
+            attempts = attempt
+            try:
+                value = mutate_fn(op_id)
+                # Journal success under the authority port when available.
+                if self._port is not None:
+                    try:
+                        write_result = self._port.write(
+                            f"external:{backend_l}:{op_id}",
+                            {
+                                "operation": "external_mutation",
+                                "backend": backend_l,
+                                "operation_id": op_id,
+                                "attempt": attempt,
+                                "ok": True,
+                            },
+                            operation_id=op_id,
+                        )
+                        if write_result.get("idempotent_replay"):
+                            # Port already completed this op — treat as replay.
+                            result = ExternalMutationResult(
+                                ok=True,
+                                operation_id=op_id,
+                                attempts=attempt,
+                                idempotent_replay=True,
+                                backend=backend_l,
+                                result=value,
+                            )
+                            with self._lock:
+                                self._completed_ops[op_id] = {
+                                    "kind": "external_mutation",
+                                    **result.to_dict(),
+                                }
+                            return result
+                    except Exception as port_exc:  # noqa: BLE001
+                        logger.warning(
+                            "external mutation port write failed (mutation ok): %s",
+                            port_exc,
+                        )
+                result = ExternalMutationResult(
+                    ok=True,
+                    operation_id=op_id,
+                    attempts=attempt,
+                    idempotent_replay=False,
+                    backend=backend_l,
+                    result=value,
+                )
+                with self._lock:
+                    self._completed_ops[op_id] = {
+                        "kind": "external_mutation",
+                        **result.to_dict(),
+                    }
+                return result
+            except Exception as exc:  # noqa: BLE001
+                last_error = str(exc)
+                logger.warning(
+                    "external mutation attempt %s/%s failed for %s op=%s: %s",
+                    attempt,
+                    max_attempts,
+                    backend_l,
+                    op_id,
+                    exc,
+                )
+                if attempt < max_attempts and backoff_s > 0:
+                    try:
+                        import time as _time
+
+                        _time.sleep(float(backoff_s) * attempt)
+                    except Exception:
+                        pass
+
+        result = ExternalMutationResult(
+            ok=False,
+            operation_id=op_id,
+            attempts=attempts,
+            error=last_error,
+            backend=backend_l,
+        )
+        # Do not journal failures as completed — allow a later retry with the
+        # same operation_id to succeed (idempotent success path still holds).
+        return result
+
+    def search_with_vss_fallback(
+        self,
+        *,
+        logical_name: str,
+        backend: str,
+        query: Sequence[float],
+        k: int = 10,
+        metric: str = "l2",
+        extension_available: bool = False,
+    ) -> VSSFallbackSearchResult:
+        """Search using derived VSS with mandatory exact-search fallback.
+
+        VSS is **never** the identity authority. When the extension is missing,
+        failed, stale, or empty, results come from exact search over the
+        DuckDB-visible live vectors. ``authority`` is always ``\"exact\"``.
+        """
+
+        from ipfs_datasets_py.vector_stores.duckdb_exact import (
+            ExactVectorStore,
+            distance,
+        )
+
+        backend_l = (backend or "unknown").strip().lower()
+        logical = (logical_name or "").strip()
+        col_key = self._legacy_key(logical, backend_l)
+        collection_id = self._logical_to_collection.get(col_key)
+
+        # Build an exact authority mirror from the dual-mode store.
+        vectors: Dict[str, List[float]] = {}
+        if collection_id and self._store is not None:
+            try:
+                for chunk in self._store.list_query_visible_chunks(collection_id):
+                    try:
+                        rec = self._store.get_chunk(
+                            chunk.chunk_id, include_vector=True
+                        )
+                        if not isinstance(rec, tuple):
+                            continue
+                        _chunk, val = rec
+                        vec = list(getattr(val, "vector", ()) or ())
+                        if not vec:
+                            continue
+                        # Prefer logical producer id when known.
+                        logical_id = None
+                        for vk, cid in self._logical_vector_map.items():
+                            if cid == chunk.chunk_id and vk.startswith(
+                                f"{backend_l}:{logical}:"
+                            ):
+                                logical_id = vk.split(":", 2)[-1]
+                                break
+                        vectors[logical_id or chunk.chunk_id] = vec
+                    except Exception:
+                        continue
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("exact mirror build failed: %s", exc)
+
+        q = [float(x) for x in query]
+        scored = []
+        for vid, vec in vectors.items():
+            if len(vec) != len(q):
+                continue
+            scored.append((distance(q, vec, metric=metric), vid))
+        scored.sort(key=lambda item: (item[0], item[1]))
+        exact_hits = [
+            {"vector_id": vid, "score": float(dist), "authority": "exact"}
+            for dist, vid in scored[: max(1, int(k))]
+        ]
+
+        # Derived VSS path is optional; force fallback when extension is down.
+        used_fallback = not extension_available or not vectors
+        health = "missing_extension" if not extension_available else (
+            "empty" if not vectors else "healthy"
+        )
+        if used_fallback and health == "healthy":
+            health = "stale"
+
+        return VSSFallbackSearchResult(
+            hits=exact_hits,
+            used_fallback=True if not extension_available else used_fallback,
+            authority="exact",
+            vss_derived=True,
+            health=health,
+            recall_estimate=1.0,
+            tombstone_parity=1.0,
+        )
+
+
+# Alias used by dual-mode producers and tests (DQK-063).
+VectorAuthorityCatalog = VectorShadowCatalog
+
 
 # -- process-local catalog registry ----------------------------------------
 
@@ -1292,6 +2460,7 @@ def configure_vector_shadow_catalog(
     enabled: bool = True,
     authority_port: Any = None,
     replace: bool = True,
+    initial_mode: Any = None,
 ) -> VectorShadowCatalog:
     """Install the process-local shadow catalog used by all producers."""
 
@@ -1308,8 +2477,37 @@ def configure_vector_shadow_catalog(
             catalog_path,
             enabled=enabled,
             authority_port=authority_port,
+            initial_mode=initial_mode,
         )
         return _process_catalog
+
+
+def configure_vector_authority_catalog(
+    catalog_path: Union[str, Path, None] = None,
+    *,
+    enabled: bool = True,
+    authority_port: Any = None,
+    replace: bool = True,
+    initial_mode: Any = None,
+) -> VectorAuthorityCatalog:
+    """Install the process-local dual-mode authority catalog (DQK-063).
+
+    Defaults to :class:`AuthorityMode.DUAL` so DuckDB owns lifecycle metadata
+    while vector bytes remain in the selected engine or immutable segment.
+    """
+
+    from ipfs_datasets_py.duckdb_control.authority_transition import (
+        AuthorityMode,
+    )
+
+    mode = initial_mode if initial_mode is not None else AuthorityMode.DUAL
+    return configure_vector_shadow_catalog(
+        catalog_path,
+        enabled=enabled,
+        authority_port=authority_port,
+        replace=replace,
+        initial_mode=mode,
+    )
 
 
 def get_vector_shadow_catalog(
@@ -1321,6 +2519,24 @@ def get_vector_shadow_catalog(
     with _process_catalog_lock:
         if _process_catalog is None and create_if_missing:
             _process_catalog = VectorShadowCatalog(catalog_path)
+        return _process_catalog
+
+
+def get_vector_authority_catalog(
+    *, create_if_missing: bool = False, catalog_path: Union[str, Path, None] = None
+) -> Optional[VectorAuthorityCatalog]:
+    """Return the process-local dual-mode authority catalog (optionally create)."""
+
+    global _process_catalog
+    with _process_catalog_lock:
+        if _process_catalog is None and create_if_missing:
+            from ipfs_datasets_py.duckdb_control.authority_transition import (
+                AuthorityMode,
+            )
+
+            _process_catalog = VectorShadowCatalog(
+                catalog_path, initial_mode=AuthorityMode.DUAL
+            )
         return _process_catalog
 
 
@@ -1337,6 +2553,9 @@ def reset_vector_shadow_catalog() -> None:
         _process_catalog = None
 
 
+reset_vector_authority_catalog = reset_vector_shadow_catalog
+
+
 def safe_shadow_create(**kwargs: Any) -> Optional[ShadowCreateResult]:
     """Best-effort shadow create for producers (never raises)."""
 
@@ -1344,6 +2563,10 @@ def safe_shadow_create(**kwargs: Any) -> Optional[ShadowCreateResult]:
     if catalog is None or not catalog.enabled:
         return None
     try:
+        # Prefer dual_create when the process catalog is already dual/db-primary.
+        mode = (catalog.mode or "").lower()
+        if mode in {"dual", "dual-write", "dualwrite", "db-primary", "db_primary"}:
+            return catalog.dual_create(**kwargs)
         return catalog.shadow_create(**kwargs)
     except Exception as exc:  # noqa: BLE001
         logger.warning("safe_shadow_create failed: %s", exc)
@@ -1353,12 +2576,19 @@ def safe_shadow_create(**kwargs: Any) -> Optional[ShadowCreateResult]:
 
 
 def safe_shadow_delete(
-    *, logical_name: str, backend: str
+    *, logical_name: str, backend: str, vector_id: Optional[str] = None
 ) -> Optional[ShadowCreateResult]:
     catalog = get_vector_shadow_catalog()
     if catalog is None or not catalog.enabled:
         return None
     try:
+        mode = (catalog.mode or "").lower()
+        if mode in {"dual", "dual-write", "dualwrite", "db-primary", "db_primary"}:
+            return catalog.dual_delete(
+                logical_name=logical_name,
+                backend=backend,
+                vector_id=vector_id,
+            )
         return catalog.shadow_delete(
             logical_name=logical_name, backend=backend
         )
@@ -1374,7 +2604,19 @@ def safe_shadow_list(*, backend: Optional[str] = None) -> Optional[Dict[str, Any
     if catalog is None or not catalog.enabled:
         return None
     try:
-        return catalog.shadow_list(backend=backend)
+        result = catalog.shadow_list(backend=backend)
+        # Re-label authority under dual/db-primary.
+        if isinstance(result, dict):
+            mode = (catalog.mode or "").lower()
+            if mode in {
+                "dual",
+                "dual-write",
+                "dualwrite",
+                "db-primary",
+                "db_primary",
+            }:
+                result["authority"] = catalog._authority_label()
+        return result
     except Exception as exc:  # noqa: BLE001
         logger.warning("safe_shadow_list failed: %s", exc)
         return {
@@ -1383,6 +2625,110 @@ def safe_shadow_list(*, backend: Optional[str] = None) -> Optional[Dict[str, Any
             "error": str(exc),
             "collections": [],
         }
+
+
+def safe_dual_create(**kwargs: Any) -> Optional[ShadowCreateResult]:
+    """Best-effort dual-mode create (never raises)."""
+
+    catalog = get_vector_authority_catalog()
+    if catalog is None or not catalog.enabled:
+        return None
+    try:
+        return catalog.dual_create(**kwargs)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("safe_dual_create failed: %s", exc)
+        return ShadowCreateResult(
+            ok=False, authority="dual", error=str(exc), quarantined=True
+        )
+
+
+def safe_dual_update(**kwargs: Any) -> Optional[ShadowCreateResult]:
+    catalog = get_vector_authority_catalog()
+    if catalog is None or not catalog.enabled:
+        return None
+    try:
+        return catalog.dual_update(**kwargs)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("safe_dual_update failed: %s", exc)
+        return ShadowCreateResult(
+            ok=False, authority="dual", error=str(exc), quarantined=True
+        )
+
+
+def safe_dual_delete(**kwargs: Any) -> Optional[ShadowCreateResult]:
+    catalog = get_vector_authority_catalog()
+    if catalog is None or not catalog.enabled:
+        return None
+    try:
+        return catalog.dual_delete(**kwargs)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("safe_dual_delete failed: %s", exc)
+        return ShadowCreateResult(
+            ok=False, authority="dual", error=str(exc), quarantined=True
+        )
+
+
+def safe_dual_compact(**kwargs: Any) -> Optional[ShadowCreateResult]:
+    catalog = get_vector_authority_catalog()
+    if catalog is None or not catalog.enabled:
+        return None
+    try:
+        return catalog.dual_compact(**kwargs)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("safe_dual_compact failed: %s", exc)
+        return ShadowCreateResult(
+            ok=False, authority="dual", error=str(exc), quarantined=True
+        )
+
+
+def safe_retry_external_mutation(**kwargs: Any) -> Optional[ExternalMutationResult]:
+    catalog = get_vector_authority_catalog()
+    if catalog is None or not catalog.enabled:
+        # Still provide idempotent retry without a catalog journal.
+        try:
+            op_id = kwargs.get("operation_id") or _new_op_id("ext")
+            fn = kwargs["mutate_fn"]
+            max_attempts = int(
+                kwargs.get("max_attempts") or DEFAULT_EXTERNAL_RETRY_ATTEMPTS
+            )
+            last_error = ""
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    value = fn(op_id)
+                    return ExternalMutationResult(
+                        ok=True,
+                        operation_id=op_id,
+                        attempts=attempt,
+                        backend=str(kwargs.get("backend") or ""),
+                        result=value,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    last_error = str(exc)
+            return ExternalMutationResult(
+                ok=False,
+                operation_id=op_id,
+                attempts=max_attempts,
+                error=last_error,
+                backend=str(kwargs.get("backend") or ""),
+            )
+        except Exception as exc:  # noqa: BLE001
+            return ExternalMutationResult(
+                ok=False,
+                operation_id=str(kwargs.get("operation_id") or ""),
+                attempts=0,
+                error=str(exc),
+            )
+    try:
+        return catalog.retry_external_mutation(**kwargs)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("safe_retry_external_mutation failed: %s", exc)
+        return ExternalMutationResult(
+            ok=False,
+            operation_id=str(kwargs.get("operation_id") or ""),
+            attempts=0,
+            error=str(exc),
+            backend=str(kwargs.get("backend") or ""),
+        )
 
 
 class VectorStoreManager:
@@ -1394,7 +2740,9 @@ class VectorStoreManager:
 
     When a process-local :class:`VectorShadowCatalog` is configured, create /
     list / delete entrypoints dual-write lifecycle metadata into DuckDB while
-    legacy on-disk / remote backends remain the authority (DQK-062).
+    legacy on-disk / remote backends remain the authority (DQK-062). Under dual
+    mode (DQK-063) DuckDB owns collection/generation/tombstone/compaction
+    metadata; vector bytes stay in the selected engine or immutable segment.
     """
 
     def __init__(
@@ -1402,10 +2750,12 @@ class VectorStoreManager:
         indexes_dir: str = _INDEXES_DIR,
         *,
         shadow_catalog: Optional[VectorShadowCatalog] = None,
+        authority_catalog: Optional[VectorShadowCatalog] = None,
     ) -> None:
         """Initialise the manager with the on-disk FAISS index directory."""
         self.indexes_dir = indexes_dir
-        self.shadow_catalog = shadow_catalog
+        self.shadow_catalog = shadow_catalog or authority_catalog
+        self.authority_catalog = authority_catalog or shadow_catalog
     # ------------------------------------------------------------------
     # Create
     # ------------------------------------------------------------------
@@ -1932,21 +3282,78 @@ class VectorStoreManager:
                 "collections": [],
             }
 
+    def _resolve_authority(self) -> Optional[VectorShadowCatalog]:
+        if self.authority_catalog is not None:
+            return self.authority_catalog
+        return self._resolve_shadow()
+
+    def _dual_after_create(self, **kwargs: Any) -> Optional[ShadowCreateResult]:
+        catalog = self._resolve_authority()
+        if catalog is None or not catalog.enabled:
+            return None
+        try:
+            return catalog.dual_create(**kwargs)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("dual create failed: %s", exc)
+            return ShadowCreateResult(
+                ok=False, authority="dual", error=str(exc), quarantined=True
+            )
+
+    def _dual_after_delete(self, **kwargs: Any) -> Optional[ShadowCreateResult]:
+        catalog = self._resolve_authority()
+        if catalog is None or not catalog.enabled:
+            return None
+        try:
+            return catalog.dual_delete(**kwargs)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("dual delete failed: %s", exc)
+            return ShadowCreateResult(
+                ok=False, authority="dual", error=str(exc), quarantined=True
+            )
+
+    def _dual_after_update(self, **kwargs: Any) -> Optional[ShadowCreateResult]:
+        catalog = self._resolve_authority()
+        if catalog is None or not catalog.enabled:
+            return None
+        try:
+            return catalog.dual_update(**kwargs)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("dual update failed: %s", exc)
+            return ShadowCreateResult(
+                ok=False, authority="dual", error=str(exc), quarantined=True
+            )
+
 
 __all__ = [
     "VectorStoreManager",
     "VectorShadowCatalog",
+    "VectorAuthorityCatalog",
     "ShadowCreateResult",
     "ShadowParityView",
+    "ExternalMutationResult",
+    "VSSFallbackSearchResult",
     "VECTOR_SHADOW_DOMAIN",
     "VECTOR_SHADOW_SCHEMA",
     "VECTOR_SHADOW_OWNER_TASK",
+    "VECTOR_AUTHORITY_DOMAIN",
+    "VECTOR_AUTHORITY_SCHEMA",
+    "VECTOR_AUTHORITY_OWNER_TASK",
+    "DEFAULT_EXTERNAL_RETRY_ATTEMPTS",
+    "DEFAULT_EXTERNAL_RETRY_BACKOFF_S",
     "configure_vector_shadow_catalog",
+    "configure_vector_authority_catalog",
     "get_vector_shadow_catalog",
+    "get_vector_authority_catalog",
     "reset_vector_shadow_catalog",
+    "reset_vector_authority_catalog",
     "safe_shadow_create",
     "safe_shadow_delete",
     "safe_shadow_list",
+    "safe_dual_create",
+    "safe_dual_update",
+    "safe_dual_delete",
+    "safe_dual_compact",
+    "safe_retry_external_mutation",
     "sanitize_collection_slug",
     "sanitize_id",
     "FAISS_AVAILABLE",

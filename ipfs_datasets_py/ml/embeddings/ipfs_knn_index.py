@@ -347,12 +347,15 @@ class IPFSKnnIndex:
 
             self._metadata.extend(metadata)
 
-        # Shadow IPFS KNN id mappings into DuckDB (legacy authority retained).
+        # Dual/shadow IPFS KNN id mappings into DuckDB (DQK-062/063).
         try:
             from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_authority_catalog,
                 get_vector_shadow_catalog,
             )
-            catalog = get_vector_shadow_catalog()
+            catalog = (
+                get_vector_authority_catalog() or get_vector_shadow_catalog()
+            )
             if catalog is not None and catalog.enabled:
                 mapping = {}
                 for i, meta in enumerate(self._metadata):
@@ -643,12 +646,15 @@ class IPFSKnnIndexManager:
         index = IPFSKnnIndex(dimension=dimension, metric=metric, storage=self.storage)
         index.index_id = index_id  # Add the missing index_id attribute
         self.indexes[index_id] = index
-        # Shadow IPFS KNN mappings into the DuckDB vector catalog (DQK-062).
+        # Dual/shadow IPFS KNN mappings into DuckDB catalog (DQK-062/063).
         try:
             from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_authority_catalog,
                 get_vector_shadow_catalog,
             )
-            catalog = get_vector_shadow_catalog()
+            catalog = (
+                get_vector_authority_catalog() or get_vector_shadow_catalog()
+            )
             if catalog is not None and catalog.enabled:
                 catalog.shadow_knn_mapping(
                     logical_name=index_id,

@@ -242,6 +242,7 @@ class IPLDVectorStore(BaseVectorStore):
         self.vector_ids[name] = []
 
         try:
+            # Dual/shadow catalog (DQK-063): metadata in DuckDB; bytes in IPLD.
             from ipfs_datasets_py.vector_stores.management_engine import (
                 safe_shadow_create,
             )
@@ -254,6 +255,7 @@ class IPLDVectorStore(BaseVectorStore):
                 metadata_json={
                     "producer": "ipld_vector_store",
                     "metric": self.distance_metric,
+                    "bytes_location": "immutable_segment",
                 },
                 model_provider="ipld",
                 model_name="ipld",

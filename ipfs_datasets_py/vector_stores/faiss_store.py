@@ -301,12 +301,35 @@ class FAISSVectorStore(BaseVectorStore):
                 "reverse_id_mapping": {}
             })
 
-            # DuckDB shadow catalog (DQK-062); legacy remains authority.
+            # DuckDB shadow/dual catalog (DQK-062/063); bytes remain in FAISS.
             try:
                 from ipfs_datasets_py.vector_stores.management_engine import (
+                    get_vector_authority_catalog,
+                    get_vector_shadow_catalog,
+                    safe_dual_create,
                     safe_shadow_create,
                 )
-                safe_shadow_create(
+                catalog = (
+                    get_vector_authority_catalog() or get_vector_shadow_catalog()
+                )
+                mode = (
+                    (getattr(catalog, "mode", None) or "").lower()
+                    if catalog
+                    else ""
+                )
+                create_fn = (
+                    safe_dual_create
+                    if mode
+                    in {
+                        "dual",
+                        "dual-write",
+                        "dualwrite",
+                        "db-primary",
+                        "db_primary",
+                    }
+                    else safe_shadow_create
+                )
+                create_kwargs = dict(
                     logical_name=collection_name,
                     backend="faiss",
                     dimension=int(dimension),
@@ -315,6 +338,7 @@ class FAISSVectorStore(BaseVectorStore):
                     metadata_json={
                         "index_type": index_type,
                         "producer": "faiss_store",
+                        "bytes_location": "engine",
                     },
                     model_name=getattr(self, "model_name", None) or "faiss",
                     model_provider="faiss",
@@ -326,6 +350,10 @@ class FAISSVectorStore(BaseVectorStore):
                     ),
                     source_revision=kwargs.get("source_revision", "src-0"),
                 )
+                try:
+                    create_fn(**create_kwargs, bytes_location="engine")
+                except TypeError:
+                    create_fn(**create_kwargs)
             except Exception as shadow_exc:  # noqa: BLE001
                 logger.warning(
                     "FAISS shadow create quarantined (legacy ok): %s", shadow_exc
@@ -370,9 +398,32 @@ class FAISSVectorStore(BaseVectorStore):
 
             try:
                 from ipfs_datasets_py.vector_stores.management_engine import (
+                    get_vector_authority_catalog,
+                    safe_dual_delete,
                     safe_shadow_delete,
+                    safe_retry_external_mutation,
                 )
-                safe_shadow_delete(logical_name=collection_name, backend="faiss")
+                catalog = get_vector_authority_catalog()
+                mode = (
+                    (getattr(catalog, "mode", None) or "").lower()
+                    if catalog
+                    else ""
+                )
+                if mode in {
+                    "dual",
+                    "dual-write",
+                    "dualwrite",
+                    "db-primary",
+                    "db_primary",
+                }:
+                    # Idempotent dual-mode collection delete (no resurrection).
+                    safe_dual_delete(
+                        logical_name=collection_name, backend="faiss"
+                    )
+                else:
+                    safe_shadow_delete(
+                        logical_name=collection_name, backend="faiss"
+                    )
             except Exception as shadow_exc:  # noqa: BLE001
                 logger.warning(
                     "FAISS shadow delete quarantined (legacy ok): %s", shadow_exc
@@ -475,10 +526,32 @@ class FAISSVectorStore(BaseVectorStore):
 
         try:
             from ipfs_datasets_py.vector_stores.management_engine import (
+                get_vector_authority_catalog,
+                get_vector_shadow_catalog,
+                safe_dual_create,
                 safe_shadow_create,
+                safe_retry_external_mutation,
             )
             dim = len(embeddings[0].embedding) if embeddings else self.dimension
-            safe_shadow_create(
+            catalog = (
+                get_vector_authority_catalog() or get_vector_shadow_catalog()
+            )
+            mode = (
+                (getattr(catalog, "mode", None) or "").lower() if catalog else ""
+            )
+            create_fn = (
+                safe_dual_create
+                if mode
+                in {
+                    "dual",
+                    "dual-write",
+                    "dualwrite",
+                    "db-primary",
+                    "db_primary",
+                }
+                else safe_shadow_create
+            )
+            create_kwargs = dict(
                 logical_name=collection_name,
                 backend="faiss",
                 dimension=int(dim or 0) or 1,
@@ -492,15 +565,41 @@ class FAISSVectorStore(BaseVectorStore):
                 metadata_json={
                     "producer": "faiss_store",
                     "id_mapping": dict(self.id_mapping[collection_name]),
+                    "bytes_location": "engine",
                 },
                 model_name=(
-                    embeddings[0].model_name if embeddings and embeddings[0].model_name
+                    embeddings[0].model_name
+                    if embeddings and embeddings[0].model_name
                     else "faiss"
                 ),
                 model_provider="faiss",
                 normalization_identity="norm:l2@1",
                 chunking_identity="chunk:faiss@1",
             )
+            # Dual-mode: journal create via idempotent external-mutation helper
+            # so a failed FAISS disk flush can be retried with the same op id.
+            def _project(_op_id: str):
+                try:
+                    return create_fn(**create_kwargs, bytes_location="engine")
+                except TypeError:
+                    return create_fn(**create_kwargs)
+
+            if mode in {
+                "dual",
+                "dual-write",
+                "dualwrite",
+                "db-primary",
+                "db_primary",
+            }:
+                safe_retry_external_mutation(
+                    operation_id=f"faiss-add:{collection_name}:{len(point_ids)}",
+                    backend="faiss",
+                    mutate_fn=_project,
+                    max_attempts=3,
+                    backoff_s=0.0,
+                )
+            else:
+                _project("shadow")
         except Exception as shadow_exc:  # noqa: BLE001
             logger.warning(
                 "FAISS shadow add quarantined (legacy ok): %s", shadow_exc
