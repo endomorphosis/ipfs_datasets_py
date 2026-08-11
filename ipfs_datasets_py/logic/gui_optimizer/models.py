@@ -15,6 +15,7 @@ must never be collapsed into a single authority signal.
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
@@ -107,9 +108,12 @@ from .schema import (
     require_int,
     require_interface,
     require_mapping,
+    require_registered_optimizer_schema_version,
     require_repo_path,
     require_schema_version,
+    require_sequence,
     require_text,
+    require_wire_identity,
     unique_digests,
     unique_identifiers,
     unique_repo_paths,
@@ -124,15 +128,29 @@ M = TypeVar("M", bound="GuiOptimizerModel")
 
 
 def _json_ready(value: Any) -> Any:
-    if value is None or isinstance(value, (bool, int, float, str)):
+    if value is None or isinstance(value, (bool, int, str)):
+        return value
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise GuiOptimizerDecodeError(
+                "canonical JSON rejects non-finite numbers"
+            )
         return value
     if isinstance(value, Enum):
         return value.value
     if isinstance(value, Mapping):
-        return {
-            str(key): _json_ready(item)
-            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
-        }
+        ready: dict[str, Any] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise GuiOptimizerDecodeError(
+                    "canonical JSON mapping keys must be strings"
+                )
+            if key in ready:
+                raise GuiOptimizerDecodeError(
+                    f"canonical-key collision for {key!r}"
+                )
+            ready[key] = _json_ready(item)
+        return {key: ready[key] for key in sorted(ready)}
     if isinstance(value, (list, tuple)):
         return [_json_ready(item) for item in value]
     to_dict = getattr(value, "to_dict", None)
@@ -302,6 +320,7 @@ def _optional_span(value: Any, name: str) -> SourceSpan | None:
         return None
     if isinstance(value, SourceSpan):
         return value
+    # Reject wrong containers before any field coercion.
     return SourceSpan.from_dict(require_mapping(value, name))
 
 
@@ -340,6 +359,12 @@ def _decode_model(
 ) -> M:
     payload = require_mapping(value, record_name)
     reject_unknown_fields(payload, cls._FIELDS, record_name)
+    require_wire_identity(
+        payload,
+        expected_interface=cls.INTERFACE,
+        expected_schema=cls.SCHEMA_VERSION,
+        record_name=record_name,
+    )
     return builder(payload)
 
 
@@ -635,6 +660,10 @@ class UiComponentVersion(GuiOptimizerModel):
         identity = self.stable_identity
         if isinstance(identity, Mapping):
             identity = UiComponentIdentity.from_dict(identity)
+        elif isinstance(identity, (str, bytes, bytearray, Sequence)) and not isinstance(
+            identity, UiComponentIdentity
+        ):
+            raise GuiOptimizerDecodeError("stable_identity must be a mapping")
         if not isinstance(identity, UiComponentIdentity):
             raise GuiOptimizerDecodeError(
                 "stable_identity must be a UiComponentIdentity"
@@ -667,10 +696,9 @@ class UiComponentVersion(GuiOptimizerModel):
         object.__setattr__(
             self,
             "optimizer_schema_version",
-            require_text(
+            require_registered_optimizer_schema_version(
                 self.optimizer_schema_version,
                 "optimizer_schema_version",
-                max_chars=128,
             ),
         )
         object.__setattr__(
@@ -1108,7 +1136,7 @@ class UiTransitionDefinition(GuiOptimizerModel):
                 to_state_id=p.get("to_state_id", ""),
                 event_id=p.get("event_id", ""),
                 guard=p.get("guard", ""),
-                effect_ids=tuple(p.get("effect_ids", ())),
+                effect_ids=p.get("effect_ids", ()),
                 is_noop=p.get("is_noop", False),
                 interface=p.get("interface", UI_TRANSITION_DEFINITION_INTERFACE),
                 schema_version=p.get(
@@ -1433,9 +1461,9 @@ class UiAccessibilityContract(GuiOptimizerModel):
             record_name="UiAccessibilityContract",
             builder=lambda p: cls(
                 contract_id=p.get("contract_id", ""),
-                requirement_kinds=tuple(p.get("requirement_kinds", ())),
-                required_roles=tuple(p.get("required_roles", ())),
-                required_names=tuple(p.get("required_names", ())),
+                requirement_kinds=p.get("requirement_kinds", ()),
+                required_roles=p.get("required_roles", ()),
+                required_names=p.get("required_names", ()),
                 component_id=p.get("component_id", ""),
                 notes=p.get("notes", ""),
                 interface=p.get("interface", UI_ACCESSIBILITY_CONTRACT_INTERFACE),
@@ -1471,6 +1499,9 @@ class UiSemanticCapsule(GuiOptimizerModel):
     visible_state_ids: tuple[str, ...] = ()
     transition_ids: tuple[str, ...] = ()
     action_binding_ids: tuple[str, ...] = ()
+    action_side_effects: tuple[str, ...] = ()
+    layout_responsive_behavior: tuple[str, ...] = ()
+    keyboard_focus_behavior: tuple[str, ...] = ()
     child_component_ids: tuple[str, ...] = ()
     dependency_edge_ids: tuple[str, ...] = ()
     test_ids: tuple[str, ...] = ()
@@ -1494,6 +1525,7 @@ class UiSemanticCapsule(GuiOptimizerModel):
         {
             "accessibility_contract_id",
             "action_binding_ids",
+            "action_side_effects",
             "analysis_classification",
             "application_id",
             "capsule_id",
@@ -1506,7 +1538,9 @@ class UiSemanticCapsule(GuiOptimizerModel):
             "empty_behavior",
             "error_behavior",
             "interface",
+            "keyboard_focus_behavior",
             "known_violation_ids",
+            "layout_responsive_behavior",
             "loading_behavior",
             "localization_keys",
             "prop_names",
@@ -1534,6 +1568,10 @@ class UiSemanticCapsule(GuiOptimizerModel):
         stable = self.stable_identity
         if isinstance(stable, Mapping):
             stable = UiComponentIdentity.from_dict(stable)
+        elif isinstance(stable, (str, bytes, bytearray, Sequence)) and not isinstance(
+            stable, UiComponentIdentity
+        ):
+            raise GuiOptimizerDecodeError("stable_identity must be a mapping")
         if not isinstance(stable, UiComponentIdentity):
             raise GuiOptimizerDecodeError(
                 "stable_identity must be a UiComponentIdentity"
@@ -1542,6 +1580,10 @@ class UiSemanticCapsule(GuiOptimizerModel):
         version = self.version_identity
         if isinstance(version, Mapping):
             version = UiComponentVersion.from_dict(version)
+        elif isinstance(version, (str, bytes, bytearray, Sequence)) and not isinstance(
+            version, UiComponentVersion
+        ):
+            raise GuiOptimizerDecodeError("version_identity must be a mapping")
         if not isinstance(version, UiComponentVersion):
             raise GuiOptimizerDecodeError(
                 "version_identity must be a UiComponentVersion"
@@ -1588,6 +1630,14 @@ class UiSemanticCapsule(GuiOptimizerModel):
                 "completeness_boundary",
             ),
         )
+        text_fields = {
+            "prop_names",
+            "action_side_effects",
+            "layout_responsive_behavior",
+            "keyboard_focus_behavior",
+            "unresolved_dynamic_behavior",
+            "localization_keys",
+        }
         for field_name in (
             "prop_names",
             "emitted_event_ids",
@@ -1595,6 +1645,9 @@ class UiSemanticCapsule(GuiOptimizerModel):
             "visible_state_ids",
             "transition_ids",
             "action_binding_ids",
+            "action_side_effects",
+            "layout_responsive_behavior",
+            "keyboard_focus_behavior",
             "child_component_ids",
             "dependency_edge_ids",
             "test_ids",
@@ -1604,7 +1657,7 @@ class UiSemanticCapsule(GuiOptimizerModel):
             "localization_keys",
         ):
             raw = getattr(self, field_name)
-            if field_name in {"prop_names", "unresolved_dynamic_behavior", "localization_keys"}:
+            if field_name in text_fields:
                 object.__setattr__(
                     self,
                     field_name,
@@ -1653,6 +1706,7 @@ class UiSemanticCapsule(GuiOptimizerModel):
         return {
             "accessibility_contract_id": self.accessibility_contract_id,
             "action_binding_ids": list(self.action_binding_ids),
+            "action_side_effects": list(self.action_side_effects),
             "analysis_classification": self.analysis_classification.value,
             "application_id": self.application_id,
             "capsule_id": self.capsule_id,
@@ -1665,7 +1719,9 @@ class UiSemanticCapsule(GuiOptimizerModel):
             "empty_behavior": self.empty_behavior,
             "error_behavior": self.error_behavior,
             "interface": self.interface,
+            "keyboard_focus_behavior": list(self.keyboard_focus_behavior),
             "known_violation_ids": list(self.known_violation_ids),
+            "layout_responsive_behavior": list(self.layout_responsive_behavior),
             "loading_behavior": self.loading_behavior,
             "localization_keys": list(self.localization_keys),
             "prop_names": list(self.prop_names),
@@ -1702,21 +1758,24 @@ class UiSemanticCapsule(GuiOptimizerModel):
                 analysis_classification=p.get("analysis_classification", ""),
                 verification_status=p.get("verification_status", ""),
                 completeness_boundary=p.get("completeness_boundary", ""),
-                prop_names=tuple(p.get("prop_names", ())),
-                emitted_event_ids=tuple(p.get("emitted_event_ids", ())),
-                state_variable_ids=tuple(p.get("state_variable_ids", ())),
-                visible_state_ids=tuple(p.get("visible_state_ids", ())),
-                transition_ids=tuple(p.get("transition_ids", ())),
-                action_binding_ids=tuple(p.get("action_binding_ids", ())),
-                child_component_ids=tuple(p.get("child_component_ids", ())),
-                dependency_edge_ids=tuple(p.get("dependency_edge_ids", ())),
-                test_ids=tuple(p.get("test_ids", ())),
-                screenshot_ids=tuple(p.get("screenshot_ids", ())),
-                known_violation_ids=tuple(p.get("known_violation_ids", ())),
-                unresolved_dynamic_behavior=tuple(
-                    p.get("unresolved_dynamic_behavior", ())
+                prop_names=p.get("prop_names", ()),
+                emitted_event_ids=p.get("emitted_event_ids", ()),
+                state_variable_ids=p.get("state_variable_ids", ()),
+                visible_state_ids=p.get("visible_state_ids", ()),
+                transition_ids=p.get("transition_ids", ()),
+                action_binding_ids=p.get("action_binding_ids", ()),
+                action_side_effects=p.get("action_side_effects", ()),
+                layout_responsive_behavior=p.get("layout_responsive_behavior", ()),
+                keyboard_focus_behavior=p.get("keyboard_focus_behavior", ()),
+                child_component_ids=p.get("child_component_ids", ()),
+                dependency_edge_ids=p.get("dependency_edge_ids", ()),
+                test_ids=p.get("test_ids", ()),
+                screenshot_ids=p.get("screenshot_ids", ()),
+                known_violation_ids=p.get("known_violation_ids", ()),
+                unresolved_dynamic_behavior=p.get(
+                    "unresolved_dynamic_behavior", ()
                 ),
-                localization_keys=tuple(p.get("localization_keys", ())),
+                localization_keys=p.get("localization_keys", ()),
                 accessibility_contract_id=p.get("accessibility_contract_id", ""),
                 confirmation_required=p.get("confirmation_required", False),
                 loading_behavior=p.get("loading_behavior", ""),
@@ -1818,11 +1877,11 @@ class UiChangeSet(GuiOptimizerModel):
             record_name="UiChangeSet",
             builder=lambda p: cls(
                 change_set_id=p.get("change_set_id", ""),
-                change_kinds=tuple(p.get("change_kinds", ())),
-                file_paths=tuple(p.get("file_paths", ())),
-                component_ids=tuple(p.get("component_ids", ())),
-                state_ids=tuple(p.get("state_ids", ())),
-                action_ids=tuple(p.get("action_ids", ())),
+                change_kinds=p.get("change_kinds", ()),
+                file_paths=p.get("file_paths", ()),
+                component_ids=p.get("component_ids", ()),
+                state_ids=p.get("state_ids", ()),
+                action_ids=p.get("action_ids", ()),
                 summary=p.get("summary", ""),
                 interface=p.get("interface", UI_CHANGE_SET_INTERFACE),
                 schema_version=p.get("schema_version", UI_CHANGE_SET_SCHEMA),
@@ -1944,10 +2003,10 @@ class UiInvalidationPlan(GuiOptimizerModel):
             builder=lambda p: cls(
                 plan_id=p.get("plan_id", ""),
                 change_set_id=p.get("change_set_id", ""),
-                reasons=tuple(p.get("reasons", ())),
-                affected_component_ids=tuple(p.get("affected_component_ids", ())),
-                affected_scenario_ids=tuple(p.get("affected_scenario_ids", ())),
-                affected_check_ids=tuple(p.get("affected_check_ids", ())),
+                reasons=p.get("reasons", ()),
+                affected_component_ids=p.get("affected_component_ids", ()),
+                affected_scenario_ids=p.get("affected_scenario_ids", ()),
+                affected_check_ids=p.get("affected_check_ids", ()),
                 confidence=p.get("confidence", ExtractionConfidence.CONSERVATIVE),
                 fallback_triggered=p.get("fallback_triggered", False),
                 fallback_explanation=p.get("fallback_explanation", ""),
@@ -2020,6 +2079,10 @@ class UiEvaluationScenario(GuiOptimizerModel):
         viewport = self.viewport
         if isinstance(viewport, Mapping):
             viewport = ViewportSpec.from_dict(viewport)
+        elif isinstance(viewport, (str, bytes, bytearray, Sequence)) and not isinstance(
+            viewport, ViewportSpec
+        ):
+            raise GuiOptimizerDecodeError("viewport must be a mapping")
         if not isinstance(viewport, ViewportSpec):
             raise GuiOptimizerDecodeError("viewport must be a ViewportSpec")
         object.__setattr__(self, "viewport", viewport)
@@ -2097,7 +2160,7 @@ class UiEvaluationScenario(GuiOptimizerModel):
                 color_scheme=p.get("color_scheme", "light"),
                 text_scale_percent=p.get("text_scale_percent", 100),
                 reduced_motion=p.get("reduced_motion", False),
-                tags=tuple(p.get("tags", ())),
+                tags=p.get("tags", ()),
                 interface=p.get("interface", UI_EVALUATION_SCENARIO_INTERFACE),
                 schema_version=p.get(
                     "schema_version", UI_EVALUATION_SCENARIO_SCHEMA
@@ -2210,9 +2273,9 @@ class UiBaseline(GuiOptimizerModel):
                 application_id=p.get("application_id", ""),
                 screen_id=p.get("screen_id", ""),
                 repository_revision=p.get("repository_revision", ""),
-                scenario_ids=tuple(p.get("scenario_ids", ())),
+                scenario_ids=p.get("scenario_ids", ()),
                 metric_digest=p.get("metric_digest", ""),
-                artifact_digests=tuple(p.get("artifact_digests", ())),
+                artifact_digests=p.get("artifact_digests", ()),
                 extractor_version=p.get("extractor_version", "1.0.0"),
                 interface=p.get("interface", UI_BASELINE_INTERFACE),
                 schema_version=p.get("schema_version", UI_BASELINE_SCHEMA),
@@ -2231,11 +2294,21 @@ class UiContextPack(GuiOptimizerModel):
     token_budget: int
     estimated_tokens: int
     raw_source_paths: tuple[str, ...]
+    style_token_paths: tuple[str, ...] = ()
+    affected_test_ids: tuple[str, ...] = ()
+    state_machine_ids: tuple[str, ...] = ()
+    invariant_failure_ids: tuple[str, ...] = ()
+    artifact_digests: tuple[str, ...] = ()
     capsule_ids: tuple[str, ...] = ()
     baseline_id: str = ""
     acceptance_criteria: tuple[str, ...] = ()
     excluded_context_explanation: str = ""
     escalation_conditions: tuple[str, ...] = ()
+    raw_source_tokens: int = 0
+    capsule_tokens: int = 0
+    screenshot_analysis_tokens: int = 0
+    replaced_source_tokens: int = 0
+    compression_ratio: float | int = 1.0
     analysis_classification: AnalysisClassification | str = (
         AnalysisClassification.CONSERVATIVE
     )
@@ -2248,19 +2321,29 @@ class UiContextPack(GuiOptimizerModel):
     _FIELDS: ClassVar[frozenset[str]] = frozenset(
         {
             "acceptance_criteria",
+            "affected_test_ids",
             "analysis_classification",
             "application_id",
+            "artifact_digests",
             "baseline_id",
             "capsule_ids",
+            "capsule_tokens",
+            "compression_ratio",
             "escalation_conditions",
             "estimated_tokens",
             "excluded_context_explanation",
             "interface",
+            "invariant_failure_ids",
             "objective",
             "pack_id",
             "raw_source_paths",
+            "raw_source_tokens",
+            "replaced_source_tokens",
             "schema_version",
             "screen_id",
+            "screenshot_analysis_tokens",
+            "state_machine_ids",
+            "style_token_paths",
             "token_budget",
             "verification_status",
         }
@@ -2298,6 +2381,31 @@ class UiContextPack(GuiOptimizerModel):
             )
         object.__setattr__(self, "raw_source_paths", paths)
         object.__setattr__(
+            self,
+            "style_token_paths",
+            unique_repo_paths(self.style_token_paths, "style_token_paths"),
+        )
+        object.__setattr__(
+            self,
+            "affected_test_ids",
+            unique_identifiers(self.affected_test_ids, "affected_test_ids"),
+        )
+        object.__setattr__(
+            self,
+            "state_machine_ids",
+            unique_identifiers(self.state_machine_ids, "state_machine_ids"),
+        )
+        object.__setattr__(
+            self,
+            "invariant_failure_ids",
+            unique_identifiers(self.invariant_failure_ids, "invariant_failure_ids"),
+        )
+        object.__setattr__(
+            self,
+            "artifact_digests",
+            unique_digests(self.artifact_digests, "artifact_digests"),
+        )
+        object.__setattr__(
             self, "capsule_ids", unique_identifiers(self.capsule_ids, "capsule_ids")
         )
         object.__setattr__(
@@ -2326,6 +2434,31 @@ class UiContextPack(GuiOptimizerModel):
                 preserve_order=True,
             ),
         )
+        for field_name in (
+            "raw_source_tokens",
+            "capsule_tokens",
+            "screenshot_analysis_tokens",
+            "replaced_source_tokens",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                require_int(getattr(self, field_name), field_name, minimum=0),
+            )
+        ratio = require_finite_number(self.compression_ratio, "compression_ratio")
+        if float(ratio) < 0:
+            raise GuiOptimizerDecodeError("compression_ratio must be >= 0")
+        object.__setattr__(self, "compression_ratio", ratio)
+        accounted = (
+            self.raw_source_tokens
+            + self.capsule_tokens
+            + self.screenshot_analysis_tokens
+            + self.replaced_source_tokens
+        )
+        if accounted > 0 and self.estimated_tokens < accounted:
+            raise GuiOptimizerDecodeError(
+                "estimated_tokens must be >= sum of token-accounting parts"
+            )
         object.__setattr__(
             self,
             "analysis_classification",
@@ -2358,19 +2491,29 @@ class UiContextPack(GuiOptimizerModel):
     def to_dict(self) -> dict[str, Any]:
         return {
             "acceptance_criteria": list(self.acceptance_criteria),
+            "affected_test_ids": list(self.affected_test_ids),
             "analysis_classification": self.analysis_classification.value,
             "application_id": self.application_id,
+            "artifact_digests": list(self.artifact_digests),
             "baseline_id": self.baseline_id,
             "capsule_ids": list(self.capsule_ids),
+            "capsule_tokens": self.capsule_tokens,
+            "compression_ratio": self.compression_ratio,
             "escalation_conditions": list(self.escalation_conditions),
             "estimated_tokens": self.estimated_tokens,
             "excluded_context_explanation": self.excluded_context_explanation,
             "interface": self.interface,
+            "invariant_failure_ids": list(self.invariant_failure_ids),
             "objective": self.objective,
             "pack_id": self.pack_id,
             "raw_source_paths": list(self.raw_source_paths),
+            "raw_source_tokens": self.raw_source_tokens,
+            "replaced_source_tokens": self.replaced_source_tokens,
             "schema_version": self.schema_version,
             "screen_id": self.screen_id,
+            "screenshot_analysis_tokens": self.screenshot_analysis_tokens,
+            "state_machine_ids": list(self.state_machine_ids),
+            "style_token_paths": list(self.style_token_paths),
             "token_budget": self.token_budget,
             "verification_status": self.verification_status.value,
         }
@@ -2388,14 +2531,24 @@ class UiContextPack(GuiOptimizerModel):
                 objective=p.get("objective", ""),
                 token_budget=p.get("token_budget", 0),
                 estimated_tokens=p.get("estimated_tokens", 0),
-                raw_source_paths=tuple(p.get("raw_source_paths", ())),
-                capsule_ids=tuple(p.get("capsule_ids", ())),
+                raw_source_paths=p.get("raw_source_paths", ()),
+                style_token_paths=p.get("style_token_paths", ()),
+                affected_test_ids=p.get("affected_test_ids", ()),
+                state_machine_ids=p.get("state_machine_ids", ()),
+                invariant_failure_ids=p.get("invariant_failure_ids", ()),
+                artifact_digests=p.get("artifact_digests", ()),
+                capsule_ids=p.get("capsule_ids", ()),
                 baseline_id=p.get("baseline_id", ""),
-                acceptance_criteria=tuple(p.get("acceptance_criteria", ())),
+                acceptance_criteria=p.get("acceptance_criteria", ()),
                 excluded_context_explanation=p.get(
                     "excluded_context_explanation", ""
                 ),
-                escalation_conditions=tuple(p.get("escalation_conditions", ())),
+                escalation_conditions=p.get("escalation_conditions", ()),
+                raw_source_tokens=p.get("raw_source_tokens", 0),
+                capsule_tokens=p.get("capsule_tokens", 0),
+                screenshot_analysis_tokens=p.get("screenshot_analysis_tokens", 0),
+                replaced_source_tokens=p.get("replaced_source_tokens", 0),
+                compression_ratio=p.get("compression_ratio", 1.0),
                 analysis_classification=p.get(
                     "analysis_classification", AnalysisClassification.CONSERVATIVE
                 ),
@@ -2592,12 +2745,12 @@ class GuiImprovementProposal(GuiOptimizerModel):
                 application_id=p.get("application_id", ""),
                 screen_id=p.get("screen_id", ""),
                 objective=p.get("objective", ""),
-                intended_file_paths=tuple(p.get("intended_file_paths", ())),
-                intended_component_ids=tuple(p.get("intended_component_ids", ())),
-                acceptance_criteria=tuple(p.get("acceptance_criteria", ())),
-                expected_test_ids=tuple(p.get("expected_test_ids", ())),
-                expected_screenshot_ids=tuple(p.get("expected_screenshot_ids", ())),
-                state_effect_ids=tuple(p.get("state_effect_ids", ())),
+                intended_file_paths=p.get("intended_file_paths", ()),
+                intended_component_ids=p.get("intended_component_ids", ()),
+                acceptance_criteria=p.get("acceptance_criteria", ()),
+                expected_test_ids=p.get("expected_test_ids", ()),
+                expected_screenshot_ids=p.get("expected_screenshot_ids", ()),
+                state_effect_ids=p.get("state_effect_ids", ()),
                 visual_effect_summary=p.get("visual_effect_summary", ""),
                 route_kind=p.get(
                     "route_kind", ProposalRouteKind.DETERMINISTIC_TRANSFORM
@@ -2639,6 +2792,11 @@ class VisualRegressionReceipt(GuiOptimizerModel):
     decision: VisualDecision | str
     evidence_level: EvidenceLevel | str
     pixel_diff_percent: float | int = 0
+    structural_diff_percent: float | int = 0
+    expected_change_regions: tuple[str, ...] = ()
+    forbidden_change_regions: tuple[str, ...] = ()
+    max_unexplained_diff_percent: float | int = 100
+    manual_review_threshold_percent: float | int = 100
     requires_human_review: bool = False
     color_scheme: str = "light"
     locale: str = "en-US"
@@ -2665,8 +2823,12 @@ class VisualRegressionReceipt(GuiOptimizerModel):
             "component_version_ids",
             "decision",
             "evidence_level",
+            "expected_change_regions",
+            "forbidden_change_regions",
             "interface",
             "locale",
+            "manual_review_threshold_percent",
+            "max_unexplained_diff_percent",
             "pixel_diff_percent",
             "receipt_id",
             "repository_revision",
@@ -2675,6 +2837,7 @@ class VisualRegressionReceipt(GuiOptimizerModel):
             "schema_version",
             "screen_id",
             "screenshot_digest",
+            "structural_diff_percent",
             "text_scale_percent",
             "verification_status",
             "viewport",
@@ -2709,6 +2872,10 @@ class VisualRegressionReceipt(GuiOptimizerModel):
         viewport = self.viewport
         if isinstance(viewport, Mapping):
             viewport = ViewportSpec.from_dict(viewport)
+        elif isinstance(viewport, (str, bytes, bytearray, Sequence)) and not isinstance(
+            viewport, ViewportSpec
+        ):
+            raise GuiOptimizerDecodeError("viewport must be a mapping")
         if not isinstance(viewport, ViewportSpec):
             raise GuiOptimizerDecodeError("viewport must be a ViewportSpec")
         object.__setattr__(self, "viewport", viewport)
@@ -2730,17 +2897,68 @@ class VisualRegressionReceipt(GuiOptimizerModel):
             "evidence_level",
             parse_enum(self.evidence_level, EvidenceLevel, "evidence_level"),
         )
-        diff = require_finite_number(self.pixel_diff_percent, "pixel_diff_percent")
-        if float(diff) < 0 or float(diff) > 100:
+        for field_name in (
+            "pixel_diff_percent",
+            "structural_diff_percent",
+            "max_unexplained_diff_percent",
+            "manual_review_threshold_percent",
+        ):
+            value = require_finite_number(getattr(self, field_name), field_name)
+            if float(value) < 0 or float(value) > 100:
+                raise GuiOptimizerDecodeError(
+                    f"{field_name} must be in the closed range 0..100"
+                )
+            object.__setattr__(self, field_name, value)
+        object.__setattr__(
+            self,
+            "expected_change_regions",
+            unique_texts(
+                self.expected_change_regions,
+                "expected_change_regions",
+                preserve_order=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "forbidden_change_regions",
+            unique_texts(
+                self.forbidden_change_regions,
+                "forbidden_change_regions",
+                preserve_order=True,
+            ),
+        )
+        overlap = sorted(
+            set(self.expected_change_regions) & set(self.forbidden_change_regions)
+        )
+        if overlap:
             raise GuiOptimizerDecodeError(
-                "pixel_diff_percent must be in the closed range 0..100"
+                "expected_change_regions and forbidden_change_regions must not "
+                f"overlap: {', '.join(overlap)}"
             )
-        object.__setattr__(self, "pixel_diff_percent", diff)
+        if (
+            float(self.pixel_diff_percent)
+            > float(self.max_unexplained_diff_percent)
+            and self.decision is VisualDecision.PASS
+        ):
+            raise GuiOptimizerDecodeError(
+                "pixel_diff_percent exceeds max_unexplained_diff_percent "
+                "but decision is pass"
+            )
         object.__setattr__(
             self,
             "requires_human_review",
             require_bool(self.requires_human_review, "requires_human_review"),
         )
+        if (
+            float(self.pixel_diff_percent)
+            >= float(self.manual_review_threshold_percent)
+            and not self.requires_human_review
+            and self.decision is not VisualDecision.REVIEW
+        ):
+            raise GuiOptimizerDecodeError(
+                "pixel_diff_percent at/above manual_review_threshold_percent "
+                "requires human review or review decision"
+            )
         object.__setattr__(
             self, "color_scheme", require_text(self.color_scheme, "color_scheme")
         )
@@ -2803,8 +3021,12 @@ class VisualRegressionReceipt(GuiOptimizerModel):
             "component_version_ids": list(self.component_version_ids),
             "decision": self.decision.value,
             "evidence_level": self.evidence_level.value,
+            "expected_change_regions": list(self.expected_change_regions),
+            "forbidden_change_regions": list(self.forbidden_change_regions),
             "interface": self.interface,
             "locale": self.locale,
+            "manual_review_threshold_percent": self.manual_review_threshold_percent,
+            "max_unexplained_diff_percent": self.max_unexplained_diff_percent,
             "pixel_diff_percent": self.pixel_diff_percent,
             "receipt_id": self.receipt_id,
             "repository_revision": self.repository_revision,
@@ -2813,6 +3035,7 @@ class VisualRegressionReceipt(GuiOptimizerModel):
             "schema_version": self.schema_version,
             "screen_id": self.screen_id,
             "screenshot_digest": self.screenshot_digest,
+            "structural_diff_percent": self.structural_diff_percent,
             "text_scale_percent": self.text_scale_percent,
             "verification_status": self.verification_status.value,
             "viewport": self.viewport.to_dict(),
@@ -2830,13 +3053,22 @@ class VisualRegressionReceipt(GuiOptimizerModel):
                 screen_id=p.get("screen_id", ""),
                 scenario_id=p.get("scenario_id", ""),
                 repository_revision=p.get("repository_revision", ""),
-                component_version_ids=tuple(p.get("component_version_ids", ())),
+                component_version_ids=p.get("component_version_ids", ()),
                 viewport=p.get("viewport", {}),
                 screenshot_digest=p.get("screenshot_digest", ""),
                 baseline_digest=p.get("baseline_digest", ""),
                 decision=p.get("decision", ""),
                 evidence_level=p.get("evidence_level", ""),
                 pixel_diff_percent=p.get("pixel_diff_percent", 0),
+                structural_diff_percent=p.get("structural_diff_percent", 0),
+                expected_change_regions=p.get("expected_change_regions", ()),
+                forbidden_change_regions=p.get("forbidden_change_regions", ()),
+                max_unexplained_diff_percent=p.get(
+                    "max_unexplained_diff_percent", 100
+                ),
+                manual_review_threshold_percent=p.get(
+                    "manual_review_threshold_percent", 100
+                ),
                 requires_human_review=p.get("requires_human_review", False),
                 color_scheme=p.get("color_scheme", "light"),
                 locale=p.get("locale", "en-US"),
@@ -3041,9 +3273,9 @@ class AccessibilityReceipt(GuiOptimizerModel):
                 repository_revision=p.get("repository_revision", ""),
                 automated_pass_count=p.get("automated_pass_count", 0),
                 violation_count=p.get("violation_count", 0),
-                violation_ids=tuple(p.get("violation_ids", ())),
-                manual_check_ids=tuple(p.get("manual_check_ids", ())),
-                unsupported_criteria=tuple(p.get("unsupported_criteria", ())),
+                violation_ids=p.get("violation_ids", ()),
+                manual_check_ids=p.get("manual_check_ids", ()),
+                unsupported_criteria=p.get("unsupported_criteria", ()),
                 keyboard_result=p.get("keyboard_result", ""),
                 screen_reader_reviewed=p.get("screen_reader_reviewed", False),
                 evidence_level=p.get("evidence_level", ""),
@@ -3239,14 +3471,14 @@ class InteractionReceipt(GuiOptimizerModel):
                 screen_id=p.get("screen_id", ""),
                 scenario_id=p.get("scenario_id", ""),
                 repository_revision=p.get("repository_revision", ""),
-                step_ids=tuple(p.get("step_ids", ())),
-                focus_sequence=tuple(p.get("focus_sequence", ())),
-                event_ids=tuple(p.get("event_ids", ())),
-                action_invocation_ids=tuple(p.get("action_invocation_ids", ())),
+                step_ids=p.get("step_ids", ()),
+                focus_sequence=p.get("focus_sequence", ()),
+                event_ids=p.get("event_ids", ()),
+                action_invocation_ids=p.get("action_invocation_ids", ()),
                 confirmation_id=p.get("confirmation_id", ""),
-                recovery_ids=tuple(p.get("recovery_ids", ())),
-                unresolved_observation_ids=tuple(
-                    p.get("unresolved_observation_ids", ())
+                recovery_ids=p.get("recovery_ids", ()),
+                unresolved_observation_ids=p.get(
+                    "unresolved_observation_ids", ()
                 ),
                 evidence_level=p.get("evidence_level", EvidenceLevel.AUTOMATED),
                 analysis_classification=p.get(
@@ -3329,13 +3561,10 @@ class UiConstraintReceipt(GuiOptimizerModel):
         if not checks:
             raise GuiOptimizerDecodeError("check_ids must not be empty")
         object.__setattr__(self, "check_ids", checks)
-        if isinstance(self.statuses, (str, bytes, bytearray)) or not isinstance(
-            self.statuses, Sequence
-        ):
-            raise GuiOptimizerDecodeError("statuses must be a sequence")
+        status_sequence = require_sequence(self.statuses, "statuses")
         statuses = tuple(
             parse_enum(item, ConstraintCheckStatus, "statuses item")
-            for item in self.statuses
+            for item in status_sequence
         )
         if len(statuses) != len(checks):
             raise GuiOptimizerDecodeError(
@@ -3426,10 +3655,10 @@ class UiConstraintReceipt(GuiOptimizerModel):
                 application_id=p.get("application_id", ""),
                 screen_id=p.get("screen_id", ""),
                 repository_revision=p.get("repository_revision", ""),
-                check_ids=tuple(p.get("check_ids", ())),
-                statuses=tuple(p.get("statuses", ())),
-                violated_check_ids=tuple(p.get("violated_check_ids", ())),
-                unsupported_check_ids=tuple(p.get("unsupported_check_ids", ())),
+                check_ids=p.get("check_ids", ()),
+                statuses=p.get("statuses", ()),
+                violated_check_ids=p.get("violated_check_ids", ()),
+                unsupported_check_ids=p.get("unsupported_check_ids", ()),
                 solver_id=p.get("solver_id", ""),
                 evidence_level=p.get("evidence_level", EvidenceLevel.STRUCTURAL),
                 analysis_classification=p.get(
@@ -3656,16 +3885,16 @@ class GuiImprovementReceipt(GuiOptimizerModel):
                 screen_id=p.get("screen_id", ""),
                 repository_revision=p.get("repository_revision", ""),
                 decision=p.get("decision", ""),
-                visual_receipt_ids=tuple(p.get("visual_receipt_ids", ())),
-                accessibility_receipt_ids=tuple(
-                    p.get("accessibility_receipt_ids", ())
+                visual_receipt_ids=p.get("visual_receipt_ids", ()),
+                accessibility_receipt_ids=p.get(
+                    "accessibility_receipt_ids", ()
                 ),
-                interaction_receipt_ids=tuple(p.get("interaction_receipt_ids", ())),
-                constraint_receipt_ids=tuple(p.get("constraint_receipt_ids", ())),
+                interaction_receipt_ids=p.get("interaction_receipt_ids", ()),
+                constraint_receipt_ids=p.get("constraint_receipt_ids", ()),
                 invalidation_plan_id=p.get("invalidation_plan_id", ""),
                 context_pack_id=p.get("context_pack_id", ""),
                 patch_digest=p.get("patch_digest", ""),
-                rejection_reasons=tuple(p.get("rejection_reasons", ())),
+                rejection_reasons=p.get("rejection_reasons", ()),
                 analysis_classification=p.get(
                     "analysis_classification",
                     AnalysisClassification.CONSERVATIVE,

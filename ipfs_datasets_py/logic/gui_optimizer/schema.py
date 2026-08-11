@@ -136,6 +136,16 @@ SCHEMA_VERSION_BY_INTERFACE: Final[Mapping[str, str]] = MappingProxyType(
     }
 )
 
+# Authoritative closed vocabulary of every registered optimizer schema version,
+# including nested shared records. Unregistered versions fail closed on decode.
+REGISTERED_OPTIMIZER_SCHEMA_VERSIONS: Final[frozenset[str]] = frozenset(
+    {
+        *SCHEMA_VERSION_BY_INTERFACE.values(),
+        SOURCE_SPAN_SCHEMA,
+        VIEWPORT_SPEC_SCHEMA,
+    }
+)
+
 # ---------------------------------------------------------------------------
 # Bounds
 # ---------------------------------------------------------------------------
@@ -460,13 +470,45 @@ def reject_unknown_fields(
 
 
 def require_mapping(value: Any, name: str) -> Mapping[str, Any]:
+    """Require a mapping container before any field coercion.
+
+    Arrays/strings/scalars never decode as mappings. Non-string keys and
+    canonical-key collisions (two distinct keys that stringify identically)
+    are rejected fail-closed.
+    """
+
+    if isinstance(value, (str, bytes, bytearray)):
+        raise GuiOptimizerDecodeError(f"{name} must be a mapping")
+    if isinstance(value, Sequence) and not isinstance(value, Mapping):
+        raise GuiOptimizerDecodeError(f"{name} must be a mapping")
     if not isinstance(value, Mapping):
         raise GuiOptimizerDecodeError(f"{name} must be a mapping")
-    # Duplicate map keys are impossible in Python dict construction; still
-    # reject non-string keys which would break deterministic serialization.
+    seen_canonical: dict[str, Any] = {}
     for key in value:
         if not isinstance(key, str):
             raise GuiOptimizerDecodeError(f"{name} keys must be strings")
+        if key in seen_canonical:
+            raise GuiOptimizerDecodeError(
+                f"{name} has canonical-key collision for {key!r}"
+            )
+        seen_canonical[key] = True
+    return value
+
+
+def require_sequence(value: Any, name: str) -> Sequence[Any]:
+    """Require an array/list/tuple container before item coercion.
+
+    Strings and mappings never decode as arrays.
+    """
+
+    if value is None:
+        raise GuiOptimizerDecodeError(f"{name} must be a sequence")
+    if isinstance(value, (str, bytes, bytearray)):
+        raise GuiOptimizerDecodeError(f"{name} must be a sequence")
+    if isinstance(value, Mapping):
+        raise GuiOptimizerDecodeError(f"{name} must be a sequence")
+    if not isinstance(value, Sequence):
+        raise GuiOptimizerDecodeError(f"{name} must be a sequence")
     return value
 
 
@@ -625,9 +667,27 @@ def require_schema_version(
     name: str = "schema_version",
 ) -> str:
     text = require_text(value, name, max_chars=128)
+    if text not in REGISTERED_OPTIMIZER_SCHEMA_VERSIONS:
+        raise GuiOptimizerDecodeError(
+            f"unregistered optimizer schema version: {text!r}"
+        )
     if text != expected:
         raise GuiOptimizerDecodeError(
             f"unsupported {name}: {text!r}; expected {expected!r}"
+        )
+    return text
+
+
+def require_registered_optimizer_schema_version(
+    value: Any,
+    name: str = "optimizer_schema_version",
+) -> str:
+    """Accept only schema versions sealed in the package registry."""
+
+    text = require_text(value, name, max_chars=128)
+    if text not in REGISTERED_OPTIMIZER_SCHEMA_VERSIONS:
+        raise GuiOptimizerDecodeError(
+            f"unregistered optimizer schema version: {text!r}"
         )
     return text
 
@@ -645,6 +705,30 @@ def require_interface(
     return text
 
 
+def require_wire_identity(
+    payload: Mapping[str, Any],
+    *,
+    expected_interface: str,
+    expected_schema: str,
+    record_name: str,
+) -> tuple[str, str]:
+    """Require exact interface + schema_version on wire input before coercion."""
+
+    if "interface" not in payload:
+        raise GuiOptimizerDecodeError(
+            f"{record_name} interface is required on wire input"
+        )
+    if "schema_version" not in payload:
+        raise GuiOptimizerDecodeError(
+            f"{record_name} schema_version is required on wire input"
+        )
+    interface = require_interface(payload["interface"], expected_interface)
+    schema_version = require_schema_version(
+        payload["schema_version"], expected_schema
+    )
+    return interface, schema_version
+
+
 def unique_identifiers(
     values: Any,
     name: str,
@@ -654,15 +738,12 @@ def unique_identifiers(
 ) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
-        raise GuiOptimizerDecodeError(f"{name} must be a sequence of identifiers")
-    if len(values) > max_items:
+    sequence = require_sequence(values, name)
+    if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
         )
-    items = tuple(require_identifier(item, f"{name} item") for item in values)
+    items = tuple(require_identifier(item, f"{name} item") for item in sequence)
     if len(items) != len(set(items)):
         raise GuiOptimizerDecodeError(f"{name} must not contain duplicates")
     return items if preserve_order else tuple(sorted(items))
@@ -679,11 +760,8 @@ def unique_texts(
 ) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
-        raise GuiOptimizerDecodeError(f"{name} must be a sequence of strings")
-    if len(values) > max_items:
+    sequence = require_sequence(values, name)
+    if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
         )
@@ -694,7 +772,7 @@ def unique_texts(
             allow_empty=allow_empty_items,
             max_chars=max_chars,
         )
-        for item in values
+        for item in sequence
     )
     if len(items) != len(set(items)):
         raise GuiOptimizerDecodeError(f"{name} must not contain duplicates")
@@ -709,15 +787,12 @@ def unique_digests(
 ) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
-        raise GuiOptimizerDecodeError(f"{name} must be a sequence of digests")
-    if len(values) > max_items:
+    sequence = require_sequence(values, name)
+    if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
         )
-    items = tuple(require_digest(item, f"{name} item") for item in values)
+    items = tuple(require_digest(item, f"{name} item") for item in sequence)
     if len(items) != len(set(items)):
         raise GuiOptimizerDecodeError(f"{name} must not contain duplicates")
     return tuple(sorted(items))
@@ -731,15 +806,12 @@ def unique_repo_paths(
 ) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
-        raise GuiOptimizerDecodeError(f"{name} must be a sequence of paths")
-    if len(values) > max_items:
+    sequence = require_sequence(values, name)
+    if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
         )
-    items = tuple(require_repo_path(item, f"{name} item") for item in values)
+    items = tuple(require_repo_path(item, f"{name} item") for item in sequence)
     if len(items) != len(set(items)):
         raise GuiOptimizerDecodeError(f"{name} must not contain duplicates")
     return tuple(sorted(items))
@@ -754,17 +826,14 @@ def parse_enum_sequence(
 ) -> tuple[E, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
-        raise GuiOptimizerDecodeError(
-            f"{name} must be a sequence of {enum_cls.__name__} values"
-        )
-    if len(values) > max_items:
+    sequence = require_sequence(values, name)
+    if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
         )
-    items = tuple(parse_enum(item, enum_cls, f"{name} item") for item in values)
+    items = tuple(
+        parse_enum(item, enum_cls, f"{name} item") for item in sequence
+    )
     if len(items) != len(set(items)):
         raise GuiOptimizerDecodeError(f"{name} must not contain duplicates")
     return tuple(sorted(items, key=lambda item: item.value))
@@ -779,6 +848,7 @@ __all__ = [
     "CANONICAL_JSON_PROFILE",
     "REQUIRED_MODEL_INTERFACES",
     "SCHEMA_VERSION_BY_INTERFACE",
+    "REGISTERED_OPTIMIZER_SCHEMA_VERSIONS",
     "GuiOptimizerSchemaError",
     "GuiOptimizerDecodeError",
     "AnalysisClassification",
@@ -801,6 +871,7 @@ __all__ = [
     "AccessibilityRequirementKind",
     "reject_unknown_fields",
     "require_mapping",
+    "require_sequence",
     "require_text",
     "optional_text",
     "require_identifier",
@@ -816,7 +887,9 @@ __all__ = [
     "require_finite_number",
     "parse_enum",
     "require_schema_version",
+    "require_registered_optimizer_schema_version",
     "require_interface",
+    "require_wire_identity",
     "unique_identifiers",
     "unique_texts",
     "unique_digests",

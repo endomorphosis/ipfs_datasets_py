@@ -48,6 +48,7 @@ from .models import (
 from .schema import (
     CANONICAL_JSON_PROFILE,
     PACKAGE_ID,
+    REGISTERED_OPTIMIZER_SCHEMA_VERSIONS,
     REQUIRED_MODEL_INTERFACES,
     SCHEMA_VERSION_BY_INTERFACE,
     AccessibilityRequirementKind,
@@ -78,6 +79,7 @@ __all__ = [
     "CANONICAL_JSON_PROFILE",
     "REQUIRED_MODEL_INTERFACES",
     "SCHEMA_VERSION_BY_INTERFACE",
+    "REGISTERED_OPTIMIZER_SCHEMA_VERSIONS",
     "MODEL_TYPES",
     "GuiOptimizerSchemaError",
     "GuiOptimizerDecodeError",

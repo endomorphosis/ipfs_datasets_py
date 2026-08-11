@@ -6,6 +6,14 @@ Evidence subset:
 * closed-schema rejection vectors
 * enum and finite-bound tests
 * analysis-class vs verification-status separation
+* parameterized wrong-container vectors for array and mapping fields
+* required schema/interface vectors
+* registered optimizer-schema vectors
+* canonical mapping-key collision vectors
+* cross-field receipt-consistency vectors
+* exact round-trip type preservation
+* required capsule/context/visual-receipt field inventory
+* undeclared-artifact absence
 * standalone package import boundary
 """
 
@@ -21,6 +29,7 @@ from typing import Any
 import pytest
 
 from ipfs_datasets_py.logic.gui_optimizer import (
+    REGISTERED_OPTIMIZER_SCHEMA_VERSIONS,
     REQUIRED_MODEL_INTERFACES,
     SCHEMA_VERSION_BY_INTERFACE,
     AccessibilityReceipt,
@@ -105,6 +114,45 @@ EXCLUDED_IMPORT_SUBSTRINGS = (
     "proof_corpus",
     "model_routing",
     "ui_ux_ir",
+)
+
+REQUIRED_CAPSULE_FIELDS = frozenset(
+    {
+        "action_side_effects",
+        "layout_responsive_behavior",
+        "keyboard_focus_behavior",
+        "analysis_classification",
+        "verification_status",
+    }
+)
+
+REQUIRED_CONTEXT_PACK_FIELDS = frozenset(
+    {
+        "raw_source_paths",
+        "style_token_paths",
+        "affected_test_ids",
+        "state_machine_ids",
+        "invariant_failure_ids",
+        "artifact_digests",
+        "raw_source_tokens",
+        "capsule_tokens",
+        "screenshot_analysis_tokens",
+        "replaced_source_tokens",
+        "estimated_tokens",
+        "compression_ratio",
+        "token_budget",
+    }
+)
+
+REQUIRED_VISUAL_RECEIPT_FIELDS = frozenset(
+    {
+        "structural_diff_percent",
+        "expected_change_regions",
+        "forbidden_change_regions",
+        "max_unexplained_diff_percent",
+        "manual_review_threshold_percent",
+        "pixel_diff_percent",
+    }
 )
 
 
@@ -227,6 +275,15 @@ def _sample_instances() -> dict[str, Any]:
             verification_status=VerificationStatus.UNVERIFIED,
             completeness_boundary=CompletenessBoundary.COMPLETE_WITHIN_BOUNDARY,
             prop_names=("goals", "tasks"),
+            action_side_effects=("dispatch-goal", "invalidate-cache"),
+            layout_responsive_behavior=(
+                "stack-on-narrow",
+                "preserve-primary-action",
+            ),
+            keyboard_focus_behavior=(
+                "tab-order-form-then-submit",
+                "escape-cancels-dialog",
+            ),
             visible_state_ids=("state:ready", "state:loading"),
             confirmation_required=True,
             source_revision="deadbeef",
@@ -239,8 +296,8 @@ def _sample_instances() -> dict[str, Any]:
             summary="Add accessible name to goal form",
         ),
         "UiInvalidationPlan@1": UiInvalidationPlan(
-            plan_id="invalidate:label-fix",
-            change_set_id="change:label-fix",
+            plan_id="invalidate:label-form",
+            change_set_id="change:label-form",
             reasons=(InvalidationReason.COMPONENT_CHANGED,),
             affected_component_ids=("comp:goal-form",),
             affected_scenario_ids=("scenario:keyboard-only",),
@@ -272,8 +329,18 @@ def _sample_instances() -> dict[str, Any]:
             token_budget=4000,
             estimated_tokens=1200,
             raw_source_paths=("swissknife/web/js/apps/agent-supervisor.js",),
+            style_token_paths=("swissknife/web/css/tokens.css",),
+            affected_test_ids=("test:goal-form-a11y",),
+            state_machine_ids=("sm:agent-supervisor",),
+            invariant_failure_ids=(),
+            artifact_digests=(DIGEST_5,),
             capsule_ids=("capsule:console-root",),
             acceptance_criteria=("form has accessible name",),
+            raw_source_tokens=800,
+            capsule_tokens=200,
+            screenshot_analysis_tokens=100,
+            replaced_source_tokens=50,
+            compression_ratio=0.42,
             analysis_classification=AnalysisClassification.CONSERVATIVE,
             verification_status=VerificationStatus.UNVERIFIED,
         ),
@@ -301,6 +368,11 @@ def _sample_instances() -> dict[str, Any]:
             decision=VisualDecision.PASS,
             evidence_level=EvidenceLevel.HEURISTIC,
             pixel_diff_percent=0.25,
+            structural_diff_percent=0.1,
+            expected_change_regions=("region:label",),
+            forbidden_change_regions=("region:nav",),
+            max_unexplained_diff_percent=1.0,
+            manual_review_threshold_percent=2.0,
             analysis_classification=AnalysisClassification.HEURISTIC,
             verification_status=VerificationStatus.SIMULATED,
         ),
@@ -345,7 +417,7 @@ def _sample_instances() -> dict[str, Any]:
         ),
         "GuiImprovementReceipt@1": GuiImprovementReceipt(
             receipt_id="receipt:improvement-1",
-            proposal_id="proposal:label-fix",
+            proposal_id="proposal:label-form",
             application_id="app:agent-supervisor",
             screen_id="screen:agent-supervisor",
             repository_revision="deadbeef",
@@ -354,7 +426,7 @@ def _sample_instances() -> dict[str, Any]:
             accessibility_receipt_ids=("receipt:a11y-1",),
             interaction_receipt_ids=("receipt:interaction-1",),
             constraint_receipt_ids=("receipt:constraint-1",),
-            invalidation_plan_id="invalidate:label-fix",
+            invalidation_plan_id="invalidate:label-form",
             context_pack_id="pack:label-form",
             patch_digest=DIGEST_8,
             analysis_classification=AnalysisClassification.EXACT,
@@ -379,6 +451,7 @@ def test_required_model_inventory_is_complete_and_registered() -> None:
         assert model_cls.INTERFACE == interface
         assert model_cls.SCHEMA_VERSION == SCHEMA_VERSION_BY_INTERFACE[interface]
         assert model_cls.SCHEMA_VERSION.endswith("/v1")
+        assert model_cls.SCHEMA_VERSION in REGISTERED_OPTIMIZER_SCHEMA_VERSIONS
 
 
 def test_every_required_model_round_trips_and_is_versioned() -> None:
@@ -391,6 +464,21 @@ def test_every_required_model_round_trips_and_is_versioned() -> None:
         restored = type(instance).from_dict(payload)
         assert restored.to_dict() == payload
         assert decode_model(payload).to_dict() == payload
+
+
+def test_round_trip_preserves_exact_wire_types() -> None:
+    for instance in _sample_instances().values():
+        payload = instance.to_dict()
+        restored = type(instance).from_dict(payload).to_dict()
+        for key, value in payload.items():
+            assert type(restored[key]) is type(value), key
+            if isinstance(value, list):
+                assert all(
+                    type(left) is type(right)
+                    for left, right in zip(value, restored[key], strict=True)
+                ), key
+            if isinstance(value, dict):
+                assert list(restored[key].keys()) == list(value.keys())
 
 
 # ---------------------------------------------------------------------------
@@ -416,6 +504,13 @@ def test_canonical_serialization_rejects_non_finite_numbers() -> None:
     payload["pixel_diff_percent"] = float("nan")
     with pytest.raises(GuiOptimizerDecodeError, match="finite"):
         VisualRegressionReceipt.from_dict(payload)
+    with pytest.raises(GuiOptimizerDecodeError, match="finite|non-finite"):
+        canonical_model_bytes({"x": float("inf")})
+
+
+def test_canonical_serialization_rejects_non_string_mapping_keys() -> None:
+    with pytest.raises(GuiOptimizerDecodeError, match="keys must be strings"):
+        canonical_model_bytes({1: "bad"})  # type: ignore[dict-item]
 
 
 # ---------------------------------------------------------------------------
@@ -437,7 +532,37 @@ def test_unsupported_schema_version_is_rejected(interface: str) -> None:
     instance = _sample_instances()[interface]
     payload = instance.to_dict()
     payload["schema_version"] = "not-a-supported-version/v9"
-    with pytest.raises(GuiOptimizerDecodeError, match="unsupported schema_version"):
+    with pytest.raises(
+        GuiOptimizerDecodeError,
+        match="unregistered optimizer schema version|unsupported schema_version",
+    ):
+        type(instance).from_dict(payload)
+
+
+@pytest.mark.parametrize("interface", REQUIRED_MODEL_INTERFACES)
+def test_missing_interface_on_wire_is_rejected(interface: str) -> None:
+    instance = _sample_instances()[interface]
+    payload = instance.to_dict()
+    del payload["interface"]
+    with pytest.raises(GuiOptimizerDecodeError, match="interface is required"):
+        type(instance).from_dict(payload)
+
+
+@pytest.mark.parametrize("interface", REQUIRED_MODEL_INTERFACES)
+def test_missing_schema_version_on_wire_is_rejected(interface: str) -> None:
+    instance = _sample_instances()[interface]
+    payload = instance.to_dict()
+    del payload["schema_version"]
+    with pytest.raises(GuiOptimizerDecodeError, match="schema_version is required"):
+        type(instance).from_dict(payload)
+
+
+@pytest.mark.parametrize("interface", REQUIRED_MODEL_INTERFACES)
+def test_wrong_interface_identity_is_rejected(interface: str) -> None:
+    instance = _sample_instances()[interface]
+    payload = instance.to_dict()
+    payload["interface"] = "NotARealInterface@9"
+    with pytest.raises(GuiOptimizerDecodeError, match="unsupported interface"):
         type(instance).from_dict(payload)
 
 
@@ -478,6 +603,97 @@ def test_malformed_paths_and_digests_are_rejected() -> None:
         )
     with pytest.raises(GuiOptimizerDecodeError, match="sha256"):
         _component_version(structure_digest="not-a-digest")
+
+
+def test_unregistered_optimizer_schema_version_is_rejected() -> None:
+    with pytest.raises(
+        GuiOptimizerDecodeError, match="unregistered optimizer schema version"
+    ):
+        _component_version(optimizer_schema_version="optimizer/not-registered/v99")
+
+
+# ---------------------------------------------------------------------------
+# Wrong JSON container types (before coercion)
+# ---------------------------------------------------------------------------
+
+
+ARRAY_FIELD_CASES: list[tuple[str, str]] = [
+    ("UiTransitionDefinition@1", "effect_ids"),
+    ("UiAccessibilityContract@1", "requirement_kinds"),
+    ("UiSemanticCapsule@1", "prop_names"),
+    ("UiSemanticCapsule@1", "action_side_effects"),
+    ("UiSemanticCapsule@1", "layout_responsive_behavior"),
+    ("UiSemanticCapsule@1", "keyboard_focus_behavior"),
+    ("UiChangeSet@1", "file_paths"),
+    ("UiInvalidationPlan@1", "reasons"),
+    ("UiEvaluationScenario@1", "tags"),
+    ("UiBaseline@1", "scenario_ids"),
+    ("UiContextPack@1", "raw_source_paths"),
+    ("UiContextPack@1", "style_token_paths"),
+    ("UiContextPack@1", "affected_test_ids"),
+    ("UiContextPack@1", "artifact_digests"),
+    ("GuiImprovementProposal@1", "intended_file_paths"),
+    ("VisualRegressionReceipt@1", "component_version_ids"),
+    ("VisualRegressionReceipt@1", "expected_change_regions"),
+    ("VisualRegressionReceipt@1", "forbidden_change_regions"),
+    ("AccessibilityReceipt@1", "violation_ids"),
+    ("InteractionReceipt@1", "step_ids"),
+    ("UiConstraintReceipt@1", "check_ids"),
+    ("UiConstraintReceipt@1", "statuses"),
+    ("GuiImprovementReceipt@1", "visual_receipt_ids"),
+]
+
+
+MAPPING_FIELD_CASES: list[tuple[str, str]] = [
+    ("UiComponentVersion@1", "stable_identity"),
+    ("UiDependencyEdge@1", "source_span"),
+    ("UiSemanticCapsule@1", "stable_identity"),
+    ("UiSemanticCapsule@1", "version_identity"),
+    ("UiEvaluationScenario@1", "viewport"),
+    ("VisualRegressionReceipt@1", "viewport"),
+]
+
+
+@pytest.mark.parametrize(("interface", "field"), ARRAY_FIELD_CASES)
+def test_array_fields_reject_strings_and_mappings(interface: str, field: str) -> None:
+    instance = _sample_instances()[interface]
+    payload = instance.to_dict()
+    payload[field] = "not-an-array"
+    with pytest.raises(GuiOptimizerDecodeError, match="must be a sequence"):
+        type(instance).from_dict(payload)
+    payload[field] = {"not": "an-array"}
+    with pytest.raises(GuiOptimizerDecodeError, match="must be a sequence"):
+        type(instance).from_dict(payload)
+
+
+@pytest.mark.parametrize(("interface", "field"), MAPPING_FIELD_CASES)
+def test_mapping_fields_reject_arrays_and_strings(interface: str, field: str) -> None:
+    instance = _sample_instances()[interface]
+    payload = instance.to_dict()
+    payload[field] = ["not", "a", "mapping"]
+    with pytest.raises(GuiOptimizerDecodeError, match="must be a mapping"):
+        type(instance).from_dict(payload)
+    payload[field] = "not-a-mapping"
+    with pytest.raises(GuiOptimizerDecodeError, match="must be a mapping"):
+        type(instance).from_dict(payload)
+
+
+@pytest.mark.parametrize("interface", REQUIRED_MODEL_INTERFACES)
+def test_top_level_payload_rejects_array_container(interface: str) -> None:
+    instance = _sample_instances()[interface]
+    with pytest.raises(GuiOptimizerDecodeError, match="must be a mapping"):
+        type(instance).from_dict(["not", "a", "mapping"])  # type: ignore[arg-type]
+    with pytest.raises(GuiOptimizerDecodeError, match="must be a mapping"):
+        type(instance).from_dict("not-a-mapping")  # type: ignore[arg-type]
+
+
+def test_string_array_field_does_not_coerce_characters() -> None:
+    """Regression: tuple(\"ab\") must never become ('a', 'b') identifiers."""
+
+    payload = _sample_instances()["UiTransitionDefinition@1"].to_dict()
+    payload["effect_ids"] = "ab"
+    with pytest.raises(GuiOptimizerDecodeError, match="must be a sequence"):
+        UiTransitionDefinition.from_dict(payload)
 
 
 # ---------------------------------------------------------------------------
@@ -542,7 +758,7 @@ def test_closed_analysis_and_verification_vocabularies() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Finite bounds / structural guards
+# Finite bounds / structural guards / cross-field consistency
 # ---------------------------------------------------------------------------
 
 
@@ -600,8 +816,102 @@ def test_constraint_receipt_statuses_align_with_checks() -> None:
         )
 
 
+def test_accessibility_receipt_violation_count_matches_ids() -> None:
+    with pytest.raises(GuiOptimizerDecodeError, match="violation_count"):
+        AccessibilityReceipt(
+            receipt_id="receipt:x",
+            application_id="app:x",
+            screen_id="screen:x",
+            scenario_id="scenario:x",
+            repository_revision="rev",
+            automated_pass_count=0,
+            violation_count=2,
+            violation_ids=("v1",),
+            manual_check_ids=(),
+            unsupported_criteria=(),
+            keyboard_result=ConstraintCheckStatus.SATISFIED,
+            screen_reader_reviewed=False,
+            evidence_level=EvidenceLevel.AUTOMATED,
+        )
+
+
+def test_visual_receipt_rejects_region_overlap_and_threshold_contradictions() -> None:
+    with pytest.raises(GuiOptimizerDecodeError, match="must not overlap"):
+        VisualRegressionReceipt(
+            receipt_id="receipt:x",
+            application_id="app:x",
+            screen_id="screen:x",
+            scenario_id="scenario:x",
+            repository_revision="rev",
+            component_version_ids=("v1",),
+            viewport=_viewport(),
+            screenshot_digest=DIGEST_6,
+            baseline_digest=DIGEST_7,
+            decision=VisualDecision.PASS,
+            evidence_level=EvidenceLevel.HEURISTIC,
+            expected_change_regions=("region:a",),
+            forbidden_change_regions=("region:a",),
+        )
+    with pytest.raises(GuiOptimizerDecodeError, match="max_unexplained_diff_percent"):
+        VisualRegressionReceipt(
+            receipt_id="receipt:x",
+            application_id="app:x",
+            screen_id="screen:x",
+            scenario_id="scenario:x",
+            repository_revision="rev",
+            component_version_ids=("v1",),
+            viewport=_viewport(),
+            screenshot_digest=DIGEST_6,
+            baseline_digest=DIGEST_7,
+            decision=VisualDecision.PASS,
+            evidence_level=EvidenceLevel.HEURISTIC,
+            pixel_diff_percent=5.0,
+            max_unexplained_diff_percent=1.0,
+        )
+
+
+def test_context_pack_token_accounting_consistency() -> None:
+    with pytest.raises(GuiOptimizerDecodeError, match="token-accounting"):
+        UiContextPack(
+            pack_id="pack:x",
+            application_id="app:x",
+            screen_id="screen:x",
+            objective="obj",
+            token_budget=100,
+            estimated_tokens=10,
+            raw_source_paths=("a.js",),
+            raw_source_tokens=20,
+            capsule_tokens=5,
+        )
+
+
 # ---------------------------------------------------------------------------
-# Import boundary: no excluded prior subsystems
+# Required field inventory for capsule / context / visual receipt
+# ---------------------------------------------------------------------------
+
+
+def test_required_capsule_context_visual_field_inventory() -> None:
+    capsule = _sample_instances()["UiSemanticCapsule@1"].to_dict()
+    assert REQUIRED_CAPSULE_FIELDS.issubset(capsule)
+    assert capsule["action_side_effects"]
+    assert capsule["layout_responsive_behavior"]
+    assert capsule["keyboard_focus_behavior"]
+
+    pack = _sample_instances()["UiContextPack@1"].to_dict()
+    assert REQUIRED_CONTEXT_PACK_FIELDS.issubset(pack)
+    assert pack["raw_source_paths"]
+    assert pack["style_token_paths"]
+    assert pack["affected_test_ids"]
+
+    visual = _sample_instances()["VisualRegressionReceipt@1"].to_dict()
+    assert REQUIRED_VISUAL_RECEIPT_FIELDS.issubset(visual)
+    assert "structural_diff_percent" in visual
+    assert visual["expected_change_regions"]
+    assert visual["forbidden_change_regions"]
+
+
+# ---------------------------------------------------------------------------
+# Import boundary: no excluded prior subsystems / undeclared artifacts
 # ---------------------------------------------------------------------------
 
 
@@ -638,3 +948,20 @@ def test_package_import_is_standalone_stdlib_only_for_schema() -> None:
     models_source = inspect.getsource(models_mod)
     for forbidden in EXCLUDED_IMPORT_SUBSTRINGS:
         assert forbidden not in models_source
+
+
+def test_no_undeclared_package_artifacts() -> None:
+    """Package tree may only contain the declared VGO-001 modules."""
+
+    allowed = {"__init__.py", "models.py", "schema.py", "__pycache__"}
+    present = {path.name for path in PACKAGE_ROOT.iterdir()}
+    unexpected = present - allowed
+    assert not unexpected, f"undeclared package artifacts: {sorted(unexpected)}"
+    # No smoke/fixture leftovers under the package.
+    for path in PACKAGE_ROOT.rglob("*"):
+        if path.is_dir():
+            continue
+        if path.name.endswith(".pyc"):
+            continue
+        assert path.name in {"__init__.py", "models.py", "schema.py"}
+        assert "smoke" not in path.name.lower()
