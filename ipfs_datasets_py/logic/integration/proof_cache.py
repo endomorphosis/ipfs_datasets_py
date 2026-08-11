@@ -132,6 +132,67 @@ class ProofCache:
         self._evictions: int = 0
         self._expirations: int = 0
         self._total_puts: int = 0
+        self._shadow_repository: Any = None
+        self._shadow_backend: str = "integration"
+
+    def bind_shadow_repository(
+        self, repository: Any, *, backend: str = "integration"
+    ) -> None:
+        """Bind this integration cache to the unified shadow repository (DQK-065)."""
+
+        self._shadow_repository = repository
+        self._shadow_backend = backend
+        if repository is not None:
+            repository.register_backend(backend)
+
+    def bind_authority_repository(self, repository, *, backend: str = "integration") -> None:
+        """Bind to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
+
+    def _shadow_write(
+        self, formula: str, prover_name: str, result_data: Any
+    ) -> None:
+        repo = self._shadow_repository
+        if repo is None:
+            try:
+                from ..common.proof_cache import get_shadow_repository
+
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        if repo is None:
+            return
+        try:
+            key = repo.project_key(
+                self._shadow_backend,
+                formula=formula,
+                prover_name=prover_name or "integration",
+                solver_identities={"prover": prover_name or "integration"},
+                toolchain={"backend": self._shadow_backend},
+                policy={"mode": "shadow", "backend": self._shadow_backend},
+            )
+            payload = (
+                result_data
+                if isinstance(result_data, dict)
+                else {"value": result_data}
+            )
+            status = str(payload.get("status") or "unknown")
+            repo.write(
+                self._shadow_backend,
+                key=key,
+                result_payload=payload,
+                status=status,
+                trust_level="none",
+                legacy_payload={
+                    "formula_hash": formula,
+                    "prover": prover_name,
+                    "result_data": payload,
+                },
+            )
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # Properties for backward compatibility
@@ -200,6 +261,7 @@ class ProofCache:
                 self._evictions += 1
             self._cache[key] = cached
             self._total_puts += 1
+        self._shadow_write(formula, prover_name, result_data)
 
     # Forward-compat alias used by new API callers
     def set(
@@ -348,3 +410,43 @@ def get_global_cache(maxsize: int = 1000, ttl: float = 3600.0) -> ProofCache:
             if _GLOBAL_CACHE is None:
                 _GLOBAL_CACHE = ProofCache(max_size=maxsize, default_ttl=ttl)
     return _GLOBAL_CACHE
+
+
+# DQK-065 shadow surface
+from ..common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
+)
+
+INTEGRATION_LEGACY_BACKEND = LegacyProofBackend.INTEGRATION
+
+__all__ = [
+    "CachedProof",
+    "INTEGRATION_LEGACY_BACKEND",
+    "LEGACY_PROOF_BACKENDS",
+    "LegacyProofBackend",
+    "ProofCache",
+    "UnifiedProofAuthorityRepository",
+    "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
+    "build_proof_shadow_repository",
+    "get_global_cache",
+    "get_authority_repository",
+    "get_shadow_repository",
+    "set_authority_repository",
+    "set_shadow_repository",
+]

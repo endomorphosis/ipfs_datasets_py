@@ -21,15 +21,42 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Optional
 
-# Import from unified location
+# Import from unified location (DQK-065/066/067)
 from ..common.proof_cache import (
-    ProofCache,
     CachedProofResult as CachedProofEntry,
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofCache as _CommonProofCache,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
     get_global_cache,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
 )
 
+TDFOL_LEGACY_BACKEND = LegacyProofBackend.TDFOL
+
+
+class TDFOLProofCache(_CommonProofCache):
+    """TDFOL façade over the unified proof cache (DQK-065 shadow-ready)."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("shadow_backend", TDFOL_LEGACY_BACKEND.value)
+        super().__init__(*args, **kwargs)
+
+
 # Alias for backward compatibility
-TDFOLProofCache = ProofCache
+ProofCache = TDFOLProofCache
 
 
 @dataclass
@@ -77,8 +104,26 @@ def clear_global_proof_cache() -> None:
 
 __all__ = [
     'TDFOLProofCache',
+    'ProofCache',
     'CachedProofEntry',
     'get_global_proof_cache',
     'clear_global_proof_cache',
     'TDFOLProofResult',
+    'LEGACY_PROOF_BACKENDS',
+    'LegacyProofBackend',
+    'TDFOL_LEGACY_BACKEND',
+    'ProofAuthorityJSONRewriteError',
+    'ProofJSONCompatibilityError',
+    'ProofPublicationPolicyError',
+    'UnifiedProofAuthorityRepository',
+    'UnifiedProofShadowRepository',
+    'assert_compatibility_shims_import_unified_repository',
+    'assert_direct_json_persistence_forbidden',
+    'build_proof_authority_repository',
+    'build_proof_shadow_repository',
+    'get_authority_repository',
+    'get_shadow_repository',
+    'legacy_json_persistence_allowed',
+    'set_authority_repository',
+    'set_shadow_repository',
 ]

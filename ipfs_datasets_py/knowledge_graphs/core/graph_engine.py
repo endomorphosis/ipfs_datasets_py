@@ -20,6 +20,7 @@ from ..exceptions import StorageError
 
 if TYPE_CHECKING:
     from ..storage.ipld_backend import IPLDBackend
+    from ipfs_datasets_py.knowledge_graphs.catalog.store import GraphShadowAuthority
 
 logger = logging.getLogger(__name__)
 
@@ -34,14 +35,23 @@ class GraphEngine:
     Phase 1: Basic CRUD operations
     Phase 2: Path traversal and pattern matching
     Phase 3: Advanced algorithms (shortest path, centrality, etc.)
+
+    DQK-059: optional DuckDB shadow authority projects inventory mutations
+    while in-memory / IPLD remains authoritative.
     """
 
-    def __init__(self, storage_backend: Optional['IPLDBackend'] = None):
+    def __init__(
+        self,
+        storage_backend: Optional['IPLDBackend'] = None,
+        *,
+        shadow_authority: Optional["GraphShadowAuthority"] = None,
+    ):
         """
         Initialize the graph engine.
 
         Args:
             storage_backend: IPLD storage backend
+            shadow_authority: Optional DQK-059 DuckDB shadow authority port
         """
         self.storage = storage_backend
         self._node_cache = {}
@@ -49,7 +59,49 @@ class GraphEngine:
         self._node_id_counter = 0
         self._rel_id_counter = 0
         self._enable_persistence = storage_backend is not None
+        self._shadow_authority = shadow_authority
         logger.debug("GraphEngine initialized (persistence=%s)", self._enable_persistence)
+
+    def attach_shadow_authority(self, authority: Optional["GraphShadowAuthority"]) -> None:
+        """Bind or clear the DuckDB shadow authority (DQK-059)."""
+
+        self._shadow_authority = authority
+
+    @property
+    def shadow_authority(self) -> Optional["GraphShadowAuthority"]:
+        return self._shadow_authority
+
+    def _emit_shadow(
+        self,
+        kind: str,
+        entity_id: str,
+        payload: Dict[str, Any],
+        *,
+        content_cid: str = "",
+        operation_id: Optional[str] = None,
+    ) -> None:
+        shadow = self._shadow_authority
+        if shadow is None:
+            try:
+                from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                    get_graph_shadow_authority,
+                )
+
+                shadow = get_graph_shadow_authority()
+            except Exception:
+                shadow = None
+        if shadow is None:
+            return
+        try:
+            shadow.record_engine_mutation(
+                kind=kind,
+                entity_id=entity_id,
+                payload=payload,
+                operation_id=operation_id,
+                content_cid=content_cid,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("graph engine shadow quarantined (legacy ok): %s", exc)
 
     def create_node(
         self,
@@ -85,6 +137,7 @@ class GraphEngine:
         self._node_cache[node_id] = node
 
         # Persist to IPLD storage if available
+        content_cid = ""
         if self._enable_persistence and self.storage:
             try:
                 node_data = {
@@ -95,10 +148,22 @@ class GraphEngine:
                 cid = self.storage.store(node_data, pin=True, codec="dag-json")
                 # Store CID mapping for retrieval
                 self._node_cache[f"cid:{node_id}"] = cid
+                content_cid = str(cid) if cid is not None else ""
                 logger.debug("Node %s persisted with CID: %s", node_id, cid)
             except StorageError as e:
                 logger.warning("Failed to persist node %s: %s", node_id, e)
 
+        self._emit_shadow(
+            "create_node",
+            node_id,
+            {
+                "node_id": node_id,
+                "labels": list(labels or []),
+                "properties": dict(properties or {}),
+                "content_cid": content_cid,
+            },
+            content_cid=content_cid,
+        )
         logger.info("Created node: %s (labels=%s)", node_id, labels)
         return node
 
@@ -165,6 +230,7 @@ class GraphEngine:
         self._node_cache[node_id] = node
 
         # Update in IPLD storage if persistence is enabled
+        content_cid = ""
         if self._enable_persistence and self.storage:
             try:
                 node_data = {
@@ -174,10 +240,21 @@ class GraphEngine:
                 }
                 cid = self.storage.store(node_data, pin=True, codec="dag-json")
                 self._node_cache[f"cid:{node_id}"] = cid
+                content_cid = str(cid) if cid is not None else ""
                 logger.debug("Node %s updated in storage (CID: %s)", node_id, cid)
             except StorageError as e:
                 logger.warning("Failed to update node %s in storage: %s", node_id, e)
 
+        self._emit_shadow(
+            "update_node",
+            node_id,
+            {
+                "node_id": node_id,
+                "properties": dict(properties or {}),
+                "content_cid": content_cid,
+            },
+            content_cid=content_cid,
+        )
         logger.info("Updated node: %s", node_id)
         return node
 
@@ -202,6 +279,11 @@ class GraphEngine:
             del self._node_cache[cid_key]
 
         # Note: We don't unpin from IPFS as other references may exist
+        self._emit_shadow(
+            "delete_node",
+            node_id,
+            {"node_id": node_id, "deleted": True},
+        )
         logger.info("Deleted node: %s", node_id)
         return True
 
@@ -237,6 +319,7 @@ class GraphEngine:
         self._relationship_cache[rel_id] = relationship
 
         # Persist to IPLD storage if available
+        content_cid = ""
         if self._enable_persistence and self.storage:
             try:
                 rel_data = {
@@ -248,10 +331,24 @@ class GraphEngine:
                 }
                 cid = self.storage.store(rel_data, pin=True, codec="dag-json")
                 self._relationship_cache[f"cid:{rel_id}"] = cid
+                content_cid = str(cid) if cid is not None else ""
                 logger.debug("Relationship %s persisted with CID: %s", rel_id, cid)
             except StorageError as e:
                 logger.warning("Failed to persist relationship %s: %s", rel_id, e)
 
+        self._emit_shadow(
+            "create_relationship",
+            rel_id,
+            {
+                "rel_id": rel_id,
+                "rel_type": rel_type,
+                "start_node": start_node,
+                "end_node": end_node,
+                "properties": dict(properties or {}),
+                "content_cid": content_cid,
+            },
+            content_cid=content_cid,
+        )
         logger.info("Created relationship: %s -%s-> %s", start_node, rel_type, end_node)
         return relationship
 
@@ -271,6 +368,11 @@ class GraphEngine:
         if cid_key in self._relationship_cache:
             del self._relationship_cache[cid_key]
 
+        self._emit_shadow(
+            "delete_relationship",
+            rel_id,
+            {"rel_id": rel_id, "deleted": True},
+        )
         logger.info("Deleted relationship: %s", rel_id)
         return True
 

@@ -76,13 +76,63 @@ async def create_vector_store(
     # Create store based on type
     if store_type == VectorStoreType.IPLD or (isinstance(store_type, str) and store_type == "ipld"):
         store = IPLDVectorStore(config)
+        backend_name = "ipld"
     elif store_type == VectorStoreType.FAISS or (isinstance(store_type, str) and store_type == "faiss"):
         store = FAISSVectorStore(config)
+        backend_name = "faiss"
     elif store_type == VectorStoreType.QDRANT or (isinstance(store_type, str) and store_type == "qdrant"):
         store = QdrantVectorStore(config)
+        backend_name = "qdrant"
     else:
         from .elasticsearch_store import ElasticsearchVectorStore
         store = ElasticsearchVectorStore(config)
+        backend_name = "elasticsearch"
+
+    # Route collection identity through DuckDB catalog (DQK-062/063/064).
+    # After promotion, no silent pickle/JSON fallback; bytes stay in engine.
+    try:
+        from ipfs_datasets_py.vector_stores.management_engine import (
+            get_vector_authority_catalog,
+            get_vector_shadow_catalog,
+            safe_dual_create,
+            safe_shadow_create,
+            duckdb_metadata_is_authority,
+        )
+        catalog = get_vector_authority_catalog() or get_vector_shadow_catalog()
+        create_fn = (
+            safe_dual_create
+            if duckdb_metadata_is_authority()
+            else safe_shadow_create
+        )
+        create_kwargs = dict(
+            logical_name=collection_name,
+            backend=backend_name,
+            dimension=int(dimension),
+            dtype="float32",
+            mapping={},
+            metadata_json={
+                "producer": "vector_stores.api",
+                "distance_metric": distance_metric,
+                "bytes_location": "engine",
+                "publication_approved": True,
+            },
+            model_provider=backend_name,
+            model_name=kwargs.get("model_name") or backend_name,
+            chunking_identity=kwargs.get("chunking_identity", "chunk:api@1"),
+            normalization_identity=kwargs.get(
+                "normalization_identity",
+                "norm:l2@1" if distance_metric == "cosine" else "norm:none@1",
+            ),
+            source_revision=kwargs.get("source_revision", "src-0"),
+        )
+        try:
+            create_fn(**create_kwargs, bytes_location="engine")
+        except TypeError:
+            create_fn(**create_kwargs)
+    except Exception as shadow_exc:  # noqa: BLE001
+        logger.warning(
+            "API shadow create quarantined (legacy ok): %s", shadow_exc
+        )
     
     logger.info(f"Created {store_type} vector store for collection '{collection_name}'")
     return store
