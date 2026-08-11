@@ -224,10 +224,12 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
         "IPFS_ACCELERATE_AGENT_CODEX_REASONING_EFFORT": "medium",
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON": "/usr/bin/python3.12",
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": (
-            "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages"
+            "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages:"
+            "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/"
+            "site-packages"
         ),
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON_MODULES": (
-            "huggingface_hub,numpy,pyarrow"
+            "huggingface_hub,numpy,pyarrow,duckdb"
         ),
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
@@ -314,7 +316,13 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
             "Hugging Face credentials are unavailable or do not show justicedao access"
         )
 
-    required_modules = ("huggingface_hub", "numpy", "pyarrow", "pytest")
+    required_modules = (
+        "huggingface_hub",
+        "numpy",
+        "pyarrow",
+        "duckdb",
+        "pytest",
+    )
     effective_launch_environment = configured_board_launch_environment(
         {
             str(key): str(value)

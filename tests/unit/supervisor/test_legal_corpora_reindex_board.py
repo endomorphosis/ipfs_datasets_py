@@ -260,6 +260,22 @@ def test_validation_runtime_deployment_drift_is_rejected(tmp_path: Path) -> None
     )
 
 
+def test_controller_runtime_deployment_drift_is_rejected(tmp_path: Path) -> None:
+    root = _copy_control_plane(tmp_path / "repo")
+    config_path = root / "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["controller_runtime"]["deployments"][0]["receipt_sha256"] = "0" * 64
+    config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+
+    result, report = _run_validator(root)
+    assert result.returncode == 1
+    assert any(
+        "scheduler controller_runtime must remain the exact sealed deployment"
+        in error
+        for error in report["errors"]
+    )
+
+
 def test_controlled_reseal_task_contract_drift_is_rejected(tmp_path: Path) -> None:
     root = _copy_control_plane(tmp_path / "repo")
     taskboard = root / "docs/architecture/legal_corpora_reindex.todo.md"

@@ -905,13 +905,42 @@ def _validate_config(
         if isinstance(concurrency, bool) or not isinstance(concurrency, int) or concurrency < 4:
             errors.append("scheduler provider.max_concurrency must be an integer >= 4")
 
+    controller_runtime = config.get("controller_runtime")
+    expected_controller_runtime = {
+        "deployments": [
+            {
+                "pythonpath": (
+                    "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/"
+                    "site-packages"
+                ),
+                "receipt_path": (
+                    "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/"
+                    "DEPLOYMENT.json"
+                ),
+                "receipt_sha256": (
+                    "8e3fb57e753b6c77c7608e7f54155436521d082e735c54e0cd66924cef4b31b8"
+                ),
+            }
+        ],
+        "required_modules": ["duckdb"],
+    }
+    if controller_runtime != expected_controller_runtime:
+        errors.append(
+            "scheduler controller_runtime must remain the exact sealed "
+            f"deployment contract {expected_controller_runtime!r}"
+        )
+
     validation_runtime = config.get("validation_runtime")
     expected_validation_runtime = {
         "python_executable": "/usr/bin/python3.12",
         "pythonpath_entries": [
-            "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages"
+            "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages",
+            (
+                "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/"
+                "site-packages"
+            ),
         ],
-        "required_modules": ["huggingface_hub", "numpy", "pyarrow"],
+        "required_modules": ["huggingface_hub", "numpy", "pyarrow", "duckdb"],
     }
     if validation_runtime != expected_validation_runtime:
         errors.append(

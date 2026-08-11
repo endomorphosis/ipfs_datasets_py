@@ -25,15 +25,29 @@
     "changed_revision_requires_fresh_inventory_and_baseline": true,
     "planning_revision_is_runtime_completion_evidence": false
   },
+  "controller_runtime": {
+    "deployments": [
+      {
+        "pythonpath": "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/site-packages",
+        "receipt_path": "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/DEPLOYMENT.json",
+        "receipt_sha256": "8e3fb57e753b6c77c7608e7f54155436521d082e735c54e0cd66924cef4b31b8"
+      }
+    ],
+    "required_modules": [
+      "duckdb"
+    ]
+  },
   "validation_runtime": {
     "python_executable": "/usr/bin/python3.12",
     "pythonpath_entries": [
-      "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages"
+      "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages",
+      "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/site-packages"
     ],
     "required_modules": [
       "huggingface_hub",
       "numpy",
-      "pyarrow"
+      "pyarrow",
+      "duckdb"
     ]
   },
   "initial_projection": {

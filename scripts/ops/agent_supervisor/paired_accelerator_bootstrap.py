@@ -27,6 +27,8 @@ GIT_BINARY = Path("/usr/bin/git")
 PAIRED_CONFIG_RELATIVE = Path(
     "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
 )
+_MODULE_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*")
+_MAX_CONTROLLER_DEPLOYMENT_ENTRIES = 10_000
 
 
 class PairedAcceleratorBootstrapError(RuntimeError):
@@ -37,6 +39,14 @@ class PairedAcceleratorBootstrapError(RuntimeError):
 class PairedAcceleratorBinding:
     root: Path
     revision: str
+    controller_pythonpath: tuple[Path, ...] = ()
+
+
+@dataclass(frozen=True)
+class ControllerRuntimeDeployment:
+    pythonpath: Path
+    receipt_path: Path
+    receipt_sha256: str
 
 
 def _reject_duplicate_keys(pairs: Sequence[tuple[str, Any]]) -> dict[str, Any]:
@@ -284,6 +294,247 @@ def _prepend_import_root(root: Path) -> None:
     sys.path.insert(0, text)
 
 
+def _attest_controller_deployment(
+    deployment: ControllerRuntimeDeployment,
+) -> None:
+    pythonpath = deployment.pythonpath
+    receipt_path = deployment.receipt_path
+    if not pythonpath.is_absolute() or not receipt_path.is_absolute():
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime paths must be absolute"
+        )
+    try:
+        resolved_pythonpath = pythonpath.resolve(strict=True)
+        resolved_receipt = receipt_path.resolve(strict=True)
+    except OSError as exc:
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime deployment is unavailable"
+        ) from exc
+    if resolved_pythonpath != pythonpath or resolved_receipt != receipt_path:
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime paths must be canonical and symlink-free"
+        )
+    if (
+        not pythonpath.is_dir()
+        or not receipt_path.is_file()
+        or receipt_path.name != "DEPLOYMENT.json"
+        or receipt_path.parent != pythonpath.parent
+    ):
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime deployment layout is not canonical"
+        )
+    if re.fullmatch(r"[0-9a-f]{64}", deployment.receipt_sha256) is None:
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime receipt digest is malformed"
+        )
+    try:
+        receipt_bytes = receipt_path.read_bytes()
+    except OSError as exc:
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime receipt is unreadable"
+        ) from exc
+    if hashlib.sha256(receipt_bytes).hexdigest() != deployment.receipt_sha256:
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime receipt digest does not match"
+        )
+    try:
+        receipt = json.loads(
+            receipt_bytes.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys
+        )
+    except PairedAcceleratorBootstrapError:
+        raise
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime receipt is not canonical JSON"
+        ) from exc
+    if (
+        not isinstance(receipt, Mapping)
+        or receipt.get("schema")
+        != "ipfs-accelerate/controller-python-deployment@1"
+        or receipt.get("manifest_order") != "UTF-8 relative path ascending"
+        or receipt.get("excluded") != ["**/__pycache__/**", "**/*.pyc"]
+        or not isinstance(receipt.get("file_count"), int)
+        or isinstance(receipt.get("file_count"), bool)
+        or not isinstance(receipt.get("byte_count"), int)
+        or isinstance(receipt.get("byte_count"), bool)
+        or re.fullmatch(r"[0-9a-f]{64}", str(receipt.get("manifest_sha256", "")))
+        is None
+    ):
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime receipt fields are not canonical"
+        )
+    try:
+        top_level_names = {item.name for item in receipt_path.parent.iterdir()}
+    except OSError as exc:
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime deployment cannot be enumerated"
+        ) from exc
+    if top_level_names != {"DEPLOYMENT.json", pythonpath.name}:
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime deployment contains unexpected top-level content"
+        )
+
+    inspected = 0
+    manifest_records: list[tuple[str, int, str]] = []
+    stack = [receipt_path.parent]
+    while stack:
+        current = stack.pop()
+        try:
+            metadata = current.lstat()
+        except OSError as exc:
+            raise PairedAcceleratorBootstrapError(
+                "controller runtime deployment cannot be inspected"
+            ) from exc
+        inspected += 1
+        if inspected > _MAX_CONTROLLER_DEPLOYMENT_ENTRIES:
+            raise PairedAcceleratorBootstrapError(
+                "controller runtime deployment exceeds its entry bound"
+            )
+        if (
+            stat.S_ISLNK(metadata.st_mode)
+            or metadata.st_uid != 0
+            or metadata.st_gid != 0
+            or metadata.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+            or os.access(current, os.W_OK)
+        ):
+            raise PairedAcceleratorBootstrapError(
+                "controller runtime deployment is not root-owned and read-only"
+            )
+        if stat.S_ISDIR(metadata.st_mode):
+            try:
+                with os.scandir(current) as entries:
+                    stack.extend(Path(entry.path) for entry in entries)
+            except OSError as exc:
+                raise PairedAcceleratorBootstrapError(
+                    "controller runtime deployment cannot be enumerated"
+                ) from exc
+        elif not stat.S_ISREG(metadata.st_mode):
+            raise PairedAcceleratorBootstrapError(
+                "controller runtime deployment contains an unsupported node"
+            )
+        elif current != receipt_path and pythonpath in current.parents:
+            try:
+                content = current.read_bytes()
+            except OSError as exc:
+                raise PairedAcceleratorBootstrapError(
+                    "controller runtime payload is unreadable"
+                ) from exc
+            manifest_records.append(
+                (
+                    current.relative_to(pythonpath).as_posix(),
+                    len(content),
+                    hashlib.sha256(content).hexdigest(),
+                )
+            )
+
+    manifest_records.sort()
+    manifest_bytes = "".join(
+        f"{digest}  {relative}\n"
+        for relative, _size, digest in manifest_records
+    ).encode("utf-8")
+    if (
+        len(manifest_records) != receipt.get("file_count")
+        or sum(size for _relative, size, _digest in manifest_records)
+        != receipt.get("byte_count")
+        or hashlib.sha256(manifest_bytes).hexdigest()
+        != receipt.get("manifest_sha256")
+    ):
+        raise PairedAcceleratorBootstrapError(
+            "controller runtime payload does not match its receipt manifest"
+        )
+
+
+def _controller_runtime_from_payload(
+    payload: Mapping[str, Any],
+) -> tuple[tuple[ControllerRuntimeDeployment, ...], tuple[str, ...]]:
+    raw = payload.get("controller_runtime")
+    if raw is None:
+        return (), ()
+    if not isinstance(raw, Mapping) or set(raw) != {
+        "deployments",
+        "required_modules",
+    }:
+        raise PairedAcceleratorBootstrapError(
+            "controller_runtime must contain exactly deployments and required_modules"
+        )
+    raw_deployments = raw.get("deployments")
+    raw_modules = raw.get("required_modules")
+    if not isinstance(raw_deployments, list) or not raw_deployments:
+        raise PairedAcceleratorBootstrapError(
+            "controller_runtime.deployments must be a nonempty list"
+        )
+    if not isinstance(raw_modules, list) or not raw_modules:
+        raise PairedAcceleratorBootstrapError(
+            "controller_runtime.required_modules must be a nonempty list"
+        )
+
+    deployments: list[ControllerRuntimeDeployment] = []
+    for raw_deployment in raw_deployments:
+        if not isinstance(raw_deployment, Mapping) or set(raw_deployment) != {
+            "pythonpath",
+            "receipt_path",
+            "receipt_sha256",
+        }:
+            raise PairedAcceleratorBootstrapError(
+                "controller runtime deployment fields are not canonical"
+            )
+        values = tuple(
+            raw_deployment.get(field)
+            for field in ("pythonpath", "receipt_path", "receipt_sha256")
+        )
+        if not all(
+            isinstance(value, str)
+            and value
+            and not any(character in value for character in "\x00\r\n")
+            for value in values
+        ):
+            raise PairedAcceleratorBootstrapError(
+                "controller runtime deployment values are malformed"
+            )
+        deployment = ControllerRuntimeDeployment(
+            pythonpath=Path(values[0]),
+            receipt_path=Path(values[1]),
+            receipt_sha256=values[2],
+        )
+        if deployment.pythonpath in {
+            existing.pythonpath for existing in deployments
+        }:
+            raise PairedAcceleratorBootstrapError(
+                "controller runtime deployment is duplicated"
+            )
+        _attest_controller_deployment(deployment)
+        deployments.append(deployment)
+
+    modules: list[str] = []
+    for value in raw_modules:
+        if (
+            not isinstance(value, str)
+            or _MODULE_PATTERN.fullmatch(value) is None
+            or value in modules
+        ):
+            raise PairedAcceleratorBootstrapError(
+                "controller runtime required modules are malformed"
+            )
+        top_level = value.split(".", 1)[0]
+        if not any(
+            (deployment.pythonpath / top_level).is_dir()
+            or (deployment.pythonpath / f"{top_level}.py").is_file()
+            or any(deployment.pythonpath.glob(f"{top_level}.*.so"))
+            for deployment in deployments
+        ):
+            raise PairedAcceleratorBootstrapError(
+                f"controller runtime module is absent: {value}"
+            )
+        modules.append(value)
+    return tuple(deployments), tuple(modules)
+
+
+def _append_controller_import_roots(roots: Sequence[Path]) -> None:
+    rendered = [str(root) for root in roots]
+    sys.path[:] = [item for item in sys.path if item not in rendered]
+    sys.path.extend(rendered)
+
+
 def _install_child_binding(
     binding: PairedAcceleratorBinding,
     control_root: Path,
@@ -299,6 +550,41 @@ def _install_child_binding(
     os.environ["PYTHONPATH"] = str(binding.root)
     os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
     sys.dont_write_bytecode = True
+
+
+def _load_control_payload(root: Path) -> Mapping[str, Any]:
+    relative_config = PAIRED_CONFIG_RELATIVE.as_posix()
+    config_path = (root / PAIRED_CONFIG_RELATIVE).resolve()
+    _git(root, "ls-files", "--error-unmatch", "--", relative_config)
+    try:
+        config_bytes = config_path.read_bytes()
+    except OSError as exc:
+        raise PairedAcceleratorBootstrapError(
+            "scheduler config is unreadable"
+        ) from exc
+    if config_bytes != _git_bytes(root, "show", f"HEAD:{relative_config}"):
+        raise PairedAcceleratorBootstrapError(
+            "scheduler config does not match the exact HEAD blob"
+        )
+    try:
+        payload = json.loads(
+            config_bytes.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys
+        )
+    except PairedAcceleratorBootstrapError:
+        raise
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PairedAcceleratorBootstrapError(
+            f"scheduler config is unreadable: {type(exc).__name__}"
+        ) from exc
+    if not isinstance(payload, Mapping):
+        raise PairedAcceleratorBootstrapError("scheduler config must be an object")
+    if payload.get("schema") != (
+        "ipfs_accelerate_py.agent_supervisor.legal_corpora_reindex.scheduler_config@1"
+    ):
+        raise PairedAcceleratorBootstrapError(
+            "scheduler config schema is not canonical"
+        )
+    return payload
 
 
 def bootstrap_from_config_argv(
@@ -330,34 +616,7 @@ def bootstrap_from_config_argv(
         raise PairedAcceleratorBootstrapError(
             "paired scheduler requires the canonical legal-corpora config"
         )
-    relative_config = PAIRED_CONFIG_RELATIVE.as_posix()
-    _git(root, "ls-files", "--error-unmatch", "--", relative_config)
-    try:
-        config_bytes = config_path.read_bytes()
-    except OSError as exc:
-        raise PairedAcceleratorBootstrapError("scheduler config is unreadable") from exc
-    if config_bytes != _git_bytes(root, "show", f"HEAD:{relative_config}"):
-        raise PairedAcceleratorBootstrapError(
-            "scheduler config does not match the exact HEAD blob"
-        )
-    try:
-        payload = json.loads(
-            config_bytes.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys
-        )
-    except PairedAcceleratorBootstrapError:
-        raise
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise PairedAcceleratorBootstrapError(
-            f"scheduler config is unreadable: {type(exc).__name__}"
-        ) from exc
-    if not isinstance(payload, Mapping):
-        raise PairedAcceleratorBootstrapError("scheduler config must be an object")
-    if payload.get("schema") != (
-        "ipfs_accelerate_py.agent_supervisor.legal_corpora_reindex.scheduler_config@1"
-    ):
-        raise PairedAcceleratorBootstrapError(
-            "scheduler config schema is not canonical"
-        )
+    payload = _load_control_payload(root)
     source_binding = payload.get("source_binding")
     if not isinstance(source_binding, Mapping):
         return None
@@ -385,8 +644,14 @@ def bootstrap_from_config_argv(
             "paired accelerator does not occupy the exact sibling slot"
         )
     _attest_checkout(paired_root, revision)
-    binding = PairedAcceleratorBinding(paired_root, revision)
+    controller_deployments, _ = _controller_runtime_from_payload(payload)
+    binding = PairedAcceleratorBinding(
+        paired_root,
+        revision,
+        tuple(deployment.pythonpath for deployment in controller_deployments),
+    )
     _prepend_import_root(binding.root)
+    _append_controller_import_roots(binding.controller_pythonpath)
     _install_child_binding(binding, root)
     return binding
 
@@ -407,14 +672,43 @@ def bootstrap_from_environment(
         raise PairedAcceleratorBootstrapError(
             "child control root does not match the initial launcher checkout"
         )
-    expected = (control_root.parent / "ipfs_accelerate_py").resolve()
-    if root != expected:
+    payload = _load_control_payload(control_root)
+    source_binding = payload.get("source_binding")
+    paired = (
+        source_binding.get("paired_accelerator")
+        if isinstance(source_binding, Mapping)
+        else None
+    )
+    if not isinstance(paired, Mapping):
         raise PairedAcceleratorBootstrapError(
-            "child paired accelerator root is not the exact sibling"
+            "child control config has no paired accelerator binding"
+        )
+    expected_revision = paired.get("required_revision")
+    expected = (control_root.parent / "ipfs_accelerate_py").resolve()
+    if (
+        paired.get("repository_name") != "ipfs_accelerate_py"
+        or paired.get("sibling_path") != "../ipfs_accelerate_py"
+        or paired.get("require_clean_worktree") is not True
+        or paired.get("require_exact_revision") is not True
+        or not isinstance(expected_revision, str)
+        or root != expected
+    ):
+        raise PairedAcceleratorBootstrapError(
+            "child paired accelerator binding does not match the control config"
+        )
+    if revision != expected_revision:
+        raise PairedAcceleratorBootstrapError(
+            "child paired accelerator revision does not match the control config"
         )
     _attest_checkout(root, revision)
-    binding = PairedAcceleratorBinding(root, revision)
+    controller_deployments, _ = _controller_runtime_from_payload(payload)
+    binding = PairedAcceleratorBinding(
+        root,
+        revision,
+        tuple(deployment.pythonpath for deployment in controller_deployments),
+    )
     _prepend_import_root(binding.root)
+    _append_controller_import_roots(binding.controller_pythonpath)
     _install_child_binding(binding, control_root)
     return binding
 

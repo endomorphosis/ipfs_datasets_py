@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -14,6 +15,16 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[3]
 ENTRY_ROOT = REPO_ROOT / "scripts/ops/agent_supervisor"
 CONFIG_RELATIVE = "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
+CONTROLLER_PYTHONPATH = Path(
+    "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/site-packages"
+)
+CONTROLLER_RECEIPT = CONTROLLER_PYTHONPATH.parent / "DEPLOYMENT.json"
+CONTROLLER_RECEIPT_SHA256 = (
+    "8e3fb57e753b6c77c7608e7f54155436521d082e735c54e0cd66924cef4b31b8"
+)
+CONTROLLER_RUNTIME_AVAILABLE = (
+    CONTROLLER_PYTHONPATH.is_dir() and CONTROLLER_RECEIPT.is_file()
+)
 
 
 def _run_git(root: Path, *arguments: str) -> str:
@@ -76,6 +87,7 @@ def main():
         "pythonpath": os.environ.get("PYTHONPATH"),
         "required": os.environ.get("IPFS_ACCELERATE_PAIRED_ATTESTATION_REQUIRED"),
         "sys_path_0": sys.path[0],
+        "sys_path": sys.path,
     }, sort_keys=True))
     return 0
 """.lstrip(),
@@ -85,9 +97,10 @@ def main():
         "multi_supervisor_runner.py",
         """
 import json
+import sys
 
 def main(_argv=None):
-    print(json.dumps({"origin": __file__, "role": "multi"}, sort_keys=True))
+    print(json.dumps({"origin": __file__, "role": "multi", "sys_path": sys.path}, sort_keys=True))
     return 0
 """.lstrip(),
     )
@@ -109,6 +122,7 @@ def main():
         "pythonpath": os.environ.get("PYTHONPATH"),
         "required": os.environ.get("IPFS_ACCELERATE_PAIRED_ATTESTATION_REQUIRED"),
         "sys_path_0": sys.path[0],
+        "sys_path": sys.path,
     }, sort_keys=True))
     return 0
 """.lstrip(),
@@ -118,9 +132,10 @@ def main():
         "implementation_daemon.py",
         """
 import json
+import sys
 
 def main(_argv=None):
-    print(json.dumps({"origin": __file__, "role": "daemon"}, sort_keys=True))
+    print(json.dumps({"origin": __file__, "role": "daemon", "sys_path": sys.path}, sort_keys=True))
     return 0
 """.lstrip(),
     )
@@ -198,6 +213,17 @@ def main():
             }
         },
     }
+    if CONTROLLER_RUNTIME_AVAILABLE:
+        config["controller_runtime"] = {
+            "deployments": [
+                {
+                    "pythonpath": str(CONTROLLER_PYTHONPATH),
+                    "receipt_path": str(CONTROLLER_RECEIPT),
+                    "receipt_sha256": CONTROLLER_RECEIPT_SHA256,
+                }
+            ],
+            "required_modules": ["duckdb"],
+        }
     _write(repository / CONFIG_RELATIVE, json.dumps(config) + "\n")
     generic_config_relative = (
         "config/agent_supervisor_uscode_sparse_graphrag_scheduler.json"
@@ -300,6 +326,132 @@ def test_configured_launcher_prefers_and_attests_exact_sibling_before_import(
     assert payload["pythonpath"] == str(paired.resolve())
     assert payload["required"] == "1"
     assert payload["sys_path_0"] == str(paired.resolve())
+
+
+@pytest.mark.skipif(
+    not CONTROLLER_RUNTIME_AVAILABLE,
+    reason="the sealed legal-board DuckDB deployment is not installed",
+)
+def test_controller_runtime_is_visible_to_every_paired_process_entry(
+    paired_layout: tuple[Path, Path, str],
+) -> None:
+    repository, paired, revision = paired_layout
+    configured = _run_configured(repository)
+    assert configured.returncode == 0, configured.stderr
+    configured_payload = json.loads(configured.stdout)
+
+    environment = _hostile_environment(repository)
+    environment.update(
+        {
+            "IPFS_ACCELERATE_PAIRED_ATTESTATION_REQUIRED": "1",
+            "IPFS_ACCELERATE_PAIRED_ROOT": str(paired),
+            "IPFS_ACCELERATE_PAIRED_REVISION": revision,
+            "IPFS_ACCELERATE_PAIRED_CONTROL_ROOT": str(repository),
+        }
+    )
+    payloads = [configured_payload]
+    for entry_name in (
+        "implementation_supervisor_entry.py",
+        "multi_supervisor_entry.py",
+        "implementation_daemon_entry.py",
+    ):
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-S",
+                "-B",
+                str(repository / "scripts/ops/agent_supervisor" / entry_name),
+            ],
+            cwd=repository,
+            env=environment,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        payloads.append(json.loads(result.stdout))
+
+    for payload in payloads:
+        assert str(CONTROLLER_PYTHONPATH) in payload["sys_path"]
+        assert payload["sys_path"].index(str(CONTROLLER_PYTHONPATH)) > 0
+
+
+def test_controller_runtime_rejects_missing_receipt_before_import(
+    paired_layout: tuple[Path, Path, str],
+) -> None:
+    repository, _, _ = paired_layout
+    config_path = repository / CONFIG_RELATIVE
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["controller_runtime"] = {
+        "deployments": [
+            {
+                "pythonpath": "/opt/missing-controller-runtime/site-packages",
+                "receipt_path": "/opt/missing-controller-runtime/DEPLOYMENT.json",
+                "receipt_sha256": "0" * 64,
+            }
+        ],
+        "required_modules": ["duckdb"],
+    }
+    config_path.write_text(json.dumps(config) + "\n", encoding="utf-8")
+    _run_git(repository, "add", CONFIG_RELATIVE)
+    _run_git(repository, "commit", "-m", "bind missing controller runtime")
+
+    result = _run_configured(repository)
+    assert result.returncode != 0
+    assert "controller runtime deployment is unavailable" in result.stderr
+
+
+def test_controller_runtime_rejects_mutable_payload_before_import(
+    paired_layout: tuple[Path, Path, str],
+) -> None:
+    repository, _, _ = paired_layout
+    deployment_root = repository.parent / "mutable-controller-runtime"
+    pythonpath = deployment_root / "site-packages"
+    module_bytes = b"__version__ = 'test'\n"
+    module_path = pythonpath / "duckdb/__init__.py"
+    module_path.parent.mkdir(parents=True)
+    module_path.write_bytes(module_bytes)
+    receipt_path = deployment_root / "DEPLOYMENT.json"
+    module_sha256 = hashlib.sha256(module_bytes).hexdigest()
+    manifest = f"{module_sha256}  duckdb/__init__.py\n".encode()
+    receipt_bytes = (
+        json.dumps(
+            {
+                "schema": "ipfs-accelerate/controller-python-deployment@1",
+                "manifest_order": "UTF-8 relative path ascending",
+                "excluded": ["**/__pycache__/**", "**/*.pyc"],
+                "file_count": 1,
+                "byte_count": len(module_bytes),
+                "manifest_sha256": hashlib.sha256(manifest).hexdigest(),
+            },
+            sort_keys=True,
+        )
+        + "\n"
+    ).encode()
+    receipt_path.write_bytes(receipt_bytes)
+    config_path = repository / CONFIG_RELATIVE
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["controller_runtime"] = {
+        "deployments": [
+            {
+                "pythonpath": str(pythonpath),
+                "receipt_path": str(receipt_path),
+                "receipt_sha256": hashlib.sha256(receipt_bytes).hexdigest(),
+            }
+        ],
+        "required_modules": ["duckdb"],
+    }
+    config_path.write_text(json.dumps(config) + "\n", encoding="utf-8")
+    _run_git(repository, "add", CONFIG_RELATIVE)
+    _run_git(repository, "commit", "-m", "bind mutable controller runtime")
+
+    result = _run_configured(repository)
+    assert result.returncode != 0
+    assert (
+        "controller runtime deployment is not root-owned and read-only"
+        in result.stderr
+    )
 
 
 def test_configured_launcher_preserves_legacy_uscode_config_import(

@@ -97,8 +97,13 @@ from scripts.ops.legal_corpora_reindex.preflight import _probe_python_modules
 
 plan = {
     "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON": "/usr/bin/python3.12",
-    "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages",
-    "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON_MODULES": "huggingface_hub,numpy,pyarrow",
+    "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": (
+        "/opt/ipfs-accelerate-validation-python-74c4a6ff/site-packages:"
+        "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/site-packages"
+    ),
+    "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON_MODULES": (
+        "huggingface_hub,numpy,pyarrow,duckdb"
+    ),
     "PYTHONDONTWRITEBYTECODE": "1",
     "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
 }
@@ -107,7 +112,7 @@ effective = configured_board_launch_environment(
     inherited_environment={"IPFS_ACCELERATE_AGENT_VALIDATION_PATH": "/tmp"},
 )
 imports, receipt = _probe_python_modules(
-    ("huggingface_hub", "numpy", "pyarrow"),
+    ("huggingface_hub", "numpy", "pyarrow", "duckdb"),
     environment=effective,
 )
 print(json.dumps({"imports": imports, "reason": receipt.get("reason")}, sort_keys=True))
@@ -140,6 +145,7 @@ print(json.dumps({"imports": imports, "reason": receipt.get("reason")}, sort_key
             "huggingface_hub": False,
             "numpy": False,
             "pyarrow": False,
+            "duckdb": False,
         },
         "reason": "validation_python_module_probe_unavailable",
     }
