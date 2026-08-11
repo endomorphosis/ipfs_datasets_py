@@ -111,7 +111,7 @@ W8  ISI-032
 
 ## ISI-003 Extract Python symbols, contracts, effects, and confidence
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: python-analysis
