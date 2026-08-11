@@ -522,7 +522,7 @@ W14 ISI-040
 
 ## ISI-042 Reject source-impossible NaN identity inputs
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: identity-closure
