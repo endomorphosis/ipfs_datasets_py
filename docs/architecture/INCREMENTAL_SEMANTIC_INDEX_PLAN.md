@@ -116,7 +116,7 @@ Authority rules:
    even a same-tree commit changes every stable symbol ID. Its merged snapshot
    also omits commit/per-entry blob identity and rereads clean content in the
    scanner after hashing it. ISI-046 preserves ISI-034's truthful completed
-   evidence and closes stable repository identity, exact captured-byte
+   evidence and was introduced to close stable repository identity, exact captured-byte
    handoff, malformed-path/unreadable-traversal retention, exclusion-before-
    mode selection, and Git failure/warning disposition before Python inventory
    repair may start.
@@ -129,6 +129,15 @@ Authority rules:
    candidates also proved that host device/inode identity is not a durable
    committed-Git identity, dirty snapshots must not discard commit/tree/blob
    evidence, and malformed/reserved raw names need collision-free domains.
+10. ISI-046 later completed at marker `44876f4b4`, but immutable audit of its
+    merged implementation `bebe7752a` proved another focused-test false green.
+    Structural content addressing authenticates bytes supplied to the CID
+    function; it does not authenticate an attacker-selected replacement
+    manifest. ISI-047 therefore closes atomic commit-to-tree selection,
+    portable born identity, mode/disposition/exclusion identity, metadata-only
+    generation fencing, and raw-path/source/artifact domain separation. A
+    restored manifest without captured or independently retrieved source bytes
+    remains a claim and cannot authorize parsing by itself.
 
 ## 3. Proposed package and files
 
@@ -409,12 +418,13 @@ W9  ISI-033 -> ISI-041 -> ISI-042
 W10 ISI-034 | ISI-035 | ISI-037
 W10a ISI-045
 W11 ISI-046
-W12 ISI-043
-W13 ISI-044
-W14 ISI-036
-W15 ISI-038
-W16 ISI-039
-W17 ISI-040
+W12 ISI-047
+W13 ISI-043
+W14 ISI-044
+W15 ISI-036
+W16 ISI-038
+W17 ISI-039
+W18 ISI-040
 ```
 
 Tasks in each parallel wave own disjoint modules and tests. Integration tasks
@@ -422,7 +432,7 @@ depend on their inputs. Supervisor workers must honor `Outputs`, `Predicted
 files`, and `Conflict policy`; plan/objective/taskboard files are read-only
 protected control inputs. Phase-two capsule or coding-agent work must not treat
 the semantic state as authoritative until ISI-042, ISI-034 through ISI-039,
-and post-merge closure tasks ISI-043 through ISI-046 pass. ISI-040 is the
+and post-merge closure tasks ISI-043 through ISI-047 pass. ISI-040 is the
 final incremental-performance and watcher hardening wave.
 
 ## 13. Validation and acceptance
@@ -574,8 +584,19 @@ candidates `febc4e096` and `607d6f09c` supplied useful partial evidence but
 were not merged: both weakened an existing race assertion, and audit still
 found non-portable committed-repository identity, non-atomic commit/tree
 selection, incomplete dirty-snapshot evidence, and raw/artifact namespace
-collisions. The replacement attempt must preserve every existing test and add
-the missing closure probes.
+collisions. The replacement implementation `bebe7752a7c8412e02b3691ba17437aa41c45012`
+then merged as `97be11c7845d2e4b1c2444c0c187e1a58499ca94`
+and completed at marker `44876f4b40d82ed97c7b7ce95ac89853cd1e854c`.
+Its 14 focused tests and useful one-read, size-bound, built-in-exclusion,
+linked-worktree, unreadable-input, and state-evidence improvements are retained,
+but immutable probes still produced clone identity divergence, mode-CID
+forgery, a commit-A/tree-B snapshot, empty unborn and staged-deletion
+inventories, a restored-mtime race miss, raw/synthetic artifact collision, and
+unbound raw-path/source claims. Further probes found missing conflict/deletion
+dispositions, ASCII-ignore exclusion of an invalid lookalike, corrupt/quiet
+Git failures misclassified as filesystem or unborn, and untyped execution or
+decode failures. ISI-047 is the final sequential snapshot gate;
+the extractor repair may not consume ISI-046 as authoritative by itself.
 
 ### 16.2 Repair matrix
 
@@ -588,7 +609,8 @@ the missing closure probes.
 | ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-042 |
 | ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-042 |
 | ISI-046 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner tests/fixture | Portable committed-Git identity across commits/clones/linked worktrees, atomic commit/tree/blob evidence including dirty forms, one-read captured-byte parsing with metadata-only race rejection, collision-free malformed-name retention, and typed Git failure closure without weakening tests | ISI-034 |
-| ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture | Canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-046 |
+| ISI-047 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner adversarial tests/fixture | Commit-derived tree, portable clone identity, mode/disposition/exclusion-rooted state, ctime-strength generation fence, collision-free raw/source/artifact keys, and explicit restored-manifest trust boundary | ISI-046 |
+| ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture | Canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-047 |
 | ISI-044 | P0 | `python_analysis.py`, distinct relation-closure tests/fixture | Exact retained inheritance/composition/schema targets, scope/state effects, bounded calls, and source-bound dynamic/plugin/native confidence | ISI-043 |
 | ISI-045 | P0 | `persistence.py`, persistence tests | Idempotent bounded cleanup of legacy and current root/transition temporary prefixes without disturbing authoritative data | ISI-037 |
 | ISI-036 | P0 | `pytest_analysis.py`, `scanner.py`, `symbol_graph.py`, `index.py` | One Python/pytest identity and version, a resolved public state, and real test/fixture/config edges | ISI-034, ISI-044 |
@@ -620,10 +642,17 @@ typed migration/rejection boundary. It must prove at least:
    not collapse to the same signature projection;
 3. a clean Git repository with a smudge filter is scanned from exactly the
    once-captured indexed Git blob; commit/tree/per-entry blob OIDs enter state
-   evidence; a read race becomes opaque instead of mixed truth; and a
-   no-origin repository keeps its repository/stable symbol identities across
-   commits while unrelated same-basename Git, unborn Git, and filesystem
-   repositories remain distinct; excluded state cannot change mode or bytes;
+   evidence; the tree derives from the captured commit; mode and explicit
+   clean/dirty/unborn/tracked/untracked/deleted dispositions enter snapshot
+   identity; a read race, including same-size content with restored mtime,
+   becomes opaque through metadata-only validation instead of mixed truth; and
+   a no-origin repository keeps its repository/stable symbol identities across
+   commits, clones, and linked worktrees while unrelated same-basename Git,
+   unborn Git, and filesystem repositories remain distinct; built-in and
+   configured excluded state cannot change mode, bytes, bounds, or roots;
+   raw-path/source/artifact keys cannot collide with valid synthetic-looking
+   names; and a restored manifest cannot authorize parsing until supplied
+   bytes verify its claimed source CID;
 4. a direct or conditionally nested method/function body edit changes that
    child without changing its parent or unrelated symbols, while an
    overload-only interface edit does change the logical binding version;
