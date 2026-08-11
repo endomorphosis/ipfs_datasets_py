@@ -70,8 +70,27 @@ class AuditLogger:
         # Add any additional fields
         event.update(kwargs)
         
-        # Log as JSON
+        # Log as JSON (legacy file/stderr sink remains authority in shadow mode)
         audit_logger.info(json.dumps(event))
+
+        # DQK-077: dual-write redacted projection into typed observability catalog.
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                route_security_audit_event,
+            )
+
+            route_security_audit_event(
+                event_type=event_type,
+                user_id=user_id,
+                success=success,
+                details=details,
+                **kwargs,
+            )
+        except Exception:
+            audit_logger.debug(
+                "observability shadow routing skipped for security audit event",
+                exc_info=True,
+            )
     
     @staticmethod
     def log_proof_attempt(

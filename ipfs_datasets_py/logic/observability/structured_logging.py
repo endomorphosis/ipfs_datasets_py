@@ -309,9 +309,29 @@ def log_event(
         logger = logging.getLogger()
     
     extra = kwargs.copy()
-    extra[LogField.EVENT_TYPE.value] = event_type
+    event_type_value = (
+        event_type.value if isinstance(event_type, EventType) else str(event_type)
+    )
+    extra[LogField.EVENT_TYPE.value] = event_type_value
     
-    logger.log(level, f"Event: {event_type}", extra=extra)
+    logger.log(level, f"Event: {event_type_value}", extra=extra)
+
+    # DQK-077: project into typed observability shadow (legacy logger remains authority).
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            route_structured_log_event,
+        )
+
+        route_structured_log_event(
+            event_type_value,
+            fields=extra,
+            level=logging.getLevelName(level),
+        )
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "observability shadow routing skipped for structured log event",
+            exc_info=True,
+        )
 
 
 def log_error(
@@ -345,6 +365,23 @@ def log_error(
         exc_info=True,
         extra=extra
     )
+
+    # DQK-077: project errors into typed observability shadow.
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            route_structured_log_event,
+        )
+
+        route_structured_log_event(
+            EventType.ERROR_OCCURRED.value,
+            fields=extra,
+            level="ERROR",
+        )
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "observability shadow routing skipped for structured error event",
+            exc_info=True,
+        )
 
 
 def log_performance(

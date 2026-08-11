@@ -244,6 +244,29 @@ class AlertManager:
                 result = await self._evaluate_rule(rule, event)
                 if result:
                     results.append(result)
+                    # DQK-077: project alert outcomes into typed observability shadow.
+                    try:
+                        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                            route_alert_event,
+                        )
+
+                        route_alert_event(
+                            rule_id=str(result.get("rule_id") or rule.rule_id),
+                            rule_name=str(
+                                result.get("rule_name") or rule.name
+                            ),
+                            severity=str(
+                                result.get("severity") or rule.severity
+                            ),
+                            status=str(result.get("status") or "triggered"),
+                            message=str(result.get("message") or ""),
+                            event_payload=event,
+                        )
+                    except Exception:
+                        logger.debug(
+                            "observability shadow routing skipped for alert event",
+                            exc_info=True,
+                        )
             except Exception as e:
                 logger.error(
                     f"Error evaluating rule {rule.rule_id}: {e}",

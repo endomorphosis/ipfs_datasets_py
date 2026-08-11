@@ -208,6 +208,27 @@ class PipelineJSONLogger:
             self.logger.log(level, json.dumps(payload, default=str))
         except (TypeError, ValueError, RuntimeError, OSError) as exc:
             self.logger.debug(f"JSON logging failed: {exc}")
+
+        # DQK-077: project into typed observability shadow (legacy JSON log remains authority).
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                route_pipeline_json_event,
+            )
+
+            run_id = ""
+            if self._context is not None:
+                run_id = str(getattr(self._context, "run_id", "") or "")
+            route_pipeline_json_event(
+                event_type,
+                data=payload,
+                domain=self.domain,
+                run_id=run_id,
+            )
+        except Exception:
+            self.logger.debug(
+                "observability shadow routing skipped for pipeline json event",
+                exc_info=True,
+            )
     
     def start_run(
         self,

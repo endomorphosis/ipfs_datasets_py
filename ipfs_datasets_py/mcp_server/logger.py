@@ -90,3 +90,55 @@ mcp_logger.setLevel(logging.INFO)
 # Ensure the log directory exists
 log_dir = Path.home() / ".ipfs_datasets"
 log_dir.mkdir(exist_ok=True)
+
+
+def log_mcp_event(
+    message: str,
+    *,
+    level: str = "INFO",
+    logger_name: str = "ipfs_datasets.mcp_server",
+    extra: dict | None = None,
+    event_id: str | None = None,
+    operation_id: str | None = None,
+) -> str | None:
+    """Emit an MCP log line and optionally project it into the observability shadow.
+
+    Legacy file / stderr sinks remain authority under DQK-077 shadow mode.
+    Returns the stable event_id when shadow routing is active, else ``None``.
+    """
+    level_name = str(level or "INFO").upper()
+    log_fn = {
+        "DEBUG": logger.debug,
+        "INFO": logger.info,
+        "WARNING": logger.warning,
+        "ERROR": logger.error,
+        "CRITICAL": logger.critical,
+    }.get(level_name, logger.info)
+    try:
+        if extra:
+            log_fn(message, extra=dict(extra))
+        else:
+            log_fn(message)
+    except Exception:
+        logger.debug("mcp log emission failed", exc_info=True)
+
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            route_mcp_log_event,
+        )
+
+        receipt = route_mcp_log_event(
+            message,
+            level=level_name,
+            logger_name=logger_name,
+            extra=extra,
+            event_id=event_id,
+            operation_id=operation_id,
+        )
+        return receipt.event_id if receipt is not None else None
+    except Exception:
+        logger.debug(
+            "observability shadow routing skipped for mcp log event",
+            exc_info=True,
+        )
+        return None

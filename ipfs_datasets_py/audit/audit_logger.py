@@ -481,6 +481,16 @@ class AuditLogger:
             self.notify_listeners(event)
             self._events.append(event)
 
+        # DQK-077: project into typed observability shadow (legacy remains authority).
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                route_audit_logger_event,
+            )
+
+            route_audit_logger_event(event)
+        except Exception:
+            logging.debug("observability shadow routing skipped for audit event", exc_info=True)
+
         return event.event_id
 
     # Convenience methods for different audit levels

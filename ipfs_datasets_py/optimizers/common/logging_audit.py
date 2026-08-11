@@ -136,6 +136,16 @@ class LoggingAuditor:
         # Check for missing logger init when methods exist
         if all_methods and not result.has_logger_init:
             result.issues.append("No logger initialization found but file has methods")
+
+        # DQK-077: project audit result into typed observability shadow.
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                route_logging_audit_result,
+            )
+
+            route_logging_audit_result(result)
+        except Exception:
+            pass
         
         return result
     

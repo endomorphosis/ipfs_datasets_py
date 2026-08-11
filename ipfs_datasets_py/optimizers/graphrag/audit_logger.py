@@ -262,9 +262,22 @@ class AuditLogger:
         """Add event to storage and optionally write to disk."""
         self.events.append(event)
         
-        # Optionally write to incremental log file
+        # Optionally write to incremental log file (legacy authority in shadow mode)
         if self.enable_file_logging:
             self._write_event_to_file(event)
+
+        # DQK-077: project into typed observability shadow repository.
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                route_graphrag_audit_event,
+            )
+
+            route_graphrag_audit_event(event, session_id=getattr(self, "session_id", ""))
+        except Exception:
+            self._log.debug(
+                "observability shadow routing skipped for graphrag audit event",
+                exc_info=True,
+            )
     
     def _write_event_to_file(self, event: AuditEvent) -> None:
         """Append event to incremental log file (JSONL format)."""
