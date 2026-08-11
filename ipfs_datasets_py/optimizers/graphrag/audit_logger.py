@@ -43,6 +43,15 @@ from ipfs_datasets_py.optimizers.common.path_validator import (
     validate_input_path,
     validate_output_path,
 )
+from ipfs_datasets_py.logic.observability.structured_logging import (
+    ObservabilityMutableFileSinkError,
+    assert_mutable_file_sink_allowed,
+    build_observability_publication_view,
+    console_grants_completion_authority,
+    console_grants_progress_authority,
+    get_observability_filesystem_guard,
+    sanitize_publication_view,
+)
 
 
 class EventType(str, Enum):
@@ -223,7 +232,7 @@ class AuditLogger:
         self,
         session_id: Optional[str] = None,
         output_dir: Optional[Union[str, Path]] = None,
-        enable_file_logging: bool = True,
+        enable_file_logging: bool = False,
         logger: Optional[logging.Logger] = None,
     ):
         """
@@ -232,23 +241,49 @@ class AuditLogger:
         Args:
             session_id: Unique session identifier. If None, auto-generated.
             output_dir: Directory to write audit files. If None, memory-only.
-            enable_file_logging: Whether to write events to disk (default: True)
+            enable_file_logging: Whether to write incremental JSONL to disk.
+                Defaults to **False** (DQK-079): mutable JSONL is not an
+                authority after cutover. Explicit :meth:`export_json` still
+                works under an export permit.
             logger: Optional Python logger for debug messages
         """
         self.session_id = session_id or self._generate_session_id()
         self.output_dir: Optional[Path] = Path(output_dir) if output_dir else None
-        self.enable_file_logging = enable_file_logging and (output_dir is not None)
+        # DQK-079: file logging is off unless explicitly requested *and* the
+        # process guard allows legacy sinks or an export permit is held.
+        requested = bool(enable_file_logging) and (output_dir is not None)
+        self.enable_file_logging = False
         self._log = logger or logging.getLogger(__name__)
         
         # Event storage
         self.events: List[AuditEvent] = []
         
-        # Create output directory if needed
-        if self.enable_file_logging and self.output_dir is not None:
-            self.output_dir.mkdir(parents=True, exist_ok=True)
-            self._log.info(f"Audit logger initialized: session_id={self.session_id}, output_dir={self.output_dir}")
+        if requested and self.output_dir is not None:
+            try:
+                probe = self.output_dir / f"audit_{self.session_id}.jsonl"
+                assert_mutable_file_sink_allowed(
+                    probe, kind="audit_jsonl", operation="attach"
+                )
+                self.output_dir.mkdir(parents=True, exist_ok=True)
+                self.enable_file_logging = True
+                self._log.info(
+                    "Audit logger initialized with permitted file sink: "
+                    "session_id=%s, output_dir=%s",
+                    self.session_id,
+                    self.output_dir,
+                )
+            except ObservabilityMutableFileSinkError:
+                self.enable_file_logging = False
+                self._log.info(
+                    "Audit logger initialized (memory-only; file sink blocked "
+                    "by DQK-079 guard): session_id=%s",
+                    self.session_id,
+                )
         else:
-            self._log.info(f"Audit logger initialized (memory-only): session_id={self.session_id}")
+            self._log.info(
+                "Audit logger initialized (memory-only): session_id=%s",
+                self.session_id,
+            )
     
     @staticmethod
     def _generate_session_id() -> str:
@@ -262,15 +297,75 @@ class AuditLogger:
         """Add event to storage and optionally write to disk."""
         self.events.append(event)
         
-        # Optionally write to incremental log file
+        # Incremental JSONL is not authority (DQK-079). Only write when the
+        # process guard still permits a declared file sink.
         if self.enable_file_logging:
-            self._write_event_to_file(event)
+            try:
+                self._write_event_to_file(event)
+            except ObservabilityMutableFileSinkError:
+                self.enable_file_logging = False
+                self._log.debug(
+                    "GraphRAG audit JSONL sink disabled mid-session (DQK-079)"
+                )
+
+        self._route_to_observability_shadow(event)
+
+    def _route_to_observability_shadow(self, event: AuditEvent) -> None:
+        """Project GraphRAG audit events into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ObservabilityProducer,
+                derive_stable_event_id,
+            )
+            from ipfs_datasets_py.duckdb_control.observability_cutover import (
+                try_record_observability_event,
+            )
+        except Exception:
+            return
+
+        event_type = (
+            event.event_type.value
+            if isinstance(event.event_type, EventType)
+            else str(event.event_type)
+        )
+        seed = f"{self.session_id}:{event_type}:{event.round_num}:{event.timestamp}"
+        event_id = derive_stable_event_id(
+            producer=ObservabilityProducer.GRAPHRAG_AUDIT.value,
+            action=event_type,
+            actor=self.session_id,
+            detail=seed,
+            seed=seed,
+        )
+        attributes = {
+            "session_id": self.session_id,
+            "round_num": int(event.round_num),
+            "event_type": event_type,
+            "event_data": dict(event.event_data or {}),
+            "metadata": dict(event.metadata or {}),
+        }
+        try_record_observability_event(
+            producer=ObservabilityProducer.GRAPHRAG_AUDIT,
+            action=event_type,
+            actor=self.session_id or "graphrag",
+            outcome="info",
+            detail=event_type,
+            attributes=attributes,
+            event_id=event_id,
+            operation_id=f"op-graphrag-audit-{event_id}",
+            resource=f"round:{event.round_num}",
+            raw_payload=event.to_dict() if hasattr(event, "to_dict") else attributes,
+            recorded_at=event.timestamp,
+        )
     
     def _write_event_to_file(self, event: AuditEvent) -> None:
-        """Append event to incremental log file (JSONL format)."""
+        """Append event to incremental log file (JSONL format) when permitted."""
         if self.output_dir is None:
             return
         log_file = self.output_dir / f"audit_{self.session_id}.jsonl"
+        assert_mutable_file_sink_allowed(
+            log_file, kind="audit_jsonl", operation="write"
+        )
         
         # Validate output path
         base_dir = Path(log_file).parent if Path(log_file).is_absolute() else None
@@ -531,7 +626,10 @@ class AuditLogger:
     
     def export_json(self, filepath: Union[str, Path], pretty: bool = True) -> None:
         """
-        Export full audit trail to JSON file.
+        Explicit deterministic export of the full audit trail to JSON.
+
+        This is **not** an authority write: it requires an export permit from
+        the DQK-079 observability filesystem guard.
         
         Args:
             filepath: Output file path
@@ -542,19 +640,40 @@ class AuditLogger:
             "session_id": self.session_id,
             "event_count": len(self.events),
             "events": [event.to_dict() for event in self.events],
+            "export_authority": False,
+            "owner_task": "DQK-079",
         }
         
-        # Validate output path
-        base_dir = filepath.parent if filepath.is_absolute() else None
-        safe_filepath = validate_output_path(str(filepath), allow_overwrite=True, base_dir=base_dir)
-        
-        with open(safe_filepath, "w", encoding="utf-8") as f:
-            if pretty:
-                json.dump(data, f, indent=2, sort_keys=True)
-            else:
-                json.dump(data, f, separators=(',', ':'), sort_keys=True)
+        guard = get_observability_filesystem_guard()
+        with guard.permit_export():
+            assert_mutable_file_sink_allowed(
+                filepath, kind="audit_json", operation="export"
+            )
+            # Validate output path
+            base_dir = filepath.parent if filepath.is_absolute() else None
+            safe_filepath = validate_output_path(
+                str(filepath), allow_overwrite=True, base_dir=base_dir
+            )
+            
+            with open(safe_filepath, "w", encoding="utf-8") as f:
+                if pretty:
+                    json.dump(data, f, indent=2, sort_keys=True)
+                else:
+                    json.dump(data, f, separators=(',', ':'), sort_keys=True)
         
         self._log.info(f"Exported {len(self.events)} events to {filepath}")
+
+    def publication_view(self, *, limit: int = 32) -> Dict[str, Any]:
+        """Sanitized publication view (secrets / high-cardinality excluded)."""
+
+        records = [e.to_dict() for e in self.events[-max(1, int(limit)):]]
+        view = build_observability_publication_view(
+            records,
+            extra={"session_id": self.session_id, "event_count": len(self.events)},
+        )
+        view["console_grants_progress_authority"] = console_grants_progress_authority()
+        view["console_grants_completion_authority"] = console_grants_completion_authority()
+        return view
     
     def get_round_summary(self, round_num: int) -> RoundSummaryDict:
         """Get summary of events for a specific round."""
@@ -668,14 +787,16 @@ class AuditLogger:
 # Convenience functions for common use cases
 
 def create_audit_logger(
-    output_dir: Union[str, Path] = "./audit_logs",
+    output_dir: Optional[Union[str, Path]] = None,
     session_id: Optional[str] = None,
+    *,
+    enable_file_logging: bool = False,
 ) -> AuditLogger:
-    """Create a new audit logger with default configuration."""
+    """Create a new audit logger with DQK-079 defaults (memory-only)."""
     return AuditLogger(
         session_id=session_id,
         output_dir=output_dir,
-        enable_file_logging=True,
+        enable_file_logging=enable_file_logging,
     )
 
 

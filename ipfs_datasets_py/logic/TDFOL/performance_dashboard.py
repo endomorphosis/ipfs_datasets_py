@@ -280,19 +280,35 @@ class PerformanceDashboard:
         # Extract proof information
         formula_str = str(proof_result.formula)
         
-        # Determine success
-        if hasattr(proof_result, 'is_proved'):
-            success = proof_result.is_proved()
-        elif hasattr(proof_result, 'status'):
-            success = str(proof_result.status) == 'ProofStatus.PROVED'
-        else:
-            success = metadata.get('success', False)
+        # Determine success.  Dynamic proxy objects (including mocks) can
+        # manufacture arbitrary attributes from ``__getattr__``.  Accept an
+        # ``is_proved`` result only when it is an actual boolean, and accept a
+        # status only when it is a concrete enum/string value; otherwise fall
+        # back to the explicit metadata contract.
+        success: bool | None = None
+        is_proved = getattr(proof_result, 'is_proved', None)
+        if callable(is_proved):
+            proved = is_proved()
+            if isinstance(proved, bool):
+                success = proved
+
+        if success is None:
+            status = getattr(proof_result, 'status', None)
+            if isinstance(status, Enum):
+                status = str(status)
+            if isinstance(status, str):
+                success = status == 'ProofStatus.PROVED'
+
+        if success is None:
+            success = bool(metadata.get('success', False))
         
         # Get proof time
         proof_time_ms = getattr(proof_result, 'time_ms', metadata.get('proof_time_ms', 0.0))
         
         # Get method
-        method = getattr(proof_result, 'method', metadata.get('method', 'unknown'))
+        method = getattr(proof_result, 'method', None)
+        if not isinstance(method, str) or not method:
+            method = metadata.get('method', 'unknown')
         
         # Get proof steps
         proof_steps = getattr(proof_result, 'proof_steps', [])

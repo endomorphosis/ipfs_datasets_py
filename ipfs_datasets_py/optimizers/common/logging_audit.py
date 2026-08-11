@@ -3,15 +3,29 @@
 Scans optimizer classes and methods to audit logging patterns and identify
 inconsistencies or missing logging statements. Generates a checklist of
 methods and their logging status.
+
+DQK-079: audit reports are ephemeral console projections or explicit
+deterministic exports. Mutable JSON/JSONL report files are not authority and
+require an export permit. Console output never grants progress/completion.
 """
 
+from __future__ import annotations
+
+import json
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple, Union
 from dataclasses import dataclass, field
 
 from ipfs_datasets_py.optimizers.common.path_validator import validate_input_path
+from ipfs_datasets_py.logic.observability.structured_logging import (
+    assert_mutable_file_sink_allowed,
+    console_grants_completion_authority,
+    console_grants_progress_authority,
+    get_observability_filesystem_guard,
+    sanitize_publication_view,
+)
 
 
 @dataclass
@@ -157,12 +171,52 @@ class LoggingAuditor:
         
         return self.results
     
+    def publication_view(self) -> Dict[str, Any]:
+        """Sanitized publication view of the audit summary (no private paths)."""
+
+        files_with_logger = sum(1 for r in self.results if r.has_logger_init)
+        methods_with_logging = sum(len(r.methods_with_logging) for r in self.results)
+        methods_without_logging = sum(
+            len(r.methods_without_logging) for r in self.results
+        )
+        summary = {
+            "files_scanned": len(self.results),
+            "files_with_logger": files_with_logger,
+            "methods_with_logging": methods_with_logging,
+            "methods_without_logging": methods_without_logging,
+            # root_dir is operator-local; exclude high-cardinality path lists.
+        }
+        view = sanitize_publication_view(summary)
+        view["console_grants_progress_authority"] = console_grants_progress_authority()
+        view["console_grants_completion_authority"] = console_grants_completion_authority()
+        return view
+
+    def export_report_json(self, filepath: str | Path) -> str:
+        """Explicit deterministic export of the audit report (not authority)."""
+
+        path = Path(filepath)
+        payload = {
+            "owner_task": "DQK-079",
+            "export_authority": False,
+            "publication": self.publication_view(),
+            "result_count": len(self.results),
+        }
+        guard = get_observability_filesystem_guard()
+        with guard.permit_export():
+            assert_mutable_file_sink_allowed(
+                path, kind="audit_json", operation="export"
+            )
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        return str(path)
+
     def generate_report(self) -> str:
-        """Generate human-readable audit report.
+        """Generate human-readable audit report (ephemeral console projection).
         
         Returns:
-            Formatted report string
+            Formatted report string. Does **not** write mutable JSON/JSONL.
         """
+        self._route_report_to_observability_shadow()
         report_lines = [
             "# Optimizer Module Logging Audit Report",
             "",
@@ -234,6 +288,55 @@ class LoggingAuditor:
         ])
         
         return "\n".join(report_lines)
+
+    def _route_report_to_observability_shadow(self) -> None:
+        """Project logging-audit summary into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ObservabilityProducer,
+                derive_stable_event_id,
+            )
+            from ipfs_datasets_py.duckdb_control.observability_cutover import (
+                try_record_observability_event,
+            )
+        except Exception:
+            return
+
+        files_with_logger = sum(1 for r in self.results if r.has_logger_init)
+        methods_with_logging = sum(len(r.methods_with_logging) for r in self.results)
+        methods_without_logging = sum(
+            len(r.methods_without_logging) for r in self.results
+        )
+        summary = {
+            "root_dir": str(self.root_dir),
+            "files_scanned": len(self.results),
+            "files_with_logger": files_with_logger,
+            "methods_with_logging": methods_with_logging,
+            "methods_without_logging": methods_without_logging,
+        }
+        seed = f"logging-audit:{self.root_dir}:{len(self.results)}:{methods_with_logging}"
+        event_id = derive_stable_event_id(
+            producer=ObservabilityProducer.LOGGING_AUDIT.value,
+            action="logging_audit.report",
+            actor="logging-auditor",
+            detail=seed,
+            seed=seed,
+        )
+        # Under DQK-078 dual/db-primary, DuckDB is authority; report print is
+        # a disposable operational projection only.
+        try_record_observability_event(
+            producer=ObservabilityProducer.LOGGING_AUDIT,
+            action="logging_audit.report",
+            actor="logging-auditor",
+            outcome="succeeded",
+            detail=f"Scanned {len(self.results)} files",
+            attributes=summary,
+            event_id=event_id,
+            operation_id=f"op-logging-audit-{event_id}",
+            resource=str(self.root_dir),
+            raw_payload=summary,
+        )
 
 
 def main() -> List[LoggingAuditResult]:

@@ -24,6 +24,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, ClassVar, Final, Iterable
 
+from ipfs_datasets_py.logic.families.translations import (
+    CONTRACT_INTERFACE as TRANSLATION_CONTRACT_INTERFACE,
+    CONTRACT_SCHEMA_VERSION as TRANSLATION_CONTRACT_SCHEMA_VERSION,
+    TranslationContract,
+    TranslationContractError,
+)
 from ipfs_datasets_py.logic.ir_core.claims import (
     Assumption,
     FrozenMap,
@@ -41,6 +47,12 @@ from ipfs_datasets_py.logic.ir_core.protocols import (
     AuthorityKind,
     AuthorityMismatchError,
     ResultAuthority,
+)
+from ipfs_datasets_py.logic.syntax_core.ast import (
+    TYPED_EXPRESSION_INTERFACE,
+    TYPED_EXPRESSION_SCHEMA_VERSION,
+    AstError,
+    TypedExpression,
 )
 
 from .samples import (
@@ -60,6 +72,7 @@ from .views import SymbolTable
 # ---------------------------------------------------------------------------
 
 CONSTRAINT_ARTIFACT_INTERFACE: Final = "ConstraintArtifact@1"
+CONSTRAINT_CONTRACT_INTERFACE: Final = "ConstraintContract@2"
 APPLICABILITY_EVIDENCE_INTERFACE: Final = "ApplicabilityEvidence@1"
 SELECTED_PREMISE_SET_INTERFACE: Final = "SelectedPremiseSet@1"
 
@@ -350,6 +363,129 @@ def forbid_silent_logic_concatenation(
         )
 
 
+def _looks_like_typed_expression(value: Any) -> bool:
+    if isinstance(value, TypedExpression):
+        return True
+    if not isinstance(value, Mapping):
+        return False
+    interface = value.get("interface")
+    schema = value.get("schema_version")
+    return (
+        interface == TYPED_EXPRESSION_INTERFACE
+        or schema == TYPED_EXPRESSION_SCHEMA_VERSION
+        or (
+            isinstance(value.get("root"), Mapping)
+            and isinstance(value.get("signature"), Mapping)
+            and "expression_id" in value
+        )
+    )
+
+
+def coerce_constraint_expression(value: Any) -> FrozenMap | TypedExpression:
+    """Dual-read statement expression as TypedExpression@1 or legacy map.
+
+    Claimed typed payloads are fully validated (family/profile/schema).
+    Arbitrary JSON/text that claims TypedExpression@1 is rejected.  Unclaimed
+    legacy object maps remain dual-read compatible.
+    """
+
+    if isinstance(value, TypedExpression):
+        return value
+    if isinstance(value, FrozenMap):
+        return value
+    if _looks_like_typed_expression(value):
+        try:
+            return TypedExpression.from_dict(_mapping(value, "expression"))
+        except (AstError, TypeError, ValueError, KeyError) as exc:
+            raise ConstraintValidationError(
+                f"expression claims TypedExpression but failed validation: {exc}"
+            ) from exc
+    if isinstance(value, (str, bytes, bytearray, bool, int, float)) or value is None:
+        raise ConstraintValidationError(
+            "constraint expression must be a mapping or TypedExpression; "
+            "arbitrary text/scalars cannot masquerade as elaborated syntax"
+        )
+    return FrozenMap(_mapping(value, "expression"))
+
+
+def serialize_constraint_expression(value: FrozenMap | TypedExpression) -> Any:
+    """Canonical write: TypedExpression@1 when typed, else legacy map."""
+
+    if isinstance(value, TypedExpression):
+        return value.to_dict()
+    return value.to_dict()
+
+
+def _looks_like_translation_contract(value: Any) -> bool:
+    if isinstance(value, TranslationContract):
+        return True
+    if not isinstance(value, Mapping):
+        return False
+    interface = value.get("interface")
+    schema = value.get("schema_version")
+    if interface == TRANSLATION_CONTRACT_INTERFACE:
+        return True
+    if schema == TRANSLATION_CONTRACT_SCHEMA_VERSION:
+        return True
+    # Structural claim: full contract endpoints + preservation, not a loss flag.
+    return (
+        isinstance(value.get("source"), Mapping)
+        and isinstance(value.get("target"), Mapping)
+        and "preservation" in value
+        and "contract_id" in value
+    )
+
+
+def coerce_translation_payload(
+    value: Any,
+) -> "TranslationReceipt | TranslationContract":
+    """Dual-read TranslationContract@2 or legacy TranslationReceipt.
+
+    A bare boolean loss flag (or a map that only carries ``lossy``) cannot
+    masquerade as a preservation receipt or TranslationContract@2.
+    """
+
+    if isinstance(value, TranslationContract):
+        return value
+    if isinstance(value, TranslationReceipt):
+        return value
+    if isinstance(value, bool):
+        raise ConstraintValidationError(
+            "boolean loss flag cannot masquerade as a preservation receipt "
+            "or TranslationContract@2"
+        )
+    if not isinstance(value, Mapping):
+        raise ConstraintValidationError(
+            "translation payload must be a mapping, TranslationReceipt, "
+            "or TranslationContract"
+        )
+    keys = set(value)
+    if keys <= {"lossy"} or keys == set():
+        raise ConstraintValidationError(
+            "boolean loss flag cannot masquerade as a preservation receipt "
+            "or TranslationContract@2"
+        )
+    if _looks_like_translation_contract(value):
+        try:
+            return TranslationContract.from_dict(value)
+        except (TranslationContractError, TypeError, ValueError) as exc:
+            raise ConstraintValidationError(
+                f"translation claims TranslationContract@2 but failed "
+                f"validation: {exc}"
+            ) from exc
+    return TranslationReceipt.from_dict(value)
+
+
+def serialize_translation_payload(
+    value: "TranslationReceipt | TranslationContract",
+) -> dict[str, Any]:
+    """Canonical write: TranslationContract@2 when present, else legacy receipt."""
+
+    if isinstance(value, TranslationContract):
+        return value.to_dict()
+    return value.to_dict()
+
+
 # ---------------------------------------------------------------------------
 # Leaf records
 # ---------------------------------------------------------------------------
@@ -548,12 +684,17 @@ class NativeViewBinding:
 
 @dataclass(frozen=True, slots=True)
 class ConstraintStatement:
-    """One typed, source-grounded constraint in a single logic family."""
+    """One typed, source-grounded constraint in a single logic family.
+
+    ``expression`` dual-reads legacy maps and fully validated
+    :class:`~ipfs_datasets_py.logic.syntax_core.ast.TypedExpression` payloads.
+    Canonical write emits ``TypedExpression@1`` when the expression is typed.
+    """
 
     statement_id: str
     role: ConstraintRole
     logic_family: str
-    expression: FrozenMap
+    expression: FrozenMap | TypedExpression
     symbol_ids: tuple[str, ...] = ()
     source_ref_ids: tuple[str, ...] = ()
     span_ids: tuple[str, ...] = ()
@@ -572,23 +713,36 @@ class ConstraintStatement:
         object.__setattr__(
             self, "logic_family", _logic_family(self.logic_family)
         )
-        expression = (
-            self.expression
-            if isinstance(self.expression, FrozenMap)
-            else FrozenMap(_mapping(self.expression, "expression"))
-        )
+        expression = coerce_constraint_expression(self.expression)
         object.__setattr__(self, "expression", expression)
-        # Reject expressions that smuggle multiple logic tags.
-        embedded = expression.to_dict().get("logic_families")
-        if embedded is not None:
-            if not isinstance(embedded, list):
-                raise ConstraintValidationError(
-                    "expression.logic_families must be a list when present"
+        # Reject expressions that smuggle multiple logic tags (legacy maps).
+        if isinstance(expression, FrozenMap):
+            embedded = expression.to_dict().get("logic_families")
+            if embedded is not None:
+                if not isinstance(embedded, list):
+                    raise ConstraintValidationError(
+                        "expression.logic_families must be a list when present"
+                    )
+                forbid_silent_logic_concatenation(
+                    [*embedded, self.logic_family],
+                    context=f"statement {self.statement_id!r}",
                 )
-            forbid_silent_logic_concatenation(
-                [*embedded, self.logic_family],
-                context=f"statement {self.statement_id!r}",
+        elif isinstance(expression, TypedExpression):
+            # Typed expressions bind family/profile at the TypedExpression boundary.
+            family_value = (
+                expression.family.value
+                if hasattr(expression.family, "value")
+                else str(expression.family)
             )
+            if family_value and family_value != self.logic_family:
+                # Allow signature family to be more specific only when equal.
+                # Constraint statement logic_family remains authoritative for
+                # native-view binding; typed family must agree when both set.
+                raise ConstraintValidationError(
+                    f"statement {self.statement_id!r} logic_family "
+                    f"{self.logic_family!r} disagrees with TypedExpression "
+                    f"family {family_value!r}"
+                )
         object.__setattr__(
             self,
             "symbol_ids",
@@ -642,13 +796,17 @@ class ConstraintStatement:
             )
 
     @property
+    def is_typed(self) -> bool:
+        return isinstance(self.expression, TypedExpression)
+
+    @property
     def digest(self) -> str:
         return f"sha256:{stable_digest(self.to_dict())}"
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "assumption_ids": list(self.assumption_ids),
-            "expression": self.expression.to_dict(),
+            "expression": serialize_constraint_expression(self.expression),
             "logic_family": self.logic_family,
             "metadata": self.metadata.to_dict(),
             "role": self.role.value,
@@ -686,7 +844,7 @@ class ConstraintStatement:
             statement_id=value.get("statement_id", ""),
             role=value.get("role", ""),
             logic_family=value.get("logic_family", ""),
-            expression=_frozen_map(value.get("expression", {}), "expression"),
+            expression=value.get("expression", {}),
             symbol_ids=tuple(
                 _sequence(value.get("symbol_ids", ()), "symbol_ids")
             ),
@@ -1885,7 +2043,7 @@ class ConstraintArtifact:
     applicability_selectors: tuple[ApplicabilitySelector, ...] = ()
     applicability_evidence: ApplicabilityEvidence | None = None
     selected_premises: SelectedPremiseSet | None = None
-    translations: tuple[TranslationReceipt, ...] = ()
+    translations: tuple[TranslationReceipt | TranslationContract, ...] = ()
     reconstructions: tuple[ReconstructionReceipt, ...] = ()
     coverage_gaps: tuple[CoverageGap, ...] = ()
     diagnostics: DiagnosticReport | None = None
@@ -2054,18 +2212,30 @@ class ConstraintArtifact:
                     "selected_premises must be a SelectedPremiseSet"
                 )
         translations = tuple(
-            item
-            if isinstance(item, TranslationReceipt)
-            else TranslationReceipt.from_dict(_mapping(item, "translation"))
+            coerce_translation_payload(item)
             for item in _bounded_sequence(self.translations, "translations")
         )
-        translation_ids = [item.translation_id for item in translations]
+        translation_ids = [
+            item.contract_id
+            if isinstance(item, TranslationContract)
+            else item.translation_id
+            for item in translations
+        ]
         if len(translation_ids) != len(set(translation_ids)):
             raise ConstraintValidationError("translation IDs must be unique")
         object.__setattr__(
             self,
             "translations",
-            tuple(sorted(translations, key=lambda item: item.translation_id)),
+            tuple(
+                sorted(
+                    translations,
+                    key=lambda item: (
+                        item.contract_id
+                        if isinstance(item, TranslationContract)
+                        else item.translation_id
+                    ),
+                )
+            ),
         )
         reconstructions = tuple(
             item
@@ -2203,6 +2373,11 @@ class ConstraintArtifact:
         # allow one statement expression to smuggle a cross-family blend
         # without a translation receipt covering those families.
         for translation in self.translations:
+            if isinstance(translation, TranslationContract):
+                # TranslationContract@2 is self-validating; view cross-refs are
+                # optional when endpoints use family identities rather than
+                # artifact-local view ids.
+                continue
             if translation.source_view_id not in known_views:
                 raise ConstraintValidationError(
                     f"translation {translation.translation_id!r} references "
@@ -2395,7 +2570,9 @@ class ConstraintArtifact:
             ),
             "source_id": self.source_id,
             "statements": [item.to_dict() for item in self.statements],
-            "translations": [item.to_dict() for item in self.translations],
+            "translations": [
+                serialize_translation_payload(item) for item in self.translations
+            ],
             "vocabulary": self.vocabulary.to_dict(),
             "world_policy": self.world_policy.to_dict(),
         }
@@ -2591,8 +2768,11 @@ __all__ = [
     "APPLICABILITY_EVIDENCE_SCHEMA_VERSION",
     "CONSTRAINT_ARTIFACT_INTERFACE",
     "CONSTRAINT_ARTIFACT_SCHEMA_VERSION",
+    "CONSTRAINT_CONTRACT_INTERFACE",
     "SELECTED_PREMISE_SET_INTERFACE",
     "SELECTED_PREMISE_SET_SCHEMA_VERSION",
+    "TRANSLATION_CONTRACT_INTERFACE",
+    "TRANSLATION_CONTRACT_SCHEMA_VERSION",
     "ApplicabilityEvidence",
     "ApplicabilitySelector",
     "ApplicabilityStatus",
@@ -2607,9 +2787,15 @@ __all__ = [
     "ReconstructionReceipt",
     "SelectedPremise",
     "SelectedPremiseSet",
+    "TranslationContract",
     "TranslationReceipt",
+    "TypedExpression",
     "WorldPolicy",
     "WorldPolicyKind",
+    "coerce_constraint_expression",
+    "coerce_translation_payload",
     "forbid_silent_logic_concatenation",
     "reject_result_authority_substitution",
+    "serialize_constraint_expression",
+    "serialize_translation_payload",
 ]

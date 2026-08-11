@@ -95,7 +95,7 @@ def test_every_legacy_hash_id_and_inventory_record_is_preserved() -> None:
 
     receipt = migration.verify_migration_integrity(
         manifest,
-        REPO_ROOT,
+        REPO_ROOT / "archive" / "data",
         inventory=inventory,
     )
     assert receipt.valid

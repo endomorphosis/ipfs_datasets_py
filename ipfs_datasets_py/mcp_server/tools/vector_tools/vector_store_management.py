@@ -1,7 +1,17 @@
 """
 Vector Store Management Tools for MCP Server — thin wrapper.
 
-Business logic lives in ``vector_store_management_engine.py``.
+Business logic lives in ``vector_store_management_engine.py`` /
+``ipfs_datasets_py.vector_stores.management_engine``.
+
+Create/list/delete entrypoints route lifecycle metadata through the DuckDB
+vector catalog when configured:
+
+* DQK-062 — shadow mode (legacy authority; shadow failures quarantine)
+* DQK-063 — dual mode promotes collection/generation/tombstone/compaction
+  metadata to DuckDB while vector bytes remain in the selected engine
+* DQK-064 — after DuckDB promotion, no silent pickle/JSON fallback; restart
+  rehydrates mappings from DuckDB; publication exposes approved stats only
 """
 
 from __future__ import annotations
@@ -16,9 +26,68 @@ from .vector_store_management_engine import (  # noqa: F401
     ELASTICSEARCH_AVAILABLE,
     EMBEDDINGS_AVAILABLE,
 )
+from .shared_state import (
+    configure_mcp_vector_authority_catalog,
+    configure_mcp_vector_shadow_catalog,
+    get_mcp_vector_authority_catalog,
+    get_mcp_vector_shadow_catalog,
+    mcp_vector_publication_document,
+    restart_mcp_vector_catalog_from_duckdb,
+)
 
 logger = logging.getLogger(__name__)
 _manager = VectorStoreManager()
+
+
+def _ensure_shadow_catalog() -> None:
+    """Bind the MCP manager to the process-local dual/shadow catalog."""
+    catalog = get_mcp_vector_authority_catalog() or get_mcp_vector_shadow_catalog()
+    if catalog is None:
+        try:
+            catalog = configure_mcp_vector_authority_catalog(enabled=True)
+        except Exception:
+            try:
+                catalog = configure_mcp_vector_shadow_catalog(enabled=True)
+            except Exception:
+                return
+    if catalog is not None:
+        # Rehydrate process maps after MCP worker restart (DQK-064).
+        try:
+            if catalog.path != ":memory:":
+                catalog.rehydrate_process_maps_from_store()
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("MCP catalog rehydrate skipped: %s", exc)
+    if getattr(_manager, "shadow_catalog", None) is None:
+        _manager.shadow_catalog = catalog
+    if getattr(_manager, "authority_catalog", None) is None:
+        _manager.authority_catalog = catalog
+
+
+async def publish_vector_statistics() -> Dict[str, Any]:
+    """Expose approved collection/build statistics (never unrestricted embeddings)."""
+    try:
+        _ensure_shadow_catalog()
+        doc = mcp_vector_publication_document()
+        return {"status": "success", **doc}
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Error publishing vector statistics: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def restart_vector_catalog(
+    catalog_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Restart MCP vector catalog from DuckDB without process-local mapping loss."""
+    try:
+        result = restart_mcp_vector_catalog_from_duckdb(catalog_path)
+        # Rebind manager to the reopened catalog.
+        catalog = get_mcp_vector_authority_catalog() or get_mcp_vector_shadow_catalog()
+        _manager.shadow_catalog = catalog
+        _manager.authority_catalog = catalog
+        return result
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Error restarting vector catalog: {e}")
+        return {"status": "error", "error": str(e)}
 
 
 async def create_vector_index(
@@ -44,6 +113,7 @@ async def create_vector_index(
         Dict with 'status', 'index_name', 'backend', 'vector_count', etc.
     """
     try:
+        _ensure_shadow_catalog()
         return await _manager.create_index(
             index_name, documents, backend, vector_dim, distance_metric, index_config
         )
@@ -92,6 +162,7 @@ async def list_vector_indexes(backend: str = "all") -> Dict[str, Any]:
         Dict with 'status' and 'indexes' mapping backend→list.
     """
     try:
+        _ensure_shadow_catalog()
         return _manager.list_indexes(backend)
     except OSError as e:
         logger.error(f"Error listing vector indexes: {e}")
@@ -115,6 +186,7 @@ async def delete_vector_index(
         Dict with 'status' and 'message'.
     """
     try:
+        _ensure_shadow_catalog()
         return _manager.delete_index(index_name, backend, config)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Error deleting vector index: {e}")

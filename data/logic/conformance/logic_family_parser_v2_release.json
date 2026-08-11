@@ -1,0 +1,313 @@
+{
+  "acceptance": {
+    "all_nonsealing_tasks_terminal": true,
+    "fixed_point_current": true,
+    "gitlink_matches_nested_head": true,
+    "no_derived_open_tasks": true,
+    "predecessor_exact": true,
+    "reachable_matrix_hard_zero": true,
+    "release_outputs_excluded_from_semantic_projection": true,
+    "replay_acceptance_holds": true,
+    "status_transitions_normalized": true,
+    "two_quiet_epochs": true
+  },
+  "authority": {
+    "completion_authority": false,
+    "independent_refutation_validation_required": true,
+    "mutation_authority": false,
+    "official_kernel_acceptance_required": true,
+    "policy": {
+      "advisor_output_is_completion_authority": false,
+      "differential_agreement_is_proof": false,
+      "independent_countermodel_validation_required_for_refutation": true,
+      "official_kernel_check_required_for_kernel_proof": true,
+      "parser_or_solver_success_is_completion_authority": false,
+      "raw_target_source_without_receipt_allowed": false,
+      "silent_translation_loss_allowed": false,
+      "unknown_ambiguous_stale_or_unsupported_disposition": "abstain_or_require_approval"
+    },
+    "promotion_authority": false,
+    "release_receipt_is_kernel_authority": false,
+    "solver_success_is_theorem_authority": false
+  },
+  "binding_mode": "normalized-controls-and-semantic-tree-projection",
+  "completion_authority": false,
+  "controls": {
+    "authority_policy": {
+      "advisor_output_is_completion_authority": false,
+      "differential_agreement_is_proof": false,
+      "independent_countermodel_validation_required_for_refutation": true,
+      "official_kernel_check_required_for_kernel_proof": true,
+      "parser_or_solver_success_is_completion_authority": false,
+      "raw_target_source_without_receipt_allowed": false,
+      "silent_translation_loss_allowed": false,
+      "unknown_ambiguous_stale_or_unsupported_disposition": "abstain_or_require_approval"
+    },
+    "objective": {
+      "path": "docs/architecture/ipfs_datasets_logic_family_parser_v2.objectives.md",
+      "sha256": "sha256:ea5b4c05829a47bcab1524a4ac5ab57d5c93d06a0ac08ea7b7597622293ed6e1",
+      "status_normalized": true
+    },
+    "plan": {
+      "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_V2_PLAN.md",
+      "sha256": "sha256:6c408b69afaf48ce62de08d3c04c3d658d38158e75c6f857ad06e82cde46c002"
+    },
+    "predecessor_config": {
+      "predecessor_accelerator_commit": "e162c19d087d4e6511f8eb97fd34ecb449777897",
+      "predecessor_board_namespace": "ipfs-datasets-logic-family-parser-v1",
+      "predecessor_datasets_commit": "fc49cbb3e0e96bf07b367859da32123187d706c1",
+      "predecessor_release_receipt_path": "ipfs_datasets_py/data/logic/conformance/logic_family_parser_release.json",
+      "predecessor_release_receipt_sha256": "sha256:86412a60bfde9b8a13156ab097b44443a4a8f70a7b286f1c7a707366c93757ce",
+      "predecessor_seed_definition_sha256": "sha256:f5d01bcc13c0b62d35b713cccb2e04abe49da454e9fa6f35cd28a5ad4b72eb44",
+      "predecessor_terminal_task_id": "LFP-047"
+    },
+    "scheduler": {
+      "canonical_sha256": "sha256:8cf95015b5611fff72c47c78c9c0fd6a7bae233a388723d5a59822dc116f0769",
+      "path": "config/agent_supervisor_ipfs_datasets_logic_family_parser_v2_scheduler.json",
+      "schema": "ipfs_accelerate_py.agent_supervisor.ipfs_datasets_logic_family_parser_v2.scheduler_config@1"
+    },
+    "task_board": {
+      "derived_task_count": 0,
+      "normalized_all_tasks_sha256": "sha256:8730b27d87dacfa9bf942941129533aa883fdbe9310401a1854f1d2ccedb136f",
+      "normalized_seed_sha256": "sha256:ac4a347a84f049d8d64d43a004544be62e37490a190c78ac82c44cdcbc347e8c",
+      "open_nonsealing_task_ids": [],
+      "path": "docs/architecture/ipfs_datasets_logic_family_parser_v2.todo.md",
+      "sealing_status_normalized": true,
+      "seed_task_count": 51
+    }
+  },
+  "evidence": {
+    "corpus_manifest": {
+      "interface": "LogicConformanceCorpus@2",
+      "item_count": 11,
+      "path": "tests/fixtures/logic_conformance_v2/manifest.json",
+      "schema_version": "logic-conformance-corpus/v2",
+      "sha256": "sha256:e15a7942a3963d09457a304ed9afa58b0f1306e520e196d58aa4e792e5f8150e",
+      "task_id": "LFP2-004"
+    },
+    "evidence_replay": {
+      "acceptance_holds": true,
+      "authority_disposition_count": 10,
+      "content_id": "sha256:33fb94c8da50d6968e6b47f1b5fb30f16eac697d3f7480d95156c59880af1b16",
+      "content_sha256": "33fb94c8da50d6968e6b47f1b5fb30f16eac697d3f7480d95156c59880af1b16",
+      "interface": "LogicEvidenceReplay@1",
+      "schema_version": "logic-evidence-replay/v1"
+    },
+    "family_registry": {
+      "content_id": "sha256:2ee48502960fd894960cb1caa069ce6bf14dafe9967a2972a5ef2ecfdcbd8f81",
+      "interface": "LogicFamilyRegistry@3",
+      "schema_version": "logic-family-registry/v3"
+    },
+    "family_routes": {
+      "content_id": "sha256:a4902654d618b7aa1b09457be29de067443e5275d79ced0ff293da134af914f2",
+      "interface": "FamilyExtensionRoutes@1",
+      "publication_interface": "FamilyRoutePublication@1",
+      "schema_version": "logic-family-extension-catalog/v1"
+    },
+    "profile_catalog": {
+      "content_id": "sha256:9682c97c3b7be805e73c2072af7b1119bdb429b8387f0b1156c04d79cb8915b8",
+      "interface": "LogicProfileCatalog@3",
+      "schema_version": "logic-profile-catalog/v3"
+    },
+    "profile_manifest": {
+      "interface": "LogicConformanceCorpus@2",
+      "item_count": 33,
+      "path": "tests/fixtures/logic_conformance_v2/profile_manifest.json",
+      "schema_version": "logic-profile-manifest/v2",
+      "sha256": "sha256:64bc15454b8370703f4124c30c780f1bfdc44e45d966cc79cbca4421bdf9f7f6",
+      "task_id": "LFP2-044"
+    },
+    "provider_manifest": {
+      "interface": "ScheduledProviderTier@1",
+      "item_count": 22,
+      "path": "tests/integration/logic_providers/manifest.json",
+      "schema_version": "scheduled-provider-tiers/v1",
+      "sha256": "sha256:f3d099f2f8c30e71299ed4e2d8ec1d4309317f79052187f05779127a17086412",
+      "task_id": "LFP2-045"
+    },
+    "reachable_matrix": {
+      "acceptance_holds": true,
+      "authority_ceiling_histogram": {
+        "advisory": 20,
+        "authorization_profile": 6,
+        "bounded": 56,
+        "candidate": 124,
+        "exact": 1,
+        "finite_trace": 12,
+        "none": 2,
+        "over_approximation": 3,
+        "protocol_symbolic": 4
+      },
+      "cell_count": 228,
+      "content_id": "sha256:93266a6997d2bd32f1175ad0a5af03eef4b87ca651168c4bccab3693bcfb0820",
+      "content_sha256": "93266a6997d2bd32f1175ad0a5af03eef4b87ca651168c4bccab3693bcfb0820",
+      "hard_zero_floors": {
+        "all_clear": true,
+        "authority_escalation": 0,
+        "false_capability": 0,
+        "family_drift": 0,
+        "kernel_trust_escape": 0,
+        "raw_ingress": 0,
+        "schema_version": "reachable-conformance-hard-zero-floors/v2",
+        "silent_node_drop": 0,
+        "silent_node_loss": 0,
+        "unexplained_reachable_gap": 0
+      },
+      "interface": "ReachableConformanceMatrix@2",
+      "path": "data/logic/conformance/reachable_matrix_v2.json",
+      "seal_sha256": "sha256:4463fcd3345e0c4325843f59cf57cf9eb4c0b84511532580c4917ddbc32ec541"
+    }
+  },
+  "fixed_point": {
+    "consecutive_empty_scans": 2,
+    "fixed_point_file_sha256": "sha256:86678328dc1de1d7b967fbed58fe4020faddeb11f7c1672ff6caf8eea9d834f4",
+    "interface": "ObjectiveRefillFixedPoint@2",
+    "ledger_file_sha256": "sha256:f15aedf0d677eb4b169e3c493107f7279df680ed8b66f21b519c6717ace1566e",
+    "matrix_accounting": {
+      "acceptance_holds": true,
+      "cell_count": 228,
+      "content_id": "sha256:93266a6997d2bd32f1175ad0a5af03eef4b87ca651168c4bccab3693bcfb0820",
+      "content_sha256": "93266a6997d2bd32f1175ad0a5af03eef4b87ca651168c4bccab3693bcfb0820",
+      "domain_count": 5,
+      "domain_ids": [
+        "crypto_ir",
+        "intent_ir",
+        "legal_ir",
+        "security_ir",
+        "software_verification"
+      ],
+      "hard_zero_floors": {
+        "all_clear": true,
+        "authority_escalation": 0,
+        "false_capability": 0,
+        "family_drift": 0,
+        "kernel_trust_escape": 0,
+        "raw_ingress": 0,
+        "schema_version": "reachable-conformance-hard-zero-floors/v2",
+        "silent_node_drop": 0,
+        "silent_node_loss": 0,
+        "unexplained_reachable_gap": 0
+      },
+      "interface": "ReachableConformanceMatrix@2",
+      "provider_count": 19,
+      "provider_ids": [
+        "apalache",
+        "cvc5",
+        "datalog_secpal",
+        "eprover",
+        "ergoai",
+        "hammer",
+        "hyperltl_autohyper_mchyper",
+        "isabelle",
+        "lean",
+        "model_check",
+        "proverif",
+        "rocq",
+        "runtime_mtl",
+        "symbolicai",
+        "tamarin",
+        "tla_tlc",
+        "vampire",
+        "z3",
+        "zk_proof_authority"
+      ]
+    },
+    "nested_repository": {
+      "excluded_release_self_outputs": [
+        "data/logic/conformance/logic_family_parser_v2_release.json",
+        "docs/architecture/logic/LOGIC_FAMILY_PARSER_V2_RELEASE.md"
+      ],
+      "gitlink_matches_nested_head": "true",
+      "nested_repository_path": "ipfs_datasets_py",
+      "semantic_inputs_clean": "true",
+      "semantic_projection_schema": "git-ls-tree-release-exclusion/v1",
+      "semantic_tree_projection_sha256": "sha256:6cc4929f3506920c40e1a9553c232465e50c5b439cafa37da2062c132d34f5d0"
+    },
+    "open_nonsealing_task_count": 0,
+    "receipt_body_sha256": "sha256:3d18b0c27067b25f88121b973f30d68c186670409ad59cc30acb3ec91a800c0d",
+    "scan_identity": {
+      "composite_digest": "sha256:319c85dddd437ded0cf1f3df71960a86bf4d49e830c22e0e2633be6aaf932bd7",
+      "config_identity": "sha256:e3e2ba2438dec41ffb079e3c228fb8535149e1cf6c8d9fed1848fbd6a30a9d33",
+      "corpus_identity": "sha256:1f7e27b6577c6aae4e70daeb180254206aa49b8d6e2b711a5f7474bddc97600b",
+      "objective_identity": "sha256:083127bed0cd1d9b966bcd1fbf9b233b3534adb5e044eccf9d777e079e4bbc68",
+      "provider_identity": "sha256:f3d099f2f8c30e71299ed4e2d8ec1d4309317f79052187f05779127a17086412",
+      "registry_identity": "sha256:66c33af272d640b6cd1fac09c5feca01a39dfff3f0b0b3054632e129570e01db",
+      "repository_id": "gitlink-verified-semantic-projection:sha256:6cc4929f3506920c40e1a9553c232465e50c5b439cafa37da2062c132d34f5d0",
+      "source_identity": "sha256:64ac5dff704a1c89649aa02f595c6524de3b621a92c4d8b7d7b4c321eff2ce61",
+      "tree_id": "semantic-tree-projection:sha256:6cc4929f3506920c40e1a9553c232465e50c5b439cafa37da2062c132d34f5d0"
+    },
+    "schema": "objective-refill-fixed-point-receipt/v2",
+    "wave1_predecessor": {
+      "wave1_predecessor_01": {
+        "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
+        "sha256": "sha256:9d07ef064e80081a67d13f754fff10b84b6176facf687b88ed1164d71a90e9c0",
+        "source": "merge-target:agent/logic-family-parser-v2-supervisor"
+      },
+      "wave1_predecessor_02": {
+        "path": "docs/architecture/ipfs_datasets_logic_family_parser.objectives.md",
+        "sha256": "sha256:1bc111b24e44508d56f4932da4ce0a76357eaaf01bf5ea22842cf06621b24217",
+        "source": "merge-target:agent/logic-family-parser-v2-supervisor"
+      },
+      "wave1_predecessor_03": {
+        "path": "docs/architecture/ipfs_datasets_logic_family_parser.todo.md",
+        "sha256": "sha256:8e851a11e3fbd1a0b174e2077abaa398c15fecdf9b9bb8baf9592b3311f5aaa8",
+        "source": "merge-target:agent/logic-family-parser-v2-supervisor"
+      },
+      "wave1_predecessor_04": {
+        "path": "ipfs_datasets_py/data/logic/conformance/logic_family_parser_release.json",
+        "sha256": "sha256:86412a60bfde9b8a13156ab097b44443a4a8f70a7b286f1c7a707366c93757ce",
+        "source": "merge-target:agent/logic-family-parser-v2-supervisor"
+      },
+      "wave1_predecessor_05": {
+        "path": "data/agent_supervisor/ipfs_datasets_logic_family_parser/refill/fixed_point_receipt.json",
+        "sha256": "sha256:df389198f2f1a5982ede95ce775c468ad7a85abf8447f4d0cc51f8b6f5eddc2c",
+        "source": "merge-target:agent/logic-family-parser-v2-supervisor"
+      },
+      "wave1_predecessor_06": {
+        "path": "data/agent_supervisor/ipfs_datasets_logic_family_parser/refill/gap_ledger.jsonl",
+        "sha256": "sha256:6258dc0a9070fd531b77f96d1044f840454d02517022aa1c9e0f3e7b8debbcac",
+        "source": "merge-target:agent/logic-family-parser-v2-supervisor"
+      }
+    }
+  },
+  "goal_id": "LFP2-G100",
+  "interface": "LogicParserReleaseReceipt@2",
+  "kernel_authority": false,
+  "markdown_binding": {
+    "json_path": "data/logic/conformance/logic_family_parser_v2_release.json",
+    "path": "docs/architecture/logic/LOGIC_FAMILY_PARSER_V2_RELEASE.md",
+    "renderer": "release_v2.render_markdown@1",
+    "schema": "logic-parser-release-markdown/v2"
+  },
+  "mutation_authority": false,
+  "predecessor": {
+    "canonical_anchor_set_sha256": "sha256:272a123f52013f0a71c36b73331d6a7401977da3e3c74ca8a234609eac83a0a6",
+    "predecessor_accelerator_commit": "e162c19d087d4e6511f8eb97fd34ecb449777897",
+    "predecessor_board_namespace": "ipfs-datasets-logic-family-parser-v1",
+    "predecessor_datasets_commit": "fc49cbb3e0e96bf07b367859da32123187d706c1",
+    "predecessor_release_receipt_path": "ipfs_datasets_py/data/logic/conformance/logic_family_parser_release.json",
+    "predecessor_release_receipt_sha256": "sha256:86412a60bfde9b8a13156ab097b44443a4a8f70a7b286f1c7a707366c93757ce",
+    "predecessor_seed_definition_sha256": "sha256:f5d01bcc13c0b62d35b713cccb2e04abe49da454e9fa6f35cd28a5ad4b72eb44",
+    "predecessor_terminal_task_id": "LFP-047",
+    "release_receipt_sha256": "sha256:86412a60bfde9b8a13156ab097b44443a4a8f70a7b286f1c7a707366c93757ce"
+  },
+  "producer_id": "logic-parser-release@2",
+  "program_id": "ipfs-datasets-logic-family-parser-v2",
+  "receipt_body_sha256": "sha256:ed2d52a5cb67efadc1a2b6634301124afa8358c687291260138459afc51b934e",
+  "receipt_id": "sha256:ed2d52a5cb67efadc1a2b6634301124afa8358c687291260138459afc51b934e",
+  "schema": "logic-parser-release-receipt/v2",
+  "source_identity": {
+    "excluded_release_self_outputs": [
+      "data/logic/conformance/logic_family_parser_v2_release.json",
+      "docs/architecture/logic/LOGIC_FAMILY_PARSER_V2_RELEASE.md"
+    ],
+    "gitlink_matches_nested_head": "true",
+    "nested_repository_path": "ipfs_datasets_py",
+    "semantic_inputs_clean": "true",
+    "semantic_projection_schema": "git-ls-tree-release-exclusion/v1",
+    "semantic_tree_projection_sha256": "sha256:6cc4929f3506920c40e1a9553c232465e50c5b439cafa37da2062c132d34f5d0"
+  },
+  "task_id": "LFP2-050",
+  "theorem_authority": false,
+  "version": "2.0.0"
+}

@@ -141,15 +141,14 @@ def test_vendor_materializer_reports_x86_unavailable_without_writes(
 ) -> None:
     install_root = (tmp_path / "managed").resolve()
 
-    with pytest.raises(
-        installer.AuthorizationInstallerError,
-        match=installer.SECPAL_VENDOR_UNAVAILABLE_REASON,
-    ):
+    with pytest.raises(installer.AuthorizationInstallerError) as raised:
         installer.materialize_vendor_secpal(
             install_root=install_root,
             platform_id="linux-x86_64",
         )
 
+    assert installer.SECPAL_VENDOR_UNAVAILABLE_REASON in str(raised.value)
+    assert "unsupported on" not in str(raised.value)
     assert not install_root.exists()
 
 
@@ -216,6 +215,8 @@ def test_x86_vendor_request_rejects_historical_python_vendor_shim(
     assert receipt.status == "unavailable"
     assert receipt.identity is None
     assert receipt.ok is False
+    assert receipt.platform_exception is False
+    assert "unsupported_platform_exception" not in receipt.block_reasons
     assert receipt.block_reasons[0] == installer.SECPAL_VENDOR_UNAVAILABLE_REASON
     assert set(installer.SECPAL_VENDOR_PREREQUISITE_REASONS) <= set(
         receipt.block_reasons
@@ -276,6 +277,11 @@ def test_installer_discovery_reports_shadow_and_vendor_scopes_separately() -> No
     description = installer.describe_authorization_installer()
     by_tool = {item["tool_id"]: item for item in description["tools"]}
 
+    # The nominal x86 artifact-intake lane is not executable platform support.
+    assert installer.supported_platforms_for_tool(installer.TOOL_SECPAL) == frozenset()
+    assert installer.SECPAL_NOMINAL_VENDOR_PLATFORMS == frozenset(
+        {"linux-x86_64"}
+    )
     assert by_tool[installer.TOOL_SECPAL]["shadow_materialization_status"] == "available"
     assert by_tool[installer.TOOL_SECPAL]["vendor_materialization_status"] == (
         "unavailable"

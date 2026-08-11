@@ -43,6 +43,13 @@ from ipfs_datasets_py.optimizers.common.structured_logging import (
     with_schema,
     enrich_with_timestamp,
 )
+from ipfs_datasets_py.logic.observability.structured_logging import (
+    assert_mutable_file_sink_allowed,
+    console_grants_completion_authority,
+    console_grants_progress_authority,
+    get_observability_filesystem_guard,
+    sanitize_publication_view,
+)
 
 
 class PipelineErrorDict(TypedDict, total=False):
@@ -205,9 +212,98 @@ class PipelineJSONLogger:
             payload = with_schema(payload)
         
         try:
+            # Ephemeral console / configured StreamHandler only. Mutable file
+            # handlers attached to self.logger are rejected by the DQK-079
+            # dynamic writer guard (they are not progress/completion authority).
+            for handler in list(getattr(self.logger, "handlers", []) or []):
+                try:
+                    assert_mutable_file_sink_allowed(
+                        handler=handler, operation="write"
+                    )
+                except Exception:
+                    # Detach blocked file sinks so runtime continues console-only.
+                    try:
+                        self.logger.removeHandler(handler)
+                    except Exception:
+                        pass
             self.logger.log(level, json.dumps(payload, default=str))
         except (TypeError, ValueError, RuntimeError, OSError) as exc:
             self.logger.debug(f"JSON logging failed: {exc}")
+
+        self._route_to_observability_shadow(event_type, payload, level)
+
+    def publication_view(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Sanitized publication view of a pipeline log payload."""
+
+        view = sanitize_publication_view(payload or {"domain": self.domain})
+        view["console_grants_progress_authority"] = console_grants_progress_authority()
+        view["console_grants_completion_authority"] = console_grants_completion_authority()
+        return view
+
+    def export_jsonl(self, filepath: str, records: List[Dict[str, Any]]) -> str:
+        """Explicit deterministic JSONL export (not an authority write)."""
+
+        from pathlib import Path
+
+        path = Path(filepath)
+        guard = get_observability_filesystem_guard()
+        with guard.permit_export():
+            assert_mutable_file_sink_allowed(
+                path, kind="pipeline_jsonl", operation="export"
+            )
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w", encoding="utf-8") as handle:
+                for row in records:
+                    handle.write(json.dumps(row, default=str) + "\n")
+        return str(path)
+
+    def _route_to_observability_shadow(
+        self,
+        event_type: str,
+        payload: Dict[str, Any],
+        level: int,
+    ) -> None:
+        """Project pipeline JSON logs into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
+
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ObservabilityProducer,
+                derive_stable_event_id,
+            )
+            from ipfs_datasets_py.duckdb_control.observability_cutover import (
+                try_record_observability_event,
+            )
+        except Exception:
+            return
+
+        run_id = str(payload.get("run_id") or "")
+        seed = f"{self.domain}:{run_id}:{event_type}:{payload.get('timestamp') or ''}"
+        event_id = derive_stable_event_id(
+            producer=ObservabilityProducer.PIPELINE_JSON.value,
+            action=event_type,
+            actor=self.domain or "pipeline",
+            detail=seed,
+            seed=seed,
+        )
+        outcome = "info"
+        if event_type.endswith(".failed") or level >= logging.ERROR:
+            outcome = "failed"
+        elif event_type.endswith(".completed"):
+            outcome = "succeeded"
+
+        try_record_observability_event(
+            producer=ObservabilityProducer.PIPELINE_JSON,
+            action=event_type,
+            actor=str(self.domain or "pipeline"),
+            outcome=outcome,
+            detail=event_type,
+            attributes=dict(payload),
+            event_id=event_id,
+            operation_id=f"op-pipeline-{event_id}",
+            resource=run_id or self.domain,
+            raw_payload=payload,
+            recorded_at=str(payload.get("timestamp") or "") or None,
+        )
     
     def start_run(
         self,

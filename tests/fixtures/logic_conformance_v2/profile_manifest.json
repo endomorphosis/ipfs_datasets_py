@@ -1,0 +1,610 @@
+{
+  "corpus_id": "logic-family-parser-profile-manifest-v2",
+  "description": "Compact per-profile Wave-2 fixture recipes for LFP2-044. Recipes are generators, not bulk golden dumps: each profile lists representative positive, negative, ambiguous, adversarial, round-trip, and resource cases with deterministic limits.",
+  "goal_id": "LFP2-G080",
+  "interface": "LogicConformanceCorpus@2",
+  "required_fixture_kinds": [
+    "positive",
+    "negative",
+    "ambiguous",
+    "adversarial",
+    "round_trip",
+    "resource"
+  ],
+  "schema_version": "logic-profile-manifest/v2",
+  "task_id": "LFP2-044",
+  "version": "2.0.0",
+  "profiles": [
+    {
+      "family_id": "deontic",
+      "parser": "normative_v2",
+      "profile_id": "normative_dyadic",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "O(pay) and O(refund | breach) and fact(breach) and status(refund)"},
+        "negative": {"payload": "O()", "expect_code_prefix": "normative."},
+        "ambiguous": {"payload": "O pay | invoice", "expect_code_prefix": "normative."},
+        "adversarial": {"payload": "O(pay) & Ο(not_pay)", "kind": "unicode_confusable"},
+        "round_trip": {"payload": "P(enter / ticket) and O(refund | breach)"},
+        "resource": {"recipe": "nested_and", "depth": 64, "atom": "O(a | b)"}
+      }
+    },
+    {
+      "family_id": "deontic",
+      "parser": "normative_v2",
+      "profile_id": "normative_defeasible",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "defeasible O(flies) unless penguin and fact(penguin) and status(flies)"},
+        "negative": {"payload": "ctd(pay, repair)", "expect_code_prefix": "normative."},
+        "ambiguous": {"payload": "defeasible O pay unless exempt", "expect_code_prefix": "normative."},
+        "adversarial": {"payload": "defeasible O(pay)\u0000unless exempt", "kind": "nul"},
+        "round_trip": {"payload": "normally O(quiet) and exception(flies, penguin)"},
+        "resource": {"recipe": "nested_and", "depth": 48, "atom": "defeasible O(a)"}
+      }
+    },
+    {
+      "family_id": "deontic",
+      "parser": "normative_v2",
+      "profile_id": "normative_prioritized",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "norm(n1, O(keep_secret)) and norm(n2, O(tell_truth)) and priority(n1 > n2) and conflict(n1, n2)"},
+        "negative": {"payload": "O(pay | invoice)", "expect_code_prefix": "normative."},
+        "ambiguous": {"payload": "priority n1 n2", "expect_code_prefix": "normative."},
+        "adversarial": {"payload": "priority(n1 > n2) and priority(n1 > n2)", "kind": "duplicate"},
+        "round_trip": {"payload": "norm(n1, O(pay)) and priority(n1, n2)"},
+        "resource": {"recipe": "nested_and", "depth": 48, "atom": "norm(n, O(a))"}
+      }
+    },
+    {
+      "family_id": "deontic",
+      "parser": "normative_v2",
+      "profile_id": "normative_contrary_to_duty",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "ctd(keep, apologize) and reparation(keep, apologize) and violation(keep)"},
+        "negative": {"payload": "defeasible O(pay)", "expect_code_prefix": "normative."},
+        "ambiguous": {"payload": "ctd pay repair", "expect_code_prefix": "normative."},
+        "adversarial": {"payload": "ctd(pay, repair)\u202e", "kind": "bidi"},
+        "round_trip": {"payload": "ctd(keep, apologize) and violation(keep)"},
+        "resource": {"recipe": "nested_and", "depth": 48, "atom": "ctd(a, b)"}
+      }
+    },
+    {
+      "family_id": "argumentation",
+      "parser": "argumentation",
+      "profile_id": "argumentation_grounded",
+      "resource_limits": {
+        "max_depth": 64,
+        "max_input_bytes": 8192,
+        "max_time_ms": 2000
+      },
+      "fixtures": {
+        "positive": {"payload": "arg(a) and arg(b) and attack(a, b)"},
+        "negative": {"payload": "attack(a, b)", "expect_code_prefix": "argumentation."},
+        "ambiguous": {"payload": "arg a attack a b", "expect_code_prefix": "argumentation."},
+        "adversarial": {"payload": "arg(a) and attack(a, a)", "kind": "self_attack"},
+        "round_trip": {"payload": "arg(a) and arg(b) and attack(a, b) and support(b, a)"},
+        "resource": {"recipe": "nested_and", "depth": 32, "atom": "arg(a)"}
+      }
+    },
+    {
+      "family_id": "argumentation",
+      "parser": "argumentation",
+      "profile_id": "argumentation_preferred",
+      "resource_limits": {
+        "max_depth": 64,
+        "max_input_bytes": 8192,
+        "max_time_ms": 2000
+      },
+      "fixtures": {
+        "positive": {"payload": "arg(a) and arg(b) and attack(a, b) and attack(b, a)"},
+        "negative": {"payload": "defeasible r :- a", "expect_code_prefix": "argumentation."},
+        "ambiguous": {"payload": "arg(a) attack(a b)", "expect_code_prefix": "argumentation."},
+        "adversarial": {"payload": "arg(\uff21) and attack(\uff21, \uff21)", "kind": "fullwidth"},
+        "round_trip": {"payload": "arg(a) and arg(b) and attack(a, b)"},
+        "resource": {"recipe": "nested_and", "depth": 32, "atom": "arg(x)"}
+      }
+    },
+    {
+      "family_id": "argumentation",
+      "parser": "argumentation",
+      "profile_id": "argumentation_complete",
+      "resource_limits": {
+        "max_depth": 64,
+        "max_input_bytes": 8192,
+        "max_time_ms": 2000
+      },
+      "fixtures": {
+        "positive": {"payload": "arg(a) and arg(b) and arg(c) and attack(a, b)"},
+        "negative": {"payload": "status(z)", "expect_code_prefix": "argumentation."},
+        "ambiguous": {"payload": "arg a,b", "expect_code_prefix": "argumentation."},
+        "adversarial": {"payload": "arg(a)\u0000and arg(b)", "kind": "nul"},
+        "round_trip": {"payload": "arg(a) and arg(b) and attack(a, b)"},
+        "resource": {"recipe": "nested_and", "depth": 32, "atom": "arg(a)"}
+      }
+    },
+    {
+      "family_id": "argumentation",
+      "parser": "argumentation",
+      "profile_id": "argumentation_stable",
+      "resource_limits": {
+        "max_depth": 64,
+        "max_input_bytes": 8192,
+        "max_time_ms": 2000
+      },
+      "fixtures": {
+        "positive": {"payload": "arg(a) and arg(b) and attack(a, b)"},
+        "negative": {"payload": "strict r :- a", "expect_code_prefix": "argumentation."},
+        "ambiguous": {"payload": "attack a b", "expect_code_prefix": "argumentation."},
+        "adversarial": {"payload": "arg(a) and attack(a, b)", "kind": "unknown_target"},
+        "round_trip": {"payload": "arg(a) and arg(b) and attack(a, b)"},
+        "resource": {"recipe": "nested_and", "depth": 32, "atom": "arg(a)"}
+      }
+    },
+    {
+      "family_id": "nonmonotonic_logic",
+      "parser": "argumentation",
+      "profile_id": "nonmonotonic_defeasible",
+      "resource_limits": {
+        "max_depth": 64,
+        "max_input_bytes": 8192,
+        "max_time_ms": 2000
+      },
+      "fixtures": {
+        "positive": {"payload": "arg(a) and defeasible r :- a and status(a)"},
+        "negative": {"payload": "attack(a, b)", "expect_code_prefix": "argumentation."},
+        "ambiguous": {"payload": "defeasible r a", "expect_code_prefix": "argumentation."},
+        "adversarial": {"payload": "defeasible r :- a and priority(r > r)", "kind": "self_priority"},
+        "round_trip": {"payload": "arg(a) and defeasible r :- a and priority(r > s)"},
+        "resource": {"recipe": "nested_and", "depth": 24, "atom": "arg(a)"}
+      }
+    },
+    {
+      "family_id": "description_logic",
+      "parser": "description_logic",
+      "profile_id": "dl_alc",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "SubClassOf(Person, Agent)"},
+        "negative": {"payload": "min(hasParent, 2, Person)", "expect_code_prefix": "description_logic."},
+        "ambiguous": {"payload": "subclass Person some hasParent Person", "expect_code_prefix": "description_logic."},
+        "adversarial": {"payload": "SubClassOf(Person, Agent)\u0000", "kind": "nul"},
+        "round_trip": {"payload": "SubClassOf(and(Parent, some(hasChild, Person)), or(Mother, Father))"},
+        "resource": {"recipe": "nested_and_concept", "depth": 48, "atom": "Person"}
+      }
+    },
+    {
+      "family_id": "description_logic",
+      "parser": "description_logic",
+      "profile_id": "dl_alcq",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "SubClassOf(Parent, min(hasChild, 1, Person))"},
+        "negative": {"payload": "Import(http://example.org/owl)", "expect_code_prefix": "description_logic."},
+        "ambiguous": {"payload": "min hasChild 1 Person", "expect_code_prefix": "description_logic."},
+        "adversarial": {"payload": "SubClassOf(Parent, min(hasChild, -1, Person))", "kind": "negative_card"},
+        "round_trip": {"payload": "SubClassOf(Parent, and(Person, min(hasChild, 1, Person)))"},
+        "resource": {"recipe": "nested_and_concept", "depth": 48, "atom": "Person"}
+      }
+    },
+    {
+      "family_id": "description_logic",
+      "parser": "description_logic",
+      "profile_id": "dl_el",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "SubClassOf(Parent, some(hasChild, Person))"},
+        "negative": {"payload": "SubClassOf(Person, not(Bot))", "expect_code_prefix": "description_logic."},
+        "ambiguous": {"payload": "some hasChild Person", "expect_code_prefix": "description_logic."},
+        "adversarial": {"payload": "SubClassOf(Person, only(hasChild, Person))", "kind": "forbidden_universal"},
+        "round_trip": {"payload": "SubClassOf(Parent, and(Person, some(hasChild, Person)))"},
+        "resource": {"recipe": "nested_and_concept", "depth": 48, "atom": "Person"}
+      }
+    },
+    {
+      "family_id": "description_logic",
+      "parser": "description_logic",
+      "profile_id": "ontology_legal_alcq",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "SubClassOf(Obligation, min(hasBearer, 1, Agent))"},
+        "negative": {"payload": "SubClassOf(Obligation, not(Permission))", "expect_ok": true},
+        "ambiguous": {"payload": "Obligation min hasBearer 1 Agent", "expect_code_prefix": "description_logic."},
+        "adversarial": {"payload": "SubClassOf(Obligation, min(hasBearer, 1, Agent))\u202e", "kind": "bidi"},
+        "round_trip": {"payload": "SubClassOf(Obligation, and(Norm, min(hasBearer, 1, Agent)))"},
+        "resource": {"recipe": "nested_and_concept", "depth": 32, "atom": "Norm"}
+      }
+    },
+    {
+      "family_id": "description_logic",
+      "parser": "description_logic",
+      "profile_id": "ontology_ui_alc",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "SubClassOf(Button, some(hasLabel, Text))"},
+        "negative": {"payload": "min(hasLabel, 1, Text)", "expect_code_prefix": "description_logic."},
+        "ambiguous": {"payload": "Button some hasLabel Text", "expect_code_prefix": "description_logic."},
+        "adversarial": {"payload": "SubClassOf(Button, some(hasLabel, Text))\u0000", "kind": "nul"},
+        "round_trip": {"payload": "SubClassOf(Button, and(Widget, some(hasLabel, Text)))"},
+        "resource": {"recipe": "nested_and_concept", "depth": 32, "atom": "Widget"}
+      }
+    },
+    {
+      "family_id": "description_logic",
+      "parser": "description_logic",
+      "profile_id": "ontology_intent_alc",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "SubClassOf(Skill, some(hasGoal, Goal))"},
+        "negative": {"payload": "min(hasGoal, 1, Goal)", "expect_code_prefix": "description_logic."},
+        "ambiguous": {"payload": "Skill some hasGoal Goal", "expect_code_prefix": "description_logic."},
+        "adversarial": {"payload": "SubClassOf(Skill, some(hasGoal, Goal))\ufffe", "kind": "noncharacter"},
+        "round_trip": {"payload": "SubClassOf(Skill, and(Capability, some(hasGoal, Goal)))"},
+        "resource": {"recipe": "nested_and_concept", "depth": 32, "atom": "Goal"}
+      }
+    },
+    {
+      "family_id": "description_logic",
+      "parser": "description_logic",
+      "profile_id": "ontology_kg_alcq",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "SubClassOf(Entity, min(hasType, 1, Concept))"},
+        "negative": {"payload": "Import(urn:kg:full-owl)", "expect_code_prefix": "description_logic."},
+        "ambiguous": {"payload": "Entity min hasType 1 Concept", "expect_code_prefix": "description_logic."},
+        "adversarial": {"payload": "SubClassOf(Entity, min(hasType, 1, Concept))\u0000", "kind": "nul"},
+        "round_trip": {"payload": "SubClassOf(Entity, and(Node, min(hasType, 1, Concept)))"},
+        "resource": {"recipe": "nested_and_concept", "depth": 32, "atom": "Node"}
+      }
+    },
+    {
+      "family_id": "bdi",
+      "parser": "agency",
+      "profile_id": "bdi_default",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "believes[alice] p and desires[alice] q and intends[alice] r"},
+        "negative": {"payload": "happens(open, t0)", "expect_code_prefix": "agency."},
+        "ambiguous": {"payload": "B[alice] p", "expect_code_prefix": "agency."},
+        "adversarial": {"payload": "believes[alice] p\u0000and intends[alice] r", "kind": "nul"},
+        "round_trip": {"payload": "believes[bob] safe and goal(bob, evacuate)"},
+        "resource": {"recipe": "nested_and", "depth": 48, "atom": "believes[a] p"}
+      }
+    },
+    {
+      "family_id": "epistemic_temporal",
+      "parser": "agency",
+      "profile_id": "epistemic_temporal_default",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "knows[alice]@t0 p"},
+        "negative": {"payload": "desires[alice] leave", "expect_code_prefix": "agency."},
+        "ambiguous": {"payload": "K[alice] p", "expect_code_prefix": "agency."},
+        "adversarial": {"payload": "knows[alice]@t0 p\u202e", "kind": "bidi"},
+        "round_trip": {"payload": "knows[alice]@t0 p and believes[bob]@t1 p"},
+        "resource": {"recipe": "nested_and", "depth": 48, "atom": "knows[a]@t p"}
+      }
+    },
+    {
+      "family_id": "agency",
+      "parser": "agency",
+      "profile_id": "agency_default",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "does[alice] open and goal(alice, exit)"},
+        "negative": {"payload": "believes[alice] safe", "expect_code_prefix": "agency."},
+        "ambiguous": {"payload": "does alice open", "expect_code_prefix": "agency."},
+        "adversarial": {"payload": "does[alice] open\u0000", "kind": "nul"},
+        "round_trip": {"payload": "agent(alice) and action(open) and does[alice] open"},
+        "resource": {"recipe": "nested_and", "depth": 48, "atom": "does[a] x"}
+      }
+    },
+    {
+      "family_id": "intention_agency",
+      "parser": "agency",
+      "profile_id": "intention_agency_default",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "intends[alice] leave and goal(alice, leave)"},
+        "negative": {"payload": "does[alice] open", "expect_code_prefix": "agency."},
+        "ambiguous": {"payload": "I[alice] leave", "expect_code_prefix": "agency."},
+        "adversarial": {"payload": "intends[alice] leave\ufffe", "kind": "noncharacter"},
+        "round_trip": {"payload": "intends[alice] leave and desires[alice] leave"},
+        "resource": {"recipe": "nested_and", "depth": 48, "atom": "intends[a] g"}
+      }
+    },
+    {
+      "family_id": "mu_calculus",
+      "parser": "fixed_point",
+      "profile_id": "mu_calculus_guarded",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "mu X. diamond X"},
+        "negative": {"payload": "mu X. not X", "expect_code_prefix": "fixed_point."},
+        "ambiguous": {"payload": "mu X p or diamond X", "expect_code_prefix": "fixed_point."},
+        "adversarial": {"payload": "mu X. diamond X\u0000", "kind": "nul"},
+        "round_trip": {"payload": "nu Y. box (p and Y)"},
+        "resource": {"recipe": "nested_mu", "depth": 32}
+      }
+    },
+    {
+      "family_id": "mu_calculus",
+      "parser": "fixed_point",
+      "profile_id": "ctl_star_fragment_to_mu",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "AG p"},
+        "negative": {"payload": "A (p U (E (q U r)))", "expect_code_prefix": "fixed_point."},
+        "ambiguous": {"payload": "AGp", "expect_ok": true},
+        "adversarial": {"payload": "AG p\u0000", "kind": "nul"},
+        "round_trip": {"payload": "AG (p and EF q)"},
+        "resource": {"recipe": "nested_and", "depth": 32, "atom": "AG p"}
+      }
+    },
+    {
+      "family_id": "mu_calculus",
+      "parser": "fixed_point",
+      "profile_id": "mixed_mu_ctl",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "mu X. AG p or diamond X"},
+        "negative": {"payload": "mu X. not X", "expect_code_prefix": "fixed_point."},
+        "ambiguous": {"payload": "mu X AG p", "expect_code_prefix": "fixed_point."},
+        "adversarial": {"payload": "mu X. AG p or diamond X\u202e", "kind": "bidi"},
+        "round_trip": {"payload": "mu X. (AG p) or diamond X"},
+        "resource": {"recipe": "nested_mu", "depth": 24}
+      }
+    },
+    {
+      "family_id": "mu_calculus",
+      "parser": "fixed_point",
+      "profile_id": "mu_calculus_declaration_only",
+      "disposition": "declaration_only",
+      "resource_limits": {
+        "max_depth": 16,
+        "max_input_bytes": 4096,
+        "max_time_ms": 1000
+      },
+      "fixtures": {
+        "positive": {"payload": "mu X. diamond X"},
+        "negative": {"payload": "mu X. not X", "expect_code_prefix": "fixed_point."}
+      }
+    },
+    {
+      "family_id": "finite_field_constraint",
+      "parser": "finite_field",
+      "profile_id": "finite_field_bn254",
+      "resource_limits": {
+        "max_depth": 96,
+        "max_input_bytes": 32768,
+        "max_time_ms": 3000
+      },
+      "fixtures": {
+        "positive": {"payload": "x * y + 3 == z and inv(w) == 2"},
+        "negative": {"payload": "r1cs(a, b, c)", "expect_code_prefix": "finite_field."},
+        "ambiguous": {"payload": "field_add x y z", "expect_code_prefix": "finite_field."},
+        "adversarial": {"payload": "x * y == z\u0000", "kind": "nul"},
+        "round_trip": {"payload": "x * y + 3 == z"},
+        "resource": {"recipe": "nested_and", "depth": 32, "atom": "x == y"}
+      }
+    },
+    {
+      "family_id": "finite_field_constraint",
+      "parser": "finite_field",
+      "profile_id": "bitvector_fixed",
+      "resource_limits": {
+        "max_depth": 96,
+        "max_input_bytes": 32768,
+        "max_time_ms": 3000
+      },
+      "fixtures": {
+        "positive": {"payload": "bvand(x, y) and bvadd(x, bv 1)"},
+        "negative": {"payload": "r1cs(a, b, c)", "expect_code_prefix": "finite_field."},
+        "ambiguous": {"payload": "bv_and x y z", "expect_code_prefix": "finite_field."},
+        "adversarial": {"payload": "bvand(x, y)\ufffe", "kind": "noncharacter"},
+        "round_trip": {"payload": "bvand(x, y) and bvadd(x, bv 1)"},
+        "resource": {"recipe": "nested_and", "depth": 32, "atom": "bvand(x, y)"}
+      }
+    },
+    {
+      "family_id": "finite_field_constraint",
+      "parser": "finite_field",
+      "profile_id": "r1cs_field",
+      "resource_limits": {
+        "max_depth": 96,
+        "max_input_bytes": 32768,
+        "max_time_ms": 3000
+      },
+      "fixtures": {
+        "positive": {"payload": "mod(17) and r1cs(x, y, z)"},
+        "negative": {"payload": "plonk(a, b, c, 1, 0, -1, 0, 0)", "expect_code_prefix": "finite_field."},
+        "ambiguous": {"payload": "r1cs a b c", "expect_code_prefix": "finite_field."},
+        "adversarial": {"payload": "r1cs(a, b, c)\u0000", "kind": "nul"},
+        "round_trip": {"payload": "r1cs(a, b, c)"},
+        "resource": {"recipe": "nested_and", "depth": 24, "atom": "r1cs(a, b, c)"}
+      }
+    },
+    {
+      "family_id": "finite_field_constraint",
+      "parser": "finite_field",
+      "profile_id": "plonk_field",
+      "resource_limits": {
+        "max_depth": 96,
+        "max_input_bytes": 32768,
+        "max_time_ms": 3000
+      },
+      "fixtures": {
+        "positive": {"payload": "plonk(a, b, c, 1, 0, -1, 0, 0)"},
+        "negative": {"payload": "r1cs(a, b, c)", "expect_code_prefix": "finite_field."},
+        "ambiguous": {"payload": "plonk_gate a b c d", "expect_code_prefix": "finite_field."},
+        "adversarial": {"payload": "plonk(a, b, c, 1, 0, -1, 0, 0)\u202e", "kind": "bidi"},
+        "round_trip": {"payload": "plonk(a, b, c, 1, 0, -1, 0, 0)"},
+        "resource": {"recipe": "nested_and", "depth": 24, "atom": "plonk(a, b, c, 1, 0, -1, 0, 0)"}
+      }
+    },
+    {
+      "family_id": "finite_field_constraint",
+      "parser": "finite_field",
+      "profile_id": "finite_field_constraint_mixed",
+      "resource_limits": {
+        "max_depth": 96,
+        "max_input_bytes": 32768,
+        "max_time_ms": 3000
+      },
+      "fixtures": {
+        "positive": {"payload": "range(x, 0, 255) and bits(x, 8) and r1cs(a, b, c)"},
+        "negative": {"payload": "zk_proof(acc)", "expect_code_prefix": "finite_field."},
+        "ambiguous": {"payload": "field_add x y z bv_and z w out", "expect_code_prefix": "finite_field."},
+        "adversarial": {"payload": "range(x, 0, 255)\u0000and r1cs(a, b, c)", "kind": "nul"},
+        "round_trip": {"payload": "range(x, 0, 255) and bits(x, 8)"},
+        "resource": {"recipe": "nested_and", "depth": 24, "atom": "r1cs(a, b, c)"}
+      }
+    },
+    {
+      "family_id": "linear_logic",
+      "parser": "session_process",
+      "profile_id": "linear_default",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "resource(a) * resource(b) -o resource(c)"},
+        "negative": {"payload": "dup(r)", "expect_code_prefix": "session_process."},
+        "ambiguous": {"payload": "resource a tensor resource b", "expect_code_prefix": "session_process."},
+        "adversarial": {"payload": "resource(r) * resource(r)", "kind": "duplication"},
+        "round_trip": {"payload": "ofcourse resource(a) with resource(b) plus resource(c)"},
+        "resource": {"recipe": "nested_tensor", "depth": 32}
+      }
+    },
+    {
+      "family_id": "session_process",
+      "parser": "session_process",
+      "profile_id": "session_default",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "!req(Msg). ?ack(Msg). end"},
+        "negative": {"payload": "resource(a) * resource(b)", "expect_code_prefix": "session_process."},
+        "ambiguous": {"payload": "send c v recv c x", "expect_code_prefix": "session_process."},
+        "adversarial": {"payload": "!req(Msg). end\u0000", "kind": "nul"},
+        "round_trip": {"payload": "dual(!req(Msg). end)"},
+        "resource": {"recipe": "nested_seq", "depth": 32}
+      }
+    },
+    {
+      "family_id": "process_calculus",
+      "parser": "session_process",
+      "profile_id": "process_default",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "par(chan(c), nil)"},
+        "negative": {"payload": "refines(abs, conc)", "expect_code_prefix": "session_process."},
+        "ambiguous": {"payload": "par send c v recv c x", "expect_code_prefix": "session_process."},
+        "adversarial": {"payload": "new(c). chan(c)\u0000", "kind": "nul"},
+        "round_trip": {"payload": "new(c). chan(c)"},
+        "resource": {"recipe": "nested_par", "depth": 24}
+      }
+    },
+    {
+      "family_id": "refinement",
+      "parser": "session_process",
+      "profile_id": "relational_refinement_default",
+      "resource_limits": {
+        "max_depth": 128,
+        "max_input_bytes": 65536,
+        "max_time_ms": 5000
+      },
+      "fixtures": {
+        "positive": {"payload": "refines(abs, conc)"},
+        "negative": {"payload": "resource(a) * resource(b)", "expect_code_prefix": "session_process."},
+        "ambiguous": {"payload": "refines impl spec", "expect_code_prefix": "session_process."},
+        "adversarial": {"payload": "refines(abs, conc)\u202e", "kind": "bidi"},
+        "round_trip": {"payload": "simulates(abs, conc, backward)"},
+        "resource": {"recipe": "nested_and", "depth": 24, "atom": "refines(a, b)"}
+      }
+    }
+  ]
+}

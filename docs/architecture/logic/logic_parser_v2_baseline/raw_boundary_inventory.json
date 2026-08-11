@@ -1,0 +1,296 @@
+{
+  "boundaries": [
+    {
+      "boundary_id": "raw_string:CEC/native/dcec_parsing.py#remove_comments.expression",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "cec_dcec"
+      ],
+      "gates_crossed": [],
+      "kind": "raw_string",
+      "notes": "DCEC preprocessing admits raw expression strings.",
+      "path": "CEC/native/dcec_parsing.py",
+      "qualname": "remove_comments.expression",
+      "role": "ingress",
+      "symbol": "remove_comments.expression"
+    },
+    {
+      "boundary_id": "raw_string:TDFOL/tdfol_parser.py#TDFOLParser.parse",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "tdfol"
+      ],
+      "gates_crossed": [],
+      "kind": "raw_string",
+      "notes": "TDFOL parser admits raw symbolic/NL string formulas.",
+      "path": "TDFOL/tdfol_parser.py",
+      "qualname": "TDFOLParser.parse",
+      "role": "ingress",
+      "symbol": "TDFOLParser.parse"
+    },
+    {
+      "boundary_id": "target_source:backends/smt/compiler.py#SoftwareVerificationSMTCompiler",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "solver_adapter"
+      ],
+      "gates_crossed": [
+        "compiled_artifact"
+      ],
+      "kind": "target_source",
+      "notes": "SMT compiler emits target source; must live under compiled artifact receipts.",
+      "path": "backends/smt/compiler.py",
+      "qualname": "SoftwareVerificationSMTCompiler",
+      "role": "egress",
+      "symbol": "SoftwareVerificationSMTCompiler"
+    },
+    {
+      "boundary_id": "target_source:backends/z3/compiler.py#Z3Compiler",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "solver_adapter"
+      ],
+      "gates_crossed": [
+        "compiled_artifact"
+      ],
+      "kind": "target_source",
+      "notes": "Z3 adapter compiler surface produces target source text.",
+      "path": "backends/z3/compiler.py",
+      "qualname": "Z3Compiler",
+      "role": "egress",
+      "symbol": "Z3Compiler"
+    },
+    {
+      "boundary_id": "frozen_json:bridge/types.py#LogicIRView.payload",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [],
+      "gates_crossed": [],
+      "kind": "frozen_json",
+      "notes": "Bridge IR view carries arbitrary JSON payload.",
+      "path": "bridge/types.py",
+      "qualname": "LogicIRView.payload",
+      "role": "field",
+      "symbol": "LogicIRView.payload"
+    },
+    {
+      "boundary_id": "raw_string:deontic/utils/deontic_parser.py#extract_normative_elements",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "deontic"
+      ],
+      "gates_crossed": [],
+      "kind": "raw_string",
+      "notes": "Deontic normative-element extraction parser on raw text.",
+      "path": "deontic/utils/deontic_parser.py",
+      "qualname": "extract_normative_elements",
+      "role": "ingress",
+      "symbol": "extract_normative_elements"
+    },
+    {
+      "boundary_id": "target_source:external_provers/prover_router.py#SyntacticProofResult.formula",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "solver_adapter"
+      ],
+      "gates_crossed": [
+        "parsed_target"
+      ],
+      "kind": "target_source",
+      "notes": "External prover result formula is a parsed-target boundary.",
+      "path": "external_provers/prover_router.py",
+      "qualname": "SyntacticProofResult.formula",
+      "role": "field",
+      "symbol": "SyntacticProofResult.formula"
+    },
+    {
+      "boundary_id": "raw_string:fol/utils/fol_parser.py#parse_quantifiers",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "fol"
+      ],
+      "gates_crossed": [],
+      "kind": "raw_string",
+      "notes": "FOL parser operates on raw natural-language strings.",
+      "path": "fol/utils/fol_parser.py",
+      "qualname": "parse_quantifiers",
+      "role": "ingress",
+      "symbol": "parse_quantifiers"
+    },
+    {
+      "boundary_id": "parser_bypass:formalization/advisor.py#FormulaSuggestion.expression",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "deontic",
+        "fol",
+        "modal"
+      ],
+      "gates_crossed": [],
+      "kind": "parser_bypass",
+      "notes": "Advisor formula suggestion stores raw expression without ParseArtifact.",
+      "path": "formalization/advisor.py",
+      "qualname": "FormulaSuggestion.expression",
+      "role": "field",
+      "symbol": "FormulaSuggestion.expression"
+    },
+    {
+      "boundary_id": "extension_payload:formalization/constraint_contracts.py#extension",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "deontic",
+        "fol",
+        "modal"
+      ],
+      "gates_crossed": [],
+      "kind": "extension_payload",
+      "notes": "Constraint contracts historically admit extension-shaped payloads.",
+      "path": "formalization/constraint_contracts.py",
+      "qualname": "extension",
+      "role": "field",
+      "symbol": "extension"
+    },
+    {
+      "boundary_id": "frozen_json:formalization/views.py#FormalFormula.expression",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "deontic",
+        "fol",
+        "modal"
+      ],
+      "gates_crossed": [],
+      "kind": "frozen_json",
+      "notes": "FormalFormula.expression admits arbitrary FrozenJSON payloads.",
+      "path": "formalization/views.py",
+      "qualname": "FormalFormula.expression",
+      "role": "field",
+      "symbol": "FormalFormula.expression"
+    },
+    {
+      "boundary_id": "parser_bypass:modal/compiler.py#DeterministicModalCompiler.compile",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "modal"
+      ],
+      "gates_crossed": [],
+      "kind": "parser_bypass",
+      "notes": "Modal compiler historically accepts raw formula strings.",
+      "path": "modal/compiler.py",
+      "qualname": "DeterministicModalCompiler.compile",
+      "role": "ingress",
+      "symbol": "DeterministicModalCompiler.compile"
+    },
+    {
+      "boundary_id": "raw_string:parsers/smtlib.py#parse",
+      "discovery": "curated",
+      "disposition": "gated",
+      "executable": true,
+      "family_hints": [
+        "solver_adapter"
+      ],
+      "gates_crossed": [
+        "parse_artifact",
+        "typed_expression"
+      ],
+      "kind": "raw_string",
+      "notes": "Shared SMT-LIB frontend; intended to cross ParseArtifact/TypedExpression.",
+      "path": "parsers/smtlib.py",
+      "qualname": "parse",
+      "role": "ingress",
+      "symbol": "parse"
+    },
+    {
+      "boundary_id": "extension_payload:syntax_core/ast.py#LogicExtensionNode.payload",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [],
+      "gates_crossed": [
+        "typed_expression"
+      ],
+      "kind": "extension_payload",
+      "notes": "Extension node payload boundary; must not silently cross elaboration.",
+      "path": "syntax_core/ast.py",
+      "qualname": "LogicExtensionNode.payload",
+      "role": "field",
+      "symbol": "LogicExtensionNode.payload"
+    },
+    {
+      "boundary_id": "parser_bypass:types/common_types.py#Formula.to_string",
+      "discovery": "curated",
+      "disposition": "known_bypass",
+      "executable": true,
+      "family_hints": [
+        "fol"
+      ],
+      "gates_crossed": [],
+      "kind": "parser_bypass",
+      "notes": "Shared Formula protocol exposes only raw-string rendering.",
+      "path": "types/common_types.py",
+      "qualname": "Formula.to_string",
+      "role": "egress",
+      "symbol": "Formula.to_string"
+    }
+  ],
+  "diagnostics": [],
+  "goal_id": "LFP2-G010",
+  "interface": "RawLogicBoundaryInventory@1",
+  "logic_root": "ipfs_datasets_py/logic",
+  "policy_profile_id": "raw-logic-boundary-inventory-curated@1",
+  "required_gates": [
+    "compiled_artifact",
+    "parse_artifact",
+    "parsed_target",
+    "typed_expression"
+  ],
+  "scanned_files": [
+    "CEC/native/dcec_parsing.py",
+    "TDFOL/tdfol_parser.py",
+    "backends/smt/compiler.py",
+    "backends/z3/compiler.py",
+    "bridge/types.py",
+    "deontic/utils/deontic_parser.py",
+    "external_provers/prover_router.py",
+    "fol/utils/fol_parser.py",
+    "formalization/advisor.py",
+    "formalization/constraint_contracts.py",
+    "formalization/views.py",
+    "modal/compiler.py",
+    "parsers/smtlib.py",
+    "syntax_core/ast.py",
+    "types/common_types.py"
+  ],
+  "schema_version": "raw-logic-boundary-inventory/v1",
+  "task_id": "LFP2-002",
+  "evidence_coverage": {
+    "required_kinds": [
+      "extension_payload",
+      "frozen_json",
+      "parser_bypass",
+      "raw_string",
+      "target_source"
+    ]
+  }
+}

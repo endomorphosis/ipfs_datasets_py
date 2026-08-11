@@ -1269,6 +1269,23 @@ EXECUTABLE_PROVIDER_MATRIX: Final[tuple[ProviderMatrixEntry, ...]] = (
     ),
 )
 
+# Exact closed executable-matrix provider IDs (portfolio namespace).  Presence in
+# this set is a declaration only; it never proves a binary is installed or that
+# a proof claim is available.  Advisory lanes (ergoai, symbolicai) are outside
+# this matrix and live in the provider-capability catalog.
+EXECUTABLE_PROVIDER_IDS: Final[tuple[str, ...]] = tuple(
+    entry.provider_id for entry in EXECUTABLE_PROVIDER_MATRIX
+)
+
+# Reviewed dual-read aliases bound to executable-matrix canonical IDs.
+EXECUTABLE_PROVIDER_ALIASES: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        alias: entry.provider_id
+        for entry in EXECUTABLE_PROVIDER_MATRIX
+        for alias in entry.aliases
+    }
+)
+
 
 def provider_matrix_declarations() -> tuple[ProviderMatrixEntry, ...]:
     """Return the closed executable provider matrix without imports or probes."""
@@ -1836,6 +1853,8 @@ def declared_backend_catalog(
 
 __all__ = [
     "BACKEND_ADAPTER_VERSION",
+    "EXECUTABLE_PROVIDER_ALIASES",
+    "EXECUTABLE_PROVIDER_IDS",
     "EXECUTABLE_PROVIDER_MATRIX",
     "EXECUTABLE_PROVIDER_MATRIX_INTERFACE",
     "EXECUTABLE_PROVIDER_MATRIX_VERSION",

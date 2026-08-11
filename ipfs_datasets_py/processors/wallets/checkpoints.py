@@ -5,6 +5,18 @@ scope, schema major, normalizer version) to a canonical hash anchor. Provider
 continuation tokens are optional pagination hints only; they never replace the
 hash-anchored position for resume or CAS advance.
 
+When a DuckDB wallet store is injected:
+
+* **shadow** (DQK-071) — every successful CAS, rewind, and reorg is dual-written
+  so cursors and reorg history shadow at ingestion time.  The in-memory map
+  remains authority.
+* **dual** / **db-primary** (DQK-072) — DuckDB is authoritative for checkpoint
+  tips; the in-memory map is a working-set projection.  Stale cursor CAS against
+  a newer DuckDB revision fails closed without mutating the tip.
+* **export-only** (DQK-073) — same as db-primary for checkpoints: in-memory is
+  never authority; resume always rehydrates from DuckDB.  Implicit JSON
+  checkpoint / manifest files are not used.
+
 Importing this module performs no I/O.
 """
 
@@ -19,10 +31,16 @@ from .canonical import content_digest, deterministic_id, freeze_json, thaw_json
 from .errors import CheckpointError, InvalidRequestError
 from .models import ChainRef, LedgerCursor, LedgerPosition, ensure_secret_safe
 from .protocols import OperationContext
+from .storage import ShadowLedgerMode
 
 
 CHECKPOINT_SCHEMA_VERSION = "wallet-checkpoint-v1"
 DEFAULT_HISTORY_LIMIT = 256
+SHADOW_CHECKPOINT_MODE = "shadow"
+DUAL_CHECKPOINT_MODE = "dual"
+DB_PRIMARY_CHECKPOINT_MODE = "db-primary"
+EXPORT_ONLY_CHECKPOINT_MODE = "export-only"
+WALLET_CHECKPOINT_ONLY_OWNER_TASK = "DQK-073"
 
 
 def _required_str(value: str, name: str) -> str:
@@ -337,6 +355,10 @@ class CheckpointCommitCoordinator:
         self._store = store
         self._pending: dict[str, SinkCommitReceipt] = {}
 
+    @property
+    def store(self) -> "InMemoryCheckpointStore":
+        return self._store
+
     def note_sink_commit(self, receipt: SinkCommitReceipt) -> None:
         """Record that the sink committed for *receipt.scope_key*."""
 
@@ -395,13 +417,54 @@ class InMemoryCheckpointStore:
     idempotent: repeating a successful CAS with the same expected revision
     fails, while reloading the stored revision and replaying yields the same
     durable state.
+
+    When *shadow_store* is provided:
+
+    * **shadow** (DQK-071) — memory is authority; successful CAS dual-writes
+      DuckDB.
+    * **dual** / **db-primary** / **export-only** (DQK-072/073) — DuckDB is
+      authority; CAS is applied to DuckDB first and memory is a projection.
+      Stale *expected_revision* values fail closed (return ``False``) without
+      mutating either tip.  Under export-only / db-primary the in-memory map
+      is never operational authority.
     """
 
-    def __init__(self, *, history_limit: int = DEFAULT_HISTORY_LIMIT) -> None:
+    def __init__(
+        self,
+        *,
+        history_limit: int = DEFAULT_HISTORY_LIMIT,
+        shadow_store: Any | None = None,
+        shadow: bool | Any | None = None,
+        authority_mode: ShadowLedgerMode | str | None = None,
+    ) -> None:
         self._history_limit = _positive_int(history_limit, "history_limit")
         self._entries: dict[str, CheckpointRecord] = {}
         self._cas_attempts: int = 0
         self._cas_successes: int = 0
+        self._shadow_cas_successes: int = 0
+        self._shadow_cas_rejects: int = 0
+        self._authority_cas_rejects: int = 0
+        self._reorg_history: list[dict[str, Any]] = []
+        self._shadow = _resolve_checkpoint_shadow(
+            shadow_store=shadow_store,
+            shadow=shadow,
+        )
+        self._authority_mode = _resolve_checkpoint_mode(
+            authority_mode=authority_mode,
+            shadow=shadow,
+            has_store=self._shadow is not None,
+        )
+        if (
+            self._authority_mode.duckdb_is_authority
+            and self._shadow is None
+            and self._authority_mode.blocks_implicit_legacy_files
+        ):
+            # db-primary / export-only without a store cannot fall back to
+            # in-memory authority (DQK-073).
+            raise CheckpointError(
+                f"checkpoint mode {self._authority_mode.value} requires a DuckDB "
+                f"store; in-memory is not authority ({WALLET_CHECKPOINT_ONLY_OWNER_TASK})"
+            )
 
     @property
     def cas_attempts(self) -> int:
@@ -411,8 +474,102 @@ class InMemoryCheckpointStore:
     def cas_successes(self) -> int:
         return self._cas_successes
 
+    @property
+    def shadow_store(self) -> Any | None:
+        return self._shadow
+
+    @property
+    def authority_store(self) -> Any | None:
+        if self._authority_mode.duckdb_is_authority:
+            return self._shadow
+        return None
+
+    @property
+    def authority_mode(self) -> ShadowLedgerMode:
+        return self._authority_mode
+
+    @property
+    def memory_is_authority(self) -> bool:
+        """True only when the in-memory map is operational checkpoint authority."""
+
+        return self._authority_mode.memory_is_authority
+
+    @property
+    def owner_task_id(self) -> str | None:
+        if self._authority_mode.blocks_implicit_legacy_files:
+            return WALLET_CHECKPOINT_ONLY_OWNER_TASK
+        return None
+
+    @property
+    def shadow_cas_successes(self) -> int:
+        return self._shadow_cas_successes
+
+    @property
+    def shadow_cas_rejects(self) -> int:
+        return self._shadow_cas_rejects
+
+    @property
+    def authority_cas_rejects(self) -> int:
+        """Count of dual-mode CAS rejects (stale expected revision)."""
+
+        return self._authority_cas_rejects
+
     def keys(self) -> frozenset[str]:
         return frozenset(self._entries)
+
+    def attach_shadow(
+        self,
+        shadow_store: Any | None,
+        *,
+        authority_mode: ShadowLedgerMode | str | None = None,
+    ) -> None:
+        """Attach or replace the DuckDB shadow/dual checkpoint port."""
+
+        self._shadow = shadow_store
+        if authority_mode is not None:
+            self._authority_mode = ShadowLedgerMode.parse(authority_mode)
+        elif shadow_store is not None and self._authority_mode is ShadowLedgerMode.OFF:
+            self._authority_mode = ShadowLedgerMode.SHADOW
+
+    def promote_to_dual(self) -> ShadowLedgerMode:
+        """Promote shadow → dual so DuckDB becomes checkpoint authority."""
+
+        if self._shadow is None:
+            raise CheckpointError("cannot promote checkpoints without a DuckDB store")
+        if self._authority_mode is ShadowLedgerMode.OFF:
+            raise CheckpointError("cannot promote from off without a dual-write store")
+        if self._authority_mode is ShadowLedgerMode.SHADOW:
+            self._authority_mode = ShadowLedgerMode.DUAL
+        elif self._authority_mode is ShadowLedgerMode.DUAL:
+            pass
+        elif self._authority_mode is ShadowLedgerMode.DB_PRIMARY:
+            pass
+        return self._authority_mode
+
+    def promote_to_db_primary(self) -> ShadowLedgerMode:
+        """Promote dual → db-primary (DuckDB sole checkpoint authority)."""
+
+        if self._shadow is None:
+            raise CheckpointError("cannot promote checkpoints without a DuckDB store")
+        if self._authority_mode is ShadowLedgerMode.SHADOW:
+            self._authority_mode = ShadowLedgerMode.DUAL
+        if self._authority_mode is ShadowLedgerMode.EXPORT_ONLY:
+            return self._authority_mode
+        self._authority_mode = ShadowLedgerMode.DB_PRIMARY
+        return self._authority_mode
+
+    def promote_to_export_only(self) -> ShadowLedgerMode:
+        """Promote to export-only (DQK-073): DuckDB sole tip; no memory authority."""
+
+        if self._shadow is None:
+            raise CheckpointError("cannot promote checkpoints without a DuckDB store")
+        self._authority_mode = ShadowLedgerMode.EXPORT_ONLY
+        return self._authority_mode
+
+    def clear_memory_projection(self) -> None:
+        """Drop the in-process working set (does not mutate DuckDB tips)."""
+
+        self._entries.clear()
 
     async def load(
         self,
@@ -420,16 +577,43 @@ class InMemoryCheckpointStore:
         *,
         context: OperationContext,
     ) -> CheckpointRecord | None:
-        """Load the checkpoint for an exact ingestion scope key or raw scope."""
+        """Load the checkpoint for an exact ingestion scope key or raw scope.
+
+        Dual / db-primary / export-only: DuckDB tip is authority; memory is
+        rehydrated from the durable head.  Shadow / off: memory map is
+        authority.  Under DuckDB-only modes a missing authority store fails
+        closed rather than inventing an in-memory tip (DQK-073).
+        """
 
         context.check_active()
         _required_str(scope, "scope")
+        if self._authority_mode.duckdb_is_authority:
+            if self._shadow is None:
+                raise CheckpointError(
+                    f"checkpoint mode {self._authority_mode.value} requires DuckDB; "
+                    f"in-memory is not authority ({WALLET_CHECKPOINT_ONLY_OWNER_TASK})"
+                )
+            load_fn = getattr(self._shadow, "load", None)
+            if callable(load_fn):
+                record = await load_fn(scope, context=context)
+                if isinstance(record, CheckpointRecord):
+                    self._entries[record.identity.key] = record
+                    return record
+                # DuckDB has no tip — clear any stale memory ghost.
+                self._entries.pop(scope, None)
+                return None
+            raise CheckpointError(
+                "authority checkpoint store does not implement load"
+            )
+        record = None
         if scope in self._entries:
-            return self._entries[scope]
-        for record in self._entries.values():
-            if record.identity.matches_scope_key(scope):
-                return record
-        return None
+            record = self._entries[scope]
+        else:
+            for candidate in self._entries.values():
+                if candidate.identity.matches_scope_key(scope):
+                    record = candidate
+                    break
+        return record
 
     async def compare_and_set(
         self,
@@ -439,7 +623,14 @@ class InMemoryCheckpointStore:
         checkpoint: object,
         context: OperationContext,
     ) -> bool:
-        """Atomically store *checkpoint* when the revision still matches."""
+        """Atomically store *checkpoint* when the revision still matches.
+
+        Dual / db-primary: CAS is applied to DuckDB first.  A stale
+        *expected_revision* returns ``False`` (no tip mutation).  On success
+        the memory projection is updated to match the durable tip.
+
+        Shadow: memory CAS first, then dual-write DuckDB (DQK-071).
+        """
 
         context.check_active()
         self._cas_attempts += 1
@@ -453,6 +644,20 @@ class InMemoryCheckpointStore:
                 "checkpoint identity does not bind to the provided scope key"
             )
         store_key = checkpoint.identity.key
+        assert_hash_anchor_present(
+            checkpoint.anchor.to_position(),
+            continuation_token=checkpoint.continuation_token,
+        )
+        stored = checkpoint.with_history_limit(self._history_limit)
+
+        if self._authority_mode.duckdb_is_authority and self._shadow is not None:
+            return await self._authority_compare_and_set(
+                store_key,
+                expected_revision=expected_revision,
+                checkpoint=stored,
+                context=context,
+            )
+
         current = self._entries.get(store_key)
         current_revision = None if current is None else current.revision
         if current_revision != expected_revision:
@@ -464,15 +669,85 @@ class InMemoryCheckpointStore:
                 "refusing to overwrite checkpoint with incompatible identity "
                 "(chain/network/genesis/provider/scope/schema/normalizer)"
             )
-        # Hash anchors are mandatory; continuation tokens alone are rejected.
-        assert_hash_anchor_present(
-            checkpoint.anchor.to_position(),
-            continuation_token=checkpoint.continuation_token,
-        )
-        stored = checkpoint.with_history_limit(self._history_limit)
         self._entries[store_key] = stored
         self._cas_successes += 1
+        await self._shadow_compare_and_set(
+            store_key,
+            expected_revision=expected_revision,
+            checkpoint=stored,
+            context=context,
+        )
         return True
+
+    async def _authority_compare_and_set(
+        self,
+        scope_key: str,
+        *,
+        expected_revision: str | None,
+        checkpoint: CheckpointRecord,
+        context: OperationContext,
+    ) -> bool:
+        """DuckDB-first CAS for dual / db-primary modes (DQK-072)."""
+
+        cas = getattr(self._shadow, "compare_and_set", None)
+        if not callable(cas):
+            raise CheckpointError(
+                "authority checkpoint store does not implement compare_and_set"
+            )
+        try:
+            accepted = await cas(
+                scope_key,
+                expected_revision=expected_revision,
+                checkpoint=checkpoint,
+                context=context,
+            )
+        except Exception as exc:
+            raise CheckpointError(
+                f"authority checkpoint CAS failed: {exc}"
+            ) from exc
+        if not accepted:
+            self._authority_cas_rejects += 1
+            self._shadow_cas_rejects += 1
+            return False
+        # Mirror durable tip into the memory projection.
+        self._entries[scope_key] = checkpoint
+        self._cas_successes += 1
+        self._shadow_cas_successes += 1
+        return True
+
+    async def _shadow_compare_and_set(
+        self,
+        scope_key: str,
+        *,
+        expected_revision: str | None,
+        checkpoint: CheckpointRecord,
+        context: OperationContext,
+    ) -> None:
+        if self._shadow is None:
+            return
+        cas = getattr(self._shadow, "compare_and_set", None)
+        if not callable(cas):
+            raise CheckpointError(
+                "shadow checkpoint store does not implement compare_and_set"
+            )
+        try:
+            accepted = await cas(
+                scope_key,
+                expected_revision=expected_revision,
+                checkpoint=checkpoint,
+                context=context,
+            )
+        except Exception as exc:
+            raise CheckpointError(
+                f"shadow checkpoint CAS failed: {exc}"
+            ) from exc
+        if not accepted:
+            self._shadow_cas_rejects += 1
+            raise CheckpointError(
+                "shadow checkpoint CAS rejected (revision mismatch); "
+                "authority and shadow tips have diverged"
+            )
+        self._shadow_cas_successes += 1
 
     async def replace_after_rewind(
         self,
@@ -492,6 +767,229 @@ class InMemoryCheckpointStore:
             checkpoint=rewound,
             context=context,
         )
+
+    async def shadow_reorg_rollback(
+        self,
+        decision: object,
+        *,
+        chain: object,
+        provenance: object,
+        identity: CheckpointIdentity,
+        rewound: CheckpointRecord,
+        expected_revision: str,
+        context: OperationContext,
+        reorg_id: str | None = None,
+        apply_corrections: bool = True,
+    ) -> Mapping[str, Any]:
+        """Record reorg history and CAS-rewind authority + shadow tips (DQK-071).
+
+        Authority rewind uses :meth:`replace_after_rewind`.  When a shadow store
+        is attached, the DuckDB reorg/finality path is also invoked so reorg
+        rows and orphan corrections shadow at ingestion time.
+        """
+
+        advanced = await self.replace_after_rewind(
+            identity,
+            expected_revision=expected_revision,
+            rewound=rewound,
+            context=context,
+        )
+        if self._authority_mode.duckdb_is_authority:
+            mode_label = self._authority_mode.value
+        elif self._shadow is not None:
+            mode_label = SHADOW_CHECKPOINT_MODE
+        else:
+            mode_label = "memory"
+        result: dict[str, Any] = {
+            "checkpoint_advanced": bool(advanced),
+            "mode": mode_label,
+            "reorg_id": reorg_id,
+        }
+        if self._shadow is not None:
+            apply = getattr(self._shadow, "apply_reorg_rollback", None)
+            if callable(apply):
+                # Shadow already received the checkpoint CAS via dual-write on
+                # replace_after_rewind; apply_reorg_rollback would CAS again
+                # with a now-stale expected revision.  Prefer record_reorg +
+                # corrections when the dual-write already moved the tip.
+                record_reorg = getattr(self._shadow, "record_reorg", None)
+                if callable(record_reorg):
+                    reorg_row = record_reorg(
+                        decision,
+                        chain=chain,
+                        provenance=provenance,
+                        reorg_id=reorg_id,
+                        apply_corrections=apply_corrections,
+                    )
+                    result["reorg_id"] = str(
+                        reorg_row.get("reorg_id") if isinstance(reorg_row, Mapping) else reorg_id
+                    )
+                    result["reorg_row"] = (
+                        dict(reorg_row) if isinstance(reorg_row, Mapping) else reorg_row
+                    )
+                else:
+                    shadow_result = await apply(
+                        decision,
+                        chain=chain,
+                        provenance=provenance,
+                        identity=identity,
+                        rewound=rewound,
+                        expected_revision=expected_revision,
+                        context=context,
+                        reorg_id=reorg_id,
+                        apply_corrections=apply_corrections,
+                    )
+                    if isinstance(shadow_result, Mapping):
+                        result.update(dict(shadow_result))
+        self._reorg_history.append(dict(result))
+        return result
+
+    def shadow_finality_transition(self, **kwargs: Any) -> dict[str, Any] | None:
+        """Apply a finality transition on the shadow store when attached."""
+
+        if self._shadow is None:
+            return None
+        apply = getattr(self._shadow, "apply_finality_transition", None)
+        if not callable(apply):
+            raise CheckpointError(
+                "shadow store does not implement apply_finality_transition"
+            )
+        row = apply(**kwargs)
+        return dict(row) if isinstance(row, Mapping) else row
+
+    def checkpoint_parity(
+        self, scope_key: str, *, context: OperationContext | None = None
+    ) -> Mapping[str, Any]:
+        """Compare authority tip with shadow tip for *scope_key*.
+
+        Returns a small parity report used by integration tests and dual-write
+        diagnostics.  When no shadow is attached, reports ``shadow=None``.
+        """
+
+        authority = self._entries.get(scope_key)
+        shadow_record = None
+        if self._shadow is not None:
+            # Prefer synchronous access to shadow heads when available; fall
+            # back to catalog list of checkpoints.
+            heads = getattr(self._shadow, "_checkpoint_heads", None)
+            if isinstance(heads, Mapping) and scope_key in heads:
+                head = heads[scope_key]
+                shadow_record = getattr(head, "record", None)
+            if shadow_record is None:
+                list_records = getattr(self._shadow, "list_records", None)
+                if callable(list_records):
+                    try:
+                        rows = list_records("checkpoints")
+                    except Exception:
+                        rows = ()
+                    # Pick latest matching identity key via checkpoint_id.
+                    if authority is not None:
+                        for row in rows:
+                            if (
+                                isinstance(row, Mapping)
+                                and row.get("checkpoint_id") == authority.checkpoint_id
+                            ):
+                                shadow_record = row
+                                break
+        if authority is None and shadow_record is None:
+            return {
+                "matched": True,
+                "scope_key": scope_key,
+                "authority": None,
+                "shadow": None,
+            }
+        if authority is None or shadow_record is None:
+            return {
+                "matched": False,
+                "scope_key": scope_key,
+                "authority": None if authority is None else authority.to_dict(),
+                "shadow": (
+                    None
+                    if shadow_record is None
+                    else (
+                        shadow_record.to_dict()
+                        if hasattr(shadow_record, "to_dict")
+                        else dict(shadow_record)
+                    )
+                ),
+            }
+        if isinstance(shadow_record, CheckpointRecord):
+            shadow_anchor = shadow_record.anchor
+            shadow_revision = shadow_record.revision
+            shadow_id = shadow_record.checkpoint_id
+        else:
+            shadow_anchor_seq = shadow_record.get("anchor_sequence") or shadow_record.get(
+                "sequence"
+            )
+            shadow_anchor_hash = shadow_record.get("anchor_hash") or shadow_record.get(
+                "block_hash"
+            )
+            shadow_revision = shadow_record.get("revision")
+            shadow_id = shadow_record.get("checkpoint_id")
+            shadow_anchor = None
+            if shadow_anchor_seq is not None and shadow_anchor_hash:
+                shadow_anchor = HashAnchor(
+                    int(shadow_anchor_seq), str(shadow_anchor_hash)
+                )
+        matched = (
+            authority.checkpoint_id == shadow_id
+            and authority.revision == shadow_revision
+            and shadow_anchor is not None
+            and authority.anchor.matches(shadow_anchor)
+        )
+        mode_label = (
+            self._authority_mode.value
+            if self._authority_mode is not ShadowLedgerMode.OFF
+            else SHADOW_CHECKPOINT_MODE
+        )
+        return {
+            "matched": bool(matched),
+            "scope_key": scope_key,
+            "authority_checkpoint_id": authority.checkpoint_id,
+            "shadow_checkpoint_id": shadow_id,
+            "authority_revision": authority.revision,
+            "shadow_revision": shadow_revision,
+            "authority_anchor": authority.anchor.to_dict(),
+            "shadow_anchor": (
+                shadow_anchor.to_dict() if shadow_anchor is not None else None
+            ),
+            "mode": mode_label,
+            "duckdb_is_authority": self._authority_mode.duckdb_is_authority,
+        }
+
+    def reorg_history(self) -> tuple[Mapping[str, Any], ...]:
+        return tuple(dict(item) for item in self._reorg_history)
+
+
+def _resolve_checkpoint_shadow(
+    *,
+    shadow_store: Any | None,
+    shadow: bool | Any | None,
+) -> Any | None:
+    if shadow_store is not None:
+        return shadow_store
+    if shadow is False or shadow is None:
+        return None
+    if shadow is True:
+        from .duckdb_storage import open_wallet_store
+
+        return open_wallet_store(scope="wallet-checkpoint-shadow", auto_recover=True)
+    return shadow
+
+
+def _resolve_checkpoint_mode(
+    *,
+    authority_mode: ShadowLedgerMode | str | None,
+    shadow: bool | Any | None,
+    has_store: bool,
+) -> ShadowLedgerMode:
+    if authority_mode is not None:
+        return ShadowLedgerMode.parse(authority_mode)
+    if shadow is False:
+        return ShadowLedgerMode.OFF
+    if has_store or shadow is True:
+        return ShadowLedgerMode.SHADOW
+    return ShadowLedgerMode.OFF
 
 
 def append_anchor_history(
@@ -562,7 +1060,12 @@ def checkpoint_content_fingerprint(checkpoint: CheckpointRecord) -> str:
 
 __all__ = [
     "CHECKPOINT_SCHEMA_VERSION",
+    "DB_PRIMARY_CHECKPOINT_MODE",
     "DEFAULT_HISTORY_LIMIT",
+    "DUAL_CHECKPOINT_MODE",
+    "EXPORT_ONLY_CHECKPOINT_MODE",
+    "SHADOW_CHECKPOINT_MODE",
+    "WALLET_CHECKPOINT_ONLY_OWNER_TASK",
     "CheckpointCommitCoordinator",
     "CheckpointIdentity",
     "CheckpointRecord",

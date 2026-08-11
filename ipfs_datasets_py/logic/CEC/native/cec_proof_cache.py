@@ -192,8 +192,18 @@ class CachedTheoremProver(BaseTheoremProver):
                 self.cache = get_global_cache()
                 logger.info("Using global proof cache")
             else:
-                self.cache = ProofCache(maxsize=cache_size, ttl=cache_ttl)
+                self.cache = ProofCache(
+                    maxsize=cache_size,
+                    ttl=cache_ttl,
+                    shadow_backend="cec_native",
+                )
                 logger.info(f"Created local proof cache (size={cache_size}, ttl={cache_ttl}s)")
+            if self.cache is not None and hasattr(self.cache, "bind_shadow_repository"):
+                # Prefer explicit backend tag even when sharing the global cache.
+                try:
+                    self.cache._shadow_backend = "cec_native"
+                except Exception:
+                    pass
         else:
             self.cache = None
             if not HAVE_CACHE:
@@ -205,6 +215,24 @@ class CachedTheoremProver(BaseTheoremProver):
         self._cache_hits = 0
         self._cache_misses = 0
         self._cache_lock = RLock()
+        self._shadow_repository = None
+        self._shadow_backend = "cec_native"
+
+    def bind_shadow_repository(self, repository, *, backend: str = "cec_native") -> None:
+        """Bind CEC native prover cache to the unified shadow repository (DQK-065)."""
+
+        self._shadow_repository = repository
+        self._shadow_backend = backend
+        if repository is not None:
+            repository.register_backend(backend)
+        if self.cache is not None and hasattr(self.cache, "bind_shadow_repository"):
+            self.cache.bind_shadow_repository(repository, backend=backend)
+
+    def bind_authority_repository(self, repository, *, backend: str = "cec_native") -> None:
+        """Bind to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
 
     def initialize(self) -> bool:
         """Initialize the prover, resetting per-instance statistics and using a fresh local cache."""
@@ -341,6 +369,39 @@ class CachedTheoremProver(BaseTheoremProver):
                 axioms=axioms,
                 prover_name="cec_native"
             )
+            repo = self._shadow_repository
+            if repo is None:
+                try:
+                    from ...common.proof_cache import get_shadow_repository
+
+                    repo = get_shadow_repository(create=False)
+                except Exception:
+                    repo = None
+            if repo is not None:
+                key = repo.project_key(
+                    self._shadow_backend,
+                    formula=cache_key,
+                    prover_name="cec_native",
+                    axioms=axioms,
+                    solver_identities={"prover": "cec_native"},
+                    toolchain={"backend": "cec_native"},
+                    policy={"mode": "shadow", "backend": "cec_native"},
+                )
+                repo.write(
+                    self._shadow_backend,
+                    key=key,
+                    result_payload={
+                        "is_proved": bool(result.is_proved),
+                        "proof_steps": result.proof_steps,
+                        "execution_time": result.execution_time,
+                    },
+                    status="proved" if result.is_proved else "unknown",
+                    trust_level="none",
+                    legacy_payload={
+                        "formula": cache_key,
+                        "is_proved": bool(result.is_proved),
+                    },
+                )
             
         except Exception as e:
             logger.warning(f"Cache store error: {e}")
@@ -414,9 +475,41 @@ def get_global_cached_prover() -> CachedTheoremProver:
     return _global_cached_prover
 
 
+from ...common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
+)
+
+CEC_NATIVE_LEGACY_BACKEND = LegacyProofBackend.CEC_NATIVE
+
 __all__ = [
     'CECCachedProofResult',
     'CachedTheoremProver',
     'get_global_cached_prover',
     'HAVE_CACHE',
+    'LEGACY_PROOF_BACKENDS',
+    'LegacyProofBackend',
+    'CEC_NATIVE_LEGACY_BACKEND',
+    'UnifiedProofAuthorityRepository',
+    'UnifiedProofShadowRepository',
+    'build_proof_authority_repository',
+    'build_proof_shadow_repository',
+    'get_authority_repository',
+    'get_shadow_repository',
+    'set_authority_repository',
+    'set_shadow_repository',
 ]

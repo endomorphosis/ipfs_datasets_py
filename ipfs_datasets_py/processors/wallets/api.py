@@ -77,12 +77,16 @@ from .registry import (
     default_registry,
 )
 from .security import SecretReference, endpoint_fingerprint
-
+from .storage import ShadowLedgerMode
 
 API_RECEIPT_SCHEMA_VERSION = "wallet-api-receipt-v1"
 API_STATUS_SCHEMA_VERSION = "wallet-api-status-v1"
 DEFAULT_MAX_TIME_SECONDS = 300
 DEFAULT_MAX_RETRIES = 3
+
+# Process-local DuckDB shadow ledger port shared by API ingest (DQK-071).
+_API_SHADOW_STORE: Any | None = None
+_API_SHADOW_ENABLED: bool = True
 _SECRET_KEY_RE = re.compile(
     r"(secret|password|token|api[_-]?key|authorization|private|seed|mnemonic|signing)",
     re.IGNORECASE,
@@ -799,6 +803,35 @@ class _JobRecord:
 # ---------------------------------------------------------------------------
 
 
+def get_api_shadow_store(*, scope: str = "wallet-api-shadow") -> Any:
+    """Return the process-local API shadow ledger store (idempotent, DQK-071)."""
+
+    global _API_SHADOW_STORE
+    if not _API_SHADOW_ENABLED:
+        return None
+    if _API_SHADOW_STORE is None:
+        from .duckdb_storage import open_wallet_store
+
+        _API_SHADOW_STORE = open_wallet_store(scope=scope, auto_recover=True)
+    return _API_SHADOW_STORE
+
+
+def reset_api_shadow_store() -> None:
+    """Drop the process-local API shadow store (intended for tests)."""
+
+    global _API_SHADOW_STORE
+    _API_SHADOW_STORE = None
+
+
+def set_api_shadow_enabled(enabled: bool) -> None:
+    """Enable or disable process-local API shadow dual-write (tests/ops)."""
+
+    global _API_SHADOW_ENABLED, _API_SHADOW_STORE
+    _API_SHADOW_ENABLED = bool(enabled)
+    if not _API_SHADOW_ENABLED:
+        _API_SHADOW_STORE = None
+
+
 class WalletProcessorAPI:
     """Bounded Python facade for wallet and ledger ingest/export surfaces.
 
@@ -813,6 +846,14 @@ class WalletProcessorAPI:
         Host/secret allowlists applied when ``trust`` is untrusted.
     trust:
         Default trust level for this API instance (MCP tools force untrusted).
+    shadow_store:
+        Optional DuckDB wallet store for dual-write shadowing at ingest time
+        (DQK-071).  When omitted and *shadow* is true, the process-local API
+        shadow port is used.
+    shadow:
+        When true, enable dual-write into the process-local DuckDB shadow store.
+        Defaults to off; pass ``shadow=True`` or ``shadow_store=...`` to inject
+        DQK-071 shadowing at ingestion time.
     """
 
     # Explicit denylist of custody/signing verbs — never implemented.
@@ -826,6 +867,8 @@ class WalletProcessorAPI:
         trust_policy: TrustPolicy | None = None,
         trust: TrustLevel = TrustLevel.TRUSTED,
         clock: Any | None = None,
+        shadow_store: Any | None = None,
+        shadow: bool | None = None,
     ) -> None:
         self._registry = registry if registry is not None else default_registry()
         self._processor = processor
@@ -833,6 +876,47 @@ class WalletProcessorAPI:
         self._trust = trust if isinstance(trust, TrustLevel) else TrustLevel(str(trust))
         self._clock = clock or _utc_now
         self._jobs: dict[str, _JobRecord] = {}
+        # Default OFF so unit tests and callers without dual-write intent keep
+        # JSONL/memory authority only.  Pass shadow=True or shadow_store=... to
+        # enable DQK-071 dual-write (integration and production injectors do).
+        if shadow_store is not None:
+            self._shadow_store = shadow_store
+        elif shadow is True:
+            self._shadow_store = get_api_shadow_store()
+        else:
+            self._shadow_store = None
+        # Ensure an injected processor dual-writes when the API owns a shadow.
+        if (
+            self._processor is not None
+            and self._shadow_store is not None
+            and getattr(self._processor, "shadow_store", None) is None
+        ):
+            attach = getattr(self._processor, "attach_shadow", None)
+            if callable(attach):
+                attach(self._shadow_store)
+
+    @property
+    def shadow_store(self) -> Any | None:
+        """DuckDB wallet store used for dual-write shadowing (DQK-071)."""
+
+        return self._shadow_store
+
+    @property
+    def shadow_mode(self) -> str:
+        return (
+            ShadowLedgerMode.SHADOW.value
+            if self._shadow_store is not None
+            else ShadowLedgerMode.OFF.value
+        )
+
+    def attach_shadow(self, shadow_store: Any | None) -> None:
+        """Attach or replace the API-level DuckDB shadow ledger port."""
+
+        self._shadow_store = shadow_store
+        if self._processor is not None:
+            attach = getattr(self._processor, "attach_shadow", None)
+            if callable(attach):
+                attach(shadow_store)
 
     # -- discovery ------------------------------------------------------------
 
@@ -1478,9 +1562,12 @@ __all__ = [
     "WalletExportRequest",
     "WalletIngestRequest",
     "WalletProcessorAPI",
+    "get_api_shadow_store",
     "get_default_api",
+    "reset_api_shadow_store",
     "reset_default_api",
     "scope_fingerprint",
+    "set_api_shadow_enabled",
     "wallet_export",
     "wallet_ingest",
 ]

@@ -68,6 +68,9 @@ proof_cache/
 logic_cache/
 .cache/
 *.duckdb
+# Runtime-only authority and transitional supervisor projections for the
+# DuckDB/Quack migration program. The database is never source-controlled.
+/data/agent_supervisor/ipfs_datasets_duckdb_quack/
 data/databases/
 batch_results_batch_*
 test.idx

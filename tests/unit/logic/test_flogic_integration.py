@@ -13,7 +13,9 @@ import importlib.util
 import math
 import os
 import shutil
+import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -144,6 +146,8 @@ def test_prover_installer_discovers_release_runergo(tmp_path, monkeypatch):
 def test_ergoai_release_installer_runs_noninteractive(tmp_path, monkeypatch):
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
+    missing = object()
+    previous_ergoai_binary = os.environ.get("ERGOAI_BINARY", missing)
     calls = []
     fake_binary = tmp_path / "Coherent" / "ERGOAI_3.0" / "ErgoAI" / "runergo"
 
@@ -173,11 +177,16 @@ def test_ergoai_release_installer_runs_noninteractive(tmp_path, monkeypatch):
     monkeypatch.setattr(prover_installer, "_download_file", fake_download)
     monkeypatch.setattr(prover_installer, "_run", fake_run)
 
-    assert prover_installer._install_ergoai_release(strict=True) is True
-    assert os.environ["ERGOAI_BINARY"] == str(fake_binary)
-    assert calls[0][0][-2:] == ["--", "noninteractive"]
-    assert calls[0][1]["cwd"] == tmp_path
-    monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+    try:
+        assert prover_installer._install_ergoai_release(strict=True) is True
+        assert os.environ["ERGOAI_BINARY"] == str(fake_binary)
+        assert calls[0][0][-2:] == ["--", "noninteractive"]
+        assert calls[0][1]["cwd"] == tmp_path
+    finally:
+        if previous_ergoai_binary is missing:
+            os.environ.pop("ERGOAI_BINARY", None)
+        else:
+            os.environ["ERGOAI_BINARY"] = previous_ergoai_binary
 
 
 def test_platform_package_plan_uses_passwordless_sudo_for_apt():
@@ -654,6 +663,11 @@ class TestErgoAIWrapperSimulation:
         monkeypatch.delenv("ERGOAI_BINARY", raising=False)
         monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path / "release"))
         monkeypatch.setattr(ergoai_wrapper, "ERGOAI_SUBMODULE_PATH", tmp_path)
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: None,
+        )
 
         assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) == fake_binary
 
@@ -670,6 +684,11 @@ class TestErgoAIWrapperSimulation:
         fake_binary.chmod(0o755)
         monkeypatch.delenv("ERGOAI_BINARY", raising=False)
         monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path))
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: None,
+        )
 
         assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) == fake_binary
 
@@ -683,6 +702,11 @@ class TestErgoAIWrapperSimulation:
         monkeypatch.delenv("ERGOAI_BINARY", raising=False)
         monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path / "release"))
         monkeypatch.setattr(ergoai_wrapper, "ERGOAI_SUBMODULE_PATH", tmp_path)
+        monkeypatch.setattr(
+            ergoai_wrapper,
+            "_configured_managed_install_root",
+            lambda: None,
+        )
         monkeypatch.setattr(shutil, "which", lambda _name: None)
 
         assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) is None
@@ -854,21 +878,65 @@ def test_flogic_package_exports():
 
 def test_flogic_import_is_quiet():
     """Importing the flogic package must not emit warnings."""
-    import warnings
-
     root = "ipfs_datasets_py.logic.flogic"
-    for key in list(sys.modules.keys()):
-        if key == root or key.startswith(root + "."):
-            del sys.modules[key]
+    parent_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == root or name.startswith(root + ".")
+    }
+    parent_package = sys.modules.get(root)
+    parent_frame = (
+        getattr(parent_package, "FLogicFrame", None)
+        if parent_package is not None
+        else None
+    )
+    repo_root = Path(__file__).resolve().parents[3]
+    script = textwrap.dedent(
+        """
+        import importlib
+        import sys
+        import warnings
 
-    with warnings.catch_warnings(record=True) as rec:
-        warnings.simplefilter("always")
-        import ipfs_datasets_py.logic.flogic  # noqa: F401
+        root = "ipfs_datasets_py.logic.flogic"
+        assert root not in sys.modules
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            module = importlib.import_module(root)
 
-    ipfs_warns = [
-        w for w in rec if "ipfs_datasets_py" in (getattr(w, "filename", "") or "")
-    ]
-    assert ipfs_warns == [], [str(w.message) for w in ipfs_warns]
+        ipfs_warnings = [
+            item
+            for item in recorded
+            if "ipfs_datasets_py" in (getattr(item, "filename", "") or "")
+        ]
+        assert ipfs_warnings == [], [str(item.message) for item in ipfs_warnings]
+        assert module.__name__ == root
+        print("ok")
+        """
+    )
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONPATH"] = os.pathsep.join(
+        part
+        for part in (str(repo_root), env.get("PYTHONPATH", ""))
+        if part
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=str(repo_root),
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "ok" in completed.stdout
+    for name, module in parent_modules.items():
+        assert sys.modules.get(name) is module
+    assert sys.modules.get(root) is parent_package
+    if parent_package is not None:
+        assert getattr(parent_package, "FLogicFrame", None) is parent_frame
 
 
 # ---------------------------------------------------------------------------

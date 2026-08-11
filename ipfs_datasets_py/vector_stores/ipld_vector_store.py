@@ -15,10 +15,13 @@ import os
 import json
 import uuid
 import tempfile
-import pickle
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Union
 import anyio
+
+# Pickle is not runtime metadata authority (DQK-064). CAR/IPLD remain
+# content-addressed segment carriers; lifecycle metadata lives in DuckDB.
+
 
 # Import base classes and schemas
 from .base import BaseVectorStore, VectorStoreError, VectorStoreConnectionError, VectorStoreOperationError
@@ -240,6 +243,49 @@ class IPLDVectorStore(BaseVectorStore):
         self.metadata[name] = []
         self.cids[name] = []
         self.vector_ids[name] = []
+
+        try:
+            # Dual/DuckDB catalog (DQK-063/064): metadata in DuckDB; bytes in IPLD.
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                safe_dual_create,
+                safe_shadow_create,
+                duckdb_metadata_is_authority,
+            )
+            create_fn = (
+                safe_dual_create
+                if duckdb_metadata_is_authority()
+                else safe_shadow_create
+            )
+            create_kwargs = dict(
+                logical_name=name,
+                backend="ipld",
+                dimension=int(dim),
+                dtype="float32",
+                mapping={},
+                metadata_json={
+                    "producer": "ipld_vector_store",
+                    "metric": self.distance_metric,
+                    "bytes_location": "immutable_segment",
+                    "publication_approved": True,
+                },
+                model_provider="ipld",
+                model_name="ipld",
+                chunking_identity=kwargs.get(
+                    "chunking_identity", "chunk:ipld@1"
+                ),
+                normalization_identity=kwargs.get(
+                    "normalization_identity", "norm:none@1"
+                ),
+                source_revision=kwargs.get("source_revision", "src-0"),
+            )
+            try:
+                create_fn(**create_kwargs, bytes_location="immutable_segment")
+            except TypeError:
+                create_fn(**create_kwargs)
+        except Exception as shadow_exc:  # noqa: BLE001
+            logger.warning(
+                "IPLD shadow create quarantined (legacy ok): %s", shadow_exc
+            )
         
         logger.info(f"Created collection '{name}' with dimension {dim}")
         return True
@@ -266,6 +312,16 @@ class IPLDVectorStore(BaseVectorStore):
         del self.metadata[name]
         del self.cids[name]
         del self.vector_ids[name]
+
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                safe_shadow_delete,
+            )
+            safe_shadow_delete(logical_name=name, backend="ipld")
+        except Exception as shadow_exc:  # noqa: BLE001
+            logger.warning(
+                "IPLD shadow delete quarantined (legacy ok): %s", shadow_exc
+            )
         
         logger.info(f"Deleted collection '{name}'")
         return True

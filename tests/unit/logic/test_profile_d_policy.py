@@ -33,10 +33,21 @@ def test_profile_d_policy_evaluator_returns_transport_artifacts() -> None:
     assert result["decision"] == "allow_with_obligations"
     assert result["policy_cid"]
     assert result["formal_logic_cid"]
-    assert result["formal_logic"]["logic_system"] == "temporal_deontic_policy"
+    assert result["formal_logic"] == [
+        "P(did:example:alice,compile.legal_ir,uscode:17)",
+        (
+            "O_before(O(did:example:alice,compile.legal_ir,uscode:17),"
+            "2026-01-03T00:00:00Z)"
+        ),
+    ]
     assert result["zkp_certificate"]["status"] == "statement_ready"
-    assert result["zkp_certificate"]["statement"]["policy_cid"] == result["policy_cid"]
-    assert result["obligations"][0]["status"] == "pending"
+    assert result["zkp_certificate"]["public_inputs"]["policy_cid"] == result["policy_cid"]
+    assert result["obligations"][0] == {
+        "type": "obligation",
+        "action": "compile.legal_ir",
+        "deadline": "2026-01-03T00:00:00Z",
+        "metadata": {"audit": "required"},
+    }
 
 
 def test_profile_d_policy_prohibition_overrides_permission() -> None:
@@ -65,4 +76,7 @@ def test_profile_d_policy_prohibition_overrides_permission() -> None:
 
     assert result["decision"] == "deny"
     assert result["obligations"] == []
-    assert result["formal_logic"]["decision"] == "deny"
+    assert result["formal_logic"] == [
+        "P(did:example:alice,compile.legal_ir,uscode:17)",
+        "F(did:example:alice,compile.legal_ir,uscode:17)",
+    ]
