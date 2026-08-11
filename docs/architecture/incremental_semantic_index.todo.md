@@ -743,7 +743,7 @@ W18 ISI-040
 
 ## ISI-047 Finalize snapshot generation, path, and manifest trust
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: snapshot-authority-final-closure
