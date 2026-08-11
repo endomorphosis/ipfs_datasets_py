@@ -1,6 +1,7 @@
 """Scraper for Wisconsin state laws.
 
-This module contains the scraper for Wisconsin statutes from the official state legislative website.
+Official path: chapter/section HTML hierarchy on https://docs.legis.wisconsin.gov
+(statutes index → chapter → section). Playwright/generic remain fallbacks only.
 """
 
 from typing import List, Dict, Optional, Tuple
@@ -204,7 +205,8 @@ class WisconsinScraper(BaseStateScraper):
             section_number = normalized.rsplit("/", 1)[-1]
             if chapter_number and section_number.split(".", 1)[0] != chapter_number:
                 continue
-            out.append((normalized, label or section_number))
+            # Always store the URL-derived section number (not the link label).
+            out.append((normalized, section_number if section_number else label))
         return out
 
     async def _scrape_section_urls(
@@ -220,23 +222,24 @@ class WisconsinScraper(BaseStateScraper):
 
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         statutes: List[NormalizedStatute] = []
-        for source_url, section_number in section_urls:
+        for source_url, section_hint in section_urls:
             if limit is not None and len(statutes) >= limit:
                 break
             payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=15)
             if not payload:
                 continue
-            section_number = str(section_number or source_url.rsplit("/", 1)[-1]).strip()
+            url_section = str(source_url).rstrip("/").rsplit("/", 1)[-1].strip()
+            section_number = url_section if re.match(r"^[0-9]+(?:\.[0-9A-Za-z]+)+$", url_section) else str(section_hint or url_section).strip()
             soup = BeautifulSoup(payload, "html.parser")
             section_nodes = soup.select(f'[data-section="{section_number}"]')
             if not section_nodes:
-                section_nodes = soup.select(".box-content, #contentFrame")
+                section_nodes = soup.select(".box-content, #contentFrame, main, article, body")
 
             text_parts: List[str] = []
             section_name = ""
             for node in section_nodes:
                 if not section_name:
-                    title_node = node.select_one(".qstitle_sect") or node.find("title")
+                    title_node = node.select_one(".qstitle_sect") or node.select_one("h1") or node.find("title")
                     if title_node:
                         section_name = title_node.get_text(" ", strip=True)
                 text_value = self._normalize_legal_text(node.get_text(" ", strip=True))
@@ -245,9 +248,9 @@ class WisconsinScraper(BaseStateScraper):
 
             text = self._normalize_legal_text(" ".join(text_parts))
             if not section_name:
-                title = soup.find("title")
+                title = soup.find("title") or soup.find("h1")
                 section_name = title.get_text(" ", strip=True) if title else f"Section {section_number}"
-            if len(text) < 240:
+            if len(text) < 180:
                 continue
             statutes.append(
                 NormalizedStatute(
@@ -262,7 +265,11 @@ class WisconsinScraper(BaseStateScraper):
                     source_url=source_url,
                     official_cite=f"Wis. Stat. § {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_wisconsin_statutes_html", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_wisconsin_statutes_html",
+                        "discovery_method": "official_chapter_section_index",
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return statutes
