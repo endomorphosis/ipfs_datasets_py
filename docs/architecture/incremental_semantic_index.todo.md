@@ -57,7 +57,7 @@ W8  ISI-032
 
 ## ISI-001 Define closed models and dual identities
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: contracts
