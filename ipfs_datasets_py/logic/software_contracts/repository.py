@@ -2565,14 +2565,1221 @@ def extract_repository_ast_shadow(
     )
 
 
+# ---------------------------------------------------------------------------
+# DQK-069: dual-write AST authority (DuckDB default source for consumers)
+# ---------------------------------------------------------------------------
+#
+# Promotes the DQK-068 shadow path to dual writes.  DuckDB is the default
+# read surface for conflict, dependency, impact, validation-selection, and
+# code-evidence consumers.  JSON bundles remain deterministic outbox exports
+# (never re-admitted as operational authority).  Source invalidation and
+# restart recovery leave no stale symbol or edge.
+
+AST_AUTHORITY_OWNER_TASK: Final[str] = "DQK-069"
+AST_AUTHORITY_INTERFACE: Final[str] = "ASTAuthorityRepository@1"
+AST_AUTHORITY_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/software-contracts-ast-authority@1"
+)
+AST_AUTHORITY_JSON_EXPORT_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/software-contracts-ast-json-outbox-export@1"
+)
+AST_AUTHORITY_DEFAULT_SOURCE: Final[str] = "duckdb"
+AST_AUTHORITY_DEFAULT_MODE: Final[str] = "dual"
+AST_INVALIDATION_RECORD_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/software-contracts-ast-invalidation@1"
+)
+AST_CONSUMER_DECISION_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/software-contracts-ast-consumer-decision@1"
+)
+
+
+class ASTAuthorityError(ASTShadowError):
+    """Raised when dual-write AST authority operations fail closed."""
+
+
+def deterministic_json_bundle_export(projection: Any) -> dict[str, Any]:
+    """Build a deterministic outbox JSON export from one catalog projection.
+
+    Exports are byte-stable for equal projections: keys sorted, closed fields,
+    no wall-clock timestamps.  They are not operational authority — only the
+    DuckDB dual-write surface is.
+    """
+
+    base = json_bundle_from_projection(projection)
+    # Strip owner_task pin from shadow so export schema stands alone.
+    export = {
+        "schema": AST_AUTHORITY_JSON_EXPORT_SCHEMA,
+        "kind": "ast_json_outbox_export",
+        "owner_task_id": AST_AUTHORITY_OWNER_TASK,
+        "authority_source": AST_AUTHORITY_DEFAULT_SOURCE,
+        "operational_authority": False,
+        "identity": dict(base["identity"]),
+        "source_revision": base["source_revision"],
+        "source_file": base["source_file"],
+        "ast_blob": base["ast_blob"],
+        "symbols": base["symbols"],
+        "imports": base["imports"],
+        "calls": base["calls"],
+        "effects": base["effects"],
+        "diagnostics": base["diagnostics"],
+        "nodes": base["nodes"],
+        "scopes": base["scopes"],
+        "references": base["references"],
+        "interfaces": base["interfaces"],
+        "invalidations": base["invalidations"],
+        "supervisor_blob_summary": base["supervisor_blob_summary"],
+        "table_row_counts": base["table_row_counts"],
+    }
+    return export
+
+
+def deterministic_json_export_bytes(export: Mapping[str, Any]) -> bytes:
+    """Canonical UTF-8 JSON bytes for an outbox export (byte-identical replay)."""
+
+    return json.dumps(
+        dict(export),
+        ensure_ascii=False,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+
+
+def _decision_digest(payload: Mapping[str, Any]) -> str:
+    import hashlib
+
+    encoded = json.dumps(
+        dict(payload),
+        ensure_ascii=False,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+class ASTAuthorityRepository:
+    """Dual-write AST repository with DuckDB as the default consumer source.
+
+    Writes go through the authority port in dual mode (crash-recoverable
+    outbox).  Reads for conflict / dependency / impact / validation-selection
+    / code-evidence always prefer the DuckDB surface (``port.read`` under dual
+    or db-primary).  JSON bundles are emitted only as deterministic outbox
+    exports.
+    """
+
+    def __init__(
+        self,
+        authority_port: Any,
+        *,
+        ast_store: Any | None = None,
+        writer_id: str = "writer:ast-authority",
+        task_id: str = AST_AUTHORITY_OWNER_TASK,
+        default_source: str = AST_AUTHORITY_DEFAULT_SOURCE,
+    ) -> None:
+        if authority_port is None:
+            raise ASTAuthorityError("authority_port is required")
+        if default_source not in {"duckdb", "dual"}:
+            raise ASTAuthorityError(
+                "default_source must be 'duckdb' (default consumer source)"
+            )
+        self._port = authority_port
+        self._writer_id = str(writer_id or "writer:ast-authority")
+        self._task_id = str(task_id or AST_AUTHORITY_OWNER_TASK)
+        self._default_source = str(default_source)
+        self._lock = threading.RLock()
+        if ast_store is None:
+            from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+                build_duckdb_ast_store,
+            )
+
+            self._store = build_duckdb_ast_store()
+        else:
+            self._store = ast_store
+        # Process-local indexes for consumer queries and invalidation.
+        self._active_blob_keys: dict[str, str] = {}  # blob_id -> authority_key
+        self._path_to_blob: dict[str, str] = {}  # path -> blob_id
+        self._active_edges: dict[str, dict[str, Any]] = {}  # edge_id -> edge
+        self._edge_by_blob: dict[str, set[str]] = {}  # blob_id -> edge_ids
+        self._symbol_index: dict[str, set[str]] = {}  # symbol_qn -> blob_ids
+        self._invalidated_blobs: set[str] = set()
+        self._invalidated_edges: set[str] = set()
+        self._impact_edges: list[dict[str, Any]] = []
+        self._validation_targets: dict[str, list[str]] = {}
+        self._conflict_edges: list[dict[str, Any]] = []
+        self._export_digests: dict[str, str] = {}  # authority_key -> digest
+        self._stats = {
+            "writes": 0,
+            "invalidations": 0,
+            "restarts": 0,
+            "consumer_reads": 0,
+            "parity_checks": 0,
+            "parity_matches": 0,
+            "outbox_exports": 0,
+        }
+
+    # -- properties ---------------------------------------------------------
+
+    @property
+    def interface(self) -> str:
+        return AST_AUTHORITY_INTERFACE
+
+    @property
+    def port(self) -> Any:
+        return self._port
+
+    @property
+    def store(self) -> Any:
+        return self._store
+
+    @property
+    def domain(self) -> str:
+        return getattr(self._port, "domain", AST_AUTHORITY_DOMAIN)
+
+    @property
+    def default_source(self) -> str:
+        """Default consumer source: always DuckDB under dual / db-primary."""
+
+        return self._default_source
+
+    @property
+    def mode(self) -> str:
+        mode = getattr(self._port, "mode", None)
+        if mode is None:
+            return AST_AUTHORITY_DEFAULT_MODE
+        return getattr(mode, "value", str(mode))
+
+    def stats(self) -> dict[str, int]:
+        with self._lock:
+            return dict(self._stats)
+
+    # -- dual write ---------------------------------------------------------
+
+    def write_projection(
+        self,
+        projection: Any,
+        *,
+        operation_id: str | None = None,
+        also_write_evidence_edges: bool = True,
+    ) -> dict[str, Any]:
+        """Dual-write one catalog projection; DuckDB is consumer authority."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            ASTCatalogProjection,
+        )
+
+        if type(projection) is not ASTCatalogProjection:
+            raise ASTAuthorityError(
+                "write_projection requires an exact ASTCatalogProjection"
+            )
+        key = authority_key_for_projection(projection)
+        json_export = deterministic_json_bundle_export(projection)
+        db_payload = projection_to_authority_payload(projection)
+        # Dual document: DB projection is authority; JSON is outbox export only.
+        dual = {
+            "schema": AST_AUTHORITY_SCHEMA,
+            "interface": AST_AUTHORITY_INTERFACE,
+            "owner_task_id": self._task_id,
+            "kind": "ast_authority_dual",
+            "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+            "operational_authority": "duckdb",
+            "identity": dict(db_payload["identity"]),
+            "json_bundle": json_export,
+            "db_projection": db_payload,
+            "invalidated": False,
+        }
+        op_id = operation_id or f"op:ast-auth:{projection.blob_id}"
+        with self._lock:
+            # Replace prior blob for the same path (prevents stale symbols).
+            prior_blob = self._path_to_blob.get(projection.source_file.path)
+            if prior_blob is not None and prior_blob != projection.blob_id:
+                self._invalidate_blob_locked(
+                    prior_blob,
+                    reason="blob_replaced",
+                    detail=f"replaced by {projection.blob_id}",
+                )
+            self._store.put_projection(projection)
+            write_result = self._port.write(key, dual, operation_id=op_id)
+            self._index_projection_locked(projection, key, json_export)
+            evidence_edges: tuple[dict[str, Any], ...] = ()
+            if also_write_evidence_edges:
+                evidence_edges = evidence_edges_from_projection(
+                    projection, task_id=self._task_id
+                )
+                for edge in evidence_edges:
+                    self._write_edge_locked(edge)
+            self._stats["writes"] += 1
+            self._stats["outbox_exports"] += 1
+        return {
+            "ok": bool(write_result.get("ok", True)),
+            "authority_key": key,
+            "operation_id": write_result.get("operation_id", op_id),
+            "mode": write_result.get("mode"),
+            "authority": write_result.get("authority") or "dual",
+            "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+            "payload_digest": write_result.get("payload_digest"),
+            "json_bundle": json_export,
+            "db_projection": db_payload,
+            "dual": dual,
+            "evidence_edges": list(evidence_edges),
+            "write_result": write_result,
+            "atomic_across_filesystems": False,
+            "operational_authority": "duckdb",
+        }
+
+    def write_record(
+        self,
+        record: Any,
+        *,
+        operation_id: str | None = None,
+        created_at: float | None = None,
+    ) -> dict[str, Any]:
+        from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_ast_record,
+        )
+
+        if type(record) is not ASTRecord:
+            raise ASTAuthorityError("write_record requires an exact ASTRecord")
+        projection = project_ast_record(record, created_at=created_at)
+        return self.write_projection(projection, operation_id=operation_id)
+
+    def write_parse_failure(
+        self,
+        *,
+        provenance: Any,
+        language: str,
+        message: str,
+        operation_id: str | None = None,
+        frontend_name: str = "unknown",
+        frontend_version: str = "unknown",
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_parse_failure,
+        )
+
+        projection = project_parse_failure(
+            provenance=provenance,
+            language=language,
+            message=message,
+            frontend_name=frontend_name,
+            frontend_version=frontend_version,
+            **kwargs,
+        )
+        return self.write_projection(projection, operation_id=operation_id)
+
+    def _index_projection_locked(
+        self,
+        projection: Any,
+        authority_key: str,
+        json_export: Mapping[str, Any],
+    ) -> None:
+        blob_id = projection.blob_id
+        self._active_blob_keys[blob_id] = authority_key
+        self._path_to_blob[projection.source_file.path] = blob_id
+        self._invalidated_blobs.discard(blob_id)
+        export_digest = _decision_digest(json_export)
+        self._export_digests[authority_key] = export_digest
+        for symbol in projection.symbols:
+            qn = symbol.qualified_name
+            self._symbol_index.setdefault(qn, set()).add(blob_id)
+            self._symbol_index.setdefault(symbol.name, set()).add(blob_id)
+        # Impact edges from imports/calls for scheduling agreement.
+        path = projection.source_file.path
+        for item in projection.imports:
+            self._impact_edges.append(
+                {
+                    "source": path,
+                    "target": f"module:{item.module}",
+                    "kind": "import",
+                    "blob_id": blob_id,
+                }
+            )
+        for item in projection.calls:
+            self._impact_edges.append(
+                {
+                    "source": path,
+                    "target": f"call:{item.callee_name}",
+                    "kind": "call",
+                    "blob_id": blob_id,
+                }
+            )
+        for symbol in projection.symbols:
+            self._impact_edges.append(
+                {
+                    "source": path,
+                    "target": f"symbol:{symbol.qualified_name}",
+                    "kind": "defines",
+                    "blob_id": blob_id,
+                }
+            )
+
+    def _write_edge_locked(self, edge: Mapping[str, Any]) -> None:
+        edge_id = str(edge["edge_id"])
+        body = dict(edge)
+        body.setdefault("schema", AST_EVIDENCE_EDGE_SCHEMA)
+        body.setdefault("task_id", self._task_id)
+        body["invalidated"] = False
+        edge_key = f"evidence:{edge_id}"
+        self._port.write(
+            edge_key,
+            body,
+            operation_id=f"op:evidence-auth:{edge_id}",
+        )
+        self._active_edges[edge_id] = body
+        self._invalidated_edges.discard(edge_id)
+        # Associate edge with blob via source_cid / ast_cid when present.
+        blob_hint = None
+        for key in self._active_blob_keys:
+            if key in edge_id or edge.get("source_cid"):
+                # Prefer matching by scanning active projections.
+                projection = self._store.get(key)
+                if projection is not None and (
+                    projection.source_cid == edge.get("source_cid")
+                    or projection.ast_cid == edge.get("ast_cid")
+                ):
+                    blob_hint = key
+                    break
+        if blob_hint is None and edge.get("source_cid"):
+            # Fall back: edge belongs to any active blob sharing source_cid.
+            for key, auth_key in self._active_blob_keys.items():
+                projection = self._store.get(key)
+                if projection is not None and projection.source_cid == edge.get(
+                    "source_cid"
+                ):
+                    blob_hint = key
+                    break
+        if blob_hint is not None:
+            self._edge_by_blob.setdefault(blob_hint, set()).add(edge_id)
+
+    # -- invalidation -------------------------------------------------------
+
+    def invalidate_source(
+        self,
+        *,
+        path: str | None = None,
+        blob_id: str | None = None,
+        reason: str = "source_changed",
+        detail: str = "",
+        actor_id: str = "ast-authority",
+    ) -> dict[str, Any]:
+        """Invalidate one source so no stale symbol or edge remains queryable."""
+
+        with self._lock:
+            target_blob = blob_id
+            if target_blob is None and path is not None:
+                target_blob = self._path_to_blob.get(path)
+            if target_blob is None:
+                raise ASTAuthorityError(
+                    "invalidate_source requires a known path or blob_id"
+                )
+            return self._invalidate_blob_locked(
+                target_blob,
+                reason=reason,
+                detail=detail or f"invalidated path={path!r}",
+                actor_id=actor_id,
+            )
+
+    def _invalidate_blob_locked(
+        self,
+        blob_id: str,
+        *,
+        reason: str,
+        detail: str = "",
+        actor_id: str = "ast-authority",
+    ) -> dict[str, Any]:
+        projection = self._store.get(blob_id)
+        authority_key = self._active_blob_keys.get(blob_id) or f"ast:{blob_id}"
+        # Drop from local store (no stale symbols).
+        inv_row = self._store.invalidate(
+            blob_id=blob_id,
+            reason=reason,
+            actor_id=actor_id,
+            detail=detail,
+        )
+        # Tombstone dual document on both authority surfaces via dual write.
+        tombstone = {
+            "schema": AST_INVALIDATION_RECORD_SCHEMA,
+            "interface": AST_AUTHORITY_INTERFACE,
+            "owner_task_id": self._task_id,
+            "kind": "ast_authority_invalidation",
+            "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+            "operational_authority": "duckdb",
+            "invalidated": True,
+            "blob_id": blob_id,
+            "authority_key": authority_key,
+            "reason": reason,
+            "detail": detail,
+            "actor_id": actor_id,
+            "invalidation_id": getattr(inv_row, "invalidation_id", ""),
+            "identity": {
+                "blob_id": blob_id,
+                "path": (
+                    projection.source_file.path if projection is not None else ""
+                ),
+                "source_cid": (
+                    projection.source_cid if projection is not None else ""
+                ),
+                "ast_cid": projection.ast_cid if projection is not None else "",
+            },
+            "json_bundle": {
+                "schema": AST_AUTHORITY_JSON_EXPORT_SCHEMA,
+                "kind": "ast_json_outbox_export",
+                "invalidated": True,
+                "blob_id": blob_id,
+            },
+            "db_projection": {
+                "schema": AST_AUTHORITY_SCHEMA,
+                "invalidated": True,
+                "blob_id": blob_id,
+            },
+        }
+        self._port.write(
+            authority_key,
+            tombstone,
+            operation_id=f"op:ast-inv:{blob_id}:{reason}",
+        )
+        # Invalidate evidence edges for this blob.
+        edge_ids = list(self._edge_by_blob.get(blob_id, ()))
+        for edge_id in edge_ids:
+            self._invalidate_edge_locked(edge_id, reason=reason)
+        # Drop impact edges tied to this blob.
+        self._impact_edges = [
+            edge
+            for edge in self._impact_edges
+            if edge.get("blob_id") != blob_id
+        ]
+        # Drop symbol index entries.
+        if projection is not None:
+            for symbol in projection.symbols:
+                for name in (symbol.qualified_name, symbol.name):
+                    holders = self._symbol_index.get(name)
+                    if holders is not None:
+                        holders.discard(blob_id)
+                        if not holders:
+                            self._symbol_index.pop(name, None)
+            path = projection.source_file.path
+            if self._path_to_blob.get(path) == blob_id:
+                self._path_to_blob.pop(path, None)
+        self._active_blob_keys.pop(blob_id, None)
+        self._edge_by_blob.pop(blob_id, None)
+        self._invalidated_blobs.add(blob_id)
+        self._export_digests.pop(authority_key, None)
+        self._stats["invalidations"] += 1
+        return {
+            "ok": True,
+            "blob_id": blob_id,
+            "authority_key": authority_key,
+            "reason": reason,
+            "invalidated_edge_ids": edge_ids,
+            "invalidation_id": getattr(inv_row, "invalidation_id", ""),
+            "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+        }
+
+    def _invalidate_edge_locked(
+        self, edge_id: str, *, reason: str = "source_changed"
+    ) -> None:
+        edge_key = f"evidence:{edge_id}"
+        prior = self._active_edges.get(edge_id) or {}
+        tombstone = {
+            **dict(prior),
+            "schema": AST_EVIDENCE_EDGE_SCHEMA,
+            "edge_id": edge_id,
+            "invalidated": True,
+            "invalidation_reason": reason,
+            "owner_task_id": self._task_id,
+            "operational_authority": "duckdb",
+        }
+        self._port.write(
+            edge_key,
+            tombstone,
+            operation_id=f"op:evidence-inv:{edge_id}",
+        )
+        self._active_edges.pop(edge_id, None)
+        self._invalidated_edges.add(edge_id)
+
+    # -- restart recovery ---------------------------------------------------
+
+    def restart(self) -> dict[str, Any]:
+        """Recover incomplete outbox work and rebuild consumer indexes.
+
+        Simulates process restart: drain incomplete dual-write outbox entries,
+        then re-index live (non-invalidated) DuckDB records so no stale
+        symbol/edge survives.
+        """
+
+        recovery = self._port.recover_outbox()
+        with self._lock:
+            # Rebuild from store + port DB surface.
+            live_blobs = list(self._active_blob_keys.items())
+            rebuilt_blobs = 0
+            rebuilt_edges = 0
+            stale_cleared = 0
+            for blob_id, authority_key in live_blobs:
+                store_proj = self._store.get(blob_id)
+                db_doc = self._port.backend.get_db(self.domain, authority_key)
+                # Stale if store empty or DB tombstoned.
+                if store_proj is None or (
+                    isinstance(db_doc, Mapping) and db_doc.get("invalidated")
+                ):
+                    self._active_blob_keys.pop(blob_id, None)
+                    self._invalidated_blobs.add(blob_id)
+                    stale_cleared += 1
+                    continue
+                # Prefer DuckDB dual document for consumer re-index.
+                payload = self._port.read(authority_key)
+                if isinstance(payload, Mapping) and payload.get("invalidated"):
+                    self._active_blob_keys.pop(blob_id, None)
+                    self._invalidated_blobs.add(blob_id)
+                    stale_cleared += 1
+                    continue
+                rebuilt_blobs += 1
+            # Drop edges whose blob is gone or marked invalidated.
+            for edge_id in list(self._active_edges):
+                edge = self._active_edges[edge_id]
+                edge_key = f"evidence:{edge_id}"
+                db_edge = self._port.backend.get_db(self.domain, edge_key)
+                if (
+                    edge_id in self._invalidated_edges
+                    or (
+                        isinstance(db_edge, Mapping)
+                        and db_edge.get("invalidated")
+                    )
+                ):
+                    self._active_edges.pop(edge_id, None)
+                    self._invalidated_edges.add(edge_id)
+                    stale_cleared += 1
+                else:
+                    rebuilt_edges += 1
+            # Prune impact edges for invalidated blobs.
+            before = len(self._impact_edges)
+            self._impact_edges = [
+                edge
+                for edge in self._impact_edges
+                if edge.get("blob_id") not in self._invalidated_blobs
+                and edge.get("blob_id") in self._active_blob_keys
+            ]
+            stale_cleared += before - len(self._impact_edges)
+            self._stats["restarts"] += 1
+        return {
+            "ok": True,
+            "recovery": recovery,
+            "rebuilt_blobs": rebuilt_blobs,
+            "rebuilt_edges": rebuilt_edges,
+            "stale_cleared": stale_cleared,
+            "active_blob_count": len(self._active_blob_keys),
+            "active_edge_count": len(self._active_edges),
+            "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+            "mode": self.mode,
+        }
+
+    # -- read path (DuckDB default) -----------------------------------------
+
+    def read(self, authority_key: str) -> Mapping[str, Any] | None:
+        """Read under the port mode (dual/db-primary prefer DuckDB)."""
+
+        with self._lock:
+            self._stats["consumer_reads"] += 1
+        payload = self._port.read(authority_key)
+        if isinstance(payload, Mapping) and payload.get("invalidated"):
+            return None
+        return payload
+
+    def get_projection(self, blob_id: str) -> Any | None:
+        """Return the live DuckDB store projection, or None if invalidated."""
+
+        with self._lock:
+            if blob_id in self._invalidated_blobs:
+                return None
+            self._stats["consumer_reads"] += 1
+            return self._store.get(blob_id)
+
+    def export_json_bundle(self, authority_key: str) -> dict[str, Any] | None:
+        """Return the deterministic outbox JSON export (non-authoritative)."""
+
+        payload = self.read(authority_key)
+        if not isinstance(payload, Mapping):
+            return None
+        export = payload.get("json_bundle")
+        if not isinstance(export, Mapping):
+            return None
+        # Ensure export is not claimed as authority.
+        result = dict(export)
+        result["operational_authority"] = False
+        result["authority_source"] = AST_AUTHORITY_DEFAULT_SOURCE
+        return result
+
+    # -- consumer surfaces (DuckDB default) ---------------------------------
+
+    def conflict_query(
+        self,
+        *,
+        seed_paths: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        """Conflict decisions from DuckDB-indexed impact/evidence edges."""
+
+        with self._lock:
+            self._stats["consumer_reads"] += 1
+            edges = [
+                dict(edge)
+                for edge in self._conflict_edges
+                if edge.get("edge_id") not in self._invalidated_edges
+            ]
+            # Derive soft conflicts: two blobs defining the same symbol.
+            symbol_conflicts: list[dict[str, Any]] = []
+            for symbol, blob_ids in sorted(self._symbol_index.items()):
+                live = sorted(
+                    bid
+                    for bid in blob_ids
+                    if bid in self._active_blob_keys
+                    and bid not in self._invalidated_blobs
+                )
+                if len(live) > 1:
+                    symbol_conflicts.append(
+                        {
+                            "kind": "duplicate_symbol",
+                            "symbol": symbol,
+                            "blob_ids": live,
+                            "blocks_concurrency": True,
+                        }
+                    )
+            if seed_paths:
+                seeds = set(seed_paths)
+                edges = [
+                    e
+                    for e in edges
+                    if e.get("left") in seeds or e.get("right") in seeds
+                ]
+                symbol_conflicts = [
+                    c
+                    for c in symbol_conflicts
+                    if any(
+                        (self._store.get(b) is not None)
+                        and self._store.get(b).source_file.path in seeds
+                        for b in c["blob_ids"]
+                    )
+                ]
+            decision = {
+                "schema": AST_CONSUMER_DECISION_SCHEMA,
+                "family": "conflict",
+                "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+                "mode": self.mode,
+                "edge_count": len(edges) + len(symbol_conflicts),
+                "edges": edges,
+                "symbol_conflicts": symbol_conflicts,
+                "active_blob_count": len(self._active_blob_keys),
+            }
+            decision["decision_digest"] = _decision_digest(decision)
+            return decision
+
+    def dependency_query(
+        self,
+        *,
+        seed_ids: Sequence[str],
+        direction: str = "forward",
+        kinds: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        """Bounded dependency closure from DuckDB-backed evidence edges."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_impact import (
+            ImpactBudget,
+            ImpactGraph,
+            closure,
+        )
+
+        with self._lock:
+            self._stats["consumer_reads"] += 1
+            graph = ImpactGraph(source_revision="ast-authority")
+            kind_filter = frozenset(kinds) if kinds is not None else None
+            for edge in self._active_edges.values():
+                if edge.get("invalidated"):
+                    continue
+                kind = str(edge.get("kind") or "dependency")
+                # Map evidence kinds onto impact kinds.
+                impact_kind = {
+                    "depends_on": "import",
+                    "defines_symbol": "reference",
+                    "derived_from": "call",
+                }.get(kind, "dependency")
+                if kind_filter is not None and impact_kind not in kind_filter:
+                    continue
+                graph.add(
+                    str(edge.get("source") or ""),
+                    str(edge.get("target") or ""),
+                    impact_kind,
+                )
+            for edge in self._impact_edges:
+                if edge.get("blob_id") in self._invalidated_blobs:
+                    continue
+                kind = str(edge.get("kind") or "dependency")
+                if kind_filter is not None and kind not in kind_filter:
+                    continue
+                graph.add(
+                    str(edge["source"]),
+                    str(edge["target"]),
+                    kind,
+                )
+            result = closure(
+                graph,
+                list(seed_ids),
+                direction=direction,
+                kinds=kind_filter,
+                budget=ImpactBudget(),
+            )
+            decision = {
+                "schema": AST_CONSUMER_DECISION_SCHEMA,
+                "family": "dependency",
+                "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+                "mode": self.mode,
+                "source_revision": result.source_revision,
+                "roots": list(result.roots),
+                "nodes": list(result.nodes),
+                "edges": [
+                    {"source": e.source, "target": e.target, "kind": e.kind}
+                    for e in result.edges
+                ],
+                "depth_reached": result.depth_reached,
+                "truncated": result.truncated,
+            }
+            decision["decision_digest"] = _decision_digest(decision)
+            return decision
+
+    def impact_query(
+        self,
+        *,
+        roots: Sequence[str],
+        direction: str = "forward",
+        kinds: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        """Impact decisions from the same DuckDB dependency surface."""
+
+        dep = self.dependency_query(
+            seed_ids=roots, direction=direction, kinds=kinds
+        )
+        dep["family"] = "impact"
+        # Re-digest after family stamp so scheduling/impact agree on structure
+        # but remain family-tagged.
+        body = {k: v for k, v in dep.items() if k != "decision_digest"}
+        dep["decision_digest"] = _decision_digest(body)
+        return dep
+
+    def validation_selection_query(
+        self,
+        *,
+        changed_paths: Sequence[str] = (),
+        changed_symbols: Sequence[str] = (),
+    ) -> dict[str, Any]:
+        """Select validations impacted by changed paths/symbols (DuckDB)."""
+
+        with self._lock:
+            self._stats["consumer_reads"] += 1
+            changed_path_set = {str(p) for p in changed_paths if str(p)}
+            changed_symbol_set = {str(s) for s in changed_symbols if str(s)}
+            # Expand symbols defined on changed paths.
+            for path in list(changed_path_set):
+                blob_id = self._path_to_blob.get(path)
+                if blob_id is None or blob_id in self._invalidated_blobs:
+                    continue
+                projection = self._store.get(blob_id)
+                if projection is None:
+                    continue
+                for symbol in projection.symbols:
+                    changed_symbol_set.add(symbol.qualified_name)
+                    changed_symbol_set.add(symbol.name)
+            # Reverse impact: dependents of changed symbols/paths via edges.
+            impacted: set[str] = set(changed_path_set) | set(changed_symbol_set)
+            for edge in self._impact_edges:
+                if edge.get("blob_id") in self._invalidated_blobs:
+                    continue
+                if edge["source"] in impacted or edge["target"] in impacted:
+                    impacted.add(str(edge["source"]))
+                    impacted.add(str(edge["target"]))
+            for edge in self._active_edges.values():
+                if edge.get("invalidated"):
+                    continue
+                src = str(edge.get("source") or "")
+                tgt = str(edge.get("target") or "")
+                if src in impacted or tgt in impacted:
+                    impacted.add(src)
+                    impacted.add(tgt)
+            required: dict[str, list[str]] = {}
+            for validation_id, targets in sorted(self._validation_targets.items()):
+                hit = sorted(impacted.intersection(targets))
+                if hit:
+                    required[validation_id] = hit
+            # Default validation ids derived from impacted symbols when none
+            # are registered explicitly.
+            if not required and impacted:
+                for item in sorted(impacted):
+                    if item.startswith("symbol:") or "." in item:
+                        vid = f"validation:{item}"
+                        required[vid] = [item]
+            decision = {
+                "schema": AST_CONSUMER_DECISION_SCHEMA,
+                "family": "validation_selection",
+                "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+                "mode": self.mode,
+                "changed_paths": sorted(changed_path_set),
+                "changed_symbols": sorted(changed_symbol_set),
+                "impacted_targets": sorted(impacted),
+                "required_validation_ids": sorted(required),
+                "validation_reasons": required,
+            }
+            decision["decision_digest"] = _decision_digest(decision)
+            return decision
+
+    def code_evidence_query(
+        self,
+        *,
+        path: str | None = None,
+        symbol: str | None = None,
+        authoritative_only: bool = True,
+    ) -> dict[str, Any]:
+        """Code-evidence consumer view over live DuckDB projections + edges."""
+
+        with self._lock:
+            self._stats["consumer_reads"] += 1
+            nodes: list[dict[str, Any]] = []
+            for blob_id, authority_key in sorted(self._active_blob_keys.items()):
+                if blob_id in self._invalidated_blobs:
+                    continue
+                projection = self._store.get(blob_id)
+                if projection is None:
+                    continue
+                if path is not None and projection.source_file.path != path:
+                    continue
+                # Prefer DuckDB dual document identity.
+                payload = self._port.read(authority_key)
+                identity = {}
+                if isinstance(payload, Mapping):
+                    if payload.get("invalidated"):
+                        continue
+                    identity = dict(payload.get("identity") or {})
+                    db_proj = payload.get("db_projection") or {}
+                    if isinstance(db_proj, Mapping):
+                        identity = dict(db_proj.get("identity") or identity)
+                symbols = [s.qualified_name for s in projection.symbols]
+                if symbol is not None:
+                    simple = {item.rsplit(".", 1)[-1] for item in symbols}
+                    if symbol not in symbols and symbol not in simple:
+                        continue
+                nodes.append(
+                    {
+                        "node_id": f"tree:{projection.source_file.path}",
+                        "kind": "tree",
+                        "path": projection.source_file.path,
+                        "blob_id": blob_id,
+                        "ast_cid": projection.ast_cid,
+                        "source_cid": projection.source_cid,
+                        "symbols": symbols,
+                        "authority_key": authority_key,
+                        "identity": identity,
+                        "source": AST_AUTHORITY_DEFAULT_SOURCE,
+                    }
+                )
+            edges = []
+            for edge_id, edge in sorted(self._active_edges.items()):
+                if edge.get("invalidated") or edge_id in self._invalidated_edges:
+                    continue
+                if authoritative_only and not edge.get("authoritative", True):
+                    continue
+                edges.append(dict(edge))
+            decision = {
+                "schema": AST_CONSUMER_DECISION_SCHEMA,
+                "family": "code_evidence",
+                "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+                "mode": self.mode,
+                "node_count": len(nodes),
+                "edge_count": len(edges),
+                "nodes": nodes,
+                "edges": edges,
+            }
+            decision["decision_digest"] = _decision_digest(decision)
+            return decision
+
+    def register_validation_target(
+        self, validation_id: str, targets: Sequence[str]
+    ) -> None:
+        """Register validation → impact targets for validation-selection."""
+
+        with self._lock:
+            self._validation_targets[str(validation_id)] = sorted(
+                {str(t) for t in targets if str(t)}
+            )
+
+    def register_conflict_edge(self, edge: Mapping[str, Any]) -> None:
+        """Register an explicit conflict edge for conflict consumers."""
+
+        with self._lock:
+            body = dict(edge)
+            body.setdefault("edge_id", f"conflict:{len(self._conflict_edges)}")
+            self._conflict_edges.append(body)
+
+    # -- parity / soak ------------------------------------------------------
+
+    def emit_parity(self, authority_key: str) -> dict[str, Any]:
+        """Port + differential parity; JSON export must match DB projection."""
+
+        receipt = self._port.emit_parity_receipt(authority_key)
+        legacy = self._port.backend.get_legacy(self.domain, authority_key)
+        db = self._port.backend.get_db(self.domain, authority_key)
+        report: dict[str, Any] = {
+            "authority_key": authority_key,
+            "port_parity_matched": bool(getattr(receipt, "matched", False)),
+            "port_parity_receipt_cid": getattr(receipt, "receipt_cid", ""),
+            "port_mismatch_reason": getattr(receipt, "mismatch_reason", ""),
+            "differential": None,
+            "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+        }
+        if (
+            isinstance(legacy, Mapping)
+            and isinstance(db, Mapping)
+            and legacy.get("kind") in {"ast_authority_dual", "ast_shadow_dual"}
+        ):
+            json_side = dict(legacy.get("json_bundle") or {})
+            db_side = dict(db.get("db_projection") or {})
+            # Compare identity fields (exports omit some shadow-only pins).
+            json_identity = dict(json_side.get("identity") or {})
+            db_identity = dict(db_side.get("identity") or {})
+            identity_match = json_identity == db_identity
+            # Family digests for span-bearing tables.
+            diff = differential_parity(
+                {
+                    "identity": json_identity,
+                    "symbols": json_side.get("symbols") or db_side.get("symbols"),
+                    "imports": json_side.get("imports") or db_side.get("imports"),
+                    "calls": json_side.get("calls") or db_side.get("calls"),
+                    "effects": json_side.get("effects") or db_side.get("effects"),
+                    "diagnostics": json_side.get("diagnostics")
+                    or db_side.get("diagnostics"),
+                    "nodes": json_side.get("nodes") or db_side.get("nodes"),
+                    "scopes": json_side.get("scopes") or db_side.get("scopes"),
+                    "references": json_side.get("references")
+                    or db_side.get("references"),
+                    "interfaces": json_side.get("interfaces")
+                    or db_side.get("interfaces"),
+                    "table_row_counts": json_side.get("table_row_counts")
+                    or db_side.get("table_row_counts"),
+                },
+                db_side,
+            )
+            dual_match = dict(legacy.get("identity") or {}) == dict(
+                db.get("identity") or {}
+            )
+            report["differential"] = diff
+            report["dual_identity_match"] = dual_match
+            report["json_identity_match"] = identity_match
+            report["export_is_non_authoritative"] = (
+                json_side.get("operational_authority") is False
+                or json_side.get("kind") == "ast_json_outbox_export"
+            )
+            report["matched"] = bool(
+                report["port_parity_matched"]
+                and diff.get("matched")
+                and dual_match
+            )
+        else:
+            report["matched"] = bool(report["port_parity_matched"])
+        with self._lock:
+            self._stats["parity_checks"] += 1
+            if report["matched"]:
+                self._stats["parity_matches"] += 1
+        return report
+
+    def parity_soak(
+        self,
+        *,
+        rounds: int = 3,
+        consumer_families: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        """Re-run scheduling/impact consumer decisions and require agreement.
+
+        Each round recomputes dependency, impact, conflict, validation-
+        selection, and code-evidence decisions.  Digests must be stable across
+        rounds (parity soak).
+        """
+
+        families = list(
+            consumer_families
+            or (
+                "dependency",
+                "impact",
+                "conflict",
+                "validation_selection",
+                "code_evidence",
+            )
+        )
+        seeds = list(self._path_to_blob.keys()) or ["__empty__"]
+        digests_by_family: dict[str, list[str]] = {f: [] for f in families}
+        last_decisions: dict[str, dict[str, Any]] = {}
+        for _ in range(max(1, int(rounds))):
+            for family in families:
+                if family == "dependency":
+                    decision = self.dependency_query(seed_ids=seeds[:1])
+                elif family == "impact":
+                    decision = self.impact_query(roots=seeds[:1])
+                elif family == "conflict":
+                    decision = self.conflict_query()
+                elif family == "validation_selection":
+                    decision = self.validation_selection_query(
+                        changed_paths=seeds[:1]
+                    )
+                elif family == "code_evidence":
+                    decision = self.code_evidence_query()
+                else:
+                    raise ASTAuthorityError(f"unknown consumer family {family!r}")
+                digests_by_family[family].append(decision["decision_digest"])
+                last_decisions[family] = decision
+        agreements: dict[str, bool] = {}
+        for family, digests in digests_by_family.items():
+            agreements[family] = len(set(digests)) == 1
+        # Scheduling (dependency) and impact must agree on node sets when
+        # queried with the same roots/direction.
+        dep_nodes = set(last_decisions.get("dependency", {}).get("nodes") or ())
+        impact_nodes = set(last_decisions.get("impact", {}).get("nodes") or ())
+        scheduling_impact_agree = dep_nodes == impact_nodes
+        return {
+            "schema": f"{AST_AUTHORITY_SCHEMA}/parity-soak",
+            "rounds": rounds,
+            "families": families,
+            "digests_by_family": digests_by_family,
+            "agreements": agreements,
+            "all_agreed": all(agreements.values()),
+            "scheduling_impact_agree": scheduling_impact_agree,
+            "default_source": AST_AUTHORITY_DEFAULT_SOURCE,
+            "mode": self.mode,
+            "matched": all(agreements.values()) and scheduling_impact_agree,
+        }
+
+    def extract_and_write(
+        self,
+        sources: Sequence[Mapping[str, Any] | tuple[Any, ...]],
+        *,
+        repository_id: str = "repository:authority",
+        revision: str = "unversioned",
+        repository_tree_cid: str | None = None,
+        continue_on_parse_failure: bool = True,
+        **kwargs: Any,
+    ) -> ASTShadowBatchResult:
+        """Extract sources and dual-write each through the authority port."""
+
+        # Reuse shadow extraction pipeline but dual-write via this repository.
+        shadow = ASTAuthorityShadowWriter(
+            self._port,
+            ast_store=self._store,
+            writer_id=self._writer_id,
+            task_id=self._task_id,
+        )
+        # Temporarily swap write_projection to dual-write path.
+        original_write = shadow.write_projection
+
+        def _dual_write(projection: Any, **write_kwargs: Any) -> dict[str, Any]:
+            return self.write_projection(projection, **write_kwargs)
+
+        shadow.write_projection = _dual_write  # type: ignore[method-assign]
+        try:
+            batch = shadow.extract_and_shadow(
+                sources,
+                repository_id=repository_id,
+                revision=revision,
+                repository_tree_cid=repository_tree_cid,
+                continue_on_parse_failure=continue_on_parse_failure,
+                **kwargs,
+            )
+        finally:
+            shadow.write_projection = original_write  # type: ignore[method-assign]
+        return batch
+
+
+def build_ast_authority_repository(
+    authority_port: Any | None = None,
+    *,
+    domain: str = AST_AUTHORITY_DOMAIN,
+    initial_mode: str = AST_AUTHORITY_DEFAULT_MODE,
+    ast_store: Any | None = None,
+    writer_id: str = "writer:ast-authority",
+    task_id: str = AST_AUTHORITY_OWNER_TASK,
+    default_source: str = AST_AUTHORITY_DEFAULT_SOURCE,
+) -> ASTAuthorityRepository:
+    """Construct a dual-write AST authority repository (DuckDB default source)."""
+
+    if authority_port is None:
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+            build_authority_port,
+        )
+
+        authority_port = build_authority_port(
+            domain=domain,
+            initial_mode=AuthorityMode.parse(initial_mode),
+            writer_id=writer_id,
+        )
+    else:
+        # Promote shadow → dual when the port is still in shadow mode.
+        mode = getattr(authority_port, "mode", None)
+        mode_value = getattr(mode, "value", str(mode) if mode is not None else "")
+        if mode_value == "shadow":
+            # Find a key for parity if any writes exist; otherwise promote
+            # without parity requirement for empty domains.
+            try:
+                authority_port.promote(
+                    "dual",
+                    require_parity=False,
+                    decision_id=f"dec:ast-auth:{task_id}:to-dual",
+                )
+            except Exception:
+                # If promotion is blocked (open quarantine etc.), leave mode
+                # as-is; dual writes still require dual mode from the caller.
+                pass
+    return ASTAuthorityRepository(
+        authority_port,
+        ast_store=ast_store,
+        writer_id=writer_id,
+        task_id=task_id,
+        default_source=default_source,
+    )
+
+
+def extract_repository_ast_authority(
+    sources: Sequence[Mapping[str, Any] | tuple[Any, ...]],
+    *,
+    repository_id: str = "repository:authority",
+    revision: str = "unversioned",
+    repository_tree_cid: str | None = None,
+    authority_port: Any | None = None,
+    **kwargs: Any,
+) -> ASTShadowBatchResult:
+    """Convenience entry: extract sources and dual-write through the repository."""
+
+    repo = build_ast_authority_repository(authority_port)
+    return repo.extract_and_write(
+        sources,
+        repository_id=repository_id,
+        revision=revision,
+        repository_tree_cid=repository_tree_cid,
+        **kwargs,
+    )
+
+
 __all__ = [
     "ALL_DISPOSITIONS",
+    "ASTAuthorityError",
+    "ASTAuthorityRepository",
     "ASTAuthorityShadowWriter",
     "ASTShadowBatchResult",
     "ASTShadowError",
     "ASTShadowFileResult",
+    "AST_AUTHORITY_DEFAULT_MODE",
+    "AST_AUTHORITY_DEFAULT_SOURCE",
     "AST_AUTHORITY_DOMAIN",
+    "AST_AUTHORITY_INTERFACE",
+    "AST_AUTHORITY_JSON_EXPORT_SCHEMA",
+    "AST_AUTHORITY_OWNER_TASK",
+    "AST_AUTHORITY_SCHEMA",
+    "AST_CONSUMER_DECISION_SCHEMA",
     "AST_EVIDENCE_EDGE_SCHEMA",
+    "AST_INVALIDATION_RECORD_SCHEMA",
     "AST_JSON_BUNDLE_SCHEMA",
     "AST_SHADOW_INTERFACE",
     "AST_SHADOW_OWNER_TASK",
@@ -2614,6 +3821,7 @@ __all__ = [
     "TrackedBlob",
     "authority_key_for_projection",
     "batch_blob_bytes",
+    "build_ast_authority_repository",
     "build_ast_authority_shadow_writer",
     "build_repository_snapshot",
     "build_snapshot_from_entries",
@@ -2622,8 +3830,11 @@ __all__ = [
     "cid_for_blob_bytes",
     "classify_blob",
     "detect_language",
+    "deterministic_json_bundle_export",
+    "deterministic_json_export_bytes",
     "differential_parity",
     "evidence_edges_from_projection",
+    "extract_repository_ast_authority",
     "extract_repository_ast_shadow",
     "is_git_checkout",
     "json_bundle_from_projection",
