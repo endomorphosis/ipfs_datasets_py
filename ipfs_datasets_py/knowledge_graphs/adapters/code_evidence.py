@@ -2100,12 +2100,19 @@ def validate_bundle_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
 
 
 class CodeEvidenceCorpusAdapter:
-    """Fail-closed reader over a supervisor multi-graph bundle.
+    """Compatibility-only reader over a supervisor multi-graph JSON bundle.
 
-    The adapter loads objective, semantic dependency, AST index, conflict, and
-    code-evidence (+ impact index) JSON records. Working-copy incremental
-    updates never write back to the bundle directory.
+    DQK-070: on-disk analysis_ast_index / objective / dependency / conflict /
+    code-evidence JSON is **not** operational state.  This adapter remains for
+    explicit compatibility import/export and fixture materialization.  Live
+    consumers must use :class:`CodeEvidenceAuthority` (DuckDB).
+
+    Working-copy incremental updates never write back to the bundle directory.
     """
+
+    #: Marker: bundle JSON is never operational authority after DQK-070.
+    OPERATIONAL_AUTHORITY = False
+    COMPATIBILITY_ONLY = True
 
     def __init__(
         self,
@@ -2114,7 +2121,14 @@ class CodeEvidenceCorpusAdapter:
         revision: str | None = None,
         allow_unknown_kinds: bool = True,
         objective_path: Path | str | None = None,
+        operational: bool = False,
     ) -> None:
+        if operational:
+            raise CodeEvidenceAdapterError(
+                "DQK-070 forbids treating CodeEvidenceCorpusAdapter as "
+                "operational state; use CodeEvidenceAuthority (DuckDB) or "
+                "pass operational=False for compatibility import only"
+            )
         self.bundle_root = Path(bundle_root)
         if not self.bundle_root.is_dir():
             raise CodeEvidenceAdapterError(
@@ -3871,7 +3885,7 @@ def build_code_evidence_authority_shadow(
 
 
 # ---------------------------------------------------------------------------
-# DQK-069: dual-write code-evidence consumers (DuckDB default source)
+# DQK-069 / DQK-070: DuckDB code-evidence consumers (no JSON operational state)
 # ---------------------------------------------------------------------------
 
 CODE_EVIDENCE_AUTHORITY_SCHEMA = (
@@ -3880,16 +3894,28 @@ CODE_EVIDENCE_AUTHORITY_SCHEMA = (
 CODE_EVIDENCE_AUTHORITY_INTERFACE = "CodeEvidenceAuthority@1"
 CODE_EVIDENCE_AUTHORITY_OWNER_TASK = "DQK-069"
 CODE_EVIDENCE_DEFAULT_SOURCE = "duckdb"
+# DQK-070: cutover owner; operational paths never load legacy JSON bundles.
+CODE_EVIDENCE_ONLY_OWNER_TASK = "DQK-070"
+CODE_EVIDENCE_NAMED_EXPORT_COMMANDS = frozenset(
+    {
+        "export_json_bundle",
+        "export_compatibility_bundle",
+        "write_compatibility_export",
+    }
+)
+CODE_EVIDENCE_PUBLICATION_VIEW_SCHEMA = (
+    "ipfs_datasets_py/knowledge-graphs-code-evidence-publication-view@1"
+)
 
 
 class CodeEvidenceAuthority:
-    """Dual-write code-evidence consumer with DuckDB as the default source.
+    """DuckDB-only code-evidence consumer (DQK-069 dual + DQK-070 cutover).
 
-    Conflict, dependency, impact, validation-selection, and code-evidence
-    queries read from the AST authority repository (DuckDB dual-write surface).
-    JSON bundles are deterministic outbox exports only — never operational
-    authority.  Source invalidation and restart recovery leave no stale
-    symbol or edge.
+    Conflict, dependency, impact, validation-selection, objective, and
+    code-evidence queries read exclusively from the AST authority repository
+    (DuckDB).  analysis_ast_index / objective / dependency / conflict /
+    code-evidence JSON files are never polled or loaded as operational state.
+    Filesystem bundle writes occur only through named export commands.
     """
 
     def __init__(
@@ -3900,13 +3926,17 @@ class CodeEvidenceAuthority:
         domain: str = "asts",
         initial_mode: str = "dual",
         task_id: str = CODE_EVIDENCE_AUTHORITY_OWNER_TASK,
+        tenant_id: str = "tenant:default",
+        promote_to_db_primary: bool = False,
     ) -> None:
         from ipfs_datasets_py.logic.software_contracts.repository import (
             ASTAuthorityRepository,
+            AST_DEFAULT_TENANT_ID,
             build_ast_authority_repository,
         )
 
         self._task_id = str(task_id or CODE_EVIDENCE_AUTHORITY_OWNER_TASK)
+        self._tenant_id = str(tenant_id or AST_DEFAULT_TENANT_ID)
         if authority_repository is not None:
             if not isinstance(authority_repository, ASTAuthorityRepository):
                 if not hasattr(authority_repository, "write_projection"):
@@ -3923,10 +3953,14 @@ class CodeEvidenceAuthority:
                 domain=domain,
                 initial_mode=initial_mode,
                 task_id=self._task_id,
+                tenant_id=self._tenant_id,
+                promote_to_db_primary=promote_to_db_primary,
             )
             self._port = self._repo.port
         self._published_keys: list[str] = []
         self._published_edges: list[dict[str, Any]] = []
+        self._filesystem_bundle_writes = 0
+        self._named_export_invocations: list[str] = []
 
     @property
     def interface(self) -> str:
@@ -3945,10 +3979,24 @@ class CodeEvidenceAuthority:
         return CODE_EVIDENCE_DEFAULT_SOURCE
 
     @property
+    def tenant_id(self) -> str:
+        return self._tenant_id
+
+    @property
+    def named_export_commands(self) -> frozenset[str]:
+        return CODE_EVIDENCE_NAMED_EXPORT_COMMANDS
+
+    @property
     def writer(self) -> Any:
         """Alias for the dual-write repository (shadow API compatibility)."""
 
         return self._repo
+
+    @property
+    def legacy_bundle_operational(self) -> bool:
+        """Always False after DQK-070 — JSON bundles are never operational."""
+
+        return False
 
     def publish_projection(
         self,
@@ -3956,13 +4004,15 @@ class CodeEvidenceAuthority:
         *,
         operation_id: str | None = None,
         also_write_evidence_edges: bool = True,
+        tenant_id: str | None = None,
     ) -> dict[str, Any]:
-        """Dual-write one AST catalog projection (DuckDB authority)."""
+        """Write one AST catalog projection (DuckDB authority; no JSON files)."""
 
         result = self._repo.write_projection(
             projection,
             operation_id=operation_id,
             also_write_evidence_edges=also_write_evidence_edges,
+            tenant_id=tenant_id or self._tenant_id,
         )
         self._published_keys.append(result["authority_key"])
         self._published_edges.extend(result.get("evidence_edges") or [])
@@ -3970,6 +4020,8 @@ class CodeEvidenceAuthority:
         result["parity"] = parity
         result["matched"] = bool(parity.get("matched"))
         result["default_source"] = CODE_EVIDENCE_DEFAULT_SOURCE
+        result["filesystem_bundle_written"] = False
+        result["legacy_bundle_operational"] = False
         return result
 
     def publish_record(
@@ -4065,7 +4117,7 @@ class CodeEvidenceAuthority:
 
         return self._repo.restart()
 
-    # -- default-source consumer APIs ---------------------------------------
+    # -- default-source consumer APIs (DuckDB only; never load JSON) --------
 
     def conflict_query(self, **kwargs: Any) -> dict[str, Any]:
         return self._repo.conflict_query(**kwargs)
@@ -4082,13 +4134,95 @@ class CodeEvidenceAuthority:
     def code_evidence_query(self, **kwargs: Any) -> dict[str, Any]:
         return self._repo.code_evidence_query(**kwargs)
 
+    def objective_query(self, **kwargs: Any) -> dict[str, Any]:
+        """Objective consumer over DuckDB (never loads objective_graph.json)."""
+
+        return self._repo.objective_query(**kwargs)
+
     def parity_soak(self, **kwargs: Any) -> dict[str, Any]:
         return self._repo.parity_soak(**kwargs)
 
     def export_json_bundle(self, authority_key: str) -> dict[str, Any] | None:
-        """Deterministic outbox JSON export (non-authoritative)."""
+        """Named export command: deterministic outbox JSON (non-authoritative)."""
 
+        self._named_export_invocations.append("export_json_bundle")
         return self._repo.export_json_bundle(authority_key)
+
+    def export_compatibility_bundle(
+        self,
+        destination: Path | str,
+        *,
+        repository_id: str | None = None,
+        tenant_id: str | None = None,
+        revision: str = "export",
+    ) -> dict[str, Any]:
+        """Named export command: write multi-graph compatibility JSON bundle.
+
+        Direct filesystem bundle writes are admitted only through this method
+        (and ``write_compatibility_export``).  Operational consumers must not
+        reload the resulting files as authority.
+        """
+
+        self._named_export_invocations.append("export_compatibility_bundle")
+        result = self._repo.export_compatibility_bundle(
+            destination,
+            repository_id=repository_id,
+            tenant_id=tenant_id or self._tenant_id,
+            revision=revision,
+        )
+        self._filesystem_bundle_writes += 1
+        result["owner_task_id"] = CODE_EVIDENCE_ONLY_OWNER_TASK
+        return result
+
+    def write_compatibility_export(
+        self,
+        destination: Path | str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Named export command alias for :meth:`export_compatibility_bundle`."""
+
+        self._named_export_invocations.append("write_compatibility_export")
+        result = self._repo.write_compatibility_export(
+            destination,
+            tenant_id=kwargs.pop("tenant_id", None) or self._tenant_id,
+            **kwargs,
+        )
+        self._filesystem_bundle_writes += 1
+        result["owner_task_id"] = CODE_EVIDENCE_ONLY_OWNER_TASK
+        return result
+
+    def publication_view(
+        self,
+        *,
+        repository_id: str | None = None,
+        tenant_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Sanitized publication view with repository and tenant filtering."""
+
+        view = self._repo.publication_view(
+            repository_id=repository_id,
+            tenant_id=tenant_id if tenant_id is not None else self._tenant_id,
+        )
+        view["schema"] = CODE_EVIDENCE_PUBLICATION_VIEW_SCHEMA
+        view["owner_task_id"] = CODE_EVIDENCE_ONLY_OWNER_TASK
+        view["interface"] = CODE_EVIDENCE_AUTHORITY_INTERFACE
+        return view
+
+    def register_objective(self, goal_id: str, **kwargs: Any) -> dict[str, Any]:
+        kwargs.setdefault("tenant_id", self._tenant_id)
+        return self._repo.register_objective(goal_id, **kwargs)
+
+    def promote_to_db_primary(self, **kwargs: Any) -> dict[str, Any]:
+        return self._repo.promote_to_db_primary(**kwargs)
+
+    def reject_legacy_bundle_load(self, *, artifact: str = "analysis_ast_index") -> None:
+        """Fail closed if operational code attempts to load legacy JSON."""
+
+        raise CodeEvidenceAdapterError(
+            f"DQK-070 forbids loading legacy bundle artifact {artifact!r} "
+            "as operational state; use DuckDB consumer queries or named "
+            f"export commands {sorted(CODE_EVIDENCE_NAMED_EXPORT_COMMANDS)}"
+        )
 
     def publish_from_bundle_adapter(
         self,
@@ -4098,11 +4232,11 @@ class CodeEvidenceAuthority:
         repository_id: str = "repository:code-evidence",
         continue_on_parse_failure: bool = True,
     ) -> dict[str, Any]:
-        """Dual-write AST facts derived from a JSON corpus + optional sources.
+        """Explicit compatibility import from a JSON corpus + optional sources.
 
-        On-disk bundles remain read-only compatibility input.  DuckDB is the
-        operational authority after dual-write; JSON exports are deterministic
-        outbox projections only.
+        DQK-070: this is not an operational poll/load path.  On-disk bundles
+        are read once as a migration/import input; DuckDB becomes the only
+        operational authority.  JSON exports remain non-authoritative.
         """
 
         if not isinstance(adapter, CodeEvidenceCorpusAdapter):
@@ -4248,6 +4382,8 @@ class CodeEvidenceAuthority:
             "batch": batch_report,
             "default_source": CODE_EVIDENCE_DEFAULT_SOURCE,
             "operational_authority": "duckdb",
+            "legacy_bundle_operational": False,
+            "compatibility_import": True,
             "atomic_across_filesystems": False,
         }
 
@@ -4364,12 +4500,18 @@ class CodeEvidenceAuthority:
     def published_edges(self) -> tuple[dict[str, Any], ...]:
         return tuple(self._published_edges)
 
+    def named_export_invocations(self) -> tuple[str, ...]:
+        return tuple(self._named_export_invocations)
+
+    def filesystem_bundle_write_count(self) -> int:
+        return int(self._filesystem_bundle_writes)
+
 
 def build_code_evidence_authority(
     authority_port: Any | None = None,
     **kwargs: Any,
 ) -> CodeEvidenceAuthority:
-    """Factory for dual-write code-evidence consumers (DuckDB default source)."""
+    """Factory for DuckDB code-evidence consumers (no JSON operational state)."""
 
     return CodeEvidenceAuthority(authority_port, **kwargs)
 
@@ -4384,7 +4526,10 @@ __all__ = [
     "CODE_EVIDENCE_DEFAULT_SOURCE",
     "CODE_EVIDENCE_EDGE_SCHEMA",
     "CODE_EVIDENCE_GRAPH_SCHEMA",
+    "CODE_EVIDENCE_NAMED_EXPORT_COMMANDS",
     "CODE_EVIDENCE_NODE_SCHEMA",
+    "CODE_EVIDENCE_ONLY_OWNER_TASK",
+    "CODE_EVIDENCE_PUBLICATION_VIEW_SCHEMA",
     "CODE_EVIDENCE_SHADOW_INTERFACE",
     "CODE_EVIDENCE_SHADOW_OWNER_TASK",
     "CODE_EVIDENCE_SHADOW_SCHEMA",
