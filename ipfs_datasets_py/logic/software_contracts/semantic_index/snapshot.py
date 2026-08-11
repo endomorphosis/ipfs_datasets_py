@@ -13,7 +13,7 @@ import posixpath
 import stat
 import subprocess
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final, Iterable, Mapping, Sequence
 
@@ -24,8 +24,8 @@ from ipfs_datasets_py.logic.software_contracts.content import (
 )
 
 
-SNAPSHOT_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-repository-snapshot@2"
-SNAPSHOT_ENTRY_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-snapshot-entry@1"
+SNAPSHOT_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-repository-snapshot@3"
+SNAPSHOT_ENTRY_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-snapshot-entry@2"
 REPOSITORY_ID_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-repository-identity@1"
 DEFAULT_MAX_FILE_BYTES: Final[int] = 8 * 1024 * 1024
 DEFAULT_MAX_ENTRIES: Final[int] = 100_000
@@ -60,11 +60,13 @@ class GitCommandTimeout(SnapshotError):
 
 
 def _path(value: str) -> str:
-    if type(value) is not str or not value or value != value.strip():
+    # POSIX names are byte strings.  ``str`` paths here are the strict UTF-8
+    # subset, and must *not* be NFC-normalised or have backslashes rewritten:
+    # both transformations alias distinct POSIX names.
+    if type(value) is not str or not value or value != value.strip() or "\x00" in value:
         raise SnapshotError("path must be nonempty trimmed text")
-    value = unicodedata.normalize("NFC", value).replace("\\", "/")
     normalized = posixpath.normpath(value)
-    if value != normalized or value in {".", ".."} or value.startswith("../") or value.startswith("/") or any(ord(char) < 32 for char in value):
+    if value != normalized or value in {".", ".."} or value.startswith("../") or value.startswith("/"):
         raise SnapshotError("path must be repository-relative")
     return value
 
@@ -72,6 +74,11 @@ def _path(value: str) -> str:
 def _malformed_path(encoded_path: bytes) -> str:
     """Return a collision-resistant, serializable witness for an invalid name."""
     return "@malformed-path/" + encoded_path.hex()
+
+
+def _path_identity(encoded_path: bytes) -> str:
+    """Domain-separated raw-name witness, including for valid UTF-8 names."""
+    return "posix-bytes:" + encoded_path.hex()
 
 
 def _ignored_path(path: str) -> bool:
@@ -98,6 +105,11 @@ class SnapshotEntry:
     size_bytes: int | None
     source_cid: str | None = None
     opaque_reason: str | None = None
+    git_blob_oid: str | None = None
+    path_identity: str | None = None
+    # This is intentionally ephemeral.  It is the single immutable byte
+    # capture handed to the scanner, not a second serialized source authority.
+    captured_bytes: bytes | None = field(default=None, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "path", _path(self.path))
@@ -115,19 +127,32 @@ class SnapshotEntry:
             raise SnapshotError("non-opaque entries require source_cid")
         if self.opaque_reason is not None and self.kind != "opaque":
             raise SnapshotError("opaque entries must have kind 'opaque'")
+        if self.git_blob_oid is not None and (len(self.git_blob_oid) not in {40, 64} or any(char not in "0123456789abcdef" for char in self.git_blob_oid)):
+            raise SnapshotError("git_blob_oid must be a Git object identifier or None")
+        identity = self.path_identity or _path_identity(self.path.encode("utf-8"))
+        encoded_identity = identity.removeprefix("posix-bytes:") if type(identity) is str else ""
+        if (type(identity) is not str or not identity.startswith("posix-bytes:")
+                or not encoded_identity or len(encoded_identity) % 2 or any(char not in "0123456789abcdef" for char in encoded_identity)):
+            raise SnapshotError("path_identity must be a POSIX byte witness")
+        object.__setattr__(self, "path_identity", identity)
+        if self.captured_bytes is not None:
+            if type(self.captured_bytes) is not bytes:
+                raise SnapshotError("captured_bytes must be bytes or None")
+            if self.source_cid is None or cid_for_bytes(self.captured_bytes) != self.source_cid:
+                raise SnapshotError("captured_bytes must verify source_cid")
 
     @property
     def is_opaque(self) -> bool:
         return self.opaque_reason is not None
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": SNAPSHOT_ENTRY_SCHEMA, "path": self.path, "kind": self.kind,
+        return {"schema": SNAPSHOT_ENTRY_SCHEMA, "path": self.path, "path_identity": self.path_identity, "kind": self.kind,
                 "size_bytes": self.size_bytes, "source_cid": self.source_cid,
-                "opaque_reason": self.opaque_reason}
+                "opaque_reason": self.opaque_reason, "git_blob_oid": self.git_blob_oid}
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "SnapshotEntry":
-        expected = {"schema", "path", "kind", "size_bytes", "source_cid", "opaque_reason"}
+        expected = {"schema", "path", "path_identity", "kind", "size_bytes", "source_cid", "opaque_reason", "git_blob_oid"}
         if set(value) != expected or value.get("schema") != SNAPSHOT_ENTRY_SCHEMA:
             raise SnapshotError("unsupported SnapshotEntry schema")
         return cls(**{key: value[key] for key in expected - {"schema"}})
@@ -141,6 +166,7 @@ class RepositorySnapshot:
     max_file_bytes: int = DEFAULT_MAX_FILE_BYTES
     max_entries: int = DEFAULT_MAX_ENTRIES
     git_tree: str | None = None
+    git_commit: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "repository_id", _text(self.repository_id, "repository_id"))
@@ -151,6 +177,11 @@ class RepositorySnapshot:
                 raise SnapshotError("git_tree must be a Git object-format tree identifier for git-clean snapshots")
         elif self.mode == "git-clean":
             raise SnapshotError("git-clean snapshots require git_tree")
+        if self.git_commit is not None:
+            if self.mode != "git-clean" or len(self.git_commit) not in {40, 64} or any(char not in "0123456789abcdef" for char in self.git_commit):
+                raise SnapshotError("git_commit must be a Git object-format commit identifier for git-clean snapshots")
+        elif self.mode == "git-clean":
+            raise SnapshotError("git-clean snapshots require git_commit")
         if type(self.max_file_bytes) is not int or self.max_file_bytes < 1:
             raise SnapshotError("max_file_bytes must be a positive integer")
         if type(self.max_entries) is not int or self.max_entries < 1:
@@ -160,7 +191,7 @@ class RepositorySnapshot:
         entries = tuple(sorted(self.entries, key=lambda entry: entry.path))
         if len(entries) > self.max_entries:
             raise SnapshotError("entries exceed max_entries")
-        if len({entry.path for entry in entries}) != len(entries):
+        if len({entry.path_identity for entry in entries}) != len(entries):
             raise SnapshotError("entries must not have duplicate paths")
         object.__setattr__(self, "entries", entries)
 
@@ -170,7 +201,7 @@ class RepositorySnapshot:
         return {"schema": SNAPSHOT_SCHEMA, "repository_id": self.repository_id,
                 "entries": [entry.to_dict() for entry in self.entries],
                 "max_file_bytes": self.max_file_bytes, "max_entries": self.max_entries,
-                "git_tree": self.git_tree}
+                "git_tree": self.git_tree, "git_commit": self.git_commit}
 
     @property
     def snapshot_cid(self) -> str:
@@ -184,10 +215,10 @@ class RepositorySnapshot:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "RepositorySnapshot":
-        expected = {"schema", "repository_id", "entries", "mode", "max_file_bytes", "max_entries", "git_tree", "snapshot_cid"}
+        expected = {"schema", "repository_id", "entries", "mode", "max_file_bytes", "max_entries", "git_tree", "git_commit", "snapshot_cid"}
         if set(value) != expected or value.get("schema") != SNAPSHOT_SCHEMA:
             raise SnapshotError("unsupported RepositorySnapshot schema")
-        result = cls(repository_id=value["repository_id"], entries=tuple(SnapshotEntry.from_dict(item) for item in value["entries"]), mode=value["mode"], max_file_bytes=value["max_file_bytes"], max_entries=value["max_entries"], git_tree=value["git_tree"])
+        result = cls(repository_id=value["repository_id"], entries=tuple(SnapshotEntry.from_dict(item) for item in value["entries"]), mode=value["mode"], max_file_bytes=value["max_file_bytes"], max_entries=value["max_entries"], git_tree=value["git_tree"], git_commit=value["git_commit"])
         if value["snapshot_cid"] != result.snapshot_cid:
             raise SnapshotError("RepositorySnapshot snapshot_cid does not verify")
         return result
@@ -220,19 +251,22 @@ def repository_identity(repository: str | os.PathLike[str], *, repository_id: st
     git_root = _git_root(root)
     label = (git_root or root).name
     remote = ""
-    head = ""
+    local_anchor: dict[str, int] | None = None
     if git_root is not None:
         result = _git(git_root, ("config", "--get", "remote.origin.url"))
         if not result.returncode:
             remote = result.stdout.decode("utf-8", "replace").strip()
-        # A repository without an origin has no portable external identity.
-        # Its immutable HEAD is a conservative identity anchor: unrelated
-        # same-basename repositories therefore cannot collide by label alone.
+        # HEAD is deliberately excluded: a no-origin repository must retain
+        # stable symbol IDs across commits (including same-tree commits).
         if not remote:
-            result = _git(git_root, ("rev-parse", "HEAD"))
-            if not result.returncode:
-                head = result.stdout.decode("ascii", "strict").strip()
-    return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "git" if git_root else "filesystem", "label": label, "origin": remote, "head": head})
+            git_dir = _git(git_root, ("rev-parse", "--git-dir"))
+            target = (git_root / git_dir.stdout.decode("utf-8", "strict").strip()).resolve() if not git_dir.returncode else git_root / ".git"
+            status = target.stat()
+            local_anchor = {"device": status.st_dev, "inode": status.st_ino}
+    else:
+        status = root.stat()
+        local_anchor = {"device": status.st_dev, "inode": status.st_ino}
+    return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "git" if git_root else "filesystem", "label": label, "origin": remote, "local_anchor": local_anchor})
 
 
 def _kind(path: str) -> str:
@@ -249,21 +283,26 @@ def _kind(path: str) -> str:
     return "artifact"
 
 
-def _opaque(path: str, reason: str, size: int | None = None, source_cid: str | None = None) -> SnapshotEntry:
-    return SnapshotEntry(path=path, kind="opaque", size_bytes=size, source_cid=source_cid, opaque_reason=reason)
+def _opaque(path: str, reason: str, size: int | None = None, source_cid: str | None = None, *, path_identity: str | None = None, git_blob_oid: str | None = None) -> SnapshotEntry:
+    return SnapshotEntry(path=path, kind="opaque", size_bytes=size, source_cid=source_cid, opaque_reason=reason, path_identity=path_identity, git_blob_oid=git_blob_oid)
 
 
-def _entry_from_bytes(path: str, data: bytes, *, max_file_bytes: int) -> SnapshotEntry:
+def _entry_from_bytes(path: str, data: bytes, *, max_file_bytes: int, path_identity: str | None = None, git_blob_oid: str | None = None) -> SnapshotEntry:
     if len(data) > max_file_bytes:
-        return _opaque(path, "oversized", len(data))
+        return _opaque(path, "oversized", len(data), path_identity=path_identity, git_blob_oid=git_blob_oid)
     try:
         data.decode("utf-8", "strict")
     except UnicodeDecodeError:
-        return _opaque(path, "undecodable", len(data), cid_for_bytes(data))
-    return SnapshotEntry(path=path, kind=_kind(path), size_bytes=len(data), source_cid=cid_for_bytes(data))
+        return _opaque(path, "undecodable", len(data), cid_for_bytes(data), path_identity=path_identity, git_blob_oid=git_blob_oid)
+    return SnapshotEntry(path=path, kind=_kind(path), size_bytes=len(data), source_cid=cid_for_bytes(data), path_identity=path_identity, git_blob_oid=git_blob_oid, captured_bytes=data)
 
 
 def _working_entry(root: Path, path: str, *, max_file_bytes: int) -> SnapshotEntry:
+    try:
+        encoded_path = os.fsencode(path)
+        encoded_path.decode("utf-8", "strict")
+    except UnicodeDecodeError:
+        return _opaque(_malformed_path(encoded_path), "malformed_path", path_identity=_path_identity(encoded_path))
     candidate = root / path
     try:
         before = candidate.stat(follow_symlinks=False)
@@ -299,7 +338,7 @@ def _working_entry(root: Path, path: str, *, max_file_bytes: int) -> SnapshotEnt
 
 def _clean_git_entries(root: Path, tree: str, *, max_file_bytes: int, max_entries: int) -> Iterable[SnapshotEntry]:
     listed = _git(root, ("ls-tree", "-r", "-z", tree))
-    if listed.returncode:
+    if listed.returncode or listed.stderr:
         raise SnapshotError("git ls-tree failed")
     records = [item for item in listed.stdout.split(b"\0") if item]
     if len(records) > max_entries:
@@ -310,33 +349,33 @@ def _clean_git_entries(root: Path, tree: str, *, max_file_bytes: int, max_entrie
             mode, object_type, oid = metadata.decode("ascii").split()
             path = _path(encoded_path.decode("utf-8", "strict"))
         except (ValueError, UnicodeDecodeError, SnapshotError):
-            yield _opaque(_malformed_path(encoded_path), "malformed_path")
+            yield _opaque(_malformed_path(encoded_path), "malformed_path", path_identity=_path_identity(encoded_path))
             continue
         if _ignored_path(path):
             continue
         if mode == "120000" or object_type != "blob":
-            yield _opaque(path, "symlink_or_nonregular")
+            yield _opaque(path, "symlink_or_nonregular", path_identity=_path_identity(encoded_path), git_blob_oid=oid)
             continue
         size_result = _git(root, ("cat-file", "-s", oid))
         try:
-            size = int(size_result.stdout.strip()) if not size_result.returncode else None
+            size = int(size_result.stdout.strip()) if not size_result.returncode and not size_result.stderr else None
         except ValueError:
             size = None
         if size is None:
-            yield _opaque(path, "missing")
+            yield _opaque(path, "missing", path_identity=_path_identity(encoded_path), git_blob_oid=oid)
         elif size > max_file_bytes:
-            yield _opaque(path, "oversized", size)
+            yield _opaque(path, "oversized", size, path_identity=_path_identity(encoded_path), git_blob_oid=oid)
         else:
             content = _git(root, ("cat-file", "blob", oid))
-            if content.returncode:
-                yield _opaque(path, "missing", size)
+            if content.returncode or content.stderr:
+                yield _opaque(path, "missing", size, path_identity=_path_identity(encoded_path), git_blob_oid=oid)
             else:
-                yield _entry_from_bytes(path, content.stdout, max_file_bytes=max_file_bytes)
+                yield _entry_from_bytes(path, content.stdout, max_file_bytes=max_file_bytes, path_identity=_path_identity(encoded_path), git_blob_oid=oid)
 
 
 def _working_paths(root: Path, *, max_entries: int) -> list[str]:
     listed = _git(root, ("ls-files", "-z", "--cached", "--others", "--exclude-standard"))
-    if listed.returncode:
+    if listed.returncode or listed.stderr:
         raise SnapshotError("git ls-files failed")
     paths: set[str] = set()
     for item in listed.stdout.split(b"\0"):
@@ -345,6 +384,8 @@ def _working_paths(root: Path, *, max_entries: int) -> list[str]:
         try:
             path = _path(item.decode("utf-8", "strict"))
         except (UnicodeDecodeError, SnapshotError):
+            # The sentinel itself is only presentation; selection keeps the
+            # original bytes in the entry identity below.
             paths.add(_malformed_path(item))
             continue
         if not _ignored_path(path):
@@ -355,6 +396,23 @@ def _working_paths(root: Path, *, max_entries: int) -> list[str]:
     return result
 
 
+def _status_has_selected_changes(raw: bytes) -> bool:
+    """Whether porcelain-v1 -z reports a change outside policy exclusions."""
+    records = [item for item in raw.split(b"\0") if item]
+    for record in records:
+        # Rename/copy's second NUL record has no XY prefix; treating it as a
+        # path is conservative and prevents an incomplete status from being
+        # mistaken for a clean selected tree.
+        encoded = record[3:] if len(record) >= 3 and record[2:3] == b" " else record
+        try:
+            path = _path(encoded.decode("utf-8", "strict"))
+        except (UnicodeDecodeError, SnapshotError):
+            return True
+        if not _ignored_path(path):
+            return True
+    return False
+
+
 def _filesystem_paths(root: Path, *, max_entries: int) -> list[str]:
     paths: list[str] = []
     stack = [root]
@@ -363,6 +421,8 @@ def _filesystem_paths(root: Path, *, max_entries: int) -> list[str]:
         try:
             children = sorted(directory.iterdir(), key=lambda item: item.name)
         except OSError:
+            if directory != root:
+                paths.append(_path(directory.relative_to(root).as_posix()))
             continue
         for child in children:
             relative = child.relative_to(root).as_posix()
@@ -393,17 +453,22 @@ def snapshot_repository(repository: str | os.PathLike[str], *, repository_id: st
     git_root = _git_root(root)
     identity = repository_identity(root, repository_id=repository_id)
     if git_root is not None:
-        status = _git(git_root, ("status", "--porcelain", "--untracked-files=all"))
-        if not status.returncode and not status.stdout:
-            tree_result = _git(git_root, ("rev-parse", "HEAD^{tree}"))
-            if tree_result.returncode:
-                raise SnapshotError("git HEAD tree is unavailable")
-            tree = tree_result.stdout.decode("ascii", "strict").strip()
-            entries = tuple(_clean_git_entries(git_root, tree, max_file_bytes=max_file_bytes, max_entries=max_entries))
-            return RepositorySnapshot(identity, entries, "git-clean", max_file_bytes, max_entries, tree)
+        status = _git(git_root, ("status", "--porcelain=v1", "-z", "--untracked-files=all"))
+        if status.returncode or status.stderr:
+            raise SnapshotError("git status failed or reported incomplete traversal")
+        if not _status_has_selected_changes(status.stdout):
+            commit_result = _git(git_root, ("rev-parse", "HEAD"))
+            if not commit_result.returncode and not commit_result.stderr:
+                tree_result = _git(git_root, ("rev-parse", "HEAD^{tree}"))
+                if tree_result.returncode or tree_result.stderr:
+                    raise SnapshotError("git HEAD tree is unavailable")
+                commit = commit_result.stdout.decode("ascii", "strict").strip()
+                tree = tree_result.stdout.decode("ascii", "strict").strip()
+                entries = tuple(_clean_git_entries(git_root, tree, max_file_bytes=max_file_bytes, max_entries=max_entries))
+                return RepositorySnapshot(identity, entries, "git-clean", max_file_bytes, max_entries, tree, commit)
         paths = _working_paths(git_root, max_entries=max_entries)
         entries = tuple(
-            _opaque(path, "malformed_path") if path.startswith("@malformed-path/")
+            _opaque(path, "malformed_path", path_identity="posix-bytes:" + path.removeprefix("@malformed-path/")) if path.startswith("@malformed-path/")
             else _working_entry(git_root, path, max_file_bytes=max_file_bytes)
             for path in paths
         )

@@ -91,6 +91,24 @@ def test_unrelated_same_basename_git_repositories_have_distinct_identity(tmp_pat
     assert repository_identity(roots[0]) != repository_identity(roots[1])
 
 
+def test_no_origin_identity_is_commit_stable_and_snapshot_records_git_evidence(tmp_path: Path) -> None:
+    _git(tmp_path, "init")
+    _git(tmp_path, "config", "user.email", "test@example.invalid")
+    _git(tmp_path, "config", "user.name", "Test")
+    (tmp_path / "module.py").write_text("value = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "module.py")
+    _git(tmp_path, "commit", "-m", "initial")
+    first = snapshot_repository(tmp_path)
+    _git(tmp_path, "commit", "--allow-empty", "-m", "same tree")
+    second = snapshot_repository(tmp_path)
+    assert first.repository_id == second.repository_id
+    assert first.git_tree == second.git_tree
+    assert first.git_commit != second.git_commit
+    assert first.snapshot_cid != second.snapshot_cid
+    assert first.entries[0].git_blob_oid
+    assert first.entries[0].to_dict()["git_blob_oid"] == first.entries[0].git_blob_oid
+
+
 def test_malformed_git_name_is_retained_as_opaque_artifact(tmp_path: Path) -> None:
     _git(tmp_path, "init")
     _git(tmp_path, "config", "user.email", "test@example.invalid")

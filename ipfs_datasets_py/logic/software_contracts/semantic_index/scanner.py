@@ -10,9 +10,7 @@ CID-verified snapshot inputs.
 from __future__ import annotations
 
 import os
-import stat
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Mapping
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
@@ -31,8 +29,6 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.pytest_analysis im
 from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import (
     RepositorySnapshot,
     SnapshotEntry,
-    _git,
-    _git_root,
     snapshot_repository,
 )
 
@@ -65,43 +61,6 @@ def _typed_artifact(entry: SnapshotEntry) -> ArtifactRecord:
     )
 
 
-def _read_regular_file(root: Path, entry: SnapshotEntry) -> bytes | None:
-    """Read a manifest entry without following a replacement symlink."""
-    path = root / entry.path
-    try:
-        before = path.stat(follow_symlinks=False)
-        if not stat.S_ISREG(before.st_mode):
-            return None
-        nofollow = getattr(os, "O_NOFOLLOW", None)
-        if nofollow is None:
-            return None
-        descriptor = os.open(path, os.O_RDONLY | nofollow)
-        with os.fdopen(descriptor, "rb") as handle:
-            opened = os.fstat(handle.fileno())
-            if not stat.S_ISREG(opened.st_mode):
-                return None
-            data = handle.read()
-        after = path.stat(follow_symlinks=False)
-    except OSError:
-        return None
-    if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
-        after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns
-    ):
-        return None
-    return data
-
-
-def _input_root(repository: Path) -> Path:
-    """Use the Git worktree root when a caller supplied one of its subpaths."""
-    return _git_root(repository) or repository
-
-
-def _read_git_blob(root: Path, tree: str, entry: SnapshotEntry) -> bytes | None:
-    """Read an immutable blob selected by a clean snapshot's tree object."""
-    result = _git(root, ("cat-file", "blob", f"{tree}:{entry.path}"))
-    return result.stdout if result.returncode == 0 else None
-
-
 @dataclass(slots=True)
 class RepositoryScanner:
     """Build a deterministic :class:`RepositoryState` without target execution."""
@@ -118,9 +77,7 @@ class RepositoryScanner:
         previous_state: RepositoryState | None = None,
         snapshot: RepositorySnapshot | None = None,
     ) -> RepositoryState:
-        root = Path(repository).resolve()
-        current = snapshot or snapshot_repository(root, repository_id=self.repository_id)
-        root = _input_root(root)
+        current = snapshot or snapshot_repository(repository, repository_id=self.repository_id)
         if self.repository_id is not None and current.repository_id != self.repository_id:
             raise RepositoryScannerError("snapshot repository_id does not match scanner repository_id")
         sources: dict[str, bytes] = {}
@@ -128,15 +85,12 @@ class RepositoryScanner:
         for entry in current.entries:
             if entry.is_opaque or entry.source_cid is None:
                 continue
-            # A clean snapshot is anchored to an immutable tree.  Never read
-            # its path from the worktree: smudge filters and a post-selection
-            # mutation would otherwise parse bytes not represented by the CID.
-            data = (_read_git_blob(root, current.git_tree, entry)
-                    if current.mode == "git-clean" and current.git_tree is not None
-                    else _read_regular_file(root, entry))
+            # Snapshot acquisition owns the sole content-byte read.  A scanner
+            # gets only that immutable capture, so filters and path mutation
+            # cannot cause parse bytes to diverge from manifest evidence.
+            data = entry.captured_bytes
             if data is None:
-                unavailable[entry.path] = ("git_blob_unavailable" if current.mode == "git-clean"
-                                           else "source_unavailable_or_raced")
+                unavailable[entry.path] = "captured_source_unavailable"
             elif cid_for_bytes(data) != entry.source_cid:
                 unavailable[entry.path] = "source_cid_mismatch"
             else:
@@ -175,6 +129,13 @@ class RepositoryScanner:
         verified: dict[str, bytes] = {}
         failures = dict(unavailable or {})
         entries_by_path = {entry.path: entry for entry in snapshot.entries}
+        # Bind the durable state root to the exact acquisition evidence,
+        # including commit/tree and each Git blob OID.  This deliberately is
+        # an artifact rather than a mutable side channel in RepositoryState.
+        artifacts.append(ArtifactRecord(
+            "artifact:@snapshot-evidence", "snapshot-evidence", "@snapshot-evidence", None,
+            AnalysisConfidence.EXACT, snapshot.identity_payload(),
+        ))
         for entry in snapshot.entries:
             if entry.is_opaque:
                 artifacts.append(_opaque_artifact(entry, entry.opaque_reason or "opaque_snapshot"))
