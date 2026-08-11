@@ -9,7 +9,10 @@ implementation must not edit, replace, rename, or weaken these assertions.
 from __future__ import annotations
 
 import os
+import stat
 import subprocess
+import sys
+import threading
 import time
 from dataclasses import replace
 from pathlib import Path
@@ -79,6 +82,20 @@ def _is_git_command(command: object, *args: str) -> bool:
     )
 
 
+def _git_metadata(repository: Path) -> Path:
+    rendered = _git(repository, "rev-parse", "--git-dir").stdout.decode(
+        "utf-8", "strict"
+    ).strip()
+    path = Path(rendered)
+    if not path.is_absolute():
+        path = repository / path
+    return path.resolve()
+
+
+def _bootstrap_marker(repository: Path) -> Path:
+    return _git_metadata(repository) / ".ipfs-datasets-semantic-index-unborn-id"
+
+
 def test_born_identity_is_portable_stable_and_history_distinct(tmp_path: Path) -> None:
     original = tmp_path / "original"
     clone = tmp_path / "clone"
@@ -124,6 +141,262 @@ def test_automatic_unborn_bootstrap_id_survives_repository_move(
     original.rename(relocated)
 
     assert repository_identity(relocated) == before
+
+
+def test_concurrent_unborn_identity_reader_never_observes_partial_publication(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    real_urandom = module.os.urandom
+    first_generator_entered = threading.Event()
+    release_first_generator = threading.Event()
+    call_lock = threading.Lock()
+    random_calls = 0
+
+    def controlled_urandom(size: int) -> bytes:
+        nonlocal random_calls
+        with call_lock:
+            random_calls += 1
+            call_number = random_calls
+        if call_number == 1:
+            first_generator_entered.set()
+            if not release_first_generator.wait(5):
+                raise OSError("audit bootstrap generator timed out")
+        return real_urandom(size)
+
+    monkeypatch.setattr(module.os, "urandom", controlled_urandom)
+    identities: dict[str, str] = {}
+    errors: dict[str, Exception] = {}
+
+    def identify(name: str) -> None:
+        try:
+            identities[name] = repository_identity(tmp_path)
+        except Exception as exc:  # pragma: no branch - asserted below
+            errors[name] = exc
+
+    first = threading.Thread(target=identify, args=("first",), daemon=True)
+    second = threading.Thread(target=identify, args=("second",), daemon=True)
+    first.start()
+    assert first_generator_entered.wait(5)
+    partial_final_visible = _bootstrap_marker(tmp_path).exists()
+    second.start()
+    try:
+        # A lock-based publisher may wait here.  A no-replace publisher may
+        # instead finish and force the first publisher to reread its winner.
+        second.join(0.5)
+    finally:
+        release_first_generator.set()
+        first.join(5)
+        second.join(5)
+
+    assert not first.is_alive()
+    assert not second.is_alive()
+    assert not partial_final_visible
+    assert errors == {}
+    assert identities["first"] == identities["second"]
+    assert repository_identity(tmp_path) == identities["first"]
+
+
+def test_unborn_entropy_failure_is_typed_cleans_up_and_recovers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    before = {item.name for item in marker.parent.iterdir()}
+    real_urandom = module.os.urandom
+    failed = False
+
+    def fail_once(size: int) -> bytes:
+        nonlocal failed
+        if not failed:
+            failed = True
+            raise OSError("audit entropy failure")
+        return real_urandom(size)
+
+    monkeypatch.setattr(module.os, "urandom", fail_once)
+    first_error: Exception | None = None
+    try:
+        repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        first_error = exc
+    published_after_failure = marker.exists()
+    residue = {item.name for item in marker.parent.iterdir()} - before
+
+    retry: str | None = None
+    retry_error: Exception | None = None
+    try:
+        retry = repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        retry_error = exc
+
+    assert failed
+    assert isinstance(first_error, GitSnapshotError)
+    assert not published_after_failure
+    assert all("lock" in name.casefold() for name in residue)
+    assert retry_error is None
+    assert retry is not None
+    assert repository_identity(tmp_path) == retry
+
+
+def test_unborn_write_failure_is_typed_and_restart_recovers(
+    tmp_path: Path,
+) -> None:
+    _init(tmp_path)
+    marker = _bootstrap_marker(tmp_path)
+    before = {item.name for item in marker.parent.iterdir()}
+    program = "\n".join(
+        (
+            "import resource",
+            "import signal",
+            "import sys",
+            "from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import GitSnapshotError, repository_identity",
+            "signal.signal(signal.SIGXFSZ, signal.SIG_IGN)",
+            "resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))",
+            "try:",
+            "    repository_identity(sys.argv[1])",
+            "except GitSnapshotError:",
+            "    raise SystemExit(23)",
+            "except Exception:",
+            "    raise SystemExit(24)",
+            "raise SystemExit(25)",
+        )
+    )
+    environment = dict(os.environ)
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    interrupted = subprocess.run(
+        [sys.executable, "-B", "-c", program, str(tmp_path)],
+        check=False,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=environment,
+        timeout=10,
+    )
+    published_after_failure = marker.exists()
+    residue = {item.name for item in marker.parent.iterdir()} - before
+
+    retry: str | None = None
+    retry_error: Exception | None = None
+    try:
+        retry = repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        retry_error = exc
+
+    assert interrupted.returncode == 23, interrupted.stderr.decode(
+        "utf-8", "replace"
+    )
+    assert not published_after_failure
+    assert all("lock" in name.casefold() for name in residue)
+    assert retry_error is None
+    assert retry is not None
+    assert repository_identity(tmp_path) == retry
+
+
+def test_unborn_file_sync_interruption_is_typed_and_restart_recovers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    before = {item.name for item in marker.parent.iterdir()}
+    real_fsync = module.os.fsync
+    interrupted = False
+
+    def interrupt_first_file_sync(descriptor: int) -> None:
+        nonlocal interrupted
+        if not interrupted and stat.S_ISREG(os.fstat(descriptor).st_mode):
+            interrupted = True
+            raise InterruptedError("audit file sync interruption")
+        real_fsync(descriptor)
+
+    monkeypatch.setattr(module.os, "fsync", interrupt_first_file_sync)
+    first_error: Exception | None = None
+    try:
+        repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        first_error = exc
+    published_after_failure = marker.exists()
+    residue = {item.name for item in marker.parent.iterdir()} - before
+    monkeypatch.setattr(module.os, "fsync", real_fsync)
+
+    retry: str | None = None
+    retry_error: Exception | None = None
+    try:
+        retry = repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        retry_error = exc
+
+    assert interrupted
+    assert isinstance(first_error, GitSnapshotError)
+    assert not published_after_failure
+    assert all("lock" in name.casefold() for name in residue)
+    assert retry_error is None
+    assert retry is not None
+    assert repository_identity(tmp_path) == retry
+
+
+def test_unborn_bootstrap_publication_syncs_file_and_git_metadata_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    real_fsync = module.os.fsync
+    synced_kinds: list[str] = []
+
+    def record_sync(descriptor: int) -> None:
+        mode = os.fstat(descriptor).st_mode
+        if stat.S_ISREG(mode):
+            synced_kinds.append("file")
+        elif stat.S_ISDIR(mode):
+            synced_kinds.append("directory")
+        real_fsync(descriptor)
+
+    monkeypatch.setattr(module.os, "fsync", record_sync)
+    first = repository_identity(tmp_path)
+
+    assert "file" in synced_kinds
+    assert "directory" in synced_kinds
+    assert stat.S_IMODE(_bootstrap_marker(tmp_path).stat().st_mode) == 0o600
+    assert repository_identity(tmp_path) == first
+
+
+def test_explicit_unborn_identity_avoids_bootstrap_metadata_mutation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    before = {item.name for item in marker.parent.iterdir()}
+
+    def forbidden_urandom(size: int) -> bytes:
+        raise AssertionError(f"unexpected bootstrap entropy request for {size} bytes")
+
+    monkeypatch.setattr(module.os, "urandom", forbidden_urandom)
+    explicit = "repo:caller-supplied-unborn"
+    original_mode = stat.S_IMODE(marker.parent.stat().st_mode)
+    marker.parent.chmod(original_mode & ~0o222)
+    try:
+        assert repository_identity(tmp_path, repository_id=explicit) == explicit
+        snapshot = snapshot_repository(tmp_path, repository_id=explicit)
+    finally:
+        marker.parent.chmod(original_mode)
+
+    assert snapshot.repository_id == explicit
+    assert snapshot.mode == "git-unborn"
+    assert not marker.exists()
+    assert {item.name for item in marker.parent.iterdir()} == before
 
 
 def test_explicit_unborn_bootstrap_id_and_inventory_survive_first_commit(

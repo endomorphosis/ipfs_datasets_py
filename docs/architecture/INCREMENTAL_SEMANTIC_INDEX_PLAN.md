@@ -161,6 +161,19 @@ Authority rules:
     ISI-049 is the narrow final snapshot-generation closure. It may repair only
     snapshot/scanner production code and cannot own or edit the now-35-case
     protected adversarial test.
+13. ISI-049 completed at marker `8815470b9` after implementation
+    `16ba55a21` merged as `fe435833e`; its protected 35 cases and 22 retained
+    focused cases pass. Independent concurrency and failure-injection audit
+    then proved that the repository-local unborn token is opened at its final
+    path before entropy generation, writing, and file sync complete. A
+    concurrent reader can therefore observe an empty marker and fail while the
+    creator later succeeds; an entropy failure leaks a host `OSError`, and an
+    interrupted write or sync leaves a poisonous final marker. The containing
+    Git metadata directory is never synced. ISI-050 is the final bootstrap-
+    publication closure before extraction work may consume snapshot authority.
+    It preserves portable born-history identity: automatic identity is stable
+    across moves only while the repository is unborn, while exact continuity
+    through the first commit requires a caller-supplied `repository_id`.
 
 ## 3. Proposed package and files
 
@@ -444,12 +457,13 @@ W11 ISI-046
 W12 ISI-047
 W13 ISI-048
 W14 ISI-049
-W15 ISI-043
-W16 ISI-044
-W17 ISI-036
-W18 ISI-038
-W19 ISI-039
-W20 ISI-040
+W15 ISI-050
+W16 ISI-043
+W17 ISI-044
+W18 ISI-036
+W19 ISI-038
+W20 ISI-039
+W21 ISI-040
 ```
 
 Tasks in each parallel wave own disjoint modules and tests. Integration tasks
@@ -457,7 +471,7 @@ depend on their inputs. Supervisor workers must honor `Outputs`, `Predicted
 files`, and `Conflict policy`; plan/objective/taskboard files are read-only
 protected control inputs. Phase-two capsule or coding-agent work must not treat
 the semantic state as authoritative until ISI-042, ISI-034 through ISI-039,
-and post-merge closure tasks ISI-043 through ISI-049 pass in their declared
+and post-merge closure tasks ISI-043 through ISI-050 pass in their declared
 dependency order. ISI-040 is the
 final incremental-performance and watcher hardening wave.
 
@@ -638,8 +652,16 @@ downstream failures, but two new protected probes fail: moving an automatically
 identified unborn repository changes its identity, and creating its first
 commit between the identity and snapshot HEAD decisions returns a mixed unborn
 identity/born mode instead of a typed race. ISI-049 is therefore the final
-sequential snapshot-generation gate, and the extractor repair may not consume
-ISI-048 as authoritative by itself.
+sequential snapshot-generation gate. ISI-049 implementation
+`16ba55a2156816154bbcb8af8a7173bbaf61ba93` merged as
+`fe435833e9a12ba13663e0b05f763c20314ca44a` and completed at marker
+`8815470b9108e9bfcd3284cf105b4623f05cd699`, reaching 35/35 protected and
+57/57 focused passes. Its final-path bootstrap write is nevertheless visible
+before entropy, write, and file-sync success; concurrent readers observe
+partial state, entropy failure is untyped, failed writes/syncs poison restart,
+and the Git metadata directory is not synced. ISI-050 closes only that
+publication boundary, and the extractor repair may not consume ISI-049 as
+authoritative by itself.
 
 ### 16.2 Repair matrix
 
@@ -655,7 +677,8 @@ ISI-048 as authoritative by itself.
 | ISI-047 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner adversarial tests/fixture | Commit-derived tree, portable clone identity, mode/disposition/exclusion-rooted state, ctime-strength generation fence, collision-free raw/source/artifact keys, and explicit restored-manifest trust boundary | ISI-046 |
 | ISI-048 | P0 | `snapshot.py`, `scanner.py`, optional fixture; protected adversarial test is external authority | Make all 33 protected public probes pass: local unborn identity, precise unborn disposition, same-HEAD status/index fencing, nested raw exclusion roots, and typed corrupt/quiet/warning/decode failures while retaining all 20 green contracts | ISI-047 |
 | ISI-049 | P0 | `snapshot.py`, `scanner.py` only as needed; protected adversarial test is external authority | Keep automatic unborn identity stable across a pre-commit repository move and reject an unborn-to-born transition between identity and snapshot decisions without regressing the prior 55 focused passes | ISI-048 |
-| ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture; protected seven-case authority is validation-only | Make the protected 7-case public gate pass while establishing canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-049 |
+| ISI-050 | P0 | `snapshot.py`, `scanner.py` only as needed; protected 41-case adversarial test is external authority | Atomically publish the local unborn bootstrap token with typed failure cleanup/recovery, concurrent loser reread, file and Git-directory durability, and an explicit-ID no-mutation path | ISI-049 |
+| ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture; protected seven-case authority is validation-only | Make the protected 7-case public gate pass while establishing canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-050 |
 | ISI-044 | P0 | `python_analysis.py`, distinct relation-closure tests/fixture; protected seven-case relation authority is validation-only | Make the protected 7-case relation gate pass with exact retained inheritance/composition/schema targets, scope/state effects, bounded calls, and source-bound dynamic/plugin/native confidence | ISI-043 |
 | ISI-045 | P0 | `persistence.py`, persistence tests | Idempotent bounded cleanup of legacy and current root/transition temporary prefixes without disturbing authoritative data | ISI-037 |
 | ISI-036 | P0 | `pytest_analysis.py`, `scanner.py`, `symbol_graph.py`, `index.py` | One Python/pytest identity and version, a resolved public state, and real test/fixture/config edges | ISI-034, ISI-044 |
