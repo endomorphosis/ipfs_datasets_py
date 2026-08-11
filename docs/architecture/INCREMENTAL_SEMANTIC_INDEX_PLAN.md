@@ -94,8 +94,13 @@ Authority rules:
    that its focused tests false-greened an optional normalized projection,
    mutable signature/annotation inputs, non-finite legal literal rejection,
    and unchanged v1 schema constants. ISI-041 preserves the completed evidence
-   and is the mandatory v2 identity-closure gate before snapshot, extraction,
-   or persistence repair may proceed.
+   and closes those recorded v2 identity defects at completion marker
+   `5d517253577da9b0e77d80e88a2cdcf5a76db0da`. A subsequent independent
+   acceptance audit proved that its float projection still admits NaN even
+   though NaN cannot arise from a Python source literal. ISI-042 preserves the
+   truthful completed ISI-041 evidence and is the final mandatory literal
+   admission gate before snapshot, extraction, or persistence repair may
+   proceed.
 
 ## 3. Proposed package and files
 
@@ -372,7 +377,7 @@ W5  ISI-020
 W6  ISI-023
 W7  ISI-030 | ISI-031
 W8  ISI-032
-W9  ISI-033 -> ISI-041
+W9  ISI-033 -> ISI-041 -> ISI-042
 W10 ISI-034 | ISI-035 | ISI-037
 W11 ISI-036
 W12 ISI-038
@@ -384,7 +389,7 @@ Tasks in each parallel wave own disjoint modules and tests. Integration tasks
 depend on their inputs. Supervisor workers must honor `Outputs`, `Predicted
 files`, and `Conflict policy`; plan/objective/taskboard files are read-only
 protected control inputs. Phase-two capsule or coding-agent work must not treat
-the semantic state as authoritative until ISI-041 and ISI-034 through ISI-039
+the semantic state as authoritative until ISI-042 and ISI-034 through ISI-039
 pass. ISI-040 is the final incremental-performance and watcher hardening wave.
 
 ## 13. Validation and acceptance
@@ -519,9 +524,10 @@ are functional and soundness gaps rather than cosmetic cleanup:
 | --- | --- | --- | --- | --- |
 | ISI-033 | P0 | `models.py`, `identity.py` | Initial tagged literals, stable-ID checks, ordered decorators, and aggregate scaffolding; completed evidence is retained but not sufficient for release | ISI-032 |
 | ISI-041 | P0 | `models.py`, `identity.py` | V2 mandatory recomputable projection, every persisted/frozen version input, explicit legacy boundary, and injective signed finite/infinite literal components | ISI-033 |
-| ISI-034 | P0 | `snapshot.py`, `scanner.py` | Git-object bytes remain canonical for clean inputs; tree/commit/snapshot identity is state-rooted; races and unreadable inputs are explicit | ISI-041 |
-| ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-041 |
-| ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-041 |
+| ISI-042 | P0 | `identity.py`, identity/model tests | Reject source-impossible NaN float and complex components before content hashing while preserving legal infinities and signed zero | ISI-041 |
+| ISI-034 | P0 | `snapshot.py`, `scanner.py` | Git-object bytes remain canonical for clean inputs; tree/commit/snapshot identity is state-rooted; races and unreadable inputs are explicit | ISI-042 |
+| ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-042 |
+| ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-042 |
 | ISI-036 | P0 | `pytest_analysis.py`, `scanner.py`, `symbol_graph.py`, `index.py` | One Python/pytest identity and version, a resolved public state, and real test/fixture/config edges | ISI-034, ISI-035 |
 | ISI-038 | P0 | `delta.py`, `invalidation.py`, `explain.py` | Recomputed deltas, edge-aware facets and rule direction, bounded real invalidation, retrievable raw-source evidence | ISI-036, ISI-037 |
 | ISI-039 | P0 | CLI, acceptance fixtures/tests, public contract documentation | All original cases through public APIs; no hand-made graph; fresh and non-self-indexing CLI; exact capsule consumer surface | ISI-038 |
