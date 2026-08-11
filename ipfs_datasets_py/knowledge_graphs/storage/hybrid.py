@@ -13,6 +13,12 @@ descriptor. The cache (and optional catalog metadata) records which copy is
 GC reachability/pin policy lives in :mod:`gc`; this module exposes the object
 inventory, pin set, staged-object registry, and authority bookkeeping that GC
 consumes.
+
+DQK-061: after DuckDB-only graph control promotion, mutable control files
+(``authority.json``, ``index.json``) are not written implicitly. Runtime cache
+state is held in memory (and optionally projected to DuckDB). Identity-bearing
+``meta/<cid>.json`` descriptors and object binaries remain durable. Explicit
+export/import compatibility obtains a filesystem-guard permit.
 """
 
 from __future__ import annotations
@@ -317,6 +323,52 @@ def atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
     atomic_write_bytes(path, text.encode("utf-8"))
 
 
+def _mutable_control_io_allowed() -> bool:
+    """Return True when hybrid may persist mutable control JSON files."""
+
+    try:
+        from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+            duckdb_only_graph_control,
+            get_graph_authority,
+            get_graph_filesystem_guard,
+            get_graph_shadow_authority,
+            legacy_graph_control_io_allowed,
+        )
+
+        auth = get_graph_authority() or get_graph_shadow_authority()
+        if auth is not None and not getattr(auth, "legacy_io_allowed", True):
+            guard = get_graph_filesystem_guard()
+            return bool(guard._has_permit())  # noqa: SLF001
+        if duckdb_only_graph_control():
+            return legacy_graph_control_io_allowed()
+        return True
+    except Exception:
+        return True
+
+
+def _assert_mutable_control_write(path: Path) -> None:
+    """Fail closed on mutable graph-control JSON writes after DuckDB-only cutover."""
+
+    try:
+        from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+            get_graph_filesystem_guard,
+        )
+
+        get_graph_filesystem_guard().assert_allowed(
+            path, kind="mutable_control_json", operation="write"
+        )
+    except Exception as exc:
+        # Re-raise guard rejections; ignore import/other issues only when allowed.
+        from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+            ImplicitLegacyGraphControlError,
+        )
+
+        if isinstance(exc, ImplicitLegacyGraphControlError):
+            raise
+        if not _mutable_control_io_allowed():
+            raise
+
+
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -419,6 +471,7 @@ class VerifiedHybridCache:
         max_entries: int = DEFAULT_CACHE_MAX_ENTRIES,
         verify_on_read: bool = True,
         shadow_authority: Any = None,
+        persist_mutable_control: Optional[bool] = None,
     ) -> None:
         if max_bytes < 0:
             raise GraphStoreError("INVALID_REQUEST", "max_bytes must be >= 0")
@@ -432,9 +485,11 @@ class VerifiedHybridCache:
         self._entries: "OrderedDict[str, CacheEntryMeta]" = OrderedDict()
         self._authority: Dict[str, AuthorityRecord] = {}
         self._total_bytes: int = 0
-        # DQK-059/060: optional DuckDB shadow/dual for control metadata;
+        # DQK-059/060/061: optional DuckDB shadow/dual for control metadata;
         # payload bytes (Parquet/IPLD) always remain local content authority.
         self._shadow_authority = shadow_authority
+        # None → derive from process DuckDB-only guard (DQK-061).
+        self._persist_mutable_control_override = persist_mutable_control
         self.root.mkdir(parents=True, exist_ok=True)
         (self.root / "objects").mkdir(parents=True, exist_ok=True)
         (self.root / "meta").mkdir(parents=True, exist_ok=True)
@@ -465,6 +520,58 @@ class VerifiedHybridCache:
         """Content always stays on local/IPLD bytes — never DuckDB (DQK-060)."""
 
         return "parquet_ipld"
+
+    @property
+    def persist_mutable_control(self) -> bool:
+        """Whether ``authority.json`` / ``index.json`` may be written."""
+
+        if self._persist_mutable_control_override is not None:
+            return bool(self._persist_mutable_control_override)
+        return _mutable_control_io_allowed()
+
+    def set_persist_mutable_control(self, allowed: bool) -> None:
+        """Explicitly enable/disable mutable control JSON persistence."""
+
+        self._persist_mutable_control_override = bool(allowed)
+
+    def export_control_json(self) -> Dict[str, Path]:
+        """Explicit export of mutable control JSON (import/export compatibility).
+
+        Obtains a filesystem-guard export permit so DQK-061 guards allow the
+        write. Identity-bearing CID meta files are not part of this export.
+        """
+
+        try:
+            from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                get_graph_filesystem_guard,
+            )
+
+            guard = get_graph_filesystem_guard()
+            with guard.permit_export():
+                with self._lock:
+                    self._persist_authority(force=True)
+                    self._persist_index(force=True)
+        except Exception:
+            # Fallback when store module is unavailable: write directly.
+            with self._lock:
+                payload_auth = {
+                    cid: rec.to_dict()
+                    for cid, rec in sorted(self._authority.items())
+                }
+                atomic_write_json(self._authority_path(), payload_auth)
+                payload_idx = {
+                    "schema_version": CACHE_SCHEMA_VERSION,
+                    "total_bytes": self._total_bytes,
+                    "entry_count": len(self._entries),
+                    "max_bytes": self.max_bytes,
+                    "max_entries": self.max_entries,
+                    "lru": list(self._entries.keys()),
+                }
+                atomic_write_json(self._index_path(), payload_idx)
+        return {
+            "authority": self._authority_path(),
+            "index": self._index_path(),
+        }
 
     def _resolve_authority(self) -> Any:
         shadow = self._shadow_authority
@@ -611,13 +718,55 @@ class VerifiedHybridCache:
         self._persist_index()
 
     def _persist_meta(self, meta: CacheEntryMeta) -> None:
+        # Identity-bearing CID descriptor — always durable (DQK-061).
         atomic_write_json(self._meta_path(meta.cid), meta.to_dict())
 
-    def _persist_authority(self) -> None:
-        payload = {cid: rec.to_dict() for cid, rec in sorted(self._authority.items())}
-        atomic_write_json(self._authority_path(), payload)
+    def _persist_authority(self, *, force: bool = False) -> None:
+        """Persist mutable authority map; blocked after DuckDB-only unless force/permit."""
 
-    def _persist_index(self) -> None:
+        path = self._authority_path()
+        if not force and not self.persist_mutable_control:
+            # Project control metadata to DuckDB when available; skip JSON.
+            self._emit_storage_shadow(
+                "skip_mutable_authority_json",
+                "hybrid-authority",
+                payload={
+                    "reason": "duckdb_only_graph_control",
+                    "authority_records": len(self._authority),
+                    "mutable_control_json_writer": False,
+                },
+            )
+            return
+        if not force:
+            try:
+                _assert_mutable_control_write(path)
+            except Exception:
+                if not _mutable_control_io_allowed():
+                    return
+        payload = {cid: rec.to_dict() for cid, rec in sorted(self._authority.items())}
+        atomic_write_json(path, payload)
+
+    def _persist_index(self, *, force: bool = False) -> None:
+        """Persist mutable index JSON; blocked after DuckDB-only unless force/permit."""
+
+        path = self._index_path()
+        if not force and not self.persist_mutable_control:
+            self._emit_storage_shadow(
+                "skip_mutable_index_json",
+                "hybrid-index",
+                payload={
+                    "reason": "duckdb_only_graph_control",
+                    "entry_count": len(self._entries),
+                    "mutable_control_json_writer": False,
+                },
+            )
+            return
+        if not force:
+            try:
+                _assert_mutable_control_write(path)
+            except Exception:
+                if not _mutable_control_io_allowed():
+                    return
         payload = {
             "schema_version": CACHE_SCHEMA_VERSION,
             "total_bytes": self._total_bytes,
@@ -626,7 +775,7 @@ class VerifiedHybridCache:
             "max_entries": self.max_entries,
             "lru": list(self._entries.keys()),
         }
-        atomic_write_json(self._index_path(), payload)
+        atomic_write_json(path, payload)
 
     # -- public stats ------------------------------------------------------
 
