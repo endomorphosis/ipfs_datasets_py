@@ -5,7 +5,7 @@ import hashlib
 import json
 import re
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -45,18 +45,20 @@ class AlabamaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
-        statutes = await self._scrape_alison_graphql(code_name, limit or 1000000)
+        statutes = await self._scrape_alison_graphql(code_name, limit)
         if statutes:
-            return statutes
+            return statutes[:limit] if limit is not None else statutes
 
         self.logger.warning(
             "Alabama GraphQL returned no statutes; falling back to archival/custom scrape path"
         )
+        # Full-corpus mode must not silently clamp the official tree.
+        custom_limit = limit if limit is not None else 1000000
         return await self._custom_scrape_alabama(
             code_name,
             code_url or self.CODE_URL,
             "Ala. Code",
-            max_sections=limit or 1000000,
+            max_sections=custom_limit,
         )
 
     async def _graphql(self, query: str, variables: Dict[str, Any] | None = None, timeout_seconds: int = 15) -> Dict[str, Any]:
@@ -114,7 +116,9 @@ class AlabamaScraper(BaseStateScraper):
             )
         return data
 
-    def _parse_scaffold_section_parent_ids(self, scaffold: str, limit: int) -> List[str]:
+    def _parse_scaffold_section_parent_ids(
+        self, scaffold: str, limit: Optional[int]
+    ) -> List[str]:
         if not scaffold or len(scaffold) < 3:
             return []
         field_sep = scaffold[0]
@@ -135,19 +139,25 @@ class AlabamaScraper(BaseStateScraper):
                 continue
             seen.add(parent_id)
             parent_ids.append(parent_id)
-            if len(parent_ids) >= max(1, limit):
+            if limit is not None and len(parent_ids) >= max(1, int(limit)):
                 break
         return parent_ids
 
-    async def _scrape_alison_graphql(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_alison_graphql(
+        self, code_name: str, max_statutes: Optional[int]
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
         self.logger.info("Alabama GraphQL: fetching scaffold")
-        scaffold_data = await self._graphql("query codeOfAlabamaScaffold { scaffold: codeOfAlabamaScaffold }")
-        parent_ids = self._parse_scaffold_section_parent_ids(str(scaffold_data.get("scaffold") or ""), max_statutes)
+        scaffold_data = await self._graphql(
+            "query codeOfAlabamaScaffold { scaffold: codeOfAlabamaScaffold }"
+        )
+        parent_ids = self._parse_scaffold_section_parent_ids(
+            str(scaffold_data.get("scaffold") or ""), max_statutes
+        )
         self.logger.info("Alabama GraphQL: discovered %d section parent ids", len(parent_ids))
         if not parent_ids:
             return []
@@ -170,13 +180,17 @@ class AlabamaScraper(BaseStateScraper):
         """
         statutes: List[NormalizedStatute] = []
         batch_size = 64 if self._full_corpus_enabled() else 8
-        heartbeat_seconds = max(15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60)))
+        heartbeat_seconds = max(
+            15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60))
+        )
         last_heartbeat = time.monotonic()
         for offset in range(0, len(parent_ids), batch_size):
-            data = await self._graphql(query, {"parentId": parent_ids[offset : offset + batch_size]})
+            data = await self._graphql(
+                query, {"parentId": parent_ids[offset : offset + batch_size]}
+            )
             rows = ((data.get("codeItems") or {}).get("data") or [])
             for row in rows:
-                if len(statutes) >= max_statutes:
+                if max_statutes is not None and len(statutes) >= max_statutes:
                     return statutes
                 if not row.get("isContentNode") or str(row.get("type") or "").lower() != "section":
                     continue
@@ -185,15 +199,21 @@ class AlabamaScraper(BaseStateScraper):
                 history = str(row.get("history") or "")
                 text_parts = []
                 if content:
-                    text_parts.append(BeautifulSoup(content, "html.parser").get_text(" ", strip=True))
+                    text_parts.append(
+                        BeautifulSoup(content, "html.parser").get_text(" ", strip=True)
+                    )
                 if history:
-                    history_text = BeautifulSoup(history, "html.parser").get_text(" ", strip=True)
+                    history_text = BeautifulSoup(history, "html.parser").get_text(
+                        " ", strip=True
+                    )
                     if history_text:
                         text_parts.append(f"History: {history_text}")
                 full_text = re.sub(r"\s+", " ", " ".join(text_parts)).strip()
                 if not display_id or len(full_text) < 80:
                     continue
-                title = re.sub(r"\s+", " ", str(row.get("title") or f"Section {display_id}")).strip()
+                title = re.sub(
+                    r"\s+", " ", str(row.get("title") or f"Section {display_id}")
+                ).strip()
                 statute = NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
@@ -206,13 +226,14 @@ class AlabamaScraper(BaseStateScraper):
                     source_url=f"{self.CODE_URL}?section={display_id}",
                     official_cite=f"Ala. Code § {display_id}",
                     metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_alison_graphql",
+                        "discovery_method": "official_alison_scaffold_parent_batch",
+                        "skip_hydrate": True,
+                        "code_id": row.get("codeId"),
+                        "parent_id": row.get("parentId"),
+                    },
                 )
-                statute.structured_data = {
-                    "source_kind": "official_alison_graphql",
-                    "skip_hydrate": True,
-                    "code_id": row.get("codeId"),
-                    "parent_id": row.get("parentId"),
-                }
                 statutes.append(statute)
             now = time.monotonic()
             if now - last_heartbeat >= heartbeat_seconds:
