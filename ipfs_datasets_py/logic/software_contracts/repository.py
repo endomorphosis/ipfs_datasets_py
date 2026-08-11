@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final, Mapping, Sequence
@@ -1512,8 +1513,1070 @@ def validate_repository_root_manifest(document: Mapping[str, Any]) -> list[str]:
     return errors
 
 
+# ---------------------------------------------------------------------------
+# DQK-068: AST / code-evidence shadow authority writers
+# ---------------------------------------------------------------------------
+#
+# Repository extraction projects normalized AST catalog rows (blobs, symbols,
+# imports, calls, effects, diagnostics) through the domain-neutral authority
+# port while JSON bundles remain the legacy authority surface.  Parse failures
+# are durable facts; one file's failure never blocks unrelated files.
+
+AST_AUTHORITY_DOMAIN: Final[str] = "asts"
+AST_SHADOW_OWNER_TASK: Final[str] = "DQK-068"
+AST_SHADOW_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/software-contracts-ast-shadow@1"
+)
+AST_JSON_BUNDLE_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/software-contracts-ast-json-bundle@1"
+)
+AST_SHADOW_INTERFACE: Final[str] = "ASTAuthorityShadowWriter@1"
+AST_EVIDENCE_EDGE_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/software-contracts-ast-evidence-edge@1"
+)
+
+_PYTHON_EXTENSIONS: Final[frozenset[str]] = frozenset({".py", ".pyi"})
+_TYPESCRIPT_EXTENSIONS: Final[frozenset[str]] = frozenset(
+    {".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts"}
+)
+
+
+class ASTShadowError(RuntimeError):
+    """Raised when an AST shadow authority write fails closed."""
+
+
+def projection_to_authority_payload(projection: Any) -> dict[str, Any]:
+    """Serialize one :class:`ASTCatalogProjection` for the authority port.
+
+    Payload fields are closed and identity-bearing: source CID, AST CID,
+    path, revision, and every span-bearing table family travel together so
+    JSON-bundle / DB differential parity is an exact digest compare.
+    """
+
+    from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+        ASTCatalogProjection,
+    )
+
+    if type(projection) is not ASTCatalogProjection:
+        raise ASTShadowError(
+            "projection_to_authority_payload requires an exact ASTCatalogProjection"
+        )
+    identity = {
+        "source_cid": projection.source_cid,
+        "ast_cid": projection.ast_cid,
+        "blob_id": projection.blob_id,
+        "path": projection.source_file.path,
+        "revision": projection.source_revision.revision,
+        "revision_id": projection.source_revision.revision_id,
+        "repository_id": projection.source_revision.repository_id,
+        "repository_tree_cid": projection.source_revision.repository_tree_cid,
+        "language": projection.ast_blob.language,
+        "parse_status": projection.ast_blob.parse_status,
+        "parse_error": projection.ast_blob.parse_error,
+    }
+    return {
+        "schema": AST_SHADOW_SCHEMA,
+        "interface": AST_SHADOW_INTERFACE,
+        "owner_task_id": AST_SHADOW_OWNER_TASK,
+        "kind": "ast_catalog_projection",
+        "identity": identity,
+        "source_revision": projection.source_revision.to_dict(),
+        "source_file": projection.source_file.to_dict(),
+        "ast_blob": projection.ast_blob.to_dict(),
+        "nodes": [item.to_dict() for item in projection.nodes],
+        "scopes": [item.to_dict() for item in projection.scopes],
+        "symbols": [item.to_dict() for item in projection.symbols],
+        "imports": [item.to_dict() for item in projection.imports],
+        "references": [item.to_dict() for item in projection.references],
+        "calls": [item.to_dict() for item in projection.calls],
+        "effects": [item.to_dict() for item in projection.effects],
+        "interfaces": [item.to_dict() for item in projection.interfaces],
+        "diagnostics": [item.to_dict() for item in projection.diagnostics],
+        "invalidations": [item.to_dict() for item in projection.invalidations],
+        "supervisor_blob_summary": projection.to_supervisor_blob_summary(),
+        "table_row_counts": projection.table_row_counts(),
+    }
+
+
+def json_bundle_from_projection(projection: Any) -> dict[str, Any]:
+    """Legacy JSON-bundle surface for one AST projection (shadow authority)."""
+
+    payload = projection_to_authority_payload(projection)
+    return {
+        "schema": AST_JSON_BUNDLE_SCHEMA,
+        "owner_task_id": AST_SHADOW_OWNER_TASK,
+        "kind": "ast_json_bundle",
+        "identity": dict(payload["identity"]),
+        "source_revision": payload["source_revision"],
+        "source_file": payload["source_file"],
+        "ast_blob": payload["ast_blob"],
+        "symbols": payload["symbols"],
+        "imports": payload["imports"],
+        "calls": payload["calls"],
+        "effects": payload["effects"],
+        "diagnostics": payload["diagnostics"],
+        "supervisor_blob_summary": payload["supervisor_blob_summary"],
+        "table_row_counts": payload["table_row_counts"],
+        # Full catalog rows for differential parity with the DB projection.
+        "nodes": payload["nodes"],
+        "scopes": payload["scopes"],
+        "references": payload["references"],
+        "interfaces": payload["interfaces"],
+        "invalidations": payload["invalidations"],
+    }
+
+
+def authority_key_for_projection(projection: Any) -> str:
+    """Stable authority key for one blob projection."""
+
+    from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+        ASTCatalogProjection,
+    )
+
+    if type(projection) is not ASTCatalogProjection:
+        raise ASTShadowError(
+            "authority_key_for_projection requires an exact ASTCatalogProjection"
+        )
+    return f"ast:{projection.blob_id}"
+
+
+def evidence_edges_from_projection(
+    projection: Any,
+    *,
+    task_id: str = AST_SHADOW_OWNER_TASK,
+) -> tuple[dict[str, Any], ...]:
+    """Derive code-evidence edges from a catalog projection (symbols/imports)."""
+
+    from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+        ASTCatalogProjection,
+    )
+
+    if type(projection) is not ASTCatalogProjection:
+        raise ASTShadowError(
+            "evidence_edges_from_projection requires an exact ASTCatalogProjection"
+        )
+    revision = projection.source_revision.revision
+    path = projection.source_file.path
+    tree_node = f"tree:{path}"
+    edges: list[dict[str, Any]] = []
+    for symbol in projection.symbols:
+        edges.append(
+            {
+                "schema": AST_EVIDENCE_EDGE_SCHEMA,
+                "edge_id": f"edge:defines:{projection.blob_id}:{symbol.symbol_id}",
+                "kind": "defines_symbol",
+                "source": tree_node,
+                "target": f"symbol:{symbol.qualified_name}",
+                "provenance": "ast",
+                "authoritative": True,
+                "revision": revision,
+                "task_id": task_id,
+                "symbol_id": symbol.symbol_id,
+                "qualified_name": symbol.qualified_name,
+                "start_byte": symbol.span.start_byte,
+                "end_byte": symbol.span.end_byte,
+                "start_line": symbol.span.start_line,
+                "end_line": symbol.span.end_line,
+                "source_cid": projection.source_cid,
+                "ast_cid": projection.ast_cid,
+            }
+        )
+    for item in projection.imports:
+        edges.append(
+            {
+                "schema": AST_EVIDENCE_EDGE_SCHEMA,
+                "edge_id": f"edge:import:{projection.blob_id}:{item.import_id}",
+                "kind": "depends_on",
+                "source": tree_node,
+                "target": f"module:{item.module}",
+                "provenance": "ast",
+                "authoritative": True,
+                "revision": revision,
+                "task_id": task_id,
+                "import_id": item.import_id,
+                "module": item.module,
+                "start_byte": item.span.start_byte,
+                "end_byte": item.span.end_byte,
+                "source_cid": projection.source_cid,
+                "ast_cid": projection.ast_cid,
+            }
+        )
+    for item in projection.calls:
+        edges.append(
+            {
+                "schema": AST_EVIDENCE_EDGE_SCHEMA,
+                "edge_id": f"edge:call:{projection.blob_id}:{item.call_id}",
+                "kind": "derived_from",
+                "source": tree_node,
+                "target": f"call:{item.callee_name}",
+                "provenance": "ast",
+                "authoritative": True,
+                "revision": revision,
+                "task_id": task_id,
+                "call_id": item.call_id,
+                "callee_name": item.callee_name,
+                "start_byte": item.span.start_byte,
+                "end_byte": item.span.end_byte,
+                "source_cid": projection.source_cid,
+                "ast_cid": projection.ast_cid,
+            }
+        )
+    edges.sort(key=lambda edge: str(edge["edge_id"]))
+    return tuple(edges)
+
+
+def _parity_digest(value: Any) -> str:
+    """SHA-256 over canonical JSON that admits AST float timestamps.
+
+    The software-contract structured CID profile rejects floats.  Catalog
+    rows intentionally carry ``created_at`` as float epoch seconds, so
+    differential parity digests use a local JSON profile that preserves
+    exact values (including floats) without inventing a second CID scheme
+    for operational identity.
+    """
+
+    import hashlib
+
+    encoded = json.dumps(
+        value,
+        ensure_ascii=False,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def differential_parity(
+    json_bundle: Mapping[str, Any],
+    db_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Compare JSON-bundle and DB projection payloads for differential parity.
+
+    Identity fields (source/hash/span/CID) must match exactly.  Table families
+    and row digests must agree.  Returns a structured report; never silently
+    treats a mismatch as success.
+    """
+
+    if not isinstance(json_bundle, Mapping) or not isinstance(db_payload, Mapping):
+        raise ASTShadowError("differential_parity requires mapping payloads")
+
+    json_identity = dict(json_bundle.get("identity") or {})
+    db_identity = dict(db_payload.get("identity") or {})
+    identity_fields = (
+        "source_cid",
+        "ast_cid",
+        "blob_id",
+        "path",
+        "revision",
+        "revision_id",
+        "repository_id",
+        "language",
+        "parse_status",
+    )
+    identity_mismatches: list[str] = []
+    for name in identity_fields:
+        if json_identity.get(name) != db_identity.get(name):
+            identity_mismatches.append(name)
+
+    # Span-bearing families: exact sorted JSON digests.
+    span_families = (
+        "symbols",
+        "imports",
+        "calls",
+        "effects",
+        "diagnostics",
+        "nodes",
+        "scopes",
+        "references",
+        "interfaces",
+    )
+    family_mismatches: list[str] = []
+    family_digests: dict[str, dict[str, str]] = {}
+    for family in span_families:
+        left_rows = list(json_bundle.get(family) or [])
+        right_rows = list(db_payload.get(family) or [])
+        left_digest = _parity_digest({"family": family, "rows": left_rows})
+        right_digest = _parity_digest({"family": family, "rows": right_rows})
+        family_digests[family] = {
+            "json": left_digest,
+            "db": right_digest,
+        }
+        if left_digest != right_digest or len(left_rows) != len(right_rows):
+            family_mismatches.append(family)
+
+    counts_json = dict(json_bundle.get("table_row_counts") or {})
+    counts_db = dict(db_payload.get("table_row_counts") or {})
+    counts_match = counts_json == counts_db
+
+    matched = (
+        not identity_mismatches
+        and not family_mismatches
+        and counts_match
+        and json_identity.get("source_cid")
+        and json_identity.get("ast_cid")
+    )
+    return {
+        "schema": f"{AST_SHADOW_SCHEMA}/differential-parity",
+        "matched": bool(matched),
+        "identity_mismatches": identity_mismatches,
+        "family_mismatches": family_mismatches,
+        "family_digests": family_digests,
+        "counts_match": counts_match,
+        "json_identity": json_identity,
+        "db_identity": db_identity,
+        "json_counts": counts_json,
+        "db_counts": counts_db,
+    }
+
+
+def _language_for_path(path: str) -> str:
+    lower = str(path or "").lower()
+    for ext in _PYTHON_EXTENSIONS:
+        if lower.endswith(ext):
+            return "python"
+    for ext in _TYPESCRIPT_EXTENSIONS:
+        if lower.endswith(ext):
+            if lower.endswith((".js", ".jsx", ".mjs", ".cjs")):
+                return "javascript"
+            return "typescript"
+    return detect_language(path)
+
+
+@dataclass(frozen=True, slots=True)
+class ASTShadowFileResult:
+    """Per-file outcome of a shadow extraction batch."""
+
+    path: str
+    source_cid: str
+    language: str
+    status: str  # parsed | parse_failed | skipped
+    blob_id: str | None
+    ast_cid: str | None
+    authority_key: str | None
+    operation_id: str | None
+    parse_error: str
+    symbol_count: int = 0
+    import_count: int = 0
+    call_count: int = 0
+    effect_count: int = 0
+    diagnostic_count: int = 0
+    evidence_edge_count: int = 0
+    blocked_unrelated: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "path": self.path,
+            "source_cid": self.source_cid,
+            "language": self.language,
+            "status": self.status,
+            "blob_id": self.blob_id,
+            "ast_cid": self.ast_cid,
+            "authority_key": self.authority_key,
+            "operation_id": self.operation_id,
+            "parse_error": self.parse_error,
+            "symbol_count": self.symbol_count,
+            "import_count": self.import_count,
+            "call_count": self.call_count,
+            "effect_count": self.effect_count,
+            "diagnostic_count": self.diagnostic_count,
+            "evidence_edge_count": self.evidence_edge_count,
+            "blocked_unrelated": self.blocked_unrelated,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ASTShadowBatchResult:
+    """Aggregate result for a multi-file shadow extraction."""
+
+    repository_id: str
+    revision: str
+    results: tuple[ASTShadowFileResult, ...]
+    projections: tuple[Any, ...]
+    json_bundles: tuple[dict[str, Any], ...]
+    evidence_edges: tuple[dict[str, Any], ...]
+    parity_reports: tuple[dict[str, Any], ...]
+    parsed_count: int
+    parse_failed_count: int
+    skipped_count: int
+    durable_parse_failures: int
+
+    @property
+    def ok(self) -> bool:
+        # Batch succeeds when no file blocked another (failures are durable).
+        return all(not item.blocked_unrelated for item in self.results)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": f"{AST_SHADOW_SCHEMA}/batch",
+            "owner_task_id": AST_SHADOW_OWNER_TASK,
+            "repository_id": self.repository_id,
+            "revision": self.revision,
+            "ok": self.ok,
+            "parsed_count": self.parsed_count,
+            "parse_failed_count": self.parse_failed_count,
+            "skipped_count": self.skipped_count,
+            "durable_parse_failures": self.durable_parse_failures,
+            "results": [item.to_dict() for item in self.results],
+            "evidence_edge_count": len(self.evidence_edges),
+            "parity_matched_count": sum(
+                1 for item in self.parity_reports if item.get("matched")
+            ),
+            "parity_total": len(self.parity_reports),
+        }
+
+
+class ASTAuthorityShadowWriter:
+    """Write normalized AST catalog facts through the authority port.
+
+    In shadow mode the JSON bundle (legacy) remains authority while DuckDB
+    receives an outbox projection of the same closed payload.  Callers bind
+    an optional in-process :class:`DuckDBASTStore` so DB-side consumers and
+    differential parity share one projection object identity.
+    """
+
+    def __init__(
+        self,
+        authority_port: Any,
+        *,
+        ast_store: Any | None = None,
+        writer_id: str = "writer:ast-shadow",
+        task_id: str = AST_SHADOW_OWNER_TASK,
+    ) -> None:
+        if authority_port is None:
+            raise ASTShadowError("authority_port is required")
+        self._port = authority_port
+        self._writer_id = str(writer_id or "writer:ast-shadow")
+        self._task_id = str(task_id or AST_SHADOW_OWNER_TASK)
+        self._lock = threading.RLock()
+        if ast_store is None:
+            from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+                build_duckdb_ast_store,
+            )
+
+            self._store = build_duckdb_ast_store()
+        else:
+            self._store = ast_store
+        self._stats = {
+            "writes": 0,
+            "parse_failures": 0,
+            "parity_checks": 0,
+            "parity_matches": 0,
+            "evidence_edges": 0,
+        }
+
+    @property
+    def interface(self) -> str:
+        return AST_SHADOW_INTERFACE
+
+    @property
+    def port(self) -> Any:
+        return self._port
+
+    @property
+    def store(self) -> Any:
+        return self._store
+
+    @property
+    def domain(self) -> str:
+        return getattr(self._port, "domain", AST_AUTHORITY_DOMAIN)
+
+    def stats(self) -> dict[str, int]:
+        with self._lock:
+            return dict(self._stats)
+
+    def write_projection(
+        self,
+        projection: Any,
+        *,
+        operation_id: str | None = None,
+        also_write_evidence_edges: bool = True,
+    ) -> dict[str, Any]:
+        """Write one catalog projection as JSON bundle + DB shadow payload."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            ASTCatalogProjection,
+        )
+
+        if type(projection) is not ASTCatalogProjection:
+            raise ASTShadowError(
+                "write_projection requires an exact ASTCatalogProjection"
+            )
+        key = authority_key_for_projection(projection)
+        json_bundle = json_bundle_from_projection(projection)
+        # Authority payload is the full catalog projection (DB shadow target).
+        db_payload = projection_to_authority_payload(projection)
+        # Legacy surface is the JSON bundle; DB surface is the full projection.
+        # In shadow mode the port writes the same payload to both sides, so we
+        # store a closed dual document that embeds both views for parity.
+        dual = {
+            "schema": AST_SHADOW_SCHEMA,
+            "interface": AST_SHADOW_INTERFACE,
+            "owner_task_id": self._task_id,
+            "kind": "ast_shadow_dual",
+            "identity": dict(db_payload["identity"]),
+            "json_bundle": json_bundle,
+            "db_projection": db_payload,
+        }
+        op_id = operation_id or f"op:ast:{projection.blob_id}"
+        with self._lock:
+            self._store.put_projection(projection)
+            write_result = self._port.write(key, dual, operation_id=op_id)
+            self._stats["writes"] += 1
+            if projection.ast_blob.parse_status == "failed":
+                self._stats["parse_failures"] += 1
+            evidence_edges: tuple[dict[str, Any], ...] = ()
+            if also_write_evidence_edges:
+                evidence_edges = evidence_edges_from_projection(
+                    projection, task_id=self._task_id
+                )
+                for edge in evidence_edges:
+                    edge_key = f"evidence:{edge['edge_id']}"
+                    edge_op = f"op:evidence:{edge['edge_id']}"
+                    self._port.write(edge_key, edge, operation_id=edge_op)
+                    self._stats["evidence_edges"] += 1
+        return {
+            "ok": bool(write_result.get("ok", True)),
+            "authority_key": key,
+            "operation_id": write_result.get("operation_id", op_id),
+            "mode": write_result.get("mode"),
+            "authority": write_result.get("authority"),
+            "payload_digest": write_result.get("payload_digest"),
+            "json_bundle": json_bundle,
+            "db_projection": db_payload,
+            "dual": dual,
+            "evidence_edges": list(evidence_edges),
+            "write_result": write_result,
+            "atomic_across_filesystems": False,
+        }
+
+    def write_record(
+        self,
+        record: Any,
+        *,
+        operation_id: str | None = None,
+        created_at: float | None = None,
+    ) -> dict[str, Any]:
+        """Project an :class:`ASTRecord` and write it through the port."""
+
+        from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_ast_record,
+        )
+
+        if type(record) is not ASTRecord:
+            raise ASTShadowError("write_record requires an exact ASTRecord")
+        projection = project_ast_record(record, created_at=created_at)
+        return self.write_projection(projection, operation_id=operation_id)
+
+    def write_parse_failure(
+        self,
+        *,
+        provenance: Any,
+        language: str,
+        message: str,
+        operation_id: str | None = None,
+        frontend_name: str = "unknown",
+        frontend_version: str = "unknown",
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Record a durable parse failure without aborting a multi-file batch."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_parse_failure,
+        )
+
+        projection = project_parse_failure(
+            provenance=provenance,
+            language=language,
+            message=message,
+            frontend_name=frontend_name,
+            frontend_version=frontend_version,
+            **kwargs,
+        )
+        return self.write_projection(projection, operation_id=operation_id)
+
+    def emit_parity(self, authority_key: str) -> dict[str, Any]:
+        """Emit port parity and differential JSON/DB parity for one key."""
+
+        receipt = self._port.emit_parity_receipt(authority_key)
+        legacy = self._port.backend.get_legacy(self.domain, authority_key)
+        db = self._port.backend.get_db(self.domain, authority_key)
+        report: dict[str, Any] = {
+            "authority_key": authority_key,
+            "port_parity_matched": bool(getattr(receipt, "matched", False)),
+            "port_parity_receipt_cid": getattr(receipt, "receipt_cid", ""),
+            "port_mismatch_reason": getattr(receipt, "mismatch_reason", ""),
+            "differential": None,
+        }
+        if (
+            isinstance(legacy, Mapping)
+            and isinstance(db, Mapping)
+            and legacy.get("kind") == "ast_shadow_dual"
+        ):
+            diff = differential_parity(
+                dict(legacy.get("json_bundle") or {}),
+                dict(db.get("db_projection") or {}),
+            )
+            # Also require both dual documents to agree on identity digests.
+            dual_match = (
+                dict(legacy.get("identity") or {})
+                == dict(db.get("identity") or {})
+            )
+            report["differential"] = diff
+            report["dual_identity_match"] = dual_match
+            report["matched"] = bool(
+                report["port_parity_matched"]
+                and diff.get("matched")
+                and dual_match
+            )
+        else:
+            report["matched"] = bool(report["port_parity_matched"])
+        with self._lock:
+            self._stats["parity_checks"] += 1
+            if report["matched"]:
+                self._stats["parity_matches"] += 1
+        return report
+
+    def extract_and_shadow(
+        self,
+        sources: Sequence[Mapping[str, Any] | tuple[Any, ...]],
+        *,
+        repository_id: str = "repository:shadow",
+        revision: str = "unversioned",
+        repository_tree_cid: str | None = None,
+        python_frontend: Any | None = None,
+        typescript_frontend: Any | None = None,
+        continue_on_parse_failure: bool = True,
+    ) -> ASTShadowBatchResult:
+        """Extract AST IR from sources and write each through the authority port.
+
+        Python and TypeScript parse failures become durable diagnostics.
+        When ``continue_on_parse_failure`` is true (default), a failure on one
+        path never blocks unrelated files in the same batch.
+        """
+
+        from ipfs_datasets_py.logic.software_contracts.ast_ir import (
+            SourceProvenance,
+        )
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_ast_record,
+            project_parse_failure,
+        )
+        from ipfs_datasets_py.logic.software_contracts.python_frontend import (
+            PythonASTExtractor,
+        )
+
+        py_fe = python_frontend or PythonASTExtractor()
+        ts_fe = typescript_frontend  # optional; may be absent in hermetic envs
+
+        results: list[ASTShadowFileResult] = []
+        projections: list[Any] = []
+        bundles: list[dict[str, Any]] = []
+        all_edges: list[dict[str, Any]] = []
+        parity_reports: list[dict[str, Any]] = []
+        parsed = 0
+        failed = 0
+        skipped = 0
+        durable_failures = 0
+        blocked = False
+
+        for index, raw in enumerate(sources):
+            if blocked and not continue_on_parse_failure:
+                # Unreachable when continue_on_parse_failure is true (default).
+                break
+            path, source_bytes, language = _coerce_shadow_source(
+                raw, index=index
+            )
+            source_cid = cid_for_bytes(source_bytes)
+            language = language or _language_for_path(path)
+            provenance = SourceProvenance(
+                source_cid=source_cid,
+                path=path,
+                repository_id=repository_id,
+                revision=revision,
+                repository_tree_cid=repository_tree_cid,
+            )
+            try:
+                parse_error = ""
+                status: str | None = None
+                projection = None
+
+                if language == "python":
+                    record = py_fe.extract_from_source(
+                        source_bytes,
+                        path=path,
+                        repository_id=repository_id,
+                        revision=revision,
+                        repository_tree_cid=repository_tree_cid,
+                    )
+                    if _record_is_parse_failure(record):
+                        parse_error = _record_parse_error(record)
+                        projection = project_parse_failure(
+                            provenance=provenance,
+                            language=language,
+                            message=parse_error or "python parse failure",
+                            frontend_name=getattr(
+                                py_fe.capability, "frontend_name", "cpython-ast"
+                            ),
+                            frontend_version=getattr(
+                                py_fe.capability,
+                                "frontend_version",
+                                "unknown",
+                            ),
+                        )
+                        status = "parse_failed"
+                    else:
+                        projection = project_ast_record(record)
+                        status = "parsed"
+                elif language in {"typescript", "javascript"}:
+                    active_ts = ts_fe
+                    if active_ts is None:
+                        try:
+                            from ipfs_datasets_py.logic.software_contracts.typescript_frontend import (
+                                TypeScriptFrontend,
+                            )
+
+                            active_ts = TypeScriptFrontend()
+                            ts_fe = active_ts
+                        except Exception as exc:  # noqa: BLE001
+                            projection = project_parse_failure(
+                                provenance=provenance,
+                                language=language,
+                                message=(
+                                    f"typescript frontend unavailable: {exc}"
+                                ),
+                                frontend_name="typescript-compiler-api",
+                                frontend_version="unavailable",
+                            )
+                            status = "parse_failed"
+                            parse_error = str(exc)
+                    if status is None and active_ts is not None:
+                        try:
+                            record = active_ts.extract(
+                                source_bytes,
+                                path=path,
+                                repository_id=repository_id,
+                                revision=revision,
+                                repository_tree_cid=repository_tree_cid,
+                            )
+                            ts_version = "unknown"
+                            if hasattr(active_ts, "capability"):
+                                ts_version = getattr(
+                                    active_ts.capability,
+                                    "frontend_version",
+                                    "unknown",
+                                )
+                            if _record_is_parse_failure(record):
+                                parse_error = _record_parse_error(record)
+                                projection = project_parse_failure(
+                                    provenance=provenance,
+                                    language=language,
+                                    message=(
+                                        parse_error
+                                        or "typescript parse failure"
+                                    ),
+                                    frontend_name="typescript-compiler-api",
+                                    frontend_version=str(ts_version),
+                                )
+                                status = "parse_failed"
+                            else:
+                                projection = project_ast_record(record)
+                                status = "parsed"
+                        except Exception as exc:  # noqa: BLE001
+                            projection = project_parse_failure(
+                                provenance=provenance,
+                                language=language,
+                                message=str(exc),
+                                frontend_name="typescript-compiler-api",
+                                frontend_version="error",
+                            )
+                            status = "parse_failed"
+                            parse_error = str(exc)
+                    if status is None:
+                        projection = project_parse_failure(
+                            provenance=provenance,
+                            language=language,
+                            message="typescript frontend unavailable",
+                            frontend_name="typescript-compiler-api",
+                            frontend_version="unavailable",
+                        )
+                        status = "parse_failed"
+                        parse_error = "typescript frontend unavailable"
+                else:
+                    results.append(
+                        ASTShadowFileResult(
+                            path=path,
+                            source_cid=source_cid,
+                            language=language,
+                            status="skipped",
+                            blob_id=None,
+                            ast_cid=None,
+                            authority_key=None,
+                            operation_id=None,
+                            parse_error="",
+                        )
+                    )
+                    skipped += 1
+                    continue
+
+                assert projection is not None and status is not None
+                write = self.write_projection(projection)
+                parity = self.emit_parity(write["authority_key"])
+                parity_reports.append(parity)
+                projections.append(projection)
+                bundles.append(write["json_bundle"])
+                all_edges.extend(write["evidence_edges"])
+                if status == "parsed":
+                    parsed += 1
+                else:
+                    failed += 1
+                    durable_failures += 1
+                results.append(
+                    ASTShadowFileResult(
+                        path=path,
+                        source_cid=source_cid,
+                        language=language,
+                        status=status,
+                        blob_id=projection.blob_id,
+                        ast_cid=projection.ast_cid,
+                        authority_key=write["authority_key"],
+                        operation_id=write["operation_id"],
+                        parse_error=parse_error
+                        or projection.ast_blob.parse_error,
+                        symbol_count=len(projection.symbols),
+                        import_count=len(projection.imports),
+                        call_count=len(projection.calls),
+                        effect_count=len(projection.effects),
+                        diagnostic_count=len(projection.diagnostics),
+                        evidence_edge_count=len(write["evidence_edges"]),
+                        blocked_unrelated=False,
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 — durable, non-blocking
+                if not continue_on_parse_failure:
+                    raise
+                try:
+                    write = self.write_parse_failure(
+                        provenance=provenance,
+                        language=language,
+                        message=str(exc),
+                        frontend_name="repository-shadow",
+                        frontend_version=AST_SHADOW_OWNER_TASK,
+                    )
+                    parity = self.emit_parity(write["authority_key"])
+                    parity_reports.append(parity)
+                    blob_id = write["db_projection"]["identity"]["blob_id"]
+                    stored = self._store.get(blob_id)
+                    if stored is not None:
+                        projections.append(stored)
+                    bundles.append(write["json_bundle"])
+                    all_edges.extend(write["evidence_edges"])
+                    durable_failures += 1
+                    failed += 1
+                    results.append(
+                        ASTShadowFileResult(
+                            path=path,
+                            source_cid=source_cid,
+                            language=language,
+                            status="parse_failed",
+                            blob_id=blob_id,
+                            ast_cid=write["db_projection"]["identity"][
+                                "ast_cid"
+                            ],
+                            authority_key=write["authority_key"],
+                            operation_id=write["operation_id"],
+                            parse_error=str(exc),
+                            diagnostic_count=1,
+                            evidence_edge_count=len(write["evidence_edges"]),
+                            blocked_unrelated=False,
+                        )
+                    )
+                except Exception as inner:  # noqa: BLE001
+                    failed += 1
+                    durable_failures += 1
+                    results.append(
+                        ASTShadowFileResult(
+                            path=path,
+                            source_cid=source_cid,
+                            language=language,
+                            status="parse_failed",
+                            blob_id=None,
+                            ast_cid=None,
+                            authority_key=None,
+                            operation_id=None,
+                            parse_error=f"{exc}; recovery={inner}",
+                            blocked_unrelated=False,
+                        )
+                    )
+
+        return ASTShadowBatchResult(
+            repository_id=repository_id,
+            revision=revision,
+            results=tuple(results),
+            projections=tuple(p for p in projections if p is not None),
+            json_bundles=tuple(bundles),
+            evidence_edges=tuple(all_edges),
+            parity_reports=tuple(parity_reports),
+            parsed_count=parsed,
+            parse_failed_count=failed,
+            skipped_count=skipped,
+            durable_parse_failures=durable_failures,
+        )
+
+
+def _coerce_shadow_source(
+    raw: Mapping[str, Any] | tuple[Any, ...] | list[Any],
+    *,
+    index: int,
+) -> tuple[str, bytes, str]:
+    if isinstance(raw, Mapping):
+        path = str(raw.get("path") or f"source_{index}.py")
+        source = raw.get("source")
+        if source is None:
+            source = raw.get("bytes") or raw.get("content") or b""
+        language = str(raw.get("language") or "")
+    elif isinstance(raw, (tuple, list)):
+        if len(raw) < 2:
+            raise ASTShadowError(
+                "source tuples must be (path, bytes[, language])"
+            )
+        path = str(raw[0])
+        source = raw[1]
+        language = str(raw[2]) if len(raw) > 2 else ""
+    else:
+        raise ASTShadowError("source entries must be mappings or tuples")
+    if isinstance(source, str):
+        source_bytes = source.encode("utf-8")
+    elif isinstance(source, (bytes, bytearray, memoryview)):
+        source_bytes = bytes(source)
+    else:
+        raise ASTShadowError(f"source for {path!r} must be str or bytes")
+    return path, source_bytes, language
+
+
+def _record_is_parse_failure(record: Any) -> bool:
+    """Heuristic: treat frontend failure records as parse failures.
+
+    The Python frontend returns valid ASTRecords with diagnostics/unsupported
+    constructs for many failure modes rather than raising.  Codes containing
+    ``invalid`` / ``parse`` / ``syntax`` / ``resource`` mark durable failures.
+    Empty modules with only failure diagnostics are also treated as failures.
+    """
+
+    if record is None:
+        return True
+    codes: list[str] = []
+    for item in getattr(record, "diagnostics", ()) or ():
+        codes.append(str(getattr(item, "code", "") or ""))
+    for item in getattr(record, "unsupported", ()) or ():
+        codes.append(str(getattr(item, "code", "") or ""))
+    failure_tokens = (
+        "invalid",
+        "parse",
+        "syntax",
+        "resource",
+        "encoding",
+        "oversized",
+        "timeout",
+        "unavailable",
+        "compiler",
+        "worker",
+    )
+    for code in codes:
+        lower = code.lower()
+        if any(token in lower for token in failure_tokens):
+            # Pure warning diagnostics should not force failure when symbols exist.
+            if getattr(record, "symbols", None) and "warning" in lower:
+                continue
+            if not getattr(record, "symbols", ()) and not getattr(
+                record, "imports", ()
+            ):
+                return True
+            if any(
+                token in lower
+                for token in ("syntax", "invalid_encoding", "parse", "oversized")
+            ):
+                return True
+    return False
+
+
+def _record_parse_error(record: Any) -> str:
+    messages: list[str] = []
+    for item in getattr(record, "diagnostics", ()) or ():
+        messages.append(
+            f"{getattr(item, 'code', '')}: {getattr(item, 'message', '')}"
+        )
+    for item in getattr(record, "unsupported", ()) or ():
+        messages.append(
+            f"{getattr(item, 'code', '')}: {getattr(item, 'reason', '')}"
+        )
+    return "; ".join(m for m in messages if m.strip()) or "parse failure"
+
+
+def build_ast_authority_shadow_writer(
+    authority_port: Any | None = None,
+    *,
+    domain: str = AST_AUTHORITY_DOMAIN,
+    initial_mode: str = "shadow",
+    ast_store: Any | None = None,
+    writer_id: str = "writer:ast-shadow",
+    task_id: str = AST_SHADOW_OWNER_TASK,
+) -> ASTAuthorityShadowWriter:
+    """Construct a shadow writer, optionally building a hermetic authority port."""
+
+    if authority_port is None:
+        from ipfs_datasets_py.duckdb_control.authority_transition import (
+            AuthorityMode,
+            build_authority_port,
+        )
+
+        authority_port = build_authority_port(
+            domain=domain,
+            initial_mode=AuthorityMode.parse(initial_mode),
+            writer_id=writer_id,
+        )
+    return ASTAuthorityShadowWriter(
+        authority_port,
+        ast_store=ast_store,
+        writer_id=writer_id,
+        task_id=task_id,
+    )
+
+
+def extract_repository_ast_shadow(
+    sources: Sequence[Mapping[str, Any] | tuple[Any, ...]],
+    *,
+    repository_id: str = "repository:shadow",
+    revision: str = "unversioned",
+    repository_tree_cid: str | None = None,
+    authority_port: Any | None = None,
+    **kwargs: Any,
+) -> ASTShadowBatchResult:
+    """Convenience entry: extract sources and shadow-write through the port."""
+
+    writer = build_ast_authority_shadow_writer(authority_port)
+    return writer.extract_and_shadow(
+        sources,
+        repository_id=repository_id,
+        revision=revision,
+        repository_tree_cid=repository_tree_cid,
+        **kwargs,
+    )
+
+
 __all__ = [
     "ALL_DISPOSITIONS",
+    "ASTAuthorityShadowWriter",
+    "ASTShadowBatchResult",
+    "ASTShadowError",
+    "ASTShadowFileResult",
+    "AST_AUTHORITY_DOMAIN",
+    "AST_EVIDENCE_EDGE_SCHEMA",
+    "AST_JSON_BUNDLE_SCHEMA",
+    "AST_SHADOW_INTERFACE",
+    "AST_SHADOW_OWNER_TASK",
+    "AST_SHADOW_SCHEMA",
     "COVERAGE_EXCLUDED_SEMANTIC",
     "COVERAGE_INCOMPLETE",
     "COVERAGE_INVENTORIED",
@@ -1549,7 +2612,9 @@ __all__ = [
     "ShardPlanEntry",
     "TASK_ID",
     "TrackedBlob",
+    "authority_key_for_projection",
     "batch_blob_bytes",
+    "build_ast_authority_shadow_writer",
     "build_repository_snapshot",
     "build_snapshot_from_entries",
     "build_tracked_blobs_for_root",
@@ -1557,9 +2622,14 @@ __all__ = [
     "cid_for_blob_bytes",
     "classify_blob",
     "detect_language",
+    "differential_parity",
+    "evidence_edges_from_projection",
+    "extract_repository_ast_shadow",
     "is_git_checkout",
+    "json_bundle_from_projection",
     "list_tree_entries",
     "load_repository_root_manifest",
+    "projection_to_authority_payload",
     "validate_repository_root_manifest",
     "write_repository_root_manifest",
 ]
