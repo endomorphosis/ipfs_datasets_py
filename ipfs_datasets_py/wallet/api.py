@@ -25,8 +25,15 @@ from pydantic import BaseModel, Field
 
 from . import DataWalletError, WalletService
 from .crypto import sha256_hex
+from .duckdb_repository import (
+    MutationKind,
+    WalletDuckDBRepository,
+    build_wallet_duckdb_repository,
+    new_operation_id,
+)
 from .manifest import canonical_bytes
 from .models import AnalyticsTemplate, AccessRequest, ApprovalRequest, AuditEvent, GrantReceipt, ProofReceipt
+from .repository import LocalWalletRepository
 from .storage import LocalEncryptedBlobStore
 from .ucan import invocation_from_token, invocation_to_token, resource_for_export, resource_for_record
 
@@ -597,15 +604,59 @@ def _require_magic_ucan(
     raise HTTPException(status_code=403, detail="UCAN does not allow this recovery action")
 
 
+# Process-local DuckDB shadow event port shared by API persistence (DQK-074).
+_API_EVENT_PORT: WalletDuckDBRepository | None = None
+
+
+def get_api_event_port() -> WalletDuckDBRepository:
+    """Return the process-local API shadow event port (idempotent)."""
+
+    global _API_EVENT_PORT
+    if _API_EVENT_PORT is None:
+        _API_EVENT_PORT = build_wallet_duckdb_repository()
+    return _API_EVENT_PORT
+
+
+def reset_api_event_port(port: WalletDuckDBRepository | None = None) -> WalletDuckDBRepository:
+    """Replace the process-local API event port (tests / reconfiguration)."""
+
+    global _API_EVENT_PORT
+    _API_EVENT_PORT = port if port is not None else build_wallet_duckdb_repository()
+    return _API_EVENT_PORT
+
+
+def _wallet_repository(wallet_dir: Path) -> LocalWalletRepository:
+    return LocalWalletRepository(wallet_dir, shadow=get_api_event_port())
+
+
 def _new_service(blob_dir: Path) -> WalletService:
-    return WalletService(storage_backend=LocalEncryptedBlobStore(blob_dir))
+    service = WalletService(storage_backend=LocalEncryptedBlobStore(blob_dir))
+    service.attach_event_port(get_api_event_port())
+    return service
 
 
-def _save_wallet_snapshot(service: WalletService, wallet_dir: Path, wallet_id: str) -> None:
-    wallet_dir.mkdir(parents=True, exist_ok=True)
-    wallet_path(wallet_dir, wallet_id).write_text(
-        json.dumps(service.export_wallet_snapshot(wallet_id), sort_keys=True),
-        encoding="utf-8",
+def _save_wallet_snapshot(
+    service: WalletService,
+    wallet_dir: Path,
+    wallet_id: str,
+    *,
+    operation_id: str | None = None,
+) -> None:
+    """Persist wallet JSON via LocalWalletRepository and shadow DuckDB (DQK-074)."""
+
+    repo = _wallet_repository(wallet_dir)
+    op_id = operation_id or new_operation_id("api-wallet")
+    repo.save(service, wallet_id, operation_id=op_id)
+    # Also record an explicit API-layer mutation envelope for callers that
+    # inspect mutation receipts by kind.
+    get_api_event_port().record_mutation(
+        action="api/wallet_snapshot",
+        resource=f"wallet://{wallet_id}/manifest",
+        wallet_id=wallet_id,
+        kind=MutationKind.API,
+        operation_id=f"{op_id}:api",
+        projection_key=f"wallet:{wallet_id}",
+        projection=repo.shadow.get_wallet_projection(wallet_id) if repo.shadow else None,
     )
 
 
@@ -616,7 +667,8 @@ def _load_wallet_service(wallet_id: str, wallet_dir: Path | None = None, blob_di
     if not path.exists():
         raise HTTPException(status_code=404, detail=f"Wallet not found: {wallet_id}")
     service = _new_service(blob_root)
-    service.import_wallet_snapshot(json.loads(path.read_text(encoding="utf-8")))
+    repo = _wallet_repository(manifest_dir)
+    repo.load(service, wallet_id)
     return service
 
 
