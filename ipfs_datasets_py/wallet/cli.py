@@ -10,6 +10,13 @@ from typing import Any, Dict, Iterable, Optional
 
 from ipfs_datasets_py.wallet import WalletService
 from ipfs_datasets_py.wallet.crypto import random_key
+from ipfs_datasets_py.wallet.duckdb_repository import (
+    MutationKind,
+    WalletDuckDBRepository,
+    build_wallet_duckdb_repository,
+    new_operation_id,
+)
+from ipfs_datasets_py.wallet.repository import LocalWalletRepository
 from ipfs_datasets_py.wallet.storage import LocalEncryptedBlobStore
 from ipfs_datasets_py.wallet.ucan import (
     invocation_from_token,
@@ -44,25 +51,62 @@ def _key_from_arg(value: str) -> bytes:
     return key
 
 
+# Process-local DuckDB shadow event port shared by CLI persistence (DQK-074).
+_CLI_EVENT_PORT: WalletDuckDBRepository | None = None
+
+
+def get_cli_event_port() -> WalletDuckDBRepository:
+    """Return the process-local CLI shadow event port (idempotent)."""
+
+    global _CLI_EVENT_PORT
+    if _CLI_EVENT_PORT is None:
+        _CLI_EVENT_PORT = build_wallet_duckdb_repository()
+    return _CLI_EVENT_PORT
+
+
+def reset_cli_event_port(port: WalletDuckDBRepository | None = None) -> WalletDuckDBRepository:
+    """Replace the process-local CLI event port (tests / reconfiguration)."""
+
+    global _CLI_EVENT_PORT
+    _CLI_EVENT_PORT = port if port is not None else build_wallet_duckdb_repository()
+    return _CLI_EVENT_PORT
+
+
 def _wallet_path(wallet_dir: Path, wallet_id: str) -> Path:
     return wallet_dir / f"{wallet_id}.json"
 
 
+def _wallet_repository(wallet_dir: Path) -> LocalWalletRepository:
+    return LocalWalletRepository(wallet_dir, shadow=get_cli_event_port())
+
+
 def _service(blob_dir: Path) -> WalletService:
-    return WalletService(storage_backend=LocalEncryptedBlobStore(blob_dir))
+    service = WalletService(storage_backend=LocalEncryptedBlobStore(blob_dir))
+    service.attach_event_port(get_cli_event_port())
+    return service
 
 
 def _save(service: WalletService, wallet_dir: Path, wallet_id: str) -> Path:
-    wallet_dir.mkdir(parents=True, exist_ok=True)
-    path = _wallet_path(wallet_dir, wallet_id)
-    path.write_text(json.dumps(service.export_wallet_snapshot(wallet_id), sort_keys=True, indent=2), encoding="utf-8")
+    """Persist wallet JSON via LocalWalletRepository and shadow DuckDB (DQK-074)."""
+
+    repo = _wallet_repository(wallet_dir)
+    op_id = new_operation_id("cli-wallet")
+    path = repo.save(service, wallet_id, operation_id=op_id)
+    get_cli_event_port().record_mutation(
+        action="cli/wallet_snapshot",
+        resource=f"wallet://{wallet_id}/manifest",
+        wallet_id=wallet_id,
+        kind=MutationKind.CLI,
+        operation_id=f"{op_id}:cli",
+        projection_key=f"wallet:{wallet_id}",
+        projection=repo.shadow.get_wallet_projection(wallet_id) if repo.shadow else None,
+    )
     return path
 
 
 def _load(wallet_dir: Path, blob_dir: Path, wallet_id: str) -> WalletService:
     service = _service(blob_dir)
-    snapshot = json.loads(_wallet_path(wallet_dir, wallet_id).read_text(encoding="utf-8"))
-    service.import_wallet_snapshot(snapshot)
+    _wallet_repository(wallet_dir).load(service, wallet_id)
     return service
 
 
@@ -70,8 +114,7 @@ def _load_all(wallet_dir: Path, blob_dir: Path) -> WalletService:
     service = _service(blob_dir)
     if not wallet_dir.exists():
         return service
-    for path in sorted(wallet_dir.glob("wallet-*.json")):
-        service.import_wallet_snapshot(json.loads(path.read_text(encoding="utf-8")))
+    _wallet_repository(wallet_dir).load_all(service)
     return service
 
 
