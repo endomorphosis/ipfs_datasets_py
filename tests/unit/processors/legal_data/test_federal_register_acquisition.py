@@ -446,7 +446,7 @@ def test_live_authority_rejects_injected_transport_and_partial_range() -> None:
         )
 
 
-def test_partition_follows_exact_official_cursor_chain() -> None:
+def test_partition_follows_exact_official_rails_continuation_chain() -> None:
     config = AcquisitionConfig(
         mode=AcquisitionMode.LIVE,
         resume=False,
@@ -468,9 +468,15 @@ def test_partition_follows_exact_official_cursor_chain() -> None:
         per_page=2,
     )
     parsed = acquisition.urllib.parse.urlsplit(second_planned)
-    query = acquisition.urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
-    query.extend((("format", "json"), ("search_after_cursor", "sealed-cursor-2")))
-    cursor_url = acquisition.urllib.parse.urlunsplit(
+    query = list(
+        reversed(
+            acquisition.urllib.parse.parse_qsl(
+                parsed.query, keep_blank_values=True
+            )
+        )
+    )
+    query.append(("format", "json"))
+    continuation_url = acquisition.urllib.parse.urlunsplit(
         (
             "https",
             "www.federalregister.gov",
@@ -487,16 +493,17 @@ def test_partition_follows_exact_official_cursor_chain() -> None:
     payloads = (
         {
             "count": 3,
+            "description": "Official result summary",
             "total_pages": 2,
-            "current_page": 1,
             "results": rows[:2],
-            "next_page_url": cursor_url,
+            "next_page_url": continuation_url,
         },
         {
             "count": 3,
+            "description": "Official result summary",
             "total_pages": 2,
-            "current_page": 2,
             "results": rows[2:],
+            "previous_page_url": first_url,
         },
     )
     observed_urls: list[str] = []
@@ -513,11 +520,60 @@ def test_partition_follows_exact_official_cursor_chain() -> None:
         known_legal_ids={},
     )
 
-    assert observed_urls == [first_url, cursor_url]
+    assert observed_urls == [first_url, continuation_url]
     assert state.status.value == "closed"
-    assert [page.request_url for page in state.pages] == [first_url, cursor_url]
-    assert state.pages[0].next_page_url == cursor_url
+    assert [page.request_url for page in state.pages] == [
+        first_url,
+        continuation_url,
+    ]
+    assert state.pages[0].next_page_url == continuation_url
     assert state.pages[1].next_page_url is None
+
+
+def test_empty_partition_accepts_only_the_exact_upstream_controller_shape() -> None:
+    config = AcquisitionConfig(
+        mode=AcquisitionMode.LIVE,
+        resume=False,
+        checkpoint_dir=None,
+        rate_limit_seconds=0,
+    )
+    spec = plan_delta_partitions()[0]
+    payload = {"count": 0, "description": "No documents were found."}
+
+    def transport(_url, _headers):
+        return acquisition.canonical_json_dumps(payload).encode("utf-8"), payload
+
+    state = acquisition.acquire_partition(
+        spec,
+        config=config,
+        transport=transport,
+        known_legal_ids={},
+    )
+    assert state.status.value == "closed"
+    assert state.api_total == 0
+    assert len(state.pages) == 1
+    assert state.pages[0].result_count == 0
+
+    for extra in (
+        {"results": []},
+        {"total_pages": 0},
+        {"current_page": 1},
+    ):
+        malformed = payload | extra
+
+        def malformed_transport(_url, _headers):
+            return (
+                acquisition.canonical_json_dumps(malformed).encode("utf-8"),
+                malformed,
+            )
+
+        with pytest.raises(FederalRegisterAcquisitionError, match="exact schema"):
+            acquisition.acquire_partition(
+                spec,
+                config=config,
+                transport=malformed_transport,
+                known_legal_ids={},
+            )
 
 
 def test_live_checkpoint_is_only_accepted_after_fresh_official_replay(
@@ -539,8 +595,8 @@ def test_live_checkpoint_is_only_accepted_after_fresh_official_replay(
     }
     payload = {
         "count": 1,
+        "description": "Official result summary",
         "total_pages": 1,
-        "current_page": 1,
         "results": [row],
     }
     calls = 0

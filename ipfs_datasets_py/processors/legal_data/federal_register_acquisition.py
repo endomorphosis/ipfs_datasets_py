@@ -1016,9 +1016,9 @@ def _validate_documents_request_url(
     end_date: str,
     page: int,
     per_page: int,
-    allow_cursor: bool,
+    allow_canonical_equivalent: bool,
 ) -> str:
-    """Require the exact inventory request or official cursor continuation."""
+    """Require the planned request or its exact Rails URL serialization."""
 
     url = _require_non_empty_str(value, "documents request URL", maximum=4096)
     expected = build_documents_api_url(
@@ -1029,7 +1029,7 @@ def _validate_documents_request_url(
     )
     if url == expected:
         return url
-    if not allow_cursor:
+    if not allow_canonical_equivalent:
         raise PageFetchError("documents request URL is not the exact planned URL")
 
     parsed = urllib.parse.urlsplit(url)
@@ -1039,10 +1039,12 @@ def _validate_documents_request_url(
         or parsed.port is not None
         or parsed.username is not None
         or parsed.password is not None
-        or parsed.path != "/api/v1/documents"
+        or parsed.path not in {"/api/v1/documents", "/api/v1/documents.json"}
         or parsed.fragment
     ):
-        raise PageFetchError("cursor URL is not the exact FederalRegister.gov endpoint")
+        raise PageFetchError(
+            "continuation URL is not the exact FederalRegister.gov endpoint"
+        )
     try:
         observed_query = urllib.parse.parse_qs(
             parsed.query,
@@ -1055,22 +1057,33 @@ def _validate_documents_request_url(
             strict_parsing=True,
         )
     except ValueError as exc:
-        raise PageFetchError("cursor URL query is malformed") from exc
-    expected_keys = set(expected_query) | {"format", "search_after_cursor"}
-    if set(observed_query) != expected_keys:
-        raise PageFetchError("cursor URL query fields differ from the exact contract")
+        raise PageFetchError("continuation URL query is malformed") from exc
+    expected_keys = set(expected_query)
+    allowed_key_sets = {
+        frozenset(expected_keys),
+        frozenset(expected_keys | {"format"}),
+    }
+    if frozenset(observed_query) not in allowed_key_sets:
+        raise PageFetchError(
+            "continuation URL query fields differ from the exact contract"
+        )
     for key, expected_values in expected_query.items():
-        if observed_query.get(key) != expected_values:
-            raise PageFetchError(f"cursor URL query field {key!r} drifted")
-    cursor = observed_query.get("search_after_cursor")
-    if (
-        observed_query.get("format") != ["json"]
-        or not isinstance(cursor, list)
-        or len(cursor) != 1
-        or not cursor[0]
-        or len(cursor[0]) > 1024
-    ):
-        raise PageFetchError("cursor URL has an invalid format/cursor binding")
+        observed_values = observed_query.get(key)
+        if key == "fields[]":
+            if (
+                not isinstance(observed_values, list)
+                or len(observed_values) != len(expected_values)
+                or sorted(observed_values) != sorted(expected_values)
+            ):
+                raise PageFetchError(
+                    "continuation URL field projection drifted"
+                )
+        elif observed_values != expected_values:
+            raise PageFetchError(
+                f"continuation URL query field {key!r} drifted"
+            )
+    if "format" in observed_query and observed_query["format"] != ["json"]:
+        raise PageFetchError("continuation URL format drifted")
     return url
 
 
@@ -1400,9 +1413,7 @@ class FixtureApiTransport:
                 )
             payload = {
                 "count": 0,
-                "total_pages": 0,
-                "current_page": page_number,
-                "results": [],
+                "description": "Fixture Federal Register documents.json response",
             }
             body = canonical_json_dumps(payload).encode("utf-8")
             return body, payload
@@ -1411,9 +1422,7 @@ class FixtureApiTransport:
         if not pages:
             payload = {
                 "count": 0,
-                "total_pages": 0,
-                "current_page": page_number,
-                "results": [],
+                "description": "Fixture Federal Register documents.json response",
             }
             body = canonical_json_dumps(payload).encode("utf-8")
             return body, payload
@@ -1429,8 +1438,8 @@ class FixtureApiTransport:
             api_total = int(pages[0].get("api_total") or 0)
             payload = {
                 "count": api_total,
+                "description": "Fixture Federal Register documents.json response",
                 "total_pages": len(pages),
-                "current_page": page_number,
                 "results": [],
             }
             body = canonical_json_dumps(payload).encode("utf-8")
@@ -1443,7 +1452,6 @@ class FixtureApiTransport:
             "count": api_total,
             "description": "Fixture Federal Register documents.json response",
             "total_pages": total_pages,
-            "current_page": page_number,
             "results": results,
         }
         # Next page URL when more pages remain.
@@ -1452,6 +1460,13 @@ class FixtureApiTransport:
                 start_date=start,
                 end_date=end,
                 page=page_number + 1,
+                per_page=self.per_page,
+            )
+        if page_number > 1:
+            payload["previous_page_url"] = build_documents_api_url(
+                start_date=start,
+                end_date=end,
+                page=page_number - 1,
                 per_page=self.per_page,
             )
         body = canonical_json_dumps(payload).encode("utf-8")
@@ -2118,7 +2133,7 @@ def _restore_partition_state(
                 end_date=spec.end_date,
                 page=expected_number + 1,
                 per_page=config.per_page,
-                allow_cursor=config.mode is AcquisitionMode.LIVE,
+                allow_canonical_equivalent=config.mode is AcquisitionMode.LIVE,
             )
             expected_request_url = expected_next
         elif page.next_page_url is not None:
@@ -2250,7 +2265,9 @@ def acquire_partition(
             end_date=spec.end_date,
             page=page_number,
             per_page=config.per_page,
-            allow_cursor=(config.mode is AcquisitionMode.LIVE and page_number > 1),
+            allow_canonical_equivalent=(
+                config.mode is AcquisitionMode.LIVE and page_number > 1
+            ),
         )
         try:
             body, payload = _fetch_with_retries(
@@ -2286,50 +2303,65 @@ def acquire_partition(
                 "transport payload differs from the response bytes"
             )
 
-        results = payload.get("results")
-        if not isinstance(results, list):
-            raise PageFetchError(
-                f"partition {spec.partition_id} page {page_number}: "
-                "results is not a list"
-            )
-        if "count" in payload:
-            raw_api_total = payload.get("count")
-        elif "total_available" in payload:
-            raw_api_total = payload.get("total_available")
-        else:
-            raise PageFetchError(
-                f"partition {spec.partition_id} page {page_number}: "
-                "official total is missing"
-            )
+        _require_non_empty_str(
+            payload.get("description"),
+            f"partition {spec.partition_id} page {page_number} description",
+            maximum=4096,
+        )
+        raw_api_total = payload.get("count")
         api_total = _require_non_negative_int(
             raw_api_total,
             f"partition {spec.partition_id} page {page_number} count",
         )
-        raw_total_pages = payload.get("total_pages")
-        observed_total_pages = _require_non_negative_int(
-            raw_total_pages,
-            f"partition {spec.partition_id} page {page_number} total_pages",
-        )
-        expected_total_pages = (
-            0
-            if api_total == 0
-            else (api_total + config.per_page - 1) // config.per_page
-        )
-        if observed_total_pages != expected_total_pages:
-            raise InventoryDriftError(
-                f"partition {spec.partition_id} page {page_number}: "
-                f"total_pages={observed_total_pages} does not reconcile with "
-                f"count={api_total}/per_page={config.per_page}"
+        if api_total == 0:
+            if page_number != 1:
+                raise InventoryDriftError("empty partition exposed multiple pages")
+            _require_exact_keys(payload, {"count", "description"}, "API response")
+            results: list[Any] = []
+            observed_total_pages = 0
+        else:
+            results_raw = payload.get("results")
+            if not isinstance(results_raw, list):
+                raise PageFetchError(
+                    f"partition {spec.partition_id} page {page_number}: "
+                    "results is not a list"
+                )
+            results = results_raw
+            observed_total_pages = _require_non_negative_int(
+                payload.get("total_pages"),
+                f"partition {spec.partition_id} page {page_number} total_pages",
             )
-        current_page = _require_non_negative_int(
-            payload.get("current_page"),
-            f"partition {spec.partition_id} page {page_number} current_page",
-        )
-        if current_page != page_number:
-            raise InventoryDriftError(
-                f"partition {spec.partition_id} returned current_page={current_page} "
-                f"for requested page {page_number}"
-            )
+            expected_total_pages = (
+                api_total + config.per_page - 1
+            ) // config.per_page
+            if observed_total_pages != expected_total_pages:
+                raise InventoryDriftError(
+                    f"partition {spec.partition_id} page {page_number}: "
+                    f"total_pages={observed_total_pages} does not reconcile with "
+                    f"count={api_total}/per_page={config.per_page}"
+                )
+            if page_number > observed_total_pages:
+                raise InventoryDriftError("API returned a page past total_pages")
+            expected_response_keys = {
+                "count",
+                "description",
+                "total_pages",
+                "results",
+            }
+            if page_number < observed_total_pages:
+                expected_response_keys.add("next_page_url")
+            if page_number > 1:
+                expected_response_keys.add("previous_page_url")
+            _require_exact_keys(payload, expected_response_keys, "API response")
+            if page_number > 1:
+                _validate_documents_request_url(
+                    payload.get("previous_page_url"),
+                    start_date=spec.start_date,
+                    end_date=spec.end_date,
+                    page=page_number - 1,
+                    per_page=config.per_page,
+                    allow_canonical_equivalent=config.mode is AcquisitionMode.LIVE,
+                )
         if page_number == 1:
             state.api_total = api_total
             total_pages = observed_total_pages
@@ -2408,7 +2440,7 @@ def acquire_partition(
                 end_date=spec.end_date,
                 page=page_number + 1,
                 per_page=config.per_page,
-                allow_cursor=config.mode is AcquisitionMode.LIVE,
+                allow_canonical_equivalent=config.mode is AcquisitionMode.LIVE,
             )
         else:
             if raw_next_page_url not in (None, ""):
