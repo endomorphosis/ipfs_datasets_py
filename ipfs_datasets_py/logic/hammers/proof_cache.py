@@ -448,8 +448,57 @@ class PersistentProofCache:
             "invalidations": 0,
             "single_flight_waits": 0,
             "load_errors": 0,
+            "shadow_writes": 0,
+            "shadow_errors": 0,
         }
+        self._shadow_repository: Any = None
+        self._shadow_backend = "hammers"
         self._load()
+
+    def bind_shadow_repository(
+        self, repository: Any, *, backend: str = "hammers"
+    ) -> None:
+        """Bind this hammer cache to the unified proof shadow repository (DQK-065)."""
+
+        self._shadow_repository = repository
+        self._shadow_backend = backend
+        if repository is not None:
+            repository.register_backend(backend)
+
+    def _shadow_write(self, key: ProofCacheKey, outcome: ProofCacheOutcome) -> None:
+        repo = self._shadow_repository
+        if repo is None:
+            try:
+                from ..common.proof_cache import get_shadow_repository
+
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        if repo is None:
+            return
+        try:
+            unified = repo.project_key(
+                self._shadow_backend,
+                hammer_key=key.to_dict(),
+            )
+            repo.write(
+                self._shadow_backend,
+                key=unified,
+                result_payload=dict(outcome.payload),
+                status=outcome.status,
+                trust_level=outcome.trust.value,
+                kernel_accepted=bool(outcome.kernel_accepted),
+                deterministic_trusted=bool(outcome.deterministic_trusted),
+                legacy_payload={
+                    "key": key.to_dict(),
+                    "outcome": outcome.to_dict(),
+                },
+            )
+            with self._lock:
+                self._stats["shadow_writes"] = int(self._stats.get("shadow_writes") or 0) + 1
+        except Exception:
+            with self._lock:
+                self._stats["shadow_errors"] = int(self._stats.get("shadow_errors") or 0) + 1
 
     def _load(self) -> None:
         if self.path is None or not self.path.exists():
@@ -577,7 +626,7 @@ class PersistentProofCache:
             self._trim_locked()
             self._persist_locked()
             self._stats["writes"] += 1
-            return ProofCacheProvenance(
+            provenance = ProofCacheProvenance(
                 key.digest,
                 False,
                 True,
@@ -587,6 +636,8 @@ class PersistentProofCache:
                 created_at=now,
                 reason="stored",
             )
+        self._shadow_write(key, outcome)
+        return provenance
 
     set = put
     store = put
@@ -704,7 +755,23 @@ def cache_provenance_metadata(
     return {"proof_cache": provenance.to_dict()}
 
 
+# DQK-065: re-export unified shadow repository surface for hammer producers.
+from ..common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    UnifiedProofShadowRepository,
+    build_proof_shadow_repository,
+    get_shadow_repository,
+    set_shadow_repository,
+)
+
+HAMMER_LEGACY_BACKEND = LegacyProofBackend.HAMMERS
+
+
 __all__ = [
+    "HAMMER_LEGACY_BACKEND",
+    "LEGACY_PROOF_BACKENDS",
+    "LegacyProofBackend",
     "PROOF_CACHE_KEY_SCHEMA_VERSION",
     "PROOF_CACHE_OUTCOME_SCHEMA_VERSION",
     "PROOF_CACHE_SCHEMA_VERSION",
@@ -724,8 +791,12 @@ __all__ = [
     "ProofObligationCacheKey",
     "ProofOutcome",
     "ProofTrust",
+    "UnifiedProofShadowRepository",
+    "build_proof_shadow_repository",
     "cache_provenance_metadata",
     "canonical_json",
     "canonicalize_obligation",
     "content_digest",
+    "get_shadow_repository",
+    "set_shadow_repository",
 ]

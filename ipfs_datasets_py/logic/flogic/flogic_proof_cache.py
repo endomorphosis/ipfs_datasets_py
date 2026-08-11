@@ -206,22 +206,42 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
                 self._cache = get_global_cache()
                 logger.info("F-logic: using global proof cache")
             else:
-                self._cache = ProofCache(maxsize=cache_size, ttl=cache_ttl)
+                self._cache = ProofCache(
+                    maxsize=cache_size,
+                    ttl=cache_ttl,
+                    shadow_backend="flogic",
+                )
                 logger.info(
                     "F-logic: created local proof cache (size=%d, ttl=%ds)",
                     cache_size,
                     cache_ttl,
                 )
+            if self._cache is not None:
+                try:
+                    self._cache._shadow_backend = "flogic"
+                except Exception:
+                    pass
         else:
             self._cache = None
             if not _HAVE_CACHE:
                 logger.warning(
                     "F-logic proof cache unavailable — install cachetools"
                 )
-
+        self._shadow_repository = None
+        self._shadow_backend = "flogic"
         self._hits = 0
         self._misses = 0
         self._lock = RLock()
+
+    def bind_shadow_repository(self, repository, *, backend: str = "flogic") -> None:
+        """Bind F-logic cache to the unified proof shadow repository (DQK-065)."""
+
+        self._shadow_repository = repository
+        self._shadow_backend = backend
+        if repository is not None:
+            repository.register_backend(backend)
+        if self._cache is not None and hasattr(self._cache, "bind_shadow_repository"):
+            self._cache.bind_shadow_repository(repository, backend=backend)
 
     # ------------------------------------------------------------------
     # Semantic normalizer (lazy init)
@@ -381,6 +401,31 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
                 result=result,
                 prover_name=_PROVER_NAME,
             )
+            repo = self._shadow_repository
+            if repo is None:
+                try:
+                    from ..common.proof_cache import get_shadow_repository
+
+                    repo = get_shadow_repository(create=False)
+                except Exception:
+                    repo = None
+            if repo is not None:
+                unified = repo.project_key(
+                    self._shadow_backend,
+                    formula=normalized_goal,
+                    prover_name=_PROVER_NAME,
+                    solver_identities={"prover": _PROVER_NAME},
+                    toolchain={"backend": "flogic"},
+                    policy={"mode": "shadow", "backend": "flogic"},
+                )
+                repo.write(
+                    self._shadow_backend,
+                    key=unified,
+                    result_payload={"goal": normalized_goal},
+                    status="unknown",
+                    trust_level="none",
+                    legacy_payload={"goal": normalized_goal, "key": key},
+                )
         except Exception as exc:
             logger.warning("F-logic cache store error: %s", exc)
 
@@ -454,10 +499,28 @@ def get_global_cached_wrapper() -> CachedErgoAIWrapper:
     return _global_cached_wrapper
 
 
+from ..common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    UnifiedProofShadowRepository,
+    build_proof_shadow_repository,
+    get_shadow_repository,
+    set_shadow_repository,
+)
+
+FLOGIC_LEGACY_BACKEND = LegacyProofBackend.FLOGIC
+
 __all__ = [
     "FLogicCachedQueryResult",
     "CachedErgoAIWrapper",
     "get_global_cached_wrapper",
     "_HAVE_CACHE",
     "_HAVE_CID",
+    "LEGACY_PROOF_BACKENDS",
+    "LegacyProofBackend",
+    "FLOGIC_LEGACY_BACKEND",
+    "UnifiedProofShadowRepository",
+    "build_proof_shadow_repository",
+    "get_shadow_repository",
+    "set_shadow_repository",
 ]

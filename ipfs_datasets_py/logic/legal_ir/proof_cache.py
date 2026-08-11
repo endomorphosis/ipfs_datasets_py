@@ -505,12 +505,76 @@ class LegalProofCache:
     _lock: threading.RLock = field(
         default_factory=threading.RLock, init=False, repr=False
     )
+    _shadow_repository: Any = field(default=None, init=False, repr=False)
+    _shadow_backend: str = field(default="legal_ir", init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.root is not None:
             object.__setattr__(self, "root", Path(self.root))
             self.root.mkdir(parents=True, exist_ok=True)
             self.reload()
+
+    def bind_shadow_repository(
+        self, repository: Any, *, backend: str = "legal_ir"
+    ) -> None:
+        """Bind this legal proof cache to the unified shadow repository (DQK-065)."""
+
+        object.__setattr__(self, "_shadow_repository", repository)
+        object.__setattr__(self, "_shadow_backend", backend)
+        if repository is not None:
+            repository.register_backend(backend)
+
+    def _shadow_write(self, record: "LegalProofRecord") -> None:
+        repo = self._shadow_repository
+        if repo is None:
+            try:
+                from ..common.proof_cache import get_shadow_repository
+
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        if repo is None:
+            return
+        try:
+            envelope_bytes = _canonical_bytes(record.to_dict())
+            key = repo.project_key(
+                self._shadow_backend,
+                formula=record.source_id,
+                cid=record.content_cid,
+                prover_name="legal_ir",
+                solver_identities={"profile": record.profile},
+                toolchain={"legal_ir": True},
+                policy={"profile": record.profile, "jurisdiction": record.jurisdiction},
+                theorem_registry=record.source_digest,
+                ir={
+                    "source_id": record.source_id,
+                    "source_digest": record.source_digest,
+                    "artifact_cid": record.artifact_cid,
+                },
+            )
+            status = "proved" if record.theorem_receipts else "unknown"
+            repo.write(
+                self._shadow_backend,
+                key=key,
+                result_payload={
+                    "content_cid": record.content_cid,
+                    "content_digest": record.content_digest,
+                    "profile": record.profile,
+                },
+                status=status,
+                trust_level=(
+                    "independently_checkable"
+                    if record.theorem_receipts
+                    else "none"
+                ),
+                kernel_accepted=bool(record.theorem_receipts),
+                envelope_bytes=envelope_bytes,
+                envelope_content_id=record.content_cid,
+                legacy_payload=record.to_dict(),
+                result_id=record.content_cid,
+            )
+        except Exception:
+            pass
 
     @property
     def interface(self) -> str:
@@ -620,7 +684,8 @@ class LegalProofCache:
             self._index_record(record)
             self._persist_record(record)
             self._persist_index()
-            return record
+        self._shadow_write(record)
+        return record
 
     def get(self, content_cid: str) -> LegalProofRecord:
         """Load one proof record by content CID (memory first, then disk)."""
@@ -990,17 +1055,36 @@ def rebuild_offline_from_fixture_dir(
     return cache
 
 
+from ..common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    UnifiedProofShadowRepository,
+    build_proof_shadow_repository,
+    get_shadow_repository,
+    set_shadow_repository,
+)
+
+LEGAL_IR_LEGACY_BACKEND = LegacyProofBackend.LEGAL_IR
+
+
 __all__ = [
+    "LEGAL_IR_LEGACY_BACKEND",
     "LEGAL_PROOF_CACHE_INTERFACE",
     "LEGAL_PROOF_CACHE_SCHEMA_VERSION",
     "LEGAL_PROOF_INDEX_SCHEMA_VERSION",
     "LEGAL_PROOF_RECORD_SCHEMA_VERSION",
+    "LEGACY_PROOF_BACKENDS",
+    "LegacyProofBackend",
     "LegalProofCache",
     "LegalProofCacheError",
     "LegalProofCacheV1",
     "LegalProofIntegrityError",
     "LegalProofRecord",
+    "UnifiedProofShadowRepository",
+    "build_proof_shadow_repository",
     "get_legal_proof",
+    "get_shadow_repository",
     "put_legal_proof",
     "rebuild_offline_from_fixture_dir",
+    "set_shadow_repository",
 ]

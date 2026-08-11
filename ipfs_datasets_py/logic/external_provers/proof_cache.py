@@ -24,10 +24,27 @@ import warnings
 
 # Import from unified location
 from ..common.proof_cache import (
-    ProofCache,
     CachedProofResult,
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofCache as _CommonProofCache,
+    UnifiedProofShadowRepository,
+    build_proof_shadow_repository,
     get_global_cache,
+    get_shadow_repository,
+    set_shadow_repository,
 )
+
+EXTERNAL_PROVERS_LEGACY_BACKEND = LegacyProofBackend.EXTERNAL_PROVERS
+
+
+class ProofCache(_CommonProofCache):
+    """External-prover façade over the unified proof cache (DQK-065 shadow-ready)."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("shadow_backend", EXTERNAL_PROVERS_LEGACY_BACKEND.value)
+        super().__init__(*args, **kwargs)
+
 
 # Emit deprecation warning
 warnings.warn(
@@ -42,4 +59,11 @@ __all__ = [
     'ProofCache',
     'CachedProofResult',
     'get_global_cache',
+    'LEGACY_PROOF_BACKENDS',
+    'LegacyProofBackend',
+    'EXTERNAL_PROVERS_LEGACY_BACKEND',
+    'UnifiedProofShadowRepository',
+    'build_proof_shadow_repository',
+    'get_shadow_repository',
+    'set_shadow_repository',
 ]
