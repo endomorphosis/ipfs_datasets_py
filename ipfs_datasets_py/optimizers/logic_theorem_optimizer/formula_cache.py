@@ -79,7 +79,19 @@ class FormulaCache:
         self._shadow_backend = backend
         if repository is not None:
             repository.register_backend(backend)
-    
+        if repository is not None and str(
+            getattr(repository, "interface", "")
+        ).startswith("UnifiedProofAuthority"):
+            self._authority_repository = repository
+
+    def bind_authority_repository(
+        self, repository, *, backend: str = "optimizer_formula"
+    ) -> None:
+        """Bind dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self._authority_repository = repository
+        self.bind_shadow_repository(repository, backend=backend)
+
     def _get_formula_key(self, formula: str, prover_name: str = "") -> str:
         """Generate a cache key for a formula (SHA-256 hash).
         
@@ -259,9 +271,14 @@ class FormulaCache:
 from ipfs_datasets_py.logic.common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    build_proof_authority_repository,
     build_proof_shadow_repository,
+    clear_authority_repository,
+    get_authority_repository,
     get_shadow_repository,
+    set_authority_repository,
     set_shadow_repository,
 )
 

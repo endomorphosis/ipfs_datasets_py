@@ -144,6 +144,18 @@ class ProofCache:
         self._shadow_backend = backend
         if repository is not None:
             repository.register_backend(backend)
+        if repository is not None and str(
+            getattr(repository, "interface", "")
+        ).startswith("UnifiedProofAuthority"):
+            self._authority_repository = repository
+
+    def bind_authority_repository(
+        self, repository: Any, *, backend: str = "integration"
+    ) -> None:
+        """Bind dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self._authority_repository = repository
+        self.bind_shadow_repository(repository, backend=backend)
 
     def _shadow_write(
         self, formula: str, prover_name: str, result_data: Any
@@ -410,9 +422,14 @@ def get_global_cache(maxsize: int = 1000, ttl: float = 3600.0) -> ProofCache:
 from ..common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    build_proof_authority_repository,
     build_proof_shadow_repository,
+    clear_authority_repository,
+    get_authority_repository,
     get_shadow_repository,
+    set_authority_repository,
     set_shadow_repository,
 )
 
@@ -424,9 +441,14 @@ __all__ = [
     "LEGACY_PROOF_BACKENDS",
     "LegacyProofBackend",
     "ProofCache",
+    "UnifiedProofAuthorityRepository",
     "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
     "build_proof_shadow_repository",
+    "clear_authority_repository",
+    "get_authority_repository",
     "get_global_cache",
     "get_shadow_repository",
+    "set_authority_repository",
     "set_shadow_repository",
 ]

@@ -523,6 +523,18 @@ class LegalProofCache:
         object.__setattr__(self, "_shadow_backend", backend)
         if repository is not None:
             repository.register_backend(backend)
+        if repository is not None and str(
+            getattr(repository, "interface", "")
+        ).startswith("UnifiedProofAuthority"):
+            object.__setattr__(self, "_authority_repository", repository)
+
+    def bind_authority_repository(
+        self, repository: Any, *, backend: str = "legal_ir"
+    ) -> None:
+        """Bind dual/promoted DuckDB proof authority (DQK-066)."""
+
+        object.__setattr__(self, "_authority_repository", repository)
+        self.bind_shadow_repository(repository, backend=backend)
 
     def _shadow_write(self, record: "LegalProofRecord") -> None:
         repo = self._shadow_repository
@@ -1058,9 +1070,14 @@ def rebuild_offline_from_fixture_dir(
 from ..common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    build_proof_authority_repository,
     build_proof_shadow_repository,
+    clear_authority_repository,
+    get_authority_repository,
     get_shadow_repository,
+    set_authority_repository,
     set_shadow_repository,
 )
 
@@ -1080,11 +1097,16 @@ __all__ = [
     "LegalProofCacheV1",
     "LegalProofIntegrityError",
     "LegalProofRecord",
+    "UnifiedProofAuthorityRepository",
     "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
     "build_proof_shadow_repository",
+    "clear_authority_repository",
+    "get_authority_repository",
     "get_legal_proof",
     "get_shadow_repository",
     "put_legal_proof",
     "rebuild_offline_from_fixture_dir",
+    "set_authority_repository",
     "set_shadow_repository",
 ]

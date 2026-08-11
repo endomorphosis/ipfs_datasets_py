@@ -453,6 +453,7 @@ class PersistentProofCache:
         }
         self._shadow_repository: Any = None
         self._shadow_backend = "hammers"
+        self._authority_repository: Any = None
         self._load()
 
     def bind_shadow_repository(
@@ -464,6 +465,30 @@ class PersistentProofCache:
         self._shadow_backend = backend
         if repository is not None:
             repository.register_backend(backend)
+        if repository is not None and getattr(
+            repository, "interface", ""
+        ).startswith("UnifiedProofAuthority"):
+            self._authority_repository = repository
+
+    def bind_authority_repository(
+        self, repository: Any, *, backend: str = "hammers"
+    ) -> None:
+        """Bind this hammer cache to dual/promoted DuckDB authority (DQK-066)."""
+
+        self._authority_repository = repository
+        self.bind_shadow_repository(repository, backend=backend)
+
+    def _guard_json_rewrite(self) -> None:
+        repo = getattr(self, "_authority_repository", None)
+        if repo is None:
+            repo = self._shadow_repository
+        if repo is None:
+            return
+        guard = getattr(repo, "assert_json_rewrite_allowed", None)
+        if guard is None:
+            return
+        path = str(self.path) if self.path is not None else ""
+        guard(self._shadow_backend, path=path)
 
     def _shadow_write(self, key: ProofCacheKey, outcome: ProofCacheOutcome) -> None:
         repo = self._shadow_repository
@@ -524,6 +549,8 @@ class PersistentProofCache:
     def _persist_locked(self) -> None:
         if self.path is None:
             return
+        # DQK-066: promoted families must not rewrite whole JSON caches.
+        self._guard_json_rewrite()
         self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = canonical_json(
             {
@@ -755,13 +782,18 @@ def cache_provenance_metadata(
     return {"proof_cache": provenance.to_dict()}
 
 
-# DQK-065: re-export unified shadow repository surface for hammer producers.
+# DQK-065 / DQK-066: re-export unified shadow and authority surfaces.
 from ..common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    build_proof_authority_repository,
     build_proof_shadow_repository,
+    clear_authority_repository,
+    get_authority_repository,
     get_shadow_repository,
+    set_authority_repository,
     set_shadow_repository,
 )
 
@@ -791,12 +823,17 @@ __all__ = [
     "ProofObligationCacheKey",
     "ProofOutcome",
     "ProofTrust",
+    "UnifiedProofAuthorityRepository",
     "UnifiedProofShadowRepository",
+    "build_proof_authority_repository",
     "build_proof_shadow_repository",
     "cache_provenance_metadata",
     "canonical_json",
     "canonicalize_obligation",
+    "clear_authority_repository",
     "content_digest",
+    "get_authority_repository",
     "get_shadow_repository",
+    "set_authority_repository",
     "set_shadow_repository",
 ]

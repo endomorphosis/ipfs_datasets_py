@@ -88,6 +88,7 @@ class ProofCorpusStore:
     """
 
     root: Path | None = None
+    _authority_repository: Any = field(default=None, init=False, repr=False)
     _envelopes: dict[str, ArtifactEnvelope] = field(
         default_factory=dict, init=False, repr=False
     )
@@ -447,11 +448,92 @@ class ProofCorpusStore:
         with self._lock:
             return len(self._envelopes)
 
+    def rebuild_index_from_envelopes(
+        self, *, persist: bool = True
+    ) -> dict[str, Any]:
+        """Rebuild secondary indexes solely from immutable envelope records.
+
+        DQK-066 acceptance: the corpus index rebuilds from immutable envelopes.
+        Envelope body bytes / digests are never rewritten; only derived family /
+        source / profile projections are reconstructed.  When bound to a
+        promoted authority repository, whole-file index rewrites still go
+        through the authority guard (outbox export only).
+        """
+
+        with self._lock:
+            family_index: dict[str, set[str]] = {}
+            source_index: dict[str, dict[str, str]] = {}
+            profile_index: dict[str, str] = {}
+            for envelope in self._envelopes.values():
+                verified = envelope.verify_integrity()
+                family_index.setdefault(verified.family.value, set()).add(
+                    verified.content_cid
+                )
+                source_index.setdefault(verified.source_digest, {})[
+                    verified.profile
+                ] = verified.content_cid
+                profile_index[verified.profile] = verified.content_cid
+            self._family_index = family_index
+            self._source_index = source_index
+            self._profile_index = profile_index
+            result = {
+                "envelopes": len(self._envelopes),
+                "families": len(family_index),
+                "sources": len(source_index),
+                "profiles": len(profile_index),
+                "operation": "rebuild_from_immutable_envelopes",
+            }
+            if persist:
+                self._persist_index_from_rebuild_locked()
+            authority = getattr(self, "_authority_repository", None)
+            if authority is not None and hasattr(
+                authority, "rebuild_corpus_index_from_envelopes"
+            ):
+                authority.rebuild_corpus_index_from_envelopes(
+                    [
+                        {
+                            "content_id": env.content_cid,
+                            "content_digest": env.content_digest,
+                            "key_digest": env.content_cid,
+                        }
+                        for env in self._envelopes.values()
+                    ]
+                )
+            return result
+
+    def _persist_index_from_rebuild_locked(self) -> None:
+        """Persist a rebuilt index projection; honor authority promotion guards."""
+
+        path = self._index_path()
+        authority = getattr(self, "_authority_repository", None)
+        if authority is not None and hasattr(
+            authority, "assert_json_rewrite_allowed"
+        ):
+            # Promoted mutable JSON cache rewrites are forbidden; skip file
+            # write and keep DuckDB / in-memory projection as authority.
+            try:
+                authority.assert_json_rewrite_allowed(
+                    "legal_ir",
+                    path=str(path) if path is not None else "index.json",
+                    operation="corpus_index_json_rewrite",
+                )
+            except Exception:
+                return
+        self._persist_index()
+
+    def bind_authority_repository(self, repository: Any) -> None:
+        """Bind dual/promoted proof authority for index rebuild coordination."""
+
+        object.__setattr__(self, "_authority_repository", repository)
+
     def reload(self) -> int:
         """Reload all on-disk envelopes with full integrity verification.
 
         Corrupt or digest-mismatched envelopes fail closed and prevent the
         store from accepting the damaged tree.  Returns the number loaded.
+
+        After envelopes load, secondary indexes are always rebuilt from the
+        immutable envelopes (DQK-066), not trusted from a stale index.json.
         """
 
         with self._lock:
@@ -459,14 +541,26 @@ class ProofCorpusStore:
                 for cid, envelope in list(self._envelopes.items()):
                     verified = envelope.verify_integrity()
                     self._envelopes[cid] = verified
+                # Rebuild derived indexes from in-memory envelopes.
+                family_index: dict[str, set[str]] = {}
+                source_index: dict[str, dict[str, str]] = {}
+                profile_index: dict[str, str] = {}
+                for envelope in self._envelopes.values():
+                    family_index.setdefault(envelope.family.value, set()).add(
+                        envelope.content_cid
+                    )
+                    source_index.setdefault(envelope.source_digest, {})[
+                        envelope.profile
+                    ] = envelope.content_cid
+                    profile_index[envelope.profile] = envelope.content_cid
+                self._family_index = family_index
+                self._source_index = source_index
+                self._profile_index = profile_index
                 return len(self._envelopes)
 
             envelopes_dir = self._envelopes_dir()
             assert envelopes_dir is not None
             loaded: dict[str, ArtifactEnvelope] = {}
-            family_index: dict[str, set[str]] = {}
-            source_index: dict[str, dict[str, str]] = {}
-            profile_index: dict[str, str] = {}
 
             for path in sorted(envelopes_dir.glob("*.json")):
                 envelope = self._load_envelope_file(path)
@@ -476,6 +570,12 @@ class ProofCorpusStore:
                         f"{envelope.content_cid}"
                     )
                 loaded[envelope.content_cid] = envelope
+
+            # Index is derived from envelopes only (immutable authority).
+            family_index = {}
+            source_index = {}
+            profile_index = {}
+            for envelope in loaded.values():
                 family_index.setdefault(envelope.family.value, set()).add(
                     envelope.content_cid
                 )
@@ -484,6 +584,8 @@ class ProofCorpusStore:
                 ] = envelope.content_cid
                 profile_index[envelope.profile] = envelope.content_cid
 
+            # Optional: cross-check on-disk index.json if present, but never
+            # treat it as authority over envelope-derived indexes.
             index_path = self._index_path()
             if index_path is not None and index_path.is_file():
                 try:
@@ -578,4 +680,13 @@ __all__ = [
     "get_envelope",
     "put_envelope",
     "put_family_fixtures",
+    "rebuild_index_from_envelopes",
 ]
+
+
+def rebuild_index_from_envelopes(
+    store: ProofCorpusStore, *, persist: bool = True
+) -> dict[str, Any]:
+    """Module-level helper: rebuild corpus index from immutable envelopes."""
+
+    return store.rebuild_index_from_envelopes(persist=persist)
