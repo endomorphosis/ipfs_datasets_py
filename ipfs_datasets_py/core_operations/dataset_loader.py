@@ -176,6 +176,42 @@ class DatasetLoader:
                 self.logger.debug(
                     "ducklake shadow projection skipped: %s", shadow_exc
                 )
+            # DQK-100: cutover discovery fence (no-op until lake authority is
+            # process-local promoted; completing DQK-100 never flips production).
+            try:
+                from ipfs_datasets_py.ducklake.cutover import (
+                    maybe_enforce_lake_discovery,
+                )
+                from ipfs_datasets_py.ducklake.adapters import ParquetProducerId as _PPId
+
+                import os as _os
+
+                cutover = maybe_enforce_lake_discovery(
+                    producer_id=_PPId.DATASET_LOADER.value,
+                    source_uri=str(source),
+                    path=str(source),
+                    uses_implicit_directory_scan=_os.path.isdir(str(source)),
+                    uses_mutable_sidecar=str(source).endswith(
+                        (".json", ".manifest", ".manifest.json")
+                    ),
+                )
+                if cutover is not None:
+                    result["ducklake_cutover"] = cutover
+            except Exception as cutover_exc:
+                # Under lake-primary, re-raise discovery rejections; under legacy
+                # the helper is a no-op so this only fires on unexpected errors.
+                from ipfs_datasets_py.ducklake.cutover import (
+                    CutoverBlockedError,
+                    is_lake_authority_active,
+                )
+
+                if is_lake_authority_active() and isinstance(
+                    cutover_exc, CutoverBlockedError
+                ):
+                    raise
+                self.logger.debug(
+                    "ducklake cutover discovery fence skipped: %s", cutover_exc
+                )
             return result
         except Exception as e:
             self.logger.error(f"Error loading dataset: {e}")

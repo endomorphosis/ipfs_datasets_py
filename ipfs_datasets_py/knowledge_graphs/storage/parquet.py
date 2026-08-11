@@ -1731,7 +1731,25 @@ class ParquetGraphStore:
                 operation_id=f"op:kg_parquet:{tenant_n}:{graph_n}:{rev_n}",
                 pre_source_digest=source_digest,
             )
-        except Exception:  # noqa: BLE001 — never block legacy publish
+            # DQK-100: cutover content-address fence (no-op until lake authority promoted).
+            from ipfs_datasets_py.ducklake.cutover import maybe_enforce_lake_discovery
+
+            maybe_enforce_lake_discovery(
+                producer_id=ParquetProducerId.KG_PARQUET_STORAGE.value,
+                source_uri=str(final_dir),
+                path=str(final_dir),
+                source_digest=source_digest,
+            )
+        except Exception as shadow_exc:  # noqa: BLE001 — never block legacy publish
+            from ipfs_datasets_py.ducklake.cutover import (
+                CutoverBlockedError,
+                is_lake_authority_active,
+            )
+
+            if is_lake_authority_active() and isinstance(
+                shadow_exc, CutoverBlockedError
+            ):
+                raise
             logger.debug(
                 "ducklake shadow projection skipped for kg parquet publish",
                 exc_info=True,

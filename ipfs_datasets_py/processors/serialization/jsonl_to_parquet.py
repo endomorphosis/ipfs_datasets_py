@@ -252,7 +252,22 @@ def jsonl_to_parquet(jsonl_path: str, parquet_path: str,
                 parquet_path,
                 shadow.parity.matched,
             )
+        # DQK-100: cutover content-address fence (no-op until lake authority promoted).
+        from ipfs_datasets_py.ducklake.cutover import maybe_enforce_lake_discovery
+
+        maybe_enforce_lake_discovery(
+            producer_id=ParquetProducerId.JSONL_TO_PARQUET.value,
+            source_uri=str(parquet_path),
+            path=str(parquet_path),
+            source_digest=source_digest,
+        )
     except Exception as shadow_exc:  # noqa: BLE001 — never block legacy conversion
+        from ipfs_datasets_py.ducklake import cutover as _cutover
+
+        if _cutover.is_lake_authority_active() and isinstance(
+            shadow_exc, _cutover.CutoverBlockedError
+        ):
+            raise
         logging.debug("ducklake shadow projection skipped: %s", shadow_exc)
 
     return parquet_path
