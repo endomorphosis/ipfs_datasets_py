@@ -17,6 +17,7 @@ from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
+import stat
 import tempfile
 import threading
 from typing import Any, Callable, Final, Iterator, Mapping, Protocol, runtime_checkable
@@ -336,28 +337,12 @@ class LocalSemanticIndexStore(_RecordStore):
         self, repository_id: str | None = None, *, cleanup_temps: bool = False
     ) -> tuple[Path, ...]:
         """Finish journal reconciliation without ever manufacturing a root."""
-        transitions = sorted(self.transitions_root.glob("*.json"))
-        removed: list[Path] = []
-        for path in transitions:
-            transition_repository, expected, new_cid = self._read_transition(path)
-            current = self._read_root_unlocked(transition_repository)
-            if current not in (expected, new_cid):
-                raise SemanticIndexPersistenceError("semantic-index transition does not match current root")
-            # The replacement is atomic: either the old root or the new root
-            # was fully visible at the crash boundary.  Never replay a journal
-            # entry, because doing so could turn a non-visible write into one.
-            path.unlink()
-            removed.append(path)
-        if cleanup_temps:
-            for directory in (self.roots_root, self.transitions_root):
-                pattern = ".root-*" if directory == self.roots_root else ".transition-*"
-                for path in sorted(directory.glob(pattern)):
-                    if path.is_file():
-                        path.unlink()
-                        removed.append(path)
-                self._fsync_directory(directory)
+        # Validate every authoritative root before deleting anything during a
+        # whole-store recovery.  A repository-scoped operation intentionally
+        # remains scoped to that repository, as it is used by root CAS.
         if repository_id is not None:
-            self._read_root_unlocked(_repository_id(repository_id))
+            repository_id = _repository_id(repository_id)
+            self._read_root_unlocked(repository_id)
         else:
             for path in sorted(self.roots_root.glob("*.json")):
                 try:
@@ -368,6 +353,45 @@ class LocalSemanticIndexStore(_RecordStore):
                 if path != self._root_path(root_repository):
                     raise SemanticIndexPersistenceError("semantic-index root filename is invalid")
                 self._read_root_unlocked(root_repository)
+
+        transitions = sorted(self.transitions_root.glob("*.json"))
+        removed: list[Path] = []
+        affected_directories: set[Path] = set()
+        for path in transitions:
+            transition_repository, expected, new_cid = self._read_transition(path)
+            current = self._read_root_unlocked(transition_repository)
+            if current not in (expected, new_cid):
+                raise SemanticIndexPersistenceError("semantic-index transition does not match current root")
+            # The replacement is atomic: either the old root or the new root
+            # was fully visible at the crash boundary.  Never replay a journal
+            # entry, because doing so could turn a non-visible write into one.
+            path.unlink()
+            removed.append(path)
+            affected_directories.add(path.parent)
+        if cleanup_temps:
+            # ``.root-`` was the original replacement prefix.  ISI-037 added
+            # the narrower ``.transition-`` prefix, but old installations can
+            # have either form in either bounded publication directory.
+            for directory in (self.roots_root, self.transitions_root):
+                for prefix in (".root-*", ".transition-*"):
+                    for path in sorted(directory.glob(prefix)):
+                        try:
+                            mode = path.stat(follow_symlinks=False).st_mode
+                        except FileNotFoundError:
+                            continue
+                        except OSError as exc:
+                            raise SemanticIndexPersistenceError(
+                                "cannot inspect semantic-index temporary"
+                            ) from exc
+                        # ``Path.is_file`` follows symlinks; never let a
+                        # symlink (including a dangling one) qualify for
+                        # cleanup merely because its name has our prefix.
+                        if stat.S_ISREG(mode):
+                            path.unlink()
+                            removed.append(path)
+                            affected_directories.add(directory)
+        for directory in sorted(affected_directories):
+            self._fsync_directory(directory)
         return tuple(removed)
 
     def current_root(self, repository_id: str) -> str | None:
