@@ -87,7 +87,21 @@ DEFAULT_FIXTURE_RELATIVE_PATH: Final = Path(
 # ---------------------------------------------------------------------------
 
 _SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
-_DOCUMENT_NUMBER_RE = re.compile(r"^[0-9]{4}-[0-9]{4,6}$")
+# Federal Register document numbers are not uniformly ``YYYY-NNNNN``.  The
+# official service retains historical two-character series (for example
+# ``93-32034`` and ``E9-5927``) and prefixes corrected/republished modern
+# documents (for example ``C1-2010-31877`` and ``R1-2015-00001``).  Keep this
+# a closed grammar: the accepted two-character series are the exact set
+# exercised by the FederalRegister.gov source implementation, not a generic
+# alphanumeric escape hatch.
+_HISTORICAL_DOCUMENT_SERIES_PATTERN: Final = (
+    r"(?:0[0-9]|20|9[2-9]|C[0-9]|E[13-9]|R[0-9]|X[019]|Z[4-9])"
+)
+_DOCUMENT_NUMBER_PATTERN: Final = (
+    rf"(?:[CR][0-9]-[0-9]{{4}}-[0-9]{{4,6}}|"
+    rf"(?:[0-9]{{4}}|{_HISTORICAL_DOCUMENT_SERIES_PATTERN})-[0-9]{{4,6}})"
+)
+_DOCUMENT_NUMBER_RE = re.compile(rf"^{_DOCUMENT_NUMBER_PATTERN}$")
 _PUBLICATION_DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 _YEAR_MONTH_RE = re.compile(r"^[0-9]{4}-[0-9]{2}$")
 _UTC_TIMESTAMP_RE = re.compile(
@@ -508,13 +522,29 @@ def days_between_inclusive(start: date, end: date) -> int:
 
 
 def validate_document_number(value: Any, *, name: str = "document_number") -> str:
-    """Validate a Federal Register document number (``YYYY-NNNNN`` shape)."""
+    """Validate an official Federal Register document-number shape.
+
+    In addition to modern ``YYYY-NNNNN`` identifiers, the official corpus
+    contains historical two-character series and correction/republication
+    identifiers such as ``C1-YYYY-NNNNN`` and ``R1-YYYY-NNNNN``.  Prefixes
+    are preserved as identity-bearing bytes; they are never stripped or
+    folded into the underlying document number.
+    """
 
     text = _require_non_empty_str(value, name, maximum=32)
     if not _DOCUMENT_NUMBER_RE.fullmatch(text):
         raise DocumentIdentityError(
-            f"{name} must match YYYY-NNNNN (4-6 digit suffix); got {value!r}"
+            f"{name} must be an official Federal Register document number; "
+            f"got {value!r}"
         )
+    parts = text.split("-")
+    year_token = parts[1] if len(parts) == 3 else parts[0]
+    if len(year_token) == 4 and year_token.isdigit():
+        year = int(year_token)
+        if year < 1936 or year > 2100:
+            raise DocumentIdentityError(
+                f"{name} year out of plausible range: {value!r}"
+            )
     return text
 
 

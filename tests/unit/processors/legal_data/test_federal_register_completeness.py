@@ -50,6 +50,7 @@ from ipfs_datasets_py.processors.legal_data.federal_register_source_policy impor
     SCHEMA_VERSION as POLICY_SCHEMA_VERSION,
     TASK_ID,
     BodyTextDisposition,
+    DocumentIdentityError,
     FederalRegisterSourcePolicy,
     MutableCutoffError,
     OfficialAuthority,
@@ -151,6 +152,54 @@ def test_document_identity_and_official_urls() -> None:
     assert validate_official_url(FEDERAL_REGISTER_DOCUMENTS_API).startswith("https://")
     with pytest.raises(OfficialAuthorityError):
         validate_official_url("https://example.com/docs")
+
+
+@pytest.mark.parametrize(
+    "document_number",
+    (
+        "2024-19189",
+        "93-32034",
+        "E9-5927",
+        "C1-12345",
+        "C1-2010-31877",
+        "R1-2015-00001",
+        "00-12345",
+        "20-12345",
+        "X0-12345",
+        "Z9-12345",
+    ),
+)
+def test_official_historical_and_revision_document_numbers_are_preserved(
+    document_number: str,
+) -> None:
+    assert validate_document_number(document_number) == document_number
+    assert build_legal_id(document_number, "2026-03-15") == (
+        f"fr:{document_number}:2026-03-15"
+    )
+
+
+@pytest.mark.parametrize(
+    "document_number",
+    (
+        "CDC-2024-0015",
+        "21-12345",
+        "91-12345",
+        "E2-12345",
+        "X2-12345",
+        "Z3-12345",
+        "C1-C1-12345",
+        "c1-2010-31877",
+        "2024-123",
+        "2024-1234567",
+        "1935-12345",
+        "2101-12345",
+    ),
+)
+def test_unknown_or_malformed_document_number_series_fail_closed(
+    document_number: str,
+) -> None:
+    with pytest.raises(DocumentIdentityError):
+        validate_document_number(document_number)
 
 
 def test_metadata_cannot_be_represented_as_body_text() -> None:

@@ -129,12 +129,24 @@ _CID_V1_RE = re.compile(r"^b[a-z2-7]{20,}$")
 _ENTRY_CID_RE = re.compile(
     r"^(?:b[a-z2-7]{20,}|sha256:[0-9a-f]{64}|[0-9a-f]{64})$"
 )
+# FederalRegister.gov retains historical two-character document series and
+# identity-bearing correction/republication prefixes.  This is deliberately
+# the same closed grammar as the LCR-049 source-policy boundary rather than a
+# generic alphanumeric identifier.
+_HISTORICAL_DOCUMENT_SERIES_PATTERN: Final = (
+    r"(?:0[0-9]|20|9[2-9]|C[0-9]|E[13-9]|R[0-9]|X[019]|Z[4-9])"
+)
+_DOCUMENT_NUMBER_PATTERN: Final = (
+    rf"(?:[CR][0-9]-[0-9]{{4}}-[0-9]{{4,6}}|"
+    rf"(?:[0-9]{{4}}|{_HISTORICAL_DOCUMENT_SERIES_PATTERN})-[0-9]{{4,6}})"
+)
 # fr:<document_number>:<publication_date>[:qualifier...]
 _LEGAL_ID_RE = re.compile(
-    r"^fr:([0-9]{4}-[0-9]{4,6}):([0-9]{4}-[0-9]{2}-[0-9]{2})(?::.+)?$",
+    rf"^fr:({_DOCUMENT_NUMBER_PATTERN}):"
+    r"([0-9]{4}-[0-9]{2}-[0-9]{2})(?::.+)?$",
     re.IGNORECASE,
 )
-_DOCUMENT_NUMBER_RE = re.compile(r"^[0-9]{4}-[0-9]{4,6}$")
+_DOCUMENT_NUMBER_RE = re.compile(rf"^{_DOCUMENT_NUMBER_PATTERN}$")
 _PUBLICATION_DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 _YEAR_MONTH_RE = re.compile(r"^[0-9]{4}-[0-9]{2}$")
 _POSITIONAL_ID_RE = re.compile(
@@ -694,7 +706,7 @@ def validate_entry_cid(value: Any, *, name: str = "entry_cid") -> str:
 
 
 def validate_document_number(value: Any, *, name: str = "document_number") -> str:
-    """Validate a Federal Register document number (``YYYY-NNNNN`` shape)."""
+    """Validate an official Federal Register document-number shape."""
 
     text = _require_non_empty_str(value, name, maximum=32)
     if _POSITIONAL_ID_RE.fullmatch(text):
@@ -703,8 +715,17 @@ def validate_document_number(value: Any, *, name: str = "document_number") -> st
         )
     if not _DOCUMENT_NUMBER_RE.fullmatch(text):
         raise DocumentIdentityError(
-            f"{name} must match YYYY-NNNNN (4-6 digit suffix); got {value!r}"
+            f"{name} must be an official Federal Register document number; "
+            f"got {value!r}"
         )
+    parts = text.split("-")
+    year_token = parts[1] if len(parts) == 3 else parts[0]
+    if len(year_token) == 4 and year_token.isdigit():
+        year = int(year_token)
+        if year < 1936 or year > 2100:
+            raise DocumentIdentityError(
+                f"{name} year out of plausible range: {value!r}"
+            )
     return text
 
 
@@ -757,7 +778,8 @@ def validate_legal_id(value: Any, *, name: str = "legal_id") -> str:
     """Validate stable Federal Register publication identity shape.
 
     Shape: ``fr:<document_number>:<publication_date>[:qualifier...]`` where
-    document_number is ``YYYY-NNNNN`` and publication_date is ``YYYY-MM-DD``.
+    document_number uses the official modern, historical, correction, or
+    republication grammar and publication_date is ``YYYY-MM-DD``.
     Positional labels are rejected. Document number and publication date form
     the durable publication identity independent of content version.
     """

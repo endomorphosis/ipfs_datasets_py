@@ -447,6 +447,66 @@ def test_legal_id_requires_fr_shape_and_document_number():
     assert validate_publication_date("2026-03-15") == "2026-03-15"
 
 
+@pytest.mark.parametrize(
+    "document_number",
+    (
+        "2024-19189",
+        "93-32034",
+        "E9-5927",
+        "C1-12345",
+        "C1-2010-31877",
+        "R1-2015-00001",
+        "00-12345",
+        "20-12345",
+        "X0-12345",
+        "Z9-12345",
+    ),
+)
+def test_official_historical_and_revision_document_numbers_are_durable(
+    document_number: str,
+):
+    legal_id = f"fr:{document_number}:2026-03-15"
+    assert validate_document_number(document_number) == document_number
+    assert validate_legal_id(legal_id) == legal_id
+
+
+def test_corpus_record_preserves_revision_document_number_identity():
+    payload = example_corpus_payload()
+    payload["document_number"] = "C1-2026-02383"
+    payload["legal_id"] = "fr:C1-2026-02383:2026-03-15"
+
+    record = CorpusRecord.from_mapping(payload)
+
+    assert record.document_number == "C1-2026-02383"
+    assert record.legal_id == "fr:C1-2026-02383:2026-03-15"
+
+
+@pytest.mark.parametrize(
+    "document_number",
+    (
+        "CDC-2024-0015",
+        "21-12345",
+        "91-12345",
+        "E2-12345",
+        "X2-12345",
+        "Z3-12345",
+        "C1-C1-12345",
+        "c1-2010-31877",
+        "2024-123",
+        "2024-1234567",
+        "1935-12345",
+        "2101-12345",
+    ),
+)
+def test_unknown_or_malformed_document_number_series_fail_closed(
+    document_number: str,
+):
+    with pytest.raises(DocumentIdentityError):
+        validate_document_number(document_number)
+    with pytest.raises(DocumentIdentityError):
+        validate_legal_id(f"fr:{document_number}:2026-03-15")
+
+
 def test_legal_id_must_match_document_number_and_publication_date_fields():
     payload = example_corpus_payload()
     payload["document_number"] = "2026-09999"
