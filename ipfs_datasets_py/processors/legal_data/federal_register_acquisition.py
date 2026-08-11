@@ -4021,6 +4021,24 @@ def _live_replay_projection(report: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _snapshot_inventory_report(report: JsonMapping) -> dict[str, Any]:
+    """Freeze one ordinary JSON object before validation or persistence."""
+
+    if type(report) is not dict:
+        raise FederalRegisterAcquisitionError(
+            "inventory report must be an ordinary JSON object"
+        )
+    try:
+        data = canonical_json_dumps(report).encode("utf-8")
+    except (TypeError, UnicodeEncodeError, ValueError) as exc:
+        raise FederalRegisterAcquisitionError(
+            "inventory report is not strict canonicalizable JSON"
+        ) from exc
+    if len(data) > MAX_CHECKPOINT_BYTES:
+        raise FederalRegisterAcquisitionError("inventory report exceeds size bound")
+    return _strict_json_object_from_bytes(data, context="inventory report snapshot")
+
+
 def _fresh_live_inventory_report() -> dict[str, Any]:
     """Acquire one checkpoint-free built-in HTTPS replay for authorization."""
 
@@ -4050,11 +4068,12 @@ def check_inventory_report(
 ) -> dict[str, Any]:
     """Validate structure and freshly replay every claimed live report."""
 
+    snapshot = _snapshot_inventory_report(report)
     structural = _check_inventory_report_structure(
-        report,
+        snapshot,
         require_live=require_live,
     )
-    raw = expand_inventory_payload(_as_mapping(report, "inventory_report"))
+    raw = expand_inventory_payload(snapshot)
     if raw.get("mode") != MODE_LIVE:
         structural["live_authority_replayed"] = False
         structural["ok"] = True
@@ -4082,12 +4101,13 @@ def write_inventory_report(
 ) -> Path:
     """Write *report* to the frozen inventory path (atomic)."""
 
+    snapshot = _snapshot_inventory_report(report)
     target = Path(path) if path is not None else default_report_path()
     check_inventory_report(
-        report,
-        require_live=report.get("mode") == MODE_LIVE,
+        snapshot,
+        require_live=snapshot.get("mode") == MODE_LIVE,
     )
-    atomic_write_json(target, report)
+    atomic_write_json(target, snapshot)
     return target
 
 
