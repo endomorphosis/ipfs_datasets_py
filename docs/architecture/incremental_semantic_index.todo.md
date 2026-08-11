@@ -138,7 +138,7 @@ W8  ISI-032
 
 ## ISI-004 Discover pytest tests, fixtures, markers, and configuration
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: pytest-analysis
