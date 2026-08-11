@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import ast
 
+import pytest
+
 from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import (
     stable_symbol_id,
     symbol_version_cid,
 )
-from ipfs_datasets_py.logic.software_contracts.semantic_index.models import SymbolKind, SymbolRecord
+from ipfs_datasets_py.logic.software_contracts.semantic_index.models import SemanticIndexModelError, SymbolKind, SymbolRecord
 
 
 def test_aggregate_facets_have_span_independent_stable_identity() -> None:
@@ -38,3 +40,47 @@ def test_constructed_property_aggregate_round_trips_without_a_span() -> None:
     )
     assert symbol.span is None
     assert SymbolRecord.from_dict(symbol.to_dict()) == symbol
+    with pytest.raises(TypeError):
+        symbol.normalized_ast["facets"] = ()
+    with pytest.raises(AttributeError):
+        symbol.normalized_ast["facets"].append("deleter")
+
+
+def test_nonfinite_and_signed_zero_ast_literals_have_distinct_tagged_cids() -> None:
+    stable = stable_symbol_id("repo:aggregate", "python", "pkg/api.py", "pkg.api.literal", "constant", "pkg")
+    positive_infinity = ast.parse("x = 1e400").body[0]
+    negative_infinity = ast.parse("x = -1e400").body[0]
+    complex_positive = ast.Constant(value=complex(float("inf"), float("-inf")))
+    complex_negative = ast.Constant(value=complex(float("-inf"), float("inf")))
+    plus_zero = ast.Constant(value=0.0)
+    minus_zero = ast.Constant(value=-0.0)
+
+    cids = {
+        symbol_version_cid(stable, positive_infinity),
+        symbol_version_cid(stable, negative_infinity),
+        symbol_version_cid(stable, complex_positive),
+        symbol_version_cid(stable, complex_negative),
+        symbol_version_cid(stable, plus_zero),
+        symbol_version_cid(stable, minus_zero),
+    }
+    assert len(cids) == 6
+
+    record = SymbolRecord(
+        stable, symbol_version_cid(stable, complex_positive), "repo:aggregate", "python",
+        "pkg/api.py", "pkg.api.literal", "constant", "pkg", normalized_ast=complex_positive,
+    )
+    assert SymbolRecord.from_dict(record.to_dict()) == record
+
+
+def test_forged_aggregate_facet_cannot_retain_the_old_version_cid() -> None:
+    stable = stable_symbol_id("repo:aggregate", "python", "pkg/api.py", "pkg.api.Item.value", "property", "pkg")
+    aggregate = {"_type": "PropertyAggregate", "facets": ["getter", "setter"]}
+    symbol = SymbolRecord(
+        stable, symbol_version_cid(stable, aggregate, property_role="aggregate"),
+        "repo:aggregate", "python", "pkg/api.py", "pkg.api.Item.value", "property", "pkg",
+        normalized_ast=aggregate, property_role="aggregate",
+    )
+    forged = symbol.to_dict()
+    forged["normalized_ast"]["facets"].append("deleter")
+    with pytest.raises(SemanticIndexModelError, match="version_cid does not verify"):
+        SymbolRecord.from_dict(forged)

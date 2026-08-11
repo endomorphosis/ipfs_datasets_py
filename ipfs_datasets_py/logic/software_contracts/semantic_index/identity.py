@@ -20,7 +20,8 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.models import SEMA
 
 
 STABLE_SYMBOL_ID_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-stable-symbol-id@1"
-SYMBOL_VERSION_ID_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-symbol-version-id@1"
+SYMBOL_VERSION_ID_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-symbol-version-id@2"
+SYMBOL_VERSION_ID_SCHEMA_V1: Final[str] = "ipfs-datasets.software-contracts.semantic-symbol-version-id@1"
 DEFAULT_EXTRACTOR_NAME: Final[str] = "python-cpython-ast"
 DEFAULT_EXTRACTOR_VERSION: Final[str] = "1"
 
@@ -75,27 +76,35 @@ def normalize_ast(value: Any) -> Any:
     if value is None or type(value) in {bool, int, str}:
         return value
     if type(value) is float:
-        if not math.isfinite(value):
-            raise SemanticIndexModelError("normalized AST rejects non-finite float constants")
         # ``float.hex`` is exact, including negative zero, and does not depend
         # on a platform's decimal formatting choices.
-        return {"$semantic_literal": "float", "hex": value.hex()}
+        return {"$semantic_literal": "float", "value": _float_projection(value)}
     if type(value) is bytes:
         return {
             "$semantic_literal": "bytes",
             "base64": base64.b64encode(value).decode("ascii"),
         }
     if type(value) is complex:
-        if not math.isfinite(value.real) or not math.isfinite(value.imag):
-            raise SemanticIndexModelError("normalized AST rejects non-finite complex constants")
         return {
             "$semantic_literal": "complex",
-            "real_hex": value.real.hex(),
-            "imag_hex": value.imag.hex(),
+            "real": _float_projection(value.real),
+            "imag": _float_projection(value.imag),
         }
     if value is Ellipsis:
         return {"$semantic_literal": "ellipsis"}
     raise SemanticIndexModelError(f"normalized AST rejects {type(value).__name__}")
+
+
+def _float_projection(value: float) -> str:
+    """Return a platform-independent, sign-preserving float projection.
+
+    JSON cannot represent infinities, while Python AST constants can (for
+    example ``ast.parse('x = 1e400')``).  The tags also retain negative zero,
+    which is semantically distinct for durable identity.
+    """
+    if math.isinf(value):
+        return "+infinity" if value > 0 else "-infinity"
+    return value.hex()
 
 
 def _structured(value: Any, name: str) -> Any:

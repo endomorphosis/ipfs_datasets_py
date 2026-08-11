@@ -21,10 +21,12 @@ from ipfs_datasets_py.logic.software_contracts.content import (
 )
 
 
-SEMANTIC_INDEX_SCHEMA = "ipfs-datasets.software-contracts.semantic-index@1"
+SEMANTIC_INDEX_SCHEMA = "ipfs-datasets.software-contracts.semantic-index@2"
+SEMANTIC_INDEX_SCHEMA_V1 = "ipfs-datasets.software-contracts.semantic-index@1"
 SOURCE_SPAN_SCHEMA = "ipfs-datasets.software-contracts.semantic-source-span@1"
 ARTIFACT_SCHEMA = "ipfs-datasets.software-contracts.semantic-artifact@1"
-SYMBOL_SCHEMA = "ipfs-datasets.software-contracts.semantic-symbol@1"
+SYMBOL_SCHEMA = "ipfs-datasets.software-contracts.semantic-symbol@2"
+SYMBOL_SCHEMA_V1 = "ipfs-datasets.software-contracts.semantic-symbol@1"
 EDGE_SCHEMA = "ipfs-datasets.software-contracts.semantic-edge@1"
 STATE_SCHEMA = "ipfs-datasets.software-contracts.semantic-repository-state@1"
 DELTA_SCHEMA = "ipfs-datasets.software-contracts.semantic-repository-delta@1"
@@ -249,14 +251,16 @@ class SymbolRecord:
     decorators: Sequence[str] = ()
     annotations: Mapping[str, Any] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
-    # Older extractors may omit this projection.  When supplied, it makes the
-    # version CID self-verifying at the model boundary.
+    # This is mandatory in v2: without it a stored version CID cannot be
+    # independently verified during restore.
     normalized_ast: Any | None = None
     extractor_name: str = "python-cpython-ast"
     extractor_version: str = "1"
     property_role: str | None = None
+    semantic_index_schema: str = SEMANTIC_INDEX_SCHEMA
 
-    _FIELDS: ClassVar[frozenset[str]] = frozenset({"schema", "stable_id", "version_cid", "repository_id", "language", "module_path", "qualified_name", "kind", "namespace", "source_cid", "span", "confidence", "signature", "decorators", "annotations", "metadata", "normalized_ast", "extractor_name", "extractor_version", "property_role"})
+    _FIELDS: ClassVar[frozenset[str]] = frozenset({"schema", "stable_id", "version_cid", "repository_id", "language", "module_path", "qualified_name", "kind", "namespace", "source_cid", "span", "confidence", "signature", "decorators", "annotations", "metadata", "normalized_ast", "extractor_name", "extractor_version", "property_role", "semantic_index_schema"})
+    _V1_FIELDS: ClassVar[frozenset[str]] = frozenset({"schema", "stable_id", "version_cid", "repository_id", "language", "module_path", "qualified_name", "kind", "namespace", "source_cid", "span", "confidence", "signature", "decorators", "annotations", "metadata", "normalized_ast", "extractor_name", "extractor_version", "property_role"})
 
     def __post_init__(self) -> None:
         for name in ("stable_id", "version_cid"):
@@ -272,12 +276,14 @@ class SymbolRecord:
         if self.span is not None and not isinstance(self.span, SourceSpan):
             raise SemanticIndexModelError("span must be a SourceSpan or None")
         object.__setattr__(self, "confidence", _enum(self.confidence, AnalysisConfidence, "confidence"))
-        object.__setattr__(self, "signature", _mapping(self.signature, "signature", frozen=False))
+        object.__setattr__(self, "signature", _mapping(self.signature, "signature"))
         object.__setattr__(self, "decorators", _ordered_texts(self.decorators, "decorator"))
-        object.__setattr__(self, "annotations", _mapping(self.annotations, "annotations", frozen=False))
+        object.__setattr__(self, "annotations", _mapping(self.annotations, "annotations"))
         object.__setattr__(self, "metadata", _mapping(self.metadata, "metadata"))
         object.__setattr__(self, "extractor_name", _text(self.extractor_name, "extractor_name"))
         object.__setattr__(self, "extractor_version", _text(self.extractor_version, "extractor_version"))
+        if self.semantic_index_schema != SEMANTIC_INDEX_SCHEMA:
+            raise SemanticIndexModelError("unsupported semantic-index schema")
         if self.property_role is not None:
             object.__setattr__(self, "property_role", _text(self.property_role, "property_role"))
         # Import lazily to avoid identity/models' intentional import cycle.
@@ -293,21 +299,23 @@ class SymbolRecord:
         )
         if self.stable_id != expected_stable_id:
             raise SemanticIndexModelError("stable_id does not verify symbol identity fields")
-        if self.normalized_ast is not None:
-            object.__setattr__(self, "normalized_ast", _freeze_structured(normalize_ast(self.normalized_ast)))
-            expected_version_cid = symbol_version_cid(
-                self.stable_id, _thaw_structured(self.normalized_ast),
-                _thaw_structured(self.signature), self.decorators,
-                _thaw_structured(self.annotations),
-                extractor_name=self.extractor_name,
-                extractor_version=self.extractor_version,
-                property_role=self.property_role,
-            )
-            if self.version_cid != expected_version_cid:
-                raise SemanticIndexModelError("version_cid does not verify symbol semantic fields")
+        if self.normalized_ast is None:
+            raise SemanticIndexModelError("normalized_ast is required for a v2 SymbolRecord")
+        object.__setattr__(self, "normalized_ast", _freeze_structured(normalize_ast(self.normalized_ast)))
+        expected_version_cid = symbol_version_cid(
+            self.stable_id, _thaw_structured(self.normalized_ast),
+            _thaw_structured(self.signature), self.decorators,
+            _thaw_structured(self.annotations),
+            extractor_name=self.extractor_name,
+            extractor_version=self.extractor_version,
+            semantic_index_schema=self.semantic_index_schema,
+            property_role=self.property_role,
+        )
+        if self.version_cid != expected_version_cid:
+            raise SemanticIndexModelError("version_cid does not verify symbol semantic fields")
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": SYMBOL_SCHEMA, "stable_id": self.stable_id, "version_cid": self.version_cid, "repository_id": self.repository_id, "language": self.language, "module_path": self.module_path, "qualified_name": self.qualified_name, "kind": self.kind, "namespace": self.namespace, "source_cid": self.source_cid, "span": None if self.span is None else self.span.to_dict(), "confidence": self.confidence, "signature": _thaw_structured(self.signature), "decorators": list(self.decorators), "annotations": _thaw_structured(self.annotations), "metadata": _thaw_structured(self.metadata), "normalized_ast": None if self.normalized_ast is None else _thaw_structured(self.normalized_ast), "extractor_name": self.extractor_name, "extractor_version": self.extractor_version, "property_role": self.property_role}
+        return {"schema": SYMBOL_SCHEMA, "stable_id": self.stable_id, "version_cid": self.version_cid, "repository_id": self.repository_id, "language": self.language, "module_path": self.module_path, "qualified_name": self.qualified_name, "kind": self.kind, "namespace": self.namespace, "source_cid": self.source_cid, "span": None if self.span is None else self.span.to_dict(), "confidence": self.confidence, "signature": _thaw_structured(self.signature), "decorators": list(self.decorators), "annotations": _thaw_structured(self.annotations), "metadata": _thaw_structured(self.metadata), "normalized_ast": _thaw_structured(self.normalized_ast), "extractor_name": self.extractor_name, "extractor_version": self.extractor_version, "property_role": self.property_role, "semantic_index_schema": self.semantic_index_schema}
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "SymbolRecord":
@@ -317,6 +325,35 @@ class SymbolRecord:
         if value["span"] is not None:
             value["span"] = SourceSpan.from_dict(value["span"])
         return cls(**value)
+
+
+def migrate_symbol_record_v1(data: Mapping[str, Any], *, normalized_ast: Any) -> SymbolRecord:
+    """Explicitly reissue a legacy symbol envelope as a verified v2 record.
+
+    Generic restoration is intentionally v2-only.  A caller that has retained
+    the extractor projection may use this narrow, typed boundary to reissue
+    the symbol; the old CID is not reused because v1 did not bind every v2
+    identity facet.
+    """
+    value = _closed(data, SymbolRecord._V1_FIELDS, "SymbolRecord v1")
+    if value.pop("schema") != SYMBOL_SCHEMA_V1:
+        raise SemanticIndexModelError("unsupported SymbolRecord v1 schema")
+    if normalized_ast is None:
+        raise SemanticIndexModelError("v1 migration requires normalized_ast")
+    if value["span"] is not None:
+        value["span"] = SourceSpan.from_dict(value["span"])
+    # Do not accept a claimed legacy projection as authority: the explicit
+    # migration argument is normalized and bound into the new CID below.
+    value["normalized_ast"] = normalized_ast
+    value["semantic_index_schema"] = SEMANTIC_INDEX_SCHEMA
+    from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import symbol_version_cid
+    stable_id = _cid(value["stable_id"], "stable_id")
+    value["version_cid"] = symbol_version_cid(
+        stable_id, normalized_ast, value["signature"], value["decorators"],
+        value["annotations"], extractor_name=value["extractor_name"],
+        extractor_version=value["extractor_version"], property_role=value["property_role"],
+    )
+    return SymbolRecord(**value)
 
 
 @dataclass(frozen=True, slots=True)
