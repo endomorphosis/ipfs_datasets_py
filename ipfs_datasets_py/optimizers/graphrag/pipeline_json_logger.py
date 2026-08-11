@@ -205,12 +205,36 @@ class PipelineJSONLogger:
             payload = with_schema(payload)
         
         try:
-            # Legacy logger sink remains selected authority under DQK-077 shadow.
+            # Ephemeral console/stream projection only (DQK-079). Never file
+            # authority; DuckDB cutover answers progress/completion.
             self.logger.log(level, json.dumps(payload, default=str))
         except (TypeError, ValueError, RuntimeError, OSError) as exc:
             self.logger.debug(f"JSON logging failed: {exc}")
 
         self._route_to_observability_shadow(event_type, payload, level)
+
+    def export_run_json(
+        self,
+        filepath: str,
+        *,
+        pretty: bool = True,
+    ) -> str:
+        """Explicit deterministic export of the current run context (DQK-079)."""
+
+        from pathlib import Path as _Path
+
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            export_observability_json,
+        )
+
+        data = {
+            "schema": "ipfs_datasets_py/pipeline-json-export@1",
+            "owner_task": "DQK-079",
+            "domain": self.domain,
+            "context": self._context.to_dict() if self._context else {},
+        }
+        path = export_observability_json(_Path(filepath), data, pretty=pretty)
+        return str(path)
 
     def _route_to_observability_shadow(
         self,
@@ -218,7 +242,7 @@ class PipelineJSONLogger:
         payload: Dict[str, Any],
         level: int,
     ) -> None:
-        """Project pipeline JSON logs into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
+        """Project pipeline JSON logs into DuckDB cutover (DQK-078/DQK-079)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (

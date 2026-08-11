@@ -3,6 +3,10 @@ Core Audit Logging Implementation
 
 This module provides the core audit logging functionality, defining the central
 AuditLogger class and associated data structures for comprehensive audit logging.
+
+After DQK-079 (canary acceptance), implicit JSON/JSONL file-handler sinks are
+not authority. Typed DuckDB observability (DQK-078) is the sole progress/audit
+authority; only explicit deterministic exports and ephemeral console logs remain.
 """
 
 import os
@@ -17,6 +21,7 @@ import traceback
 from typing import Dict, List, Any, Optional, Union, Callable, Type, Set
 from enum import Enum, auto
 from dataclasses import dataclass, field, asdict
+from pathlib import Path
 
 # Try to import security module for integration with AuditLogEntry if available
 try:
@@ -304,11 +309,45 @@ class AuditLogger:
         """
         Add a handler to the audit logger.
 
+        Under DQK-079 duckdb-only mode, handlers that target undeclared mutable
+        file sinks (JSON/JSONL/log paths) are rejected unless an export permit
+        is held or legacy file sinks remain explicitly allowed.
+
         Args:
             handler: The handler to add
         """
+        self._assert_handler_sink_allowed(handler)
         with self._lock:
             self.handlers.append(handler)
+
+    def _assert_handler_sink_allowed(self, handler: AuditHandler) -> None:
+        """Reject undeclared mutable file sinks after canary acceptance."""
+
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                assert_observability_file_write_allowed,
+                legacy_observability_file_sinks_allowed,
+            )
+        except Exception:
+            return
+        if legacy_observability_file_sinks_allowed():
+            return
+        # FileAuditHandler and similar expose file_path; logging.FileHandler-style
+        # adapters may expose baseFilename.
+        file_path = getattr(handler, "file_path", None) or getattr(
+            handler, "baseFilename", None
+        )
+        if not file_path:
+            return
+        kind = "file_handler"
+        name = Path(str(file_path)).name.lower()
+        if name.endswith(".jsonl"):
+            kind = "audit_jsonl"
+        elif name.endswith(".json"):
+            kind = "audit_json"
+        elif name.endswith(".log"):
+            kind = "log_file"
+        assert_observability_file_write_allowed(file_path, kind=kind)
 
     def remove_handler(self, handler_name: str) -> bool:
         """
@@ -469,11 +508,11 @@ class AuditLogger:
             event.source_module = os.path.basename(frame.filename)
             event.source_function = frame.name
 
-        # Dispatch to handlers. Under DQK-078 dual/db-primary cutover, DuckDB
-        # is the typed observability authority and file/console sinks are
-        # disposable projections. Under DQK-077 shadow mode, legacy file sinks
-        # remain selected authority while the catalog is a non-authoritative
-        # projection.
+        # Dispatch to handlers. Under DQK-078/DQK-079 dual/db-primary cutover,
+        # DuckDB is the typed observability authority. File sinks are blocked
+        # unless explicitly permitted; console is ephemeral human-readable only
+        # and never answers progress or completion. Under DQK-077 shadow mode
+        # (legacy sinks allowed), file handlers may still write as projections.
         with self._lock:
             for handler in self.handlers:
                 try:
@@ -489,8 +528,35 @@ class AuditLogger:
 
         return event.event_id
 
+    def export_events_json(
+        self,
+        path: Union[str, "Path"],
+        *,
+        pretty: bool = True,
+    ) -> "Path":
+        """Explicit deterministic export of in-memory audit events (DQK-079).
+
+        Does not establish file authority; requires the observability export
+        permit path and never implies completion/progress from console logs.
+        """
+
+        from pathlib import Path as _Path
+
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            export_observability_json,
+        )
+
+        with self._lock:
+            payload = {
+                "schema": "ipfs_datasets_py/audit-events-export@1",
+                "owner_task": "DQK-079",
+                "event_count": len(self._events),
+                "events": [e.to_dict() for e in self._events],
+            }
+        return export_observability_json(_Path(path), payload, pretty=pretty)
+
     def _route_to_observability_shadow(self, event: "AuditEvent") -> None:
-        """Project a recorded event into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
+        """Project a recorded event into DuckDB cutover (DQK-078/DQK-079)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (

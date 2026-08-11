@@ -223,7 +223,7 @@ class AuditLogger:
         self,
         session_id: Optional[str] = None,
         output_dir: Optional[Union[str, Path]] = None,
-        enable_file_logging: bool = True,
+        enable_file_logging: bool = False,
         logger: Optional[logging.Logger] = None,
     ):
         """
@@ -232,18 +232,31 @@ class AuditLogger:
         Args:
             session_id: Unique session identifier. If None, auto-generated.
             output_dir: Directory to write audit files. If None, memory-only.
-            enable_file_logging: Whether to write events to disk (default: True)
+            enable_file_logging: Whether to write events to disk. Defaults to
+                False after DQK-079; implicit JSONL is not authority. Use
+                :meth:`export_json` for explicit deterministic exports.
             logger: Optional Python logger for debug messages
         """
         self.session_id = session_id or self._generate_session_id()
         self.output_dir: Optional[Path] = Path(output_dir) if output_dir else None
-        self.enable_file_logging = enable_file_logging and (output_dir is not None)
+        # Implicit JSONL authority disabled by default (DQK-079).
+        want_files = bool(enable_file_logging) and (output_dir is not None)
+        if want_files:
+            try:
+                from ipfs_datasets_py.logic.observability.structured_logging import (
+                    legacy_observability_file_sinks_allowed,
+                )
+                if not legacy_observability_file_sinks_allowed():
+                    want_files = False
+            except ImportError:
+                pass
+        self.enable_file_logging = want_files
         self._log = logger or logging.getLogger(__name__)
         
         # Event storage
         self.events: List[AuditEvent] = []
         
-        # Create output directory if needed
+        # Create output directory if needed (legacy dual-write only).
         if self.enable_file_logging and self.output_dir is not None:
             self.output_dir.mkdir(parents=True, exist_ok=True)
             self._log.info(f"Audit logger initialized: session_id={self.session_id}, output_dir={self.output_dir}")
@@ -262,15 +275,15 @@ class AuditLogger:
         """Add event to storage and optionally write to disk."""
         self.events.append(event)
         
-        # Optionally write to incremental log file (legacy sink remains the
-        # selected authority under DQK-077 shadow mode).
+        # Optional incremental JSONL only when legacy file sinks are allowed
+        # (pre-canary / explicit dual-write). Never authority after DQK-079.
         if self.enable_file_logging:
             self._write_event_to_file(event)
 
         self._route_to_observability_shadow(event)
 
     def _route_to_observability_shadow(self, event: AuditEvent) -> None:
-        """Project GraphRAG audit events into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
+        """Project GraphRAG audit events into DuckDB cutover (DQK-078/DQK-079)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (
@@ -318,11 +331,26 @@ class AuditLogger:
         )
     
     def _write_event_to_file(self, event: AuditEvent) -> None:
-        """Append event to incremental log file (JSONL format)."""
+        """Append event to incremental log file (JSONL format).
+
+        Guarded by the observability filesystem guard (DQK-079). Callers must
+        hold legacy-sink permission; prefer :meth:`export_json` for explicit
+        deterministic exports.
+        """
         if self.output_dir is None:
             return
         log_file = self.output_dir / f"audit_{self.session_id}.jsonl"
-        
+
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                assert_observability_file_write_allowed,
+            )
+            assert_observability_file_write_allowed(
+                log_file, kind="audit_jsonl", operation="write"
+            )
+        except ImportError:
+            pass
+
         # Validate output path
         base_dir = Path(log_file).parent if Path(log_file).is_absolute() else None
         safe_log_file = validate_output_path(str(log_file), allow_overwrite=True, base_dir=base_dir)
@@ -582,29 +610,41 @@ class AuditLogger:
     
     def export_json(self, filepath: Union[str, Path], pretty: bool = True) -> None:
         """
-        Export full audit trail to JSON file.
-        
+        Explicit deterministic export of the full audit trail (DQK-079).
+
+        This is not runtime authority; DuckDB observability remains authoritative.
+        Uses the observability export permit so the filesystem guard allows the
+        write.
+
         Args:
             filepath: Output file path
             pretty: Whether to pretty-print JSON (default: True)
         """
         filepath = Path(filepath)
         data = {
+            "schema": "ipfs_datasets_py/graphrag-audit-export@1",
+            "owner_task": "DQK-079",
             "session_id": self.session_id,
             "event_count": len(self.events),
             "events": [event.to_dict() for event in self.events],
         }
-        
-        # Validate output path
-        base_dir = filepath.parent if filepath.is_absolute() else None
-        safe_filepath = validate_output_path(str(filepath), allow_overwrite=True, base_dir=base_dir)
-        
-        with open(safe_filepath, "w", encoding="utf-8") as f:
-            if pretty:
-                json.dump(data, f, indent=2, sort_keys=True)
-            else:
-                json.dump(data, f, separators=(',', ':'), sort_keys=True)
-        
+
+        try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                export_observability_json,
+            )
+            export_observability_json(filepath, data, pretty=pretty)
+        except ImportError:
+            base_dir = filepath.parent if filepath.is_absolute() else None
+            safe_filepath = validate_output_path(
+                str(filepath), allow_overwrite=True, base_dir=base_dir
+            )
+            with open(safe_filepath, "w", encoding="utf-8") as f:
+                if pretty:
+                    json.dump(data, f, indent=2, sort_keys=True)
+                else:
+                    json.dump(data, f, separators=(",", ":"), sort_keys=True)
+
         self._log.info(f"Exported {len(self.events)} events to {filepath}")
     
     def get_round_summary(self, round_num: int) -> RoundSummaryDict:
@@ -719,14 +759,20 @@ class AuditLogger:
 # Convenience functions for common use cases
 
 def create_audit_logger(
-    output_dir: Union[str, Path] = "./audit_logs",
+    output_dir: Optional[Union[str, Path]] = None,
     session_id: Optional[str] = None,
+    *,
+    enable_file_logging: bool = False,
 ) -> AuditLogger:
-    """Create a new audit logger with default configuration."""
+    """Create a new audit logger with duckdb-only defaults (DQK-079).
+
+    Memory + DuckDB routing only unless *enable_file_logging* is explicitly
+    requested and legacy file sinks remain allowed.
+    """
     return AuditLogger(
         session_id=session_id,
         output_dir=output_dir,
-        enable_file_logging=True,
+        enable_file_logging=enable_file_logging,
     )
 
 

@@ -1,6 +1,10 @@
 """Audit logging for logic module.
 
 Provides structured audit logging for security and compliance.
+
+After DQK-079, implicit file-handler authority is disabled. Events route to
+typed DuckDB observability (DQK-078); only ephemeral console logs and explicit
+deterministic exports remain as non-authority surfaces.
 """
 
 import logging
@@ -23,22 +27,60 @@ class AuditLogger:
         """Initialize audit logger.
         
         Args:
-            log_path: Path to audit log file. If None, uses config or stderr.
+            log_path: Path to audit log file. If None, uses config. Under
+                DQK-079 duckdb-only mode, file sinks are rejected unless
+                legacy file I/O is explicitly re-enabled or an export permit
+                is held. Console/stderr remains ephemeral only.
         """
         if log_path is None:
-            config = get_config()
-            log_path = config.security.audit_log_path
+            try:
+                config = get_config()
+                log_path = config.security.audit_log_path
+            except Exception:
+                log_path = None
         
-        # Set up file handler if path provided
+        # File handler only when path provided AND legacy sinks allowed (DQK-079).
+        file_sink_allowed = False
         if log_path:
             path = Path(log_path)
+            try:
+                from ipfs_datasets_py.logic.observability.structured_logging import (
+                    ImplicitMutableFileSinkError,
+                    assert_observability_file_write_allowed,
+                    legacy_observability_file_sinks_allowed,
+                )
+                if legacy_observability_file_sinks_allowed():
+                    file_sink_allowed = True
+                else:
+                    # Fail closed: raise if caller insists; otherwise no file authority.
+                    assert_observability_file_write_allowed(
+                        path, kind="log_file", operation="write"
+                    )
+                    file_sink_allowed = True
+            except ImplicitMutableFileSinkError:
+                file_sink_allowed = False
+            except ImportError:
+                file_sink_allowed = True  # pre-guard environments
+
+        if log_path and file_sink_allowed:
+            path = Path(log_path)
             path.parent.mkdir(parents=True, exist_ok=True)
-            
             handler = logging.FileHandler(path)
             handler.setLevel(logging.INFO)
             formatter = logging.Formatter('%(message)s')
             handler.setFormatter(formatter)
             audit_logger.addHandler(handler)
+        else:
+            # Ephemeral console projection only (never progress/completion authority).
+            if not any(
+                isinstance(h, logging.StreamHandler)
+                and not isinstance(h, logging.FileHandler)
+                for h in audit_logger.handlers
+            ):
+                stream_handler = logging.StreamHandler()
+                stream_handler.setLevel(logging.INFO)
+                stream_handler.setFormatter(logging.Formatter('%(message)s'))
+                audit_logger.addHandler(stream_handler)
     
     @staticmethod
     def log_event(
@@ -70,8 +112,8 @@ class AuditLogger:
         # Add any additional fields
         event.update(kwargs)
         
-        # Log as JSON (legacy file/stderr sink remains authority under DQK-077
-        # shadow mode; typed observability is a non-authoritative projection).
+        # Ephemeral console projection (human-readable). Under DQK-079 this is
+        # never progress/completion authority; DuckDB cutover is authoritative.
         audit_logger.info(json.dumps(event))
         AuditLogger._route_to_observability_shadow(event)
     
@@ -189,7 +231,7 @@ class AuditLogger:
 
     @staticmethod
     def _route_to_observability_shadow(event: Dict[str, Any]) -> None:
-        """Project a security audit event into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
+        """Project a security audit event into DuckDB cutover (DQK-078/DQK-079)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (

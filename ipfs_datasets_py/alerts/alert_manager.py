@@ -6,6 +6,10 @@ This module provides the main alert management system that:
 - Evaluates rules against event payloads
 - Triggers Discord notifications when rules match
 - Manages debouncing and suppression windows
+
+After DQK-079, mutable alert-state JSON files are not authority. Alert events
+route to typed DuckDB observability (DQK-078). Explicit deterministic exports
+and ephemeral console logs remain the only non-DuckDB surfaces.
 """
 
 from __future__ import annotations
@@ -190,30 +194,92 @@ class AlertManager:
     def save_rules_to_file(self, config_file: Union[str, Path]):
         """
         Save alert rules to YAML config file.
-        
-        Args:
-            config_file: Path to output YAML file
+
+        Rule configuration is not alert-state authority. Mutable alert-state
+        JSON (``alerts.json``, ``alert_state.json``) remains blocked under
+        DQK-079 unless an explicit export permit is held.
         """
         try:
+            from ipfs_datasets_py.logic.observability.structured_logging import (
+                ImplicitMutableFileSinkError,
+                get_observability_filesystem_guard,
+            )
+        except ImportError:
+            ImplicitMutableFileSinkError = None  # type: ignore[misc, assignment]
+            get_observability_filesystem_guard = None  # type: ignore[assignment]
+
+        path = Path(config_file)
+        if get_observability_filesystem_guard is not None:
+            kind = get_observability_filesystem_guard().classify_path(path)
+            if kind == "alert_state":
+                # Fail closed — do not swallow as a soft config error.
+                get_observability_filesystem_guard().assert_write_allowed(
+                    path, kind="alert_state", operation="write"
+                )
+
+        try:
             import yaml
-            
+
             config = {
                 'rules': [rule.to_dict() for rule in self.rules.values()]
             }
-            
-            path = Path(config_file)
+
             path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             with open(path, 'w') as f:
                 yaml.dump(config, f, default_flow_style=False, sort_keys=False)
-            
+
             logger.info(f"Saved {len(self.rules)} rules to {config_file}")
-        
+
         except ImportError:
             logger.error("PyYAML required for saving config files")
         except Exception as e:
+            if ImplicitMutableFileSinkError is not None and isinstance(
+                e, ImplicitMutableFileSinkError
+            ):
+                raise
             logger.error(f"Error saving rules to file: {e}", exc_info=True)
-    
+
+    def save_alert_state_json(self, path: Union[str, Path]) -> Path:
+        """Explicit deterministic export of in-memory alert trigger state (DQK-079)."""
+
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            export_observability_json,
+        )
+
+        payload = {
+            "schema": "ipfs_datasets_py/alert-state-export@1",
+            "owner_task": "DQK-079",
+            "last_triggered": dict(self.last_triggered),
+            "rule_ids": sorted(self.rules.keys()),
+            "exported_at": datetime.now().isoformat(),
+        }
+        return export_observability_json(Path(path), payload, pretty=True)
+
+    def write_metric_snapshot_json(self, path: Union[str, Path]) -> Path:
+        """Explicit deterministic metric/alert snapshot export (DQK-079)."""
+
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            export_observability_json,
+        )
+
+        payload = {
+            "schema": "ipfs_datasets_py/alert-metric-snapshot-export@1",
+            "owner_task": "DQK-079",
+            "rules_enabled": sum(1 for r in self.rules.values() if r.enabled),
+            "rules_total": len(self.rules),
+            "suppressed": [
+                rid
+                for rid, ts in self.last_triggered.items()
+                if self._is_suppressed(
+                    rid,
+                    self.rules[rid].suppression_window if rid in self.rules else 0,
+                )
+            ],
+            "exported_at": datetime.now().isoformat(),
+        }
+        return export_observability_json(Path(path), payload, pretty=True)
+
     async def evaluate_event(
         self,
         event: Dict[str, Any],
@@ -291,9 +357,9 @@ class AlertManager:
         if rule.embed_config:
             embed = self._create_embed(rule, event)
         
-        # Send notification (legacy Discord/file sinks remain authority under
-        # DQK-077 shadow mode; typed observability is a non-authoritative
-        # projection).
+        # Discord/console remain operational projections only. Under DQK-079
+        # typed DuckDB observability is alert-state authority; mutable
+        # alerts.json / alert_state.json sinks are blocked.
         try:
             send_result = await self.notifier.send_message(
                 text=message,
@@ -329,7 +395,7 @@ class AlertManager:
         event: Dict[str, Any],
         result: Dict[str, Any],
     ) -> None:
-        """Project triggered alerts into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
+        """Project triggered alerts into DuckDB cutover (DQK-078/DQK-079)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (

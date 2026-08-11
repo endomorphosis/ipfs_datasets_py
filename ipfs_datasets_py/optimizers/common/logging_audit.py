@@ -237,7 +237,7 @@ class LoggingAuditor:
         return "\n".join(report_lines)
 
     def _route_report_to_observability_shadow(self) -> None:
-        """Project logging-audit summary into DuckDB cutover (DQK-078) or shadow (DQK-077)."""
+        """Project logging-audit summary into DuckDB cutover (DQK-078/DQK-079)."""
 
         try:
             from ipfs_datasets_py.duckdb_control.observability_adapters import (
@@ -270,8 +270,9 @@ class LoggingAuditor:
             detail=seed,
             seed=seed,
         )
-        # Under DQK-078 dual/db-primary, DuckDB is authority; report print is
-        # a disposable operational projection only.
+        # Under DQK-078/DQK-079 dual/db-primary, DuckDB is authority; the
+        # human-readable report print is an ephemeral console projection only
+        # and cannot satisfy progress or completion.
         try_record_observability_event(
             producer=ObservabilityProducer.LOGGING_AUDIT,
             action="logging_audit.report",
@@ -284,6 +285,47 @@ class LoggingAuditor:
             resource=str(self.root_dir),
             raw_payload=summary,
         )
+
+    def export_report_json(
+        self,
+        filepath: str,
+        *,
+        pretty: bool = True,
+    ) -> str:
+        """Explicit deterministic export of the audit summary (DQK-079)."""
+
+        from pathlib import Path as _Path
+
+        from ipfs_datasets_py.logic.observability.structured_logging import (
+            export_observability_json,
+        )
+
+        files_with_logger = sum(1 for r in self.results if r.has_logger_init)
+        methods_with_logging = sum(len(r.methods_with_logging) for r in self.results)
+        methods_without_logging = sum(
+            len(r.methods_without_logging) for r in self.results
+        )
+        payload = {
+            "schema": "ipfs_datasets_py/logging-audit-export@1",
+            "owner_task": "DQK-079",
+            "root_dir": str(self.root_dir),
+            "files_scanned": len(self.results),
+            "files_with_logger": files_with_logger,
+            "methods_with_logging": methods_with_logging,
+            "methods_without_logging": methods_without_logging,
+            "results": [
+                {
+                    "file_path": r.file_path,
+                    "class_name": r.class_name,
+                    "methods_with_logging": list(r.methods_with_logging),
+                    "methods_without_logging": list(r.methods_without_logging),
+                    "issues": list(r.issues),
+                }
+                for r in self.results
+            ],
+        }
+        path = export_observability_json(_Path(filepath), payload, pretty=pretty)
+        return str(path)
 
 
 def main() -> List[LoggingAuditResult]:
