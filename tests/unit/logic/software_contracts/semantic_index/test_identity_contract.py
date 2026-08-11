@@ -6,6 +6,7 @@ import ast
 
 import pytest
 
+from ipfs_datasets_py.logic.software_contracts.semantic_index import identity
 from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import (
     stable_symbol_id,
     symbol_version_cid,
@@ -70,6 +71,28 @@ def test_nonfinite_and_signed_zero_ast_literals_have_distinct_tagged_cids() -> N
         "pkg/api.py", "pkg.api.literal", "constant", "pkg", normalized_ast=complex_positive,
     )
     assert SymbolRecord.from_dict(record.to_dict()) == record
+
+
+@pytest.mark.parametrize(
+    "literal",
+    [
+        float("nan"),
+        complex(float("nan"), 0.0),
+        complex(0.0, float("nan")),
+    ],
+)
+def test_symbol_version_cid_rejects_nan_before_content_hashing(
+    monkeypatch: pytest.MonkeyPatch, literal: object
+) -> None:
+    stable = stable_symbol_id("repo:aggregate", "python", "pkg/api.py", "pkg.api.literal", "constant", "pkg")
+
+    def content_hasher_must_not_run(value: object) -> str:
+        pytest.fail(f"content hasher received rejected value: {value!r}")
+
+    monkeypatch.setattr(identity, "cid_for_structured", content_hasher_must_not_run)
+
+    with pytest.raises(SemanticIndexModelError, match="rejects NaN"):
+        identity.symbol_version_cid(stable, ast.Constant(value=literal))
 
 
 def test_forged_aggregate_facet_cannot_retain_the_old_version_cid() -> None:
