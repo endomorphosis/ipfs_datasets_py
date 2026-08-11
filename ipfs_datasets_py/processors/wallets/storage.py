@@ -6,16 +6,21 @@ stable ``record_id``, and only becomes durable after :meth:`DatasetSink.commit`.
 Partial or cancelled runs leave staged data aborted and do not invent a
 successful sink commit for checkpoint CAS.
 
-Authority modes (DQK-071 / DQK-072):
+Authority modes (DQK-071 / DQK-072 / DQK-073):
 
 * ``off`` — JSONL / in-memory only (legacy unit-test path).
 * ``shadow`` — dual-write into DuckDB; JSONL / in-memory remain authority
   (DQK-071).
-* ``dual`` / ``db-primary`` — DuckDB is authoritative for normalized ledger
-  state; JSONL, Parquet, Arrow and CAR are outbox-driven exports (DQK-072).
+* ``dual`` — DuckDB is authoritative for normalized ledger state; JSONL,
+  Parquet, Arrow and CAR are outbox-driven exports (DQK-072).
+* ``db-primary`` / ``export-only`` — DuckDB is sole operational authority
+  (DQK-073).  Implicit ``records.jsonl``, ``.meta.json``, and JSON manifests
+  are never operational truth; only explicit import/export and encrypted/CID
+  raw-object references remain.
 
 Secrets, signing payloads, and unrestricted raw bytes never enter DuckDB
-(CID/digest refs only).
+(CID/digest refs only).  Quack publication receives redacted public ledger
+analytics only.
 
 Importing this module performs no network I/O.
 """
@@ -23,7 +28,9 @@ Importing this module performs no network I/O.
 from __future__ import annotations
 
 import os
-from collections.abc import Iterable, Mapping, Sequence
+import threading
+from collections.abc import Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import StrEnum
 from hashlib import sha256
@@ -41,6 +48,7 @@ from .models import (
     LedgerRecord,
     RawPayloadPolicy,
     RawPayloadRef,
+    ensure_secret_safe,
 )
 from .protocols import OperationContext, RecordBatch
 
@@ -50,6 +58,39 @@ RAW_PAYLOAD_SCHEMA_VERSION = "wallet-raw-payload-v1"
 SHADOW_LEDGER_MODE_SCHEMA_VERSION = "wallet-shadow-ledger-v1"
 AUTHORITY_LEDGER_MODE_SCHEMA_VERSION = "wallet-authority-ledger-v1"
 EXPORT_OUTBOX_SCHEMA_VERSION = "wallet-export-outbox-v1"
+PUBLIC_LEDGER_ANALYTICS_SCHEMA_VERSION = "wallet-public-ledger-analytics-v1"
+
+# DQK-073 cutover pins.
+WALLET_LEDGER_ONLY_OWNER_TASK: Final[str] = "DQK-073"
+WALLET_LEDGER_ONLY_DEFAULT_MODE: Final[str] = "db-primary"
+LEGACY_WALLET_LEDGER_FILENAMES: Final[frozenset[str]] = frozenset(
+    {
+        "records.jsonl",
+        "export-manifest.json",
+        "export-partitions.json",
+        "content.digest",
+        "export.manifest.json",
+        "records.meta.json",
+    }
+)
+LEGACY_META_JSON_SUFFIX: Final[str] = ".meta.json"
+NAMED_LEDGER_EXPORT_COMMANDS: Final[tuple[str, ...]] = (
+    "export_ledger_jsonl",
+    "export_ledger_parquet",
+    "export_ledger_manifest",
+    "drain_export_outbox",
+    "import_legacy_bundle",
+)
+# Columns admitted into the Quack publication plane for redacted analytics.
+PUBLIC_LEDGER_ANALYTICS_COLUMNS: Final[tuple[str, ...]] = (
+    "scope",
+    "record_type",
+    "finality",
+    "count",
+    "min_sequence",
+    "max_sequence",
+    "chain_ref_id",
+)
 
 # Fact tables dual-written by the shadow/dual ledger projection (DQK-071/072).
 _SHADOW_FACT_TABLES: Final = (
@@ -461,6 +502,124 @@ def _restrictive_mkdir(path: Path) -> None:
         pass
 
 
+class ImplicitLegacyLedgerWriteError(DatasetSinkError):
+    """Raised when an implicit records.jsonl / .meta.json / manifest write is blocked."""
+
+    def __init__(self, message: str, *, path: str = "", kind: str = "") -> None:
+        super().__init__(message)
+        self.path = path
+        self.kind = kind
+
+
+class LedgerFilesystemGuard:
+    """Blocks implicit legacy ledger file writes under DuckDB-only authority.
+
+    Explicit import/export paths obtain a short-lived permit via
+    :meth:`permit_export` / :meth:`permit_import`.  All other attempts to write
+    ``records.jsonl``, ``*.meta.json``, or JSON manifests fail closed.
+    """
+
+    def __init__(self, root: str | Path | None = None) -> None:
+        self.root = Path(root) if root is not None else None
+        self._lock = threading.RLock()
+        self._export_permits: int = 0
+        self._import_permits: int = 0
+
+    @contextmanager
+    def permit_export(self) -> Iterator[None]:
+        with self._lock:
+            self._export_permits += 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._export_permits = max(0, self._export_permits - 1)
+
+    @contextmanager
+    def permit_import(self) -> Iterator[None]:
+        with self._lock:
+            self._import_permits += 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._import_permits = max(0, self._import_permits - 1)
+
+    def assert_write_allowed(self, path: Path | str, *, kind: str = "legacy") -> None:
+        path = Path(path)
+        if not self._is_guarded_path(path):
+            return
+        with self._lock:
+            allowed = self._export_permits > 0 or self._import_permits > 0
+        if allowed:
+            return
+        raise ImplicitLegacyLedgerWriteError(
+            f"implicit {kind} write blocked by filesystem guard: {path} "
+            f"(use explicit export/import; owner task {WALLET_LEDGER_ONLY_OWNER_TASK})",
+            path=str(path),
+            kind=kind,
+        )
+
+    def check_path_write(self, path: Path | str, *, kind: str = "legacy") -> None:
+        self.assert_write_allowed(path, kind=kind)
+
+    def _is_guarded_path(self, path: Path) -> bool:
+        name = path.name
+        if name in LEGACY_WALLET_LEDGER_FILENAMES:
+            return True
+        if name.endswith(LEGACY_META_JSON_SUFFIX):
+            return True
+        if name.endswith(".jsonl") and name.startswith("records"):
+            return True
+        if name in {"export-manifest.json", "export-partitions.json"}:
+            return True
+        if name.endswith(".manifest.json") or name.endswith("-manifest.json"):
+            return True
+        return False
+
+
+def is_legacy_wallet_ledger_filename(name: str) -> bool:
+    """Return whether *name* is a legacy wallet ledger authority surface file."""
+
+    if name in LEGACY_WALLET_LEDGER_FILENAMES:
+        return True
+    if name.endswith(LEGACY_META_JSON_SUFFIX):
+        return True
+    if name.endswith(".jsonl") and name.startswith("records"):
+        return True
+    if name.endswith(".manifest.json") or name.endswith("-manifest.json"):
+        return True
+    return False
+
+
+def legacy_wallet_ledger_files_present(root: str | Path) -> tuple[str, ...]:
+    """Return sorted basenames of legacy ledger files found under *root*."""
+
+    root_path = Path(root)
+    if not root_path.exists():
+        return ()
+    found: list[str] = []
+    for path in root_path.rglob("*"):
+        if path.is_file() and is_legacy_wallet_ledger_filename(path.name):
+            try:
+                rel = str(path.relative_to(root_path))
+            except ValueError:
+                rel = path.name
+            found.append(rel)
+    return tuple(sorted(found))
+
+
+def assert_legacy_wallet_ledger_files_absent(root: str | Path) -> None:
+    """Fail closed when any legacy operational ledger file is present under *root*."""
+
+    present = legacy_wallet_ledger_files_present(root)
+    if present:
+        raise DatasetSinkError(
+            f"legacy wallet ledger files present under {root}: {list(present)}; "
+            f"DuckDB-only authority ({WALLET_LEDGER_ONLY_OWNER_TASK}) requires them absent"
+        )
+
+
 def _restrictive_write_bytes(path: Path, data: bytes) -> None:
     """Atomically write *data* with owner-only file permissions."""
 
@@ -647,6 +806,11 @@ class DirectoryRawPayloadStore:
     The store directory is created with owner-only permissions (``0o700``) and
     payload files with owner-only permissions (``0o600``).  Bounds are enforced
     before hashing or durable writes so rejected puts leave the store unchanged.
+
+    Under DuckDB-only authority (DQK-073), ``write_meta_json=False`` keeps
+    operational identity on digest/CID refs only — ``.meta.json`` sidecars are
+    never authority and are only materialised when an explicit export permit
+    is active on the optional *filesystem_guard*.
     """
 
     def __init__(
@@ -659,6 +823,8 @@ class DirectoryRawPayloadStore:
         max_objects: int | None = None,
         policy: RawPayloadPolicy = RawPayloadPolicy.REFERENCED,
         encryptor: RawPayloadEncryptor | None = None,
+        write_meta_json: bool = True,
+        filesystem_guard: LedgerFilesystemGuard | None = None,
     ) -> None:
         if limits is not None and not isinstance(limits, RawPayloadCustodyLimits):
             raise InvalidRequestError("limits must be a RawPayloadCustodyLimits")
@@ -690,9 +856,13 @@ class DirectoryRawPayloadStore:
         self._limits = limits
         self._policy = policy
         self._encryptor = encryptor
+        self._write_meta_json = bool(write_meta_json)
+        self._filesystem_guard = filesystem_guard
         self._total_bytes = 0
         self._object_count = 0
         self._known_digests: set[str] = set()
+        # In-process meta for digest → media_type/cid when sidecars are disabled.
+        self._meta: dict[str, dict[str, Any]] = {}
         self._hydrate_accounting()
 
     def _hydrate_accounting(self) -> None:
@@ -725,6 +895,10 @@ class DirectoryRawPayloadStore:
         return self._encryptor
 
     @property
+    def write_meta_json(self) -> bool:
+        return self._write_meta_json
+
+    @property
     def total_bytes(self) -> int:
         return self._total_bytes
 
@@ -735,6 +909,20 @@ class DirectoryRawPayloadStore:
         # Digest is "sha256:<hex>"; keep the algorithm prefix out of the name.
         safe = digest.replace(":", "_")
         return self._root / f"{safe}.bin"
+
+    def _write_meta_sidecar(self, meta_path: Path, payload: StoredRawPayload) -> None:
+        """Write optional ``.meta.json`` only when explicitly enabled / permitted."""
+
+        if not self._write_meta_json:
+            # In-process meta only — digest/CID remain the durable identity.
+            self._meta[payload.digest] = payload.to_dict()
+            return
+        if self._filesystem_guard is not None:
+            self._filesystem_guard.assert_write_allowed(
+                meta_path, kind="raw_payload_meta"
+            )
+        _restrictive_write_bytes(meta_path, canonical_json_bytes(payload.to_dict()))
+        self._meta[payload.digest] = payload.to_dict()
 
     async def put(
         self,
@@ -756,7 +944,7 @@ class DirectoryRawPayloadStore:
 
         digest = digest_bytes(raw)
         path = self._path_for(digest)
-        meta_path = path.with_suffix(".meta.json")
+        meta_path = path.with_suffix(LEGACY_META_JSON_SUFFIX)
         if path.exists():
             # Idempotent content-addressed hit: no new capacity consumed.
             # Encrypted ciphertext may be non-deterministic, so when an encryptor
@@ -798,12 +986,10 @@ class DirectoryRawPayloadStore:
             media_type=media_type,
             cid=cid,
         )
-        # Write body then meta; counters update only after both succeed.
+        # Body is the content-addressed object; meta is never operational authority.
         _restrictive_write_bytes(path, payload.body)
         try:
-            _restrictive_write_bytes(
-                meta_path, canonical_json_bytes(payload.to_dict())
-            )
+            self._write_meta_sidecar(meta_path, payload)
         except Exception:
             try:
                 path.unlink(missing_ok=True)
@@ -830,13 +1016,19 @@ class DirectoryRawPayloadStore:
         body = path.read_bytes()
         media_type = "application/json"
         cid = None
-        meta_path = path.with_suffix(".meta.json")
-        if meta_path.exists():
-            import json
+        # Prefer in-process meta (DuckDB-only path); fall back to optional sidecar.
+        cached = self._meta.get(digest)
+        if isinstance(cached, Mapping):
+            media_type = str(cached.get("media_type") or media_type)
+            cid = cached.get("cid")
+        else:
+            meta_path = path.with_suffix(LEGACY_META_JSON_SUFFIX)
+            if meta_path.exists():
+                import json
 
-            meta = json.loads(meta_path.read_text(encoding="utf-8"))
-            media_type = str(meta.get("media_type") or media_type)
-            cid = meta.get("cid")
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                media_type = str(meta.get("media_type") or media_type)
+                cid = meta.get("cid")
         if self._encryptor is not None:
             try:
                 body = self._encryptor.decrypt(body)
@@ -860,7 +1052,7 @@ class _StagedRecord:
 
 
 class ShadowLedgerMode(StrEnum):
-    """Authority mode for dual-written wallet ledger sinks (DQK-071 / DQK-072).
+    """Authority mode for dual-written wallet ledger sinks (DQK-071..073).
 
     * ``off`` — JSONL / in-memory only (legacy unit-test path).
     * ``shadow`` — dual-write into DuckDB; JSONL / in-memory remain authority
@@ -868,13 +1060,17 @@ class ShadowLedgerMode(StrEnum):
     * ``dual`` — dual writes with DuckDB as ledger/checkpoint authority and a
       crash-recoverable export outbox for JSONL/Parquet/Arrow/CAR (DQK-072).
     * ``db-primary`` — DuckDB is sole authority; file formats are outbox exports
-      only and never re-admitted as operational truth.
+      only and never re-admitted as operational truth (DQK-072/073).
+    * ``export-only`` — post-promotion greenfield state (DQK-073): DuckDB sole
+      authority; implicit ``records.jsonl`` / ``.meta.json`` / JSON manifests
+      are blocked; only named export/import commands materialise files.
     """
 
     OFF = "off"
     SHADOW = "shadow"
     DUAL = "dual"
     DB_PRIMARY = "db-primary"
+    EXPORT_ONLY = "export-only"
 
     @classmethod
     def parse(cls, value: "ShadowLedgerMode | str | None") -> "ShadowLedgerMode":
@@ -894,6 +1090,9 @@ class ShadowLedgerMode(StrEnum):
             "db-primary": cls.DB_PRIMARY,
             "dbprimary": cls.DB_PRIMARY,
             "duckdb-primary": cls.DB_PRIMARY,
+            "export-only": cls.EXPORT_ONLY,
+            "exportonly": cls.EXPORT_ONLY,
+            "export_only": cls.EXPORT_ONLY,
             "authority": cls.DUAL,
         }
         if text not in aliases:
@@ -907,7 +1106,11 @@ class ShadowLedgerMode(StrEnum):
     def duckdb_is_authority(self) -> bool:
         """True when DuckDB is the operational truth for ledger rows."""
 
-        return self in {ShadowLedgerMode.DUAL, ShadowLedgerMode.DB_PRIMARY}
+        return self in {
+            ShadowLedgerMode.DUAL,
+            ShadowLedgerMode.DB_PRIMARY,
+            ShadowLedgerMode.EXPORT_ONLY,
+        }
 
     @property
     def dual_writes(self) -> bool:
@@ -917,7 +1120,23 @@ class ShadowLedgerMode(StrEnum):
             ShadowLedgerMode.SHADOW,
             ShadowLedgerMode.DUAL,
             ShadowLedgerMode.DB_PRIMARY,
+            ShadowLedgerMode.EXPORT_ONLY,
         }
+
+    @property
+    def blocks_implicit_legacy_files(self) -> bool:
+        """True when implicit records.jsonl / meta / manifest writes are blocked."""
+
+        return self in {
+            ShadowLedgerMode.DB_PRIMARY,
+            ShadowLedgerMode.EXPORT_ONLY,
+        }
+
+    @property
+    def memory_is_authority(self) -> bool:
+        """True when the in-memory / JSONL projection is operational authority."""
+
+        return self in {ShadowLedgerMode.OFF, ShadowLedgerMode.SHADOW}
 
 
 class ExportOutboxStatus(StrEnum):
@@ -1133,9 +1352,12 @@ class StreamingDatasetSink:
     Authority:
 
     * ``shadow`` — in-memory / JSONL remains authority; DuckDB is dual-written.
-    * ``dual`` / ``db-primary`` — DuckDB is authority; JSONL and other file
-      formats are projected only through the export outbox after a durable
-      DuckDB commit (kill/restart loses or duplicates no ledger record).
+    * ``dual`` — DuckDB is authority; JSONL and other file formats are projected
+      only through the export outbox after a durable DuckDB commit.
+    * ``db-primary`` / ``export-only`` (DQK-073) — DuckDB is sole authority.
+      Implicit ``records.jsonl``, ``.meta.json``, and JSON manifests are blocked;
+      only named export/import commands materialise files.  Resume rehydrates
+      exclusively from DuckDB.
     """
 
     def __init__(
@@ -1149,6 +1371,7 @@ class StreamingDatasetSink:
         authority_mode: ShadowLedgerMode | str | None = None,
         export_formats: Sequence[str] = (),
         export_outbox: ExportOutbox | None = None,
+        filesystem_guard: LedgerFilesystemGuard | None = None,
     ) -> None:
         self._scope = _required_str(scope, "scope")
         self._output_dir = Path(output_dir) if output_dir is not None else None
@@ -1172,6 +1395,7 @@ class StreamingDatasetSink:
         self._export_formats = tuple(str(fmt) for fmt in export_formats)
         self._export_outbox = export_outbox if export_outbox is not None else ExportOutbox()
         self._crash_boundary: str | None = None
+        self._named_export_invocations: list[str] = []
         self._shadow = _resolve_shadow_store(
             shadow_store=shadow_store,
             shadow=shadow,
@@ -1186,6 +1410,11 @@ class StreamingDatasetSink:
             # Dual / shadow / db-primary without a store opens a process-local
             # pure-Python DuckDB wallet store so authority is never file-only.
             self._shadow = _open_default_shadow_store(scope=self._scope)
+        self._filesystem_guard = (
+            filesystem_guard
+            if filesystem_guard is not None
+            else LedgerFilesystemGuard(self._output_dir)
+        )
 
     @property
     def scope(self) -> str:
@@ -1224,8 +1453,54 @@ class StreamingDatasetSink:
         return self._export_outbox
 
     @property
+    def filesystem_guard(self) -> LedgerFilesystemGuard:
+        return self._filesystem_guard
+
+    @property
+    def memory_is_authority(self) -> bool:
+        return self._shadow_mode.memory_is_authority
+
+    @property
+    def owner_task_id(self) -> str | None:
+        if self._shadow_mode.blocks_implicit_legacy_files:
+            return WALLET_LEDGER_ONLY_OWNER_TASK
+        return None
+
+    @property
     def shadow_write_receipts(self) -> tuple[ShadowWriteReceipt, ...]:
         return tuple(self._shadow_write_receipts)
+
+    def promote_to_db_primary(self) -> ShadowLedgerMode:
+        """Promote dual → db-primary (DuckDB sole authority; files export-only)."""
+
+        if self._shadow is None:
+            raise DatasetSinkError("cannot promote without a DuckDB store")
+        if self._shadow_mode is ShadowLedgerMode.SHADOW:
+            self._shadow_mode = ShadowLedgerMode.DUAL
+        if self._shadow_mode is ShadowLedgerMode.EXPORT_ONLY:
+            return self._shadow_mode
+        self._shadow_mode = ShadowLedgerMode.DB_PRIMARY
+        return self._shadow_mode
+
+    def promote_to_export_only(self) -> ShadowLedgerMode:
+        """Promote to export-only (DQK-073 greenfield; no implicit legacy files)."""
+
+        if self._shadow is None:
+            raise DatasetSinkError("cannot promote without a DuckDB store")
+        self._shadow_mode = ShadowLedgerMode.EXPORT_ONLY
+        return self._shadow_mode
+
+    def named_export_invocations(self) -> tuple[str, ...]:
+        return tuple(self._named_export_invocations)
+
+    def assert_json_write_allowed(
+        self, path: str | Path, *, kind: str = "legacy"
+    ) -> None:
+        """Fail closed on implicit legacy ledger file writes (DQK-073)."""
+
+        if not self._shadow_mode.blocks_implicit_legacy_files:
+            return
+        self._filesystem_guard.assert_write_allowed(path, kind=kind)
 
     @property
     def last_parity(self) -> ShadowParityReport | None:
@@ -1557,12 +1832,34 @@ class StreamingDatasetSink:
         return receipt
 
     def _enqueue_export_outbox(self, receipt: SinkCommitReceipt) -> ExportOutboxEntry:
-        """Enqueue outbox-driven export after a durable DuckDB commit."""
+        """Enqueue outbox-driven export after a durable DuckDB commit.
+
+        Under db-primary / export-only (DQK-073) formats are never implied from
+        ``output_dir``: callers must pass *export_formats* explicitly so
+        ``records.jsonl`` is not materialised by accident.
+        """
 
         self._maybe_crash("before_export_outbox")
-        formats = self._export_formats or ("jsonl",)
-        if self._output_dir is not None and "jsonl" not in formats:
-            formats = ("jsonl",) + tuple(formats)
+        if self._shadow_mode.blocks_implicit_legacy_files:
+            formats = self._export_formats  # explicit only; may be empty
+            if not formats:
+                # No outbox entry when no explicit formats — DuckDB is enough.
+                return ExportOutboxEntry(
+                    outbox_id=f"outbox:{receipt.commit_id}:noop",
+                    commit_id=receipt.commit_id,
+                    scope=receipt.scope,
+                    formats=(),
+                    record_ids=tuple(item.record_id for item in self._committed),
+                    content_digest=receipt.content_digest,
+                    status=ExportOutboxStatus.COMPLETED,
+                    output_dir=(
+                        str(self._output_dir) if self._output_dir is not None else None
+                    ),
+                )
+        else:
+            formats = self._export_formats or ("jsonl",)
+            if self._output_dir is not None and "jsonl" not in formats:
+                formats = ("jsonl",) + tuple(formats)
         entry = ExportOutboxEntry(
             outbox_id=f"outbox:{receipt.commit_id}",
             commit_id=receipt.commit_id,
@@ -1579,6 +1876,14 @@ class StreamingDatasetSink:
         assert self._output_dir is not None
         self._maybe_crash("before_jsonl_flush")
         path = self._output_dir / "records.jsonl"
+        if self._shadow_mode.blocks_implicit_legacy_files:
+            raise ImplicitLegacyLedgerWriteError(
+                f"implicit records.jsonl flush blocked under "
+                f"{self._shadow_mode.value} (DQK-073); use drain_export_outbox "
+                f"or export_ledger_jsonl",
+                path=str(path),
+                kind="records_jsonl",
+            )
         tmp = path.with_suffix(".jsonl.tmp")
         lines = [
             canonical_json_bytes(item.payload).decode("utf-8")
@@ -1599,11 +1904,20 @@ class StreamingDatasetSink:
 
         Idempotent: completed entries are skipped.  File formats never become
         operational authority — they are one-way projections of DuckDB state.
+        This is a **named export** command (DQK-073).
         """
 
         from .export import drain_wallet_export_outbox
 
         out_dir = Path(output_dir) if output_dir is not None else self._output_dir
+        self._named_export_invocations.append("drain_export_outbox")
+        if self._shadow_mode.blocks_implicit_legacy_files and out_dir is not None:
+            with self._filesystem_guard.permit_export():
+                return drain_wallet_export_outbox(
+                    self,
+                    formats=formats,
+                    output_dir=out_dir,
+                )
         return drain_wallet_export_outbox(
             self,
             formats=formats,
@@ -1774,13 +2088,18 @@ class StreamingDatasetSink:
     def read_jsonl_records(self) -> tuple[dict[str, Any], ...]:
         """Load committed JSONL projections (export surface; dual-mode outbox).
 
-        Dual / db-primary: JSONL is not authority.  When the outbox has not
-        been drained yet, return the in-memory projection of DuckDB authority
-        so parity checks remain available without re-admitting files as truth.
+        Dual / db-primary / export-only: JSONL is **not** authority.  When the
+        outbox has not been drained yet, return the in-memory projection of
+        DuckDB authority so parity checks remain available without re-admitting
+        files as truth.  Under DuckDB-only modes, file reads are treated as
+        explicit export inspection only.
         """
 
         path = self.jsonl_path()
         if path is not None and path.is_file():
+            if self._shadow_mode.duckdb_is_authority:
+                # Prefer authority projection; JSONL is export/compatibility only.
+                return self.committed_records()
             rows: list[dict[str, Any]] = []
             for line in path.read_text(encoding="utf-8").splitlines():
                 text = line.strip()
@@ -1793,6 +2112,17 @@ class StreamingDatasetSink:
                     rows.append(payload)
             return tuple(rows)
         return self.committed_records()
+
+    def reject_legacy_file_authority(
+        self, *, artifact: str = "records.jsonl"
+    ) -> None:
+        """Fail closed when a caller attempts to treat a legacy file as truth."""
+
+        raise DatasetSinkError(
+            f"legacy file {artifact!r} is not operational authority under "
+            f"{self._shadow_mode.value} ({WALLET_LEDGER_ONLY_OWNER_TASK}); "
+            "resume from DuckDB and use named export/import only"
+        )
 
 
 def _resolve_shadow_store(
@@ -2074,21 +2404,138 @@ def iter_record_dicts(records: Iterable[object]) -> list[dict[str, Any]]:
     return [record_as_dict(record) for record in records]
 
 
+def build_redacted_public_ledger_analytics(
+    authority_store: Any,
+    *,
+    scope: str | None = None,
+) -> Mapping[str, Any]:
+    """Build redacted public ledger analytics for Quack publication (DQK-073).
+
+    Aggregates only allowlisted columns (counts / finality / sequence bounds /
+    chain_ref_id).  Never includes raw payloads, secrets, signing material, or
+    unrestricted bytes.  Suitable for the physically separate publication plane.
+    """
+
+    if authority_store is None:
+        raise InvalidRequestError("authority_store is required")
+    list_records = getattr(authority_store, "list_records", None)
+    if not callable(list_records):
+        raise DatasetSinkError("authority_store does not expose list_records")
+
+    aggregates: dict[tuple[str, str, str], dict[str, Any]] = {}
+    total_records = 0
+    for table in _AUTHORITY_FACT_TABLES:
+        try:
+            rows = list_records(table)
+        except Exception:
+            continue
+        for row in rows:
+            if not isinstance(row, Mapping):
+                continue
+            total_records += 1
+            record_type = str(row.get("record_type") or table)
+            finality = str(row.get("finality") or Finality.UNKNOWN.value)
+            chain_ref_id = str(row.get("chain_ref_id") or "")
+            key = (record_type, finality, chain_ref_id)
+            bucket = aggregates.get(key)
+            if bucket is None:
+                bucket = {
+                    "scope": scope or "",
+                    "record_type": record_type,
+                    "finality": finality,
+                    "count": 0,
+                    "min_sequence": None,
+                    "max_sequence": None,
+                    "chain_ref_id": chain_ref_id,
+                }
+                aggregates[key] = bucket
+            bucket["count"] = int(bucket["count"]) + 1
+            seq = row.get("sequence")
+            if isinstance(seq, int) and not isinstance(seq, bool):
+                min_seq = bucket["min_sequence"]
+                max_seq = bucket["max_sequence"]
+                bucket["min_sequence"] = seq if min_seq is None else min(int(min_seq), seq)
+                bucket["max_sequence"] = seq if max_seq is None else max(int(max_seq), seq)
+
+    rows_out = sorted(
+        aggregates.values(),
+        key=lambda r: (r["record_type"], r["finality"], r["chain_ref_id"]),
+    )
+    # Fail closed on secret-shaped keys/values before publication.
+    for row in rows_out:
+        ensure_secret_safe(row)
+        for col in row:
+            if col not in PUBLIC_LEDGER_ANALYTICS_COLUMNS:
+                raise DatasetSinkError(
+                    f"public ledger analytics forbids column {col!r}"
+                )
+
+    document: dict[str, Any] = {
+        "schema_version": PUBLIC_LEDGER_ANALYTICS_SCHEMA_VERSION,
+        "publication_type": "wallet_public_ledger_analytics_v1",
+        "owner_task_id": WALLET_LEDGER_ONLY_OWNER_TASK,
+        "operational_authority": "duckdb",
+        "sensitive_raw_excluded": True,
+        "payload_body_excluded": True,
+        "legacy_file_authority": False,
+        "quack_surface": "redacted_public_ledger_analytics",
+        "scope": scope or "",
+        "total_records": total_records,
+        "aggregates": rows_out,
+        "columns": list(PUBLIC_LEDGER_ANALYTICS_COLUMNS),
+    }
+    ensure_secret_safe(document)
+    return MappingProxyType(document)
+
+
+def assert_publication_excludes_secrets(document: Mapping[str, Any]) -> None:
+    """Fail closed if a publication document carries secret-bearing material."""
+
+    ensure_secret_safe(document)
+    for key in document:
+        lowered = str(key).casefold()
+        for fragment in ("private_key", "mnemonic", "password", "api_key"):
+            if fragment in lowered:
+                raise DatasetSinkError(
+                    f"publication document forbids key {key!r}"
+                )
+    # Nested aggregates must stay within the allowlisted column set.
+    aggregates = document.get("aggregates")
+    if isinstance(aggregates, Sequence) and not isinstance(aggregates, (str, bytes)):
+        for row in aggregates:
+            if not isinstance(row, Mapping):
+                continue
+            for col in row:
+                if col not in PUBLIC_LEDGER_ANALYTICS_COLUMNS:
+                    raise DatasetSinkError(
+                        f"publication aggregate forbids column {col!r}"
+                    )
+
+
 __all__ = [
     "AUTHORITY_LEDGER_MODE_SCHEMA_VERSION",
     "DEFAULT_MAX_RAW_OBJECT_BYTES",
     "DEFAULT_MAX_RAW_OBJECTS",
     "DEFAULT_MAX_RAW_TOTAL_BYTES",
     "EXPORT_OUTBOX_SCHEMA_VERSION",
+    "LEGACY_META_JSON_SUFFIX",
+    "LEGACY_WALLET_LEDGER_FILENAMES",
+    "NAMED_LEDGER_EXPORT_COMMANDS",
+    "PUBLIC_LEDGER_ANALYTICS_COLUMNS",
+    "PUBLIC_LEDGER_ANALYTICS_SCHEMA_VERSION",
     "RAW_PAYLOAD_SCHEMA_VERSION",
     "SHADOW_LEDGER_MODE_SCHEMA_VERSION",
     "SINK_RECEIPT_SCHEMA_VERSION",
+    "WALLET_LEDGER_ONLY_DEFAULT_MODE",
+    "WALLET_LEDGER_ONLY_OWNER_TASK",
     "BatchWriteReceipt",
     "DirectoryRawPayloadStore",
     "ExportOutbox",
     "ExportOutboxEntry",
     "ExportOutboxStatus",
+    "ImplicitLegacyLedgerWriteError",
     "InMemoryRawPayloadStore",
+    "LedgerFilesystemGuard",
     "RawPayloadCustodyLimits",
     "RawPayloadEncryptor",
     "RawPayloadStore",
@@ -2098,11 +2545,16 @@ __all__ = [
     "SinkCommitReceipt",
     "StoredRawPayload",
     "StreamingDatasetSink",
+    "assert_legacy_wallet_ledger_files_absent",
+    "assert_publication_excludes_secrets",
     "assert_shadow_catalog_excludes_secrets",
+    "build_redacted_public_ledger_analytics",
     "compare_jsonl_db_projections",
     "digest_bytes",
     "fact_table_for_record",
+    "is_legacy_wallet_ledger_filename",
     "iter_record_dicts",
+    "legacy_wallet_ledger_files_present",
     "record_as_dict",
     "record_finality",
     "record_identity",

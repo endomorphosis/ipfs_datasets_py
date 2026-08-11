@@ -17,6 +17,12 @@ exports**: they are materialised only after a durable DuckDB commit and never
 re-admitted as authority.  Typed Parquet columns support predicate pushdown
 without relying on opaque-only ``payload_json`` as the pushdown surface.
 
+Under DuckDB-only / export-only authority (DQK-073), implicit ``records.jsonl``,
+``.meta.json``, and JSON manifest writes are blocked.  Named export commands
+and outbox drains are the only admitted filesystem materialisation paths.
+Quack receives redacted public ledger analytics only — never raw secret-bearing
+payloads.
+
 Importing this module performs no network I/O.  Parquet support uses optional
 ``pyarrow`` / ``duckdb`` only inside export methods.
 """
@@ -58,7 +64,15 @@ from .storage import (
     ExportOutbox,
     ExportOutboxEntry,
     ExportOutboxStatus,
+    ImplicitLegacyLedgerWriteError,
+    LedgerFilesystemGuard,
+    NAMED_LEDGER_EXPORT_COMMANDS,
+    PUBLIC_LEDGER_ANALYTICS_COLUMNS,
     StreamingDatasetSink,
+    WALLET_LEDGER_ONLY_OWNER_TASK,
+    assert_publication_excludes_secrets,
+    assert_shadow_catalog_excludes_secrets,
+    build_redacted_public_ledger_analytics,
     record_as_dict,
     record_finality,
     record_sequence,
@@ -68,6 +82,7 @@ from .storage import (
 EXPORT_RECEIPT_SCHEMA_VERSION = "wallet-export-receipt-v1"
 DEFAULT_PROCESSOR_VERSION = "wallet-exporter@1.0.0"
 DEFAULT_NORMALIZED_SCHEMA_MAJOR = 1
+PUBLIC_LEDGER_QUACK_TABLE: Final[str] = "public_ledger_analytics"
 
 # Typed columns for predicate pushdown.  Opaque payload_json is optional and
 # never the sole authority surface for dual-mode analytical exports (DQK-072).
@@ -711,11 +726,16 @@ def drain_wallet_export_outbox(
     formats: Sequence[str] | None = None,
     output_dir: str | Path | None = None,
 ) -> tuple[ExportOutboxEntry, ...]:
-    """Drain pending export outbox entries from a dual-mode sink (DQK-072).
+    """Drain pending export outbox entries from a dual-mode sink (DQK-072/073).
 
     Materialises JSONL / Parquet / Arrow / CAR projections from the sink's
     committed authority working set (DuckDB-backed).  Completing an entry is
     idempotent: re-draining completed ids is a no-op.
+
+    This is a **named export** command.  Under db-primary / export-only the
+    sink's filesystem guard must hold an export permit (obtained by
+    :meth:`StreamingDatasetSink.drain_export_outbox` or an explicit permit).
+    File formats never become operational authority.
     """
 
     if not isinstance(sink, StreamingDatasetSink):
@@ -723,8 +743,18 @@ def drain_wallet_export_outbox(
     outbox: ExportOutbox = sink.export_outbox
     completed: list[ExportOutboxEntry] = []
     records = list(sink.committed_records())
+    guard = getattr(sink, "filesystem_guard", None)
     for entry in outbox.pending():
         target_formats = tuple(formats) if formats is not None else entry.formats
+        if not target_formats:
+            # Empty format list: complete without writing files (DQK-073).
+            done = outbox.mark(
+                entry.outbox_id,
+                ExportOutboxStatus.COMPLETED,
+                output_dir=entry.output_dir,
+            )
+            completed.append(done)
+            continue
         out = Path(
             output_dir
             if output_dir is not None
@@ -736,12 +766,35 @@ def drain_wallet_export_outbox(
             for index, fmt_name in enumerate(target_formats):
                 fmt = ExportFormat(str(fmt_name))
                 if fmt is ExportFormat.JSONL:
-                    write_jsonl(records, out / f"records-{index:03d}.jsonl")
-                    # Also maintain the classic records.jsonl path for parity helpers.
-                    write_jsonl(records, out / "records.jsonl")
+                    part_path = out / f"records-{index:03d}.jsonl"
+                    classic_path = out / "records.jsonl"
                     digest_path = out / "content.digest"
-                    digest_path.write_text(
-                        content_digest(records) + "\n", encoding="utf-8"
+
+                    def _write_part(p: Path = part_path) -> None:
+                        write_jsonl(records, p)
+
+                    def _write_classic(p: Path = classic_path) -> None:
+                        write_jsonl(records, p)
+
+                    def _write_digest(p: Path = digest_path) -> None:
+                        p.write_text(
+                            content_digest(records) + "\n", encoding="utf-8"
+                        )
+
+                    _guarded_write(
+                        guard, part_path, kind="records_jsonl", write=_write_part
+                    )
+                    _guarded_write(
+                        guard,
+                        classic_path,
+                        kind="records_jsonl",
+                        write=_write_classic,
+                    )
+                    _guarded_write(
+                        guard,
+                        digest_path,
+                        kind="content_digest",
+                        write=_write_digest,
                     )
                 elif fmt is ExportFormat.PARQUET:
                     write_parquet(
@@ -779,6 +832,29 @@ def drain_wallet_export_outbox(
                 f"export outbox drain failed for {entry.outbox_id}: {exc}"
             ) from exc
     return tuple(completed)
+
+
+def _guarded_write(
+    guard: LedgerFilesystemGuard | None,
+    path: Path,
+    *,
+    kind: str,
+    write: Any,
+) -> None:
+    """Write *path* under an optional filesystem guard (DQK-073)."""
+
+    if guard is None:
+        write()
+        return
+    # Permit may already be held by the caller (sink.drain_export_outbox).
+    try:
+        guard.assert_write_allowed(path, kind=kind)
+    except ImplicitLegacyLedgerWriteError:
+        with guard.permit_export():
+            guard.assert_write_allowed(path, kind=kind)
+            write()
+        return
+    write()
 
 
 def _write_arrow_typed(
@@ -938,6 +1014,9 @@ class WalletDatasetExporter:
         enable_car: bool = False,
         car_writer: Any | None = None,
         clock: Any | None = None,
+        persist_manifest: bool = True,
+        filesystem_guard: LedgerFilesystemGuard | None = None,
+        explicit_export_only: bool = False,
     ) -> None:
         if not isinstance(chain, ChainRef):
             raise InvalidRequestError("chain must be a ChainRef")
@@ -961,6 +1040,14 @@ class WalletDatasetExporter:
         self._provider = _required_str(provider, "provider")
         self._provider_kind = _required_str(provider_kind, "provider_kind")
         self._provider_capabilities = tuple(provider_capabilities)
+        self._persist_manifest = bool(persist_manifest)
+        self._explicit_export_only = bool(explicit_export_only)
+        self._filesystem_guard = (
+            filesystem_guard
+            if filesystem_guard is not None
+            else LedgerFilesystemGuard(self._output_dir)
+        )
+        self._named_export_invocations: list[str] = []
         _ensure_export_safe(
             {
                 "chain": self._chain.to_dict(),
@@ -988,12 +1075,23 @@ class WalletDatasetExporter:
                 "processor_version": self._processor_version,
                 "normalized_schema_major": self._normalized_schema_major,
                 "car_enabled": self._enable_car and self._car_writer is not None,
+                "explicit_export_only": self._explicit_export_only,
+                "owner_task_id": (
+                    WALLET_LEDGER_ONLY_OWNER_TASK if self._explicit_export_only else None
+                ),
             },
         )
 
     @property
     def capabilities(self) -> Capabilities:
         return self._capabilities
+
+    @property
+    def filesystem_guard(self) -> LedgerFilesystemGuard:
+        return self._filesystem_guard
+
+    def named_export_invocations(self) -> tuple[str, ...]:
+        return tuple(self._named_export_invocations)
 
     async def export_records(
         self,
@@ -1007,13 +1105,19 @@ class WalletDatasetExporter:
         warnings: Sequence[str] = (),
         sink: DatasetSink | None = None,
     ) -> ExportReceipt:
-        """Export *records* to the configured formats and return a receipt."""
+        """Export *records* to the configured formats and return a receipt.
+
+        When *explicit_export_only* is true (DQK-073), this is a named export
+        that holds a filesystem-guard permit for legacy file materialisation.
+        Manifests are never operational authority.
+        """
 
         context.check_active()
         scope = _required_str(scope, "scope")
         started_at = self._clock()
         if not isinstance(started_at, datetime):
             raise ExportError("clock must return a datetime")
+        self._named_export_invocations.append("export_ledger_jsonl")
 
         if sink is not None:
             batch = RecordBatch(tuple(records), response_bytes=0)
@@ -1034,36 +1138,45 @@ class WalletDatasetExporter:
         # group.  We therefore emit one logical partition group per format but
         # set record_count on the manifest from the row set, not the sum of
         # all formats.
-        logical_partitions: list[ExportPartition] = []
-        for index, fmt in enumerate(self._formats):
-            if fmt is ExportFormat.JSONL:
-                part = write_jsonl(
-                    primary_records,
-                    self._output_dir / f"records-{index:03d}.jsonl",
-                )
-            elif fmt is ExportFormat.PARQUET:
-                part = write_parquet(
-                    primary_records,
-                    self._output_dir / f"records-{index:03d}.parquet",
-                )
-            elif fmt is ExportFormat.ARROW:
-                # Arrow IPC uses the same column contract as Parquet.
-                part = self._write_arrow(
-                    primary_records,
-                    self._output_dir / f"records-{index:03d}.arrow",
-                )
-            elif fmt is ExportFormat.CAR:
-                part = self._write_car(
-                    primary_records,
-                    self._output_dir / f"records-{index:03d}.car",
-                    context=context,
-                )
-            else:  # pragma: no cover
-                raise UnsupportedCapabilityError(f"unsupported export format: {fmt}")
-            partitions.append(part)
-            written_formats.append(fmt.value)
-            if index == 0:
-                logical_partitions.append(part)
+        def _materialize() -> tuple[list[ExportPartition], list[str], list[ExportPartition]]:
+            parts: list[ExportPartition] = []
+            fmts: list[str] = []
+            logical: list[ExportPartition] = []
+            for index, fmt in enumerate(self._formats):
+                if fmt is ExportFormat.JSONL:
+                    part = write_jsonl(
+                        primary_records,
+                        self._output_dir / f"records-{index:03d}.jsonl",
+                    )
+                elif fmt is ExportFormat.PARQUET:
+                    part = write_parquet(
+                        primary_records,
+                        self._output_dir / f"records-{index:03d}.parquet",
+                    )
+                elif fmt is ExportFormat.ARROW:
+                    part = self._write_arrow(
+                        primary_records,
+                        self._output_dir / f"records-{index:03d}.arrow",
+                    )
+                elif fmt is ExportFormat.CAR:
+                    part = self._write_car(
+                        primary_records,
+                        self._output_dir / f"records-{index:03d}.car",
+                        context=context,
+                    )
+                else:  # pragma: no cover
+                    raise UnsupportedCapabilityError(f"unsupported export format: {fmt}")
+                parts.append(part)
+                fmts.append(fmt.value)
+                if index == 0:
+                    logical.append(part)
+            return parts, fmts, logical
+
+        if self._explicit_export_only:
+            with self._filesystem_guard.permit_export():
+                partitions, written_formats, logical_partitions = _materialize()
+        else:
+            partitions, written_formats, logical_partitions = _materialize()
 
         # Manifest partitions: primary format only for record_count identity;
         # attach remaining formats via extensions-equivalent sidecar list in
@@ -1122,23 +1235,46 @@ class WalletDatasetExporter:
             raise ExportError(str(exc)) from exc
 
         verify_manifest(manifest)
-        # Persist manifest next to partitions for offline verification.
-        manifest_path = self._output_dir / "export-manifest.json"
-        manifest_path.write_text(manifest.to_canonical_json() + "\n", encoding="utf-8")
-        # Persist full multi-format partition index (including sidecars).
-        index_path = self._output_dir / "export-partitions.json"
-        index_path.write_bytes(
-            canonical_json_bytes(
-                {
-                    "formats": written_formats,
-                    "partitions": [part.to_dict() for part in partitions],
-                    "provider_capabilities": list(self._provider_capabilities),
-                    "processor_version": self._processor_version,
-                    "normalized_schema_major": self._normalized_schema_major,
-                    "manifest_schema": EXPORT_MANIFEST_SCHEMA_VERSION,
-                }
-            )
-        )
+        # Persist manifest next to partitions for offline verification only when
+        # explicitly requested.  Manifests are never operational authority
+        # (DQK-073); under explicit_export_only the write is permit-guarded.
+        if self._persist_manifest:
+            self._named_export_invocations.append("export_ledger_manifest")
+
+            def _write_manifests() -> None:
+                manifest_path = self._output_dir / "export-manifest.json"
+                if self._explicit_export_only:
+                    self._filesystem_guard.assert_write_allowed(
+                        manifest_path, kind="export_manifest"
+                    )
+                manifest_path.write_text(
+                    manifest.to_canonical_json() + "\n", encoding="utf-8"
+                )
+                index_path = self._output_dir / "export-partitions.json"
+                if self._explicit_export_only:
+                    self._filesystem_guard.assert_write_allowed(
+                        index_path, kind="export_partitions"
+                    )
+                index_path.write_bytes(
+                    canonical_json_bytes(
+                        {
+                            "formats": written_formats,
+                            "partitions": [part.to_dict() for part in partitions],
+                            "provider_capabilities": list(self._provider_capabilities),
+                            "processor_version": self._processor_version,
+                            "normalized_schema_major": self._normalized_schema_major,
+                            "manifest_schema": EXPORT_MANIFEST_SCHEMA_VERSION,
+                            "authoritative": False,
+                            "owner_task_id": WALLET_LEDGER_ONLY_OWNER_TASK,
+                        }
+                    )
+                )
+
+            if self._explicit_export_only:
+                with self._filesystem_guard.permit_export():
+                    _write_manifests()
+            else:
+                _write_manifests()
 
         if sink is not None:
             await sink.commit(manifest, context=context)
@@ -1264,6 +1400,102 @@ def load_export_manifest(path: str | Path) -> dict[str, Any]:
     return payload
 
 
+def publish_redacted_public_ledger_analytics(
+    authority_store: Any,
+    *,
+    scope: str | None = None,
+    publication_plane: Any | None = None,
+    fence: Any | None = None,
+    revision_id: str = "wallet-ledger-analytics-1",
+) -> Mapping[str, Any]:
+    """Publish redacted public ledger analytics for Quack (DQK-073).
+
+    Builds allowlisted aggregates from DuckDB authority and optionally
+    materialises them into a physically separate publication plane.  Never
+    forwards raw payloads, secrets, or signing material.
+    """
+
+    if authority_store is not None:
+        try:
+            assert_shadow_catalog_excludes_secrets(authority_store)
+        except Exception as exc:
+            raise ExportError(
+                f"authority catalog is not safe for publication: {exc}"
+            ) from exc
+    document = dict(
+        build_redacted_public_ledger_analytics(authority_store, scope=scope)
+    )
+    assert_publication_excludes_secrets(document)
+
+    receipt: dict[str, Any] = {
+        "ok": True,
+        "owner_task_id": WALLET_LEDGER_ONLY_OWNER_TASK,
+        "quack_surface": "redacted_public_ledger_analytics",
+        "table_name": PUBLIC_LEDGER_QUACK_TABLE,
+        "columns": list(PUBLIC_LEDGER_ANALYTICS_COLUMNS),
+        "document": document,
+        "materialized": False,
+        "authority_catalogs_attached": False,
+    }
+
+    if publication_plane is None:
+        return MappingProxyType(receipt)
+
+    try:
+        from ipfs_datasets_py.duckdb_control.publication import (
+            AllowlistedColumn,
+            FenceToken,
+            ReadModelSpec,
+            RevisionBinding,
+        )
+    except Exception as exc:  # pragma: no cover - hermetic optional
+        raise ExportError(
+            f"publication plane unavailable: {exc}"
+        ) from exc
+
+    aggregates = list(document.get("aggregates") or [])
+    columns = list(PUBLIC_LEDGER_ANALYTICS_COLUMNS)
+    rows = [
+        tuple(row.get(col) for col in columns)
+        for row in aggregates
+        if isinstance(row, Mapping)
+    ]
+    fence_token = fence
+    if fence_token is None:
+        fence_token = FenceToken(
+            fence_id=f"fence:wallet-ledger:{scope or 'default'}",
+            generation=1,
+            expires_at_ms=2**62,
+            nonce="b" * 32,
+        )
+    spec = ReadModelSpec(
+        read_model_id=f"rm:wallet-ledger:{scope or 'default'}",
+        table_name=PUBLIC_LEDGER_QUACK_TABLE,
+        columns=tuple(AllowlistedColumn(name=c) for c in columns),
+        revision_bindings=(
+            RevisionBinding(
+                source_domain="wallet",
+                revision_id=revision_id,
+                store_generation=0,
+                schema_checksum="sha256:" + ("cd" * 32),
+            ),
+        ),
+        fence=fence_token,
+        max_rows=max(1, len(rows) + 1),
+        description="redacted public ledger analytics",
+    )
+    materialization = publication_plane.materialize_read_model(spec, rows=rows)
+    if hasattr(publication_plane, "assert_sensitive_surfaces_absent"):
+        publication_plane.assert_sensitive_surfaces_absent()
+    receipt["materialized"] = True
+    receipt["row_count"] = getattr(materialization, "row_count", len(rows))
+    receipt["authority_catalogs_attached"] = bool(
+        getattr(materialization, "authority_catalogs_attached", False)
+    )
+    assert_publication_excludes_secrets(receipt)
+    return MappingProxyType(receipt)
+
+
 def round_trip_records(
     records: Sequence[object],
     *,
@@ -1292,6 +1524,8 @@ __all__ = [
     "DEFAULT_NORMALIZED_SCHEMA_MAJOR",
     "DEFAULT_PROCESSOR_VERSION",
     "EXPORT_RECEIPT_SCHEMA_VERSION",
+    "NAMED_LEDGER_EXPORT_COMMANDS",
+    "PUBLIC_LEDGER_QUACK_TABLE",
     "TYPED_PARQUET_COLUMNS",
     "ExportFormat",
     "ExportReceipt",
@@ -1301,6 +1535,7 @@ __all__ = [
     "build_finality_counts",
     "drain_wallet_export_outbox",
     "load_export_manifest",
+    "publish_redacted_public_ledger_analytics",
     "read_jsonl",
     "read_parquet",
     "round_trip_records",

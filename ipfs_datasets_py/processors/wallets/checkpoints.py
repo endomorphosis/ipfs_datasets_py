@@ -13,6 +13,9 @@ When a DuckDB wallet store is injected:
 * **dual** / **db-primary** (DQK-072) — DuckDB is authoritative for checkpoint
   tips; the in-memory map is a working-set projection.  Stale cursor CAS against
   a newer DuckDB revision fails closed without mutating the tip.
+* **export-only** (DQK-073) — same as db-primary for checkpoints: in-memory is
+  never authority; resume always rehydrates from DuckDB.  Implicit JSON
+  checkpoint / manifest files are not used.
 
 Importing this module performs no I/O.
 """
@@ -36,6 +39,8 @@ DEFAULT_HISTORY_LIMIT = 256
 SHADOW_CHECKPOINT_MODE = "shadow"
 DUAL_CHECKPOINT_MODE = "dual"
 DB_PRIMARY_CHECKPOINT_MODE = "db-primary"
+EXPORT_ONLY_CHECKPOINT_MODE = "export-only"
+WALLET_CHECKPOINT_ONLY_OWNER_TASK = "DQK-073"
 
 
 def _required_str(value: str, name: str) -> str:
@@ -417,9 +422,11 @@ class InMemoryCheckpointStore:
 
     * **shadow** (DQK-071) — memory is authority; successful CAS dual-writes
       DuckDB.
-    * **dual** / **db-primary** (DQK-072) — DuckDB is authority; CAS is applied
-      to DuckDB first and memory is a projection.  Stale *expected_revision*
-      values fail closed (return ``False``) without mutating either tip.
+    * **dual** / **db-primary** / **export-only** (DQK-072/073) — DuckDB is
+      authority; CAS is applied to DuckDB first and memory is a projection.
+      Stale *expected_revision* values fail closed (return ``False``) without
+      mutating either tip.  Under export-only / db-primary the in-memory map
+      is never operational authority.
     """
 
     def __init__(
@@ -447,6 +454,17 @@ class InMemoryCheckpointStore:
             shadow=shadow,
             has_store=self._shadow is not None,
         )
+        if (
+            self._authority_mode.duckdb_is_authority
+            and self._shadow is None
+            and self._authority_mode.blocks_implicit_legacy_files
+        ):
+            # db-primary / export-only without a store cannot fall back to
+            # in-memory authority (DQK-073).
+            raise CheckpointError(
+                f"checkpoint mode {self._authority_mode.value} requires a DuckDB "
+                f"store; in-memory is not authority ({WALLET_CHECKPOINT_ONLY_OWNER_TASK})"
+            )
 
     @property
     def cas_attempts(self) -> int:
@@ -469,6 +487,18 @@ class InMemoryCheckpointStore:
     @property
     def authority_mode(self) -> ShadowLedgerMode:
         return self._authority_mode
+
+    @property
+    def memory_is_authority(self) -> bool:
+        """True only when the in-memory map is operational checkpoint authority."""
+
+        return self._authority_mode.memory_is_authority
+
+    @property
+    def owner_task_id(self) -> str | None:
+        if self._authority_mode.blocks_implicit_legacy_files:
+            return WALLET_CHECKPOINT_ONLY_OWNER_TASK
+        return None
 
     @property
     def shadow_cas_successes(self) -> int:
@@ -523,8 +553,23 @@ class InMemoryCheckpointStore:
             raise CheckpointError("cannot promote checkpoints without a DuckDB store")
         if self._authority_mode is ShadowLedgerMode.SHADOW:
             self._authority_mode = ShadowLedgerMode.DUAL
+        if self._authority_mode is ShadowLedgerMode.EXPORT_ONLY:
+            return self._authority_mode
         self._authority_mode = ShadowLedgerMode.DB_PRIMARY
         return self._authority_mode
+
+    def promote_to_export_only(self) -> ShadowLedgerMode:
+        """Promote to export-only (DQK-073): DuckDB sole tip; no memory authority."""
+
+        if self._shadow is None:
+            raise CheckpointError("cannot promote checkpoints without a DuckDB store")
+        self._authority_mode = ShadowLedgerMode.EXPORT_ONLY
+        return self._authority_mode
+
+    def clear_memory_projection(self) -> None:
+        """Drop the in-process working set (does not mutate DuckDB tips)."""
+
+        self._entries.clear()
 
     async def load(
         self,
@@ -534,20 +579,32 @@ class InMemoryCheckpointStore:
     ) -> CheckpointRecord | None:
         """Load the checkpoint for an exact ingestion scope key or raw scope.
 
-        Dual / db-primary: DuckDB tip is authority; memory is rehydrated from
-        the durable head.  Shadow / off: memory map is authority.
+        Dual / db-primary / export-only: DuckDB tip is authority; memory is
+        rehydrated from the durable head.  Shadow / off: memory map is
+        authority.  Under DuckDB-only modes a missing authority store fails
+        closed rather than inventing an in-memory tip (DQK-073).
         """
 
         context.check_active()
         _required_str(scope, "scope")
-        if self._authority_mode.duckdb_is_authority and self._shadow is not None:
+        if self._authority_mode.duckdb_is_authority:
+            if self._shadow is None:
+                raise CheckpointError(
+                    f"checkpoint mode {self._authority_mode.value} requires DuckDB; "
+                    f"in-memory is not authority ({WALLET_CHECKPOINT_ONLY_OWNER_TASK})"
+                )
             load_fn = getattr(self._shadow, "load", None)
             if callable(load_fn):
                 record = await load_fn(scope, context=context)
                 if isinstance(record, CheckpointRecord):
                     self._entries[record.identity.key] = record
                     return record
+                # DuckDB has no tip — clear any stale memory ghost.
+                self._entries.pop(scope, None)
                 return None
+            raise CheckpointError(
+                "authority checkpoint store does not implement load"
+            )
         record = None
         if scope in self._entries:
             record = self._entries[scope]
@@ -1006,7 +1063,9 @@ __all__ = [
     "DB_PRIMARY_CHECKPOINT_MODE",
     "DEFAULT_HISTORY_LIMIT",
     "DUAL_CHECKPOINT_MODE",
+    "EXPORT_ONLY_CHECKPOINT_MODE",
     "SHADOW_CHECKPOINT_MODE",
+    "WALLET_CHECKPOINT_ONLY_OWNER_TASK",
     "CheckpointCommitCoordinator",
     "CheckpointIdentity",
     "CheckpointRecord",
