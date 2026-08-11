@@ -90,3 +90,50 @@ mcp_logger.setLevel(logging.INFO)
 # Ensure the log directory exists
 log_dir = Path.home() / ".ipfs_datasets"
 log_dir.mkdir(exist_ok=True)
+
+
+class _ObservabilityShadowLogHandler(logging.Handler):
+    """DQK-077: project MCP log records into the typed observability catalog.
+
+    The legacy ``mcp_server.log`` FileHandler remains the explicitly selected
+    shadow authority.  This handler never raises into the logging pipeline.
+    """
+
+    def emit(self, record: logging.LogRecord) -> None:  # noqa: A003
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ensure_shadow_adapter,
+            )
+
+            message = record.getMessage()
+            # Skip pure noise / filter-suppressed style messages.
+            if not message or any(
+                pattern.match(message) for pattern in _OPTIONAL_WARNING_PATTERNS
+            ):
+                return
+            adapter = ensure_shadow_adapter()
+            adapter.emit_mcp_log(
+                message=message[:512],
+                level=record.levelname,
+                logger_name=record.name,
+                seed=f"mcp:{record.name}:{record.levelname}:{record.created}:{record.lineno}",
+            )
+        except Exception:
+            # Logging must never raise into the caller's log path.
+            return
+
+
+def _install_observability_shadow_handler() -> None:
+    """Attach the shadow projection handler once per process."""
+    target = logging.getLogger("ipfs_datasets.mcp_server")
+    for existing in list(getattr(target, "handlers", []) or []):
+        if isinstance(existing, _ObservabilityShadowLogHandler):
+            return
+    handler = _ObservabilityShadowLogHandler(level=logging.INFO)
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    )
+    target.addHandler(handler)
+
+
+_install_observability_shadow_handler()

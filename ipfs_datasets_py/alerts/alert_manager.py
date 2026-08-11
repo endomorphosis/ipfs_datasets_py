@@ -299,7 +299,7 @@ class AlertManager:
                 embed=embed
             )
             
-            return {
+            result = {
                 'rule_id': rule.rule_id,
                 'rule_name': rule.name,
                 'severity': rule.severity,
@@ -308,14 +308,54 @@ class AlertManager:
                 'notification_result': send_result,
                 'timestamp': datetime.now().isoformat()
             }
+            self._shadow_emit_alert(rule, message, status='triggered', event=event)
+            return result
         
         except Exception as e:
             logger.error(f"Error sending notification: {e}", exc_info=True)
-            return {
+            result = {
                 'rule_id': rule.rule_id,
                 'status': 'error',
                 'error': f"Failed to send notification: {e}"
             }
+            self._shadow_emit_alert(rule, message, status='error', event=event)
+            return result
+
+    def _shadow_emit_alert(
+        self,
+        rule: AlertRule,
+        message: str,
+        *,
+        status: str,
+        event: Dict[str, Any],
+    ) -> None:
+        """DQK-077: project triggered alerts into the typed observability catalog.
+
+        Legacy Discord / file notification paths remain the selected shadow
+        authority; catalog writes are non-blocking projections.
+        """
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ensure_shadow_adapter,
+            )
+
+            adapter = ensure_shadow_adapter()
+            safe_event = {
+                k: v
+                for k, v in (event or {}).items()
+                if isinstance(v, (str, int, float, bool)) or v is None
+            }
+            adapter.emit_alert(
+                rule_id=str(rule.rule_id),
+                rule_name=str(rule.name),
+                severity=str(rule.severity),
+                status=status,
+                message=str(message),
+                event_payload=safe_event,
+                seed=f"alert:{rule.rule_id}:{status}:{int(self.last_triggered.get(rule.rule_id, 0))}",
+            )
+        except Exception:
+            pass
     
     def _is_suppressed(self, rule_id: str, suppression_window: int) -> bool:
         """Check if a rule is currently suppressed."""

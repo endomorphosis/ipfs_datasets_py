@@ -208,6 +208,32 @@ class PipelineJSONLogger:
             self.logger.log(level, json.dumps(payload, default=str))
         except (TypeError, ValueError, RuntimeError, OSError) as exc:
             self.logger.debug(f"JSON logging failed: {exc}")
+
+        # DQK-077: typed observability catalog shadow projection. Legacy JSON
+        # logger remains the explicitly selected shadow authority.
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ensure_shadow_adapter,
+            )
+
+            adapter = ensure_shadow_adapter()
+            run_id = ""
+            if self._context is not None:
+                run_id = str(self._context.run_id or "")
+            adapter.emit_pipeline_log(
+                event_type=str(event_type),
+                domain=str(self.domain),
+                run_id=run_id,
+                data={
+                    k: v
+                    for k, v in data.items()
+                    if isinstance(v, (str, int, float, bool)) or v is None
+                },
+                seed=f"{run_id or self.domain}:{event_type}:{status}",
+                status=status,
+            )
+        except Exception:
+            pass
     
     def start_run(
         self,

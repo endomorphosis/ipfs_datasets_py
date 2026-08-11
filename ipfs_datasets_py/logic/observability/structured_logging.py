@@ -313,6 +313,33 @@ def log_event(
     
     logger.log(level, f"Event: {event_type}", extra=extra)
 
+    # DQK-077: route through typed observability repository (legacy stream remains
+    # the explicitly selected shadow authority).
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            ensure_shadow_adapter,
+        )
+
+        event_type_s = (
+            event_type.value if isinstance(event_type, EventType) else str(event_type)
+        )
+        adapter = ensure_shadow_adapter()
+        context = get_current_context()
+        fields = {**context, **kwargs}
+        adapter.emit_structured_log(
+            event_type=event_type_s,
+            message=f"Event: {event_type_s}",
+            level=logging.getLevelName(level),
+            fields=fields,
+            seed=str(
+                kwargs.get("event_id")
+                or fields.get("request_id")
+                or f"structured:{event_type_s}:{fields.get('tool_name', '')}"
+            ),
+        )
+    except Exception:
+        pass
+
 
 def log_error(
     error: Exception,

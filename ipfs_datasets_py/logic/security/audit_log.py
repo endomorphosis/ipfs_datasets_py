@@ -70,8 +70,31 @@ class AuditLogger:
         # Add any additional fields
         event.update(kwargs)
         
-        # Log as JSON
+        # Log as JSON (legacy file / stderr sink remains shadow authority)
         audit_logger.info(json.dumps(event))
+
+        # DQK-077: typed observability catalog shadow projection.
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ensure_shadow_adapter,
+            )
+
+            adapter = ensure_shadow_adapter()
+            adapter.emit_security_event(
+                event_type=str(event_type),
+                user_id=str(user_id or "system"),
+                success=bool(success),
+                details=dict(details or {}),
+                seed=f"logic-security:{event_type}:{user_id}:{success}",
+                **{
+                    k: v
+                    for k, v in kwargs.items()
+                    if isinstance(v, (str, int, float, bool)) or v is None
+                },
+            )
+        except Exception:
+            # Never break the legacy audit path.
+            pass
     
     @staticmethod
     def log_proof_attempt(

@@ -171,6 +171,19 @@ class LoggingAuditor:
             "## Summary Statistics",
             "",
         ]
+
+        # Summary scalars used for the typed shadow emit (DQK-077).
+        self._last_report_summary = {
+            "files_scanned": len(self.results),
+            "files_with_logger": sum(1 for r in self.results if r.has_logger_init),
+            "methods_with_logging": sum(
+                len(r.methods_with_logging) for r in self.results
+            ),
+            "methods_without_logging": sum(
+                len(r.methods_without_logging) for r in self.results
+            ),
+            "issue_count": sum(len(r.issues) for r in self.results),
+        }
         
         files_with_logger = sum(1 for r in self.results if r.has_logger_init)
         total_methods = sum(len(r.methods_with_logging) + len(r.methods_without_logging) for r in self.results)
@@ -233,7 +246,28 @@ class LoggingAuditor:
             "5. Consider using JSON formatter for machine-readable logs",
         ])
         
-        return "\n".join(report_lines)
+        report_text = "\n".join(report_lines)
+
+        # DQK-077: route report summary through typed observability repository.
+        # The printed/returned report text remains the legacy authority surface.
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ensure_shadow_adapter,
+            )
+
+            adapter = ensure_shadow_adapter()
+            summary = getattr(self, "_last_report_summary", {}) or {
+                "files_scanned": len(self.results),
+            }
+            adapter.emit_logging_audit_report(
+                report_summary=summary,
+                seed=f"logging-audit:{summary.get('files_scanned', 0)}:"
+                f"{summary.get('methods_without_logging', 0)}",
+            )
+        except Exception:
+            pass
+
+        return report_text
 
 
 def main() -> List[LoggingAuditResult]:

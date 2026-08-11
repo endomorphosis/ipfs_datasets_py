@@ -481,6 +481,36 @@ class AuditLogger:
             self.notify_listeners(event)
             self._events.append(event)
 
+            # DQK-077: dual-write a typed shadow projection (legacy handlers remain
+            # the selected shadow authority). Failures must not block the emit.
+            try:
+                from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                    ensure_shadow_adapter,
+                    ProducerKind,
+                )
+
+                adapter = ensure_shadow_adapter()
+                adapter.emit_audit_event(
+                    action=str(action),
+                    actor=str(event.user or "system"),
+                    outcome="succeeded" if status == "success" else (
+                        "failed" if status == "failure" else "info"
+                    ),
+                    details=dict(event.details or {}),
+                    event_id=str(event.event_id),
+                    resource=str(event.resource_id or ""),
+                    level=event.level.name,
+                    category=event.category.name,
+                    producer=ProducerKind.AUDIT_LOGGER,
+                    resource_type=str(event.resource_type or ""),
+                    session_id=str(event.session_id or ""),
+                )
+            except Exception as exc:  # pragma: no cover - never break audit path
+                logging.debug(
+                    "observability shadow adapter skipped for audit event: %s",
+                    exc,
+                )
+
         return event.event_id
 
     # Convenience methods for different audit levels

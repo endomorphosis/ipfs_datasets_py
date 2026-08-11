@@ -262,9 +262,27 @@ class AuditLogger:
         """Add event to storage and optionally write to disk."""
         self.events.append(event)
         
-        # Optionally write to incremental log file
+        # Optionally write to incremental log file (legacy sink = shadow authority)
         if self.enable_file_logging:
             self._write_event_to_file(event)
+
+        # DQK-077: typed observability catalog shadow projection.
+        try:
+            from ipfs_datasets_py.duckdb_control.observability_adapters import (
+                ensure_shadow_adapter,
+            )
+
+            adapter = ensure_shadow_adapter()
+            adapter.emit_graphrag_audit(
+                event_type=str(event.event_type.value),
+                session_id=str(self.session_id),
+                round_num=int(event.round_num),
+                event_data=dict(event.event_data or {}),
+                seed=f"{self.session_id}:{event.event_type.value}:{event.round_num}:{len(self.events)}",
+                metadata_keys=list((event.metadata or {}).keys()),
+            )
+        except Exception:
+            pass
     
     def _write_event_to_file(self, event: AuditEvent) -> None:
         """Append event to incremental log file (JSONL format)."""
