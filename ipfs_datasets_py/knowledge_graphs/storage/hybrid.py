@@ -432,7 +432,8 @@ class VerifiedHybridCache:
         self._entries: "OrderedDict[str, CacheEntryMeta]" = OrderedDict()
         self._authority: Dict[str, AuthorityRecord] = {}
         self._total_bytes: int = 0
-        # DQK-059: optional DuckDB shadow for metadata; payload bytes stay local.
+        # DQK-059/060: optional DuckDB shadow/dual for control metadata;
+        # payload bytes (Parquet/IPLD) always remain local content authority.
         self._shadow_authority = shadow_authority
         self.root.mkdir(parents=True, exist_ok=True)
         (self.root / "objects").mkdir(parents=True, exist_ok=True)
@@ -440,13 +441,47 @@ class VerifiedHybridCache:
         self._load()
 
     def attach_shadow_authority(self, authority: Any) -> None:
-        """Bind DuckDB shadow authority (JSON/local cache remains authority)."""
+        """Bind DuckDB shadow/dual authority for metadata projection.
+
+        Payload bytes and CIDs remain the content authority regardless of
+        control-metadata mode (DQK-060).
+        """
 
         self._shadow_authority = authority
+
+    # Alias used by dual-mode cutover callers.
+    attach_authority = attach_shadow_authority
 
     @property
     def shadow_authority(self) -> Any:
         return self._shadow_authority
+
+    @property
+    def authority(self) -> Any:
+        return self._shadow_authority
+
+    @property
+    def content_authority(self) -> str:
+        """Content always stays on local/IPLD bytes — never DuckDB (DQK-060)."""
+
+        return "parquet_ipld"
+
+    def _resolve_authority(self) -> Any:
+        shadow = self._shadow_authority
+        if shadow is not None:
+            return shadow
+        try:
+            from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                get_graph_authority,
+                get_graph_shadow_authority,
+            )
+
+            shadow = get_graph_authority() or get_graph_shadow_authority()
+            if shadow is not None:
+                self._shadow_authority = shadow
+            return shadow
+        except Exception:
+            return None
 
     def _emit_storage_shadow(
         self,
@@ -458,21 +493,20 @@ class VerifiedHybridCache:
         checksum: str = "",
         operation_id: Optional[str] = None,
     ) -> None:
-        shadow = self._shadow_authority
-        if shadow is None:
-            try:
-                from ipfs_datasets_py.knowledge_graphs.catalog.store import (
-                    get_graph_shadow_authority,
-                )
-
-                shadow = get_graph_shadow_authority()
-            except Exception:
-                shadow = None
+        shadow = self._resolve_authority()
         if shadow is None:
             return
         try:
             body = dict(payload or {})
             body.setdefault("cid", cid)
+            # Dual/db-primary: metadata is outbox-projected; content stays local.
+            body.setdefault(
+                "legacy_is_outbox_projection",
+                bool(getattr(shadow, "legacy_is_outbox_projection", False)),
+            )
+            body.setdefault("content_authority", self.content_authority)
+            if hasattr(shadow, "_authority_label"):
+                body.setdefault("control_authority", shadow._authority_label())
             shadow.record_storage_mutation(
                 kind=kind,
                 cid=cid,

@@ -9,6 +9,12 @@ Architecture:
 - Optimistic concurrency control (detect conflicts at commit)
 - Support for 4 isolation levels
 - Integration with GraphEngine for operations
+
+DQK-060: transaction-control metadata (active txs, WAL head, applied keys)
+is dual-written and promoted to DuckDB authority under fenced dual writes.
+Immutable IPLD WAL entry CIDs remain content authority; legacy projections
+are outbox-bound after cutover. Crash recovery redrives the outbox so no
+durable transaction control state is lost.
 """
 
 import logging
@@ -87,8 +93,9 @@ class TransactionManager:
             graph_engine: GraphEngine for executing operations
             storage_backend: IPLD backend for WAL storage
             wal_head_cid: Existing WAL head CID (for recovery)
-            shadow_authority: Optional DQK-059 DuckDB shadow authority for
-                WAL/MVCC control-state parity (IPLD WAL CIDs remain authoritative)
+            shadow_authority: Optional DQK-059/DQK-060 DuckDB shadow or dual
+                authority for WAL/MVCC control-state projection (IPLD WAL CIDs
+                remain content-authoritative)
         """
         self.graph_engine = graph_engine
         self.wal = WriteAheadLog(storage_backend, wal_head_cid)
@@ -105,13 +112,37 @@ class TransactionManager:
     def attach_shadow_authority(
         self, authority: Optional["GraphShadowAuthority"]
     ) -> None:
-        """Bind DuckDB shadow authority for WAL/MVCC control projection."""
+        """Bind DuckDB shadow/dual authority for WAL/MVCC control projection."""
 
         self._shadow_authority = authority
+
+    # Alias used by dual-mode cutover callers.
+    attach_authority = attach_shadow_authority
 
     @property
     def shadow_authority(self) -> Optional["GraphShadowAuthority"]:
         return self._shadow_authority
+
+    @property
+    def authority(self) -> Optional["GraphShadowAuthority"]:
+        return self._shadow_authority
+
+    def _resolve_authority(self) -> Optional["GraphShadowAuthority"]:
+        shadow = self._shadow_authority
+        if shadow is not None:
+            return shadow
+        try:
+            from ipfs_datasets_py.knowledge_graphs.catalog.store import (
+                get_graph_authority,
+                get_graph_shadow_authority,
+            )
+
+            shadow = get_graph_authority() or get_graph_shadow_authority()
+            if shadow is not None:
+                self._shadow_authority = shadow
+            return shadow
+        except Exception:
+            return None
 
     def _emit_tx_shadow(
         self,
@@ -122,16 +153,7 @@ class TransactionManager:
         operation_id: Optional[str] = None,
         extra: Optional[Dict[str, Any]] = None,
     ) -> None:
-        shadow = self._shadow_authority
-        if shadow is None:
-            try:
-                from ipfs_datasets_py.knowledge_graphs.catalog.store import (
-                    get_graph_shadow_authority,
-                )
-
-                shadow = get_graph_shadow_authority()
-            except Exception:
-                shadow = None
+        shadow = self._resolve_authority()
         if shadow is None:
             return
         try:
@@ -149,6 +171,15 @@ class TransactionManager:
                 "wal_entries": list(transaction.wal_entries),
                 "wal_head_cid": self.wal.wal_head_cid,
                 "operation_count": len(transaction.operations),
+                # DQK-060 markers for dual/db-primary outbox projections.
+                "legacy_is_outbox_projection": bool(
+                    getattr(shadow, "legacy_is_outbox_projection", False)
+                ),
+                "authority": (
+                    shadow._authority_label()
+                    if hasattr(shadow, "_authority_label")
+                    else "legacy"
+                ),
             }
             if extra:
                 payload.update(extra)
@@ -165,6 +196,50 @@ class TransactionManager:
                 kind,
                 exc,
             )
+
+    def recover_control_state_after_crash(self) -> Dict[str, Any]:
+        """Recover dual-written transaction control state after restart.
+
+        Re-opens the attached authority (if file-backed) and redrives any
+        incomplete outbox so WAL head / applied keys are not lost. In-process
+        active transactions remain empty after a hard crash by design; durable
+        progress lives in DuckDB transaction-control state + IPLD WAL CIDs.
+        """
+
+        shadow = self._resolve_authority()
+        if shadow is None:
+            return {
+                "ok": True,
+                "authority": "none",
+                "recovered": False,
+                "wal_head_cid": self.wal.wal_head_cid,
+            }
+        result = shadow.recover_after_crash()
+        # Re-hydrate wal head from durable DuckDB control when present.
+        duck_tx = getattr(shadow, "duckdb_transaction_state", None)
+        recovered_head = None
+        if duck_tx is not None:
+            try:
+                recovered_head = duck_tx.get_wal_head_cid()
+            except Exception:  # noqa: BLE001
+                recovered_head = None
+        if recovered_head and not self.wal.wal_head_cid:
+            # Best-effort: surface recovered head without rewriting IPLD bytes.
+            try:
+                self.wal.wal_head_cid = recovered_head
+            except Exception:  # noqa: BLE001
+                pass
+        return {
+            "ok": bool(result.get("ok", True)),
+            "authority": result.get("authority"),
+            "mode": result.get("mode"),
+            "outbox": result.get("outbox"),
+            "transaction_control": result.get("transaction_control"),
+            "wal_head_cid": self.wal.wal_head_cid or recovered_head,
+            "legacy_is_outbox_projection": bool(
+                getattr(shadow, "legacy_is_outbox_projection", False)
+            ),
+        }
     
     def begin(
         self,
