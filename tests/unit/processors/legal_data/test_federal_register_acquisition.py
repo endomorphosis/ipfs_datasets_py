@@ -48,6 +48,7 @@ from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import 
     expand_inventory_payload,
     find_secret_surfaces,
     is_inventory_recipe,
+    inspect_inventory_report_structure,
     plan_delta_partitions,
     plan_full_history_partitions,
     plan_monthly_partitions,
@@ -1153,13 +1154,16 @@ def test_compact_recipe_requires_the_complete_exact_contract() -> None:
         check_inventory_report(altered)
 
 
-def test_on_disk_federal_inventory_recipe_passes_check() -> None:
+def test_on_disk_live_federal_inventory_passes_non_authorizing_structure_check() -> None:
     path = default_report_path()
-    assert path.is_file(), f"missing committed inventory recipe: {path}"
+    assert path.is_file(), f"missing committed live inventory: {path}"
     payload = json.loads(path.read_text(encoding="utf-8"))
-    assert is_inventory_recipe(payload) is True
-    result = check_inventory_report(payload)
-    assert result["ok"] is True
+    assert is_inventory_recipe(payload) is False
+    assert payload["mode"] == "live"
+    result = inspect_inventory_report_structure(payload, require_live=True)
+    assert result["structure_valid"] is True
+    assert result["live_authority_replayed"] is False
+    assert result["authorizing"] is False
     assert result["acceptance"]["failed_final_zero"] is True
     assert result["acceptance"]["no_coverage_gap"] is True
     assert result["acceptance"]["duplicate_free_by_official_identity"] is True

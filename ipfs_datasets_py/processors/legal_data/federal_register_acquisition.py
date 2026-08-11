@@ -4059,6 +4059,28 @@ def _snapshot_inventory_report(report: JsonMapping) -> dict[str, Any]:
     return _strict_json_object_from_bytes(data, context="inventory report snapshot")
 
 
+def inspect_inventory_report_structure(
+    report: JsonMapping,
+    *,
+    require_live: bool = False,
+) -> dict[str, Any]:
+    """Validate frozen report bytes without conferring live authority.
+
+    This entry point exists for hermetic CI inspection of a committed live
+    receipt.  Only :func:`check_inventory_report` performs the independent
+    checkpoint-free HTTPS replay required to return ``ok=True`` for live data.
+    """
+
+    snapshot = _snapshot_inventory_report(report)
+    structural = _check_inventory_report_structure(
+        snapshot,
+        require_live=require_live,
+    )
+    structural["live_authority_replayed"] = False
+    structural["authorizing"] = False
+    return structural
+
+
 def _fresh_live_inventory_report() -> dict[str, Any]:
     """Acquire one checkpoint-free built-in HTTPS replay for authorization."""
 

@@ -47,6 +47,7 @@ from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import 
     default_checkpoint_dir,
     default_report_path,
     expand_inventory_payload,
+    inspect_inventory_report_structure,
     load_json_object,
     render_check_summary,
 )
@@ -177,15 +178,38 @@ def main(argv: Sequence[str] | None = None) -> int:
                 observation_cutoff=args.observation_cutoff,
             )
 
+            raw_disk: Mapping[str, Any] | None = None
+            if report_path.is_file():
+                raw_disk = load_json_object(report_path)
+
             if args.write:
+                if raw_disk is not None and raw_disk.get("mode") == "live":
+                    raise FederalRegisterAcquisitionError(
+                        "refusing to replace a committed live inventory with "
+                        "fixture evidence"
+                    )
                 # Prefer the compact admission-friendly recipe on disk; full
                 # expansion is available via --print-json or runtime check.
                 atomic_write_json(report_path, recipe)
                 print(f"wrote inventory recipe: {report_path}", file=sys.stderr)
+                raw_disk = recipe
 
             if args.check:
-                if report_path.is_file():
-                    raw_disk = load_json_object(report_path)
+                fixture_result = check_inventory_report(fixture_report)
+                if raw_disk is not None and raw_disk.get("mode") == "live":
+                    live_structure = inspect_inventory_report_structure(
+                        raw_disk,
+                        require_live=True,
+                    )
+                    print(
+                        "live_structure_valid="
+                        f"{live_structure['structure_valid']} "
+                        "live_authority_replayed=False authorizing=False "
+                        f"digest={str(live_structure['inventory_digest'])[:12]}"
+                    )
+                    report = raw_disk
+                    result = fixture_result
+                elif raw_disk is not None:
                     result = check_inventory_report(raw_disk)
                     expanded = expand_inventory_payload(raw_disk)
                     disk_acceptance = dict(expanded.get("acceptance") or {})
@@ -227,7 +251,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     report: Mapping[str, Any] = expanded
                 else:
                     report = fixture_report
-                    result = check_inventory_report(report)
+                    result = fixture_result
                 print(render_check_summary(result))
                 if args.print_json:
                     sys.stdout.write(
