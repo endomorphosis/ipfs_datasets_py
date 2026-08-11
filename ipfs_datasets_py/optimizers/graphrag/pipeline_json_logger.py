@@ -43,6 +43,13 @@ from ipfs_datasets_py.optimizers.common.structured_logging import (
     with_schema,
     enrich_with_timestamp,
 )
+from ipfs_datasets_py.logic.observability.structured_logging import (
+    assert_mutable_file_sink_allowed,
+    console_grants_completion_authority,
+    console_grants_progress_authority,
+    get_observability_filesystem_guard,
+    sanitize_publication_view,
+)
 
 
 class PipelineErrorDict(TypedDict, total=False):
@@ -205,12 +212,50 @@ class PipelineJSONLogger:
             payload = with_schema(payload)
         
         try:
-            # Legacy logger sink remains selected authority under DQK-077 shadow.
+            # Ephemeral console / configured StreamHandler only. Mutable file
+            # handlers attached to self.logger are rejected by the DQK-079
+            # dynamic writer guard (they are not progress/completion authority).
+            for handler in list(getattr(self.logger, "handlers", []) or []):
+                try:
+                    assert_mutable_file_sink_allowed(
+                        handler=handler, operation="write"
+                    )
+                except Exception:
+                    # Detach blocked file sinks so runtime continues console-only.
+                    try:
+                        self.logger.removeHandler(handler)
+                    except Exception:
+                        pass
             self.logger.log(level, json.dumps(payload, default=str))
         except (TypeError, ValueError, RuntimeError, OSError) as exc:
             self.logger.debug(f"JSON logging failed: {exc}")
 
         self._route_to_observability_shadow(event_type, payload, level)
+
+    def publication_view(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Sanitized publication view of a pipeline log payload."""
+
+        view = sanitize_publication_view(payload or {"domain": self.domain})
+        view["console_grants_progress_authority"] = console_grants_progress_authority()
+        view["console_grants_completion_authority"] = console_grants_completion_authority()
+        return view
+
+    def export_jsonl(self, filepath: str, records: List[Dict[str, Any]]) -> str:
+        """Explicit deterministic JSONL export (not an authority write)."""
+
+        from pathlib import Path
+
+        path = Path(filepath)
+        guard = get_observability_filesystem_guard()
+        with guard.permit_export():
+            assert_mutable_file_sink_allowed(
+                path, kind="pipeline_jsonl", operation="export"
+            )
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w", encoding="utf-8") as handle:
+                for row in records:
+                    handle.write(json.dumps(row, default=str) + "\n")
+        return str(path)
 
     def _route_to_observability_shadow(
         self,
