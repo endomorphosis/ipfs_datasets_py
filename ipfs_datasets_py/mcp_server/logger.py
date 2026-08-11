@@ -87,6 +87,64 @@ mcp_logger = logging.getLogger("ipfs_datasets.mcp")
 logger.setLevel(logging.INFO)
 mcp_logger.setLevel(logging.INFO)
 
-# Ensure the log directory exists
+# Ensure the log directory exists (legacy file sink remains selected authority
+# under DQK-077 shadow mode).
 log_dir = Path.home() / ".ipfs_datasets"
 log_dir.mkdir(exist_ok=True)
+
+
+def log_mcp_event(
+    message: str,
+    *,
+    level: int = logging.INFO,
+    event_type: str = "mcp.log",
+    actor: str = "mcp_server",
+    **attributes,
+) -> None:
+    """Log an MCP server event and project it into the typed shadow catalog.
+
+    The legacy ``mcp_server.log`` file handler remains the selected authority
+    under DQK-077 shadow mode. When the observability shadow repository is
+    configured, a redacted typed audit record is dual-written with a parity
+    receipt and content-addressed evidence blob.
+    """
+
+    # Always write through the legacy logger first.
+    logger.log(level, message, extra=attributes if attributes else None)
+
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            ObservabilityProducer,
+            derive_stable_event_id,
+            record_observability_event,
+        )
+    except Exception:
+        return
+
+    seed = attributes.get("event_id") or f"{event_type}:{message}:{actor}"
+    event_id = derive_stable_event_id(
+        producer=ObservabilityProducer.MCP_LOGGER.value,
+        action=event_type,
+        actor=actor,
+        detail=str(message),
+        seed=str(seed),
+    )
+    outcome = "error" if level >= logging.ERROR else "info"
+    if level >= logging.ERROR:
+        outcome = "error"
+    elif "fail" in str(event_type).lower():
+        outcome = "failed"
+    elif "complete" in str(event_type).lower() or "success" in str(event_type).lower():
+        outcome = "succeeded"
+
+    record_observability_event(
+        producer=ObservabilityProducer.MCP_LOGGER,
+        action=event_type,
+        actor=actor,
+        outcome=outcome,
+        detail=str(message),
+        attributes=dict(attributes),
+        event_id=event_id,
+        operation_id=f"op-mcp-{event_id}",
+        raw_payload={"message": message, "event_type": event_type, **attributes},
+    )

@@ -312,6 +312,69 @@ def log_event(
     extra[LogField.EVENT_TYPE.value] = event_type
     
     logger.log(level, f"Event: {event_type}", extra=extra)
+    _route_structured_event_to_shadow(
+        event_type=str(event_type),
+        level=level,
+        payload=extra,
+        message=f"Event: {event_type}",
+    )
+
+
+def _route_structured_event_to_shadow(
+    *,
+    event_type: str,
+    level: int,
+    payload: Dict[str, Any],
+    message: str,
+    outcome: str = "info",
+) -> None:
+    """Project structured log events into the typed observability shadow (DQK-077)."""
+
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            ObservabilityProducer,
+            derive_stable_event_id,
+            record_observability_event,
+        )
+    except Exception:
+        return
+
+    context = get_current_context()
+    merged = {**context, **payload}
+    actor = str(
+        merged.get("user_id")
+        or merged.get("component")
+        or merged.get("logger")
+        or "system"
+    )
+    seed = str(
+        merged.get("event_id")
+        or merged.get("request_id")
+        or ""
+    ) or None
+    event_id = derive_stable_event_id(
+        producer=ObservabilityProducer.STRUCTURED_LOGGING.value,
+        action=event_type,
+        actor=actor,
+        detail=message,
+        seed=seed,
+    )
+    if level >= logging.ERROR:
+        outcome = "error"
+    elif level >= logging.WARNING:
+        outcome = "info"
+
+    record_observability_event(
+        producer=ObservabilityProducer.STRUCTURED_LOGGING,
+        action=event_type,
+        actor=actor,
+        outcome=outcome,
+        detail=message,
+        attributes=merged,
+        event_id=event_id,
+        operation_id=f"op-slog-{event_id}",
+        raw_payload=merged,
+    )
 
 
 def log_error(
@@ -344,6 +407,13 @@ def log_error(
         f"Error: {type(error).__name__}: {error}",
         exc_info=True,
         extra=extra
+    )
+    _route_structured_event_to_shadow(
+        event_type=EventType.ERROR_OCCURRED.value,
+        level=logging.ERROR,
+        payload=extra,
+        message=f"Error: {type(error).__name__}: {error}",
+        outcome="error",
     )
 
 
@@ -378,6 +448,13 @@ def log_performance(
     logger.info(
         f"Performance: {operation} completed in {duration_ms:.2f}ms",
         extra=extra
+    )
+    _route_structured_event_to_shadow(
+        event_type="performance.measured",
+        level=logging.INFO,
+        payload=extra,
+        message=f"Performance: {operation} completed in {duration_ms:.2f}ms",
+        outcome="succeeded",
     )
 
 
