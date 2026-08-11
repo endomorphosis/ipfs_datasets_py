@@ -52,13 +52,13 @@ def _key_from_arg(value: str) -> bytes:
     return key
 
 
-# Process-local DuckDB dual-mode event port shared by CLI persistence (DQK-075).
+# Process-local DuckDB db-primary event port shared by CLI persistence (DQK-076).
 _CLI_EVENT_PORT: WalletDuckDBRepository | None = None
-_CLI_DEFAULT_AUTHORITY_MODE: AuthorityMode = AuthorityMode.DUAL
+_CLI_DEFAULT_AUTHORITY_MODE: AuthorityMode = AuthorityMode.DB_PRIMARY
 
 
 def get_cli_event_port() -> WalletDuckDBRepository:
-    """Return the process-local CLI dual-mode event port (idempotent)."""
+    """Return the process-local CLI DuckDB event port (idempotent)."""
 
     global _CLI_EVENT_PORT
     if _CLI_EVENT_PORT is None:
@@ -79,6 +79,8 @@ def reset_cli_event_port(port: WalletDuckDBRepository | None = None) -> WalletDu
 
 
 def _wallet_path(wallet_dir: Path, wallet_id: str) -> Path:
+    """Compatibility path for explicit JSON export/import only (DQK-076)."""
+
     return wallet_dir / f"{wallet_id}.json"
 
 
@@ -87,6 +89,7 @@ def _wallet_repository(wallet_dir: Path) -> LocalWalletRepository:
         wallet_dir,
         shadow=get_cli_event_port(),
         authority_mode=_CLI_DEFAULT_AUTHORITY_MODE,
+        allow_legacy_json=False,
     )
 
 
@@ -103,7 +106,7 @@ def _save(
     *,
     expected_revision: int | None = None,
 ) -> Path:
-    """Persist dual-mode wallet JSON + DuckDB authority projection (DQK-075)."""
+    """Persist DuckDB-authoritative wallet envelope (no implicit JSON, DQK-076)."""
 
     repo = _wallet_repository(wallet_dir)
     op_id = new_operation_id("cli-wallet")
@@ -141,8 +144,7 @@ def _load(wallet_dir: Path, blob_dir: Path, wallet_id: str) -> WalletService:
 
 def _load_all(wallet_dir: Path, blob_dir: Path) -> WalletService:
     service = _service(blob_dir)
-    if not wallet_dir.exists():
-        return service
+    wallet_dir.mkdir(parents=True, exist_ok=True)
     _wallet_repository(wallet_dir).load_all(service)
     return service
 

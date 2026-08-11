@@ -5619,6 +5619,90 @@ class DataWalletService:
         projection = self.event_port.get_wallet_projection(wallet_id)
         return dict(projection) if projection is not None else None
 
+    def approved_aggregate_results_for_quack(self) -> List[Dict[str, Any]]:
+        """Return only separately approved, released aggregate analytics for Quack.
+
+        Draft/paused/retired templates and suppressed/unreleased aggregates are
+        excluded. This is the only analytics surface that may reach the Quack
+        publication plane (DQK-076 / DQK-058).
+        """
+
+        approved_template_ids = {
+            template.template_id
+            for template in self.analytics_templates.values()
+            if self._analytics_template_is_approved(template)
+        }
+        results: List[Dict[str, Any]] = []
+        for result in sorted(self.aggregate_results.values(), key=lambda item: item.result_id):
+            if result.template_id not in approved_template_ids:
+                continue
+            if not result.released or result.suppressed:
+                continue
+            results.append(
+                {
+                    "result_id": result.result_id,
+                    "template_id": result.template_id,
+                    "metric": result.metric,
+                    "released": True,
+                    "suppressed": False,
+                    "noisy_count": result.noisy_count,
+                    "count": result.count if result.exact_count_released else None,
+                    "exact_count_released": result.exact_count_released,
+                    "cohort_size": (
+                        result.cohort_size if result.cohort_size_released else None
+                    ),
+                    "min_cohort_size": result.min_cohort_size,
+                    "epsilon": result.epsilon,
+                    "group_by": list(result.group_by),
+                    "cohorts": list(result.cohorts) if result.released else [],
+                    "privacy_notes": list(result.privacy_notes),
+                    "created_at": result.created_at,
+                }
+            )
+        return results
+
+    def quack_publication_document(self) -> Dict[str, Any]:
+        """Build the Quack-facing publication document (approved aggregates only).
+
+        Wallet envelopes, principal secrets, key wraps, encrypted bytes, and
+        unapproved analytics never appear on this surface. Only separately
+        approved, released aggregate results are published (DQK-076).
+        """
+
+        document: Dict[str, Any] = {
+            "publication_type": "wallet_quack_publication_v1",
+            "schema_version": "wallet-quack-publication/v1",
+            "domain": "data-wallet",
+            "approved_aggregate_results": self.approved_aggregate_results_for_quack(),
+            "approved_template_ids": sorted(
+                template.template_id
+                for template in self.analytics_templates.values()
+                if self._analytics_template_is_approved(template)
+            ),
+            "wallet_raw_excluded": True,
+            "unapproved_analytics_excluded": True,
+        }
+        if self.event_port is not None:
+            document["authority_mode"] = self.event_port.authority_mode.value
+            # Public wallet metadata only (never the full analytics ledger,
+            # which may still carry draft/unapproved template descriptors).
+            public_wallets: Dict[str, Any] = {}
+            for wallet_id in sorted(self.wallets):
+                projection = self.event_port.get_wallet_projection(wallet_id)
+                if projection is None:
+                    continue
+                public_wallets[wallet_id] = {
+                    "wallet_id": projection.get("wallet_id"),
+                    "counts": dict(projection.get("counts") or {}),
+                    "owner_did": (
+                        (projection.get("wallet") or {}).get("owner_did")
+                        if isinstance(projection.get("wallet"), dict)
+                        else None
+                    ),
+                }
+            document["public_wallet_metadata"] = public_wallets
+        return document
+
     def verify_record_storage(
         self,
         wallet_id: str,
