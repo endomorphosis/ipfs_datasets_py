@@ -2979,6 +2979,7 @@ def _repository_control_plane_tip_paths() -> frozenset[str]:
             "ipfs_datasets_py/database_utils.py",
             "ipfs_datasets_py/duckdb_control/generation_rollover.py",
             "ipfs_datasets_py/duckdb_control/inventory_refinement.py",
+            "ipfs_datasets_py/ducklake/cutover.py",
             "scripts/ops/ipfs_datasets_duckdb_quack_lifecycle.py",
             "scripts/validation/validate_accelerate_duckdb_quack_release.py",
             "ipfs_accelerate_py",
