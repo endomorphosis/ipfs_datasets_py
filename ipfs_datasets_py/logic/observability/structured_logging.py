@@ -1,5 +1,5 @@
 """
-Standardized JSON Log Schema (Session 83, P2-obs).
+Standardized JSON Log Schema (Session 83, P2-obs) + DQK-079 file-sink guards.
 
 Provides unified, structured logging across all MCP++ components with:
 - Consistent field names and types
@@ -8,6 +8,13 @@ Provides unified, structured logging across all MCP++ components with:
 - Performance metrics integration
 - Error classification and severity levels
 
+DQK-079: after canary acceptance, implicit JSON/JSONL/file-handler/
+metric-snapshot/alert-state authorities are disabled. Only explicit
+deterministic exports and ephemeral human-readable console logs remain.
+Static and dynamic writer guards reject undeclared mutable file sinks.
+Console lines never satisfy progress or completion authority. Publication
+views are sanitized (secrets + high-cardinality private payloads removed).
+
 Usage:
     from ipfs_datasets_py.logic.observability.structured_logging import (
         get_logger,
@@ -15,6 +22,8 @@ Usage:
         log_event,
         log_error,
         log_performance,
+        get_observability_filesystem_guard,
+        sanitize_publication_view,
     )
     
     logger = get_logger("my_component")
@@ -24,22 +33,534 @@ Usage:
         log_event("item_processed", item_id="abc", status="success")
 """
 
+from __future__ import annotations
+
 import json
 import logging
+import re
+import threading
 import time
 import traceback
+from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-from typing import Any, Dict, Optional, List
 from pathlib import Path
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Union,
+)
 
 
 # ---------------------------------------------------------------------------
-# Log Schema Version
+# Log Schema Version / DQK-079 pins
 # ---------------------------------------------------------------------------
 
 LOG_SCHEMA_VERSION = "1.0.0"
+OBSERVABILITY_FILE_SINK_OWNER_TASK = "DQK-079"
+OBSERVABILITY_PUBLICATION_SCHEMA = (
+    "ipfs_datasets_py/duckdb-observability-publication-view@1"
+)
+_REDACTION_MARKER = "***REDACTED***"
+_MAX_PUBLICATION_ATTR_KEYS = 32
+_MAX_PUBLICATION_STRING_BYTES = 512
+_MAX_PUBLICATION_LIST_ITEMS = 16
+
+# High-cardinality / private payload keys stripped from publication views.
+_HIGH_CARDINALITY_KEYS = frozenset(
+    {
+        "raw_payload",
+        "raw",
+        "payload",
+        "body",
+        "sql",
+        "query",
+        "query_text",
+        "unrestricted_sql",
+        "stack",
+        "stack_trace",
+        "traceback",
+        "exception_traceback",
+        "embeddings",
+        "vectors",
+        "tokens",
+        "token_ids",
+        "chunk_text",
+        "full_text",
+        "document_text",
+        "messages",
+        "message_history",
+        "event_history",
+        "per_row",
+        "rows",
+        "samples",
+        "sample_ids",
+        "user_ids",
+        "ip_addresses",
+        "client_ips",
+        "session_ids",
+        "request_bodies",
+        "response_bodies",
+    }
+)
+
+_SECRET_KEY_RE = re.compile(
+    r"(?i)^(password|passwd|pwd|secret|token|api[_-]?key|authorization|"
+    r"private[_-]?key|mnemonic|seed|signing|credential|bearer|"
+    r"access[_-]?key|secret[_-]?key|auth[_-]?header)$"
+)
+
+# Filenames / suffixes that are treated as mutable observability file sinks.
+_GUARDED_EXACT_NAMES = frozenset(
+    {
+        "mcp_server.log",
+        "alert-state.json",
+        "alert_state.json",
+        "alerts_state.json",
+        "metric-snapshot.json",
+        "metrics_snapshot.json",
+        "metrics-snapshot.json",
+        "audit_log.json",
+        "audit_log.jsonl",
+        "audit.json",
+        "audit.jsonl",
+    }
+)
+_GUARDED_NAME_PREFIXES = (
+    "audit_",
+    "metric-snapshot",
+    "metrics_snapshot",
+    "metrics-snapshot",
+    "alert-state",
+    "alert_state",
+    "pipeline_",
+)
+_GUARDED_SUFFIXES = (
+    ".audit.json",
+    ".audit.jsonl",
+    "_audit.json",
+    "_audit.jsonl",
+    "_metrics.json",
+    "_metrics.jsonl",
+    "_metric_snapshot.json",
+)
+
+_process_guard_lock = threading.RLock()
+_process_filesystem_guard: Optional["ObservabilityFilesystemGuard"] = None
+
+
+# ---------------------------------------------------------------------------
+# DQK-079: mutable file-sink writer guards + sanitized publication views
+# ---------------------------------------------------------------------------
+
+
+class ObservabilityMutableFileSinkError(RuntimeError):
+    """Raised when an undeclared mutable observability file sink is blocked."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        path: str = "",
+        kind: str = "",
+        operation: str = "write",
+    ) -> None:
+        super().__init__(message)
+        self.path = path
+        self.kind = kind
+        self.operation = operation
+        self.owner_task = OBSERVABILITY_FILE_SINK_OWNER_TASK
+
+
+class ObservabilityFilesystemGuard:
+    """Blocks implicit JSON/JSONL/file-handler/metric/alert-state sinks (DQK-079).
+
+    After canary acceptance the default is fail-closed: only ephemeral console
+    logs and *explicit* deterministic exports (via :meth:`permit_export`) may
+    touch guarded paths. Console projections never grant progress or
+    completion authority.
+    """
+
+    def __init__(self, *, allow_legacy_file_sinks: bool = False) -> None:
+        self._lock = threading.RLock()
+        self._export_permits: int = 0
+        self._import_permits: int = 0
+        self._allow_legacy_file_sinks: bool = bool(allow_legacy_file_sinks)
+
+    @property
+    def allow_legacy_file_sinks(self) -> bool:
+        with self._lock:
+            return self._allow_legacy_file_sinks
+
+    @allow_legacy_file_sinks.setter
+    def allow_legacy_file_sinks(self, value: bool) -> None:
+        with self._lock:
+            self._allow_legacy_file_sinks = bool(value)
+
+    @contextmanager
+    def permit_export(self) -> Iterator[None]:
+        """Allow one explicit deterministic export of a guarded sink."""
+
+        with self._lock:
+            self._export_permits += 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._export_permits = max(0, self._export_permits - 1)
+
+    @contextmanager
+    def permit_import(self) -> Iterator[None]:
+        """Allow one explicit one-time import of a guarded sink."""
+
+        with self._lock:
+            self._import_permits += 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._import_permits = max(0, self._import_permits - 1)
+
+    def _has_permit(self) -> bool:
+        with self._lock:
+            return self._export_permits > 0 or self._import_permits > 0
+
+    @staticmethod
+    def classify_path(path: Union[Path, str]) -> Optional[str]:
+        """Return the guarded sink kind for *path*, or ``None`` if unguarded."""
+
+        p = Path(path)
+        name = p.name
+        lower = name.lower()
+
+        if lower in _GUARDED_EXACT_NAMES:
+            if lower == "mcp_server.log":
+                return "mcp_log"
+            if "alert" in lower and lower.endswith(".json"):
+                return "alert_state"
+            if "metric" in lower:
+                return "metric_snapshot"
+            if lower.endswith(".jsonl"):
+                return "audit_jsonl"
+            return "audit_json"
+
+        if lower.endswith(".jsonl"):
+            if lower.startswith("audit") or ".audit." in lower or lower.endswith("_audit.jsonl"):
+                return "audit_jsonl"
+            if "metric" in lower or "pipeline" in lower:
+                return "metric_snapshot" if "metric" in lower else "pipeline_jsonl"
+            if lower.startswith(_GUARDED_NAME_PREFIXES) or any(
+                lower.endswith(s) for s in _GUARDED_SUFFIXES if s.endswith(".jsonl")
+            ):
+                return "jsonl_sink"
+            # Generic JSONL under known observability directory names.
+            parent = p.parent.name.lower()
+            if parent in {
+                "audit",
+                "audit_logs",
+                "logs",
+                "metrics",
+                "observability",
+                "alerts",
+            }:
+                return "jsonl_sink"
+
+        if lower.endswith(".json"):
+            if lower.startswith("audit") or ".audit." in lower or lower.endswith("_audit.json"):
+                return "audit_json"
+            if "metric-snapshot" in lower or "metrics_snapshot" in lower or "metric_snapshot" in lower:
+                return "metric_snapshot"
+            if "alert-state" in lower or "alert_state" in lower or lower == "alerts_state.json":
+                return "alert_state"
+            if lower.startswith("metric") and "snapshot" in lower:
+                return "metric_snapshot"
+
+        if lower.endswith(".log") and (
+            "audit" in lower or "mcp" in lower or "pipeline" in lower
+        ):
+            return "ad_hoc_file_handler"
+
+        for prefix in _GUARDED_NAME_PREFIXES:
+            if lower.startswith(prefix) and (
+                lower.endswith(".json") or lower.endswith(".jsonl") or lower.endswith(".log")
+            ):
+                if "alert" in prefix:
+                    return "alert_state"
+                if "metric" in prefix:
+                    return "metric_snapshot"
+                if "pipeline" in prefix:
+                    return "pipeline_jsonl" if lower.endswith(".jsonl") else "pipeline_json"
+                return "audit_jsonl" if lower.endswith(".jsonl") else "audit_json"
+
+        for suffix in _GUARDED_SUFFIXES:
+            if lower.endswith(suffix):
+                return "audit_jsonl" if suffix.endswith(".jsonl") else "audit_json"
+
+        return None
+
+    def is_guarded_path(self, path: Union[Path, str]) -> bool:
+        return self.classify_path(path) is not None
+
+    def is_mutable_file_handler(self, handler: Any) -> bool:
+        """True when *handler* is an ad-hoc logging FileHandler-like sink."""
+
+        if handler is None:
+            return False
+        cls_name = type(handler).__name__
+        if cls_name in {"FileHandler", "RotatingFileHandler", "TimedRotatingFileHandler", "WatchedFileHandler"}:
+            return True
+        # Project audit handlers that write durable files.
+        if cls_name in {"FileAuditHandler", "JSONAuditHandler"}:
+            return True
+        base_names = {base.__name__ for base in type(handler).__mro__}
+        if "FileHandler" in base_names:
+            return True
+        if hasattr(handler, "file_path") or hasattr(handler, "baseFilename"):
+            # StreamHandler and NullHandler do not expose these.
+            if cls_name not in {"StreamHandler", "NullHandler", "MemoryHandler"}:
+                return True
+        return False
+
+    def classify_handler(self, handler: Any) -> Optional[str]:
+        if not self.is_mutable_file_handler(handler):
+            return None
+        path = getattr(handler, "baseFilename", None) or getattr(handler, "file_path", None)
+        if path:
+            return self.classify_path(path) or "ad_hoc_file_handler"
+        return "ad_hoc_file_handler"
+
+    def assert_allowed(
+        self,
+        path: Union[Path, str, None] = None,
+        *,
+        kind: Optional[str] = None,
+        operation: str = "write",
+        handler: Any = None,
+    ) -> None:
+        """Fail closed when a mutable file sink is blocked without a permit."""
+
+        classified = kind
+        if classified is None and path is not None:
+            classified = self.classify_path(path)
+        if classified is None and handler is not None:
+            classified = self.classify_handler(handler)
+        if classified is None:
+            return
+        with self._lock:
+            allowed = self._allow_legacy_file_sinks or self._has_permit()
+        if allowed:
+            return
+        target = str(path) if path is not None else (
+            str(getattr(handler, "baseFilename", None) or getattr(handler, "file_path", "") or "<handler>")
+        )
+        raise ObservabilityMutableFileSinkError(
+            f"implicit {operation} of undeclared mutable file sink "
+            f"{classified!r} blocked after DuckDB observability cutover: "
+            f"{target} (use explicit deterministic export; "
+            f"owner_task={OBSERVABILITY_FILE_SINK_OWNER_TASK})",
+            path=target,
+            kind=classified,
+            operation=operation,
+        )
+
+    def check_path_write(self, path: Union[Path, str], *, kind: str = "") -> None:
+        self.assert_allowed(path, kind=kind or None, operation="write")
+
+    def check_handler(self, handler: Any, *, operation: str = "attach") -> None:
+        self.assert_allowed(handler=handler, operation=operation)
+
+    def check_path_read(self, path: Union[Path, str], *, kind: str = "") -> None:
+        self.assert_allowed(path, kind=kind or None, operation="read")
+
+
+def get_observability_filesystem_guard() -> ObservabilityFilesystemGuard:
+    """Return the process-local observability mutable-file-sink guard."""
+
+    global _process_filesystem_guard
+    with _process_guard_lock:
+        if _process_filesystem_guard is None:
+            # DQK-079 default: deny legacy mutable file sinks.
+            _process_filesystem_guard = ObservabilityFilesystemGuard(
+                allow_legacy_file_sinks=False
+            )
+        return _process_filesystem_guard
+
+
+def reset_observability_filesystem_guard() -> None:
+    """Drop the process-local filesystem guard (tests)."""
+
+    global _process_filesystem_guard
+    with _process_guard_lock:
+        _process_filesystem_guard = None
+
+
+def set_allow_legacy_observability_file_sinks(allowed: bool) -> None:
+    """Enable/disable legacy mutable file sinks (migration / tests only)."""
+
+    get_observability_filesystem_guard().allow_legacy_file_sinks = bool(allowed)
+
+
+def mutable_observability_file_sinks_allowed() -> bool:
+    """True when legacy file sinks or an explicit export/import permit is active."""
+
+    guard = get_observability_filesystem_guard()
+    return guard.allow_legacy_file_sinks or guard._has_permit()  # noqa: SLF001
+
+
+def assert_mutable_file_sink_allowed(
+    path: Union[Path, str, None] = None,
+    *,
+    kind: Optional[str] = None,
+    operation: str = "write",
+    handler: Any = None,
+) -> None:
+    """Raise :class:`ObservabilityMutableFileSinkError` if the sink is blocked."""
+
+    get_observability_filesystem_guard().assert_allowed(
+        path, kind=kind, operation=operation, handler=handler
+    )
+
+
+def console_grants_progress_authority() -> bool:
+    """Console / stderr projections never answer progress queries (DQK-079)."""
+
+    return False
+
+
+def console_grants_completion_authority() -> bool:
+    """Console / stderr projections never answer completion queries (DQK-079)."""
+
+    return False
+
+
+def console_is_authority() -> bool:
+    """Disposable console logs are never an observability authority."""
+
+    return False
+
+
+def _looks_like_secret_key(key: str) -> bool:
+    return bool(_SECRET_KEY_RE.fullmatch(str(key).strip()))
+
+
+def _truncate_public_string(value: str) -> str:
+    raw = value.encode("utf-8", errors="replace")
+    if len(raw) <= _MAX_PUBLICATION_STRING_BYTES:
+        return value
+    return raw[:_MAX_PUBLICATION_STRING_BYTES].decode("utf-8", errors="ignore") + "…"
+
+
+def sanitize_publication_view(
+    payload: Mapping[str, Any] | None,
+    *,
+    max_keys: int = _MAX_PUBLICATION_ATTR_KEYS,
+) -> Dict[str, Any]:
+    """Return a publication-safe view excluding secrets and high-cardinality data.
+
+    Uses the DQK-077 redaction helpers when available, then strips high-
+    cardinality private payload keys and bounds string/list sizes.
+    """
+
+    if not payload:
+        return {
+            "schema": OBSERVABILITY_PUBLICATION_SCHEMA,
+            "owner_task": OBSERVABILITY_FILE_SINK_OWNER_TASK,
+            "sanitized": True,
+            "attributes": {},
+        }
+
+    # Prefer shared redaction from the observability adapters when importable.
+    redacted: Dict[str, Any]
+    try:
+        from ipfs_datasets_py.duckdb_control.observability_adapters import (
+            redact_event_payload,
+        )
+
+        redacted, _klass = redact_event_payload(dict(payload))
+    except Exception:
+        redacted = {}
+        for key, value in dict(payload).items():
+            if _looks_like_secret_key(str(key)):
+                redacted[str(key)] = _REDACTION_MARKER
+            else:
+                redacted[str(key)] = value
+
+    cleaned: Dict[str, Any] = {}
+    for key, value in redacted.items():
+        name = str(key)
+        lower = name.lower()
+        if lower in _HIGH_CARDINALITY_KEYS or name in _HIGH_CARDINALITY_KEYS:
+            continue
+        if _looks_like_secret_key(name):
+            cleaned[name] = _REDACTION_MARKER
+            continue
+        if isinstance(value, str):
+            cleaned[name] = _truncate_public_string(value)
+        elif isinstance(value, Mapping):
+            nested = sanitize_publication_view(value, max_keys=max_keys)
+            cleaned[name] = nested.get("attributes", nested)
+        elif isinstance(value, (list, tuple)):
+            items = list(value)[:_MAX_PUBLICATION_LIST_ITEMS]
+            bounded: List[Any] = []
+            for item in items:
+                if isinstance(item, Mapping):
+                    nested = sanitize_publication_view(item, max_keys=max_keys)
+                    bounded.append(nested.get("attributes", nested))
+                elif isinstance(item, str):
+                    bounded.append(_truncate_public_string(item))
+                elif isinstance(item, (int, float, bool)) or item is None:
+                    bounded.append(item)
+                else:
+                    bounded.append(_truncate_public_string(str(item)))
+            cleaned[name] = bounded
+        elif isinstance(value, (int, float, bool)) or value is None:
+            cleaned[name] = value
+        else:
+            cleaned[name] = _truncate_public_string(str(value))
+        if len(cleaned) >= max_keys:
+            break
+
+    return {
+        "schema": OBSERVABILITY_PUBLICATION_SCHEMA,
+        "owner_task": OBSERVABILITY_FILE_SINK_OWNER_TASK,
+        "sanitized": True,
+        "console_is_authority": False,
+        "console_grants_progress_authority": False,
+        "console_grants_completion_authority": False,
+        "attributes": cleaned,
+    }
+
+
+def build_observability_publication_view(
+    records: Sequence[Mapping[str, Any]] | None = None,
+    *,
+    extra: Mapping[str, Any] | None = None,
+) -> Dict[str, Any]:
+    """Build a sanitized multi-record publication view for Quack consumers."""
+
+    safe_records: List[Dict[str, Any]] = []
+    for row in list(records or [])[:_MAX_PUBLICATION_LIST_ITEMS]:
+        view = sanitize_publication_view(row)
+        safe_records.append(view.get("attributes", {}))
+    envelope = sanitize_publication_view(extra or {})
+    return {
+        "schema": OBSERVABILITY_PUBLICATION_SCHEMA,
+        "owner_task": OBSERVABILITY_FILE_SINK_OWNER_TASK,
+        "sanitized": True,
+        "console_is_authority": False,
+        "console_grants_progress_authority": console_grants_progress_authority(),
+        "console_grants_completion_authority": console_grants_completion_authority(),
+        "record_count": len(safe_records),
+        "records": safe_records,
+        "attributes": envelope.get("attributes", {}),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -252,6 +773,8 @@ def get_logger(
         level: Logging level (default: INFO).
         use_json: Use JSON formatter (default: True). Set False for development.
         handlers: Custom handlers. If None, uses StreamHandler to stdout.
+            FileHandler / other mutable file sinks are rejected unless an
+            explicit export permit or legacy-allow flag is active (DQK-079).
     
     Returns:
         Configured logger instance.
@@ -266,7 +789,7 @@ def get_logger(
     # Remove existing handlers to avoid duplicates
     logger.handlers.clear()
     
-    # Add handlers
+    # Add handlers — default is ephemeral console only (never file authority).
     if handlers is None:
         handler = logging.StreamHandler()
         handler.setLevel(level)
@@ -277,6 +800,10 @@ def get_logger(
                 "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             ))
         handlers = [handler]
+    else:
+        guard = get_observability_filesystem_guard()
+        for handler in handlers:
+            guard.check_handler(handler, operation="attach")
     
     for handler in handlers:
         logger.addHandler(handler)
