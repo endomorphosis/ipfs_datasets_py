@@ -28,6 +28,7 @@ import calendar
 import json
 import os
 import re
+import stat
 import tempfile
 import time
 import urllib.error
@@ -98,6 +99,9 @@ from ipfs_datasets_py.processors.legal_data.federal_register_source_policy impor
 
 SCHEMA_VERSION: Final = "federal-register-acquisition-v1"
 REPORT_SCHEMA: Final = "ipfs_datasets_py/legal-corpora-reindex-federal-inventory@1"
+CHECKPOINT_SCHEMA: Final = (
+    "ipfs_datasets_py/legal-corpora-reindex-federal-inventory-checkpoint@2"
+)
 TASK_ID: Final = "LCR-052"
 GOAL_ID: Final = "LCR-G110"
 PROGRAM_ID: Final = "legal-corpora-reindex-v1"
@@ -115,6 +119,8 @@ DEFAULT_PER_PAGE: Final = DEFAULT_API_PER_PAGE  # 100
 DEFAULT_MAX_RETRIES: Final = 3
 DEFAULT_RETRY_BACKOFF_SECONDS: Final = 0.5
 DEFAULT_REQUEST_TIMEOUT_SECONDS: Final = 30.0
+MAX_API_RESPONSE_BYTES: Final = 32 * 1024 * 1024
+MAX_CHECKPOINT_BYTES: Final = 64 * 1024 * 1024
 DEFAULT_RATE_LIMIT_SECONDS: Final = 0.25
 DEFAULT_USER_AGENT: Final = (
     "ipfs-datasets-py-legal-corpora-reindex/1.0 "
@@ -281,6 +287,39 @@ def _require_non_empty_str(value: Any, name: str, *, maximum: int = 4096) -> str
     return text
 
 
+def _require_bounded_str(
+    value: Any,
+    name: str,
+    *,
+    maximum: int,
+    allow_empty: bool = True,
+) -> str:
+    """Require an exact string without coercion or lossy truncation."""
+
+    if not isinstance(value, str):
+        raise FederalRegisterAcquisitionError(f"{name} must be a string")
+    if "\x00" in value:
+        raise FederalRegisterAcquisitionError(f"{name} must not contain NUL")
+    if not allow_empty and not value:
+        raise FederalRegisterAcquisitionError(f"{name} must not be empty")
+    if len(value) > maximum:
+        raise FederalRegisterAcquisitionError(
+            f"{name} exceeds maximum length {maximum}"
+        )
+    return value
+
+
+def _require_optional_bounded_str(
+    value: Any,
+    name: str,
+    *,
+    maximum: int,
+) -> str | None:
+    if value is None:
+        return None
+    return _require_bounded_str(value, name, maximum=maximum, allow_empty=False)
+
+
 def _require_non_negative_int(value: Any, name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise FederalRegisterAcquisitionError(f"{name} must be an integer")
@@ -305,6 +344,20 @@ def _as_sequence(value: Any, name: str) -> Sequence[Any]:
     if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
         raise FederalRegisterAcquisitionError(f"{name} must be a sequence")
     return value
+
+
+def _require_exact_keys(
+    value: Mapping[str, Any],
+    expected: set[str],
+    name: str,
+) -> None:
+    observed = set(value)
+    if observed != expected:
+        raise FederalRegisterAcquisitionError(
+            f"{name} fields differ from the exact schema: "
+            f"missing={sorted(expected - observed)}; "
+            f"extra={sorted(observed - expected)}"
+        )
 
 
 def _utc_now() -> datetime:
@@ -345,7 +398,9 @@ def default_checkpoint_dir(
     """
 
     environ = env if env is not None else os.environ
-    configured = (environ.get("IPFS_ACCELERATE_AGENT_TASK_CHECKPOINT_DIR") or "").strip()
+    configured = (
+        environ.get("IPFS_ACCELERATE_AGENT_TASK_CHECKPOINT_DIR") or ""
+    ).strip()
     if configured:
         return Path(configured).expanduser().resolve()
     root = Path(repo_root) if repo_root is not None else repository_root()
@@ -548,7 +603,10 @@ class InventoryDocument:
         object.__setattr__(
             self, "disposition", DocumentDisposition.coerce(self.disposition)
         )
-        legal = self.legal_id.strip() if self.legal_id else ""
+        legal_raw = _require_bounded_str(
+            self.legal_id, "legal_id", maximum=512
+        )
+        legal = legal_raw.strip() if legal_raw else ""
         if not legal:
             legal = build_legal_id(doc, pub)
         else:
@@ -565,23 +623,34 @@ class InventoryDocument:
         object.__setattr__(self, "legal_id", legal)
         for url_field in ("html_url", "pdf_url", "xml_url"):
             raw = getattr(self, url_field)
-            if raw and str(raw).strip():
+            _require_bounded_str(raw, url_field, maximum=4096)
+            if raw.strip():
                 object.__setattr__(
                     self, url_field, validate_official_url(raw, name=url_field)
                 )
             else:
                 object.__setattr__(self, url_field, "")
+        if not isinstance(self.agencies, tuple):
+            raise FederalRegisterAcquisitionError("agencies must be a tuple")
         agencies = tuple(
             _require_non_empty_str(a, f"agencies[{i}]", maximum=256)
-            for i, a in enumerate(self.agencies or ())
-            if str(a or "").strip()
+            for i, a in enumerate(self.agencies)
         )
         object.__setattr__(self, "agencies", agencies)
-        object.__setattr__(self, "title", str(self.title or "")[:2048])
-        object.__setattr__(self, "abstract", str(self.abstract or "")[:2048])
-        object.__setattr__(self, "document_type", str(self.document_type or "")[:128])
-        object.__setattr__(self, "page_id", str(self.page_id or "")[:128])
-        object.__setattr__(self, "partition_id", str(self.partition_id or "")[:128])
+        for field_name, maximum in (
+            ("title", 2048),
+            ("abstract", 2048),
+            ("document_type", 128),
+            ("page_id", 128),
+            ("partition_id", 128),
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _require_bounded_str(
+                    getattr(self, field_name), field_name, maximum=maximum
+                ),
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -609,7 +678,23 @@ class InventoryDocument:
         page_id: str,
         disposition: DocumentDisposition = DocumentDisposition.FETCHED,
     ) -> "InventoryDocument":
-        agencies_raw = raw.get("agencies") or ()
+        def _optional_text(*field_names: str, maximum: int) -> str:
+            for field_name in field_names:
+                if field_name not in raw or raw[field_name] is None:
+                    continue
+                value = raw[field_name]
+                if value == "":
+                    continue
+                return _require_bounded_str(
+                    value,
+                    f"API result {field_name}",
+                    maximum=maximum,
+                )
+            return ""
+
+        agencies_raw = raw.get("agencies")
+        if agencies_raw is None:
+            agencies_raw = ()
         agency_names: list[str] = []
         if isinstance(agencies_raw, Sequence) and not isinstance(
             agencies_raw, (str, bytes)
@@ -617,28 +702,45 @@ class InventoryDocument:
             for item in agencies_raw:
                 if isinstance(item, Mapping):
                     name = item.get("name") or item.get("raw_name") or item.get("id")
-                    if name:
-                        agency_names.append(str(name))
-                elif item:
-                    agency_names.append(str(item))
+                    if name is not None and name != "":
+                        agency_names.append(
+                            _require_non_empty_str(
+                                name, "API result agency name", maximum=256
+                            )
+                        )
+                elif item is not None and item != "":
+                    agency_names.append(
+                        _require_non_empty_str(
+                            item, "API result agency name", maximum=256
+                        )
+                    )
+        else:
+            raise FederalRegisterAcquisitionError(
+                "API result agencies must be a sequence"
+            )
         return cls(
-            document_number=str(raw.get("document_number") or ""),
-            publication_date=str(raw.get("publication_date") or ""),
-            title=str(raw.get("title") or ""),
-            html_url=str(raw.get("html_url") or raw.get("html_url") or ""),
-            pdf_url=str(raw.get("pdf_url") or ""),
-            xml_url=str(
-                raw.get("full_text_xml_url")
-                or raw.get("xml_url")
-                or raw.get("raw_text_url")
-                or ""
+            document_number=_require_non_empty_str(
+                raw.get("document_number"),
+                "API result document_number",
+                maximum=64,
             ),
-            document_type=str(
-                raw.get("type") or raw.get("document_type") or raw.get("subtype") or ""
+            publication_date=_require_non_empty_str(
+                raw.get("publication_date"),
+                "API result publication_date",
+                maximum=10,
+            ),
+            title=_optional_text("title", maximum=2048),
+            html_url=_optional_text("html_url", maximum=4096),
+            pdf_url=_optional_text("pdf_url", maximum=4096),
+            xml_url=_optional_text(
+                "full_text_xml_url", "xml_url", "raw_text_url", maximum=4096
+            ),
+            document_type=_optional_text(
+                "type", "document_type", "subtype", maximum=128
             ),
             agencies=tuple(agency_names),
             disposition=disposition,
-            abstract=str(raw.get("abstract") or ""),
+            abstract=_optional_text("abstract", maximum=2048),
             page_id=page_id,
             partition_id=partition_id,
         )
@@ -662,7 +764,9 @@ class PageEvidence:
 
     def __post_init__(self) -> None:
         object.__setattr__(
-            self, "page_id", _require_non_empty_str(self.page_id, "page_id", maximum=128)
+            self,
+            "page_id",
+            _require_non_empty_str(self.page_id, "page_id", maximum=128),
         )
         page_number = _require_non_negative_int(self.page_number, "page_number")
         if page_number < 1:
@@ -684,7 +788,9 @@ class PageEvidence:
             normalize_sha256(self.response_hash, name="response_hash"),
         )
         object.__setattr__(
-            self, "result_count", _require_non_negative_int(self.result_count, "result_count")
+            self,
+            "result_count",
+            _require_non_negative_int(self.result_count, "result_count"),
         )
         object.__setattr__(
             self, "api_total", _require_non_negative_int(self.api_total, "api_total")
@@ -695,6 +801,18 @@ class PageEvidence:
             for i, d in enumerate(self.document_numbers or ())
         )
         object.__setattr__(self, "document_numbers", docs)
+        object.__setattr__(
+            self,
+            "cursor",
+            _require_optional_bounded_str(self.cursor, "cursor", maximum=2048),
+        )
+        object.__setattr__(
+            self,
+            "next_page_url",
+            _require_optional_bounded_str(
+                self.next_page_url, "next_page_url", maximum=4096
+            ),
+        )
         if self.status.is_closed and self.status is not PageStatus.SKIPPED:
             if not self.response_hash:
                 raise PageFetchError(
@@ -794,7 +912,9 @@ class PartitionAcquisitionState:
         if self.excluded:
             body_dispositions[BodyTextDisposition.UNAVAILABLE.value] = self.excluded
         if self.failed_final:
-            body_dispositions[BodyTextDisposition.FAILED_FINAL.value] = self.failed_final
+            body_dispositions[
+                BodyTextDisposition.FAILED_FINAL.value
+            ] = self.failed_final
         enumerated = (
             self.fetched
             + self.duplicate
@@ -889,9 +1009,110 @@ def build_documents_api_url(
     return f"{FEDERAL_REGISTER_DOCUMENTS_API}?{'&'.join(query_parts)}"
 
 
+def _validate_documents_request_url(
+    value: Any,
+    *,
+    start_date: str,
+    end_date: str,
+    page: int,
+    per_page: int,
+    allow_cursor: bool,
+) -> str:
+    """Require the exact inventory request or official cursor continuation."""
+
+    url = _require_non_empty_str(value, "documents request URL", maximum=4096)
+    expected = build_documents_api_url(
+        start_date=start_date,
+        end_date=end_date,
+        page=page,
+        per_page=per_page,
+    )
+    if url == expected:
+        return url
+    if not allow_cursor:
+        raise PageFetchError("documents request URL is not the exact planned URL")
+
+    parsed = urllib.parse.urlsplit(url)
+    if (
+        parsed.scheme != "https"
+        or parsed.hostname != "www.federalregister.gov"
+        or parsed.port is not None
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path != "/api/v1/documents"
+        or parsed.fragment
+    ):
+        raise PageFetchError("cursor URL is not the exact FederalRegister.gov endpoint")
+    try:
+        observed_query = urllib.parse.parse_qs(
+            parsed.query,
+            keep_blank_values=True,
+            strict_parsing=True,
+        )
+        expected_query = urllib.parse.parse_qs(
+            urllib.parse.urlsplit(expected).query,
+            keep_blank_values=True,
+            strict_parsing=True,
+        )
+    except ValueError as exc:
+        raise PageFetchError("cursor URL query is malformed") from exc
+    expected_keys = set(expected_query) | {"format", "search_after_cursor"}
+    if set(observed_query) != expected_keys:
+        raise PageFetchError("cursor URL query fields differ from the exact contract")
+    for key, expected_values in expected_query.items():
+        if observed_query.get(key) != expected_values:
+            raise PageFetchError(f"cursor URL query field {key!r} drifted")
+    cursor = observed_query.get("search_after_cursor")
+    if (
+        observed_query.get("format") != ["json"]
+        or not isinstance(cursor, list)
+        or len(cursor) != 1
+        or not cursor[0]
+        or len(cursor[0]) > 1024
+    ):
+        raise PageFetchError("cursor URL has an invalid format/cursor binding")
+    return url
+
+
 # ---------------------------------------------------------------------------
 # Transports
 # ---------------------------------------------------------------------------
+
+
+class _RejectRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+        raise PageFetchError(f"Federal Register API redirect is forbidden: HTTP {code}")
+
+
+def _strict_json_object_from_bytes(data: bytes, *, context: str) -> dict[str, Any]:
+    """Decode one strict UTF-8 JSON object with no duplicates/nonfinite values."""
+
+    def _pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError(f"duplicate JSON key {key!r}")
+            result[key] = value
+        return result
+
+    def _constant(value: str) -> None:
+        raise ValueError(f"nonfinite JSON number {value!r}")
+
+    try:
+        text = data.decode("utf-8", errors="strict")
+        payload = json.loads(
+            text,
+            object_pairs_hook=_pairs,
+            parse_constant=_constant,
+        )
+        # This rejects escaped lone surrogates and values that cannot be
+        # represented by the canonical receipt encoder.
+        canonical_json_dumps(payload).encode("utf-8")
+    except (UnicodeDecodeError, UnicodeEncodeError, ValueError, TypeError) as exc:
+        raise PageFetchError(f"{context} is not strict canonicalizable JSON") from exc
+    if not isinstance(payload, dict):
+        raise PageFetchError(f"{context} is not a JSON object")
+    return payload
 
 
 def live_http_transport(
@@ -902,25 +1123,57 @@ def live_http_transport(
 ) -> tuple[bytes, dict[str, Any]]:
     """Fetch one official API page over HTTPS (live mode only)."""
 
-    validate_official_url(url, name="url")
-    request = urllib.request.Request(
+    parsed_url = urllib.parse.urlsplit(url)
+    if (
+        parsed_url.scheme != "https"
+        or parsed_url.hostname != "www.federalregister.gov"
+        or parsed_url.port is not None
+        or parsed_url.username is not None
+        or parsed_url.password is not None
+        or parsed_url.path not in {"/api/v1/documents", "/api/v1/documents.json"}
+        or parsed_url.fragment
+    ):
+        raise PageFetchError("live inventory URL is outside the exact HTTPS endpoint")
+    request = urllib.request.Request(  # noqa: S310 - exact HTTPS endpoint checked above
         url,
         headers={str(k): str(v) for k, v in headers.items()},
         method="GET",
     )
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        _RejectRedirectHandler(),
+    )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            body = response.read()
+        with opener.open(request, timeout=timeout) as response:
+            if response.geturl() != url:
+                raise PageFetchError("Federal Register API response URL drifted")
+            if response.headers.get_content_type() != "application/json":
+                raise PageFetchError("Federal Register API response is not JSON")
+            encoding = (response.headers.get("Content-Encoding") or "identity").lower()
+            if encoding != "identity":
+                raise PageFetchError("compressed API responses are forbidden")
+            declared_length = response.headers.get("Content-Length")
+            if declared_length is not None:
+                try:
+                    length = int(declared_length, 10)
+                except ValueError as exc:
+                    raise PageFetchError("invalid API Content-Length") from exc
+                if length < 0 or length > MAX_API_RESPONSE_BYTES:
+                    raise PageFetchError(
+                        "API Content-Length exceeds the response bound"
+                    )
+            body = response.read(MAX_API_RESPONSE_BYTES + 1)
+            if len(body) > MAX_API_RESPONSE_BYTES:
+                raise PageFetchError("API response exceeds the response bound")
+            if declared_length is not None and len(body) != length:
+                raise PageFetchError("API body length does not match Content-Length")
+    except PageFetchError:
+        raise
     except urllib.error.HTTPError as exc:
         raise PageFetchError(f"HTTP {exc.code} for {url}: {exc.reason}") from exc
     except urllib.error.URLError as exc:
         raise PageFetchError(f"URL error for {url}: {exc.reason}") from exc
-    try:
-        payload = json.loads(body.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise PageFetchError(f"non-JSON API response for {url}") from exc
-    if not isinstance(payload, dict):
-        raise PageFetchError(f"API response for {url} is not a JSON object")
+    payload = _strict_json_object_from_bytes(body, context=f"API response for {url}")
     return body, payload
 
 
@@ -1023,7 +1276,10 @@ def build_default_fixture_recipe(
             start = parse_calendar_date(spec.start_date)
             end = parse_calendar_date(spec.end_date)
             span = max(0, (end - start).days)
-            offset = min(span, (i * max(1, span // max(docs_per_partition, 1))) % (span + 1))
+            offset = min(
+                span,
+                (i * max(1, span // max(docs_per_partition, 1))) % (span + 1),
+            )
             pub = (start + timedelta(days=offset)).isoformat()
             doc_number = _fixture_document_number(year, global_seq)
             global_seq += 1
@@ -1122,7 +1378,9 @@ class FixtureApiTransport:
         validate_official_url(url, name="url")
         parsed = urllib.parse.urlparse(url)
         if not parsed.path.endswith("/documents.json"):
-            raise FixtureTransportError(f"fixture transport only serves documents.json: {url}")
+            raise FixtureTransportError(
+                f"fixture transport only serves documents.json: {url}"
+            )
         qs = urllib.parse.parse_qs(parsed.query)
         start = (qs.get("conditions[publication_date][gte]") or [""])[0]
         end = (qs.get("conditions[publication_date][lte]") or [""])[0]
@@ -1208,39 +1466,198 @@ class FixtureApiTransport:
 def atomic_write_json(path: PathLike, payload: Mapping[str, Any]) -> None:
     """Atomically write *payload* as sorted JSON to *path*."""
 
-    target = Path(path)
+    target = Path(path).absolute()
     target.parent.mkdir(parents=True, exist_ok=True)
+    resolved_parent = target.parent.resolve(strict=True)
+    if resolved_parent != target.parent:
+        raise CheckpointError("JSON output parent must be a canonical real directory")
     text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
     assert_no_secrets(payload, context=f"checkpoint:{target.name}")
-    fd, tmp_name = tempfile.mkstemp(
-        prefix=f".{target.name}.",
-        suffix=".tmp",
-        dir=str(target.parent),
+    parent_fd = os.open(
+        resolved_parent,
+        os.O_RDONLY
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_DIRECTORY", 0),
     )
+    tmp_name = ""
+    fd = -1
     try:
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f".{target.name}.",
+            suffix=".tmp",
+            dir=str(resolved_parent),
+        )
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            fd = -1  # ownership transferred to the file object
             handle.write(text)
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(tmp_name, target)
+        os.fsync(parent_fd)
     except Exception:
-        try:
-            os.unlink(tmp_name)
-        except OSError:
-            pass
+        if fd >= 0:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+        if tmp_name:
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
         raise
+    finally:
+        os.close(parent_fd)
 
 
 def load_json_object(path: PathLike) -> dict[str, Any]:
-    target = Path(path)
-    if not target.is_file():
-        raise CheckpointError(f"checkpoint not found: {target}")
+    target = Path(path).absolute()
     try:
-        payload = json.loads(target.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise CheckpointError(f"corrupt checkpoint {target}: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise CheckpointError(f"checkpoint {target} is not a JSON object")
+        resolved = target.resolve(strict=True)
+        if resolved != target:
+            raise CheckpointError(f"JSON input path is not canonical: {target}")
+        flags = (
+            os.O_RDONLY
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        fd = os.open(target, flags)
+        try:
+            before = os.fstat(fd)
+            if (
+                not stat.S_ISREG(before.st_mode)
+                or before.st_nlink != 1
+                or before.st_size < 2
+                or before.st_size > MAX_CHECKPOINT_BYTES
+            ):
+                raise CheckpointError(
+                    f"JSON input is not a bounded regular file: {target}"
+                )
+            chunks: list[bytes] = []
+            remaining = MAX_CHECKPOINT_BYTES + 1
+            while remaining > 0:
+                chunk = os.read(fd, min(1024 * 1024, remaining))
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                remaining -= len(chunk)
+            data = b"".join(chunks)
+            after = os.fstat(fd)
+        finally:
+            os.close(fd)
+        if (
+            not stat.S_ISREG(after.st_mode)
+            or after.st_nlink != 1
+            or len(data) > MAX_CHECKPOINT_BYTES
+        ):
+            raise CheckpointError(f"JSON input metadata drifted: {target}")
+        identity_before = (
+            before.st_dev,
+            before.st_ino,
+            before.st_size,
+            before.st_mtime_ns,
+            before.st_ctime_ns,
+        )
+        identity_after = (
+            after.st_dev,
+            after.st_ino,
+            after.st_size,
+            after.st_mtime_ns,
+            after.st_ctime_ns,
+        )
+        if identity_before != identity_after or len(data) != before.st_size:
+            raise CheckpointError(f"JSON input changed while reading: {target}")
+        payload = _strict_json_object_from_bytes(data, context=f"JSON input {target}")
+    except (OSError, PageFetchError) as exc:
+        raise CheckpointError(f"corrupt JSON input {target}: {exc}") from exc
+    return payload
+
+
+def _prepare_checkpoint_directory(path: PathLike) -> Path:
+    target = Path(path).absolute()
+    target.mkdir(mode=0o700, parents=True, exist_ok=True)
+    try:
+        resolved = target.resolve(strict=True)
+        metadata = target.lstat()
+    except OSError as exc:
+        raise CheckpointError(f"checkpoint directory is unavailable: {target}") from exc
+    if resolved != target or not stat.S_ISDIR(metadata.st_mode):
+        raise CheckpointError("checkpoint directory must be a canonical real directory")
+    if metadata.st_uid != os.geteuid() or metadata.st_mode & 0o022:
+        raise CheckpointError(
+            "checkpoint directory must be owned by the current user and not writable "
+            "by group/other"
+        )
+    return target
+
+
+def _load_checkpoint_json_object(path: PathLike) -> dict[str, Any]:
+    """Read one bounded, regular, canonical checkpoint without following links."""
+
+    target = Path(path).absolute()
+    parent = _prepare_checkpoint_directory(target.parent)
+    if target.parent != parent:
+        raise CheckpointError("checkpoint path escaped its canonical directory")
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        fd = os.open(target, flags)
+    except OSError as exc:
+        raise CheckpointError(f"checkpoint cannot be opened safely: {target}") from exc
+    try:
+        before = os.fstat(fd)
+        if (
+            not stat.S_ISREG(before.st_mode)
+            or before.st_nlink != 1
+            or before.st_uid != os.geteuid()
+            or before.st_mode & 0o077
+            or before.st_size < 2
+            or before.st_size > MAX_CHECKPOINT_BYTES
+        ):
+            raise CheckpointError("checkpoint file metadata is not private and regular")
+        chunks: list[bytes] = []
+        remaining = MAX_CHECKPOINT_BYTES + 1
+        while remaining > 0:
+            chunk = os.read(fd, min(1024 * 1024, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        data = b"".join(chunks)
+        after = os.fstat(fd)
+    finally:
+        os.close(fd)
+    before_identity = (
+        before.st_dev,
+        before.st_ino,
+        before.st_size,
+        before.st_mtime_ns,
+        before.st_ctime_ns,
+    )
+    after_identity = (
+        after.st_dev,
+        after.st_ino,
+        after.st_size,
+        after.st_mtime_ns,
+        after.st_ctime_ns,
+    )
+    if before_identity != after_identity or len(data) != before.st_size:
+        raise CheckpointError("checkpoint changed while it was being read")
+    try:
+        payload = _strict_json_object_from_bytes(data, context=f"checkpoint {target}")
+        canonical = (
+            json.dumps(
+                payload,
+                indent=2,
+                sort_keys=True,
+                ensure_ascii=False,
+                allow_nan=False,
+            )
+            + "\n"
+        ).encode("utf-8")
+    except (PageFetchError, UnicodeEncodeError, TypeError, ValueError) as exc:
+        raise CheckpointError(f"checkpoint is not strict JSON: {target}") from exc
+    if data != canonical:
+        raise CheckpointError("checkpoint bytes are not the exact canonical framing")
     return payload
 
 
@@ -1306,6 +1723,78 @@ class AcquisitionConfig:
             raise FederalRegisterAcquisitionError(
                 f"range_start {self.range_start} > range_end {self.range_end}"
             )
+        if self.mode is AcquisitionMode.LIVE:
+            if self.observation_cutoff != DEFAULT_OBSERVATION_CUTOFF:
+                raise FederalRegisterAcquisitionError(
+                    "live inventory authority requires the exact sealed observation "
+                    f"cutoff {DEFAULT_OBSERVATION_CUTOFF}"
+                )
+            if self.range_start != LEGACY_DELTA_START_INCLUSIVE:
+                raise FederalRegisterAcquisitionError(
+                    "live inventory authority requires the exact post-baseline "
+                    f"range start {LEGACY_DELTA_START_INCLUSIVE}, got "
+                    f"{self.range_start}"
+                )
+            if self.range_end != cutoff_day:
+                raise FederalRegisterAcquisitionError(
+                    "live inventory authority requires range_end to equal the "
+                    f"observation cutoff date {cutoff_day}, got {self.range_end}"
+                )
+            if self.dataset_repo_id != DEFAULT_DATASET_REPO_ID:
+                raise FederalRegisterAcquisitionError(
+                    "live inventory dataset_repo_id must equal the sealed target"
+                )
+            if self.previous_public_pin != PREVIOUS_PUBLIC_PIN:
+                raise FederalRegisterAcquisitionError(
+                    "live inventory previous_public_pin must equal the sealed baseline"
+                )
+
+
+def _checkpoint_config_payload(
+    config: AcquisitionConfig,
+    spec: PartitionSpec,
+) -> dict[str, Any]:
+    """Return the exact acquisition authority a reusable checkpoint belongs to."""
+
+    return {
+        "schema": "federal-register-inventory-checkpoint-binding@1",
+        "schema_version": SCHEMA_VERSION,
+        "task_id": TASK_ID,
+        "mode": config.mode.value,
+        "observation_cutoff": config.observation_cutoff,
+        "range_start": config.range_start,
+        "range_end": config.range_end,
+        "per_page": config.per_page,
+        "dataset_repo_id": config.dataset_repo_id,
+        "previous_public_pin": config.previous_public_pin,
+        "inventory_url": FEDERAL_REGISTER_DOCUMENTS_API,
+        "partition": spec.to_dict(),
+    }
+
+
+def _checkpoint_config_binding(
+    config: AcquisitionConfig,
+    spec: PartitionSpec,
+) -> str:
+    return digest_mapping(_checkpoint_config_payload(config, spec))
+
+
+def _build_partition_checkpoint(
+    state: PartitionAcquisitionState,
+    *,
+    config: AcquisitionConfig,
+) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "schema": CHECKPOINT_SCHEMA,
+        "schema_version": SCHEMA_VERSION,
+        "task_id": TASK_ID,
+        "checkpoint_kind": "partition",
+        "config": _checkpoint_config_payload(config, state.spec),
+        "config_binding": _checkpoint_config_binding(config, state.spec),
+        "state": state.to_checkpoint_dict(),
+    }
+    body["checkpoint_digest"] = digest_mapping(body)
+    return body
 
 
 @dataclass
@@ -1365,59 +1854,296 @@ class AcquisitionResult:
 
 def _restore_partition_state(
     payload: JsonMapping,
+    *,
+    config: AcquisitionConfig,
+    expected_spec: PartitionSpec,
 ) -> PartitionAcquisitionState:
     raw = _as_mapping(payload, "checkpoint")
-    spec_raw = _as_mapping(raw.get("spec") or {}, "spec")
-    spec = PartitionSpec(
-        partition_id=str(spec_raw.get("partition_id") or raw.get("partition_id") or ""),
-        start_date=str(spec_raw.get("start_date") or ""),
-        end_date=str(spec_raw.get("end_date") or ""),
-        year_month=str(spec_raw.get("year_month") or ""),
+    expected_top_keys = {
+        "schema",
+        "schema_version",
+        "task_id",
+        "checkpoint_kind",
+        "config",
+        "config_binding",
+        "state",
+        "checkpoint_digest",
+    }
+    if set(raw) != expected_top_keys:
+        raise CheckpointError(
+            "checkpoint fields differ from the exact v2 schema: "
+            f"missing={sorted(expected_top_keys - set(raw))}; "
+            f"extra={sorted(set(raw) - expected_top_keys)}"
+        )
+    if raw.get("schema") != CHECKPOINT_SCHEMA:
+        raise CheckpointError("checkpoint schema is not the exact v2 schema")
+    if raw.get("schema_version") != SCHEMA_VERSION:
+        raise CheckpointError("checkpoint schema_version does not match runtime")
+    if raw.get("task_id") != TASK_ID or raw.get("checkpoint_kind") != "partition":
+        raise CheckpointError("checkpoint task/kind identity mismatch")
+    expected_digest = digest_mapping(
+        {key: value for key, value in raw.items() if key != "checkpoint_digest"}
     )
+    if raw.get("checkpoint_digest") != expected_digest:
+        raise CheckpointError("checkpoint digest does not match its exact bytes")
+    expected_config = _checkpoint_config_payload(config, expected_spec)
+    try:
+        observed_config_bytes = canonical_json_dumps(raw.get("config")).encode("utf-8")
+        expected_config_bytes = canonical_json_dumps(expected_config).encode("utf-8")
+    except (TypeError, UnicodeEncodeError, ValueError) as exc:
+        raise CheckpointError("checkpoint configuration is not canonical") from exc
+    if observed_config_bytes != expected_config_bytes:
+        raise CheckpointError("checkpoint acquisition authority/configuration mismatch")
+    expected_binding = _checkpoint_config_binding(config, expected_spec)
+    if raw.get("config_binding") != expected_binding:
+        raise CheckpointError("checkpoint configuration binding mismatch")
+
+    state_raw = _as_mapping(raw.get("state"), "checkpoint.state")
+    expected_state_keys = {
+        "partition_id",
+        "spec",
+        "status",
+        "api_total",
+        "failed_final",
+        "excluded",
+        "quarantined",
+        "pages",
+        "documents",
+    }
+    if set(state_raw) != expected_state_keys:
+        raise CheckpointError("checkpoint state fields differ from the exact schema")
+    spec_raw = _as_mapping(state_raw.get("spec"), "checkpoint.state.spec")
+    if set(spec_raw) != {"partition_id", "start_date", "end_date", "year_month"}:
+        raise CheckpointError(
+            "checkpoint partition fields differ from the exact schema"
+        )
+    spec = PartitionSpec(
+        partition_id=_require_non_empty_str(
+            spec_raw.get("partition_id"),
+            "checkpoint.state.spec.partition_id",
+            maximum=128,
+        ),
+        start_date=_require_non_empty_str(
+            spec_raw.get("start_date"),
+            "checkpoint.state.spec.start_date",
+            maximum=10,
+        ),
+        end_date=_require_non_empty_str(
+            spec_raw.get("end_date"),
+            "checkpoint.state.spec.end_date",
+            maximum=10,
+        ),
+        year_month=_require_non_empty_str(
+            spec_raw.get("year_month"),
+            "checkpoint.state.spec.year_month",
+            maximum=7,
+        ),
+    )
+    if spec != expected_spec or state_raw.get("partition_id") != spec.partition_id:
+        raise CheckpointError("checkpoint partition identity does not match the plan")
     state = PartitionAcquisitionState(spec=spec)
-    state.api_total = int(raw.get("api_total") or 0)
-    state.failed_final = int(raw.get("failed_final") or 0)
-    state.excluded = int(raw.get("excluded") or 0)
-    state.quarantined = int(raw.get("quarantined") or 0)
-    state.status = PartitionStatus.coerce(raw.get("status") or PartitionStatus.PENDING)
-    for page_raw in raw.get("pages") or ():
+    state.api_total = _require_non_negative_int(
+        state_raw.get("api_total"), "checkpoint.state.api_total"
+    )
+    state.failed_final = _require_non_negative_int(
+        state_raw.get("failed_final"), "checkpoint.state.failed_final"
+    )
+    state.excluded = _require_non_negative_int(
+        state_raw.get("excluded"), "checkpoint.state.excluded"
+    )
+    state.quarantined = _require_non_negative_int(
+        state_raw.get("quarantined"), "checkpoint.state.quarantined"
+    )
+    raw_state_status = state_raw.get("status")
+    if not isinstance(raw_state_status, str):
+        raise CheckpointError("checkpoint state status must be an exact string")
+    try:
+        state.status = PartitionStatus(raw_state_status)
+    except ValueError as exc:
+        raise CheckpointError("checkpoint state status is unknown") from exc
+    page_items = _as_sequence(state_raw.get("pages"), "checkpoint.state.pages")
+    if not isinstance(page_items, list):
+        raise CheckpointError("checkpoint pages must be a JSON list")
+    for page_raw in page_items:
         page = _as_mapping(page_raw, "page")
+        expected_page_keys = {
+            "page_id",
+            "page_number",
+            "partition_id",
+            "request_url",
+            "response_hash",
+            "result_count",
+            "document_numbers",
+            "status",
+            "cursor",
+            "api_total",
+            "next_page_url",
+        }
+        if set(page) != expected_page_keys:
+            raise CheckpointError("checkpoint page fields differ from the exact schema")
+        raw_page_status = page.get("status")
+        if not isinstance(raw_page_status, str):
+            raise CheckpointError("checkpoint page status must be an exact string")
+        try:
+            page_status = PageStatus(raw_page_status)
+        except ValueError as exc:
+            raise CheckpointError("checkpoint page status is unknown") from exc
+        raw_response_hash = page.get("response_hash")
+        if not isinstance(raw_response_hash, str):
+            raise CheckpointError("checkpoint response hash must be an exact string")
+        if raw_response_hash != normalize_sha256(
+            raw_response_hash, name="checkpoint.page.response_hash"
+        ):
+            raise CheckpointError("checkpoint response hash is not canonical")
+        raw_document_numbers = _as_sequence(
+            page.get("document_numbers"),
+            "checkpoint.page.document_numbers",
+        )
+        if not isinstance(raw_document_numbers, list):
+            raise CheckpointError(
+                "checkpoint page document_numbers must be a JSON list"
+            )
         state.pages.append(
             PageEvidence(
-                page_id=str(page.get("page_id") or ""),
-                page_number=int(page.get("page_number") or 0),
-                partition_id=str(page.get("partition_id") or spec.partition_id),
-                request_url=str(page.get("request_url") or FEDERAL_REGISTER_DOCUMENTS_API),
-                response_hash=str(page.get("response_hash") or ""),
-                result_count=int(page.get("result_count") or 0),
-                document_numbers=tuple(page.get("document_numbers") or ()),
-                status=PageStatus.coerce(page.get("status") or PageStatus.VERIFIED),
+                page_id=page.get("page_id"),
+                page_number=page.get("page_number"),
+                partition_id=page.get("partition_id"),
+                request_url=page.get("request_url"),
+                response_hash=page.get("response_hash"),
+                result_count=page.get("result_count"),
+                document_numbers=tuple(raw_document_numbers),
+                status=page_status,
                 cursor=page.get("cursor"),
-                api_total=int(page.get("api_total") or 0),
+                api_total=page.get("api_total"),
                 next_page_url=page.get("next_page_url"),
             )
         )
-    for doc_raw in raw.get("documents") or ():
+    document_items = _as_sequence(
+        state_raw.get("documents"), "checkpoint.state.documents"
+    )
+    if not isinstance(document_items, list):
+        raise CheckpointError("checkpoint documents must be a JSON list")
+    for doc_raw in document_items:
         doc = _as_mapping(doc_raw, "document")
+        expected_document_keys = {
+            "document_number",
+            "publication_date",
+            "title",
+            "html_url",
+            "pdf_url",
+            "xml_url",
+            "document_type",
+            "agencies",
+            "disposition",
+            "legal_id",
+            "abstract",
+            "page_id",
+            "partition_id",
+        }
+        if set(doc) != expected_document_keys:
+            raise CheckpointError(
+                "checkpoint document fields differ from the exact schema"
+            )
+        raw_disposition = doc.get("disposition")
+        if not isinstance(raw_disposition, str):
+            raise CheckpointError(
+                "checkpoint document disposition must be an exact string"
+            )
+        try:
+            disposition = DocumentDisposition(raw_disposition)
+        except ValueError as exc:
+            raise CheckpointError("checkpoint document disposition is unknown") from exc
+        raw_agencies = _as_sequence(
+            doc.get("agencies"), "checkpoint.document.agencies"
+        )
+        if not isinstance(raw_agencies, list):
+            raise CheckpointError("checkpoint document agencies must be a JSON list")
         state.documents.append(
             InventoryDocument(
-                document_number=str(doc.get("document_number") or ""),
-                publication_date=str(doc.get("publication_date") or ""),
-                title=str(doc.get("title") or ""),
-                html_url=str(doc.get("html_url") or ""),
-                pdf_url=str(doc.get("pdf_url") or ""),
-                xml_url=str(doc.get("xml_url") or ""),
-                document_type=str(doc.get("document_type") or ""),
-                agencies=tuple(doc.get("agencies") or ()),
-                disposition=DocumentDisposition.coerce(
-                    doc.get("disposition") or DocumentDisposition.FETCHED
-                ),
-                legal_id=str(doc.get("legal_id") or ""),
-                abstract=str(doc.get("abstract") or ""),
-                page_id=str(doc.get("page_id") or ""),
-                partition_id=str(doc.get("partition_id") or spec.partition_id),
+                document_number=doc.get("document_number"),
+                publication_date=doc.get("publication_date"),
+                title=doc.get("title"),
+                html_url=doc.get("html_url"),
+                pdf_url=doc.get("pdf_url"),
+                xml_url=doc.get("xml_url"),
+                document_type=doc.get("document_type"),
+                agencies=tuple(raw_agencies),
+                disposition=disposition,
+                legal_id=doc.get("legal_id"),
+                abstract=doc.get("abstract"),
+                page_id=doc.get("page_id"),
+                partition_id=doc.get("partition_id"),
             )
         )
+
+    if state.status is not PartitionStatus.CLOSED or state.failed_final != 0:
+        raise CheckpointError("only exact closed zero-failure checkpoints are reusable")
+    if state.excluded != 0 or state.quarantined != 0:
+        raise CheckpointError(
+            "inventory checkpoints cannot hide excluded/quarantined rows"
+        )
+    expected_page_count = max(
+        1, (state.api_total + config.per_page - 1) // config.per_page
+    )
+    if len(state.pages) != expected_page_count:
+        raise CheckpointError("checkpoint page count does not match official total")
+    seen_hashes: set[str] = set()
+    page_ids: set[str] = set()
+    expected_request_url = build_documents_api_url(
+        start_date=spec.start_date,
+        end_date=spec.end_date,
+        page=1,
+        per_page=config.per_page,
+    )
+    for expected_number, page in enumerate(state.pages, start=1):
+        expected_page_id = f"{spec.partition_id}/page-{expected_number}"
+        if (
+            page.page_number != expected_number
+            or page.page_id != expected_page_id
+            or page.partition_id != spec.partition_id
+            or page.request_url != expected_request_url
+            or page.cursor != f"page={expected_number}"
+            or page.api_total != state.api_total
+            or page.status is not PageStatus.VERIFIED
+        ):
+            raise CheckpointError("checkpoint page identity/request ledger mismatch")
+        if page.response_hash in seen_hashes:
+            raise CheckpointError("checkpoint contains duplicate page response hashes")
+        seen_hashes.add(page.response_hash)
+        page_ids.add(page.page_id)
+        if expected_number < expected_page_count:
+            expected_next = _validate_documents_request_url(
+                page.next_page_url,
+                start_date=spec.start_date,
+                end_date=spec.end_date,
+                page=expected_number + 1,
+                per_page=config.per_page,
+                allow_cursor=config.mode is AcquisitionMode.LIVE,
+            )
+            expected_request_url = expected_next
+        elif page.next_page_url is not None:
+            raise CheckpointError("checkpoint final page has a continuation URL")
+    if sum(page.result_count for page in state.pages) != state.api_total:
+        raise CheckpointError("checkpoint page counts do not reconcile")
+    if any(doc.partition_id != spec.partition_id for doc in state.documents):
+        raise CheckpointError("checkpoint document belongs to another partition")
+    if any(doc.page_id not in page_ids for doc in state.documents):
+        raise CheckpointError("checkpoint document references an unknown page")
+    for doc in state.documents:
+        if not (spec.start_date <= doc.publication_date <= spec.end_date):
+            raise CheckpointError("checkpoint document date is outside its partition")
+        if doc.legal_id != build_legal_id(doc.document_number, doc.publication_date):
+            raise CheckpointError("checkpoint document legal_id is not canonical")
+    for page in state.pages:
+        observed_numbers = tuple(
+            doc.document_number
+            for doc in state.documents
+            if doc.page_id == page.page_id
+        )
+        if page.document_numbers != observed_numbers or page.result_count != len(
+            observed_numbers
+        ):
+            raise CheckpointError("checkpoint page/document membership mismatch")
     return state
 
 
@@ -1444,7 +2170,8 @@ def _fetch_with_retries(
             if attempt + 1 >= attempts:
                 break
             time.sleep(backoff * (2**attempt))
-    assert last_error is not None
+    if last_error is None:
+        raise PageFetchError("transport retry loop ended without a result")
     raise last_error
 
 
@@ -1458,11 +2185,20 @@ def acquire_partition(
 ) -> PartitionAcquisitionState:
     """Acquire every official API page for one date partition."""
 
-    # Resume from closed checkpoint when available.
+    # Fixture checkpoints can be replayed directly because their transport is a
+    # sealed deterministic recipe. A live checkpoint is only a candidate: its
+    # unkeyed digest detects corruption but cannot authenticate official bytes.
+    # Re-fetch the complete partition and require byte-equivalent canonical
+    # state before accepting it or replacing the checkpoint.
+    live_checkpoint_candidate: PartitionAcquisitionState | None = None
     if config.resume and checkpoint_dir is not None:
         ckpt_path = partition_checkpoint_path(checkpoint_dir, spec.partition_id)
         if ckpt_path.is_file():
-            restored = _restore_partition_state(load_json_object(ckpt_path))
+            restored = _restore_partition_state(
+                _load_checkpoint_json_object(ckpt_path),
+                config=config,
+                expected_spec=spec,
+            )
             if (
                 restored.status is PartitionStatus.CLOSED
                 and restored.spec.start_date == spec.start_date
@@ -1470,11 +2206,27 @@ def acquire_partition(
                 and all(not page.status.is_open for page in restored.pages)
                 and restored.failed_final == 0
             ):
-                # Re-register identities into the shared union.
-                for doc in restored.documents:
-                    if doc.disposition is DocumentDisposition.FETCHED:
-                        known_legal_ids.setdefault(doc.legal_id, doc)
-                return restored
+                if config.mode is AcquisitionMode.LIVE:
+                    live_checkpoint_candidate = restored
+                else:
+                    # Re-register identities into the shared union.
+                    for doc in restored.documents:
+                        if doc.disposition is DocumentDisposition.FETCHED:
+                            if doc.legal_id in known_legal_ids:
+                                raise CheckpointError(
+                                    "checkpoint marks an already-observed legal "
+                                    "identity "
+                                    f"as fetched: {doc.legal_id}"
+                                )
+                            known_legal_ids[doc.legal_id] = doc
+                        elif doc.disposition is DocumentDisposition.DUPLICATE:
+                            if doc.legal_id not in known_legal_ids:
+                                raise CheckpointError(
+                                    "checkpoint marks an unseen legal identity as "
+                                    "duplicate: "
+                                    f"{doc.legal_id}"
+                                )
+                    return restored
 
     state = PartitionAcquisitionState(spec=spec, status=PartitionStatus.IN_PROGRESS)
     headers = {
@@ -1484,13 +2236,21 @@ def acquire_partition(
     page_number = 1
     total_pages: Optional[int] = None
     seen_page_hashes: set[str] = set()
+    request_url = build_documents_api_url(
+        start_date=spec.start_date,
+        end_date=spec.end_date,
+        page=page_number,
+        per_page=config.per_page,
+    )
 
     while True:
-        url = build_documents_api_url(
+        url = _validate_documents_request_url(
+            request_url,
             start_date=spec.start_date,
             end_date=spec.end_date,
             page=page_number,
             per_page=config.per_page,
+            allow_cursor=(config.mode is AcquisitionMode.LIVE and page_number > 1),
         )
         try:
             body, payload = _fetch_with_retries(
@@ -1516,22 +2276,89 @@ def acquire_partition(
             )
         seen_page_hashes.add(response_hash)
 
-        results = payload.get("results") or payload.get("documents") or []
+        body_payload = _strict_json_object_from_bytes(
+            body,
+            context=f"partition {spec.partition_id} page {page_number}",
+        )
+        if body_payload != payload:
+            raise PageFetchError(
+                f"partition {spec.partition_id} page {page_number}: "
+                "transport payload differs from the response bytes"
+            )
+
+        results = payload.get("results")
         if not isinstance(results, list):
             raise PageFetchError(
                 f"partition {spec.partition_id} page {page_number}: "
                 "results is not a list"
             )
-        api_total = int(payload.get("count") or payload.get("total_available") or 0)
+        if "count" in payload:
+            raw_api_total = payload.get("count")
+        elif "total_available" in payload:
+            raw_api_total = payload.get("total_available")
+        else:
+            raise PageFetchError(
+                f"partition {spec.partition_id} page {page_number}: "
+                "official total is missing"
+            )
+        api_total = _require_non_negative_int(
+            raw_api_total,
+            f"partition {spec.partition_id} page {page_number} count",
+        )
+        raw_total_pages = payload.get("total_pages")
+        observed_total_pages = _require_non_negative_int(
+            raw_total_pages,
+            f"partition {spec.partition_id} page {page_number} total_pages",
+        )
+        expected_total_pages = (
+            0
+            if api_total == 0
+            else (api_total + config.per_page - 1) // config.per_page
+        )
+        if observed_total_pages != expected_total_pages:
+            raise InventoryDriftError(
+                f"partition {spec.partition_id} page {page_number}: "
+                f"total_pages={observed_total_pages} does not reconcile with "
+                f"count={api_total}/per_page={config.per_page}"
+            )
+        current_page = _require_non_negative_int(
+            payload.get("current_page"),
+            f"partition {spec.partition_id} page {page_number} current_page",
+        )
+        if current_page != page_number:
+            raise InventoryDriftError(
+                f"partition {spec.partition_id} returned current_page={current_page} "
+                f"for requested page {page_number}"
+            )
         if page_number == 1:
             state.api_total = api_total
-            total_pages = payload.get("total_pages")
-            if total_pages is not None:
-                total_pages = int(total_pages)
-            elif api_total > 0:
-                total_pages = max(1, (api_total + config.per_page - 1) // config.per_page)
-            else:
-                total_pages = 0
+            total_pages = observed_total_pages
+        elif api_total != state.api_total or observed_total_pages != total_pages:
+            raise InventoryDriftError(
+                f"partition {spec.partition_id} page {page_number}: "
+                "official count/page geometry changed during acquisition"
+            )
+
+        if total_pages is None:
+            raise PageFetchError(
+                f"partition {spec.partition_id} page {page_number}: "
+                "page geometry was not initialized"
+            )
+        expected_result_count = (
+            0
+            if total_pages == 0
+            else (
+                config.per_page
+                if page_number < total_pages
+                else state.api_total - config.per_page * (total_pages - 1)
+            )
+        )
+        if len(results) != expected_result_count:
+            raise InventoryDriftError(
+                f"partition {spec.partition_id} page {page_number}: "
+                f"result_count={len(results)} does not match expected "
+                f"{expected_result_count}"
+            )
 
         page_id = f"{spec.partition_id}/page-{page_number}"
         doc_numbers: list[str] = []
@@ -1573,6 +2400,23 @@ def acquire_partition(
                 known_legal_ids[inv_doc.legal_id] = inv_doc
                 state.documents.append(inv_doc)
 
+        raw_next_page_url = payload.get("next_page_url")
+        if page_number < total_pages:
+            next_page_url = _validate_documents_request_url(
+                raw_next_page_url,
+                start_date=spec.start_date,
+                end_date=spec.end_date,
+                page=page_number + 1,
+                per_page=config.per_page,
+                allow_cursor=config.mode is AcquisitionMode.LIVE,
+            )
+        else:
+            if raw_next_page_url not in (None, ""):
+                raise InventoryDriftError(
+                    f"partition {spec.partition_id} final page exposes a continuation"
+                )
+            next_page_url = None
+
         page_evidence = PageEvidence(
             page_id=page_id,
             page_number=page_number,
@@ -1585,23 +2429,13 @@ def acquire_partition(
             status=PageStatus.VERIFIED,
             cursor=f"page={page_number}",
             api_total=state.api_total,
-            next_page_url=payload.get("next_page_url"),
+            next_page_url=next_page_url,
         )
         state.pages.append(page_evidence)
 
-        # Termination: empty page after first, or last page by total_pages.
-        if total_pages == 0 and page_number == 1 and not results:
+        if total_pages == 0 or page_number >= total_pages:
             break
-        if total_pages is not None and page_number >= total_pages:
-            break
-        if not results and page_number > 1:
-            break
-        if (
-            total_pages is None
-            and len(results) < config.per_page
-            and not payload.get("next_page_url")
-        ):
-            break
+        request_url = next_page_url
         page_number += 1
         if config.mode is AcquisitionMode.LIVE and config.rate_limit_seconds > 0:
             time.sleep(config.rate_limit_seconds)
@@ -1638,15 +2472,20 @@ def acquire_partition(
 
     state.status = PartitionStatus.CLOSED
 
+    if (
+        live_checkpoint_candidate is not None
+        and state.to_checkpoint_dict()
+        != live_checkpoint_candidate.to_checkpoint_dict()
+    ):
+        raise InventoryDriftError(
+            f"partition {spec.partition_id}: live checkpoint differs from a fresh "
+            "official replay"
+        )
+
     if checkpoint_dir is not None:
         atomic_write_json(
             partition_checkpoint_path(checkpoint_dir, spec.partition_id),
-            {
-                "schema_version": SCHEMA_VERSION,
-                "task_id": TASK_ID,
-                "checkpoint_kind": "partition",
-                **state.to_checkpoint_dict(),
-            },
+            _build_partition_checkpoint(state, config=config),
         )
     return state
 
@@ -1671,6 +2510,21 @@ def acquire_federal_register_inventory(
         if cfg.mode is AcquisitionMode.FIXTURE
         else format_utc_now()
     )
+    if cfg.mode is AcquisitionMode.LIVE:
+        cutoff_dt = datetime.fromisoformat(cfg.observation_cutoff)
+        observed_dt = datetime.fromisoformat(observed_at)
+        if cutoff_dt > observed_dt:
+            raise FederalRegisterAcquisitionError(
+                "live observation cutoff is later than the verifier-owned start time"
+            )
+        if fixture_recipe is not None:
+            raise LiveTransportDisabledError(
+                "fixture_recipe is forbidden for live inventory authority"
+            )
+        if transport is not None:
+            raise LiveTransportDisabledError(
+                "caller-supplied transports are forbidden for live inventory authority"
+            )
     receipt_id = (
         f"fr-inventory-{cfg.mode.value}-"
         f"{cfg.range_start}_{cfg.range_end}-{cfg.observation_cutoff[:10]}"
@@ -1701,7 +2555,18 @@ def acquire_federal_register_inventory(
                 )
             transport = FixtureApiTransport(recipe)
         elif cfg.mode is AcquisitionMode.LIVE:
-            transport = live_http_transport
+
+            def _bound_live_transport(
+                url: str,
+                headers: Mapping[str, str],
+            ) -> tuple[bytes, dict[str, Any]]:
+                return live_http_transport(
+                    url,
+                    headers,
+                    timeout=cfg.request_timeout_seconds,
+                )
+
+            transport = _bound_live_transport
         else:
             raise LiveTransportDisabledError(
                 f"no transport available for mode={cfg.mode.value}"
@@ -1710,7 +2575,7 @@ def acquire_federal_register_inventory(
     specs = plan_monthly_partitions(cfg.range_start, cfg.range_end)
     checkpoint_dir = cfg.checkpoint_dir
     if checkpoint_dir is not None:
-        Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
+        checkpoint_dir = _prepare_checkpoint_directory(checkpoint_dir)
 
     known: dict[str, InventoryDocument] = {}
     partitions: list[PartitionAcquisitionState] = []
@@ -1807,7 +2672,8 @@ def build_completion_receipt(result: AcquisitionResult) -> dict[str, Any]:
                 "publication_date": doc.publication_date,
                 "disposition": BodyTextDisposition.METADATA_ONLY.value,
                 "text": "",
-                "abstract": doc.abstract or f"Inventory abstract for {doc.document_number}",
+                "abstract": doc.abstract
+                or f"Inventory abstract for {doc.document_number}",
                 "legal_id": doc.legal_id,
             }
         )
@@ -2089,6 +2955,10 @@ def build_inventory_report(result: AcquisitionResult) -> dict[str, Any]:
         "code_version": CODE_VERSION,
         "mode": cfg.mode.value,
         "network_required": cfg.mode is AcquisitionMode.LIVE,
+        "transport_kind": (
+            "builtin_https" if cfg.mode is AcquisitionMode.LIVE else "fixture_recipe"
+        ),
+        "checkpoint_schema": CHECKPOINT_SCHEMA,
         "observation_cutoff": cfg.observation_cutoff,
         "release_point": cutoff_release_point(cfg.observation_cutoff),
         "observed_at": result.observed_at,
@@ -2116,7 +2986,8 @@ def build_inventory_report(result: AcquisitionResult) -> dict[str, Any]:
             and cfg.range_end >= observation_cutoff_date(cfg.observation_cutoff),
             "note": (
                 f"Explicit delta from legacy endpoint {LEGACY_BASELINE_END_INCLUSIVE} "
-                f"through observation cutoff {observation_cutoff_date(cfg.observation_cutoff)}; "
+                "through observation cutoff "
+                f"{observation_cutoff_date(cfg.observation_cutoff)}; "
                 f"official API exposes at least {POST_ENDPOINT_DELTA_DOCUMENTS_MIN} "
                 f"documents after the legacy endpoint."
             ),
@@ -2137,7 +3008,8 @@ def build_inventory_report(result: AcquisitionResult) -> dict[str, Any]:
         },
         "reconciliation": {
             "formula": (
-                "enumerated = fetched + duplicate + excluded + quarantined + failed_final"
+                "enumerated = fetched + duplicate + excluded + quarantined + "
+                "failed_final"
             ),
             "enumerated": result.enumerated,
             "accounted": (
@@ -2231,6 +3103,18 @@ def expand_inventory_payload(payload: JsonMapping) -> dict[str, Any]:
     if not is_inventory_recipe(raw):
         return dict(raw)
     cutoff = raw.get("observation_cutoff", DEFAULT_OBSERVATION_CUTOFF)
+    expected_recipe = build_compact_inventory_recipe(observation_cutoff=cutoff)
+    try:
+        observed_bytes = canonical_json_dumps(raw).encode("utf-8")
+        expected_bytes = canonical_json_dumps(expected_recipe).encode("utf-8")
+    except (TypeError, UnicodeEncodeError, ValueError) as exc:
+        raise FederalRegisterAcquisitionError(
+            "compact inventory recipe is not canonical JSON"
+        ) from exc
+    if observed_bytes != expected_bytes:
+        raise FederalRegisterAcquisitionError(
+            "compact inventory recipe differs from the sealed exact contract"
+        )
     return build_fixture_inventory_report(observation_cutoff=cutoff)
 
 
@@ -2320,7 +3204,11 @@ def build_compact_inventory_recipe(
     }
 
 
-def check_inventory_report(report: JsonMapping) -> dict[str, Any]:
+def check_inventory_report(
+    report: JsonMapping,
+    *,
+    require_live: bool = False,
+) -> dict[str, Any]:
     """Validate a federal inventory report against sealed acceptance gates.
 
     Accepts either a fully expanded inventory report or a compact sealed recipe
@@ -2329,6 +3217,7 @@ def check_inventory_report(report: JsonMapping) -> dict[str, Any]:
     """
 
     raw_in = _as_mapping(report, "inventory_report")
+    _require_bool(require_live, "require_live")
     assert_no_secrets(raw_in, context="inventory_report")
     raw = expand_inventory_payload(raw_in)
     assert_no_secrets(raw, context="inventory_report_expanded")
@@ -2373,9 +3262,246 @@ def check_inventory_report(report: JsonMapping) -> dict[str, Any]:
             f"unexpected goal_id: {raw.get('goal_id')!r}"
         )
 
-    require_immutable_observation_cutoff(raw.get("observation_cutoff"))
+    _require_exact_keys(
+        raw,
+        {
+            "schema",
+            "schema_version",
+            "task_id",
+            "goal_id",
+            "program_id",
+            "producer",
+            "code_version",
+            "mode",
+            "network_required",
+            "transport_kind",
+            "checkpoint_schema",
+            "observation_cutoff",
+            "release_point",
+            "observed_at",
+            "receipt_id",
+            "inventory_authority",
+            "inventory_source",
+            "inventory_url",
+            "dataset_repo_id",
+            "previous_public_pin",
+            "currentness_disclaimer",
+            "range",
+            "delta",
+            "counts",
+            "reconciliation",
+            "partitions",
+            "identity",
+            "completeness",
+            "acceptance",
+            "errors",
+            "frontier_closed",
+            "secrets_absent",
+            "notes",
+            "inventory_digest",
+        },
+        "inventory_report",
+    )
+
+    mode = raw.get("mode")
+    if mode not in {MODE_FIXTURE, MODE_LIVE}:
+        raise FederalRegisterAcquisitionError("inventory mode is not exact")
+    live_authority = mode == MODE_LIVE
+    if require_live and not live_authority:
+        raise FederalRegisterAcquisitionError(
+            "fixture inventory cannot satisfy required live authority"
+        )
+    if raw.get("program_id") != PROGRAM_ID:
+        raise FederalRegisterAcquisitionError("inventory program_id drifted")
+    if raw.get("producer") != PRODUCER or raw.get("code_version") != CODE_VERSION:
+        raise FederalRegisterAcquisitionError("inventory producer/code version drifted")
+    if raw.get("network_required") is not (mode == MODE_LIVE):
+        raise FederalRegisterAcquisitionError("inventory network_required drifted")
+    expected_transport = "builtin_https" if mode == MODE_LIVE else "fixture_recipe"
+    if raw.get("transport_kind") != expected_transport:
+        raise FederalRegisterAcquisitionError("inventory transport_kind drifted")
+    if raw.get("checkpoint_schema") != CHECKPOINT_SCHEMA:
+        raise FederalRegisterAcquisitionError("inventory checkpoint schema drifted")
+    for key, expected in (
+        ("inventory_authority", OfficialAuthority.FEDERAL_REGISTER_API.value),
+        ("inventory_source", OFFICIAL_INVENTORY_SOURCE),
+        ("inventory_url", FEDERAL_REGISTER_DOCUMENTS_API),
+        ("dataset_repo_id", DEFAULT_DATASET_REPO_ID),
+        ("previous_public_pin", PREVIOUS_PUBLIC_PIN),
+        ("currentness_disclaimer", CURRENTNESS_DISCLAIMER),
+    ):
+        if raw.get(key) != expected:
+            raise FederalRegisterAcquisitionError(f"inventory {key} drifted")
+    if raw.get("secrets_absent") is not True:
+        raise SecretInReceiptError("inventory secrets_absent is not true")
+    errors = raw.get("errors")
+    if not isinstance(errors, list) or errors:
+        raise FederalRegisterAcquisitionError("closed inventory errors must be []")
+
+    if live_authority:
+        exact_identity = {
+            "program_id": PROGRAM_ID,
+            "producer": PRODUCER,
+            "code_version": CODE_VERSION,
+            "mode": MODE_LIVE,
+            "network_required": True,
+            "transport_kind": "builtin_https",
+            "checkpoint_schema": CHECKPOINT_SCHEMA,
+            "observation_cutoff": DEFAULT_OBSERVATION_CUTOFF,
+            "inventory_authority": OfficialAuthority.FEDERAL_REGISTER_API.value,
+            "inventory_source": OFFICIAL_INVENTORY_SOURCE,
+            "inventory_url": FEDERAL_REGISTER_DOCUMENTS_API,
+            "dataset_repo_id": DEFAULT_DATASET_REPO_ID,
+            "previous_public_pin": PREVIOUS_PUBLIC_PIN,
+        }
+        mismatched = {
+            key: raw.get(key)
+            for key, expected in exact_identity.items()
+            if raw.get(key) != expected
+        }
+        if mismatched:
+            raise FederalRegisterAcquisitionError(
+                "live inventory identity/provenance mismatch: "
+                f"{mismatched}"
+            )
+        if raw_in.get("report_kind") == "fixture_recipe" or raw_in.get(
+            "compact_recipe"
+        ) is True:
+            raise FederalRegisterAcquisitionError(
+                "fixture/compact inventory cannot satisfy live authority"
+            )
+
+    cutoff_text = require_immutable_observation_cutoff(raw.get("observation_cutoff"))
+    cutoff_date = observation_cutoff_date(cutoff_text)
+    if raw.get("release_point") != cutoff_release_point(cutoff_text):
+        raise FederalRegisterAcquisitionError("inventory release_point drifted")
+
+    range_payload = _as_mapping(raw.get("range"), "range")
+    _require_exact_keys(
+        range_payload,
+        {"start", "end", "inclusive", "partition_count", "partition_strategy"},
+        "range",
+    )
+    if (
+        range_payload.get("start") != LEGACY_DELTA_START_INCLUSIVE
+        or range_payload.get("end") != cutoff_date
+        or range_payload.get("inclusive") is not True
+        or range_payload.get("partition_strategy") != "monthly"
+    ):
+        raise InventoryGapError("inventory range is not the exact delta window")
+    range_partition_count = _require_non_negative_int(
+        range_payload.get("partition_count"), "range.partition_count"
+    )
+    expected_specs = plan_monthly_partitions(
+        LEGACY_DELTA_START_INCLUSIVE, cutoff_date
+    )
+    if range_partition_count != len(expected_specs):
+        raise InventoryGapError("inventory range partition_count drifted")
+
+    expected_receipt_id = (
+        f"fr-inventory-{mode}-{LEGACY_DELTA_START_INCLUSIVE}_{cutoff_date}-"
+        f"{cutoff_text[:10]}"
+    )
+    if raw.get("receipt_id") != expected_receipt_id:
+        raise FederalRegisterAcquisitionError("inventory receipt_id drifted")
+
+    observed_text = _require_non_empty_str(
+        raw.get("observed_at"), "observed_at", maximum=64
+    )
+    if live_authority:
+        if not observed_text.endswith("Z"):
+            raise FederalRegisterAcquisitionError("observed_at must be exact UTC-Z")
+        try:
+            observed_dt = datetime.fromisoformat(observed_text)
+            cutoff_dt = datetime.fromisoformat(cutoff_text)
+        except ValueError as exc:
+            raise FederalRegisterAcquisitionError(
+                "live inventory timestamps are malformed"
+            ) from exc
+        canonical_observed = observed_dt.isoformat(timespec="seconds").replace(
+            "+00:00", "Z"
+        )
+        if (
+            observed_dt.utcoffset() != timedelta(0)
+            or observed_dt.microsecond != 0
+            or observed_text != canonical_observed
+        ):
+            raise FederalRegisterAcquisitionError(
+                "live inventory observed_at is not canonical UTC seconds"
+            )
+        verifier_now = _utc_now()
+        if observed_dt > verifier_now:
+            raise FederalRegisterAcquisitionError(
+                "live inventory observed_at is later than verifier time"
+            )
+        if cutoff_dt > observed_dt:
+            raise FederalRegisterAcquisitionError(
+                "live inventory cutoff is later than its observation"
+            )
+    elif observed_text != FIXTURE_OBSERVED_AT:
+        raise FederalRegisterAcquisitionError("fixture observed_at drifted")
+
+    counts = _as_mapping(raw.get("counts"), "counts")
+    count_keys = {
+        "partition_count",
+        "page_count",
+        "official_total",
+        "enumerated",
+        "fetched",
+        "duplicate",
+        "excluded",
+        "quarantined",
+        "failed_final",
+        "unique_legal_ids",
+        "unique_document_numbers",
+        "open_pages",
+    }
+    _require_exact_keys(counts, count_keys, "counts")
+    count_values = {
+        key: _require_non_negative_int(counts.get(key), f"counts.{key}")
+        for key in count_keys
+    }
+    if count_values["partition_count"] != len(expected_specs):
+        raise InventoryGapError("counts.partition_count drifted")
+    if count_values["open_pages"] != 0 or count_values["failed_final"] != 0:
+        raise InventoryGapError("inventory counts retain open/failed items")
+    if count_values["official_total"] != count_values["enumerated"]:
+        raise InventoryDriftError("official_total does not equal enumerated")
+    if count_values["enumerated"] != sum(
+        count_values[key]
+        for key in ("fetched", "duplicate", "excluded", "quarantined", "failed_final")
+    ):
+        raise InventoryDriftError("inventory count formula does not reconcile")
+    if count_values["unique_legal_ids"] != count_values["fetched"]:
+        raise IdentityCollisionError("unique legal-id count does not equal fetched")
+    if count_values["unique_document_numbers"] > count_values["unique_legal_ids"]:
+        raise IdentityCollisionError("unique document-number count is impossible")
 
     acceptance = _as_mapping(raw.get("acceptance"), "acceptance")
+    acceptance_keys = {
+        "all_partitions_closed",
+        "all_pages_closed",
+        "duplicate_free_by_official_identity",
+        "no_coverage_gap",
+        "unexplained_count_drift",
+        "failed_final",
+        "failed_final_zero",
+        "secrets_absent",
+        "frontier_closed",
+        "completeness_oracle_passed",
+        "unique_document_count",
+        "enumerated",
+        "official_total",
+        "partition_count",
+        "observation_cutoff",
+        "range_start",
+        "range_end",
+        "mode",
+        "inventory_authority",
+        "previous_public_pin",
+        "all_expected_outputs_accounted",
+    }
+    _require_exact_keys(acceptance, acceptance_keys, "acceptance")
     bool_true_keys = (
         "all_partitions_closed",
         "all_pages_closed",
@@ -2392,28 +3518,159 @@ def check_inventory_report(report: JsonMapping) -> dict[str, Any]:
             raise FederalRegisterAcquisitionError(
                 f"acceptance.{key} must be true, got {acceptance.get(key)!r}"
             )
-    if acceptance.get("failed_final") != 0:
+    if _require_non_negative_int(
+        acceptance.get("failed_final"), "acceptance.failed_final"
+    ) != 0:
         raise FailedFinalItemError(
             f"acceptance.failed_final must be 0, got {acceptance.get('failed_final')!r}"
         )
-    if acceptance.get("unexplained_count_drift") != 0:
+    if _require_non_negative_int(
+        acceptance.get("unexplained_count_drift"),
+        "acceptance.unexplained_count_drift",
+    ) != 0:
         raise InventoryDriftError(
             f"acceptance.unexplained_count_drift must be 0, got "
             f"{acceptance.get('unexplained_count_drift')!r}"
         )
 
+    if live_authority:
+        if acceptance.get("mode") != MODE_LIVE:
+            raise FederalRegisterAcquisitionError("acceptance.mode is not live")
+        if acceptance.get("range_start") != LEGACY_DELTA_START_INCLUSIVE:
+            raise InventoryGapError("live inventory does not start at the exact delta")
+        if acceptance.get("range_end") != cutoff_date:
+            raise InventoryGapError("live inventory does not end at its cutoff")
+        if acceptance.get("previous_public_pin") != PREVIOUS_PUBLIC_PIN:
+            raise FederalRegisterAcquisitionError(
+                "acceptance.previous_public_pin is not the sealed baseline"
+            )
+        if acceptance.get("inventory_authority") != OFFICIAL_INVENTORY_SOURCE:
+            raise FederalRegisterAcquisitionError(
+                "acceptance inventory authority is not canonical"
+            )
+        official_total = _require_non_negative_int(
+            acceptance.get("official_total"), "acceptance.official_total"
+        )
+        if official_total < POST_ENDPOINT_DELTA_DOCUMENTS_MIN:
+            raise InventoryGapError(
+                "live inventory total is below the sealed post-endpoint minimum"
+            )
+
+    for acceptance_key, count_key in (
+        ("unique_document_count", "unique_legal_ids"),
+        ("enumerated", "enumerated"),
+        ("official_total", "official_total"),
+        ("partition_count", "partition_count"),
+    ):
+        acceptance_value = _require_non_negative_int(
+            acceptance.get(acceptance_key), f"acceptance.{acceptance_key}"
+        )
+        if acceptance_value != count_values[count_key]:
+            raise InventoryDriftError(
+                f"acceptance.{acceptance_key} does not match counts.{count_key}"
+            )
+    for key, expected in (
+        ("observation_cutoff", cutoff_text),
+        ("range_start", LEGACY_DELTA_START_INCLUSIVE),
+        ("range_end", cutoff_date),
+        ("mode", mode),
+        ("inventory_authority", OFFICIAL_INVENTORY_SOURCE),
+        ("previous_public_pin", PREVIOUS_PUBLIC_PIN),
+    ):
+        if acceptance.get(key) != expected:
+            raise FederalRegisterAcquisitionError(f"acceptance.{key} drifted")
+
     if raw.get("frontier_closed") is not True:
         raise InventoryGapError("inventory report frontier_closed is not true")
 
     completeness = _as_mapping(raw.get("completeness"), "completeness")
-    if completeness.get("passed") is not True:
+    _require_exact_keys(
+        completeness,
+        {
+            "verdict",
+            "passed",
+            "frontier_closed",
+            "open_page_count",
+            "failed_final",
+            "unexplained_count_drift",
+            "finding_count",
+            "findings",
+        },
+        "completeness",
+    )
+    if (
+        completeness.get("verdict") != CompletenessVerdict.PASS.value
+        or completeness.get("passed") is not True
+        or completeness.get("frontier_closed") is not True
+    ):
         raise InventoryGapError("inventory completeness oracle did not pass")
+    for key in (
+        "open_page_count",
+        "failed_final",
+        "unexplained_count_drift",
+        "finding_count",
+    ):
+        if _require_non_negative_int(
+            completeness.get(key), f"completeness.{key}"
+        ) != 0:
+            raise InventoryGapError(f"completeness.{key} is not zero")
+    if completeness.get("findings") != []:
+        raise InventoryGapError("complete inventory contains findings")
 
     partitions = _as_sequence(raw.get("partitions"), "partitions")
-    if not partitions:
+    if not isinstance(partitions, list) or not partitions:
         raise InventoryGapError("inventory report has no partitions")
-    for item in partitions:
+    if len(partitions) != len(expected_specs):
+        raise InventoryGapError("inventory partition list length drifted")
+    partition_sums = dict.fromkeys(
+        (
+            "api_total",
+            "enumerated",
+            "fetched",
+            "duplicate",
+            "excluded",
+            "quarantined",
+            "failed_final",
+            "page_count",
+        ),
+        0,
+    )
+    observed_document_numbers: set[str] = set()
+    for expected_spec, item in zip(expected_specs, partitions, strict=True):
         part = _as_mapping(item, "partition")
+        _require_exact_keys(
+            part,
+            {
+                "partition_id",
+                "start_date",
+                "end_date",
+                "year_month",
+                "status",
+                "api_total",
+                "enumerated",
+                "fetched",
+                "duplicate",
+                "excluded",
+                "quarantined",
+                "failed_final",
+                "pages_closed",
+                "page_count",
+                "response_hashes",
+                "document_numbers",
+                "pages",
+            },
+            "partition",
+        )
+        if any(
+            part.get(key) != expected
+            for key, expected in (
+                ("partition_id", expected_spec.partition_id),
+                ("start_date", expected_spec.start_date),
+                ("end_date", expected_spec.end_date),
+                ("year_month", expected_spec.year_month),
+            )
+        ):
+            raise InventoryGapError("partition identity/geometry drifted")
         if part.get("status") != PartitionStatus.CLOSED.value:
             raise InventoryGapError(
                 f"partition {part.get('partition_id')!r} is not closed"
@@ -2422,32 +3679,143 @@ def check_inventory_report(report: JsonMapping) -> dict[str, Any]:
             raise InventoryGapError(
                 f"partition {part.get('partition_id')!r} has open pages"
             )
-        if int(part.get("failed_final") or 0) != 0:
+        part_counts = {
+            key: _require_non_negative_int(part.get(key), f"partition.{key}")
+            for key in (
+                "api_total",
+                "enumerated",
+                "fetched",
+                "duplicate",
+                "excluded",
+                "quarantined",
+                "failed_final",
+                "page_count",
+            )
+        }
+        if part_counts["failed_final"] != 0:
             raise FailedFinalItemError(
                 f"partition {part.get('partition_id')!r} has failed_final"
             )
-        for page in part.get("pages") or ():
+        if part_counts["api_total"] != part_counts["enumerated"] or part_counts[
+            "enumerated"
+        ] != sum(
+            part_counts[key]
+            for key in (
+                "fetched",
+                "duplicate",
+                "excluded",
+                "quarantined",
+                "failed_final",
+            )
+        ):
+            raise InventoryDriftError("partition counts do not reconcile")
+        for key in partition_sums:
+            partition_sums[key] += part_counts[key]
+        pages = part.get("pages")
+        if not isinstance(pages, list) or len(pages) != part_counts["page_count"]:
+            raise InventoryGapError("partition page_count does not match pages")
+        response_hashes = part.get("response_hashes")
+        document_numbers = part.get("document_numbers")
+        if not isinstance(response_hashes, list) or not isinstance(
+            document_numbers, list
+        ):
+            raise InventoryGapError("partition ledgers must be JSON lists")
+        normalized_partition_docs = [
+            validate_document_number(value, name="partition.document_number")
+            for value in document_numbers
+        ]
+        if len(normalized_partition_docs) != len(set(normalized_partition_docs)):
+            raise IdentityCollisionError(
+                "partition document_numbers contain duplicates"
+            )
+        if len(normalized_partition_docs) != part_counts["fetched"]:
+            raise InventoryDriftError("partition fetched/document-number count drifted")
+        observed_document_numbers.update(normalized_partition_docs)
+        page_hashes: list[str] = []
+        page_result_total = 0
+        for expected_page_number, page in enumerate(pages, start=1):
             page_m = _as_mapping(page, "page")
-            if page_m.get("status") not in {
-                PageStatus.VERIFIED.value,
-                PageStatus.FETCHED.value,
-                PageStatus.SKIPPED.value,
-            }:
+            _require_exact_keys(
+                page_m,
+                {
+                    "page_id",
+                    "page_number",
+                    "status",
+                    "response_hash",
+                    "result_count",
+                    "document_numbers",
+                    "cursor",
+                },
+                "page",
+            )
+            if (
+                page_m.get("page_id")
+                != f"{expected_spec.partition_id}/page-{expected_page_number}"
+                or _require_non_negative_int(
+                    page_m.get("page_number"), "page.page_number"
+                )
+                != expected_page_number
+                or page_m.get("cursor") != f"page={expected_page_number}"
+            ):
+                raise InventoryGapError("page identity/order drifted")
+            if page_m.get("status") != PageStatus.VERIFIED.value:
                 raise InventoryGapError(
                     f"page {page_m.get('page_id')!r} status={page_m.get('status')!r} "
                     "is not closed"
                 )
-            if page_m.get("status") != PageStatus.SKIPPED.value:
-                normalize_sha256(
-                    page_m.get("response_hash"), name="response_hash"
-                )
+            raw_page_hash = page_m.get("response_hash")
+            if not isinstance(raw_page_hash, str):
+                raise InventoryGapError("page response_hash must be a string")
+            normalized_page_hash = normalize_sha256(
+                raw_page_hash, name="response_hash"
+            )
+            if raw_page_hash != normalized_page_hash:
+                raise InventoryGapError("page response_hash is not canonical")
+            page_hashes.append(normalized_page_hash)
+            page_documents = page_m.get("document_numbers")
+            if not isinstance(page_documents, list):
+                raise InventoryGapError("page document_numbers must be a JSON list")
+            normalized_page_documents = [
+                validate_document_number(value, name="page.document_number")
+                for value in page_documents
+            ]
+            result_count = _require_non_negative_int(
+                page_m.get("result_count"), "page.result_count"
+            )
+            if result_count != len(normalized_page_documents):
+                raise InventoryDriftError("page result_count does not match its ledger")
+            page_result_total += result_count
+        if page_hashes != response_hashes:
+            raise InventoryDriftError("partition response_hash ledger drifted")
+        if page_result_total != part_counts["api_total"]:
+            raise InventoryDriftError("partition page results do not match api_total")
+
+    for partition_key, count_key in (
+        ("api_total", "official_total"),
+        ("enumerated", "enumerated"),
+        ("fetched", "fetched"),
+        ("duplicate", "duplicate"),
+        ("excluded", "excluded"),
+        ("quarantined", "quarantined"),
+        ("failed_final", "failed_final"),
+        ("page_count", "page_count"),
+    ):
+        if partition_sums[partition_key] != count_values[count_key]:
+            raise InventoryDriftError(
+                f"partition {partition_key} sum does not match counts.{count_key}"
+            )
+    if len(observed_document_numbers) != count_values["unique_document_numbers"]:
+        raise IdentityCollisionError("unique document-number count does not reconcile")
 
     # Verify digest if recomputable.
     body = {k: v for k, v in raw.items() if k != "inventory_digest"}
     expected_digest = digest_mapping(body)
-    actual_digest = normalize_sha256(
-        raw.get("inventory_digest"), name="inventory_digest"
-    )
+    raw_inventory_digest = raw.get("inventory_digest")
+    if not isinstance(raw_inventory_digest, str):
+        raise FederalRegisterAcquisitionError("inventory_digest must be a string")
+    actual_digest = normalize_sha256(raw_inventory_digest, name="inventory_digest")
+    if raw_inventory_digest != actual_digest:
+        raise FederalRegisterAcquisitionError("inventory_digest is not canonical")
     if actual_digest != expected_digest:
         raise FederalRegisterAcquisitionError(
             "inventory_digest does not match report body "
@@ -2455,24 +3823,125 @@ def check_inventory_report(report: JsonMapping) -> dict[str, Any]:
         )
 
     recon = _as_mapping(raw.get("reconciliation"), "reconciliation")
+    _require_exact_keys(
+        recon,
+        {
+            "formula",
+            "enumerated",
+            "accounted",
+            "official_total",
+            "unexplained_count_drift",
+            "reconciled",
+        },
+        "reconciliation",
+    )
+    if recon.get("formula") != (
+        "enumerated = fetched + duplicate + excluded + quarantined + failed_final"
+    ):
+        raise InventoryDriftError("inventory reconciliation formula drifted")
     if recon.get("reconciled") is not True:
         raise InventoryDriftError("inventory reconciliation.reconciled is not true")
+    for key, expected in (
+        ("enumerated", count_values["enumerated"]),
+        ("accounted", count_values["enumerated"]),
+        ("official_total", count_values["official_total"]),
+        ("unexplained_count_drift", 0),
+    ):
+        if (
+            _require_non_negative_int(recon.get(key), f"reconciliation.{key}")
+            != expected
+        ):
+            raise InventoryDriftError(f"reconciliation.{key} drifted")
 
     identity = _as_mapping(raw.get("identity"), "identity")
+    _require_exact_keys(
+        identity,
+        {
+            "key",
+            "unique_legal_id_count",
+            "duplicate_observations",
+            "sample_legal_ids",
+            "sample_document_numbers",
+            "duplicate_free",
+        },
+        "identity",
+    )
+    if identity.get("key") != "legal_id = fr:<document_number>:<publication_date>":
+        raise IdentityCollisionError("identity key contract drifted")
     if identity.get("duplicate_free") is not True:
         raise IdentityCollisionError("identity.duplicate_free is not true")
+    if _require_non_negative_int(
+        identity.get("unique_legal_id_count"), "identity.unique_legal_id_count"
+    ) != count_values["unique_legal_ids"]:
+        raise IdentityCollisionError("identity unique count drifted")
+    if _require_non_negative_int(
+        identity.get("duplicate_observations"), "identity.duplicate_observations"
+    ) != count_values["duplicate"]:
+        raise IdentityCollisionError("identity duplicate count drifted")
+    sample_legal_ids = identity.get("sample_legal_ids")
+    sample_document_numbers = identity.get("sample_document_numbers")
+    if not isinstance(sample_legal_ids, list) or not isinstance(
+        sample_document_numbers, list
+    ):
+        raise IdentityCollisionError("identity samples must be JSON lists")
+    if len(sample_legal_ids) > 12 or len(sample_document_numbers) > 12:
+        raise IdentityCollisionError("identity sample bounds exceeded")
+    for index, legal_id in enumerate(sample_legal_ids):
+        _require_non_empty_str(
+            legal_id, f"identity.sample_legal_ids[{index}]", maximum=512
+        )
+    for index, document_number in enumerate(sample_document_numbers):
+        validate_document_number(
+            document_number,
+            name=f"identity.sample_document_numbers[{index}]",
+        )
 
     delta = _as_mapping(raw.get("delta"), "delta")
-    if str(delta.get("delta_start_inclusive")) != LEGACY_DELTA_START_INCLUSIVE:
+    _require_exact_keys(
+        delta,
+        {
+            "legacy_baseline_end_inclusive",
+            "delta_start_inclusive",
+            "legacy_advertised_count",
+            "legacy_materialized_count",
+            "post_endpoint_documents_min",
+            "covers_delta_window",
+            "note",
+        },
+        "delta",
+    )
+    if delta.get("delta_start_inclusive") != LEGACY_DELTA_START_INCLUSIVE:
         raise FederalRegisterAcquisitionError(
             "delta.delta_start_inclusive must be "
             f"{LEGACY_DELTA_START_INCLUSIVE}"
         )
-    if str(delta.get("legacy_baseline_end_inclusive")) != LEGACY_BASELINE_END_INCLUSIVE:
+    if delta.get("legacy_baseline_end_inclusive") != LEGACY_BASELINE_END_INCLUSIVE:
         raise FederalRegisterAcquisitionError(
             "delta.legacy_baseline_end_inclusive must be "
             f"{LEGACY_BASELINE_END_INCLUSIVE}"
         )
+    for key, expected in (
+        ("legacy_advertised_count", LEGACY_ADVERTISED_COUNT),
+        ("legacy_materialized_count", LEGACY_MATERIALIZED_COUNT),
+        ("post_endpoint_documents_min", POST_ENDPOINT_DELTA_DOCUMENTS_MIN),
+    ):
+        if _require_non_negative_int(delta.get(key), f"delta.{key}") != expected:
+            raise FederalRegisterAcquisitionError(f"delta.{key} drifted")
+    if delta.get("covers_delta_window") is not True:
+        raise InventoryGapError("inventory delta window is not covered")
+    _require_non_empty_str(delta.get("note"), "delta.note", maximum=2048)
+    if live_authority:
+        if delta.get("covers_delta_window") is not True:
+            raise InventoryGapError(
+                "live inventory does not cover its exact delta window"
+            )
+        if (
+            delta.get("post_endpoint_documents_min")
+            != POST_ENDPOINT_DELTA_DOCUMENTS_MIN
+        ):
+            raise FederalRegisterAcquisitionError(
+                "live inventory post-endpoint minimum drifted"
+            )
 
     return {
         "ok": True,
@@ -2491,7 +3960,10 @@ def write_inventory_report(
     """Write *report* to the frozen inventory path (atomic)."""
 
     target = Path(path) if path is not None else default_report_path()
-    check_inventory_report(report)
+    check_inventory_report(
+        report,
+        require_live=report.get("mode") == MODE_LIVE,
+    )
     atomic_write_json(target, report)
     return target
 
@@ -2551,6 +4023,7 @@ def render_check_summary(result: Mapping[str, Any]) -> str:
 __all__ = [
     "SCHEMA_VERSION",
     "REPORT_SCHEMA",
+    "CHECKPOINT_SCHEMA",
     "TASK_ID",
     "GOAL_ID",
     "PROGRAM_ID",
@@ -2601,6 +4074,7 @@ __all__ = [
     "format_utc_now",
     "is_inventory_recipe",
     "live_http_transport",
+    "load_json_object",
     "load_inventory_report",
     "month_end",
     "plan_delta_partitions",

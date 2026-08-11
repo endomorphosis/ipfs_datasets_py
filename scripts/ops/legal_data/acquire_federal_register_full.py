@@ -9,7 +9,8 @@ resumes from atomic checkpoints, and writes the durable inventory receipt at
 
 Default CI operation is offline and network-free::
 
-    python scripts/ops/legal_data/acquire_federal_register_full.py --fixture-only --check
+    python scripts/ops/legal_data/acquire_federal_register_full.py \
+        --fixture-only --check
 
 Live network acquisition is opt-in (``--live``) and never required for the
 validation gate. Fixture mode expands a compact sealed recipe and proves:
@@ -46,6 +47,7 @@ from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import 
     default_checkpoint_dir,
     default_report_path,
     expand_inventory_payload,
+    load_json_object,
     render_check_summary,
     write_inventory_report,
 )
@@ -184,11 +186,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
             if args.check:
                 if report_path.is_file():
-                    raw_disk = json.loads(report_path.read_text(encoding="utf-8"))
-                    if not isinstance(raw_disk, dict):
-                        raise FederalRegisterAcquisitionError(
-                            f"inventory report is not a JSON object: {report_path}"
-                        )
+                    raw_disk = load_json_object(report_path)
                     result = check_inventory_report(raw_disk)
                     expanded = expand_inventory_payload(raw_disk)
                     disk_acceptance = dict(expanded.get("acceptance") or {})
@@ -291,7 +289,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 write_inventory_report(report, report_path)
                 print(f"wrote inventory report: {report_path}", file=sys.stderr)
             if args.check:
-                result = check_inventory_report(report)
+                result = check_inventory_report(report, require_live=True)
                 print(render_check_summary(result))
             if args.print_json:
                 sys.stdout.write(

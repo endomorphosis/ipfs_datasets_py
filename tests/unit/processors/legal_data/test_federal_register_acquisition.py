@@ -13,7 +13,9 @@ from pathlib import Path
 
 import pytest
 
+import ipfs_datasets_py.processors.legal_data.federal_register_acquisition as acquisition
 from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import (
+    CHECKPOINT_SCHEMA,
     FIXTURE_RANGE_END,
     FIXTURE_RANGE_START,
     GOAL_ID,
@@ -28,6 +30,8 @@ from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import 
     FixtureApiTransport,
     InventoryDriftError,
     InventoryGapError,
+    LiveTransportDisabledError,
+    PageFetchError,
     PartitionPlanError,
     SecretInReceiptError,
     acquire_federal_register_inventory,
@@ -64,7 +68,6 @@ from ipfs_datasets_py.processors.legal_data.federal_register_source_policy impor
     build_legal_id,
     content_sha256,
 )
-
 
 # ---------------------------------------------------------------------------
 # Schema / identity
@@ -325,6 +328,38 @@ def test_check_rejects_open_page_and_failed_final() -> None:
         check_inventory_report(broken3)
 
 
+def test_check_rejects_recomputed_digest_schema_and_type_mutations() -> None:
+    report = build_fixture_inventory_report()
+
+    def _unknown_field(payload):
+        payload["unreviewed"] = "value"
+
+    def _boolean_count(payload):
+        payload["counts"]["failed_final"] = False
+
+    def _partition_drift(payload):
+        payload["partitions"][0]["api_total"] += 1
+
+    def _noncanonical_hash(payload):
+        page = payload["partitions"][0]["pages"][0]
+        page["response_hash"] = page["response_hash"].upper()
+        payload["partitions"][0]["response_hashes"][0] = page["response_hash"]
+
+    for mutate in (
+        _unknown_field,
+        _boolean_count,
+        _partition_drift,
+        _noncanonical_hash,
+    ):
+        altered = copy.deepcopy(report)
+        mutate(altered)
+        altered["inventory_digest"] = acquisition.digest_mapping(
+            {key: value for key, value in altered.items() if key != "inventory_digest"}
+        )
+        with pytest.raises(FederalRegisterAcquisitionError):
+            check_inventory_report(altered)
+
+
 def test_resume_from_checkpoint_is_deterministic(tmp_path: Path) -> None:
     ckpt = tmp_path / "checkpoints"
     first = acquire_federal_register_inventory(
@@ -352,6 +387,339 @@ def test_resume_from_checkpoint_is_deterministic(tmp_path: Path) -> None:
     # Checkpoint files exist per partition.
     ckpt_files = list(ckpt.glob("*.json"))
     assert len(ckpt_files) == len(first.partitions)
+
+
+def test_fixture_checkpoint_cannot_resurrect_as_live_authority(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checkpoint_root = tmp_path / "checkpoints"
+    fixture = acquire_federal_register_inventory(
+        config=AcquisitionConfig(
+            mode=AcquisitionMode.FIXTURE,
+            resume=True,
+            checkpoint_dir=checkpoint_root,
+        )
+    )
+    assert fixture.frontier_closed is True
+
+    calls = 0
+
+    def forbidden_network(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        raise AssertionError("network should not be reached after checkpoint rejection")
+
+    monkeypatch.setattr(acquisition, "live_http_transport", forbidden_network)
+    live = acquire_federal_register_inventory(
+        config=AcquisitionConfig(
+            mode=AcquisitionMode.LIVE,
+            resume=True,
+            checkpoint_dir=checkpoint_root,
+            rate_limit_seconds=0,
+        )
+    )
+    assert live.frontier_closed is False
+    assert calls == 0
+    assert any("checkpoint" in error for error in live.errors)
+
+
+def test_live_authority_rejects_injected_transport_and_partial_range() -> None:
+    with pytest.raises(LiveTransportDisabledError):
+        acquire_federal_register_inventory(
+            config=AcquisitionConfig(mode=AcquisitionMode.LIVE, resume=False),
+            transport=lambda _url, _headers: (b"{}", {}),
+        )
+
+    with pytest.raises(FederalRegisterAcquisitionError, match="exact post-baseline"):
+        AcquisitionConfig(
+            mode=AcquisitionMode.LIVE,
+            range_start="2026-08-01",
+            range_end=DEFAULT_OBSERVATION_CUTOFF_DATE,
+        )
+    with pytest.raises(FederalRegisterAcquisitionError, match="sealed observation"):
+        AcquisitionConfig(
+            mode=AcquisitionMode.LIVE,
+            observation_cutoff="2026-08-09T00:00:00Z",
+            range_start=LEGACY_DELTA_START_INCLUSIVE,
+            range_end="2026-08-09",
+        )
+
+
+def test_partition_follows_exact_official_cursor_chain() -> None:
+    config = AcquisitionConfig(
+        mode=AcquisitionMode.LIVE,
+        resume=False,
+        checkpoint_dir=None,
+        per_page=2,
+        rate_limit_seconds=0,
+    )
+    spec = plan_delta_partitions()[0]
+    first_url = build_documents_api_url(
+        start_date=spec.start_date,
+        end_date=spec.end_date,
+        page=1,
+        per_page=2,
+    )
+    second_planned = build_documents_api_url(
+        start_date=spec.start_date,
+        end_date=spec.end_date,
+        page=2,
+        per_page=2,
+    )
+    parsed = acquisition.urllib.parse.urlsplit(second_planned)
+    query = acquisition.urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+    query.extend((("format", "json"), ("search_after_cursor", "sealed-cursor-2")))
+    cursor_url = acquisition.urllib.parse.urlunsplit(
+        (
+            "https",
+            "www.federalregister.gov",
+            "/api/v1/documents",
+            acquisition.urllib.parse.urlencode(query),
+            "",
+        )
+    )
+    rows = [
+        {"document_number": "2026-00001", "publication_date": spec.start_date},
+        {"document_number": "2026-00002", "publication_date": spec.start_date},
+        {"document_number": "2026-00003", "publication_date": spec.start_date},
+    ]
+    payloads = (
+        {
+            "count": 3,
+            "total_pages": 2,
+            "current_page": 1,
+            "results": rows[:2],
+            "next_page_url": cursor_url,
+        },
+        {
+            "count": 3,
+            "total_pages": 2,
+            "current_page": 2,
+            "results": rows[2:],
+        },
+    )
+    observed_urls: list[str] = []
+
+    def transport(url, _headers):
+        observed_urls.append(url)
+        payload = payloads[len(observed_urls) - 1]
+        return acquisition.canonical_json_dumps(payload).encode("utf-8"), payload
+
+    state = acquisition.acquire_partition(
+        spec,
+        config=config,
+        transport=transport,
+        known_legal_ids={},
+    )
+
+    assert observed_urls == [first_url, cursor_url]
+    assert state.status.value == "closed"
+    assert [page.request_url for page in state.pages] == [first_url, cursor_url]
+    assert state.pages[0].next_page_url == cursor_url
+    assert state.pages[1].next_page_url is None
+
+
+def test_live_checkpoint_is_only_accepted_after_fresh_official_replay(
+    tmp_path: Path,
+) -> None:
+    checkpoint_root = tmp_path / "checkpoints"
+    config = AcquisitionConfig(
+        mode=AcquisitionMode.LIVE,
+        resume=True,
+        checkpoint_dir=checkpoint_root,
+        rate_limit_seconds=0,
+    )
+    acquisition._prepare_checkpoint_directory(checkpoint_root)
+    spec = plan_delta_partitions()[0]
+    row = {
+        "document_number": "2026-00001",
+        "publication_date": spec.start_date,
+        "title": "Bound official row",
+    }
+    payload = {
+        "count": 1,
+        "total_pages": 1,
+        "current_page": 1,
+        "results": [row],
+    }
+    calls = 0
+
+    def transport(_url, _headers):
+        nonlocal calls
+        calls += 1
+        return acquisition.canonical_json_dumps(payload).encode("utf-8"), payload
+
+    first = acquisition.acquire_partition(
+        spec,
+        config=config,
+        transport=transport,
+        known_legal_ids={},
+        checkpoint_dir=checkpoint_root,
+    )
+    assert first.status.value == "closed"
+    assert calls == 1
+
+    second = acquisition.acquire_partition(
+        spec,
+        config=config,
+        transport=transport,
+        known_legal_ids={},
+        checkpoint_dir=checkpoint_root,
+    )
+    assert second.to_checkpoint_dict() == first.to_checkpoint_dict()
+    assert calls == 2, "live checkpoint reuse must still contact official authority"
+
+    checkpoint_path = acquisition.partition_checkpoint_path(
+        checkpoint_root, spec.partition_id
+    )
+    forged = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    forged["state"]["documents"][0]["title"] = "forged but digest-consistent"
+    forged["checkpoint_digest"] = acquisition.digest_mapping(
+        {key: value for key, value in forged.items() if key != "checkpoint_digest"}
+    )
+    acquisition.atomic_write_json(checkpoint_path, forged)
+
+    with pytest.raises(InventoryDriftError, match="fresh official replay"):
+        acquisition.acquire_partition(
+            spec,
+            config=config,
+            transport=transport,
+            known_legal_ids={},
+            checkpoint_dir=checkpoint_root,
+        )
+    assert calls == 3
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        ("document_number", ["2026-00001"]),
+        ("publication_date", {"value": "2026-03-03"}),
+        ("title", ["not", "text"]),
+        ("type", 7),
+        ("abstract", True),
+        ("agencies", [{"name": ["EPA"]}]),
+    ),
+)
+def test_api_document_fields_reject_lossy_type_coercion(
+    field: str,
+    value: object,
+) -> None:
+    raw = {
+        "document_number": "2026-00001",
+        "publication_date": "2026-03-03",
+        field: value,
+    }
+    with pytest.raises(FederalRegisterAcquisitionError):
+        acquisition.InventoryDocument.from_api_result(
+            raw,
+            partition_id="p-2026-03",
+            page_id="p-2026-03/page-1",
+        )
+
+
+@pytest.mark.parametrize(
+    "body",
+    (
+        b'{"x":1,"x":2}',
+        b'{"x":NaN}',
+        b'{"x":Infinity}',
+        b'{"x":"\\ud800"}',
+        b"[]",
+    ),
+)
+def test_api_json_boundary_rejects_ambiguous_or_non_object_bytes(body: bytes) -> None:
+    with pytest.raises(PageFetchError):
+        acquisition._strict_json_object_from_bytes(body, context="test")
+
+
+def test_live_check_rejects_fixture_recipe() -> None:
+    with pytest.raises(FederalRegisterAcquisitionError, match="live"):
+        check_inventory_report(build_fixture_inventory_report(), require_live=True)
+
+
+def test_checkpoint_revalidates_canonical_state_after_recomputed_outer_digest(
+    tmp_path: Path,
+) -> None:
+    checkpoint_root = tmp_path / "checkpoints"
+    result = acquire_federal_register_inventory(
+        config=AcquisitionConfig(
+            mode=AcquisitionMode.FIXTURE,
+            resume=True,
+            checkpoint_dir=checkpoint_root,
+        )
+    )
+    checkpoint_path = min(checkpoint_root.glob("*.json"))
+    payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    assert payload["schema"] == CHECKPOINT_SCHEMA
+    payload["state"]["documents"][0]["legal_id"] += ":forged=true"
+    payload["checkpoint_digest"] = acquisition.digest_mapping(
+        {key: value for key, value in payload.items() if key != "checkpoint_digest"}
+    )
+    checkpoint_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    rerun = acquire_federal_register_inventory(
+        config=AcquisitionConfig(
+            mode=AcquisitionMode.FIXTURE,
+            resume=True,
+            checkpoint_dir=checkpoint_root,
+        )
+    )
+    assert rerun.frontier_closed is False
+    assert any("checkpoint" in error for error in rerun.errors)
+    assert result.frontier_closed is True
+
+
+def test_checkpoint_reader_rejects_symlink_and_noncanonical_bytes(
+    tmp_path: Path,
+) -> None:
+    checkpoint_root = tmp_path / "checkpoints"
+    first = acquire_federal_register_inventory(
+        config=AcquisitionConfig(
+            mode=AcquisitionMode.FIXTURE,
+            resume=True,
+            checkpoint_dir=checkpoint_root,
+        )
+    )
+    assert first.frontier_closed is True
+    checkpoint_path = min(checkpoint_root.glob("*.json"))
+    payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    checkpoint_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    noncanonical = acquire_federal_register_inventory(
+        config=AcquisitionConfig(
+            mode=AcquisitionMode.FIXTURE,
+            resume=True,
+            checkpoint_dir=checkpoint_root,
+        )
+    )
+    assert noncanonical.frontier_closed is False
+    assert any("checkpoint" in error for error in noncanonical.errors)
+
+    canonical = (
+        json.dumps(
+            payload,
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
+    checkpoint_path.write_text(canonical, encoding="utf-8")
+    real_path = tmp_path / "real-checkpoint.json"
+    checkpoint_path.rename(real_path)
+    checkpoint_path.symlink_to(real_path)
+
+    linked = acquire_federal_register_inventory(
+        config=AcquisitionConfig(
+            mode=AcquisitionMode.FIXTURE,
+            resume=True,
+            checkpoint_dir=checkpoint_root,
+        )
+    )
+    assert linked.frontier_closed is False
+    assert any("checkpoint" in error for error in linked.errors)
 
 
 def test_duplicate_identity_is_tracked_not_double_counted() -> None:
@@ -459,6 +827,16 @@ def test_compact_recipe_expands_and_passes_check() -> None:
     result = check_inventory_report(recipe)
     assert result["ok"] is True
     assert result["frontier_closed"] is True
+
+
+def test_compact_recipe_requires_the_complete_exact_contract() -> None:
+    with pytest.raises(FederalRegisterAcquisitionError, match="sealed exact"):
+        check_inventory_report({"report_kind": "fixture_recipe"})
+
+    altered = build_compact_inventory_recipe()
+    altered["notes"] += " unreviewed"
+    with pytest.raises(FederalRegisterAcquisitionError, match="sealed exact"):
+        check_inventory_report(altered)
 
 
 def test_on_disk_federal_inventory_recipe_passes_check() -> None:
