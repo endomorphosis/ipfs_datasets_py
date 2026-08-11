@@ -227,6 +227,34 @@ def jsonl_to_parquet(jsonl_path: str, parquet_path: str,
         row_group_size=row_group_size
     )
 
+    # DQK-089: optional admitted-lake shadow projection (legacy parquet remains authority).
+    try:
+        from ipfs_datasets_py.ducklake.adapters import (
+            ParquetProducerId,
+            digest_file,
+            maybe_shadow_project,
+        )
+
+        source_digest = digest_file(parquet_path)
+        shadow = maybe_shadow_project(
+            producer_id=ParquetProducerId.JSONL_TO_PARQUET.value,
+            dataset_id=f"jsonl_parquet:{parquet_path}",
+            source_uri=str(parquet_path),
+            source_digest=source_digest,
+            source_kind="parquet",
+            schema_fields=tuple(table.schema.names) if table is not None else (),
+            operation_id=f"op:jsonl_to_parquet:{parquet_path}",
+            pre_source_digest=source_digest,
+        )
+        if shadow is not None:
+            logging.debug(
+                "ducklake shadow projection for %s: parity_matched=%s",
+                parquet_path,
+                shadow.parity.matched,
+            )
+    except Exception as shadow_exc:  # noqa: BLE001 — never block legacy conversion
+        logging.debug("ducklake shadow projection skipped: %s", shadow_exc)
+
     return parquet_path
 
 def batch_jsonl_to_parquet(jsonl_dir: str, parquet_dir: str,

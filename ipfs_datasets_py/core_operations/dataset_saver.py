@@ -59,12 +59,36 @@ class DatasetSaver:
             # TODO: Implement dataset saving logic
             # This is a placeholder for Phase 2 implementation
             
-            return {
+            result = {
                 "status": "success",
                 "destination": destination,
                 "format": format if format else "auto",
                 "message": "Dataset saved successfully"
             }
+            # DQK-089: optional admitted-lake shadow projection (legacy remains authority).
+            try:
+                from ipfs_datasets_py.ducklake.adapters import (
+                    ParquetProducerId,
+                    maybe_shadow_project,
+                )
+
+                fmt = (format or "auto").lower()
+                source_kind = "parquet" if fmt == "parquet" else "dataset"
+                shadow = maybe_shadow_project(
+                    producer_id=ParquetProducerId.DATASET_SAVER.value,
+                    dataset_id=f"saved:{destination}",
+                    source_uri=str(destination),
+                    source_kind=source_kind,
+                    schema_fields=(),
+                    operation_id=f"op:dataset_saver:{destination}",
+                )
+                if shadow is not None:
+                    result["ducklake_shadow"] = shadow.to_dict()
+            except Exception as shadow_exc:  # noqa: BLE001 — never block legacy save
+                self.logger.debug(
+                    "ducklake shadow projection skipped: %s", shadow_exc
+                )
+            return result
         except Exception as e:
             self.logger.error(f"Error saving dataset: {e}")
             return {
