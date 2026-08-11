@@ -49,7 +49,6 @@ from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import 
     expand_inventory_payload,
     load_json_object,
     render_check_summary,
-    write_inventory_report,
 )
 from ipfs_datasets_py.processors.legal_data.federal_register_source_policy import (  # noqa: E402
     DEFAULT_OBSERVATION_CUTOFF,
@@ -285,12 +284,19 @@ def main(argv: Sequence[str] | None = None) -> int:
                     + "; ".join(live_result.errors[:8])
                 )
             report = live_result.inventory_report
+            validated: Mapping[str, Any] | None = None
+            if args.write or args.check:
+                validated = check_inventory_report(report, require_live=True)
             if args.write:
-                write_inventory_report(report, report_path)
+                # Persist only after an independent checkpoint-free replay.
+                atomic_write_json(report_path, report)
                 print(f"wrote inventory report: {report_path}", file=sys.stderr)
             if args.check:
-                result = check_inventory_report(report, require_live=True)
-                print(render_check_summary(result))
+                if validated is None:
+                    raise FederalRegisterAcquisitionError(
+                        "live validation result is unavailable"
+                    )
+                print(render_check_summary(validated))
             if args.print_json:
                 sys.stdout.write(
                     json.dumps(dict(report), indent=2, sort_keys=True) + "\n"

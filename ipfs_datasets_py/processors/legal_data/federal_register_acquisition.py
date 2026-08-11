@@ -2990,6 +2990,7 @@ def build_inventory_report(result: AcquisitionResult) -> dict[str, Any]:
         "transport_kind": (
             "builtin_https" if cfg.mode is AcquisitionMode.LIVE else "fixture_recipe"
         ),
+        "per_page": cfg.per_page,
         "checkpoint_schema": CHECKPOINT_SCHEMA,
         "observation_cutoff": cfg.observation_cutoff,
         "release_point": cutoff_release_point(cfg.observation_cutoff),
@@ -3236,7 +3237,7 @@ def build_compact_inventory_recipe(
     }
 
 
-def check_inventory_report(
+def _check_inventory_report_structure(
     report: JsonMapping,
     *,
     require_live: bool = False,
@@ -3307,6 +3308,7 @@ def check_inventory_report(
             "mode",
             "network_required",
             "transport_kind",
+            "per_page",
             "checkpoint_schema",
             "observation_cutoff",
             "release_point",
@@ -3352,6 +3354,9 @@ def check_inventory_report(
     expected_transport = "builtin_https" if mode == MODE_LIVE else "fixture_recipe"
     if raw.get("transport_kind") != expected_transport:
         raise FederalRegisterAcquisitionError("inventory transport_kind drifted")
+    expected_per_page = DEFAULT_PER_PAGE if live_authority else FIXTURE_PER_PAGE
+    if _require_non_negative_int(raw.get("per_page"), "per_page") != expected_per_page:
+        raise FederalRegisterAcquisitionError("inventory per_page drifted")
     if raw.get("checkpoint_schema") != CHECKPOINT_SCHEMA:
         raise FederalRegisterAcquisitionError("inventory checkpoint schema drifted")
     for key, expected in (
@@ -3746,6 +3751,15 @@ def check_inventory_report(
         pages = part.get("pages")
         if not isinstance(pages, list) or len(pages) != part_counts["page_count"]:
             raise InventoryGapError("partition page_count does not match pages")
+        expected_page_count = max(
+            1,
+            (
+                part_counts["api_total"] + expected_per_page - 1
+            )
+            // expected_per_page,
+        )
+        if part_counts["page_count"] != expected_page_count:
+            raise InventoryDriftError("partition page geometry drifted")
         response_hashes = part.get("response_hashes")
         document_numbers = part.get("document_numbers")
         if not isinstance(response_hashes, list) or not isinstance(
@@ -3814,6 +3828,18 @@ def check_inventory_report(
             result_count = _require_non_negative_int(
                 page_m.get("result_count"), "page.result_count"
             )
+            expected_result_count = (
+                0
+                if part_counts["api_total"] == 0
+                else (
+                    expected_per_page
+                    if expected_page_number < expected_page_count
+                    else part_counts["api_total"]
+                    - expected_per_page * (expected_page_count - 1)
+                )
+            )
+            if result_count != expected_result_count:
+                raise InventoryDriftError("page result geometry drifted")
             if result_count != len(normalized_page_documents):
                 raise InventoryDriftError("page result_count does not match its ledger")
             page_result_total += result_count
@@ -3983,6 +4009,69 @@ def check_inventory_report(
         "frontier_closed": True,
         "inventory_digest": actual_digest,
     }
+
+
+def _live_replay_projection(report: Mapping[str, Any]) -> dict[str, Any]:
+    """Return all stable live evidence fields compared across fresh replays."""
+
+    return {
+        key: value
+        for key, value in report.items()
+        if key not in {"observed_at", "inventory_digest"}
+    }
+
+
+def _fresh_live_inventory_report() -> dict[str, Any]:
+    """Acquire one checkpoint-free built-in HTTPS replay for authorization."""
+
+    result = acquire_federal_register_inventory(
+        config=AcquisitionConfig(
+            observation_cutoff=DEFAULT_OBSERVATION_CUTOFF,
+            range_start=LEGACY_DELTA_START_INCLUSIVE,
+            range_end=DEFAULT_OBSERVATION_CUTOFF_DATE,
+            mode=AcquisitionMode.LIVE,
+            per_page=DEFAULT_PER_PAGE,
+            resume=False,
+            checkpoint_dir=None,
+        )
+    )
+    if not result.frontier_closed:
+        raise InventoryGapError(
+            "fresh official replay did not close: "
+            + "; ".join(result.errors[:8])
+        )
+    return result.inventory_report
+
+
+def check_inventory_report(
+    report: JsonMapping,
+    *,
+    require_live: bool = False,
+) -> dict[str, Any]:
+    """Validate structure and freshly replay every claimed live report."""
+
+    structural = _check_inventory_report_structure(
+        report,
+        require_live=require_live,
+    )
+    raw = expand_inventory_payload(_as_mapping(report, "inventory_report"))
+    if raw.get("mode") != MODE_LIVE:
+        structural["live_authority_replayed"] = False
+        return structural
+
+    fresh = _fresh_live_inventory_report()
+    _check_inventory_report_structure(fresh, require_live=True)
+    observed_projection = _live_replay_projection(raw)
+    fresh_projection = _live_replay_projection(fresh)
+    if canonical_json_dumps(observed_projection) != canonical_json_dumps(
+        fresh_projection
+    ):
+        raise InventoryDriftError(
+            "live inventory differs from a fresh checkpoint-free official replay"
+        )
+    structural["live_authority_replayed"] = True
+    structural["fresh_inventory_digest"] = fresh["inventory_digest"]
+    return structural
 
 
 def write_inventory_report(

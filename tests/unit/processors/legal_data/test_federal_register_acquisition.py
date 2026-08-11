@@ -695,6 +695,70 @@ def test_live_check_rejects_fixture_recipe() -> None:
         check_inventory_report(build_fixture_inventory_report(), require_live=True)
 
 
+def test_live_report_requires_fresh_replay_and_rejects_self_consistent_forgery(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Project the deterministic fixture into a structurally valid synthetic
+    # live report. This deliberately exercises the old failure mode without
+    # contacting the network.
+    monkeypatch.setattr(acquisition, "DEFAULT_PER_PAGE", acquisition.FIXTURE_PER_PAGE)
+    monkeypatch.setattr(acquisition, "POST_ENDPOINT_DELTA_DOCUMENTS_MIN", 0)
+    live_report = build_fixture_inventory_report()
+    live_report["mode"] = acquisition.MODE_LIVE
+    live_report["network_required"] = True
+    live_report["transport_kind"] = "builtin_https"
+    live_report["observed_at"] = acquisition.format_utc_now()
+    live_report["receipt_id"] = (
+        "fr-inventory-live-2026-03-03_2026-08-10-2026-08-10"
+    )
+    live_report["acceptance"]["mode"] = acquisition.MODE_LIVE
+    live_report["delta"]["post_endpoint_documents_min"] = 0
+    live_report["inventory_digest"] = acquisition.digest_mapping(
+        {
+            key: value
+            for key, value in live_report.items()
+            if key != "inventory_digest"
+        }
+    )
+
+    calls = 0
+
+    def unavailable_replay():
+        nonlocal calls
+        calls += 1
+        raise PageFetchError("official replay unavailable")
+
+    monkeypatch.setattr(acquisition, "_fresh_live_inventory_report", unavailable_replay)
+    with pytest.raises(PageFetchError, match="official replay unavailable"):
+        check_inventory_report(live_report)
+    assert calls == 1
+
+    output_path = tmp_path / "forged-live.json"
+    with pytest.raises(PageFetchError, match="official replay unavailable"):
+        write_inventory_report(live_report, output_path)
+    assert not output_path.exists()
+
+    fresh_report = copy.deepcopy(live_report)
+    monkeypatch.setattr(
+        acquisition,
+        "_fresh_live_inventory_report",
+        lambda: copy.deepcopy(fresh_report),
+    )
+    checked = check_inventory_report(live_report)
+    assert checked["live_authority_replayed"] is True
+
+    forged = copy.deepcopy(live_report)
+    forged_hash = "0" * 64
+    forged["partitions"][0]["pages"][0]["response_hash"] = forged_hash
+    forged["partitions"][0]["response_hashes"][0] = forged_hash
+    forged["inventory_digest"] = acquisition.digest_mapping(
+        {key: value for key, value in forged.items() if key != "inventory_digest"}
+    )
+    with pytest.raises(InventoryDriftError, match="fresh checkpoint-free"):
+        check_inventory_report(forged)
+
+
 def test_checkpoint_revalidates_canonical_state_after_recomputed_outer_digest(
     tmp_path: Path,
 ) -> None:
