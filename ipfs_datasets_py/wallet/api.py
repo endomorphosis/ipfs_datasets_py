@@ -25,6 +25,8 @@ from pydantic import BaseModel, Field
 
 from . import DataWalletError, WalletService
 from .crypto import sha256_hex
+from ipfs_datasets_py.duckdb_control.authority_transition import AuthorityMode
+
 from .duckdb_repository import (
     MutationKind,
     WalletDuckDBRepository,
@@ -604,16 +606,19 @@ def _require_magic_ucan(
     raise HTTPException(status_code=403, detail="UCAN does not allow this recovery action")
 
 
-# Process-local DuckDB shadow event port shared by API persistence (DQK-074).
+# Process-local DuckDB dual-mode event port shared by API persistence (DQK-075).
+# Dual mode dual-writes redacted projections; DuckDB is preferred for public
+# metadata reads. Encrypted content stays in the blob backend.
 _API_EVENT_PORT: WalletDuckDBRepository | None = None
+_API_DEFAULT_AUTHORITY_MODE: AuthorityMode = AuthorityMode.DUAL
 
 
 def get_api_event_port() -> WalletDuckDBRepository:
-    """Return the process-local API shadow event port (idempotent)."""
+    """Return the process-local API dual-mode event port (idempotent)."""
 
     global _API_EVENT_PORT
     if _API_EVENT_PORT is None:
-        _API_EVENT_PORT = build_wallet_duckdb_repository()
+        _API_EVENT_PORT = build_wallet_duckdb_repository(mode=_API_DEFAULT_AUTHORITY_MODE)
     return _API_EVENT_PORT
 
 
@@ -621,12 +626,20 @@ def reset_api_event_port(port: WalletDuckDBRepository | None = None) -> WalletDu
     """Replace the process-local API event port (tests / reconfiguration)."""
 
     global _API_EVENT_PORT
-    _API_EVENT_PORT = port if port is not None else build_wallet_duckdb_repository()
+    _API_EVENT_PORT = (
+        port
+        if port is not None
+        else build_wallet_duckdb_repository(mode=_API_DEFAULT_AUTHORITY_MODE)
+    )
     return _API_EVENT_PORT
 
 
 def _wallet_repository(wallet_dir: Path) -> LocalWalletRepository:
-    return LocalWalletRepository(wallet_dir, shadow=get_api_event_port())
+    return LocalWalletRepository(
+        wallet_dir,
+        shadow=get_api_event_port(),
+        authority_mode=_API_DEFAULT_AUTHORITY_MODE,
+    )
 
 
 def _new_service(blob_dir: Path) -> WalletService:
@@ -641,12 +654,24 @@ def _save_wallet_snapshot(
     wallet_id: str,
     *,
     operation_id: str | None = None,
+    expected_revision: int | None = None,
 ) -> None:
-    """Persist wallet JSON via LocalWalletRepository and shadow DuckDB (DQK-074)."""
+    """Persist dual-mode wallet JSON + DuckDB authority projection (DQK-075).
+
+    CAS-gated on ``authority_revision`` so stale API service instances cannot
+    overwrite a newer revision written by another concurrent writer (CLI/API).
+    """
 
     repo = _wallet_repository(wallet_dir)
     op_id = operation_id or new_operation_id("api-wallet")
-    repo.save(service, wallet_id, operation_id=op_id)
+    if expected_revision is None:
+        expected_revision = service.authority_revision(wallet_id)
+    repo.save(
+        service,
+        wallet_id,
+        operation_id=op_id,
+        expected_revision=expected_revision,
+    )
     # Also record an explicit API-layer mutation envelope for callers that
     # inspect mutation receipts by kind.
     get_api_event_port().record_mutation(
@@ -657,6 +682,12 @@ def _save_wallet_snapshot(
         operation_id=f"{op_id}:api",
         projection_key=f"wallet:{wallet_id}",
         projection=repo.shadow.get_wallet_projection(wallet_id) if repo.shadow else None,
+        details={
+            "authority_revision": service.authority_revision(wallet_id),
+            "authority_mode": (
+                repo.authority_mode.value if repo.authority_mode is not None else "legacy"
+            ),
+        },
     )
 
 

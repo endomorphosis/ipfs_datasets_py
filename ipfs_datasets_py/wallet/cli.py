@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
+from ipfs_datasets_py.duckdb_control.authority_transition import AuthorityMode
 from ipfs_datasets_py.wallet import WalletService
 from ipfs_datasets_py.wallet.crypto import random_key
 from ipfs_datasets_py.wallet.duckdb_repository import (
@@ -51,16 +52,17 @@ def _key_from_arg(value: str) -> bytes:
     return key
 
 
-# Process-local DuckDB shadow event port shared by CLI persistence (DQK-074).
+# Process-local DuckDB dual-mode event port shared by CLI persistence (DQK-075).
 _CLI_EVENT_PORT: WalletDuckDBRepository | None = None
+_CLI_DEFAULT_AUTHORITY_MODE: AuthorityMode = AuthorityMode.DUAL
 
 
 def get_cli_event_port() -> WalletDuckDBRepository:
-    """Return the process-local CLI shadow event port (idempotent)."""
+    """Return the process-local CLI dual-mode event port (idempotent)."""
 
     global _CLI_EVENT_PORT
     if _CLI_EVENT_PORT is None:
-        _CLI_EVENT_PORT = build_wallet_duckdb_repository()
+        _CLI_EVENT_PORT = build_wallet_duckdb_repository(mode=_CLI_DEFAULT_AUTHORITY_MODE)
     return _CLI_EVENT_PORT
 
 
@@ -68,7 +70,11 @@ def reset_cli_event_port(port: WalletDuckDBRepository | None = None) -> WalletDu
     """Replace the process-local CLI event port (tests / reconfiguration)."""
 
     global _CLI_EVENT_PORT
-    _CLI_EVENT_PORT = port if port is not None else build_wallet_duckdb_repository()
+    _CLI_EVENT_PORT = (
+        port
+        if port is not None
+        else build_wallet_duckdb_repository(mode=_CLI_DEFAULT_AUTHORITY_MODE)
+    )
     return _CLI_EVENT_PORT
 
 
@@ -77,7 +83,11 @@ def _wallet_path(wallet_dir: Path, wallet_id: str) -> Path:
 
 
 def _wallet_repository(wallet_dir: Path) -> LocalWalletRepository:
-    return LocalWalletRepository(wallet_dir, shadow=get_cli_event_port())
+    return LocalWalletRepository(
+        wallet_dir,
+        shadow=get_cli_event_port(),
+        authority_mode=_CLI_DEFAULT_AUTHORITY_MODE,
+    )
 
 
 def _service(blob_dir: Path) -> WalletService:
@@ -86,12 +96,25 @@ def _service(blob_dir: Path) -> WalletService:
     return service
 
 
-def _save(service: WalletService, wallet_dir: Path, wallet_id: str) -> Path:
-    """Persist wallet JSON via LocalWalletRepository and shadow DuckDB (DQK-074)."""
+def _save(
+    service: WalletService,
+    wallet_dir: Path,
+    wallet_id: str,
+    *,
+    expected_revision: int | None = None,
+) -> Path:
+    """Persist dual-mode wallet JSON + DuckDB authority projection (DQK-075)."""
 
     repo = _wallet_repository(wallet_dir)
     op_id = new_operation_id("cli-wallet")
-    path = repo.save(service, wallet_id, operation_id=op_id)
+    if expected_revision is None:
+        expected_revision = service.authority_revision(wallet_id)
+    path = repo.save(
+        service,
+        wallet_id,
+        operation_id=op_id,
+        expected_revision=expected_revision,
+    )
     get_cli_event_port().record_mutation(
         action="cli/wallet_snapshot",
         resource=f"wallet://{wallet_id}/manifest",
@@ -100,6 +123,12 @@ def _save(service: WalletService, wallet_dir: Path, wallet_id: str) -> Path:
         operation_id=f"{op_id}:cli",
         projection_key=f"wallet:{wallet_id}",
         projection=repo.shadow.get_wallet_projection(wallet_id) if repo.shadow else None,
+        details={
+            "authority_revision": service.authority_revision(wallet_id),
+            "authority_mode": (
+                repo.authority_mode.value if repo.authority_mode is not None else "legacy"
+            ),
+        },
     )
     return path
 
