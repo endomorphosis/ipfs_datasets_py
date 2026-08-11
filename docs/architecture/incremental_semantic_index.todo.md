@@ -31,10 +31,13 @@ W7  ISI-030 | ISI-031
 W8  ISI-032
 W9  ISI-033 -> ISI-041 -> ISI-042
 W10 ISI-034 | ISI-035 | ISI-037
-W11 ISI-036
-W12 ISI-038
-W13 ISI-039
-W14 ISI-040
+W10a ISI-045
+W11 ISI-043
+W12 ISI-044
+W13 ISI-036
+W14 ISI-038
+W15 ISI-039
+W16 ISI-040
 ```
 
 ## ISI-000 Inspect and seal semantic-index authorities
@@ -628,13 +631,94 @@ W14 ISI-040
 - Effects: Makes the store protocol concrete for state/delta/plan put/get and root operations; validates root-record CID, referenced state CID, and `state.repository_id` against the requested repository on every local and kit read/CAS; adds process-safe locked expected-old publication, explicit interruption points/WAL or equivalent recoverable transition records, atomic visibility, deterministic replay, and corruption/orphan recovery.
 - Acceptance: A valid repository-B state installed under repository A is rejected on current-root read and CAS. A root record whose canonical bytes or referenced state mismatch is rejected. Two separate subprocess writers using one expected root yield exactly one distinct successor and one typed conflict. Injected interruption before/after object write, transition write, and root replace recovers to the last fully visible root. Corrupt blocks/transitions fail closed; local tests require no daemon/network/install, and the kit adapter enforces the same binding.
 
+## ISI-043 Restore frontend-authoritative Python inventory and projections
+
+- Status: todo
+- Completion: auto
+- Priority: P0
+- Track: extraction-inventory-closure
+- Depends on: ISI-034, ISI-035
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py, tests/fixtures/software_contracts/incremental_semantic_index/python_constructs
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/test_python_frontend.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/python-inventory-closure
+- Parallel lane: isi-python-inventory-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: codex-implement
+- Context budget tokens: 52000
+- LLM context budget bytes: 425984
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 6, 7, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py, tests/fixtures/software_contracts/incremental_semantic_index/python_constructs
+- Predicted symbols: PythonSemanticAnalyzer, PythonSemanticAnalysis, analyze_python_source, aggregate_logical_bindings, _projection, _kind
+- Interfaces: PythonSemanticAnalysis@2, PythonFrontendDisposition@1
+- Conflict policy: Repair merged implementation `bf827c9bb` and completion marker `a090afad2` without rewriting the truthful completed ISI-035 record. Treat `PythonASTExtractor` records as the canonical declaration, scope, duplicate-definition, diagnostic, unsupported-construct, import, and effect inventory; a local AST used for version projection may not become a competing inventory. Preserve strict symbol identities and source bytes. Do not edit `python_frontend.py`, scanner/graph production files, identity/CID code, or the distinct ISI-044 relation-closure test/fixture.
+- Preconditions: ISI-034 supplies the canonical selected source bytes and completed ISI-035 is pinned at implementation `bf827c9bb` with completion marker `a090afad2`; its 22 focused tests pass, but independent source/probe audit demonstrates a second weaker declaration walk, non-recursive child projection exclusion, incomplete aliases/model kinds, and loss of nonfatal frontend results at scanner disposition.
+- Effects: Adapts canonical frontend facts into one deterministic logical-binding inventory, including definitions in conditional, try/except, with, and match bodies and honest aggregation of conditional or repeated bindings. Recursively excludes independently addressed function/class bodies from every parent projection while retaining child interfaces. Makes overload declarations authoritative public-signature facets so overload-only edits change the binding version. Builds lexical-scope-aware prefix alias facts for module and local imports and uses them for calls, decorators, bases, class and functional TypedDict (including keyword fields and `total`), dataclass, Enum-family, and Pydantic-style model detection. Separates fatal encoding/parse/resource diagnostics from nonfatal unsupported/confidence evidence so public scans preserve analyzable symbols with their caveats instead of replacing the whole file with an opaque artifact.
+- Acceptance: The semantic logical-binding inventory has a deterministic, tested correspondence to canonical frontend declaration/scope facts rather than an independently discovered second inventory. Definitions inside `except` handlers and `match` cases are present; conditional/rebound facets are not falsely claimed exact. Changing a nested child body under direct or conditional control flow changes that child but not its parent function, class, or module version, while an overload-only signature edit changes the public binding version. `import pkg as p; p.fn()`, local import aliases, and aliased `IntEnum`, `TypedDict`, `dataclass`, and `BaseModel` resolve/classify identically to their direct forms; functional TypedDict keyword fields and `total` participate in version evidence. Dynamic import, eval, metaclass, and nonlocal frontend notices remain attached to returned symbols, and a public scanner probe retains those symbols with conservative/opaque confidence; only malformed/undecodable/resource-exhausted input becomes a whole-file opaque artifact.
+
+## ISI-044 Close typed Python relations, effects, and confidence
+
+- Status: todo
+- Completion: auto
+- Priority: P0
+- Track: extraction-relation-closure
+- Depends on: ISI-043
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_relation_closure.py, tests/fixtures/software_contracts/incremental_semantic_index/python_relation_closure
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_relation_closure.py tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/test_python_frontend.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/python-relation-closure
+- Parallel lane: isi-python-relation-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: codex-implement
+- Context budget tokens: 52000
+- LLM context budget bytes: 425984
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 7, 8, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_relation_closure.py, tests/fixtures/software_contracts/incremental_semantic_index/python_relation_closure
+- Predicted symbols: PythonSemanticAnalyzer, ConfidenceClassifier, _FactsVisitor, classify_confidence
+- Interfaces: PythonSemanticAnalysis@2, PythonTypedRelations@1
+- Conflict policy: Build on ISI-043's frontend-backed inventory and alias/scope authority. Emit only source-bound typed edges with exact targets, spans, methods, confidence, extractor version, and bounded uncertainty; do not repair resolution globally, invent a complete call graph, add a new relation vocabulary, or edit scanner/graph/persistence files. Assertions must compare relation, target, extraction method, confidence, and source span rather than merely proving that some relation name is present.
+- Preconditions: ISI-043 has restored authoritative inventory/projection and alias/model-kind facts on the audited `bf827c9bb` / `a090afad2` baseline. Independent audit proves that completed ISI-035 drops every inheritance edge by appending it after edge collection; emits no static composition/implements dependency; leaves alias, self, and nested calls unresolved; misstates scope effects; points schema relations at operation methods; and reports several dynamic/native/plugin cases exact.
+- Effects: Emits retained alias-aware inheritance and implements edges to the actual type target, plus statically visible composition dependencies through an existing typed relation and an explicit composition extraction method. Resolves bounded direct, module-alias, local-alias, `self` method, and nested lexical calls without claiming completeness. Models global versus shadowed local/nonlocal access, destructuring, and read-plus-write effects for augmented attribute/subscript/name assignments. Emits tuple exception and multi-context facts and serializer/deserializer/validator relations to the schema symbol, including `model_validate_json`, rather than only to a guessed operation name. Makes alias-aware dynamic import, `__import__`, runtime type/class construction, constructed attributes, native calls, uncontrolled effects, entry-point/plugin discovery, dynamic monkey patching, unknown decorators, and metaclass mutation conservative or opaque with source-bound reasons; unrelated qualified assignments do not poison a same-named local class.
+- Acceptance: Exact fixture assertions prove that each class-base edge survives collection and targets its base; annotated class composition targets the member type with an explicit extraction method; and serializer/deserializer/validator edges target the dataclass, TypedDict, or Pydantic schema rather than `lexical:dumps`, `loads`, or a method name. Nonlocal mutation and `self.attr += value` each emit both required reads and writes, local shadowing emits no false global write, and destructuring/subscript effects have exact expected targets. Alias, `self`, and nested calls resolve to the expected bounded target. Aliased `importlib.import_module`, aliased ctypes/native calls, `entry_points`, three-argument `type`/`types.new_class`, constructed `setattr`, dynamic monkey assignment, and aliased uncontrolled I/O are never exact; direct tuple catches and multiple context managers remain complete. Tests fail on a wrong target, method, span, or confidence even when the expected relation type is present.
+
+## ISI-045 Recover legacy and current persistence temporary orphans
+
+- Status: todo
+- Completion: auto
+- Priority: P0
+- Track: persistence-recovery-closure
+- Depends on: ISI-037
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/persistence.py, tests/unit/logic/software_contracts/semantic_index/test_persistence.py
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_persistence.py tests/unit/logic/software_contracts/test_cache.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/root-recovery-closure
+- Parallel lane: isi-persistence-recovery-closure
+- Resource class: cpu-small
+- Implementation timeout seconds: 5400
+- Provider role: codex-implement
+- Context budget tokens: 24000
+- LLM context budget bytes: 196608
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 10 and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/persistence.py, tests/unit/logic/software_contracts/semantic_index/test_persistence.py
+- Predicted symbols: LocalSemanticIndexStore, _replace_root, _recover_unlocked, recover
+- Interfaces: SemanticIndexStore@2, StateRootCAS@2, StateRootRecovery@1
+- Conflict policy: Repair only recovery behavior from ISI-037 implementation `aa1e64aba` and completion marker `cb80ff74e`; preserve its repository-binding, verification, process lock, CAS, transition, and kit-adapter behavior. Recognize only the bounded legacy/current temporary prefixes in the roots and transitions directories; never glob broadly, follow symlinks, delete immutable CAS data, or alter a valid root/transition as orphan cleanup.
+- Preconditions: Completed ISI-037 is pinned at implementation `aa1e64aba` with completion marker `cb80ff74e`; its 29 focused tests and independent cross-repository and two-process CAS probes pass. Audit demonstrates that recovery recognizes the current `.transition-*` prefix in the transition directory but leaves the legacy `.root-*` form produced by the earlier root-replacement path.
+- Effects: Reconciles valid transition journals as before, then under the process-safe recovery lock recognizes and removes both `.root-*` and `.transition-*` temporary-file forms from their bounded roots/transitions locations. Recovery remains deterministic and idempotent, fsyncs affected directories, preserves the last fully visible verified root, and reports exactly the orphan paths removed.
+- Acceptance: Crash fixtures for every before/after object, transition-write, and root-replace interruption boundary seed both legacy and current temporary prefixes in each bounded publication directory. `recover()` removes and reports every regular-file orphan, a second recovery reports none, and the old or new fully visible root remains authoritative as appropriate. Valid root JSON, valid/reconcilable transition JSON, immutable CAS blocks, unrelated files, directories, and symlinks are not mistaken for temporary orphans. Corrupt authoritative roots/transitions still fail closed, and all existing repository-binding, subprocess-CAS, local hermetic, fake-kit, and cache tests remain green.
+
 ## ISI-036 Unify pytest identity and commit resolution into public state
 
 - Status: todo
 - Completion: auto
 - Priority: P0
 - Track: public-graph-repair
-- Depends on: ISI-034, ISI-035
+- Depends on: ISI-034, ISI-044
 - Goal id: ISI-G080, ISI-G083
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/pytest_analysis.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, ipfs_datasets_py/logic/software_contracts/semantic_index/symbol_graph.py, ipfs_datasets_py/logic/software_contracts/semantic_index/index.py, tests/unit/logic/software_contracts/semantic_index/test_pytest_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/unit/logic/software_contracts/semantic_index/test_symbol_graph.py, tests/unit/logic/software_contracts/semantic_index/test_api.py, tests/fixtures/software_contracts/incremental_semantic_index/pytest_identity
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_pytest_analysis.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py tests/unit/logic/software_contracts/semantic_index/test_symbol_graph.py tests/unit/logic/software_contracts/semantic_index/test_api.py
@@ -651,7 +735,7 @@ W14 ISI-040
 - Predicted symbols: PytestAnalyzer, RepositoryScanner, SymbolGraph, resolve_edge_targets, scan_repository, IncrementalSemanticIndex
 - Interfaces: PytestSemanticAnalysis@2, TypedSymbolGraph@2, RepositoryState@2, IncrementalSemanticIndex@2
 - Conflict policy: Classify a test/fixture before final identity construction or deterministically merge its pytest facts into the one Python logical binding; never clone a second TEST/FIXTURE identity. Reuse bounded statuses/revision checks from `resolver.py`; resolution must occur before state-root computation, not only inside explanation helpers. Preserve unresolved/finite-may evidence and confidence.
-- Preconditions: ISI-034 provides byte-rooted scanner inputs and ISI-035 provides complete analyzer bindings.
+- Preconditions: ISI-034 provides byte-rooted scanner inputs and ISI-043 plus ISI-044 close the audited inventory/projection and typed-edge/confidence defects left by completed ISI-035.
 - Effects: Includes full AST/body/signature/decorators/annotations plus fixture scope/autouse/params/marker values in test/fixture versions; resolves/remaps call sources to unified IDs; models lexical fixture scope, conftest visibility, autouse, `usefixtures`, module/class/function `pytestmark`, marker arguments, and parametrization without treating parametrized value names as fixtures; stores resolved imports/calls/inheritance/schema/test/config/generated/proof relations in the returned public state; creates dependency/lock configuration edges to affected semantic/test/receipt artifacts where statically explicit.
 - Acceptance: `scan_repository` alone returns a state whose resolvable calls target stable symbol CIDs, never a parallel `lexical:target`; a production signature change reaches real callers and pytest tests. A fixture body edit changes its one version CID and invalidates dependent tests. Autouse/usefixtures and same-named scoped fixtures resolve correctly. Parametrized argument names are not fixture dependencies unless independently supplied. Module/class marks and marker values affect versions. Real `tested_by`, `uses_fixture`, `configured_by`, serialization/schema, generated, and proof edges are source-rooted and survive round trip.
 
@@ -688,7 +772,7 @@ W14 ISI-040
 - Completion: auto
 - Priority: P0
 - Track: release-repair
-- Depends on: ISI-038
+- Depends on: ISI-038, ISI-045
 - Goal id: ISI-G080, ISI-G084
 - Outputs: ipfs_datasets_py/cli/semantic_index_cli.py, tests/fixtures/software_contracts/incremental_semantic_index, tests/unit/logic/software_contracts/semantic_index/test_acceptance.py, tests/unit/logic/software_contracts/semantic_index/test_import_safety.py, tests/cli/test_semantic_index_cli.py, docs/software_contracts/INCREMENTAL_SEMANTIC_INDEX.md
 - Validation: python -m pytest -q tests/unit/logic/software_contracts tests/cli/test_semantic_index_cli.py
@@ -705,7 +789,7 @@ W14 ISI-040
 - Predicted symbols: semantic-index CLI commands, public acceptance fixture matrix, SemanticCapsuleIndexConsumer
 - Interfaces: semantic-index CLI@2, IncrementalSemanticIndexAcceptance@2, SemanticCapsuleIndexConsumer@2
 - Conflict policy: Acceptance tests must copy fixture repositories and exercise `scan_repository`, `diff_repository_states`, `calculate_invalidation`, and public explanations; they may not manufacture `DependencyEdge` or mutate returned states to create the expected result. Keep the CLI local/hermetic and do not hide failures, add a service, or implement capsule generation.
-- Preconditions: ISI-038 proves the public resolved pipeline and persistence is repository-bound.
+- Preconditions: ISI-038 proves the public resolved pipeline and ISI-045 proves that recovery removes both legacy and current temporary-file forms without disturbing valid repository-bound roots or journals.
 - Effects: Rebuilds every original fixture assertion on real scanner output; separates fixture-body changes from test/config changes; adds missing required Python/dynamic/persistence cases; makes the CLI's default store external to or canonically excluded from the indexed repository; makes impact/explain/watch scan current truth rather than silently returning a stored root; CAS-publishes accepted watch states consistently; gives missing/corrupt/root-conflict cases stable nonzero exits; replaces documentation-only capsule types with the exact implemented immutable fields/functions or documents the exact existing public adapter without fictional symbols.
 - Acceptance: No public end-to-end acceptance test constructs a `DependencyEdge`. Unrelated formatting/function edits remain bounded; all requested body/signature/schema/exception/fixture/config/lock/dynamic/monkey-patch/delete/rename/determinism/recovery/concurrency cases pass through public APIs. In a clean Git fixture, `semantic-index scan` with default options does not create an indexed `.semantic-index/.roots.lock` or change the second root. After storing a root and editing source, `impact`, `explain`, and `watch --once` observe the edit; an accepted watch root is visible through `state-root`. Missing `state-root` is nonzero. CLI JSON/errors are deterministic, imports remain hermetic, documentation states only tested behavior, and every capsule key/input/type it names is publicly retrievable.
 
