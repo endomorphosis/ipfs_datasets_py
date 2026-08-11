@@ -17,6 +17,12 @@ exports**: they are materialised only after a durable DuckDB commit and never
 re-admitted as authority.  Typed Parquet columns support predicate pushdown
 without relying on opaque-only ``payload_json`` as the pushdown surface.
 
+Under db-primary (DQK-073), implicit ``records.jsonl`` / ``.meta.json`` / JSON
+manifest authority is removed. Explicit :func:`drain_wallet_export_outbox` and
+:class:`WalletDatasetExporter` remain the only file materialisers. Quack
+publication surfaces use :func:`project_redacted_public_ledger_analytics` —
+redacted public ledger analytics only, never raw secret-bearing data.
+
 Importing this module performs no network I/O.  Parquet support uses optional
 ``pyarrow`` / ``duckdb`` only inside export methods.
 """
@@ -58,7 +64,11 @@ from .storage import (
     ExportOutbox,
     ExportOutboxEntry,
     ExportOutboxStatus,
+    ShadowLedgerMode,
     StreamingDatasetSink,
+    assert_publication_database_excludes_secrets,
+    project_publication_ledger,
+    project_public_ledger_analytics,
     record_as_dict,
     record_finality,
     record_sequence,
@@ -710,12 +720,18 @@ def drain_wallet_export_outbox(
     *,
     formats: Sequence[str] | None = None,
     output_dir: str | Path | None = None,
+    write_legacy_names: bool | None = None,
 ) -> tuple[ExportOutboxEntry, ...]:
-    """Drain pending export outbox entries from a dual-mode sink (DQK-072).
+    """Drain pending export outbox entries from a dual/db-primary sink.
 
     Materialises JSONL / Parquet / Arrow / CAR projections from the sink's
     committed authority working set (DuckDB-backed).  Completing an entry is
     idempotent: re-draining completed ids is a no-op.
+
+    File projections are never operational authority (DQK-072 / DQK-073).
+    Under db-primary, classic ``records.jsonl`` / ``content.digest`` names are
+    suppressed unless *write_legacy_names* is explicitly ``True`` (compatibility
+    import/export only).
     """
 
     if not isinstance(sink, StreamingDatasetSink):
@@ -723,6 +739,13 @@ def drain_wallet_export_outbox(
     outbox: ExportOutbox = sink.export_outbox
     completed: list[ExportOutboxEntry] = []
     records = list(sink.committed_records())
+    # Secret-scan every record before materialising any export file.
+    for record in records:
+        _ensure_export_safe(record_as_dict(record))
+    if write_legacy_names is None:
+        write_legacy_names = not getattr(
+            sink, "rejects_legacy_file_authority", False
+        )
     for entry in outbox.pending():
         target_formats = tuple(formats) if formats is not None else entry.formats
         out = Path(
@@ -737,12 +760,13 @@ def drain_wallet_export_outbox(
                 fmt = ExportFormat(str(fmt_name))
                 if fmt is ExportFormat.JSONL:
                     write_jsonl(records, out / f"records-{index:03d}.jsonl")
-                    # Also maintain the classic records.jsonl path for parity helpers.
-                    write_jsonl(records, out / "records.jsonl")
-                    digest_path = out / "content.digest"
-                    digest_path.write_text(
-                        content_digest(records) + "\n", encoding="utf-8"
-                    )
+                    if write_legacy_names:
+                        # Classic names for dual-mode parity helpers only.
+                        write_jsonl(records, out / "records.jsonl")
+                        digest_path = out / "content.digest"
+                        digest_path.write_text(
+                            content_digest(records) + "\n", encoding="utf-8"
+                        )
                 elif fmt is ExportFormat.PARQUET:
                     write_parquet(
                         records,
@@ -921,6 +945,10 @@ class WalletDatasetExporter:
     Optional CAR export is advertised only when ``enable_car=True`` and a
     ``car_writer`` callable is supplied; otherwise requesting CAR fails with
     :class:`UnsupportedCapabilityError` without affecting JSONL/Parquet.
+
+    Under db-primary (DQK-073) exports remain explicit one-way projections.
+    Manifest JSON next to partitions is an export artifact, never operational
+    authority for resume.
     """
 
     def __init__(
@@ -938,6 +966,8 @@ class WalletDatasetExporter:
         enable_car: bool = False,
         car_writer: Any | None = None,
         clock: Any | None = None,
+        persist_manifest: bool = True,
+        authority_mode: ShadowLedgerMode | str | None = None,
     ) -> None:
         if not isinstance(chain, ChainRef):
             raise InvalidRequestError("chain must be a ChainRef")
@@ -976,6 +1006,10 @@ class WalletDatasetExporter:
         self._enable_car = bool(enable_car)
         self._car_writer = car_writer
         self._clock = clock or _utc_now
+        self._authority_mode = ShadowLedgerMode.parse(authority_mode)
+        # Manifest JSON next to partitions is an explicit export artifact only —
+        # never operational resume authority (DQK-073).
+        self._persist_manifest = bool(persist_manifest)
         features = {Capability.DATASET_EXPORT}
         if ExportFormat.JSONL in self._formats:
             features.add(Capability.DATASET_EXPORT)
@@ -988,6 +1022,8 @@ class WalletDatasetExporter:
                 "processor_version": self._processor_version,
                 "normalized_schema_major": self._normalized_schema_major,
                 "car_enabled": self._enable_car and self._car_writer is not None,
+                "authority_mode": self._authority_mode.value,
+                "manifest_is_authority": False,
             },
         )
 
@@ -1122,23 +1158,28 @@ class WalletDatasetExporter:
             raise ExportError(str(exc)) from exc
 
         verify_manifest(manifest)
-        # Persist manifest next to partitions for offline verification.
-        manifest_path = self._output_dir / "export-manifest.json"
-        manifest_path.write_text(manifest.to_canonical_json() + "\n", encoding="utf-8")
-        # Persist full multi-format partition index (including sidecars).
-        index_path = self._output_dir / "export-partitions.json"
-        index_path.write_bytes(
-            canonical_json_bytes(
-                {
-                    "formats": written_formats,
-                    "partitions": [part.to_dict() for part in partitions],
-                    "provider_capabilities": list(self._provider_capabilities),
-                    "processor_version": self._processor_version,
-                    "normalized_schema_major": self._normalized_schema_major,
-                    "manifest_schema": EXPORT_MANIFEST_SCHEMA_VERSION,
-                }
+        # Explicit export artifacts only — never operational resume authority
+        # (DQK-073).  Optional under persist_manifest=False.
+        if self._persist_manifest:
+            manifest_path = self._output_dir / "export-manifest.json"
+            manifest_path.write_text(
+                manifest.to_canonical_json() + "\n", encoding="utf-8"
             )
-        )
+            # Persist full multi-format partition index (including sidecars).
+            index_path = self._output_dir / "export-partitions.json"
+            index_path.write_bytes(
+                canonical_json_bytes(
+                    {
+                        "formats": written_formats,
+                        "partitions": [part.to_dict() for part in partitions],
+                        "provider_capabilities": list(self._provider_capabilities),
+                        "processor_version": self._processor_version,
+                        "normalized_schema_major": self._normalized_schema_major,
+                        "manifest_schema": EXPORT_MANIFEST_SCHEMA_VERSION,
+                        "manifest_is_authority": False,
+                    }
+                )
+            )
 
         if sink is not None:
             await sink.commit(manifest, context=context)
@@ -1253,7 +1294,11 @@ class WalletDatasetExporter:
 
 
 def load_export_manifest(path: str | Path) -> dict[str, Any]:
-    """Load a previously written export-manifest.json document."""
+    """Load a previously written export-manifest.json document.
+
+    Compatibility import only (DQK-073): manifests are never operational
+    authority for resume. Callers must not use this path as a checkpoint tip.
+    """
 
     import json
 
@@ -1261,7 +1306,38 @@ def load_export_manifest(path: str | Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ExportError("export manifest must be a JSON object")
     _ensure_export_safe(payload)
+    payload.setdefault("manifest_is_authority", False)
     return payload
+
+
+def project_redacted_public_ledger_analytics(
+    store: Any,
+    *,
+    scope: str | None = None,
+) -> dict[str, Any]:
+    """Quack-facing redacted public ledger analytics (DQK-073).
+
+    Wraps :func:`storage.project_public_ledger_analytics` and asserts the
+    publication surface excludes raw secret-bearing data.  This is the only
+    analytics projection Quack is allowed to expose for processor wallet
+    ledgers after the db-primary cutover.
+    """
+
+    analytics = project_public_ledger_analytics(store, scope=scope)
+    assert_publication_database_excludes_secrets(analytics)
+    return analytics
+
+
+def project_quack_public_ledger_publication(
+    store: Any,
+    *,
+    scope: str | None = None,
+) -> dict[str, Any]:
+    """Full Quack publication envelope for redacted public ledger analytics."""
+
+    publication = project_publication_ledger(store, scope=scope)
+    assert_publication_database_excludes_secrets(publication)
+    return publication
 
 
 def round_trip_records(
@@ -1301,6 +1377,8 @@ __all__ = [
     "build_finality_counts",
     "drain_wallet_export_outbox",
     "load_export_manifest",
+    "project_quack_public_ledger_publication",
+    "project_redacted_public_ledger_analytics",
     "read_jsonl",
     "read_parquet",
     "round_trip_records",

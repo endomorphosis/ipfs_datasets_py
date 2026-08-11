@@ -10,9 +10,13 @@ When a DuckDB wallet store is injected:
 * **shadow** (DQK-071) — every successful CAS, rewind, and reorg is dual-written
   so cursors and reorg history shadow at ingestion time.  The in-memory map
   remains authority.
-* **dual** / **db-primary** (DQK-072) — DuckDB is authoritative for checkpoint
-  tips; the in-memory map is a working-set projection.  Stale cursor CAS against
-  a newer DuckDB revision fails closed without mutating the tip.
+* **dual** (DQK-072) — DuckDB is authoritative for checkpoint tips; the
+  in-memory map is a working-set projection.  Stale cursor CAS against a newer
+  DuckDB revision fails closed without mutating the tip.
+* **db-primary** (DQK-073) — DuckDB is sole checkpoint authority. In-memory is
+  never authority; JSON checkpoint / ``.meta.json`` files are never loaded or
+  required for resume. Pure in-memory operation is rejected without a DuckDB
+  store.
 
 Importing this module performs no I/O.
 """
@@ -21,6 +25,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -36,6 +41,15 @@ DEFAULT_HISTORY_LIMIT = 256
 SHADOW_CHECKPOINT_MODE = "shadow"
 DUAL_CHECKPOINT_MODE = "dual"
 DB_PRIMARY_CHECKPOINT_MODE = "db-primary"
+
+# File names that must never be re-admitted as checkpoint authority (DQK-073).
+LEGACY_CHECKPOINT_AUTHORITY_FILENAMES: tuple[str, ...] = (
+    "checkpoint.json",
+    "checkpoints.json",
+    "checkpoint.meta.json",
+    "cursors.json",
+    "cursor.json",
+)
 
 
 def _required_str(value: str, name: str) -> str:
@@ -417,9 +431,12 @@ class InMemoryCheckpointStore:
 
     * **shadow** (DQK-071) — memory is authority; successful CAS dual-writes
       DuckDB.
-    * **dual** / **db-primary** (DQK-072) — DuckDB is authority; CAS is applied
-      to DuckDB first and memory is a projection.  Stale *expected_revision*
-      values fail closed (return ``False``) without mutating either tip.
+    * **dual** (DQK-072) — DuckDB is authority; CAS is applied to DuckDB first
+      and memory is a projection.  Stale *expected_revision* values fail closed
+      (return ``False``) without mutating either tip.
+    * **db-primary** (DQK-073) — DuckDB is sole authority; memory is never
+      operational truth. Constructing this mode without a DuckDB store fails
+      closed. File-based checkpoint / ``.meta.json`` loads are never performed.
     """
 
     def __init__(
@@ -447,6 +464,25 @@ class InMemoryCheckpointStore:
             shadow=shadow,
             has_store=self._shadow is not None,
         )
+        if (
+            self._authority_mode is ShadowLedgerMode.DB_PRIMARY
+            and self._shadow is None
+        ):
+            # Auto-open a process-local DuckDB store so db-primary never falls
+            # back to pure in-memory authority (DQK-073).
+            from .duckdb_storage import open_wallet_store
+
+            self._shadow = open_wallet_store(
+                scope="wallet-checkpoint-db-primary", auto_recover=True
+            )
+        if (
+            self._authority_mode is ShadowLedgerMode.DB_PRIMARY
+            and self._shadow is None
+        ):
+            raise CheckpointError(
+                "db-primary checkpoint mode requires a DuckDB store; "
+                "in-memory checkpoint authority has been removed"
+            )
 
     @property
     def cas_attempts(self) -> int:
@@ -517,7 +553,7 @@ class InMemoryCheckpointStore:
         return self._authority_mode
 
     def promote_to_db_primary(self) -> ShadowLedgerMode:
-        """Promote dual → db-primary (DuckDB sole checkpoint authority)."""
+        """Promote dual → db-primary (DuckDB sole checkpoint authority, DQK-073)."""
 
         if self._shadow is None:
             raise CheckpointError("cannot promote checkpoints without a DuckDB store")
@@ -525,6 +561,16 @@ class InMemoryCheckpointStore:
             self._authority_mode = ShadowLedgerMode.DUAL
         self._authority_mode = ShadowLedgerMode.DB_PRIMARY
         return self._authority_mode
+
+    @property
+    def memory_is_authority(self) -> bool:
+        """True only when the in-memory map is operational truth.
+
+        False under dual / db-primary (DQK-072 / DQK-073): memory is a
+        working-set projection of DuckDB tips.
+        """
+
+        return not self._authority_mode.duckdb_is_authority
 
     async def load(
         self,
@@ -535,7 +581,9 @@ class InMemoryCheckpointStore:
         """Load the checkpoint for an exact ingestion scope key or raw scope.
 
         Dual / db-primary: DuckDB tip is authority; memory is rehydrated from
-        the durable head.  Shadow / off: memory map is authority.
+        the durable head.  Under db-primary, a missing DuckDB tip is treated as
+        absent even when a stale memory projection remains.  Shadow / off:
+        memory map is authority.  JSON checkpoint files are never consulted.
         """
 
         context.check_active()
@@ -547,7 +595,20 @@ class InMemoryCheckpointStore:
                 if isinstance(record, CheckpointRecord):
                     self._entries[record.identity.key] = record
                     return record
+                # db-primary: DuckDB absence wins over any stale memory entry.
+                if self._authority_mode is ShadowLedgerMode.DB_PRIMARY:
+                    # Drop stale memory so resume cannot invent authority.
+                    for key in list(self._entries):
+                        entry = self._entries[key]
+                        if entry.identity.matches_scope_key(scope) or key == scope:
+                            del self._entries[key]
+                    return None
                 return None
+        if self._authority_mode is ShadowLedgerMode.DB_PRIMARY:
+            raise CheckpointError(
+                "db-primary checkpoint load requires a DuckDB authority store; "
+                "in-memory and file checkpoint authority have been removed"
+            )
         record = None
         if scope in self._entries:
             record = self._entries[scope]
@@ -935,6 +996,37 @@ def _resolve_checkpoint_mode(
     return ShadowLedgerMode.OFF
 
 
+def assert_legacy_checkpoint_files_absent(root: str | Path | None) -> None:
+    """Fail closed when JSON checkpoint / meta files are present under *root*.
+
+    DQK-073 removes file checkpoint authority. Explicit export of checkpoint
+    snapshots is out of scope for the runtime resume path.
+    """
+
+    if root is None:
+        return
+    path = Path(root)
+    if not path.is_dir():
+        return
+    present = [
+        child.name
+        for child in sorted(path.iterdir())
+        if child.is_file()
+        and (
+            child.name in LEGACY_CHECKPOINT_AUTHORITY_FILENAMES
+            or (
+                child.name.endswith(".meta.json")
+                and "checkpoint" in child.name.casefold()
+            )
+        )
+    ]
+    if present:
+        raise CheckpointError(
+            "legacy checkpoint authority files must be absent after "
+            f"db-primary cutover: {', '.join(present)}"
+        )
+
+
 def append_anchor_history(
     history: Sequence[HashAnchor],
     anchor: HashAnchor,
@@ -1006,6 +1098,7 @@ __all__ = [
     "DB_PRIMARY_CHECKPOINT_MODE",
     "DEFAULT_HISTORY_LIMIT",
     "DUAL_CHECKPOINT_MODE",
+    "LEGACY_CHECKPOINT_AUTHORITY_FILENAMES",
     "SHADOW_CHECKPOINT_MODE",
     "CheckpointCommitCoordinator",
     "CheckpointIdentity",
@@ -1015,6 +1108,7 @@ __all__ = [
     "SinkCommitReceipt",
     "append_anchor_history",
     "assert_hash_anchor_present",
+    "assert_legacy_checkpoint_files_absent",
     "build_checkpoint",
     "checkpoint_content_fingerprint",
     "new_revision",
