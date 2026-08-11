@@ -1062,6 +1062,7 @@ def _validate_documents_request_url(
     allowed_key_sets = {
         frozenset(expected_keys),
         frozenset(expected_keys | {"format"}),
+        frozenset(expected_keys | {"format", "search_after_cursor"}),
     }
     if frozenset(observed_query) not in allowed_key_sets:
         raise PageFetchError(
@@ -1084,6 +1085,14 @@ def _validate_documents_request_url(
             )
     if "format" in observed_query and observed_query["format"] != ["json"]:
         raise PageFetchError("continuation URL format drifted")
+    if "search_after_cursor" in observed_query:
+        cursor_values = observed_query["search_after_cursor"]
+        if (
+            observed_query.get("format") != ["json"]
+            or len(cursor_values) != 1
+            or re.fullmatch(r"[A-Za-z0-9_=-]{1,1024}", cursor_values[0]) is None
+        ):
+            raise PageFetchError("continuation URL cursor is malformed")
     return url
 
 
@@ -1739,6 +1748,10 @@ class AcquisitionConfig:
                 f"range_start {self.range_start} > range_end {self.range_end}"
             )
         if self.mode is AcquisitionMode.LIVE:
+            if self.per_page != DEFAULT_PER_PAGE:
+                raise FederalRegisterAcquisitionError(
+                    "live inventory requires the exact sealed per_page value"
+                )
             if self.observation_cutoff != DEFAULT_OBSERVATION_CUTOFF:
                 raise FederalRegisterAcquisitionError(
                     "live inventory authority requires the exact sealed observation "
@@ -2409,6 +2422,13 @@ def acquire_partition(
                     f"partition {spec.partition_id} page {page_number}: "
                     f"invalid document row: {exc}"
                 ) from exc
+            if not (spec.start_date <= inv_doc.publication_date <= spec.end_date):
+                raise InventoryDriftError(
+                    f"partition {spec.partition_id} page {page_number}: "
+                    f"document {inv_doc.document_number} publication_date "
+                    f"{inv_doc.publication_date} falls outside "
+                    f"{spec.start_date}..{spec.end_date}"
+                )
             doc_numbers.append(inv_doc.document_number)
             if inv_doc.legal_id in known_legal_ids:
                 # Cross-partition or intra-partition duplicate by official identity.

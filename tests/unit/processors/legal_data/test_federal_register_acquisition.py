@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import json
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -444,6 +445,8 @@ def test_live_authority_rejects_injected_transport_and_partial_range() -> None:
             range_start=LEGACY_DELTA_START_INCLUSIVE,
             range_end="2026-08-09",
         )
+    with pytest.raises(FederalRegisterAcquisitionError, match="sealed per_page"):
+        AcquisitionConfig(mode=AcquisitionMode.LIVE, per_page=1)
 
 
 def test_partition_follows_exact_official_rails_continuation_chain() -> None:
@@ -451,7 +454,6 @@ def test_partition_follows_exact_official_rails_continuation_chain() -> None:
         mode=AcquisitionMode.LIVE,
         resume=False,
         checkpoint_dir=None,
-        per_page=2,
         rate_limit_seconds=0,
     )
     spec = plan_delta_partitions()[0]
@@ -459,23 +461,25 @@ def test_partition_follows_exact_official_rails_continuation_chain() -> None:
         start_date=spec.start_date,
         end_date=spec.end_date,
         page=1,
-        per_page=2,
+        per_page=acquisition.DEFAULT_PER_PAGE,
     )
     second_planned = build_documents_api_url(
         start_date=spec.start_date,
         end_date=spec.end_date,
         page=2,
-        per_page=2,
+        per_page=acquisition.DEFAULT_PER_PAGE,
     )
     parsed = acquisition.urllib.parse.urlsplit(second_planned)
-    query = list(
-        reversed(
-            acquisition.urllib.parse.parse_qsl(
-                parsed.query, keep_blank_values=True
-            )
+    query = acquisition.urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+    query.extend(
+        (
+            ("format", "json"),
+            (
+                "search_after_cursor",
+                "WzE3NzI1ODI0MDAwMDAsIjIwMjYtMDQyMzEiXQ",
+            ),
         )
     )
-    query.append(("format", "json"))
     continuation_url = acquisition.urllib.parse.urlunsplit(
         (
             "https",
@@ -485,25 +489,49 @@ def test_partition_follows_exact_official_rails_continuation_chain() -> None:
             "",
         )
     )
+    first_parsed = acquisition.urllib.parse.urlsplit(first_url)
+    previous_query = acquisition.urllib.parse.parse_qsl(
+        first_parsed.query, keep_blank_values=True
+    )
+    previous_query.extend(
+        (
+            ("format", "json"),
+            (
+                "search_after_cursor",
+                "WzE3NzI1ODI0MDAwMDAsIjIwMjYtMDQyMzEiXQ",
+            ),
+        )
+    )
+    previous_url = acquisition.urllib.parse.urlunsplit(
+        (
+            "https",
+            "www.federalregister.gov",
+            "/api/v1/documents",
+            acquisition.urllib.parse.urlencode(previous_query),
+            "",
+        )
+    )
     rows = [
-        {"document_number": "2026-00001", "publication_date": spec.start_date},
-        {"document_number": "2026-00002", "publication_date": spec.start_date},
-        {"document_number": "2026-00003", "publication_date": spec.start_date},
+        {
+            "document_number": f"2026-{number:05d}",
+            "publication_date": spec.start_date,
+        }
+        for number in range(1, acquisition.DEFAULT_PER_PAGE + 2)
     ]
     payloads = (
         {
-            "count": 3,
+            "count": len(rows),
             "description": "Official result summary",
             "total_pages": 2,
-            "results": rows[:2],
+            "results": rows[: acquisition.DEFAULT_PER_PAGE],
             "next_page_url": continuation_url,
         },
         {
-            "count": 3,
+            "count": len(rows),
             "description": "Official result summary",
             "total_pages": 2,
-            "results": rows[2:],
-            "previous_page_url": first_url,
+            "results": rows[acquisition.DEFAULT_PER_PAGE :],
+            "previous_page_url": previous_url,
         },
     )
     observed_urls: list[str] = []
@@ -528,6 +556,149 @@ def test_partition_follows_exact_official_rails_continuation_chain() -> None:
     ]
     assert state.pages[0].next_page_url == continuation_url
     assert state.pages[1].next_page_url is None
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        {"search_after_cursor": ""},
+        {"search_after_cursor": "cursor with spaces"},
+        {"search_after_cursor": "cursor/with/slashes"},
+        {"format": "xml"},
+        {"unexpected": "field"},
+    ),
+)
+def test_official_cursor_url_rejects_malformed_mutations(
+    mutation: dict[str, str],
+) -> None:
+    spec = plan_delta_partitions()[0]
+    planned = build_documents_api_url(
+        start_date=spec.start_date,
+        end_date=spec.end_date,
+        page=2,
+        per_page=acquisition.DEFAULT_PER_PAGE,
+    )
+    parsed = acquisition.urllib.parse.urlsplit(planned)
+    query = acquisition.urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+    continuation_fields = {
+        "format": "json",
+        "search_after_cursor": "WzE3NzI1ODI0MDAwMDAsIjIwMjYtMDQyMzEiXQ",
+    }
+    continuation_fields.update(mutation)
+    query.extend(continuation_fields.items())
+    mutated = acquisition.urllib.parse.urlunsplit(
+        (
+            "https",
+            "www.federalregister.gov",
+            "/api/v1/documents",
+            acquisition.urllib.parse.urlencode(query, doseq=True),
+            "",
+        )
+    )
+
+    with pytest.raises(PageFetchError):
+        acquisition._validate_documents_request_url(
+            mutated,
+            start_date=spec.start_date,
+            end_date=spec.end_date,
+            page=2,
+            per_page=acquisition.DEFAULT_PER_PAGE,
+            allow_canonical_equivalent=True,
+        )
+
+
+def test_official_cursor_url_rejects_wrong_endpoint() -> None:
+    spec = plan_delta_partitions()[0]
+    planned = build_documents_api_url(
+        start_date=spec.start_date,
+        end_date=spec.end_date,
+        page=2,
+        per_page=acquisition.DEFAULT_PER_PAGE,
+    )
+    parsed = acquisition.urllib.parse.urlsplit(planned)
+    query = acquisition.urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+    query.extend(
+        (
+            ("format", "json"),
+            (
+                "search_after_cursor",
+                "WzE3NzI1ODI0MDAwMDAsIjIwMjYtMDQyMzEiXQ",
+            ),
+        )
+    )
+    wrong_endpoint = acquisition.urllib.parse.urlunsplit(
+        (
+            "https",
+            "www.federalregister.gov",
+            "/api/v1/not-documents",
+            acquisition.urllib.parse.urlencode(query),
+            "",
+        )
+    )
+
+    with pytest.raises(PageFetchError, match="exact FederalRegister.gov endpoint"):
+        acquisition._validate_documents_request_url(
+            wrong_endpoint,
+            start_date=spec.start_date,
+            end_date=spec.end_date,
+            page=2,
+            per_page=acquisition.DEFAULT_PER_PAGE,
+            allow_canonical_equivalent=True,
+        )
+
+
+@pytest.mark.parametrize(
+    ("boundary", "accepted"),
+    (("before", False), ("start", True), ("end", True), ("after", False)),
+)
+def test_partition_binds_each_document_to_its_date_range(
+    boundary: str,
+    accepted: bool,
+) -> None:
+    config = AcquisitionConfig(
+        mode=AcquisitionMode.LIVE,
+        resume=False,
+        checkpoint_dir=None,
+        rate_limit_seconds=0,
+    )
+    spec = plan_delta_partitions()[0]
+    publication_date = {
+        "before": (spec.start - timedelta(days=1)).isoformat(),
+        "start": spec.start_date,
+        "end": spec.end_date,
+        "after": (spec.end + timedelta(days=1)).isoformat(),
+    }[boundary]
+    row = {
+        "document_number": "2026-00001",
+        "publication_date": publication_date,
+    }
+    payload = {
+        "count": 1,
+        "description": "Official result summary",
+        "total_pages": 1,
+        "results": [row],
+    }
+
+    def transport(_url, _headers):
+        return acquisition.canonical_json_dumps(payload).encode("utf-8"), payload
+
+    if accepted:
+        state = acquisition.acquire_partition(
+            spec,
+            config=config,
+            transport=transport,
+            known_legal_ids={},
+        )
+        assert state.status.value == "closed"
+        assert state.documents[0].publication_date == publication_date
+    else:
+        with pytest.raises(InventoryDriftError, match="falls outside"):
+            acquisition.acquire_partition(
+                spec,
+                config=config,
+                transport=transport,
+                known_legal_ids={},
+            )
 
 
 def test_empty_partition_accepts_only_the_exact_upstream_controller_shape() -> None:
