@@ -436,6 +436,268 @@ def test_unborn_post_publication_cleanup_failure_is_typed_and_recoverable(
     assert all(not candidate.exists() for candidate in cleanup_attempts)
 
 
+def test_existing_unborn_winner_syncs_directory_after_stale_cleanup(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    marker.write_bytes(b"c" * 64)
+    marker.chmod(0o600)
+    stale = marker.parent / f".{marker.name}.tmp-crashed-writer-19"
+    stale.write_bytes(b"partial-crashed-candidate")
+    stale.chmod(0o600)
+
+    real_fsync = module.os.fsync
+    real_unlink = module.os.unlink
+    events: list[str] = []
+
+    def record_sync(descriptor: int) -> None:
+        if stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            events.append("directory_sync")
+        real_fsync(descriptor)
+
+    def record_unlink(path, *args, **kwargs) -> None:
+        if Path(os.fsdecode(os.fspath(path))) == stale:
+            events.append("stale_unlink")
+        real_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(module.os, "fsync", record_sync)
+    monkeypatch.setattr(module.os, "unlink", record_unlink)
+
+    first = repository_identity(tmp_path)
+
+    assert not stale.exists()
+    cleanup_index = events.index("stale_unlink")
+    assert "directory_sync" in events[:cleanup_index]
+    assert "directory_sync" in events[cleanup_index + 1 :]
+    assert repository_identity(tmp_path) == first
+
+
+def test_concurrent_first_publishers_do_not_reap_a_live_candidate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    real_fsync = module.os.fsync
+    first_candidate_synced = threading.Event()
+    release_first_publisher = threading.Event()
+    visibility_at_first_file_sync: list[bool] = []
+
+    def pause_first_publisher_after_file_sync(descriptor: int) -> None:
+        mode = os.fstat(descriptor).st_mode
+        real_fsync(descriptor)
+        if (
+            threading.current_thread().name == "audit-first-publisher"
+            and stat.S_ISREG(mode)
+            and not first_candidate_synced.is_set()
+        ):
+            visibility_at_first_file_sync.append(marker.exists())
+            first_candidate_synced.set()
+            if not release_first_publisher.wait(5):
+                raise OSError("audit first publisher timed out")
+
+    monkeypatch.setattr(module.os, "fsync", pause_first_publisher_after_file_sync)
+    identities: dict[str, str] = {}
+    errors: dict[str, Exception] = {}
+    second_finished = threading.Event()
+
+    def identify(name: str) -> None:
+        try:
+            identities[name] = repository_identity(tmp_path)
+        except Exception as exc:  # pragma: no branch - asserted below
+            errors[name] = exc
+        finally:
+            if name == "second":
+                second_finished.set()
+
+    first = threading.Thread(
+        target=identify,
+        args=("first",),
+        name="audit-first-publisher",
+        daemon=True,
+    )
+    second = threading.Thread(
+        target=identify,
+        args=("second",),
+        name="audit-second-publisher",
+        daemon=True,
+    )
+    first.start()
+    assert first_candidate_synced.wait(5)
+    second.start()
+    try:
+        # A no-replace publisher may finish here; a lock-based publisher may
+        # wait. Detect final visibility without requiring either strategy.
+        deadline = time.monotonic() + 2
+        while not marker.exists() and second.is_alive() and time.monotonic() < deadline:
+            time.sleep(0.005)
+        if marker.exists():
+            # If the second no-lock publisher made the winner visible, let it
+            # finish its cleanup before releasing the first. A sound publisher
+            # must not classify that first caller's still-live candidate as
+            # crash residue. A lock-based implementation never enters here.
+            second_finished.wait(2)
+    finally:
+        release_first_publisher.set()
+        first.join(5)
+        second.join(5)
+
+    assert visibility_at_first_file_sync == [False]
+    assert not first.is_alive()
+    assert not second.is_alive()
+    assert errors == {}
+    assert identities["first"] == identities["second"]
+    temporary_prefix = f".{marker.name}.tmp-"
+    assert not any(item.name.startswith(temporary_prefix) for item in marker.parent.iterdir())
+    assert repository_identity(tmp_path) == identities["first"]
+
+
+def test_unborn_stale_cleanup_is_bounded_per_call_and_retryable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    # This is an oracle ceiling, not a required implementation strategy. A
+    # smaller production batch, a bounded quarantine, or another fail-closed
+    # scheme is acceptable as long as no public call exceeds this work bound.
+    max_cleanup_operations = 256
+    marker = _bootstrap_marker(tmp_path)
+    marker.write_bytes(b"d" * 64)
+    marker.chmod(0o600)
+    temporary_prefix = f".{marker.name}.tmp-"
+    for index in range(max_cleanup_operations + 17):
+        stale = marker.parent / f"{temporary_prefix}crashed-{index:04d}"
+        stale.write_bytes(b"partial")
+        stale.chmod(0o600)
+
+    real_unlink = module.os.unlink
+    real_remove = module.os.remove
+    cleanup_operations = 0
+
+    def count_cleanup(function, path, *args, **kwargs) -> None:
+        nonlocal cleanup_operations
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if candidate.parent == marker.parent and candidate.name.startswith(temporary_prefix):
+            cleanup_operations += 1
+        function(path, *args, **kwargs)
+
+    def count_unlink(path, *args, **kwargs) -> None:
+        count_cleanup(real_unlink, path, *args, **kwargs)
+
+    def count_remove(path, *args, **kwargs) -> None:
+        count_cleanup(real_remove, path, *args, **kwargs)
+
+    monkeypatch.setattr(module.os, "unlink", count_unlink)
+    monkeypatch.setattr(module.os, "remove", count_remove)
+    per_call_cleanup: list[int] = []
+    typed_failures: list[GitSnapshotError] = []
+    identity: str | None = None
+
+    for _attempt in range(8):
+        cleanup_operations = 0
+        try:
+            identity = repository_identity(tmp_path)
+        except GitSnapshotError as exc:
+            typed_failures.append(exc)
+        per_call_cleanup.append(cleanup_operations)
+        assert cleanup_operations <= max_cleanup_operations
+        if identity is not None:
+            break
+
+    assert typed_failures
+    assert identity is not None
+    assert not any(item.name.startswith(temporary_prefix) for item in marker.parent.iterdir())
+    assert repository_identity(tmp_path) == identity
+    assert all(count <= max_cleanup_operations for count in per_call_cleanup)
+
+
+def test_unborn_write_and_cleanup_failure_is_typed_then_restart_recovers(
+    tmp_path: Path,
+) -> None:
+    _init(tmp_path)
+    marker = _bootstrap_marker(tmp_path)
+    program = "\n".join(
+        (
+            "import os",
+            "import resource",
+            "import signal",
+            "import sys",
+            "from pathlib import Path",
+            "import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module",
+            "from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import GitSnapshotError, repository_identity",
+            "repository = Path(sys.argv[1])",
+            "marker = Path(sys.argv[2])",
+            "prefix = f'.{marker.name}.tmp-'",
+            "real_unlink = module.os.unlink",
+            "cleanup_attempts = []",
+            "def fail_candidate_cleanup(path, *args, **kwargs):",
+            "    candidate = Path(os.fsdecode(os.fspath(path)))",
+            "    if candidate.parent == marker.parent and candidate.name.startswith(prefix):",
+            "        cleanup_attempts.append(candidate)",
+            "        raise OSError('audit prepublication cleanup failure')",
+            "    return real_unlink(path, *args, **kwargs)",
+            "module.os.unlink = fail_candidate_cleanup",
+            "signal.signal(signal.SIGXFSZ, signal.SIG_IGN)",
+            "resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))",
+            "try:",
+            "    repository_identity(repository)",
+            "except GitSnapshotError as exc:",
+            "    pending = [exc]",
+            "    seen = set()",
+            "    messages = []",
+            "    while pending:",
+            "        current = pending.pop()",
+            "        if id(current) in seen:",
+            "            continue",
+            "        seen.add(id(current))",
+            "        messages.append(str(current))",
+            "        nested = getattr(current, 'exceptions', ())",
+            "        pending.extend(item for item in nested if isinstance(item, BaseException))",
+            "        for linked in (current.__cause__, current.__context__):",
+            "            if linked is not None:",
+            "                pending.append(linked)",
+            "    residue = [item for item in marker.parent.iterdir() if item.name.startswith(prefix)]",
+            "    cleanup_was_surfaced = any('audit prepublication cleanup failure' in message for message in messages)",
+            "    if marker.exists() or not cleanup_attempts or not residue or not cleanup_was_surfaced:",
+            "        raise SystemExit(31)",
+            "    raise SystemExit(23)",
+            "except Exception as exc:",
+            "    print(f'{type(exc).__name__}: {exc}', file=sys.stderr)",
+            "    raise SystemExit(24)",
+            "raise SystemExit(25)",
+        )
+    )
+    environment = dict(os.environ)
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+
+    interrupted = subprocess.run(
+        [sys.executable, "-B", "-c", program, str(tmp_path), str(marker)],
+        check=False,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=environment,
+        timeout=10,
+    )
+
+    assert interrupted.returncode == 23, interrupted.stderr.decode(
+        "utf-8", "replace"
+    )
+    assert not marker.exists()
+    recovered = repository_identity(tmp_path)
+    temporary_prefix = f".{marker.name}.tmp-"
+    assert not any(item.name.startswith(temporary_prefix) for item in marker.parent.iterdir())
+    assert repository_identity(tmp_path) == recovered
+
+
 def test_unborn_entropy_failure_is_typed_cleans_up_and_recovers(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

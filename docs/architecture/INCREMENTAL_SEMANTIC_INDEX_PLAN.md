@@ -213,6 +213,21 @@ Authority rules:
     rejected promptly unless the descriptor proves a regular private `0600`
     file; symlink, FIFO/nonregular, and nonprivate markers fail typed and
     closed.
+16. Repair run v13 made that 46-case authority green but was stopped without
+    merge after public production-semantics probes exposed a false green. Its
+    existing-winner path synced the Git metadata directory before stale-temp
+    unlink but returned without the required post-cleanup sync; its unbounded
+    all-temporary sweep could delete another cooperating publisher's live
+    candidate and make that caller fail instead of rereading the winner; and
+    best-effort prepublication cleanup swallowed `OSError`. Four final public
+    probes bring the protected authority to 50 cases and the focused command
+    to 72 items, exactly fourteen assigned failures and 58 passes on the pinned
+    ISI-049 baseline. The broader baseline is exactly 46 failures and 127
+    passes. ISI-050 now also requires existing-winner pre-sync/unlink/post-sync
+    ordering, concurrent first-publisher convergence without live-candidate
+    reaping, no more than 256 marker-derived cleanup operations per public
+    call with typed bounded retry, and typed recoverable evidence when a
+    prepublication write and cleanup both fail.
 
 ## 3. Proposed package and files
 
@@ -716,7 +731,7 @@ authoritative by itself.
 | ISI-047 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner adversarial tests/fixture | Commit-derived tree, portable clone identity, mode/disposition/exclusion-rooted state, ctime-strength generation fence, collision-free raw/source/artifact keys, and explicit restored-manifest trust boundary | ISI-046 |
 | ISI-048 | P0 | `snapshot.py`, `scanner.py`, optional fixture; protected adversarial test is external authority | Make all 33 protected public probes pass: local unborn identity, precise unborn disposition, same-HEAD status/index fencing, nested raw exclusion roots, and typed corrupt/quiet/warning/decode failures while retaining all 20 green contracts | ISI-047 |
 | ISI-049 | P0 | `snapshot.py`, `scanner.py` only as needed; protected adversarial test is external authority | Keep automatic unborn identity stable across a pre-commit repository move and reject an unborn-to-born transition between identity and snapshot decisions without regressing the prior 55 focused passes | ISI-048 |
-| ISI-050 | P0 | `snapshot.py`, `scanner.py` only as needed; protected 46-case adversarial test is external authority | Atomically publish the local unborn bootstrap token with typed failure cleanup/recovery, durable-reader fencing, cross-process stale-temporary recovery, ordered publish/cleanup directory syncs, safe final-marker metadata validation, and an explicit-ID no-mutation path | ISI-049 |
+| ISI-050 | P0 | `snapshot.py`, `scanner.py` only as needed; protected 50-case adversarial test is external authority | Atomically publish the local unborn bootstrap token with typed failure cleanup/recovery, durable-reader fencing, bounded concurrency-safe stale-temporary recovery, ordered publish/cleanup directory syncs, safe final-marker metadata validation, and an explicit-ID no-mutation path | ISI-049 |
 | ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture; protected seven-case authority is validation-only | Make the protected 7-case public gate pass while establishing canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-050 |
 | ISI-044 | P0 | `python_analysis.py`, distinct relation-closure tests/fixture; protected seven-case relation authority is validation-only | Make the protected 7-case relation gate pass with exact retained inheritance/composition/schema targets, scope/state effects, bounded calls, and source-bound dynamic/plugin/native confidence | ISI-043 |
 | ISI-045 | P0 | `persistence.py`, persistence tests | Idempotent bounded cleanup of legacy and current root/transition temporary prefixes without disturbing authoritative data | ISI-037 |
