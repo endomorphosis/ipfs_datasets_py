@@ -130,6 +130,31 @@ class QdrantVectorStore(BaseVectorStore):
                 vectors_config=VectorParams(size=dimension, distance=distance),
                 **kwargs
             )
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    safe_shadow_create,
+                )
+                safe_shadow_create(
+                    logical_name=collection_name,
+                    backend="qdrant",
+                    dimension=int(dimension),
+                    dtype="float32",
+                    mapping={},
+                    metadata_json={"producer": "qdrant_store"},
+                    model_provider="qdrant",
+                    model_name="qdrant",
+                    chunking_identity=kwargs.get(
+                        "chunking_identity", "chunk:qdrant@1"
+                    ),
+                    normalization_identity=kwargs.get(
+                        "normalization_identity", "norm:none@1"
+                    ),
+                    source_revision=kwargs.get("source_revision", "src-0"),
+                )
+            except Exception as shadow_exc:  # noqa: BLE001
+                logger.warning(
+                    "Qdrant shadow create quarantined (legacy ok): %s", shadow_exc
+                )
             logger.info(f"Created Qdrant collection: {collection_name}")
             return True
         except Exception as e:
@@ -149,6 +174,15 @@ class QdrantVectorStore(BaseVectorStore):
         
         try:
             self.client.delete_collection(collection_name=collection_name)
+            try:
+                from ipfs_datasets_py.vector_stores.management_engine import (
+                    safe_shadow_delete,
+                )
+                safe_shadow_delete(logical_name=collection_name, backend="qdrant")
+            except Exception as shadow_exc:  # noqa: BLE001
+                logger.warning(
+                    "Qdrant shadow delete quarantined (legacy ok): %s", shadow_exc
+                )
             logger.info(f"Deleted Qdrant collection: {collection_name}")
             return True
         except Exception as e:

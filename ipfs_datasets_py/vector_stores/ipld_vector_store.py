@@ -240,6 +240,35 @@ class IPLDVectorStore(BaseVectorStore):
         self.metadata[name] = []
         self.cids[name] = []
         self.vector_ids[name] = []
+
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                safe_shadow_create,
+            )
+            safe_shadow_create(
+                logical_name=name,
+                backend="ipld",
+                dimension=int(dim),
+                dtype="float32",
+                mapping={},
+                metadata_json={
+                    "producer": "ipld_vector_store",
+                    "metric": self.distance_metric,
+                },
+                model_provider="ipld",
+                model_name="ipld",
+                chunking_identity=kwargs.get(
+                    "chunking_identity", "chunk:ipld@1"
+                ),
+                normalization_identity=kwargs.get(
+                    "normalization_identity", "norm:none@1"
+                ),
+                source_revision=kwargs.get("source_revision", "src-0"),
+            )
+        except Exception as shadow_exc:  # noqa: BLE001
+            logger.warning(
+                "IPLD shadow create quarantined (legacy ok): %s", shadow_exc
+            )
         
         logger.info(f"Created collection '{name}' with dimension {dim}")
         return True
@@ -266,6 +295,16 @@ class IPLDVectorStore(BaseVectorStore):
         del self.metadata[name]
         del self.cids[name]
         del self.vector_ids[name]
+
+        try:
+            from ipfs_datasets_py.vector_stores.management_engine import (
+                safe_shadow_delete,
+            )
+            safe_shadow_delete(logical_name=name, backend="ipld")
+        except Exception as shadow_exc:  # noqa: BLE001
+            logger.warning(
+                "IPLD shadow delete quarantined (legacy ok): %s", shadow_exc
+            )
         
         logger.info(f"Deleted collection '{name}'")
         return True
