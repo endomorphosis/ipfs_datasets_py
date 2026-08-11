@@ -799,7 +799,7 @@ W20 ISI-040
 
 ## ISI-049 Close durable unborn identity and single-generation HEAD capture
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: snapshot-authority-generation-closure
