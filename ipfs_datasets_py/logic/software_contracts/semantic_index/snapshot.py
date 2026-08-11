@@ -22,6 +22,8 @@ REPOSITORY_ID_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.semantic-re
 DEFAULT_MAX_FILE_BYTES: Final[int] = 8 * 1024 * 1024
 DEFAULT_MAX_ENTRIES: Final[int] = 100_000
 GIT_COMMAND_TIMEOUT_SECONDS: Final[float] = 10.0
+_UNBORN_ID_FILE: Final[str] = ".ipfs-datasets-semantic-index-unborn-id"
+_UNBORN_ID_BYTES: Final[int] = 32
 _IGNORED_DIRECTORIES: Final[frozenset[str]] = frozenset({".git", ".hg", ".svn", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".tox", ".nox", ".venv", "venv", "env", "build", "dist", ".eggs", "htmlcov", "coverage", "node_modules", "vendor", "third_party", "third-party", "external", "site-packages", ".semantic-index", "semantic-index-state", ".semantic_index"})
 _LOCK_NAMES = frozenset({"poetry.lock", "pdm.lock", "uv.lock", "requirements.txt", "requirements-dev.txt", "pipfile.lock", "package-lock.json", "yarn.lock", "pnpm-lock.yaml"})
 _PYTEST_CONFIG_NAMES = frozenset({"pytest.ini", "tox.ini", "setup.cfg", "conftest.py"})
@@ -211,24 +213,114 @@ def _unborn_head_ref(root: Path) -> str:
         raise GitSnapshotError("git unborn HEAD verification failed")
     return head_ref
 
+def _captured_head(root: Path) -> tuple[str | None, str | None]:
+    """Capture one HEAD generation, returning ``(commit, unborn_ref)``.
+
+    Git has no single command that gives both the unborn state and the
+    symbolic ref.  Re-checking the quiet lookup after the symbolic/history
+    proof makes that compound observation fail closed if a first commit lands
+    in between.  Callers which subsequently acquire an unborn inventory must
+    fence with this helper again before returning it.
+    """
+    head = _git(root, ("rev-parse", "--verify", "--quiet", "HEAD"))
+    if not head.returncode:
+        if head.stderr:
+            raise GitSnapshotError("git HEAD discovery warned")
+        return _ascii_oid(head.stdout, "HEAD"), None
+    if head.returncode != 1 or head.stderr:
+        raise GitSnapshotError("git HEAD discovery failed")
+    head_ref = _unborn_head_ref(root)
+    fence = _git(root, ("rev-parse", "--verify", "--quiet", "HEAD"))
+    if not fence.returncode or fence.returncode != 1 or fence.stderr:
+        raise GitSnapshotError("git HEAD generation changed during capture")
+    return None, head_ref
+
+def _git_dir(root: Path) -> Path:
+    """Resolve Git's metadata directory, including linked worktrees."""
+    raw = _require_git(root, ("rev-parse", "--git-dir"), "git-dir")
+    try:
+        rendered = raw.decode("utf-8", "strict").strip()
+    except UnicodeDecodeError as exc:
+        raise GitSnapshotError("git directory was not UTF-8") from exc
+    if not rendered:
+        raise GitSnapshotError("git directory was empty")
+    candidate = Path(rendered)
+    if not candidate.is_absolute():
+        candidate = root / candidate
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise GitSnapshotError("git directory was unavailable") from exc
+    if not resolved.is_dir():
+        raise GitSnapshotError("git directory was not a directory")
+    return resolved
+
+def _unborn_bootstrap_token(root: Path) -> str:
+    """Return a move-stable, locally generated identity seed for an unborn Git repo."""
+    metadata = _git_dir(root) / _UNBORN_ID_FILE
+
+    def read_token() -> str:
+        try:
+            descriptor = os.open(metadata, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+            with os.fdopen(descriptor, "rb") as handle:
+                value = handle.read(_UNBORN_ID_BYTES * 2 + 1)
+        except OSError as exc:
+            raise GitSnapshotError("unborn repository identity was unreadable") from exc
+        try:
+            token = value.decode("ascii", "strict")
+        except UnicodeDecodeError as exc:
+            raise GitSnapshotError("unborn repository identity was malformed") from exc
+        if len(token) != _UNBORN_ID_BYTES * 2 or any(char not in "0123456789abcdef" for char in token):
+            raise GitSnapshotError("unborn repository identity was malformed")
+        return token
+
+    try:
+        descriptor = os.open(
+            metadata,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+        )
+    except FileExistsError:
+        return read_token()
+    except OSError as exc:
+        raise GitSnapshotError("unborn repository identity could not be created") from exc
+    token = os.urandom(_UNBORN_ID_BYTES).hex()
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(token.encode("ascii"))
+            handle.flush()
+            os.fsync(handle.fileno())
+    except OSError as exc:
+        raise GitSnapshotError("unborn repository identity could not be stored") from exc
+    return token
+
+def _identity_for_captured_head(root: Path, commit: str | None, unborn_ref: str | None) -> str:
+    if commit is None:
+        if unborn_ref is None:
+            raise GitSnapshotError("git HEAD capture was incomplete")
+        return cid_for_structured({
+            "schema": REPOSITORY_ID_SCHEMA,
+            "kind": "git-unborn",
+            "head_ref": unborn_ref,
+            "bootstrap": _unborn_bootstrap_token(root),
+        })
+    roots = _require_git(root, ("rev-list", "--max-parents=0", "--reverse", commit), "root-history").splitlines()
+    if not roots:
+        raise GitSnapshotError("git root history was empty")
+    try:
+        object_format = _require_git(root, ("rev-parse", "--show-object-format"), "object-format").decode("ascii", "strict").strip()
+    except UnicodeDecodeError as exc:
+        raise GitSnapshotError("git object format was not ASCII") from exc
+    if object_format not in {"sha1", "sha256"}:
+        raise GitSnapshotError("git object format was malformed")
+    return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "git", "root_commits": sorted(_ascii_oid(item, "root commit") for item in roots), "object_format": object_format})
+
 def repository_identity(repository: str | os.PathLike[str], *, repository_id: str | None = None) -> str:
     if repository_id is not None: return _text(repository_id, "repository_id")
     root = Path(repository).resolve(); git_root = _git_root(root)
     if git_root is None: return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "filesystem", "path": str(root)})
-    head = _git(git_root, ("rev-parse", "--verify", "--quiet", "HEAD"))
-    if head.returncode:
-        # Only rev-parse's documented unborn result is accepted; quiet corrupt
-        # refs and warnings are evidence failures, not a filesystem fallback.
-        if head.returncode != 1 or head.stderr: raise GitSnapshotError("git HEAD discovery failed")
-        return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "git-unborn", "head_ref": _unborn_head_ref(git_root), "git_dir": str((git_root / ".git").resolve())})
-    if head.stderr: raise GitSnapshotError("git HEAD discovery warned")
-    _ascii_oid(head.stdout, "HEAD")
-    roots = _require_git(git_root, ("rev-list", "--max-parents=0", "--reverse", "HEAD"), "root-history").splitlines()
-    if not roots: raise GitSnapshotError("git root history was empty")
-    try: object_format = _require_git(git_root, ("rev-parse", "--show-object-format"), "object-format").decode("ascii", "strict").strip()
-    except UnicodeDecodeError as exc: raise GitSnapshotError("git object format was not ASCII") from exc
-    if object_format not in {"sha1", "sha256"}: raise GitSnapshotError("git object format was malformed")
-    return cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "git", "root_commits": sorted(_ascii_oid(item, "root commit") for item in roots), "object_format": object_format})
+    commit, unborn_ref = _captured_head(git_root)
+    return _identity_for_captured_head(git_root, commit, unborn_ref)
 
 def _kind(path: str) -> str:
     name = posixpath.basename(path).lower(); suffix = posixpath.splitext(name)[1]
@@ -357,19 +449,21 @@ def snapshot_repository(repository: str | os.PathLike[str], *, repository_id: st
     root = Path(repository).resolve()
     if not root.is_dir(): raise SnapshotError("repository must be an existing directory")
     raw_exclusions = _exclusion_raw(exclusions); rendered_exclusions = tuple(item.decode("utf-8", "strict") for item in raw_exclusions)
-    git_root = _git_root(root); identity = repository_identity(root, repository_id=repository_id)
-    if git_root is None: return RepositorySnapshot(identity, _filesystem_entries(root, max_file_bytes, max_entries, raw_exclusions), "filesystem", max_file_bytes, max_entries, exclusions=rendered_exclusions)
-    head = _git(git_root, ("rev-parse", "--verify", "--quiet", "HEAD"))
-    if head.returncode:
-        if head.returncode != 1 or head.stderr: raise GitSnapshotError("git HEAD discovery failed")
-        _unborn_head_ref(git_root)
+    git_root = _git_root(root)
+    if git_root is None:
+        identity = _text(repository_id, "repository_id") if repository_id is not None else cid_for_structured({"schema": REPOSITORY_ID_SCHEMA, "kind": "filesystem", "path": str(root)})
+        return RepositorySnapshot(identity, _filesystem_entries(root, max_file_bytes, max_entries, raw_exclusions), "filesystem", max_file_bytes, max_entries, exclusions=rendered_exclusions)
+    commit, unborn_ref = _captured_head(git_root)
+    identity = _text(repository_id, "repository_id") if repository_id is not None else _identity_for_captured_head(git_root, commit, unborn_ref)
+    if commit is None:
         entries = _filesystem_entries(git_root, max_file_bytes, max_entries, raw_exclusions)
         index = _index_oids(git_root, raw_exclusions)
         status = _status(git_root)
+        fence_commit, fence_ref = _captured_head(git_root)
+        if fence_commit is not None or fence_ref != unborn_ref:
+            raise GitSnapshotError("git generation changed during snapshot")
         entries = tuple(_unborn_entry_evidence(item, index, status) for item in entries)
         return RepositorySnapshot(identity, entries, "git-unborn", max_file_bytes, max_entries, exclusions=rendered_exclusions)
-    if head.stderr: raise GitSnapshotError("git HEAD discovery warned")
-    commit = _ascii_oid(head.stdout, "HEAD")
     tree = _ascii_oid(_require_git(git_root, ("rev-parse", f"{commit}^{{tree}}"), "commit tree"), "commit tree")
     status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
     selected_status = {raw: code for raw, code in status.items() if not _ignored_raw(raw, raw_exclusions)}
