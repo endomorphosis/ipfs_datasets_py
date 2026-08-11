@@ -830,7 +830,23 @@ class SecurityConstraintCache:
             self._records[record.content_cid] = record
             self._profile_index[record.profile] = record.content_cid
             self._persist_record(record)
-            self._persist_index()
+            # DQK-067: skip mutable index.json when export-only/promoted;
+            # in-memory + DuckDB authority remain sufficient.
+            try:
+                from ..common.proof_cache import legacy_json_persistence_allowed
+
+                repo = self._shadow_repository
+                if repo is None:
+                    from ..common.proof_cache import get_shadow_repository
+
+                    repo = get_shadow_repository(create=False)
+                if legacy_json_persistence_allowed(repo):
+                    self._persist_index()
+            except Exception:
+                try:
+                    self._persist_index()
+                except Exception:
+                    pass
         self._shadow_write(record)
         return record
 
@@ -1030,6 +1046,36 @@ class SecurityConstraintCache:
         path = self._index_path()
         if path is None:
             return
+        # DQK-067: after promotion/export-only, mutable index.json is not
+        # authority.  Runtime path refuses whole-file rewrites; use explicit
+        # export_index_json_compat for compatibility dumps.
+        repo = self._shadow_repository
+        if repo is None:
+            try:
+                from ..common.proof_cache import get_shadow_repository
+
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        try:
+            from ..common.proof_cache import (
+                assert_direct_json_persistence_forbidden,
+                legacy_json_persistence_allowed,
+            )
+
+            if not legacy_json_persistence_allowed(repo):
+                assert_direct_json_persistence_forbidden(
+                    repo,
+                    path=str(path),
+                    backend=self._shadow_backend,
+                    family="common",
+                )
+        except ImportError:
+            if repo is not None and getattr(repo, "is_promoted", False):
+                if hasattr(repo, "assert_json_rewrite_allowed"):
+                    repo.assert_json_rewrite_allowed(
+                        "common", path=str(path), backend=self._shadow_backend
+                    )
         payload = {
             "interface": SECURITY_CONSTRAINT_CACHE_INTERFACE,
             "profiles": {
@@ -1040,6 +1086,34 @@ class SecurityConstraintCache:
             "schema_version": SECURITY_CONSTRAINT_INDEX_SCHEMA_VERSION,
         }
         _atomic_write_json(path, payload)
+
+    def export_index_json_compat(self, path: Path | str | None = None) -> dict[str, Any]:
+        """Explicit legacy index.json export (DQK-067 compatibility only)."""
+
+        target = Path(path) if path is not None else self._index_path()
+        if target is None:
+            raise SecurityConstraintCacheError(
+                "export_index_json_compat requires a path or cache root"
+            )
+        payload = {
+            "interface": SECURITY_CONSTRAINT_CACHE_INTERFACE,
+            "profiles": {
+                profile: cid
+                for profile, cid in sorted(self._profile_index.items())
+            },
+            "record_cids": sorted(self._records),
+            "schema_version": SECURITY_CONSTRAINT_INDEX_SCHEMA_VERSION,
+            "export_only": True,
+            "legacy_file_authoritative": False,
+            "owner_task_id": "DQK-067",
+        }
+        _atomic_write_json(Path(target), payload)
+        return {
+            "path": str(target),
+            "operation": "export_index_json_compat",
+            "record_count": len(self._records),
+            "legacy_file_authoritative": False,
+        }
 
     def _load_record_file(self, path: Path) -> SecurityConstraintRecord:
         try:
@@ -1106,12 +1180,18 @@ def get_security_constraints(
 from ..common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
     UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
     build_proof_authority_repository,
     build_proof_shadow_repository,
     get_authority_repository,
     get_shadow_repository,
+    legacy_json_persistence_allowed,
     set_authority_repository,
     set_shadow_repository,
 )

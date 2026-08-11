@@ -266,12 +266,18 @@ class FormulaCache:
 from ipfs_datasets_py.logic.common.proof_cache import (  # noqa: E402
     LEGACY_PROOF_BACKENDS,
     LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
     UnifiedProofAuthorityRepository,
     UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
     build_proof_authority_repository,
     build_proof_shadow_repository,
     get_authority_repository,
     get_shadow_repository,
+    legacy_json_persistence_allowed,
     set_authority_repository,
     set_shadow_repository,
 )
