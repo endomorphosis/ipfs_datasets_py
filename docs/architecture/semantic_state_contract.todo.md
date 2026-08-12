@@ -145,7 +145,7 @@ D7  DSS-011
 
 ## DSS-004 Compile deterministic authoritative capsules incrementally
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: capsules
