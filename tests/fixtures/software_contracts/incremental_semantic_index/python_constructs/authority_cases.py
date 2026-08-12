@@ -51,3 +51,10 @@ class Service:
 if enabled:
     def conditional():
         return "present"
+
+# Nested under control flow: changing the nested body must not version the parent.
+def outer_container():
+    if enabled:
+        def nested_child():
+            return "nested-body-v1"
+        return nested_child

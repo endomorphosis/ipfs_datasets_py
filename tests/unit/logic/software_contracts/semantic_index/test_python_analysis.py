@@ -3,12 +3,19 @@
 from __future__ import annotations
 
 from pathlib import Path
+from textwrap import dedent
 
-from ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis import analyze_python_source
+from ipfs_datasets_py.logic.software_contracts.python_frontend import PythonASTExtractor
+from ipfs_datasets_py.logic.software_contracts.semantic_index.models import SymbolKind
+from ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis import (
+    PythonFrontendDisposition,
+    aggregate_logical_bindings,
+    analyze_python_source,
+)
 
 
-def _by_name(source: str):
-    result = analyze_python_source(source, "pkg/example.py", "repo:example")
+def _by_name(source: str, path: str = "pkg/example.py"):
+    result = analyze_python_source(source, path, "repo:example")
     return {item.symbol.qualified_name: item for item in result.symbols}
 
 
@@ -122,3 +129,181 @@ def test_literals_keep_whitespace_and_construct_fixture_is_opaque_where_needed()
     assert facts["pkg.example.Service.native"].symbol.confidence == "opaque"
     assert any(edge.confidence == "opaque" for edge in facts["pkg.example.Service.native"].edges)
     assert "pkg.example.conditional" in facts
+
+
+def test_except_and_match_definitions_are_inventoried_with_frontend_declarations() -> None:
+    source = dedent("""\
+        try:
+            work()
+        except ValueError:
+            def recovered():
+                return 1
+
+        match payload:
+            case {"ok": True}:
+                class Matched:
+                    ready = True
+        """)
+    frontend = PythonASTExtractor().extract(source, path="pkg/example.py", repository_id="repo:example")
+    analysis = analyze_python_source(source, "pkg/example.py", "repo:example")
+    by_name = {fact.symbol.qualified_name: fact for fact in analysis.symbols}
+
+    assert "pkg.example.recovered" in by_name
+    assert "pkg.example.Matched" in by_name
+    assert by_name["pkg.example.recovered"].symbol.confidence != "exact"
+    assert by_name["pkg.example.Matched"].symbol.confidence != "exact"
+    assert "conditional_binding" in by_name["pkg.example.recovered"].confidence_reasons
+
+    for name in ("pkg.example.recovered", "pkg.example.Matched"):
+        frontend_ids = [
+            symbol.symbol_id
+            for symbol in frontend.symbols
+            if symbol.qualified_name == name and symbol.kind in {"function", "class", "method", "variable", "constructor"}
+        ]
+        assert list(by_name[name].symbol.metadata["frontend_declarations"]) == frontend_ids
+
+
+def test_recursive_child_isolation_under_control_flow() -> None:
+    def source(inner: int) -> str:
+        return dedent(f"""\
+            FLAG = True
+            def outer():
+                if FLAG:
+                    def inner():
+                        return {inner}
+                return inner
+            """)
+
+    before = _by_name(source(1))
+    after = _by_name(source(99))
+    assert before["pkg.example.outer.inner"].symbol.version_cid != after["pkg.example.outer.inner"].symbol.version_cid
+    assert before["pkg.example.outer"].symbol.version_cid == after["pkg.example.outer"].symbol.version_cid
+    assert before["pkg.example"].symbol.version_cid == after["pkg.example"].symbol.version_cid
+
+
+def test_overload_only_edit_changes_public_signature() -> None:
+    before = _by_name(dedent("""\
+        from typing import overload
+
+        @overload
+        def convert(value: int) -> int: ...
+
+        @overload
+        def convert(value: bytes) -> bytes: ...
+
+        def convert(value):
+            return value
+        """))["pkg.example.convert"].symbol
+    after = _by_name(dedent("""\
+        from typing import overload
+
+        @overload
+        def convert(value: float) -> float: ...
+
+        @overload
+        def convert(value: bytes) -> bytes: ...
+
+        def convert(value):
+            return value
+        """))["pkg.example.convert"].symbol
+
+    assert before.stable_id == after.stable_id
+    assert before.signature != after.signature
+    assert "overloads" in before.signature
+    assert before.version_cid != after.version_cid
+
+
+def test_module_and_local_aliases_classify_model_kinds() -> None:
+    facts = _by_name(Path(__file__).resolve().parents[4].joinpath(
+        "fixtures/software_contracts/incremental_semantic_index/python_constructs/alias_models.py"
+    ).read_text())
+    assert facts["pkg.example.AliasedEnum"].symbol.kind == SymbolKind.ENUM
+    assert facts["pkg.example.AliasedDictionary"].symbol.kind == SymbolKind.TYPED_DICT
+    assert facts["pkg.example.AliasedRecord"].symbol.kind == SymbolKind.DATACLASS
+    assert facts["pkg.example.AliasedModel"].symbol.annotations["pydantic_model"] is True
+    assert facts["pkg.example.local_models.LocalEnum"].symbol.kind == SymbolKind.ENUM
+    assert facts["pkg.example.local_models.LocalDictionary"].symbol.kind == SymbolKind.TYPED_DICT
+    assert facts["pkg.example.local_models.LocalRecord"].symbol.kind == SymbolKind.DATACLASS
+    assert facts["pkg.example.local_models.LocalModel"].symbol.annotations["pydantic_model"] is True
+
+
+def test_functional_typed_dict_keywords_and_total_version() -> None:
+    optional = _by_name(dedent("""\
+        from typing import TypedDict as Dictionary
+        Movie = Dictionary("Movie", title=str, year=int, total=False)
+        """))["pkg.example.Movie"].symbol
+    required = _by_name(dedent("""\
+        from typing import TypedDict as Dictionary
+        Movie = Dictionary("Movie", title=str, year=int, total=True)
+        """))["pkg.example.Movie"].symbol
+    assert optional.kind == required.kind == SymbolKind.TYPED_DICT
+    assert dict(optional.annotations["fields"]) == {"title": "str", "year": "int"}
+    assert optional.annotations["total"] != required.annotations["total"]
+    assert optional.version_cid != required.version_cid
+
+
+def test_prefix_alias_call_resolves_like_direct_import() -> None:
+    aliased = _by_name(dedent("""\
+        import json as js
+        def dump(value):
+            return js.dumps(value)
+        """))["pkg.example.dump"]
+    direct = _by_name(dedent("""\
+        import json
+        def dump(value):
+            return json.dumps(value)
+        """))["pkg.example.dump"]
+    assert any(edge.relation == "serializes" for edge in aliased.edges)
+    assert {edge.relation for edge in aliased.edges} == {edge.relation for edge in direct.edges}
+
+
+def test_nonfatal_notices_attach_to_symbols_without_whole_file_opacity() -> None:
+    source = dedent("""\
+        import importlib
+
+        def evaluated(text):
+            return eval(text)
+
+        def loaded(name):
+            return importlib.import_module(name)
+
+        class Generated(metaclass=type):
+            pass
+
+        def outer():
+            value = 0
+            def mutate():
+                nonlocal value
+                value += 1
+                return value
+            return mutate
+        """)
+    analysis = analyze_python_source(source, "pkg/example.py", "repo:example")
+    by_name = {fact.symbol.qualified_name: fact for fact in analysis.symbols}
+
+    assert not analysis.diagnostics
+    assert by_name["pkg.example.evaluated"].symbol.confidence == "opaque"
+    assert by_name["pkg.example.loaded"].symbol.confidence in {"conservative", "opaque"}
+    assert by_name["pkg.example.Generated"].symbol.confidence == "opaque"
+    mutate = by_name["pkg.example.outer.mutate"]
+    assert mutate.symbol.confidence in {"conservative", "opaque"}
+    assert mutate.symbol.metadata["frontend_notices"]
+    assert mutate.symbol.metadata["confidence_reasons"]
+
+
+def test_malformed_input_is_fatal_only() -> None:
+    analysis = analyze_python_source("def broken(:\n", "broken.py", "repo:example")
+    assert not analysis.symbols
+    assert "python.parse_error" in analysis.diagnostics
+    disposition = PythonFrontendDisposition(fatal_diagnostics=("python.parse_error",))
+    assert disposition.is_fatal
+
+
+def test_aggregate_logical_bindings_rejects_duplicate_stable_ids() -> None:
+    facts = analyze_python_source("def one():\n    return 1\n", "pkg/example.py", "repo:example").symbols
+    try:
+        aggregate_logical_bindings((*facts, facts[0]))
+    except ValueError as exc:
+        assert "duplicate" in str(exc)
+    else:
+        raise AssertionError("expected duplicate stable ID rejection")
