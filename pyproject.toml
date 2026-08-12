@@ -30,6 +30,17 @@ shared-formal-verification-bindings = [
 optional-formal-verification-bindings = ["symbolicai"]
 external-native-tools-policy = "explicit-transactional-lazy-installer-only"
 
+[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight]
+schema = "ipfs_accelerate_py/agent-supervisor/scoped-project-dependency-preflight@1"
+requires-python = ">=3.12"
+covered-pytest-target = "tests/unit/logic/gui_optimizer/test_models.py"
+covered-pytest-target-sha256 = "2681a3a9c8d8f8490371877dbb26da3318fb289ee7847c3efda9420d1a0472ef"
+# This is the complete third-party runtime of the exact covered test target.
+# It is deliberately a subset of setup.py's test extra, not a replacement for
+# setup.py:install_requires or the source-checkout requirements.txt manifest.
+requirements = ["pytest>=9.0.3,<10.0.0"]
+authority = { file = "setup.py", sha256 = "540c38ef5c5009043ca84ab7f9500790d9cfdfb89be6709ec239375e1cb4de36", extra = "test", extra-requirements-sha256 = "bde93396701c9668161a22e73a9e2808682f22f8c2a4343b10b4dfdcd8e0de67" }
+
 [project.optional-dependencies]
 # IPLD / CAR format extras
 ipld = [
