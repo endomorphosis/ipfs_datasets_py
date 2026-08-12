@@ -199,7 +199,7 @@ D7  DSS-011
 
 ## DSS-006 Assess freshness and retrieve exact producer-bound source
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: source-admission
