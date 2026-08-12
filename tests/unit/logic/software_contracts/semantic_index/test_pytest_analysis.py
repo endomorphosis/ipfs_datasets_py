@@ -27,7 +27,9 @@ def test_answer(database, value, expected):
     )
     assert len(analysis.tests) == len(analysis.fixtures) == 1
     test, fixture = analysis.tests[0], analysis.fixtures[0]
-    assert test.fixture_parameters == ("database", "expected", "value")
+    # Parametrized names are not fixture parameters.
+    assert test.fixture_parameters == ("database",)
+    assert test.all_parameters == ("database", "expected", "value")
     assert test.usefixtures == ("database",)
     assert test.markers == ("slow",)
     assert test.parametrizations == (("expected", "value"),)
@@ -36,11 +38,103 @@ def test_answer(database, value, expected):
     assert fixture.scope == "module"
     assert fixture.params == ("large", "small")
     fixture_edges = [edge for edge in analysis.edges if edge.relation == RelationType.USES_FIXTURE]
-    assert {(edge.source_id, edge.metadata["fixture_name"], edge.confidence) for edge in fixture_edges} >= {
-        (test.symbol_id, "database", "exact"),
-        (fixture.symbol_id, "tmp_path", "conservative"),
-    }
+    fixture_names = {(edge.source_id, edge.metadata["fixture_name"], edge.confidence) for edge in fixture_edges}
+    assert (test.symbol_id, "database", "exact") in fixture_names
+    assert (fixture.symbol_id, "tmp_path", "conservative") in fixture_names
+    # Parametrized argument names must not become fixture dependencies.
+    assert not any(edge.metadata["fixture_name"] in {"value", "expected"} for edge in fixture_edges if edge.source_id == test.symbol_id)
     assert all(edge.metadata["source_bound"] is True for edge in fixture_edges)
+
+
+def test_parametrized_names_are_not_fixtures_unless_independently_supplied() -> None:
+    analysis = PytestAnalyzer().analyze_python(
+        '''
+import pytest
+
+@pytest.fixture
+def value():
+    return 99
+
+@pytest.mark.parametrize("value", [1, 2])
+@pytest.mark.usefixtures("value")
+def test_independent(value):
+    pass
+''',
+        path="tests/test_param.py",
+    )
+    test = analysis.tests[0]
+    # Parameter list only has the parametrized name; usefixtures independently supplies it.
+    assert test.fixture_parameters == ()
+    assert "value" in test.usefixtures
+    assert test.fixture_names == ("value",)
+    edges = [edge for edge in analysis.edges if edge.relation == RelationType.USES_FIXTURE and edge.source_id == test.symbol_id]
+    assert {edge.metadata["fixture_name"] for edge in edges} == {"value"}
+
+
+def test_marker_values_and_module_class_marks_are_recorded() -> None:
+    analysis = PytestAnalyzer().analyze_python(
+        '''
+import pytest
+
+pytestmark = pytest.mark.module_slow
+
+@pytest.mark.timeout(30)
+class TestGroup:
+    pytestmark = pytest.mark.class_integration
+
+    @pytest.mark.timeout(10)
+    def test_one(self):
+        pass
+''',
+        path="tests/test_marks.py",
+    )
+    test = analysis.tests[0]
+    assert "timeout(10)" in test.markers
+    assert "module_slow" in test.module_markers
+    assert "class_integration" in test.class_markers or "timeout(30)" in test.class_markers
+    assert "timeout(10)" in test.version_markers
+    assert "module_slow" in test.version_markers
+
+
+def test_autouse_and_scoped_same_named_fixtures_resolve_correctly() -> None:
+    combined = PytestAnalyzer(repository_id="repo:example").analyze_files({
+        "conftest.py": '''
+import pytest
+
+@pytest.fixture(autouse=True)
+def audit():
+    return []
+
+@pytest.fixture
+def shared():
+    return "root"
+''',
+        "tests/conftest.py": '''
+import pytest
+
+@pytest.fixture
+def shared():
+    return "tests"
+''',
+        "tests/test_one.py": "def test_one(shared):\n    pass\n",
+        "test_root.py": "def test_root(shared):\n    pass\n",
+    })
+    fixtures = {item.name + "@" + item.path: item for item in combined.fixtures}
+    assert "shared@conftest.py" in fixtures and "shared@tests/conftest.py" in fixtures
+    assert fixtures["audit@conftest.py"].autouse is True
+    tests = {item.path: item for item in combined.tests}
+    in_tests = tests["tests/test_one.py"]
+    at_root = tests["test_root.py"]
+    edges_for = lambda symbol_id: {
+        edge.metadata["fixture_name"]: edge.target_id
+        for edge in combined.edges
+        if edge.relation == RelationType.USES_FIXTURE and edge.source_id == symbol_id
+    }
+    # Closer conftest wins for shared; autouse applies to both.
+    assert edges_for(in_tests.symbol_id)["shared"] == fixtures["shared@tests/conftest.py"].symbol_id
+    assert edges_for(at_root.symbol_id)["shared"] == fixtures["shared@conftest.py"].symbol_id
+    assert edges_for(in_tests.symbol_id)["audit"] == fixtures["audit@conftest.py"].symbol_id
+    assert edges_for(at_root.symbol_id)["audit"] == fixtures["audit@conftest.py"].symbol_id
 
 
 def test_conftest_and_ini_configuration_become_receipt_selectable_artifacts() -> None:
