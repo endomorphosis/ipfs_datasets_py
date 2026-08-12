@@ -908,7 +908,7 @@ W21 ISI-040
 
 ## ISI-039 Requalify public fixtures, CLI truth, and capsule handoff
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: release-repair
