@@ -92,7 +92,7 @@ D7  DSS-011
 
 ## DSS-002 Build the controlled Python selection fixture
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: fixtures
