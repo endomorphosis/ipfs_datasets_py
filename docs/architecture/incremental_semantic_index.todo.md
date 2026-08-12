@@ -827,7 +827,7 @@ W21 ISI-040
 
 ## ISI-050 Make automatic unborn bootstrap publication atomic and recoverable
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: snapshot-bootstrap-publication-closure
