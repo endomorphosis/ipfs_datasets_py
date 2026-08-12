@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import inspect
 import json
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,7 @@ from typing import Any
 import pytest
 from ipfs_datasets_py.logic.gui_optimizer import (
     MODEL_TYPES,
+    NESTED_MODEL_TYPES,
     REQUIRED_MODEL_INTERFACES,
     SCHEMA_VERSION_BY_INTERFACE,
     GuiOptimizerDecodeError,
@@ -958,20 +960,83 @@ def test_every_required_model_round_trips_and_is_versioned() -> None:
         assert decode_model(payload).to_dict() == payload
 
 
-def test_layout_constraint_direct_constructor_accepts_wire_breakpoint_keyword() -> None:
+def test_layout_constraint_direct_constructor_preserves_attempt3_contract() -> None:
     payload = _owned_fixtures()["UiLayoutConstraint@1"]
-    model = MODEL_TYPES["UiLayoutConstraint@1"](
-        constraint_id=payload["constraint_id"],
-        kind=payload["kind"],
-        expression=payload["expression"],
-        component_id=payload["component_id"],
-        breakpoint=payload["breakpoint"],
-        lower_bound=payload["lower_bound"],
-        upper_bound=payload["upper_bound"],
-        interface=payload["interface"],
-        schema_version=payload["schema_version"],
+    payload = dict(payload, lower_bound=None, upper_bound=None)
+    cls = MODEL_TYPES["UiLayoutConstraint@1"]
+    signature = inspect.signature(cls)
+    assert tuple(signature.parameters) == (
+        "constraint_id",
+        "kind",
+        "expression",
+        "component_id",
+        "breakpoint",
+        "lower_bound",
+        "upper_bound",
+        "interface",
+        "schema_version",
     )
+    assert all(
+        parameter.default is inspect.Parameter.empty
+        for parameter in signature.parameters.values()
+    )
+    model = cls(**payload)
     assert model.to_dict() == payload
+    for field in ("lower_bound", "upper_bound"):
+        candidate = dict(_owned_fixtures()["UiLayoutConstraint@1"], **{field: None})
+        with pytest.raises(GuiOptimizerDecodeError):
+            cls.from_dict(candidate)
+
+
+def test_source_span_direct_constructor_preserves_nullable_end_coordinates() -> None:
+    payload = dict(_owned_fixtures()["UiDependencyEdge@1"]["source_span"])
+    payload.update(end_line=None, end_column=None)
+    cls = NESTED_MODEL_TYPES["SourceSpan@1"]
+    assert cls(**payload).to_dict() == payload
+    with pytest.raises(GuiOptimizerDecodeError):
+        cls.from_dict(payload)
+
+
+def test_viewport_direct_constructor_preserves_positive_finite_float_scale() -> None:
+    payload = dict(_owned_fixtures()["UiEvaluationScenario@1"]["viewport"])
+    payload["device_scale_factor"] = 1.25
+    cls = NESTED_MODEL_TYPES["ViewportSpec@1"]
+    assert cls(**payload).to_dict() == payload
+    with pytest.raises(GuiOptimizerDecodeError):
+        cls.from_dict(payload)
+
+
+def test_component_version_direct_constructor_preserves_optional_localization_digest() -> None:
+    payload = dict(_owned_fixtures()["UiComponentVersion@1"])
+    payload["localization_digest"] = ""
+    cls = MODEL_TYPES["UiComponentVersion@1"]
+    assert cls(**payload).to_dict() == payload
+    with pytest.raises(GuiOptimizerDecodeError):
+        cls.from_dict(payload)
+
+
+def test_dependency_edge_direct_constructor_preserves_none_notes_default() -> None:
+    payload = dict(_owned_fixtures()["UiDependencyEdge@1"])
+    payload["notes"] = None
+    cls = MODEL_TYPES["UiDependencyEdge@1"]
+    assert cls(**payload).notes == ""
+    with pytest.raises(GuiOptimizerDecodeError):
+        cls.from_dict(payload)
+
+
+def test_metric_baseline_direct_constructor_preserves_closed_json_values() -> None:
+    payload = dict(_owned_fixtures()["UiContextPack@1"]["metric_baseline"])
+    payload["metrics"] = {
+        "enabled": True,
+        "label": "baseline",
+        "thresholds": [1, 1.5, None],
+    }
+    cls = NESTED_MODEL_TYPES["UiContextMetricBaseline@1"]
+    assert cls(**payload).to_dict() == payload
+    wire_payload = dict(_owned_fixtures()["UiContextPack@1"]["metric_baseline"])
+    wire_payload["metrics"] = {"interaction_steps": 3.0}
+    with pytest.raises(GuiOptimizerDecodeError):
+        cls.from_dict(wire_payload)
 
 
 def test_canonical_serialization_is_deterministic() -> None:

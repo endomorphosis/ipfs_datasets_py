@@ -121,6 +121,7 @@ from .schema import (
     parse_enum,
     parse_enum_sequence,
     require_bool,
+    require_closed_json_value,
     require_content_string,
     require_digest,
     require_extractor_version,
@@ -253,8 +254,10 @@ class SourceSpan(GuiOptimizerModel):
         interface: str,
         schema_version: str,
     ) -> None:
-        end_line_v = require_int(end_line, "end_line", minimum=1)
-        end_column_v = require_int(end_column, "end_column", minimum=0)
+        end_line_v = None if end_line is None else require_int(end_line, "end_line", minimum=1)
+        end_column_v = (
+            None if end_column is None else require_int(end_column, "end_column", minimum=0)
+        )
         start = require_int(start_line, "start_line", minimum=1)
         if end_line_v is not None and end_line_v < start:
             raise GuiOptimizerDecodeError("end_line must be >= start_line")
@@ -290,8 +293,10 @@ class SourceSpan(GuiOptimizerModel):
                 path=field_value(p, "path", ""),
                 start_line=field_value(p, "start_line", 0),
                 start_column=field_value(p, "start_column", 0),
-                end_line=field_value(p, "end_line", None),
-                end_column=field_value(p, "end_column", None),
+                end_line=require_int(field_value(p, "end_line", None), "end_line", minimum=1),
+                end_column=require_int(
+                    field_value(p, "end_column", None), "end_column", minimum=0
+                ),
                 interface=field_value(p, "interface", ""),
                 schema_version=field_value(p, "schema_version", ""),
             ),
@@ -314,7 +319,9 @@ class ViewportSpec(GuiOptimizerModel):
         interface: str,
         schema_version: str,
     ) -> None:
-        scale = require_int(device_scale_factor, "device_scale_factor", minimum=1)
+        scale = require_finite_number(device_scale_factor, "device_scale_factor")
+        if float(scale) <= 0:
+            raise GuiOptimizerDecodeError("device_scale_factor must be > 0")
         store_attrs(
             self,
             width=require_int(width, "width", minimum=1, maximum=100_000),
@@ -342,7 +349,11 @@ class ViewportSpec(GuiOptimizerModel):
             builder=lambda p: cls(
                 width=field_value(p, "width", 0),
                 height=field_value(p, "height", 0),
-                device_scale_factor=field_value(p, "device_scale_factor", 1),
+                device_scale_factor=require_int(
+                    field_value(p, "device_scale_factor", 1),
+                    "device_scale_factor",
+                    minimum=1,
+                ),
                 interface=field_value(p, "interface", ""),
                 schema_version=field_value(p, "schema_version", ""),
             ),
@@ -731,7 +742,7 @@ class UiComponentVersion(_IdentityBase):
                 UiComponentIdentity, stable_identity, "stable_identity"
             ),
             **digests,
-            localization_digest=require_digest(localization_digest, "localization_digest"),
+            localization_digest=optional_digest(localization_digest, "localization_digest"),
             extractor_version=require_extractor_version(extractor_version),
             optimizer_schema_version=require_registered_optimizer_schema_version(
                 optimizer_schema_version, "optimizer_schema_version"
@@ -772,7 +783,9 @@ class UiComponentVersion(_IdentityBase):
                 accessibility_digest=field_value(p, "accessibility_digest", ""),
                 styles_digest=field_value(p, "styles_digest", ""),
                 actions_digest=field_value(p, "actions_digest", ""),
-                localization_digest=field_value(p, "localization_digest", ""),
+                localization_digest=require_digest(
+                    field_value(p, "localization_digest", ""), "localization_digest"
+                ),
                 extractor_version=field_value(p, "extractor_version", ""),
                 optimizer_schema_version=field_value(p, "optimizer_schema_version", ""),
                 interface=field_value(p, "interface", ""),
@@ -833,7 +846,7 @@ class UiDependencyEdge(_IdentityBase):
             extractor_version=require_extractor_version(extractor_version),
             confidence=parse_enum(confidence, ExtractionConfidence, "confidence"),
             source_span=optional_nested_record(SourceSpan, source_span, "source_span"),
-            notes=optional_text(notes, "notes"),
+            notes=optional_text(notes if notes is not None else "", "notes"),
             interface=require_interface(interface, UI_DEPENDENCY_EDGE_INTERFACE),
             schema_version=require_schema_version(schema_version, UI_DEPENDENCY_EDGE_SCHEMA),
         )
@@ -866,7 +879,7 @@ class UiDependencyEdge(_IdentityBase):
                 extractor_version=field_value(p, "extractor_version", ""),
                 confidence=field_value(p, "confidence", ""),
                 source_span=field_value(p, "source_span"),
-                notes=field_value(p, "notes", ""),
+                notes=optional_text(field_value(p, "notes", _MISSING), "notes"),
                 interface=field_value(p, "interface", ""),
                 schema_version=field_value(p, "schema_version", ""),
             ),
@@ -1205,6 +1218,81 @@ class UiActionBinding(_IdentityBase):
         )
 
 
+def _initialize_layout_constraint(
+    self: Any,
+    constraint_id: Any,
+    kind: Any,
+    expression: Any,
+    component_id: Any,
+    breakpoint_value: Any,
+    lower_bound: Any,
+    upper_bound: Any,
+    interface: Any,
+    schema_version: Any,
+) -> None:
+    lower = None if lower_bound is None else require_int(lower_bound, "lower_bound")
+    upper = None if upper_bound is None else require_int(upper_bound, "upper_bound")
+    if lower is not None and upper is not None and lower > upper:
+        raise GuiOptimizerDecodeError("lower_bound must not exceed upper_bound")
+    store_attrs(
+        self,
+        constraint_id=require_identifier(constraint_id, "constraint_id"),
+        kind=parse_enum(kind, LayoutConstraintKind, "kind"),
+        expression=require_text(expression, "expression"),
+        component_id=optional_identifier(component_id, "component_id"),
+        breakpoint=optional_text(breakpoint_value, "breakpoint"),
+        lower_bound=lower,
+        upper_bound=upper,
+        interface=require_interface(interface, UI_LAYOUT_CONSTRAINT_INTERFACE),
+        schema_version=require_schema_version(schema_version, UI_LAYOUT_CONSTRAINT_SCHEMA),
+    )
+
+
+def _layout_constraint_constructor(declared: Any) -> Any:
+    parameter_names = (
+        "constraint_id",
+        "kind",
+        "expression",
+        "component_id",
+        "breakpoint",
+        "lower_bound",
+        "upper_bound",
+        "interface",
+        "schema_version",
+    )
+
+    def invoke(self: Any, *args: Any, **kwargs: Any) -> None:
+        if len(args) > len(parameter_names):
+            raise TypeError("too many positional arguments")
+        values = {
+            parameter_names[index]: value for index, value in enumerate(args)
+        }
+        for name, value in kwargs.items():
+            if name not in parameter_names:
+                raise TypeError(f"unexpected keyword argument: {name!r}")
+            if name in values:
+                raise TypeError(f"multiple values for argument: {name!r}")
+            values[name] = value
+        missing = [name for name in parameter_names if name not in values]
+        if missing:
+            raise TypeError(f"missing required argument: {missing[0]!r}")
+        _initialize_layout_constraint(
+            self,
+            values["constraint_id"],
+            values["kind"],
+            values["expression"],
+            values["component_id"],
+            values["breakpoint"],
+            values["lower_bound"],
+            values["upper_bound"],
+            values["interface"],
+            values["schema_version"],
+        )
+
+    invoke.__wrapped__ = declared
+    return invoke
+
+
 class UiLayoutConstraint(_IdentityBase):
     INTERFACE = UI_LAYOUT_CONSTRAINT_INTERFACE
     SCHEMA_VERSION = UI_LAYOUT_CONSTRAINT_SCHEMA
@@ -1233,45 +1321,20 @@ class UiLayoutConstraint(_IdentityBase):
         "schema_version",
     )
 
+    @_layout_constraint_constructor
     def __init__(
         self,
         constraint_id: str,
         kind: Any,
         expression: str,
         component_id: str,
-        breakpoint_value: Any = _MISSING,
-        lower_bound: Any = _MISSING,
-        upper_bound: Any = _MISSING,
-        interface: Any = _MISSING,
-        schema_version: Any = _MISSING,
-        **wire_fields: Any,
+        breakpoint: str,
+        lower_bound: int | None,
+        upper_bound: int | None,
+        interface: str,
+        schema_version: str,
     ) -> None:
-        unexpected = set(wire_fields) - {"breakpoint"}
-        if unexpected:
-            name = sorted(unexpected)[0]
-            raise TypeError(f"unexpected keyword argument: {name!r}")
-        if "breakpoint" in wire_fields:
-            if breakpoint_value is not _MISSING:
-                raise TypeError("breakpoint was supplied more than once")
-            breakpoint_value = wire_fields["breakpoint"]
-        if breakpoint_value is _MISSING:
-            raise TypeError("missing required keyword or positional argument: 'breakpoint'")
-        lower = require_int(lower_bound, "lower_bound")
-        upper = require_int(upper_bound, "upper_bound")
-        if lower > upper:
-            raise GuiOptimizerDecodeError("lower_bound must not exceed upper_bound")
-        store_attrs(
-            self,
-            constraint_id=require_identifier(constraint_id, "constraint_id"),
-            kind=parse_enum(kind, LayoutConstraintKind, "kind"),
-            expression=require_text(expression, "expression"),
-            component_id=optional_identifier(component_id, "component_id"),
-            breakpoint=optional_text(breakpoint_value, "breakpoint"),
-            lower_bound=lower,
-            upper_bound=upper,
-            interface=require_interface(interface, UI_LAYOUT_CONSTRAINT_INTERFACE),
-            schema_version=require_schema_version(schema_version, UI_LAYOUT_CONSTRAINT_SCHEMA),
-        )
+        raise AssertionError("UiLayoutConstraint constructor wrapper was not installed")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1298,8 +1361,8 @@ class UiLayoutConstraint(_IdentityBase):
                 expression=field_value(p, "expression", ""),
                 component_id=field_value(p, "component_id", ""),
                 breakpoint=field_value(p, "breakpoint", ""),
-                lower_bound=field_value(p, "lower_bound", None),
-                upper_bound=field_value(p, "upper_bound", None),
+                lower_bound=require_int(field_value(p, "lower_bound", None), "lower_bound"),
+                upper_bound=require_int(field_value(p, "upper_bound", None), "upper_bound"),
                 interface=field_value(p, "interface", ""),
                 schema_version=field_value(p, "schema_version", ""),
             ),
@@ -1916,10 +1979,7 @@ class UiContextMetricBaseline(_FormalBase):
         schema_version: str,
     ) -> None:
         mapping = require_mapping(metrics, "metrics")
-        closed = {
-            key: require_int(item, f"metrics.{key}")
-            for key, item in mapping.items()
-        }
+        closed = require_closed_json_value(mapping, "metrics")
         store_attrs(
             self,
             metric_id=require_identifier(metric_id, "metric_id"),
@@ -1946,11 +2006,20 @@ class UiContextMetricBaseline(_FormalBase):
             record_name="UiContextMetricBaseline",
             builder=lambda p: cls(
                 metric_id=field_value(p, "metric_id", ""),
-                metrics=field_value(p, "metrics", {}),
+                metrics=_decode_metric_baseline_metrics(field_value(p, "metrics", {})),
                 interface=field_value(p, "interface", ""),
                 schema_version=field_value(p, "schema_version", ""),
             ),
         )
+
+
+def _decode_metric_baseline_metrics(value: Any) -> Any:
+    mapping = require_mapping(value, "metrics")
+    closed = require_closed_json_value(mapping, "metrics")
+    for name in ("interaction_steps", "unlabeled_controls"):
+        if name in mapping:
+            require_int(mapping[name], f"metrics.{name}")
+    return closed
 
 
 class UiContextPack(_FormalBase):
