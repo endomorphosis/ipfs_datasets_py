@@ -12,13 +12,10 @@ Protected operator-owned artifacts:
 - `scripts/validate_semantic_state_contract_dependencies.py`
 - `tests/unit/logic/software_contracts/semantic_state/test_dependency_seal.py`
 
-`DSS-000` is an unresolved manual authority gate. No implementation task is
-eligible until an operator replaces the remaining final ISI placeholders,
-records its exact commit/tree/schema/extractor/interface/tests, validates every
-checkout and complete authority fingerprint, commits that sealed state, and
-marks only `DSS-000` completed. The final ISI is always supplied through a
-separate clean `${DSS_ISI_CHECKOUT}`; the phase-two checkout is never its own
-phase-one pin. Workers must never complete or weaken this gate.
+`DSS-000` is sealed on `main` against the final ISI tip and related authorities.
+Implementation workers must not edit protected control files, weaken the seal,
+or treat the phase-two checkout as its own phase-one pin. The final ISI remains
+a separate clean `${DSS_ISI_CHECKOUT}` authority for validation only.
 
 The package is
 `ipfs_datasets_py.logic.software_contracts.semantic_state`. It consumes the
@@ -32,7 +29,7 @@ accelerate-owned 40-task benchmark.
 ## Parallel waves
 
 ```text
-D0  DSS-000 (manual unresolved dependency seal)
+D0  DSS-000 (completed seal)
 D1  DSS-001 | DSS-002
 D2  DSS-003 | DSS-005
 D3  DSS-004 | DSS-007
