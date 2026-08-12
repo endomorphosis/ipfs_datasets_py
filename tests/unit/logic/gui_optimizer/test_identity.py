@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from dataclasses import replace
 
 import pytest
 from ipfs_datasets_py.logic.gui_optimizer.identity import (
@@ -97,6 +98,41 @@ CROSS_RUNTIME_DIGEST = (
 )
 CROSS_RUNTIME_CID = (
     "bafkreigkfa7mw2fj45ncwfbwfdzmtceiw5e74d37x7bgsna5sve4dafzhq"
+)
+
+ARTIFACT_VECTOR_DOMAIN = "gui.artifact-vector"
+ARTIFACT_VECTOR_MATERIAL = {
+    "facet": None,
+    "label": "\u0085value\u0085",
+    "route_path": "/docs/start",
+}
+ARTIFACT_VECTOR_PREIMAGE = (
+    '{"canonicalization":"gui-optimizer-canonical-json/v1",'
+    '"domain":"gui.artifact-vector",'
+    '"identity_profile":"gui-optimizer-canonical-identity/v1",'
+    '"payload":{"facet":null,"label":"value",'
+    '"route_path":"/docs/start"},'
+    '"schema_version":"gui-artifact-digest/v1"}'
+)
+ARTIFACT_VECTOR_DIGEST = (
+    "sha256:491a93ed0b5c2ee1a60a450cf6a65c331cbdf818541e3d3f5c90f0bd15aa80b6"
+)
+ARTIFACT_VECTOR_CID = (
+    "bafkreicjdkj62c24f3q2mcsfbt3kmxbtds67qgcudy6t6xeq6c6rlkuawy"
+)
+
+TRIM_VECTOR_DOMAIN = "\u001cgui.trim\ufeff"
+TRIM_VECTOR_PREIMAGE = (
+    '{"canonicalization":"gui-optimizer-canonical-json/v1",'
+    '"domain":"\\u001cgui.trim\ufeff",'
+    '"identity_profile":"gui-optimizer-canonical-identity/v1",'
+    '"payload":{},"schema_version":"trim-vector/v1"}'
+)
+TRIM_VECTOR_DIGEST = (
+    "sha256:d7bddc07adbab269eb9cb770b95b6552bb01d348fb8ab3efe088478a1a013e10"
+)
+TRIM_VECTOR_CID = (
+    "bafkreigxxxoapln2wju6xhfxoc4vwzksxma5gsh3rkz67yeii6fbuaj6ca"
 )
 
 
@@ -200,6 +236,23 @@ def test_unicode_scalar_and_recursive_collision_policy_fails_closed() -> None:
         )
 
 
+def test_literal_cross_runtime_trim_policy_vector() -> None:
+    # U+0085 is profile whitespace; U+001C and U+FEFF are not. This must not
+    # inherit Python ``str.strip`` behavior.
+    assert normalize_material("\u0085value\u0085") == "value"
+    assert normalize_material("\u001cvalue\ufeff") == "\u001cvalue\ufeff"
+    with pytest.raises(GuiIdentityError, match="surrounding whitespace"):
+        canonical_identity(
+            {}, domain="\u0085gui.trim", schema_version="trim-vector/v1"
+        )
+    identity = canonical_identity(
+        {}, domain=TRIM_VECTOR_DOMAIN, schema_version="trim-vector/v1"
+    )
+    assert identity.canonical_bytes.decode("utf-8") == TRIM_VECTOR_PREIMAGE
+    assert identity.digest == TRIM_VECTOR_DIGEST
+    assert identity.cid == TRIM_VECTOR_CID
+
+
 def test_cid_v1_raw_sha256_base32_for_hello() -> None:
     # Known multiformats vector for raw CIDv1 of b"hello".
     assert cid_v1(b"hello") == (
@@ -293,6 +346,27 @@ def test_verify_identity_rejects_tamper() -> None:
         verify_identity(identity, {**GOLDEN_PAYLOAD, "kind": "dialog"})
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("profile", "forged-profile/v1"),
+        ("interface", "ForgedIdentity@1"),
+        ("wire_schema_version", "forged-identity/v1"),
+        ("domain", "gui.forged-domain"),
+        ("schema_version", "forged-schema/v1"),
+    ],
+)
+def test_verify_identity_rejects_forged_claimed_metadata(
+    field: str, value: str
+) -> None:
+    identity = canonical_identity(
+        GOLDEN_PAYLOAD, domain=GOLDEN_DOMAIN, schema_version=GOLDEN_SCHEMA
+    )
+    forged = replace(identity, **{field: value})
+    with pytest.raises(GuiIdentityError):
+        verify_identity(forged, GOLDEN_PAYLOAD)
+
+
 # ---------------------------------------------------------------------------
 # Stable identity (line movement / unrelated edits)
 # ---------------------------------------------------------------------------
@@ -357,7 +431,7 @@ def _base_material(**overrides: object) -> dict[str, object]:
             "tag": "form",
             "children": ["input", "button"],
             "start_line": 10,
-            "path": "/home/user/checkout/web/js/apps/agent-supervisor.js",
+            "source_path": "/home/user/checkout/web/js/apps/agent-supervisor.js",
         },
         "props": {"name": "goal", "required": True, "comments": "ignore me"},
         "state": {"ready": True},
@@ -371,20 +445,24 @@ def _base_material(**overrides: object) -> dict[str, object]:
     return material
 
 
-def test_normalize_material_drops_provenance_and_absolute_paths() -> None:
+def test_normalize_material_drops_source_provenance_and_keeps_paths() -> None:
     raw = {
         "tag": "button",
         "start_line": 42,
         "end_line": 44,
-        "path": "/abs/checkout/file.tsx",
+        "source_path": "/abs/checkout/file.tsx",
+        "path": "/settings/profile",
+        "href": "/help",
         "label": "  Save   now  ",
-        "comments": "// ignore",
+        "source_span": {"start_line": 42},
     }
     normalized = normalize_material(raw)
     assert "start_line" not in normalized
     assert "end_line" not in normalized
-    assert "path" not in normalized
-    assert "comments" not in normalized
+    assert "source_path" not in normalized
+    assert "source_span" not in normalized
+    assert normalized["path"] == "/settings/profile"
+    assert normalized["href"] == "/help"
     assert normalized["label"] == "Save now"
     assert normalized["tag"] == "button"
 
@@ -403,8 +481,7 @@ def test_version_identity_stable_across_line_movement_and_unrelated_noise() -> N
             "tag": "form",
             "children": ["input", "button"],
             "start_line": 999,
-            "path": "/other/checkout/web/js/apps/agent-supervisor.js",
-            "comments": "moved down the file",
+            "source_path": "/other/checkout/web/js/apps/agent-supervisor.js",
         },
         styles={
             "tokens": ["color.primary"],
@@ -457,6 +534,36 @@ def test_meaningful_material_change_alters_version_identity() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "field", ["path", "href", "line", "column", "span", "offset", "comments"]
+)
+def test_generic_material_fields_remain_identity_bearing(field: str) -> None:
+    assert facet_digest({field: "semantic-a"}) != facet_digest(
+        {field: "semantic-b"}
+    )
+
+
+def test_explicit_null_facet_differs_from_an_absent_facet() -> None:
+    identity = build_stable_identity(
+        application_id="app:agent-supervisor",
+        qualified_name="apps.agent-supervisor.GoalForm",
+        component_kind="form",
+        package_namespace="swissknife.web.js.apps",
+        screen_id="screen:agent-supervisor",
+    )
+    explicit_null = compile_component_version(
+        identity,
+        {"props": None},
+        extractor_version="gui-static-scanner-1.0.0",
+    )
+    absent = compile_component_version(
+        identity, {}, extractor_version="gui-static-scanner-1.0.0"
+    )
+    assert explicit_null.props_digest == facet_digest(None)
+    assert absent.props_digest == facet_digest({})
+    assert explicit_null.props_digest != absent.props_digest
+
+
 def test_component_version_compiler_facade() -> None:
     compiler = create_component_version_compiler(
         extractor_version="gui-static-scanner-1.0.0"
@@ -500,6 +607,35 @@ def test_artifact_digest_rehash_and_domain() -> None:
     assert parsed["digest_label"] == art.digest
 
 
+def test_literal_cross_runtime_artifact_domain_null_vector() -> None:
+    artifact = artifact_digest(
+        ARTIFACT_VECTOR_MATERIAL, domain=ARTIFACT_VECTOR_DOMAIN
+    )
+    assert artifact.canonical_bytes.decode("utf-8") == ARTIFACT_VECTOR_PREIMAGE
+    assert artifact.digest == ARTIFACT_VECTOR_DIGEST
+    assert artifact.cid == ARTIFACT_VECTOR_CID
+    assert artifact.rehash() == artifact
+    domain_a = artifact_digest(ARTIFACT_VECTOR_MATERIAL, domain="gui.domain-a")
+    domain_b = artifact_digest(ARTIFACT_VECTOR_MATERIAL, domain="gui.domain-b")
+    assert domain_a.digest != domain_b.digest
+    assert domain_a.cid != domain_b.cid
+    assert domain_a.canonical_bytes != domain_b.canonical_bytes
+
+
+def test_artifact_rehash_rejects_forged_profile_metadata() -> None:
+    artifact = artifact_digest(ARTIFACT_VECTOR_MATERIAL)
+    with pytest.raises(GuiIdentityError, match="metadata"):
+        replace(artifact, domain="gui.forged").rehash()
+    with pytest.raises(GuiIdentityError, match="metadata"):
+        replace(artifact, interface="ForgedArtifact@1").rehash()
+    with pytest.raises(GuiIdentityError, match="metadata"):
+        replace(artifact, schema_version="forged-artifact/v1").rehash()
+    with pytest.raises(GuiIdentityError, match="rehash"):
+        replace(artifact, digest=f"sha256:{'0' * 64}").rehash()
+
+
 def test_empty_and_equivalent_facets_share_digest() -> None:
-    assert facet_digest({}) == facet_digest({"start_line": 3, "comments": "x"})
+    assert facet_digest({}) == facet_digest(
+        {"start_line": 3, "source_path": "/tmp/source.ts"}
+    )
     assert facet_digest({"a": 1}) != facet_digest({"a": 2})

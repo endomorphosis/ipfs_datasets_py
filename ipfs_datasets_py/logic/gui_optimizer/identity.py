@@ -93,8 +93,6 @@ MAX_SAFE_INTEGER: Final = (1 << 53) - 1
 # Provenance-only keys excluded from version material normalization.
 _PROVENANCE_KEYS: Final = frozenset(
     {
-        "line",
-        "column",
         "start_line",
         "end_line",
         "start_column",
@@ -103,19 +101,46 @@ _PROVENANCE_KEYS: Final = frozenset(
         "checkout_path",
         "source_path",
         "file_path",
-        "path",
-        "comments",
-        "comment",
-        "span",
         "source_span",
-        "offset",
         "byte_offset",
         "char_offset",
     }
 )
 
 _WS_RE: Final = re.compile(r"[ \t]+")
-_ABS_PATH_RE: Final = re.compile(r"^(/|[A-Za-z]:[\\/])")
+
+# Unicode White_Space from PropList.txt, spelled out so Python ``str.strip``
+# and JavaScript ``String.trim`` cannot silently define different wire data.
+# U+001C and U+FEFF are deliberately not members of this profile.
+_PROFILE_TRIM_CHARS: Final = frozenset(
+    {
+        "\u0009",
+        "\u000a",
+        "\u000b",
+        "\u000c",
+        "\u000d",
+        "\u0020",
+        "\u0085",
+        "\u00a0",
+        "\u1680",
+        "\u2000",
+        "\u2001",
+        "\u2002",
+        "\u2003",
+        "\u2004",
+        "\u2005",
+        "\u2006",
+        "\u2007",
+        "\u2008",
+        "\u2009",
+        "\u200a",
+        "\u2028",
+        "\u2029",
+        "\u202f",
+        "\u205f",
+        "\u3000",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -207,6 +232,18 @@ class GuiCanonicalIdentity:
     def rehash(self) -> GuiCanonicalIdentity:
         """Recompute digest and CID from retained canonical bytes."""
 
+        if (
+            self.interface != GUI_CANONICAL_IDENTITY_INTERFACE
+            or self.wire_schema_version != GUI_CANONICAL_IDENTITY_SCHEMA
+            or self.profile != IDENTITY_PROFILE_NAME
+        ):
+            raise GuiIdentityError("identity metadata does not match the profile")
+        _require_identity_preimage_metadata(
+            self.canonical_bytes,
+            domain=self.domain,
+            schema_version=self.schema_version,
+        )
+
         raw = hashlib.sha256(self.canonical_bytes).digest()
         recomputed = GuiCanonicalIdentity(
             profile=self.profile,
@@ -246,6 +283,18 @@ class GuiArtifactDigest:
         }
 
     def rehash(self) -> GuiArtifactDigest:
+        if (
+            self.interface != GUI_ARTIFACT_DIGEST_INTERFACE
+            or self.schema_version != GUI_ARTIFACT_DIGEST_SCHEMA
+        ):
+            raise GuiIdentityError(
+                "artifact digest metadata does not match the profile"
+            )
+        _require_identity_preimage_metadata(
+            self.canonical_bytes,
+            domain=self.domain,
+            schema_version=self.schema_version,
+        )
         raw = hashlib.sha256(self.canonical_bytes).digest()
         recomputed = GuiArtifactDigest(
             digest=f"sha256:{raw.hex()}",
@@ -348,6 +397,18 @@ def _normalize_text(value: str, *, label: str) -> str:
     return normalized
 
 
+def _trim_profile_whitespace(value: str) -> str:
+    """Trim only the cross-runtime profile's explicit Unicode characters."""
+
+    start = 0
+    end = len(value)
+    while start < end and value[start] in _PROFILE_TRIM_CHARS:
+        start += 1
+    while end > start and value[end - 1] in _PROFILE_TRIM_CHARS:
+        end -= 1
+    return value[start:end]
+
+
 def _validate_gui_number(value: int | float, *, label: str) -> None:
     """Require a number in the exact Python/JavaScript GUI wire domain."""
 
@@ -437,7 +498,10 @@ def _normalized_discriminator(value: str, *, label: str) -> str:
     if not isinstance(value, str):
         raise TypeError(f"{label} must be a string")
     normalized = unicodedata.normalize("NFC", value)
-    if not normalized or normalized.strip() != normalized:
+    if (
+        not normalized
+        or _trim_profile_whitespace(normalized) != normalized
+    ):
         raise GuiIdentityError(
             f"{label} must be non-empty and have no surrounding whitespace"
         )
@@ -448,6 +512,38 @@ def _normalized_discriminator(value: str, *, label: str) -> str:
             f"{label} contains an unpaired Unicode surrogate"
         ) from exc
     return normalized
+
+
+def _require_identity_preimage_metadata(
+    preimage: bytes,
+    *,
+    domain: str,
+    schema_version: str,
+) -> None:
+    """Require retained bytes to bind the record's declared discriminators."""
+
+    normalized_domain = _normalized_discriminator(domain, label="domain")
+    normalized_version = _normalized_discriminator(
+        schema_version, label="schema_version"
+    )
+    prefix = (
+        b'{"canonicalization":'
+        + canonical_json_bytes(CANONICAL_JSON_PROFILE)
+        + b',"domain":'
+        + canonical_json_bytes(normalized_domain)
+        + b',"identity_profile":'
+        + canonical_json_bytes(IDENTITY_PROFILE_NAME)
+        + b',"payload":'
+    )
+    suffix = (
+        b',"schema_version":'
+        + canonical_json_bytes(normalized_version)
+        + b"}"
+    )
+    if not preimage.startswith(prefix) or not preimage.endswith(suffix):
+        raise GuiIdentityError(
+            "retained canonical bytes do not bind the claimed metadata"
+        )
 
 
 def identity_preimage(
@@ -545,13 +641,20 @@ def artifact_digest(
 ) -> GuiArtifactDigest:
     """Digest normalized artifact material (GuiArtifactDigest@1)."""
 
+    normalized_domain = _normalized_discriminator(domain, label="domain")
     normalized = normalize_material(material)
-    preimage = canonical_json_bytes(normalized)
+    # Reuse the one canonical domain-separated preimage profile; artifact
+    # records retain those exact bytes so their declared domain is rehashable.
+    preimage = identity_preimage(
+        normalized,
+        domain=normalized_domain,
+        schema_version=GUI_ARTIFACT_DIGEST_SCHEMA,
+    )
     raw = hashlib.sha256(preimage).digest()
     return GuiArtifactDigest(
         digest=f"sha256:{raw.hex()}",
         cid=cid_v1_from_digest(raw),
-        domain=_normalized_discriminator(domain, label="domain"),
+        domain=normalized_domain,
         canonical_bytes=preimage,
     )
 
@@ -570,9 +673,11 @@ def facet_digest(material: Any) -> str:
 def normalize_material(value: Any) -> Any:
     """Normalize component material for version digests.
 
-    Drops provenance-only keys (line numbers, absolute paths, comments, spans),
-    NFC-normalizes text, collapses nonsemantic interior whitespace in strings,
-    and sorts mapping keys.  Does not invent structure.
+    Drops explicitly named source-provenance fields (source line/column
+    ranges, source paths, spans, and byte/character offsets), NFC-normalizes
+    text, collapses nonsemantic interior whitespace in strings, and sorts map
+    keys. Plain ``path`` / ``href`` / ``comments`` fields and absolute-looking
+    string values remain semantic.
     """
 
     return _normalize_value(value)
@@ -592,10 +697,7 @@ def _normalize_value(value: Any) -> Any:
         # Collapse nonsemantic runs of spaces/tabs; preserve newlines as single
         # separators so multi-line structure remains distinguishable.
         text = _WS_RE.sub(" ", text)
-        text = re.sub(r"\n+", "\n", text).strip()
-        if _ABS_PATH_RE.match(text):
-            # Absolute checkout paths are never version authority.
-            return ""
+        text = _trim_profile_whitespace(re.sub(r"\n+", "\n", text))
         return text
     if type(value) is list:
         return [_normalize_value(item) for item in value]
