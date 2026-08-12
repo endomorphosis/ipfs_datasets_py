@@ -5,12 +5,16 @@ semantic projections, rather than raw source bytes or source locations.  A
 source reformat can therefore alter a snapshot's provenance without becoming a
 symbol or edge change.  Rename correlations are only heuristic annotations:
 the old and new stable IDs remain respectively deleted and added.
+
+Facets are independent: a combined body and signature edit retains both, and
+schema is reserved for schema-bearing kinds (dataclass / typed dict / enum),
+not ordinary function or method annotations.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any, Final
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_structured
@@ -18,6 +22,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
     DependencyEdge,
     RepositoryState,
     RepositoryStateDelta,
+    SymbolKind,
     SymbolRecord,
 )
 
@@ -48,25 +53,86 @@ _EFFECT_RELATIONS: Final[frozenset[str]] = frozenset(
     }
 )
 _EXCEPTION_RELATIONS: Final[frozenset[str]] = frozenset({"raises", "catches"})
+_SCHEMA_KINDS: Final[frozenset[str]] = frozenset(
+    {
+        SymbolKind.DATACLASS.value,
+        SymbolKind.TYPED_DICT.value,
+        SymbolKind.ENUM.value,
+    }
+)
+# Only these annotation keys describe a durable schema surface.  Parameter and
+# return annotations on ordinary functions/methods are deliberately excluded.
+_SCHEMA_ANNOTATION_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "fields",
+        "bases",
+        "enum_family",
+        "pydantic_model",
+        "total",
+    }
+)
+# Analyzer metadata that mirrors normalized AST / inventory and must not drown
+# an independent body facet.
+_METADATA_BODY_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "facets",
+        "frontend_declarations",
+        "facet_count",
+    }
+)
 
 
 class RepositoryStateDeltaError(ValueError):
     """Raised when states cannot be compared under the delta contract."""
 
 
+def _jsonable(value: Any) -> Any:
+    """Return a strict DAG-JSON value (lists, not tuples; plain dicts)."""
+    if isinstance(value, Mapping):
+        return {str(key): _jsonable(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(item) for item in value]
+    return value
+
+
+def _semantic_metadata(metadata: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Drop body-duplicating analyzer inventory from the metadata facet."""
+    if not metadata:
+        return {}
+    return {
+        key: _jsonable(value)
+        for key, value in dict(metadata).items()
+        if key not in _METADATA_BODY_KEYS
+    }
+
+
+def _schema_projection(symbol: SymbolRecord) -> dict[str, Any]:
+    """Return the schema-bearing annotation surface, or empty for non-schemas."""
+    if symbol.kind not in _SCHEMA_KINDS:
+        return {}
+    annotations = dict(symbol.annotations)
+    return {
+        key: _jsonable(annotations[key])
+        for key in sorted(annotations)
+        if key in _SCHEMA_ANNOTATION_KEYS
+    }
+
+
 def _symbol_projection(symbol: SymbolRecord) -> dict[str, Any]:
     """Return the semantic portion of a stable symbol record.
 
     ``source_cid`` and ``span`` are snapshot provenance, not semantic facts.
-    The remaining fields are either the version identity itself or explicit
-    semantic facts that are not bound by that identity (notably confidence).
+    ``normalized_ast`` is the body surface; schema annotations are projected
+    separately so ordinary function type hints do not become schema edits.
     """
     return {
         "version_cid": symbol.version_cid,
-        "signature": dict(symbol.signature),
+        "normalized_ast": _jsonable(symbol.normalized_ast),
+        "signature": _jsonable(dict(symbol.signature)),
         "decorators": list(symbol.decorators),
-        "annotations": dict(symbol.annotations),
-        "metadata": dict(symbol.metadata),
+        "schema": _schema_projection(symbol),
+        "annotations": _jsonable(dict(symbol.annotations)),
+        "metadata": _semantic_metadata(symbol.metadata),
         "confidence": symbol.confidence,
     }
 
@@ -80,7 +146,7 @@ def _edge_projection(edge: DependencyEdge) -> dict[str, Any]:
         "extraction_method": edge.extraction_method,
         "confidence": edge.confidence,
         "extractor_version": edge.extractor_version,
-        "metadata": dict(edge.metadata),
+        "metadata": _jsonable(dict(edge.metadata)),
     }
 
 
@@ -107,10 +173,10 @@ def classify_symbol_change(
 ) -> tuple[str, ...]:
     """Classify a stable-ID-preserving semantic change into closed facets.
 
-    A body facet is the residual version-identity change after all explicit
-    interface facets have been compared.  This keeps a signature-only or
-    exception-only change distinguishable without pretending the index can
-    reconstruct a source diff from durable records.
+    Facets are independent.  A body edit is a ``normalized_ast`` difference and
+    is retained alongside signature/schema/etc. when those also change.  Schema
+    is emitted only for schema-bearing kinds when their field/base surface
+    changes — not for ordinary function or dataclass-method annotations.
     """
     if not isinstance(previous, SymbolRecord) or not isinstance(current, SymbolRecord):
         raise RepositoryStateDeltaError("symbols must be SymbolRecords")
@@ -118,13 +184,15 @@ def classify_symbol_change(
         raise RepositoryStateDeltaError("symbol change classification requires matching stable_id")
 
     facets: set[str] = set()
+    if _jsonable(previous.normalized_ast) != _jsonable(current.normalized_ast):
+        facets.add("body")
     if previous.signature != current.signature:
         facets.add("signature")
     if previous.decorators != current.decorators:
         facets.add("decorator")
-    if previous.annotations != current.annotations:
+    if _schema_projection(previous) != _schema_projection(current):
         facets.add("schema")
-    if previous.metadata != current.metadata:
+    if _semantic_metadata(previous.metadata) != _semantic_metadata(current.metadata):
         facets.add("metadata")
     if previous.confidence != current.confidence:
         facets.add("confidence")
@@ -136,9 +204,9 @@ def classify_symbol_change(
     if any(old_facts.get(relation, ()) != new_facts.get(relation, ()) for relation in _EXCEPTION_RELATIONS):
         facets.add("exceptions")
 
-    # A version CID is the normalized AST projection.  If no independently
-    # represented facet changed, its difference is necessarily body-local at
-    # the level of this durable model.
+    # Residual version-CID change with no independently represented facet is
+    # still body-local (for example annotation-only projections that ride the
+    # version CID without altering normalized_ast or schema surface).
     if previous.version_cid != current.version_cid and not facets:
         facets.add("body")
     return tuple(facet for facet in SYMBOL_CHANGE_FACETS if facet in facets)
@@ -173,10 +241,10 @@ def _rename_projection(symbol: SymbolRecord) -> dict[str, Any]:
         "language": symbol.language,
         "kind": symbol.kind,
         "namespace": symbol.namespace,
-        "signature": dict(symbol.signature),
+        "signature": _jsonable(dict(symbol.signature)),
         "decorators": list(symbol.decorators),
-        "annotations": dict(symbol.annotations),
-        "metadata": dict(symbol.metadata),
+        "annotations": _jsonable(dict(symbol.annotations)),
+        "metadata": _semantic_metadata(symbol.metadata),
         "confidence": symbol.confidence,
     }
 
