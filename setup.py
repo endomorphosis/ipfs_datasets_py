@@ -277,6 +277,7 @@ setup(
             "logic/zkp/provekit/circuits/*/Nargo.toml",
             "logic/zkp/provekit/circuits/*/src/*.nr",
             "logic/legal_ir/schemas/*.json",
+            "logic/software_contracts/semantic_state/schemas/*.json",
         ],
     },
     include_package_data=True,
