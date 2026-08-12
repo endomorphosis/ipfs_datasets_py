@@ -4,6 +4,9 @@ The explanation layer deliberately reports the graph facts it was given.  It
 does not turn lexical, heuristic, or opaque observations into a claim about
 runtime behaviour.  In particular, a path through opaque evidence always
 contains a raw-source requirement.
+
+File and artifact impact membership is path-scoped: identical-byte files that
+share a source CID never contaminate each other's impact sets.
 """
 
 from __future__ import annotations
@@ -13,11 +16,9 @@ from collections.abc import Iterable
 
 from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
     AnalysisConfidence,
-    ArtifactRecord,
     ImpactExplanation,
     RepositoryState,
     SymbolExplanation,
-    SymbolRecord,
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_index.symbol_graph import (
     SymbolGraph,
@@ -118,15 +119,24 @@ def explain_symbol(state: RepositoryState, symbol_id: str) -> SymbolExplanation:
 
 
 def _path_members(state: RepositoryState, path: str) -> tuple[str, ...]:
-    """Find stable symbols belonging to a tracked source artifact path."""
+    """Find stable symbols belonging to a tracked source artifact path.
+
+    Membership is path-scoped.  Sharing a source CID with another file must
+    not pull that other file's symbols into this path's impact set.
+    """
     normalized = path.replace("\\", "/")
-    artifacts = tuple(item for item in state.artifacts if item.path == normalized)
-    source_cids = {item.source_cid for item in artifacts if item.source_cid is not None}
     members = {
-        item.stable_id for item in state.symbols
+        item.stable_id
+        for item in state.symbols
         if item.module_path == normalized
-        or (item.source_cid is not None and item.source_cid in source_cids)
+        or (
+            item.span is not None
+            and getattr(item.span, "path", None) == normalized
+        )
     }
+    # Artifact IDs bound to this exact path may also seed impact; their own
+    # identifiers are handled by the caller.  Do not expand through shared
+    # source CIDs across different paths.
     return tuple(sorted(members))
 
 
@@ -160,12 +170,12 @@ def explain_impact(
     """Report bounded reverse dependency impact for symbols, artifacts, or paths.
 
     A supplied artifact ID or repository-relative path expands through stable
-    artifact membership (artifact path/source CID to symbol records), then
-    follows incoming edges: an incoming edge's source is the record that
-    depends on the changed target.  The output lists every edge actually
-    traversed, while limitations state depth/node truncation and confidence
-    boundaries.  It intentionally creates no invalidation obligations; that
-    policy belongs to the invalidation engine.
+    path membership (module path / span path only), then follows incoming
+    edges: an incoming edge's source is the record that depends on the changed
+    target.  Outgoing edges are never traversed as reverse impact.  The output
+    lists every edge actually traversed, while limitations state depth/node
+    truncation and confidence boundaries.  It intentionally creates no
+    invalidation obligations; that policy belongs to the invalidation engine.
     """
     if type(max_depth) is not int or max_depth < 0:
         raise ValueError("max_depth must be a nonnegative integer")
@@ -196,6 +206,7 @@ def explain_impact(
                 truncated_depth = True
             continue
         for edge in graph.incoming(node_id):
+            # Reverse impact only: dependents are edge sources of incoming edges.
             traversed.append(edge)
             limitations.update(_edge_limitations(edge))
             limitations.update(_node_limitations(graph, edge.source_id))

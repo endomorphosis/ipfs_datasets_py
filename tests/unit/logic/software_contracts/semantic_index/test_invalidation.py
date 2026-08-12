@@ -3,23 +3,71 @@
 from __future__ import annotations
 
 import ast
+from dataclasses import replace
 
 import pytest
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
 from ipfs_datasets_py.logic.software_contracts.semantic_index.delta import diff_repository_states
-from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import stable_symbol_id, symbol_version_cid
-from ipfs_datasets_py.logic.software_contracts.semantic_index.invalidation import InvalidationError, InvalidationReason, calculate_invalidation
-from ipfs_datasets_py.logic.software_contracts.semantic_index.models import ArtifactRecord, DependencyEdge, RepositoryState, RelationType, SymbolKind, SymbolRecord
+from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import (
+    normalize_ast,
+    stable_symbol_id,
+    symbol_version_cid,
+)
+from ipfs_datasets_py.logic.software_contracts.semantic_index.invalidation import (
+    InvalidationError,
+    InvalidationReason,
+    calculate_invalidation,
+)
+from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
+    ArtifactRecord,
+    DependencyEdge,
+    RepositoryState,
+    RelationType,
+    SourceSpan,
+    SymbolKind,
+    SymbolRecord,
+)
 
 
-def _symbol(name: str, source: str, *, kind: SymbolKind = SymbolKind.FUNCTION, signature: dict[str, object] | None = None, annotations: dict[str, object] | None = None, confidence: str = "exact") -> SymbolRecord:
+def _symbol(
+    name: str,
+    source: str,
+    *,
+    kind: SymbolKind = SymbolKind.FUNCTION,
+    signature: dict[str, object] | None = None,
+    annotations: dict[str, object] | None = None,
+    confidence: str = "exact",
+) -> SymbolRecord:
     stable = stable_symbol_id("repo:invalidation", "python", "pkg/mod.py", f"pkg.mod.{name}", kind, "pkg")
     tree = ast.parse(source).body[0]
-    return SymbolRecord(stable, symbol_version_cid(stable, tree, signature or {}, (), annotations or {}), "repo:invalidation", "python", "pkg/mod.py", f"pkg.mod.{name}", kind, "pkg", cid_for_bytes(source.encode()), None, confidence, signature or {}, (), annotations or {}, {})
+    sig = signature or {}
+    anns = annotations or {}
+    return SymbolRecord(
+        stable,
+        symbol_version_cid(stable, tree, sig, (), anns),
+        "repo:invalidation",
+        "python",
+        "pkg/mod.py",
+        f"pkg.mod.{name}",
+        kind,
+        "pkg",
+        cid_for_bytes(source.encode()),
+        SourceSpan("pkg/mod.py", 1, 0, 2, 20),
+        confidence,
+        sig,
+        (),
+        anns,
+        {},
+        normalized_ast=normalize_ast(tree),
+    )
 
 
-def _state(*symbols: SymbolRecord, artifacts: tuple[ArtifactRecord, ...] = (), edges: tuple[DependencyEdge, ...] = ()) -> RepositoryState:
+def _state(
+    *symbols: SymbolRecord,
+    artifacts: tuple[ArtifactRecord, ...] = (),
+    edges: tuple[DependencyEdge, ...] = (),
+) -> RepositoryState:
     return RepositoryState("repo:invalidation", symbols, artifacts, edges)
 
 
@@ -27,24 +75,75 @@ def _reasons(plan: object) -> set[str]:
     return {item.reason_code for item in plan.obligations}  # type: ignore[attr-defined]
 
 
-def test_body_change_is_local_but_requires_capsule_proof_and_test_receipt() -> None:
+def test_body_change_is_local_but_requires_capsule_and_test_receipt() -> None:
     old = _symbol("target", "def target(value):\n return value + 1\n")
     new = _symbol("target", "def target(value):\n return value + 2\n")
     caller = _symbol("caller", "def caller():\n return target(1)\n")
     test = _symbol("test_target", "def test_target():\n assert target(1) == 2\n", kind=SymbolKind.TEST)
-    edges = (DependencyEdge(caller.stable_id, old.stable_id, RelationType.CALLS, "static", "exact", "1"), DependencyEdge(old.stable_id, test.stable_id, RelationType.TESTED_BY, "static", "exact", "1"))
-    previous, current = _state(old, caller, test, edges=edges), _state(new, caller, test, edges=(DependencyEdge(caller.stable_id, new.stable_id, RelationType.CALLS, "static", "exact", "1"), DependencyEdge(new.stable_id, test.stable_id, RelationType.TESTED_BY, "static", "exact", "1")))
+    proof = _symbol("proof_target", "def proof_target():\n pass\n")
+    edges = (
+        DependencyEdge(caller.stable_id, old.stable_id, RelationType.CALLS, "static", "exact", "1"),
+        DependencyEdge(old.stable_id, test.stable_id, RelationType.TESTED_BY, "static", "exact", "1"),
+        DependencyEdge(proof.stable_id, old.stable_id, RelationType.PROOF_DEPENDS_ON, "static", "exact", "1"),
+    )
+    new_edges = (
+        DependencyEdge(caller.stable_id, new.stable_id, RelationType.CALLS, "static", "exact", "1"),
+        DependencyEdge(new.stable_id, test.stable_id, RelationType.TESTED_BY, "static", "exact", "1"),
+        DependencyEdge(proof.stable_id, new.stable_id, RelationType.PROOF_DEPENDS_ON, "static", "exact", "1"),
+    )
+    previous, current = _state(old, caller, test, proof, edges=edges), _state(new, caller, test, proof, edges=new_edges)
     plan = calculate_invalidation(previous, current, diff_repository_states(previous, current))
-    assert {InvalidationReason.NEW_CAPSULE.value, InvalidationReason.PROOF_RERUN.value, InvalidationReason.STALE_TEST_RECEIPT.value} <= _reasons(plan)
+    assert InvalidationReason.NEW_CAPSULE.value in _reasons(plan)
+    assert InvalidationReason.STALE_TEST_RECEIPT.value in _reasons(plan)
+    assert InvalidationReason.PROOF_RERUN.value in _reasons(plan)
     assert InvalidationReason.CALLER_SIGNATURE_MISMATCH.value not in _reasons(plan)
+    proof_items = [item for item in plan.obligations if item.reason_code == InvalidationReason.PROOF_RERUN.value]
+    assert all(item.subject_id == proof.stable_id for item in proof_items)
+    assert all(item.supporting_edge_ids for item in proof_items)
+
+
+def test_no_proof_rerun_without_proof_depends_on_edge() -> None:
+    old = _symbol("target", "def target(value):\n return value + 1\n")
+    new = _symbol("target", "def target(value):\n return value + 2\n")
+    previous, current = _state(old), _state(new)
+    plan = calculate_invalidation(previous, current, diff_repository_states(previous, current))
+    assert InvalidationReason.PROOF_RERUN.value not in _reasons(plan)
+    assert InvalidationReason.NEW_CAPSULE.value in _reasons(plan)
 
 
 def test_signature_schema_and_effect_rules_are_edge_justified() -> None:
-    old = _symbol("model", "def model(value):\n return value\n", signature={"parameters": ["value"]}, annotations={"return": "int"})
-    new = _symbol("model", "def model(value, flag=False):\n return value\n", signature={"parameters": ["value", "flag"]}, annotations={"return": "str"})
+    old = _symbol(
+        "model",
+        "def model(value):\n return value\n",
+        kind=SymbolKind.DATACLASS,
+        signature={"parameters": ["value"]},
+        annotations={"fields": {"value": "int"}},
+    )
+    new = _symbol(
+        "model",
+        "def model(value, flag=False):\n return value\n",
+        kind=SymbolKind.DATACLASS,
+        signature={"parameters": ["value", "flag"]},
+        annotations={"fields": {"value": "int", "flag": "bool"}},
+    )
     caller, adapter = _symbol("caller", "def caller():\n return model(1)\n"), _symbol("adapter", "def adapter():\n pass\n")
-    old_edges = (DependencyEdge(caller.stable_id, old.stable_id, RelationType.CALLS, "static", "exact", "1"), DependencyEdge(adapter.stable_id, old.stable_id, RelationType.SERIALIZES, "static", "exact", "1"))
-    new_edges = tuple(DependencyEdge(edge.source_id, new.stable_id if edge.target_id == old.stable_id else edge.target_id, edge.relation, edge.extraction_method, edge.confidence, edge.extractor_version, edge.span, edge.metadata) for edge in old_edges)
+    old_edges = (
+        DependencyEdge(caller.stable_id, old.stable_id, RelationType.CALLS, "static", "exact", "1"),
+        DependencyEdge(adapter.stable_id, old.stable_id, RelationType.SERIALIZES, "static", "exact", "1"),
+    )
+    new_edges = tuple(
+        DependencyEdge(
+            edge.source_id,
+            new.stable_id if edge.target_id == old.stable_id else edge.target_id,
+            edge.relation,
+            edge.extraction_method,
+            edge.confidence,
+            edge.extractor_version,
+            edge.span,
+            edge.metadata,
+        )
+        for edge in old_edges
+    )
     previous, current = _state(old, caller, adapter, edges=old_edges), _state(new, caller, adapter, edges=new_edges)
     plan = calculate_invalidation(previous, current, diff_repository_states(previous, current))
     obligations = {item.reason_code: item for item in plan.obligations}
@@ -60,16 +159,58 @@ def test_effect_and_exception_assumptions_receive_specific_reviews() -> None:
     old_edges = (
         DependencyEdge(old.stable_id, "state:read", RelationType.READS_STATE, "static", "exact", "1"),
         DependencyEdge(old.stable_id, "exception:Old", RelationType.RAISES, "static", "exact", "1"),
-        DependencyEdge(caller.stable_id, old.stable_id, RelationType.CALLS, "static", "exact", "1", metadata={"assumes_effects": True, "assumes_exceptions": True}),
+        DependencyEdge(
+            caller.stable_id,
+            old.stable_id,
+            RelationType.CALLS,
+            "static",
+            "exact",
+            "1",
+            metadata={"assumes_effects": True, "assumes_exceptions": True},
+        ),
     )
     new_edges = (
         DependencyEdge(new.stable_id, "state:write", RelationType.WRITES_STATE, "static", "exact", "1"),
         DependencyEdge(new.stable_id, "exception:New", RelationType.RAISES, "static", "exact", "1"),
-        DependencyEdge(caller.stable_id, new.stable_id, RelationType.CALLS, "static", "exact", "1", metadata={"assumes_effects": True, "assumes_exceptions": True}),
+        DependencyEdge(
+            caller.stable_id,
+            new.stable_id,
+            RelationType.CALLS,
+            "static",
+            "exact",
+            "1",
+            metadata={"assumes_effects": True, "assumes_exceptions": True},
+        ),
     )
     previous, current = _state(old, caller, edges=old_edges), _state(new, caller, edges=new_edges)
     plan = calculate_invalidation(previous, current, diff_repository_states(previous, current))
-    assert {InvalidationReason.PURITY_SECURITY_REVIEW.value, InvalidationReason.EFFECT_ASSUMPTION_STALE.value, InvalidationReason.EXCEPTION_RECOVERY_STALE.value} <= _reasons(plan)
+    assert {
+        InvalidationReason.PURITY_SECURITY_REVIEW.value,
+        InvalidationReason.EFFECT_ASSUMPTION_STALE.value,
+        InvalidationReason.EXCEPTION_RECOVERY_STALE.value,
+    } <= _reasons(plan)
+
+
+def test_exception_recovery_via_caller_catch_edges() -> None:
+    old = _symbol("service", "def service():\n raise ValueError()\n")
+    new = _symbol("service", "def service():\n raise KeyError()\n")
+    recover = _symbol("recover", "def recover():\n try:\n  service()\n except ValueError:\n  pass\n")
+    old_edges = (
+        DependencyEdge(old.stable_id, "exception:ValueError", RelationType.RAISES, "static", "exact", "1"),
+        DependencyEdge(recover.stable_id, old.stable_id, RelationType.CALLS, "static", "exact", "1"),
+        DependencyEdge(recover.stable_id, "exception:ValueError", RelationType.CATCHES, "static", "exact", "1"),
+    )
+    new_edges = (
+        DependencyEdge(new.stable_id, "exception:KeyError", RelationType.RAISES, "static", "exact", "1"),
+        DependencyEdge(recover.stable_id, new.stable_id, RelationType.CALLS, "static", "exact", "1"),
+        DependencyEdge(recover.stable_id, "exception:ValueError", RelationType.CATCHES, "static", "exact", "1"),
+    )
+    previous, current = _state(old, recover, edges=old_edges), _state(new, recover, edges=new_edges)
+    plan = calculate_invalidation(previous, current, diff_repository_states(previous, current))
+    assert any(
+        item.reason_code == InvalidationReason.EXCEPTION_RECOVERY_STALE.value and item.subject_id == recover.stable_id
+        for item in plan.obligations
+    )
 
 
 def test_fixture_environment_deletion_and_opaque_evidence_are_explicit() -> None:
@@ -78,11 +219,70 @@ def test_fixture_environment_deletion_and_opaque_evidence_are_explicit() -> None
     lock_old = ArtifactRecord("artifact:lock", "dependency_lock", "poetry.lock", cid_for_bytes(b"old"))
     lock_new = ArtifactRecord("artifact:lock", "dependency_lock", "poetry.lock", cid_for_bytes(b"new"))
     deleted = _symbol("gone", "def gone():\n pass\n")
-    edges = (DependencyEdge(test.stable_id, fixture.stable_id, RelationType.USES_FIXTURE, "static", "exact", "1"), DependencyEdge(test.stable_id, lock_old.artifact_id, RelationType.CONFIGURED_BY, "static", "exact", "1"), DependencyEdge(test.stable_id, deleted.stable_id, RelationType.CALLS, "dynamic", "opaque", "1", metadata={"resolution": "unresolved"}))
-    previous = _state(fixture, test, deleted, artifacts=(lock_old,), edges=edges)
-    current = _state(test, artifacts=(lock_new,), edges=(DependencyEdge(test.stable_id, fixture.stable_id, RelationType.USES_FIXTURE, "static", "exact", "1"), DependencyEdge(test.stable_id, lock_new.artifact_id, RelationType.CONFIGURED_BY, "static", "exact", "1")))
+    opaque = _symbol("dyn", "def dyn():\n pass\n", confidence="opaque")
+    edges = (
+        DependencyEdge(test.stable_id, fixture.stable_id, RelationType.USES_FIXTURE, "static", "exact", "1"),
+        DependencyEdge(test.stable_id, lock_old.artifact_id, RelationType.CONFIGURED_BY, "static", "exact", "1"),
+        DependencyEdge(test.stable_id, deleted.stable_id, RelationType.CALLS, "dynamic", "opaque", "1"),
+    )
+    previous = _state(fixture, test, deleted, opaque, artifacts=(lock_old,), edges=edges)
+    current = _state(
+        test,
+        opaque,
+        artifacts=(lock_new,),
+        edges=(
+            DependencyEdge(test.stable_id, fixture.stable_id, RelationType.USES_FIXTURE, "static", "exact", "1"),
+            DependencyEdge(test.stable_id, lock_new.artifact_id, RelationType.CONFIGURED_BY, "static", "exact", "1"),
+        ),
+    )
+    # Mark opaque as modified so raw-source obligation is considered.
+    opaque_new = replace(opaque, metadata={"note": "still-opaque"})
+    current = _state(
+        test,
+        opaque_new,
+        artifacts=(lock_new,),
+        edges=(
+            DependencyEdge(test.stable_id, fixture.stable_id, RelationType.USES_FIXTURE, "static", "exact", "1"),
+            DependencyEdge(test.stable_id, lock_new.artifact_id, RelationType.CONFIGURED_BY, "static", "exact", "1"),
+        ),
+    )
     plan = calculate_invalidation(previous, current, diff_repository_states(previous, current))
-    assert {InvalidationReason.STALE_TEST_RECEIPT.value, InvalidationReason.ENVIRONMENT_RECEIPT_STALE.value, InvalidationReason.DELETED_SYMBOL_DEPENDENCY.value, InvalidationReason.RAW_SOURCE_REQUIRED.value} <= _reasons(plan)
+    assert {
+        InvalidationReason.STALE_TEST_RECEIPT.value,
+        InvalidationReason.ENVIRONMENT_RECEIPT_STALE.value,
+        InvalidationReason.DELETED_SYMBOL_DEPENDENCY.value,
+        InvalidationReason.RAW_SOURCE_REQUIRED.value,
+    } <= _reasons(plan)
+    opaque_items = [
+        item for item in plan.obligations if item.reason_code == InvalidationReason.RAW_SOURCE_REQUIRED.value
+    ]
+    assert opaque_items
+    assert any(item.details.get("source_paths") or item.details.get("source_cids") for item in opaque_items)
+
+
+def test_edge_only_change_is_actionable() -> None:
+    symbol = _symbol("target", "def target():\n return 1\n")
+    test = _symbol("test_target", "def test_target():\n assert True\n", kind=SymbolKind.TEST)
+    previous = _state(symbol, test)
+    edge = DependencyEdge(symbol.stable_id, test.stable_id, RelationType.TESTED_BY, "static", "exact", "1")
+    current = _state(symbol, test, edges=(edge,))
+    plan = calculate_invalidation(previous, current, diff_repository_states(previous, current))
+    assert any(
+        item.reason_code == InvalidationReason.STALE_TEST_RECEIPT.value and item.subject_id == test.stable_id
+        for item in plan.obligations
+    )
+
+
+def test_fabricated_delta_with_matching_state_cids_is_rejected() -> None:
+    old, new = _symbol("x", "def x():\n return 1\n"), _symbol("x", "def x():\n return 2\n")
+    previous, current = _state(old), _state(new)
+    real = diff_repository_states(previous, current)
+    fabricated = replace(real, modified_symbol_ids=())
+    assert fabricated.previous_state_cid == previous.state_cid
+    assert fabricated.current_state_cid == current.state_cid
+    assert fabricated.delta_cid != real.delta_cid
+    with pytest.raises(InvalidationError, match="fabricated|recompute"):
+        calculate_invalidation(previous, current, fabricated)
 
 
 def test_plan_is_deterministic_deduplicated_bounded_and_rejects_foreign_delta() -> None:
