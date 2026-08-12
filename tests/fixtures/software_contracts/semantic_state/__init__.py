@@ -1,0 +1,43 @@
+"""Controlled Python selection fixture (SemanticStateControlledFixture@1)."""
+
+from .controlled import (
+    INTERFACE_NAME,
+    SCHEMA_NAME,
+    FIXTURE_ROOT,
+    MANIFEST_PATH,
+    FileOp,
+    MutationCase,
+    SemanticStateControlledFixture,
+    apply_mutation,
+    case_ids,
+    changed_paths_between,
+    forbidden_fixture_artifacts,
+    iter_repository_files,
+    list_mutation_cases,
+    load_controlled_fixture,
+    load_manifest,
+    materialize_baseline,
+    materialize_mutated,
+    repository_digest,
+)
+
+__all__ = [
+    "INTERFACE_NAME",
+    "SCHEMA_NAME",
+    "FIXTURE_ROOT",
+    "MANIFEST_PATH",
+    "FileOp",
+    "MutationCase",
+    "SemanticStateControlledFixture",
+    "apply_mutation",
+    "case_ids",
+    "changed_paths_between",
+    "forbidden_fixture_artifacts",
+    "iter_repository_files",
+    "list_mutation_cases",
+    "load_controlled_fixture",
+    "load_manifest",
+    "materialize_baseline",
+    "materialize_mutated",
+    "repository_digest",
+]
