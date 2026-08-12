@@ -5,6 +5,11 @@ those observations only against the supplied closed symbol/artifact set: a
 unique match is exact, multiple finite matches are retained as conservative
 may-targets, and no match remains an explicit typed target.  It never imports
 or executes repository code.
+
+Resolution statuses reuse the closed vocabulary shared with
+``software_contracts.resolver`` (definite, finite_may, unresolved).  The
+public repository state must commit these resolved edges before its state
+root is computed.
 """
 
 from __future__ import annotations
@@ -29,6 +34,11 @@ EXTRACTOR_VERSION = "1"
 _CONFIDENCE_RANK = {"exact": 0, "conservative": 1, "heuristic": 2, "opaque": 3}
 _DIRECTIONS = frozenset({"outgoing", "incoming", "both"})
 
+# Bounded resolution statuses aligned with software_contracts.resolver.
+STATUS_DEFINITE = "definite"
+STATUS_FINITE_MAY = "finite_may"
+STATUS_UNRESOLVED = "unresolved"
+
 
 def _degrade(*values: AnalysisConfidence | str) -> str:
     """Return the least certain member of the closed confidence vocabulary."""
@@ -52,6 +62,25 @@ def _module_name(symbol: SymbolRecord) -> str:
     return ".".join(parts) or "__main__"
 
 
+def _fixture_name(symbol: SymbolRecord) -> str | None:
+    if symbol.kind != SymbolKind.FIXTURE.value:
+        return None
+    meta = symbol.metadata.get("fixture_name")
+    if isinstance(meta, str) and meta:
+        return meta
+    pytest_meta = symbol.metadata.get("pytest")
+    if isinstance(pytest_meta, Mapping):
+        name = pytest_meta.get("name")
+        if isinstance(name, str) and name:
+            return name
+    annotations = symbol.annotations.get("pytest")
+    if isinstance(annotations, Mapping):
+        name = annotations.get("name")
+        if isinstance(name, str) and name:
+            return name
+    return symbol.qualified_name.rsplit(".", 1)[-1]
+
+
 def _candidate_ids(edge: DependencyEdge, symbols: Sequence[SymbolRecord], artifacts: Sequence[ArtifactRecord]) -> tuple[str, ...]:
     """Find only statically justified candidates for one frontend target."""
     known_ids = {item.stable_id for item in symbols} | {item.artifact_id for item in artifacts}
@@ -64,13 +93,31 @@ def _candidate_ids(edge: DependencyEdge, symbols: Sequence[SymbolRecord], artifa
     candidates: set[str] = set()
     if edge.target_id.startswith("module:"):
         # An import can designate a module itself or a declared member of it.
-        candidates.update(item.stable_id for item in symbols if item.kind == SymbolKind.MODULE.value and item.qualified_name == name)
-    elif edge.target_id.startswith("pytest-fixture:"):
         candidates.update(
             item.stable_id for item in symbols
-            if item.kind == SymbolKind.FIXTURE.value
-            and (item.qualified_name.rsplit(".", 1)[-1] == name or item.metadata.get("fixture_name") == name)
+            if item.kind == SymbolKind.MODULE.value and item.qualified_name == name
         )
+        # Also match imported member names when a unique symbol shares the tail.
+        member = name.rsplit(".", 1)[-1]
+        if "." in name:
+            candidates.update(
+                item.stable_id for item in symbols
+                if item.qualified_name == name or item.qualified_name.endswith("." + member)
+            )
+            # Prefer exact qualified matches over bare suffix when both exist.
+            exact = {
+                item.stable_id for item in symbols
+                if item.qualified_name == name
+            }
+            if exact:
+                candidates = exact
+    elif edge.target_id.startswith("pytest-fixture:"):
+        for item in symbols:
+            if item.kind != SymbolKind.FIXTURE.value:
+                continue
+            fixture_name = _fixture_name(item)
+            if fixture_name == name or item.qualified_name.rsplit(".", 1)[-1] == name:
+                candidates.add(item.stable_id)
     else:
         # Qualified lexical expressions can be matched directly.  A bare name
         # is additionally scoped to its declaring module, never globally
@@ -79,6 +126,33 @@ def _candidate_ids(edge: DependencyEdge, symbols: Sequence[SymbolRecord], artifa
         if source is not None and "." not in name:
             local = f"{_module_name(source)}.{name}"
             candidates.update(item.stable_id for item in symbols if item.qualified_name == local)
+        elif source is not None and name.count(".") >= 1:
+            # module.attr form: match symbols whose qualified name equals the
+            # expanded alias or ends with the attribute under a known module.
+            candidates.update(
+                item.stable_id for item in symbols
+                if item.qualified_name.endswith("." + name.rsplit(".", 1)[-1])
+                and (
+                    item.qualified_name == name
+                    or item.qualified_name.endswith("." + name)
+                    or _module_name(item) + "." + name.rsplit(".", 1)[-1] == item.qualified_name
+                )
+            )
+            # Prefer exact qualified_name equality when present.
+            exact = {item.stable_id for item in symbols if item.qualified_name == name}
+            if exact:
+                candidates = exact
+            else:
+                # For lexical:module.target match module.target or pkg.module.target.
+                tail = name
+                tail_matches = {
+                    item.stable_id for item in symbols
+                    if item.qualified_name == tail or item.qualified_name.endswith("." + tail)
+                }
+                if len(tail_matches) == 1:
+                    candidates = tail_matches
+                elif tail_matches:
+                    candidates = tail_matches
     return tuple(sorted(candidates))
 
 
@@ -93,6 +167,10 @@ def resolve_edge_targets(
     metadata and conservative confidence.  A target with no candidate remains
     unchanged with ``unresolved`` metadata, so later stages can explain the
     missing source rather than treating it as absent.
+
+    Already-inventory targets (including frontend-resolved stable CIDs) are
+    annotated with ``resolution=definite`` so public state and explanations
+    share one committed resolution vocabulary.
     """
     symbol_items = tuple(sorted(symbols, key=lambda item: item.stable_id))
     artifact_items = tuple(sorted(artifacts, key=lambda item: item.artifact_id))
@@ -101,19 +179,40 @@ def resolve_edge_targets(
         candidates = _candidate_ids(edge, symbol_items, artifact_items)
         if len(candidates) == 1:
             metadata = dict(edge.metadata)
+            metadata["resolution"] = STATUS_DEFINITE
             if candidates[0] != edge.target_id:
-                metadata.update({"resolution": "definite", "unresolved_target": edge.target_id})
-            resolved.append(DependencyEdge(edge.source_id, candidates[0], edge.relation, edge.extraction_method, edge.confidence, edge.extractor_version, edge.span, metadata))
+                metadata["unresolved_target"] = edge.target_id
+            resolved.append(DependencyEdge(
+                edge.source_id, candidates[0], edge.relation, edge.extraction_method,
+                edge.confidence, edge.extractor_version, edge.span, metadata,
+            ))
         elif candidates:
             for candidate in candidates:
                 metadata = dict(edge.metadata)
-                metadata.update({"resolution": "finite_may", "unresolved_target": edge.target_id, "candidate_count": len(candidates)})
-                resolved.append(DependencyEdge(edge.source_id, candidate, edge.relation, edge.extraction_method, _degrade(edge.confidence, "conservative"), edge.extractor_version, edge.span, metadata))
+                metadata.update({
+                    "resolution": STATUS_FINITE_MAY,
+                    "unresolved_target": edge.target_id,
+                    "candidate_count": len(candidates),
+                })
+                resolved.append(DependencyEdge(
+                    edge.source_id, candidate, edge.relation, edge.extraction_method,
+                    _degrade(edge.confidence, "conservative"), edge.extractor_version,
+                    edge.span, metadata,
+                ))
         else:
             metadata = dict(edge.metadata)
-            metadata.setdefault("resolution", "unresolved")
+            # Preserve explicit unresolved markers from frontends; otherwise set.
+            metadata.setdefault("resolution", STATUS_UNRESOLVED)
             metadata.setdefault("unresolved_target", edge.target_id)
-            resolved.append(DependencyEdge(edge.source_id, edge.target_id, edge.relation, edge.extraction_method, _degrade(edge.confidence, "conservative"), edge.extractor_version, edge.span, metadata))
+            # Already-stable non-inventory targets (exception:, state:, global:)
+            # keep confidence; pure lexical misses degrade.
+            confidence = edge.confidence
+            if edge.target_id.startswith(("lexical:", "module:", "pytest-fixture:")):
+                confidence = _degrade(edge.confidence, "conservative")
+            resolved.append(DependencyEdge(
+                edge.source_id, edge.target_id, edge.relation, edge.extraction_method,
+                confidence, edge.extractor_version, edge.span, metadata,
+            ))
     return tuple(sorted({edge.edge_id: edge for edge in resolved}.values(), key=lambda item: item.edge_id))
 
 
@@ -158,7 +257,12 @@ class SymbolGraph:
     @property
     def node_ids(self) -> tuple[str, ...]:
         """All declared and explicit unresolved nodes, in canonical order."""
-        return tuple(sorted({*(item.stable_id for item in self.symbols), *(item.artifact_id for item in self.artifacts), *(edge.source_id for edge in self.edges), *(edge.target_id for edge in self.edges)}))
+        return tuple(sorted({
+            *(item.stable_id for item in self.symbols),
+            *(item.artifact_id for item in self.artifacts),
+            *(edge.source_id for edge in self.edges),
+            *(edge.target_id for edge in self.edges),
+        }))
 
     def outgoing(self, node_id: str, *, relation: RelationType | str | None = None) -> tuple[DependencyEdge, ...]:
         return self._filter(self._outgoing.get(node_id, ()), relation)
@@ -166,13 +270,30 @@ class SymbolGraph:
     def incoming(self, node_id: str, *, relation: RelationType | str | None = None) -> tuple[DependencyEdge, ...]:
         return self._filter(self._incoming.get(node_id, ()), relation)
 
-    def neighbors(self, node_id: str, *, direction: Literal["outgoing", "incoming", "both"] = "outgoing", relation: RelationType | str | None = None) -> tuple[DependencyEdge, ...]:
+    def neighbors(
+        self,
+        node_id: str,
+        *,
+        direction: Literal["outgoing", "incoming", "both"] = "outgoing",
+        relation: RelationType | str | None = None,
+    ) -> tuple[DependencyEdge, ...]:
         if direction not in _DIRECTIONS:
             raise ValueError("direction must be outgoing, incoming, or both")
-        edges = (() if direction == "incoming" else self.outgoing(node_id, relation=relation)) + (() if direction == "outgoing" else self.incoming(node_id, relation=relation))
+        edges = (
+            (() if direction == "incoming" else self.outgoing(node_id, relation=relation))
+            + (() if direction == "outgoing" else self.incoming(node_id, relation=relation))
+        )
         return tuple(sorted({edge.edge_id: edge for edge in edges}.values(), key=lambda item: item.edge_id))
 
-    def traverse(self, start_ids: str | Iterable[str], *, direction: Literal["outgoing", "incoming", "both"] = "outgoing", relation: RelationType | str | None = None, max_depth: int = 1, max_nodes: int = 1_000) -> tuple[str, ...]:
+    def traverse(
+        self,
+        start_ids: str | Iterable[str],
+        *,
+        direction: Literal["outgoing", "incoming", "both"] = "outgoing",
+        relation: RelationType | str | None = None,
+        max_depth: int = 1,
+        max_nodes: int = 1_000,
+    ) -> tuple[str, ...]:
         """Breadth-first node traversal, bounded before expanding a cycle."""
         if max_depth < 0 or max_nodes < 1:
             raise ValueError("max_depth must be nonnegative and max_nodes must be positive")
@@ -211,9 +332,10 @@ def build_symbol_graph(
 ) -> SymbolGraph:
     """Build a resolved graph from inventory records or a repository state.
 
-    Existing edges are retained verbatim where already typed; only lexical and
-    missing targets are rewritten through the bounded resolver.  Calls from a
+    Existing edges are retained where already typed; only lexical and missing
+    targets are rewritten through the bounded resolver.  Calls from a
     statically identified test also produce a reverse ``tested_by`` receipt.
+    Protocol inheritance emits ``implements`` when the base is a Protocol.
     """
     if isinstance(symbols, RepositoryState):
         if artifacts or edges:
@@ -226,19 +348,48 @@ def build_symbol_graph(
     tests = {item.stable_id for item in symbol_items if item.kind == SymbolKind.TEST.value}
     known_symbols = {item.stable_id for item in symbol_items}
     by_id = {item.stable_id: item for item in symbol_items}
+    derived: list[DependencyEdge] = []
     for edge in tuple(resolved):
         if edge.relation == RelationType.CALLS.value and edge.source_id in tests and edge.target_id in known_symbols:
             metadata = dict(edge.metadata)
-            metadata.update({"derived_from_edge": edge.edge_id, "resolution": metadata.get("resolution", "definite")})
-            resolved.append(DependencyEdge(edge.target_id, edge.source_id, RelationType.TESTED_BY, "static-test-call-reversal", edge.confidence, EXTRACTOR_VERSION, edge.span, metadata))
+            metadata.update({
+                "derived_from_edge": edge.edge_id,
+                "resolution": metadata.get("resolution", STATUS_DEFINITE),
+                "source_bound": True,
+            })
+            derived.append(DependencyEdge(
+                edge.target_id, edge.source_id, RelationType.TESTED_BY,
+                "static-test-call-reversal", edge.confidence, EXTRACTOR_VERSION,
+                edge.span, metadata,
+            ))
         if edge.relation == RelationType.INHERITS.value and edge.target_id in known_symbols:
             target = by_id[edge.target_id]
             bases = target.annotations.get("bases", ())
             if isinstance(bases, list) and any(str(base).rsplit(".", 1)[-1] == "Protocol" for base in bases):
                 metadata = dict(edge.metadata)
-                metadata.update({"derived_from_edge": edge.edge_id, "resolution": metadata.get("resolution", "definite")})
-                resolved.append(DependencyEdge(edge.source_id, edge.target_id, RelationType.IMPLEMENTS, "static-protocol-inheritance", _degrade(edge.confidence, target.confidence), EXTRACTOR_VERSION, edge.span, metadata))
+                metadata.update({
+                    "derived_from_edge": edge.edge_id,
+                    "resolution": metadata.get("resolution", STATUS_DEFINITE),
+                })
+                derived.append(DependencyEdge(
+                    edge.source_id, edge.target_id, RelationType.IMPLEMENTS,
+                    "static-protocol-inheritance",
+                    _degrade(edge.confidence, target.confidence), EXTRACTOR_VERSION,
+                    edge.span, metadata,
+                ))
+    if derived:
+        # Re-resolve derived edges so they carry definite resolution against inventory.
+        resolved.extend(resolve_edge_targets(derived, symbol_items, artifact_items))
     return SymbolGraph(symbol_items, artifact_items, resolved)
 
 
-__all__ = ["EXTRACTOR_VERSION", "SYMBOL_GRAPH_SCHEMA", "SymbolGraph", "build_symbol_graph", "resolve_edge_targets"]
+__all__ = [
+    "EXTRACTOR_VERSION",
+    "STATUS_DEFINITE",
+    "STATUS_FINITE_MAY",
+    "STATUS_UNRESOLVED",
+    "SYMBOL_GRAPH_SCHEMA",
+    "SymbolGraph",
+    "build_symbol_graph",
+    "resolve_edge_targets",
+]

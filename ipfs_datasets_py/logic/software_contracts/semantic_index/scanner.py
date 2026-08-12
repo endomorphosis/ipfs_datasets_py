@@ -5,20 +5,32 @@ are inputs, and the Python/pytest frontends decide what those bytes mean.  It
 never imports target modules.  In particular, ``previous_state`` is only an
 optional record-reuse cache; all output is still derived from the current,
 CID-verified snapshot inputs.
+
+Identity unification (ISI-036): a pytest test/fixture never clones a second
+stable ID beside the Python logical binding.  Pytest facts are merged into
+that binding (reclassified as ``test``/``fixture``) before version CIDs and
+the public state root are computed.  Lexical edge targets are resolved
+through :mod:`symbol_graph` so the returned state never relies on parallel
+``lexical:`` targets for resolvable calls.
 """
 
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Iterable, Mapping
+from pathlib import Path, PurePosixPath
+from typing import Any, Iterable, Mapping, Sequence
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
-from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import symbol_version_cid
+from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import (
+    stable_symbol_id,
+    symbol_version_cid,
+)
 from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
     AnalysisConfidence,
     ArtifactRecord,
+    DependencyEdge,
+    RelationType,
     RepositoryState,
     SymbolKind,
     SymbolRecord,
@@ -26,12 +38,27 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
 from ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis import (
     PythonSemanticAnalyzer,
 )
-from ipfs_datasets_py.logic.software_contracts.semantic_index.pytest_analysis import PytestAnalyzer
-from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import RepositorySnapshot, SnapshotEntry, _git_root, snapshot_repository
+from ipfs_datasets_py.logic.software_contracts.semantic_index.pytest_analysis import (
+    PYTEST_ANALYZER_VERSION,
+    PytestAnalyzer,
+    PytestFixtureFacts,
+    PytestTestFacts,
+)
+from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import (
+    RepositorySnapshot,
+    SnapshotEntry,
+    _git_root,
+    snapshot_repository,
+)
+from ipfs_datasets_py.logic.software_contracts.semantic_index.symbol_graph import (
+    build_symbol_graph,
+)
 
 
 SCANNER_NAME = "semantic-repository-scanner"
 SCANNER_VERSION = "1"
+_CONFIDENCE_RANK = {"exact": 0, "conservative": 1, "heuristic": 2, "opaque": 3}
+_LOCK_KINDS = frozenset({"dependency-lock"})
 
 
 class RepositoryScannerError(ValueError):
@@ -97,6 +124,249 @@ def _witness_matches(root: Path, entry: SnapshotEntry) -> bool:
                              observed.st_mtime_ns, observed.st_ctime_ns)
 
 
+def _merge_confidence(*values: str) -> str:
+    return max((AnalysisConfidence(value).value for value in values), key=_CONFIDENCE_RANK.__getitem__)
+
+
+def _module_name(path: str) -> str:
+    parts = list(PurePosixPath(path.replace("\\", "/")).parts)
+    if parts and parts[-1].endswith((".py", ".pyi")):
+        parts[-1] = parts[-1].rsplit(".", 1)[0]
+    if parts and parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts) or "__main__"
+
+
+def _python_qualified(path: str, local_qualified: str) -> str:
+    """Map a pytest-local qualified name onto the Python module binding name."""
+    module = _module_name(path)
+    if not local_qualified:
+        return module
+    if local_qualified == module or local_qualified.startswith(module + "."):
+        return local_qualified
+    return f"{module}.{local_qualified}"
+
+
+def _pytest_projection(facts: PytestTestFacts | PytestFixtureFacts) -> dict[str, Any]:
+    """Closed DAG-JSON facet bound into the unified symbol version."""
+    if isinstance(facts, PytestTestFacts):
+        return {
+            "kind": "test",
+            "fixture_parameters": list(facts.fixture_parameters),
+            "usefixtures": list(facts.usefixtures),
+            "markers": list(facts.version_markers),
+            "function_markers": list(facts.markers),
+            "module_markers": list(facts.module_markers),
+            "class_markers": list(facts.class_markers),
+            "parametrizations": [list(group) for group in facts.parametrizations],
+            "all_parameters": list(facts.all_parameters),
+        }
+    return {
+        "kind": "fixture",
+        "name": facts.name,
+        "dependencies": list(facts.dependencies),
+        "scope": facts.scope,
+        "autouse": facts.autouse,
+        "params": list(facts.params),
+    }
+
+
+def _thaw(value: Any) -> Any:
+    """Detach frozen SymbolRecord mappings/tuples into strict DAG-JSON."""
+    if isinstance(value, Mapping):
+        return {key: _thaw(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw(item) for item in value]
+    return value
+
+
+def _reissue_pytest_symbol(
+    python: SymbolRecord,
+    facts: PytestTestFacts | PytestFixtureFacts,
+    kind: SymbolKind,
+) -> SymbolRecord:
+    """One logical binding: Python body/signature plus pytest receipt facts."""
+    annotations = _thaw(python.annotations)
+    projection = _pytest_projection(facts)
+    annotations["pytest"] = projection
+    metadata = _thaw(python.metadata)
+    metadata["pytest"] = projection
+    if isinstance(facts, PytestFixtureFacts):
+        metadata["fixture_name"] = facts.name
+    confidence = _merge_confidence(python.confidence, str(facts.confidence))
+    signature = _thaw(python.signature)
+    normalized = _thaw(python.normalized_ast)
+    stable = stable_symbol_id(
+        python.repository_id, python.language, python.module_path,
+        python.qualified_name, kind, python.namespace,
+    )
+    version = symbol_version_cid(
+        stable,
+        normalized,
+        signature,
+        tuple(python.decorators),
+        annotations,
+        extractor_name=python.extractor_name,
+        extractor_version=python.extractor_version,
+        property_role=python.property_role,
+    )
+    return SymbolRecord(
+        stable, version, python.repository_id, python.language, python.module_path,
+        python.qualified_name, kind, python.namespace, python.source_cid, facts.span or python.span,
+        confidence, signature, tuple(python.decorators), annotations, metadata,
+        normalized, python.extractor_name, python.extractor_version,
+        python.property_role,
+    )
+
+
+def _standalone_pytest_symbol(
+    facts: PytestTestFacts | PytestFixtureFacts,
+    kind: SymbolKind,
+    repository_id: str,
+    namespace: str,
+) -> SymbolRecord:
+    """Fallback when no Python binding exists (should be rare for valid AST)."""
+    qualified = _python_qualified(facts.path, facts.qualified_name)
+    module_namespace = namespace or _module_name(facts.path).split(".")[0]
+    projection = _pytest_projection(facts)
+    annotations = {"pytest": projection}
+    # Minimal location-free projection so v2 identity verifies without a body.
+    normalized = {
+        "_type": "PytestBinding",
+        "qualified_name": qualified,
+        "pytest": projection,
+    }
+    stable = stable_symbol_id(
+        repository_id, "python", facts.path, qualified, kind, module_namespace,
+    )
+    version = symbol_version_cid(
+        stable, normalized, {}, (), annotations,
+        extractor_name="pytest-static-ast", extractor_version=PYTEST_ANALYZER_VERSION,
+    )
+    metadata: dict[str, Any] = {"pytest": projection, "standalone_pytest": True}
+    if isinstance(facts, PytestFixtureFacts):
+        metadata["fixture_name"] = facts.name
+    return SymbolRecord(
+        stable, version, repository_id, "python", facts.path, qualified, kind,
+        module_namespace, facts.source_cid, facts.span, facts.confidence,
+        {}, (), annotations, metadata, normalized,
+        "pytest-static-ast", PYTEST_ANALYZER_VERSION,
+    )
+
+
+def _remap_edge(edge: DependencyEdge, remap: Mapping[str, str]) -> DependencyEdge:
+    source = remap.get(edge.source_id, edge.source_id)
+    target = remap.get(edge.target_id, edge.target_id)
+    if source == edge.source_id and target == edge.target_id:
+        return edge
+    return DependencyEdge(
+        source, target, edge.relation, edge.extraction_method, edge.confidence,
+        edge.extractor_version, edge.span, edge.metadata,
+    )
+
+
+def unify_pytest_identities(
+    symbols: Sequence[SymbolRecord],
+    edges: Sequence[DependencyEdge],
+    tests: Sequence[PytestTestFacts],
+    fixtures: Sequence[PytestFixtureFacts],
+    pytest_edges: Sequence[DependencyEdge],
+    *,
+    repository_id: str,
+    namespace: str | None,
+) -> tuple[list[SymbolRecord], list[DependencyEdge], dict[str, str]]:
+    """Merge pytest facts into the one Python logical binding per declaration.
+
+    Never clones a second TEST/FIXTURE identity alongside a FUNCTION/METHOD
+    binding for the same path and qualified name.  Call/import edge sources
+    that previously pointed at the function identity are remapped to the
+    unified test/fixture stable ID.
+    """
+    by_path_qn: dict[tuple[str, str], SymbolRecord] = {
+        (item.module_path, item.qualified_name): item for item in symbols
+    }
+    remap: dict[str, str] = {}
+    replaced: set[str] = set()
+    unified: list[SymbolRecord] = []
+
+    def absorb(facts: PytestTestFacts | PytestFixtureFacts, kind: SymbolKind) -> SymbolRecord:
+        python_qn = _python_qualified(facts.path, facts.qualified_name)
+        python = by_path_qn.get((facts.path, python_qn))
+        if python is None:
+            # Match by trailing local qualified name within the same module.
+            for (path, qn), candidate in by_path_qn.items():
+                if path == facts.path and (qn == python_qn or qn.endswith("." + facts.qualified_name)):
+                    python = candidate
+                    break
+        if python is not None and python.stable_id not in replaced:
+            record = _reissue_pytest_symbol(python, facts, kind)
+            remap[python.stable_id] = record.stable_id
+            remap[facts.symbol_id] = record.stable_id
+            replaced.add(python.stable_id)
+            return record
+        record = _standalone_pytest_symbol(facts, kind, repository_id, namespace or "pytest")
+        remap[facts.symbol_id] = record.stable_id
+        return record
+
+    for item in tests:
+        unified.append(absorb(item, SymbolKind.TEST))
+    for item in fixtures:
+        unified.append(absorb(item, SymbolKind.FIXTURE))
+
+    for item in symbols:
+        if item.stable_id not in replaced:
+            unified.append(item)
+
+    # Collapse any accidental duplicate stable IDs (should not occur).
+    by_stable: dict[str, SymbolRecord] = {}
+    for item in unified:
+        by_stable[item.stable_id] = item
+    merged_symbols = list(by_stable.values())
+
+    remapped_edges = [_remap_edge(edge, remap) for edge in (*edges, *pytest_edges)]
+    # Deduplicate after remap (edge_id changes with source/target).
+    edge_by_id = {edge.edge_id: edge for edge in remapped_edges}
+    return merged_symbols, list(edge_by_id.values()), remap
+
+
+def _lock_configuration_edges(
+    symbols: Sequence[SymbolRecord],
+    artifacts: Sequence[ArtifactRecord],
+) -> list[DependencyEdge]:
+    """Emit source-rooted configured_by edges from tests to explicit lockfiles.
+
+    Dependency/lock artifacts are statically present snapshot kinds.  Every
+    test receipt is treated as environment-sensitive when a lock/dependency
+    artifact exists in the same repository state; this is explicit presence,
+    not a guessed import graph.
+    """
+    locks = [item for item in artifacts if item.kind in _LOCK_KINDS or item.kind == "dependency-lock"]
+    if not locks:
+        # Also accept artifacts whose path is a known lock basename.
+        lock_names = {
+            "poetry.lock", "pdm.lock", "uv.lock", "requirements.txt",
+            "requirements-dev.txt", "Pipfile.lock", "package-lock.json",
+            "yarn.lock", "pnpm-lock.yaml",
+        }
+        locks = [
+            item for item in artifacts
+            if PurePosixPath(item.path).name in lock_names
+            or item.metadata.get("snapshot_kind") == "dependency-lock"
+        ]
+    if not locks:
+        return []
+    edges: list[DependencyEdge] = []
+    tests = [item for item in symbols if item.kind == SymbolKind.TEST.value]
+    for test in tests:
+        for lock in locks:
+            edges.append(DependencyEdge(
+                test.stable_id, lock.artifact_id, RelationType.CONFIGURED_BY,
+                "static-dependency-lock", "exact", SCANNER_VERSION, test.span,
+                {"config_path": lock.path, "source_bound": True, "lock": True},
+            ))
+    return edges
+
+
 @dataclass(slots=True)
 class RepositoryScanner:
     """Build a deterministic :class:`RepositoryState` without target execution."""
@@ -148,6 +418,10 @@ class RepositoryScanner:
         Supplying bytes explicitly makes this suitable for immutable object
         stores.  Every supplied byte sequence is checked against the snapshot;
         absent or mismatched bytes become an explicit opaque artifact.
+
+        The returned state is fully identity-unified and edge-resolved: call
+        targets that uniquely match inventory symbols are stable CIDs, never
+        a parallel ``lexical:`` residual for the same binding.
         """
         if not isinstance(snapshot, RepositorySnapshot):
             raise RepositoryScannerError("snapshot must be a RepositorySnapshot")
@@ -159,11 +433,14 @@ class RepositoryScanner:
                 raise RepositoryScannerError("previous_state must be a RepositoryState")
             if previous_state.repository_id != snapshot.repository_id:
                 raise RepositoryScannerError("previous_state repository_id does not match snapshot")
-            previous_by_key = {(item.stable_id, item.source_cid or "", item.version_cid): item for item in previous_state.symbols}
+            previous_by_key = {
+                (item.stable_id, item.source_cid or "", item.version_cid): item
+                for item in previous_state.symbols
+            }
 
         artifacts: list[ArtifactRecord] = []
         symbols: list[SymbolRecord] = []
-        edges = []
+        edges: list[DependencyEdge] = []
         verified: dict[str, bytes] = {}
         failures = dict(unavailable or {})
         entries_by_key = {entry.source_key: entry for entry in snapshot.entries}
@@ -213,11 +490,17 @@ class RepositoryScanner:
             if entry.kind == "python":
                 analysis = python.analyze(raw, path)
                 if analysis.diagnostics:
-                    artifacts.append(ArtifactRecord(_artifact_id(path), "python-analysis", path, entry.source_cid, "opaque", {"diagnostics": list(analysis.diagnostics)}))
+                    artifacts.append(ArtifactRecord(
+                        _artifact_id(path), "python-analysis", path, entry.source_cid, "opaque",
+                        {"diagnostics": list(analysis.diagnostics)},
+                    ))
                 else:
                     for fact in analysis.symbols:
                         record = fact.symbol
-                        symbols.append(previous_by_key.get((record.stable_id, record.source_cid or "", record.version_cid), record))
+                        reused = previous_by_key.get(
+                            (record.stable_id, record.source_cid or "", record.version_cid), record
+                        )
+                        symbols.append(reused)
                         edges.extend(fact.edges)
                 pytest_sources[path] = raw
             elif entry.kind == "pytest-config":
@@ -229,26 +512,35 @@ class RepositoryScanner:
         # Configuration artifacts are richer than a generic artifact; Python
         # sources stay represented by their module symbol instead.
         artifacts.extend(pytest_analysis.artifacts)
-        for facts, kind in ((item, SymbolKind.TEST) for item in pytest_analysis.tests):
-            symbols.append(self._pytest_symbol(facts, kind, snapshot.repository_id))
-        for facts, kind in ((item, SymbolKind.FIXTURE) for item in pytest_analysis.fixtures):
-            symbols.append(self._pytest_symbol(facts, kind, snapshot.repository_id))
-        edges.extend(pytest_analysis.edges)
 
-        # A Python file that pytest inspected but which had no configuration
-        # remains represented by its module; config artifacts are deliberately
-        # emitted by the pytest frontend only, avoiding duplicate IDs.
-        return RepositoryState(snapshot.repository_id, symbols, artifacts, edges, self.extractor_name, self.extractor_version)
+        symbols, edges, _remap = unify_pytest_identities(
+            symbols, edges,
+            pytest_analysis.tests, pytest_analysis.fixtures, pytest_analysis.edges,
+            repository_id=snapshot.repository_id, namespace=self.namespace,
+        )
 
-    def _pytest_symbol(self, facts: object, kind: SymbolKind, repository_id: str) -> SymbolRecord:
-        payload = {
-            "qualified_name": facts.qualified_name, "fixture_parameters": list(getattr(facts, "fixture_parameters", ())),
-            "usefixtures": list(getattr(facts, "usefixtures", ())), "markers": list(getattr(facts, "markers", ())),
-            "dependencies": list(getattr(facts, "dependencies", ())), "name": getattr(facts, "name", None),
-        }
-        stable_id = facts.symbol_id
-        version = symbol_version_cid(stable_id, payload, extractor_name="pytest-static-ast", extractor_version="1")
-        return SymbolRecord(stable_id, version, repository_id, "python", facts.path, facts.qualified_name, kind, "pytest", facts.source_cid, facts.span, facts.confidence, {}, (), {}, {"pytest": payload})
+        # Explicit lock/dependency artifacts configure test receipts.
+        edges.extend(_lock_configuration_edges(symbols, artifacts))
+
+        # Resolution must run before state-root computation so the public
+        # state commits stable symbol CIDs for resolvable call targets.
+        graph = build_symbol_graph(symbols, artifacts, edges)
+        # Prefer previously verified records only when identities still match.
+        final_symbols: list[SymbolRecord] = []
+        for record in graph.symbols:
+            reused = previous_by_key.get(
+                (record.stable_id, record.source_cid or "", record.version_cid)
+            )
+            final_symbols.append(reused if reused is not None else record)
+
+        return RepositoryState(
+            snapshot.repository_id,
+            final_symbols,
+            graph.artifacts,
+            graph.edges,
+            self.extractor_name,
+            self.extractor_version,
+        )
 
 
 def scan_repository_state(
@@ -260,7 +552,16 @@ def scan_repository_state(
     exclusions: Iterable[str] | None = None,
 ) -> RepositoryState:
     """Convenience entry point for a cold or incremental repository scan."""
-    return RepositoryScanner(repository_id=repository_id, namespace=namespace, exclusions=exclusions).scan(repository, previous_state=previous_state)
+    return RepositoryScanner(
+        repository_id=repository_id, namespace=namespace, exclusions=exclusions,
+    ).scan(repository, previous_state=previous_state)
 
 
-__all__ = ["SCANNER_NAME", "SCANNER_VERSION", "RepositoryScanner", "RepositoryScannerError", "scan_repository_state"]
+__all__ = [
+    "SCANNER_NAME",
+    "SCANNER_VERSION",
+    "RepositoryScanner",
+    "RepositoryScannerError",
+    "scan_repository_state",
+    "unify_pytest_identities",
+]
