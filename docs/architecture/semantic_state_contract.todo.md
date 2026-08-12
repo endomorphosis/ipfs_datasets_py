@@ -333,7 +333,7 @@ D7  DSS-011
 
 ## DSS-011 Close documentation, import safety, and regressions
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: closeout
