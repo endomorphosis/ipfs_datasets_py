@@ -3,10 +3,6 @@
 Standalone package under ``ipfs_datasets_py.logic.gui_optimizer`` owning
 versioned wire models, closed enums, and fail-closed decoders. It does not
 scan source, apply patches, select models, or cache proofs.
-
-Import surface is intentionally narrow so later identity (VGO-010) and
-receipt (VGO-041) leaves can extend the package without pulling excluded
-prior subsystems.
 """
 
 from __future__ import annotations
@@ -20,6 +16,7 @@ from .models import (
     GuiScreenIdentity,
     InteractionReceipt,
     MODEL_TYPES,
+    NESTED_MODEL_TYPES,
     SourceSpan,
     UiAccessibilityContract,
     UiActionBinding,
@@ -28,7 +25,17 @@ from .models import (
     UiComponentIdentity,
     UiComponentVersion,
     UiConstraintReceipt,
+    UiContextAccessibilityViolation,
+    UiContextFormalFailure,
+    UiContextMetricBaseline,
     UiContextPack,
+    UiContextRoute,
+    UiContextScreenshotDescription,
+    UiContextSource,
+    UiContextStateMachine,
+    UiContextStyle,
+    UiContextTest,
+    UiContextVisualReference,
     UiDependencyEdge,
     UiEvaluationScenario,
     UiEventDefinition,
@@ -38,6 +45,7 @@ from .models import (
     UiStateDefinition,
     UiTransitionDefinition,
     ViewportSpec,
+    VisualChangeRegion,
     VisualRegressionReceipt,
     assert_required_models_registered,
     canonical_model_bytes,
@@ -47,11 +55,13 @@ from .models import (
 )
 from .schema import (
     CANONICAL_JSON_PROFILE,
+    NESTED_SCHEMA_VERSION_BY_INTERFACE,
     PACKAGE_ID,
     REGISTERED_OPTIMIZER_SCHEMA_VERSIONS,
     REQUIRED_MODEL_INTERFACES,
     SCHEMA_VERSION_BY_INTERFACE,
     AccessibilityRequirementKind,
+    AccessibilitySeverity,
     AnalysisClassification,
     ChangeKind,
     CompletenessBoundary,
@@ -65,6 +75,7 @@ from .schema import (
     LayoutConstraintKind,
     ProposalDecision,
     ProposalRouteKind,
+    StyleKind,
     UiComponentKind,
     UiDependencyRelation,
     UiEventKind,
@@ -79,8 +90,10 @@ __all__ = [
     "CANONICAL_JSON_PROFILE",
     "REQUIRED_MODEL_INTERFACES",
     "SCHEMA_VERSION_BY_INTERFACE",
+    "NESTED_SCHEMA_VERSION_BY_INTERFACE",
     "REGISTERED_OPTIMIZER_SCHEMA_VERSIONS",
     "MODEL_TYPES",
+    "NESTED_MODEL_TYPES",
     "GuiOptimizerSchemaError",
     "GuiOptimizerDecodeError",
     "AnalysisClassification",
@@ -101,8 +114,11 @@ __all__ = [
     "ConstraintCheckStatus",
     "LayoutConstraintKind",
     "AccessibilityRequirementKind",
+    "StyleKind",
+    "AccessibilitySeverity",
     "SourceSpan",
     "ViewportSpec",
+    "VisualChangeRegion",
     "GuiOptimizerModel",
     "GuiApplicationIdentity",
     "GuiScreenIdentity",
@@ -120,6 +136,16 @@ __all__ = [
     "UiInvalidationPlan",
     "UiEvaluationScenario",
     "UiBaseline",
+    "UiContextSource",
+    "UiContextStyle",
+    "UiContextTest",
+    "UiContextStateMachine",
+    "UiContextFormalFailure",
+    "UiContextAccessibilityViolation",
+    "UiContextVisualReference",
+    "UiContextScreenshotDescription",
+    "UiContextRoute",
+    "UiContextMetricBaseline",
     "UiContextPack",
     "GuiImprovementProposal",
     "VisualRegressionReceipt",

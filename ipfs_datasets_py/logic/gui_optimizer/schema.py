@@ -2,11 +2,12 @@
 
 This module owns:
 
-* explicit interface and schema-version identities for every required model;
-* closed enum vocabularies, including the independent analysis-classification
-  and verification-status dimensions;
+* explicit interface and schema-version identities for every required model and
+  nested wire record;
+* closed enum vocabularies, including independent analysis-classification and
+  verification-status dimensions;
 * fail-closed decoding helpers (unknown fields, invalid enums, unsupported
-  schema versions, non-finite numbers, malformed identifiers).
+  schema versions, non-finite numbers, wrong container types, non-NFC keys).
 
 It deliberately imports only the Python standard library. Identity CID
 profiles, scanners, proof caches, semantic indexes, and model routers live
@@ -17,7 +18,8 @@ from __future__ import annotations
 
 import math
 import re
-from collections.abc import Mapping, Sequence
+import unicodedata
+from collections.abc import Callable, Mapping, Sequence
 from enum import Enum
 from types import MappingProxyType
 from typing import Any, Final, TypeVar
@@ -54,6 +56,25 @@ INTERACTION_RECEIPT_INTERFACE: Final = "InteractionReceipt@1"
 UI_CONSTRAINT_RECEIPT_INTERFACE: Final = "UiConstraintReceipt@1"
 GUI_IMPROVEMENT_RECEIPT_INTERFACE: Final = "GuiImprovementReceipt@1"
 
+# Nested shared wire records.
+SOURCE_SPAN_INTERFACE: Final = "SourceSpan@1"
+VIEWPORT_SPEC_INTERFACE: Final = "ViewportSpec@1"
+VISUAL_CHANGE_REGION_INTERFACE: Final = "VisualChangeRegion@1"
+UI_CONTEXT_SOURCE_INTERFACE: Final = "UiContextSource@1"
+UI_CONTEXT_STYLE_INTERFACE: Final = "UiContextStyle@1"
+UI_CONTEXT_TEST_INTERFACE: Final = "UiContextTest@1"
+UI_CONTEXT_STATE_MACHINE_INTERFACE: Final = "UiContextStateMachine@1"
+UI_CONTEXT_FORMAL_FAILURE_INTERFACE: Final = "UiContextFormalFailure@1"
+UI_CONTEXT_ACCESSIBILITY_VIOLATION_INTERFACE: Final = (
+    "UiContextAccessibilityViolation@1"
+)
+UI_CONTEXT_VISUAL_REFERENCE_INTERFACE: Final = "UiContextVisualReference@1"
+UI_CONTEXT_SCREENSHOT_DESCRIPTION_INTERFACE: Final = (
+    "UiContextScreenshotDescription@1"
+)
+UI_CONTEXT_ROUTE_INTERFACE: Final = "UiContextRoute@1"
+UI_CONTEXT_METRIC_BASELINE_INTERFACE: Final = "UiContextMetricBaseline@1"
+
 # Wire schema versions (closed; unsupported versions fail decode).
 GUI_APPLICATION_IDENTITY_SCHEMA: Final = "gui-application-identity/v1"
 GUI_SCREEN_IDENTITY_SCHEMA: Final = "gui-screen-identity/v1"
@@ -80,69 +101,104 @@ UI_CONSTRAINT_RECEIPT_SCHEMA: Final = "ui-constraint-receipt/v1"
 GUI_IMPROVEMENT_RECEIPT_SCHEMA: Final = "gui-improvement-receipt/v1"
 SOURCE_SPAN_SCHEMA: Final = "gui-source-span/v1"
 VIEWPORT_SPEC_SCHEMA: Final = "gui-viewport-spec/v1"
+VISUAL_CHANGE_REGION_SCHEMA: Final = "visual-change-region/v1"
+UI_CONTEXT_SOURCE_SCHEMA: Final = "ui-context-source/v1"
+UI_CONTEXT_STYLE_SCHEMA: Final = "ui-context-style/v1"
+UI_CONTEXT_TEST_SCHEMA: Final = "ui-context-test/v1"
+UI_CONTEXT_STATE_MACHINE_SCHEMA: Final = "ui-context-state-machine/v1"
+UI_CONTEXT_FORMAL_FAILURE_SCHEMA: Final = "ui-context-formal-failure/v1"
+UI_CONTEXT_ACCESSIBILITY_VIOLATION_SCHEMA: Final = (
+    "ui-context-accessibility-violation/v1"
+)
+UI_CONTEXT_VISUAL_REFERENCE_SCHEMA: Final = "ui-context-visual-reference/v1"
+UI_CONTEXT_SCREENSHOT_DESCRIPTION_SCHEMA: Final = (
+    "ui-context-screenshot-description/v1"
+)
+UI_CONTEXT_ROUTE_SCHEMA: Final = "ui-context-route/v1"
+UI_CONTEXT_METRIC_BASELINE_SCHEMA: Final = "ui-context-metric-baseline/v1"
 
 # Required model inventory for tests and registry checks.
 REQUIRED_MODEL_INTERFACES: Final[tuple[str, ...]] = (
+    ACCESSIBILITY_RECEIPT_INTERFACE,
     GUI_APPLICATION_IDENTITY_INTERFACE,
+    GUI_IMPROVEMENT_PROPOSAL_INTERFACE,
+    GUI_IMPROVEMENT_RECEIPT_INTERFACE,
     GUI_SCREEN_IDENTITY_INTERFACE,
+    INTERACTION_RECEIPT_INTERFACE,
+    UI_ACCESSIBILITY_CONTRACT_INTERFACE,
+    UI_ACTION_BINDING_INTERFACE,
+    UI_BASELINE_INTERFACE,
+    UI_CHANGE_SET_INTERFACE,
     UI_COMPONENT_IDENTITY_INTERFACE,
     UI_COMPONENT_VERSION_INTERFACE,
-    UI_DEPENDENCY_EDGE_INTERFACE,
-    UI_STATE_DEFINITION_INTERFACE,
-    UI_EVENT_DEFINITION_INTERFACE,
-    UI_TRANSITION_DEFINITION_INTERFACE,
-    UI_ACTION_BINDING_INTERFACE,
-    UI_LAYOUT_CONSTRAINT_INTERFACE,
-    UI_ACCESSIBILITY_CONTRACT_INTERFACE,
-    UI_SEMANTIC_CAPSULE_INTERFACE,
-    UI_CHANGE_SET_INTERFACE,
-    UI_INVALIDATION_PLAN_INTERFACE,
-    UI_EVALUATION_SCENARIO_INTERFACE,
-    UI_BASELINE_INTERFACE,
-    UI_CONTEXT_PACK_INTERFACE,
-    GUI_IMPROVEMENT_PROPOSAL_INTERFACE,
-    VISUAL_REGRESSION_RECEIPT_INTERFACE,
-    ACCESSIBILITY_RECEIPT_INTERFACE,
-    INTERACTION_RECEIPT_INTERFACE,
     UI_CONSTRAINT_RECEIPT_INTERFACE,
-    GUI_IMPROVEMENT_RECEIPT_INTERFACE,
+    UI_CONTEXT_PACK_INTERFACE,
+    UI_DEPENDENCY_EDGE_INTERFACE,
+    UI_EVALUATION_SCENARIO_INTERFACE,
+    UI_EVENT_DEFINITION_INTERFACE,
+    UI_INVALIDATION_PLAN_INTERFACE,
+    UI_LAYOUT_CONSTRAINT_INTERFACE,
+    UI_SEMANTIC_CAPSULE_INTERFACE,
+    UI_STATE_DEFINITION_INTERFACE,
+    UI_TRANSITION_DEFINITION_INTERFACE,
+    VISUAL_REGRESSION_RECEIPT_INTERFACE,
 )
 
 SCHEMA_VERSION_BY_INTERFACE: Final[Mapping[str, str]] = MappingProxyType(
     {
+        ACCESSIBILITY_RECEIPT_INTERFACE: ACCESSIBILITY_RECEIPT_SCHEMA,
         GUI_APPLICATION_IDENTITY_INTERFACE: GUI_APPLICATION_IDENTITY_SCHEMA,
+        GUI_IMPROVEMENT_PROPOSAL_INTERFACE: GUI_IMPROVEMENT_PROPOSAL_SCHEMA,
+        GUI_IMPROVEMENT_RECEIPT_INTERFACE: GUI_IMPROVEMENT_RECEIPT_SCHEMA,
         GUI_SCREEN_IDENTITY_INTERFACE: GUI_SCREEN_IDENTITY_SCHEMA,
+        INTERACTION_RECEIPT_INTERFACE: INTERACTION_RECEIPT_SCHEMA,
+        UI_ACCESSIBILITY_CONTRACT_INTERFACE: UI_ACCESSIBILITY_CONTRACT_SCHEMA,
+        UI_ACTION_BINDING_INTERFACE: UI_ACTION_BINDING_SCHEMA,
+        UI_BASELINE_INTERFACE: UI_BASELINE_SCHEMA,
+        UI_CHANGE_SET_INTERFACE: UI_CHANGE_SET_SCHEMA,
         UI_COMPONENT_IDENTITY_INTERFACE: UI_COMPONENT_IDENTITY_SCHEMA,
         UI_COMPONENT_VERSION_INTERFACE: UI_COMPONENT_VERSION_SCHEMA,
-        UI_DEPENDENCY_EDGE_INTERFACE: UI_DEPENDENCY_EDGE_SCHEMA,
-        UI_STATE_DEFINITION_INTERFACE: UI_STATE_DEFINITION_SCHEMA,
-        UI_EVENT_DEFINITION_INTERFACE: UI_EVENT_DEFINITION_SCHEMA,
-        UI_TRANSITION_DEFINITION_INTERFACE: UI_TRANSITION_DEFINITION_SCHEMA,
-        UI_ACTION_BINDING_INTERFACE: UI_ACTION_BINDING_SCHEMA,
-        UI_LAYOUT_CONSTRAINT_INTERFACE: UI_LAYOUT_CONSTRAINT_SCHEMA,
-        UI_ACCESSIBILITY_CONTRACT_INTERFACE: UI_ACCESSIBILITY_CONTRACT_SCHEMA,
-        UI_SEMANTIC_CAPSULE_INTERFACE: UI_SEMANTIC_CAPSULE_SCHEMA,
-        UI_CHANGE_SET_INTERFACE: UI_CHANGE_SET_SCHEMA,
-        UI_INVALIDATION_PLAN_INTERFACE: UI_INVALIDATION_PLAN_SCHEMA,
-        UI_EVALUATION_SCENARIO_INTERFACE: UI_EVALUATION_SCENARIO_SCHEMA,
-        UI_BASELINE_INTERFACE: UI_BASELINE_SCHEMA,
-        UI_CONTEXT_PACK_INTERFACE: UI_CONTEXT_PACK_SCHEMA,
-        GUI_IMPROVEMENT_PROPOSAL_INTERFACE: GUI_IMPROVEMENT_PROPOSAL_SCHEMA,
-        VISUAL_REGRESSION_RECEIPT_INTERFACE: VISUAL_REGRESSION_RECEIPT_SCHEMA,
-        ACCESSIBILITY_RECEIPT_INTERFACE: ACCESSIBILITY_RECEIPT_SCHEMA,
-        INTERACTION_RECEIPT_INTERFACE: INTERACTION_RECEIPT_SCHEMA,
         UI_CONSTRAINT_RECEIPT_INTERFACE: UI_CONSTRAINT_RECEIPT_SCHEMA,
-        GUI_IMPROVEMENT_RECEIPT_INTERFACE: GUI_IMPROVEMENT_RECEIPT_SCHEMA,
+        UI_CONTEXT_PACK_INTERFACE: UI_CONTEXT_PACK_SCHEMA,
+        UI_DEPENDENCY_EDGE_INTERFACE: UI_DEPENDENCY_EDGE_SCHEMA,
+        UI_EVALUATION_SCENARIO_INTERFACE: UI_EVALUATION_SCENARIO_SCHEMA,
+        UI_EVENT_DEFINITION_INTERFACE: UI_EVENT_DEFINITION_SCHEMA,
+        UI_INVALIDATION_PLAN_INTERFACE: UI_INVALIDATION_PLAN_SCHEMA,
+        UI_LAYOUT_CONSTRAINT_INTERFACE: UI_LAYOUT_CONSTRAINT_SCHEMA,
+        UI_SEMANTIC_CAPSULE_INTERFACE: UI_SEMANTIC_CAPSULE_SCHEMA,
+        UI_STATE_DEFINITION_INTERFACE: UI_STATE_DEFINITION_SCHEMA,
+        UI_TRANSITION_DEFINITION_INTERFACE: UI_TRANSITION_DEFINITION_SCHEMA,
+        VISUAL_REGRESSION_RECEIPT_INTERFACE: VISUAL_REGRESSION_RECEIPT_SCHEMA,
     }
 )
 
-# Authoritative closed vocabulary of every registered optimizer schema version,
-# including nested shared records. Unregistered versions fail closed on decode.
+NESTED_SCHEMA_VERSION_BY_INTERFACE: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        SOURCE_SPAN_INTERFACE: SOURCE_SPAN_SCHEMA,
+        UI_CONTEXT_ACCESSIBILITY_VIOLATION_INTERFACE: (
+            UI_CONTEXT_ACCESSIBILITY_VIOLATION_SCHEMA
+        ),
+        UI_CONTEXT_FORMAL_FAILURE_INTERFACE: UI_CONTEXT_FORMAL_FAILURE_SCHEMA,
+        UI_CONTEXT_METRIC_BASELINE_INTERFACE: UI_CONTEXT_METRIC_BASELINE_SCHEMA,
+        UI_CONTEXT_ROUTE_INTERFACE: UI_CONTEXT_ROUTE_SCHEMA,
+        UI_CONTEXT_SCREENSHOT_DESCRIPTION_INTERFACE: (
+            UI_CONTEXT_SCREENSHOT_DESCRIPTION_SCHEMA
+        ),
+        UI_CONTEXT_SOURCE_INTERFACE: UI_CONTEXT_SOURCE_SCHEMA,
+        UI_CONTEXT_STATE_MACHINE_INTERFACE: UI_CONTEXT_STATE_MACHINE_SCHEMA,
+        UI_CONTEXT_STYLE_INTERFACE: UI_CONTEXT_STYLE_SCHEMA,
+        UI_CONTEXT_TEST_INTERFACE: UI_CONTEXT_TEST_SCHEMA,
+        UI_CONTEXT_VISUAL_REFERENCE_INTERFACE: UI_CONTEXT_VISUAL_REFERENCE_SCHEMA,
+        VIEWPORT_SPEC_INTERFACE: VIEWPORT_SPEC_SCHEMA,
+        VISUAL_CHANGE_REGION_INTERFACE: VISUAL_CHANGE_REGION_SCHEMA,
+    }
+)
+
+# Authoritative closed vocabulary of every registered optimizer schema version.
 REGISTERED_OPTIMIZER_SCHEMA_VERSIONS: Final[frozenset[str]] = frozenset(
     {
         *SCHEMA_VERSION_BY_INTERFACE.values(),
-        SOURCE_SPAN_SCHEMA,
-        VIEWPORT_SPEC_SCHEMA,
+        *NESTED_SCHEMA_VERSION_BY_INTERFACE.values(),
     }
 )
 
@@ -152,21 +208,18 @@ REGISTERED_OPTIMIZER_SCHEMA_VERSIONS: Final[frozenset[str]] = frozenset(
 
 MAX_IDENTIFIER_CHARS: Final = 256
 MAX_STRING_CHARS: Final = 4_096
+MAX_CONTENT_CHARS: Final = 262_144
 MAX_COLLECTION_ITEMS: Final = 1_024
 MAX_SAFE_INTEGER: Final = (1 << 53) - 1
 
-_ID_RE: Final = re.compile(
-    r"^[A-Za-z0-9][A-Za-z0-9._:/#@-]{0,255}$"
-)
+_ID_RE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/#@-]{0,255}$")
 _SHA256_HEX_RE: Final = re.compile(r"^[0-9a-f]{64}$")
 _DIGEST_RE: Final = re.compile(r"^sha256:[0-9a-f]{64}$")
 _REPO_PATH_RE: Final = re.compile(
     r"^(?!/)(?!\.\.(?:/|$))(?!.*/\.\.(?:/|$))"
     r"[A-Za-z0-9][A-Za-z0-9._+/\-]{0,511}$"
 )
-_EXTRACTOR_VERSION_RE: Final = re.compile(
-    r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"
-)
+_EXTRACTOR_VERSION_RE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$")
 
 # ---------------------------------------------------------------------------
 # Errors
@@ -448,11 +501,31 @@ class AccessibilityRequirementKind(str, Enum):
     OTHER = "other"
 
 
+class StyleKind(str, Enum):
+    """Closed style / design-token kind for context-pack style payloads."""
+
+    DESIGN_TOKEN = "design-token"
+    CSS = "css"
+    STYLESHEET = "stylesheet"
+    INLINE = "inline"
+    OTHER = "other"
+
+
+class AccessibilitySeverity(str, Enum):
+    """Closed severity vocabulary for accessibility violations."""
+
+    CRITICAL = "critical"
+    SERIOUS = "serious"
+    MODERATE = "moderate"
+    MINOR = "minor"
+
+
 # ---------------------------------------------------------------------------
 # Shared validators
 # ---------------------------------------------------------------------------
 
 E = TypeVar("E", bound=Enum)
+_MISSING: Final = object()
 
 
 def reject_unknown_fields(
@@ -469,46 +542,65 @@ def reject_unknown_fields(
         )
 
 
-def require_mapping(value: Any, name: str) -> Mapping[str, Any]:
-    """Require a mapping container before any field coercion.
+def require_mapping(value: Any, name: str) -> dict[str, Any]:
+    """Require an exact JSON object (plain ``dict``) before field coercion.
 
-    Arrays/strings/scalars never decode as mappings. Non-string keys and
-    canonical-key collisions (two distinct keys that stringify identically)
-    are rejected fail-closed.
+    Arrays/strings/scalars never decode as mappings. Mapping proxies, dict
+    subclasses, dataclasses, models, and enums are rejected. Non-string keys,
+    non-NFC keys, and NFC-equivalent key collisions fail closed.
     """
 
-    if isinstance(value, (str, bytes, bytearray)):
+    if type(value) is not dict:
         raise GuiOptimizerDecodeError(f"{name} must be a mapping")
-    if isinstance(value, Sequence) and not isinstance(value, Mapping):
-        raise GuiOptimizerDecodeError(f"{name} must be a mapping")
-    if not isinstance(value, Mapping):
-        raise GuiOptimizerDecodeError(f"{name} must be a mapping")
-    seen_canonical: dict[str, Any] = {}
+    seen_nfc: dict[str, str] = {}
     for key in value:
-        if not isinstance(key, str):
+        if type(key) is not str:
             raise GuiOptimizerDecodeError(f"{name} keys must be strings")
-        if key in seen_canonical:
+        nfc = unicodedata.normalize("NFC", key)
+        if key != nfc:
+            raise GuiOptimizerDecodeError(f"{name} keys must be NFC-normalized")
+        if nfc in seen_nfc:
             raise GuiOptimizerDecodeError(
                 f"{name} has canonical-key collision for {key!r}"
             )
-        seen_canonical[key] = True
+        seen_nfc[nfc] = key
     return value
 
 
-def require_sequence(value: Any, name: str) -> Sequence[Any]:
-    """Require an array/list/tuple container before item coercion.
+def require_list(value: Any, name: str) -> list[Any]:
+    """Require an exact JSON array (plain ``list``) before item coercion.
 
-    Strings and mappings never decode as arrays.
+    Tuples, list subclasses, strings, mappings, scalars, and null never decode
+    as arrays.
     """
 
-    if value is None:
+    if type(value) is not list:
         raise GuiOptimizerDecodeError(f"{name} must be a sequence")
-    if isinstance(value, (str, bytes, bytearray)):
-        raise GuiOptimizerDecodeError(f"{name} must be a sequence")
-    if isinstance(value, Mapping):
-        raise GuiOptimizerDecodeError(f"{name} must be a sequence")
-    if not isinstance(value, Sequence):
-        raise GuiOptimizerDecodeError(f"{name} must be a sequence")
+    return value
+
+
+def require_sequence(value: Any, name: str) -> list[Any]:
+    """Alias for :func:`require_list` (wire arrays are exact JSON lists)."""
+
+    return require_list(value, name)
+
+
+def require_wire_string(
+    value: Any,
+    name: str,
+    *,
+    max_chars: int = MAX_STRING_CHARS,
+) -> str:
+    """Require an exact ``str`` wire string (not Enum, not str subclass)."""
+
+    if type(value) is not str:
+        raise GuiOptimizerDecodeError(f"{name} must be a string")
+    if len(value) > max_chars:
+        raise GuiOptimizerDecodeError(
+            f"{name} exceeds maximum length of {max_chars}"
+        )
+    if "\x00" in value:
+        raise GuiOptimizerDecodeError(f"{name} must not contain NUL bytes")
     return value
 
 
@@ -519,21 +611,25 @@ def require_text(
     allow_empty: bool = False,
     max_chars: int = MAX_STRING_CHARS,
 ) -> str:
-    if not isinstance(value, str):
-        raise GuiOptimizerDecodeError(f"{name} must be a string")
+    text = require_wire_string(value, name, max_chars=max_chars)
     if value != value.strip():
         raise GuiOptimizerDecodeError(
             f"{name} must not have surrounding whitespace"
         )
     if not allow_empty and not value:
         raise GuiOptimizerDecodeError(f"{name} must be a non-empty string")
-    if len(value) > max_chars:
-        raise GuiOptimizerDecodeError(
-            f"{name} exceeds maximum length of {max_chars}"
-        )
-    if "\x00" in value:
-        raise GuiOptimizerDecodeError(f"{name} must not contain NUL bytes")
-    return value
+    return text
+
+
+def require_content_string(
+    value: Any,
+    name: str,
+    *,
+    max_chars: int = MAX_CONTENT_CHARS,
+) -> str:
+    """Exact raw content string: preserves every code point, no trimming."""
+
+    return require_wire_string(value, name, max_chars=max_chars)
 
 
 def optional_text(
@@ -541,8 +637,15 @@ def optional_text(
     name: str,
     *,
     max_chars: int = MAX_STRING_CHARS,
+    missing_default: str = "",
 ) -> str:
-    if value in (None, ""):
+    """Optional non-null string. Explicit null is rejected; omission uses default."""
+
+    if value is _MISSING:
+        return missing_default
+    if value is None:
+        raise GuiOptimizerDecodeError(f"{name} must be a string")
+    if value == "":
         return ""
     return require_text(value, name, max_chars=max_chars)
 
@@ -554,16 +657,23 @@ def require_identifier(value: Any, name: str) -> str:
     return text
 
 
-def optional_identifier(value: Any, name: str) -> str:
-    if value in (None, ""):
+def optional_identifier(
+    value: Any,
+    name: str,
+    *,
+    missing_default: str = "",
+) -> str:
+    if value is _MISSING:
+        return missing_default
+    if value is None:
+        raise GuiOptimizerDecodeError(f"{name} must be a string")
+    if value == "":
         return ""
     return require_identifier(value, name)
 
 
 def require_digest(value: Any, name: str) -> str:
     text = require_text(value, name, max_chars=80)
-    if _SHA256_HEX_RE.fullmatch(text):
-        text = f"sha256:{text}"
     if not _DIGEST_RE.fullmatch(text):
         raise GuiOptimizerDecodeError(
             f"{name} must be a sha256:<64-hex> digest"
@@ -571,8 +681,17 @@ def require_digest(value: Any, name: str) -> str:
     return text
 
 
-def optional_digest(value: Any, name: str) -> str:
-    if value in (None, ""):
+def optional_digest(
+    value: Any,
+    name: str,
+    *,
+    missing_default: str = "",
+) -> str:
+    if value is _MISSING:
+        return missing_default
+    if value is None:
+        raise GuiOptimizerDecodeError(f"{name} must be a string")
+    if value == "":
         return ""
     return require_digest(value, name)
 
@@ -586,8 +705,17 @@ def require_repo_path(value: Any, name: str) -> str:
     return text
 
 
-def optional_repo_path(value: Any, name: str) -> str:
-    if value in (None, ""):
+def optional_repo_path(
+    value: Any,
+    name: str,
+    *,
+    missing_default: str = "",
+) -> str:
+    if value is _MISSING:
+        return missing_default
+    if value is None:
+        raise GuiOptimizerDecodeError(f"{name} must be a string")
+    if value == "":
         return ""
     return require_repo_path(value, name)
 
@@ -602,7 +730,7 @@ def require_extractor_version(value: Any, name: str = "extractor_version") -> st
 
 
 def require_bool(value: Any, name: str) -> bool:
-    if not isinstance(value, bool):
+    if type(value) is not bool:
         raise GuiOptimizerDecodeError(f"{name} must be a boolean")
     return value
 
@@ -614,7 +742,7 @@ def require_int(
     minimum: int | None = None,
     maximum: int | None = None,
 ) -> int:
-    if isinstance(value, bool) or not isinstance(value, int):
+    if type(value) is not int:
         raise GuiOptimizerDecodeError(f"{name} must be an integer")
     if value < -MAX_SAFE_INTEGER or value > MAX_SAFE_INTEGER:
         raise GuiOptimizerDecodeError(f"{name} is outside the safe integer range")
@@ -631,30 +759,47 @@ def optional_int(
     *,
     minimum: int | None = None,
     maximum: int | None = None,
+    allow_null: bool = False,
 ) -> int | None:
-    if value is None:
+    if value is _MISSING:
         return None
+    if value is None:
+        if allow_null:
+            return None
+        raise GuiOptimizerDecodeError(f"{name} must be an integer")
     return require_int(value, name, minimum=minimum, maximum=maximum)
 
 
 def require_finite_number(value: Any, name: str) -> float | int:
-    if isinstance(value, bool):
-        raise GuiOptimizerDecodeError(f"{name} must be a finite number")
-    if isinstance(value, int):
+    if type(value) is int:
         return require_int(value, name)
-    if isinstance(value, float):
+    if type(value) is float:
         if not math.isfinite(value):
             raise GuiOptimizerDecodeError(f"{name} must be a finite number")
         return value
     raise GuiOptimizerDecodeError(f"{name} must be a finite number")
 
 
+def require_finite_float(value: Any, name: str) -> float:
+    """Require an exact finite ``float`` (not int, not subclass)."""
+
+    if type(value) is not float:
+        raise GuiOptimizerDecodeError(f"{name} must be a finite number")
+    if not math.isfinite(value):
+        raise GuiOptimizerDecodeError(f"{name} must be a finite number")
+    return value
+
+
 def parse_enum(value: Any, enum_cls: type[E], name: str) -> E:
-    if isinstance(value, enum_cls):
-        return value
+    """Parse a closed enum from an exact wire string (never a Python Enum)."""
+
+    if isinstance(value, Enum):
+        raise GuiOptimizerDecodeError(f"{name} must be a string enum value")
+    if type(value) is not str:
+        raise GuiOptimizerDecodeError(f"{name} must be a string")
     try:
         return enum_cls(value)
-    except (TypeError, ValueError) as exc:
+    except ValueError as exc:
         allowed = ", ".join(item.value for item in enum_cls)
         raise GuiOptimizerDecodeError(
             f"{name} must be one of: {allowed}"
@@ -729,16 +874,31 @@ def require_wire_identity(
     return interface, schema_version
 
 
+def field_value(
+    payload: Mapping[str, Any],
+    key: str,
+    default: Any = _MISSING,
+) -> Any:
+    """Return a field value, distinguishing omission from present null."""
+
+    if key not in payload:
+        return default
+    return payload[key]
+
+
 def unique_identifiers(
     values: Any,
     name: str,
     *,
     max_items: int = MAX_COLLECTION_ITEMS,
-    preserve_order: bool = False,
+    preserve_order: bool = True,
+    required: bool = False,
 ) -> tuple[str, ...]:
-    if values is None:
+    if values is _MISSING:
+        if required:
+            raise GuiOptimizerDecodeError(f"{name} is required")
         return ()
-    sequence = require_sequence(values, name)
+    sequence = require_list(values, name)
     if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
@@ -755,12 +915,15 @@ def unique_texts(
     *,
     max_items: int = MAX_COLLECTION_ITEMS,
     max_chars: int = MAX_STRING_CHARS,
-    preserve_order: bool = False,
+    preserve_order: bool = True,
     allow_empty_items: bool = False,
+    required: bool = False,
 ) -> tuple[str, ...]:
-    if values is None:
+    if values is _MISSING:
+        if required:
+            raise GuiOptimizerDecodeError(f"{name} is required")
         return ()
-    sequence = require_sequence(values, name)
+    sequence = require_list(values, name)
     if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
@@ -784,10 +947,14 @@ def unique_digests(
     name: str,
     *,
     max_items: int = MAX_COLLECTION_ITEMS,
+    preserve_order: bool = True,
+    required: bool = False,
 ) -> tuple[str, ...]:
-    if values is None:
+    if values is _MISSING:
+        if required:
+            raise GuiOptimizerDecodeError(f"{name} is required")
         return ()
-    sequence = require_sequence(values, name)
+    sequence = require_list(values, name)
     if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
@@ -795,7 +962,7 @@ def unique_digests(
     items = tuple(require_digest(item, f"{name} item") for item in sequence)
     if len(items) != len(set(items)):
         raise GuiOptimizerDecodeError(f"{name} must not contain duplicates")
-    return tuple(sorted(items))
+    return items if preserve_order else tuple(sorted(items))
 
 
 def unique_repo_paths(
@@ -803,10 +970,14 @@ def unique_repo_paths(
     name: str,
     *,
     max_items: int = MAX_COLLECTION_ITEMS,
+    preserve_order: bool = True,
+    required: bool = False,
 ) -> tuple[str, ...]:
-    if values is None:
+    if values is _MISSING:
+        if required:
+            raise GuiOptimizerDecodeError(f"{name} is required")
         return ()
-    sequence = require_sequence(values, name)
+    sequence = require_list(values, name)
     if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
@@ -814,7 +985,7 @@ def unique_repo_paths(
     items = tuple(require_repo_path(item, f"{name} item") for item in sequence)
     if len(items) != len(set(items)):
         raise GuiOptimizerDecodeError(f"{name} must not contain duplicates")
-    return tuple(sorted(items))
+    return items if preserve_order else tuple(sorted(items))
 
 
 def parse_enum_sequence(
@@ -823,10 +994,14 @@ def parse_enum_sequence(
     name: str,
     *,
     max_items: int = MAX_COLLECTION_ITEMS,
+    preserve_order: bool = True,
+    required: bool = False,
 ) -> tuple[E, ...]:
-    if values is None:
+    if values is _MISSING:
+        if required:
+            raise GuiOptimizerDecodeError(f"{name} is required")
         return ()
-    sequence = require_sequence(values, name)
+    sequence = require_list(values, name)
     if len(sequence) > max_items:
         raise GuiOptimizerDecodeError(
             f"{name} exceeds maximum of {max_items} items"
@@ -836,11 +1011,116 @@ def parse_enum_sequence(
     )
     if len(items) != len(set(items)):
         raise GuiOptimizerDecodeError(f"{name} must not contain duplicates")
-    return tuple(sorted(items, key=lambda item: item.value))
+    return items if preserve_order else tuple(sorted(items, key=lambda i: i.value))
+
+
+def require_closed_json_value(value: Any, name: str) -> Any:
+    """Recursively validate a closed JSON value with exact built-in types."""
+
+    value_type = type(value)
+    if value is None or value_type is bool or value_type is str:
+        if value_type is str and "\x00" in value:
+            raise GuiOptimizerDecodeError(f"{name} must not contain NUL bytes")
+        return value
+    if value_type is int:
+        return require_int(value, name)
+    if value_type is float:
+        return require_finite_float(value, name)
+    if value_type is list:
+        return [
+            require_closed_json_value(item, f"{name}[{index}]")
+            for index, item in enumerate(value)
+        ]
+    if value_type is dict:
+        mapping = require_mapping(value, name)
+        return {
+            key: require_closed_json_value(item, f"{name}.{key}")
+            for key, item in mapping.items()
+        }
+    raise GuiOptimizerDecodeError(
+        f"{name} must be a closed JSON value; got {value_type.__name__}"
+    )
+
+
+def deep_copy_json(value: Any) -> Any:
+    """Defensive deep copy of a closed JSON value."""
+
+    value_type = type(value)
+    if value is None or value_type in (bool, int, float, str):
+        return value
+    if value_type is list:
+        return [deep_copy_json(item) for item in value]
+    if value_type is dict:
+        return {key: deep_copy_json(item) for key, item in value.items()}
+    raise GuiOptimizerDecodeError(
+        f"cannot deep-copy non-JSON type {value_type.__name__}"
+    )
 
 
 def enum_values(enum_cls: type[Enum]) -> tuple[str, ...]:
     return tuple(item.value for item in enum_cls)
+
+
+def decode_closed_record(
+    cls: type[Any],
+    value: Any,
+    *,
+    record_name: str,
+    builder: Callable[[dict[str, Any]], Any],
+) -> Any:
+    """Shared closed-record decoder used by all versioned wire models."""
+
+    payload = require_mapping(value, record_name)
+    payload = deep_copy_json(payload)
+    reject_unknown_fields(payload, cls._FIELDS, record_name)
+    require_wire_identity(
+        payload,
+        expected_interface=cls.INTERFACE,
+        expected_schema=cls.SCHEMA_VERSION,
+        record_name=record_name,
+    )
+    return builder(payload)
+
+
+def decode_nested_record(cls: type[Any], value: Any, name: str) -> Any:
+    if type(value) is not dict:
+        raise GuiOptimizerDecodeError(f"{name} must be a mapping")
+    return cls.from_dict(value)
+
+
+def optional_nested_record(cls: type[Any], value: Any, name: str) -> Any | None:
+    if value is _MISSING or value is None:
+        return None
+    return decode_nested_record(cls, value, name)
+
+
+def nested_record_list(
+    cls: type[Any],
+    values: Any,
+    name: str,
+    *,
+    min_items: int = 0,
+) -> tuple[Any, ...]:
+    if values is _MISSING:
+        values = []
+    sequence = require_list(values, name)
+    if len(sequence) > MAX_COLLECTION_ITEMS:
+        raise GuiOptimizerDecodeError(
+            f"{name} exceeds maximum of {MAX_COLLECTION_ITEMS} items"
+        )
+    items = tuple(
+        decode_nested_record(cls, item, f"{name} item") for item in sequence
+    )
+    if len(items) < min_items:
+        raise GuiOptimizerDecodeError(
+            f"{name} must contain at least {min_items} item(s)"
+        )
+    return items
+
+
+def store_attrs(obj: Any, **values: Any) -> None:
+    for key, value in values.items():
+        object.__setattr__(obj, key, value)
 
 
 __all__ = [
@@ -848,6 +1128,7 @@ __all__ = [
     "CANONICAL_JSON_PROFILE",
     "REQUIRED_MODEL_INTERFACES",
     "SCHEMA_VERSION_BY_INTERFACE",
+    "NESTED_SCHEMA_VERSION_BY_INTERFACE",
     "REGISTERED_OPTIMIZER_SCHEMA_VERSIONS",
     "GuiOptimizerSchemaError",
     "GuiOptimizerDecodeError",
@@ -869,10 +1150,15 @@ __all__ = [
     "ConstraintCheckStatus",
     "LayoutConstraintKind",
     "AccessibilityRequirementKind",
+    "StyleKind",
+    "AccessibilitySeverity",
     "reject_unknown_fields",
     "require_mapping",
+    "require_list",
     "require_sequence",
+    "require_wire_string",
     "require_text",
+    "require_content_string",
     "optional_text",
     "require_identifier",
     "optional_identifier",
@@ -885,15 +1171,25 @@ __all__ = [
     "require_int",
     "optional_int",
     "require_finite_number",
+    "require_finite_float",
     "parse_enum",
     "require_schema_version",
     "require_registered_optimizer_schema_version",
     "require_interface",
     "require_wire_identity",
+    "field_value",
     "unique_identifiers",
     "unique_texts",
     "unique_digests",
     "unique_repo_paths",
     "parse_enum_sequence",
+    "require_closed_json_value",
+    "deep_copy_json",
     "enum_values",
+    "decode_closed_record",
+    "decode_nested_record",
+    "optional_nested_record",
+    "nested_record_list",
+    "store_attrs",
+    "_MISSING",
 ]
