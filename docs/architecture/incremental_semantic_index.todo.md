@@ -638,7 +638,7 @@ W21 ISI-040
 
 ## ISI-043 Restore frontend-authoritative Python inventory and projections
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: extraction-inventory-closure
