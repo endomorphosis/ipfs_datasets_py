@@ -226,7 +226,7 @@ D7  DSS-011
 
 ## DSS-007 Select affected pytest tests and proof obligations
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: test-selection
