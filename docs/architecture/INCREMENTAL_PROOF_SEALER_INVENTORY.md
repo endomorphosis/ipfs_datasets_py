@@ -10,7 +10,7 @@ nested revision. This document is a companion to
 | Field | Value |
 | --- | --- |
 | `planning_revision` | `bd2ff6245ebe476fc744d45c7c66235c92b0e19c` |
-| `inventory_worktree_parent_revision` | `a99e1aff41efa20ebc0f5068cc4c67c9a8d9843c` |
+| `inventory_worktree_parent_revision` | `78e4db9f77d6cb2960bb9dc7b3890e544b8dc6c1` |
 
 `inventory_worktree_parent_revision` is immutable and equals the receipt-tested
 datasets source revision. Final nested/outer/status commits come from supervisor
@@ -24,7 +24,7 @@ command lines, outcome tallies, logs, or execution claims.
 | Field | Value |
 | --- | --- |
 | path | `artifacts/agent_supervisor/incremental_proof_sealer/baseline_receipts/datasets.json` |
-| receipt_digest | `sha256:bcdd3a1dd729bd92d37db771947ba10fa61d15fe396358edf20d48cc7f981dab` |
+| receipt_digest | `sha256:11b602d2000a3ccf2676131ee3bcab10c6515a4e855e14a3dbac87800c1d34a5` |
 | required_command_ids | `datasets-zkp-focused-current`, `datasets-zkp-unit-wide-current`, `datasets-proof-cache-adapters`, `datasets-zkp-broad-safe-current` |
 | evidence_origin | `operator_capture` |
 | assurance | `process_observed_only` |
