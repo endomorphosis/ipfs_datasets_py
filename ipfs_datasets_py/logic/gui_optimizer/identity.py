@@ -734,7 +734,10 @@ def compile_component_version(
     extractor = require_extractor_version(extractor_version)
 
     return UiComponentVersion(
-        stable_identity=identity,
+        # The shared wire model intentionally accepts only a closed mapping at
+        # its decode boundary.  Keep the compiler's ergonomic model-or-mapping
+        # input, but cross that boundary through the canonical wire form.
+        stable_identity=identity.to_dict(),
         structure_digest=digests["structure_digest"],
         props_digest=digests["props_digest"],
         state_digest=digests["state_digest"],
