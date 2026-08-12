@@ -19,7 +19,7 @@ from __future__ import annotations
 import math
 import re
 import unicodedata
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from enum import Enum
 from types import MappingProxyType
 from typing import Any, Final, TypeVar
@@ -1120,7 +1120,466 @@ def nested_record_list(
 
 def store_attrs(obj: Any, **values: Any) -> None:
     for key, value in values.items():
-        object.__setattr__(obj, key, value)
+        if key == 'acceptance_criteria':
+            obj.acceptance_criteria = value
+        elif key == 'accessibility_contract_id':
+            obj.accessibility_contract_id = value
+        elif key == 'accessibility_receipt_ids':
+            obj.accessibility_receipt_ids = value
+        elif key == 'accessibility_violations':
+            obj.accessibility_violations = value
+        elif key == 'accessibility_digest':
+            obj.accessibility_digest = value
+        elif key == 'actions_digest':
+            obj.actions_digest = value
+        elif key == 'handlers_digest':
+            obj.handlers_digest = value
+        elif key == 'props_digest':
+            obj.props_digest = value
+        elif key == 'state_digest':
+            obj.state_digest = value
+        elif key == 'structure_digest':
+            obj.structure_digest = value
+        elif key == 'styles_digest':
+            obj.styles_digest = value
+        elif key == 'action_binding_ids':
+            obj.action_binding_ids = value
+        elif key == 'action_bindings':
+            obj.action_bindings = value
+        elif key == 'action_id':
+            obj.action_id = value
+        elif key == 'action_ids':
+            obj.action_ids = value
+        elif key == 'action_invocation_ids':
+            obj.action_invocation_ids = value
+        elif key == 'action_side_effects':
+            obj.action_side_effects = value
+        elif key == 'affected_check_ids':
+            obj.affected_check_ids = value
+        elif key == 'affected_component_ids':
+            obj.affected_component_ids = value
+        elif key == 'affected_routes':
+            obj.affected_routes = value
+        elif key == 'affected_scenario_ids':
+            obj.affected_scenario_ids = value
+        elif key == 'affected_tests':
+            obj.affected_tests = value
+        elif key == 'analysis_classification':
+            obj.analysis_classification = value
+        elif key == 'application_id':
+            obj.application_id = value
+        elif key == 'artifact_digest':
+            obj.artifact_digest = value
+        elif key == 'artifact_digests':
+            obj.artifact_digests = value
+        elif key == 'automated_pass_count':
+            obj.automated_pass_count = value
+        elif key == 'baseline_digest':
+            obj.baseline_digest = value
+        elif key == 'baseline_id':
+            obj.baseline_id = value
+        elif key == 'breakpoint':
+            obj.breakpoint = value
+        elif key == 'browser':
+            obj.browser = value
+        elif key == 'browser_version':
+            obj.browser_version = value
+        elif key == 'capsule_id':
+            obj.capsule_id = value
+        elif key == 'capsule_tokens':
+            obj.capsule_tokens = value
+        elif key == 'change_kinds':
+            obj.change_kinds = value
+        elif key == 'change_set_id':
+            obj.change_set_id = value
+        elif key == 'check_ids':
+            obj.check_ids = value
+        elif key == 'child_capsules':
+            obj.child_capsules = value
+        elif key == 'child_component_ids':
+            obj.child_component_ids = value
+        elif key == 'color_scheme':
+            obj.color_scheme = value
+        elif key == 'completeness_boundary':
+            obj.completeness_boundary = value
+        elif key == 'component_id':
+            obj.component_id = value
+        elif key == 'component_ids':
+            obj.component_ids = value
+        elif key == 'component_kind':
+            obj.component_kind = value
+        elif key == 'component_type':
+            obj.component_type = value
+        elif key == 'component_version_ids':
+            obj.component_version_ids = value
+        elif key == 'compression_ratio':
+            obj.compression_ratio = value
+        elif key == 'confidence':
+            obj.confidence = value
+        elif key == 'confirmation_id':
+            obj.confirmation_id = value
+        elif key == 'confirmation_required':
+            obj.confirmation_required = value
+        elif key == 'constraint_id':
+            obj.constraint_id = value
+        elif key == 'constraint_receipt_ids':
+            obj.constraint_receipt_ids = value
+        elif key == 'content':
+            obj.content = value
+        elif key == 'context_pack_id':
+            obj.context_pack_id = value
+        elif key == 'contract_id':
+            obj.contract_id = value
+        elif key == 'decision':
+            obj.decision = value
+        elif key == 'dependency_edge_ids':
+            obj.dependency_edge_ids = value
+        elif key == 'depends_on_schema':
+            obj.depends_on_schema = value
+        elif key == 'description':
+            obj.description = value
+        elif key == 'device_scale_factor':
+            obj.device_scale_factor = value
+        elif key == 'display_name':
+            obj.display_name = value
+        elif key == 'editable':
+            obj.editable = value
+        elif key == 'effect_ids':
+            obj.effect_ids = value
+        elif key == 'emitted_event_ids':
+            obj.emitted_event_ids = value
+        elif key == 'empty_behavior':
+            obj.empty_behavior = value
+        elif key == 'end_column':
+            obj.end_column = value
+        elif key == 'end_line':
+            obj.end_line = value
+        elif key == 'error_behavior':
+            obj.error_behavior = value
+        elif key == 'escalation_conditions':
+            obj.escalation_conditions = value
+        elif key == 'event_id':
+            obj.event_id = value
+        elif key == 'event_ids':
+            obj.event_ids = value
+        elif key == 'events':
+            obj.events = value
+        elif key == 'evidence_level':
+            obj.evidence_level = value
+        elif key == 'evidence_reason':
+            obj.evidence_reason = value
+        elif key == 'excluded_context_explanation':
+            obj.excluded_context_explanation = value
+        elif key == 'expected_change_regions':
+            obj.expected_change_regions = value
+        elif key == 'expected_screenshot_ids':
+            obj.expected_screenshot_ids = value
+        elif key == 'expected_test_ids':
+            obj.expected_test_ids = value
+        elif key == 'expression':
+            obj.expression = value
+        elif key == 'extra_control_count':
+            obj.extra_control_count = value
+        elif key == 'extraction_method':
+            obj.extraction_method = value
+        elif key == 'extractor_version':
+            obj.extractor_version = value
+        elif key == 'fallback_explanation':
+            obj.fallback_explanation = value
+        elif key == 'fallback_triggered':
+            obj.fallback_triggered = value
+        elif key == 'file_paths':
+            obj.file_paths = value
+        elif key == 'fixture_digest':
+            obj.fixture_digest = value
+        elif key == 'focus_behavior':
+            obj.focus_behavior = value
+        elif key == 'focus_sequence':
+            obj.focus_sequence = value
+        elif key == 'forbidden_change_regions':
+            obj.forbidden_change_regions = value
+        elif key == 'formal_invariant_failures':
+            obj.formal_invariant_failures = value
+        elif key == 'from_state_id':
+            obj.from_state_id = value
+        elif key == 'guard':
+            obj.guard = value
+        elif key == 'height':
+            obj.height = value
+        elif key == 'initial_state_id':
+            obj.initial_state_id = value
+        elif key == 'intended_component_ids':
+            obj.intended_component_ids = value
+        elif key == 'intended_file_paths':
+            obj.intended_file_paths = value
+        elif key == 'interaction_receipt_ids':
+            obj.interaction_receipt_ids = value
+        elif key == 'interface':
+            obj.interface = value
+        elif key == 'invalidation_plan_id':
+            obj.invalidation_plan_id = value
+        elif key == 'invariant_id':
+            obj.invariant_id = value
+        elif key == 'is_destructive':
+            obj.is_destructive = value
+        elif key == 'is_initial':
+            obj.is_initial = value
+        elif key == 'is_noop':
+            obj.is_noop = value
+        elif key == 'is_terminal':
+            obj.is_terminal = value
+        elif key == 'keyboard_interactions':
+            obj.keyboard_interactions = value
+        elif key == 'keyboard_result':
+            obj.keyboard_result = value
+        elif key == 'kind':
+            obj.kind = value
+        elif key == 'known_violation_ids':
+            obj.known_violation_ids = value
+        elif key == 'label':
+            obj.label = value
+        elif key == 'layout_role':
+            obj.layout_role = value
+        elif key == 'loading_behavior':
+            obj.loading_behavior = value
+        elif key == 'locale':
+            obj.locale = value
+        elif key == 'localization_digest':
+            obj.localization_digest = value
+        elif key == 'localization_keys':
+            obj.localization_keys = value
+        elif key == 'lower_bound':
+            obj.lower_bound = value
+        elif key == 'machine_id':
+            obj.machine_id = value
+        elif key == 'manual_check_ids':
+            obj.manual_check_ids = value
+        elif key == 'manual_review_threshold_percent':
+            obj.manual_review_threshold_percent = value
+        elif key == 'max_unexplained_diff_percent':
+            obj.max_unexplained_diff_percent = value
+        elif key == 'method':
+            obj.method = value
+        elif key == 'metric_baseline':
+            obj.metric_baseline = value
+        elif key == 'metric_digest':
+            obj.metric_digest = value
+        elif key == 'metric_id':
+            obj.metric_id = value
+        elif key == 'metrics':
+            obj.metrics = value
+        elif key == 'missing_control_count':
+            obj.missing_control_count = value
+        elif key == 'name':
+            obj.name = value
+        elif key == 'notes':
+            obj.notes = value
+        elif key == 'objective':
+            obj.objective = value
+        elif key == 'optimizer_schema_version':
+            obj.optimizer_schema_version = value
+        elif key == 'ordinary_raw_dependency_tokens':
+            obj.ordinary_raw_dependency_tokens = value
+        elif key == 'other_context_tokens':
+            obj.other_context_tokens = value
+        elif key == 'pack_id':
+            obj.pack_id = value
+        elif key == 'package_namespace':
+            obj.package_namespace = value
+        elif key == 'parent_capsules':
+            obj.parent_capsules = value
+        elif key == 'patch_digest':
+            obj.patch_digest = value
+        elif key == 'path':
+            obj.path = value
+        elif key == 'pixel_diff_percent':
+            obj.pixel_diff_percent = value
+        elif key == 'plan_id':
+            obj.plan_id = value
+        elif key == 'policy_id':
+            obj.policy_id = value
+        elif key == 'prop_names':
+            obj.prop_names = value
+        elif key == 'proposal_id':
+            obj.proposal_id = value
+        elif key == 'purpose':
+            obj.purpose = value
+        elif key == 'qualified_name':
+            obj.qualified_name = value
+        elif key == 'raw_source_tokens':
+            obj.raw_source_tokens = value
+        elif key == 'raw_sources':
+            obj.raw_sources = value
+        elif key == 'reasons':
+            obj.reasons = value
+        elif key == 'receipt_id':
+            obj.receipt_id = value
+        elif key == 'recovery_ids':
+            obj.recovery_ids = value
+        elif key == 'reduced_motion':
+            obj.reduced_motion = value
+        elif key == 'region_id':
+            obj.region_id = value
+        elif key == 'rejection_reasons':
+            obj.rejection_reasons = value
+        elif key == 'relation':
+            obj.relation = value
+        elif key == 'repository_revision':
+            obj.repository_revision = value
+        elif key == 'repository_root':
+            obj.repository_root = value
+        elif key == 'required_names':
+            obj.required_names = value
+        elif key == 'required_roles':
+            obj.required_roles = value
+        elif key == 'requirement_kinds':
+            obj.requirement_kinds = value
+        elif key == 'requires_confirmation':
+            obj.requires_confirmation = value
+        elif key == 'requires_human_review':
+            obj.requires_human_review = value
+        elif key == 'responsive_behavior':
+            obj.responsive_behavior = value
+        elif key == 'route_id':
+            obj.route_id = value
+        elif key == 'route_kind':
+            obj.route_kind = value
+        elif key == 'scenario_id':
+            obj.scenario_id = value
+        elif key == 'scenario_ids':
+            obj.scenario_ids = value
+        elif key == 'schema_id':
+            obj.schema_id = value
+        elif key == 'schema_version':
+            obj.schema_version = value
+        elif key == 'screen_id':
+            obj.screen_id = value
+        elif key == 'screen_reader_reviewed':
+            obj.screen_reader_reviewed = value
+        elif key == 'screenshot_analysis_tokens':
+            obj.screenshot_analysis_tokens = value
+        elif key == 'screenshot_descriptions':
+            obj.screenshot_descriptions = value
+        elif key == 'screenshot_digest':
+            obj.screenshot_digest = value
+        elif key == 'screenshot_height':
+            obj.screenshot_height = value
+        elif key == 'screenshot_ids':
+            obj.screenshot_ids = value
+        elif key == 'screenshot_width':
+            obj.screenshot_width = value
+        elif key == 'severity':
+            obj.severity = value
+        elif key == 'solver_id':
+            obj.solver_id = value
+        elif key == 'source_component_id':
+            obj.source_component_id = value
+        elif key == 'source_revision':
+            obj.source_revision = value
+        elif key == 'source_span':
+            obj.source_span = value
+        elif key == 'source_tokens_replaced_by_capsules':
+            obj.source_tokens_replaced_by_capsules = value
+        elif key == 'stable_identity':
+            obj.stable_identity = value
+        elif key == 'start_column':
+            obj.start_column = value
+        elif key == 'start_line':
+            obj.start_line = value
+        elif key == 'state_effect_ids':
+            obj.state_effect_ids = value
+        elif key == 'state_id':
+            obj.state_id = value
+        elif key == 'state_ids':
+            obj.state_ids = value
+        elif key == 'state_machine':
+            obj.state_machine = value
+        elif key == 'state_variable_ids':
+            obj.state_variable_ids = value
+        elif key == 'states':
+            obj.states = value
+        elif key == 'status':
+            obj.status = value
+        elif key == 'statuses':
+            obj.statuses = value
+        elif key == 'step_ids':
+            obj.step_ids = value
+        elif key == 'structural_diff_percent':
+            obj.structural_diff_percent = value
+        elif key == 'style_kind':
+            obj.style_kind = value
+        elif key == 'styles':
+            obj.styles = value
+        elif key == 'success_behavior':
+            obj.success_behavior = value
+        elif key == 'summary':
+            obj.summary = value
+        elif key == 'tags':
+            obj.tags = value
+        elif key == 'target_component_id':
+            obj.target_component_id = value
+        elif key == 'test_id':
+            obj.test_id = value
+        elif key == 'test_ids':
+            obj.test_ids = value
+        elif key == 'text_scale_percent':
+            obj.text_scale_percent = value
+        elif key == 'timezone':
+            obj.timezone = value
+        elif key == 'to_state_id':
+            obj.to_state_id = value
+        elif key == 'token_budget':
+            obj.token_budget = value
+        elif key == 'total_estimated_prompt_tokens':
+            obj.total_estimated_prompt_tokens = value
+        elif key == 'transition_id':
+            obj.transition_id = value
+        elif key == 'transition_ids':
+            obj.transition_ids = value
+        elif key == 'transitions':
+            obj.transitions = value
+        elif key == 'unexpected_layout_shift_count':
+            obj.unexpected_layout_shift_count = value
+        elif key == 'unresolved_dynamic_behavior':
+            obj.unresolved_dynamic_behavior = value
+        elif key == 'unresolved_observation_ids':
+            obj.unresolved_observation_ids = value
+        elif key == 'unsupported_check_ids':
+            obj.unsupported_check_ids = value
+        elif key == 'unsupported_criteria':
+            obj.unsupported_criteria = value
+        elif key == 'upper_bound':
+            obj.upper_bound = value
+        elif key == 'verification_status':
+            obj.verification_status = value
+        elif key == 'version_identity':
+            obj.version_identity = value
+        elif key == 'viewport':
+            obj.viewport = value
+        elif key == 'violated_check_ids':
+            obj.violated_check_ids = value
+        elif key == 'violation_count':
+            obj.violation_count = value
+        elif key == 'violation_id':
+            obj.violation_id = value
+        elif key == 'violation_ids':
+            obj.violation_ids = value
+        elif key == 'visible_state_ids':
+            obj.visible_state_ids = value
+        elif key == 'visual_effect_summary':
+            obj.visual_effect_summary = value
+        elif key == 'visual_receipt_ids':
+            obj.visual_receipt_ids = value
+        elif key == 'visual_references':
+            obj.visual_references = value
+        elif key == 'width':
+            obj.width = value
+        elif key == 'x':
+            obj.x = value
+        elif key == 'y':
+            obj.y = value
+        else:
+            raise GuiOptimizerDecodeError(f"unsupported model attribute: {key}")
 
 
 __all__ = [

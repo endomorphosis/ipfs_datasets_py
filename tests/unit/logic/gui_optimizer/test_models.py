@@ -8,13 +8,11 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from ipfs_datasets_py.logic.gui_optimizer import (
-    REGISTERED_OPTIMIZER_SCHEMA_VERSIONS,
+    MODEL_TYPES,
     REQUIRED_MODEL_INTERFACES,
     SCHEMA_VERSION_BY_INTERFACE,
     GuiOptimizerDecodeError,
-    MODEL_TYPES,
     assert_required_models_registered,
     canonical_model_bytes,
     decode_model,

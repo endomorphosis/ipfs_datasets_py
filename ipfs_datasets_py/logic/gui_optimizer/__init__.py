@@ -8,6 +8,8 @@ scan source, apply patches, select models, or cache proofs.
 from __future__ import annotations
 
 from .models import (
+    MODEL_TYPES,
+    NESTED_MODEL_TYPES,
     AccessibilityReceipt,
     GuiApplicationIdentity,
     GuiImprovementProposal,
@@ -15,8 +17,6 @@ from .models import (
     GuiOptimizerModel,
     GuiScreenIdentity,
     InteractionReceipt,
-    MODEL_TYPES,
-    NESTED_MODEL_TYPES,
     SourceSpan,
     UiAccessibilityContract,
     UiActionBinding,
