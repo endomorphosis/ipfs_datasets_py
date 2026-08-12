@@ -307,7 +307,7 @@ D7  DSS-011
 
 ## DSS-010 Prove the public controlled pipeline and wire boundary
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: acceptance
