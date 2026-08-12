@@ -6,6 +6,7 @@ analysed in this process; a deserialised snapshot is only a manifest claim.
 """
 from __future__ import annotations
 
+import fcntl
 import os
 import posixpath
 import stat
@@ -24,6 +25,8 @@ DEFAULT_MAX_ENTRIES: Final[int] = 100_000
 GIT_COMMAND_TIMEOUT_SECONDS: Final[float] = 10.0
 _UNBORN_ID_FILE: Final[str] = ".ipfs-datasets-semantic-index-unborn-id"
 _UNBORN_ID_BYTES: Final[int] = 32
+_UNBORN_TOKEN_HEX_LEN: Final[int] = _UNBORN_ID_BYTES * 2
+_UNBORN_CLEANUP_BOUND: Final[int] = 256
 _IGNORED_DIRECTORIES: Final[frozenset[str]] = frozenset({".git", ".hg", ".svn", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".tox", ".nox", ".venv", "venv", "env", "build", "dist", ".eggs", "htmlcov", "coverage", "node_modules", "vendor", "third_party", "third-party", "external", "site-packages", ".semantic-index", "semantic-index-state", ".semantic_index"})
 _LOCK_NAMES = frozenset({"poetry.lock", "pdm.lock", "uv.lock", "requirements.txt", "requirements-dev.txt", "pipfile.lock", "package-lock.json", "yarn.lock", "pnpm-lock.yaml"})
 _PYTEST_CONFIG_NAMES = frozenset({"pytest.ini", "tox.ini", "setup.cfg", "conftest.py"})
@@ -32,6 +35,9 @@ _SCHEMA_SUFFIXES = (".json", ".yaml", ".yml", ".toml", ".proto", ".schema")
 # raw_path_hex remains the non-forgeable key, so a real path with this spelling
 # cannot collide with an unsafe byte name downstream.
 _UNSAFE_PREFIX = "@malformed-path/"
+_O_NOFOLLOW: Final[int] = getattr(os, "O_NOFOLLOW", 0)
+_O_DIRECTORY: Final[int] = getattr(os, "O_DIRECTORY", 0)
+_O_NONBLOCK: Final[int] = getattr(os, "O_NONBLOCK", 0)
 
 class SnapshotError(ValueError): pass
 class GitCommandTimeout(SnapshotError): pass
@@ -255,44 +261,424 @@ def _git_dir(root: Path) -> Path:
         raise GitSnapshotError("git directory was not a directory")
     return resolved
 
-def _unborn_bootstrap_token(root: Path) -> str:
-    """Return a move-stable, locally generated identity seed for an unborn Git repo."""
-    metadata = _git_dir(root) / _UNBORN_ID_FILE
+def _unborn_temp_prefix(marker_name: str) -> str:
+    return f".{marker_name}.tmp-"
 
-    def read_token() -> str:
+
+def _raise_git_snapshot(message: str, *failures: BaseException) -> None:
+    """Raise ``GitSnapshotError``, retaining every linked diagnostic."""
+    retained = [item for item in failures if isinstance(item, BaseException)]
+    if not retained:
+        raise GitSnapshotError(message)
+    if len(retained) == 1:
+        raise GitSnapshotError(message) from retained[0]
+    raise GitSnapshotError(message) from ExceptionGroup(message, retained)
+
+
+def _close_descriptor(descriptor: int) -> None:
+    os.close(descriptor)
+
+
+def _sync_metadata_directory(directory: Path) -> None:
+    """Make directory entry mutations durable via an explicit directory fsync."""
+    try:
+        descriptor = os.open(directory, os.O_RDONLY | _O_DIRECTORY)
+    except OSError as exc:
+        _raise_git_snapshot("unborn repository identity directory could not be synchronized", exc)
+        return
+    sync_error: BaseException | None = None
+    try:
         try:
-            descriptor = os.open(metadata, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-            with os.fdopen(descriptor, "rb") as handle:
-                value = handle.read(_UNBORN_ID_BYTES * 2 + 1)
+            os.fsync(descriptor)
+        except OSError as exc:
+            sync_error = exc
+    finally:
+        try:
+            _close_descriptor(descriptor)
+        except OSError as exc:
+            if sync_error is not None:
+                _raise_git_snapshot(
+                    "unborn repository identity directory could not be synchronized",
+                    sync_error,
+                    exc,
+                )
+            _raise_git_snapshot(
+                "unborn repository identity directory could not be synchronized",
+                exc,
+            )
+    if sync_error is not None:
+        _raise_git_snapshot("unborn repository identity directory could not be synchronized", sync_error)
+
+
+def _token_from_bytes(value: bytes) -> str:
+    try:
+        token = value.decode("ascii", "strict")
+    except UnicodeDecodeError as exc:
+        raise GitSnapshotError("unborn repository identity was malformed") from exc
+    if len(token) != _UNBORN_TOKEN_HEX_LEN or any(char not in "0123456789abcdef" for char in token):
+        raise GitSnapshotError("unborn repository identity was malformed")
+    return token
+
+
+def _validate_private_regular(descriptor: int) -> None:
+    try:
+        info = os.fstat(descriptor)
+    except OSError as exc:
+        raise GitSnapshotError("unborn repository identity was unreadable") from exc
+    if not stat.S_ISREG(info.st_mode):
+        raise GitSnapshotError("unborn repository identity was not a private regular file")
+    if stat.S_IMODE(info.st_mode) != 0o600:
+        raise GitSnapshotError("unborn repository identity was not a private regular file")
+
+
+def _read_token_from_descriptor(descriptor: int) -> str:
+    _validate_private_regular(descriptor)
+    try:
+        value = os.read(descriptor, _UNBORN_TOKEN_HEX_LEN + 1)
+    except OSError as exc:
+        raise GitSnapshotError("unborn repository identity was unreadable") from exc
+    return _token_from_bytes(value)
+
+
+def _open_unborn_path(path: Path, flags: int, mode: int = 0o600) -> int:
+    """Open a final or temporary marker without following or blocking."""
+    open_flags = flags | _O_NOFOLLOW | _O_NONBLOCK
+    try:
+        if flags & os.O_CREAT:
+            return os.open(path, open_flags, mode)
+        return os.open(path, open_flags)
+    except FileExistsError:
+        raise
+    except FileNotFoundError:
+        raise
+    except OSError as exc:
+        raise GitSnapshotError("unborn repository identity was unreadable") from exc
+
+
+def _read_final_unborn_token(metadata: Path) -> str | None:
+    """Return a validated final token, or ``None`` when the final path is absent."""
+    try:
+        descriptor = _open_unborn_path(metadata, os.O_RDONLY)
+    except FileNotFoundError:
+        return None
+    except GitSnapshotError:
+        raise
+    try:
+        return _read_token_from_descriptor(descriptor)
+    finally:
+        try:
+            _close_descriptor(descriptor)
         except OSError as exc:
             raise GitSnapshotError("unborn repository identity was unreadable") from exc
+
+
+def _try_lock_exclusive(descriptor: int) -> bool:
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        return False
+    except OSError as exc:
+        raise GitSnapshotError("unborn repository identity cleanup failed") from exc
+    return True
+
+
+def _unlink_path(path: Path) -> None:
+    try:
+        os.unlink(path)
+    except FileNotFoundError:
+        return
+    except OSError as exc:
+        raise GitSnapshotError("unborn repository identity cleanup failed") from exc
+
+
+def _inspect_and_reap_candidate(path: Path) -> str:
+    """Inspect one marker-derived temporary.
+
+    Returns ``"reaped"``, ``"live"``, or ``"absent"``. A non-blocking exclusive
+    lock distinguishes a cooperating live publisher (lock held) from crash
+    residue (lock available). Unsafe residue fails typed rather than skipped.
+    """
+    try:
+        descriptor = _open_unborn_path(path, os.O_RDWR)
+    except FileNotFoundError:
+        return "absent"
+    close_error: BaseException | None = None
+    try:
+        _validate_private_regular(descriptor)
         try:
-            token = value.decode("ascii", "strict")
-        except UnicodeDecodeError as exc:
-            raise GitSnapshotError("unborn repository identity was malformed") from exc
-        if len(token) != _UNBORN_ID_BYTES * 2 or any(char not in "0123456789abcdef" for char in token):
-            raise GitSnapshotError("unborn repository identity was malformed")
-        return token
+            # Consume evidence through the descriptor; content validity does not
+            # change reaping once the exclusive lock is available.
+            os.read(descriptor, _UNBORN_TOKEN_HEX_LEN + 1)
+        except OSError as exc:
+            raise GitSnapshotError("unborn repository identity was unreadable") from exc
+        if not _try_lock_exclusive(descriptor):
+            return "live"
+    finally:
+        try:
+            _close_descriptor(descriptor)
+        except OSError as exc:
+            close_error = exc
+    if close_error is not None:
+        raise GitSnapshotError("unborn repository identity cleanup failed") from close_error
+    _unlink_path(path)
+    return "reaped"
+
+
+def _cleanup_unborn_candidates(directory: Path, marker_name: str) -> None:
+    """Boundedly discover and clean marker-derived temporaries.
+
+    Discovery/inspection and marker-derived mutation are each capped at
+    ``_UNBORN_CLEANUP_BOUND`` per public call. Unsafe, nonprivate, or unreadable
+    residue fails typed. Every successful unlink batch is followed by a
+    metadata-directory sync before return or typed failure.
+    """
+    prefix = _unborn_temp_prefix(marker_name)
+    inspected = 0
+    mutations = 0
+    reaped_any = False
+    hit_bound = False
+    fatal: BaseException | None = None
+    try:
+        with os.scandir(directory) as entries:
+            iterator = iter(entries)
+            while True:
+                # Do not request another entry once the discovery budget is spent;
+                # a for-loop would otherwise materialize entry 257 before the check.
+                if inspected >= _UNBORN_CLEANUP_BOUND:
+                    hit_bound = True
+                    break
+                if mutations >= _UNBORN_CLEANUP_BOUND:
+                    hit_bound = True
+                    break
+                try:
+                    entry = next(iterator)
+                except StopIteration:
+                    break
+                inspected += 1
+                if not entry.name.startswith(prefix):
+                    continue
+                outcome = _inspect_and_reap_candidate(Path(entry.path))
+                if outcome == "reaped":
+                    mutations += 1
+                    reaped_any = True
+    except GitSnapshotError as exc:
+        fatal = exc
+    except OSError as exc:
+        fatal = GitSnapshotError("unborn repository identity cleanup failed")
+        fatal.__cause__ = exc
+    if reaped_any:
+        try:
+            _sync_metadata_directory(directory)
+        except GitSnapshotError as exc:
+            if fatal is None:
+                fatal = exc
+            else:
+                _raise_git_snapshot("unborn repository identity cleanup failed", fatal, exc)
+    if fatal is not None:
+        if isinstance(fatal, GitSnapshotError):
+            raise fatal
+        raise GitSnapshotError("unborn repository identity cleanup failed") from fatal
+    if hit_bound:
+        raise GitSnapshotError("unborn repository identity cleanup made only bounded progress")
+
+
+def _write_all(descriptor: int, payload: bytes) -> None:
+    view = memoryview(payload)
+    while view:
+        try:
+            written = os.write(descriptor, view)
+        except OSError as exc:
+            raise GitSnapshotError("unborn repository identity could not be stored") from exc
+        if written <= 0:
+            raise GitSnapshotError("unborn repository identity could not be stored")
+        view = view[written:]
+
+
+def _cleanup_failed_candidate(
+    directory: Path,
+    candidate: Path,
+    failures: list[BaseException],
+    message: str,
+) -> None:
+    """Unlink a prepublication candidate, sync the directory, then raise if needed."""
+    try:
+        _unlink_path(candidate)
+    except GitSnapshotError as exc:
+        failures.append(exc)
+        _raise_git_snapshot(message, *failures)
+    try:
+        _sync_metadata_directory(directory)
+    except GitSnapshotError as exc:
+        failures.append(exc)
+        _raise_git_snapshot(message, *failures)
+    if failures:
+        _raise_git_snapshot(message, *failures)
+
+
+def _publish_unborn_candidate(directory: Path, metadata: Path, token: str) -> bool:
+    """Write a private candidate and no-replace publish it.
+
+    Returns True when this caller installed the final marker, False when another
+    durable winner already won the race. Own candidate residue is always cleaned
+    with a following metadata-directory sync, or a typed cleanup failure is raised.
+    """
+    payload = token.encode("ascii")
+    failures: list[BaseException] = []
+    candidate: Path | None = None
+    descriptor: int | None = None
+    published = False
+
+    for _attempt in range(8):
+        suffix = os.urandom(8).hex()
+        path = directory / f"{_unborn_temp_prefix(metadata.name)}{suffix}"
+        try:
+            descriptor = _open_unborn_path(
+                path,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o600,
+            )
+            candidate = path
+            break
+        except FileExistsError:
+            continue
+        except GitSnapshotError as exc:
+            failures.append(exc)
+            break
+    if descriptor is None or candidate is None:
+        if failures:
+            _raise_git_snapshot("unborn repository identity could not be created", *failures)
+        raise GitSnapshotError("unborn repository identity could not be created")
 
     try:
-        descriptor = os.open(
-            metadata,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
-            0o600,
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX)
+        except OSError as exc:
+            failures.append(exc)
+            raise
+        try:
+            _write_all(descriptor, payload)
+        except GitSnapshotError as exc:
+            failures.append(exc.__cause__ or exc)
+            raise
+        try:
+            os.fsync(descriptor)
+        except OSError as exc:
+            failures.append(exc)
+            raise
+        try:
+            os.link(candidate, metadata)
+            published = True
+        except FileExistsError:
+            published = False
+        except OSError as exc:
+            failures.append(exc)
+            raise
+    except (GitSnapshotError, OSError, Exception):
+        # Close before cleanup so flock is released; retain close diagnostics.
+        close_error: BaseException | None = None
+        try:
+            _close_descriptor(descriptor)
+        except OSError as exc:
+            close_error = exc
+        descriptor = None
+        if close_error is not None:
+            failures.append(close_error)
+        assert candidate is not None
+        _cleanup_failed_candidate(
+            directory,
+            candidate,
+            failures,
+            "unborn repository identity could not be stored",
         )
-    except FileExistsError:
-        return read_token()
+        return False
+    else:
+        close_error = None
+        try:
+            _close_descriptor(descriptor)
+        except OSError as exc:
+            close_error = exc
+        descriptor = None
+        if close_error is not None:
+            failures.append(close_error)
+            assert candidate is not None
+            if published:
+                try:
+                    _sync_metadata_directory(directory)
+                    _unlink_path(candidate)
+                    _sync_metadata_directory(directory)
+                except GitSnapshotError as exc:
+                    failures.append(exc)
+                _raise_git_snapshot(
+                    "unborn repository identity could not be stored",
+                    *failures,
+                )
+            _cleanup_failed_candidate(
+                directory,
+                candidate,
+                failures,
+                "unborn repository identity could not be stored",
+            )
+            return False
+
+    assert candidate is not None
+    if not published:
+        _cleanup_failed_candidate(
+            directory,
+            candidate,
+            failures,
+            "unborn repository identity could not be stored",
+        )
+        return False
+
+    # Winner: durable publication, then candidate unlink, then post-cleanup sync.
+    _sync_metadata_directory(directory)
+    _unlink_path(candidate)
+    _sync_metadata_directory(directory)
+    return True
+
+
+def _unborn_bootstrap_token(root: Path) -> str:
+    """Return a move-stable, locally generated identity seed for an unborn Git repo.
+
+    Publication is candidate-then-no-replace-link: the final path is never
+    visible with partial or unflushed bytes. Concurrent losers reread the
+    durable winner; crash residue is cleaned with bounded discovery/mutation
+    and live cooperating candidates are not reaped.
+    """
+    directory = _git_dir(root)
+    metadata = directory / _UNBORN_ID_FILE
+
+    existing = _read_final_unborn_token(metadata)
+    if existing is not None:
+        # Final visibility is not durability: re-establish directory durability
+        # before returning, then clean stale candidates with pre/post sync order.
+        _sync_metadata_directory(directory)
+        _cleanup_unborn_candidates(directory, metadata.name)
+        confirmed = _read_final_unborn_token(metadata)
+        if confirmed is None:
+            raise GitSnapshotError("unborn repository identity was unreadable")
+        return confirmed
+
+    # Remove crash residue; flock keeps cooperating live candidates alive.
+    _cleanup_unborn_candidates(directory, metadata.name)
+
+    try:
+        token = os.urandom(_UNBORN_ID_BYTES).hex()
     except OSError as exc:
         raise GitSnapshotError("unborn repository identity could not be created") from exc
-    token = os.urandom(_UNBORN_ID_BYTES).hex()
-    try:
-        with os.fdopen(descriptor, "wb") as handle:
-            handle.write(token.encode("ascii"))
-            handle.flush()
-            os.fsync(handle.fileno())
-    except OSError as exc:
-        raise GitSnapshotError("unborn repository identity could not be stored") from exc
-    return token
+
+    _publish_unborn_candidate(directory, metadata, token)
+
+    winner = _read_final_unborn_token(metadata)
+    if winner is None:
+        raise GitSnapshotError("unborn repository identity was unreadable")
+    # Losers re-establish durability before return; winners already synced.
+    _sync_metadata_directory(directory)
+    _cleanup_unborn_candidates(directory, metadata.name)
+    confirmed = _read_final_unborn_token(metadata)
+    if confirmed is None:
+        raise GitSnapshotError("unborn repository identity was unreadable")
+    return confirmed
 
 def _identity_for_captured_head(root: Path, commit: str | None, unborn_ref: str | None) -> str:
     if commit is None:
