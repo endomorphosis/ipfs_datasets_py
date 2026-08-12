@@ -253,7 +253,7 @@ D7  DSS-011
 
 ## DSS-008 Compute honest selected-versus-full oracle metrics
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: oracle
