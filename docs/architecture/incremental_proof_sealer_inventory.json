@@ -1,0 +1,1007 @@
+{
+  "schema_version": "ips/datasets-inventory@2",
+  "task_id": "IPS-002",
+  "repository": "datasets",
+  "evidence_subset": "ips/datasets-inventory@2",
+  "planning_revision": "bd2ff6245ebe476fc744d45c7c66235c92b0e19c",
+  "inventory_worktree_parent_revision": "bd2ff6245ebe476fc744d45c7c66235c92b0e19c",
+  "baseline_evidence": {
+    "path": "artifacts/agent_supervisor/incremental_proof_sealer/baseline_receipts/datasets.json",
+    "receipt_digest": "sha256:2bf70cf540d04bac0d11fc58b8668bd924884ea89578cef28ec2e8c601efe8a9",
+    "required_command_ids": [
+      "datasets-zkp-focused-current",
+      "datasets-zkp-unit-wide-current",
+      "datasets-proof-cache-adapters",
+      "datasets-zkp-broad-safe-current"
+    ],
+    "evidence_origin": "operator_capture",
+    "assurance": "process_observed_only",
+    "nonclaim": "pytest_execution_not_cryptographically_proven"
+  },
+  "inspection": {
+    "classification_method": "static source inventory",
+    "scope": "ipfs_datasets_py repository-relative paths at inventory_worktree_parent_revision",
+    "assurance": "static_surfaces_only",
+    "nonclaim": "static_inspection_is_not_pytest_execution_and_is_not_cryptographic_proof"
+  },
+  "ownership_candidates": {
+    "datasets_semantic_authority": [
+      "proof evidence classes and closed proof-unit/status enums",
+      "ProofUnit / VerificationRequirementManifest / VerificationPolicy schemas",
+      "canonical proof statements, identities, dependency graphs, invalidation rules",
+      "canonical leaf/category/repository commitment codec"
+    ],
+    "proposed_package": "ipfs_datasets_py.logic.zkp.incremental_sealing"
+  },
+  "explicit_nonclaims": [
+    "Test-execution certificates without signature verification are not signed receipts.",
+    "TestPassStatementV1 is a Python predicate/statement protocol, not an implemented ZK aggregation circuit.",
+    "proof_receipt_attestation callback-style cryptographic attempts are structural unless a real backend actually ran.",
+    "Groth16 v2 proves a bounded Horn-style TDFOL derivation; that computation-proof axis is distinct from pytest-execution proof.",
+    "Event-DAG v3 proving/verifying-key artifacts under processors/groth16_backend/artifacts/v3 are absent; availability() reports unavailable without them.",
+    "tdfol_v1_axioms_commitment_hex_v2 is an explicit reduced-field BN254 digest binding, not a full cryptographic hash commitment.",
+    "Outer ZKPProof.public_inputs metadata is not currently bound to the inner Groth16 public input.",
+    "Existing v1/v2 key files lack production-origin and allowlist evidence and remain test-only candidates.",
+    "Controlled-offline baseline capture disables Groth16/ProveKit enablement, builds, downloads, and auto-install; operator receipt reference does not establish new real proving.",
+    "Wallet and PDF form proof paths default to simulated backends and must not authorize production seals."
+  ],
+  "classifications": [
+    {
+      "surface": "ipfs_datasets_py/logic/CEC/native/cec_zkp_integration.py",
+      "family": "CEC",
+      "role": "zkp_bridge",
+      "classification": "hybrid_bridge",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "ZKPCECProver bridges DCEC theorem proving to selectable ZKP backends."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/CEC/native/cec_proof_cache.py",
+      "family": "CEC",
+      "role": "proof_cache",
+      "classification": "integrity_cache",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "CID-keyed cache of CEC proof attempts; cache hit is not cryptographic proof."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/TDFOL/zkp_integration.py",
+      "family": "TDFOL",
+      "role": "zkp_bridge",
+      "classification": "hybrid_bridge",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "ZKPTDFOLProver hybrid path; module documents simulated backend as educational only. Required term alias tdfol_zkp_integration.py maps to this path."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/TDFOL/tdfol_proof_cache.py",
+      "family": "TDFOL",
+      "role": "proof_cache",
+      "classification": "integrity_cache",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "TDFOL proof cache adapter over unified ProofCache."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/flogic/flogic_zkp_integration.py",
+      "family": "F-logic",
+      "role": "zkp_bridge",
+      "classification": "hybrid_bridge",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Optional F-logic ZKP attestation bridge patterned after cec_zkp_integration."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/flogic/flogic_proof_cache.py",
+      "family": "F-logic",
+      "role": "proof_cache",
+      "classification": "integrity_cache",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "CID-keyed ErgoAI/F-logic query cache."
+    },
+    {
+      "surface": "ipfs_datasets_py/mcp_server/event_dag_zkp.py",
+      "family": "Event-DAG",
+      "role": "profile_f_compaction_zk",
+      "classification": "real_backend_candidate_with_absent_v3_artifacts",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "event_dag_zkp.py Profile F circuit v3; requires audited v3 pk/vk pair. Absent artifacts force EventDagZKUnavailable and zero_knowledge false."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/backends/provekit_ffi.py",
+      "family": "ProveKit",
+      "role": "ffi_wrapper",
+      "classification": "real_backend_candidate_fail_closed",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "provekit_ffi.py library discovery and FFI bindings; no silent simulated fallback."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/backends/provekit.py",
+      "family": "ProveKit",
+      "role": "backend_entrypoint",
+      "classification": "real_backend_candidate_fail_closed",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Selectable ProveKit WHIR shell; fails closed without CLI and key artifacts."
+    },
+    {
+      "surface": "ipfs_datasets_py/wallet/proofs.py",
+      "family": "wallet",
+      "role": "wallet_proof_backend",
+      "classification": "simulated",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "wallet/proofs.py defaults to SimulatedProofBackend; simulated-wallet-zkp-v0.1 is not production ZK."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/test_execution_certificate.py",
+      "family": "test_execution",
+      "role": "certificate_conformance_verifier",
+      "classification": "structural_integrity",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "test_execution_certificate.py checks certificate shape, binding pins, and optional backend proof bytes. No receipt-signature verifier; certificates without signature verification are not signed receipts."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/statements/test_pass.py",
+      "family": "test_execution",
+      "role": "statement_protocol",
+      "classification": "predicate_only",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "test_pass.py defines TestPassStatementV1 public/private inputs. Not an implemented ZK circuit."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/provekit/test_pass_circuit.py",
+      "family": "test_execution",
+      "role": "circuit_binding",
+      "classification": "structural_binding",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Verifier-side TestPassCircuitBinding pins reviewed artifacts; does not implement a ZK aggregation circuit."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/bridge/proof_receipt_attestation.py",
+      "family": "attestation",
+      "role": "receipt_attestation",
+      "classification": "structural_unless_real_backend",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "proof_receipt_attestation.py builds envelopes and can invoke caller-supplied prover/verifier callbacks. Structural unless a real backend ran."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/backends/groth16.py",
+      "family": "Groth16",
+      "role": "backend_entrypoint",
+      "classification": "real_backend_candidate_opt_in",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Gated by IPFS_DATASETS_ENABLE_GROTH16. ensure_setup provisions keys when absent. v2 uses TDFOL_v1 reduced-field axiom commitment."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/backends/groth16_ffi.py",
+      "family": "Groth16",
+      "role": "rust_ffi",
+      "classification": "real_backend_candidate",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Rust binary CLI wrapper; setup() and artifacts_exist() for versioned keys."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/backends/simulated.py",
+      "family": "simulated",
+      "role": "demo_backend",
+      "classification": "simulated",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "SIMZKP/1 hash-layout educational backend; not cryptographically secure."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/backends/__init__.py",
+      "family": "backend_registry",
+      "role": "selection",
+      "classification": "structural",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Lazy registry for simulated, groth16, provekit."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/canonicalization.py",
+      "family": "identity",
+      "role": "canonicalization",
+      "classification": "integrity_commitment",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Text/axiom canonicalization; tdfol_v1_axioms_commitment_hex_v2 reduced-field digest binding for circuit_version=2."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/statement.py",
+      "family": "identity",
+      "role": "statement_witness",
+      "classification": "structural",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Circuit ref parsing and statement/witness formats."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/circuits.py",
+      "family": "circuits",
+      "role": "circuit_helpers",
+      "classification": "mixed_structural_and_real_targets",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Attestation views, MVP circuits, TDFOLv1DerivationCircuit Python constraint checker (non-cryptographic alone)."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/legal_theorem_semantics.py",
+      "family": "TDFOL",
+      "role": "derivation_semantics",
+      "classification": "structural_semantics",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "derive_tdfol_v1_trace for bounded Horn-style derivation used by Groth16 v2."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/vk_registry.py",
+      "family": "keys",
+      "role": "vk_hash_registry",
+      "classification": "integrity_only",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Off-chain (circuit_id, version) -> vk_hash_hex map; no setup/prove/verify."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/setup_artifacts.py",
+      "family": "keys",
+      "role": "setup_artifact_helpers",
+      "classification": "integrity_transport",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "IPFS storage of proving_key_cid/verifying_key_cid from setup manifests; does not run setup."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/backends/groth16.py#ensure_setup",
+      "family": "keys",
+      "role": "ensure_setup",
+      "classification": "setup_key_generation_surface",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "ensure_setup(version) idempotently creates keys when missing; opt-in only."
+    },
+    {
+      "surface": "ipfs_datasets_py/processors/groth16_backend/artifacts/v1/proving_key.bin",
+      "family": "keys",
+      "role": "proving_key",
+      "classification": "test_only_key_candidate",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Present on disk. No production-origin or allowlist evidence in tree."
+    },
+    {
+      "surface": "ipfs_datasets_py/processors/groth16_backend/artifacts/v1/verifying_key.bin",
+      "family": "keys",
+      "role": "verifying_key",
+      "classification": "test_only_key_candidate",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Present on disk. Identity via setup manifest sha256 fields when setup is run; no allowlist."
+    },
+    {
+      "surface": "ipfs_datasets_py/processors/groth16_backend/artifacts/v2/proving_key.bin",
+      "family": "keys",
+      "role": "proving_key",
+      "classification": "test_only_key_candidate",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "v2 TDFOL_v1 derivation circuit key. Test-only provenance."
+    },
+    {
+      "surface": "ipfs_datasets_py/processors/groth16_backend/artifacts/v2/verifying_key.bin",
+      "family": "keys",
+      "role": "verifying_key",
+      "classification": "test_only_key_candidate",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "v2 verifying key present; production-origin evidence absent."
+    },
+    {
+      "surface": "ipfs_datasets_py/processors/groth16_backend/artifacts/v3",
+      "family": "keys",
+      "role": "event_dag_v3_artifacts",
+      "classification": "absent",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "v3 directory and proving_key.bin/verifying_key.bin are absent. Event-DAG Profile F real path unavailable."
+    },
+    {
+      "surface": "ipfs_datasets_py/processors/groth16_backend/src/setup.rs",
+      "family": "keys",
+      "role": "key_generation",
+      "classification": "setup_key_generation_surface",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Rust setup emits proving_key_sha256_hex, verifying_key_sha256_hex, vk_hash_hex exact identity fields."
+    },
+    {
+      "surface": "ipfs_datasets_py/processors/groth16_backend/src/circuit.rs",
+      "family": "circuits",
+      "role": "rust_circuits",
+      "classification": "real_circuit_source",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Includes TDFOL v2 bounds and EventDagCompactionCircuitV3 with reduced-field Merkle root public input binding."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/common/proof_cache.py",
+      "family": "proof_cache",
+      "role": "unified_cache",
+      "classification": "integrity_cache",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Unified CID-based ProofCache for all provers."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/provekit/cache.py",
+      "family": "ProveKit",
+      "role": "provekit_cache_keys",
+      "classification": "integrity_cache",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "ProveKit public payload and cache-key construction; excludes private witness material."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/provekit/artifacts.py",
+      "family": "ProveKit",
+      "role": "artifact_paths",
+      "classification": "structural",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "ProveKit artifact path helpers."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/provekit/circuits/knowledge_of_axioms",
+      "family": "ProveKit",
+      "role": "noir_circuit",
+      "classification": "circuit_source_present",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Nargo package present; requires external ProveKit toolchain."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/provekit/circuits/tdfol_v1_trace",
+      "family": "ProveKit",
+      "role": "noir_circuit",
+      "classification": "circuit_source_present",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "TDFOL trace Noir circuit package."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/provekit/circuits/program_contract_trace",
+      "family": "ProveKit",
+      "role": "noir_circuit",
+      "classification": "circuit_source_present",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Program contract trace Noir circuit package."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/proof_corpus",
+      "family": "proof_corpus",
+      "role": "attested_envelope_store",
+      "classification": "integrity_and_policy",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "AttestedProofEnvelope store, manifests, revocation, consumer verifier."
+    },
+    {
+      "surface": "ipfs_datasets_py/mcp_server/event_dag.py",
+      "family": "Event-DAG",
+      "role": "hash_commitment_fallback",
+      "classification": "integrity_only_non_zk",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Hash-commitment certificate path when ZK unavailable; zero_knowledge remains false."
+    },
+    {
+      "surface": "ipfs_datasets_py/mcp_server/dag_compaction.py",
+      "family": "Event-DAG",
+      "role": "compaction_orchestration",
+      "classification": "structural",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Calls event_dag_zkp availability/prove/verify when present."
+    },
+    {
+      "surface": "tests/integration/test_pdf_form_agent.py",
+      "family": "PDF",
+      "role": "simulated_form_certificate",
+      "classification": "simulated",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "FormCompletionCertificate defaults is_simulated; PDF simulated path."
+    },
+    {
+      "surface": "tests/contract/processors/wallets/test_worldcoin_differential.py",
+      "family": "wallet",
+      "role": "wallet_contract_test",
+      "classification": "contract_surface",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Worldcoin differential contract surface included in broad-safe suite registry."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/eth_integration.py",
+      "family": "evm",
+      "role": "onchain_integration",
+      "classification": "structural",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Ethereum integration helpers; gated by env flags in baseline capture."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/eth_vk_registry_payloads.py",
+      "family": "evm",
+      "role": "vk_registry_payloads",
+      "classification": "structural",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "On-chain VK registry payload builders."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/evm_public_inputs.py",
+      "family": "evm",
+      "role": "public_input_encoding",
+      "classification": "structural",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "EVM public input encoding helpers."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/ceremony.py",
+      "family": "setup",
+      "role": "mpc_ceremony_surface",
+      "classification": "structural",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Ceremony helper surface; not production trusted-setup evidence by itself."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/witness_manager.py",
+      "family": "witness",
+      "role": "witness_construction",
+      "classification": "structural",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Witness construction including v2 reduced-field commitment checks."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/zkp_prover.py",
+      "family": "api",
+      "role": "high_level_prover",
+      "classification": "mixed",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "High-level prover adapter over backends; may rewrite outer public_inputs metadata."
+    },
+    {
+      "surface": "ipfs_datasets_py/logic/zkp/zkp_verifier.py",
+      "family": "api",
+      "role": "high_level_verifier",
+      "classification": "mixed",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "High-level verifier adapter over backends."
+    },
+    {
+      "surface": "tests/unit/logic/zkp/test_test_execution_certificate.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Repository-relative focused test for certificate conformance."
+    },
+    {
+      "surface": "tests/unit/logic/zkp/test_test_pass_statement.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Repository-relative focused test for TestPassStatementV1."
+    },
+    {
+      "surface": "tests/unit/logic/zkp/test_legal_constraint_attestation.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Legal constraint attestation unit test path."
+    },
+    {
+      "surface": "tests/unit/logic/zkp/test_eth_transaction_guard.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Eth transaction guard unit test path."
+    },
+    {
+      "surface": "tests/unit/logic/zkp/test_program_contract_trace.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1,
+      "notes": "Program contract trace unit test path."
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_backend_selection.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_canonicalization.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_circuit_version_policy.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_groth16_backend_ffi.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_groth16_wire_vectors.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_tdfol_v1_derivation_circuit.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_vk_registry.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_setup_artifacts_ipfs.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_ffi_wrapper.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_backend.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_cache_ipfs_payloads.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_mpc_ceremony.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_zkp_module.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/CEC/native/test_cec_zkp_integration.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/CEC/native/test_cec_proof_cache.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/TDFOL/test_tdfol_proof_cache.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit/logic/test_flogic_cache_zkp.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit/logic/test_flogic_integration.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit/logic/test_flogic_semantic_cid.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/integration/test_provekit_zkp.py",
+      "family": "focused_test",
+      "role": "integration_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/integration/test_groth16_local_evm_verification.py",
+      "family": "focused_test",
+      "role": "integration_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/integration/logic/test_proof_receipt_attestation.py",
+      "family": "focused_test",
+      "role": "integration_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/mcp/unit/test_mcplusplus_spec_session50.py",
+      "family": "focused_test",
+      "role": "mcp_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/mcp/integration/test_profile_f_ceremony_p2p.py",
+      "family": "focused_test",
+      "role": "mcp_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/mcp/integration/test_profile_d_policy_p2p.py",
+      "family": "focused_test",
+      "role": "mcp_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_eth_contract_artifacts.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_eth_vk_registry_payloads.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_evm_harness.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_evm_public_inputs.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_groth16_backend_entrypoint_seed.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_legal_theorem_semantics.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_onchain_pipeline.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_phase3c5_golden_vector_roundtrip.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_artifacts.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_attestation_envelope.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_cli_wrapper.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_golden_vectors.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_hybrid_provers.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_knowledge_of_axioms_circuit.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_properties.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_public_inputs.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_recursive_export_contract.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_tdfol_trace_circuit.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_tdfol_trace_schema.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_witness_no_leak.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_provekit_zkp_attestation_bridge.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_witness_manager.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_zkp_edge_cases.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_zkp_golden_vectors.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_zkp_integration.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_zkp_performance.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    },
+    {
+      "surface": "tests/unit_tests/logic/zkp/test_zkp_properties.py",
+      "family": "focused_test",
+      "role": "unit_test",
+      "classification": "focused_test_path",
+      "classification_method": "static source inventory",
+      "surfaces_found": 1
+    }
+  ],
+  "circuit_version_axes": {
+    "groth16_v1": {
+      "claim": "nonzero_public_commitment_knowledge_of_axioms",
+      "artifacts": "processors/groth16_backend/artifacts/v1",
+      "pytest_execution_proven": false
+    },
+    "groth16_v2": {
+      "claim": "bounded_TDFOL_v1_Horn_derivation",
+      "artifacts": "processors/groth16_backend/artifacts/v2",
+      "axiom_commitment": "tdfol_v1_axioms_commitment_hex_v2 reduced-field BN254 binding",
+      "distinct_from_pytest_execution_proof": true,
+      "pytest_execution_proven": false
+    },
+    "event_dag_v3": {
+      "claim": "event_digest_merkle_root_and_count",
+      "artifacts": "processors/groth16_backend/artifacts/v3",
+      "artifacts_present": false,
+      "public_root_binding": "full 32-byte SHA-256 root reduced into Fr as circuit public input; archive compares full root bytes separately"
+    }
+  },
+  "dependency_and_manifest_paths": [
+    "ipfs_datasets_py/logic/zkp/statement.py",
+    "ipfs_datasets_py/logic/zkp/canonicalization.py",
+    "ipfs_datasets_py/logic/zkp/circuits.py",
+    "ipfs_datasets_py/logic/zkp/vk_registry.py",
+    "ipfs_datasets_py/logic/zkp/setup_artifacts.py",
+    "ipfs_datasets_py/logic/zkp/provekit/artifacts.py",
+    "ipfs_datasets_py/logic/zkp/provekit/cache.py",
+    "ipfs_datasets_py/logic/zkp/provekit/public_inputs.py",
+    "ipfs_datasets_py/logic/common/proof_cache.py",
+    "ipfs_datasets_py/logic/proof_corpus",
+    "ipfs_datasets_py/processors/groth16_backend/schemas/proof_v1.schema.json",
+    "ipfs_datasets_py/processors/groth16_backend/schemas/witness_v1.schema.json",
+    "ipfs_datasets_py/processors/groth16_backend/schemas/error_envelope_v1.schema.json"
+  ],
+  "environment_gates_observed_in_source": [
+    "IPFS_DATASETS_ENABLE_GROTH16",
+    "IPFS_DATASETS_PY_AUTO_GROTH16_BUILD",
+    "IPFS_DATASETS_RUN_GROTH16_EVM",
+    "IPFS_DATASETS_RUN_PROVEKIT_TESTS",
+    "IPFS_DATASETS_GROTH16_BINARY",
+    "IPFS_DATASETS_EVENT_DAG_GROTH16_ARTIFACTS",
+    "IPFS_DATASETS_AUTO_INSTALL_TEST_DEPS",
+    "GROTH16_BACKEND_ARTIFACTS_ROOT",
+    "GROTH16_BACKEND_DETERMINISTIC"
+  ]
+}
