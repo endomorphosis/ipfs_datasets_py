@@ -1,0 +1,38 @@
+{
+  "schema": "ipfs-datasets.software-contracts.semantic-state-controlled-fixture@1",
+  "interface": "SemanticStateControlledFixture@1",
+  "version": 1,
+  "language": "python",
+  "python_minor": "3.12",
+  "test_framework": "pytest",
+  "description": "Controlled Python selection fixture: baseline source, ordinary mutation patches, and authored affected-test/proof oracles.",
+  "constraints": {
+    "no_checked_in_git": true,
+    "no_state_store": true,
+    "no_generated_receipt": true,
+    "no_hand_built_dependency_edge": true,
+    "no_second_benchmark_corpus": true,
+    "no_hidden_external_dependency": true,
+    "scanner_consumes_without_importing_fixture_package": true
+  },
+  "required_mutation_kinds": [
+    "local_body",
+    "signature",
+    "cross_module",
+    "schema",
+    "exception",
+    "fixture",
+    "config",
+    "plugin",
+    "lock",
+    "policy",
+    "interface",
+    "generated",
+    "dynamic",
+    "monkey",
+    "native",
+    "format",
+    "delete",
+    "rename"
+  ]
+}
