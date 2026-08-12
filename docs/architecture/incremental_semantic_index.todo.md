@@ -935,7 +935,7 @@ W21 ISI-040
 
 ## ISI-040 Prove verified incremental reuse and bounded watcher operation
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: incremental-repair
