@@ -6,6 +6,13 @@ never imports target modules.  In particular, ``previous_state`` is only an
 optional record-reuse cache; all output is still derived from the current,
 CID-verified snapshot inputs.
 
+Verified incremental reuse (ISI-040): when ``previous_state`` matches the
+current repository, schema, and extractor identities, source files whose
+snapshot member ``source_cid`` still matches the prior verified records skip
+Python re-analysis.  Pytest unification and graph resolution always rerun so
+dependent edges recompute against the live inventory.  Reuse diagnostics live
+on the scanner instance only and never enter the durable state root.
+
 Identity unification (ISI-036): a pytest test/fixture never clones a second
 stable ID beside the Python logical binding.  Pytest facts are merged into
 that binding (reclassified as ``test``/``fixture``) before version CIDs and
@@ -17,7 +24,7 @@ through :mod:`symbol_graph` so the returned state never relies on parallel
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -27,6 +34,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import (
     symbol_version_cid,
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
+    SEMANTIC_INDEX_SCHEMA,
     AnalysisConfidence,
     ArtifactRecord,
     DependencyEdge,
@@ -57,12 +65,58 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.symbol_graph impor
 
 SCANNER_NAME = "semantic-repository-scanner"
 SCANNER_VERSION = "1"
+SCAN_REUSE_DIAGNOSTICS_SCHEMA = (
+    "ipfs-datasets.software-contracts.semantic-index-scan-reuse@1"
+)
 _CONFIDENCE_RANK = {"exact": 0, "conservative": 1, "heuristic": 2, "opaque": 3}
 _LOCK_KINDS = frozenset({"dependency-lock"})
+# Edges produced by pytest analysis or scanner lock wiring are always rebuilt.
+_NON_REUSABLE_RELATIONS = frozenset({
+    RelationType.TESTED_BY.value,
+    RelationType.USES_FIXTURE.value,
+    RelationType.CONFIGURED_BY.value,
+})
+_NON_REUSABLE_EXTRACTION = frozenset({
+    "static-test-call-reversal",
+    "static-dependency-lock",
+})
 
 
 class RepositoryScannerError(ValueError):
     """Raised for invalid scanner inputs rather than silently changing scope."""
+
+
+@dataclass(frozen=True, slots=True)
+class ScanReuseDiagnostics:
+    """Ephemeral measurements of verified ``previous_state`` reuse.
+
+    These fields deliberately never participate in :class:`RepositoryState`
+    identity.  Callers inspect them after a scan to prove which sources skipped
+    re-analysis; durable consumers must ignore them.
+    """
+
+    schema: str = SCAN_REUSE_DIAGNOSTICS_SCHEMA
+    previous_state_accepted: bool = False
+    reject_reason: str | None = None
+    reused_paths: tuple[str, ...] = ()
+    analyzed_paths: tuple[str, ...] = ()
+    reused_symbol_ids: tuple[str, ...] = ()
+    recomputed_symbol_ids: tuple[str, ...] = ()
+    reused_artifact_paths: tuple[str, ...] = ()
+    resolution_recomputed: bool = True
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": self.schema,
+            "previous_state_accepted": self.previous_state_accepted,
+            "reject_reason": self.reject_reason,
+            "reused_paths": list(self.reused_paths),
+            "analyzed_paths": list(self.analyzed_paths),
+            "reused_symbol_ids": list(self.reused_symbol_ids),
+            "recomputed_symbol_ids": list(self.recomputed_symbol_ids),
+            "reused_artifact_paths": list(self.reused_artifact_paths),
+            "resolution_recomputed": self.resolution_recomputed,
+        }
 
 
 def _artifact_id(path: str) -> str:
@@ -329,6 +383,89 @@ def unify_pytest_identities(
     return merged_symbols, list(edge_by_id.values()), remap
 
 
+def _evaluate_previous_state(
+    previous_state: RepositoryState | None,
+    *,
+    repository_id: str,
+    extractor_name: str,
+    extractor_version: str,
+) -> tuple[RepositoryState | None, str | None]:
+    """Return an accepted previous state or ``(None, reason)`` without raising.
+
+    Type errors still raise: a non-state value is a programming mistake, not a
+    forged optimization input.  Repository/schema/extractor mismatches refuse
+    reuse and force a cold analysis path.
+    """
+    if previous_state is None:
+        return None, None
+    if not isinstance(previous_state, RepositoryState):
+        raise RepositoryScannerError("previous_state must be a RepositoryState")
+    if previous_state.repository_id != repository_id:
+        return None, "repository_id_mismatch"
+    if previous_state.schema != SEMANTIC_INDEX_SCHEMA:
+        return None, "schema_mismatch"
+    if previous_state.extractor_name != extractor_name:
+        return None, "extractor_name_mismatch"
+    if previous_state.extractor_version != extractor_version:
+        return None, "extractor_version_mismatch"
+    return previous_state, None
+
+
+def _python_frontend_edge(edge: DependencyEdge) -> bool:
+    """Whether an edge is eligible to ride along with reused Python analysis."""
+    if edge.relation in _NON_REUSABLE_RELATIONS:
+        return False
+    if edge.extraction_method in _NON_REUSABLE_EXTRACTION:
+        return False
+    return True
+
+
+def _reusable_path_symbols(
+    previous: RepositoryState,
+    path: str,
+    source_cid: str,
+) -> tuple[SymbolRecord, ...] | None:
+    """Return prior symbols for ``path`` when every record matches ``source_cid``."""
+    items = tuple(item for item in previous.symbols if item.module_path == path)
+    if not items:
+        return None
+    if any(item.source_cid != source_cid for item in items):
+        return None
+    if any(item.semantic_index_schema != SEMANTIC_INDEX_SCHEMA for item in items):
+        return None
+    if any(item.repository_id != previous.repository_id for item in items):
+        return None
+    return items
+
+
+def _reusable_opaque_python_artifact(
+    previous: RepositoryState,
+    path: str,
+    source_cid: str,
+) -> ArtifactRecord | None:
+    """Return a prior opaque python-analysis artifact for the same bytes."""
+    for artifact in previous.artifacts:
+        if (
+            artifact.path == path
+            and artifact.kind == "python-analysis"
+            and artifact.source_cid == source_cid
+            and artifact.confidence == AnalysisConfidence.OPAQUE.value
+        ):
+            return artifact
+    return None
+
+
+def _reusable_path_edges(
+    previous: RepositoryState,
+    symbol_ids: set[str],
+) -> list[DependencyEdge]:
+    """Reuse non-pytest edges sourced from verified path symbols."""
+    return [
+        edge for edge in previous.edges
+        if edge.source_id in symbol_ids and _python_frontend_edge(edge)
+    ]
+
+
 def _lock_configuration_edges(
     symbols: Sequence[SymbolRecord],
     artifacts: Sequence[ArtifactRecord],
@@ -369,13 +506,19 @@ def _lock_configuration_edges(
 
 @dataclass(slots=True)
 class RepositoryScanner:
-    """Build a deterministic :class:`RepositoryState` without target execution."""
+    """Build a deterministic :class:`RepositoryState` without target execution.
+
+    After each :meth:`scan` / :meth:`scan_snapshot`, :attr:`last_reuse_diagnostics`
+    reports which source paths reused verified prior analysis.  Diagnostics are
+    ephemeral process state and are excluded from durable root identity.
+    """
 
     repository_id: str | None = None
     namespace: str | None = None
     extractor_name: str = SCANNER_NAME
     extractor_version: str = SCANNER_VERSION
     exclusions: Iterable[str] | None = None
+    last_reuse_diagnostics: ScanReuseDiagnostics | None = field(default=None, repr=False)
 
     def scan(
         self,
@@ -422,20 +565,27 @@ class RepositoryScanner:
         The returned state is fully identity-unified and edge-resolved: call
         targets that uniquely match inventory symbols are stable CIDs, never
         a parallel ``lexical:`` residual for the same binding.
+
+        ``previous_state`` may skip Python re-analysis for paths whose verified
+        ``source_cid`` and extractor/schema identities still match.  Graph
+        resolution always recomputes against the current inventory.
         """
         if not isinstance(snapshot, RepositorySnapshot):
             raise RepositoryScannerError("snapshot must be a RepositorySnapshot")
         if self.repository_id is not None and snapshot.repository_id != self.repository_id:
             raise RepositoryScannerError("snapshot repository_id does not match scanner repository_id")
+
+        accepted_previous, reject_reason = _evaluate_previous_state(
+            previous_state,
+            repository_id=snapshot.repository_id,
+            extractor_name=self.extractor_name,
+            extractor_version=self.extractor_version,
+        )
         previous_by_key: dict[tuple[str, str, str], SymbolRecord] = {}
-        if previous_state is not None:
-            if not isinstance(previous_state, RepositoryState):
-                raise RepositoryScannerError("previous_state must be a RepositoryState")
-            if previous_state.repository_id != snapshot.repository_id:
-                raise RepositoryScannerError("previous_state repository_id does not match snapshot")
+        if accepted_previous is not None:
             previous_by_key = {
                 (item.stable_id, item.source_cid or "", item.version_cid): item
-                for item in previous_state.symbols
+                for item in accepted_previous.symbols
             }
 
         artifacts: list[ArtifactRecord] = []
@@ -444,6 +594,12 @@ class RepositoryScanner:
         verified: dict[str, bytes] = {}
         failures = dict(unavailable or {})
         entries_by_key = {entry.source_key: entry for entry in snapshot.entries}
+        reused_paths: list[str] = []
+        analyzed_paths: list[str] = []
+        reused_symbol_ids: list[str] = []
+        recomputed_symbol_ids: list[str] = []
+        reused_artifact_paths: list[str] = []
+
         # State roots must bind the complete acquisition authority, not merely
         # the parsed source subset.  This has a fixed identity so a real file
         # named @snapshot-evidence cannot collide with it.
@@ -488,20 +644,46 @@ class RepositoryScanner:
                 artifacts.append(_opaque_artifact(entry, "raw_path_not_model_safe"))
                 continue
             if entry.kind == "python":
-                analysis = python.analyze(raw, path)
-                if analysis.diagnostics:
-                    artifacts.append(ArtifactRecord(
-                        _artifact_id(path), "python-analysis", path, entry.source_cid, "opaque",
-                        {"diagnostics": list(analysis.diagnostics)},
-                    ))
-                else:
-                    for fact in analysis.symbols:
-                        record = fact.symbol
-                        reused = previous_by_key.get(
-                            (record.stable_id, record.source_cid or "", record.version_cid), record
+                reused = False
+                if accepted_previous is not None and entry.source_cid is not None:
+                    prior_symbols = _reusable_path_symbols(
+                        accepted_previous, path, entry.source_cid,
+                    )
+                    if prior_symbols is not None:
+                        symbols.extend(prior_symbols)
+                        edges.extend(_reusable_path_edges(
+                            accepted_previous, {item.stable_id for item in prior_symbols},
+                        ))
+                        reused_paths.append(path)
+                        reused_symbol_ids.extend(item.stable_id for item in prior_symbols)
+                        reused = True
+                    else:
+                        prior_opaque = _reusable_opaque_python_artifact(
+                            accepted_previous, path, entry.source_cid,
                         )
-                        symbols.append(reused)
-                        edges.extend(fact.edges)
+                        if prior_opaque is not None:
+                            artifacts.append(prior_opaque)
+                            reused_paths.append(path)
+                            reused_artifact_paths.append(path)
+                            reused = True
+                if not reused:
+                    analysis = python.analyze(raw, path)
+                    analyzed_paths.append(path)
+                    if analysis.diagnostics:
+                        artifacts.append(ArtifactRecord(
+                            _artifact_id(path), "python-analysis", path, entry.source_cid, "opaque",
+                            {"diagnostics": list(analysis.diagnostics)},
+                        ))
+                    else:
+                        for fact in analysis.symbols:
+                            record = fact.symbol
+                            cached = previous_by_key.get(
+                                (record.stable_id, record.source_cid or "", record.version_cid),
+                                record,
+                            )
+                            symbols.append(cached)
+                            edges.extend(fact.edges)
+                            recomputed_symbol_ids.append(cached.stable_id)
                 pytest_sources[path] = raw
             elif entry.kind == "pytest-config":
                 pytest_sources[path] = raw
@@ -524,14 +706,26 @@ class RepositoryScanner:
 
         # Resolution must run before state-root computation so the public
         # state commits stable symbol CIDs for resolvable call targets.
+        # Dependent resolution always recomputes even when file analysis reused.
         graph = build_symbol_graph(symbols, artifacts, edges)
         # Prefer previously verified records only when identities still match.
         final_symbols: list[SymbolRecord] = []
         for record in graph.symbols:
-            reused = previous_by_key.get(
+            cached = previous_by_key.get(
                 (record.stable_id, record.source_cid or "", record.version_cid)
             )
-            final_symbols.append(reused if reused is not None else record)
+            final_symbols.append(cached if cached is not None else record)
+
+        self.last_reuse_diagnostics = ScanReuseDiagnostics(
+            previous_state_accepted=accepted_previous is not None,
+            reject_reason=reject_reason,
+            reused_paths=tuple(sorted(set(reused_paths))),
+            analyzed_paths=tuple(sorted(set(analyzed_paths))),
+            reused_symbol_ids=tuple(sorted(set(reused_symbol_ids))),
+            recomputed_symbol_ids=tuple(sorted(set(recomputed_symbol_ids))),
+            reused_artifact_paths=tuple(sorted(set(reused_artifact_paths))),
+            resolution_recomputed=True,
+        )
 
         return RepositoryState(
             snapshot.repository_id,
@@ -560,6 +754,8 @@ def scan_repository_state(
 __all__ = [
     "SCANNER_NAME",
     "SCANNER_VERSION",
+    "SCAN_REUSE_DIAGNOSTICS_SCHEMA",
+    "ScanReuseDiagnostics",
     "RepositoryScanner",
     "RepositoryScannerError",
     "scan_repository_state",

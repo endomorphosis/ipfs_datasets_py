@@ -1,15 +1,23 @@
-"""Tests for deterministic repository-state assembly and public resolution."""
+"""Tests for deterministic repository-state assembly and verified incremental reuse."""
 
 from __future__ import annotations
 
+from dataclasses import replace
 import shutil
 import subprocess
 from pathlib import Path
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
 from ipfs_datasets_py.logic.software_contracts.semantic_index.index import scan_repository
-from ipfs_datasets_py.logic.software_contracts.semantic_index.models import RelationType, RepositoryState
-from ipfs_datasets_py.logic.software_contracts.semantic_index.scanner import RepositoryScanner, scan_repository_state
+from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
+    RelationType,
+    RepositoryState,
+)
+from ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis import PythonSemanticAnalyzer
+from ipfs_datasets_py.logic.software_contracts.semantic_index.scanner import (
+    RepositoryScanner,
+    scan_repository_state,
+)
 from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import snapshot_repository
 
 
@@ -26,6 +34,8 @@ def test_cold_and_incremental_scans_have_the_same_root(tmp_path) -> None:
     first = scan_repository_state(tmp_path, repository_id="repo:scanner")
     second = scan_repository_state(tmp_path, repository_id="repo:scanner", previous_state=first)
     assert first.state_cid == second.state_cid
+    assert first == second
+    assert first.to_dict() == second.to_dict()
 
 
 def test_formatting_and_unrelated_edits_do_not_change_other_symbol_versions(tmp_path) -> None:
@@ -221,3 +231,114 @@ def test_public_state_edges_are_source_rooted_and_survive_round_trip(tmp_path) -
     assert restored.state_cid == state.state_cid
     assert restored.edges == state.edges
     assert restored.symbols == state.symbols
+
+
+def test_instrumented_reuse_skips_unchanged_files_and_reanalyzes_changed(tmp_path, monkeypatch) -> None:
+    """Unchanged sources reuse verified analysis; changed files recompute."""
+    (tmp_path / "stable.py").write_text("def keep():\n    return 1\n", encoding="utf-8")
+    (tmp_path / "mutable.py").write_text(
+        "from stable import keep\ndef use():\n    return keep()\n",
+        encoding="utf-8",
+    )
+    scanner = RepositoryScanner(repository_id="repo:reuse")
+    cold = scanner.scan(tmp_path)
+    assert scanner.last_reuse_diagnostics is not None
+    assert scanner.last_reuse_diagnostics.previous_state_accepted is False
+    assert set(scanner.last_reuse_diagnostics.analyzed_paths) == {"stable.py", "mutable.py"}
+
+    analyzed: list[str] = []
+    original = PythonSemanticAnalyzer.analyze
+
+    def instrumented(self, source, path):  # type: ignore[no-untyped-def]
+        analyzed.append(path)
+        return original(self, source, path)
+
+    monkeypatch.setattr(PythonSemanticAnalyzer, "analyze", instrumented)
+
+    identical = scanner.scan(tmp_path, previous_state=cold)
+    assert analyzed == []
+    assert identical == cold
+    assert identical.state_cid == cold.state_cid
+    diag = scanner.last_reuse_diagnostics
+    assert diag is not None
+    assert diag.previous_state_accepted is True
+    assert diag.reject_reason is None
+    assert set(diag.reused_paths) == {"stable.py", "mutable.py"}
+    assert diag.analyzed_paths == ()
+    assert diag.resolution_recomputed is True
+    # Diagnostics are outside durable identity.
+    assert "reused_paths" not in identical.to_dict()
+    assert diag.to_dict()["schema"]
+
+    analyzed.clear()
+    (tmp_path / "mutable.py").write_text(
+        "from stable import keep\ndef use():\n    return keep() + 1\n",
+        encoding="utf-8",
+    )
+    incremental = scanner.scan(tmp_path, previous_state=cold)
+    assert analyzed == ["mutable.py"]
+    diag = scanner.last_reuse_diagnostics
+    assert diag is not None
+    assert set(diag.reused_paths) == {"stable.py"}
+    assert set(diag.analyzed_paths) == {"mutable.py"}
+    assert diag.resolution_recomputed is True
+
+    # Dependent resolution still binds the reused caller to the stable target.
+    by_qn = _symbols(incremental)
+    assert any(
+        edge.relation == RelationType.CALLS.value
+        and edge.source_id == by_qn["mutable.use"].stable_id
+        and edge.target_id == by_qn["stable.keep"].stable_id
+        and edge.metadata.get("resolution") == "definite"
+        for edge in incremental.edges
+    )
+    # Cold scan of the same bytes matches the incremental result.
+    cold_after = RepositoryScanner(repository_id="repo:reuse").scan(tmp_path)
+    assert cold_after == incremental
+    assert cold_after.state_cid == incremental.state_cid
+
+
+def test_forged_or_mismatched_previous_states_are_never_reused(tmp_path, monkeypatch) -> None:
+    (tmp_path / "module.py").write_text("def value():\n    return 1\n", encoding="utf-8")
+    scanner = RepositoryScanner(repository_id="repo:gate")
+    genuine = scanner.scan(tmp_path)
+
+    analyzed: list[str] = []
+    original = PythonSemanticAnalyzer.analyze
+
+    def instrumented(self, source, path):  # type: ignore[no-untyped-def]
+        analyzed.append(path)
+        return original(self, source, path)
+
+    monkeypatch.setattr(PythonSemanticAnalyzer, "analyze", instrumented)
+
+    # Bypass constructors that refuse forged envelopes so the scanner gate is
+    # the code under test (optimization admission, not model construction).
+    repo_forged = replace(genuine, extractor_version=genuine.extractor_version)
+    object.__setattr__(repo_forged, "repository_id", "repo:other")
+    schema_forged = replace(genuine, extractor_version=genuine.extractor_version)
+    object.__setattr__(schema_forged, "schema", "ipfs-datasets.software-contracts.semantic-index@1")
+
+    for forged, reason in (
+        (repo_forged, "repository_id_mismatch"),
+        (replace(genuine, extractor_name="forged-extractor"), "extractor_name_mismatch"),
+        (replace(genuine, extractor_version="999"), "extractor_version_mismatch"),
+        (schema_forged, "schema_mismatch"),
+    ):
+        analyzed.clear()
+        result = scanner.scan(tmp_path, previous_state=forged)
+        assert analyzed == ["module.py"], reason
+        diag = scanner.last_reuse_diagnostics
+        assert diag is not None
+        assert diag.previous_state_accepted is False
+        assert diag.reject_reason == reason
+        assert diag.reused_paths == ()
+        assert result.state_cid == genuine.state_cid
+
+    # Matching previous_state still reuses.
+    analyzed.clear()
+    reused = scanner.scan(tmp_path, previous_state=genuine)
+    assert analyzed == []
+    assert reused == genuine
+    assert scanner.last_reuse_diagnostics is not None
+    assert scanner.last_reuse_diagnostics.previous_state_accepted is True
