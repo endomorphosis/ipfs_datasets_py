@@ -29,9 +29,25 @@ plan = calculate_invalidation(before, after, delta)
 
 `scan_repository` returns a sorted `RepositoryState`.  `previous_state` is a
 verified reuse optimization only: it cannot change the result for the same
-repository bytes.  `explain_symbol` and `explain_impact` report only recorded
-facts and their confidence limits.  `watch_repository` is notification-only;
-each notification is established by a fresh deterministic scan.
+repository bytes.  Cold and incremental scans of identical inputs produce
+byte-identical state records and root CIDs.  A prior state is reused only after
+repository identity, semantic-index schema, scanner extractor name/version, and
+per-member `source_cid` values verify; forged or mismatched previous states are
+ignored (treated as a cold scan).  Unchanged Python sources skip re-analysis
+while pytest unification and graph resolution always recompute so dependents
+stay current.  Reuse diagnostics are exposed on `RepositoryScanner.last_reuse_diagnostics`
+(and `ScanReuseDiagnostics.to_dict`) outside durable root identity—they never
+enter `RepositoryState` or its CID.
+
+`explain_symbol` and `explain_impact` report only recorded facts and their
+confidence limits.  `watch_repository` is notification-only; each notification
+is established by a fresh deterministic scan.  The hermetic watcher uses bounded
+polling (minimum poll interval, configurable debounce), isolates callback
+exceptions so progress continues, joins within a deterministic timeout on
+`stop`, and treats OS events as wake-up hints only—missed or coalesced events
+are corrected by the next canonical scan.  Concurrent watches each own an
+independent fence and converge on the same canonical `state_cid` without
+sharing mutable authority.
 
 Every durable record has a closed `to_dict`/`from_dict` schema and a CIDv1
 identity computed through the software-contract content authority.  State,
