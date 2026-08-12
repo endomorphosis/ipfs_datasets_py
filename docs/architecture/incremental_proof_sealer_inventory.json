@@ -4,10 +4,10 @@
   "repository": "datasets",
   "evidence_subset": "ips/datasets-inventory@2",
   "planning_revision": "bd2ff6245ebe476fc744d45c7c66235c92b0e19c",
-  "inventory_worktree_parent_revision": "bd2ff6245ebe476fc744d45c7c66235c92b0e19c",
+  "inventory_worktree_parent_revision": "a99e1aff41efa20ebc0f5068cc4c67c9a8d9843c",
   "baseline_evidence": {
     "path": "artifacts/agent_supervisor/incremental_proof_sealer/baseline_receipts/datasets.json",
-    "receipt_digest": "sha256:2bf70cf540d04bac0d11fc58b8668bd924884ea89578cef28ec2e8c601efe8a9",
+    "receipt_digest": "sha256:bcdd3a1dd729bd92d37db771947ba10fa61d15fe396358edf20d48cc7f981dab",
     "required_command_ids": [
       "datasets-zkp-focused-current",
       "datasets-zkp-unit-wide-current",
@@ -107,7 +107,7 @@
       "classification": "real_backend_candidate_with_absent_v3_artifacts",
       "classification_method": "static source inventory",
       "surfaces_found": 1,
-      "notes": "event_dag_zkp.py Profile F circuit v3; requires audited v3 pk/vk pair. Absent artifacts force EventDagZKUnavailable and zero_knowledge false."
+      "notes": "event_dag_zkp.py Profile F circuit v3; requires audited v3 pk/vk pair. Absent artifacts force EventDagZKUnavailable with zero_knowledge remaining disabled."
     },
     {
       "surface": "ipfs_datasets_py/logic/zkp/backends/provekit_ffi.py",
@@ -962,19 +962,18 @@
     "groth16_v1": {
       "claim": "nonzero_public_commitment_knowledge_of_axioms",
       "artifacts": "processors/groth16_backend/artifacts/v1",
-      "pytest_execution_proven": false
+      "nonclaim": "bounded_declared_computation_only_not_pytest_execution_proof"
     },
     "groth16_v2": {
       "claim": "bounded_TDFOL_v1_Horn_derivation",
       "artifacts": "processors/groth16_backend/artifacts/v2",
       "axiom_commitment": "tdfol_v1_axioms_commitment_hex_v2 reduced-field BN254 binding",
-      "distinct_from_pytest_execution_proof": true,
-      "pytest_execution_proven": false
+      "nonclaim": "bounded_computation_proof_axis_distinct_from_pytest_execution_proof"
     },
     "event_dag_v3": {
       "claim": "event_digest_merkle_root_and_count",
       "artifacts": "processors/groth16_backend/artifacts/v3",
-      "artifacts_present": false,
+      "artifact_state": "absent",
       "public_root_binding": "full 32-byte SHA-256 root reduced into Fr as circuit public input; archive compares full root bytes separately"
     }
   },

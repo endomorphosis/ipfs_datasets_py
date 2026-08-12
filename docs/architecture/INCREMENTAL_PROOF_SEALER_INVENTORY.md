@@ -10,7 +10,7 @@ nested revision. This document is a companion to
 | Field | Value |
 | --- | --- |
 | `planning_revision` | `bd2ff6245ebe476fc744d45c7c66235c92b0e19c` |
-| `inventory_worktree_parent_revision` | `bd2ff6245ebe476fc744d45c7c66235c92b0e19c` |
+| `inventory_worktree_parent_revision` | `a99e1aff41efa20ebc0f5068cc4c67c9a8d9843c` |
 
 `inventory_worktree_parent_revision` is immutable and equals the receipt-tested
 datasets source revision. Final nested/outer/status commits come from supervisor
@@ -24,7 +24,7 @@ command lines, outcome tallies, logs, or execution claims.
 | Field | Value |
 | --- | --- |
 | path | `artifacts/agent_supervisor/incremental_proof_sealer/baseline_receipts/datasets.json` |
-| receipt_digest | `sha256:2bf70cf540d04bac0d11fc58b8668bd924884ea89578cef28ec2e8c601efe8a9` |
+| receipt_digest | `sha256:bcdd3a1dd729bd92d37db771947ba10fa61d15fe396358edf20d48cc7f981dab` |
 | required_command_ids | `datasets-zkp-focused-current`, `datasets-zkp-unit-wide-current`, `datasets-proof-cache-adapters`, `datasets-zkp-broad-safe-current` |
 | evidence_origin | `operator_capture` |
 | assurance | `process_observed_only` |
@@ -164,8 +164,8 @@ digest fields and the on-disk versioned paths above.
 
 | Version | Declared claim | Artifacts | Notes |
 | --- | --- | --- | --- |
-| Groth16 v1 | nonzero public commitment / knowledge_of_axioms | `artifacts/v1` present | not pytest-execution proof |
-| Groth16 v2 | bounded TDFOL_v1 Horn derivation | `artifacts/v2` present | reduced-field axiom commitment; distinct from pytest-execution proof |
+| Groth16 v1 | nonzero public commitment / knowledge_of_axioms | `artifacts/v1` present | bounded declared computation only; not a pytest-execution proof axis |
+| Groth16 v2 | bounded TDFOL_v1 Horn derivation | `artifacts/v2` present | reduced-field axiom commitment; computation-proof axis distinct from pytest-execution proof |
 | Event-DAG v3 | event digests → Merkle root + count | `artifacts/v3` **absent** | public root is Fr-reduced; archive compares full root bytes |
 
 ## Focused tests (repository-relative)
