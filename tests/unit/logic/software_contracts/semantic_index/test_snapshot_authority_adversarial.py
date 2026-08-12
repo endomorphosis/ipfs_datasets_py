@@ -8,6 +8,7 @@ implementation must not edit, replace, rename, or weaken these assertions.
 
 from __future__ import annotations
 
+import fcntl
 import os
 import stat
 import subprocess
@@ -94,6 +95,28 @@ def _git_metadata(repository: Path) -> Path:
 
 def _bootstrap_marker(repository: Path) -> Path:
     return _git_metadata(repository) / ".ipfs-datasets-semantic-index-unborn-id"
+
+
+def _exception_messages(error: BaseException) -> tuple[str, ...]:
+    """Render an injected failure and every linked/aggregated failure once."""
+    pending = [error]
+    seen: set[int] = set()
+    messages: list[str] = []
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        messages.append(str(current))
+        pending.extend(
+            item
+            for item in getattr(current, "exceptions", ())
+            if isinstance(item, BaseException)
+        )
+        for linked in (current.__cause__, current.__context__):
+            if linked is not None:
+                pending.append(linked)
+    return tuple(messages)
 
 
 def test_born_identity_is_portable_stable_and_history_distinct(tmp_path: Path) -> None:
@@ -695,6 +718,515 @@ def test_unborn_write_and_cleanup_failure_is_typed_then_restart_recovers(
     recovered = repository_identity(tmp_path)
     temporary_prefix = f".{marker.name}.tmp-"
     assert not any(item.name.startswith(temporary_prefix) for item in marker.parent.iterdir())
+    assert repository_identity(tmp_path) == recovered
+
+
+def test_unborn_cleanup_bounds_discovery_and_inspection_not_only_unlinks(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    # Materialising/listing an arbitrary-sized metadata directory is already
+    # unbounded work even if a later loop limits successful unlink calls.
+    max_inspections = 256
+    marker = _bootstrap_marker(tmp_path)
+    marker.write_bytes(b"e" * 64)
+    marker.chmod(0o600)
+    temporary_prefix = f".{marker.name}.tmp-"
+    for index in range(max_inspections + 37):
+        stale = marker.parent / f"{temporary_prefix}bounded-discovery-{index:04d}"
+        stale.write_bytes(b"partial")
+        stale.chmod(0o600)
+
+    real_listdir = module.os.listdir
+    real_scandir = module.os.scandir
+    inspections = 0
+
+    def is_metadata_directory(path: object) -> bool:
+        if isinstance(path, int):
+            return False
+        try:
+            return Path(os.fsdecode(os.fspath(path))) == marker.parent
+        except TypeError:
+            return False
+
+    def audited_listdir(path, *args, **kwargs):
+        nonlocal inspections
+        names = real_listdir(path, *args, **kwargs)
+        if is_metadata_directory(path):
+            inspections += len(names)
+        return names
+
+    class AuditedScandir:
+        def __init__(self, delegate) -> None:
+            self._delegate = delegate
+
+        def __enter__(self):
+            self._delegate.__enter__()
+            return self
+
+        def __exit__(self, *args):
+            return self._delegate.__exit__(*args)
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            nonlocal inspections
+            item = next(self._delegate)
+            inspections += 1
+            return item
+
+        def close(self) -> None:
+            self._delegate.close()
+
+    def audited_scandir(path):
+        delegate = real_scandir(path)
+        if is_metadata_directory(path):
+            return AuditedScandir(delegate)
+        return delegate
+
+    monkeypatch.setattr(module.os, "listdir", audited_listdir)
+    monkeypatch.setattr(module.os, "scandir", audited_scandir)
+    per_call_inspections: list[int] = []
+    typed_failures: list[GitSnapshotError] = []
+    identity: str | None = None
+
+    for _attempt in range(8):
+        inspections = 0
+        try:
+            identity = repository_identity(tmp_path)
+        except GitSnapshotError as exc:
+            typed_failures.append(exc)
+        per_call_inspections.append(inspections)
+        if identity is not None:
+            break
+
+    residue = [
+        name for name in real_listdir(marker.parent) if name.startswith(temporary_prefix)
+    ]
+
+    assert typed_failures
+    assert identity is not None
+    assert residue == []
+    assert all(count <= max_inspections for count in per_call_inspections)
+    assert repository_identity(tmp_path) == identity
+
+
+@pytest.mark.parametrize("scenario", ("symlink", "fifo", "nonprivate"))
+def test_unsafe_marker_derived_residue_fails_typed_and_bounded(
+    tmp_path: Path,
+    scenario: str,
+) -> None:
+    _init(tmp_path)
+    marker = _bootstrap_marker(tmp_path)
+    marker.write_bytes(b"f" * 64)
+    marker.chmod(0o600)
+    residue = marker.parent / f".{marker.name}.tmp-audit-{scenario}"
+    if scenario == "symlink":
+        target = marker.parent / "audit-temporary-symlink-target"
+        target.write_bytes(b"partial")
+        target.chmod(0o600)
+        residue.symlink_to(target.name)
+    elif scenario == "fifo":
+        os.mkfifo(residue, 0o600)
+    else:
+        residue.write_bytes(b"partial")
+        residue.chmod(0o644)
+
+    program = "\n".join(
+        (
+            "import sys",
+            "from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import GitSnapshotError, repository_identity",
+            "try:",
+            "    repository_identity(sys.argv[1])",
+            "except GitSnapshotError:",
+            "    raise SystemExit(21)",
+            "except Exception as exc:",
+            "    print(f'{type(exc).__name__}: {exc}', file=sys.stderr)",
+            "    raise SystemExit(22)",
+            "print('unsafe temporary residue was silently accepted', file=sys.stderr)",
+            "raise SystemExit(23)",
+        )
+    )
+    environment = dict(os.environ)
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    try:
+        completed = subprocess.run(
+            [sys.executable, "-B", "-c", program, str(tmp_path)],
+            check=False,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=environment,
+            timeout=2,
+        )
+    except subprocess.TimeoutExpired:
+        result: int | str = "timeout"
+        diagnostic = "temporary-residue validation blocked"
+    else:
+        result = completed.returncode
+        diagnostic = completed.stderr.decode("utf-8", "replace")
+
+    assert result == 21, diagnostic
+
+
+def test_unreadable_marker_derived_residue_cannot_be_skipped_on_success(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    marker.write_bytes(b"0" * 64)
+    marker.chmod(0o600)
+    residue = marker.parent / f".{marker.name}.tmp-audit-unreadable"
+    residue.write_bytes(b"partial")
+    residue.chmod(0o600)
+    real_open = module.os.open
+    denied = False
+
+    def deny_residue_open(path, flags, *args, **kwargs):
+        nonlocal denied
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if candidate == residue:
+            denied = True
+            raise PermissionError("audit temporary inspection failure")
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(module.os, "open", deny_residue_open)
+    first_error: Exception | None = None
+    try:
+        repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        first_error = exc
+
+    monkeypatch.setattr(module.os, "open", real_open)
+    if os.path.lexists(residue):
+        os.unlink(residue)
+    recovered = repository_identity(tmp_path)
+
+    assert denied
+    assert isinstance(first_error, GitSnapshotError)
+    assert repository_identity(tmp_path) == recovered
+
+
+def test_file_exists_loser_cleanup_failure_is_typed_then_retry_converges(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    temporary_prefix = f".{marker.name}.tmp-"
+    real_open = module.os.open
+    real_unlink = module.os.unlink
+    real_fsync = module.os.fsync
+    real_close = module.os.close
+    candidate_path: Path | None = None
+    winner_created = False
+    cleanup_attempts = 0
+
+    def create_durable_winner() -> None:
+        winner = real_open(
+            marker,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+        )
+        try:
+            payload = b"1" * 64
+            written = 0
+            while written < len(payload):
+                written += os.write(winner, payload[written:])
+            real_fsync(winner)
+        finally:
+            real_close(winner)
+        directory = real_open(
+            marker.parent,
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0),
+        )
+        try:
+            real_fsync(directory)
+        finally:
+            real_close(directory)
+
+    def race_after_candidate_open(path, flags, *args, **kwargs):
+        nonlocal candidate_path, winner_created
+        descriptor = real_open(path, flags, *args, **kwargs)
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if (
+            candidate.parent == marker.parent
+            and candidate.name.startswith(temporary_prefix)
+            and flags & os.O_CREAT
+            and flags & os.O_EXCL
+            and not winner_created
+        ):
+            candidate_path = candidate
+            create_durable_winner()
+            winner_created = True
+        return descriptor
+
+    def fail_first_loser_cleanup(path, *args, **kwargs) -> None:
+        nonlocal cleanup_attempts
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if candidate_path is not None and candidate == candidate_path:
+            cleanup_attempts += 1
+            if cleanup_attempts == 1:
+                raise OSError("audit FileExists loser cleanup failure")
+        real_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(module.os, "open", race_after_candidate_open)
+    monkeypatch.setattr(module.os, "unlink", fail_first_loser_cleanup)
+    first_error: Exception | None = None
+    try:
+        repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        first_error = exc
+
+    monkeypatch.setattr(module.os, "open", real_open)
+    monkeypatch.setattr(module.os, "unlink", real_unlink)
+    recovered = repository_identity(tmp_path)
+    residue = [
+        item
+        for item in marker.parent.iterdir()
+        if item.name.startswith(temporary_prefix)
+    ]
+
+    assert winner_created
+    assert candidate_path is not None
+    assert cleanup_attempts >= 1
+    assert isinstance(first_error, GitSnapshotError)
+    assert any(
+        "audit FileExists loser cleanup failure" in message
+        for message in _exception_messages(first_error)
+    )
+    assert residue == []
+    assert repository_identity(tmp_path) == recovered
+
+
+@pytest.mark.parametrize("failure_point", ("unlock", "close"))
+def test_publish_lock_finalization_failure_is_typed_and_recoverable_when_used(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure_point: str,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    real_open = module.os.open
+    real_close = module.os.close
+    real_flock = fcntl.flock
+    lock_descriptor: int | None = None
+    injected = False
+    diagnostic = f"audit publish lock {failure_point} failure"
+
+    def record_lock_open(path, flags, *args, **kwargs):
+        nonlocal lock_descriptor
+        descriptor = real_open(path, flags, *args, **kwargs)
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if (
+            candidate.parent == marker.parent
+            and candidate != marker
+            and flags & os.O_CREAT
+            and not flags & os.O_EXCL
+        ):
+            lock_descriptor = descriptor
+        return descriptor
+
+    def fail_unlock(descriptor: int, operation: int) -> None:
+        nonlocal injected
+        if (
+            failure_point == "unlock"
+            and descriptor == lock_descriptor
+            and operation == fcntl.LOCK_UN
+            and not injected
+        ):
+            real_flock(descriptor, operation)
+            injected = True
+            raise OSError(diagnostic)
+        real_flock(descriptor, operation)
+
+    def fail_lock_close(descriptor: int) -> None:
+        nonlocal injected
+        if (
+            failure_point == "close"
+            and descriptor == lock_descriptor
+            and not injected
+        ):
+            real_close(descriptor)
+            injected = True
+            raise OSError(diagnostic)
+        real_close(descriptor)
+
+    monkeypatch.setattr(module.os, "open", record_lock_open)
+    monkeypatch.setattr(module.os, "close", fail_lock_close)
+    monkeypatch.setattr(fcntl, "flock", fail_unlock)
+    first_identity: str | None = None
+    first_error: Exception | None = None
+    try:
+        first_identity = repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted conditionally below
+        first_error = exc
+
+    monkeypatch.setattr(module.os, "open", real_open)
+    monkeypatch.setattr(module.os, "close", real_close)
+    monkeypatch.setattr(fcntl, "flock", real_flock)
+    recovered = repository_identity(tmp_path)
+
+    if injected:
+        assert isinstance(first_error, GitSnapshotError)
+        assert any(diagnostic in message for message in _exception_messages(first_error))
+    else:
+        # A lock-free no-replace design has no lock-finalization obligation to
+        # inject; its ordinary result remains acceptable.
+        assert first_error is None
+        assert first_identity == recovered
+    assert repository_identity(tmp_path) == recovered
+
+
+def test_primary_and_candidate_close_failures_preserve_both_typed_evidence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    temporary_prefix = f".{marker.name}.tmp-"
+    real_open = module.os.open
+    real_fsync = module.os.fsync
+    real_close = module.os.close
+    candidate_descriptor: int | None = None
+    candidate_path: Path | None = None
+    sync_failed = False
+    close_failed = False
+
+    def record_candidate_open(path, flags, *args, **kwargs):
+        nonlocal candidate_descriptor, candidate_path
+        descriptor = real_open(path, flags, *args, **kwargs)
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if (
+            candidate.parent == marker.parent
+            and candidate.name.startswith(temporary_prefix)
+            and flags & os.O_CREAT
+            and flags & os.O_EXCL
+        ):
+            candidate_descriptor = descriptor
+            candidate_path = candidate
+        return descriptor
+
+    def fail_candidate_sync(descriptor: int) -> None:
+        nonlocal sync_failed
+        if descriptor == candidate_descriptor and not sync_failed:
+            sync_failed = True
+            raise OSError("audit candidate primary sync failure")
+        real_fsync(descriptor)
+
+    def fail_candidate_close(descriptor: int) -> None:
+        nonlocal close_failed
+        if descriptor == candidate_descriptor and sync_failed and not close_failed:
+            real_close(descriptor)
+            close_failed = True
+            raise OSError("audit candidate close failure")
+        real_close(descriptor)
+
+    monkeypatch.setattr(module.os, "open", record_candidate_open)
+    monkeypatch.setattr(module.os, "fsync", fail_candidate_sync)
+    monkeypatch.setattr(module.os, "close", fail_candidate_close)
+    first_error: Exception | None = None
+    try:
+        repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        first_error = exc
+
+    monkeypatch.setattr(module.os, "open", real_open)
+    monkeypatch.setattr(module.os, "fsync", real_fsync)
+    monkeypatch.setattr(module.os, "close", real_close)
+    recovered = repository_identity(tmp_path)
+    messages = _exception_messages(first_error) if first_error is not None else ()
+
+    assert candidate_path is not None
+    assert sync_failed
+    assert close_failed
+    assert isinstance(first_error, GitSnapshotError)
+    assert any("audit candidate primary sync failure" in message for message in messages)
+    assert any("audit candidate close failure" in message for message in messages)
+    assert not os.path.lexists(candidate_path)
+    assert repository_identity(tmp_path) == recovered
+
+
+def test_prepublication_stale_cleanup_is_followed_by_directory_sync(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _init(tmp_path)
+    import ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot as module
+
+    marker = _bootstrap_marker(tmp_path)
+    temporary_prefix = f".{marker.name}.tmp-"
+    real_open = module.os.open
+    real_fsync = module.os.fsync
+    real_unlink = module.os.unlink
+    candidate_descriptor: int | None = None
+    candidate_path: Path | None = None
+    sync_failed = False
+    events: list[str] = []
+
+    def record_candidate_open(path, flags, *args, **kwargs):
+        nonlocal candidate_descriptor, candidate_path
+        descriptor = real_open(path, flags, *args, **kwargs)
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if (
+            candidate.parent == marker.parent
+            and candidate.name.startswith(temporary_prefix)
+            and flags & os.O_CREAT
+            and flags & os.O_EXCL
+        ):
+            candidate_descriptor = descriptor
+            candidate_path = candidate
+        return descriptor
+
+    def fail_candidate_sync(descriptor: int) -> None:
+        nonlocal sync_failed
+        if descriptor == candidate_descriptor and not sync_failed:
+            sync_failed = True
+            events.append("candidate_sync_failure")
+            raise OSError("audit prepublication candidate sync failure")
+        if stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            events.append("directory_sync")
+        real_fsync(descriptor)
+
+    def record_candidate_unlink(path, *args, **kwargs) -> None:
+        candidate = Path(os.fsdecode(os.fspath(path)))
+        if candidate_path is not None and candidate == candidate_path:
+            events.append("candidate_unlink")
+        real_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(module.os, "open", record_candidate_open)
+    monkeypatch.setattr(module.os, "fsync", fail_candidate_sync)
+    monkeypatch.setattr(module.os, "unlink", record_candidate_unlink)
+    first_error: Exception | None = None
+    try:
+        repository_identity(tmp_path)
+    except Exception as exc:  # pragma: no branch - asserted below
+        first_error = exc
+
+    monkeypatch.setattr(module.os, "open", real_open)
+    monkeypatch.setattr(module.os, "fsync", real_fsync)
+    monkeypatch.setattr(module.os, "unlink", real_unlink)
+    recovered = repository_identity(tmp_path)
+
+    assert candidate_path is not None
+    assert sync_failed
+    assert isinstance(first_error, GitSnapshotError)
+    cleanup_index = events.index("candidate_unlink")
+    assert "directory_sync" in events[cleanup_index + 1 :]
+    assert not os.path.lexists(candidate_path)
     assert repository_identity(tmp_path) == recovered
 
 

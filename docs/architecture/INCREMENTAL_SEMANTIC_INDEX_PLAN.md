@@ -228,6 +228,29 @@ Authority rules:
     reaping, no more than 256 marker-derived cleanup operations per public
     call with typed bounded retry, and typed recoverable evidence when a
     prepublication write and cleanup both fail.
+17. The retained repair-run-v14 draft makes all inherited 50 protected cases
+    and the inherited 72-item focused command green, but independent public-
+    boundary probes reject it before merge. It bounds only successful unlinks:
+    each call first materializes and sorts the whole Git metadata directory,
+    and may repeat that full discovery to decide whether residue remains. It
+    silently skips symlink, FIFO/nonregular, and open-failed marker-derived
+    residue, silently deletes a nonprivate candidate, swallows a concurrent
+    `FileExistsError` loser's first cleanup failure, swallows publish-lock
+    unlock failure, leaks a raw lock-close failure, loses candidate-close
+    evidence when a primary candidate operation also fails, and does not sync
+    the metadata directory after prepublication error cleanup. Ten additional
+    public cases bring the final protected authority to 60 cases and the
+    focused command to 82 items. On the pinned merged-tree baseline they are
+    exactly 22 assigned failures and 60 passes; the broader semantic-index
+    baseline is exactly 54 failures and 129 passes (the prior 19 older, six
+    ISI-043, seven ISI-044, and 22 ISI-050 failures). Against the retained v14
+    draft, all inherited 72 focused cases pass and all ten new cases fail.
+    ISI-050 must therefore bound discovery and inspection as well as mutation
+    to 256 metadata entries per public call; fail typed rather than return
+    while an unsafe, nonprivate, or unreadable marker-derived residue is
+    unresolved; preserve typed loser/lock/candidate-finalization evidence; and
+    follow every successful stale unlink, including error-path cleanup, with a
+    Git-metadata-directory sync.
 
 ## 3. Proposed package and files
 
@@ -731,7 +754,7 @@ authoritative by itself.
 | ISI-047 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner adversarial tests/fixture | Commit-derived tree, portable clone identity, mode/disposition/exclusion-rooted state, ctime-strength generation fence, collision-free raw/source/artifact keys, and explicit restored-manifest trust boundary | ISI-046 |
 | ISI-048 | P0 | `snapshot.py`, `scanner.py`, optional fixture; protected adversarial test is external authority | Make all 33 protected public probes pass: local unborn identity, precise unborn disposition, same-HEAD status/index fencing, nested raw exclusion roots, and typed corrupt/quiet/warning/decode failures while retaining all 20 green contracts | ISI-047 |
 | ISI-049 | P0 | `snapshot.py`, `scanner.py` only as needed; protected adversarial test is external authority | Keep automatic unborn identity stable across a pre-commit repository move and reject an unborn-to-born transition between identity and snapshot decisions without regressing the prior 55 focused passes | ISI-048 |
-| ISI-050 | P0 | `snapshot.py`, `scanner.py` only as needed; protected 50-case adversarial test is external authority | Atomically publish the local unborn bootstrap token with typed failure cleanup/recovery, durable-reader fencing, bounded concurrency-safe stale-temporary recovery, ordered publish/cleanup directory syncs, safe final-marker metadata validation, and an explicit-ID no-mutation path | ISI-049 |
+| ISI-050 | P0 | `snapshot.py`, `scanner.py` only as needed; protected 60-case adversarial test is external authority | Atomically publish the local unborn bootstrap token with typed failure cleanup/recovery, durable-reader fencing, bounded discovery and concurrency-safe stale-temporary recovery, typed unsafe-residue/finalization handling, ordered publish/error-cleanup directory syncs, safe final-marker metadata validation, and an explicit-ID no-mutation path | ISI-049 |
 | ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture; protected seven-case authority is validation-only | Make the protected 7-case public gate pass while establishing canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-050 |
 | ISI-044 | P0 | `python_analysis.py`, distinct relation-closure tests/fixture; protected seven-case relation authority is validation-only | Make the protected 7-case relation gate pass with exact retained inheritance/composition/schema targets, scope/state effects, bounded calls, and source-bound dynamic/plugin/native confidence | ISI-043 |
 | ISI-045 | P0 | `persistence.py`, persistence tests | Idempotent bounded cleanup of legacy and current root/transition temporary prefixes without disturbing authoritative data | ISI-037 |
