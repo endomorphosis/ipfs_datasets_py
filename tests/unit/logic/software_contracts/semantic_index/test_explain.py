@@ -96,3 +96,27 @@ def test_opaque_edge_on_an_impact_path_requires_raw_source() -> None:
     state = RepositoryState(state.repository_id, state.symbols, state.artifacts, [*state.edges, edge])
     impact = explain_impact(state, names["a"])
     assert f"raw_source_required:{edge.edge_id}" in impact.limitations
+
+
+def test_identical_byte_files_do_not_cross_contaminate_path_impact() -> None:
+    """Shared source CIDs must not pull symbols from a different path."""
+    analysis_a = analyze_python_source("def shared():\n    return 1\n", "pkg/a.py", "repo:example")
+    analysis_b = analyze_python_source("def shared():\n    return 1\n", "pkg/b.py", "repo:example")
+    symbols = (*analysis_a.symbol_records, *analysis_b.symbol_records)
+    # Force identical source CIDs across distinct paths.
+    shared_cid = symbols[0].source_cid
+    from dataclasses import replace as dc_replace
+
+    symbols = tuple(
+        dc_replace(item, source_cid=shared_cid) if item.source_cid != shared_cid else item
+        for item in symbols
+    )
+    state = RepositoryState("repo:example", symbols, edges=())
+    impact_a = explain_impact(state, "pkg/a.py")
+    impact_b = explain_impact(state, "pkg/b.py")
+    ids_a = {item.stable_id for item in symbols if item.module_path == "pkg/a.py"}
+    ids_b = {item.stable_id for item in symbols if item.module_path == "pkg/b.py"}
+    assert ids_a & set(impact_a.changed_symbol_ids)
+    assert not (ids_b & set(impact_a.changed_symbol_ids))
+    assert ids_b & set(impact_b.changed_symbol_ids)
+    assert not (ids_a & set(impact_b.changed_symbol_ids))

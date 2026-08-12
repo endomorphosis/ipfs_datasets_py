@@ -29,12 +29,20 @@ W5  ISI-020
 W6  ISI-023
 W7  ISI-030 | ISI-031
 W8  ISI-032
-W9  ISI-033 -> ISI-041
+W9  ISI-033 -> ISI-041 -> ISI-042
 W10 ISI-034 | ISI-035 | ISI-037
-W11 ISI-036
-W12 ISI-038
-W13 ISI-039
-W14 ISI-040
+W10a ISI-045
+W11 ISI-046
+W12 ISI-047
+W13 ISI-048
+W14 ISI-049
+W15 ISI-050
+W16 ISI-043
+W17 ISI-044
+W18 ISI-036
+W19 ISI-038
+W20 ISI-039
+W21 ISI-040
 ```
 
 ## ISI-000 Inspect and seal semantic-index authorities
@@ -520,13 +528,40 @@ W14 ISI-040
 - Effects: Publishes an explicit v2 durable symbol/version schema; makes the normalized semantic projection mandatory for every v2 record construction/deserialization and version recomputation, with an explicit typed v1 migration adapter or typed legacy rejection if compatibility is retained; persists every version-CID input including extractor name/version, semantic-index schema, property role, signature, ordered decorators, annotations, and normalized AST; recursively freezes every stable/version identity input; canonically and injectively represents finite values, signed zero, and positive/negative infinity in float and complex components while continuing to reject values that cannot arise from a Python literal unless they have an explicit tag.
 - Acceptance: Omitting `normalized_ast` from a v2 record or replacing it with a different projection fails with a typed model error. Forging extractor name/version, semantic-index schema, property role, signature, decorator order, annotation, or AST while retaining the old version CID fails restore. Mutating top-level or nested signature, annotations, metadata, normalized AST, or aggregate facets is impossible and cannot alter serialized/state identity. `ast.parse("x = 1e400")` and complex literals with positive/negative infinite components round-trip through distinct tagged projections and CIDs; positive/negative zero remain distinct. A v1 payload is accepted only through the named typed migration boundary and emerges as a fully verifiable v2 record, or is rejected explicitly. Tests exercise omitted/forged projections and attempted signature/annotation mutation rather than only metadata mutation.
 
+## ISI-042 Reject source-impossible NaN identity inputs
+
+- Status: completed
+- Completion: auto
+- Priority: P0
+- Track: identity-closure
+- Depends on: ISI-041
+- Goal id: ISI-G080, ISI-G081
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py, tests/unit/logic/software_contracts/semantic_index/test_models.py, tests/unit/logic/software_contracts/semantic_index/test_identity_contract.py
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_models.py tests/unit/logic/software_contracts/semantic_index/test_identity_contract.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/literal-admission
+- Parallel lane: isi-identity-closure
+- Resource class: cpu-small
+- Implementation timeout seconds: 3600
+- Provider role: codex-implement
+- Context budget tokens: 16000
+- LLM context budget bytes: 131072
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 5 and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py, tests/unit/logic/software_contracts/semantic_index/test_models.py, tests/unit/logic/software_contracts/semantic_index/test_identity_contract.py
+- Predicted symbols: normalize_ast, _float_projection, symbol_version_identity_payload, symbol_version_cid
+- Interfaces: SymbolVersionIdentity@2
+- Conflict policy: Repair only the audited literal-admission gap in merged baseline `5d517253577da9b0e77d80e88a2cdcf5a76db0da`. Preserve the completed ISI-041 record and its v2 schema, keep `logic/software_contracts/content.py` unchanged as the sole canonicalization/CID authority, and do not edit models, scanners, extractors, persistence, or control documents.
+- Preconditions: ISI-041 is merged at implementation `520029a0f` and completion marker `5d5172535`; its 18 focused tests pass, but independent acceptance audit proved that `normalize_ast(float("nan"))` and complex values with a NaN component are admitted as the string projection `"nan"` even though no Python source literal can produce NaN.
+- Effects: Rejects NaN float constants and either NaN component of a complex constant with `SemanticIndexModelError` before canonical DAG-JSON validation or CID construction. It retains the distinct tagged projections already established for positive/negative infinity and positive/negative zero.
+- Acceptance: Direct normalization and `symbol_version_cid` reject `float("nan")`, `complex(float("nan"), 0.0)`, and `complex(0.0, float("nan"))` with the typed model error before the content hasher is invoked. The committed test proves the hasher was not called on each rejected input. Existing tests still prove distinct CIDs and round trips for positive/negative infinity, complex infinite components, and positive/negative zero.
+
 ## ISI-034 Root scans in exact Git blobs and snapshot identity
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: snapshot-repair
-- Depends on: ISI-041
+- Depends on: ISI-042
 - Goal id: ISI-G080, ISI-G082
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_truth
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py
@@ -543,20 +578,20 @@ W14 ISI-040
 - Predicted symbols: RepositorySnapshot, SnapshotFile, GitSnapshotProvider, RepositoryScanner, scan_repository_state
 - Interfaces: RepositorySnapshot@2, RepositoryState@2
 - Conflict policy: Adapt the bounded Git object inventory and cat-file patterns in `logic/software_contracts/repository.py`; do not reread a clean snapshot path after its Git blob was selected. Keep dirty filesystem bytes and clean Git bytes as explicit mutually exclusive sources, and keep watcher events non-authoritative. `scanner.py` is owned only by this task in W10.
-- Preconditions: ISI-041 has closed and tested the v2 durable state and identity schema.
+- Preconditions: ISI-042 has closed and tested the v2 durable state and literal-admission schema.
 - Effects: Carries selected bytes (or a verified immutable byte reference) from snapshot through parsing exactly once; records Git repository identity, commit OID, tree OID, tracked blob OIDs, snapshot CID, input disposition, and closed exclusions in the state root; bounds Git subprocesses; turns undecodable paths, unreadable files/directories, symlink escapes, oversize inputs, and read races into typed opaque artifacts; excludes semantic-index store/control files in both Git-dirty and filesystem modes.
 - Acceptance: A clean fixture with a Git smudge filter produces symbols/source CIDs from the indexed blob rather than transformed worktree bytes. Mutating a file between snapshot selection and parse cannot mix bytes and becomes an explicit race/opaque artifact. Two identical clean scans retain identical commit/tree/snapshot/state roots, while two unrelated same-basename repositories without a shared Git identity do not silently share repository identity. Dirty tracked and untracked bytes are deterministic. `.semantic-index` and configured store files never enter the target state. Malformed names and unreadable inputs are represented, not silently omitted; Git commands time out with typed failure.
 
 ## ISI-035 Rebase Python extraction on the established frontend authority
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: extraction-repair
-- Depends on: ISI-041
+- Depends on: ISI-042
 - Goal id: ISI-G080, ISI-G082
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py, tests/fixtures/software_contracts/incremental_semantic_index/python_constructs
-- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/test_python_frontend.py
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_analysis_authority_adversarial.py tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/test_python_frontend.py
 - Board namespace: incremental-semantic-index-v1
 - Bundle: isi/extraction-authority
 - Parallel lane: isi-python-repair
@@ -570,17 +605,17 @@ W14 ISI-040
 - Predicted symbols: PythonSemanticAnalyzer, PythonAnalysisResult, analyze_python_source, aggregate_logical_bindings, classify_confidence
 - Interfaces: PythonSemanticAnalysis@2
 - Conflict policy: Consume/adapt `python_frontend.py` AST records, diagnostics, effects, and duplicate-definition facts instead of maintaining a weaker second frontend. Extend only missing semantic-index projections. Never import target code, infer a complete call graph, flatten whitespace inside literal values, or label unknown native/dynamic behavior exact.
-- Preconditions: ISI-041 supplies closed v2 aggregate binding/version projections; this task does not edit scanner or graph files.
+- Preconditions: ISI-042 supplies closed v2 aggregate binding/version projections with source-impossible NaN rejected; this task does not edit scanner or graph files.
 - Effects: Collects module, conditional and nested definitions; aggregates overload/rebinding/property roles; excludes independently addressed child bodies from parent body projections while preserving interfaces; renders signatures/defaults without changing string literal content; fixes generator scoping; emits alias-aware imports/calls/inheritance/composition; captures ordinary global reads/writes, destructuring/augmented/subscript instance-state access, raised/caught exception sets, context managers, dataclasses, class/functional TypedDict, Enum/IntEnum/StrEnum/Flag families, statically detectable Pydantic models, and explicit serializer/deserializer/validator targets. Confidence degrades for eval/exec, native imports, dynamic imports/attributes, decorators, metaclasses, monkey patching, reflection, plugins, code generation, and uncontrolled I/O with source-bound reasons.
 - Acceptance: Editing one method body versions that method but not unrelated methods or the module merely because it contains the method. Analyzer output aggregates overload declarations and property getter/setter/deleter sets without duplicate stable IDs, retains repeated decorator order, and gives each facet version evidence. Defaults `"a  b"` and `"a b"` have distinct signature projections. `from ctypes import CDLL` and native calls are conservative/opaque, never exact. Conditional/nested definitions are present or explicit opaque records. Fixtures prove Pydantic fields, functional TypedDict, IntEnum/StrEnum/Flag, class composition, ordinary global reads, tuple catches, context managers, state reads/writes, decorator opacity, dynamic attribute opacity, and schema-target serialization without executing code.
 
 ## ISI-037 Bind persisted roots to repositories and process-safe CAS
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: persistence-repair
-- Depends on: ISI-041
+- Depends on: ISI-042
 - Goal id: ISI-G080, ISI-G082
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/persistence.py, tests/unit/logic/software_contracts/semantic_index/test_persistence.py
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_persistence.py tests/unit/logic/software_contracts/test_cache.py
@@ -597,17 +632,233 @@ W14 ISI-040
 - Predicted symbols: SemanticIndexStore, LocalSemanticIndexStore, IpfsKitSemanticIndexStore, compare_and_swap_root, load_current_state, recover
 - Interfaces: SemanticIndexStore@2, StateRootCAS@2
 - Conflict policy: Compose `cache.ImmutableCAS` and authoritative CID recomputation; do not duplicate block identity/publication. The optional kit adapter remains lazy, injected, and capability checked. A platform without a reliable interprocess lock must fail closed rather than silently downgrade to thread-only CAS.
-- Preconditions: ISI-041 v2 state deserialization rejects omitted or forged identity projections and repository membership.
+- Preconditions: ISI-042 v2 identity admission rejects omitted, forged, and source-impossible projections before persistence consumes them.
 - Effects: Makes the store protocol concrete for state/delta/plan put/get and root operations; validates root-record CID, referenced state CID, and `state.repository_id` against the requested repository on every local and kit read/CAS; adds process-safe locked expected-old publication, explicit interruption points/WAL or equivalent recoverable transition records, atomic visibility, deterministic replay, and corruption/orphan recovery.
 - Acceptance: A valid repository-B state installed under repository A is rejected on current-root read and CAS. A root record whose canonical bytes or referenced state mismatch is rejected. Two separate subprocess writers using one expected root yield exactly one distinct successor and one typed conflict. Injected interruption before/after object write, transition write, and root replace recovers to the last fully visible root. Corrupt blocks/transitions fail closed; local tests require no daemon/network/install, and the kit adapter enforces the same binding.
 
+## ISI-043 Restore frontend-authoritative Python inventory and projections
+
+- Status: completed
+- Completion: auto
+- Priority: P0
+- Track: extraction-inventory-closure
+- Depends on: ISI-035, ISI-050
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py, tests/fixtures/software_contracts/incremental_semantic_index/python_constructs
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/test_python_frontend.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/python-inventory-closure
+- Parallel lane: isi-python-inventory-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: grok-implement
+- Context budget tokens: 52000
+- LLM context budget bytes: 425984
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 6, 7, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py, tests/fixtures/software_contracts/incremental_semantic_index/python_constructs
+- Predicted symbols: PythonSemanticAnalyzer, PythonSemanticAnalysis, analyze_python_source, aggregate_logical_bindings, _projection, _kind
+- Interfaces: PythonSemanticAnalysis@2, PythonFrontendDisposition@1
+- Conflict policy: Repair merged implementation `bf827c9bb` and completion marker `a090afad2` without rewriting the truthful completed ISI-035 record. Treat `PythonASTExtractor` records as the canonical declaration, scope, duplicate-definition, diagnostic, unsupported-construct, import, and effect inventory; a local AST used for version projection may not become a competing inventory. Preserve strict symbol identities and source bytes. The independent `tests/unit/logic/software_contracts/semantic_index/test_python_analysis_authority_adversarial.py` is a protected validation-only authority: do not edit, replace, rename, delete, skip, xfail, monkeypatch around, special-case, or add it to task outputs. Do not edit `python_frontend.py`, scanner/graph production files, identity/CID code, or the distinct ISI-044 relation-closure test/fixture.
+- Preconditions: ISI-050 supplies atomic, recoverable publication for ISI-049's durable moved-unborn identity and preserves its single-captured-HEAD generation closure, while ISI-048 remains pinned at implementation `ee0bc3b542a46b1d5ab52d3a3a9c1209dbbfec28`, merge `a9d4096fdb561b7ecdf42af910c13fe84475ac86`, and completion marker `3a11ef85f03e4a934b97412e3c348d98877c58ad`; completed ISI-035 is pinned at implementation `bf827c9bb` with completion marker `a090afad2`, and its 22 focused tests pass. On that baseline the protected seven-case public-API authority collects with exactly one malformed-input pass and six assigned failures: canonical frontend declaration provenance/grouping, recursive child projection isolation, overload-only public signature evidence, aliased model kinds, aliased functional TypedDict fields/total, and public-scanner retention of nonfatal uncertainty. Independent source/probe audit demonstrates the same second weaker declaration walk, non-recursive child projection exclusion, incomplete aliases/model kinds, and loss of nonfatal frontend results at scanner disposition.
+- Effects: Adapts canonical frontend facts into one deterministic logical-binding inventory, including definitions in conditional, try/except, with, and match bodies and honest aggregation of conditional or repeated bindings. Recursively excludes independently addressed function/class bodies from every parent projection while retaining child interfaces. Makes overload declarations authoritative public-signature facets so overload-only edits change the binding version. Builds lexical-scope-aware prefix alias facts for module and local imports and uses them for calls, decorators, bases, class and functional TypedDict (including keyword fields and `total`), dataclass, Enum-family, and Pydantic-style model detection. Separates fatal encoding/parse/resource diagnostics from nonfatal unsupported/confidence evidence so public scans preserve analyzable symbols with their caveats instead of replacing the whole file with an opaque artifact.
+- Acceptance: The protected authority reaches 7/7 without modification. The semantic logical-binding inventory has a deterministic, tested correspondence to canonical frontend declaration/scope facts rather than an independently discovered second inventory. Definitions inside `except` handlers and `match` cases are present; conditional/rebound facets are not falsely claimed exact. Changing a nested child body under direct or conditional control flow changes that child but not its parent function, class, or module version, while an overload-only signature edit changes the public binding version. `import pkg as p; p.fn()`, local import aliases, and aliased `IntEnum`, `TypedDict`, `dataclass`, and `BaseModel` resolve/classify identically to their direct forms; functional TypedDict keyword fields and `total` participate in version evidence. Dynamic import, eval, metaclass, and nonlocal frontend notices remain attached to returned symbols, and a public scanner probe retains those symbols with conservative/opaque confidence; only malformed/undecodable/resource-exhausted input becomes a whole-file opaque artifact.
+
+## ISI-044 Close typed Python relations, effects, and confidence
+
+- Status: completed
+- Completion: auto
+- Priority: P0
+- Track: extraction-relation-closure
+- Depends on: ISI-043
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_relation_closure.py, tests/fixtures/software_contracts/incremental_semantic_index/python_relation_closure
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_relation_authority_adversarial.py tests/unit/logic/software_contracts/semantic_index/test_python_relation_closure.py tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/test_python_frontend.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/python-relation-closure
+- Parallel lane: isi-python-relation-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: grok-implement
+- Context budget tokens: 52000
+- LLM context budget bytes: 425984
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 7, 8, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_python_relation_closure.py, tests/fixtures/software_contracts/incremental_semantic_index/python_relation_closure
+- Predicted symbols: PythonSemanticAnalyzer, ConfidenceClassifier, _FactsVisitor, classify_confidence
+- Interfaces: PythonSemanticAnalysis@2, PythonTypedRelations@1
+- Conflict policy: Build on ISI-043's frontend-backed inventory and alias/scope authority. Emit only source-bound typed edges with exact targets, spans, methods, confidence, extractor version, and bounded uncertainty; do not repair resolution globally, invent a complete call graph, add a new relation vocabulary, or edit scanner/graph/persistence files. The independent `tests/unit/logic/software_contracts/semantic_index/test_python_relation_authority_adversarial.py` is a protected validation-only authority: do not edit, replace, rename, delete, skip, xfail, monkeypatch around, special-case, or add it to task outputs. Assertions must compare relation, target, extraction method, confidence, and source span rather than merely proving that some relation name is present.
+- Preconditions: ISI-043 has restored authoritative inventory/projection and alias/model-kind facts on the audited `bf827c9bb` / `a090afad2` baseline. The protected seven-case public-analyzer relation authority fails exactly seven assigned contracts on that baseline: inheritance/implements/composition targets; bounded module/local/self/nested calls; shadowed/global/nonlocal plus augmented name/attribute/subscript effects; tuple catches and multi-context targets; schema-target serialization/deserialization/validation; aliased dynamic/native/plugin/runtime confidence; and decorator/metaclass/constructed-attribute locality. Independent audit proves that completed ISI-035 drops every inheritance edge by appending it after edge collection; emits no static composition/implements dependency; leaves alias, self, and nested calls unresolved; misstates scope effects; points schema relations at operation methods; and reports several dynamic/native/plugin cases exact.
+- Effects: Emits retained alias-aware inheritance and implements edges to the actual type target, plus statically visible composition dependencies through an existing typed relation and an explicit composition extraction method. Resolves bounded direct, module-alias, local-alias, `self` method, and nested lexical calls without claiming completeness. Models global versus shadowed local/nonlocal access, destructuring, and read-plus-write effects for augmented attribute/subscript/name assignments. Emits tuple exception and multi-context facts and serializer/deserializer/validator relations to the schema symbol, including `model_validate_json`, rather than only to a guessed operation name. Makes alias-aware dynamic import, `__import__`, runtime type/class construction, constructed attributes, native calls, uncontrolled effects, entry-point/plugin discovery, dynamic monkey patching, unknown decorators, and metaclass mutation conservative or opaque with source-bound reasons; unrelated qualified assignments do not poison a same-named local class.
+- Acceptance: The protected relation authority reaches 7/7 without modification. Exact fixture assertions prove that each class-base edge survives collection and targets its base; annotated class composition targets the member type with an explicit extraction method; and serializer/deserializer/validator edges target the dataclass, TypedDict, or Pydantic schema rather than `lexical:dumps`, `loads`, or a method name. Nonlocal mutation and `self.attr += value` each emit both required reads and writes, local shadowing emits no false global write, and destructuring/subscript effects have exact expected targets. Alias, `self`, and nested calls resolve to the expected bounded target. Aliased `importlib.import_module`, aliased ctypes/native calls, `entry_points`, three-argument `type`/`types.new_class`, constructed `setattr`, dynamic monkey assignment, and aliased uncontrolled I/O are never exact; direct tuple catches and multiple context managers remain complete. Tests fail on a wrong target, method, span, or confidence even when the expected relation type is present.
+
+## ISI-045 Recover legacy and current persistence temporary orphans
+
+- Status: completed
+- Completion: auto
+- Priority: P0
+- Track: persistence-recovery-closure
+- Depends on: ISI-037
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/persistence.py, tests/unit/logic/software_contracts/semantic_index/test_persistence.py
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_persistence.py tests/unit/logic/software_contracts/test_cache.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/root-recovery-closure
+- Parallel lane: isi-persistence-recovery-closure
+- Resource class: cpu-small
+- Implementation timeout seconds: 5400
+- Provider role: codex-implement
+- Context budget tokens: 24000
+- LLM context budget bytes: 196608
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 10 and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/persistence.py, tests/unit/logic/software_contracts/semantic_index/test_persistence.py
+- Predicted symbols: LocalSemanticIndexStore, _replace_root, _recover_unlocked, recover
+- Interfaces: SemanticIndexStore@2, StateRootCAS@2, StateRootRecovery@1
+- Conflict policy: Repair only recovery behavior from ISI-037 implementation `aa1e64aba` and completion marker `cb80ff74e`; preserve its repository-binding, verification, process lock, CAS, transition, and kit-adapter behavior. Recognize only the bounded legacy/current temporary prefixes in the roots and transitions directories; never glob broadly, follow symlinks, delete immutable CAS data, or alter a valid root/transition as orphan cleanup.
+- Preconditions: Completed ISI-037 is pinned at implementation `aa1e64aba` with completion marker `cb80ff74e`; its 29 focused tests and independent cross-repository and two-process CAS probes pass. Audit demonstrates that recovery recognizes the current `.transition-*` prefix in the transition directory but leaves the legacy `.root-*` form produced by the earlier root-replacement path.
+- Effects: Reconciles valid transition journals as before, then under the process-safe recovery lock recognizes and removes both `.root-*` and `.transition-*` temporary-file forms from their bounded roots/transitions locations. Recovery remains deterministic and idempotent, fsyncs affected directories, preserves the last fully visible verified root, and reports exactly the orphan paths removed.
+- Acceptance: Crash fixtures for every before/after object, transition-write, and root-replace interruption boundary seed both legacy and current temporary prefixes in each bounded publication directory. `recover()` removes and reports every regular-file orphan, a second recovery reports none, and the old or new fully visible root remains authoritative as appropriate. Valid root JSON, valid/reconcilable transition JSON, immutable CAS blocks, unrelated files, directories, and symlinks are not mistaken for temporary orphans. Corrupt authoritative roots/transitions still fail closed, and all existing repository-binding, subprocess-CAS, local hermetic, fake-kit, and cache tests remain green.
+
+## ISI-046 Close stable repository and exact snapshot-byte authority
+
+- Status: completed
+- Completion: auto
+- Priority: P0
+- Track: snapshot-authority-closure
+- Depends on: ISI-034
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_truth
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/snapshot-authority-closure
+- Parallel lane: isi-snapshot-authority-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: codex-implement
+- Context budget tokens: 46000
+- LLM context budget bytes: 376832
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 5, 6, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_truth
+- Predicted symbols: SnapshotEntry, RepositorySnapshot, repository_identity, snapshot_repository, RepositoryScanner, scan_repository_state
+- Interfaces: RepositorySnapshot@3, RepositoryState@2
+- Conflict policy: Repair only the post-merge snapshot/scanner defects in ISI-034 implementation `10482c1c1864ac829ec26ebd97d7c8e97f508cd0`, merge `0348908d40e7cba12542288266083b111c99add5`, and completion marker `92b7cdbd67a3cc57d92db3d90c4280f00ab69248`; preserve the truthful completed ISI-034 record. Reuse bounded Git object patterns from `logic/software_contracts/repository.py` and `content.py` identities. Never put current HEAD/tree/revision or host device/inode into committed-Git stable identity, reread selected content during parsing, silently downgrade Git command failure to another mode, remove/rename/weaken an existing test, or edit models, Python/pytest analysis, graph, persistence, or control files. In particular, preserve `test_working_file_mutation_after_snapshot_is_explicit_opaque_artifact` unchanged; satisfy it with a non-content acquisition witness and metadata-only validation, not a second content read.
+- Preconditions: ISI-034's 12 focused tests pass, but independent live-candidate audit proves that a no-origin repository hashes current `HEAD` into `repository_id`: two commits over the identical empty tree produced different repository CIDs and would churn every stable symbol ID. Independent non-Git and unborn-Git same-basename repositories instead collide. The merged snapshot also omits commit OID and per-entry blob OID, reads a clean blob once for its CID and again in the scanner, turns malformed working-tree names into a whole-scan exception, silently omits an unreadable filesystem directory, and can treat Git status failure as working mode. Its path projection rewrites valid NFD and backslash-containing POSIX names, can collapse them with other valid names, and places invalid-byte markers in a forgeable valid-path namespace. An excluded untracked `.semantic-index/state` changes `git-clean` to `git-working`, changes the snapshot root, and causes a smudge-filtered source to be parsed from worktree rather than indexed bytes; invalid-byte filesystem names reach CID encoding and crash; no configured store/control exclusion root is accepted by the API. Rejected provider commits `febc4e09606172e58db8bef3dbe8cc56ad5f1b82` and `607d6f09cfa3dbda6f8b778f34121810d78b3e71` were correctly denied for test weakening; audit additionally found host-inode committed identity, non-atomic separate HEAD/tree reads, excluded entries counted before bounds, dirty snapshots losing commit/tree/blob evidence, forgeable malformed markers and reserved artifact collisions, and corrupt/nonzero Git discovery silently downgrading modes.
+- Effects: Derives committed Git repository identity from portable normalized origin/root-history evidence shared by clones and linked worktrees, never from a current commit/tree, basename, host path, device, or inode; it remains stable across commits while distinguishing unrelated histories. Uses an explicit local bootstrap domain for unborn repositories and a stable filesystem domain where no Git identity exists. Selects one commit then derives its tree from that exact commit, and records commit, tree, tracked blob OID/disposition, acquisition mode, exclusions, and explicit unborn/dirty/untracked evidence in the canonical snapshot and state-root evidence. Carries every selected regular input's exact bytes from bounded Git-object or race-checked filesystem acquisition into scanner parsing so each content object is read once and the scanner performs no second `cat-file` or filesystem content read. A non-identity acquisition witness may record working-file metadata so scanner-time replacement becomes opaque without weakening the existing race test or rereading content. Converts malformed Git/working/filesystem names, reserved synthetic names, and unreadable directories to collision-resistant domain-separated opaque entries, or a typed fail-closed snapshot disposition when no safe entry can be formed, without silent omission, duplicate artifact IDs, or surrogate-encoding failure. Treats repository discovery, status, revision, tree listing, size, blob read, warnings that imply incomplete traversal, and other Git failures/timeouts as typed fail-closed results. Adds explicit configured store/control exclusions and applies all closed exclusions before entry bounds and Git cleanliness/mode selection as well as during clean, dirty, and filesystem enumeration.
+- Acceptance: A no-origin repository keeps the same `repository_id` and stable symbol IDs across an empty commit, a source-changing commit, and a same-tree commit; a clone and linked worktree of the same committed repository share that identity, while two independently initialized different histories, two unborn same-basename repositories, and two non-Git same-basename directories remain distinct. An unborn repository produces a typed deterministic snapshot rather than a generic HEAD error, and an explicitly bootstrapped unborn repository retains that caller-supplied `repository_id` through its first commit. Snapshot/state evidence exposes acquisition disposition/exclusions and one atomically selected commit and its exact tree plus every tracked blob OID in clean and dirty forms; changing any authoritative evidence changes the snapshot/state root, while host inode/path changes do not alter committed-Git identity. Closed snapshot/entry schema round-trips recompute every claimed CID and reject missing, forged, corrupt, or unknown fields. Instrumented Git and filesystem probes prove exactly one successful content-byte read per selected input across snapshot plus scanner and fail if scanner invokes a second `cat-file` or reopens the path for content. The unchanged `test_working_file_mutation_after_snapshot_is_explicit_opaque_artifact` remains green through metadata-only replacement detection. A smudge-filtered clean worktree parses indexed bytes; adding or mutating only an excluded `.semantic-index` or configured state/control root leaves mode, selected bytes, and snapshot/state root unchanged, even with invalid raw child names or more excluded entries than `max_entries`; mutation at each selection/acquisition/parse boundary is represented by immutable captured bytes or a typed raced/opaque input, never mixed. Valid names resembling synthetic markers, a real `@snapshot-evidence` path, NFD, backslash-containing, invalid UTF-8, and otherwise malformed POSIX names in clean, dirty, and filesystem modes retain domain-separated raw identity and distinct artifact identity without lookup rewrite, collision, collapse, duplicate IDs, or CID encoding failure; unreadable files/directories are not omitted. Corrupt repository metadata, nonzero/timeout discovery/HEAD/status/tree/blob failures, and successful Git commands whose warnings prove incomplete traversal (including an unreadable untracked directory) fail closed with the expected typed error or path-bound opaque artifact and never downgrade to filesystem/working mode. Identical scans and cold/incremental scans retain identical snapshot/state roots.
+
+## ISI-047 Finalize snapshot generation, path, and manifest trust
+
+- Status: completed
+- Completion: auto
+- Priority: P0
+- Track: snapshot-authority-final-closure
+- Depends on: ISI-046
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_closure.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_authority_closure
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_closure.py tests/unit/logic/software_contracts/semantic_index/test_watch.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/snapshot-authority-final-closure
+- Parallel lane: isi-snapshot-authority-final-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: codex-implement
+- Context budget tokens: 56000
+- LLM context budget bytes: 458752
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 5, 6, 12, 13, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_closure.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_authority_closure
+- Predicted symbols: SnapshotEntry, RepositorySnapshot, repository_identity, snapshot_repository, RepositoryScanner, scan_repository_state, _witness_matches, _snapshot_evidence_artifact
+- Interfaces: RepositorySnapshot@4, SnapshotEntry@3, RepositoryState@2
+- Conflict policy: Repair only the retained snapshot/scanner defects in completed ISI-046 implementation `bebe7752a7c8412e02b3691ba17437aa41c45012`, merge `97be11c7845d2e4b1c2444c0c187e1a58499ca94`, and completion marker `44876f4b40d82ed97c7b7ce95ac89853cd1e854c`; preserve that truthful completion record and its valid exact-one-read, bounded clean-blob size, built-in exact-name exclusion, linked-worktree, raw-opaque, unreadable-retention, deterministic-root, and state-evidence improvements. Reuse `software_contracts.content` as the sole CID/canonicalization authority. Do not edit models, Python/pytest analysis, graph, persistence, control files, or any existing test to weaken, rename, delete, or replace its assertion. The 19 failures in the 105-test semantic-index baseline are assigned to already ordered downstream repair tasks; this task may not expand that failure set.
+- Preconditions: ISI-046's 14 declared focused tests pass and the full semantic-index suite has the same 19 known failures as its pre-046 baseline, but independent immutable probes show it is not authoritative. Original and local clone repository IDs differ because born identity mixes a clone-local origin with one root; snapshot CID omits mode and accepts a clean-to-working mode forgery; commit A can be paired with tree B because tree lookup repeats `HEAD`; the public snapshot signature has no configured exclusions; an unborn repository drops its untracked Python inventory; a corrupt ref whose verified HEAD fails quietly is mislabeled unborn; staged deletion produces no entry or disposition; conflicted index stages lose every blob OID; and dirty acquisition is only `captured`. A same-size rewrite with restored mtime evades its witness. An invalid raw name and a valid literal `@malformed-path/<hex>` collapse into duplicate artifacts; `raw_path_hex` need not bind to `path`; scanner source/failure maps are keyed by the colliding display path; and ASCII-ignore comparison silently excludes a distinct `.semantic-index<invalid-byte>` name. A corrupt Git marker can downgrade to filesystem, HEAD/remote success warnings and remote failures can be accepted, Git execution `OSError` leaks untyped, and empty/non-ASCII identity output leaks `IndexError`/`UnicodeDecodeError`. A structurally self-consistent manifest can replace `source_cid` and recompute dependent entry/snapshot CIDs because restored manifests carry no source bytes; such recomputation proves only internal manifest consistency, not source authenticity.
+- Effects: Uses a portable sorted born-Git root-history identity shared by the original, clones, and linked worktrees without incorporating clone-local origin/path/inode data, while caller-supplied bootstrap identity remains stable through an unborn repository's first commit and unrelated histories remain distinct. Captures one verified commit and derives its tree only as `<captured-commit>^{tree}`, then checks a bounded generation fence around status/index/blob acquisition. Includes mode in snapshot identity. Inventories unborn working inputs and represents tracked-clean, tracked-modified, conflicted, staged-added/modified/deleted, unstaged-deleted, and untracked entries with explicit disposition plus every applicable HEAD/index-stage blob OID. Adds normalized configured store/control exclusions to snapshot, scanner, and convenience scan entry points; compares exact raw components and applies exclusions before status/mode selection, bounds, and enumeration. Extends the metadata-only working/filesystem witness with ctime or an equally strong non-content generation value so replacement with restored size/mtime is opaque without a second content read. Separates raw entry identity, safe display/module path, source lookup key, opaque artifact ID, and synthetic snapshot-evidence ID into non-forgeable domains; scanner maps by the raw/entry identity rather than display path. Distinguishes a genuinely unborn symbolic HEAD from corrupt, missing-object, permission, nonzero, warning, timeout, execution, decoding, and malformed/empty-output failures and exposes only typed snapshot errors.
+- Acceptance: Main checkout, linked worktree, and local clone of one born history have one `repository_id`; different histories differ; ordinary commits do not churn stable symbol IDs; and an explicit caller ID survives unborn inventory through first commit. A monkeypatched HEAD advance proves `git_commit=A` can only pair with `A^{tree}` or a typed race, never `B^{tree}`. `mode` participates in `snapshot_cid`, so changing or deserializing a forged mode fails CID verification and the state evidence remains bound to that CID. Dirty and unborn fixtures retain exact per-entry disposition and HEAD/index OIDs, including staged/unstaged deletion and index conflict stages 1/2/3, without analyzing deleted bytes. Built-in and configured exclusions with regular or invalid raw children are applied before mode and `max_entries`; excluded-only changes preserve selected bytes and roots, while a nonmatching `.semantic-index<invalid-byte>` remains visible. Existing one-content-read and smudge tests remain green, oversized clean blobs are rejected from `cat-file -s` without reading content, and the unchanged `test_working_file_mutation_after_snapshot_is_explicit_opaque_artifact` plus a same-size/restored-mtime variant both produce opaque evidence through metadata-only validation. Exact probes pair invalid UTF-8, NFD, backslash, valid synthetic-looking names, and a real `@snapshot-evidence` path and obtain distinct entries/artifacts with no duplicate, omission, lookup rewrite, or analyzer crash. Safe paths must be the exact UTF-8 decoding of `raw_path_hex`; unsafe names must use a typed synthetic domain derived from those raw bytes; `from_dict` rejects any mismatched raw/path binding. Entry and snapshot CIDs recompute from closed payloads, but a restored manifest with no captured bytes is explicitly a manifest claim: scanner parses it only after caller-injected or CAS-retrieved bytes recompute to `source_cid`, never from the recomputed structural CIDs alone. Corrupt-ref quiet HEAD failure, corrupt/not-repository marker ambiguity, remote/HEAD success warnings, remote non-missing failures, Git execution `OSError`, empty/non-ASCII identity output, nonzero/timeout failures, incomplete traversal, unreadable inputs, and commit/status/index races all return typed evidence/errors and never downgrade modes or leak host exceptions. Identical and cold/incremental scans stay deterministic; every previously green focused/watch test remains green; the known broader failure set does not grow.
+
+## ISI-048 Satisfy the protected snapshot authority adversarial gate
+
+- Status: completed
+- Completion: auto
+- Priority: P0
+- Track: snapshot-authority-protected-gate
+- Depends on: ISI-047
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_authority_adversarial
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_adversarial.py tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_closure.py tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py tests/unit/logic/software_contracts/semantic_index/test_watch.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/snapshot-authority-protected-gate
+- Parallel lane: isi-snapshot-authority-protected-gate
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: codex-implement
+- Context budget tokens: 56000
+- LLM context budget bytes: 458752
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 5, 6, 12, 13, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, tests/fixtures/software_contracts/incremental_semantic_index/git_snapshot_authority_adversarial
+- Predicted symbols: SnapshotEntry, RepositorySnapshot, repository_identity, snapshot_repository, RepositoryScanner, scan_repository_state, _git_root, _witness_matches
+- Interfaces: RepositorySnapshot@4, SnapshotEntry@3, RepositoryState@2
+- Conflict policy: Repair only production `snapshot.py`, `scanner.py`, and an optional narrowly scoped fixture on top of completed ISI-047 implementation `e90a13cd761810e4f74dadc395eac342ce2888c7`, merge `595d4dd9329a21a3bb6e0233c4acd3839ec3bab4`, and completion marker `c63c57b9ecd50192b899ce31151c3499af927604`. The independent `tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_adversarial.py` is a protected external acceptance authority: do not edit, replace, rename, delete, skip, xfail, monkeypatch around, or weaken it. Preserve every ISI-047 green contract and reuse `software_contracts.content` as the sole CID/canonicalization authority. Do not edit models, Python/pytest analysis, graph, persistence, any other test, or control files. The known 19 failures in the pre-ISI-047 105-test semantic-index baseline may not grow.
+- Preconditions: ISI-047's 22 declared tests pass, but independent immutable audit of its merged implementation produces exactly 13 failures and 20 passes in the protected 33-item adversarial module. The failures prove that unrelated unborn repositories share one identity; unborn untracked inputs are mislabeled; same-HEAD status and index changes evade the generation fence; a nested configured root is not excluded before mode, bounds, or scanning; excluded-only changes alter roots; an empty corrupt `.git` marker downgrades to filesystem mode; a quiet born-HEAD failure is accepted as unborn; empty and non-ASCII successful HEAD output is accepted for identity; non-ASCII symbolic HEAD output leaks `UnicodeDecodeError`; and successful HEAD warnings are accepted. The retained 20 passing probes cover portable born identity, commit-derived tree selection, CID/schema closure, raw/path and artifact domains, exact dirty/deletion/conflict OIDs, ctime race detection, manifest trust, one-read/size/smudge boundaries, typed status/OSError/root failures, remote non-authority, and deterministic scans.
+- Effects: Introduces a durable local bootstrap identity for an automatically identified unborn Git repository without putting clone-local data into any born identity, and preserves explicit caller identity through the first commit. Keeps `git-unborn` as acquisition mode while labeling its staged and untracked entries precisely. Uses one validated captured HEAD result for identity/snapshot decisions, rejects warnings and malformed output, distinguishes genuine unborn state from a born repository whose HEAD query failed quietly, and treats a present corrupt Git marker as typed evidence rather than filesystem absence. Normalizes configured repository-relative exclusion roots and performs raw-byte exact prefix/component filtering before status mode, entry bounds, index/tree enumeration, and scanner input selection. Adds a bounded status/index/HEAD generation fence that detects same-HEAD worktree and index changes without rereading selected content. All Git/decode/OS failures remain typed, captured bytes remain one-read, and restored manifests remain non-authoritative without independently supplied CID-verifying bytes.
+- Acceptance: The protected adversarial module changes from exactly 13 failures/20 passes to 33 passes without modification. Original, clone, and linked worktrees retain one born identity while unrelated born, unborn, and filesystem repositories differ; explicit bootstrap identity and precise unborn staged/untracked evidence survive first commit. Captured commit/tree, worktree status, index stages, mode, exclusions, content, and metadata witness come from one bounded generation or fail typed. Nested configured exclusions, including invalid-byte children in excess of `max_entries`, cannot affect mode, entries, roots, or public scanner results, while an invalid-byte built-in lookalike remains visible. Corrupt markers, quiet born-HEAD failures, successful HEAD warnings, empty/non-ASCII outputs, nonzero/timeouts, traversal warnings, and execution errors never downgrade or leak host exceptions. Every retained path/domain, disposition/OID, ctime, manifest-trust, one-read, oversized, smudge, schema, and deterministic-root assertion remains green; all previously green focused/watch tests remain green; and the broader semantic-index suite retains exactly its pre-existing downstream-assigned failure set.
+
+## ISI-049 Close durable unborn identity and single-generation HEAD capture
+
+- Status: completed
+- Completion: auto
+- Priority: P0
+- Track: snapshot-authority-generation-closure
+- Depends on: ISI-048
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_adversarial.py tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_closure.py tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py tests/unit/logic/software_contracts/semantic_index/test_watch.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/snapshot-authority-generation-closure
+- Parallel lane: isi-snapshot-authority-generation-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: codex-implement
+- Context budget tokens: 42000
+- LLM context budget bytes: 344064
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 5, 6, 12, 13, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py
+- Predicted symbols: repository_identity, snapshot_repository, RepositoryScanner, scan_repository_state, _git_root, _unborn_head_ref
+- Interfaces: RepositorySnapshot@4, SnapshotEntry@3, RepositoryState@2
+- Conflict policy: Repair only production `snapshot.py` and, only if public propagation requires it, `scanner.py`, on top of ISI-048 implementation `ee0bc3b542a46b1d5ab52d3a3a9c1209dbbfec28`, merge `a9d4096fdb561b7ecdf42af910c13fe84475ac86`, and completion marker `3a11ef85f03e4a934b97412e3c348d98877c58ad`. The independent `tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_adversarial.py` is now a protected 35-case external authority: do not edit, replace, rename, delete, skip, xfail, monkeypatch around, special-case test names/paths, or weaken it. Preserve the 33 ISI-048 cases and 22 retained focused cases, reuse `software_contracts.content` as the sole CID/canonicalization authority, and do not edit any fixture, other production module, test, or control file. The exact 19 broader downstream failures may not grow. Do not use a remote URL, current commit, working-tree content, resolved checkout path, device/inode, or process-local randomness as born repository identity; do not silently mix identity evidence from one HEAD generation with snapshot mode/evidence from another.
+- Preconditions: ISI-048's implementation, merge, and marker are pinned at `ee0bc3b542a46b1d5ab52d3a3a9c1209dbbfec28`, `a9d4096fdb561b7ecdf42af910c13fe84475ac86`, and `3a11ef85f03e4a934b97412e3c348d98877c58ad`. On that exact completion, all 33 protected ISI-048 cases and all 22 retained closure/snapshot/scanner/watch cases pass, while the broader semantic-index suite has exactly 19 known downstream failures and 123 passes. Extending only the protected module with two independent public repros yields exactly two new failures and 55 retained focused passes: moving an automatically identified unborn repository before its first commit changes `repository_identity`, and creating the first commit after the identity probe's verified unborn evidence but before the snapshot HEAD decision returns a born snapshot carrying the stale unborn identity instead of raising `GitSnapshotError`.
+- Effects: Replaces resolved-path-derived automatic unborn identity with durable repository-local bootstrap evidence that remains distinct across unrelated unborn repositories and stable when one unborn repository is moved before its first commit, without changing explicit `repository_id` behavior or contaminating portable born-history identity. Captures and validates one HEAD disposition for each snapshot operation and uses that same evidence for repository identity, mode, commit/tree selection, and the generation fence. An unborn-to-born or born-to-unborn transition during acquisition fails with a typed snapshot error; no returned snapshot may combine an unborn identity with a born mode or the reverse. Preserves exact one-read selected bytes, all Git failure/warning/decode handling, raw exclusions, dispositions, and existing state evidence.
+- Acceptance: The protected adversarial module reaches 35/35 without modification, and the full declared focused command reaches 57/57, preserving every 33-case ISI-048 assertion and all 22 retained focused assertions. Two separately initialized unborn repositories still differ, but moving either repository before its first commit preserves its automatically generated identity; explicit caller identity remains unchanged. A first commit injected after verified unborn identity evidence but before later snapshot acquisition can only produce a typed `GitSnapshotError`, never a snapshot whose `repository_id` is derived from unborn evidence while `mode`, `git_commit`, or `git_tree` is born. The broader semantic-index suite retains exactly the known 19 downstream failures and reaches 125 passes; no skip, xfail, test-name/path branch, subprocess monkeypatch bypass, or production test hook satisfies the gate.
+
+## ISI-050 Make automatic unborn bootstrap publication atomic and recoverable
+
+- Status: completed
+- Completion: auto
+- Priority: P0
+- Track: snapshot-bootstrap-publication-closure
+- Depends on: ISI-049
+- Goal id: ISI-G080, ISI-G082
+- Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py
+- Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_adversarial.py tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_closure.py tests/unit/logic/software_contracts/semantic_index/test_snapshot.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py tests/unit/logic/software_contracts/semantic_index/test_watch.py
+- Board namespace: incremental-semantic-index-v1
+- Bundle: isi/snapshot-bootstrap-publication-closure
+- Parallel lane: isi-snapshot-bootstrap-publication-closure
+- Resource class: cpu-large
+- Implementation timeout seconds: 10800
+- Provider role: grok-implement
+- Context budget tokens: 46000
+- LLM context budget bytes: 376832
+- Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 2, 5, 6, 12, 13, and 16
+- Predicted files: ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py
+- Predicted symbols: repository_identity, snapshot_repository, _unborn_bootstrap_token, _git_dir
+- Interfaces: RepositorySnapshot@4, SnapshotEntry@3, RepositoryState@2
+- Conflict policy: Repair only production `snapshot.py` and, only if public propagation strictly requires it, `scanner.py`, on top of ISI-049 implementation `16ba55a2156816154bbcb8af8a7173bbaf61ba93`, merge `fe435833e9a12ba13663e0b05f763c20314ca44a`, and completion marker `8815470b9108e9bfcd3284cf105b4623f05cd699`. The independent `tests/unit/logic/software_contracts/semantic_index/test_snapshot_authority_adversarial.py` is now a protected 60-case external authority: do not edit, replace, rename, delete, skip, xfail, monkeypatch around, special-case test names/paths, or add it to task outputs. Preserve all prior 50 protected cases (including all 35 ISI-049 cases) and 22 retained closure/snapshot/scanner/watch cases; do not edit fixtures, other production modules, tests, or control files. Reuse `software_contracts.content` as the sole CID/canonicalization authority. Do not satisfy the gate with sleeps, process-local caches, test detection, swallowed failures, a mock publisher, or a final-path write before durability. In one public call, metadata-directory discovery and inspection as well as marker-derived mutation must each be bounded to at most 256 operations: do not materialize, sort, or walk an arbitrarily large directory before applying the mutation bound. Cleanup must never reap a live cooperating publisher; unsafe, nonprivate, or unreadable marker-derived residue and loser/resource-finalization failures must fail typed rather than be skipped, swallowed, or coexist with successful return; and every successful stale-cleanup batch must be followed by a metadata-directory sync. The exact 19 older downstream failures plus the separately assigned six ISI-043 and seven ISI-044 protected failures may not grow or be consumed before this task passes audit.
+- Preconditions: ISI-049's implementation, merge, and marker are pinned at `16ba55a2156816154bbcb8af8a7173bbaf61ba93`, `fe435833e9a12ba13663e0b05f763c20314ca44a`, and `8815470b9108e9bfcd3284cf105b4623f05cd699`. On that exact completion the protected snapshot authority is 35/35 and the declared focused command is 57/57. The first fifteen public publication probes produced the prior 50-case authority, with exactly fourteen assigned failures and 58 passes in the 72-item focused command. Repair run v13 greened the preceding 46-case authority but was stopped without merge after public probes exposed missing existing-winner post-cleanup sync, live-candidate reaping, unbounded cleanup, and swallowed error-path cleanup failure. The retained v14 draft then makes all inherited 50 protected cases and the inherited 72-item focused command green, yet all ten final public cases reject it: it materializes and sorts the whole metadata directory before limiting only successful unlinks; silently skips symlink, FIFO/nonregular, and injected-unreadable residue; silently disposes a nonprivate residue and returns; swallows a `FileExistsError` loser's cleanup failure and publish-lock unlock failure; leaks raw lock-close failure; drops simultaneous primary/candidate-close evidence; and unlinks a failed prepublication candidate without a following directory sync. On the current merged pinned-production baseline the final 60-case authority is exactly 22 assigned failures and 38 passes, the 82-item focused command is exactly 22 failures and 60 passes, and the broader 183-item semantic-index suite is exactly 54 failures and 129 passes: 19 older downstream failures, six ISI-043 failures, seven ISI-044 failures, and 22 ISI-050 failures. Two conditional lock-finalization probes pass that pinned baseline because it acquires no publish lock, but both correctly reject v14 once its lock is exercised. This measured authority is `isi/snapshot-bootstrap-publication-closure@2`.
+- Effects: Keeps the move-stable automatic unborn bootstrap token in the repository's actual Git metadata directory, but constructs it as an exact private lowercase-hex record at a same-directory temporary path. Opens every final and temporary marker without following symlinks or blocking on nonregular files, verifies through the opened descriptor that it is a regular private `0600` file, and rejects symlinks, FIFOs, devices, other nonregular paths, nonprivate modes, and unreadable candidate evidence as typed corruption before consuming token bytes or returning success. It completes and verifies the full candidate write, flushes and syncs the file, then publishes it atomically with no replacement of an existing winner, using either a correctly recovered lock protocol or a same-filesystem no-replace primitive. Final-path visibility alone is not publication authority: until the post-publication Git-metadata-directory sync succeeds, a concurrent reader waits or independently establishes that durability before returning. A concurrent loser never returns its private candidate: it discards or cleans that candidate and rereads and validates the durable winning final record, and any loser-cleanup failure is surfaced typed before convergence is retried. It recognizes its marker-derived temporary namespace across process restarts, removes or safely supersedes stale candidates without PID-reuse collision or unbounded residue, and cleans stale candidates even when a valid final marker already exists. Metadata-directory discovery, candidate inspection, and marker-derived mutation are each bounded to at most 256 operations per public call without a preceding full list, sort, or walk; reaching a bound with unresolved work fails typed, and retries make bounded progress. Stale recovery distinguishes cooperating live candidates from crash residue so one concurrent first publisher cannot reap another's candidate; both publishers instead converge on the validated winner without error or residue. It syncs the containing Git metadata directory after publishing the final, unlinks the successful temporary candidate, then syncs that directory a second time so cleanup is durable before reporting the token; the same pre-cleanup sync, unlink, and post-cleanup sync ordering applies when a valid winner already exists, and every error-path cleanup batch containing a successful candidate unlink is also followed by metadata-directory sync before the typed failure returns. Entropy, open, write, flush, file-sync, publish, directory-sync, close, cleanup, contention, and—when a lock protocol is used—lock/unlock/lock-close failures are translated to typed snapshot errors. Simultaneous primary-write/cleanup or primary/candidate-close failures preserve typed evidence of every failure instead of swallowing one; they may retain only bounded recoverable candidate residue, and a later process can retry safely. A failed post-publication directory sync leaves the valid final marker in place but retains a durability obligation which a retry must actually sync successfully before returning it. A cleanup failure after durable publication fails typed while preserving the winning final marker; after the cleanup fault is removed, a retry validates that marker and completes and directory-syncs pending cleanup. An existing malformed or unsafe final record remains corruption and fails typed rather than being accepted. The automatic token may be created only by an explicitly invoked scan/identity operation for an unborn repository; ordinary import, born repositories, and calls supplying `repository_id` do not create, read, or require it. The marker is private acquisition metadata, not a tracked working-tree input or born-history identity component.
+- Acceptance: Without modification, the final `isi/snapshot-bootstrap-publication-closure@2` authority reaches 60/60 and the full declared focused command reaches 82/82. While one first-time identity call is paused before publication, a second public caller either safely publishes or waits and then both return the same validated winner; no caller observes empty, partial, unflushed, or losing bytes. If the first publisher is paused immediately after its candidate file sync, that candidate remains live and cannot be reaped as stale by a concurrent first publisher; both complete without error, converge on one winner, and leave no candidate residue. If the final hard link is visible while its first metadata-directory sync is blocked, a concurrent public identity call does not return before that sync (or an equivalent durability establishment) completes, and both calls ultimately return the same identity. Injected entropy, operating-system write, and file-sync failures are typed, leave no final marker or non-lock residue, and a fresh-process or same-process retry succeeds with a stable identity. A simultaneous prepublication write and candidate-unlink failure surfaces typed cleanup evidence, leaves no poisonous final marker, and a fresh process removes the bounded residue and recovers. Simultaneous primary candidate-sync and candidate-close failure preserves both diagnostics under typed snapshot evidence and retry recovers. Injected metadata-directory-sync failure after final visibility raises `GitSnapshotError`, preserves the valid final marker, and a retry demonstrably reattempts and succeeds at directory sync before returning the stable identity. A fresh process deterministically removes or supersedes crashed marker-derived temporaries, including the exact PID/counter-reuse collision case, and successful recovery leaves no stale candidate. No public call discovers or inspects more than 256 metadata-directory entries or performs more than 256 marker-derived cleanup mutations; excess crash residue causes typed bounded progress and retry, never a preceding full directory materialization/sort/walk, an unbounded sweep, or successful return with residue. Symlink, FIFO/nonregular, nonprivate, and injected-unreadable marker-derived temporaries fail typed and closed in bounded time rather than being skipped or silently disposed. An injected `FileExistsError` loser-cleanup failure is surfaced with its diagnostic and a later retry converges on the durable winner without residue. If a publish lock is acquired, injected unlock and close failures are typed, retain their diagnostics, and a later retry recovers; a lock-free no-replace implementation has no artificial lock obligation. Every successful stale-candidate unlink, including prepublication failure cleanup, is followed by metadata-directory sync before return or typed failure. Injected temporary unlink failure after durable publication raises `GitSnapshotError` rather than being swallowed, preserves the winning final marker, and a later retry returns that stable identity and finishes cleanup. Successful first publication and existing-winner recovery each order metadata-directory sync before successful temporary unlink and a second metadata-directory sync after unlink before return. Existing symlink, FIFO/nonregular, and valid-token non-`0600` final-marker paths fail typed and closed in a bounded subprocess without following, blocking, or acceptance. A caller-supplied `repository_id` succeeds without bootstrap entropy or metadata mutation, including on read-only Git metadata. Automatic identity remains distinct across unrelated unborn repositories and stable across a pre-commit move; after the first commit portable root-history identity takes authority and may differ, while exact continuity through that transition remains available only through explicit `repository_id`. Born original/clone/linked-worktree equality, single-generation HEAD fencing, every retained snapshot/scanner contract, and import side-effect boundaries remain unchanged. The broader suite retains exactly the 19 older plus six ISI-043 plus seven ISI-044 assigned failures and reaches 151 passes; no skip, xfail, test branch, monkeypatch bypass, production test hook, or silent fallback satisfies the gate.
+
 ## ISI-036 Unify pytest identity and commit resolution into public state
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: public-graph-repair
-- Depends on: ISI-034, ISI-035
+- Depends on: ISI-034, ISI-044
 - Goal id: ISI-G080, ISI-G083
 - Outputs: ipfs_datasets_py/logic/software_contracts/semantic_index/pytest_analysis.py, ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py, ipfs_datasets_py/logic/software_contracts/semantic_index/symbol_graph.py, ipfs_datasets_py/logic/software_contracts/semantic_index/index.py, tests/unit/logic/software_contracts/semantic_index/test_pytest_analysis.py, tests/unit/logic/software_contracts/semantic_index/test_scanner.py, tests/unit/logic/software_contracts/semantic_index/test_symbol_graph.py, tests/unit/logic/software_contracts/semantic_index/test_api.py, tests/fixtures/software_contracts/incremental_semantic_index/pytest_identity
 - Validation: python -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_pytest_analysis.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py tests/unit/logic/software_contracts/semantic_index/test_symbol_graph.py tests/unit/logic/software_contracts/semantic_index/test_api.py
@@ -616,7 +867,7 @@ W14 ISI-040
 - Parallel lane: isi-public-graph-repair
 - Resource class: cpu-large
 - Implementation timeout seconds: 10800
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 50000
 - LLM context budget bytes: 409600
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 6, 8, and 16
@@ -624,13 +875,13 @@ W14 ISI-040
 - Predicted symbols: PytestAnalyzer, RepositoryScanner, SymbolGraph, resolve_edge_targets, scan_repository, IncrementalSemanticIndex
 - Interfaces: PytestSemanticAnalysis@2, TypedSymbolGraph@2, RepositoryState@2, IncrementalSemanticIndex@2
 - Conflict policy: Classify a test/fixture before final identity construction or deterministically merge its pytest facts into the one Python logical binding; never clone a second TEST/FIXTURE identity. Reuse bounded statuses/revision checks from `resolver.py`; resolution must occur before state-root computation, not only inside explanation helpers. Preserve unresolved/finite-may evidence and confidence.
-- Preconditions: ISI-034 provides byte-rooted scanner inputs and ISI-035 provides complete analyzer bindings.
+- Preconditions: ISI-034 provides byte-rooted scanner inputs and ISI-043 plus ISI-044 close the audited inventory/projection and typed-edge/confidence defects left by completed ISI-035.
 - Effects: Includes full AST/body/signature/decorators/annotations plus fixture scope/autouse/params/marker values in test/fixture versions; resolves/remaps call sources to unified IDs; models lexical fixture scope, conftest visibility, autouse, `usefixtures`, module/class/function `pytestmark`, marker arguments, and parametrization without treating parametrized value names as fixtures; stores resolved imports/calls/inheritance/schema/test/config/generated/proof relations in the returned public state; creates dependency/lock configuration edges to affected semantic/test/receipt artifacts where statically explicit.
 - Acceptance: `scan_repository` alone returns a state whose resolvable calls target stable symbol CIDs, never a parallel `lexical:target`; a production signature change reaches real callers and pytest tests. A fixture body edit changes its one version CID and invalidates dependent tests. Autouse/usefixtures and same-named scoped fixtures resolve correctly. Parametrized argument names are not fixture dependencies unless independently supplied. Module/class marks and marker values affect versions. Real `tested_by`, `uses_fixture`, `configured_by`, serialization/schema, generated, and proof edges are source-rooted and survive round trip.
 
 ## ISI-038 Make delta, invalidation, and impact evidence-sound end to end
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: invalidation-repair
@@ -643,7 +894,7 @@ W14 ISI-040
 - Parallel lane: isi-invalidation-repair
 - Resource class: cpu-large
 - Implementation timeout seconds: 10800
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 52000
 - LLM context budget bytes: 425984
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 9 and 16
@@ -657,11 +908,11 @@ W14 ISI-040
 
 ## ISI-039 Requalify public fixtures, CLI truth, and capsule handoff
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: release-repair
-- Depends on: ISI-038
+- Depends on: ISI-038, ISI-045
 - Goal id: ISI-G080, ISI-G084
 - Outputs: ipfs_datasets_py/cli/semantic_index_cli.py, tests/fixtures/software_contracts/incremental_semantic_index, tests/unit/logic/software_contracts/semantic_index/test_acceptance.py, tests/unit/logic/software_contracts/semantic_index/test_import_safety.py, tests/cli/test_semantic_index_cli.py, docs/software_contracts/INCREMENTAL_SEMANTIC_INDEX.md
 - Validation: python -m pytest -q tests/unit/logic/software_contracts tests/cli/test_semantic_index_cli.py
@@ -670,7 +921,7 @@ W14 ISI-040
 - Parallel lane: isi-release-repair
 - Resource class: cpu-large
 - Implementation timeout seconds: 14400
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 52000
 - LLM context budget bytes: 425984
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 11, 13, 15, and 16
@@ -678,13 +929,13 @@ W14 ISI-040
 - Predicted symbols: semantic-index CLI commands, public acceptance fixture matrix, SemanticCapsuleIndexConsumer
 - Interfaces: semantic-index CLI@2, IncrementalSemanticIndexAcceptance@2, SemanticCapsuleIndexConsumer@2
 - Conflict policy: Acceptance tests must copy fixture repositories and exercise `scan_repository`, `diff_repository_states`, `calculate_invalidation`, and public explanations; they may not manufacture `DependencyEdge` or mutate returned states to create the expected result. Keep the CLI local/hermetic and do not hide failures, add a service, or implement capsule generation.
-- Preconditions: ISI-038 proves the public resolved pipeline and persistence is repository-bound.
+- Preconditions: ISI-038 proves the public resolved pipeline and ISI-045 proves that recovery removes both legacy and current temporary-file forms without disturbing valid repository-bound roots or journals.
 - Effects: Rebuilds every original fixture assertion on real scanner output; separates fixture-body changes from test/config changes; adds missing required Python/dynamic/persistence cases; makes the CLI's default store external to or canonically excluded from the indexed repository; makes impact/explain/watch scan current truth rather than silently returning a stored root; CAS-publishes accepted watch states consistently; gives missing/corrupt/root-conflict cases stable nonzero exits; replaces documentation-only capsule types with the exact implemented immutable fields/functions or documents the exact existing public adapter without fictional symbols.
 - Acceptance: No public end-to-end acceptance test constructs a `DependencyEdge`. Unrelated formatting/function edits remain bounded; all requested body/signature/schema/exception/fixture/config/lock/dynamic/monkey-patch/delete/rename/determinism/recovery/concurrency cases pass through public APIs. In a clean Git fixture, `semantic-index scan` with default options does not create an indexed `.semantic-index/.roots.lock` or change the second root. After storing a root and editing source, `impact`, `explain`, and `watch --once` observe the edit; an accepted watch root is visible through `state-root`. Missing `state-root` is nonzero. CLI JSON/errors are deterministic, imports remain hermetic, documentation states only tested behavior, and every capsule key/input/type it names is publicly retrievable.
 
 ## ISI-040 Prove verified incremental reuse and bounded watcher operation
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: incremental-repair
@@ -697,7 +948,7 @@ W14 ISI-040
 - Parallel lane: isi-incremental-repair
 - Resource class: cpu-medium
 - Implementation timeout seconds: 7200
-- Provider role: codex-implement
+- Provider role: grok-implement
 - Context budget tokens: 36000
 - LLM context budget bytes: 294912
 - Plan context: docs/architecture/INCREMENTAL_SEMANTIC_INDEX_PLAN.md sections 6, 11, and 16

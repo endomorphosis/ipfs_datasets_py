@@ -48,10 +48,13 @@ def scan_repository(
     repo_path: str | os.PathLike[str],
     previous_state: RepositoryState | None = None,
 ) -> RepositoryState:
-    """Scan ``repo_path`` into a deterministic repository state.
+    """Scan ``repo_path`` into a deterministic, edge-resolved repository state.
 
     ``previous_state`` is only a verified reuse optimization; it cannot alter
-    the state produced for the current repository bytes.
+    the state produced for the current repository bytes.  The returned state
+    commits unified Python/pytest identities and resolved call targets (stable
+    symbol CIDs) into the state root — resolution is not deferred to
+    explanation helpers.
     """
     return RepositoryScanner().scan(repo_path, previous_state=previous_state)
 

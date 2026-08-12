@@ -84,6 +84,19 @@ def test_version_identity_encodes_non_dag_json_ast_constants(literal: object) ->
     assert SymbolRecord.from_dict(record.to_dict()) == record
 
 
+@pytest.mark.parametrize(
+    "literal",
+    [
+        float("nan"),
+        complex(float("nan"), 0.0),
+        complex(0.0, float("nan")),
+    ],
+)
+def test_normalize_ast_rejects_source_impossible_nan_literals(literal: object) -> None:
+    with pytest.raises(SemanticIndexModelError, match="rejects NaN"):
+        normalize_ast(literal)
+
+
 def test_version_identity_preserves_decorator_order_and_repetitions() -> None:
     stable = stable_symbol_id("repo:example", "python", "pkg/mod.py", "pkg.mod.decorated", "function", "pkg")
     node = ast.parse("def decorated():\n    pass\n").body[0]

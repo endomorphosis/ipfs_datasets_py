@@ -4,6 +4,14 @@ State arguments accepted by ``diff`` are either a CID stored in ``--store`` or
 a JSON file produced by ``semantic-index scan``.  A file containing only a CID
 is also accepted, which is convenient for shell workflows.  The CLI emits
 canonical, sorted JSON and intentionally has no IPFS daemon dependency.
+
+The default local store is ``<repository>/.semantic-index``.  That path is a
+canonical scanner exclusion, so publishing roots and lock files there cannot
+enter the indexed snapshot or alter a second scan of the same repository
+bytes.  ``impact``, ``explain``, and ``watch --once`` always scan current
+repository bytes; they never silently return a previously stored root.
+``watch --once`` additionally CAS-publishes the accepted state so
+``state-root`` can observe it.  A missing published root is a nonzero exit.
 """
 
 from __future__ import annotations
@@ -88,24 +96,66 @@ def _load_state_reference(reference: str, store_path: str | None):
         raise SemanticIndexCLIError("state CID is unavailable or corrupt") from exc
 
 
-def _state_for_repository(repository: str, store_path: str | None):
-    """Use the published local root when available, otherwise scan fresh bytes."""
-    from ipfs_datasets_py.logic.software_contracts.semantic_index import scan_repository
+def _load_previous_state(repository_path: Path, store_path: str | None):
+    """Load the published root as a verified previous state, if any.
+
+    A missing root is not an error (callers scan cold).  A corrupt root or
+    store failure is a stable nonzero CLI error.
+    """
     from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import repository_identity
 
-    repository_path = _checked_repository(repository)
     store = _store(_store_path(repository_path, store_path))
     try:
         root = store.current_root(repository_identity(repository_path))
-        if root is not None:
-            return store.load_state(root)
-        return scan_repository(repository_path)
+        if root is None:
+            return None, store
+        return store.load_state(root), store
+    except SemanticIndexCLIError:
+        raise
     except Exception as exc:
         raise SemanticIndexCLIError("repository state is unavailable or corrupt") from exc
 
 
+def _scan_current(repository: str, store_path: str | None):
+    """Scan the repository's current bytes.
+
+    A published local root is only a verified reuse optimization for the
+    scanner; it is never returned in place of a fresh scan.
+    """
+    from ipfs_datasets_py.logic.software_contracts.semantic_index import scan_repository
+
+    repository_path = _checked_repository(repository)
+    previous, _store_obj = _load_previous_state(repository_path, store_path)
+    try:
+        return scan_repository(repository_path, previous_state=previous)
+    except Exception as exc:
+        raise SemanticIndexCLIError("scan failed") from exc
+
+
+def _publish_state(state, store_path: str | None, repository_path: Path):
+    """Store ``state`` and CAS-publish it as the current root for its repository."""
+    from ipfs_datasets_py.logic.software_contracts.semantic_index.persistence import (
+        RootConflictError,
+    )
+
+    store = _store(_store_path(repository_path, store_path))
+    try:
+        old = store.current_root(state.repository_id)
+        cid = store.store_state(state)
+        return store.compare_and_swap_root(state.repository_id, old, cid)
+    except RootConflictError as exc:
+        raise SemanticIndexCLIError("root conflict") from exc
+    except SemanticIndexCLIError:
+        raise
+    except Exception as exc:
+        raise SemanticIndexCLIError("state publication failed") from exc
+
+
 def _scan(args: argparse.Namespace) -> int:
     from ipfs_datasets_py.logic.software_contracts.semantic_index import scan_repository
+    from ipfs_datasets_py.logic.software_contracts.semantic_index.persistence import (
+        RootConflictError,
+    )
     from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import repository_identity
 
     repository = _checked_repository(args.repository)
@@ -117,6 +167,10 @@ def _scan(args: argparse.Namespace) -> int:
         state = scan_repository(repository, previous_state=previous)
         cid = store.store_state(state)
         store.compare_and_swap_root(state.repository_id, old, cid)
+    except RootConflictError as exc:
+        raise SemanticIndexCLIError("root conflict") from exc
+    except SemanticIndexCLIError:
+        raise
     except Exception as exc:
         raise SemanticIndexCLIError("scan failed") from exc
     _emit(state.to_dict())
@@ -139,7 +193,7 @@ def _diff(args: argparse.Namespace) -> int:
 def _impact(args: argparse.Namespace) -> int:
     from ipfs_datasets_py.logic.software_contracts.semantic_index import explain_impact
 
-    state = _state_for_repository(args.repository, args.store)
+    state = _scan_current(args.repository, args.store)
     try:
         result = explain_impact(state, args.symbol_or_file)
     except Exception as exc:
@@ -151,7 +205,7 @@ def _impact(args: argparse.Namespace) -> int:
 def _explain(args: argparse.Namespace) -> int:
     from ipfs_datasets_py.logic.software_contracts.semantic_index import explain_symbol
 
-    state = _state_for_repository(args.repository, args.store)
+    state = _scan_current(args.repository, args.store)
     try:
         result = explain_symbol(state, args.symbol)
     except Exception as exc:
@@ -167,17 +221,24 @@ def _state_root(args: argparse.Namespace) -> int:
         repository = _checked_repository(args.repository)
         repository_id = repository_identity(repository)
         cid = _store(_store_path(repository, args.store)).current_root(repository_id)
+    except SemanticIndexCLIError:
+        raise
     except Exception as exc:
         raise SemanticIndexCLIError("state root is unavailable or corrupt") from exc
+    if cid is None:
+        raise SemanticIndexCLIError("no published state root")
     _emit({"repository_id": repository_id, "state_cid": cid})
     return 0
 
 
 def _watch(args: argparse.Namespace) -> int:
-    # ``--once`` makes watcher availability testable without a long-running
-    # subprocess.  It does not start a thread or import the watcher backend.
+    # ``--once`` scans current truth, CAS-publishes the accepted state, emits
+    # JSON, and exits.  It does not start a thread or import the watcher backend.
     if args.once:
-        _emit(_state_for_repository(args.repository, args.store).to_dict())
+        repository = _checked_repository(args.repository)
+        state = _scan_current(args.repository, args.store)
+        _publish_state(state, args.store, repository)
+        _emit(state.to_dict())
         return 0
 
     from ipfs_datasets_py.logic.software_contracts.semantic_index import watch_repository
@@ -200,7 +261,10 @@ def _watch(args: argparse.Namespace) -> int:
 
 
 def _add_store_option(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--store", help="Local semantic-index store (defaults to <repo>/.semantic-index)")
+    parser.add_argument(
+        "--store",
+        help="Local semantic-index store (defaults to <repo>/.semantic-index, a scanner exclusion)",
+    )
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -233,7 +297,7 @@ def create_parser() -> argparse.ArgumentParser:
     watch = subcommands.add_parser("watch", help="Watch a repository and emit state-root changes")
     watch.add_argument("repository")
     watch.add_argument("--debounce-ms", type=int, default=250)
-    watch.add_argument("--once", action="store_true", help="Scan once and exit")
+    watch.add_argument("--once", action="store_true", help="Scan once, publish the accepted root, and exit")
     _add_store_option(watch)
     watch.set_defaults(handler=_watch)
 

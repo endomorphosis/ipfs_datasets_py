@@ -101,7 +101,13 @@ def _float_projection(value: float) -> str:
     JSON cannot represent infinities, while Python AST constants can (for
     example ``ast.parse('x = 1e400')``).  The tags also retain negative zero,
     which is semantically distinct for durable identity.
+
+    NaN has no source-level Python literal and is not a durable semantic
+    value: unlike infinities and signed zero, it cannot participate in a
+    deterministic identity projection.
     """
+    if math.isnan(value):
+        raise SemanticIndexModelError("normalized AST rejects NaN float literal")
     if math.isinf(value):
         return "+infinity" if value > 0 else "-infinity"
     return value.hex()

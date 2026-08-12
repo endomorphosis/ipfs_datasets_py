@@ -94,8 +94,163 @@ Authority rules:
    that its focused tests false-greened an optional normalized projection,
    mutable signature/annotation inputs, non-finite legal literal rejection,
    and unchanged v1 schema constants. ISI-041 preserves the completed evidence
-   and is the mandatory v2 identity-closure gate before snapshot, extraction,
-   or persistence repair may proceed.
+   and closes those recorded v2 identity defects at completion marker
+   `5d517253577da9b0e77d80e88a2cdcf5a76db0da`. A subsequent independent
+   acceptance audit proved that its float projection still admits NaN even
+   though NaN cannot arise from a Python source literal. ISI-042 preserves the
+   truthful completed ISI-041 evidence and is the final mandatory literal
+   admission gate before snapshot, extraction, or persistence repair may
+   proceed.
+7. ISI-035 and ISI-037 are truthfully recorded as completed at marker
+   `a090afad2`, but a post-merge source/probe audit of their implementations
+   `bf827c9bb` and `aa1e64aba` found two further release blockers. Python
+   extraction still maintains a weaker inventory beside the canonical
+   frontend, loses required version/edge/confidence facts, and can cause
+   nonfatal frontend notices to erase a file from a public scan. Persistence
+   recovery recognizes current transition temporaries but not the legacy
+   `.root-*` form in the transition directory. ISI-043 and ISI-044 close the
+   extractor defects sequentially after the canonical-byte gate; disjoint
+   ISI-045 closes both temporary-prefix recovery forms in parallel.
+8. ISI-034 completed at marker `92b7cdbd6`, but its live-candidate audit
+   proved that no-origin repository identity incorporates current `HEAD`, so
+   even a same-tree commit changes every stable symbol ID. Its merged snapshot
+   also omits commit/per-entry blob identity and rereads clean content in the
+   scanner after hashing it. ISI-046 preserves ISI-034's truthful completed
+   evidence and was introduced to close stable repository identity, exact captured-byte
+   handoff, malformed-path/unreadable-traversal retention, exclusion-before-
+   mode selection, and Git failure/warning disposition before Python inventory
+   repair may start.
+9. Two ISI-046 provider proposals were correctly rejected by the proposal
+   gate because they renamed and weakened the existing post-snapshot mutation
+   test. The repair must keep that assertion: acquisition may read content
+   exactly once and carry those bytes, while a non-content acquisition witness
+   permits the scanner to detect a later working-file replacement and emit an
+   opaque raced input without reopening the file for content. Rejected
+   candidates also proved that host device/inode identity is not a durable
+   committed-Git identity, dirty snapshots must not discard commit/tree/blob
+   evidence, and malformed/reserved raw names need collision-free domains.
+10. ISI-046 later completed at marker `44876f4b4`, but immutable audit of its
+    merged implementation `bebe7752a` proved another focused-test false green.
+    Structural content addressing authenticates bytes supplied to the CID
+    function; it does not authenticate an attacker-selected replacement
+    manifest. ISI-047 therefore closes atomic commit-to-tree selection,
+    portable born identity, mode/disposition/exclusion identity, metadata-only
+    generation fencing, and raw-path/source/artifact domain separation. A
+    restored manifest without captured or independently retrieved source bytes
+    remains a claim and cannot authorize parsing by itself.
+11. ISI-047 completed at marker `c63c57b9e` after implementation
+    `e90a13cd7` merged as `595d4dd93`, but its 22 declared tests again
+    false-greened a wider prose contract. An independently protected 33-item
+    public adversarial module produces exactly 13 failures and 20 passes: it
+    proves unrelated unborn identity collision, imprecise unborn disposition,
+    same-HEAD status/index race acceptance, nested configured-exclusion
+    failures, corrupt-marker filesystem downgrade, quiet born-HEAD downgrade,
+    accepted empty/non-ASCII HEAD identity output, leaked symbolic-HEAD decode
+    failure, and accepted successful HEAD warnings. ISI-048 is therefore the
+    final snapshot authority gate. It may repair only snapshot/scanner
+    production code and cannot own or edit the protected adversarial test.
+12. ISI-048 completed at marker `3a11ef85f` after implementation
+    `ee0bc3b54` merged as `a9d4096fd`; its protected 33 cases and 22 retained
+    focused cases all pass, and the broader semantic-index suite retains the
+    exact known 19 downstream failures. Two additional independent probes
+    expose a remaining generation contract gap: the automatically generated
+    unborn identity is derived from the resolved Git path and therefore
+    changes when the repository is moved before its first commit, and
+    `snapshot_repository` can combine an unborn identity with a born snapshot
+    mode when the first commit appears between its identity and HEAD probes.
+    ISI-049 is the narrow final snapshot-generation closure. It may repair only
+    snapshot/scanner production code and cannot own or edit the now-35-case
+    protected adversarial test.
+13. ISI-049 completed at marker `8815470b9` after implementation
+    `16ba55a21` merged as `fe435833e`; its protected 35 cases and 22 retained
+    focused cases pass. Independent concurrency and failure-injection audit
+    then proved that the repository-local unborn token is opened at its final
+    path before entropy generation, writing, and file sync complete. A
+    concurrent reader can therefore observe an empty marker and fail while the
+    creator later succeeds; an entropy failure leaks a host `OSError`, and an
+    interrupted write or sync leaves a poisonous final marker. The containing
+    Git metadata directory is never synced. ISI-050 is the final bootstrap-
+    publication closure before extraction work may consume snapshot authority.
+    It preserves portable born-history identity: automatic identity is stable
+    across moves only while the repository is unborn, while exact continuity
+    through the first commit requires a caller-supplied `repository_id`.
+14. Repair run v11 remained structurally healthy but all four Codex dispatches
+    for the sole-ready ISI-050 returned an authenticated hard usage-limit
+    result with provider-declared retry at `2026-08-18T00:00:00Z`; no candidate
+    was produced and no task attempt was consumed. To avoid an external-
+    capacity stall, exactly the seven unfinished tasks ISI-050, ISI-043,
+    ISI-044, ISI-036, ISI-038, ISI-039, and ISI-040 use provider role
+    `grok-implement`. That role means authenticated Grok 4.5 is primary and the
+    supervisor may route to Codex only through its typed quota-only fallback.
+    It does not authorize anonymous providers, mocks, simulated output, silent
+    fallback, or any change to task dependencies, outputs, validation, or
+    acceptance authority.
+15. Repair run v12's first Grok 4.5 ISI-050 candidate made the original
+    41-case protected authority and 63-item focused command green, but
+    independent production-semantics audit stopped it before merge. Its
+    marker-derived temporary used a PID plus process-local counter, so stale
+    candidates were not proactively discovered, an exact PID/counter reuse
+    aborted instead of completing recovery, and noncolliding crash residue
+    could accumulate; its cleanup `OSError` was silently swallowed after
+    publication.
+    Two additional public-entry-point probes now make the protected authority
+    43 cases. On the pinned ISI-049 baseline the 65-item focused command is
+    exactly seven assigned failures and 58 passes; with the separate ISI-043
+    and ISI-044 authorities collected, the broader semantic-index baseline is
+    exactly 39 failures and 127 passes. ISI-050 must recover or safely
+    supersede stale marker-derived temporaries without unbounded residue, and
+    must surface post-publication cleanup failure as `GitSnapshotError` while
+    retaining the already durable winning final marker for successful retry.
+    A final independent durability/type audit adds three more public cases and
+    strengthens the successful-publication order assertion, bringing the
+    protected authority to 46 cases. On the pinned baseline the 68-item
+    focused command is exactly ten assigned failures and 58 passes; the
+    broader semantic-index baseline is exactly 42 failures and 127 passes.
+    Readers may not treat final-path visibility as durability before the Git-
+    metadata-directory sync, a failed directory sync must be reattempted on
+    retry, and successful candidate unlink must be followed by a second
+    directory sync. Existing final markers must be opened nofollow and
+    rejected promptly unless the descriptor proves a regular private `0600`
+    file; symlink, FIFO/nonregular, and nonprivate markers fail typed and
+    closed.
+16. Repair run v13 made that 46-case authority green but was stopped without
+    merge after public production-semantics probes exposed a false green. Its
+    existing-winner path synced the Git metadata directory before stale-temp
+    unlink but returned without the required post-cleanup sync; its unbounded
+    all-temporary sweep could delete another cooperating publisher's live
+    candidate and make that caller fail instead of rereading the winner; and
+    best-effort prepublication cleanup swallowed `OSError`. Four final public
+    probes bring the protected authority to 50 cases and the focused command
+    to 72 items, exactly fourteen assigned failures and 58 passes on the pinned
+    ISI-049 baseline. The broader baseline is exactly 46 failures and 127
+    passes. ISI-050 now also requires existing-winner pre-sync/unlink/post-sync
+    ordering, concurrent first-publisher convergence without live-candidate
+    reaping, no more than 256 marker-derived cleanup operations per public
+    call with typed bounded retry, and typed recoverable evidence when a
+    prepublication write and cleanup both fail.
+17. The retained repair-run-v14 draft makes all inherited 50 protected cases
+    and the inherited 72-item focused command green, but independent public-
+    boundary probes reject it before merge. It bounds only successful unlinks:
+    each call first materializes and sorts the whole Git metadata directory,
+    and may repeat that full discovery to decide whether residue remains. It
+    silently skips symlink, FIFO/nonregular, and open-failed marker-derived
+    residue, silently deletes a nonprivate candidate, swallows a concurrent
+    `FileExistsError` loser's first cleanup failure, swallows publish-lock
+    unlock failure, leaks a raw lock-close failure, loses candidate-close
+    evidence when a primary candidate operation also fails, and does not sync
+    the metadata directory after prepublication error cleanup. Ten additional
+    public cases bring the final protected authority to 60 cases and the
+    focused command to 82 items. On the pinned merged-tree baseline they are
+    exactly 22 assigned failures and 60 passes; the broader semantic-index
+    baseline is exactly 54 failures and 129 passes (the prior 19 older, six
+    ISI-043, seven ISI-044, and 22 ISI-050 failures). Against the retained v14
+    draft, all inherited 72 focused cases pass and all ten new cases fail.
+    ISI-050 must therefore bound discovery and inspection as well as mutation
+    to 256 metadata entries per public call; fail typed rather than return
+    while an unsafe, nonprivate, or unreadable marker-derived residue is
+    unresolved; preserve typed loser/lock/candidate-finalization evidence; and
+    follow every successful stale unlink, including error-path cleanup, with a
+    Git-metadata-directory sync.
 
 ## 3. Proposed package and files
 
@@ -372,20 +527,30 @@ W5  ISI-020
 W6  ISI-023
 W7  ISI-030 | ISI-031
 W8  ISI-032
-W9  ISI-033 -> ISI-041
+W9  ISI-033 -> ISI-041 -> ISI-042
 W10 ISI-034 | ISI-035 | ISI-037
-W11 ISI-036
-W12 ISI-038
-W13 ISI-039
-W14 ISI-040
+W10a ISI-045
+W11 ISI-046
+W12 ISI-047
+W13 ISI-048
+W14 ISI-049
+W15 ISI-050
+W16 ISI-043
+W17 ISI-044
+W18 ISI-036
+W19 ISI-038
+W20 ISI-039
+W21 ISI-040
 ```
 
 Tasks in each parallel wave own disjoint modules and tests. Integration tasks
 depend on their inputs. Supervisor workers must honor `Outputs`, `Predicted
 files`, and `Conflict policy`; plan/objective/taskboard files are read-only
 protected control inputs. Phase-two capsule or coding-agent work must not treat
-the semantic state as authoritative until ISI-041 and ISI-034 through ISI-039
-pass. ISI-040 is the final incremental-performance and watcher hardening wave.
+the semantic state as authoritative until ISI-042, ISI-034 through ISI-039,
+and post-merge closure tasks ISI-043 through ISI-050 pass in their declared
+dependency order. ISI-040 is the
+final incremental-performance and watcher hardening wave.
 
 ## 13. Validation and acceptance
 
@@ -513,18 +678,89 @@ are functional and soundness gaps rather than cosmetic cleanup:
   impact/explain/watch, leave watch results unpublished, and report a missing
   state root as success.
 
+The later audit at completion marker `a090afad2` retains the valid completed
+evidence for ISI-035 and ISI-037 but does not treat their focused green tests
+as full acceptance. In `bf827c9bb`, semantic extraction invokes the shared
+frontend and then rediscovers inventory through a second AST walk; recursive
+child isolation, overload interfaces, aliases/model kinds, typed relation
+targets, scope effects, and dynamic/plugin/native confidence remain incomplete.
+In `aa1e64aba`, repository binding and process-safe CAS pass independent probes,
+but recovery does not remove the legacy `.root-*` transition temporary form.
+The bounded follow-up gates below repair those findings without rewriting the
+truthful completion records.
+
+The snapshot repair subsequently merged as implementation `10482c1c1`, merge
+`0348908d4`, and completion marker `92b7cdbd6`. Its 12 focused tests are useful
+but false-green the stable repository boundary: a no-origin repository hashes
+current `HEAD`, so committing an unchanged tree changes repository identity
+and all stable symbol identities. It also records only a tree OID, not the
+selected commit and per-entry blob OIDs, and hashes then rereads clean content
+instead of carrying the selected bytes into parsing. ISI-046 is the mandatory
+post-034 authority closure for these exact findings. Rejected ISI-046
+candidates `febc4e096` and `607d6f09c` supplied useful partial evidence but
+were not merged: both weakened an existing race assertion, and audit still
+found non-portable committed-repository identity, non-atomic commit/tree
+selection, incomplete dirty-snapshot evidence, and raw/artifact namespace
+collisions. The replacement implementation `bebe7752a7c8412e02b3691ba17437aa41c45012`
+then merged as `97be11c7845d2e4b1c2444c0c187e1a58499ca94`
+and completed at marker `44876f4b40d82ed97c7b7ce95ac89853cd1e854c`.
+Its 14 focused tests and useful one-read, size-bound, built-in-exclusion,
+linked-worktree, unreadable-input, and state-evidence improvements are retained,
+but immutable probes still produced clone identity divergence, mode-CID
+forgery, a commit-A/tree-B snapshot, empty unborn and staged-deletion
+inventories, a restored-mtime race miss, raw/synthetic artifact collision, and
+unbound raw-path/source claims. Further probes found missing conflict/deletion
+dispositions, ASCII-ignore exclusion of an invalid lookalike, corrupt/quiet
+Git failures misclassified as filesystem or unborn, and untyped execution or
+decode failures. ISI-047 retained useful repairs, but its completed
+implementation `e90a13cd7`, merge `595d4dd93`, and marker `c63c57b9e` were
+independently re-audited against a protected 33-item public test module. The
+result was exactly 13 failures and 20 passes: unrelated unborn repositories
+collide; unborn untracked inputs are mislabeled; same-HEAD status/index
+mutations escape the fence; nested configured roots fail mode/bound/scanner
+exclusion; corrupt Git markers and quiet born-HEAD failures downgrade; empty or
+non-ASCII successful HEAD output is accepted; symbolic-HEAD decode leaks; and
+successful HEAD warnings are accepted. ISI-048 implementation
+`ee0bc3b542a46b1d5ab52d3a3a9c1209dbbfec28` then merged as
+`a9d4096fdb561b7ecdf42af910c13fe84475ac86` and completed at marker
+`3a11ef85f03e4a934b97412e3c348d98877c58ad`. Its 33 protected cases plus
+22 retained focused cases pass and the broader suite keeps exactly 19 known
+downstream failures, but two new protected probes fail: moving an automatically
+identified unborn repository changes its identity, and creating its first
+commit between the identity and snapshot HEAD decisions returns a mixed unborn
+identity/born mode instead of a typed race. ISI-049 is therefore the final
+sequential snapshot-generation gate. ISI-049 implementation
+`16ba55a2156816154bbcb8af8a7173bbaf61ba93` merged as
+`fe435833e9a12ba13663e0b05f763c20314ca44a` and completed at marker
+`8815470b9108e9bfcd3284cf105b4623f05cd699`, reaching 35/35 protected and
+57/57 focused passes. Its final-path bootstrap write is nevertheless visible
+before entropy, write, and file-sync success; concurrent readers observe
+partial state, entropy failure is untyped, failed writes/syncs poison restart,
+and the Git metadata directory is not synced. ISI-050 closes only that
+publication boundary, and the extractor repair may not consume ISI-049 as
+authoritative by itself.
+
 ### 16.2 Repair matrix
 
 | Task | Priority | Production boundary | Required proof | Depends on |
 | --- | --- | --- | --- | --- |
 | ISI-033 | P0 | `models.py`, `identity.py` | Initial tagged literals, stable-ID checks, ordered decorators, and aggregate scaffolding; completed evidence is retained but not sufficient for release | ISI-032 |
 | ISI-041 | P0 | `models.py`, `identity.py` | V2 mandatory recomputable projection, every persisted/frozen version input, explicit legacy boundary, and injective signed finite/infinite literal components | ISI-033 |
-| ISI-034 | P0 | `snapshot.py`, `scanner.py` | Git-object bytes remain canonical for clean inputs; tree/commit/snapshot identity is state-rooted; races and unreadable inputs are explicit | ISI-041 |
-| ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-041 |
-| ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-041 |
-| ISI-036 | P0 | `pytest_analysis.py`, `scanner.py`, `symbol_graph.py`, `index.py` | One Python/pytest identity and version, a resolved public state, and real test/fixture/config edges | ISI-034, ISI-035 |
+| ISI-042 | P0 | `identity.py`, identity/model tests | Reject source-impossible NaN float and complex components before content hashing while preserving legal infinities and signed zero | ISI-041 |
+| ISI-034 | P0 | `snapshot.py`, `scanner.py` | Git-object bytes remain canonical for clean inputs; tree/commit/snapshot identity is state-rooted; races and unreadable inputs are explicit | ISI-042 |
+| ISI-035 | P0 | `python_analysis.py` | Adapt the existing frontend authority; cover required declarations/effects/relationships and fail closed on dynamic/native behavior | ISI-042 |
+| ISI-037 | P0 | `persistence.py` | Repository-bound verified roots, process-safe CAS, interruption recovery, and the same checks in the optional kit adapter | ISI-042 |
+| ISI-046 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner tests/fixture | Portable committed-Git identity across commits/clones/linked worktrees, atomic commit/tree/blob evidence including dirty forms, one-read captured-byte parsing with metadata-only race rejection, collision-free malformed-name retention, and typed Git failure closure without weakening tests | ISI-034 |
+| ISI-047 | P0 | `snapshot.py`, `scanner.py`, snapshot/scanner adversarial tests/fixture | Commit-derived tree, portable clone identity, mode/disposition/exclusion-rooted state, ctime-strength generation fence, collision-free raw/source/artifact keys, and explicit restored-manifest trust boundary | ISI-046 |
+| ISI-048 | P0 | `snapshot.py`, `scanner.py`, optional fixture; protected adversarial test is external authority | Make all 33 protected public probes pass: local unborn identity, precise unborn disposition, same-HEAD status/index fencing, nested raw exclusion roots, and typed corrupt/quiet/warning/decode failures while retaining all 20 green contracts | ISI-047 |
+| ISI-049 | P0 | `snapshot.py`, `scanner.py` only as needed; protected adversarial test is external authority | Keep automatic unborn identity stable across a pre-commit repository move and reject an unborn-to-born transition between identity and snapshot decisions without regressing the prior 55 focused passes | ISI-048 |
+| ISI-050 | P0 | `snapshot.py`, `scanner.py` only as needed; protected 60-case adversarial test is external authority | Atomically publish the local unborn bootstrap token with typed failure cleanup/recovery, durable-reader fencing, bounded discovery and concurrency-safe stale-temporary recovery, typed unsafe-residue/finalization handling, ordered publish/error-cleanup directory syncs, safe final-marker metadata validation, and an explicit-ID no-mutation path | ISI-049 |
+| ISI-043 | P0 | `python_analysis.py`, existing analyzer tests/fixture; protected seven-case authority is validation-only | Make the protected 7-case public gate pass while establishing canonical frontend inventory/disposition, recursive child isolation, overload interface evidence, scoped aliases, and alias-aware model kinds | ISI-035, ISI-050 |
+| ISI-044 | P0 | `python_analysis.py`, distinct relation-closure tests/fixture; protected seven-case relation authority is validation-only | Make the protected 7-case relation gate pass with exact retained inheritance/composition/schema targets, scope/state effects, bounded calls, and source-bound dynamic/plugin/native confidence | ISI-043 |
+| ISI-045 | P0 | `persistence.py`, persistence tests | Idempotent bounded cleanup of legacy and current root/transition temporary prefixes without disturbing authoritative data | ISI-037 |
+| ISI-036 | P0 | `pytest_analysis.py`, `scanner.py`, `symbol_graph.py`, `index.py` | One Python/pytest identity and version, a resolved public state, and real test/fixture/config edges | ISI-034, ISI-044 |
 | ISI-038 | P0 | `delta.py`, `invalidation.py`, `explain.py` | Recomputed deltas, edge-aware facets and rule direction, bounded real invalidation, retrievable raw-source evidence | ISI-036, ISI-037 |
-| ISI-039 | P0 | CLI, acceptance fixtures/tests, public contract documentation | All original cases through public APIs; no hand-made graph; fresh and non-self-indexing CLI; exact capsule consumer surface | ISI-038 |
+| ISI-039 | P0 | CLI, acceptance fixtures/tests, public contract documentation | All original cases through public APIs; no hand-made graph; fresh and non-self-indexing CLI; exact capsule consumer surface | ISI-038, ISI-045 |
 | ISI-040 | P1 | `watch.py`, `scanner.py` | Verified symbol-level reuse plus cancellable, bounded polling whose notifications never become authority | ISI-039 |
 
 The exact outputs, validation commands, task-sized effects, and acceptance
@@ -549,22 +785,37 @@ typed migration/rejection boundary. It must prove at least:
    infinity;
 2. two signatures whose string defaults differ only by internal whitespace do
    not collapse to the same signature projection;
-3. a clean Git repository with a smudge filter is scanned from the indexed Git
-   blob, and a read race becomes an opaque artifact instead of mixed truth;
-4. a method-body edit changes that method without changing unrelated methods
-   or automatically versioning the entire module;
-5. `from ctypes import CDLL` and unresolved native behavior cannot remain
-   `exact`, while conditional/nested definitions and required Pydantic,
-   TypedDict, Enum, composition, global/state, catch, and context facts remain
-   present or explicitly opaque;
+3. a clean Git repository with a smudge filter is scanned from exactly the
+   once-captured indexed Git blob; commit/tree/per-entry blob OIDs enter state
+   evidence; the tree derives from the captured commit; mode and explicit
+   clean/dirty/unborn/tracked/untracked/deleted dispositions enter snapshot
+   identity; a read race, including same-size content with restored mtime,
+   becomes opaque through metadata-only validation instead of mixed truth; and
+   a no-origin repository keeps its repository/stable symbol identities across
+   commits, clones, and linked worktrees while unrelated same-basename Git,
+   unborn Git, and filesystem repositories remain distinct; built-in and
+   configured excluded state cannot change mode, bytes, bounds, or roots;
+   raw-path/source/artifact keys cannot collide with valid synthetic-looking
+   names; and a restored manifest cannot authorize parsing until supplied
+   bytes verify its claimed source CID;
+4. a direct or conditionally nested method/function body edit changes that
+   child without changing its parent or unrelated symbols, while an
+   overload-only interface edit does change the logical binding version;
+5. direct and aliased native/dynamic/plugin behavior cannot remain `exact`;
+   aliased model kinds remain detectable; and exact-target assertions prove
+   inheritance, composition, schema serialization/validation, nonlocal/global,
+   augmented state, self/nested call, catch, and context facts rather than
+   merely checking that a relation name exists;
 6. the state returned by the public scan contains resolved call targets and a
    production function's signature change reaches its caller and real pytest
    tests without hand-authored edges;
 7. fixture body changes, autouse/usefixtures/scoped fixtures, and parametrized
    argument names have correct identity, version, and dependency behavior;
 8. loading repository B's valid state CID through repository A's root is
-   rejected, and two separate writer processes cannot both replace one
-   expected root;
+   rejected, two separate writer processes cannot both replace one expected
+   root, and recovery removes both legacy/current root/transition temporary
+   prefixes without touching a valid root, journal, CAS block, or unrelated
+   path;
 9. combined body/signature changes retain both facets, edge-only changes
    invalidate their affected subjects, non-schema annotations do not trigger
    schema invalidation, and proofs are rerun only through recorded proof edges;
