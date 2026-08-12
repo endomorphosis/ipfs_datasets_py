@@ -854,7 +854,7 @@ W21 ISI-040
 
 ## ISI-036 Unify pytest identity and commit resolution into public state
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: public-graph-repair
