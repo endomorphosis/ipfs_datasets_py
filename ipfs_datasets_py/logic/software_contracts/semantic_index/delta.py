@@ -5,12 +5,17 @@ semantic projections, rather than raw source bytes or source locations.  A
 source reformat can therefore alter a snapshot's provenance without becoming a
 symbol or edge change.  Rename correlations are only heuristic annotations:
 the old and new stable IDs remain respectively deleted and added.
+
+Facet classification keeps body, signature, effects, exceptions, schema,
+decorator, metadata, and confidence independently observable so a combined
+body+signature edit retains both facts.  Schema is reserved for schema-bearing
+kinds; ordinary function annotations are never promoted to a schema change.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any, Final
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_structured
@@ -18,6 +23,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
     DependencyEdge,
     RepositoryState,
     RepositoryStateDelta,
+    SymbolKind,
     SymbolRecord,
 )
 
@@ -49,9 +55,101 @@ _EFFECT_RELATIONS: Final[frozenset[str]] = frozenset(
 )
 _EXCEPTION_RELATIONS: Final[frozenset[str]] = frozenset({"raises", "catches"})
 
+# Schema facets apply only to declarations whose durable contract is a field
+# or member schema.  Ordinary functions, methods, and modules use annotations
+# as version inputs without becoming "schema" changes.
+_SCHEMA_KINDS: Final[frozenset[str]] = frozenset(
+    {
+        SymbolKind.DATACLASS.value,
+        SymbolKind.TYPED_DICT.value,
+        SymbolKind.ENUM.value,
+        SymbolKind.CLASS.value,
+    }
+)
+
+# Analyzer dumps that restate the version AST must not appear as a separate
+# "metadata" facet when only the body changed.
+_METADATA_EXCLUDED_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "facets",
+        "version_evidence",
+        "frontend_declarations",
+        "facet_count",
+    }
+)
+
 
 class RepositoryStateDeltaError(ValueError):
     """Raised when states cannot be compared under the delta contract."""
+
+
+def _thaw(value: Any) -> Any:
+    """Detach mapping proxies and tuples into strict DAG-JSON shapes."""
+    if isinstance(value, Mapping):
+        return {str(key): _thaw(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_thaw(item) for item in value]
+    return value
+
+
+def _semantic_metadata(metadata: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Project metadata without body/version-evidence dumps."""
+    if not metadata:
+        return {}
+    return {
+        key: _thaw(value)
+        for key, value in sorted(metadata.items())
+        if key not in _METADATA_EXCLUDED_KEYS
+    }
+
+
+def _body_projection(symbol: SymbolRecord) -> Any | None:
+    """Return a comparable body projection when durable AST evidence exists."""
+    normalized = symbol.normalized_ast
+    if normalized is not None:
+        thawed = _thaw(normalized)
+        if isinstance(thawed, Mapping) and "body" in thawed:
+            return thawed.get("body")
+        return thawed
+    metadata = symbol.metadata or {}
+    facets = metadata.get("facets")
+    if isinstance(facets, (list, tuple)):
+        bodies: list[Any] = []
+        for facet in facets:
+            if not isinstance(facet, Mapping):
+                continue
+            evidence = facet.get("version_evidence")
+            if isinstance(evidence, Mapping) and "body" in evidence:
+                bodies.append(_thaw(evidence.get("body")))
+        if bodies:
+            return bodies
+    return None
+
+
+def _schema_projection(symbol: SymbolRecord) -> dict[str, Any]:
+    """Field/member schema facts for schema-bearing kinds only."""
+    annotations = _thaw(dict(symbol.annotations or {}))
+    # Prefer explicit field/member maps; fall back to the full annotation set
+    # so TypedDict/Enum-style shapes remain comparable.
+    fields = annotations.get("fields")
+    if isinstance(fields, dict):
+        schema_fields = fields
+    else:
+        schema_fields = {
+            key: value
+            for key, value in annotations.items()
+            if key not in {"return", "pytest", "bases"}
+        }
+    return {
+        "kind": symbol.kind,
+        "fields": schema_fields,
+        "bases": annotations.get("bases"),
+        "decorators": list(symbol.decorators),
+    }
+
+
+def _is_schema_kind(symbol: SymbolRecord) -> bool:
+    return symbol.kind in _SCHEMA_KINDS
 
 
 def _symbol_projection(symbol: SymbolRecord) -> dict[str, Any]:
@@ -63,11 +161,13 @@ def _symbol_projection(symbol: SymbolRecord) -> dict[str, Any]:
     """
     return {
         "version_cid": symbol.version_cid,
-        "signature": dict(symbol.signature),
+        "signature": _thaw(dict(symbol.signature)),
         "decorators": list(symbol.decorators),
-        "annotations": dict(symbol.annotations),
-        "metadata": dict(symbol.metadata),
+        "annotations": _thaw(dict(symbol.annotations)),
+        "metadata": _semantic_metadata(symbol.metadata),
         "confidence": symbol.confidence,
+        "normalized_ast": _thaw(symbol.normalized_ast) if symbol.normalized_ast is not None else None,
+        "property_role": symbol.property_role,
     }
 
 
@@ -80,7 +180,7 @@ def _edge_projection(edge: DependencyEdge) -> dict[str, Any]:
         "extraction_method": edge.extraction_method,
         "confidence": edge.confidence,
         "extractor_version": edge.extractor_version,
-        "metadata": dict(edge.metadata),
+        "metadata": _thaw(dict(edge.metadata)),
     }
 
 
@@ -107,10 +207,9 @@ def classify_symbol_change(
 ) -> tuple[str, ...]:
     """Classify a stable-ID-preserving semantic change into closed facets.
 
-    A body facet is the residual version-identity change after all explicit
-    interface facets have been compared.  This keeps a signature-only or
-    exception-only change distinguishable without pretending the index can
-    reconstruct a source diff from durable records.
+    Body and interface facets are independent.  A combined body+signature
+    edit therefore retains both facets.  Annotation drift on ordinary
+    functions is never classified as schema.
     """
     if not isinstance(previous, SymbolRecord) or not isinstance(current, SymbolRecord):
         raise RepositoryStateDeltaError("symbols must be SymbolRecords")
@@ -122,12 +221,14 @@ def classify_symbol_change(
         facets.add("signature")
     if previous.decorators != current.decorators:
         facets.add("decorator")
-    if previous.annotations != current.annotations:
-        facets.add("schema")
-    if previous.metadata != current.metadata:
-        facets.add("metadata")
     if previous.confidence != current.confidence:
         facets.add("confidence")
+    if _semantic_metadata(previous.metadata) != _semantic_metadata(current.metadata):
+        facets.add("metadata")
+
+    if _is_schema_kind(previous) or _is_schema_kind(current):
+        if _schema_projection(previous) != _schema_projection(current):
+            facets.add("schema")
 
     old_facts = _edge_facts(previous_edges, previous.stable_id)
     new_facts = _edge_facts(current_edges, current.stable_id)
@@ -136,11 +237,26 @@ def classify_symbol_change(
     if any(old_facts.get(relation, ()) != new_facts.get(relation, ()) for relation in _EXCEPTION_RELATIONS):
         facets.add("exceptions")
 
-    # A version CID is the normalized AST projection.  If no independently
-    # represented facet changed, its difference is necessarily body-local at
-    # the level of this durable model.
-    if previous.version_cid != current.version_cid and not facets:
-        facets.add("body")
+    body_previous = _body_projection(previous)
+    body_current = _body_projection(current)
+    if body_previous is not None and body_current is not None:
+        if body_previous != body_current:
+            facets.add("body")
+    elif previous.version_cid != current.version_cid:
+        # Residual body: version identity moved while every version-bound
+        # interface input stayed equal.  When interface inputs also move and
+        # no durable body projection exists, body cannot be asserted.
+        version_interface_same = (
+            previous.signature == current.signature
+            and previous.decorators == current.decorators
+            and previous.annotations == current.annotations
+            and previous.property_role == current.property_role
+            and previous.extractor_name == current.extractor_name
+            and previous.extractor_version == current.extractor_version
+        )
+        if version_interface_same:
+            facets.add("body")
+
     return tuple(facet for facet in SYMBOL_CHANGE_FACETS if facet in facets)
 
 
@@ -173,10 +289,10 @@ def _rename_projection(symbol: SymbolRecord) -> dict[str, Any]:
         "language": symbol.language,
         "kind": symbol.kind,
         "namespace": symbol.namespace,
-        "signature": dict(symbol.signature),
+        "signature": _thaw(dict(symbol.signature)),
         "decorators": list(symbol.decorators),
-        "annotations": dict(symbol.annotations),
-        "metadata": dict(symbol.metadata),
+        "annotations": _thaw(dict(symbol.annotations)),
+        "metadata": _semantic_metadata(symbol.metadata),
         "confidence": symbol.confidence,
     }
 
@@ -241,24 +357,43 @@ def diff_repository_states(
         if old_artifacts[artifact_id].to_dict() != new_artifacts[artifact_id].to_dict()
     )
     added_edges, deleted_edges = _edge_delta(previous_state.edges, current_state.edges)
-
-    return RepositoryStateDelta(
+    rename_candidates = _rename_candidates(
+        (old_symbols[symbol_id] for symbol_id in deleted_symbols),
+        (new_symbols[symbol_id] for symbol_id in added_symbols),
+    )
+    # RepositoryStateDelta freezes rename candidates then sorts with
+    # ``cid_for_structured`` on mappingproxy values, which the content CID
+    # authority rejects.  Construct the delta without candidates, then attach
+    # frozen candidates sorted by their thawed DAG-JSON projection so rename
+    # hints remain durable and content-addressable.
+    delta = RepositoryStateDelta(
         previous_state_cid=previous_state.state_cid,
         current_state_cid=current_state.state_cid,
         added_symbol_ids=added_symbols,
         deleted_symbol_ids=deleted_symbols,
         modified_symbol_ids=modified_symbols,
         unchanged_symbol_ids=unchanged_symbols,
-        rename_candidates=_rename_candidates(
-            (old_symbols[symbol_id] for symbol_id in deleted_symbols),
-            (new_symbols[symbol_id] for symbol_id in added_symbols),
-        ),
+        rename_candidates=(),
         added_artifact_ids=added_artifacts,
         deleted_artifact_ids=deleted_artifacts,
         modified_artifact_ids=modified_artifacts,
         added_edge_ids=added_edges,
         deleted_edge_ids=deleted_edges,
     )
+    if rename_candidates:
+        from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
+            _mapping,
+            _thaw_structured,
+        )
+
+        frozen = tuple(
+            sorted(
+                (_mapping(item, "rename_candidate") for item in rename_candidates),
+                key=lambda item: cid_for_structured(_thaw_structured(item)),
+            )
+        )
+        object.__setattr__(delta, "rename_candidates", frozen)
+    return delta
 
 
 __all__ = [
