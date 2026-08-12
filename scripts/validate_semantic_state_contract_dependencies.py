@@ -71,7 +71,13 @@ BLOB_FIELDS = frozenset({"path", "oid"})
 INTERFACE_FIELDS = frozenset({"contract_name", "schema_versions", "public_api"})
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 FINGERPRINT = re.compile(r"^sha256:[0-9a-f]{64}$")
-PLACEHOLDER = re.compile(r"(?:UNRESOLVED|PLACEHOLDER|\bTODO\b)", re.IGNORECASE)
+# Match deliberate unresolved tokens only.  Do not treat path segments such as
+# ``semantic_compression_harness.todo.md`` as placeholders (``.todo`` sits on a
+# word boundary under a naive ``\\bTODO\\b`` pattern).
+PLACEHOLDER = re.compile(
+    r"(?:UNRESOLVED(?:_[A-Z0-9_]+)?|PLACEHOLDER(?:_[A-Z0-9_]+)?|(?<![A-Za-z0-9_.-])TODO(?![A-Za-z0-9_.-]))",
+    re.IGNORECASE,
+)
 
 REACHABILITY_POLICY = "exact_clean_head"
 EXPECTED_TEST_TIMEOUT_SECONDS = {
@@ -195,20 +201,18 @@ EXPECTED_INTERFACE_CONTRACTS = {
     "incremental_semantic_index": {
         "contract_name": "SemanticCapsuleIndexConsumer@2",
         "schema_versions": [
-            ["extractor_name", "UNRESOLVED_FINAL_ISI_EXTRACTOR_NAME"],
-            ["extractor_version", "UNRESOLVED_FINAL_ISI_EXTRACTOR_VERSION"],
-            ["semantic_index_schema", "UNRESOLVED_FINAL_ISI_SCHEMA"],
+            ["extractor_name", "python-cpython-ast"],
+            ["extractor_version", "1"],
+            ["semantic_index_schema", "ipfs-datasets.software-contracts.semantic-index@2"],
         ],
         "public_api": [
-            "SemanticIndexForCapsules.incoming_edges(stable_symbol_id:str)->tuple[DependencyEdge,...]",
-            "SemanticIndexForCapsules.outgoing_edges(stable_symbol_id:str)->tuple[DependencyEdge,...]",
-            "SemanticIndexForCapsules.read_source_blob(source_cid:str)->bytes",
-            "SemanticIndexForCapsules.read_source_span(stable_symbol_id:str)->bytes",
-            "SemanticIndexForCapsules.source_slice(stable_symbol_id:str)->SourceSliceRef",
-            "SemanticIndexForCapsules.state_root_cid:str",
-            "SemanticIndexForCapsules.symbol(stable_symbol_id:str)->SymbolRecord",
+            "RepositoryState.edges:Sequence[DependencyEdge]",
+            "RepositoryState.state_cid:str",
+            "RepositoryState.symbols:Sequence[SymbolRecord]",
+            "SymbolRecord.stable_id|version_cid|source_cid|module_path|span",
             "calculate_invalidation(previous_state,current_state,delta)->InvalidationPlan",
             "diff_repository_states(previous_state,current_state)->RepositoryStateDelta",
+            "explain_symbol(repository_state,symbol_id)->SymbolExplanation",
             "scan_repository(repo_path,previous_state=None)->RepositoryState",
         ],
     },

@@ -44,7 +44,7 @@ D7  DSS-011
 
 ## DSS-000 Seal final producer and consumer authorities
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: control

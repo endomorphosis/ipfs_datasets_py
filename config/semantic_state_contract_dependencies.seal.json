@@ -1,6 +1,6 @@
 {
   "schema": "ipfs-datasets.software-contracts.semantic-state-dependency-seal@1",
-  "status": "unresolved",
+  "status": "sealed",
   "target": {
     "language": "python",
     "python_minor": "3.12",
@@ -23,9 +23,9 @@
       "repository": "endomorphosis/ipfs_accelerate_py",
       "origin": "https://github.com/endomorphosis/ipfs_accelerate_py",
       "reachability_policy": "exact_clean_head",
-      "commit": "bde62375e2eabd1c0f9a50c6672372b1af5616c6",
-      "tree": "b4a0f30cd7884db15cdfd74da72127426a833d8a",
-      "interface_fingerprint": "sha256:a55c133d175591a181c961cd39ea120ab98238126fca62ab72c690be143a96fd",
+      "commit": "80cfe8ac6e353a63af7eeae33e5ca9caaffc29dd",
+      "tree": "89aedcdadd7c893145159d6b47121ec9e104f297",
+      "interface_fingerprint": "sha256:0add24ef4be13629972ddef3050df00f75139731f873ecfc8d77052c25e44036",
       "interface_contract": {
         "contract_name": "SemanticCompressionHarnessConsumerPlan@1",
         "schema_versions": [
@@ -63,7 +63,7 @@
         },
         {
           "path": "ipfs_accelerate_py/agent_supervisor/validation/proposal_validation.py",
-          "oid": "e72d3aaa2cedef10ce16b2ad27fe9d663379f5c9"
+          "oid": "831ba963c30f49f0c82c17f53a9e82af9533aa02"
         },
         {
           "path": "test/api/test_agent_supervisor_production_context_slice.py",
@@ -71,7 +71,7 @@
         },
         {
           "path": "test/api/test_agent_supervisor_proposal_validation.py",
-          "oid": "9d30955307972b8451fa7128dfaf6fc3b2910f82"
+          "oid": "f36c85726ef8e5ad2ca6bf93f7080d02af1629ed"
         }
       ],
       "required_test_commands": [
@@ -91,86 +91,84 @@
       "repository": "endomorphosis/ipfs_datasets_py",
       "origin": "https://github.com/endomorphosis/ipfs_datasets_py",
       "reachability_policy": "exact_clean_head",
-      "commit": "UNRESOLVED_FINAL_ISI_COMMIT",
-      "tree": "UNRESOLVED_FINAL_ISI_TREE",
-      "interface_fingerprint": "UNRESOLVED_FINAL_ISI_INTERFACE_FINGERPRINT",
+      "commit": "b572255d5f8f4f4f8136df43f58dae44f8e1b941",
+      "tree": "caa333e868a7699e4f095d70e98e8eb27acb4ce9",
+      "interface_fingerprint": "sha256:6e7b284e3a028244424cb75c19352a75ee054cae785158623fd7a90074b729f1",
       "interface_contract": {
         "contract_name": "SemanticCapsuleIndexConsumer@2",
         "schema_versions": [
           [
             "extractor_name",
-            "UNRESOLVED_FINAL_ISI_EXTRACTOR_NAME"
+            "python-cpython-ast"
           ],
           [
             "extractor_version",
-            "UNRESOLVED_FINAL_ISI_EXTRACTOR_VERSION"
+            "1"
           ],
           [
             "semantic_index_schema",
-            "UNRESOLVED_FINAL_ISI_SCHEMA"
+            "ipfs-datasets.software-contracts.semantic-index@2"
           ]
         ],
         "public_api": [
-          "SemanticIndexForCapsules.incoming_edges(stable_symbol_id:str)->tuple[DependencyEdge,...]",
-          "SemanticIndexForCapsules.outgoing_edges(stable_symbol_id:str)->tuple[DependencyEdge,...]",
-          "SemanticIndexForCapsules.read_source_blob(source_cid:str)->bytes",
-          "SemanticIndexForCapsules.read_source_span(stable_symbol_id:str)->bytes",
-          "SemanticIndexForCapsules.source_slice(stable_symbol_id:str)->SourceSliceRef",
-          "SemanticIndexForCapsules.state_root_cid:str",
-          "SemanticIndexForCapsules.symbol(stable_symbol_id:str)->SymbolRecord",
+          "RepositoryState.edges:Sequence[DependencyEdge]",
+          "RepositoryState.state_cid:str",
+          "RepositoryState.symbols:Sequence[SymbolRecord]",
+          "SymbolRecord.stable_id|version_cid|source_cid|module_path|span",
           "calculate_invalidation(previous_state,current_state,delta)->InvalidationPlan",
           "diff_repository_states(previous_state,current_state)->RepositoryStateDelta",
+          "explain_symbol(repository_state,symbol_id)->SymbolExplanation",
           "scan_repository(repo_path,previous_state=None)->RepositoryState"
         ]
       },
       "required_blobs": [
         {
           "path": "docs/software_contracts/INCREMENTAL_SEMANTIC_INDEX.md",
-          "oid": "UNRESOLVED_FINAL_ISI_DOCUMENTATION_BLOB"
+          "oid": "f0cbda761a09b71eea619dabd377b5429238fded"
         },
         {
           "path": "ipfs_datasets_py/logic/software_contracts/content.py",
-          "oid": "UNRESOLVED_FINAL_ISI_CONTENT_AUTHORITY_BLOB"
+          "oid": "14458fb99ea57c19652398ee479d678ae3fbe507"
         },
         {
           "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/__init__.py",
-          "oid": "UNRESOLVED_FINAL_ISI_PUBLIC_EXPORTS_BLOB"
+          "oid": "6fcce2893b20e5b418df9e73995d75d010635866"
         },
         {
           "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/delta.py",
-          "oid": "UNRESOLVED_FINAL_ISI_DELTA_BLOB"
+          "oid": "4f10273e4018222d355dc1da9bc0deed88c1c927"
         },
         {
           "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/index.py",
-          "oid": "UNRESOLVED_FINAL_ISI_CAPSULE_VIEW_BLOB"
+          "oid": "a2ca2dee8aaed0f0f69dcb327e34fa5110ee377b"
         },
         {
           "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/invalidation.py",
-          "oid": "UNRESOLVED_FINAL_ISI_INVALIDATION_BLOB"
+          "oid": "23386eed158736852ee6c208163e55d24763a982"
         },
         {
           "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py",
-          "oid": "UNRESOLVED_FINAL_ISI_MODELS_BLOB"
+          "oid": "87074b234b82bfdde77572b5caf0a9603257b49d"
         },
         {
           "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py",
-          "oid": "UNRESOLVED_FINAL_ISI_SCANNER_BLOB"
+          "oid": "c3f8fc4d69117f2d1b8ebe36cdb1a2ee8cc7e42a"
         },
         {
           "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py",
-          "oid": "UNRESOLVED_FINAL_ISI_SNAPSHOT_BLOB"
+          "oid": "3f222cfb5917abf32c01108ccbd835d24f793662"
         },
         {
           "path": "tests/cli/test_semantic_index_cli.py",
-          "oid": "UNRESOLVED_FINAL_ISI_CLI_TEST_BLOB"
+          "oid": "4cb9645f7a5424eeed6216c1c2390861def017bb"
         },
         {
           "path": "tests/unit/logic/software_contracts/semantic_index/test_acceptance.py",
-          "oid": "UNRESOLVED_FINAL_ISI_ACCEPTANCE_TEST_BLOB"
+          "oid": "286019117174419b5692c176ea3d2c392122db61"
         },
         {
           "path": "tests/unit/logic/software_contracts/semantic_index/test_import_safety.py",
-          "oid": "UNRESOLVED_FINAL_ISI_IMPORT_SAFETY_TEST_BLOB"
+          "oid": "b7d002b7ca5c017dfe62131544b8f07d1e1d1d2e"
         }
       ],
       "required_test_commands": [

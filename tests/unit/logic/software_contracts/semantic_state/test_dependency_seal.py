@@ -1,10 +1,11 @@
-"""Control-plane tests for the deliberately unresolved DSS-000 seal."""
+"""Control-plane tests for the sealed DSS-000 dependency authority."""
 
 from __future__ import annotations
 
 import copy
 import importlib.util
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -12,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[5]
 SEAL_PATH = REPO_ROOT / "config/semantic_state_contract_dependencies.seal.json"
 VALIDATOR_PATH = REPO_ROOT / "scripts/validate_semantic_state_contract_dependencies.py"
 PLAN_PATH = REPO_ROOT / "docs/architecture/SEMANTIC_STATE_CONTRACT_PLAN.md"
+HEX40 = re.compile(r"^[0-9a-f]{40}$")
 
 
 def _load_validator():
@@ -22,21 +24,27 @@ def _load_validator():
     return module
 
 
-def test_checked_in_seal_is_intentionally_unresolved_and_fails_closed(capsys) -> None:
+def test_checked_in_seal_is_sealed_with_final_isi_and_kit_pins() -> None:
     validator = _load_validator()
     seal = validator.load_seal(SEAL_PATH)
+    authorities = {item["role"]: item for item in seal["authorities"]}
 
-    assert seal["status"] == "unresolved"
-    assert seal["authorities"][1]["commit"] == "UNRESOLVED_FINAL_ISI_COMMIT"
-    assert seal["authorities"][2]["commit"] == "05ba9375923cd5fb52e2c9c18b98b530d57d077f"
+    assert seal["status"] == "sealed"
+    assert HEX40.fullmatch(authorities["incremental_semantic_index"]["commit"])
+    assert authorities["incremental_semantic_index"]["commit"] == (
+        "b572255d5f8f4f4f8136df43f58dae44f8e1b941"
+    )
+    assert authorities["kit_state_roots"]["commit"] == (
+        "05ba9375923cd5fb52e2c9c18b98b530d57d077f"
+    )
+    assert not any(
+        "UNRESOLVED" in json.dumps(item) for item in seal["authorities"]
+    )
 
-    errors = validator.validate_seal(SEAL_PATH)
-    assert "seal: status must be 'sealed'" in errors
-    assert "seal: unresolved placeholder present" in errors
-    assert any(error.startswith("checkout bindings missing:") for error in errors)
-
-    assert validator.main(["--check", str(SEAL_PATH)]) == 1
-    assert "ERROR: seal: unresolved placeholder present" in capsys.readouterr().err
+    # Portable document contract is closed; checkout bindings remain required
+    # for full operator validation via --repo / --run-tests.
+    errors = validator.validate_document(seal)
+    assert errors == []
 
 
 def test_resolved_control_authority_fingerprints_bind_complete_contracts() -> None:
@@ -44,7 +52,12 @@ def test_resolved_control_authority_fingerprints_bind_complete_contracts() -> No
     seal = validator.load_seal(SEAL_PATH)
     authorities = {item["role"]: item for item in seal["authorities"]}
 
-    for role in ("accelerate_harness", "kit_state_roots", "mcp_plus_plus"):
+    for role in (
+        "accelerate_harness",
+        "incremental_semantic_index",
+        "kit_state_roots",
+        "mcp_plus_plus",
+    ):
         authority = authorities[role]
         assert authority["interface_fingerprint"] == validator.authority_fingerprint(authority)
 
