@@ -665,7 +665,7 @@ W21 ISI-040
 
 ## ISI-044 Close typed Python relations, effects, and confidence
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: extraction-relation-closure
