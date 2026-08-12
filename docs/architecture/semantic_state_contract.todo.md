@@ -172,7 +172,7 @@ D7  DSS-011
 
 ## DSS-005 Extend source invalidation with environment bindings
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: invalidation
