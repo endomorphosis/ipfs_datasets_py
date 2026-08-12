@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 
 import pytest
-
 from ipfs_datasets_py.logic.gui_optimizer.identity import (
     CANONICAL_JSON_PROFILE,
     DOMAIN_ARTIFACT,
@@ -15,6 +14,7 @@ from ipfs_datasets_py.logic.gui_optimizer.identity import (
     GUI_CANONICAL_IDENTITY_INTERFACE,
     IDENTITY_PROFILE,
     IDENTITY_PROFILE_NAME,
+    MAX_SAFE_INTEGER,
     MULTICODEC_CODE,
     MULTIHASH_CODE,
     UI_COMPONENT_VERSION_COMPILER_INTERFACE,
@@ -58,6 +58,45 @@ GOLDEN_SCHEMA = "gui-test-vector/v1"
 GOLDEN_PAYLOAD_BYTES = (
     b'{"component":"ConsoleRoot","kind":"screen",'
     b'"tags":["primary","workspace"],"title":"Caf\xc3\xa9"}'
+)
+
+# Literal cross-runtime contract.  Keep byte-for-byte identical to the vector
+# in swissknife/test/unit/services/gui-optimizer/identity.test.ts.
+CROSS_RUNTIME_DOMAIN = "gui.cross-runtime-vector"
+CROSS_RUNTIME_SCHEMA = "gui-cross-runtime-vector/v1"
+CROSS_RUNTIME_PAYLOAD = {
+    "astral_and_bmp": {"\ue000": "bmp", "\U00010000": "astral"},
+    "boolean_false": False,
+    "boolean_true": True,
+    "float_one": 1.0,
+    "negative_zero": -0.0,
+    "safe_integer": 9_007_199_254_740_991,
+    "small_exponent": 1e-7,
+    "smallest_subnormal": 5e-324,
+}
+CROSS_RUNTIME_PAYLOAD_JSON = (
+    '{"astral_and_bmp":{"\ue000":"bmp","\U00010000":"astral"},'
+    '"boolean_false":false,"boolean_true":true,"float_one":1,'
+    '"negative_zero":0,"safe_integer":9007199254740991,'
+    '"small_exponent":0.0000001,"smallest_subnormal":'
+    "0.0000000000000000000000000000000000000000000000000000000000000000"
+    "000000000000000000000000000000000000000000000000000000000000000000"
+    "000000000000000000000000000000000000000000000000000000000000000000"
+    "000000000000000000000000000000000000000000000000000000000000000000"
+    "00000000000000000000000000000000000000000000000000000000000005}"
+)
+CROSS_RUNTIME_PREIMAGE_JSON = (
+    '{"canonicalization":"gui-optimizer-canonical-json/v1",'
+    '"domain":"gui.cross-runtime-vector",'
+    '"identity_profile":"gui-optimizer-canonical-identity/v1","payload":'
+    + CROSS_RUNTIME_PAYLOAD_JSON
+    + ',"schema_version":"gui-cross-runtime-vector/v1"}'
+)
+CROSS_RUNTIME_DIGEST = (
+    "sha256:ca283ecb68a9e75a2b143628f2c98888b749fe0f7fbfc269341d9549c180b93c"
+)
+CROSS_RUNTIME_CID = (
+    "bafkreigkfa7mw2fj45ncwfbwfdzmtceiw5e74d37x7bgsna5sve4dafzhq"
 )
 
 
@@ -104,6 +143,61 @@ def test_canonical_json_rejects_non_json_and_key_collisions() -> None:
         canonical_json_bytes(float("nan"))
     with pytest.raises(GuiIdentityError, match="collide"):
         canonical_json_bytes({"é": 1, "e\u0301": 2})
+
+
+def test_literal_cross_runtime_json_digest_and_cid_vector() -> None:
+    encoded = canonical_json_bytes(CROSS_RUNTIME_PAYLOAD)
+    assert encoded.decode("utf-8") == CROSS_RUNTIME_PAYLOAD_JSON
+    identity = canonical_identity(
+        CROSS_RUNTIME_PAYLOAD,
+        domain=CROSS_RUNTIME_DOMAIN,
+        schema_version=CROSS_RUNTIME_SCHEMA,
+    )
+    assert identity.canonical_bytes.decode("utf-8") == CROSS_RUNTIME_PREIMAGE_JSON
+    assert identity.digest == CROSS_RUNTIME_DIGEST
+    assert identity.cid == CROSS_RUNTIME_CID
+    # Exact bool/int/float distinctions and negative-zero collapse.
+    assert canonical_json_bytes([False, 0, True, 1, 1.0, -0.0]) == (
+        b"[false,0,true,1,1,0]"
+    )
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        MAX_SAFE_INTEGER + 1,
+        -(MAX_SAFE_INTEGER + 1),
+        float(MAX_SAFE_INTEGER + 1),
+        1e20,
+        float.fromhex("0x1.fffffffffffffp+1023"),
+    ],
+)
+def test_cross_runtime_numeric_domain_rejects_unsafe_integers(
+    value: int | float,
+) -> None:
+    with pytest.raises(GuiIdentityError, match="safe-integer"):
+        canonical_json_bytes(value)
+    with pytest.raises(GuiIdentityError, match="safe-integer"):
+        normalize_material({"nested": [value]})
+
+
+def test_unicode_scalar_and_recursive_collision_policy_fails_closed() -> None:
+    for value in ("\ud800", {"\udc00": "value"}, {"nested": ["\udfff"]}):
+        with pytest.raises(GuiIdentityError, match="unpaired Unicode surrogate"):
+            canonical_json_bytes(value)
+        with pytest.raises(GuiIdentityError, match="unpaired Unicode surrogate"):
+            normalize_material(value)
+
+    collision = {"outer": {"é": 1, "e\u0301": 2}}
+    with pytest.raises(GuiIdentityError, match="collide"):
+        canonical_json_bytes(collision)
+    with pytest.raises(GuiIdentityError, match="collide"):
+        normalize_material(collision)
+
+    with pytest.raises(GuiIdentityError, match="unpaired Unicode surrogate"):
+        canonical_identity(
+            {}, domain="gui.\ud800", schema_version=CROSS_RUNTIME_SCHEMA
+        )
 
 
 def test_cid_v1_raw_sha256_base32_for_hello() -> None:

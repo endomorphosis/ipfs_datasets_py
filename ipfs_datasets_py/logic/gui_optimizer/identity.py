@@ -1,8 +1,9 @@
 """Canonical GUI content identity and provenance (VGO-010).
 
-Implements a closed, dependency-free CIDv1 / SHA-256 identity profile for the
-VerifiedGuiOptimizer package.  Identities are domain-separated, rehashable from
-retained canonical bytes, and independent of line-number provenance.
+Implements a closed, optional-dependency-free CIDv1 / SHA-256 identity profile
+for the VerifiedGuiOptimizer package.  Identities are domain-separated,
+rehashable from retained canonical bytes, and independent of line-number
+provenance.
 
 Wire interfaces:
 
@@ -22,7 +23,6 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
 import math
 import re
 import unicodedata
@@ -30,6 +30,18 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Final
 
+from ..ir_core.canonical import (
+    CanonicalizationError,
+)
+from ..ir_core.canonical import (
+    canonical_json_bytes as _ir_canonical_json_bytes,
+)
+from ..ir_core.identity import (
+    cid_v1 as _ir_cid_v1,
+)
+from ..ir_core.identity import (
+    cid_v1_from_digest as _ir_cid_v1_from_digest,
+)
 from .models import (
     UiComponentIdentity,
     UiComponentVersion,
@@ -72,6 +84,11 @@ MULTIHASH_NAME: Final = "sha2-256"
 MULTIHASH_CODE: Final = 0x12
 DIGEST_SIZE: Final = 32
 MULTIBASE_NAME: Final = "base32"
+
+# The shared IR encoder accepts arbitrary Python integers.  GUI identity is a
+# cross-runtime profile, so it deliberately narrows that domain to integers
+# that round-trip exactly through a JavaScript number.
+MAX_SAFE_INTEGER: Final = (1 << 53) - 1
 
 # Provenance-only keys excluded from version material normalization.
 _PROVENANCE_KEYS: Final = frozenset(
@@ -246,19 +263,8 @@ class GuiArtifactDigest:
 
 
 # ---------------------------------------------------------------------------
-# Low-level CID / digest primitives (dependency-free)
+# Low-level CID / digest primitives
 # ---------------------------------------------------------------------------
-
-
-def _varint(value: int) -> bytes:
-    if value < 0:
-        raise ValueError("unsigned varints cannot encode negative values")
-    output = bytearray()
-    while value >= 0x80:
-        output.append((value & 0x7F) | 0x80)
-        value >>= 7
-    output.append(value)
-    return bytes(output)
 
 
 def sha256_digest(data: bytes | bytearray | memoryview) -> str:
@@ -277,10 +283,7 @@ def cid_v1_from_digest(digest: bytes | bytearray | memoryview) -> str:
         raise ValueError(
             f"{MULTIHASH_NAME} digest must be exactly {DIGEST_SIZE} bytes"
         )
-    multihash = _varint(MULTIHASH_CODE) + _varint(DIGEST_SIZE) + raw_digest
-    cid_bytes = _varint(CID_VERSION) + _varint(MULTICODEC_CODE) + multihash
-    encoded = base64.b32encode(cid_bytes).decode("ascii").rstrip("=").lower()
-    return "b" + encoded
+    return _ir_cid_v1_from_digest(raw_digest)
 
 
 def cid_v1(data: bytes | bytearray | memoryview) -> str:
@@ -288,7 +291,7 @@ def cid_v1(data: bytes | bytearray | memoryview) -> str:
 
     if not isinstance(data, (bytes, bytearray, memoryview)):
         raise TypeError("cid_v1 expects bytes-like input")
-    return cid_v1_from_digest(hashlib.sha256(bytes(data)).digest())
+    return _ir_cid_v1(bytes(data))
 
 
 def parse_cid_v1(cid: str) -> dict[str, Any]:
@@ -345,16 +348,55 @@ def _normalize_text(value: str, *, label: str) -> str:
     return normalized
 
 
-def _canonical_number(value: int | float) -> str:
-    if isinstance(value, bool):
-        raise TypeError("booleans are not numbers")
-    if isinstance(value, int):
-        return str(value)
+def _validate_gui_number(value: int | float, *, label: str) -> None:
+    """Require a number in the exact Python/JavaScript GUI wire domain."""
+
+    if type(value) is int:
+        if abs(value) > MAX_SAFE_INTEGER:
+            raise GuiIdentityError(
+                f"{label} integer exceeds the GUI safe-integer domain"
+            )
+        return
     if not math.isfinite(value):
-        raise GuiIdentityError("canonical JSON numbers must be finite")
-    # Match models.canonical_model_bytes: Python json for finite floats.
-    text = json.dumps(value, allow_nan=False, separators=(",", ":"))
-    return text
+        raise GuiIdentityError(f"{label} numbers must be finite")
+    if value.is_integer() and abs(value) > MAX_SAFE_INTEGER:
+        raise GuiIdentityError(
+            f"{label} integer-valued number exceeds the GUI safe-integer domain"
+        )
+
+
+def _coerce_gui_value(value: Any, *, path: str) -> Any:
+    """Coerce existing ergonomic inputs into the shared IR JSON value set."""
+
+    if value is None or type(value) is bool or type(value) is str:
+        return value
+    if type(value) is int or type(value) is float:
+        _validate_gui_number(value, label=f"canonical JSON at {path}")
+        return value
+    if type(value) is list:
+        return [
+            _coerce_gui_value(item, path=f"{path}[{index}]")
+            for index, item in enumerate(value)
+        ]
+    if isinstance(value, Mapping):
+        ready: dict[str, Any] = {}
+        for key, item in value.items():
+            if type(key) is not str:
+                raise GuiIdentityError(f"{path} map keys must be strings")
+            ready[key] = _coerce_gui_value(item, path=f"{path}.{key}")
+        return ready
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray, memoryview)
+    ):
+        return [
+            _coerce_gui_value(item, path=f"{path}[{index}]")
+            for index, item in enumerate(value)
+        ]
+    if hasattr(value, "to_dict") and callable(value.to_dict):
+        return _coerce_gui_value(value.to_dict(), path=path)
+    raise GuiIdentityError(
+        f"{path} is not JSON-serializable for identity: {type(value).__name__}"
+    )
 
 
 def canonical_json_bytes(value: Any) -> bytes:
@@ -364,69 +406,20 @@ def canonical_json_bytes(value: Any) -> bytes:
 
     * NFC-normalized text and map keys;
     * map keys sorted by Unicode code point;
-    * finite numbers only;
+    * finite numbers in the JavaScript safe-integer interoperability domain;
+    * no-exponent decimal numbers, no insignificant zeroes, and no ``-0``;
     * compact UTF-8 JSON (``ensure_ascii=False``);
-    * reject bytes, sets, tuples, non-string keys, and host objects.
+    * reject unpaired surrogates, NFC key collisions, and unsafe host values.
+
+    Encoding delegates to the committed ``ir_core.canonical`` primitive after
+    applying the deliberately narrower GUI cross-runtime numeric restriction.
     """
 
-    return _encode_canonical(value, path="$")
-
-
-def _encode_canonical(value: Any, *, path: str) -> bytes:
-    if value is None:
-        return b"null"
-    if value is True:
-        return b"true"
-    if value is False:
-        return b"false"
-    if type(value) is str:
-        normalized = _normalize_text(value, label=path)
-        return json.dumps(
-            normalized, ensure_ascii=False, separators=(",", ":")
-        ).encode("utf-8")
-    if type(value) is int:
-        return str(value).encode("ascii")
-    if type(value) is float:
-        return _canonical_number(value).encode("ascii")
-    if type(value) is dict:
-        ready: dict[str, Any] = {}
-        originals: dict[str, str] = {}
-        for key, item in value.items():
-            if type(key) is not str:
-                raise GuiIdentityError(f"{path} map keys must be strings")
-            nfc = _normalize_text(key, label=f"{path} key")
-            if nfc in ready:
-                raise GuiIdentityError(
-                    f"map keys collide after NFC at {path}: "
-                    f"{originals[nfc]!r} and {key!r}"
-                )
-            ready[nfc] = item
-            originals[nfc] = key
-        parts: list[bytes] = []
-        for key in sorted(ready):
-            encoded_key = json.dumps(
-                key, ensure_ascii=False, separators=(",", ":")
-            ).encode("utf-8")
-            encoded_value = _encode_canonical(ready[key], path=f"{path}.{key}")
-            parts.append(encoded_key + b":" + encoded_value)
-        return b"{" + b",".join(parts) + b"}"
-    if type(value) is list:
-        parts = [
-            _encode_canonical(item, path=f"{path}[{index}]")
-            for index, item in enumerate(value)
-        ]
-        return b"[" + b",".join(parts) + b"]"
-    if isinstance(value, Mapping):
-        return _encode_canonical(dict(value), path=path)
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray, memoryview)
-    ):
-        return _encode_canonical(list(value), path=path)
-    if hasattr(value, "to_dict") and callable(value.to_dict):
-        return _encode_canonical(value.to_dict(), path=path)
-    raise GuiIdentityError(
-        f"{path} is not JSON-serializable for identity: {type(value).__name__}"
-    )
+    prepared = _coerce_gui_value(value, path="$")
+    try:
+        return _ir_canonical_json_bytes(prepared)
+    except CanonicalizationError as exc:
+        raise GuiIdentityError(str(exc)) from exc
 
 
 def canonical_json(value: Any) -> str:
@@ -586,14 +579,16 @@ def normalize_material(value: Any) -> Any:
 
 
 def _normalize_value(value: Any) -> Any:
-    if value is None or type(value) is bool or type(value) is int:
+    if value is None or type(value) is bool:
+        return value
+    if type(value) is int:
+        _validate_gui_number(value, label="material")
         return value
     if type(value) is float:
-        if not math.isfinite(value):
-            raise GuiIdentityError("material rejects non-finite numbers")
+        _validate_gui_number(value, label="material")
         return value
     if type(value) is str:
-        text = unicodedata.normalize("NFC", value)
+        text = _normalize_text(value, label="material string")
         # Collapse nonsemantic runs of spaces/tabs; preserve newlines as single
         # separators so multi-line structure remains distinguishable.
         text = _WS_RE.sub(" ", text)
@@ -606,10 +601,17 @@ def _normalize_value(value: Any) -> Any:
         return [_normalize_value(item) for item in value]
     if type(value) is dict or isinstance(value, Mapping):
         ready: dict[str, Any] = {}
+        originals: dict[str, str] = {}
         for key, item in dict(value).items():
             if type(key) is not str:
                 raise GuiIdentityError("material map keys must be strings")
-            nfc = unicodedata.normalize("NFC", key)
+            nfc = _normalize_text(key, label="material map key")
+            if nfc in originals:
+                raise GuiIdentityError(
+                    "material map keys collide after NFC normalization: "
+                    f"{originals[nfc]!r} and {key!r}"
+                )
+            originals[nfc] = key
             if nfc in _PROVENANCE_KEYS or nfc.lower() in _PROVENANCE_KEYS:
                 continue
             ready[nfc] = _normalize_value(item)
@@ -898,6 +900,7 @@ __all__ = [
     "GUI_CANONICAL_IDENTITY_SCHEMA",
     "IDENTITY_PROFILE",
     "IDENTITY_PROFILE_NAME",
+    "MAX_SAFE_INTEGER",
     "MULTIBASE_NAME",
     "MULTICODEC_CODE",
     "MULTICODEC_NAME",
