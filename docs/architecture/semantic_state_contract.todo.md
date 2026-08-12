@@ -118,7 +118,7 @@ D7  DSS-011
 
 ## DSS-003 Materialize the acyclic symbol Merkle DAG
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: merkle
