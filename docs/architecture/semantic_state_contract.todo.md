@@ -65,7 +65,7 @@ D7  DSS-011
 
 ## DSS-001 Define closed semantic-state payload models
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: contracts
