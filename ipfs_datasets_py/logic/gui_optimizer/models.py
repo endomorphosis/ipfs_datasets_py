@@ -1239,12 +1239,23 @@ class UiLayoutConstraint(_IdentityBase):
         kind: Any,
         expression: str,
         component_id: str,
-        breakpoint_value: str,
-        lower_bound: int | None,
-        upper_bound: int | None,
-        interface: str,
-        schema_version: str,
+        breakpoint_value: Any = _MISSING,
+        lower_bound: Any = _MISSING,
+        upper_bound: Any = _MISSING,
+        interface: Any = _MISSING,
+        schema_version: Any = _MISSING,
+        **wire_fields: Any,
     ) -> None:
+        unexpected = set(wire_fields) - {"breakpoint"}
+        if unexpected:
+            name = sorted(unexpected)[0]
+            raise TypeError(f"unexpected keyword argument: {name!r}")
+        if "breakpoint" in wire_fields:
+            if breakpoint_value is not _MISSING:
+                raise TypeError("breakpoint was supplied more than once")
+            breakpoint_value = wire_fields["breakpoint"]
+        if breakpoint_value is _MISSING:
+            raise TypeError("missing required keyword or positional argument: 'breakpoint'")
         lower = require_int(lower_bound, "lower_bound")
         upper = require_int(upper_bound, "upper_bound")
         if lower > upper:
@@ -1286,7 +1297,7 @@ class UiLayoutConstraint(_IdentityBase):
                 kind=field_value(p, "kind", ""),
                 expression=field_value(p, "expression", ""),
                 component_id=field_value(p, "component_id", ""),
-                breakpoint_value=field_value(p, "breakpoint", ""),
+                breakpoint=field_value(p, "breakpoint", ""),
                 lower_bound=field_value(p, "lower_bound", None),
                 upper_bound=field_value(p, "upper_bound", None),
                 interface=field_value(p, "interface", ""),

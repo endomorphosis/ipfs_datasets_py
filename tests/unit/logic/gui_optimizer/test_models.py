@@ -958,6 +958,22 @@ def test_every_required_model_round_trips_and_is_versioned() -> None:
         assert decode_model(payload).to_dict() == payload
 
 
+def test_layout_constraint_direct_constructor_accepts_wire_breakpoint_keyword() -> None:
+    payload = _owned_fixtures()["UiLayoutConstraint@1"]
+    model = MODEL_TYPES["UiLayoutConstraint@1"](
+        constraint_id=payload["constraint_id"],
+        kind=payload["kind"],
+        expression=payload["expression"],
+        component_id=payload["component_id"],
+        breakpoint=payload["breakpoint"],
+        lower_bound=payload["lower_bound"],
+        upper_bound=payload["upper_bound"],
+        interface=payload["interface"],
+        schema_version=payload["schema_version"],
+    )
+    assert model.to_dict() == payload
+
+
 def test_canonical_serialization_is_deterministic() -> None:
     for instance in _samples().values():
         first = instance.canonical_bytes()
