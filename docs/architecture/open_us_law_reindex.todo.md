@@ -51,7 +51,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: A live authenticated recursive listing is canonically sorted and hashed; 107 objects, 103 live Parquets, stale checksum entries, sizes, Xet hashes, and observation time are independently reconciled without treating the mutable bucket as a revision pin.
 
 ## OUL-002 Seal the exact-51 official-source rights and admission matrix
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
