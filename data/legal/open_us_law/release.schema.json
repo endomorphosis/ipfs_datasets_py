@@ -1,0 +1,576 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/open-us-law-release-v1.schema.json",
+  "title": "Open US Law identity schema and configuration boundaries",
+  "description": "OUL-005 release identity contract. Default configuration is current exact-51 state/DC statutes with stable jurisdiction, hierarchy, edition, source CID, entry CID, and text hash fields. Puerto Rico, federal US Code, constitutions, historical, recovery, and quarantine rows are explicit non-default configurations and cannot satisfy the exact-51 gate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "release_profile",
+    "task_id",
+    "dataset_repo_id",
+    "source_bucket",
+    "default_configuration",
+    "configurations",
+    "jurisdictions",
+    "identity_fields",
+    "model_id",
+    "model_revision",
+    "embedding_dimension",
+    "model_token_ceiling",
+    "max_rows_per_physical_shard",
+    "extras_in_default_allowed",
+    "viewer",
+    "manifest_digest"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "open-us-law-identity-schema-v1"
+    },
+    "release_profile": {
+      "const": "open-us-law-sparse-graphrag/v1"
+    },
+    "task_id": {
+      "const": "OUL-005"
+    },
+    "dataset_repo_id": {
+      "const": "justicedao/open-us-law-sparse-graphrag"
+    },
+    "source_bucket": {
+      "const": "justicedao/open-us-law-bucket"
+    },
+    "default_configuration": {
+      "const": "state_statutes_exact_51"
+    },
+    "configurations": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/configurationDescriptor"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "required": ["name", "default", "satisfies_exact_51_gate"],
+            "properties": {
+              "name": { "const": "state_statutes_exact_51" },
+              "default": { "const": true },
+              "satisfies_exact_51_gate": { "const": true }
+            }
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["name", "default", "satisfies_exact_51_gate"],
+            "properties": {
+              "name": { "const": "federal_uscode" },
+              "default": { "const": false },
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["name", "default", "satisfies_exact_51_gate"],
+            "properties": {
+              "name": { "const": "puerto_rico" },
+              "default": { "const": false },
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["name", "default", "satisfies_exact_51_gate"],
+            "properties": {
+              "name": { "const": "constitutions" },
+              "default": { "const": false },
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["name", "default", "satisfies_exact_51_gate"],
+            "properties": {
+              "name": { "const": "historical" },
+              "default": { "const": false },
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["name", "default", "satisfies_exact_51_gate"],
+            "properties": {
+              "name": { "const": "recovery" },
+              "default": { "const": false },
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["name", "default", "satisfies_exact_51_gate"],
+            "properties": {
+              "name": { "const": "quarantine" },
+              "default": { "const": false },
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        }
+      ]
+    },
+    "jurisdictions": {
+      "$ref": "#/$defs/jurisdictionSet"
+    },
+    "identity_fields": {
+      "const": [
+        "jurisdiction_code",
+        "hierarchy",
+        "edition",
+        "source_cid",
+        "entry_cid",
+        "text_hash"
+      ]
+    },
+    "model_id": {
+      "const": "thenlper/gte-small"
+    },
+    "model_revision": {
+      "const": "17e1f347d17fe144873b1201da91788898c639cd"
+    },
+    "embedding_dimension": {
+      "const": 384
+    },
+    "model_token_ceiling": {
+      "const": 512,
+      "description": "Pinned thenlper/gte-small tokenizer truncation. Distinct from the 4096 physical row/pointer bound."
+    },
+    "max_rows_per_physical_shard": {
+      "const": 4096
+    },
+    "extras_in_default_allowed": {
+      "const": false
+    },
+    "viewer": {
+      "$ref": "#/$defs/viewerPolicy"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/corpusIdentityRow"
+      }
+    },
+    "manifest_digest": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "digestOrCid": {
+      "type": "string",
+      "pattern": "^(?:b[a-z2-7]{20,}|sha256:[0-9a-f]{64}|[0-9a-f]{64})$"
+    },
+    "configurationName": {
+      "type": "string",
+      "enum": [
+        "state_statutes_exact_51",
+        "federal_uscode",
+        "puerto_rico",
+        "constitutions",
+        "historical",
+        "recovery",
+        "quarantine"
+      ]
+    },
+    "nonDefaultConfigurationName": {
+      "type": "string",
+      "enum": [
+        "federal_uscode",
+        "puerto_rico",
+        "constitutions",
+        "historical",
+        "recovery",
+        "quarantine"
+      ]
+    },
+    "exact51Jurisdiction": {
+      "type": "string",
+      "enum": [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY",
+        "DC"
+      ]
+    },
+    "anyJurisdiction": {
+      "type": "string",
+      "enum": [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DE",
+        "DC",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "PR",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "US",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY"
+      ]
+    },
+    "documentKind": {
+      "type": "string",
+      "enum": ["statute", "federal", "puerto_rico", "constitution"]
+    },
+    "statuteStatus": {
+      "type": "string",
+      "enum": ["current", "historical", "repealed", "superseded", "reserved"]
+    },
+    "legalId": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 512,
+      "pattern": "^oul:(statute|federal|puerto_rico|constitution):[A-Z]{2}:[a-z0-9][a-z0-9._-]{0,63}:.+$"
+    },
+    "edition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9._:-]{0,127}$",
+      "not": {
+        "pattern": "^(?:latest|main|master|head|current|live)$"
+      }
+    },
+    "relativeSplit": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^configs/[A-Za-z0-9._-]+$",
+      "not": {
+        "pattern": "(?:^|/)\\.\\.(?:/|$)"
+      }
+    },
+    "hierarchy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+        "chapter": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+        "part": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+        "article": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+        "section": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+        "subsection": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "configurationDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "default",
+        "satisfies_exact_51_gate",
+        "viewer_visible",
+        "description"
+      ],
+      "properties": {
+        "name": { "$ref": "#/$defs/configurationName" },
+        "default": { "type": "boolean" },
+        "satisfies_exact_51_gate": { "type": "boolean" },
+        "viewer_visible": { "type": "boolean" },
+        "description": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "relative_split": { "$ref": "#/$defs/relativeSplit" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "name": { "const": "state_statutes_exact_51" } },
+            "required": ["name"]
+          },
+          "then": {
+            "properties": {
+              "default": { "const": true },
+              "satisfies_exact_51_gate": { "const": true },
+              "viewer_visible": { "const": true }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "name": { "$ref": "#/$defs/nonDefaultConfigurationName" } },
+            "required": ["name"]
+          },
+          "then": {
+            "properties": {
+              "default": { "const": false },
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "name": { "enum": ["recovery", "quarantine"] } },
+            "required": ["name"]
+          },
+          "then": {
+            "properties": {
+              "viewer_visible": { "const": false }
+            }
+          }
+        }
+      ]
+    },
+    "jurisdictionSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_codes",
+        "required_count",
+        "extras_in_default_allowed"
+      ],
+      "properties": {
+        "required_count": { "const": 51 },
+        "extras_in_default_allowed": { "const": false },
+        "required_codes": {
+          "type": "array",
+          "minItems": 51,
+          "maxItems": 51,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/exact51Jurisdiction" }
+        }
+      }
+    },
+    "viewerPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default_split",
+        "excluded_from_default",
+        "hidden_configurations"
+      ],
+      "properties": {
+        "default_split": { "const": "state_statutes_exact_51" },
+        "excluded_from_default": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nonDefaultConfigurationName" }
+        },
+        "hidden_configurations": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "enum": ["recovery", "quarantine"] }
+        }
+      }
+    },
+    "corpusIdentityRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "jurisdiction_code",
+        "hierarchy",
+        "edition",
+        "source_cid",
+        "entry_cid",
+        "text_hash",
+        "legal_id",
+        "code_family",
+        "configuration",
+        "document_kind",
+        "status",
+        "satisfies_exact_51_gate"
+      ],
+      "properties": {
+        "jurisdiction_code": { "$ref": "#/$defs/anyJurisdiction" },
+        "hierarchy": { "$ref": "#/$defs/hierarchy" },
+        "edition": { "$ref": "#/$defs/edition" },
+        "source_cid": { "$ref": "#/$defs/digestOrCid" },
+        "entry_cid": { "$ref": "#/$defs/digestOrCid" },
+        "text_hash": { "$ref": "#/$defs/sha256" },
+        "text_cid": {
+          "type": ["string", "null"],
+          "pattern": "^(?:b[a-z2-7]{20,}|sha256:[0-9a-f]{64}|[0-9a-f]{64})$"
+        },
+        "legal_id": { "$ref": "#/$defs/legalId" },
+        "code_family": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+        },
+        "configuration": { "$ref": "#/$defs/configurationName" },
+        "document_kind": { "$ref": "#/$defs/documentKind" },
+        "status": { "$ref": "#/$defs/statuteStatus" },
+        "satisfies_exact_51_gate": { "type": "boolean" },
+        "document_index": { "type": ["integer", "null"], "minimum": 0 },
+        "schema_version": { "type": "string", "minLength": 1, "maxLength": 128 }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "configuration": { "const": "state_statutes_exact_51" } },
+            "required": ["configuration"]
+          },
+          "then": {
+            "properties": {
+              "jurisdiction_code": { "$ref": "#/$defs/exact51Jurisdiction" },
+              "document_kind": { "const": "statute" },
+              "status": { "enum": ["current", "reserved"] },
+              "satisfies_exact_51_gate": { "const": true }
+            },
+            "not": {
+              "properties": {
+                "jurisdiction_code": { "enum": ["PR", "US"] }
+              },
+              "required": ["jurisdiction_code"]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "configuration": { "$ref": "#/$defs/nonDefaultConfigurationName" }
+            },
+            "required": ["configuration"]
+          },
+          "then": {
+            "properties": {
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "configuration": { "const": "puerto_rico" } },
+            "required": ["configuration"]
+          },
+          "then": {
+            "properties": {
+              "jurisdiction_code": { "const": "PR" },
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "configuration": { "const": "federal_uscode" } },
+            "required": ["configuration"]
+          },
+          "then": {
+            "properties": {
+              "jurisdiction_code": { "const": "US" },
+              "document_kind": { "const": "federal" },
+              "satisfies_exact_51_gate": { "const": false }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
