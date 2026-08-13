@@ -123,7 +123,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The transport lists and range-reads hf://buckets objects under explicit byte and object budgets, verifies expected size and SHA256 or Xet identity, rejects path escapes and listing drift, and emits a content-root receipt.
 
 ## OUL-005 Specify canonical Open US Law identity schema and configuration boundaries
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
