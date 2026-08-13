@@ -1,0 +1,952 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/semantic-governor.audit.schema.json",
+  "title": "Semantic-governor audit, coverage, omission, expansion, and decision models v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned semantic-governor coverage manifests, sufficiency claims, exclusion records, omission hypotheses/evidence, bounded expansion plans/steps, governor decisions, run receipts, and audit cases (SCG-007). Missing exclusion reasons, unbounded paths/spans/steps, inconsistent totals, and verification-pass-only sufficiency claims are rejected by the Python contracts; this schema mirrors closed vocabularies and structural bounds.",
+  "oneOf": [
+    { "$ref": "#/$defs/sourceSpan" },
+    { "$ref": "#/$defs/graphPath" },
+    { "$ref": "#/$defs/includedArtifactRecord" },
+    { "$ref": "#/$defs/excludedArtifactRecord" },
+    { "$ref": "#/$defs/coverageGap" },
+    { "$ref": "#/$defs/contextCoverageManifest" },
+    { "$ref": "#/$defs/contextSufficiencyClaim" },
+    { "$ref": "#/$defs/omissionHypothesis" },
+    { "$ref": "#/$defs/omissionEvidence" },
+    { "$ref": "#/$defs/contextExpansionStep" },
+    { "$ref": "#/$defs/contextExpansionPlan" },
+    { "$ref": "#/$defs/governorDecision" },
+    { "$ref": "#/$defs/governorRunReceipt" },
+    { "$ref": "#/$defs/compressionAuditCase" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nfcStringOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nfcString" }]
+    },
+    "token": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:/+-]{0,127}$"
+    },
+    "tokenOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/token" }]
+    },
+    "taskId": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:/+-]{0,127}$"
+    },
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?!/)(?!~)(?!.*\\.\\./)[A-Za-z0-9_./@+-][A-Za-z0-9_./@+-]{0,1022}$"
+    },
+    "repoPathOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/repoPath" }]
+    },
+    "basisPoints": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "nonnegInt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "posInt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tokenCost": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "exclusionReason": {
+      "type": "string",
+      "enum": [
+        "exact_capsule_substituted",
+        "conservative_capsule_substituted",
+        "proven_unrelated_by_dependency_graph",
+        "outside_affected_invalidation_cone",
+        "generated_from_included_authoritative_schema",
+        "verified_immutable_dependency",
+        "duplicate_representation",
+        "budget_exceeded_escalation_required"
+      ]
+    },
+    "inclusionKind": {
+      "type": "string",
+      "enum": [
+        "raw_source",
+        "exact_capsule",
+        "conservative_capsule",
+        "proof",
+        "test",
+        "schema",
+        "configuration",
+        "fixture",
+        "state_read",
+        "state_write"
+      ]
+    },
+    "coveredArtifactKind": {
+      "type": "string",
+      "enum": [
+        "symbol",
+        "file",
+        "schema",
+        "fixture",
+        "configuration",
+        "test",
+        "proof_obligation",
+        "state_binding",
+        "dependency_edge"
+      ]
+    },
+    "sufficiencyEvidenceBasis": {
+      "type": "string",
+      "enum": [
+        "coverage_manifest",
+        "dependency_graph",
+        "acceptance_matrix",
+        "freshness",
+        "confidence",
+        "proof_coverage",
+        "test_coverage",
+        "calibration_history",
+        "budget",
+        "opaque_dependency_check",
+        "invalidation_obligations",
+        "human_review",
+        "verification_pass"
+      ]
+    },
+    "contextSufficiencyState": {
+      "type": "string",
+      "enum": [
+        "sufficient",
+        "sufficient_with_caveats",
+        "expansion_required",
+        "frontier_escalation_required",
+        "human_review_required",
+        "inconclusive",
+        "invalid",
+        "stale",
+        "evaluation_failed"
+      ]
+    },
+    "hypothesisCause": {
+      "type": "string",
+      "enum": [
+        "omission",
+        "model_insufficiency",
+        "stale_artifact",
+        "policy_boundary",
+        "budget_overflow",
+        "conflicting_evidence",
+        "unknown"
+      ]
+    },
+    "expansionAction": {
+      "type": "string",
+      "enum": [
+        "include_raw_source",
+        "strengthen_capsule",
+        "include_schema",
+        "include_fixture",
+        "include_configuration",
+        "include_test",
+        "include_proof",
+        "escalate_route",
+        "request_human_review",
+        "no_action"
+      ]
+    },
+    "expansionStepStatus": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "applied",
+        "skipped",
+        "rejected",
+        "budget_exceeded",
+        "supported",
+        "unsupported"
+      ]
+    },
+    "decisionAction": {
+      "type": "string",
+      "enum": [
+        "accept_compressed",
+        "require_expansion",
+        "retry_same_route",
+        "escalate_frontier",
+        "require_human_review",
+        "reject",
+        "mark_inconclusive",
+        "mark_stale",
+        "mark_invalid",
+        "evaluation_failed"
+      ]
+    },
+    "routeTier": {
+      "type": "string",
+      "enum": ["deterministic", "small", "medium", "frontier", "human"]
+    },
+    "coverageGapKind": {
+      "type": "string",
+      "enum": [
+        "opaque_dependency",
+        "dynamic_import",
+        "unresolved_invalidation",
+        "missing_proof",
+        "missing_test",
+        "missing_schema",
+        "missing_fixture",
+        "missing_configuration",
+        "budget_truncation",
+        "stale_capsule",
+        "low_confidence",
+        "unknown"
+      ]
+    },
+    "omissionEvidenceKind": {
+      "type": "string",
+      "enum": [
+        "counterexample",
+        "differential_outcome",
+        "verification_failure",
+        "selected_pass_full_fail",
+        "proof_failure",
+        "static_analysis",
+        "graph_path",
+        "exclusion_record",
+        "expansion_repair",
+        "human_review"
+      ]
+    },
+    "strictObject": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "not": {
+          "anyOf": [
+            {
+              "pattern": "(?i)(access_token|api_key|authorization|cookie|credential|hidden_witness|password|private_key|private_premise|private_source|private_witness|raw_private_source|raw_source|raw_source_text|refresh_token|secret|session_token|source_bytes|source_text|witness)"
+            },
+            {
+              "pattern": "(?i)(llm_authority|model_authority|model_decision_authority|model_promoted|model_written_authority|provider_authority|self_authorized|self_authorization|trusted_key|trusted_keys|promotion_authority)"
+            }
+          ]
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/strictValue"
+      }
+    },
+    "strictValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "integer" },
+        { "type": "string", "maxLength": 16384 },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/strictValue" },
+          "maxItems": 4096
+        },
+        { "$ref": "#/$defs/strictObject" }
+      ]
+    },
+    "sourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "path", "start_line", "end_line", "start_col", "end_col"],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-source-span@1"
+        },
+        "path": { "$ref": "#/$defs/repoPath" },
+        "start_line": { "$ref": "#/$defs/posInt", "maximum": 10000000 },
+        "end_line": { "$ref": "#/$defs/posInt", "maximum": 10000000 },
+        "start_col": { "$ref": "#/$defs/posInt", "maximum": 1000000 },
+        "end_col": { "$ref": "#/$defs/posInt", "maximum": 1000000 }
+      }
+    },
+    "graphPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "nodes", "edge_relation"],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-graph-path@1"
+        },
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/token" },
+          "minItems": 1,
+          "maxItems": 256
+        },
+        "edge_relation": { "$ref": "#/$defs/token" }
+      }
+    },
+    "includedArtifactRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "artifact_id",
+        "artifact_kind",
+        "inclusion_kind",
+        "token_cost",
+        "symbol_id",
+        "path",
+        "artifact_cid",
+        "confidence_bp",
+        "dependency_path",
+        "source_span",
+        "notes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-included-artifact@1"
+        },
+        "artifact_id": { "$ref": "#/$defs/token" },
+        "artifact_kind": { "$ref": "#/$defs/coveredArtifactKind" },
+        "inclusion_kind": { "$ref": "#/$defs/inclusionKind" },
+        "token_cost": { "$ref": "#/$defs/tokenCost" },
+        "symbol_id": { "$ref": "#/$defs/tokenOrNull" },
+        "path": { "$ref": "#/$defs/repoPathOrNull" },
+        "artifact_cid": { "$ref": "#/$defs/cidOrNull" },
+        "confidence_bp": { "$ref": "#/$defs/basisPoints" },
+        "dependency_path": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/graphPath" }]
+        },
+        "source_span": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sourceSpan" }]
+        },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" }
+      }
+    },
+    "excludedArtifactRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "artifact_id",
+        "artifact_kind",
+        "exclusion_reason",
+        "token_cost",
+        "confidence_bp",
+        "symbol_id",
+        "path",
+        "artifact_cid",
+        "dependency_path",
+        "source_span",
+        "repository_state_cid",
+        "substituted_by_artifact_id",
+        "critical",
+        "notes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-excluded-artifact@1"
+        },
+        "artifact_id": { "$ref": "#/$defs/token" },
+        "artifact_kind": { "$ref": "#/$defs/coveredArtifactKind" },
+        "exclusion_reason": { "$ref": "#/$defs/exclusionReason" },
+        "token_cost": { "$ref": "#/$defs/tokenCost" },
+        "confidence_bp": { "$ref": "#/$defs/basisPoints" },
+        "symbol_id": { "$ref": "#/$defs/tokenOrNull" },
+        "path": { "$ref": "#/$defs/repoPathOrNull" },
+        "artifact_cid": { "$ref": "#/$defs/cidOrNull" },
+        "dependency_path": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/graphPath" }]
+        },
+        "source_span": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sourceSpan" }]
+        },
+        "repository_state_cid": { "$ref": "#/$defs/cidOrNull" },
+        "substituted_by_artifact_id": { "$ref": "#/$defs/tokenOrNull" },
+        "critical": { "type": "boolean" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" }
+      }
+    },
+    "coverageGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "gap_id",
+        "gap_kind",
+        "description",
+        "artifact_id",
+        "path",
+        "critical",
+        "supporting_cids"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-coverage-gap@1"
+        },
+        "gap_id": { "$ref": "#/$defs/token" },
+        "gap_kind": { "$ref": "#/$defs/coverageGapKind" },
+        "description": { "$ref": "#/$defs/nfcString" },
+        "artifact_id": { "$ref": "#/$defs/tokenOrNull" },
+        "path": { "$ref": "#/$defs/repoPathOrNull" },
+        "critical": { "type": "boolean" },
+        "supporting_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" },
+          "uniqueItems": true,
+          "maxItems": 4096
+        }
+      }
+    },
+    "contextCoverageManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "manifest_id",
+        "target_symbol_ids",
+        "inclusions",
+        "exclusions",
+        "context_budget_tokens",
+        "minimum_safe_tokens",
+        "total_included_tokens",
+        "total_excluded_tokens",
+        "raw_inclusion_count",
+        "capsule_inclusion_count",
+        "exclusion_count",
+        "known_gaps",
+        "opaque_dependency_ids",
+        "dependency_paths",
+        "policy_cid",
+        "notes",
+        "metadata",
+        "manifest_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-context-coverage-manifest@1"
+        },
+        "interface_id": { "const": "ContextCoverageManifest@1" },
+        "header": { "type": "object" },
+        "manifest_id": { "$ref": "#/$defs/token" },
+        "target_symbol_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/token" },
+          "minItems": 1,
+          "maxItems": 4096,
+          "uniqueItems": true
+        },
+        "inclusions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/includedArtifactRecord" },
+          "maxItems": 8192
+        },
+        "exclusions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/excludedArtifactRecord" },
+          "maxItems": 8192
+        },
+        "context_budget_tokens": { "$ref": "#/$defs/tokenCost" },
+        "minimum_safe_tokens": { "$ref": "#/$defs/tokenCost" },
+        "total_included_tokens": { "$ref": "#/$defs/tokenCost" },
+        "total_excluded_tokens": { "$ref": "#/$defs/tokenCost" },
+        "raw_inclusion_count": { "$ref": "#/$defs/nonnegInt" },
+        "capsule_inclusion_count": { "$ref": "#/$defs/nonnegInt" },
+        "exclusion_count": { "$ref": "#/$defs/nonnegInt" },
+        "known_gaps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/coverageGap" },
+          "maxItems": 1024
+        },
+        "opaque_dependency_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/token" },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "dependency_paths": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/graphPath" },
+          "maxItems": 256
+        },
+        "policy_cid": { "$ref": "#/$defs/cidOrNull" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "manifest_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "contextSufficiencyClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "claim_id",
+        "sufficiency_state",
+        "evidence_bases",
+        "coverage_manifest_cid",
+        "route_tier",
+        "task_class",
+        "risk_class",
+        "confidence_bp",
+        "verification_passed",
+        "blocking_reason_codes",
+        "known_gap_ids",
+        "policy_cid",
+        "notes",
+        "metadata",
+        "claim_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-context-sufficiency-claim@1"
+        },
+        "interface_id": { "const": "ContextSufficiencyClaim@1" },
+        "header": { "type": "object" },
+        "claim_id": { "$ref": "#/$defs/token" },
+        "sufficiency_state": { "$ref": "#/$defs/contextSufficiencyState" },
+        "evidence_bases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sufficiencyEvidenceBasis" },
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true
+        },
+        "coverage_manifest_cid": { "$ref": "#/$defs/cid" },
+        "route_tier": { "$ref": "#/$defs/routeTier" },
+        "task_class": { "$ref": "#/$defs/token" },
+        "risk_class": { "$ref": "#/$defs/token" },
+        "confidence_bp": { "$ref": "#/$defs/basisPoints" },
+        "verification_passed": { "type": "boolean" },
+        "blocking_reason_codes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/token" },
+          "uniqueItems": true,
+          "maxItems": 256
+        },
+        "known_gap_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/token" },
+          "uniqueItems": true,
+          "maxItems": 1024
+        },
+        "policy_cid": { "$ref": "#/$defs/cidOrNull" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "claim_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "omissionHypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "hypothesis_id",
+        "cause",
+        "subject_artifact_id",
+        "subject_kind",
+        "rank",
+        "expected_relevance_bp",
+        "inclusion_cost_tokens",
+        "confidence_bp",
+        "expansion_action",
+        "exclusion_reason",
+        "capsule_class",
+        "path",
+        "source_span",
+        "dependency_path",
+        "supporting_evidence_cids",
+        "proposed_rule_change",
+        "notes",
+        "metadata",
+        "hypothesis_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-omission-hypothesis@1"
+        },
+        "interface_id": { "const": "OmissionHypothesis@1" },
+        "header": { "type": "object" },
+        "hypothesis_id": { "$ref": "#/$defs/token" },
+        "cause": { "$ref": "#/$defs/hypothesisCause" },
+        "subject_artifact_id": { "$ref": "#/$defs/token" },
+        "subject_kind": { "$ref": "#/$defs/coveredArtifactKind" },
+        "rank": { "$ref": "#/$defs/nonnegInt" },
+        "expected_relevance_bp": { "$ref": "#/$defs/basisPoints" },
+        "inclusion_cost_tokens": { "$ref": "#/$defs/tokenCost" },
+        "confidence_bp": { "$ref": "#/$defs/basisPoints" },
+        "expansion_action": { "$ref": "#/$defs/expansionAction" },
+        "exclusion_reason": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/exclusionReason" }]
+        },
+        "capsule_class": { "$ref": "#/$defs/tokenOrNull" },
+        "path": { "$ref": "#/$defs/repoPathOrNull" },
+        "source_span": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sourceSpan" }]
+        },
+        "dependency_path": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/graphPath" }]
+        },
+        "supporting_evidence_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "proposed_rule_change": { "$ref": "#/$defs/nfcStringOrNull" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "hypothesis_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "omissionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "evidence_id",
+        "evidence_kind",
+        "audit_case_cid",
+        "hypothesis_cids",
+        "supporting_cids",
+        "confidence_bp",
+        "differential_outcome",
+        "counterexample_cid",
+        "notes",
+        "metadata",
+        "evidence_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-omission-evidence@1"
+        },
+        "interface_id": { "const": "OmissionEvidence@1" },
+        "header": { "type": "object" },
+        "evidence_id": { "$ref": "#/$defs/token" },
+        "evidence_kind": { "$ref": "#/$defs/omissionEvidenceKind" },
+        "audit_case_cid": { "$ref": "#/$defs/cid" },
+        "hypothesis_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "supporting_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "confidence_bp": { "$ref": "#/$defs/basisPoints" },
+        "differential_outcome": { "$ref": "#/$defs/nfcStringOrNull" },
+        "counterexample_cid": { "$ref": "#/$defs/cidOrNull" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "evidence_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "contextExpansionStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "step_id",
+        "step_index",
+        "action",
+        "status",
+        "token_increase",
+        "artifact_ids_added",
+        "hypothesis_cid",
+        "reason_code",
+        "prior_result_cid",
+        "new_result_cid",
+        "changed_assumption_ids",
+        "hypothesis_supported",
+        "notes",
+        "metadata",
+        "step_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-context-expansion-step@1"
+        },
+        "interface_id": { "const": "ContextExpansionStep@1" },
+        "header": { "type": "object" },
+        "step_id": { "$ref": "#/$defs/token" },
+        "step_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 63
+        },
+        "action": { "$ref": "#/$defs/expansionAction" },
+        "status": { "$ref": "#/$defs/expansionStepStatus" },
+        "token_increase": { "$ref": "#/$defs/tokenCost" },
+        "artifact_ids_added": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/token" },
+          "uniqueItems": true,
+          "maxItems": 8192
+        },
+        "hypothesis_cid": { "$ref": "#/$defs/cidOrNull" },
+        "reason_code": { "$ref": "#/$defs/token" },
+        "prior_result_cid": { "$ref": "#/$defs/cidOrNull" },
+        "new_result_cid": { "$ref": "#/$defs/cidOrNull" },
+        "changed_assumption_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/token" },
+          "uniqueItems": true,
+          "maxItems": 256
+        },
+        "hypothesis_supported": {
+          "oneOf": [{ "type": "null" }, { "type": "boolean" }]
+        },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "step_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "contextExpansionPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "plan_id",
+        "audit_case_cid",
+        "steps",
+        "max_steps",
+        "max_token_growth",
+        "total_token_increase",
+        "step_count",
+        "omission_evidence_cid",
+        "max_retries",
+        "max_escalations",
+        "max_wall_time_ms",
+        "max_spend_micros",
+        "notes",
+        "metadata",
+        "plan_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-context-expansion-plan@1"
+        },
+        "interface_id": { "const": "ContextExpansionPlan@1" },
+        "header": { "type": "object" },
+        "plan_id": { "$ref": "#/$defs/token" },
+        "audit_case_cid": { "$ref": "#/$defs/cid" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/contextExpansionStep" },
+          "maxItems": 64
+        },
+        "max_steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "max_token_growth": { "$ref": "#/$defs/tokenCost" },
+        "total_token_increase": { "$ref": "#/$defs/tokenCost" },
+        "step_count": { "$ref": "#/$defs/nonnegInt" },
+        "omission_evidence_cid": { "$ref": "#/$defs/cidOrNull" },
+        "max_retries": { "$ref": "#/$defs/nonnegInt" },
+        "max_escalations": { "$ref": "#/$defs/nonnegInt" },
+        "max_wall_time_ms": { "$ref": "#/$defs/nonnegInt" },
+        "max_spend_micros": { "$ref": "#/$defs/nonnegInt" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "plan_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "governorDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "decision_id",
+        "action",
+        "sufficiency_state",
+        "route_tier",
+        "task_class",
+        "risk_class",
+        "reason_codes",
+        "coverage_manifest_cid",
+        "sufficiency_claim_cid",
+        "expansion_plan_cid",
+        "omission_evidence_cid",
+        "policy_cid",
+        "requires_human_review",
+        "notes",
+        "metadata",
+        "decision_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-decision@1"
+        },
+        "interface_id": { "const": "GovernorDecision@1" },
+        "header": { "type": "object" },
+        "decision_id": { "$ref": "#/$defs/token" },
+        "action": { "$ref": "#/$defs/decisionAction" },
+        "sufficiency_state": { "$ref": "#/$defs/contextSufficiencyState" },
+        "route_tier": { "$ref": "#/$defs/routeTier" },
+        "task_class": { "$ref": "#/$defs/token" },
+        "risk_class": { "$ref": "#/$defs/token" },
+        "reason_codes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/token" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "maxItems": 256
+        },
+        "coverage_manifest_cid": { "$ref": "#/$defs/cidOrNull" },
+        "sufficiency_claim_cid": { "$ref": "#/$defs/cidOrNull" },
+        "expansion_plan_cid": { "$ref": "#/$defs/cidOrNull" },
+        "omission_evidence_cid": { "$ref": "#/$defs/cidOrNull" },
+        "policy_cid": { "$ref": "#/$defs/cidOrNull" },
+        "requires_human_review": { "type": "boolean" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "decision_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "governorRunReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "receipt_id",
+        "task_id",
+        "decision_cid",
+        "route_tier",
+        "input_tokens",
+        "output_tokens",
+        "verification_cost_tokens",
+        "wall_time_ms",
+        "spend_micros",
+        "coverage_manifest_cid",
+        "sufficiency_claim_cid",
+        "expansion_plan_cid",
+        "omission_evidence_cid",
+        "shadow_result_cid",
+        "differential_report_cid",
+        "policy_cid",
+        "notes",
+        "metadata",
+        "receipt_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-run-receipt@1"
+        },
+        "interface_id": { "const": "GovernorRunReceipt@1" },
+        "header": { "type": "object" },
+        "receipt_id": { "$ref": "#/$defs/token" },
+        "task_id": { "$ref": "#/$defs/taskId" },
+        "decision_cid": { "$ref": "#/$defs/cid" },
+        "route_tier": { "$ref": "#/$defs/routeTier" },
+        "input_tokens": { "$ref": "#/$defs/nonnegInt" },
+        "output_tokens": { "$ref": "#/$defs/nonnegInt" },
+        "verification_cost_tokens": { "$ref": "#/$defs/nonnegInt" },
+        "wall_time_ms": { "$ref": "#/$defs/nonnegInt" },
+        "spend_micros": { "$ref": "#/$defs/nonnegInt" },
+        "coverage_manifest_cid": { "$ref": "#/$defs/cidOrNull" },
+        "sufficiency_claim_cid": { "$ref": "#/$defs/cidOrNull" },
+        "expansion_plan_cid": { "$ref": "#/$defs/cidOrNull" },
+        "omission_evidence_cid": { "$ref": "#/$defs/cidOrNull" },
+        "shadow_result_cid": { "$ref": "#/$defs/cidOrNull" },
+        "differential_report_cid": { "$ref": "#/$defs/cidOrNull" },
+        "policy_cid": { "$ref": "#/$defs/cidOrNull" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "receipt_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "compressionAuditCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "case_id",
+        "task_id",
+        "task_class",
+        "risk_class",
+        "coverage_manifest_cid",
+        "sufficiency_claim_cid",
+        "decision_cid",
+        "run_receipt_cid",
+        "expansion_plan_cid",
+        "omission_evidence_cid",
+        "shadow_plan_cid",
+        "shadow_result_cid",
+        "differential_report_cid",
+        "policy_cid",
+        "benchmark_partition",
+        "notes",
+        "metadata",
+        "case_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-compression-audit-case@1"
+        },
+        "interface_id": { "const": "CompressionAuditCase@1" },
+        "header": { "type": "object" },
+        "case_id": { "$ref": "#/$defs/token" },
+        "task_id": { "$ref": "#/$defs/taskId" },
+        "task_class": { "$ref": "#/$defs/token" },
+        "risk_class": { "$ref": "#/$defs/token" },
+        "coverage_manifest_cid": { "$ref": "#/$defs/cid" },
+        "sufficiency_claim_cid": { "$ref": "#/$defs/cid" },
+        "decision_cid": { "$ref": "#/$defs/cid" },
+        "run_receipt_cid": { "$ref": "#/$defs/cidOrNull" },
+        "expansion_plan_cid": { "$ref": "#/$defs/cidOrNull" },
+        "omission_evidence_cid": { "$ref": "#/$defs/cidOrNull" },
+        "shadow_plan_cid": { "$ref": "#/$defs/cidOrNull" },
+        "shadow_result_cid": { "$ref": "#/$defs/cidOrNull" },
+        "differential_report_cid": { "$ref": "#/$defs/cidOrNull" },
+        "policy_cid": { "$ref": "#/$defs/cidOrNull" },
+        "benchmark_partition": { "$ref": "#/$defs/token" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "case_cid": { "$ref": "#/$defs/cid" }
+      }
+    }
+  }
+}
