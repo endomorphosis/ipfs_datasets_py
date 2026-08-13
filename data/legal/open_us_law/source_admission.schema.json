@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/open-us-law-source-admission-v1.schema.json",
+  "title": "Open US Law exact-51 source admission matrix",
+  "description": "OUL-002 fail-closed rights and admission contract for the exact 50-state-plus-DC set. Every jurisdiction must declare an official authority, rights scope, attribution duty, frontier method, and typed seed disposition. Georgia, North Carolina, nonofficial rows, and linkless rows remain fail-closed until official replacement evidence exists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "producer",
+    "program_id",
+    "task_id",
+    "goal_id",
+    "sealed_at",
+    "authorizing_for_publication",
+    "jurisdiction_count",
+    "required_jurisdiction_codes",
+    "fail_closed_jurisdiction_codes",
+    "publication_admitted_jurisdiction_codes",
+    "description",
+    "currentness_disclaimer",
+    "jurisdictions",
+    "matrix_digest_sha256"
+  ],
+  "properties": {
+    "schema_version": { "const": "open-us-law-source-admission-v1" },
+    "producer": { "const": "audit_open_us_law_sources.py@1" },
+    "program_id": { "const": "open-us-law-reindex-v1" },
+    "task_id": { "const": "OUL-002" },
+    "goal_id": { "const": "OUL-G010" },
+    "sealed_at": { "$ref": "#/$defs/utcTimestamp" },
+    "authorizing_for_publication": { "type": "boolean" },
+    "jurisdiction_count": { "const": 51 },
+    "required_jurisdiction_codes": {
+      "type": "array",
+      "minItems": 51,
+      "maxItems": 51,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/jurisdictionCode" }
+    },
+    "fail_closed_jurisdiction_codes": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/jurisdictionCode" }
+    },
+    "publication_admitted_jurisdiction_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/jurisdictionCode" }
+    },
+    "description": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "currentness_disclaimer": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "jurisdictions": {
+      "type": "array",
+      "minItems": 51,
+      "maxItems": 51,
+      "items": { "$ref": "#/$defs/jurisdictionAdmission" }
+    },
+    "matrix_digest_sha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$"
+    },
+    "jurisdictionCode": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+\\-]{0,159}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "sourceUrl": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "domainName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]{0,251}[A-Za-z0-9]$"
+    },
+    "officialAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_id",
+        "name",
+        "authority_class",
+        "role",
+        "provider",
+        "base_url",
+        "entry_url",
+        "allowed_domains"
+      ],
+      "properties": {
+        "authority_id": { "$ref": "#/$defs/identifier" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "authority_class": {
+          "type": "string",
+          "enum": ["official", "secondary", "commercial", "unknown"]
+        },
+        "role": { "$ref": "#/$defs/identifier" },
+        "provider": { "$ref": "#/$defs/identifier" },
+        "base_url": { "$ref": "#/$defs/sourceUrl" },
+        "entry_url": { "$ref": "#/$defs/sourceUrl" },
+        "allowed_domains": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/domainName" }
+        }
+      }
+    },
+    "rightsScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content_scope",
+        "license_id",
+        "legal_basis",
+        "license_ref_digest_sha256",
+        "annotations_excluded",
+        "site_presentation_excluded",
+        "database_content_excluded",
+        "admissible_for_statutory_text"
+      ],
+      "properties": {
+        "content_scope": { "const": "statutory_text" },
+        "license_id": { "const": "LicenseRef-US-State-Statutory-Text" },
+        "legal_basis": { "const": "government_edicts_doctrine" },
+        "license_ref_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "annotations_excluded": { "const": true },
+        "site_presentation_excluded": { "const": true },
+        "database_content_excluded": { "const": true },
+        "admissible_for_statutory_text": { "type": "boolean" }
+      }
+    },
+    "attributionDuty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "notice",
+        "redistribution",
+        "currentness_disclaimer_required"
+      ],
+      "properties": {
+        "required": { "const": true },
+        "notice": { "$ref": "#/$defs/nonEmptyString" },
+        "redistribution": {
+          "type": "string",
+          "enum": ["statutory_text_only"]
+        },
+        "currentness_disclaimer_required": { "const": true }
+      }
+    },
+    "frontierMethod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method_id",
+        "discovery_mode",
+        "code_family_id",
+        "code_family_name",
+        "citation_prefix",
+        "closed_frontier_required",
+        "as_of_fields"
+      ],
+      "properties": {
+        "method_id": { "$ref": "#/$defs/identifier" },
+        "discovery_mode": {
+          "type": "string",
+          "enum": ["api", "hierarchy", "bundle", "pagination", "mixed"]
+        },
+        "code_family_id": { "$ref": "#/$defs/identifier" },
+        "code_family_name": { "$ref": "#/$defs/nonEmptyString" },
+        "citation_prefix": { "$ref": "#/$defs/nonEmptyString" },
+        "closed_frontier_required": { "const": true },
+        "as_of_fields": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    },
+    "officialReplacementEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_kind",
+        "source_url",
+        "observed_at",
+        "response_sha256",
+        "body_sha256",
+        "frontier_digest_sha256",
+        "contamination_cleared"
+      ],
+      "properties": {
+        "evidence_kind": { "const": "official_replacement" },
+        "source_url": { "$ref": "#/$defs/sourceUrl" },
+        "observed_at": { "$ref": "#/$defs/utcTimestamp" },
+        "response_sha256": { "$ref": "#/$defs/sha256" },
+        "body_sha256": { "$ref": "#/$defs/sha256" },
+        "frontier_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "contamination_cleared": { "type": "boolean" }
+      }
+    },
+    "seedDisposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "disposition",
+        "fail_closed",
+        "bucket_seed_admissible",
+        "publication_admissible",
+        "official_replacement_evidence_required",
+        "official_replacement_evidence_present",
+        "official_replacement_evidence",
+        "reason"
+      ],
+      "properties": {
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "blocked_until_official_replacement",
+            "quarantine_or_official_reacquisition",
+            "source_link_repair_or_typed_quarantine",
+            "candidate_seed_pending_frontier_reconciliation"
+          ]
+        },
+        "fail_closed": { "type": "boolean" },
+        "bucket_seed_admissible": { "type": "boolean" },
+        "publication_admissible": { "type": "boolean" },
+        "official_replacement_evidence_required": { "type": "boolean" },
+        "official_replacement_evidence_present": { "type": "boolean" },
+        "official_replacement_evidence": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/officialReplacementEvidence" }
+          ]
+        },
+        "reason": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "jurisdictionAdmission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "jurisdiction_code",
+        "name",
+        "official_authority",
+        "rights_scope",
+        "attribution_duty",
+        "frontier_method",
+        "seed_disposition"
+      ],
+      "properties": {
+        "jurisdiction_code": { "$ref": "#/$defs/jurisdictionCode" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "official_authority": { "$ref": "#/$defs/officialAuthority" },
+        "rights_scope": { "$ref": "#/$defs/rightsScope" },
+        "attribution_duty": { "$ref": "#/$defs/attributionDuty" },
+        "frontier_method": { "$ref": "#/$defs/frontierMethod" },
+        "seed_disposition": { "$ref": "#/$defs/seedDisposition" }
+      }
+    }
+  }
+}

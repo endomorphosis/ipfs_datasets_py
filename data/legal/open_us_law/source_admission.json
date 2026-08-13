@@ -1,0 +1,2929 @@
+{
+  "authorizing_for_publication": false,
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "description": "Exact-51 official-source rights and admission matrix for all 50 states and the District of Columbia. Bucket seed rows are never proof of completeness or freshness. Georgia and North Carolina, plus any nonofficial or linkless row, remain fail-closed until official replacement evidence exists.",
+  "fail_closed_jurisdiction_codes": [
+    "GA",
+    "NC"
+  ],
+  "goal_id": "OUL-G010",
+  "jurisdiction_count": 51,
+  "jurisdictions": [
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Alabama Legislature ALISON, Code of Alabama. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Ala. Code",
+        "closed_frontier_required": true,
+        "code_family_id": "code-of-alabama",
+        "code_family_name": "Code of Alabama",
+        "discovery_mode": "api",
+        "method_id": "alison_graphql_and_html_toc"
+      },
+      "jurisdiction_code": "AL",
+      "name": "Alabama",
+      "official_authority": {
+        "allowed_domains": [
+          "alison.legislature.state.al.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "al-alison-code",
+        "base_url": "https://alison.legislature.state.al.us",
+        "entry_url": "https://alison.legislature.state.al.us/code-of-alabama",
+        "name": "Alabama Legislature ALISON",
+        "provider": "alabama_legislature_alison",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "source_link_repair_or_typed_quarantine",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Alabama (AL) contains per-row source-link gaps. Unrepaired or untyped linkless rows remain fail-closed until official replacement or a typed quarantine exists."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Alaska Legislature, Alaska Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Alaska Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "alaska-statutes",
+        "code_family_name": "Alaska Statutes",
+        "discovery_mode": "api",
+        "method_id": "basis_statutes_fetch"
+      },
+      "jurisdiction_code": "AK",
+      "name": "Alaska",
+      "official_authority": {
+        "allowed_domains": [
+          "www.akleg.gov",
+          "akleg.gov",
+          "www.legis.state.ak.us",
+          "legis.state.ak.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "ak-akleg-basis",
+        "base_url": "https://www.akleg.gov",
+        "entry_url": "https://www.akleg.gov/basis/statutes.asp",
+        "name": "Alaska Legislature",
+        "provider": "alaska_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "source_link_repair_or_typed_quarantine",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Alaska (AK) contains per-row source-link gaps. Unrepaired or untyped linkless rows remain fail-closed until official replacement or a typed quarantine exists."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Arizona Legislature, Arizona Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Ariz. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "arizona-revised-statutes",
+        "code_family_name": "Arizona Revised Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "title_index"
+      },
+      "jurisdiction_code": "AZ",
+      "name": "Arizona",
+      "official_authority": {
+        "allowed_domains": [
+          "www.azleg.gov",
+          "azleg.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "az-azleg-ars",
+        "base_url": "https://www.azleg.gov",
+        "entry_url": "https://www.azleg.gov/arsDetail/?title=1",
+        "name": "Arizona Legislature",
+        "provider": "arizona_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Arizona (AZ) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Arkansas Legislature, Arkansas Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Ark. Code Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "arkansas-code",
+        "code_family_name": "Arkansas Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "html_toc"
+      },
+      "jurisdiction_code": "AR",
+      "name": "Arkansas",
+      "official_authority": {
+        "allowed_domains": [
+          "www.arkleg.state.ar.us",
+          "arkleg.state.ar.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "ar-arkleg",
+        "base_url": "https://www.arkleg.state.ar.us",
+        "entry_url": "https://www.arkleg.state.ar.us/",
+        "name": "Arkansas Legislature",
+        "provider": "arkansas_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "quarantine_or_official_reacquisition",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": true,
+        "publication_admissible": false,
+        "reason": "Arkansas (AR) bucket seed material is quarantined. Official reacquisition or typed quarantine is required before any row may satisfy the exact-51 gate."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: California Legislative Information, California Codes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Cal.",
+        "closed_frontier_required": true,
+        "code_family_id": "california-codes",
+        "code_family_name": "California Codes",
+        "discovery_mode": "hierarchy",
+        "method_id": "leginfo_code_toc"
+      },
+      "jurisdiction_code": "CA",
+      "name": "California",
+      "official_authority": {
+        "allowed_domains": [
+          "leginfo.legislature.ca.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ca-leginfo",
+        "base_url": "https://leginfo.legislature.ca.gov",
+        "entry_url": "https://leginfo.legislature.ca.gov/faces/codes.xhtml",
+        "name": "California Legislative Information",
+        "provider": "california_legislative_information",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "source_link_repair_or_typed_quarantine",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "California (CA) contains per-row source-link gaps. Unrepaired or untyped linkless rows remain fail-closed until official replacement or a typed quarantine exists."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Colorado General Assembly, Colorado Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Colo. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "colorado-revised-statutes",
+        "code_family_name": "Colorado Revised Statutes",
+        "discovery_mode": "bundle",
+        "method_id": "publication_search_pdf"
+      },
+      "jurisdiction_code": "CO",
+      "name": "Colorado",
+      "official_authority": {
+        "allowed_domains": [
+          "leg.colorado.gov",
+          "content.leg.colorado.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "co-leg-crs",
+        "base_url": "https://leg.colorado.gov",
+        "entry_url": "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs",
+        "name": "Colorado General Assembly",
+        "provider": "colorado_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Colorado (CO) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Connecticut General Assembly, Connecticut General Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Conn. Gen. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "connecticut-general-statutes",
+        "code_family_name": "Connecticut General Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "title_chapter_html"
+      },
+      "jurisdiction_code": "CT",
+      "name": "Connecticut",
+      "official_authority": {
+        "allowed_domains": [
+          "www.cga.ct.gov",
+          "cga.ct.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ct-cga-titles",
+        "base_url": "https://www.cga.ct.gov",
+        "entry_url": "https://www.cga.ct.gov/current/pub/titles.htm",
+        "name": "Connecticut General Assembly",
+        "provider": "connecticut_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Connecticut (CT) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Delaware Code Online, Delaware Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Del. Code Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "delaware-code",
+        "code_family_name": "Delaware Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "html_toc"
+      },
+      "jurisdiction_code": "DE",
+      "name": "Delaware",
+      "official_authority": {
+        "allowed_domains": [
+          "delcode.delaware.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "de-delcode",
+        "base_url": "https://delcode.delaware.gov",
+        "entry_url": "https://delcode.delaware.gov/index.html",
+        "name": "Delaware Code Online",
+        "provider": "delaware_code_online",
+        "role": "official_code_publisher"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Delaware (DE) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Florida Legislature, Florida Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Fla. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "florida-statutes",
+        "code_family_name": "Florida Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "title_chapter_index"
+      },
+      "jurisdiction_code": "FL",
+      "name": "Florida",
+      "official_authority": {
+        "allowed_domains": [
+          "www.leg.state.fl.us",
+          "leg.state.fl.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "fl-leg-statutes",
+        "base_url": "http://www.leg.state.fl.us",
+        "entry_url": "http://www.leg.state.fl.us/Statutes/",
+        "name": "Florida Legislature",
+        "provider": "florida_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Florida (FL) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Georgia General Assembly, Official Code of Georgia Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Ga. Code Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "official-code-of-georgia",
+        "code_family_name": "Official Code of Georgia Annotated",
+        "discovery_mode": "hierarchy",
+        "method_id": "legislature_laws_index"
+      },
+      "jurisdiction_code": "GA",
+      "name": "Georgia",
+      "official_authority": {
+        "allowed_domains": [
+          "www.legis.ga.gov",
+          "legis.ga.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ga-legis-laws",
+        "base_url": "https://www.legis.ga.gov",
+        "entry_url": "https://www.legis.ga.gov/legislation/laws.html",
+        "name": "Georgia General Assembly",
+        "provider": "georgia_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "blocked_until_official_replacement",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": true,
+        "publication_admissible": false,
+        "reason": "Georgia (GA) statutes were withdrawn from the v2026.07 bucket because navigation and footer contamination was embedded in section bodies. The jurisdiction remains fail-closed until clean official replacement evidence exists."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Hawaii State Legislature, Hawaii Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Haw. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "hawaii-revised-statutes",
+        "code_family_name": "Hawaii Revised Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "hrscurrent_html"
+      },
+      "jurisdiction_code": "HI",
+      "name": "Hawaii",
+      "official_authority": {
+        "allowed_domains": [
+          "www.capitol.hawaii.gov",
+          "capitol.hawaii.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "hi-capitol-hrs",
+        "base_url": "https://www.capitol.hawaii.gov",
+        "entry_url": "https://www.capitol.hawaii.gov/hrscurrent/",
+        "name": "Hawaii State Legislature",
+        "provider": "hawaii_state_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Hawaii (HI) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Idaho Legislature, Idaho Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Idaho Code",
+        "closed_frontier_required": true,
+        "code_family_id": "idaho-statutes",
+        "code_family_name": "Idaho Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "idstat_toc"
+      },
+      "jurisdiction_code": "ID",
+      "name": "Idaho",
+      "official_authority": {
+        "allowed_domains": [
+          "legislature.idaho.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "id-legislature-statutes",
+        "base_url": "https://legislature.idaho.gov",
+        "entry_url": "https://legislature.idaho.gov/statutesrules/idstat/",
+        "name": "Idaho Legislature",
+        "provider": "idaho_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Idaho (ID) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Illinois General Assembly, Illinois Compiled Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Ill. Comp. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "illinois-compiled-statutes",
+        "code_family_name": "Illinois Compiled Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "ilcs_chapters"
+      },
+      "jurisdiction_code": "IL",
+      "name": "Illinois",
+      "official_authority": {
+        "allowed_domains": [
+          "www.ilga.gov",
+          "ilga.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "il-ilga-ilcs",
+        "base_url": "https://www.ilga.gov",
+        "entry_url": "https://www.ilga.gov/Legislation/ILCS/Chapters",
+        "name": "Illinois General Assembly",
+        "provider": "illinois_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Illinois (IL) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Indiana General Assembly, Indiana Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Ind. Code",
+        "closed_frontier_required": true,
+        "code_family_id": "indiana-code",
+        "code_family_name": "Indiana Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "titles_index"
+      },
+      "jurisdiction_code": "IN",
+      "name": "Indiana",
+      "official_authority": {
+        "allowed_domains": [
+          "iga.in.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "in-iga-code",
+        "base_url": "https://iga.in.gov",
+        "entry_url": "https://iga.in.gov/legislative/laws/2024/ic/titles/",
+        "name": "Indiana General Assembly",
+        "provider": "indiana_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Indiana (IN) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Iowa Legislature, Iowa Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Iowa Code",
+        "closed_frontier_required": true,
+        "code_family_id": "iowa-code",
+        "code_family_name": "Iowa Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "html_toc"
+      },
+      "jurisdiction_code": "IA",
+      "name": "Iowa",
+      "official_authority": {
+        "allowed_domains": [
+          "www.legis.iowa.gov",
+          "legis.iowa.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ia-legis",
+        "base_url": "https://www.legis.iowa.gov",
+        "entry_url": "https://www.legis.iowa.gov/law/statutory",
+        "name": "Iowa Legislature",
+        "provider": "iowa_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Iowa (IA) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Kansas Legislature, Kansas Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Kan. Stat. Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "kansas-statutes",
+        "code_family_name": "Kansas Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "laws_chapter_index"
+      },
+      "jurisdiction_code": "KS",
+      "name": "Kansas",
+      "official_authority": {
+        "allowed_domains": [
+          "www.kslegislature.gov",
+          "kslegislature.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ks-legislature-laws",
+        "base_url": "https://www.kslegislature.gov",
+        "entry_url": "https://www.kslegislature.gov/laws/",
+        "name": "Kansas Legislature",
+        "provider": "kansas_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Kansas (KS) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Kentucky Legislature, Kentucky Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Ky. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "kentucky-revised-statutes",
+        "code_family_name": "Kentucky Revised Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "krs_chapter_section"
+      },
+      "jurisdiction_code": "KY",
+      "name": "Kentucky",
+      "official_authority": {
+        "allowed_domains": [
+          "apps.legislature.ky.gov",
+          "legislature.ky.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ky-apps-statutes",
+        "base_url": "https://apps.legislature.ky.gov",
+        "entry_url": "https://apps.legislature.ky.gov/law/statutes/",
+        "name": "Kentucky Legislature",
+        "provider": "kentucky_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Kentucky (KY) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Louisiana Legislature, Louisiana Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "La. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "louisiana-revised-statutes",
+        "code_family_name": "Louisiana Revised Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "laws_aspx_index"
+      },
+      "jurisdiction_code": "LA",
+      "name": "Louisiana",
+      "official_authority": {
+        "allowed_domains": [
+          "legis.la.gov",
+          "www.legis.la.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "la-legis-laws",
+        "base_url": "https://legis.la.gov",
+        "entry_url": "https://legis.la.gov/legis/Laws.aspx",
+        "name": "Louisiana Legislature",
+        "provider": "louisiana_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "source_link_repair_or_typed_quarantine",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Louisiana (LA) contains per-row source-link gaps. Unrepaired or untyped linkless rows remain fail-closed until official replacement or a typed quarantine exists."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Maine Legislature, Maine Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Me. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "maine-revised-statutes",
+        "code_family_name": "Maine Revised Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "statutes_html"
+      },
+      "jurisdiction_code": "ME",
+      "name": "Maine",
+      "official_authority": {
+        "allowed_domains": [
+          "legislature.maine.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "me-legislature",
+        "base_url": "https://legislature.maine.gov",
+        "entry_url": "https://legislature.maine.gov/statutes/",
+        "name": "Maine Legislature",
+        "provider": "maine_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Maine (ME) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Maryland General Assembly, Maryland Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Md. Code Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "maryland-code",
+        "code_family_name": "Maryland Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "statutes_portal"
+      },
+      "jurisdiction_code": "MD",
+      "name": "Maryland",
+      "official_authority": {
+        "allowed_domains": [
+          "mgaleg.maryland.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "md-mga-statutes",
+        "base_url": "https://mgaleg.maryland.gov",
+        "entry_url": "https://mgaleg.maryland.gov/mgawebsite/Laws/Statutes",
+        "name": "Maryland General Assembly",
+        "provider": "maryland_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Maryland (MD) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Massachusetts General Court, Massachusetts General Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Mass. Gen. Laws",
+        "closed_frontier_required": true,
+        "code_family_id": "massachusetts-general-laws",
+        "code_family_name": "Massachusetts General Laws",
+        "discovery_mode": "hierarchy",
+        "method_id": "general_laws_toc"
+      },
+      "jurisdiction_code": "MA",
+      "name": "Massachusetts",
+      "official_authority": {
+        "allowed_domains": [
+          "malegislature.gov",
+          "www.malegislature.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ma-malegislature-mgl",
+        "base_url": "https://malegislature.gov",
+        "entry_url": "https://malegislature.gov/Laws/GeneralLaws",
+        "name": "Massachusetts General Court",
+        "provider": "massachusetts_general_court",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "source_link_repair_or_typed_quarantine",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Massachusetts (MA) contains per-row source-link gaps. Unrepaired or untyped linkless rows remain fail-closed until official replacement or a typed quarantine exists."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Michigan Legislature, Michigan Compiled Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Mich. Comp. Laws",
+        "closed_frontier_required": true,
+        "code_family_id": "michigan-compiled-laws",
+        "code_family_name": "Michigan Compiled Laws",
+        "discovery_mode": "hierarchy",
+        "method_id": "chapter_index"
+      },
+      "jurisdiction_code": "MI",
+      "name": "Michigan",
+      "official_authority": {
+        "allowed_domains": [
+          "www.legislature.mi.gov",
+          "legislature.mi.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "mi-legislature-mcl",
+        "base_url": "https://www.legislature.mi.gov",
+        "entry_url": "https://www.legislature.mi.gov/Laws/ChapterIndex",
+        "name": "Michigan Legislature",
+        "provider": "michigan_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Michigan (MI) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Minnesota Revisor Of Statutes, Minnesota Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Minn. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "minnesota-statutes",
+        "code_family_name": "Minnesota Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "revisor_statutes"
+      },
+      "jurisdiction_code": "MN",
+      "name": "Minnesota",
+      "official_authority": {
+        "allowed_domains": [
+          "www.revisor.mn.gov",
+          "revisor.mn.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "mn-revisor-statutes",
+        "base_url": "https://www.revisor.mn.gov",
+        "entry_url": "https://www.revisor.mn.gov/statutes/",
+        "name": "Minnesota Revisor Of Statutes",
+        "provider": "minnesota_revisor_of_statutes",
+        "role": "official_reviser"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Minnesota (MN) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Mississippi Legislature, Mississippi Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Miss. Code Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "mississippi-code",
+        "code_family_name": "Mississippi Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "legislature_legislation_index"
+      },
+      "jurisdiction_code": "MS",
+      "name": "Mississippi",
+      "official_authority": {
+        "allowed_domains": [
+          "www.legislature.ms.gov",
+          "legislature.ms.gov",
+          "billstatus.ls.state.ms.us",
+          "www.ls.state.ms.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "ms-legislature",
+        "base_url": "https://www.legislature.ms.gov",
+        "entry_url": "https://www.legislature.ms.gov/legislation/",
+        "name": "Mississippi Legislature",
+        "provider": "mississippi_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "quarantine_or_official_reacquisition",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": true,
+        "publication_admissible": false,
+        "reason": "Mississippi (MS) bucket seed material is quarantined. Official reacquisition or typed quarantine is required before any row may satisfy the exact-51 gate."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Missouri Revisor Of Statutes, Missouri Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Mo. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "missouri-revised-statutes",
+        "code_family_name": "Missouri Revised Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "revisor_home"
+      },
+      "jurisdiction_code": "MO",
+      "name": "Missouri",
+      "official_authority": {
+        "allowed_domains": [
+          "revisor.mo.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "mo-revisor",
+        "base_url": "https://revisor.mo.gov",
+        "entry_url": "https://revisor.mo.gov/main/Home.aspx",
+        "name": "Missouri Revisor Of Statutes",
+        "provider": "missouri_revisor_of_statutes",
+        "role": "official_reviser"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Missouri (MO) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Montana Legislature, Montana Code Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Mont. Code Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "montana-code-annotated",
+        "code_family_name": "Montana Code Annotated",
+        "discovery_mode": "hierarchy",
+        "method_id": "mca_html"
+      },
+      "jurisdiction_code": "MT",
+      "name": "Montana",
+      "official_authority": {
+        "allowed_domains": [
+          "leg.mt.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "mt-leg-mca",
+        "base_url": "https://leg.mt.gov",
+        "entry_url": "https://leg.mt.gov/bills/mca/index.html",
+        "name": "Montana Legislature",
+        "provider": "montana_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Montana (MT) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Nebraska Legislature, Nebraska Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Neb. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "nebraska-revised-statutes",
+        "code_family_name": "Nebraska Revised Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "browse_statutes"
+      },
+      "jurisdiction_code": "NE",
+      "name": "Nebraska",
+      "official_authority": {
+        "allowed_domains": [
+          "nebraskalegislature.gov",
+          "www.nebraskalegislature.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ne-legislature-statutes",
+        "base_url": "https://nebraskalegislature.gov",
+        "entry_url": "https://nebraskalegislature.gov/laws/browse-statutes.php",
+        "name": "Nebraska Legislature",
+        "provider": "nebraska_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Nebraska (NE) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Nevada Legislature, Nevada Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Nev. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "nevada-revised-statutes",
+        "code_family_name": "Nevada Revised Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "nrs_chapter_html"
+      },
+      "jurisdiction_code": "NV",
+      "name": "Nevada",
+      "official_authority": {
+        "allowed_domains": [
+          "www.leg.state.nv.us",
+          "leg.state.nv.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "nv-leg-nrs",
+        "base_url": "https://www.leg.state.nv.us",
+        "entry_url": "https://www.leg.state.nv.us/NRS/",
+        "name": "Nevada Legislature",
+        "provider": "nevada_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "quarantine_or_official_reacquisition",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": true,
+        "publication_admissible": false,
+        "reason": "Nevada (NV) bucket seed material is quarantined. Official reacquisition or typed quarantine is required before any row may satisfy the exact-51 gate."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: New Hampshire General Court, New Hampshire Revised Statutes Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "N.H. Rev. Stat. Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "new-hampshire-revised-statutes",
+        "code_family_name": "New Hampshire Revised Statutes Annotated",
+        "discovery_mode": "hierarchy",
+        "method_id": "rsa_html_toc"
+      },
+      "jurisdiction_code": "NH",
+      "name": "New Hampshire",
+      "official_authority": {
+        "allowed_domains": [
+          "www.gencourt.state.nh.us",
+          "gencourt.state.nh.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "nh-gencourt-rsa",
+        "base_url": "https://www.gencourt.state.nh.us",
+        "entry_url": "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
+        "name": "New Hampshire General Court",
+        "provider": "new_hampshire_general_court",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "New Hampshire (NH) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: New Jersey Legislature, New Jersey Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "N.J. Stat. Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "new-jersey-statutes",
+        "code_family_name": "New Jersey Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "lis_gateway"
+      },
+      "jurisdiction_code": "NJ",
+      "name": "New Jersey",
+      "official_authority": {
+        "allowed_domains": [
+          "www.njleg.state.nj.us",
+          "njleg.state.nj.us",
+          "lis.njleg.state.nj.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "nj-lis-statutes",
+        "base_url": "https://www.njleg.state.nj.us",
+        "entry_url": "https://lis.njleg.state.nj.us/nxt/gateway.dll/statutes/1?f=templates&fn=default.htm&vid=Publish:10.1048/Enu",
+        "name": "New Jersey Legislature",
+        "provider": "new_jersey_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "source_link_repair_or_typed_quarantine",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "New Jersey (NJ) contains per-row source-link gaps. Unrepaired or untyped linkless rows remain fail-closed until official replacement or a typed quarantine exists."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: New Mexico Compilation Commission, New Mexico Statutes Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "N.M. Stat. Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "new-mexico-statutes-annotated",
+        "code_family_name": "New Mexico Statutes Annotated",
+        "discovery_mode": "hierarchy",
+        "method_id": "nmonesource_compiler"
+      },
+      "jurisdiction_code": "NM",
+      "name": "New Mexico",
+      "official_authority": {
+        "allowed_domains": [
+          "nmonesource.com",
+          "www.nmonesource.com",
+          "www.nmlegis.gov",
+          "nmlegis.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "nm-nmonesource",
+        "base_url": "https://nmonesource.com",
+        "entry_url": "https://nmonesource.com/nmos/nmsa/en/nav_date.do",
+        "name": "New Mexico Compilation Commission",
+        "provider": "new_mexico_compilation_commission",
+        "role": "official_code_publisher"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "quarantine_or_official_reacquisition",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": true,
+        "publication_admissible": false,
+        "reason": "New Mexico (NM) bucket seed material is quarantined. Official reacquisition or typed quarantine is required before any row may satisfy the exact-51 gate."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: New York State Senate, New York Consolidated Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "N.Y.",
+        "closed_frontier_required": true,
+        "code_family_id": "new-york-consolidated-laws",
+        "code_family_name": "New York Consolidated Laws",
+        "discovery_mode": "hierarchy",
+        "method_id": "senate_legislation_laws"
+      },
+      "jurisdiction_code": "NY",
+      "name": "New York",
+      "official_authority": {
+        "allowed_domains": [
+          "www.nysenate.gov",
+          "nysenate.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ny-senate-laws",
+        "base_url": "https://www.nysenate.gov",
+        "entry_url": "https://www.nysenate.gov/legislation/laws",
+        "name": "New York State Senate",
+        "provider": "new_york_state_senate",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "New York (NY) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: North Carolina General Assembly, North Carolina General Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "N.C. Gen. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "north-carolina-general-statutes",
+        "code_family_name": "North Carolina General Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "general_statutes_portal"
+      },
+      "jurisdiction_code": "NC",
+      "name": "North Carolina",
+      "official_authority": {
+        "allowed_domains": [
+          "www.ncleg.gov",
+          "ncleg.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "nc-ncleg-gs",
+        "base_url": "https://www.ncleg.gov",
+        "entry_url": "https://www.ncleg.gov/Laws/GeneralStatutes",
+        "name": "North Carolina General Assembly",
+        "provider": "north_carolina_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "blocked_until_official_replacement",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": true,
+        "publication_admissible": false,
+        "reason": "North Carolina (NC) statutes were withdrawn from the v2026.07 bucket because navigation and footer contamination was embedded in section bodies. The jurisdiction remains fail-closed until clean official replacement evidence exists."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: North Dakota Legislative Branch, North Dakota Century Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "N.D. Cent. Code",
+        "closed_frontier_required": true,
+        "code_family_id": "north-dakota-century-code",
+        "code_family_name": "North Dakota Century Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "html_toc"
+      },
+      "jurisdiction_code": "ND",
+      "name": "North Dakota",
+      "official_authority": {
+        "allowed_domains": [
+          "www.legis.nd.gov",
+          "legis.nd.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "nd-legis",
+        "base_url": "https://www.legis.nd.gov",
+        "entry_url": "https://www.legis.nd.gov/general-information/north-dakota-century-code",
+        "name": "North Dakota Legislative Branch",
+        "provider": "north_dakota_legislative_branch",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "North Dakota (ND) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Ohio Legislative Service Commission, Ohio Revised Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Ohio Rev. Code",
+        "closed_frontier_required": true,
+        "code_family_id": "ohio-revised-code",
+        "code_family_name": "Ohio Revised Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "orc_html"
+      },
+      "jurisdiction_code": "OH",
+      "name": "Ohio",
+      "official_authority": {
+        "allowed_domains": [
+          "codes.ohio.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "oh-codes-orc",
+        "base_url": "https://codes.ohio.gov",
+        "entry_url": "https://codes.ohio.gov/ohio-revised-code",
+        "name": "Ohio Legislative Service Commission",
+        "provider": "ohio_legislative_service_commission",
+        "role": "official_code_publisher"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Ohio (OH) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Oklahoma State Courts Network, Oklahoma Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Okla. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "oklahoma-statutes",
+        "code_family_name": "Oklahoma Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "oscn_deliver_document"
+      },
+      "jurisdiction_code": "OK",
+      "name": "Oklahoma",
+      "official_authority": {
+        "allowed_domains": [
+          "www.oscn.net",
+          "oscn.net",
+          "www.oklegislature.gov",
+          "oklegislature.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ok-oscn-statutes",
+        "base_url": "https://www.oscn.net",
+        "entry_url": "https://www.oscn.net/applications/oscn/index.asp?level=1&ftdb=STOKST",
+        "name": "Oklahoma State Courts Network",
+        "provider": "oklahoma_state_courts_network",
+        "role": "official_code_publisher"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Oklahoma (OK) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Oregon Legislature, Oregon Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Or. Rev. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "oregon-revised-statutes",
+        "code_family_name": "Oregon Revised Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "ors_chapter_html"
+      },
+      "jurisdiction_code": "OR",
+      "name": "Oregon",
+      "official_authority": {
+        "allowed_domains": [
+          "www.oregonlegislature.gov",
+          "oregonlegislature.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "or-legislature-ors",
+        "base_url": "https://www.oregonlegislature.gov",
+        "entry_url": "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx",
+        "name": "Oregon Legislature",
+        "provider": "oregon_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "quarantine_or_official_reacquisition",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": true,
+        "publication_admissible": false,
+        "reason": "Oregon (OR) bucket seed material is quarantined. Official reacquisition or typed quarantine is required before any row may satisfy the exact-51 gate."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Pennsylvania General Assembly, Pennsylvania Consolidated Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Pa. Cons. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "pennsylvania-consolidated-statutes",
+        "code_family_name": "Pennsylvania Consolidated Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "consolidated_statutes_portal"
+      },
+      "jurisdiction_code": "PA",
+      "name": "Pennsylvania",
+      "official_authority": {
+        "allowed_domains": [
+          "www.palegis.us",
+          "palegis.us",
+          "www.legis.state.pa.us",
+          "legis.state.pa.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "pa-palegis-statutes",
+        "base_url": "https://www.palegis.us",
+        "entry_url": "https://www.palegis.us/statutes/consolidated",
+        "name": "Pennsylvania General Assembly",
+        "provider": "pennsylvania_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Pennsylvania (PA) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Rhode Island General Assembly, Rhode Island General Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "R.I. Gen. Laws",
+        "closed_frontier_required": true,
+        "code_family_id": "rhode-island-general-laws",
+        "code_family_name": "Rhode Island General Laws",
+        "discovery_mode": "hierarchy",
+        "method_id": "title_index_html"
+      },
+      "jurisdiction_code": "RI",
+      "name": "Rhode Island",
+      "official_authority": {
+        "allowed_domains": [
+          "webserver.rilegislature.gov",
+          "www.rilegislature.gov",
+          "rilegislature.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ri-webserver-statutes",
+        "base_url": "https://webserver.rilegislature.gov",
+        "entry_url": "https://webserver.rilegislature.gov/Statutes/TITLE1/INDEX.HTM",
+        "name": "Rhode Island General Assembly",
+        "provider": "rhode_island_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Rhode Island (RI) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: South Carolina Legislature, South Carolina Code of Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "S.C. Code Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "south-carolina-code-of-laws",
+        "code_family_name": "South Carolina Code of Laws",
+        "discovery_mode": "hierarchy",
+        "method_id": "statute_master"
+      },
+      "jurisdiction_code": "SC",
+      "name": "South Carolina",
+      "official_authority": {
+        "allowed_domains": [
+          "www.scstatehouse.gov",
+          "scstatehouse.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "sc-statehouse-code",
+        "base_url": "https://www.scstatehouse.gov",
+        "entry_url": "https://www.scstatehouse.gov/code/statmast.php",
+        "name": "South Carolina Legislature",
+        "provider": "south_carolina_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "South Carolina (SC) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: South Dakota Legislature, South Dakota Codified Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "S.D. Codified Laws",
+        "closed_frontier_required": true,
+        "code_family_id": "south-dakota-codified-laws",
+        "code_family_name": "South Dakota Codified Laws",
+        "discovery_mode": "hierarchy",
+        "method_id": "html_toc"
+      },
+      "jurisdiction_code": "SD",
+      "name": "South Dakota",
+      "official_authority": {
+        "allowed_domains": [
+          "sdlegislature.gov",
+          "www.sdlegislature.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "sd-legislature",
+        "base_url": "https://sdlegislature.gov",
+        "entry_url": "https://sdlegislature.gov/Statutes",
+        "name": "South Dakota Legislature",
+        "provider": "south_dakota_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "South Dakota (SD) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Tennessee General Assembly, Tennessee Code Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Tenn. Code Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "tennessee-code-annotated",
+        "code_family_name": "Tennessee Code Annotated",
+        "discovery_mode": "hierarchy",
+        "method_id": "general_assembly_portal"
+      },
+      "jurisdiction_code": "TN",
+      "name": "Tennessee",
+      "official_authority": {
+        "allowed_domains": [
+          "www.tn.gov",
+          "tn.gov",
+          "www.capitol.tn.gov",
+          "capitol.tn.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "tn-tga",
+        "base_url": "https://www.tn.gov",
+        "entry_url": "https://www.tn.gov/tga",
+        "name": "Tennessee General Assembly",
+        "provider": "tennessee_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "quarantine_or_official_reacquisition",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": true,
+        "publication_admissible": false,
+        "reason": "Tennessee (TN) bucket seed material is quarantined. Official reacquisition or typed quarantine is required before any row may satisfy the exact-51 gate."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Texas Legislature, Texas Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Tex.",
+        "closed_frontier_required": true,
+        "code_family_id": "texas-statutes",
+        "code_family_name": "Texas Statutes",
+        "discovery_mode": "mixed",
+        "method_id": "html_and_zip_bundle"
+      },
+      "jurisdiction_code": "TX",
+      "name": "Texas",
+      "official_authority": {
+        "allowed_domains": [
+          "statutes.capitol.texas.gov",
+          "tcss.legis.texas.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "tx-capitol-statutes",
+        "base_url": "https://statutes.capitol.texas.gov",
+        "entry_url": "https://statutes.capitol.texas.gov/",
+        "name": "Texas Legislature",
+        "provider": "texas_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Texas (TX) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Utah State Legislature, Utah Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Utah Code",
+        "closed_frontier_required": true,
+        "code_family_id": "utah-code",
+        "code_family_name": "Utah Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "html_toc"
+      },
+      "jurisdiction_code": "UT",
+      "name": "Utah",
+      "official_authority": {
+        "allowed_domains": [
+          "le.utah.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "ut-le-code",
+        "base_url": "https://le.utah.gov",
+        "entry_url": "https://le.utah.gov/xcode/code.html",
+        "name": "Utah State Legislature",
+        "provider": "utah_state_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Utah (UT) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Vermont General Assembly, Vermont Statutes Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Vt. Stat. Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "vermont-statutes",
+        "code_family_name": "Vermont Statutes Annotated",
+        "discovery_mode": "hierarchy",
+        "method_id": "html_toc"
+      },
+      "jurisdiction_code": "VT",
+      "name": "Vermont",
+      "official_authority": {
+        "allowed_domains": [
+          "legislature.vermont.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "vt-legislature",
+        "base_url": "https://legislature.vermont.gov",
+        "entry_url": "https://legislature.vermont.gov/statutes/",
+        "name": "Vermont General Assembly",
+        "provider": "vermont_general_assembly",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Vermont (VT) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Virginia Legislative Information System, Code of Virginia. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Va. Code Ann.",
+        "closed_frontier_required": true,
+        "code_family_id": "code-of-virginia",
+        "code_family_name": "Code of Virginia",
+        "discovery_mode": "hierarchy",
+        "method_id": "lis_vacode"
+      },
+      "jurisdiction_code": "VA",
+      "name": "Virginia",
+      "official_authority": {
+        "allowed_domains": [
+          "law.lis.virginia.gov",
+          "lis.virginia.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "va-lis-code",
+        "base_url": "https://law.lis.virginia.gov",
+        "entry_url": "https://law.lis.virginia.gov/vacode/",
+        "name": "Virginia Legislative Information System",
+        "provider": "virginia_legislative_information_system",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Virginia (VA) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Washington State Legislature, Revised Code of Washington. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Wash. Rev. Code",
+        "closed_frontier_required": true,
+        "code_family_id": "revised-code-of-washington",
+        "code_family_name": "Revised Code of Washington",
+        "discovery_mode": "hierarchy",
+        "method_id": "rcw_cite_index"
+      },
+      "jurisdiction_code": "WA",
+      "name": "Washington",
+      "official_authority": {
+        "allowed_domains": [
+          "app.leg.wa.gov",
+          "leg.wa.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "wa-leg-rcw",
+        "base_url": "https://app.leg.wa.gov",
+        "entry_url": "https://app.leg.wa.gov/RCW/",
+        "name": "Washington State Legislature",
+        "provider": "washington_state_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Washington (WA) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: West Virginia Legislature, West Virginia Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "W. Va. Code",
+        "closed_frontier_required": true,
+        "code_family_id": "west-virginia-code",
+        "code_family_name": "West Virginia Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "code_html"
+      },
+      "jurisdiction_code": "WV",
+      "name": "West Virginia",
+      "official_authority": {
+        "allowed_domains": [
+          "code.wvlegislature.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "wv-code",
+        "base_url": "https://code.wvlegislature.gov",
+        "entry_url": "https://code.wvlegislature.gov/",
+        "name": "West Virginia Legislature",
+        "provider": "west_virginia_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "West Virginia (WV) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Wisconsin Legislature, Wisconsin Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Wis. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "wisconsin-statutes",
+        "code_family_name": "Wisconsin Statutes",
+        "discovery_mode": "hierarchy",
+        "method_id": "docs_statutes"
+      },
+      "jurisdiction_code": "WI",
+      "name": "Wisconsin",
+      "official_authority": {
+        "allowed_domains": [
+          "docs.legis.wisconsin.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "wi-docs-statutes",
+        "base_url": "https://docs.legis.wisconsin.gov",
+        "entry_url": "https://docs.legis.wisconsin.gov/statutes/statutes",
+        "name": "Wisconsin Legislature",
+        "provider": "wisconsin_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "Wisconsin (WI) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: Wyoming Legislature, Wyoming Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "Wyo. Stat.",
+        "closed_frontier_required": true,
+        "code_family_id": "wyoming-statutes",
+        "code_family_name": "Wyoming Statutes",
+        "discovery_mode": "bundle",
+        "method_id": "statutes_download"
+      },
+      "jurisdiction_code": "WY",
+      "name": "Wyoming",
+      "official_authority": {
+        "allowed_domains": [
+          "www.wyoleg.gov",
+          "wyoleg.gov"
+        ],
+        "authority_class": "official",
+        "authority_id": "wy-wyoleg-statutes",
+        "base_url": "https://www.wyoleg.gov",
+        "entry_url": "https://www.wyoleg.gov/stateStatutes/StatutesDownload",
+        "name": "Wyoming Legislature",
+        "provider": "wyoming_legislature",
+        "role": "official_legislature"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "quarantine_or_official_reacquisition",
+        "fail_closed": true,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": true,
+        "publication_admissible": false,
+        "reason": "Wyoming (WY) bucket seed material is quarantined. Official reacquisition or typed quarantine is required before any row may satisfy the exact-51 gate."
+      }
+    },
+    {
+      "attribution_duty": {
+        "currentness_disclaimer_required": true,
+        "notice": "Source: DC Council, District of Columbia Official Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "redistribution": "statutory_text_only",
+        "required": true
+      },
+      "frontier_method": {
+        "as_of_fields": [
+          "edition",
+          "publication_date",
+          "retrieval_time"
+        ],
+        "citation_prefix": "D.C. Code",
+        "closed_frontier_required": true,
+        "code_family_id": "dc-official-code",
+        "code_family_name": "District of Columbia Official Code",
+        "discovery_mode": "hierarchy",
+        "method_id": "council_code_toc"
+      },
+      "jurisdiction_code": "DC",
+      "name": "District of Columbia",
+      "official_authority": {
+        "allowed_domains": [
+          "code.dccouncil.gov",
+          "code.dccouncil.us"
+        ],
+        "authority_class": "official",
+        "authority_id": "dc-council-code",
+        "base_url": "https://code.dccouncil.gov",
+        "entry_url": "https://code.dccouncil.gov/us/dc/council/code",
+        "name": "DC Council",
+        "provider": "dc_council",
+        "role": "dc_council"
+      },
+      "rights_scope": {
+        "admissible_for_statutory_text": true,
+        "annotations_excluded": true,
+        "content_scope": "statutory_text",
+        "database_content_excluded": true,
+        "legal_basis": "government_edicts_doctrine",
+        "license_id": "LicenseRef-US-State-Statutory-Text",
+        "license_ref_digest_sha256": "d48cb14da98ecaa1f06e2ba498b17cadd9f0adaea38ceb28d71759ed049c8508",
+        "site_presentation_excluded": true
+      },
+      "seed_disposition": {
+        "bucket_seed_admissible": false,
+        "disposition": "candidate_seed_pending_frontier_reconciliation",
+        "fail_closed": false,
+        "official_replacement_evidence": null,
+        "official_replacement_evidence_present": false,
+        "official_replacement_evidence_required": false,
+        "publication_admissible": false,
+        "reason": "District of Columbia (DC) official host is recorded as a candidate seed only. Fresh closed-frontier reconciliation is required before publication."
+      }
+    }
+  ],
+  "matrix_digest_sha256": "3dc984d1b50b465f60fcd9a03ae27ab9a7f50954848aa1038806d7979ec47d1a",
+  "producer": "audit_open_us_law_sources.py@1",
+  "program_id": "open-us-law-reindex-v1",
+  "publication_admitted_jurisdiction_codes": [],
+  "required_jurisdiction_codes": [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC"
+  ],
+  "schema_version": "open-us-law-source-admission-v1",
+  "sealed_at": "2026-08-13T00:00:00Z",
+  "task_id": "OUL-002"
+}
