@@ -23,10 +23,21 @@ ATTESTATION_REQUIRED_ENV = "IPFS_ACCELERATE_PAIRED_ATTESTATION_REQUIRED"
 PAIRED_ROOT_ENV = "IPFS_ACCELERATE_PAIRED_ROOT"
 PAIRED_REVISION_ENV = "IPFS_ACCELERATE_PAIRED_REVISION"
 PAIRED_CONTROL_ROOT_ENV = "IPFS_ACCELERATE_PAIRED_CONTROL_ROOT"
+PAIRED_CONFIG_ENV = "IPFS_ACCELERATE_PAIRED_CONFIG"
 GIT_BINARY = Path("/usr/bin/git")
 PAIRED_CONFIG_RELATIVE = Path(
     "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
 )
+PAIRED_CONFIG_SCHEMAS = {
+    PAIRED_CONFIG_RELATIVE: (
+        "ipfs_accelerate_py.agent_supervisor.legal_corpora_reindex."
+        "scheduler_config@1"
+    ),
+    Path("config/agent_supervisor_open_us_law_reindex_scheduler.json"): (
+        "ipfs_accelerate_py.agent_supervisor.open_us_law_reindex."
+        "scheduler_config@1"
+    ),
+}
 _MODULE_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*")
 _MAX_CONTROLLER_DEPLOYMENT_ENTRIES = 10_000
 
@@ -538,6 +549,7 @@ def _append_controller_import_roots(roots: Sequence[Path]) -> None:
 def _install_child_binding(
     binding: PairedAcceleratorBinding,
     control_root: Path,
+    config_relative: Path = PAIRED_CONFIG_RELATIVE,
 ) -> None:
     for name in tuple(os.environ):
         if name.startswith(("PYTHON", "GIT_")):
@@ -546,15 +558,24 @@ def _install_child_binding(
     os.environ[PAIRED_ROOT_ENV] = str(binding.root)
     os.environ[PAIRED_REVISION_ENV] = binding.revision
     os.environ[PAIRED_CONTROL_ROOT_ENV] = str(control_root.resolve())
+    os.environ[PAIRED_CONFIG_ENV] = config_relative.as_posix()
     os.environ["IPFS_ACCELERATE_ROOT"] = str(binding.root)
     os.environ["PYTHONPATH"] = str(binding.root)
     os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
     sys.dont_write_bytecode = True
 
 
-def _load_control_payload(root: Path) -> Mapping[str, Any]:
-    relative_config = PAIRED_CONFIG_RELATIVE.as_posix()
-    config_path = (root / PAIRED_CONFIG_RELATIVE).resolve()
+def _load_control_payload(
+    root: Path,
+    config_relative: Path = PAIRED_CONFIG_RELATIVE,
+) -> Mapping[str, Any]:
+    expected_schema = PAIRED_CONFIG_SCHEMAS.get(config_relative)
+    if expected_schema is None:
+        raise PairedAcceleratorBootstrapError(
+            "scheduler config is not in the paired-config allowlist"
+        )
+    relative_config = config_relative.as_posix()
+    config_path = (root / config_relative).resolve()
     _git(root, "ls-files", "--error-unmatch", "--", relative_config)
     try:
         config_bytes = config_path.read_bytes()
@@ -578,9 +599,7 @@ def _load_control_payload(root: Path) -> Mapping[str, Any]:
         ) from exc
     if not isinstance(payload, Mapping):
         raise PairedAcceleratorBootstrapError("scheduler config must be an object")
-    if payload.get("schema") != (
-        "ipfs_accelerate_py.agent_supervisor.legal_corpora_reindex.scheduler_config@1"
-    ):
+    if payload.get("schema") != expected_schema:
         raise PairedAcceleratorBootstrapError(
             "scheduler config schema is not canonical"
         )
@@ -612,11 +631,12 @@ def bootstrap_from_config_argv(
         raise PairedAcceleratorBootstrapError(
             "scheduler config is outside the launcher checkout"
         ) from exc
-    if config_path != (root / PAIRED_CONFIG_RELATIVE).resolve():
+    config_relative = Path(config_path.relative_to(root).as_posix())
+    if config_relative not in PAIRED_CONFIG_SCHEMAS:
         raise PairedAcceleratorBootstrapError(
-            "paired scheduler requires the canonical legal-corpora config"
+            "paired scheduler requires an allowlisted canonical config"
         )
-    payload = _load_control_payload(root)
+    payload = _load_control_payload(root, config_relative)
     source_binding = payload.get("source_binding")
     if not isinstance(source_binding, Mapping):
         return None
@@ -652,7 +672,7 @@ def bootstrap_from_config_argv(
     )
     _prepend_import_root(binding.root)
     _append_controller_import_roots(binding.controller_pythonpath)
-    _install_child_binding(binding, root)
+    _install_child_binding(binding, root, config_relative)
     return binding
 
 
@@ -672,7 +692,20 @@ def bootstrap_from_environment(
         raise PairedAcceleratorBootstrapError(
             "child control root does not match the initial launcher checkout"
         )
-    payload = _load_control_payload(control_root)
+    config_value = os.environ.get(
+        PAIRED_CONFIG_ENV,
+        PAIRED_CONFIG_RELATIVE.as_posix(),
+    )
+    config_relative = Path(config_value)
+    if (
+        config_relative.is_absolute()
+        or ".." in config_relative.parts
+        or config_relative not in PAIRED_CONFIG_SCHEMAS
+    ):
+        raise PairedAcceleratorBootstrapError(
+            "child paired config identity is invalid"
+        )
+    payload = _load_control_payload(control_root, config_relative)
     source_binding = payload.get("source_binding")
     paired = (
         source_binding.get("paired_accelerator")
@@ -709,7 +742,7 @@ def bootstrap_from_environment(
     )
     _prepend_import_root(binding.root)
     _append_controller_import_roots(binding.controller_pythonpath)
-    _install_child_binding(binding, control_root)
+    _install_child_binding(binding, control_root, config_relative)
     return binding
 
 
@@ -735,6 +768,7 @@ def attest_imported_module(
 __all__ = (
     "ATTESTATION_REQUIRED_ENV",
     "PAIRED_CONTROL_ROOT_ENV",
+    "PAIRED_CONFIG_ENV",
     "PAIRED_REVISION_ENV",
     "PAIRED_ROOT_ENV",
     "PairedAcceleratorBinding",

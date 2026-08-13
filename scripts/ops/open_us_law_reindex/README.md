@@ -10,7 +10,7 @@ The source is `justicedao/open-us-law-bucket`. The authoritative query release i
 REPO_ROOT=/home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py
 cd "$REPO_ROOT"
 python3 -P scripts/validate_open_us_law_reindex_board.py --check-all
-python3 -P scripts/ops/open_us_law_reindex/preflight.py --repo-root "$REPO_ROOT" --json
+/usr/bin/python3.12 -I -S -B scripts/ops/open_us_law_reindex/preflight.py --repo-root "$REPO_ROOT" --json
 ```
 
 Preflight fails closed on a dirty/wrong branch, an untracked control file, paired-runtime drift, provider/auth failure, missing validation dependencies, stale runtime artifacts, or another live process in the same OUL namespace.
