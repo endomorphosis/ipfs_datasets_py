@@ -1,0 +1,2388 @@
+{
+  "accepted_receipts": [],
+  "authorizing_for_publication": false,
+  "checks": {
+    "byte_and_frontier_required_for_reuse": true,
+    "completion_ledgers_not_authoritative": true,
+    "live_leases_prevent_duplicate_scrapes": true,
+    "missing_or_invalid_scheduled_exactly_once": true,
+    "synthetic_two_row_rejected": true
+  },
+  "code_version": "1",
+  "description": "Exclusive exact-51 acquisition leases. Prior state-laws supervisor receipts are reused only after byte and frontier verification. Synthetic two-row reports and completion ledgers are rejected. Live foreign leases are waited on. Missing or invalid jurisdictions are scheduled exactly once.",
+  "duplicate_lease_attempts": 0,
+  "duplicate_schedule_attempts": 0,
+  "goal_id": "OUL-G010",
+  "jurisdiction_count": 51,
+  "leases": [
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "A",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "AL",
+      "lease_id": "oul-006:AL:4fbca97d03986fc5",
+      "oul_task_id": "OUL-009",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "A",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "AK",
+      "lease_id": "oul-006:AK:e21476409ff7e481",
+      "oul_task_id": "OUL-009",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "A",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "AZ",
+      "lease_id": "oul-006:AZ:93d4434193633d26",
+      "oul_task_id": "OUL-009",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "A",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "AR",
+      "lease_id": "oul-006:AR:d05a9b2e92eb9be4",
+      "oul_task_id": "OUL-009",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "B",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "CA",
+      "lease_id": "oul-006:CA:cc0edcc2fff2bd7b",
+      "oul_task_id": "OUL-010",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "B",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "CO",
+      "lease_id": "oul-006:CO:4f924055c2fba190",
+      "oul_task_id": "OUL-010",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "B",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "CT",
+      "lease_id": "oul-006:CT:df5f447553e33fe9",
+      "oul_task_id": "OUL-010",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "B",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "DE",
+      "lease_id": "oul-006:DE:338fc1a1c9d36241",
+      "oul_task_id": "OUL-010",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "C",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "FL",
+      "lease_id": "oul-006:FL:61380da1080fba75",
+      "oul_task_id": "OUL-011",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "C",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "GA",
+      "lease_id": "oul-006:GA:97232ca3994c7f2e",
+      "oul_task_id": "OUL-011",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "C",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "HI",
+      "lease_id": "oul-006:HI:4ae83b679f4a8f6d",
+      "oul_task_id": "OUL-011",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "C",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "ID",
+      "lease_id": "oul-006:ID:6dfe4285485eaf4f",
+      "oul_task_id": "OUL-011",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "D",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "IL",
+      "lease_id": "oul-006:IL:baf55f3ab087409f",
+      "oul_task_id": "OUL-012",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "D",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "IN",
+      "lease_id": "oul-006:IN:300c148f067e80eb",
+      "oul_task_id": "OUL-012",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "D",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "IA",
+      "lease_id": "oul-006:IA:202a4a277999ac7b",
+      "oul_task_id": "OUL-012",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "D",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "KS",
+      "lease_id": "oul-006:KS:bc2998640af16e6c",
+      "oul_task_id": "OUL-012",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "E",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "KY",
+      "lease_id": "oul-006:KY:0923628d69e7ed4b",
+      "oul_task_id": "OUL-013",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "E",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "LA",
+      "lease_id": "oul-006:LA:d70ba05dc62290ac",
+      "oul_task_id": "OUL-013",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "E",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "ME",
+      "lease_id": "oul-006:ME:442dd5fbbbd183f8",
+      "oul_task_id": "OUL-013",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "E",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "MD",
+      "lease_id": "oul-006:MD:ed6d071fa2251ee2",
+      "oul_task_id": "OUL-013",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "F",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "MA",
+      "lease_id": "oul-006:MA:2b28cbd99287ca09",
+      "oul_task_id": "OUL-014",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "F",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "MI",
+      "lease_id": "oul-006:MI:fa8002ba377ef2cb",
+      "oul_task_id": "OUL-014",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "F",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "MN",
+      "lease_id": "oul-006:MN:1cf7b10f3bf4aea5",
+      "oul_task_id": "OUL-014",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "F",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "MS",
+      "lease_id": "oul-006:MS:a835a1f8ba3ed15a",
+      "oul_task_id": "OUL-014",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "G",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "MO",
+      "lease_id": "oul-006:MO:834a8f4a92cbf984",
+      "oul_task_id": "OUL-015",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "G",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "MT",
+      "lease_id": "oul-006:MT:c06aeedd66433496",
+      "oul_task_id": "OUL-015",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "G",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "NE",
+      "lease_id": "oul-006:NE:01b7a4e102cd94bb",
+      "oul_task_id": "OUL-015",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "G",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "NV",
+      "lease_id": "oul-006:NV:d89635b9d96157a9",
+      "oul_task_id": "OUL-015",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "H",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "NH",
+      "lease_id": "oul-006:NH:1034403a168b3fad",
+      "oul_task_id": "OUL-016",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "H",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "NJ",
+      "lease_id": "oul-006:NJ:935b5a4d4588f118",
+      "oul_task_id": "OUL-016",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "H",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "NM",
+      "lease_id": "oul-006:NM:7a74197e42f62cde",
+      "oul_task_id": "OUL-016",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "H",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "NY",
+      "lease_id": "oul-006:NY:ad787faeefe49072",
+      "oul_task_id": "OUL-016",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "I",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "NC",
+      "lease_id": "oul-006:NC:593a3e77ade570a2",
+      "oul_task_id": "OUL-017",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "I",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "ND",
+      "lease_id": "oul-006:ND:e2a1a301c833d9fc",
+      "oul_task_id": "OUL-017",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "I",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "OH",
+      "lease_id": "oul-006:OH:38d5e6f2f64f7a70",
+      "oul_task_id": "OUL-017",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "I",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "OK",
+      "lease_id": "oul-006:OK:0344e489de64623f",
+      "oul_task_id": "OUL-017",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "J",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "OR",
+      "lease_id": "oul-006:OR:ee4bb25dca963e3a",
+      "oul_task_id": "OUL-018",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "J",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "PA",
+      "lease_id": "oul-006:PA:925b00fb45388069",
+      "oul_task_id": "OUL-018",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "schedule_scrape",
+      "byte_verified": false,
+      "cohort": "J",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "RI",
+      "lease_id": "oul-006:RI:7fbdab23207c2a09",
+      "oul_task_id": "OUL-018",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "no verified prior receipt; scheduled exactly once for a leased live official scrape",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "J",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "SC",
+      "lease_id": "oul-006:SC:f69aec5be1ed56c7",
+      "oul_task_id": "OUL-018",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "K",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "SD",
+      "lease_id": "oul-006:SD:a59a684b1b7f3a99",
+      "oul_task_id": "OUL-019",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "K",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "TN",
+      "lease_id": "oul-006:TN:8437da12be6e235e",
+      "oul_task_id": "OUL-019",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "K",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "TX",
+      "lease_id": "oul-006:TX:fdb39c60dfee4ab2",
+      "oul_task_id": "OUL-019",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "K",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "UT",
+      "lease_id": "oul-006:UT:e2dac803a0fbc0e0",
+      "oul_task_id": "OUL-019",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "L",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "VT",
+      "lease_id": "oul-006:VT:337a24fb33dd2586",
+      "oul_task_id": "OUL-020",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "L",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "VA",
+      "lease_id": "oul-006:VA:f4c9ec596d079ec7",
+      "oul_task_id": "OUL-020",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "schedule_scrape",
+      "byte_verified": false,
+      "cohort": "L",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "WA",
+      "lease_id": "oul-006:WA:778a00cb1648abd3",
+      "oul_task_id": "OUL-020",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "no verified prior receipt; scheduled exactly once for a leased live official scrape",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "L",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "WV",
+      "lease_id": "oul-006:WV:a6a834d02b085361",
+      "oul_task_id": "OUL-020",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "M",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "WI",
+      "lease_id": "oul-006:WI:e4be977f91a7a437",
+      "oul_task_id": "OUL-021",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "M",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "WY",
+      "lease_id": "oul-006:WY:6e24357f6f778a1a",
+      "oul_task_id": "OUL-021",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    },
+    {
+      "acquired_at": "2026-08-13T00:00:00Z",
+      "action": "repair",
+      "byte_verified": false,
+      "cohort": "M",
+      "expires_at": null,
+      "frontier_verified": false,
+      "holder": "oul-board",
+      "holder_board": "open-us-law-reindex-v1",
+      "jurisdiction_code": "DC",
+      "lease_id": "oul-006:DC:32076591373fa687",
+      "oul_task_id": "OUL-021",
+      "prevents_duplicate_scrape": true,
+      "prior_receipt_accepted": false,
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed); scheduled exactly once for official reacquisition",
+      "status": "scheduled"
+    }
+  ],
+  "producer": "open_us_law_acquisition_coordinator.py",
+  "program_id": "open-us-law-reindex-v1",
+  "rejected_prior_evidence": [
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "AK",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 65,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:AK"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "AK",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_a.json:AK"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "AL",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 42547,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:AL"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "AL",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_a.json:AL"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "AR",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 442,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:AR"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "AR",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_a.json:AR"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "AZ",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 24632,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:AZ"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "AZ",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_a.json:AZ"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "CA",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 3098,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:CA"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "CA",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_b.json:CA"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "CO",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 5,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:CO"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "CO",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_b.json:CO"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "CT",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 26627,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:CT"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "CT",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_b.json:CT"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "DC",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_m.json:DC"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "DE",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 8826,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:DE"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "DE",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_b.json:DE"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "FL",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 24866,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:FL"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "FL",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_c.json:FL"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "GA",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:GA"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "GA",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_c.json:GA"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "HI",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_c.json:HI"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "IA",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 287,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:IA"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "IA",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_d.json:IA"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "ID",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 20571,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:ID"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "ID",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_c.json:ID"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "IL",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 72607,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:IL"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "IL",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_d.json:IL"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "IN",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 73194,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:IN"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "IN",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_d.json:IN"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "KS",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 22299,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:KS"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "KS",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_d.json:KS"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "KY",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 35242,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:KY"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "LA",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 4,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:LA"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "MA",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 14,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:MA"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "MA",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_f.json:MA"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "MD",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 8099,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:MD"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "ME",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 32508,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:ME"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "MI",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 1490,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:MI"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "MI",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_f.json:MI"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "MN",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 16389,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:MN"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "MN",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_f.json:MN"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "MO",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 469,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:MO"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "MS",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 28508,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:MS"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "MS",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_f.json:MS"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "MT",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 10,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:MT"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "NC",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 35245,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:NC"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "NC",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_i.json:NC"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "ND",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 1738,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:ND"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "ND",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_i.json:ND"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "NE",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 48768,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:NE"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "NH",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 1041,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:NH"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "NJ",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 1,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:NJ"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "NM",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 3140,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:NM"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "NV",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 47334,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:NV"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "NY",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 26,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:NY"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "OH",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 10,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:OH"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "OH",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_i.json:OH"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "OK",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 36,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:OK"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "OK",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_i.json:OK"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "OR",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 1789,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:OR"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "PA",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 10719,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:PA"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "SC",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 39720,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:SC"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "SD",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 4266,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:SD"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "SD",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_k.json:SD"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "TN",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 278,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:TN"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "TN",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_k.json:TN"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "TX",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 85100,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:TX"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "TX",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_k.json:TX"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "UT",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 22178,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:UT"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "UT",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_k.json:UT"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "VA",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 28999,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:VA"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "VT",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 4707,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:VT"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "WI",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 12894,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:WI"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "WI",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_m.json:WI"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "WV",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 96,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:WV"
+    },
+    {
+      "detail": "completion ledger status/count is not a verified receipt; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; receipt missing frontier block",
+      "jurisdiction_code": "WY",
+      "rejection_kinds": [
+        "untrusted_completion_ledger",
+        "byte_verification_failed",
+        "frontier_verification_failed"
+      ],
+      "row_count": 11830,
+      "source_kind": "completion_ledger",
+      "source_label": "completion_ledger:WY"
+    },
+    {
+      "detail": "synthetic two-row report is not reusable evidence; missing replayable hashes: request_sha256,response_sha256,admitted_body_sha256; frontier_digest_sha256 missing; completeness oracle rejected receipt: missing_identity,missing_required_field,missing_response_hashes,replay_mismatch,missing_cids,text_quality_failure",
+      "jurisdiction_code": "WY",
+      "rejection_kinds": [
+        "synthetic_two_row",
+        "byte_verification_failed",
+        "frontier_verification_failed",
+        "completeness_oracle_failed"
+      ],
+      "row_count": 2,
+      "source_kind": "state_laws_cohort_report",
+      "source_label": "docs/reports/legal_corpora_reindex/cohort_m.json:WY"
+    }
+  ],
+  "report_digest_sha256": "758f3d82814a69ebf561d75ee408a03d07405d5ee0a66609440e01bc8271276d",
+  "report_schema": "ipfs_datasets_py/open-us-law-acquisition-leases@1",
+  "required_jurisdiction_codes": [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC"
+  ],
+  "reused_jurisdiction_codes": [],
+  "scheduled_jurisdiction_codes": [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC"
+  ],
+  "scheduled_scrapes": [
+    {
+      "action": "repair",
+      "cohort": "A",
+      "jurisdiction_code": "AL",
+      "lease_id": "oul-006:AL:4fbca97d03986fc5",
+      "oul_task_id": "OUL-009",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "A",
+      "jurisdiction_code": "AK",
+      "lease_id": "oul-006:AK:e21476409ff7e481",
+      "oul_task_id": "OUL-009",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "A",
+      "jurisdiction_code": "AZ",
+      "lease_id": "oul-006:AZ:93d4434193633d26",
+      "oul_task_id": "OUL-009",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "A",
+      "jurisdiction_code": "AR",
+      "lease_id": "oul-006:AR:d05a9b2e92eb9be4",
+      "oul_task_id": "OUL-009",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "B",
+      "jurisdiction_code": "CA",
+      "lease_id": "oul-006:CA:cc0edcc2fff2bd7b",
+      "oul_task_id": "OUL-010",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "B",
+      "jurisdiction_code": "CO",
+      "lease_id": "oul-006:CO:4f924055c2fba190",
+      "oul_task_id": "OUL-010",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "B",
+      "jurisdiction_code": "CT",
+      "lease_id": "oul-006:CT:df5f447553e33fe9",
+      "oul_task_id": "OUL-010",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "B",
+      "jurisdiction_code": "DE",
+      "lease_id": "oul-006:DE:338fc1a1c9d36241",
+      "oul_task_id": "OUL-010",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "C",
+      "jurisdiction_code": "FL",
+      "lease_id": "oul-006:FL:61380da1080fba75",
+      "oul_task_id": "OUL-011",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "C",
+      "jurisdiction_code": "GA",
+      "lease_id": "oul-006:GA:97232ca3994c7f2e",
+      "oul_task_id": "OUL-011",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "C",
+      "jurisdiction_code": "HI",
+      "lease_id": "oul-006:HI:4ae83b679f4a8f6d",
+      "oul_task_id": "OUL-011",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "C",
+      "jurisdiction_code": "ID",
+      "lease_id": "oul-006:ID:6dfe4285485eaf4f",
+      "oul_task_id": "OUL-011",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "D",
+      "jurisdiction_code": "IL",
+      "lease_id": "oul-006:IL:baf55f3ab087409f",
+      "oul_task_id": "OUL-012",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "D",
+      "jurisdiction_code": "IN",
+      "lease_id": "oul-006:IN:300c148f067e80eb",
+      "oul_task_id": "OUL-012",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "D",
+      "jurisdiction_code": "IA",
+      "lease_id": "oul-006:IA:202a4a277999ac7b",
+      "oul_task_id": "OUL-012",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "D",
+      "jurisdiction_code": "KS",
+      "lease_id": "oul-006:KS:bc2998640af16e6c",
+      "oul_task_id": "OUL-012",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "E",
+      "jurisdiction_code": "KY",
+      "lease_id": "oul-006:KY:0923628d69e7ed4b",
+      "oul_task_id": "OUL-013",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "E",
+      "jurisdiction_code": "LA",
+      "lease_id": "oul-006:LA:d70ba05dc62290ac",
+      "oul_task_id": "OUL-013",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "E",
+      "jurisdiction_code": "ME",
+      "lease_id": "oul-006:ME:442dd5fbbbd183f8",
+      "oul_task_id": "OUL-013",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "E",
+      "jurisdiction_code": "MD",
+      "lease_id": "oul-006:MD:ed6d071fa2251ee2",
+      "oul_task_id": "OUL-013",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "F",
+      "jurisdiction_code": "MA",
+      "lease_id": "oul-006:MA:2b28cbd99287ca09",
+      "oul_task_id": "OUL-014",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "F",
+      "jurisdiction_code": "MI",
+      "lease_id": "oul-006:MI:fa8002ba377ef2cb",
+      "oul_task_id": "OUL-014",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "F",
+      "jurisdiction_code": "MN",
+      "lease_id": "oul-006:MN:1cf7b10f3bf4aea5",
+      "oul_task_id": "OUL-014",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "F",
+      "jurisdiction_code": "MS",
+      "lease_id": "oul-006:MS:a835a1f8ba3ed15a",
+      "oul_task_id": "OUL-014",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "G",
+      "jurisdiction_code": "MO",
+      "lease_id": "oul-006:MO:834a8f4a92cbf984",
+      "oul_task_id": "OUL-015",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "G",
+      "jurisdiction_code": "MT",
+      "lease_id": "oul-006:MT:c06aeedd66433496",
+      "oul_task_id": "OUL-015",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "G",
+      "jurisdiction_code": "NE",
+      "lease_id": "oul-006:NE:01b7a4e102cd94bb",
+      "oul_task_id": "OUL-015",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "G",
+      "jurisdiction_code": "NV",
+      "lease_id": "oul-006:NV:d89635b9d96157a9",
+      "oul_task_id": "OUL-015",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "H",
+      "jurisdiction_code": "NH",
+      "lease_id": "oul-006:NH:1034403a168b3fad",
+      "oul_task_id": "OUL-016",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "H",
+      "jurisdiction_code": "NJ",
+      "lease_id": "oul-006:NJ:935b5a4d4588f118",
+      "oul_task_id": "OUL-016",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "H",
+      "jurisdiction_code": "NM",
+      "lease_id": "oul-006:NM:7a74197e42f62cde",
+      "oul_task_id": "OUL-016",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "H",
+      "jurisdiction_code": "NY",
+      "lease_id": "oul-006:NY:ad787faeefe49072",
+      "oul_task_id": "OUL-016",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "I",
+      "jurisdiction_code": "NC",
+      "lease_id": "oul-006:NC:593a3e77ade570a2",
+      "oul_task_id": "OUL-017",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "I",
+      "jurisdiction_code": "ND",
+      "lease_id": "oul-006:ND:e2a1a301c833d9fc",
+      "oul_task_id": "OUL-017",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "I",
+      "jurisdiction_code": "OH",
+      "lease_id": "oul-006:OH:38d5e6f2f64f7a70",
+      "oul_task_id": "OUL-017",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "I",
+      "jurisdiction_code": "OK",
+      "lease_id": "oul-006:OK:0344e489de64623f",
+      "oul_task_id": "OUL-017",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "J",
+      "jurisdiction_code": "OR",
+      "lease_id": "oul-006:OR:ee4bb25dca963e3a",
+      "oul_task_id": "OUL-018",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "J",
+      "jurisdiction_code": "PA",
+      "lease_id": "oul-006:PA:925b00fb45388069",
+      "oul_task_id": "OUL-018",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "schedule_scrape",
+      "cohort": "J",
+      "jurisdiction_code": "RI",
+      "lease_id": "oul-006:RI:7fbdab23207c2a09",
+      "oul_task_id": "OUL-018",
+      "reason": "no verified prior receipt; scheduled exactly once for a leased live official scrape"
+    },
+    {
+      "action": "repair",
+      "cohort": "J",
+      "jurisdiction_code": "SC",
+      "lease_id": "oul-006:SC:f69aec5be1ed56c7",
+      "oul_task_id": "OUL-018",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "K",
+      "jurisdiction_code": "SD",
+      "lease_id": "oul-006:SD:a59a684b1b7f3a99",
+      "oul_task_id": "OUL-019",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "K",
+      "jurisdiction_code": "TN",
+      "lease_id": "oul-006:TN:8437da12be6e235e",
+      "oul_task_id": "OUL-019",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "K",
+      "jurisdiction_code": "TX",
+      "lease_id": "oul-006:TX:fdb39c60dfee4ab2",
+      "oul_task_id": "OUL-019",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "K",
+      "jurisdiction_code": "UT",
+      "lease_id": "oul-006:UT:e2dac803a0fbc0e0",
+      "oul_task_id": "OUL-019",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "L",
+      "jurisdiction_code": "VT",
+      "lease_id": "oul-006:VT:337a24fb33dd2586",
+      "oul_task_id": "OUL-020",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "L",
+      "jurisdiction_code": "VA",
+      "lease_id": "oul-006:VA:f4c9ec596d079ec7",
+      "oul_task_id": "OUL-020",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "schedule_scrape",
+      "cohort": "L",
+      "jurisdiction_code": "WA",
+      "lease_id": "oul-006:WA:778a00cb1648abd3",
+      "oul_task_id": "OUL-020",
+      "reason": "no verified prior receipt; scheduled exactly once for a leased live official scrape"
+    },
+    {
+      "action": "repair",
+      "cohort": "L",
+      "jurisdiction_code": "WV",
+      "lease_id": "oul-006:WV:a6a834d02b085361",
+      "oul_task_id": "OUL-020",
+      "reason": "prior evidence rejected (untrusted_completion_ledger,byte_verification_failed,frontier_verification_failed); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "M",
+      "jurisdiction_code": "WI",
+      "lease_id": "oul-006:WI:e4be977f91a7a437",
+      "oul_task_id": "OUL-021",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "M",
+      "jurisdiction_code": "WY",
+      "lease_id": "oul-006:WY:6e24357f6f778a1a",
+      "oul_task_id": "OUL-021",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed,untrusted_completion_ledger); scheduled exactly once for official reacquisition"
+    },
+    {
+      "action": "repair",
+      "cohort": "M",
+      "jurisdiction_code": "DC",
+      "lease_id": "oul-006:DC:32076591373fa687",
+      "oul_task_id": "OUL-021",
+      "reason": "prior evidence rejected (synthetic_two_row,byte_verification_failed,frontier_verification_failed,completeness_oracle_failed); scheduled exactly once for official reacquisition"
+    }
+  ],
+  "schema_version": "open-us-law-acquisition-leases-v1",
+  "sealed_at": "2026-08-13T00:00:00Z",
+  "summary": {
+    "repair": 49,
+    "reuse": 0,
+    "schedule_scrape": 2,
+    "wait_live_lease": 0
+  },
+  "task_id": "OUL-006",
+  "two_row_reports_rejected": 32,
+  "waiting_jurisdiction_codes": []
+}
