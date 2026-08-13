@@ -75,7 +75,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Every state and DC has an official authority, rights scope, attribution duty, frontier method, and typed seed disposition; GA and NC plus nonofficial or linkless rows fail closed until official replacement evidence exists.
 
 ## OUL-003 Define the exhaustive 50-state-plus-DC completeness oracle
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
