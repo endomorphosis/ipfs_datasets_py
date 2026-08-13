@@ -147,7 +147,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: State statutes use stable jurisdiction, hierarchy, edition, source CID, entry CID, and text hash fields; PR, federal, constitutions, historical, recovery, and quarantine rows are explicit non-default configurations.
 
 ## OUL-006 Coordinate prior state-law evidence and lease only missing live scrapes
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
