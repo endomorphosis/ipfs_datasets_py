@@ -1,0 +1,67 @@
+{
+  "schema_version": "open-us-law-bucket-listing-fixture/v1",
+  "listing": {
+    "bucket_id": "justicedao/open-us-law-bucket",
+    "objects": [
+      {
+        "media_type": "application/vnd.apache.parquet",
+        "mtime": "2026-07-21T00:00:00Z",
+        "path": "federal/uscode.parquet",
+        "size_bytes": 4096,
+        "uploaded_at": "2026-07-21T00:00:00Z",
+        "xet_hash": "6565656565656565656565656565656565656565656565656565656565656565"
+      },
+      {
+        "media_type": "text/markdown",
+        "mtime": "2026-07-21T00:00:00Z",
+        "path": "README.md",
+        "size_bytes": 128,
+        "uploaded_at": "2026-07-21T00:00:00Z",
+        "xet_hash": "6161616161616161616161616161616161616161616161616161616161616161"
+      },
+      {
+        "media_type": "application/json",
+        "mtime": "2026-07-21T00:00:00Z",
+        "path": "SHA256SUMS.json",
+        "size_bytes": 256,
+        "uploaded_at": "2026-07-21T00:00:00Z",
+        "xet_hash": "6262626262626262626262626262626262626262626262626262626262626262"
+      },
+      {
+        "media_type": "application/vnd.apache.parquet",
+        "mtime": "2026-07-21T00:00:00Z",
+        "path": "statutes/al.parquet",
+        "size_bytes": 2048,
+        "uploaded_at": "2026-07-21T00:00:00Z",
+        "xet_hash": "6363636363636363636363636363636363636363636363636363636363636363"
+      },
+      {
+        "media_type": "application/vnd.apache.parquet",
+        "mtime": "2026-07-21T00:00:00Z",
+        "path": "statutes/dc.parquet",
+        "size_bytes": 1024,
+        "uploaded_at": "2026-07-21T00:00:00Z",
+        "xet_hash": "6464646464646464646464646464646464646464646464646464646464646464"
+      }
+    ],
+    "prefix": "",
+    "schema_version": "huggingface-bucket-listing/v1"
+  },
+  "observation": {
+    "absent_jurisdictions": ["GA", "NC"],
+    "grants_authority": false,
+    "label": "v2026.07",
+    "live_object_count": 107,
+    "live_parquet_count": 103,
+    "live_total_size_bytes": 1134269198,
+    "note": "Compact transport fixture. The live bucket is mutable and is not a revision pin; objects here are seed metadata for budget, drift, and identity tests.",
+    "observed_on": "2026-07-21",
+    "source_bucket": "justicedao/open-us-law-bucket"
+  },
+  "budgets": {
+    "max_bytes": 2147483648,
+    "max_object_bytes": 268435456,
+    "max_objects": 128,
+    "max_range_bytes": 67108864
+  }
+}
