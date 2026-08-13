@@ -892,6 +892,27 @@ def known_vectors() -> dict[str, Any]:
     }
 
 
+def build_repository_state(
+    *,
+    repository_id: str,
+    revision: str,
+    tree_cid: str,
+    dirty_overlay_cid: str = ABSENCE_TOKEN,
+    parent_revision_ids: Sequence[str] = (),
+    canonicalization_version: str = CANONICALIZATION_VERSION,
+) -> RepositoryState:
+    """Construct a version-bound repository identity (IPS-017 public freeze)."""
+
+    return RepositoryState(
+        repository_id=repository_id,
+        revision=revision,
+        tree_cid=tree_cid,
+        dirty_overlay_cid=dirty_overlay_cid,
+        parent_revision_ids=tuple(parent_revision_ids),
+        canonicalization_version=canonicalization_version,
+    )
+
+
 __all__ = (
     "ABSENCE_TOKEN",
     "CANONICALIZATION_VERSION",
@@ -909,6 +930,7 @@ __all__ = (
     "SourceArtifactIdentity",
     "SourceSymbolIdentity",
     "TestSelectorIdentity",
+    "build_repository_state",
     "canonical_cid",
     "canonical_cid_for_bytes",
     "canonicalize_relative_path",

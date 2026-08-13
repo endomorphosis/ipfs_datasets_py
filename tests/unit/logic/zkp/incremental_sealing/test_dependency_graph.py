@@ -463,7 +463,24 @@ def test_adjacency_helpers_are_sorted() -> None:
 
 
 def test_module_reloads_cleanly() -> None:
-    module = importlib.import_module(MODULE_NAME)
-    reloaded = importlib.reload(module)
-    assert reloaded.DEPENDENCY_GRAPH_SUBSET == "ips/dependency-graph@1"
-    assert len(reloaded.closed_dependency_edge_types()) == 11
+    # Reload in a subprocess so in-process class identity used by later
+    # incremental-sealing tests is not replaced (importlib.reload +
+    # pytest --import-mode=importlib otherwise splits ProofDependencyGraph).
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import importlib; "
+                f"module = importlib.import_module({MODULE_NAME!r}); "
+                "reloaded = importlib.reload(module); "
+                "assert reloaded.DEPENDENCY_GRAPH_SUBSET == 'ips/dependency-graph@1'; "
+                "assert len(reloaded.closed_dependency_edge_types()) == 11"
+            ),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr or completed.stdout

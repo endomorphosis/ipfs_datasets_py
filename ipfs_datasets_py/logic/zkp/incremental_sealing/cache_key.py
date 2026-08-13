@@ -603,6 +603,12 @@ def build_proof_cache_key(**values: Any) -> ProofCacheKey:
     return ProofCacheKey(**normalized)
 
 
+def compute_proof_cache_key(**values: Any) -> ProofCacheKey:
+    """IPS-017 public alias for :func:`build_proof_cache_key`."""
+
+    return build_proof_cache_key(**values)
+
+
 def sample_proof_cache_key(**overrides: Any) -> ProofCacheKey:
     """Minimal valid complete key for tests and hermetic vectors."""
 
@@ -752,6 +758,7 @@ __all__ = (
     "CacheKeyError",
     "ProofCacheKey",
     "build_proof_cache_key",
+    "compute_proof_cache_key",
     "known_vectors",
     "sample_proof_cache_key",
 )

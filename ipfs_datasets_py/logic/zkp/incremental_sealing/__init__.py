@@ -12,9 +12,10 @@ from __future__ import annotations
 
 from typing import Any
 
-# Package-level evidence subsets for the public freeze (IPS-012).
+# Package-level evidence subsets for the public freeze (IPS-012 / IPS-017).
 PUBLIC_API_SUBSET = "ips/datasets-public-api@1"
 MIGRATION_SUBSET = "ips/legacy-receipt-migration@1"
+CONFORMANCE_SUBSET = "ips/datasets-conformance@1"
 PACKAGE_SCHEMA_VERSION = "1"
 
 # Lazy export table: public name -> (submodule, attribute).
@@ -23,7 +24,14 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     # Package metadata
     "PUBLIC_API_SUBSET": (__name__, "PUBLIC_API_SUBSET"),
     "MIGRATION_SUBSET": (__name__, "MIGRATION_SUBSET"),
+    "CONFORMANCE_SUBSET": (__name__, "CONFORMANCE_SUBSET"),
     "PACKAGE_SCHEMA_VERSION": (__name__, "PACKAGE_SCHEMA_VERSION"),
+    "build_repository_state": (".identity", "build_repository_state"),
+    "build_proof_dependency_graph": (".discovery", "build_proof_dependency_graph"),
+    "compute_proof_cache_key": (".cache_key", "compute_proof_cache_key"),
+    "diff_repository_states": (".repository_diff", "diff_repository_states"),
+    "compute_invalidation_closure": (".invalidation", "compute_invalidation_closure"),
+    "explain_invalidation": (".invalidation", "explain_invalidation"),
     # evidence
     "EVIDENCE_SUBSET": (".evidence", "EVIDENCE_SUBSET"),
     "SCHEMA_VERSION": (".evidence", "SCHEMA_VERSION"),
