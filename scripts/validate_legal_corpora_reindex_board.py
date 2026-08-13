@@ -916,7 +916,7 @@ def _validate_config(
     else:
         provider_contract = {
             "primary_provider_id": "grok_cli",
-            "primary_model_id": "grok-4.5",
+            "primary_model_id": "grok-4.6",
             "fallback_provider_id": "codex",
             "fallback_model_id": "gpt-5.6-terra",
             "fallback_trigger": "primary_quota_exhausted",
@@ -1062,7 +1062,7 @@ def _validate_config(
             paired_contract = {
                 "sibling_path": "../ipfs_accelerate_py",
                 "repository_name": "ipfs_accelerate_py",
-                "required_revision": "cfb66d1c1b727033f8e8a4266df02f52fdc43b5e",
+                "required_revision": "78605821601b914548038b5a1366fbbcf3b993b5",
                 "require_clean_worktree": True,
                 "require_exact_revision": True,
             }

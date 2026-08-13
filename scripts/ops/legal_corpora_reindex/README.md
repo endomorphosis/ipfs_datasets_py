@@ -39,7 +39,7 @@ The preflight rejects dirty or wrong-branch control planes, missing tracked file
   launch --implement
 ```
 
-The default launch detaches. It uses four strict full-task-ID SHA-256 lanes, a serialized merge queue, bounded retries and refills, Grok `grok-4.5` as primary, and Codex `gpt-5.6-terra` only when the supervisor verifies primary quota exhaustion. Secrets come only from the inherited environment.
+The default launch detaches. It uses four strict full-task-ID SHA-256 lanes, a serialized merge queue, bounded retries and refills, Grok `grok-4.6` as primary, and Codex `gpt-5.6-terra` only when the supervisor verifies primary quota exhaustion. Secrets come only from the inherited environment.
 
 ## Verify health
 
