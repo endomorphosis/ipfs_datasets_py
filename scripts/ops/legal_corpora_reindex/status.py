@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import time
@@ -264,7 +265,14 @@ def _lane_sample(
     processes: list[dict[str, Any]],
 ) -> dict[str, Any]:
     lane_dir = state_root / f"lane-{index}"
-    prefix = f"lcr_lane_{index}"
+    base_prefix = re.sub(
+        r"[^a-z0-9._-]+",
+        "-",
+        str(config.get("task_prefix") or "").strip().lower(),
+    ).strip("-")
+    if not base_prefix:
+        raise ValueError("configured task_prefix cannot produce an empty state prefix")
+    prefix = f"{base_prefix}_lane_{index}"
     outer_pid_path = lane_dir / f"{prefix}_supervisor.pid"
     daemon_pid_path = lane_dir / f"{prefix}_managed_daemon.pid"
     identity_path = lane_dir / f"{prefix}_managed_daemon.identity.json"

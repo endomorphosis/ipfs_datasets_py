@@ -1,0 +1,281 @@
+# Open US Law sparse GraphRAG objective heap
+
+## OUL-G000 Publish an exact-51 Open US Law sparse GraphRAG release
+- Status: active
+- Parent:
+- Depends on:
+- Fib priority: 13
+- Track: root
+- Priority: P0
+- Bundle: root
+- Goal: Deliver a complete, attributable, immutable, directly queryable release for all 50 states plus DC.
+- Evidence: Task OUL-048 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/final_release_evidence.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: Final evidence verifies every descendant goal and no open or blocked work remains.
+- Gap task: OUL-048
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to root, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect root outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G010 Freeze bucket, authority, completeness, identity, transport, and safety contracts
+- Status: active
+- Parent: OUL-G000
+- Depends on:
+- Fib priority: 13
+- Track: foundation
+- Priority: P0
+- Bundle: foundation
+- Goal: Establish truthful live inputs and fail-closed contracts before acquisition or publication.
+- Evidence: Task OUL-001 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/bucket_snapshot.json, data/legal/open_us_law/source_admission.json, docs/reports/open_us_law_reindex/substrate_gap_audit.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: The bucket drift, missing jurisdictions, rights risks, schema boundaries, provider route, and reuse gaps are explicit and machine validated.
+- Gap task: OUL-001
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to foundation, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect foundation outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G020 Acquire a complete official corpus for exactly 50 states plus DC
+- Status: active
+- Parent: OUL-G000
+- Depends on: OUL-G010
+- Fib priority: 13
+- Track: acquisition
+- Priority: P0
+- Bundle: acquisition
+- Goal: Obtain fresh exhaustive official-source evidence and clean canonical rows for all 51 jurisdictions.
+- Evidence: Task OUL-023 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/exact_51_coverage.json, docs/reports/open_us_law_reindex/acquisition_refill_closure.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains.
+- Gap task: OUL-023
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to acquisition, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect acquisition outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G021 Complete official acquisition cohorts A through D
+- Status: active
+- Parent: OUL-G020
+- Depends on: OUL-G010
+- Fib priority: 8
+- Track: cohorts-a-d
+- Priority: P1
+- Bundle: cohorts-a-d
+- Goal: Certify cohorts A-D in parallel under the shared oracle and lease protocol.
+- Evidence: Task OUL-009 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/cohort_A.json, docs/reports/open_us_law_reindex/cohort_B.json, docs/reports/open_us_law_reindex/cohort_C.json, docs/reports/open_us_law_reindex/cohort_D.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: Every jurisdiction in AL through KS assigned to these cohorts has replayable exhaustive evidence.
+- Gap task: OUL-009
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to cohorts-a-d, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect cohorts-a-d outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G022 Complete official acquisition cohorts E through H
+- Status: active
+- Parent: OUL-G020
+- Depends on: OUL-G010
+- Fib priority: 8
+- Track: cohorts-e-h
+- Priority: P1
+- Bundle: cohorts-e-h
+- Goal: Certify cohorts E-H in parallel under the shared oracle and lease protocol.
+- Evidence: Task OUL-013 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/cohort_E.json, docs/reports/open_us_law_reindex/cohort_F.json, docs/reports/open_us_law_reindex/cohort_G.json, docs/reports/open_us_law_reindex/cohort_H.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: Every jurisdiction in KY through NY assigned to these cohorts has replayable exhaustive evidence.
+- Gap task: OUL-013
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to cohorts-e-h, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect cohorts-e-h outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G023 Complete official acquisition cohorts I through M including DC
+- Status: active
+- Parent: OUL-G020
+- Depends on: OUL-G010
+- Fib priority: 8
+- Track: cohorts-i-m
+- Priority: P1
+- Bundle: cohorts-i-m
+- Goal: Certify cohorts I-M in parallel and restore NC while counting DC exactly once.
+- Evidence: Task OUL-017 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/cohort_I.json, docs/reports/open_us_law_reindex/cohort_J.json, docs/reports/open_us_law_reindex/cohort_K.json, docs/reports/open_us_law_reindex/cohort_L.json, docs/reports/open_us_law_reindex/cohort_M.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: Every jurisdiction in NC through DC assigned to these cohorts has replayable exhaustive evidence.
+- Gap task: OUL-017
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to cohorts-i-m, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect cohorts-i-m outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G024 Reconcile exact-51 evidence and refill every source gap
+- Status: active
+- Parent: OUL-G020
+- Depends on: OUL-G021, OUL-G022, OUL-G023
+- Fib priority: 8
+- Track: acquisition-closure
+- Priority: P1
+- Bundle: acquisition-closure
+- Goal: Prove set, count, key, hash, rights, frontier, and disposition closure across all cohorts.
+- Evidence: Task OUL-022 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/exact_51_coverage.json, docs/reports/open_us_law_reindex/acquisition_refill_closure.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: The deduplicated exact-51 union matches admitted artifacts and all discovered gaps have terminal evidence.
+- Gap task: OUL-022
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to acquisition-closure, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect acquisition-closure outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G030 Build a canonical bounded and streaming Open US Law corpus
+- Status: active
+- Parent: OUL-G000
+- Depends on: OUL-G010, OUL-G020
+- Fib priority: 8
+- Track: corpus-substrate
+- Priority: P1
+- Bundle: corpus-substrate
+- Goal: Normalize exact-51 law into deterministic IDs and corpus-scale reusable layout primitives.
+- Evidence: Task OUL-024 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_corpus.py, ipfs_datasets_py/retrieval/hf_graphrag/hierarchical_routes.py
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: Canonical corpus and quarantine are complete, builds resume deterministically, and shared routing scales beyond one 4096-row index page.
+- Gap task: OUL-024
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to corpus-substrate, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect corpus-substrate outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G040 Produce BM25, GTE vector, and BM25-backed graph families
+- Status: active
+- Parent: OUL-G000
+- Depends on: OUL-G030
+- Fib priority: 13
+- Track: indexes
+- Priority: P0
+- Bundle: indexes
+- Goal: Build all retrieval families with bounded sorted shards and one compatible real GTE vector space.
+- Evidence: Task OUL-027 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_bm25.py, ipfs_datasets_py/processors/legal_data/open_us_law_vectors.py, ipfs_datasets_py/processors/legal_data/open_us_law_lexical_graph.py, ipfs_datasets_py/processors/legal_data/open_us_law_hf_release.py
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: Every admitted key appears in all required families; physical rows and pointers are bounded at 4096 and descriptors are integrity complete.
+- Gap task: OUL-027
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to indexes, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect indexes outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G050 Query Hugging Face sparsely and traverse the graph with embeddings
+- Status: active
+- Parent: OUL-G000
+- Depends on: OUL-G040
+- Fib priority: 8
+- Track: remote-query
+- Priority: P1
+- Bundle: remote-query
+- Goal: Support direct immutable Dataset and content-addressed Bucket retrieval without cloning the release.
+- Evidence: Task OUL-033 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_query.py, scripts/ops/legal_data/query_open_us_law_hf.py
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: BM25 term ranges, centroid probes, entry locators, hybrid fusion, and budgeted semantic graph walks fetch only routed artifacts.
+- Gap task: OUL-033
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to remote-query, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect remote-query outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G060 Prove quality, security, reproducibility, and full-scale behavior
+- Status: active
+- Parent: OUL-G000
+- Depends on: OUL-G030, OUL-G040, OUL-G050
+- Fib priority: 8
+- Track: assurance
+- Priority: P1
+- Bundle: assurance
+- Goal: Evaluate legal retrieval and run a complete exact-51 production build under measured resource bounds.
+- Evidence: Task OUL-036 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/evaluation.json, docs/reports/open_us_law_reindex/reproducibility.json, docs/reports/open_us_law_reindex/full_build.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: Quality thresholds, sparse I/O, determinism, hostile-input defenses, real GTE inference, and corpus/index/graph parity all pass.
+- Gap task: OUL-036
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to assurance, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect assurance outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G070 Stage and canary the exact content-addressed candidate
+- Status: active
+- Parent: OUL-G000
+- Depends on: OUL-G060
+- Fib priority: 8
+- Track: staging
+- Priority: P1
+- Bundle: staging
+- Goal: Seal one candidate and verify it from isolated Dataset and Bucket staging locations.
+- Evidence: Task OUL-040 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/release_candidate.json, docs/reports/open_us_law_reindex/staging_canary.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: Fresh redownload at immutable pins reproduces every digest and query mode before public mutation is authorized.
+- Gap task: OUL-040
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to staging, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect staging outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G080 Publish and verify the authorized public Hugging Face release
+- Status: active
+- Parent: OUL-G000
+- Depends on: OUL-G070
+- Fib priority: 13
+- Track: publication
+- Priority: P0
+- Bundle: publication
+- Goal: Publish the exact staged bytes to a versioned dataset and additive content-addressed bucket prefix.
+- Evidence: Task OUL-043 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/prepublication_seal.json, docs/reports/open_us_law_reindex/publication_receipt.json, docs/reports/open_us_law_reindex/public_canary.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: The public revision and bucket content root are immutable, verified, Viewer-compatible, sparse-queryable, and preserve all raw bucket objects.
+- Gap task: OUL-043
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to publication, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect publication outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+
+## OUL-G090 Rehearse operations and seal terminal evidence
+- Status: active
+- Parent: OUL-G000
+- Depends on: OUL-G080
+- Fib priority: 8
+- Track: operations
+- Priority: P1
+- Bundle: operations
+- Goal: Prove rollback, quarterly updates, refill closure, health monitoring, and long-term reproducibility.
+- Evidence: Task OUL-047 and every descendant task receipt, validation result, manifest digest, and immutable remote pin.
+- Outputs: docs/reports/open_us_law_reindex/operations_rehearsal.json, docs/reports/open_us_law_reindex/final_release_evidence.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Acceptance: Previous pins remain queryable, no destructive operation is needed, and final evidence closes the root objective.
+- Gap task: OUL-047
+- Refinement: Depth 1 bounded refinement; add only evidence-bound child goals with contiguous IDs when objective or codebase scans find a real gap.
+- Embedding query: Locate code and tests relevant to operations, Open US Law, BM25, GTE vectors, graph routing, and Hugging Face sparse retrieval.
+- AST query: Find writers, resolvers, builders, and publication callbacks that affect operations outputs or target identities.
+- Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
+- Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.

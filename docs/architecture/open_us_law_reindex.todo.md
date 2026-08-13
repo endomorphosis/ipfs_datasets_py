@@ -1,0 +1,1179 @@
+# Open US Law sparse GraphRAG implementation board
+
+This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every metadata value is deliberately one physical line.
+
+## OUL-000 Seal the Open US Law supervisor control plane
+- Status: completed
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: control-plane
+- Depends on:
+- Goal id: OUL-G010
+- Outputs: docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md, docs/architecture/open_us_law_reindex.objectives.md, docs/architecture/open_us_law_reindex.todo.md, config/agent_supervisor_open_us_law_reindex_scheduler.json, scripts/validate_open_us_law_reindex_board.py
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all
+- Board namespace: open-us-law-reindex-v1
+- Bundle: control-plane
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 12000
+- Predicted files: docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md, docs/architecture/open_us_law_reindex.objectives.md, docs/architecture/open_us_law_reindex.todo.md, config/agent_supervisor_open_us_law_reindex_scheduler.json, scripts/validate_open_us_law_reindex_board.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: The committed OUL control plane and clean target revision are available.
+- Effects: Seal the Open US Law supervisor control plane; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The committed goals, tasks, scheduler, provider route, refill policy, protected paths, and validation report form one clean launchable control plane.
+
+## OUL-001 Freeze and reconcile the live open-us-law bucket inventory
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: bucket-baseline
+- Depends on: OUL-000
+- Goal id: OUL-G010
+- Outputs: scripts/ops/legal_data/audit_open_us_law_bucket.py, data/legal/open_us_law/bucket_snapshot.schema.json, tests/unit/scripts/test_audit_open_us_law_bucket.py, docs/reports/open_us_law_reindex/bucket_snapshot.json
+- Validation: python -m pytest tests/unit/scripts/test_audit_open_us_law_bucket.py -q; python scripts/ops/legal_data/audit_open_us_law_bucket.py --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: bucket-baseline
+- Parallel lane: 1
+- Resource class: network-bounded
+- Token class: medium
+- Estimated tokens: 24000
+- Predicted files: scripts/ops/legal_data/audit_open_us_law_bucket.py, data/legal/open_us_law/bucket_snapshot.schema.json, tests/unit/scripts/test_audit_open_us_law_bucket.py, docs/reports/open_us_law_reindex/bucket_snapshot.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-000 completed with valid evidence.
+- Effects: Freeze and reconcile the live open-us-law bucket inventory; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: A live authenticated recursive listing is canonically sorted and hashed; 107 objects, 103 live Parquets, stale checksum entries, sizes, Xet hashes, and observation time are independently reconciled without treating the mutable bucket as a revision pin.
+
+## OUL-002 Seal the exact-51 official-source rights and admission matrix
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: source-rights
+- Depends on: OUL-000
+- Goal id: OUL-G010
+- Outputs: data/legal/open_us_law/source_admission.schema.json, data/legal/open_us_law/source_admission.json, scripts/ops/legal_data/audit_open_us_law_sources.py, tests/unit/scripts/test_audit_open_us_law_sources.py
+- Validation: python -m pytest tests/unit/scripts/test_audit_open_us_law_sources.py -q; python scripts/ops/legal_data/audit_open_us_law_sources.py --require-51 --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: source-rights
+- Parallel lane: 0
+- Resource class: network-bounded
+- Token class: medium
+- Estimated tokens: 26000
+- Predicted files: data/legal/open_us_law/source_admission.schema.json, data/legal/open_us_law/source_admission.json, scripts/ops/legal_data/audit_open_us_law_sources.py, tests/unit/scripts/test_audit_open_us_law_sources.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-000 completed with valid evidence.
+- Effects: Seal the exact-51 official-source rights and admission matrix; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Every state and DC has an official authority, rights scope, attribution duty, frontier method, and typed seed disposition; GA and NC plus nonofficial or linkless rows fail closed until official replacement evidence exists.
+
+## OUL-003 Define the exhaustive 50-state-plus-DC completeness oracle
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: completeness-contract
+- Depends on: OUL-000
+- Goal id: OUL-G010
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_completeness.py, data/legal/open_us_law/full_scrape_receipt.schema.json, tests/unit/processors/legal_data/test_open_us_law_completeness.py
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_completeness.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: completeness-contract
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 24000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_completeness.py, data/legal/open_us_law/full_scrape_receipt.schema.json, tests/unit/processors/legal_data/test_open_us_law_completeness.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-000 completed with valid evidence.
+- Effects: Define the exhaustive 50-state-plus-DC completeness oracle; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Completeness requires exact jurisdiction set equality, closed bundle or pagination frontiers, zero failed-final units, replayable response hashes, no caps or fixture transports, and aggregate-to-jurisdiction key and digest equality.
+
+## OUL-004 Implement a fail-closed Hugging Face Bucket snapshot transport
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: bucket-transport
+- Depends on: OUL-000
+- Goal id: OUL-G010
+- Outputs: ipfs_datasets_py/huggingface/hf_bucket_transport.py, tests/unit/huggingface/test_hf_bucket_transport.py, tests/fixtures/legal_ir/open_us_law_bucket_listing.json
+- Validation: python -m pytest tests/unit/huggingface/test_hf_bucket_transport.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: bucket-transport
+- Parallel lane: 3
+- Resource class: cpu-network
+- Token class: medium
+- Estimated tokens: 26000
+- Predicted files: ipfs_datasets_py/huggingface/hf_bucket_transport.py, tests/unit/huggingface/test_hf_bucket_transport.py, tests/fixtures/legal_ir/open_us_law_bucket_listing.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-000 completed with valid evidence.
+- Effects: Implement a fail-closed Hugging Face Bucket snapshot transport; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The transport lists and range-reads hf://buckets objects under explicit byte and object budgets, verifies expected size and SHA256 or Xet identity, rejects path escapes and listing drift, and emits a content-root receipt.
+
+## OUL-005 Specify canonical Open US Law identity schema and configuration boundaries
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: schema-identity
+- Depends on: OUL-000
+- Goal id: OUL-G010
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_schema.py, data/legal/open_us_law/release.schema.json, tests/unit/processors/legal_data/test_open_us_law_schema.py
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_schema.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: schema-identity
+- Parallel lane: 2
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 22000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_schema.py, data/legal/open_us_law/release.schema.json, tests/unit/processors/legal_data/test_open_us_law_schema.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-000 completed with valid evidence.
+- Effects: Specify canonical Open US Law identity schema and configuration boundaries; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: State statutes use stable jurisdiction, hierarchy, edition, source CID, entry CID, and text hash fields; PR, federal, constitutions, historical, recovery, and quarantine rows are explicit non-default configurations.
+
+## OUL-006 Coordinate prior state-law evidence and lease only missing live scrapes
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: acquisition-coordination
+- Depends on: OUL-000
+- Goal id: OUL-G010
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_acquisition_coordinator.py, scripts/ops/legal_data/coordinate_open_us_law_scrapes.py, tests/unit/processors/legal_data/test_open_us_law_acquisition_coordinator.py, docs/reports/open_us_law_reindex/acquisition_leases.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_acquisition_coordinator.py -q; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --no-mutate --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: acquisition-coordination
+- Parallel lane: 1
+- Resource class: network-bounded
+- Token class: medium
+- Estimated tokens: 28000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_acquisition_coordinator.py, scripts/ops/legal_data/coordinate_open_us_law_scrapes.py, tests/unit/processors/legal_data/test_open_us_law_acquisition_coordinator.py, docs/reports/open_us_law_reindex/acquisition_leases.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-000 completed with valid evidence.
+- Effects: Coordinate prior state-law evidence and lease only missing live scrapes; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Receipts from the separate state-laws supervisor are accepted only after byte and frontier verification; live jurisdiction leases prevent duplicate scraping, and missing or invalid jurisdictions are scheduled exactly once without trusting synthetic two-row reports.
+
+## OUL-007 Bind additive Dataset and Bucket publication authority
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: publication-safety
+- Depends on: OUL-000
+- Goal id: OUL-G010
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_publication_gate.py, data/legal/open_us_law/publication_policy.schema.json, tests/unit/processors/legal_data/test_open_us_law_publication_gate.py
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_publication_gate.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: publication-safety
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 28000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_publication_gate.py, data/legal/open_us_law/publication_policy.schema.json, tests/unit/processors/legal_data/test_open_us_law_publication_gate.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-000 completed with valid evidence.
+- Effects: Bind additive Dataset and Bucket publication authority; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Only justicedao/open-us-law-sparse-graphrag dataset creation or additive commits and justicedao/open-us-law-bucket releases/<manifest_sha256>/ writes are authorized; root overwrite, delete, force push, history rewrite, visibility change, mutable query pins, and pre-seal writes fail before any callback.
+
+## OUL-008 Audit and harden the reused USCode sparse GraphRAG substrate for corpus scale
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: substrate-audit
+- Depends on: OUL-000
+- Goal id: OUL-G010
+- Outputs: scripts/ops/legal_data/audit_open_us_law_graphrag_reuse.py, tests/unit/scripts/test_audit_open_us_law_graphrag_reuse.py, docs/reports/open_us_law_reindex/substrate_gap_audit.json
+- Validation: python -m pytest tests/unit/scripts/test_audit_open_us_law_graphrag_reuse.py -q; python scripts/ops/legal_data/audit_open_us_law_graphrag_reuse.py --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: substrate-audit
+- Parallel lane: 2
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 22000
+- Predicted files: scripts/ops/legal_data/audit_open_us_law_graphrag_reuse.py, tests/unit/scripts/test_audit_open_us_law_graphrag_reuse.py, docs/reports/open_us_law_reindex/substrate_gap_audit.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-000 completed with valid evidence.
+- Effects: Audit and harden the reused USCode sparse GraphRAG substrate for corpus scale; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The audit proves reusable contracts and records required repairs for real GTE inference, external sorting, BM25 scale, hierarchical routes, vector entry locators, tokenizer parity, postings-driven neighbors, and neutral LCR provenance.
+
+## OUL-009 Certify official scrape cohort A (AL, AK, AZ, AR)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-a
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G021
+- Outputs: docs/reports/open_us_law_reindex/cohort_A.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort A --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-a
+- Parallel lane: 2
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 32000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_A.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort A (AL, AK, AZ, AR); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: AL, AK, AZ, and AR each have exhaustive official-source receipts and admitted canonical rows; AR bucket seed rows remain quarantined until official replacement is proven.
+
+## OUL-010 Certify official scrape cohort B (CA, CO, CT, DE)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-b
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G021
+- Outputs: docs/reports/open_us_law_reindex/cohort_B.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort B --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-b
+- Parallel lane: 1
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 32000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_B.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort B (CA, CO, CT, DE); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: CA, CO, CT, and DE each have exhaustive official-source receipts, with CA missing-link rows repaired or typed and no fixture evidence admitted.
+
+## OUL-011 Certify official scrape cohort C (FL, GA, HI, ID)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-c
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G021
+- Outputs: docs/reports/open_us_law_reindex/cohort_C.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort C --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-c
+- Parallel lane: 0
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 36000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_C.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort C (FL, GA, HI, ID); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: FL, GA, HI, and ID each have exhaustive official-source receipts; the absent contaminated GA bucket object is replaced from official clean text.
+
+## OUL-012 Certify official scrape cohort D (IL, IN, IA, KS)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-d
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G021
+- Outputs: docs/reports/open_us_law_reindex/cohort_D.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort D --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-d
+- Parallel lane: 2
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 32000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_D.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort D (IL, IN, IA, KS); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: IL, IN, IA, and KS each have exhaustive official-source receipts, stable logical keys, closed frontiers, and zero unexplained failed-final units.
+
+## OUL-013 Certify official scrape cohort E (KY, LA, ME, MD)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-e
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G022
+- Outputs: docs/reports/open_us_law_reindex/cohort_E.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort E --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-e
+- Parallel lane: 2
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 32000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_E.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort E (KY, LA, ME, MD); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: KY, LA, ME, and MD each have exhaustive official-source receipts; LA missing-link rows are repaired or quarantined with typed disposition.
+
+## OUL-014 Certify official scrape cohort F (MA, MI, MN, MS)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-f
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G022
+- Outputs: docs/reports/open_us_law_reindex/cohort_F.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort F --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-f
+- Parallel lane: 1
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 36000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_F.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort F (MA, MI, MN, MS); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: MA, MI, MN, and MS each have exhaustive official-source receipts; MS is reacquired from official sources and synthetic two-row success is rejected.
+
+## OUL-015 Certify official scrape cohort G (MO, MT, NE, NV)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-g
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G022
+- Outputs: docs/reports/open_us_law_reindex/cohort_G.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort G --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-g
+- Parallel lane: 1
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 34000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_G.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort G (MO, MT, NE, NV); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: MO, MT, NE, and NV each have exhaustive official-source receipts; NV linkless bucket material is replaced or quarantined.
+
+## OUL-016 Certify official scrape cohort H (NH, NJ, NM, NY)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-h
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G022
+- Outputs: docs/reports/open_us_law_reindex/cohort_H.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort H --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-h
+- Parallel lane: 1
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 34000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_H.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort H (NH, NJ, NM, NY); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: NH, NJ, NM, and NY each have exhaustive official-source receipts; NJ link gaps and NM linkless seed material receive explicit repair or quarantine dispositions.
+
+## OUL-017 Certify official scrape cohort I (NC, ND, OH, OK)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-i
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G023
+- Outputs: docs/reports/open_us_law_reindex/cohort_I.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort I --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-i
+- Parallel lane: 1
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 36000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_I.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort I (NC, ND, OH, OK); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: NC, ND, OH, and OK each have exhaustive official-source receipts; the absent contaminated NC bucket object is replaced from official clean text.
+
+## OUL-018 Certify official scrape cohort J (OR, PA, RI, SC)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-j
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G023
+- Outputs: docs/reports/open_us_law_reindex/cohort_J.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort J --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-j
+- Parallel lane: 1
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 34000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_J.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort J (OR, PA, RI, SC); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: OR, PA, RI, and SC each have exhaustive official-source receipts; nonofficial Oregon seed text is replaced or quarantined.
+
+## OUL-019 Certify official scrape cohort K (SD, TN, TX, UT)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-k
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G023
+- Outputs: docs/reports/open_us_law_reindex/cohort_K.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort K --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-k
+- Parallel lane: 1
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 34000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_K.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort K (SD, TN, TX, UT); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: SD, TN, TX, and UT each have exhaustive official-source receipts; TN linkless material is independently reacquired or quarantined and TX mixed acquisition is fully reconciled.
+
+## OUL-020 Certify official scrape cohort L (VT, VA, WA, WV)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-l
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G023
+- Outputs: docs/reports/open_us_law_reindex/cohort_L.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort L --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-l
+- Parallel lane: 3
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 32000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_L.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort L (VT, VA, WA, WV); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: VT, VA, WA, and WV each have exhaustive official-source receipts with every continuation exhausted and no partial checkpoint promoted.
+
+## OUL-021 Certify official scrape cohort M (WI, WY, DC)
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: scrape-cohort-m
+- Depends on: OUL-002, OUL-003, OUL-006
+- Goal id: OUL-G023
+- Outputs: docs/reports/open_us_law_reindex/cohort_M.json
+- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort M --require-live --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: scrape-cohort-m
+- Parallel lane: 2
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 32000
+- Predicted files: docs/reports/open_us_law_reindex/cohort_M.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
+- Effects: Certify official scrape cohort M (WI, WY, DC); emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: WI, WY, and DC each have exhaustive official-source receipts; WY linkless seed material is reacquired or quarantined and DC is counted exactly once in the required 51.
+
+## OUL-022 Reconcile exact-51 jurisdiction coverage and bucket deltas
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: coverage-reconciliation
+- Depends on: OUL-009, OUL-010, OUL-011, OUL-012, OUL-013, OUL-014, OUL-015, OUL-016, OUL-017, OUL-018, OUL-019, OUL-020, OUL-021
+- Goal id: OUL-G024
+- Outputs: scripts/ops/legal_data/reconcile_open_us_law_coverage.py, tests/unit/scripts/test_reconcile_open_us_law_coverage.py, docs/reports/open_us_law_reindex/exact_51_coverage.json
+- Validation: python -m pytest tests/unit/scripts/test_reconcile_open_us_law_coverage.py -q; python scripts/ops/legal_data/reconcile_open_us_law_coverage.py --require-51 --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: coverage-reconciliation
+- Parallel lane: 0
+- Resource class: cpu-disk-large
+- Token class: medium
+- Estimated tokens: 30000
+- Predicted files: scripts/ops/legal_data/reconcile_open_us_law_coverage.py, tests/unit/scripts/test_reconcile_open_us_law_coverage.py, docs/reports/open_us_law_reindex/exact_51_coverage.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-009, OUL-010, OUL-011, OUL-012, OUL-013, OUL-014, OUL-015, OUL-016, OUL-017, OUL-018, OUL-019, OUL-020, OUL-021 completed with valid evidence.
+- Effects: Reconcile exact-51 jurisdiction coverage and bucket deltas; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The deduplicated union is exactly all 50 states plus DC, includes clean official GA and NC, excludes PR and federal from the default set, reconciles all bucket deltas, and has zero unknown or failed-final dispositions.
+
+## OUL-023 Refill and close every acquisition, rights, and frontier gap
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: acquisition-refill
+- Depends on: OUL-022
+- Goal id: OUL-G024
+- Outputs: docs/reports/open_us_law_reindex/acquisition_refill_closure.json
+- Validation: python scripts/ops/legal_data/reconcile_open_us_law_coverage.py --require-51 --require-no-open-gaps --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: acquisition-refill
+- Parallel lane: 0
+- Resource class: network-large
+- Token class: medium
+- Estimated tokens: 26000
+- Predicted files: docs/reports/open_us_law_reindex/acquisition_refill_closure.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-022 completed with valid evidence.
+- Effects: Refill and close every acquisition, rights, and frontier gap; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Every finding has either a completed evidence-bound repair task or a typed terminal quarantine; no unresolved acquisition, attribution, freshness, contamination, or frontier gap reaches corpus construction.
+
+## OUL-024 Materialize the canonical exact-51 corpus and quarantine
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: canonical-corpus
+- Depends on: OUL-001, OUL-005, OUL-023
+- Goal id: OUL-G030
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_corpus.py, tests/unit/processors/legal_data/test_open_us_law_corpus.py, docs/reports/open_us_law_reindex/corpus_admission.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_corpus.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: canonical-corpus
+- Parallel lane: 3
+- Resource class: cpu-disk-large
+- Token class: medium
+- Estimated tokens: 30000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_corpus.py, tests/unit/processors/legal_data/test_open_us_law_corpus.py, docs/reports/open_us_law_reindex/corpus_admission.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-001, OUL-005, OUL-023 completed with valid evidence.
+- Effects: Materialize the canonical exact-51 corpus and quarantine; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Canonical sections and structure-aware text chunks have deterministic IDs and provenance; duplicate, contaminated, historical, PR, federal, constitution, recovery, and unsupported rows are isolated in explicit configurations or quarantine.
+
+## OUL-025 Implement streaming chunking, checkpoints, and external sort
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: streaming-build
+- Depends on: OUL-024
+- Goal id: OUL-G030
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_streaming.py, tests/unit/processors/legal_data/test_open_us_law_streaming.py, tests/integration/legal_data/test_open_us_law_resume.py
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_streaming.py tests/integration/legal_data/test_open_us_law_resume.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: streaming-build
+- Parallel lane: 0
+- Resource class: cpu-disk-large
+- Token class: large
+- Estimated tokens: 32000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_streaming.py, tests/unit/processors/legal_data/test_open_us_law_streaming.py, tests/integration/legal_data/test_open_us_law_resume.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-024 completed with valid evidence.
+- Effects: Implement streaming chunking, checkpoints, and external sort; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Corpus-scale builds are bounded-memory, jurisdiction-checkpointed, resumable after interruption, externally sorted, and byte-deterministic without loading all documents, postings, or embeddings into RAM.
+
+## OUL-026 Add hierarchical routes and corpus-scale shared layout primitives
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: shared-scale-substrate
+- Depends on: OUL-008, OUL-025
+- Goal id: OUL-G030
+- Outputs: ipfs_datasets_py/retrieval/hf_graphrag/external_sort.py, ipfs_datasets_py/retrieval/hf_graphrag/hierarchical_routes.py, tests/unit/retrieval/hf_graphrag/test_external_sort.py, tests/unit/retrieval/hf_graphrag/test_hierarchical_routes.py
+- Validation: python -m pytest tests/unit/retrieval/hf_graphrag/test_external_sort.py tests/unit/retrieval/hf_graphrag/test_hierarchical_routes.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: shared-scale-substrate
+- Parallel lane: 1
+- Resource class: cpu-disk-large
+- Token class: large
+- Estimated tokens: 36000
+- Predicted files: ipfs_datasets_py/retrieval/hf_graphrag/external_sort.py, ipfs_datasets_py/retrieval/hf_graphrag/hierarchical_routes.py, tests/unit/retrieval/hf_graphrag/test_external_sort.py, tests/unit/retrieval/hf_graphrag/test_hierarchical_routes.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-008, OUL-025 completed with valid evidence.
+- Effects: Add hierarchical routes and corpus-scale shared layout primitives; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Routing indexes can page beyond 4096 descriptors, builders stream bounded partitions, route pages are integrity-bound, and legacy USCode, patent, CVE, and SkillCenter layouts remain readable.
+
+## OUL-027 Build scalable field-weighted term-range BM25
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: bm25-index
+- Depends on: OUL-025, OUL-026
+- Goal id: OUL-G040
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_bm25.py, tests/unit/processors/legal_data/test_open_us_law_bm25.py, docs/reports/open_us_law_reindex/bm25_receipt.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_bm25.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: bm25-index
+- Parallel lane: 3
+- Resource class: cpu-disk-large
+- Token class: large
+- Estimated tokens: 36000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_bm25.py, tests/unit/processors/legal_data/test_open_us_law_bm25.py, docs/reports/open_us_law_reindex/bm25_receipt.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-025, OUL-026 completed with valid evidence.
+- Effects: Build scalable field-weighted term-range BM25; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: One versioned legal tokenizer is shared by build and query; documents and lexicographic term ranges are externally sorted; every shard and posting cell has at most 4096 rows or pointers; no 250000-document ceiling truncates the corpus.
+
+## OUL-028 Generate real pinned thenlper gte-small embeddings
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: gte-embeddings
+- Depends on: OUL-025, OUL-026
+- Goal id: OUL-G040
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_embeddings.py, tests/unit/processors/legal_data/test_open_us_law_embeddings.py, docs/reports/open_us_law_reindex/embedding_receipt.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_embeddings.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: gte-embeddings
+- Parallel lane: 2
+- Resource class: gpu-disk-large
+- Token class: large
+- Estimated tokens: 42000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_embeddings.py, tests/unit/processors/legal_data/test_open_us_law_embeddings.py, docs/reports/open_us_law_reindex/embedding_receipt.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-025, OUL-026 completed with valid evidence.
+- Effects: Generate real pinned thenlper gte-small embeddings; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Every admitted chunk is embedded with sentence-transformers thenlper/gte-small at revision 17e1f347d17fe144873b1201da91788898c639cd, 384 dimensions, mean pooling, L2 normalization, real 512-token truncation, input hashes, device evidence, and resumable checkpoints; projection fallback cannot authorize release.
+
+## OUL-029 Cluster, sort, and shard centroid-routed vectors
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: vector-index
+- Depends on: OUL-026, OUL-028
+- Goal id: OUL-G040
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_vectors.py, tests/unit/processors/legal_data/test_open_us_law_vectors.py, docs/reports/open_us_law_reindex/vector_receipt.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_vectors.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: vector-index
+- Parallel lane: 3
+- Resource class: cpu-gpu-disk-large
+- Token class: large
+- Estimated tokens: 40000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_vectors.py, tests/unit/processors/legal_data/test_open_us_law_vectors.py, docs/reports/open_us_law_reindex/vector_receipt.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-026, OUL-028 completed with valid evidence.
+- Effects: Cluster, sort, and shard centroid-routed vectors; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Deterministic balanced spherical k-means yields at most 8192 rows and two shards per centroid; every physical shard has at most 4096 vectors sorted by descending centroid cosine then entry CID, and a dedicated entry-to-shard locator supports off-centroid graph frontier hydration.
+
+## OUL-030 Build the multi-jurisdiction legal and provenance graph
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: legal-graph
+- Depends on: OUL-024, OUL-026
+- Goal id: OUL-G040
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_graph.py, tests/unit/processors/legal_data/test_open_us_law_graph.py, docs/reports/open_us_law_reindex/legal_graph_receipt.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_graph.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: legal-graph
+- Parallel lane: 1
+- Resource class: cpu-disk-large
+- Token class: large
+- Estimated tokens: 36000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_graph.py, tests/unit/processors/legal_data/test_open_us_law_graph.py, docs/reports/open_us_law_reindex/legal_graph_receipt.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-024, OUL-026 completed with valid evidence.
+- Effects: Build the multi-jurisdiction legal and provenance graph; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Deterministic nodes and edges cover jurisdiction, code, title, chapter, section, subsection, citation, amendment, source, edition, and provenance with unresolved citations preserved and no embedding or lexical similarity misrepresented as legal authority.
+
+## OUL-031 Build the BM25-backed lexical graph and bounded adjacency
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: lexical-graph
+- Depends on: OUL-027, OUL-030
+- Goal id: OUL-G040
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_lexical_graph.py, tests/unit/processors/legal_data/test_open_us_law_lexical_graph.py, docs/reports/open_us_law_reindex/graph_adjacency_receipt.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_lexical_graph.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: lexical-graph
+- Parallel lane: 0
+- Resource class: cpu-disk-large
+- Token class: large
+- Estimated tokens: 38000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_lexical_graph.py, tests/unit/processors/legal_data/test_open_us_law_lexical_graph.py, docs/reports/open_us_law_reindex/graph_adjacency_receipt.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-027, OUL-030 completed with valid evidence.
+- Effects: Build the BM25-backed lexical graph and bounded adjacency; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: BM25 postings are the canonical virtual term-document graph; optional top-k BM25 neighbor edges use postings-driven candidate accumulation rather than O(N^2) scans; incoming and outgoing adjacency pages and physical shards contain at most 4096 pointers or rows.
+
+## OUL-032 Assemble the descriptor-complete sparse GraphRAG release
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: release-layout
+- Depends on: OUL-027, OUL-029, OUL-031
+- Goal id: OUL-G040
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_hf_release.py, tests/unit/processors/legal_data/test_open_us_law_hf_release.py, tests/fixtures/legal_ir/open_us_law_dataset_card.md
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_hf_release.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: release-layout
+- Parallel lane: 2
+- Resource class: cpu-disk-large
+- Token class: large
+- Estimated tokens: 34000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_hf_release.py, tests/unit/processors/legal_data/test_open_us_law_hf_release.py, tests/fixtures/legal_ir/open_us_law_dataset_card.md
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-027, OUL-029, OUL-031 completed with valid evidence.
+- Effects: Assemble the descriptor-complete sparse GraphRAG release; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The manifest binds corpus, BM25, vectors, centroids, vector locator, graph, two-way adjacency, recovery, configs, source receipts, model revision, row counts, sizes, SHA256 digests, route bounds, and a Viewer-safe default exact-51 configuration.
+
+## OUL-033 Implement content-addressed Bucket and immutable Dataset resolution
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: remote-resolver
+- Depends on: OUL-004, OUL-007, OUL-032
+- Goal id: OUL-G050
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_resolver.py, tests/unit/processors/legal_data/test_open_us_law_resolver.py, tests/security/test_open_us_law_resolver_security.py
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_resolver.py tests/security/test_open_us_law_resolver_security.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: remote-resolver
+- Parallel lane: 1
+- Resource class: cpu-network
+- Token class: large
+- Estimated tokens: 38000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_resolver.py, tests/unit/processors/legal_data/test_open_us_law_resolver.py, tests/security/test_open_us_law_resolver_security.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-004, OUL-007, OUL-032 completed with valid evidence.
+- Effects: Implement content-addressed Bucket and immutable Dataset resolution; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Dataset queries require a 40-hex revision; bucket queries require releases/<manifest_sha256>/ and verified descriptors; both transports fetch only routed artifacts under explicit byte, shard, row, time, graph, and centroid budgets and fail closed on mutable pointers or drift.
+
+## OUL-034 Implement hybrid retrieval and embedding-guided graph traversal
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: query-engine
+- Depends on: OUL-029, OUL-031, OUL-033
+- Goal id: OUL-G050
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_query.py, tests/unit/processors/legal_data/test_open_us_law_query.py, docs/reports/open_us_law_reindex/query_contract.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_query.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: query-engine
+- Parallel lane: 0
+- Resource class: cpu-network
+- Token class: large
+- Estimated tokens: 38000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_query.py, tests/unit/processors/legal_data/test_open_us_law_query.py, docs/reports/open_us_law_reindex/query_contract.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-029, OUL-031, OUL-033 completed with valid evidence.
+- Effects: Implement hybrid retrieval and embedding-guided graph traversal; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: BM25 routes by lexicographic term ranges, dense retrieval probes evaluated centroids, hybrid scores late-fuse compatible rankings, and semantic graph traversal hydrates frontier vectors through the entry locator with depth, node, edge, shard, byte, and time budgets.
+
+## OUL-035 Expose direct-Hugging-Face query API and CLI
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: query-cli
+- Depends on: OUL-034
+- Goal id: OUL-G050
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_sparse_graphrag.py, scripts/ops/legal_data/query_open_us_law_hf.py, tests/unit/scripts/test_query_open_us_law_hf.py
+- Validation: python -m pytest tests/unit/scripts/test_query_open_us_law_hf.py -q; python scripts/ops/legal_data/query_open_us_law_hf.py --help
+- Board namespace: open-us-law-reindex-v1
+- Bundle: query-cli
+- Parallel lane: 2
+- Resource class: cpu-network
+- Token class: medium
+- Estimated tokens: 26000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_sparse_graphrag.py, scripts/ops/legal_data/query_open_us_law_hf.py, tests/unit/scripts/test_query_open_us_law_hf.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-034 completed with valid evidence.
+- Effects: Expose direct-Hugging-Face query API and CLI; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Package and CLI expose BM25, vector, hybrid, graph, and semantic-graph modes, jurisdiction and status filters, immutable pins, fetch traces, and resource budgets without full-index download.
+
+## OUL-036 Seal a jurisdiction-diverse legal retrieval gold set
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: goldset
+- Depends on: OUL-002, OUL-022, OUL-024
+- Goal id: OUL-G060
+- Outputs: tests/fixtures/legal_ir/open_us_law_sparse_gold.json, tests/fixtures/legal_ir/open_us_law_sparse_negative_controls.json, docs/reports/open_us_law_reindex/goldset_rationale.md, tests/unit/processors/legal_data/test_open_us_law_goldset.py
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_goldset.py -q
+- Board namespace: open-us-law-reindex-v1
+- Bundle: goldset
+- Parallel lane: 3
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 28000
+- Predicted files: tests/fixtures/legal_ir/open_us_law_sparse_gold.json, tests/fixtures/legal_ir/open_us_law_sparse_negative_controls.json, docs/reports/open_us_law_reindex/goldset_rationale.md, tests/unit/processors/legal_data/test_open_us_law_goldset.py
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-002, OUL-022, OUL-024 completed with valid evidence.
+- Effects: Seal a jurisdiction-diverse legal retrieval gold set; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Gold and adversarial queries cover all jurisdiction cohorts, exact citations, terminology variants, cross-state ambiguity, repealed or reserved status, graph citations, source provenance, and explicit no-legal-advice controls.
+
+## OUL-037 Evaluate retrieval quality, graph utility, and sparse I/O
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: evaluation
+- Depends on: OUL-027, OUL-029, OUL-031, OUL-035, OUL-036
+- Goal id: OUL-G060
+- Outputs: scripts/ops/legal_data/evaluate_open_us_law_sparse_graphrag.py, tests/unit/scripts/test_evaluate_open_us_law_sparse_graphrag.py, docs/reports/open_us_law_reindex/evaluation.json
+- Validation: python -m pytest tests/unit/scripts/test_evaluate_open_us_law_sparse_graphrag.py -q; python scripts/ops/legal_data/evaluate_open_us_law_sparse_graphrag.py --fixture-only --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: evaluation
+- Parallel lane: 2
+- Resource class: cpu-gpu-network
+- Token class: large
+- Estimated tokens: 36000
+- Predicted files: scripts/ops/legal_data/evaluate_open_us_law_sparse_graphrag.py, tests/unit/scripts/test_evaluate_open_us_law_sparse_graphrag.py, docs/reports/open_us_law_reindex/evaluation.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-027, OUL-029, OUL-031, OUL-035, OUL-036 completed with valid evidence.
+- Effects: Evaluate retrieval quality, graph utility, and sparse I/O; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: BM25, vector, hybrid, graph, and semantic traversal meet declared recall and ranking thresholds; fetch traces prove bounded shard selection and substantially less than full-release transfer for routed queries.
+
+## OUL-038 Prove deterministic builds and fail-closed resource security
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: reproducibility-security
+- Depends on: OUL-026, OUL-032, OUL-033
+- Goal id: OUL-G060
+- Outputs: scripts/ops/legal_data/check_open_us_law_reproducibility.py, tests/integration/legal_data/test_open_us_law_security.py, docs/reports/open_us_law_reindex/reproducibility.json
+- Validation: python -m pytest tests/integration/legal_data/test_open_us_law_security.py -q; python scripts/ops/legal_data/check_open_us_law_reproducibility.py --fixture-only --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: reproducibility-security
+- Parallel lane: 1
+- Resource class: cpu-disk-large
+- Token class: large
+- Estimated tokens: 34000
+- Predicted files: scripts/ops/legal_data/check_open_us_law_reproducibility.py, tests/integration/legal_data/test_open_us_law_security.py, docs/reports/open_us_law_reindex/reproducibility.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-026, OUL-032, OUL-033 completed with valid evidence.
+- Effects: Prove deterministic builds and fail-closed resource security; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Two clean builds are byte-identical; malformed descriptors, path escapes, digest drift, oversized pages, decompression bombs, hostile Parquet metadata, budget exhaustion, stale bucket pointers, and cross-release vector misuse fail closed.
+
+## OUL-039 Run the full exact-51 production build end to end
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: full-build
+- Depends on: OUL-023, OUL-032, OUL-035, OUL-037, OUL-038
+- Goal id: OUL-G060
+- Outputs: scripts/ops/legal_data/build_open_us_law_sparse_graphrag.py, tests/integration/legal_data/test_open_us_law_sparse_graphrag_e2e.py, docs/reports/open_us_law_reindex/full_build.json
+- Validation: python -m pytest tests/integration/legal_data/test_open_us_law_sparse_graphrag_e2e.py -q; python scripts/ops/legal_data/build_open_us_law_sparse_graphrag.py --full --require-live-evidence --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: full-build
+- Parallel lane: 3
+- Resource class: gpu-network-disk-xlarge
+- Token class: xlarge
+- Estimated tokens: 60000
+- Predicted files: scripts/ops/legal_data/build_open_us_law_sparse_graphrag.py, tests/integration/legal_data/test_open_us_law_sparse_graphrag_e2e.py, docs/reports/open_us_law_reindex/full_build.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-023, OUL-032, OUL-035, OUL-037, OUL-038 completed with valid evidence.
+- Effects: Run the full exact-51 production build end to end; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: A resumable full build covers exactly 51 jurisdictions with corpus-to-BM25-to-vector-to-graph key parity, real pinned GTE embeddings, all shard bounds, no unresolved admission gaps, and measured resource usage.
+
+## OUL-040 Seal the exact release candidate and publication evidence root
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: candidate-seal
+- Depends on: OUL-039
+- Goal id: OUL-G070
+- Outputs: scripts/ops/legal_data/seal_open_us_law_candidate.py, tests/unit/scripts/test_seal_open_us_law_candidate.py, docs/reports/open_us_law_reindex/release_candidate.json
+- Validation: python -m pytest tests/unit/scripts/test_seal_open_us_law_candidate.py -q; python scripts/ops/legal_data/seal_open_us_law_candidate.py --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: candidate-seal
+- Parallel lane: 1
+- Resource class: cpu-disk-large
+- Token class: medium
+- Estimated tokens: 30000
+- Predicted files: scripts/ops/legal_data/seal_open_us_law_candidate.py, tests/unit/scripts/test_seal_open_us_law_candidate.py, docs/reports/open_us_law_reindex/release_candidate.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-039 completed with valid evidence.
+- Effects: Seal the exact release candidate and publication evidence root; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The candidate root binds the exact clean commit, full task and goal closure, source and rights receipts, bucket inventory root, build manifest, evaluation, all artifact digests, target IDs, and an expiry-bound prepublication policy.
+
+## OUL-041 Upload the candidate to isolated Dataset and Bucket staging
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: staging-upload
+- Depends on: OUL-007, OUL-040
+- Goal id: OUL-G070
+- Outputs: scripts/ops/legal_data/stage_open_us_law_hf_release.py, tests/unit/scripts/test_stage_open_us_law_hf_release.py, docs/reports/open_us_law_reindex/staging_upload.json
+- Validation: python -m pytest tests/unit/scripts/test_stage_open_us_law_hf_release.py -q; python scripts/ops/legal_data/stage_open_us_law_hf_release.py --check-receipt
+- Board namespace: open-us-law-reindex-v1
+- Bundle: staging-upload
+- Parallel lane: 1
+- Resource class: network-disk-large
+- Token class: large
+- Estimated tokens: 36000
+- Predicted files: scripts/ops/legal_data/stage_open_us_law_hf_release.py, tests/unit/scripts/test_stage_open_us_law_hf_release.py, docs/reports/open_us_law_reindex/staging_upload.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-007, OUL-040 completed with valid evidence.
+- Effects: Upload the candidate to isolated Dataset and Bucket staging; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The identical candidate is uploaded additively to an explicit non-default dataset revision and a unique bucket staging prefix after a reviewed dry-run plan; raw bucket root objects are untouched and every remote object identity is recorded.
+
+## OUL-042 Redownload and canary the immutable staging candidate
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: staging-canary
+- Depends on: OUL-041
+- Goal id: OUL-G070
+- Outputs: scripts/ops/legal_data/canary_open_us_law_hf_release.py, tests/unit/scripts/test_canary_open_us_law_hf_release.py, docs/reports/open_us_law_reindex/staging_canary.json
+- Validation: python -m pytest tests/unit/scripts/test_canary_open_us_law_hf_release.py -q; python scripts/ops/legal_data/canary_open_us_law_hf_release.py --require-live-staging --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: staging-canary
+- Parallel lane: 0
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 34000
+- Predicted files: scripts/ops/legal_data/canary_open_us_law_hf_release.py, tests/unit/scripts/test_canary_open_us_law_hf_release.py, docs/reports/open_us_law_reindex/staging_canary.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-041 completed with valid evidence.
+- Effects: Redownload and canary the immutable staging candidate; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: A clean cache redownloads descriptors and routed shards from the exact 40-hex dataset revision and content-addressed bucket prefix, verifies all bytes, runs every query mode, and demonstrates sparse I/O without local artifact fallback.
+
+## OUL-043 Create the manifest-bound prepublication authorization seal
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: publication-seal
+- Depends on: OUL-007, OUL-042
+- Goal id: OUL-G080
+- Outputs: scripts/ops/legal_data/seal_open_us_law_prepublication.py, tests/unit/scripts/test_seal_open_us_law_prepublication.py, docs/reports/open_us_law_reindex/prepublication_seal.json
+- Validation: python -m pytest tests/unit/scripts/test_seal_open_us_law_prepublication.py -q; python scripts/ops/legal_data/seal_open_us_law_prepublication.py --require-live-staging --no-mutate --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: publication-seal
+- Parallel lane: 3
+- Resource class: cpu-network
+- Token class: medium
+- Estimated tokens: 30000
+- Predicted files: scripts/ops/legal_data/seal_open_us_law_prepublication.py, tests/unit/scripts/test_seal_open_us_law_prepublication.py, docs/reports/open_us_law_reindex/prepublication_seal.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-007, OUL-042 completed with valid evidence.
+- Effects: Create the manifest-bound prepublication authorization seal; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The seal is created before mutation and binds the exact candidate, staging revision, bucket prefix, current principal and write scope, task and goal closure including refill work, target IDs, operation set, and expiration.
+
+## OUL-044 Publish the authorized public Dataset and content-addressed Bucket release
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: public-upload
+- Depends on: OUL-043
+- Goal id: OUL-G080
+- Outputs: scripts/ops/legal_data/publish_open_us_law_hf_release.py, tests/unit/scripts/test_publish_open_us_law_hf_release.py, docs/reports/open_us_law_reindex/publication_receipt.json
+- Validation: python -m pytest tests/unit/scripts/test_publish_open_us_law_hf_release.py -q; python scripts/ops/legal_data/publish_open_us_law_hf_release.py --check-receipt
+- Board namespace: open-us-law-reindex-v1
+- Bundle: public-upload
+- Parallel lane: 2
+- Resource class: network-disk-large
+- Token class: large
+- Estimated tokens: 38000
+- Predicted files: scripts/ops/legal_data/publish_open_us_law_hf_release.py, tests/unit/scripts/test_publish_open_us_law_hf_release.py, docs/reports/open_us_law_reindex/publication_receipt.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-043 completed with valid evidence.
+- Effects: Publish the authorized public Dataset and content-addressed Bucket release; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: After immediate gate revalidation, the exact staged bytes are committed to justicedao/open-us-law-sparse-graphrag and copied additively under releases/<manifest_sha256>/ in justicedao/open-us-law-bucket; a tiny pointer is updated last, no root raw object is overwritten, and no deletion occurs.
+
+## OUL-045 Verify the immutable public release and Dataset Viewer
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: public-verification
+- Depends on: OUL-044
+- Goal id: OUL-G080
+- Outputs: scripts/ops/legal_data/check_open_us_law_public_release.py, tests/unit/scripts/test_check_open_us_law_public_release.py, docs/reports/open_us_law_reindex/public_canary.json
+- Validation: python -m pytest tests/unit/scripts/test_check_open_us_law_public_release.py -q; python scripts/ops/legal_data/check_open_us_law_public_release.py --require-public-pin --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: public-verification
+- Parallel lane: 1
+- Resource class: network-large
+- Token class: large
+- Estimated tokens: 32000
+- Predicted files: scripts/ops/legal_data/check_open_us_law_public_release.py, tests/unit/scripts/test_check_open_us_law_public_release.py, docs/reports/open_us_law_reindex/public_canary.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-044 completed with valid evidence.
+- Effects: Verify the immutable public release and Dataset Viewer; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The public 40-hex dataset revision, Viewer configs, bucket content root, exact-51 coverage, model receipt, every descriptor, sparse query mode, fetch trace, attribution notice, and legacy raw preservation are independently verified.
+
+## OUL-046 Benchmark sparse production retrieval at the public pin
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: public-benchmark
+- Depends on: OUL-037, OUL-045
+- Goal id: OUL-G080
+- Outputs: scripts/ops/legal_data/benchmark_open_us_law_public_release.py, tests/unit/scripts/test_benchmark_open_us_law_public_release.py, docs/reports/open_us_law_reindex/public_benchmark.json
+- Validation: python -m pytest tests/unit/scripts/test_benchmark_open_us_law_public_release.py -q; python scripts/ops/legal_data/benchmark_open_us_law_public_release.py --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: public-benchmark
+- Parallel lane: 0
+- Resource class: cpu-network
+- Token class: medium
+- Estimated tokens: 30000
+- Predicted files: scripts/ops/legal_data/benchmark_open_us_law_public_release.py, tests/unit/scripts/test_benchmark_open_us_law_public_release.py, docs/reports/open_us_law_reindex/public_benchmark.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-037, OUL-045 completed with valid evidence.
+- Effects: Benchmark sparse production retrieval at the public pin; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Cold and warm public queries meet declared relevance, latency, bytes, shard-count, and graph-budget thresholds while proving that no query downloads the complete BM25, vector, graph, or corpus family.
+
+## OUL-047 Rehearse rollback, quarterly updates, and refill closure
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: operations
+- Depends on: OUL-045, OUL-046
+- Goal id: OUL-G090
+- Outputs: scripts/ops/legal_data/rehearse_open_us_law_operations.py, tests/unit/scripts/test_rehearse_open_us_law_operations.py, docs/reports/open_us_law_reindex/operations_rehearsal.json
+- Validation: python -m pytest tests/unit/scripts/test_rehearse_open_us_law_operations.py -q; python scripts/ops/legal_data/rehearse_open_us_law_operations.py --no-mutate --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: operations
+- Parallel lane: 0
+- Resource class: cpu-network
+- Token class: medium
+- Estimated tokens: 30000
+- Predicted files: scripts/ops/legal_data/rehearse_open_us_law_operations.py, tests/unit/scripts/test_rehearse_open_us_law_operations.py, docs/reports/open_us_law_reindex/operations_rehearsal.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-045, OUL-046 completed with valid evidence.
+- Effects: Rehearse rollback, quarterly updates, and refill closure; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: Rollback repoints without deleting immutable releases; quarterly delta builds preserve identities and rebuild affected indexes; interrupted uploads resume safely; all refill findings are completed and prior public pins remain queryable.
+
+## OUL-048 Seal final exact-51 Open US Law sparse GraphRAG evidence
+- Status: todo
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: terminal-evidence
+- Depends on: OUL-047
+- Goal id: OUL-G090
+- Outputs: docs/reports/open_us_law_reindex/final_release_evidence.json
+- Validation: python scripts/validate_open_us_law_reindex_board.py --check-all; python scripts/ops/legal_data/check_open_us_law_public_release.py --require-public-pin --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: terminal-evidence
+- Parallel lane: 2
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 22000
+- Predicted files: docs/reports/open_us_law_reindex/final_release_evidence.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
+- Preconditions: OUL-047 completed with valid evidence.
+- Effects: Seal final exact-51 Open US Law sparse GraphRAG evidence; emits content-addressed, secret-free evidence for downstream validation.
+- Acceptance: The root evidence proves exact-51 official completeness, source rights, real GTE embeddings, bounded sorted indexes, BM25-backed graph, sparse direct-HF retrieval, immutable public pins, successful publication, health history, zero blocked work, and closed refills.

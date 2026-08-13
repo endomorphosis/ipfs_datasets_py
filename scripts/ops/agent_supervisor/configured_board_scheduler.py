@@ -10,9 +10,14 @@ from pathlib import Path, PurePosixPath
 
 _ENTRY_PATH = Path(__file__).resolve()
 REPO_ROOT = _ENTRY_PATH.parents[3]
-_LEGAL_CONFIG = (
-    REPO_ROOT / "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
-).resolve()
+_PAIRED_CONFIGS = {
+    (
+        REPO_ROOT / "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
+    ).resolve(),
+    (
+        REPO_ROOT / "config/agent_supervisor_open_us_law_reindex_scheduler.json"
+    ).resolve(),
+}
 
 
 def _selects_paired_legal_config(argv: list[str]) -> bool:
@@ -28,7 +33,7 @@ def _selects_paired_legal_config(argv: list[str]) -> bool:
                 config_path = Path(config_value)
                 if not config_path.is_absolute():
                     config_path = REPO_ROOT / config_path
-                if config_path.resolve() == _LEGAL_CONFIG:
+                if config_path.resolve() in _PAIRED_CONFIGS:
                     return True
     return False
 
