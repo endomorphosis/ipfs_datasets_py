@@ -1,0 +1,483 @@
+{
+  "interface": "GuiIdentityConformanceVectors@1",
+  "schema_version": "gui-identity-conformance-vectors/v1",
+  "identity_profile": "gui-optimizer-canonical-identity/v1",
+  "canonicalization": "gui-optimizer-canonical-json/v1",
+  "cid_profile": {
+    "cid_version": 1,
+    "digest": "sha256",
+    "multibase": "base32",
+    "multicodec": "raw",
+    "multicodec_code": 85,
+    "multihash": "sha2-256",
+    "multihash_code": 18
+  },
+  "domains": {
+    "application": "gui.application-identity",
+    "artifact": "gui.artifact",
+    "baseline": "gui.ui-baseline",
+    "component_version": "gui.component-version",
+    "receipt": "gui.improvement-receipt",
+    "screen": "gui.screen-identity",
+    "stable": "gui.stable-identity"
+  },
+  "schemas": {
+    "application": "gui-application-identity/v1",
+    "artifact": "gui-artifact-digest/v1",
+    "baseline": "ui-baseline/v1",
+    "component_version": "ui-component-version/v1",
+    "receipt": "gui-improvement-receipt/v1",
+    "screen": "gui-screen-identity/v1",
+    "stable": "ui-component-identity/v1"
+  },
+  "known_cid": {
+    "cid": "bafkreibm6jg3ux5qumhcn2b3flc3tyu6dmlb4xa7u5bf44yegnrjhc4yeq",
+    "preimage": "hello"
+  },
+  "profile_vectors": [
+    {
+      "id": "golden-nfc-key-order",
+      "kind": "canonical",
+      "domain": "gui.test-vector",
+      "schema_version": "gui-test-vector/v1",
+      "payload": {
+        "component": "ConsoleRoot",
+        "kind": "screen",
+        "tags": ["primary", "workspace"],
+        "title": "Cafe\u0301"
+      },
+      "shuffled_payload": {
+        "title": "Café",
+        "tags": ["primary", "workspace"],
+        "kind": "screen",
+        "component": "ConsoleRoot"
+      },
+      "payload_bytes": "{\"component\":\"ConsoleRoot\",\"kind\":\"screen\",\"tags\":[\"primary\",\"workspace\"],\"title\":\"Café\"}",
+      "canonical_bytes": "{\"canonicalization\":\"gui-optimizer-canonical-json/v1\",\"domain\":\"gui.test-vector\",\"identity_profile\":\"gui-optimizer-canonical-identity/v1\",\"payload\":{\"component\":\"ConsoleRoot\",\"kind\":\"screen\",\"tags\":[\"primary\",\"workspace\"],\"title\":\"Café\"},\"schema_version\":\"gui-test-vector/v1\"}"
+    },
+    {
+      "id": "cross-runtime-numeric",
+      "kind": "canonical",
+      "domain": "gui.cross-runtime-vector",
+      "schema_version": "gui-cross-runtime-vector/v1",
+      "payload": {
+        "astral_and_bmp": {"\ue000": "bmp", "\ud800\udc00": "astral"},
+        "boolean_false": false,
+        "boolean_true": true,
+        "float_one": 1.0,
+        "negative_zero": -0.0,
+        "safe_integer": 9007199254740991,
+        "small_exponent": 1e-7,
+        "smallest_subnormal": 5e-324
+      },
+      "digest": "sha256:ca283ecb68a9e75a2b143628f2c98888b749fe0f7fbfc269341d9549c180b93c",
+      "cid": "bafkreigkfa7mw2fj45ncwfbwfdzmtceiw5e74d37x7bgsna5sve4dafzhq"
+    },
+    {
+      "id": "trim-policy-domain",
+      "kind": "canonical",
+      "domain": "\u001cgui.trim\ufeff",
+      "schema_version": "trim-vector/v1",
+      "payload": {},
+      "canonical_bytes": "{\"canonicalization\":\"gui-optimizer-canonical-json/v1\",\"domain\":\"\\u001cgui.trim\ufeff\",\"identity_profile\":\"gui-optimizer-canonical-identity/v1\",\"payload\":{},\"schema_version\":\"trim-vector/v1\"}",
+      "digest": "sha256:d7bddc07adbab269eb9cb770b95b6552bb01d348fb8ab3efe088478a1a013e10",
+      "cid": "bafkreigxxxoapln2wju6xhfxoc4vwzksxma5gsh3rkz67yeii6fbuaj6ca"
+    },
+    {
+      "id": "artifact-null-facet",
+      "kind": "artifact",
+      "domain": "gui.artifact-vector",
+      "schema_version": "gui-artifact-digest/v1",
+      "payload": {
+        "facet": null,
+        "label": "\u0085value\u0085",
+        "route_path": "/docs/start"
+      },
+      "canonical_bytes": "{\"canonicalization\":\"gui-optimizer-canonical-json/v1\",\"domain\":\"gui.artifact-vector\",\"identity_profile\":\"gui-optimizer-canonical-identity/v1\",\"payload\":{\"facet\":null,\"label\":\"value\",\"route_path\":\"/docs/start\"},\"schema_version\":\"gui-artifact-digest/v1\"}",
+      "digest": "sha256:491a93ed0b5c2ee1a60a450cf6a65c331cbdf818541e3d3f5c90f0bd15aa80b6",
+      "cid": "bafkreicjdkj62c24f3q2mcsfbt3kmxbtds67qgcudy6t6xeq6c6rlkuawy"
+    }
+  ],
+  "identity_vectors": [
+    {
+      "id": "application-console",
+      "kind": "application",
+      "domain": "gui.application-identity",
+      "schema_version": "gui-application-identity/v1",
+      "payload": {
+        "application_id": "app:agent-supervisor",
+        "display_name": "Café Console",
+        "interface": "GuiApplicationIdentity@1",
+        "package_namespace": "swissknife.web.js.apps",
+        "repository_root": "swissknife/web/js/apps",
+        "schema_version": "gui-application-identity/v1"
+      },
+      "canonical_bytes": "{\"canonicalization\":\"gui-optimizer-canonical-json/v1\",\"domain\":\"gui.application-identity\",\"identity_profile\":\"gui-optimizer-canonical-identity/v1\",\"payload\":{\"application_id\":\"app:agent-supervisor\",\"display_name\":\"Café Console\",\"interface\":\"GuiApplicationIdentity@1\",\"package_namespace\":\"swissknife.web.js.apps\",\"repository_root\":\"swissknife/web/js/apps\",\"schema_version\":\"gui-application-identity/v1\"},\"schema_version\":\"gui-application-identity/v1\"}"
+    },
+    {
+      "id": "screen-console",
+      "kind": "screen",
+      "domain": "gui.screen-identity",
+      "schema_version": "gui-screen-identity/v1",
+      "payload": {
+        "application_id": "app:agent-supervisor",
+        "interface": "GuiScreenIdentity@1",
+        "route_id": "route:agent-supervisor",
+        "schema_version": "gui-screen-identity/v1",
+        "screen_id": "screen:agent-supervisor"
+      },
+      "canonical_bytes": "{\"canonicalization\":\"gui-optimizer-canonical-json/v1\",\"domain\":\"gui.screen-identity\",\"identity_profile\":\"gui-optimizer-canonical-identity/v1\",\"payload\":{\"application_id\":\"app:agent-supervisor\",\"interface\":\"GuiScreenIdentity@1\",\"route_id\":\"route:agent-supervisor\",\"schema_version\":\"gui-screen-identity/v1\",\"screen_id\":\"screen:agent-supervisor\"},\"schema_version\":\"gui-screen-identity/v1\"}"
+    },
+    {
+      "id": "stable-goal-form",
+      "kind": "stable",
+      "domain": "gui.stable-identity",
+      "schema_version": "ui-component-identity/v1",
+      "payload": {
+        "application_id": "app:agent-supervisor",
+        "component_kind": "form",
+        "interface": "UiComponentIdentity@1",
+        "package_namespace": "swissknife.web.js.apps",
+        "qualified_name": "apps.agent-supervisor.GoalForm",
+        "schema_version": "ui-component-identity/v1",
+        "screen_id": "screen:agent-supervisor"
+      },
+      "canonical_bytes": "{\"canonicalization\":\"gui-optimizer-canonical-json/v1\",\"domain\":\"gui.stable-identity\",\"identity_profile\":\"gui-optimizer-canonical-identity/v1\",\"payload\":{\"application_id\":\"app:agent-supervisor\",\"component_kind\":\"form\",\"interface\":\"UiComponentIdentity@1\",\"package_namespace\":\"swissknife.web.js.apps\",\"qualified_name\":\"apps.agent-supervisor.GoalForm\",\"schema_version\":\"ui-component-identity/v1\",\"screen_id\":\"screen:agent-supervisor\"},\"schema_version\":\"ui-component-identity/v1\"}"
+    },
+    {
+      "id": "version-goal-form",
+      "kind": "component_version",
+      "domain": "gui.component-version",
+      "schema_version": "ui-component-version/v1",
+      "extractor_version": "gui-static-scanner-1.0.0",
+      "stable_identity": {
+        "application_id": "app:agent-supervisor",
+        "component_kind": "form",
+        "interface": "UiComponentIdentity@1",
+        "package_namespace": "swissknife.web.js.apps",
+        "qualified_name": "apps.agent-supervisor.GoalForm",
+        "schema_version": "ui-component-identity/v1",
+        "screen_id": "screen:agent-supervisor"
+      },
+      "material": {
+        "accessibility": {"label": "Goal form", "role": "form"},
+        "actions": {"dispatch": "agentSupervisor.dispatch"},
+        "handlers": {"onSubmit": "dispatchGoal"},
+        "localization": {"keys": ["agentSupervisor.goal.label"]},
+        "props": {"comments": "ignore me", "name": "goal", "required": true},
+        "state": {"ready": true},
+        "structure": {
+          "children": ["input", "button"],
+          "source_path": "/home/user/checkout/web/js/apps/agent-supervisor.js",
+          "start_line": 10,
+          "tag": "form"
+        },
+        "styles": {"start_column": 4, "tokens": ["color.primary"]}
+      }
+    },
+    {
+      "id": "baseline-console",
+      "kind": "baseline",
+      "domain": "gui.ui-baseline",
+      "schema_version": "ui-baseline/v1",
+      "payload": {
+        "application_id": "app:agent-supervisor",
+        "artifact_digests": [
+          "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+        ],
+        "baseline_id": "baseline:agent-supervisor-v1",
+        "extractor_version": "1.0.0",
+        "interface": "UiBaseline@1",
+        "metric_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "repository_revision": "deadbeef",
+        "scenario_ids": ["scenario:keyboard-only", "scenario:initial-load"],
+        "schema_version": "ui-baseline/v1",
+        "screen_id": "screen:agent-supervisor"
+      },
+      "canonical_bytes": "{\"canonicalization\":\"gui-optimizer-canonical-json/v1\",\"domain\":\"gui.ui-baseline\",\"identity_profile\":\"gui-optimizer-canonical-identity/v1\",\"payload\":{\"application_id\":\"app:agent-supervisor\",\"artifact_digests\":[\"sha256:3333333333333333333333333333333333333333333333333333333333333333\",\"sha256:4444444444444444444444444444444444444444444444444444444444444444\"],\"baseline_id\":\"baseline:agent-supervisor-v1\",\"extractor_version\":\"1.0.0\",\"interface\":\"UiBaseline@1\",\"metric_digest\":\"sha256:5555555555555555555555555555555555555555555555555555555555555555\",\"repository_revision\":\"deadbeef\",\"scenario_ids\":[\"scenario:keyboard-only\",\"scenario:initial-load\"],\"schema_version\":\"ui-baseline/v1\",\"screen_id\":\"screen:agent-supervisor\"},\"schema_version\":\"ui-baseline/v1\"}"
+    },
+    {
+      "id": "receipt-accepted",
+      "kind": "receipt",
+      "domain": "gui.improvement-receipt",
+      "schema_version": "gui-improvement-receipt/v1",
+      "payload": {
+        "accessibility_receipt_ids": ["receipt:a11y-1"],
+        "analysis_classification": "exact",
+        "application_id": "app:agent-supervisor",
+        "constraint_receipt_ids": ["receipt:constraint-1"],
+        "context_pack_id": "pack:label-form",
+        "decision": "accept",
+        "interaction_receipt_ids": ["receipt:interaction-1"],
+        "interface": "GuiImprovementReceipt@1",
+        "invalidation_plan_id": "invalidate:label-form",
+        "patch_digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+        "proposal_id": "proposal:label-form",
+        "receipt_id": "receipt:improvement-1",
+        "rejection_reasons": [],
+        "repository_revision": "deadbeef",
+        "schema_version": "gui-improvement-receipt/v1",
+        "screen_id": "screen:agent-supervisor",
+        "verification_status": "verified",
+        "visual_receipt_ids": ["receipt:visual-1"]
+      },
+      "canonical_bytes": "{\"canonicalization\":\"gui-optimizer-canonical-json/v1\",\"domain\":\"gui.improvement-receipt\",\"identity_profile\":\"gui-optimizer-canonical-identity/v1\",\"payload\":{\"accessibility_receipt_ids\":[\"receipt:a11y-1\"],\"analysis_classification\":\"exact\",\"application_id\":\"app:agent-supervisor\",\"constraint_receipt_ids\":[\"receipt:constraint-1\"],\"context_pack_id\":\"pack:label-form\",\"decision\":\"accept\",\"interaction_receipt_ids\":[\"receipt:interaction-1\"],\"interface\":\"GuiImprovementReceipt@1\",\"invalidation_plan_id\":\"invalidate:label-form\",\"patch_digest\":\"sha256:8888888888888888888888888888888888888888888888888888888888888888\",\"proposal_id\":\"proposal:label-form\",\"receipt_id\":\"receipt:improvement-1\",\"rejection_reasons\":[],\"repository_revision\":\"deadbeef\",\"schema_version\":\"gui-improvement-receipt/v1\",\"screen_id\":\"screen:agent-supervisor\",\"verification_status\":\"verified\",\"visual_receipt_ids\":[\"receipt:visual-1\"]},\"schema_version\":\"gui-improvement-receipt/v1\"}"
+    }
+  ],
+  "baseline_pairs": [
+    {
+      "id": "identical-source-scenario",
+      "expect_identical": true,
+      "left": {
+        "application_id": "app:agent-supervisor",
+        "artifact_digests": [
+          "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+        ],
+        "baseline_id": "baseline:agent-supervisor-v1",
+        "extractor_version": "1.0.0",
+        "interface": "UiBaseline@1",
+        "metric_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "repository_revision": "deadbeef",
+        "scenario_ids": ["scenario:keyboard-only", "scenario:initial-load"],
+        "schema_version": "ui-baseline/v1",
+        "screen_id": "screen:agent-supervisor"
+      },
+      "right": {
+        "screen_id": "screen:agent-supervisor",
+        "schema_version": "ui-baseline/v1",
+        "scenario_ids": ["scenario:keyboard-only", "scenario:initial-load"],
+        "repository_revision": "deadbeef",
+        "metric_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "interface": "UiBaseline@1",
+        "extractor_version": "1.0.0",
+        "baseline_id": "baseline:agent-supervisor-v1",
+        "artifact_digests": [
+          "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+        ],
+        "application_id": "app:agent-supervisor"
+      }
+    },
+    {
+      "id": "divergent-scenario",
+      "expect_identical": false,
+      "left": {
+        "application_id": "app:agent-supervisor",
+        "artifact_digests": [
+          "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+        ],
+        "baseline_id": "baseline:agent-supervisor-v1",
+        "extractor_version": "1.0.0",
+        "interface": "UiBaseline@1",
+        "metric_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "repository_revision": "deadbeef",
+        "scenario_ids": ["scenario:keyboard-only", "scenario:initial-load"],
+        "schema_version": "ui-baseline/v1",
+        "screen_id": "screen:agent-supervisor"
+      },
+      "right": {
+        "application_id": "app:agent-supervisor",
+        "artifact_digests": [
+          "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+        ],
+        "baseline_id": "baseline:agent-supervisor-v2",
+        "extractor_version": "1.0.0",
+        "interface": "UiBaseline@1",
+        "metric_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "repository_revision": "deadbeef",
+        "scenario_ids": ["scenario:keyboard-only", "scenario:narrow-overflow"],
+        "schema_version": "ui-baseline/v1",
+        "screen_id": "screen:agent-supervisor"
+      }
+    }
+  ],
+  "mutation_matrix": [
+    {
+      "id": "handlers-bound-change",
+      "description": "A bound handler change alters version identity only.",
+      "expect_changed": ["version"],
+      "expect_unchanged": ["application", "screen", "stable", "baseline", "receipt"],
+      "changed_facets": ["handlers_digest"],
+      "unchanged_facets": [
+        "accessibility_digest",
+        "actions_digest",
+        "localization_digest",
+        "props_digest",
+        "state_digest",
+        "structure_digest",
+        "styles_digest"
+      ],
+      "mutation": {
+        "target": "material",
+        "path": ["handlers"],
+        "value": {"onCancel": "cancelGoal", "onSubmit": "dispatchGoal"}
+      }
+    },
+    {
+      "id": "structure-tag-change",
+      "description": "A bound structure change alters version identity only.",
+      "expect_changed": ["version"],
+      "expect_unchanged": ["application", "screen", "stable", "baseline", "receipt"],
+      "changed_facets": ["structure_digest"],
+      "unchanged_facets": [
+        "accessibility_digest",
+        "actions_digest",
+        "handlers_digest",
+        "localization_digest",
+        "props_digest",
+        "state_digest",
+        "styles_digest"
+      ],
+      "mutation": {
+        "target": "material",
+        "path": ["structure", "tag"],
+        "value": "section"
+      }
+    },
+    {
+      "id": "line-movement-provenance",
+      "description": "Line movement is provenance and must not change identities.",
+      "expect_changed": [],
+      "expect_unchanged": ["application", "screen", "stable", "version", "baseline", "receipt"],
+      "changed_facets": [],
+      "unchanged_facets": [
+        "accessibility_digest",
+        "actions_digest",
+        "handlers_digest",
+        "localization_digest",
+        "props_digest",
+        "state_digest",
+        "structure_digest",
+        "styles_digest"
+      ],
+      "mutation": {
+        "target": "material",
+        "path": ["structure", "start_line"],
+        "value": 999
+      }
+    },
+    {
+      "id": "application-display-name",
+      "description": "Application display name is bound only to application identity.",
+      "expect_changed": ["application"],
+      "expect_unchanged": ["screen", "stable", "version", "baseline", "receipt"],
+      "changed_facets": [],
+      "unchanged_facets": [],
+      "mutation": {
+        "target": "application",
+        "path": ["display_name"],
+        "value": "Agent Supervisor Console"
+      }
+    },
+    {
+      "id": "application-nfc-equivalent",
+      "description": "NFC-equivalent application text must not change identity.",
+      "expect_changed": [],
+      "expect_unchanged": ["application", "screen", "stable", "version", "baseline", "receipt"],
+      "changed_facets": [],
+      "unchanged_facets": [],
+      "mutation": {
+        "target": "application",
+        "path": ["display_name"],
+        "value": "Cafe\u0301 Console"
+      }
+    },
+    {
+      "id": "screen-route-change",
+      "description": "Screen route identity is independent of application and version.",
+      "expect_changed": ["screen"],
+      "expect_unchanged": ["application", "stable", "version", "baseline", "receipt"],
+      "changed_facets": [],
+      "unchanged_facets": [],
+      "mutation": {
+        "target": "screen",
+        "path": ["route_id"],
+        "value": "route:agent-supervisor-settings"
+      }
+    },
+    {
+      "id": "baseline-scenario-change",
+      "description": "A bound scenario change alters baseline identity only.",
+      "expect_changed": ["baseline"],
+      "expect_unchanged": ["application", "screen", "stable", "version", "receipt"],
+      "changed_facets": [],
+      "unchanged_facets": [],
+      "mutation": {
+        "target": "baseline",
+        "path": ["scenario_ids"],
+        "value": ["scenario:keyboard-only", "scenario:narrow-overflow"]
+      }
+    },
+    {
+      "id": "receipt-proposal-change",
+      "description": "A bound receipt field change alters receipt identity only.",
+      "expect_changed": ["receipt"],
+      "expect_unchanged": ["application", "screen", "stable", "version", "baseline"],
+      "changed_facets": [],
+      "unchanged_facets": [],
+      "mutation": {
+        "target": "receipt",
+        "path": ["proposal_id"],
+        "value": "proposal:label-form-v2"
+      }
+    }
+  ],
+  "negative_cases": [
+    {
+      "id": "unsafe-integer",
+      "kind": "canonical_json",
+      "error_substring": "safe-integer",
+      "input": {"type": "number", "value": 9007199254740992}
+    },
+    {
+      "id": "unpaired-surrogate",
+      "kind": "canonical_json",
+      "error_substring": "unpaired Unicode surrogate",
+      "input": {"type": "surrogate_string", "units": [55296]}
+    },
+    {
+      "id": "nfc-key-collision",
+      "kind": "canonical_json",
+      "error_substring": "collide",
+      "input": {"type": "nfc_collision"}
+    },
+    {
+      "id": "whitespace-domain",
+      "kind": "canonical_identity",
+      "domain": "\u0085gui.trim",
+      "schema_version": "trim-vector/v1",
+      "payload": {},
+      "error_substring": "surrounding whitespace"
+    },
+    {
+      "id": "malformed-cid",
+      "kind": "parse_cid",
+      "cid": "not-a-cid",
+      "error_substring": ""
+    },
+    {
+      "id": "dag-json-cid-rejected",
+      "kind": "parse_cid",
+      "cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+      "error_substring": ""
+    }
+  ],
+  "domain_separation": [
+    {
+      "id": "same-payload-distinct-domains",
+      "payload": {
+        "component": "ConsoleRoot",
+        "kind": "screen",
+        "tags": ["primary", "workspace"],
+        "title": "Cafe\u0301"
+      },
+      "schema_version": "gui-test-vector/v1",
+      "left_domain": "gui.domain-a",
+      "right_domain": "gui.domain-b"
+    }
+  ]
+}
