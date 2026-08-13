@@ -99,7 +99,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Completeness requires exact jurisdiction set equality, closed bundle or pagination frontiers, zero failed-final units, replayable response hashes, no caps or fixture transports, and aggregate-to-jurisdiction key and digest equality.
 
 ## OUL-004 Implement a fail-closed Hugging Face Bucket snapshot transport
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
