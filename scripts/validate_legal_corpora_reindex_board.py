@@ -1062,7 +1062,7 @@ def _validate_config(
             paired_contract = {
                 "sibling_path": "../ipfs_accelerate_py",
                 "repository_name": "ipfs_accelerate_py",
-                "required_revision": "78605821601b914548038b5a1366fbbcf3b993b5",
+                "required_revision": "9d31e30bb7a414ccb91081309d586689eb34a8f2",
                 "require_clean_worktree": True,
                 "require_exact_revision": True,
             }
