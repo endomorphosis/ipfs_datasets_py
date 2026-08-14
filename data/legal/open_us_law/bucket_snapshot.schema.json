@@ -1,0 +1,412 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/open-us-law-bucket-snapshot-v1.schema.json",
+  "title": "Open US Law live bucket inventory snapshot",
+  "description": "OUL-001 freeze of one live authenticated recursive listing of justicedao/open-us-law-bucket. The listing is canonically sorted and hashed over path, type, size, Xet identity, and upload time. Object counts, live Parquet counts, stale checksum entries, sizes, Xet hashes, and observation time are independently reconciled. The mutable bucket is not a revision pin.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "producer",
+    "program_id",
+    "task_id",
+    "goal_id",
+    "bucket_id",
+    "snapshot_label",
+    "sources_observed_on",
+    "withdrawn_on",
+    "observed_at",
+    "listing_mode",
+    "authenticated",
+    "recursive",
+    "token_presented",
+    "bucket_is_mutable",
+    "revision_pin",
+    "grants_authority",
+    "authorizing_for_publication",
+    "descriptor_is_authoritative",
+    "provisional_digest_authorizes_downstream",
+    "description",
+    "currentness_disclaimer",
+    "canonical_algorithm",
+    "expected",
+    "objects",
+    "canonical_records",
+    "inventory_digest_sha256",
+    "listing_sha256",
+    "provisional_inventory_digest_sha256",
+    "checksum_manifest",
+    "reconciliation",
+    "snapshot_digest_sha256"
+  ],
+  "properties": {
+    "schema_version": { "const": "open-us-law-bucket-snapshot-v1" },
+    "producer": { "const": "audit_open_us_law_bucket.py@1" },
+    "program_id": { "const": "open-us-law-reindex-v1" },
+    "task_id": { "const": "OUL-001" },
+    "goal_id": { "const": "OUL-G010" },
+    "bucket_id": { "const": "justicedao/open-us-law-bucket" },
+    "snapshot_label": { "const": "v2026.07" },
+    "sources_observed_on": { "const": "2026-07-21" },
+    "withdrawn_on": { "const": "2026-08-12" },
+    "observed_at": { "$ref": "#/$defs/utcTimestamp" },
+    "listing_mode": { "const": "authenticated_recursive" },
+    "authenticated": { "const": true },
+    "recursive": { "const": true },
+    "token_presented": { "type": "boolean" },
+    "bucket_is_mutable": { "const": true },
+    "revision_pin": { "const": false },
+    "grants_authority": { "const": false },
+    "authorizing_for_publication": { "const": false },
+    "descriptor_is_authoritative": { "const": false },
+    "provisional_digest_authorizes_downstream": { "const": false },
+    "description": { "$ref": "#/$defs/nonEmptyString" },
+    "currentness_disclaimer": { "$ref": "#/$defs/nonEmptyString" },
+    "canonical_algorithm": { "$ref": "#/$defs/canonicalAlgorithm" },
+    "expected": { "$ref": "#/$defs/expectedCounts" },
+    "objects": {
+      "type": "array",
+      "minItems": 107,
+      "maxItems": 107,
+      "items": { "$ref": "#/$defs/listingObject" }
+    },
+    "canonical_records": {
+      "type": "array",
+      "minItems": 107,
+      "maxItems": 107,
+      "items": { "$ref": "#/$defs/canonicalRecord" }
+    },
+    "inventory_digest_sha256": { "$ref": "#/$defs/sha256" },
+    "listing_sha256": { "$ref": "#/$defs/sha256" },
+    "provisional_inventory_digest_sha256": {
+      "const": "ef84263ab604460297fadfefa4268aee974b1ba1ed914188cc591df62e6ff65b"
+    },
+    "checksum_manifest": { "$ref": "#/$defs/checksumManifest" },
+    "reconciliation": { "$ref": "#/$defs/reconciliation" },
+    "snapshot_digest_sha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$"
+    },
+    "posixPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z0-9._][A-Za-z0-9._/+-]*$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "jurisdictionCode": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$"
+    },
+    "canonicalAlgorithm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fields", "sort", "encoding", "hash"],
+      "properties": {
+        "id": { "const": "open-us-law-bucket-object-list-v1" },
+        "fields": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "prefixItems": [
+            { "const": "path" },
+            { "const": "size_bytes" },
+            { "const": "type" },
+            { "const": "uploaded_at" },
+            { "const": "xet_hash" }
+          ],
+          "items": false
+        },
+        "sort": { "const": "path_lexicographic" },
+        "encoding": { "const": "ir-canonical-json-v1" },
+        "hash": { "const": "sha256" }
+      }
+    },
+    "expectedCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "object_count",
+        "parquet_count",
+        "control_object_count",
+        "total_size_bytes",
+        "absent_required_statute_codes",
+        "stale_checksum_bytes_sha256"
+      ],
+      "properties": {
+        "object_count": { "const": 107 },
+        "parquet_count": { "const": 103 },
+        "control_object_count": { "const": 4 },
+        "total_size_bytes": { "const": 1134269198 },
+        "absent_required_statute_codes": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            { "const": "GA" },
+            { "const": "NC" }
+          ],
+          "items": false
+        },
+        "stale_checksum_bytes_sha256": {
+          "const": "20c7f327d38810da9168e53dd90babcae25fb634114e3cebbbe201c4726306b0"
+        }
+      }
+    },
+    "listingObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "media_type",
+        "mtime",
+        "path",
+        "size_bytes",
+        "type",
+        "uploaded_at",
+        "xet_hash"
+      ],
+      "properties": {
+        "media_type": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "mtime": {
+          "anyOf": [
+            { "$ref": "#/$defs/utcTimestamp" },
+            { "type": "null" }
+          ]
+        },
+        "path": { "$ref": "#/$defs/posixPath" },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "type": { "const": "file" },
+        "uploaded_at": {
+          "anyOf": [
+            { "$ref": "#/$defs/utcTimestamp" },
+            { "type": "null" }
+          ]
+        },
+        "xet_hash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "canonicalRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "type", "uploaded_at", "xet_hash"],
+      "properties": {
+        "path": { "$ref": "#/$defs/posixPath" },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "type": { "const": "file" },
+        "uploaded_at": { "type": "string", "maxLength": 64 },
+        "xet_hash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "checksumEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes"],
+      "properties": {
+        "path": { "$ref": "#/$defs/posixPath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size_bytes": {
+          "anyOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "checksumMismatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "kind", "checksum_size_bytes", "live_size_bytes"],
+      "properties": {
+        "path": { "$ref": "#/$defs/posixPath" },
+        "kind": { "const": "size" },
+        "checksum_size_bytes": { "type": "integer", "minimum": 0 },
+        "live_size_bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "checksumManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "bytes_sha256",
+        "expected_stale_bytes_sha256",
+        "stale",
+        "entry_count",
+        "entries",
+        "withdrawn_paths_still_listed",
+        "checksum_paths_missing_from_live",
+        "live_parquet_paths_missing_from_checksum",
+        "size_or_digest_mismatches",
+        "stale_entry_count"
+      ],
+      "properties": {
+        "path": { "const": "SHA256SUMS.json" },
+        "bytes_sha256": {
+          "const": "20c7f327d38810da9168e53dd90babcae25fb634114e3cebbbe201c4726306b0"
+        },
+        "expected_stale_bytes_sha256": {
+          "const": "20c7f327d38810da9168e53dd90babcae25fb634114e3cebbbe201c4726306b0"
+        },
+        "stale": { "const": true },
+        "entry_count": { "type": "integer", "minimum": 2 },
+        "entries": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/checksumEntry" }
+        },
+        "withdrawn_paths_still_listed": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            { "const": "us_ga_statutes.parquet" },
+            { "const": "us_nc_statutes.parquet" }
+          ],
+          "items": false
+        },
+        "checksum_paths_missing_from_live": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/posixPath" }
+        },
+        "live_parquet_paths_missing_from_checksum": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/posixPath" }
+        },
+        "size_or_digest_mismatches": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/checksumMismatch" }
+        },
+        "stale_entry_count": { "type": "integer", "minimum": 2 }
+      }
+    },
+    "countMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["independent", "expected", "match"],
+      "properties": {
+        "independent": { "type": "integer", "minimum": 0 },
+        "expected": { "type": "integer", "minimum": 0 },
+        "match": { "const": true }
+      }
+    },
+    "xetMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["present", "missing", "unique", "match"],
+      "properties": {
+        "present": { "type": "integer", "minimum": 0 },
+        "missing": { "const": 0 },
+        "unique": { "const": true },
+        "match": { "const": true }
+      }
+    },
+    "observationMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recorded", "value", "match"],
+      "properties": {
+        "recorded": { "const": true },
+        "value": { "$ref": "#/$defs/utcTimestamp" },
+        "match": { "const": true }
+      }
+    },
+    "staleChecksumMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["independent", "withdrawn_paths_still_listed", "stale", "match"],
+      "properties": {
+        "independent": { "type": "integer", "minimum": 2 },
+        "withdrawn_paths_still_listed": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/posixPath" }
+        },
+        "stale": { "const": true },
+        "match": { "const": true }
+      }
+    },
+    "absentCodesMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["independent", "expected", "match"],
+      "properties": {
+        "independent": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            { "const": "GA" },
+            { "const": "NC" }
+          ],
+          "items": false
+        },
+        "expected": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            { "const": "GA" },
+            { "const": "NC" }
+          ],
+          "items": false
+        },
+        "match": { "const": true }
+      }
+    },
+    "reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "object_count",
+        "parquet_count",
+        "control_object_count",
+        "total_size_bytes",
+        "xet_hashes",
+        "observation_time",
+        "stale_checksum_entries",
+        "absent_required_statute_codes",
+        "live_statute_codes",
+        "live_parquet_paths",
+        "control_object_paths"
+      ],
+      "properties": {
+        "object_count": { "$ref": "#/$defs/countMatch" },
+        "parquet_count": { "$ref": "#/$defs/countMatch" },
+        "control_object_count": { "$ref": "#/$defs/countMatch" },
+        "total_size_bytes": { "$ref": "#/$defs/countMatch" },
+        "xet_hashes": { "$ref": "#/$defs/xetMatch" },
+        "observation_time": { "$ref": "#/$defs/observationMatch" },
+        "stale_checksum_entries": { "$ref": "#/$defs/staleChecksumMatch" },
+        "absent_required_statute_codes": { "$ref": "#/$defs/absentCodesMatch" },
+        "live_statute_codes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jurisdictionCode" }
+        },
+        "live_parquet_paths": {
+          "type": "array",
+          "minItems": 103,
+          "maxItems": 103,
+          "items": { "$ref": "#/$defs/posixPath" }
+        },
+        "control_object_paths": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "$ref": "#/$defs/posixPath" }
+        }
+      }
+    }
+  }
+}

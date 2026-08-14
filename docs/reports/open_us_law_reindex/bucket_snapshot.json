@@ -1,0 +1,2536 @@
+{
+  "authenticated": true,
+  "authorizing_for_publication": false,
+  "bucket_id": "justicedao/open-us-law-bucket",
+  "bucket_is_mutable": true,
+  "canonical_algorithm": {
+    "encoding": "ir-canonical-json-v1",
+    "fields": [
+      "path",
+      "size_bytes",
+      "type",
+      "uploaded_at",
+      "xet_hash"
+    ],
+    "hash": "sha256",
+    "id": "open-us-law-bucket-object-list-v1",
+    "sort": "path_lexicographic"
+  },
+  "canonical_records": [
+    {
+      "path": ".gitattributes",
+      "size_bytes": 2504,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.114000Z",
+      "xet_hash": "738f112595603cb0e8566ac7936fb35c8f148f469ba15cda1b9fb53639a96b70"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 10594,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.114000Z",
+      "xet_hash": "a7c6a462d125681a60c225f868562f13ebdbda46ba59fa84ab28b51f9a3e6f91"
+    },
+    {
+      "path": "SHA256SUMS.json",
+      "size_bytes": 17841,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.114000Z",
+      "xet_hash": "eb526ebb269e3661db862513639c1a0803efa690f0f1366c966c83020d82d70e"
+    },
+    {
+      "path": "us_ak_constitutions.parquet",
+      "size_bytes": 35551,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "73a20315cc07011257ccf0c7dbb337f9a780e113ee62493d298ce67ef6517326"
+    },
+    {
+      "path": "us_ak_statutes.parquet",
+      "size_bytes": 8259550,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d3c9e879ba8873052d5bf717ac9361f97e872283f6ee022c47f8ade1a830ed24"
+    },
+    {
+      "path": "us_al_constitutions.parquet",
+      "size_bytes": 215753,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "b1100f4c2a0221d9861602a011f63b5a726f926360897d8195ce8d5b571023cc"
+    },
+    {
+      "path": "us_al_statutes.parquet",
+      "size_bytes": 22528685,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a0ab4eb5c3f930658c3cdec399d3e27d65eb61802b00fbb1797c2574ef98927b"
+    },
+    {
+      "path": "us_ar_constitutions.parquet",
+      "size_bytes": 94778,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "da7c37603bbc502048b2ca12e292b8b78e4242c35534fadaffe1b19126cf6765"
+    },
+    {
+      "path": "us_ar_statutes.parquet",
+      "size_bytes": 22460220,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7d2e3f4f9718b45e2fb753fdb81c8fc022f46f0bec6527bd5c0bd06a80d0e99e"
+    },
+    {
+      "path": "us_az_constitutions.parquet",
+      "size_bytes": 102303,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4c61b26eb2514a9dee9b557c42168aef24a964d506342921eaa7899aec698387"
+    },
+    {
+      "path": "us_az_statutes.parquet",
+      "size_bytes": 14817668,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4ae29f19c4e06e2fcf003462684bb2443db9b574e1536f237c8f3088ed67987f"
+    },
+    {
+      "path": "us_ca_constitutions.parquet",
+      "size_bytes": 138245,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "5528dc38c476c94b511c78b054f62d8dbf01c6367f271b72057c46de07a6c5ae"
+    },
+    {
+      "path": "us_ca_statutes.parquet",
+      "size_bytes": 71109210,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "2a4f04c03186dba304dd431cbb70c4c586c446c368d5b1ce888d780fbbfb2c7b"
+    },
+    {
+      "path": "us_co_constitutions.parquet",
+      "size_bytes": 200684,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d887cb9691beab52a185317800defc6029461c3847d1d300bae53d44ae2d5da9"
+    },
+    {
+      "path": "us_co_statutes.parquet",
+      "size_bytes": 24525942,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "97595160a4d5bb1416ecdf1dd18f3fc4b8a86de20ea89f722cd3343cee779066"
+    },
+    {
+      "path": "us_ct_constitutions.parquet",
+      "size_bytes": 26148,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "f3b866371a2aeb44e9309579165e3cfb0b13e6289c39c6dd851dbb002eff5cd0"
+    },
+    {
+      "path": "us_ct_statutes.parquet",
+      "size_bytes": 13477137,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "58b90b4eaf2569493fbd06a5d3666be1fcb3273c65431ebd62e9e9df32b954bb"
+    },
+    {
+      "path": "us_dc_statutes.parquet",
+      "size_bytes": 12112787,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "ffd80222bb5a4f1c8927a01aaa6c77afe5cb94106d59d50836b33b6100686a77"
+    },
+    {
+      "path": "us_de_constitutions.parquet",
+      "size_bytes": 74709,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d48869f196736e69db485ab4da2e7b214ffa01d48ae8372098218b8c549ef7ae"
+    },
+    {
+      "path": "us_de_statutes.parquet",
+      "size_bytes": 12693428,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "09727a345bb0d0f0dfd6f528177b9e74e311ed25dda30c161e30d76d95bc37a0"
+    },
+    {
+      "path": "us_federal_constitutions.parquet",
+      "size_bytes": 31003,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "adffa9980c338900f2155bffc5b5afa2f593cb655df08141796f62c8e752f8b3"
+    },
+    {
+      "path": "us_federal_statutes.parquet",
+      "size_bytes": 88711846,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e762d9689d5a0f2733272373a68a723cd7b4df5c3a5605b27eb339ee8e69281b"
+    },
+    {
+      "path": "us_fl_constitutions.parquet",
+      "size_bytes": 98437,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4cc322adecbf9fca26ca916de085b11cf340ed93a71288fd4c3d6721d9392bcd"
+    },
+    {
+      "path": "us_fl_statutes.parquet",
+      "size_bytes": 24175744,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "fca8421ac746697a44386a5850424706741c2e89230533fb5ac58ed882a7cd86"
+    },
+    {
+      "path": "us_ga_constitutions.parquet",
+      "size_bytes": 39277,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "fad42556f0d5946407616d13c8bb7c60e803058a4b8cacbb4650982cc13e1f51"
+    },
+    {
+      "path": "us_hi_constitutions.parquet",
+      "size_bytes": 55471,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "c5eb62ad310b27beedd68d1f12c39d00e331a6c1904917541d1e569b3d6e59db"
+    },
+    {
+      "path": "us_hi_statutes.parquet",
+      "size_bytes": 10452322,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "cbea762b5fcdf5d452ca39e9692e8de0aa1cb2f1f8fa474f6e853cca799eee75"
+    },
+    {
+      "path": "us_ia_constitutions.parquet",
+      "size_bytes": 48678,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "6645b322688f362254abef40a0fef81b6b5e65f043db1e65fad29fc239c39644"
+    },
+    {
+      "path": "us_ia_statutes.parquet",
+      "size_bytes": 15128004,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "5da03cb996667a52b6196d63a80c20c65791bea55d89d8eefd9d6cc51884d4b3"
+    },
+    {
+      "path": "us_id_constitutions.parquet",
+      "size_bytes": 71772,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "065844a083b2386427935f247409c0ca78b51b17d0593c73525ac34e922b1a98"
+    },
+    {
+      "path": "us_id_statutes.parquet",
+      "size_bytes": 13916663,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "378670a5568ff995ef2c24aba1fcc7d6583dd3154a4f96897fdb671a553babe2"
+    },
+    {
+      "path": "us_il_constitutions.parquet",
+      "size_bytes": 43810,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "eb8ceef72f836ba8342fbf08d4bba815fd8dd4fd204516853a45b510eb1c5317"
+    },
+    {
+      "path": "us_il_statutes.parquet",
+      "size_bytes": 27692046,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "27ba48ce809a7ca288591040c9f835e3f318d8bf11e8283a38c9ff0c155f01e0"
+    },
+    {
+      "path": "us_in_constitutions.parquet",
+      "size_bytes": 39212,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "ea1dded5e5bbf3225c67ed672d4bc49b037cfd11509bf8455f9d65850347f709"
+    },
+    {
+      "path": "us_in_statutes.parquet",
+      "size_bytes": 28183409,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4cdfb57bf3b912f43740d2d2e148edc0b5cba44544d4531bc39e9e62ca484223"
+    },
+    {
+      "path": "us_ks_constitutions.parquet",
+      "size_bytes": 39369,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "0b148449bcf63744b3b16bb3f3f0a980e1ae708d24750055b9e265531966018d"
+    },
+    {
+      "path": "us_ks_statutes.parquet",
+      "size_bytes": 14451104,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7d13e92fcf949d9035dbf55339df1199867d551891d172bc02c76218a7567d15"
+    },
+    {
+      "path": "us_ky_constitutions.parquet",
+      "size_bytes": 78759,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "f64dc98f2d16d8062efb0a11cc58cd79dc4d8746302c555e74924ce0fc080fb8"
+    },
+    {
+      "path": "us_ky_statutes.parquet",
+      "size_bytes": 14519383,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "3eb6e196d406d6e82b54aabe298ba8d7d4fcc6edf64f2e33cb406d4841cec2c8"
+    },
+    {
+      "path": "us_la_constitutions.parquet",
+      "size_bytes": 31706,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e35f94a9892fda36a65b66c10f1506840651158dc0999cef72624081d29ac195"
+    },
+    {
+      "path": "us_la_statutes.parquet",
+      "size_bytes": 27192448,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a51d59df54e8344ef066a74169bc873150ff8839aede8dfe71cb2a8f2e10fba1"
+    },
+    {
+      "path": "us_ma_constitutions.parquet",
+      "size_bytes": 44651,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a333a47ecbc1cc0fc6cb548fc73e1ea38b3954f7c94c987a8e1924282417c145"
+    },
+    {
+      "path": "us_ma_statutes.parquet",
+      "size_bytes": 15348093,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "3152d5eff36c2f424195e9bc6fe7e28ef0834c96d81cefa86b7b516bda4713b3"
+    },
+    {
+      "path": "us_md_constitutions.parquet",
+      "size_bytes": 75966,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "bb2a0769f73a5556dc11f57bcd372550a025b54c89f7895c0d8840373e126363"
+    },
+    {
+      "path": "us_md_statutes.parquet",
+      "size_bytes": 18934534,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d911fd58ab09a2e2082abc6c1bc8cfda363d11a243e3da7899f7ecb0e5b453d4"
+    },
+    {
+      "path": "us_me_constitutions.parquet",
+      "size_bytes": 67253,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8c647f828c654ac47552aa6776941e12a6a9387679155b0f92bc651de62c3fd2"
+    },
+    {
+      "path": "us_me_statutes.parquet",
+      "size_bytes": 17589106,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "79880fae9b4fc2a87e9c8038586fbf7a59b1a60ac5ed92435685201ac5916da1"
+    },
+    {
+      "path": "us_mi_constitutions.parquet",
+      "size_bytes": 97009,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "b6f2088752237f3ee7a48cf63343a836a056d54806a327790541d062fa51140e"
+    },
+    {
+      "path": "us_mi_statutes.parquet",
+      "size_bytes": 24941161,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "912e2bc5a9bd0e56dd5a8a2347f3f11671dbd8a3714abaf3ff791ec767df17b9"
+    },
+    {
+      "path": "us_mn_constitutions.parquet",
+      "size_bytes": 40299,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "cec515cbf3780afcf5cfbdb312e97f87c4546413dc4963d0617de94cabb6c500"
+    },
+    {
+      "path": "us_mn_statutes.parquet",
+      "size_bytes": 23216637,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "82147cc011e144101453ab46b4b4f4f194092f84a09f7adcf20d4a95cff5f28b"
+    },
+    {
+      "path": "us_mo_constitutions.parquet",
+      "size_bytes": 95982,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "163e665c907f608cbe3b023d75eec7960cf75a861ba407616c13ccb29f2746b7"
+    },
+    {
+      "path": "us_mo_statutes.parquet",
+      "size_bytes": 19209168,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "032383b5b4d66f6e10f63796d94d2782d4d11f145243784472952312db42b8e8"
+    },
+    {
+      "path": "us_ms_constitutions.parquet",
+      "size_bytes": 66550,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "47c735bf6fd324ab9db238b32e5f43dccab0aebb137dbf9ed8656ff52d4fdfe1"
+    },
+    {
+      "path": "us_ms_statutes.parquet",
+      "size_bytes": 83274157,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7ab8e23d7c18cdb53015f33605ae982fab69e82300974b292992d697a6247907"
+    },
+    {
+      "path": "us_mt_constitutions.parquet",
+      "size_bytes": 41491,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8d09b4774a20b68f11474424e02d4a0ffdd329ba7580c46b4286d658c98aefd0"
+    },
+    {
+      "path": "us_mt_statutes.parquet",
+      "size_bytes": 15176349,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8aed722467c2bc5401788bbe9c216fbb9c29af9b1f5b3987ef0402b725542263"
+    },
+    {
+      "path": "us_nc_constitutions.parquet",
+      "size_bytes": 52397,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "abeab491fde29e0813dbc93309bd32e606ca60cf8abc4e029a3fb3a81774edb2"
+    },
+    {
+      "path": "us_nd_constitutions.parquet",
+      "size_bytes": 75121,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "728987b2bb30e6211fb03150f2103823ddffe120c4a340841ca356ba7d5af398"
+    },
+    {
+      "path": "us_nd_statutes.parquet",
+      "size_bytes": 13223712,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "0d4adfc873856e5a784dfbc76f457c194f6de054d0a8f1e43454273fafadf246"
+    },
+    {
+      "path": "us_ne_constitutions.parquet",
+      "size_bytes": 79589,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "352e2a6ab554c0454f024b129d51ce99641176bdfe7e731e94e303d46f8f3b2c"
+    },
+    {
+      "path": "us_ne_statutes.parquet",
+      "size_bytes": 14325911,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8d51817c649d1bdfbd47d323741cb7a9eb05dceaf2abe51b5e33a227eef5df12"
+    },
+    {
+      "path": "us_nh_constitutions.parquet",
+      "size_bytes": 33769,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "c44a3fc391c3b2474e74067cd186cb1d8da576a0d599b96a83808c3a22933851"
+    },
+    {
+      "path": "us_nh_statutes.parquet",
+      "size_bytes": 12213565,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e17c7ee81f4afa23a42097c39a475f398235df32b504a07554ad5ae45fca820e"
+    },
+    {
+      "path": "us_nj_constitutions.parquet",
+      "size_bytes": 55794,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "b1be01d9defda9b0c6f5657bf2e9f8253c0f9566953481b3cd2d4933923f55b7"
+    },
+    {
+      "path": "us_nj_statutes.parquet",
+      "size_bytes": 28433533,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "35f97f293c35e284069f938f6ffb516dafd0a9f80e61c05f703078cf04f1dd12"
+    },
+    {
+      "path": "us_nm_constitutions.parquet",
+      "size_bytes": 30817,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7757500e3433d72c3ac01cb262e6e161255ae4d6f2112bbc7fcc3b04641a7487"
+    },
+    {
+      "path": "us_nm_statutes.parquet",
+      "size_bytes": 15646341,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "cbaf10b01473ad4525d39827976efe9cfaa3cc78aff491e622b9fb6715f5e15c"
+    },
+    {
+      "path": "us_nv_constitutions.parquet",
+      "size_bytes": 17613,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7ef42df720a78dfc155e5692b051544d4a5ca17f1e95129efd7790354e051bd0"
+    },
+    {
+      "path": "us_nv_statutes.parquet",
+      "size_bytes": 19428874,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "95f29f6b3ae984e671cda201c46766a58d4f12825cd93e585fe74535688bea2f"
+    },
+    {
+      "path": "us_ny_constitutions.parquet",
+      "size_bytes": 93102,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "173d9b38271071ba1bdeeee89c6cd5c2ec249ca27c9395b50d41d8376fd5860e"
+    },
+    {
+      "path": "us_ny_statutes.parquet",
+      "size_bytes": 39170904,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "429d81e2ec0b8595cd6860838fe356275747758acee04501c4bd9affbdf777c7"
+    },
+    {
+      "path": "us_oh_constitutions.parquet",
+      "size_bytes": 55606,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8cec1d4ca1b4dbe7ff0adc56d3ba1b7e5b4544f63e2a266344ea22470b8a4d09"
+    },
+    {
+      "path": "us_oh_statutes.parquet",
+      "size_bytes": 24154685,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "c67f5c8e5b3e95d6ed589a6bd73191e0010a79c253a95a991cb094b437df401d"
+    },
+    {
+      "path": "us_ok_constitutions.parquet",
+      "size_bytes": 76109,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "de4591f0f4114058a220c8499c9abd0ed32dd7a0063d4372add863069fabde66"
+    },
+    {
+      "path": "us_ok_statutes.parquet",
+      "size_bytes": 21726587,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d6f9cda445316518f270b1f97678522e5eccbbf4539403b69925873fed1ed361"
+    },
+    {
+      "path": "us_or_constitutions.parquet",
+      "size_bytes": 22321,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "89b98bff6d80468d6c349abd25f7c230add670627298da430d575db3d3e428fa"
+    },
+    {
+      "path": "us_or_statutes.parquet",
+      "size_bytes": 22644812,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a7fb81b27c4b18399f1d15288521062b6705d7c965d1a5d74f75f1400f0a40bf"
+    },
+    {
+      "path": "us_pa_constitutions.parquet",
+      "size_bytes": 63527,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "5cd34f25589f437399e431aebbe84ab8f41aff1352b2e98d4fe46e84fc32d69b"
+    },
+    {
+      "path": "us_pa_statutes.parquet",
+      "size_bytes": 8543572,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "697430906e32557033b11f0ff4a76fc0dfedd995e99373269a5b88a1475d9997"
+    },
+    {
+      "path": "us_pr_constitutions.parquet",
+      "size_bytes": 32878,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4166e71b64ba1c689b35b56782b4de70d2fc25b7c8503036abb6e997e8ff4216"
+    },
+    {
+      "path": "us_pr_statutes.parquet",
+      "size_bytes": 13481894,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "dead9083686b1057c0582bb29ce5b4ca2e5743609a00f5cdef9e4cb9630f2c72"
+    },
+    {
+      "path": "us_ri_constitutions.parquet",
+      "size_bytes": 42666,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "741351d124de2044d9f832956453cdabe0952a39c47fda2f01c5f3b86de285b9"
+    },
+    {
+      "path": "us_ri_statutes.parquet",
+      "size_bytes": 9953327,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "168b8c4be1b0d6bb5128881062f97bc436e1490bb7c505e23696c5b774c34b35"
+    },
+    {
+      "path": "us_sc_constitutions.parquet",
+      "size_bytes": 64453,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e9a55f805aa52dc3f01ee6713b33b46c0a6bd08d816ff77ced26fc5356af48c9"
+    },
+    {
+      "path": "us_sc_statutes.parquet",
+      "size_bytes": 15372558,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "f606e12687ce0e295f88bcab4270a92e82eed5cfb4385608ff61e094e42a59b0"
+    },
+    {
+      "path": "us_sd_constitutions.parquet",
+      "size_bytes": 79402,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a08b284da18d5aedca7d71da5d18fd845b4da243bf3d9c13d46a98e6628f1398"
+    },
+    {
+      "path": "us_sd_statutes.parquet",
+      "size_bytes": 13337734,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a93634ac0977299b89c17aafaa89204f5921fcd83a1e1dbdaff73430cde3f871"
+    },
+    {
+      "path": "us_tn_constitutions.parquet",
+      "size_bytes": 41734,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d7d95dc20c154a81b6e06a2a6a2a3e74e3f1f3f94d918ae8eda915a5b03e4c94"
+    },
+    {
+      "path": "us_tn_statutes.parquet",
+      "size_bytes": 21275917,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "0cd29c55d0ac340c206bde9d289b45875387192d8170df7c651b395424e33667"
+    },
+    {
+      "path": "us_tx_constitutions.parquet",
+      "size_bytes": 202505,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "af999477454010b59c955c4a828d50e1360766e875163c456ae8a55b32eadd85"
+    },
+    {
+      "path": "us_tx_statutes.parquet",
+      "size_bytes": 39943258,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "0bdfa4277fb4aadfdafc2aa61d2bf1469a10f8a74adb1f46969cb5f43c74430c"
+    },
+    {
+      "path": "us_ut_constitutions.parquet",
+      "size_bytes": 92252,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d73784c83a8fcc8d03b68d1f428d06bcf288383d1d49f51a2a2f364544028adb"
+    },
+    {
+      "path": "us_ut_statutes.parquet",
+      "size_bytes": 17349903,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "65bc53733bbeca31e3b5a795ca9c4126f4772c83289b8bf83509f3a7141177f5"
+    },
+    {
+      "path": "us_va_constitutions.parquet",
+      "size_bytes": 58561,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e480f71bb6f904978f7715c891ce35ba9799812d554aa38ceace8eebd9eae071"
+    },
+    {
+      "path": "us_va_statutes.parquet",
+      "size_bytes": 20738699,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "eca8f355d8a459863359d5f9bca45a51bba289cc31171765e6c1dbe309a93b9c"
+    },
+    {
+      "path": "us_vt_constitutions.parquet",
+      "size_bytes": 26976,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "c3c45fcaf45692e9fdcccb0b1e5ef25b68bb81b327e9efadf456415a7417cde7"
+    },
+    {
+      "path": "us_vt_statutes.parquet",
+      "size_bytes": 12301259,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8b6f2b8071f9f44140e6a4116a95f1410194ee1370014a0884184fa008936a3d"
+    },
+    {
+      "path": "us_wa_constitutions.parquet",
+      "size_bytes": 43099,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "dd53a89b77cc37868b17cbf6fb0177e827482cfc4bb87fb88828fdd6ca1339d4"
+    },
+    {
+      "path": "us_wa_statutes.parquet",
+      "size_bytes": 26777056,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a3ac82545c9efa58a5b03eedf3627f4837bd80f8edd117c177a1cbf495b0ec03"
+    },
+    {
+      "path": "us_wi_constitutions.parquet",
+      "size_bytes": 47081,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "ba153abf99089fea6496cf344ec86f87d129dd9d1396bca1390b089da98d436f"
+    },
+    {
+      "path": "us_wi_statutes.parquet",
+      "size_bytes": 14653073,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e002a7ca4b475c9e7ec31fcdbc927068dd30518c11d643dbf830d5fd35dd3ce7"
+    },
+    {
+      "path": "us_wv_constitutions.parquet",
+      "size_bytes": 22367,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "30e2f8496e812c4bcec7ca928367b5fb67c7c1b765a5b8331f7bba3577b1233f"
+    },
+    {
+      "path": "us_wv_statutes.parquet",
+      "size_bytes": 16337170,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.538000Z",
+      "xet_hash": "387caa0e570380c3ff4edeb90095a737f7b835e1c751d8d4af3f958608fc4843"
+    },
+    {
+      "path": "us_wy_constitutions.parquet",
+      "size_bytes": 73701,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.538000Z",
+      "xet_hash": "49df350f75464459342fd0bc92f4200be552eacfa625fd19ced36ad33f9fe77c"
+    },
+    {
+      "path": "us_wy_statutes.parquet",
+      "size_bytes": 5330029,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.538000Z",
+      "xet_hash": "c12dc4ecd95617c671f31d278ea39965e2c3938892873c74ac13dc4bc6685fad"
+    },
+    {
+      "path": "walkthrough-thumb.png",
+      "size_bytes": 298779,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.538000Z",
+      "xet_hash": "ab91b0fa8a8f0fa2cf4cdfad885cd6ae73ee02e156ef4d7bb56e3dcd91024904"
+    }
+  ],
+  "checksum_manifest": {
+    "bytes_sha256": "20c7f327d38810da9168e53dd90babcae25fb634114e3cebbbe201c4726306b0",
+    "checksum_paths_missing_from_live": [
+      "us_ga_statutes.parquet",
+      "us_nc_statutes.parquet"
+    ],
+    "entries": [
+      {
+        "path": "us_ak_constitutions.parquet",
+        "sha256": "99733a9530cd0b35b71a71408437828a0a0dc0ac09d09cde871819d38c15ea88",
+        "size_bytes": 35551
+      },
+      {
+        "path": "us_ak_statutes.parquet",
+        "sha256": "39d056703b11ec6b7a32672546e47143cc67f814d82270ad456dbd005a45806a",
+        "size_bytes": 8259550
+      },
+      {
+        "path": "us_al_constitutions.parquet",
+        "sha256": "e1903690b49296c3389e05348d0fd6c1e14d034a943dd2fc8449213ca7008bf7",
+        "size_bytes": 215753
+      },
+      {
+        "path": "us_al_statutes.parquet",
+        "sha256": "0fcf95a2f58bcf164f795bdf7da05149824c3247504c3f754c84a5ba0bbdca5f",
+        "size_bytes": 22528685
+      },
+      {
+        "path": "us_ar_constitutions.parquet",
+        "sha256": "c5a6f7c5ae0977d793492f86ea837b5405f66404ff627097474d30098f36f8ff",
+        "size_bytes": 94778
+      },
+      {
+        "path": "us_ar_statutes.parquet",
+        "sha256": "e04988701e67f640f2f113c8ca1e7f49685f5aa4d06649166c3ca948bce59034",
+        "size_bytes": 22460220
+      },
+      {
+        "path": "us_az_constitutions.parquet",
+        "sha256": "a4a91f0071cf8d80bda9adfabfbcde180b3be3ea08255f003b634d8538be9874",
+        "size_bytes": 102303
+      },
+      {
+        "path": "us_az_statutes.parquet",
+        "sha256": "154906fd7bd455d1d1f3f76be91b9212f9fcde010b4dda83fa3f89dd084cc434",
+        "size_bytes": 14817668
+      },
+      {
+        "path": "us_ca_constitutions.parquet",
+        "sha256": "28ea3ccd0db5b6c1f8d58cba214869edc3f016dd624925b206554d68d642f08a",
+        "size_bytes": 138245
+      },
+      {
+        "path": "us_ca_statutes.parquet",
+        "sha256": "3beea508ad85b6a05f02b4173e1381e3a218dc4af4a41008980daef4674d92bf",
+        "size_bytes": 71109210
+      },
+      {
+        "path": "us_co_constitutions.parquet",
+        "sha256": "c0dd0cf49f936b65a89f921074d27cd4000a03540c53014ff9481eea22e20510",
+        "size_bytes": 200684
+      },
+      {
+        "path": "us_co_statutes.parquet",
+        "sha256": "12cd2678d5be3f962300d186b9955a0363f97d45b4a4ba7a3a21e9b2d723dfc2",
+        "size_bytes": 24525942
+      },
+      {
+        "path": "us_ct_constitutions.parquet",
+        "sha256": "19a65a08fb3d8370c7a2cbb4be2e705c42230e04bb0b9380488003a3dcae7533",
+        "size_bytes": 26148
+      },
+      {
+        "path": "us_ct_statutes.parquet",
+        "sha256": "d1f7c5270d0de395022149d7f1463adb163b039a5f6c889f9abe5d30737e2b8a",
+        "size_bytes": 13477137
+      },
+      {
+        "path": "us_dc_statutes.parquet",
+        "sha256": "758bd52983a5ba7460a00b4ef35d3f4791a47e2b6e4b90249828e25875854cf7",
+        "size_bytes": 12112787
+      },
+      {
+        "path": "us_de_constitutions.parquet",
+        "sha256": "f84e9fabf12a0b20d046727aa54b16db2e34fa64a89a5d5a705ea755e81c800f",
+        "size_bytes": 74709
+      },
+      {
+        "path": "us_de_statutes.parquet",
+        "sha256": "8c7486bdf3aa498225ccc05ddff699e87379a9a27aa5cde8dd9aeb15f22d1444",
+        "size_bytes": 12693428
+      },
+      {
+        "path": "us_federal_constitutions.parquet",
+        "sha256": "8220915353a5eff1f205969acc2af7282bab4c65331e000a472e4df0498af3a5",
+        "size_bytes": 25208
+      },
+      {
+        "path": "us_federal_statutes.parquet",
+        "sha256": "41a25a703b8cc1746bb20b8fe6ed0a51cf991c72de8daad40a1d211ff4494696",
+        "size_bytes": 88711846
+      },
+      {
+        "path": "us_fl_constitutions.parquet",
+        "sha256": "8da7b1da21328743459f0706f4b41ef765e6ff6406f258d44032c8766de629a3",
+        "size_bytes": 98437
+      },
+      {
+        "path": "us_fl_statutes.parquet",
+        "sha256": "6e8f4a3dd7554e3a8c52359e68501772d7ef31df0253b66303e6263c3d1b2759",
+        "size_bytes": 24175744
+      },
+      {
+        "path": "us_ga_constitutions.parquet",
+        "sha256": "4ff23f13ffe2fde173d19af84b50d6882004f708d44529ff85a70314a0fb7ee6",
+        "size_bytes": 39277
+      },
+      {
+        "path": "us_ga_statutes.parquet",
+        "sha256": "e159b2051da90cacce9521ca91d5af6938374da1491ee82cb7a21ae6c2b5ef6a",
+        "size_bytes": 18649994
+      },
+      {
+        "path": "us_hi_constitutions.parquet",
+        "sha256": "1cdd22d84a61273d9f387bb1796f367e3a4ff55f78390f232d56cc09800af604",
+        "size_bytes": 55471
+      },
+      {
+        "path": "us_hi_statutes.parquet",
+        "sha256": "169c2bf075fb8681b92ce4d950444536be3087bc0250e7d4edead0948341222c",
+        "size_bytes": 10452322
+      },
+      {
+        "path": "us_ia_constitutions.parquet",
+        "sha256": "4abeb3f204809b8f3b681dee6b75687b6ac2f836291e9273e408bd94c9ddacf7",
+        "size_bytes": 48678
+      },
+      {
+        "path": "us_ia_statutes.parquet",
+        "sha256": "2ace1dbf27e6cce08341e2c7c34573e47a2ce99252fda6634e51012a07457977",
+        "size_bytes": 15128004
+      },
+      {
+        "path": "us_id_constitutions.parquet",
+        "sha256": "313aa695207455d6122b4cdac2cd8d2260c5fbdb0eca5b5f314d9c7b6a614d4d",
+        "size_bytes": 71772
+      },
+      {
+        "path": "us_id_statutes.parquet",
+        "sha256": "6d6174f667af06d91cbb62989d1baeaf6537f08424bc3eec4a0e5aead41a859c",
+        "size_bytes": 13916663
+      },
+      {
+        "path": "us_il_constitutions.parquet",
+        "sha256": "69350473c15882a983a4ccab38fb0f2a03d54aa820091ab8e8d92496e896b976",
+        "size_bytes": 43810
+      },
+      {
+        "path": "us_il_statutes.parquet",
+        "sha256": "ed0ff25221812669452a1b7b15e5b4d98beb52d88c3e8737423d81bd32f0479a",
+        "size_bytes": 27692046
+      },
+      {
+        "path": "us_in_constitutions.parquet",
+        "sha256": "63c70973faccfd2f7ed77b9f5c844347f5dcb7acf91dca5170f2c70c572c2bd8",
+        "size_bytes": 39212
+      },
+      {
+        "path": "us_in_statutes.parquet",
+        "sha256": "bc5009125925e93afe2dc88f791b2f41a13375a0fe640ce723a52f69bd6eefc7",
+        "size_bytes": 28183409
+      },
+      {
+        "path": "us_ks_constitutions.parquet",
+        "sha256": "3737035009cb4cffdfcfef28163ebbc0e704daf6e120c7538420166fc9e27397",
+        "size_bytes": 39369
+      },
+      {
+        "path": "us_ks_statutes.parquet",
+        "sha256": "41d7c1d405bfeb990d6b6b3586a218d2a0af6df15affae3bfa3f9ed2df4b30f4",
+        "size_bytes": 14451104
+      },
+      {
+        "path": "us_ky_constitutions.parquet",
+        "sha256": "2e215f99ddf923aec495a68d927f9c7fe1bb9d71790f8b97adf98682e4f4ec09",
+        "size_bytes": 78759
+      },
+      {
+        "path": "us_ky_statutes.parquet",
+        "sha256": "3771030a169b5e7dca74355a93b9e5eafc4c17a1ad9efb2f82d7bed0d1630ae1",
+        "size_bytes": 14519383
+      },
+      {
+        "path": "us_la_constitutions.parquet",
+        "sha256": "c566ef19939ae927d839ccb4521e54ce6a01ad033f87e573cccd7b7b022195fa",
+        "size_bytes": 31706
+      },
+      {
+        "path": "us_la_statutes.parquet",
+        "sha256": "fa0e803d0f39fa0ab526907fef3f5834870d97790bde3d4355c80dfe948e3f2b",
+        "size_bytes": 27192448
+      },
+      {
+        "path": "us_ma_constitutions.parquet",
+        "sha256": "cbeecc9b67e64f71527d59bb07e512c5c4913b25753f19e4262236df9c3dc08a",
+        "size_bytes": 44651
+      },
+      {
+        "path": "us_ma_statutes.parquet",
+        "sha256": "c20d9669fa7469a3ae8b252f6618763b73c8132b8b90ecfa7a6566d926448209",
+        "size_bytes": 15348093
+      },
+      {
+        "path": "us_md_constitutions.parquet",
+        "sha256": "2d5d3cab85d8347936df81ef4cfe0febd2078e88c910341e76e80fcbde60e89f",
+        "size_bytes": 75966
+      },
+      {
+        "path": "us_md_statutes.parquet",
+        "sha256": "c424c93356f1d33f0b69ea7b356ccd0d59cca5a0fd3cf0bd49b4e5365d898f45",
+        "size_bytes": 18934534
+      },
+      {
+        "path": "us_me_constitutions.parquet",
+        "sha256": "78b29ae5f02fd74876062a058eee625a981f1caa0c993ab55153bf19be712b4b",
+        "size_bytes": 67253
+      },
+      {
+        "path": "us_me_statutes.parquet",
+        "sha256": "60fc5bd1b18a8817aaafc46551f14e1bdcb21867dc835174c81d619f19a19929",
+        "size_bytes": 17589106
+      },
+      {
+        "path": "us_mi_constitutions.parquet",
+        "sha256": "b5123187b45dfdb0d2525df540bc8530f32f1fb1c9fccd22d9bca06db7c86641",
+        "size_bytes": 97009
+      },
+      {
+        "path": "us_mi_statutes.parquet",
+        "sha256": "0c3fbe9af49f74a3c9d1da0eb12b03f55fb067eadec174f6d1b86bf5bd95f74e",
+        "size_bytes": 24941161
+      },
+      {
+        "path": "us_mn_constitutions.parquet",
+        "sha256": "3c42422aac3db73e7f43bad7e66ac32249e5259eec47d10cc15ddd709b8ef87b",
+        "size_bytes": 40299
+      },
+      {
+        "path": "us_mn_statutes.parquet",
+        "sha256": "b7707afa3e56c57034349bb549855f3bbbc29552a039107e27f9cb70b7096b19",
+        "size_bytes": 23216637
+      },
+      {
+        "path": "us_mo_constitutions.parquet",
+        "sha256": "99b4268ea1615631c2855b8eba34861db0d24c4ba91cf19f8b3818df83b97e0b",
+        "size_bytes": 95982
+      },
+      {
+        "path": "us_mo_statutes.parquet",
+        "sha256": "6a109d2b598c076bb1f35ec07ff380f7f559b6b926127fa6cfc119ce79ce5987",
+        "size_bytes": 19209168
+      },
+      {
+        "path": "us_ms_constitutions.parquet",
+        "sha256": "09231db7fec21a8965bc7fbdb41954b4497ffb23d079aa61d3faabdf8c14a128",
+        "size_bytes": 66550
+      },
+      {
+        "path": "us_ms_statutes.parquet",
+        "sha256": "6840ea1396b6c0227f1771e65afa4bb2271ae351938192b4e13395804d8019d4",
+        "size_bytes": 83274157
+      },
+      {
+        "path": "us_mt_constitutions.parquet",
+        "sha256": "5d0e69a7744a923c456e380ce5d46b2baed46682e41564512155be1551c26553",
+        "size_bytes": 41491
+      },
+      {
+        "path": "us_mt_statutes.parquet",
+        "sha256": "612527d07519d79b1247ac6ae30955f9cc998d4aac100d74f2619f99c7076c78",
+        "size_bytes": 15176349
+      },
+      {
+        "path": "us_nc_constitutions.parquet",
+        "sha256": "d696e436dbfa2d3c468f4255a7c33a3affafa70bf819ccfb8691e4d708540daa",
+        "size_bytes": 52397
+      },
+      {
+        "path": "us_nc_statutes.parquet",
+        "sha256": "687d65076b085e8e4fb6a47f14ecb1758c91522d4f514dbd36890e5a35d02b64",
+        "size_bytes": 17106762
+      },
+      {
+        "path": "us_nd_constitutions.parquet",
+        "sha256": "0246028caf1820ae86974542549074daa8bd663d1c88428475f5fe5fc3cc5829",
+        "size_bytes": 75121
+      },
+      {
+        "path": "us_nd_statutes.parquet",
+        "sha256": "bf98fa001f878634c08bceae60459abe899e2854c397ae6acec204893e42435e",
+        "size_bytes": 13223712
+      },
+      {
+        "path": "us_ne_constitutions.parquet",
+        "sha256": "b653a8647cd9f4a84ffa4411ff8b9361147b1d04bb7dca5ceb86b3b4a10d01ea",
+        "size_bytes": 79589
+      },
+      {
+        "path": "us_ne_statutes.parquet",
+        "sha256": "3209ba3e333933f46496caa80ba2c46379f00a343f3de0ff22f314103688b28b",
+        "size_bytes": 14325911
+      },
+      {
+        "path": "us_nh_constitutions.parquet",
+        "sha256": "4811b83c70c11c4e02ab6845f9c7602ea781e7fb9127631a7d42d75b6ec569a6",
+        "size_bytes": 33769
+      },
+      {
+        "path": "us_nh_statutes.parquet",
+        "sha256": "53da8ffa0f8221d1e020da49153fbc82bff834626abfeec670124989a824d480",
+        "size_bytes": 12213565
+      },
+      {
+        "path": "us_nj_constitutions.parquet",
+        "sha256": "379adfc4cc53172c31f2eb161dc03409c7f04ec74924171dfc3083cb8cb80ea2",
+        "size_bytes": 55794
+      },
+      {
+        "path": "us_nj_statutes.parquet",
+        "sha256": "9191c792342e60cd3d031dc2cf1a3baac2df0743d36ab0f66ca162ea8d3562de",
+        "size_bytes": 28433533
+      },
+      {
+        "path": "us_nm_constitutions.parquet",
+        "sha256": "e2d209f2ecdc5bb7a9700006fae3987d5ac0f015efad861e831b2ff4a14a24f2",
+        "size_bytes": 30817
+      },
+      {
+        "path": "us_nm_statutes.parquet",
+        "sha256": "236d4d8f5befd6d1de3cc986cbc644c93496909b3e18c96d50821af94ef3b1f1",
+        "size_bytes": 15646341
+      },
+      {
+        "path": "us_nv_constitutions.parquet",
+        "sha256": "78837c3240cdcd54a4db1cb9b4b7ae0bae874a485c68bb548000431454f007b0",
+        "size_bytes": 17613
+      },
+      {
+        "path": "us_nv_statutes.parquet",
+        "sha256": "22b6bd9cdaf88b1e7dab881bdc3840dc8af091a6cbd1890831c9a416fd8160e9",
+        "size_bytes": 19428874
+      },
+      {
+        "path": "us_ny_constitutions.parquet",
+        "sha256": "3146917a9e5aaa4c6ba6a89ce2141eefb3abc0bc01ef7a7a25e44deea2d35aa4",
+        "size_bytes": 93102
+      },
+      {
+        "path": "us_ny_statutes.parquet",
+        "sha256": "bd3921e2c5cee7f65b8f98a59467b97a6fe5a95db8bc95e5abbe77d85bbf8ca7",
+        "size_bytes": 39170904
+      },
+      {
+        "path": "us_oh_constitutions.parquet",
+        "sha256": "687f701dfe6145414ab847730c1a0d6cbf1964c2b700313f62af429729b8d7b2",
+        "size_bytes": 55606
+      },
+      {
+        "path": "us_oh_statutes.parquet",
+        "sha256": "082a32555bac4579d7f96c990c943afc6497a5d95459c41fe3423b9027edb17f",
+        "size_bytes": 24154685
+      },
+      {
+        "path": "us_ok_constitutions.parquet",
+        "sha256": "ccbff2e6cfb72e7dc9dcedbaf1b9a63b63189f8dbfb160ff4486e9c1aa055521",
+        "size_bytes": 76109
+      },
+      {
+        "path": "us_ok_statutes.parquet",
+        "sha256": "c3ef87eb40fd7e2281a5d11c8d0c66f915cb03e9756480cac233b197341b1790",
+        "size_bytes": 21726587
+      },
+      {
+        "path": "us_or_constitutions.parquet",
+        "sha256": "41b336a884f10b20e6896e87a12c49c4c8e7e079ea6717faa4768b4668723f3a",
+        "size_bytes": 22321
+      },
+      {
+        "path": "us_or_statutes.parquet",
+        "sha256": "17e91bfff4e0b35a460772f6261724f35535b245acfd904554e8d4a426aaba30",
+        "size_bytes": 22644812
+      },
+      {
+        "path": "us_pa_constitutions.parquet",
+        "sha256": "dc86238f9bdcadf5a2b0d5958957f13c0c12794d21e1f003772a8d8171513323",
+        "size_bytes": 63527
+      },
+      {
+        "path": "us_pa_statutes.parquet",
+        "sha256": "4b78240c493ce6ddb458203a4276865b6da43c3e195dcbeb53a0519fdaaf29f2",
+        "size_bytes": 8543572
+      },
+      {
+        "path": "us_pr_constitutions.parquet",
+        "sha256": "e1a634bcaff711de9f57f23194860897e495783e57c89fc8913cf7c997616c25",
+        "size_bytes": 32878
+      },
+      {
+        "path": "us_pr_statutes.parquet",
+        "sha256": "cfdb99e8d63a2d61859ba3fc78799416c820ffaa047a0b2808e182e1bcaf2dcb",
+        "size_bytes": 13481894
+      },
+      {
+        "path": "us_ri_constitutions.parquet",
+        "sha256": "f10a5bd6174f0431ce90a42f0444a1ffc97118b8d7ed8a24f6cc53da34dd6aeb",
+        "size_bytes": 42666
+      },
+      {
+        "path": "us_ri_statutes.parquet",
+        "sha256": "b8ba13561f9a499a46df596f402c86bf1f8ea7ba0060ab4f16533b802425ce1c",
+        "size_bytes": 9953327
+      },
+      {
+        "path": "us_sc_constitutions.parquet",
+        "sha256": "e29a8e40bcaa636994c8747a3f7a6a384206eef4498b554e67b8272577265ab0",
+        "size_bytes": 64453
+      },
+      {
+        "path": "us_sc_statutes.parquet",
+        "sha256": "dfa881c65dda4d1f86ad59577dbd5eb06e5aa65c25eb7c15100817e5f2d402bb",
+        "size_bytes": 15372558
+      },
+      {
+        "path": "us_sd_constitutions.parquet",
+        "sha256": "6edad9e5ec9c519d7e21ac8a4857e19e68787a7bd6ce6868af473d1c3fddaa92",
+        "size_bytes": 79402
+      },
+      {
+        "path": "us_sd_statutes.parquet",
+        "sha256": "af1771351fd6d122fdcf92a1005fb8b525e1214e8ddc57fa50b3e10938c259c0",
+        "size_bytes": 13337734
+      },
+      {
+        "path": "us_tn_constitutions.parquet",
+        "sha256": "62cb16aca1a877310a9b2cea80d5516516190e6c510ce19f32f4b04d86d93240",
+        "size_bytes": 41734
+      },
+      {
+        "path": "us_tn_statutes.parquet",
+        "sha256": "8a7b5ff5119964a3fc2d9b76c90fae0cc78b092f22e8b12fac0c965bc1a53113",
+        "size_bytes": 21275917
+      },
+      {
+        "path": "us_tx_constitutions.parquet",
+        "sha256": "5201082435ca96fbb319f9a6843bf2932a6c2f9150d566aaba4c2883c83b45d6",
+        "size_bytes": 202505
+      },
+      {
+        "path": "us_tx_statutes.parquet",
+        "sha256": "de8d3c329c894a6cf8f90effb9d0e91003e9cbf2353626ede5125626189f5516",
+        "size_bytes": 39943258
+      },
+      {
+        "path": "us_ut_constitutions.parquet",
+        "sha256": "ad31b9fb0517175bcce4196d58f20de4e343bcaf3edc16ca84786363247666f0",
+        "size_bytes": 92252
+      },
+      {
+        "path": "us_ut_statutes.parquet",
+        "sha256": "e62dd449380c48e6b3dfcb6ec2572458f807a498bf9c162677983664bd7d7940",
+        "size_bytes": 17349903
+      },
+      {
+        "path": "us_va_constitutions.parquet",
+        "sha256": "c97baf484cdeeb38a1b0f37b0c6ee850fc8afe3441d5261a29b13fcdeb792aaa",
+        "size_bytes": 58561
+      },
+      {
+        "path": "us_va_statutes.parquet",
+        "sha256": "e41c71532d0cb96084ddd7efc34e3243f7d6b7938b8065427cbbb6bfec26a772",
+        "size_bytes": 20738699
+      },
+      {
+        "path": "us_vt_constitutions.parquet",
+        "sha256": "86d37fe10de3dffa4cae51141f6eb0c463f0c788cf75e1456e62c5b5398256d9",
+        "size_bytes": 26976
+      },
+      {
+        "path": "us_vt_statutes.parquet",
+        "sha256": "250cbda013b3505a0edb16fdcdf6fe0ccad227a622c52a5f21634cd46c24059c",
+        "size_bytes": 12301259
+      },
+      {
+        "path": "us_wa_constitutions.parquet",
+        "sha256": "968938ebb56f7e933f28837053dcbf3bcbd634acafc7bc51c2a8859524899a22",
+        "size_bytes": 43099
+      },
+      {
+        "path": "us_wa_statutes.parquet",
+        "sha256": "f66eb6e47a6668a47be54691663746b6d462ca9086c6f9c554fd0069c372327d",
+        "size_bytes": 26777056
+      },
+      {
+        "path": "us_wi_constitutions.parquet",
+        "sha256": "d94c9cf2025ec3384221372cf910de8e17179e8810bfdfc2f26c292b2c5f669b",
+        "size_bytes": 47081
+      },
+      {
+        "path": "us_wi_statutes.parquet",
+        "sha256": "16fce77c17ef934078c37477815c99d2f2cee1939fcf26ceefe50daca45b4f0d",
+        "size_bytes": 14653073
+      },
+      {
+        "path": "us_wv_constitutions.parquet",
+        "sha256": "ea44cb3edc4c800223c9a55671694af6c288a039233c214082302308dc6ec08a",
+        "size_bytes": 22367
+      },
+      {
+        "path": "us_wv_statutes.parquet",
+        "sha256": "2d4b1c584fa6388ced8ae579fc4ac2fa5b6bdc824cbc648ba5a6252bd56c59ca",
+        "size_bytes": 16337170
+      },
+      {
+        "path": "us_wy_constitutions.parquet",
+        "sha256": "be2c8e3a405b1091c93c1c58e57c2907d2c9153391c1e3a537f075d58911fee1",
+        "size_bytes": 73701
+      },
+      {
+        "path": "us_wy_statutes.parquet",
+        "sha256": "baf8eb087b6a4730d0559d507afb86f91e56be8edb7b2b622fdb66a80fa240d2",
+        "size_bytes": 5330029
+      }
+    ],
+    "entry_count": 105,
+    "expected_stale_bytes_sha256": "20c7f327d38810da9168e53dd90babcae25fb634114e3cebbbe201c4726306b0",
+    "live_parquet_paths_missing_from_checksum": [],
+    "path": "SHA256SUMS.json",
+    "size_or_digest_mismatches": [
+      {
+        "checksum_size_bytes": 25208,
+        "kind": "size",
+        "live_size_bytes": 31003,
+        "path": "us_federal_constitutions.parquet"
+      }
+    ],
+    "stale": true,
+    "stale_entry_count": 3,
+    "withdrawn_paths_still_listed": [
+      "us_ga_statutes.parquet",
+      "us_nc_statutes.parquet"
+    ]
+  },
+  "currentness_disclaimer": "This snapshot records one observation of a mutable, non-versioned Hugging Face Bucket. The inventory digest identifies that observation only. It is not a 40-hex Dataset revision, not a content-addressed release pin, and not proof of completeness or freshness.",
+  "description": "Live authenticated recursive inventory of justicedao/open-us-law-bucket. The listing is canonically sorted and hashed over path, type, size, Xet identity, and upload time. Object counts, live Parquet counts, stale checksum entries, sizes, Xet hashes, and observation time are recomputed independently. The bucket is mutable and is not a revision pin.",
+  "descriptor_is_authoritative": false,
+  "expected": {
+    "absent_required_statute_codes": [
+      "GA",
+      "NC"
+    ],
+    "control_object_count": 4,
+    "object_count": 107,
+    "parquet_count": 103,
+    "stale_checksum_bytes_sha256": "20c7f327d38810da9168e53dd90babcae25fb634114e3cebbbe201c4726306b0",
+    "total_size_bytes": 1134269198
+  },
+  "goal_id": "OUL-G010",
+  "grants_authority": false,
+  "inventory_digest_sha256": "8fb795731ad1298faa02e53ac0ea487d631133e9c1a32ae73c646079ca1e2e6b",
+  "listing_mode": "authenticated_recursive",
+  "listing_sha256": "48581ddd94772982dda06a62008abd737838ab8850ea035b094081f086ac7a8b",
+  "objects": [
+    {
+      "media_type": "application/octet-stream",
+      "mtime": null,
+      "path": ".gitattributes",
+      "size_bytes": 2504,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.114000Z",
+      "xet_hash": "738f112595603cb0e8566ac7936fb35c8f148f469ba15cda1b9fb53639a96b70"
+    },
+    {
+      "media_type": "text/markdown",
+      "mtime": null,
+      "path": "README.md",
+      "size_bytes": 10594,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.114000Z",
+      "xet_hash": "a7c6a462d125681a60c225f868562f13ebdbda46ba59fa84ab28b51f9a3e6f91"
+    },
+    {
+      "media_type": "application/json",
+      "mtime": null,
+      "path": "SHA256SUMS.json",
+      "size_bytes": 17841,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.114000Z",
+      "xet_hash": "eb526ebb269e3661db862513639c1a0803efa690f0f1366c966c83020d82d70e"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ak_constitutions.parquet",
+      "size_bytes": 35551,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "73a20315cc07011257ccf0c7dbb337f9a780e113ee62493d298ce67ef6517326"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ak_statutes.parquet",
+      "size_bytes": 8259550,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d3c9e879ba8873052d5bf717ac9361f97e872283f6ee022c47f8ade1a830ed24"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_al_constitutions.parquet",
+      "size_bytes": 215753,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "b1100f4c2a0221d9861602a011f63b5a726f926360897d8195ce8d5b571023cc"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_al_statutes.parquet",
+      "size_bytes": 22528685,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a0ab4eb5c3f930658c3cdec399d3e27d65eb61802b00fbb1797c2574ef98927b"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ar_constitutions.parquet",
+      "size_bytes": 94778,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "da7c37603bbc502048b2ca12e292b8b78e4242c35534fadaffe1b19126cf6765"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ar_statutes.parquet",
+      "size_bytes": 22460220,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7d2e3f4f9718b45e2fb753fdb81c8fc022f46f0bec6527bd5c0bd06a80d0e99e"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_az_constitutions.parquet",
+      "size_bytes": 102303,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4c61b26eb2514a9dee9b557c42168aef24a964d506342921eaa7899aec698387"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_az_statutes.parquet",
+      "size_bytes": 14817668,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4ae29f19c4e06e2fcf003462684bb2443db9b574e1536f237c8f3088ed67987f"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ca_constitutions.parquet",
+      "size_bytes": 138245,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "5528dc38c476c94b511c78b054f62d8dbf01c6367f271b72057c46de07a6c5ae"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ca_statutes.parquet",
+      "size_bytes": 71109210,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "2a4f04c03186dba304dd431cbb70c4c586c446c368d5b1ce888d780fbbfb2c7b"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_co_constitutions.parquet",
+      "size_bytes": 200684,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d887cb9691beab52a185317800defc6029461c3847d1d300bae53d44ae2d5da9"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_co_statutes.parquet",
+      "size_bytes": 24525942,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "97595160a4d5bb1416ecdf1dd18f3fc4b8a86de20ea89f722cd3343cee779066"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ct_constitutions.parquet",
+      "size_bytes": 26148,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "f3b866371a2aeb44e9309579165e3cfb0b13e6289c39c6dd851dbb002eff5cd0"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ct_statutes.parquet",
+      "size_bytes": 13477137,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "58b90b4eaf2569493fbd06a5d3666be1fcb3273c65431ebd62e9e9df32b954bb"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_dc_statutes.parquet",
+      "size_bytes": 12112787,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "ffd80222bb5a4f1c8927a01aaa6c77afe5cb94106d59d50836b33b6100686a77"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_de_constitutions.parquet",
+      "size_bytes": 74709,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d48869f196736e69db485ab4da2e7b214ffa01d48ae8372098218b8c549ef7ae"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_de_statutes.parquet",
+      "size_bytes": 12693428,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "09727a345bb0d0f0dfd6f528177b9e74e311ed25dda30c161e30d76d95bc37a0"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_federal_constitutions.parquet",
+      "size_bytes": 31003,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "adffa9980c338900f2155bffc5b5afa2f593cb655df08141796f62c8e752f8b3"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_federal_statutes.parquet",
+      "size_bytes": 88711846,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e762d9689d5a0f2733272373a68a723cd7b4df5c3a5605b27eb339ee8e69281b"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_fl_constitutions.parquet",
+      "size_bytes": 98437,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4cc322adecbf9fca26ca916de085b11cf340ed93a71288fd4c3d6721d9392bcd"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_fl_statutes.parquet",
+      "size_bytes": 24175744,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "fca8421ac746697a44386a5850424706741c2e89230533fb5ac58ed882a7cd86"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ga_constitutions.parquet",
+      "size_bytes": 39277,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "fad42556f0d5946407616d13c8bb7c60e803058a4b8cacbb4650982cc13e1f51"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_hi_constitutions.parquet",
+      "size_bytes": 55471,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "c5eb62ad310b27beedd68d1f12c39d00e331a6c1904917541d1e569b3d6e59db"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_hi_statutes.parquet",
+      "size_bytes": 10452322,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "cbea762b5fcdf5d452ca39e9692e8de0aa1cb2f1f8fa474f6e853cca799eee75"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ia_constitutions.parquet",
+      "size_bytes": 48678,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "6645b322688f362254abef40a0fef81b6b5e65f043db1e65fad29fc239c39644"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ia_statutes.parquet",
+      "size_bytes": 15128004,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "5da03cb996667a52b6196d63a80c20c65791bea55d89d8eefd9d6cc51884d4b3"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_id_constitutions.parquet",
+      "size_bytes": 71772,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "065844a083b2386427935f247409c0ca78b51b17d0593c73525ac34e922b1a98"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_id_statutes.parquet",
+      "size_bytes": 13916663,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "378670a5568ff995ef2c24aba1fcc7d6583dd3154a4f96897fdb671a553babe2"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_il_constitutions.parquet",
+      "size_bytes": 43810,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "eb8ceef72f836ba8342fbf08d4bba815fd8dd4fd204516853a45b510eb1c5317"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_il_statutes.parquet",
+      "size_bytes": 27692046,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "27ba48ce809a7ca288591040c9f835e3f318d8bf11e8283a38c9ff0c155f01e0"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_in_constitutions.parquet",
+      "size_bytes": 39212,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "ea1dded5e5bbf3225c67ed672d4bc49b037cfd11509bf8455f9d65850347f709"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_in_statutes.parquet",
+      "size_bytes": 28183409,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4cdfb57bf3b912f43740d2d2e148edc0b5cba44544d4531bc39e9e62ca484223"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ks_constitutions.parquet",
+      "size_bytes": 39369,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "0b148449bcf63744b3b16bb3f3f0a980e1ae708d24750055b9e265531966018d"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ks_statutes.parquet",
+      "size_bytes": 14451104,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7d13e92fcf949d9035dbf55339df1199867d551891d172bc02c76218a7567d15"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ky_constitutions.parquet",
+      "size_bytes": 78759,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "f64dc98f2d16d8062efb0a11cc58cd79dc4d8746302c555e74924ce0fc080fb8"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ky_statutes.parquet",
+      "size_bytes": 14519383,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "3eb6e196d406d6e82b54aabe298ba8d7d4fcc6edf64f2e33cb406d4841cec2c8"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_la_constitutions.parquet",
+      "size_bytes": 31706,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e35f94a9892fda36a65b66c10f1506840651158dc0999cef72624081d29ac195"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_la_statutes.parquet",
+      "size_bytes": 27192448,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a51d59df54e8344ef066a74169bc873150ff8839aede8dfe71cb2a8f2e10fba1"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ma_constitutions.parquet",
+      "size_bytes": 44651,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a333a47ecbc1cc0fc6cb548fc73e1ea38b3954f7c94c987a8e1924282417c145"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ma_statutes.parquet",
+      "size_bytes": 15348093,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "3152d5eff36c2f424195e9bc6fe7e28ef0834c96d81cefa86b7b516bda4713b3"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_md_constitutions.parquet",
+      "size_bytes": 75966,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "bb2a0769f73a5556dc11f57bcd372550a025b54c89f7895c0d8840373e126363"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_md_statutes.parquet",
+      "size_bytes": 18934534,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d911fd58ab09a2e2082abc6c1bc8cfda363d11a243e3da7899f7ecb0e5b453d4"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_me_constitutions.parquet",
+      "size_bytes": 67253,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8c647f828c654ac47552aa6776941e12a6a9387679155b0f92bc651de62c3fd2"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_me_statutes.parquet",
+      "size_bytes": 17589106,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "79880fae9b4fc2a87e9c8038586fbf7a59b1a60ac5ed92435685201ac5916da1"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_mi_constitutions.parquet",
+      "size_bytes": 97009,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "b6f2088752237f3ee7a48cf63343a836a056d54806a327790541d062fa51140e"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_mi_statutes.parquet",
+      "size_bytes": 24941161,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "912e2bc5a9bd0e56dd5a8a2347f3f11671dbd8a3714abaf3ff791ec767df17b9"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_mn_constitutions.parquet",
+      "size_bytes": 40299,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "cec515cbf3780afcf5cfbdb312e97f87c4546413dc4963d0617de94cabb6c500"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_mn_statutes.parquet",
+      "size_bytes": 23216637,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "82147cc011e144101453ab46b4b4f4f194092f84a09f7adcf20d4a95cff5f28b"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_mo_constitutions.parquet",
+      "size_bytes": 95982,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "163e665c907f608cbe3b023d75eec7960cf75a861ba407616c13ccb29f2746b7"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_mo_statutes.parquet",
+      "size_bytes": 19209168,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "032383b5b4d66f6e10f63796d94d2782d4d11f145243784472952312db42b8e8"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ms_constitutions.parquet",
+      "size_bytes": 66550,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "47c735bf6fd324ab9db238b32e5f43dccab0aebb137dbf9ed8656ff52d4fdfe1"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ms_statutes.parquet",
+      "size_bytes": 83274157,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7ab8e23d7c18cdb53015f33605ae982fab69e82300974b292992d697a6247907"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_mt_constitutions.parquet",
+      "size_bytes": 41491,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8d09b4774a20b68f11474424e02d4a0ffdd329ba7580c46b4286d658c98aefd0"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_mt_statutes.parquet",
+      "size_bytes": 15176349,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8aed722467c2bc5401788bbe9c216fbb9c29af9b1f5b3987ef0402b725542263"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nc_constitutions.parquet",
+      "size_bytes": 52397,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "abeab491fde29e0813dbc93309bd32e606ca60cf8abc4e029a3fb3a81774edb2"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nd_constitutions.parquet",
+      "size_bytes": 75121,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "728987b2bb30e6211fb03150f2103823ddffe120c4a340841ca356ba7d5af398"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nd_statutes.parquet",
+      "size_bytes": 13223712,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "0d4adfc873856e5a784dfbc76f457c194f6de054d0a8f1e43454273fafadf246"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ne_constitutions.parquet",
+      "size_bytes": 79589,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "352e2a6ab554c0454f024b129d51ce99641176bdfe7e731e94e303d46f8f3b2c"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ne_statutes.parquet",
+      "size_bytes": 14325911,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8d51817c649d1bdfbd47d323741cb7a9eb05dceaf2abe51b5e33a227eef5df12"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nh_constitutions.parquet",
+      "size_bytes": 33769,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "c44a3fc391c3b2474e74067cd186cb1d8da576a0d599b96a83808c3a22933851"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nh_statutes.parquet",
+      "size_bytes": 12213565,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e17c7ee81f4afa23a42097c39a475f398235df32b504a07554ad5ae45fca820e"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nj_constitutions.parquet",
+      "size_bytes": 55794,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "b1be01d9defda9b0c6f5657bf2e9f8253c0f9566953481b3cd2d4933923f55b7"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nj_statutes.parquet",
+      "size_bytes": 28433533,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "35f97f293c35e284069f938f6ffb516dafd0a9f80e61c05f703078cf04f1dd12"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nm_constitutions.parquet",
+      "size_bytes": 30817,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7757500e3433d72c3ac01cb262e6e161255ae4d6f2112bbc7fcc3b04641a7487"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nm_statutes.parquet",
+      "size_bytes": 15646341,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "cbaf10b01473ad4525d39827976efe9cfaa3cc78aff491e622b9fb6715f5e15c"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nv_constitutions.parquet",
+      "size_bytes": 17613,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "7ef42df720a78dfc155e5692b051544d4a5ca17f1e95129efd7790354e051bd0"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_nv_statutes.parquet",
+      "size_bytes": 19428874,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "95f29f6b3ae984e671cda201c46766a58d4f12825cd93e585fe74535688bea2f"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ny_constitutions.parquet",
+      "size_bytes": 93102,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "173d9b38271071ba1bdeeee89c6cd5c2ec249ca27c9395b50d41d8376fd5860e"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ny_statutes.parquet",
+      "size_bytes": 39170904,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "429d81e2ec0b8595cd6860838fe356275747758acee04501c4bd9affbdf777c7"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_oh_constitutions.parquet",
+      "size_bytes": 55606,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8cec1d4ca1b4dbe7ff0adc56d3ba1b7e5b4544f63e2a266344ea22470b8a4d09"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_oh_statutes.parquet",
+      "size_bytes": 24154685,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "c67f5c8e5b3e95d6ed589a6bd73191e0010a79c253a95a991cb094b437df401d"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ok_constitutions.parquet",
+      "size_bytes": 76109,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "de4591f0f4114058a220c8499c9abd0ed32dd7a0063d4372add863069fabde66"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ok_statutes.parquet",
+      "size_bytes": 21726587,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d6f9cda445316518f270b1f97678522e5eccbbf4539403b69925873fed1ed361"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_or_constitutions.parquet",
+      "size_bytes": 22321,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "89b98bff6d80468d6c349abd25f7c230add670627298da430d575db3d3e428fa"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_or_statutes.parquet",
+      "size_bytes": 22644812,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a7fb81b27c4b18399f1d15288521062b6705d7c965d1a5d74f75f1400f0a40bf"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_pa_constitutions.parquet",
+      "size_bytes": 63527,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "5cd34f25589f437399e431aebbe84ab8f41aff1352b2e98d4fe46e84fc32d69b"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_pa_statutes.parquet",
+      "size_bytes": 8543572,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "697430906e32557033b11f0ff4a76fc0dfedd995e99373269a5b88a1475d9997"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_pr_constitutions.parquet",
+      "size_bytes": 32878,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "4166e71b64ba1c689b35b56782b4de70d2fc25b7c8503036abb6e997e8ff4216"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_pr_statutes.parquet",
+      "size_bytes": 13481894,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "dead9083686b1057c0582bb29ce5b4ca2e5743609a00f5cdef9e4cb9630f2c72"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ri_constitutions.parquet",
+      "size_bytes": 42666,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "741351d124de2044d9f832956453cdabe0952a39c47fda2f01c5f3b86de285b9"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ri_statutes.parquet",
+      "size_bytes": 9953327,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "168b8c4be1b0d6bb5128881062f97bc436e1490bb7c505e23696c5b774c34b35"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_sc_constitutions.parquet",
+      "size_bytes": 64453,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e9a55f805aa52dc3f01ee6713b33b46c0a6bd08d816ff77ced26fc5356af48c9"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_sc_statutes.parquet",
+      "size_bytes": 15372558,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "f606e12687ce0e295f88bcab4270a92e82eed5cfb4385608ff61e094e42a59b0"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_sd_constitutions.parquet",
+      "size_bytes": 79402,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a08b284da18d5aedca7d71da5d18fd845b4da243bf3d9c13d46a98e6628f1398"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_sd_statutes.parquet",
+      "size_bytes": 13337734,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a93634ac0977299b89c17aafaa89204f5921fcd83a1e1dbdaff73430cde3f871"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_tn_constitutions.parquet",
+      "size_bytes": 41734,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d7d95dc20c154a81b6e06a2a6a2a3e74e3f1f3f94d918ae8eda915a5b03e4c94"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_tn_statutes.parquet",
+      "size_bytes": 21275917,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "0cd29c55d0ac340c206bde9d289b45875387192d8170df7c651b395424e33667"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_tx_constitutions.parquet",
+      "size_bytes": 202505,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "af999477454010b59c955c4a828d50e1360766e875163c456ae8a55b32eadd85"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_tx_statutes.parquet",
+      "size_bytes": 39943258,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "0bdfa4277fb4aadfdafc2aa61d2bf1469a10f8a74adb1f46969cb5f43c74430c"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ut_constitutions.parquet",
+      "size_bytes": 92252,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "d73784c83a8fcc8d03b68d1f428d06bcf288383d1d49f51a2a2f364544028adb"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_ut_statutes.parquet",
+      "size_bytes": 17349903,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "65bc53733bbeca31e3b5a795ca9c4126f4772c83289b8bf83509f3a7141177f5"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_va_constitutions.parquet",
+      "size_bytes": 58561,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e480f71bb6f904978f7715c891ce35ba9799812d554aa38ceace8eebd9eae071"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_va_statutes.parquet",
+      "size_bytes": 20738699,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "eca8f355d8a459863359d5f9bca45a51bba289cc31171765e6c1dbe309a93b9c"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_vt_constitutions.parquet",
+      "size_bytes": 26976,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "c3c45fcaf45692e9fdcccb0b1e5ef25b68bb81b327e9efadf456415a7417cde7"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_vt_statutes.parquet",
+      "size_bytes": 12301259,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "8b6f2b8071f9f44140e6a4116a95f1410194ee1370014a0884184fa008936a3d"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_wa_constitutions.parquet",
+      "size_bytes": 43099,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "dd53a89b77cc37868b17cbf6fb0177e827482cfc4bb87fb88828fdd6ca1339d4"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_wa_statutes.parquet",
+      "size_bytes": 26777056,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "a3ac82545c9efa58a5b03eedf3627f4837bd80f8edd117c177a1cbf495b0ec03"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_wi_constitutions.parquet",
+      "size_bytes": 47081,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "ba153abf99089fea6496cf344ec86f87d129dd9d1396bca1390b089da98d436f"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_wi_statutes.parquet",
+      "size_bytes": 14653073,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "e002a7ca4b475c9e7ec31fcdbc927068dd30518c11d643dbf830d5fd35dd3ce7"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_wv_constitutions.parquet",
+      "size_bytes": 22367,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.305000Z",
+      "xet_hash": "30e2f8496e812c4bcec7ca928367b5fb67c7c1b765a5b8331f7bba3577b1233f"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_wv_statutes.parquet",
+      "size_bytes": 16337170,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.538000Z",
+      "xet_hash": "387caa0e570380c3ff4edeb90095a737f7b835e1c751d8d4af3f958608fc4843"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_wy_constitutions.parquet",
+      "size_bytes": 73701,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.538000Z",
+      "xet_hash": "49df350f75464459342fd0bc92f4200be552eacfa625fd19ced36ad33f9fe77c"
+    },
+    {
+      "media_type": "application/vnd.apache.parquet",
+      "mtime": null,
+      "path": "us_wy_statutes.parquet",
+      "size_bytes": 5330029,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.538000Z",
+      "xet_hash": "c12dc4ecd95617c671f31d278ea39965e2c3938892873c74ac13dc4bc6685fad"
+    },
+    {
+      "media_type": "image/png",
+      "mtime": null,
+      "path": "walkthrough-thumb.png",
+      "size_bytes": 298779,
+      "type": "file",
+      "uploaded_at": "2026-08-13T20:54:05.538000Z",
+      "xet_hash": "ab91b0fa8a8f0fa2cf4cdfad885cd6ae73ee02e156ef4d7bb56e3dcd91024904"
+    }
+  ],
+  "observed_at": "2026-08-14T00:51:06Z",
+  "producer": "audit_open_us_law_bucket.py@1",
+  "program_id": "open-us-law-reindex-v1",
+  "provisional_digest_authorizes_downstream": false,
+  "provisional_inventory_digest_sha256": "ef84263ab604460297fadfefa4268aee974b1ba1ed914188cc591df62e6ff65b",
+  "reconciliation": {
+    "absent_required_statute_codes": {
+      "expected": [
+        "GA",
+        "NC"
+      ],
+      "independent": [
+        "GA",
+        "NC"
+      ],
+      "match": true
+    },
+    "control_object_count": {
+      "expected": 4,
+      "independent": 4,
+      "match": true
+    },
+    "control_object_paths": [
+      ".gitattributes",
+      "README.md",
+      "SHA256SUMS.json",
+      "walkthrough-thumb.png"
+    ],
+    "live_parquet_paths": [
+      "us_ak_constitutions.parquet",
+      "us_ak_statutes.parquet",
+      "us_al_constitutions.parquet",
+      "us_al_statutes.parquet",
+      "us_ar_constitutions.parquet",
+      "us_ar_statutes.parquet",
+      "us_az_constitutions.parquet",
+      "us_az_statutes.parquet",
+      "us_ca_constitutions.parquet",
+      "us_ca_statutes.parquet",
+      "us_co_constitutions.parquet",
+      "us_co_statutes.parquet",
+      "us_ct_constitutions.parquet",
+      "us_ct_statutes.parquet",
+      "us_dc_statutes.parquet",
+      "us_de_constitutions.parquet",
+      "us_de_statutes.parquet",
+      "us_federal_constitutions.parquet",
+      "us_federal_statutes.parquet",
+      "us_fl_constitutions.parquet",
+      "us_fl_statutes.parquet",
+      "us_ga_constitutions.parquet",
+      "us_hi_constitutions.parquet",
+      "us_hi_statutes.parquet",
+      "us_ia_constitutions.parquet",
+      "us_ia_statutes.parquet",
+      "us_id_constitutions.parquet",
+      "us_id_statutes.parquet",
+      "us_il_constitutions.parquet",
+      "us_il_statutes.parquet",
+      "us_in_constitutions.parquet",
+      "us_in_statutes.parquet",
+      "us_ks_constitutions.parquet",
+      "us_ks_statutes.parquet",
+      "us_ky_constitutions.parquet",
+      "us_ky_statutes.parquet",
+      "us_la_constitutions.parquet",
+      "us_la_statutes.parquet",
+      "us_ma_constitutions.parquet",
+      "us_ma_statutes.parquet",
+      "us_md_constitutions.parquet",
+      "us_md_statutes.parquet",
+      "us_me_constitutions.parquet",
+      "us_me_statutes.parquet",
+      "us_mi_constitutions.parquet",
+      "us_mi_statutes.parquet",
+      "us_mn_constitutions.parquet",
+      "us_mn_statutes.parquet",
+      "us_mo_constitutions.parquet",
+      "us_mo_statutes.parquet",
+      "us_ms_constitutions.parquet",
+      "us_ms_statutes.parquet",
+      "us_mt_constitutions.parquet",
+      "us_mt_statutes.parquet",
+      "us_nc_constitutions.parquet",
+      "us_nd_constitutions.parquet",
+      "us_nd_statutes.parquet",
+      "us_ne_constitutions.parquet",
+      "us_ne_statutes.parquet",
+      "us_nh_constitutions.parquet",
+      "us_nh_statutes.parquet",
+      "us_nj_constitutions.parquet",
+      "us_nj_statutes.parquet",
+      "us_nm_constitutions.parquet",
+      "us_nm_statutes.parquet",
+      "us_nv_constitutions.parquet",
+      "us_nv_statutes.parquet",
+      "us_ny_constitutions.parquet",
+      "us_ny_statutes.parquet",
+      "us_oh_constitutions.parquet",
+      "us_oh_statutes.parquet",
+      "us_ok_constitutions.parquet",
+      "us_ok_statutes.parquet",
+      "us_or_constitutions.parquet",
+      "us_or_statutes.parquet",
+      "us_pa_constitutions.parquet",
+      "us_pa_statutes.parquet",
+      "us_pr_constitutions.parquet",
+      "us_pr_statutes.parquet",
+      "us_ri_constitutions.parquet",
+      "us_ri_statutes.parquet",
+      "us_sc_constitutions.parquet",
+      "us_sc_statutes.parquet",
+      "us_sd_constitutions.parquet",
+      "us_sd_statutes.parquet",
+      "us_tn_constitutions.parquet",
+      "us_tn_statutes.parquet",
+      "us_tx_constitutions.parquet",
+      "us_tx_statutes.parquet",
+      "us_ut_constitutions.parquet",
+      "us_ut_statutes.parquet",
+      "us_va_constitutions.parquet",
+      "us_va_statutes.parquet",
+      "us_vt_constitutions.parquet",
+      "us_vt_statutes.parquet",
+      "us_wa_constitutions.parquet",
+      "us_wa_statutes.parquet",
+      "us_wi_constitutions.parquet",
+      "us_wi_statutes.parquet",
+      "us_wv_constitutions.parquet",
+      "us_wv_statutes.parquet",
+      "us_wy_constitutions.parquet",
+      "us_wy_statutes.parquet"
+    ],
+    "live_statute_codes": [
+      "AK",
+      "AL",
+      "AR",
+      "AZ",
+      "CA",
+      "CO",
+      "CT",
+      "DC",
+      "DE",
+      "FL",
+      "HI",
+      "IA",
+      "ID",
+      "IL",
+      "IN",
+      "KS",
+      "KY",
+      "LA",
+      "MA",
+      "MD",
+      "ME",
+      "MI",
+      "MN",
+      "MO",
+      "MS",
+      "MT",
+      "ND",
+      "NE",
+      "NH",
+      "NJ",
+      "NM",
+      "NV",
+      "NY",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "PR",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VA",
+      "VT",
+      "WA",
+      "WI",
+      "WV",
+      "WY"
+    ],
+    "object_count": {
+      "expected": 107,
+      "independent": 107,
+      "match": true
+    },
+    "observation_time": {
+      "match": true,
+      "recorded": true,
+      "value": "2026-08-14T00:51:06Z"
+    },
+    "parquet_count": {
+      "expected": 103,
+      "independent": 103,
+      "match": true
+    },
+    "stale_checksum_entries": {
+      "independent": 3,
+      "match": true,
+      "stale": true,
+      "withdrawn_paths_still_listed": [
+        "us_ga_statutes.parquet",
+        "us_nc_statutes.parquet"
+      ]
+    },
+    "total_size_bytes": {
+      "expected": 1134269198,
+      "independent": 1134269198,
+      "match": true
+    },
+    "xet_hashes": {
+      "match": true,
+      "missing": 0,
+      "present": 107,
+      "unique": true
+    }
+  },
+  "recursive": true,
+  "revision_pin": false,
+  "schema_version": "open-us-law-bucket-snapshot-v1",
+  "snapshot_digest_sha256": "815b21dba9d6b923e57949d99db20312c13a0cba573cabb1a4e33dc620975c04",
+  "snapshot_label": "v2026.07",
+  "sources_observed_on": "2026-07-21",
+  "task_id": "OUL-001",
+  "token_presented": false,
+  "withdrawn_on": "2026-08-12"
+}
