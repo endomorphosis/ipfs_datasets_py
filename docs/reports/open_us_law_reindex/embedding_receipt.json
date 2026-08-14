@@ -1,0 +1,161 @@
+{
+  "acceptance": {
+    "device_evidence_recorded": true,
+    "every_admitted_chunk_embedded": true,
+    "input_hashes_recorded": true,
+    "l2_normalization": true,
+    "mean_pooling": true,
+    "no_per_call_chunk_ceiling": true,
+    "pinned_thenlper_gte_small": true,
+    "projection_fallback_cannot_authorize_release": true,
+    "real_512_token_truncation": true,
+    "resumable_checkpoints": true,
+    "sentence_transformers_required_for_release": true,
+    "vector_dimension_384": true
+  },
+  "adr_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "backend": {
+    "default": "sentence_transformers",
+    "production": "sentence_transformers",
+    "projection": "local_deterministic_projection",
+    "projection_authorizes_release": false,
+    "provider": "huggingface"
+  },
+  "checks": {
+    "default_backend_is_sentence_transformers": true,
+    "demo_projection_blocked_from_release": true,
+    "demo_projection_error": "projection_cannot_authorize_release",
+    "input_hashes_present": true,
+    "keys_match_admitted": true,
+    "no_per_call_chunk_ceiling": true,
+    "per_call_ceiling_below_exact_51_seed": false,
+    "pinned_dimension": 384,
+    "pinned_max_tokens": 512,
+    "pinned_model_id": "thenlper/gte-small",
+    "pinned_model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "pinned_normalization": "l2",
+    "pinned_pooling": "mean",
+    "requires_real_512_token_truncation": true,
+    "unit_norms": true
+  },
+  "config": {
+    "backend": "sentence_transformers",
+    "batch_size": 64,
+    "config_cid": "sha256:a4ed2777618d2092c772e91dc5f65c282b80a3be62b0b93b35dab05bfbc7a99a",
+    "device": "cuda",
+    "device_fallback": "fallback_cpu",
+    "dimension": 384,
+    "input_fields": [
+      "text"
+    ],
+    "license": "mit",
+    "max_tokens": 512,
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "normalization": "l2",
+    "pooling": "mean",
+    "precision": "fp32",
+    "provider": "huggingface",
+    "schema_version": "open-us-law-embeddings-v1",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "demo": {
+    "admitted_chunk_cids": [
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    ],
+    "authorizing_for_release": false,
+    "backend": "local_deterministic_projection",
+    "device": {
+      "fallback_applied": false,
+      "precision": "fp32",
+      "requested": "cpu",
+      "runtime": {
+        "cuda_available": false,
+        "cuda_device_name": null,
+        "cuda_version": null,
+        "device": "cpu",
+        "note": "Sealed software-contract receipt does not record host runtime probes; production runs attach live device evidence separately.",
+        "precision": "fp32",
+        "python": null,
+        "sentence_transformers_available": null,
+        "sentence_transformers_version": null,
+        "torch_version": null
+      },
+      "selected": "cpu"
+    },
+    "embedder_kind": "local_deterministic_projection",
+    "input_hashes": {
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "234c52e93744e5ff02b156cf9e0b45861e84e110c095f36a6f7c66887af77ba7",
+      "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc": "e0b4ff0be07da02d560bd13aea4f0fa3d634d77dfbbfe4e82ad9492e85692ee2"
+    },
+    "real_inference": false,
+    "release_authorization_reasons": [
+      "projection_backend",
+      "backend_not_sentence_transformers",
+      "real_inference_required",
+      "non_production_embedder",
+      "pin_does_not_authorize",
+      "real_512_token_truncation_missing"
+    ],
+    "truncation": {
+      "applied": false,
+      "max_seq_length": null,
+      "max_tokens": 512,
+      "tokenizer_model_max_length": null
+    },
+    "vector_count": 2
+  },
+  "description": "Software-contract receipt for OUL-028. Production embedding requires sentence-transformers inference of thenlper/gte-small at the sealed revision, 384 dimensions, mean pooling, L2 normalization, real 512-token truncation, input hashes, device evidence, and resumable checkpoints. Projection output cannot authorize release. This receipt does not claim the live exact-51 corpus has been embedded.",
+  "device": {
+    "default": "cuda",
+    "fallback": "fallback_cpu",
+    "precision": "fp32",
+    "supported": [
+      "cpu",
+      "cuda",
+      "cuda:0",
+      "mps"
+    ]
+  },
+  "exact_51_seed_row_lower_bound": 1904919,
+  "goal_id": "OUL-G040",
+  "model_pin": {
+    "dimension": 384,
+    "license": "mit",
+    "max_tokens": 512,
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "normalization": "l2",
+    "pooling": "mean",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "per_call_chunk_ceiling": null,
+  "producer": "open_us_law_embeddings.py",
+  "program_id": "open-us-law-reindex-v1",
+  "projection_fallback_authorizes_release": false,
+  "proves_software_contract_only": true,
+  "real_sentence_transformers_required": true,
+  "receipt_sha256": "9a430e204b26c018a5222834212c3696e5646350025fb06905002ef0ad0ac66e",
+  "release_profile": "open-us-law-sparse-graphrag/v1",
+  "repairs": {
+    "area_id": "real_gte_inference",
+    "owner_task": "OUL-028",
+    "required": [
+      "Require sentence-transformers inference of thenlper/gte-small at revision 17e1f347d17fe144873b1201da91788898c639cd for every admitted production chunk.",
+      "Set the real tokenizer truncation window to 512 tokens and record input, model-file, device, precision, batch, and checkpoint evidence.",
+      "Refuse release authorization when the backend is local_deterministic_projection or any other fixture projection.",
+      "Stream and checkpoint embeddings so the 100,000-chunk per-call cap cannot truncate the exact-51 corpus."
+    ]
+  },
+  "schema_version": "open-us-law-embedding-receipt-v1",
+  "sealed_at": "2026-08-14T00:00:00Z",
+  "task_id": "OUL-028",
+  "truncation": {
+    "method": "sentence_transformers.max_seq_length",
+    "required": true,
+    "tokens": 512
+  }
+}
