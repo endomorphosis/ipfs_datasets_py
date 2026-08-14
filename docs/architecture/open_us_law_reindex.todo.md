@@ -675,7 +675,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: One versioned legal tokenizer is shared by build and query; documents and lexicographic term ranges are externally sorted; every shard and posting cell has at most 4096 rows or pointers; no 250000-document ceiling truncates the corpus.
 
 ## OUL-028 Generate real pinned thenlper gte-small embeddings
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
