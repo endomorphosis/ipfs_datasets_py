@@ -603,7 +603,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Canonical sections and structure-aware text chunks have deterministic IDs and provenance; duplicate, contaminated, historical, PR, federal, constitution, recovery, and unsupported rows are isolated in explicit configurations or quarantine.
 
 ## OUL-025 Implement streaming chunking, checkpoints, and external sort
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
