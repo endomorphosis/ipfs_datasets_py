@@ -627,7 +627,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Corpus-scale builders are bounded-memory, jurisdiction-checkpointed, resumable after interruption, externally sorted, and byte-deterministic without loading all documents, postings, or embeddings into RAM; completion proves the reusable software contract only, never that the exact-51 corpus has already been acquired.
 
 ## OUL-026 Add hierarchical routes and corpus-scale shared layout primitives
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
