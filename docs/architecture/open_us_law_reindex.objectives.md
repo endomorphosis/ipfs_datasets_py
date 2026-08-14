@@ -19,9 +19,16 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect root outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.083333
+- Uncovered criteria: ["Final evidence verifies every descendant goal and no open or blocked work remains."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G010 Freeze bucket, authority, completeness, identity, transport, and safety contracts
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G000
 - Depends on:
 - Fib priority: 13
@@ -39,6 +46,16 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect foundation outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["The bucket drift, missing jurisdictions, rights risks, schema boundaries, provider route, and reuse gaps are explicit and machine validated."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-14T04:13:21.953986+00:00
+- State transition reason: Produce completion evidence for: The bucket drift, missing jurisdictions, rights risks, schema boundaries, provider route, and reuse gaps are explicit and machine validated.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-14T04:13:21.953986+00:00
 
 ## OUL-G020 Acquire a complete official corpus for exactly 50 states plus DC
 - Status: active
@@ -59,6 +76,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect acquisition outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.083333
+- Uncovered criteria: ["All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G021 Complete official acquisition cohorts A through D
 - Status: active
@@ -79,6 +103,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect cohorts-a-d outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Every jurisdiction in AL through KS assigned to these cohorts has replayable exhaustive evidence."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G022 Complete official acquisition cohorts E through H
 - Status: active
@@ -99,6 +130,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect cohorts-e-h outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Every jurisdiction in KY through NY assigned to these cohorts has replayable exhaustive evidence."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G023 Complete official acquisition cohorts I through M including DC
 - Status: active
@@ -119,6 +157,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect cohorts-i-m outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Every jurisdiction in NC through DC assigned to these cohorts has replayable exhaustive evidence."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G024 Reconcile exact-51 evidence and refill every source gap
 - Status: active
@@ -139,6 +184,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect acquisition-closure outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["The deduplicated exact-51 union matches admitted artifacts and all discovered gaps have terminal evidence."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G030 Build a canonical bounded and streaming Open US Law corpus
 - Status: active
@@ -159,6 +211,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect corpus-substrate outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Canonical corpus and quarantine are complete, builds resume deterministically, and shared routing scales beyond one 4096-row index page."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G040 Produce BM25, GTE vector, and BM25-backed graph families
 - Status: active
@@ -179,6 +238,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect indexes outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Every admitted key appears in all required families","physical rows and pointers are bounded at 4096 and descriptors are integrity complete."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G050 Query Hugging Face sparsely and traverse the graph with embeddings
 - Status: active
@@ -199,6 +265,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect remote-query outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["BM25 term ranges, centroid probes, entry locators, hybrid fusion, and budgeted semantic graph walks fetch only routed artifacts."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G060 Prove quality, security, reproducibility, and full-scale behavior
 - Status: active
@@ -219,6 +292,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect assurance outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Quality thresholds, sparse I/O, determinism, hostile-input defenses, real GTE inference, and corpus/index/graph parity all pass."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G070 Stage and canary the exact content-addressed candidate
 - Status: active
@@ -239,6 +319,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect staging outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Fresh redownload at immutable pins reproduces every digest and query mode before public mutation is authorized."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G080 Publish and verify the authorized public Hugging Face release
 - Status: active
@@ -259,6 +346,13 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect publication outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["The public revision and bucket content root are immutable, verified, Viewer-compatible, sparse-queryable, and preserve all raw bucket objects."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## OUL-G090 Rehearse operations and seal terminal evidence
 - Status: active
@@ -279,3 +373,10 @@
 - AST query: Find writers, resolvers, builders, and publication callbacks that affect operations outputs or target identities.
 - Parallel lane: Strict sha256(full_task_id) modulo four lanes; goal tasks remain file-disjoint until explicit dependency joins.
 - Conflict policy: Child task output ownership is exclusive; shared outputs require a dependency edge and publication mutations are serialized and manifest-bound.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Previous pins remain queryable, no destructive operation is needed, and final evidence closes the root objective."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []

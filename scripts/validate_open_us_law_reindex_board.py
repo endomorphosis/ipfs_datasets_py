@@ -26,7 +26,7 @@ TARGET_DATASET = "justicedao/open-us-law-sparse-graphrag"
 SOURCE_BUCKET = "justicedao/open-us-law-bucket"
 MODEL_ID = "thenlper/gte-small"
 MODEL_REVISION = "17e1f347d17fe144873b1201da91788898c639cd"
-PAIRED_ACCELERATOR_REVISION = "bcadc044f8accd411280d86772616b8e0d7a4b28"
+PAIRED_ACCELERATOR_REVISION = "4cc59787445ff759c6172e96ff0174a7471133f6"
 
 INITIAL_TASK_IDS = tuple(f"OUL-{number:03d}" for number in range(49))
 INITIAL_GOAL_IDS = (
@@ -198,6 +198,22 @@ def _depends(task_id: str, wanted: str, graph: Mapping[str, Iterable[str]]) -> b
     return False
 
 
+def _retry_repair_source(task: Mapping[str, Any]) -> str:
+    """Return a strictly bound retry source, or no collision authority."""
+
+    source = str(task.get("retry_repair_source") or "").strip()
+    failure_kind = str(task.get("retry_failure_kind") or "").strip().lower()
+    generated_by = str(task.get("generated_by") or "").strip()
+    if (
+        re.fullmatch(r"OUL-\d{3,}", source)
+        and failure_kind in {"validation", "implementation", "merge"}
+        and generated_by
+        == "ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1"
+    ):
+        return source
+    return ""
+
+
 def _load_json(path: Path, errors: list[str], label: str) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -337,9 +353,11 @@ def _validate_config(config: Mapping[str, Any], tasks: Mapping[str, Any], errors
         ".gitignore", PLAN.as_posix(), OBJECTIVES.as_posix(), TASKBOARD.as_posix(),
         CONFIG.as_posix(), "scripts/validate_open_us_law_reindex_board.py",
         "scripts/ops/agent_supervisor/configured_board_scheduler.py",
+        "scripts/ops/agent_supervisor/legal_retry_task_renderer.py",
         "scripts/ops/open_us_law_reindex/preflight.py",
         "scripts/ops/open_us_law_reindex/status.py",
         "tests/unit/supervisor/test_open_us_law_reindex_board.py",
+        "tests/unit/supervisor/test_legal_retry_task_renderer.py",
         RELEASE_POLICY.as_posix(), LANE_MATRIX.as_posix(),
     }
     if not isinstance(protected, list) or not required.issubset(set(protected)):
@@ -481,7 +499,11 @@ def validate(repo_root: Path) -> dict[str, Any]:
         for index, left in enumerate(owners):
             for right in owners[index + 1:]:
                 if not (_depends(left, right, task_graph) or _depends(right, left, task_graph)):
-                    errors.append(f"unordered output collision for {output}: {left}, {right}")
+                    left_source = _retry_repair_source(tasks[left])
+                    right_source = _retry_repair_source(tasks[right])
+                    retry_pair = left_source == right or right_source == left
+                    if not retry_pair:
+                        errors.append(f"unordered output collision for {output}: {left}, {right}")
 
     cohort_union = {code for codes in COHORTS.values() for code in codes}
     if cohort_union != JURISDICTIONS or sum(map(len, COHORTS.values())) != 51:

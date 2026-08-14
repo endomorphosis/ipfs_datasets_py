@@ -13,23 +13,28 @@ def test_open_us_law_board_is_valid_and_parallel() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     report = validate(repo_root)
     assert report["valid"], report["errors"]
-    assert report["counts"] == {
-        "tasks": 49,
-        "goals": 14,
-        "completed": 1,
-        "ready": 8,
-        "waiting": 40,
-        "blocked": 0,
-        "in_progress": 0,
-        "generated_tasks": 0,
-        "generated_goals": 0,
-        "jurisdictions": 51,
-        "outputs": 124,
-    }
+    counts = report["counts"]
+    assert counts["tasks"] == 58
+    assert counts["goals"] == 14
+    assert counts["completed"] == 9
+    assert counts["ready"] == 2
+    assert counts["waiting"] == 47
+    assert counts["blocked"] == 0
+    assert counts["in_progress"] == 0
+    assert counts["generated_tasks"] == 9
+    assert counts["generated_goals"] == 0
+    assert counts["jurisdictions"] == 51
     assert set(report["current_projection"]["ready_task_ids"]) == {
-        f"OUL-{number:03d}" for number in range(1, 9)
+        "OUL-025",
+        "OUL-049",
     }
-    assert {_task_lane(task_id) for task_id in report["current_projection"]["ready_task_ids"]} == {0, 1, 2, 3}
+    assert report["current_projection"]["generated_nonterminal_task_ids"] == [
+        f"OUL-{number:03d}" for number in range(49, 58)
+    ]
+    assert {
+        _task_lane(task_id)
+        for task_id in report["current_projection"]["ready_task_ids"]
+    } == {0, 2}
 
 
 def test_open_us_law_provider_and_release_contract_are_exact() -> None:
@@ -51,6 +56,9 @@ def test_open_us_law_provider_and_release_contract_are_exact() -> None:
     assert config["release_policy"]["maximum_rows_per_physical_shard"] == 4096
     assert config["release_policy"]["embedding_model"] == "thenlper/gte-small"
     assert len(config["release_policy"]["embedding_revision"]) == 40
+    assert config["source_binding"]["paired_accelerator"]["required_revision"] == (
+        "4cc59787445ff759c6172e96ff0174a7471133f6"
+    )
 
 
 def test_shared_status_derives_oul_state_prefix(tmp_path: Path) -> None:

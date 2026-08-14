@@ -171,6 +171,12 @@ if str(REPO_ROOT) not in sys.path:
 from ipfs_accelerate_py.agent_supervisor.todo_daemon import (
     implementation_daemon as _implementation_daemon,
 )
+from ipfs_accelerate_py.agent_supervisor.merge import (
+    checkout_lock as _checkout_lock,
+)
+from ipfs_accelerate_py.agent_supervisor.objectives import (
+    backlog_refinery as _backlog_refinery,
+)
 
 attest_imported_module(
     _PAIRED_BINDING,
@@ -178,6 +184,41 @@ attest_imported_module(
     expected_relative=(
         "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py"
     ),
+)
+attest_imported_module(
+    _PAIRED_BINDING,
+    _checkout_lock.__file__,
+    expected_relative=(
+        "ipfs_accelerate_py/agent_supervisor/merge/checkout_lock.py"
+    ),
+)
+attest_imported_module(
+    _PAIRED_BINDING,
+    _backlog_refinery.__file__,
+    expected_relative=(
+        "ipfs_accelerate_py/agent_supervisor/objectives/backlog_refinery.py"
+    ),
+)
+
+_REPAIRS_PATH = _ENTRY_PATH.parent / "legal_retry_task_renderer.py"
+_REPAIRS_SOURCE = _attest_tracked_source(_REPAIRS_PATH)
+_REPAIRS_MODULE = types.ModuleType("_legal_retry_task_renderer_source")
+_REPAIRS_MODULE.__file__ = str(_REPAIRS_PATH)
+_REPAIRS_MODULE.__package__ = ""
+sys.modules[_REPAIRS_MODULE.__name__] = _REPAIRS_MODULE
+exec(  # noqa: S102
+    compile(
+        _REPAIRS_SOURCE,
+        str(_REPAIRS_PATH),
+        "exec",
+        dont_inherit=True,
+    ),
+    _REPAIRS_MODULE.__dict__,
+)
+_REPAIRS_MODULE.install_legal_runtime_repairs(
+    _backlog_refinery,
+    _checkout_lock,
+    repo_root=REPO_ROOT,
 )
 
 

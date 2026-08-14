@@ -225,21 +225,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-a
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-050
 - Goal id: OUL-G021
-- Outputs: docs/reports/open_us_law_reindex/cohort_A.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort A --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/alabama.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/alaska.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/arizona.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/arkansas.py, tests/integration/legal_data/test_open_us_law_cohort_a.py, docs/reports/open_us_law_reindex/cohort_A.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort A --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort A --report docs/reports/open_us_law_reindex/cohort_A.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-a
 - Parallel lane: 2
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 32000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_A.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/alabama.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/alaska.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/arizona.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/arkansas.py, tests/integration/legal_data/test_open_us_law_cohort_a.py, docs/reports/open_us_law_reindex/cohort_A.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort A (AL, AK, AZ, AR); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-050 source-specific retry repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort A by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: AL, AK, AZ, and AR each have exhaustive official-source receipts and admitted canonical rows; AR bucket seed rows remain quarantined until official replacement is proven.
 
 ## OUL-010 Certify official scrape cohort B (CA, CO, CT, DE)
@@ -249,21 +249,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-b
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-051
 - Goal id: OUL-G021
-- Outputs: docs/reports/open_us_law_reindex/cohort_B.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort B --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/california.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/colorado.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/connecticut.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/delaware.py, tests/integration/legal_data/test_open_us_law_cohort_b.py, docs/reports/open_us_law_reindex/cohort_B.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort B --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort B --report docs/reports/open_us_law_reindex/cohort_B.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-b
 - Parallel lane: 1
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 32000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_B.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/california.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/colorado.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/connecticut.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/delaware.py, tests/integration/legal_data/test_open_us_law_cohort_b.py, docs/reports/open_us_law_reindex/cohort_B.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort B (CA, CO, CT, DE); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-051 source-specific retry repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort B by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: CA, CO, CT, and DE each have exhaustive official-source receipts, with CA missing-link rows repaired or typed and no fixture evidence admitted.
 
 ## OUL-011 Certify official scrape cohort C (FL, GA, HI, ID)
@@ -273,21 +273,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-c
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-049
 - Goal id: OUL-G021
-- Outputs: docs/reports/open_us_law_reindex/cohort_C.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort C --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/florida.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/georgia.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/hawaii.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/idaho.py, tests/integration/legal_data/test_open_us_law_cohort_c.py, docs/reports/open_us_law_reindex/cohort_C.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort C --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort C --report docs/reports/open_us_law_reindex/cohort_C.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-c
 - Parallel lane: 0
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 36000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_C.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/florida.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/georgia.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/hawaii.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/idaho.py, tests/integration/legal_data/test_open_us_law_cohort_c.py, docs/reports/open_us_law_reindex/cohort_C.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort C (FL, GA, HI, ID); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-049 acquisition-contract repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort C by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: FL, GA, HI, and ID each have exhaustive official-source receipts; the absent contaminated GA bucket object is replaced from official clean text.
 
 ## OUL-012 Certify official scrape cohort D (IL, IN, IA, KS)
@@ -297,21 +297,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-d
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-052
 - Goal id: OUL-G021
-- Outputs: docs/reports/open_us_law_reindex/cohort_D.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort D --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/illinois.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/indiana.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/iowa.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/kansas.py, tests/integration/legal_data/test_open_us_law_cohort_d.py, docs/reports/open_us_law_reindex/cohort_D.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort D --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort D --report docs/reports/open_us_law_reindex/cohort_D.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-d
 - Parallel lane: 2
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 32000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_D.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/illinois.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/indiana.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/iowa.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/kansas.py, tests/integration/legal_data/test_open_us_law_cohort_d.py, docs/reports/open_us_law_reindex/cohort_D.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort D (IL, IN, IA, KS); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-052 source-specific retry repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort D by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: IL, IN, IA, and KS each have exhaustive official-source receipts, stable logical keys, closed frontiers, and zero unexplained failed-final units.
 
 ## OUL-013 Certify official scrape cohort E (KY, LA, ME, MD)
@@ -321,21 +321,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-e
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-053
 - Goal id: OUL-G022
-- Outputs: docs/reports/open_us_law_reindex/cohort_E.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort E --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/kentucky.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/louisiana.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/maine.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/maryland.py, tests/integration/legal_data/test_open_us_law_cohort_e.py, docs/reports/open_us_law_reindex/cohort_E.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort E --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort E --report docs/reports/open_us_law_reindex/cohort_E.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-e
 - Parallel lane: 2
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 32000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_E.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/kentucky.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/louisiana.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/maine.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/maryland.py, tests/integration/legal_data/test_open_us_law_cohort_e.py, docs/reports/open_us_law_reindex/cohort_E.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort E (KY, LA, ME, MD); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-053 source-specific retry repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort E by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: KY, LA, ME, and MD each have exhaustive official-source receipts; LA missing-link rows are repaired or quarantined with typed disposition.
 
 ## OUL-014 Certify official scrape cohort F (MA, MI, MN, MS)
@@ -345,21 +345,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-f
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-054
 - Goal id: OUL-G022
-- Outputs: docs/reports/open_us_law_reindex/cohort_F.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort F --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/massachusetts.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/michigan.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/minnesota.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/mississippi.py, tests/integration/legal_data/test_open_us_law_cohort_f.py, docs/reports/open_us_law_reindex/cohort_F.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort F --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort F --report docs/reports/open_us_law_reindex/cohort_F.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-f
 - Parallel lane: 1
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 36000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_F.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/massachusetts.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/michigan.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/minnesota.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/mississippi.py, tests/integration/legal_data/test_open_us_law_cohort_f.py, docs/reports/open_us_law_reindex/cohort_F.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort F (MA, MI, MN, MS); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-054 source-specific retry repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort F by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: MA, MI, MN, and MS each have exhaustive official-source receipts; MS is reacquired from official sources and synthetic two-row success is rejected.
 
 ## OUL-015 Certify official scrape cohort G (MO, MT, NE, NV)
@@ -369,21 +369,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-g
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-055
 - Goal id: OUL-G022
-- Outputs: docs/reports/open_us_law_reindex/cohort_G.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort G --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/missouri.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/montana.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/nebraska.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/nevada.py, tests/integration/legal_data/test_open_us_law_cohort_g.py, docs/reports/open_us_law_reindex/cohort_G.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort G --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort G --report docs/reports/open_us_law_reindex/cohort_G.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-g
 - Parallel lane: 1
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 34000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_G.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/missouri.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/montana.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/nebraska.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/nevada.py, tests/integration/legal_data/test_open_us_law_cohort_g.py, docs/reports/open_us_law_reindex/cohort_G.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort G (MO, MT, NE, NV); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-055 source-specific retry repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort G by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: MO, MT, NE, and NV each have exhaustive official-source receipts; NV linkless bucket material is replaced or quarantined.
 
 ## OUL-016 Certify official scrape cohort H (NH, NJ, NM, NY)
@@ -393,21 +393,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-h
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-049
 - Goal id: OUL-G022
-- Outputs: docs/reports/open_us_law_reindex/cohort_H.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort H --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/new_hampshire.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/new_jersey.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/new_mexico.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/new_york.py, tests/integration/legal_data/test_open_us_law_cohort_h.py, docs/reports/open_us_law_reindex/cohort_H.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort H --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort H --report docs/reports/open_us_law_reindex/cohort_H.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-h
 - Parallel lane: 1
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 34000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_H.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/new_hampshire.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/new_jersey.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/new_mexico.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/new_york.py, tests/integration/legal_data/test_open_us_law_cohort_h.py, docs/reports/open_us_law_reindex/cohort_H.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort H (NH, NJ, NM, NY); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-049 acquisition-contract repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort H by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: NH, NJ, NM, and NY each have exhaustive official-source receipts; NJ link gaps and NM linkless seed material receive explicit repair or quarantine dispositions.
 
 ## OUL-017 Certify official scrape cohort I (NC, ND, OH, OK)
@@ -417,21 +417,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-i
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-049
 - Goal id: OUL-G023
-- Outputs: docs/reports/open_us_law_reindex/cohort_I.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort I --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/north_carolina.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/north_dakota.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/ohio.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py, tests/integration/legal_data/test_open_us_law_cohort_i.py, docs/reports/open_us_law_reindex/cohort_I.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort I --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort I --report docs/reports/open_us_law_reindex/cohort_I.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-i
 - Parallel lane: 1
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 36000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_I.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/north_carolina.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/north_dakota.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/ohio.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py, tests/integration/legal_data/test_open_us_law_cohort_i.py, docs/reports/open_us_law_reindex/cohort_I.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort I (NC, ND, OH, OK); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-049 acquisition-contract repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort I by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: NC, ND, OH, and OK each have exhaustive official-source receipts; the absent contaminated NC bucket object is replaced from official clean text.
 
 ## OUL-018 Certify official scrape cohort J (OR, PA, RI, SC)
@@ -441,21 +441,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-j
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-049
 - Goal id: OUL-G023
-- Outputs: docs/reports/open_us_law_reindex/cohort_J.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort J --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oregon.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/pennsylvania.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/rhode_island.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/south_carolina.py, tests/integration/legal_data/test_open_us_law_cohort_j.py, docs/reports/open_us_law_reindex/cohort_J.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort J --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort J --report docs/reports/open_us_law_reindex/cohort_J.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-j
 - Parallel lane: 1
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 34000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_J.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oregon.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/pennsylvania.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/rhode_island.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/south_carolina.py, tests/integration/legal_data/test_open_us_law_cohort_j.py, docs/reports/open_us_law_reindex/cohort_J.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort J (OR, PA, RI, SC); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-049 acquisition-contract repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort J by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: OR, PA, RI, and SC each have exhaustive official-source receipts; nonofficial Oregon seed text is replaced or quarantined.
 
 ## OUL-019 Certify official scrape cohort K (SD, TN, TX, UT)
@@ -465,21 +465,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-k
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-049
 - Goal id: OUL-G023
-- Outputs: docs/reports/open_us_law_reindex/cohort_K.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort K --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/south_dakota.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/tennessee.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/texas.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/utah.py, tests/integration/legal_data/test_open_us_law_cohort_k.py, docs/reports/open_us_law_reindex/cohort_K.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort K --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort K --report docs/reports/open_us_law_reindex/cohort_K.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-k
 - Parallel lane: 1
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 34000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_K.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/south_dakota.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/tennessee.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/texas.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/utah.py, tests/integration/legal_data/test_open_us_law_cohort_k.py, docs/reports/open_us_law_reindex/cohort_K.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort K (SD, TN, TX, UT); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-049 acquisition-contract repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort K by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: SD, TN, TX, and UT each have exhaustive official-source receipts; TN linkless material is independently reacquired or quarantined and TX mixed acquisition is fully reconciled.
 
 ## OUL-020 Certify official scrape cohort L (VT, VA, WA, WV)
@@ -489,21 +489,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-l
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-056
 - Goal id: OUL-G023
-- Outputs: docs/reports/open_us_law_reindex/cohort_L.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort L --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/vermont.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/virginia.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/washington.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/west_virginia.py, tests/integration/legal_data/test_open_us_law_cohort_l.py, docs/reports/open_us_law_reindex/cohort_L.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort L --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort L --report docs/reports/open_us_law_reindex/cohort_L.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-l
 - Parallel lane: 3
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 32000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_L.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/vermont.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/virginia.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/washington.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/west_virginia.py, tests/integration/legal_data/test_open_us_law_cohort_l.py, docs/reports/open_us_law_reindex/cohort_L.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort L (VT, VA, WA, WV); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-056 source-specific retry repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort L by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: VT, VA, WA, and WV each have exhaustive official-source receipts with every continuation exhausted and no partial checkpoint promoted.
 
 ## OUL-021 Certify official scrape cohort M (WI, WY, DC)
@@ -513,21 +513,21 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P0
 - Track: scrape-cohort-m
-- Depends on: OUL-002, OUL-003, OUL-006
+- Depends on: OUL-002, OUL-003, OUL-006, OUL-057
 - Goal id: OUL-G023
-- Outputs: docs/reports/open_us_law_reindex/cohort_M.json
-- Validation: python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort M --require-live --check
+- Outputs: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/wisconsin.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/wyoming.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/district_of_columbia.py, tests/integration/legal_data/test_open_us_law_cohort_m.py, docs/reports/open_us_law_reindex/cohort_M.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort M --require-live --check; python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --cohort M --report docs/reports/open_us_law_reindex/cohort_M.json --require-live --check
 - Board namespace: open-us-law-reindex-v1
 - Bundle: scrape-cohort-m
 - Parallel lane: 2
 - Resource class: network-large
 - Token class: large
 - Estimated tokens: 32000
-- Predicted files: docs/reports/open_us_law_reindex/cohort_M.json
+- Predicted files: ipfs_datasets_py/processors/legal_scrapers/state_scrapers/wisconsin.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/wyoming.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/district_of_columbia.py, tests/integration/legal_data/test_open_us_law_cohort_m.py, docs/reports/open_us_law_reindex/cohort_M.json
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-002, OUL-003, OUL-006 completed with valid evidence.
-- Effects: Certify official scrape cohort M (WI, WY, DC); emits content-addressed, secret-free evidence for downstream validation.
+- Preconditions: OUL-002, OUL-003, OUL-006, and the OUL-057 source-specific retry repair completed; no fixture, legacy completion registry, or self-asserted receipt is admissible.
+- Effects: Repair only the assigned adapters, execute an uncapped checkpointed official acquisition in the isolated evidence root, and certify cohort M by rehashing retained response bodies, frontiers, canonical rows, and CIDs.
 - Acceptance: WI, WY, and DC each have exhaustive official-source receipts; WY linkless seed material is reacquired or quarantined and DC is counted exactly once in the required 51.
 
 ## OUL-022 Reconcile exact-51 jurisdiction coverage and bucket deltas
@@ -609,7 +609,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Review only: false
 - Priority: P1
 - Track: streaming-build
-- Depends on: OUL-024
+- Depends on: OUL-003, OUL-008
 - Goal id: OUL-G030
 - Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_streaming.py, tests/unit/processors/legal_data/test_open_us_law_streaming.py, tests/integration/legal_data/test_open_us_law_resume.py
 - Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_streaming.py tests/integration/legal_data/test_open_us_law_resume.py -q
@@ -622,9 +622,9 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_streaming.py, tests/unit/processors/legal_data/test_open_us_law_streaming.py, tests/integration/legal_data/test_open_us_law_resume.py
 - Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
 - Conflict policy: Exclusive ownership of the listed outputs; overlapping successors are dependency ordered and all remote mutations are serialized behind the publication gate.
-- Preconditions: OUL-024 completed with valid evidence.
-- Effects: Implement streaming chunking, checkpoints, and external sort; emits content-addressed, secret-free evidence for downstream validation.
-- Acceptance: Corpus-scale builds are bounded-memory, jurisdiction-checkpointed, resumable after interruption, externally sorted, and byte-deterministic without loading all documents, postings, or embeddings into RAM.
+- Preconditions: OUL-003 and OUL-008 completed with valid interface and reuse-gap evidence; deterministic fixtures may exercise the software but cannot authorize an exact-51 corpus or release.
+- Effects: Implement the data-independent streaming, checkpoint, and external-sort substrate in parallel with official acquisition; production materialization remains gated by OUL-024 and the full build remains gated by OUL-023.
+- Acceptance: Corpus-scale builders are bounded-memory, jurisdiction-checkpointed, resumable after interruption, externally sorted, and byte-deterministic without loading all documents, postings, or embeddings into RAM; completion proves the reusable software contract only, never that the exact-51 corpus has already been acquired.
 
 ## OUL-026 Add hierarchical routes and corpus-scale shared layout primitives
 - Status: todo
@@ -1179,13 +1179,254 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The root evidence proves exact-51 official completeness, source rights, real GTE embeddings, bounded sorted indexes, BM25-backed graph, sparse direct-HF retrieval, immutable public pins, successful publication, health history, zero blocked work, and closed refills.
 
 ## OUL-049 Resolve validation retry-budget failure for OUL-011
-
 - Status: todo
 - Completion: manual
+- Is schedulable: true
+- Review only: false
 - Priority: P1
-- Track: ops
+- Track: retry-repair
 - Depends on: OUL-002, OUL-003, OUL-006
-- Outputs: docs/reports/open_us_law_reindex/cohort_C.json, workspace/agent-supervisor/open-us-law-reindex/state/discovery
-- Validation: test -f /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-049-oul-011-retry-budget.md
+- Goal id: OUL-G021
+- Outputs: ipfs_datasets_py/processors/legal_data/open_us_law_live_evidence.py, ipfs_datasets_py/processors/legal_data/open_us_law_acquisition_coordinator.py, scripts/ops/legal_data/run_open_us_law_scrape_cohort.py, scripts/ops/legal_data/coordinate_open_us_law_scrapes.py, scripts/ops/legal_data/audit_open_us_law_retry_repair.py, data/legal/open_us_law/cohort_evidence.schema.json, tests/unit/processors/legal_data/test_open_us_law_live_evidence.py, tests/unit/processors/legal_data/test_open_us_law_acquisition_coordinator.py, tests/unit/scripts/test_run_open_us_law_scrape_cohort.py, tests/unit/scripts/test_audit_open_us_law_retry_repair.py, docs/reports/open_us_law_reindex/retry/oul-049-oul-011-validation.json
+- Validation: python -m pytest tests/unit/processors/legal_data/test_open_us_law_live_evidence.py tests/unit/processors/legal_data/test_open_us_law_acquisition_coordinator.py tests/unit/scripts/test_run_open_us_law_scrape_cohort.py tests/unit/scripts/test_audit_open_us_law_retry_repair.py -q; python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --fixture-only --cohort C --check; python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-049 --source OUL-011 --cohort C --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: acquisition-evidence-bridge
+- Parallel lane: 2
+- Resource class: cpu-network-large
+- Token class: xlarge
+- Estimated tokens: 48000
+- Predicted files: ipfs_datasets_py/processors/legal_data/open_us_law_live_evidence.py, ipfs_datasets_py/processors/legal_data/open_us_law_acquisition_coordinator.py, scripts/ops/legal_data/run_open_us_law_scrape_cohort.py, scripts/ops/legal_data/coordinate_open_us_law_scrapes.py, scripts/ops/legal_data/audit_open_us_law_retry_repair.py, data/legal/open_us_law/cohort_evidence.schema.json, tests/unit/processors/legal_data/test_open_us_law_live_evidence.py, tests/unit/processors/legal_data/test_open_us_law_acquisition_coordinator.py, tests/unit/scripts/test_run_open_us_law_scrape_cohort.py, tests/unit/scripts/test_audit_open_us_law_retry_repair.py, docs/reports/open_us_law_reindex/retry/oul-049-oul-011-validation.json
+- Allow concurrent with: OUL-025 and any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns the shared acquisition runner, byte-verifier, coordinator repair, schema, and tests; cohort tasks remain strategy-fenced and dependency-waiting until this repair completes.
+- Preconditions: OUL-002, OUL-003, and OUL-006 are complete; the stopped-runtime discovery and failed cohort proposals are diagnostic inputs only and no claimed receipt is trusted.
+- Effects: Split deterministic checkpointed acquisition from offline certification, make cohort-scoped checks consume the declared cohort report, and require retained response bytes, complete frontier and canonical-key manifests, nonzero rows, real hashes and CIDs, official hosts, and closed boundary probes.
+- Acceptance: Retry-budget guardrail filed this from repeated validation failures in OUL-011. Implement the production-capable uncapped acquisition and offline certification bridge, reject raw_bytes_checked=false, zero-row success, placeholders, samples, and self-asserted digests, record the exact repair in the tracked OUL-049 report, then mark this repair completed so the supervisor can release OUL-011 from strategy blocked_tasks; fixture execution proves software behavior only and never cohort completion.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-011
+- Retry failure kind: validation
+- Canonical board task: false
+- Discovery evidence: archived stopped-runtime lane-0 retry-budget receipt and proposal/validation events
 
-- Acceptance: Retry-budget guardrail filed this from repeated validation failures in OUL-011. Use evidence in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-049-oul-011-retry-budget.md to fix the validation blocker, then mark this repair task completed so the supervisor can release OUL-011 from strategy blocked_tasks.
+## OUL-050 Resolve validation retry-budget failure for OUL-009
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: retry-repair
+- Depends on: OUL-049
+- Goal id: OUL-G021
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-050-oul-009-validation.json
+- Validation: python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-050 --source OUL-009 --cohort A --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: retry-oul-009
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-050-oul-009-validation.json
+- Allow concurrent with: OUL-051, OUL-052, OUL-053, OUL-054, OUL-055, OUL-056, OUL-057 and any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only its tracked repair receipt; OUL-009 remains strategy-fenced and dependency-waiting until completion.
+- Preconditions: OUL-049 completed and the cohort A adapters and evidence route can be exercised without granting fixture completion authority.
+- Effects: Reproduce the former cohort A failure against the repaired bridge and seal a current, tracked retry decision without claiming live acquisition completion.
+- Acceptance: Verify the OUL-049 bridge against cohort A, bind the tracked report to current source and validation digests, then mark this repair completed so the supervisor can release OUL-009 from strategy blocked_tasks; the subsequent OUL-009 task alone owns live acquisition certification.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-009
+- Retry failure kind: validation
+- Canonical board task: false
+
+## OUL-051 Resolve validation retry-budget failure for OUL-010
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: retry-repair
+- Depends on: OUL-049
+- Goal id: OUL-G021
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-051-oul-010-validation.json
+- Validation: python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-051 --source OUL-010 --cohort B --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: retry-oul-010
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-051-oul-010-validation.json
+- Allow concurrent with: OUL-050, OUL-052, OUL-053, OUL-054, OUL-055, OUL-056, OUL-057 and any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only its tracked repair receipt; OUL-010 remains strategy-fenced and dependency-waiting until completion.
+- Preconditions: OUL-049 completed and the cohort B adapters and evidence route can be exercised without granting fixture completion authority.
+- Effects: Reproduce the former cohort B failure against the repaired bridge and seal a current, tracked retry decision without claiming live acquisition completion.
+- Acceptance: Verify the OUL-049 bridge against cohort B, bind the tracked report to current source and validation digests, then mark this repair completed so the supervisor can release OUL-010 from strategy blocked_tasks; the subsequent OUL-010 task alone owns live acquisition certification.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-010
+- Retry failure kind: validation
+- Canonical board task: false
+
+## OUL-052 Resolve validation retry-budget failure for OUL-012
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: retry-repair
+- Depends on: OUL-049
+- Goal id: OUL-G021
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-052-oul-012-validation.json
+- Validation: python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-052 --source OUL-012 --cohort D --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: retry-oul-012
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-052-oul-012-validation.json
+- Allow concurrent with: OUL-050, OUL-051, OUL-053, OUL-054, OUL-055, OUL-056, OUL-057 and any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only its tracked repair receipt; OUL-012 remains strategy-fenced and dependency-waiting until completion.
+- Preconditions: OUL-049 completed and the cohort D adapters and evidence route can be exercised without granting fixture completion authority.
+- Effects: Reproduce the former cohort D failure against the repaired bridge and seal a current, tracked retry decision without claiming live acquisition completion.
+- Acceptance: Verify the OUL-049 bridge against cohort D, bind the tracked report to current source and validation digests, then mark this repair completed so the supervisor can release OUL-012 from strategy blocked_tasks; the subsequent OUL-012 task alone owns live acquisition certification.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-012
+- Retry failure kind: validation
+- Canonical board task: false
+
+## OUL-053 Resolve validation retry-budget failure for OUL-013
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: retry-repair
+- Depends on: OUL-049
+- Goal id: OUL-G022
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-053-oul-013-validation.json
+- Validation: python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-053 --source OUL-013 --cohort E --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: retry-oul-013
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-053-oul-013-validation.json
+- Allow concurrent with: OUL-050, OUL-051, OUL-052, OUL-054, OUL-055, OUL-056, OUL-057 and any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only its tracked repair receipt; OUL-013 remains strategy-fenced and dependency-waiting until completion.
+- Preconditions: OUL-049 completed and the cohort E adapters and evidence route can be exercised without granting fixture completion authority.
+- Effects: Reproduce the former cohort E failure against the repaired bridge and seal a current, tracked retry decision without claiming live acquisition completion.
+- Acceptance: Verify the OUL-049 bridge against cohort E, bind the tracked report to current source and validation digests, then mark this repair completed so the supervisor can release OUL-013 from strategy blocked_tasks; the subsequent OUL-013 task alone owns live acquisition certification.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-013
+- Retry failure kind: validation
+- Canonical board task: false
+
+## OUL-054 Resolve validation retry-budget failure for OUL-014
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: retry-repair
+- Depends on: OUL-049
+- Goal id: OUL-G022
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-054-oul-014-validation.json
+- Validation: python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-054 --source OUL-014 --cohort F --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: retry-oul-014
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-054-oul-014-validation.json
+- Allow concurrent with: OUL-050, OUL-051, OUL-052, OUL-053, OUL-055, OUL-056, OUL-057 and any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only its tracked repair receipt; OUL-014 remains strategy-fenced and dependency-waiting until completion.
+- Preconditions: OUL-049 completed and the cohort F adapters and evidence route can be exercised without granting fixture completion authority.
+- Effects: Reproduce the former cohort F failure against the repaired bridge and seal a current, tracked retry decision without claiming live acquisition completion.
+- Acceptance: Verify the OUL-049 bridge against cohort F, bind the tracked report to current source and validation digests, then mark this repair completed so the supervisor can release OUL-014 from strategy blocked_tasks; the subsequent OUL-014 task alone owns live acquisition certification.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-014
+- Retry failure kind: validation
+- Canonical board task: false
+
+## OUL-055 Resolve validation retry-budget failure for OUL-015
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: retry-repair
+- Depends on: OUL-049
+- Goal id: OUL-G022
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-055-oul-015-validation.json
+- Validation: python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-055 --source OUL-015 --cohort G --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: retry-oul-015
+- Parallel lane: 3
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-055-oul-015-validation.json
+- Allow concurrent with: OUL-050, OUL-051, OUL-052, OUL-053, OUL-054, OUL-056, OUL-057 and any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only its tracked repair receipt; OUL-015 remains strategy-fenced and dependency-waiting until completion.
+- Preconditions: OUL-049 completed and the cohort G adapters and evidence route can be exercised without granting fixture completion authority.
+- Effects: Reproduce the former cohort G failure against the repaired bridge and seal a current, tracked retry decision without claiming live acquisition completion.
+- Acceptance: Verify the OUL-049 bridge against cohort G, bind the tracked report to current source and validation digests, then mark this repair completed so the supervisor can release OUL-015 from strategy blocked_tasks; the subsequent OUL-015 task alone owns live acquisition certification.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-015
+- Retry failure kind: validation
+- Canonical board task: false
+
+## OUL-056 Resolve validation retry-budget failure for OUL-020
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: retry-repair
+- Depends on: OUL-049
+- Goal id: OUL-G023
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-056-oul-020-validation.json
+- Validation: python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-056 --source OUL-020 --cohort L --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: retry-oul-020
+- Parallel lane: 0
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-056-oul-020-validation.json
+- Allow concurrent with: OUL-050, OUL-051, OUL-052, OUL-053, OUL-054, OUL-055, OUL-057 and any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only its tracked repair receipt; OUL-020 remains strategy-fenced and dependency-waiting until completion.
+- Preconditions: OUL-049 completed and the cohort L adapters and evidence route can be exercised without granting fixture completion authority.
+- Effects: Reproduce the former cohort L failure against the repaired bridge and seal a current, tracked retry decision without claiming live acquisition completion.
+- Acceptance: Verify the OUL-049 bridge against cohort L, bind the tracked report to current source and validation digests, then mark this repair completed so the supervisor can release OUL-020 from strategy blocked_tasks; the subsequent OUL-020 task alone owns live acquisition certification.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-020
+- Retry failure kind: validation
+- Canonical board task: false
+
+## OUL-057 Resolve validation retry-budget failure for OUL-021
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: retry-repair
+- Depends on: OUL-049
+- Goal id: OUL-G023
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-057-oul-021-validation.json
+- Validation: python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-057 --source OUL-021 --cohort M --check
+- Board namespace: open-us-law-reindex-v1
+- Bundle: retry-oul-021
+- Parallel lane: 3
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-057-oul-021-validation.json
+- Allow concurrent with: OUL-050, OUL-051, OUL-052, OUL-053, OUL-054, OUL-055, OUL-056 and any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only its tracked repair receipt; OUL-021 remains strategy-fenced and dependency-waiting until completion.
+- Preconditions: OUL-049 completed and the cohort M adapters and evidence route can be exercised without granting fixture completion authority.
+- Effects: Reproduce the former cohort M failure against the repaired bridge and seal a current, tracked retry decision without claiming live acquisition completion.
+- Acceptance: Verify the OUL-049 bridge against cohort M, bind the tracked report to current source and validation digests, then mark this repair completed so the supervisor can release OUL-021 from strategy blocked_tasks; the subsequent OUL-021 task alone owns live acquisition certification.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-021
+- Retry failure kind: validation
+- Canonical board task: false

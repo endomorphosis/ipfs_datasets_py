@@ -494,6 +494,15 @@ def _lane_sample(
         3 * float(config["check_interval_seconds"]),
     )
     idle_reason = _string(task, "selection_idle_reason", "idle_reason")
+    attempt_limit_idle_reasons = {
+        "all_selectable_ready_tasks_reached_max_task_attempts",
+        "all_selectable_ready_tasks_attempt_limited",
+        "task_attempt_limit_reached",
+    }
+    if idle_reason in attempt_limit_idle_reasons and not starting:
+        reasons.append(
+            f"attempt-limited work cannot make progress: {idle_reason}"
+        )
     if (
         ready > 0
         and not active_task

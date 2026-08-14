@@ -171,6 +171,10 @@ The board contains 49 initial tasks, `OUL-000` through `OUL-048`, and 14 goals. 
 
 Each task declares exact outputs, dependencies, validation, acceptance, resource class, token class, predicted files, lane, and conflict policy. Output collisions require dependency ordering. Remote publication is serialized and callback-gated.
 
+The first supervised run completed OUL-001 through OUL-008 and exposed a real acquisition-contract gap rather than live corpus evidence: cohort tasks wrote `open_us_law_reindex/cohort_X.json`, while their validator read only the older `legal_corpora_reindex` receipt directory. The bounded recovery refinement adds OUL-049 through OUL-057. OUL-049 owns the shared acquisition/evidence bridge and repairs the retry renderer; the remaining generated tasks preserve one durable, source-specific retry decision for each exhausted cohort. All cohort tasks now own their exact adapters, integration test, and report, and consume that report directly.
+
+Acquisition and certification are separate. A resumable uncapped runner writes retained official response bodies, an exhaustive frontier ledger, canonical row shards, and immutable hashes beneath an isolated evidence root. The offline certifier reopens and rehashes those artifacts; `raw_bytes_checked=false`, zero-row success, placeholder hashes/CIDs, truncated key lists, samples, open frontiers, and self-asserted replay digests fail closed. Generated retry receipts prove only that the repaired software path is current—they never prove a jurisdiction was scraped. OUL-025 may implement data-independent streaming/checkpoint/sort primitives in parallel, while OUL-024, OUL-039, and every publication task remain gated on exact-51 live evidence.
+
 The objective and codebase refill scans are enabled. Refills:
 
 - start at the next contiguous task and goal IDs;
