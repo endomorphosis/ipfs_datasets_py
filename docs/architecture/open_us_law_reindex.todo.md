@@ -1513,13 +1513,13 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Depends on:
 - Outputs: workspace/agent-supervisor/open-us-law-reindex/state/discovery, docs/architecture/open_us_law_reindex.todo.md
 - Board namespace: open-us-law-reindex-v1
-- Goal id: OUL-G010
-- Graph parents: OUL-G000
-- Bundle: foundation
-- Parallel lane: foundation
+- Goal id: OUL-G000
+- Graph parents: none
+- Bundle: root
+- Parallel lane: root
 - Resource class: cpu-medium
 - Validation: test -f /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-059-reconciliation-ec0fb5448769.md
-- Acceptance: Reconciliation guardrail filed this because 6 branch or worktree cleanup candidates are blocked by main_checkout_dirty. This task is intentionally operator-gated because unknown dirty checkout content must not be committed, stashed, or discarded automatically. Use evidence and the machine-readable reconciliation plan in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-059-reconciliation-ec0fb5448769.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
+- Acceptance: Reconciliation guardrail filed this because 6 branch or worktree cleanup candidates are blocked by main_checkout_dirty. Use evidence and the machine-readable reconciliation plan in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-059-reconciliation-ec0fb5448769.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
 
 ## OUL-060 Review completion-evidence alignment for Publish an exact-51 Open US Law sparse GraphRAG release
 
