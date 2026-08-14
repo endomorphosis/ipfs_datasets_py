@@ -1498,3 +1498,25 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Candidate kind: generated_task
 - Todo vector key: 5476dc4f268a9796
 - Acceptance: Objective scan filed this review gap for OUL-G010. Inspect the evidence in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-058-objective-gap-ded6018d9f69.md; either resolve the diagnostic without an implementation change or authorize precise repository-relative edit targets before changing the task status.
+
+## OUL-059 Resolve dirty main checkout blocking 6 worktree merges
+
+- Status: blocked
+- Completion: manual
+- Is schedulable: false
+- Review only: true
+- Blocked reason: operator_reconciliation_required
+- Priority: P1
+- Track: ops
+- Fingerprint: ec0fb5448769d7c278c129e05c0a9e8ad3325e71
+- Dedupe key: reconciliation_guardrail:main_checkout_dirty
+- Depends on:
+- Outputs: workspace/agent-supervisor/open-us-law-reindex/state/discovery, docs/architecture/open_us_law_reindex.todo.md
+- Board namespace: open-us-law-reindex-v1
+- Goal id: OUL-G010
+- Graph parents: OUL-G000
+- Bundle: foundation
+- Parallel lane: foundation
+- Resource class: cpu-medium
+- Validation: test -f /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-059-reconciliation-ec0fb5448769.md
+- Acceptance: Reconciliation guardrail filed this because 6 branch or worktree cleanup candidates are blocked by main_checkout_dirty. This task is intentionally operator-gated because unknown dirty checkout content must not be committed, stashed, or discarded automatically. Use evidence and the machine-readable reconciliation plan in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-059-reconciliation-ec0fb5448769.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
