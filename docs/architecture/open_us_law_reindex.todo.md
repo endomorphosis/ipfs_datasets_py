@@ -1179,7 +1179,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The root evidence proves exact-51 official completeness, source rights, real GTE embeddings, bounded sorted indexes, BM25-backed graph, sparse direct-HF retrieval, immutable public pins, successful publication, health history, zero blocked work, and closed refills.
 
 ## OUL-049 Resolve validation retry-budget failure for OUL-011
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
