@@ -1,0 +1,177 @@
+{
+  "acceptance": {
+    "documents_and_term_ranges_externally_sorted": true,
+    "every_shard_and_posting_cell_at_most_4096": true,
+    "no_250000_document_ceiling": true,
+    "one_versioned_legal_tokenizer_shared_by_build_and_query": true
+  },
+  "adr_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "bounds": {
+    "document_count_ceiling": null,
+    "exact_51_seed_row_lower_bound": 1904919,
+    "forbidden_document_ceiling": 250000,
+    "maximum_posting_pointers_per_cell": 4096,
+    "maximum_route_page_rows": 4096,
+    "maximum_rows_per_physical_shard": 4096,
+    "shared_layout_document_ceiling": 250000,
+    "sort_order_documents": "document_index_then_entry_cid",
+    "sort_order_postings": "term_then_entry_cid",
+    "sort_order_terms": "lexicographic_term"
+  },
+  "checks": {
+    "build_query_tokenizer_terms_equal": true,
+    "demo_document_count": 8,
+    "demo_document_shard_count": 4,
+    "demo_max_document_shard_rows": 2,
+    "demo_max_posting_cell_pointers": 2,
+    "demo_max_route_page_rows": 2,
+    "demo_max_term_shard_rows": 2,
+    "demo_posting_count": 196,
+    "demo_term_count": 136,
+    "demo_term_shard_count": 68,
+    "documents_externally_sorted": true,
+    "every_admitted_chunk_has_document": true,
+    "forbidden_ceiling_would_truncate_exact_51_seed": true,
+    "hierarchical_term_routes_present": true,
+    "no_document_count_ceiling": true,
+    "postings_externally_sorted": true,
+    "production_max_posting_pointers": 4096,
+    "production_max_rows_per_shard": 4096,
+    "query_uses_legal_tokenizer": true,
+    "term_range_routing_used": true,
+    "terms_externally_sorted": true,
+    "tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "tokenizer_shared_by": "build_and_query",
+    "tokenizer_version": "v1"
+  },
+  "demo": {
+    "authorizing_for_release": false,
+    "average_document_length": 29.25,
+    "config_digest": "36b1ab49529e15766986a6eb0fe89a9a5ec98e0db2cdf51976765479a9fa80a9",
+    "corpus_root_cid": "sha256:97847c1deea1e15b692c792e94baa7b64eef913cea7b06a5e0a5ae889a516547",
+    "document_count": 8,
+    "document_route_page_count": 3,
+    "document_shard_count": 4,
+    "entry_cids": [
+      "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+    ],
+    "index_root_cid": "sha256:84a0ea2c8a56676a26ea3bd10d38d70c2b93422cf9ac55e3be6c11929963533f",
+    "k1": 1.2,
+    "posting_count": 196,
+    "query_hit_count": 5,
+    "sort_receipts": {
+      "documents": {
+        "externally_sorted": true,
+        "family": "documents",
+        "max_records_in_memory": 3,
+        "peak_resident_records": 3,
+        "records_consumed": 8,
+        "row_count": 8,
+        "run_count": 3,
+        "status": "complete"
+      },
+      "postings": {
+        "externally_sorted": true,
+        "family": "postings",
+        "max_records_in_memory": 3,
+        "peak_resident_records": 3,
+        "records_consumed": 196,
+        "row_count": 196,
+        "run_count": 66,
+        "status": "complete"
+      },
+      "terms": {
+        "externally_sorted": true,
+        "family": "terms",
+        "max_records_in_memory": 3,
+        "peak_resident_records": 3,
+        "records_consumed": 136,
+        "row_count": 136,
+        "run_count": 46,
+        "status": "complete"
+      }
+    },
+    "term_count": 136,
+    "term_route_height": 7,
+    "term_route_page_count": 71,
+    "term_shard_count": 68,
+    "tokenizer_id": "uscode-bm25-tokenizer/v1"
+  },
+  "description": "Software-contract receipt for OUL-027. One versioned legal tokenizer is shared by build and query. Documents and lexicographic term ranges are externally sorted. Every shard and posting cell has at most 4096 rows or pointers. No 250000-document ceiling truncates the corpus. This receipt does not claim the live exact-51 corpus has been indexed.",
+  "exact_51_seed_row_lower_bound": 1904919,
+  "field_weights": {
+    "body": 1.0,
+    "citation": 8.0,
+    "heading": 4.0,
+    "hierarchy": 3.0,
+    "jurisdiction": 2.0,
+    "note": 0.5,
+    "title": 5.0
+  },
+  "goal_id": "OUL-G040",
+  "parameters": {
+    "b": 0.75,
+    "k1": 1.2,
+    "legacy_parameter_delta": {
+      "b": {
+        "changed": false,
+        "delta": 0.0,
+        "evaluation_default": 0.75,
+        "legacy": 0.75
+      },
+      "k1": {
+        "changed": true,
+        "delta": -0.30000000000000004,
+        "evaluation_default": 1.2,
+        "legacy": 1.5
+      },
+      "legacy_field_separation": false,
+      "legacy_tokenizer_identity": null,
+      "notes": "Legacy legal BM25 used k1=1.5 with a single unweighted term array and no tokenizer identity. Open US Law uses k1=1.2, explicit multi-field weights, and the sealed legal tokenizer shared by build and query."
+    },
+    "stopword_policy_id": "uscode-legal-stopwords/v1",
+    "tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "tokenizer_version": "v1"
+  },
+  "producer": "open_us_law_bm25.py",
+  "program_id": "open-us-law-reindex-v1",
+  "proves_software_contract_only": true,
+  "receipt_sha256": "6e24c22646b920103419be0d986b916c63790e675dd64b8b8fbe0a1e1c5e07db",
+  "release_profile": "open-us-law-sparse-graphrag/v1",
+  "repairs": {
+    "area_id": "field_weighted_term_range_bm25",
+    "owner_task": "OUL-027",
+    "required": [
+      "Use one versioned legal tokenizer for both BM25 build and query, and record tokenizer revision, stopword policy, k1, b, field weights, and average lengths.",
+      "Externally sort documents by stable document index and terms/postings by lexicographic (term, entry_cid).",
+      "Cap every document shard, term-range shard, route page, and posting cell at 4096 rows or pointers.",
+      "Reject the inherited 250000-document ceiling so the exact-51 seed (1904919 rows) is not truncated."
+    ]
+  },
+  "schema_version": "open-us-law-bm25-receipt-v1",
+  "sealed_at": "2026-08-14T00:00:00Z",
+  "stopword_policy_id": "uscode-legal-stopwords/v1",
+  "task_id": "OUL-027",
+  "tokenizer": {
+    "goal_id": "USCIR-G040",
+    "release_profile": "publicus-ir-graphrag/v2",
+    "schema_version": "uscode-tokenizer-v1",
+    "shared_by": "build_and_query",
+    "stopword_policy_id": "uscode-legal-stopwords/v1",
+    "task_id": "USCIR-013",
+    "tokenizer_digest": "cd2e8d52fab9cc7d3a7a1f4d853a84e7a3dce95d6828d8edb916bd1dc8f810d6",
+    "tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "tokenizer_version": "v1",
+    "used_for_build": true,
+    "used_for_query": true
+  }
+}
