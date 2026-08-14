@@ -27,7 +27,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The committed goals, tasks, scheduler, provider route, refill policy, protected paths, and validation report form one clean launchable control plane.
 
 ## OUL-001 Freeze and reconcile the live open-us-law bucket inventory
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
