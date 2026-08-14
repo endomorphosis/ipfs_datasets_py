@@ -699,7 +699,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Every admitted chunk is embedded with sentence-transformers thenlper/gte-small at revision 17e1f347d17fe144873b1201da91788898c639cd, 384 dimensions, mean pooling, L2 normalization, real 512-token truncation, input hashes, device evidence, and resumable checkpoints; projection fallback cannot authorize release.
 
 ## OUL-029 Cluster, sort, and shard centroid-routed vectors
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
