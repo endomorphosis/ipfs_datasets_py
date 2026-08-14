@@ -1,0 +1,845 @@
+{
+  "acceptance": {
+    "all_expected_outputs_accounted": true,
+    "authorizing_for_publication": false,
+    "required_repair_areas": [
+      "real_gte_inference",
+      "external_sorting",
+      "bm25_scale",
+      "hierarchical_routes",
+      "vector_entry_locators",
+      "tokenizer_parity",
+      "postings_driven_neighbors",
+      "neutral_lcr_provenance"
+    ],
+    "reusable_contract_ids": [
+      "physical_shard_bound_4096",
+      "artifact_family_vocabulary",
+      "sorted_bm25_term_range_layout",
+      "centroid_routed_vector_bounds",
+      "two_way_graph_adjacency",
+      "content_addressed_key_locators",
+      "pinned_gte_small_identity",
+      "versioned_legal_tokenizer",
+      "virtual_term_document_postings",
+      "immutable_revision_resolver"
+    ],
+    "reusable_contracts_proven": true,
+    "task_id": "OUL-008"
+  },
+  "audit_digest_sha256": "10fb8cc75fc7787121315c3e1f324f83c23d0c8cfce43dfef9a3c015f8dcc5e8",
+  "authorizing_for_publication": false,
+  "code_version": "1",
+  "corpus_scale": {
+    "bm25_document_ceiling": 250000,
+    "centroid_row_bound": 8192,
+    "observed_bm25_document_ceiling": 250000,
+    "physical_shard_bound": 4096,
+    "routing_page_bound": 4096,
+    "seed_row_count": 1904919,
+    "shards_per_centroid_bound": 2
+  },
+  "goal_id": "OUL-G010",
+  "missing_scale_primitives": [
+    "ipfs_datasets_py/retrieval/hf_graphrag/external_sort.py",
+    "ipfs_datasets_py/retrieval/hf_graphrag/hierarchical_routes.py"
+  ],
+  "model_pin": {
+    "backend_default": "local_deterministic_projection",
+    "dimension": 384,
+    "max_tokens": 512,
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "normalization": "l2",
+    "pooling": "mean",
+    "production_inference_default": false
+  },
+  "network_required": false,
+  "producer": "audit_open_us_law_graphrag_reuse.py@1",
+  "program_id": "open-us-law-reindex-v1",
+  "repair_areas": {
+    "bm25_scale": {
+      "area_id": "bm25_scale",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Shared layout default document ceiling.",
+          "observed": 250000,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py",
+          "symbol": "BM25LayoutConfig.max_documents"
+        },
+        {
+          "note": "US Code adapter document ceiling.",
+          "observed": 250000,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_bm25.py",
+          "symbol": "MAX_DOCUMENTS"
+        },
+        {
+          "note": "Observed exact-51 seed row count exceeds the BM25 ceiling.",
+          "observed": 1904919,
+          "path": "data/agent_supervisor/open_us_law_reindex/release_policy.json",
+          "symbol": "observed_source.default_seed_row_count"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-026",
+        "OUL-027"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Remove or raise the 250,000-document ceiling so it cannot truncate the admitted exact-51 corpus.",
+        "Externally sort documents by stable document index and postings by (term, entry_cid).",
+        "Keep every document, term, and posting shard and every posting cell at or below 4,096 rows or pointers."
+      ],
+      "summary": "Both the shared layout and the US Code adapter refuse corpora larger than 250000 documents. The exact-51 seed already has 1904919 rows, so the ceiling would truncate Open US Law.",
+      "title": "BM25 scale"
+    },
+    "external_sorting": {
+      "area_id": "external_sorting",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Shared external-sort module is absent.",
+          "observed": false,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/external_sort.py",
+          "symbol": "external_sort"
+        },
+        {
+          "note": "Layout builder loads the full document sequence before sorting.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py",
+          "symbol": "_normalize_documents"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-025",
+        "OUL-026"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Add a domain-neutral external sort that spills sorted runs and merges them under a memory bound.",
+        "Stream documents, terms, postings, and vectors by jurisdiction or partition with atomic checkpoints.",
+        "Make clean resume byte-deterministic without loading the full corpus, postings, or embeddings into RAM."
+      ],
+      "summary": "The shared BM25 layout materializes every document in memory and sorts there. No hf_graphrag external-sort primitive exists, so a 51-jurisdiction build cannot stay bounded-memory.",
+      "title": "External sorting"
+    },
+    "hierarchical_routes": {
+      "area_id": "hierarchical_routes",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Single routing-index page bound.",
+          "observed": 4096,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/schema.py",
+          "symbol": "MAX_ROUTING_ROWS_PER_INDEX"
+        },
+        {
+          "note": "page_locator_rows validates the whole index against the 4,096 bound.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/locators.py",
+          "symbol": "page_locator_rows"
+        },
+        {
+          "note": "Hierarchical route module is absent.",
+          "observed": false,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/hierarchical_routes.py",
+          "symbol": "hierarchical_routes"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-026"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Add integrity-bound hierarchical route pages so descriptor sets may exceed one 4,096-row page.",
+        "Keep every physical route page at or below 4,096 descriptors.",
+        "Preserve readability of legacy US Code, patent, CVE, and SkillCenter single-page layouts."
+      ],
+      "summary": "Locator and routing indexes are a single 4,096-row page. A 1904919-row corpus needs more than one descriptor page for documents, postings, vectors, and locators.",
+      "title": "Hierarchical routes"
+    },
+    "neutral_lcr_provenance": {
+      "area_id": "neutral_lcr_provenance",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "US Code release writes a verbose per-row lineage report.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
+          "symbol": "uscode-verbose-lineage/v1"
+        },
+        {
+          "note": "Lineage rows are emitted once per corpus row rather than per source document.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
+          "symbol": "lineage_rows"
+        },
+        {
+          "note": "Shared substrate receipts hard-code USCIR task identities.",
+          "observed": {
+            "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py": "USCIR-014",
+            "ipfs_datasets_py/retrieval/hf_graphrag/graph.py": "USCIR-022",
+            "ipfs_datasets_py/retrieval/hf_graphrag/query.py": "USCIR-025",
+            "ipfs_datasets_py/retrieval/hf_graphrag/remote_search.py": "USCIR-026",
+            "ipfs_datasets_py/retrieval/hf_graphrag/vectors.py": "USCIR-018"
+          },
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag",
+          "symbol": "TASK_ID"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-024",
+        "OUL-032"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Normalize and deduplicate lineage by source document; never repeat full lineage payloads on postings or vector rows.",
+        "Keep shared descriptor/receipt schemas program-neutral so OUL, LCR, and USCIR can bind their own task and goal identifiers.",
+        "Record source_cid, rights, acquisition, and edition provenance on the corpus row and a compact source-level receipt, not on every posting."
+      ],
+      "summary": "Legal Corpora Reindex requires compact, source-document lineage that is not copied onto every posting. The reused US Code release still emits verbose per-row lineage, and shared hf_graphrag receipts lock USCIR task identities. Open US Law must reuse the compact LCR provenance contract without inheriting LCR- or USCIR-board identity.",
+      "title": "Neutral LCR provenance"
+    },
+    "postings_driven_neighbors": {
+      "area_id": "postings_driven_neighbors",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Neighbor scorer iterates index.documents for every source document.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_lexical_graph.py",
+          "symbol": "_score_neighbors_for_document"
+        },
+        {
+          "note": "Reusable virtual postings graph must remain the default.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_lexical_graph.py",
+          "symbol": "VIRTUAL_TERM_DOCUMENT_EDGE_TYPE"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-031"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Accumulate neighbor candidates from the postings of selected query terms.",
+        "Apply bounded top-k selection per source document; never scan all pairs.",
+        "Keep durable full term-document expansion disabled by default and label neighbor edges non-authoritative."
+      ],
+      "summary": "Virtual term-document edges already walk postings, but optional BM25_NEIGHBOR_OF materialization scores every other document. That is an all-pairs scan and cannot run at exact-51 scale.",
+      "title": "Postings-driven neighbors"
+    },
+    "real_gte_inference": {
+      "area_id": "real_gte_inference",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Default backend is fixture projection, not sentence-transformers.",
+          "observed": "local_deterministic_projection",
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "DEFAULT_BACKEND"
+        },
+        {
+          "note": "Default provider is local rather than a production inference runtime.",
+          "observed": "local",
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "DEFAULT_PROVIDER"
+        },
+        {
+          "note": "Production encode helper does not assign model.max_seq_length=512.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "_sentence_transformers_embedder"
+        },
+        {
+          "note": "Per-call chunk cap is below the exact-51 seed row count.",
+          "observed": 100000,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "MAX_CHUNKS_PER_CALL"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-028"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Require sentence-transformers inference of thenlper/gte-small at revision 17e1f347d17fe144873b1201da91788898c639cd for every admitted production chunk.",
+        "Set the real tokenizer truncation window to 512 tokens and record input, model-file, device, precision, batch, and checkpoint evidence.",
+        "Refuse release authorization when the backend is local_deterministic_projection or any other fixture projection.",
+        "Stream and checkpoint embeddings so the 100,000-chunk per-call cap cannot truncate the exact-51 corpus."
+      ],
+      "summary": "The reused embedding pin names thenlper/gte-small at the sealed revision, but the default backend is a local hashed projection. The sentence-transformers encode path does not set the 512-token ceiling. Projection output cannot authorize an Open US Law release.",
+      "title": "Real GTE inference"
+    },
+    "tokenizer_parity": {
+      "area_id": "tokenizer_parity",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Legal tokenizer identity used by the US Code BM25 adapter.",
+          "observed": "uscode-bm25-tokenizer/v1",
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_tokenizer.py",
+          "symbol": "TOKENIZER_ID"
+        },
+        {
+          "note": "Shared layout tokenizer identity; other values raise CVEfixes errors.",
+          "observed": "hf-graphrag-bm25-tokens/v1",
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py",
+          "symbol": "DEFAULT_BM25_TOKENIZER_ID"
+        },
+        {
+          "note": "Remote query engine calls tokenize_bm25_text, not tokenize_legal_text.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/query.py",
+          "symbol": "run_bm25"
+        },
+        {
+          "note": "In-process adapter search uses the legal tokenizer.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_bm25.py",
+          "symbol": "UscodeBm25Index.search"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-027",
+        "OUL-033"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Use one versioned legal tokenizer for index build and every query path.",
+        "Stop rejecting legal tokenizer identities as unsupported CVEfixes tokens.",
+        "Record tokenizer revision, stopword policy, and field-weight identity on the BM25 receipt and query diagnostics."
+      ],
+      "summary": "The US Code adapter tokenizes with uscode-bm25-tokenizer/v1, but the shared layout rejects any tokenizer other than hf-graphrag-bm25-tokens/v1 and the remote query engine tokenizes with the CVE-style grammar. Build and query therefore do not share one legal token stream.",
+      "title": "Tokenizer parity"
+    },
+    "vector_entry_locators": {
+      "area_id": "vector_entry_locators",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Dedicated vector entry locator directory exists on the US Code adapter.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_vectors.py",
+          "symbol": "VECTOR_ENTRY_LOCATOR_DIR"
+        },
+        {
+          "note": "Entry-locator page count is still capped by MAX_ROUTING_ROWS_PER_INDEX.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_vectors.py",
+          "symbol": "build_entry_locator_rows"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-026",
+        "OUL-029"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Keep a dedicated entry_cid to centroid/shard/row locator; never treat cosine-sorted shard first/last keys as lexical CID ranges.",
+        "Page the locator hierarchically so off-centroid graph frontiers can be hydrated without loading every vector shard.",
+        "Require the locator in the sealed release manifest and query path."
+      ],
+      "summary": "US Code already builds a dedicated entry-to-shard locator because cosine-sorted shard first/last keys are not lexical CID ranges. That locator is still a flat 4,096-page index and cannot hydrate off-centroid frontiers at exact-51 scale.",
+      "title": "Vector entry locators"
+    }
+  },
+  "required_repairs": [
+    {
+      "area_id": "real_gte_inference",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Default backend is fixture projection, not sentence-transformers.",
+          "observed": "local_deterministic_projection",
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "DEFAULT_BACKEND"
+        },
+        {
+          "note": "Default provider is local rather than a production inference runtime.",
+          "observed": "local",
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "DEFAULT_PROVIDER"
+        },
+        {
+          "note": "Production encode helper does not assign model.max_seq_length=512.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "_sentence_transformers_embedder"
+        },
+        {
+          "note": "Per-call chunk cap is below the exact-51 seed row count.",
+          "observed": 100000,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "MAX_CHUNKS_PER_CALL"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-028"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Require sentence-transformers inference of thenlper/gte-small at revision 17e1f347d17fe144873b1201da91788898c639cd for every admitted production chunk.",
+        "Set the real tokenizer truncation window to 512 tokens and record input, model-file, device, precision, batch, and checkpoint evidence.",
+        "Refuse release authorization when the backend is local_deterministic_projection or any other fixture projection.",
+        "Stream and checkpoint embeddings so the 100,000-chunk per-call cap cannot truncate the exact-51 corpus."
+      ],
+      "summary": "The reused embedding pin names thenlper/gte-small at the sealed revision, but the default backend is a local hashed projection. The sentence-transformers encode path does not set the 512-token ceiling. Projection output cannot authorize an Open US Law release.",
+      "title": "Real GTE inference"
+    },
+    {
+      "area_id": "external_sorting",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Shared external-sort module is absent.",
+          "observed": false,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/external_sort.py",
+          "symbol": "external_sort"
+        },
+        {
+          "note": "Layout builder loads the full document sequence before sorting.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py",
+          "symbol": "_normalize_documents"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-025",
+        "OUL-026"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Add a domain-neutral external sort that spills sorted runs and merges them under a memory bound.",
+        "Stream documents, terms, postings, and vectors by jurisdiction or partition with atomic checkpoints.",
+        "Make clean resume byte-deterministic without loading the full corpus, postings, or embeddings into RAM."
+      ],
+      "summary": "The shared BM25 layout materializes every document in memory and sorts there. No hf_graphrag external-sort primitive exists, so a 51-jurisdiction build cannot stay bounded-memory.",
+      "title": "External sorting"
+    },
+    {
+      "area_id": "bm25_scale",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Shared layout default document ceiling.",
+          "observed": 250000,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py",
+          "symbol": "BM25LayoutConfig.max_documents"
+        },
+        {
+          "note": "US Code adapter document ceiling.",
+          "observed": 250000,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_bm25.py",
+          "symbol": "MAX_DOCUMENTS"
+        },
+        {
+          "note": "Observed exact-51 seed row count exceeds the BM25 ceiling.",
+          "observed": 1904919,
+          "path": "data/agent_supervisor/open_us_law_reindex/release_policy.json",
+          "symbol": "observed_source.default_seed_row_count"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-026",
+        "OUL-027"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Remove or raise the 250,000-document ceiling so it cannot truncate the admitted exact-51 corpus.",
+        "Externally sort documents by stable document index and postings by (term, entry_cid).",
+        "Keep every document, term, and posting shard and every posting cell at or below 4,096 rows or pointers."
+      ],
+      "summary": "Both the shared layout and the US Code adapter refuse corpora larger than 250000 documents. The exact-51 seed already has 1904919 rows, so the ceiling would truncate Open US Law.",
+      "title": "BM25 scale"
+    },
+    {
+      "area_id": "hierarchical_routes",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Single routing-index page bound.",
+          "observed": 4096,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/schema.py",
+          "symbol": "MAX_ROUTING_ROWS_PER_INDEX"
+        },
+        {
+          "note": "page_locator_rows validates the whole index against the 4,096 bound.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/locators.py",
+          "symbol": "page_locator_rows"
+        },
+        {
+          "note": "Hierarchical route module is absent.",
+          "observed": false,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/hierarchical_routes.py",
+          "symbol": "hierarchical_routes"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-026"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Add integrity-bound hierarchical route pages so descriptor sets may exceed one 4,096-row page.",
+        "Keep every physical route page at or below 4,096 descriptors.",
+        "Preserve readability of legacy US Code, patent, CVE, and SkillCenter single-page layouts."
+      ],
+      "summary": "Locator and routing indexes are a single 4,096-row page. A 1904919-row corpus needs more than one descriptor page for documents, postings, vectors, and locators.",
+      "title": "Hierarchical routes"
+    },
+    {
+      "area_id": "vector_entry_locators",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Dedicated vector entry locator directory exists on the US Code adapter.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_vectors.py",
+          "symbol": "VECTOR_ENTRY_LOCATOR_DIR"
+        },
+        {
+          "note": "Entry-locator page count is still capped by MAX_ROUTING_ROWS_PER_INDEX.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_vectors.py",
+          "symbol": "build_entry_locator_rows"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-026",
+        "OUL-029"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Keep a dedicated entry_cid to centroid/shard/row locator; never treat cosine-sorted shard first/last keys as lexical CID ranges.",
+        "Page the locator hierarchically so off-centroid graph frontiers can be hydrated without loading every vector shard.",
+        "Require the locator in the sealed release manifest and query path."
+      ],
+      "summary": "US Code already builds a dedicated entry-to-shard locator because cosine-sorted shard first/last keys are not lexical CID ranges. That locator is still a flat 4,096-page index and cannot hydrate off-centroid frontiers at exact-51 scale.",
+      "title": "Vector entry locators"
+    },
+    {
+      "area_id": "tokenizer_parity",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Legal tokenizer identity used by the US Code BM25 adapter.",
+          "observed": "uscode-bm25-tokenizer/v1",
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_tokenizer.py",
+          "symbol": "TOKENIZER_ID"
+        },
+        {
+          "note": "Shared layout tokenizer identity; other values raise CVEfixes errors.",
+          "observed": "hf-graphrag-bm25-tokens/v1",
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py",
+          "symbol": "DEFAULT_BM25_TOKENIZER_ID"
+        },
+        {
+          "note": "Remote query engine calls tokenize_bm25_text, not tokenize_legal_text.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/query.py",
+          "symbol": "run_bm25"
+        },
+        {
+          "note": "In-process adapter search uses the legal tokenizer.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_bm25.py",
+          "symbol": "UscodeBm25Index.search"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-027",
+        "OUL-033"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Use one versioned legal tokenizer for index build and every query path.",
+        "Stop rejecting legal tokenizer identities as unsupported CVEfixes tokens.",
+        "Record tokenizer revision, stopword policy, and field-weight identity on the BM25 receipt and query diagnostics."
+      ],
+      "summary": "The US Code adapter tokenizes with uscode-bm25-tokenizer/v1, but the shared layout rejects any tokenizer other than hf-graphrag-bm25-tokens/v1 and the remote query engine tokenizes with the CVE-style grammar. Build and query therefore do not share one legal token stream.",
+      "title": "Tokenizer parity"
+    },
+    {
+      "area_id": "postings_driven_neighbors",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "Neighbor scorer iterates index.documents for every source document.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_lexical_graph.py",
+          "symbol": "_score_neighbors_for_document"
+        },
+        {
+          "note": "Reusable virtual postings graph must remain the default.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_lexical_graph.py",
+          "symbol": "VIRTUAL_TERM_DOCUMENT_EDGE_TYPE"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-031"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Accumulate neighbor candidates from the postings of selected query terms.",
+        "Apply bounded top-k selection per source document; never scan all pairs.",
+        "Keep durable full term-document expansion disabled by default and label neighbor edges non-authoritative."
+      ],
+      "summary": "Virtual term-document edges already walk postings, but optional BM25_NEIGHBOR_OF materialization scores every other document. That is an all-pairs scan and cannot run at exact-51 scale.",
+      "title": "Postings-driven neighbors"
+    },
+    {
+      "area_id": "neutral_lcr_provenance",
+      "blocking": true,
+      "evidence": [
+        {
+          "note": "US Code release writes a verbose per-row lineage report.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
+          "symbol": "uscode-verbose-lineage/v1"
+        },
+        {
+          "note": "Lineage rows are emitted once per corpus row rather than per source document.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
+          "symbol": "lineage_rows"
+        },
+        {
+          "note": "Shared substrate receipts hard-code USCIR task identities.",
+          "observed": {
+            "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py": "USCIR-014",
+            "ipfs_datasets_py/retrieval/hf_graphrag/graph.py": "USCIR-022",
+            "ipfs_datasets_py/retrieval/hf_graphrag/query.py": "USCIR-025",
+            "ipfs_datasets_py/retrieval/hf_graphrag/remote_search.py": "USCIR-026",
+            "ipfs_datasets_py/retrieval/hf_graphrag/vectors.py": "USCIR-018"
+          },
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag",
+          "symbol": "TASK_ID"
+        }
+      ],
+      "owner_tasks": [
+        "OUL-024",
+        "OUL-032"
+      ],
+      "required": true,
+      "required_repairs": [
+        "Normalize and deduplicate lineage by source document; never repeat full lineage payloads on postings or vector rows.",
+        "Keep shared descriptor/receipt schemas program-neutral so OUL, LCR, and USCIR can bind their own task and goal identifiers.",
+        "Record source_cid, rights, acquisition, and edition provenance on the corpus row and a compact source-level receipt, not on every posting."
+      ],
+      "summary": "Legal Corpora Reindex requires compact, source-document lineage that is not copied onto every posting. The reused US Code release still emits verbose per-row lineage, and shared hf_graphrag receipts lock USCIR task identities. Open US Law must reuse the compact LCR provenance contract without inheriting LCR- or USCIR-board identity.",
+      "title": "Neutral LCR provenance"
+    }
+  ],
+  "reusable_contracts": [
+    {
+      "contract_id": "physical_shard_bound_4096",
+      "evidence": [
+        {
+          "note": "Authoritative physical row bound; never a model-token ceiling.",
+          "observed": 4096,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/schema.py",
+          "symbol": "MAX_ROWS_PER_PHYSICAL_SHARD"
+        },
+        {
+          "note": "Authoritative pointer bound for postings and adjacency cells.",
+          "observed": 4096,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/schema.py",
+          "symbol": "MAX_POINTERS_PER_ROW"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Keep the 4,096-row/pointer physical bound for corpus, BM25, vector, graph, and route pages. Do not reuse it as a 4,096-token embedding input.",
+      "title": "4,096-row/pointer physical shard bound"
+    },
+    {
+      "contract_id": "artifact_family_vocabulary",
+      "evidence": [
+        {
+          "note": "Corpus, BM25, vector, centroid, graph, locator, and manifest families.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/schema.py",
+          "symbol": "ArtifactFamily"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Reuse the shared family names and descriptor fields. Domain ontology and vector spaces stay private to each release.",
+      "title": "Shared artifact-family vocabulary"
+    },
+    {
+      "contract_id": "sorted_bm25_term_range_layout",
+      "evidence": [
+        {
+          "note": "Lexicographic term shards, bounded posting cells, term-range meta.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py",
+          "symbol": "build_bm25_layout"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Reuse the sorted documents/postings layout and term-range router. Lift the 250,000-document ceiling and accept the legal tokenizer.",
+      "title": "Sorted term-range BM25 layout"
+    },
+    {
+      "contract_id": "centroid_routed_vector_bounds",
+      "evidence": [
+        {
+          "note": "At most 8,192 vectors per centroid.",
+          "observed": 8192,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/schema.py",
+          "symbol": "MAX_ROWS_PER_VECTOR_CENTROID"
+        },
+        {
+          "note": "At most two 4,096-row physical shards per centroid.",
+          "observed": 2,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/schema.py",
+          "symbol": "MAX_VECTOR_SHARDS_PER_CENTROID"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Keep balanced spherical k-means bounds, cosine-then-entry_cid sort, and dedicated entry locators after cosine sorting.",
+      "title": "Centroid-routed vector bounds"
+    },
+    {
+      "contract_id": "two_way_graph_adjacency",
+      "evidence": [
+        {
+          "note": "Shared in/out adjacency pointer bound.",
+          "observed": 4096,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/schema.py",
+          "symbol": "MAX_ADJACENCY_POINTERS_PER_ROW"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Reuse paged two-way adjacency. Similarity edges remain non-authoritative.",
+      "title": "Incoming and outgoing adjacency pages"
+    },
+    {
+      "contract_id": "content_addressed_key_locators",
+      "evidence": [
+        {
+          "note": "Inclusive key-range locators with binary-search lookup.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/locators.py",
+          "symbol": "page_locator_rows"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Reuse locator row schema and confined paths. Add hierarchical route pages before descriptor counts exceed 4,096.",
+      "title": "Content-addressed key-range locators"
+    },
+    {
+      "contract_id": "pinned_gte_small_identity",
+      "evidence": [
+        {
+          "note": "Production model identity.",
+          "observed": "thenlper/gte-small",
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "DEFAULT_MODEL_ID"
+        },
+        {
+          "note": "Immutable 40-hex model revision.",
+          "observed": "17e1f347d17fe144873b1201da91788898c639cd",
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+          "symbol": "DEFAULT_MODEL_REVISION"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Keep the pinned model, revision, 384 dimensions, mean pooling, L2 normalization, and 512-token ceiling. Projection may exist only for fixtures.",
+      "title": "Pinned thenlper/gte-small identity"
+    },
+    {
+      "contract_id": "versioned_legal_tokenizer",
+      "evidence": [
+        {
+          "note": "Locale-independent legal token stream with citation preservation.",
+          "observed": "uscode-bm25-tokenizer/v1",
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_tokenizer.py",
+          "symbol": "TOKENIZER_ID"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Reuse the versioned legal tokenizer for both build and query. Do not fall back to the CVE-style shared layout tokenizer at query time.",
+      "title": "Versioned legal BM25 tokenizer"
+    },
+    {
+      "contract_id": "virtual_term_document_postings",
+      "evidence": [
+        {
+          "note": "BM25 postings remain the canonical lexical graph.",
+          "observed": true,
+          "path": "ipfs_datasets_py/processors/legal_data/uscode_lexical_graph.py",
+          "symbol": "VIRTUAL_TERM_DOCUMENT_EDGE_TYPE"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Keep term-document edges virtual over postings. Optional neighbors must accumulate candidates from postings, never scan every document pair.",
+      "title": "Virtual term-document postings graph"
+    },
+    {
+      "contract_id": "immutable_revision_resolver",
+      "evidence": [
+        {
+          "note": "Path confinement, digest/size/row checks, revision-scoped cache.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/resolver.py",
+          "symbol": "resolver"
+        },
+        {
+          "note": "Budgeted BM25/vector/graph engine with fetch traces.",
+          "observed": true,
+          "path": "ipfs_datasets_py/retrieval/hf_graphrag/query.py",
+          "symbol": "run_bm25"
+        }
+      ],
+      "reusable": true,
+      "reuse_rule": "Reuse confined resolution, descriptor verification, and budgeted sparse I/O. Bind tokenizer identity and entry locators before production query.",
+      "title": "Immutable revision resolver and sparse query engine"
+    }
+  ],
+  "schema": "ipfs_datasets_py/open-us-law-graphrag-reuse-audit@1",
+  "schema_version": "1",
+  "sealed_at": "2026-08-14T00:00:00Z",
+  "shared_task_locks": {
+    "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py": "USCIR-014",
+    "ipfs_datasets_py/retrieval/hf_graphrag/graph.py": "USCIR-022",
+    "ipfs_datasets_py/retrieval/hf_graphrag/query.py": "USCIR-025",
+    "ipfs_datasets_py/retrieval/hf_graphrag/remote_search.py": "USCIR-026",
+    "ipfs_datasets_py/retrieval/hf_graphrag/vectors.py": "USCIR-018"
+  },
+  "source_inventory": {
+    "adapters": [
+      "ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+      "ipfs_datasets_py/processors/legal_data/uscode_tokenizer.py",
+      "ipfs_datasets_py/processors/legal_data/uscode_bm25.py",
+      "ipfs_datasets_py/processors/legal_data/uscode_vectors.py",
+      "ipfs_datasets_py/processors/legal_data/uscode_lexical_graph.py",
+      "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
+      "ipfs_datasets_py/processors/legal_data/uscode_release_schema.py"
+    ],
+    "missing_scale_primitives": [
+      "ipfs_datasets_py/retrieval/hf_graphrag/external_sort.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/hierarchical_routes.py"
+    ],
+    "shared_substrate": [
+      "ipfs_datasets_py/retrieval/hf_graphrag/schema.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/artifacts.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/locators.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/bm25.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/vectors.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/graph.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/resolver.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/query.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/remote_search.py"
+    ]
+  },
+  "task_id": "OUL-008",
+  "tokenizer": {
+    "adapter_query_uses_legal_tokenizer": true,
+    "legal_tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "remote_query_uses_shared_tokenizer": true,
+    "shared_tokenizer_id": "hf-graphrag-bm25-tokens/v1"
+  }
+}
