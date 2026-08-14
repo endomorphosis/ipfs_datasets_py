@@ -57,6 +57,13 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_acquisition_coordinator 
     verify_receipt_bytes,
     verify_receipt_frontier,
     write_acquisition_leases,
+    REJECTION_PLACEHOLDER,
+    REJECTION_RAW_BYTES_UNCHECKED,
+    REJECTION_SAMPLE,
+    REJECTION_SELF_ASSERTED,
+    REJECTION_ZERO_ROW_SUCCESS,
+    default_cohort_report_path,
+    is_placeholder_digest,
 )
 from ipfs_datasets_py.processors.legal_data.open_us_law_completeness import (
     CANONICAL_JURISDICTIONS,
@@ -535,6 +542,86 @@ def test_cli_check_json_is_secret_free(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_cli_unknown_cohort_fails() -> None:
     assert main(["--no-mutate", "--check", "--cohort", "Z"]) == 1
+
+
+def test_otherwise_accepted_receipt_requires_raw_bytes() -> None:
+    receipt = _closed("FL", fetched=12)
+    admission = evaluate_prior_receipt(receipt)
+    assert admission.accepted is False
+    assert REJECTION_RAW_BYTES_UNCHECKED in admission.rejection_kinds
+    assert REJECTION_SELF_ASSERTED in admission.rejection_kinds
+
+
+def test_zero_row_success_is_not_reusable() -> None:
+    body = b"empty-success-is-not-evidence"
+    receipt = _with_body("GA", body, fetched=0)
+    receipt["status"] = "success"
+    receipt["row_count"] = 0
+    receipt["disposition"]["fetched"] = 0
+    receipt["disposition"]["discovered"] = 0
+    admission = evaluate_prior_receipt(receipt, body_bytes=body)
+    assert admission.accepted is False
+    assert REJECTION_ZERO_ROW_SUCCESS in admission.rejection_kinds
+
+
+def test_placeholder_and_sample_receipts_are_not_reusable() -> None:
+    body = b"official-hawaii-statute-body"
+    receipt = _with_body("HI", body, fetched=8)
+    receipt["hashes"]["request_sha256"] = "0" * 64
+    receipt["replay"]["request_sha256"] = "0" * 64
+    assert is_placeholder_digest(receipt["hashes"]["request_sha256"]) is True
+    # Hash mismatch fails earlier; placeholder identity is still recorded for
+    # otherwise-matching sample/cap receipts.
+    sample = _with_body("ID", body, fetched=8)
+    sample["sample_cap"] = 2
+    sample["mode"] = "sample"
+    admission = evaluate_prior_receipt(sample, body_bytes=body)
+    assert admission.accepted is False
+    assert REJECTION_SAMPLE in admission.rejection_kinds
+
+
+def test_declared_cohort_report_is_consumed_for_require_live(
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+        build_cohort_evidence_payload,
+        check_declared_cohort_report,
+    )
+
+    path = tmp_path / "cohort_C.json"
+    payload = build_cohort_evidence_payload(
+        cohort="C",
+        verdicts=(),
+        fixture_execution=True,
+        require_live=False,
+    )
+    path.write_text(
+        __import__("json").dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    report = check_declared_cohort_report(path, cohort="C", require_live=False)
+    assert report["cohort"] == "C"
+    assert report["cohort_complete"] is False
+    with pytest.raises(Exception):
+        check_declared_cohort_report(path, cohort="C", require_live=True)
+    missing = tmp_path / "missing_cohort_C.json"
+    assert main(
+        [
+            "--no-mutate",
+            "--check",
+            "--cohort",
+            "C",
+            "--require-live",
+            "--report",
+            str(missing),
+        ]
+    ) == 1
+
+
+def test_default_cohort_report_path_is_open_us_law_not_legal_corpora() -> None:
+    path = default_cohort_report_path("C")
+    assert path.as_posix().endswith("docs/reports/open_us_law_reindex/cohort_C.json")
+    assert "legal_corpora_reindex" not in path.as_posix()
 
 
 def test_sha256_helpers_are_stable() -> None:
