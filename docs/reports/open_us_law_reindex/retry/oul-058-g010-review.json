@@ -1,0 +1,346 @@
+{
+  "acceptance": "The receipt states that foundation contracts are provisionally complete, lists the still-open acquisition and publication criteria, and never treats analyzer-health-missing as live corpus proof.",
+  "analyzer_health": {
+    "evidence": {},
+    "is_live_corpus_proof": false,
+    "live_corpus_proof": false,
+    "passed": false,
+    "reason_code": "analyzer_health_missing",
+    "status": "missing",
+    "treatment": "Planner diagnostic only. analyzer-health-missing records that no healthy analyzer receipt is bound to the current tree. It is not live corpus proof, not official-source evidence, not a completeness-oracle result, and not publication authority."
+  },
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "bundle": "foundation-review",
+  "canonical_board_task": false,
+  "checks": {
+    "acquisition_criteria_still_open": true,
+    "analyzer_health_missing_is_live_corpus_proof": false,
+    "analyzer_health_missing_treated_as_live_corpus_proof": false,
+    "claims_live_acquisition": false,
+    "claims_live_corpus": false,
+    "claims_verified_complete": false,
+    "exhaustion_quorum_is_live_corpus_proof": false,
+    "fixture_or_retry_receipt_is_live_scrape": false,
+    "foundation_contracts_provisionally_complete": true,
+    "foundation_contracts_verified_complete": false,
+    "g010_verified_complete": false,
+    "live_corpus_claimed": false,
+    "planner_diagnostics_are_live_corpus_proof": false,
+    "publication_authorized": false,
+    "publication_criteria_still_open": true,
+    "reopens_oul_000_through_oul_008": false
+  },
+  "claims_live_acquisition": false,
+  "claims_live_corpus": false,
+  "claims_verified_complete": false,
+  "code_version": "1",
+  "depends_on": [
+    "OUL-008"
+  ],
+  "does_not_reopen": [
+    "OUL-000",
+    "OUL-001",
+    "OUL-002",
+    "OUL-003",
+    "OUL-004",
+    "OUL-005",
+    "OUL-006",
+    "OUL-007",
+    "OUL-008"
+  ],
+  "effects": "Write a secret-free receipt that records the current G010 evidence gap without claiming verified_complete.",
+  "evidence_gap": {
+    "detail": "OUL-G010 is provisionally complete because OUL-000 through OUL-008 sealed the foundation contracts. The goal remains provisionally complete until later acquisition and publication evidence exists. The planner still lists G010 acceptance as uncovered and records analyzer_health_missing plus exhaustion_quorum_missing. Those planner diagnostics are not live corpus proof and do not close G020 or G080.",
+    "g010_acceptance_still_uncovered": [
+      "The bucket drift, missing jurisdictions, rights risks, schema boundaries, provider route, and reuse gaps are explicit and machine validated."
+    ],
+    "missing_live_outputs": [
+      "docs/reports/open_us_law_reindex/cohort_A.json",
+      "docs/reports/open_us_law_reindex/cohort_B.json",
+      "docs/reports/open_us_law_reindex/cohort_C.json",
+      "docs/reports/open_us_law_reindex/cohort_D.json",
+      "docs/reports/open_us_law_reindex/cohort_E.json",
+      "docs/reports/open_us_law_reindex/cohort_F.json",
+      "docs/reports/open_us_law_reindex/cohort_G.json",
+      "docs/reports/open_us_law_reindex/cohort_H.json",
+      "docs/reports/open_us_law_reindex/cohort_I.json",
+      "docs/reports/open_us_law_reindex/cohort_J.json",
+      "docs/reports/open_us_law_reindex/cohort_K.json",
+      "docs/reports/open_us_law_reindex/cohort_L.json",
+      "docs/reports/open_us_law_reindex/cohort_M.json",
+      "docs/reports/open_us_law_reindex/exact_51_coverage.json",
+      "docs/reports/open_us_law_reindex/acquisition_refill_closure.json",
+      "docs/reports/open_us_law_reindex/prepublication_seal.json",
+      "docs/reports/open_us_law_reindex/publication_receipt.json",
+      "docs/reports/open_us_law_reindex/public_canary.json"
+    ],
+    "required_before_verified_complete": [
+      "later acquisition evidence for OUL-G020 through OUL-G024",
+      "later publication evidence for OUL-G070 and OUL-G080",
+      "an explicitly healthy analyzer that is safe for completion reasoning",
+      "the configured independent fresh healthy exhaustive receipts bound to the current tree"
+    ]
+  },
+  "exhaustion_quorum": {
+    "evidence": {},
+    "is_live_corpus_proof": false,
+    "member_count": null,
+    "reason_code": "exhaustion_quorum_missing",
+    "required_members": null,
+    "satisfied": false,
+    "stale_members": [],
+    "treatment": "Planner diagnostic only. A missing exhaustion quorum is not live corpus proof."
+  },
+  "foundation_contracts": {
+    "goal_id": "OUL-G010",
+    "goal_title": "Freeze bucket, authority, completeness, identity, transport, and safety contracts",
+    "member_tasks": [
+      {
+        "id": "OUL-000",
+        "role": "control-plane",
+        "status": "completed",
+        "title": "Seal the Open US Law supervisor control plane"
+      },
+      {
+        "id": "OUL-001",
+        "role": "bucket-baseline",
+        "status": "completed",
+        "title": "Freeze and reconcile the live open-us-law bucket inventory"
+      },
+      {
+        "id": "OUL-002",
+        "role": "source-rights",
+        "status": "completed",
+        "title": "Seal the exact-51 official-source rights and admission matrix"
+      },
+      {
+        "id": "OUL-003",
+        "role": "completeness-contract",
+        "status": "completed",
+        "title": "Define the exhaustive 50-state-plus-DC completeness oracle"
+      },
+      {
+        "id": "OUL-004",
+        "role": "bucket-transport",
+        "status": "completed",
+        "title": "Implement a fail-closed Hugging Face Bucket snapshot transport"
+      },
+      {
+        "id": "OUL-005",
+        "role": "schema-identity",
+        "status": "completed",
+        "title": "Specify canonical Open US Law identity schema and configuration boundaries"
+      },
+      {
+        "id": "OUL-006",
+        "role": "acquisition-coordination",
+        "status": "completed",
+        "title": "Coordinate prior state-law evidence and lease only missing live scrapes"
+      },
+      {
+        "id": "OUL-007",
+        "role": "publication-safety",
+        "status": "completed",
+        "title": "Bind additive Dataset and Bucket publication authority"
+      },
+      {
+        "id": "OUL-008",
+        "role": "substrate-audit",
+        "status": "completed",
+        "title": "Audit and harden the reused USCode sparse GraphRAG substrate for corpus scale"
+      }
+    ],
+    "outputs_are_live_corpus_proof": false,
+    "provisionally_complete": true,
+    "sealed_contract_outputs": [
+      "docs/reports/open_us_law_reindex/bucket_snapshot.json",
+      "data/legal/open_us_law/source_admission.json",
+      "docs/reports/open_us_law_reindex/substrate_gap_audit.json",
+      "docs/reports/open_us_law_reindex/acquisition_leases.json"
+    ],
+    "verified_complete": false
+  },
+  "generated_by": "ipfs_accelerate_py.agent_supervisor.objective-refill@1",
+  "goal_id": "OUL-G010",
+  "goal_status": "provisionally_complete",
+  "kind": "g010_completion_evidence_review",
+  "live_acquisition_complete": false,
+  "live_corpus_proven": false,
+  "notes": "Foundation contracts are provisionally complete. OUL-G010 is not verified_complete. This OUL-058 receipt records the G010 evidence gap only. It does not reopen OUL-000 through OUL-008, does not certify any scrape cohort, does not authorize publication, and never treats analyzer-health-missing as live corpus proof.",
+  "preconditions": "OUL-000 through OUL-008 are complete and OUL-G010 remains provisionally complete until later acquisition and publication evidence exists.",
+  "producer": "oul-058-g010-completion-evidence-review",
+  "program_id": "open-us-law-reindex-v1",
+  "publication_authorized": false,
+  "report_schema": "ipfs_datasets_py/open-us-law-completion-evidence-review@1",
+  "reviewed_goal": "OUL-G010",
+  "schema_version": "open-us-law-completion-evidence-review-v1",
+  "sealed_at": "2026-08-14T00:00:00Z",
+  "secret_free": true,
+  "statement": "Foundation contracts are provisionally complete. OUL-G010 remains provisionally complete and is not verified_complete. Still-open acquisition criteria: all cohorts close; GA and NC are restored from official sources; nonofficial seeds are repaired or quarantined; no final acquisition failure remains; every jurisdiction in AL through KS, KY through NY, and NC through DC has replayable exhaustive evidence; and the deduplicated exact-51 union matches admitted artifacts with terminal evidence for every gap. Still-open publication criteria: a fresh redownload at immutable pins reproduces every digest and query mode before public mutation is authorized; and the public revision and bucket content root are immutable, verified, Viewer-compatible, sparse-queryable, and preserve all raw bucket objects. This receipt never treats analyzer-health-missing as live corpus proof.",
+  "status": "passed",
+  "still_open_acquisition_criteria": [
+    {
+      "criterion": "All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains.",
+      "goal_id": "OUL-G020",
+      "open": true,
+      "owning_tasks": [
+        "OUL-009",
+        "OUL-010",
+        "OUL-011",
+        "OUL-012",
+        "OUL-013",
+        "OUL-014",
+        "OUL-015",
+        "OUL-016",
+        "OUL-017",
+        "OUL-018",
+        "OUL-019",
+        "OUL-020",
+        "OUL-021",
+        "OUL-022",
+        "OUL-023"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "Every jurisdiction in AL through KS assigned to these cohorts has replayable exhaustive evidence.",
+      "goal_id": "OUL-G021",
+      "open": true,
+      "owning_tasks": [
+        "OUL-009",
+        "OUL-010",
+        "OUL-011",
+        "OUL-012"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "Every jurisdiction in KY through NY assigned to these cohorts has replayable exhaustive evidence.",
+      "goal_id": "OUL-G022",
+      "open": true,
+      "owning_tasks": [
+        "OUL-013",
+        "OUL-014",
+        "OUL-015",
+        "OUL-016"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "Every jurisdiction in NC through DC assigned to these cohorts has replayable exhaustive evidence.",
+      "goal_id": "OUL-G023",
+      "open": true,
+      "owning_tasks": [
+        "OUL-017",
+        "OUL-018",
+        "OUL-019",
+        "OUL-020",
+        "OUL-021"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "The deduplicated exact-51 union matches admitted artifacts and all discovered gaps have terminal evidence.",
+      "goal_id": "OUL-G024",
+      "open": true,
+      "owning_tasks": [
+        "OUL-022",
+        "OUL-023"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "Completeness requires exact jurisdiction set equality, closed bundle or pagination frontiers, zero failed-final units, replayable response hashes, no caps or fixture transports, and aggregate-to-jurisdiction key and digest equality.",
+      "goal_id": "OUL-G020",
+      "open": true,
+      "owning_tasks": [
+        "OUL-003",
+        "OUL-009",
+        "OUL-010",
+        "OUL-011",
+        "OUL-012",
+        "OUL-013",
+        "OUL-014",
+        "OUL-015",
+        "OUL-016",
+        "OUL-017",
+        "OUL-018",
+        "OUL-019",
+        "OUL-020",
+        "OUL-021",
+        "OUL-022",
+        "OUL-023"
+      ],
+      "source": "OUL-003 completeness oracle applied to live acquisition",
+      "status": "open"
+    }
+  ],
+  "still_open_publication_criteria": [
+    {
+      "criterion": "Fresh redownload at immutable pins reproduces every digest and query mode before public mutation is authorized.",
+      "goal_id": "OUL-G070",
+      "open": true,
+      "owning_tasks": [
+        "OUL-040",
+        "OUL-041",
+        "OUL-042"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "The public revision and bucket content root are immutable, verified, Viewer-compatible, sparse-queryable, and preserve all raw bucket objects.",
+      "goal_id": "OUL-G080",
+      "open": true,
+      "owning_tasks": [
+        "OUL-043",
+        "OUL-044",
+        "OUL-045",
+        "OUL-046"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "The seal is created before mutation and binds the exact candidate, staging revision, bucket prefix, current principal and write scope, task and goal closure including refill work, target IDs, operation set, and expiration.",
+      "goal_id": "OUL-G080",
+      "open": true,
+      "owning_tasks": [
+        "OUL-043"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "After immediate gate revalidation, the exact staged bytes are committed to justicedao/open-us-law-sparse-graphrag and copied additively under releases/<manifest_sha256>/ in justicedao/open-us-law-bucket; a tiny pointer is updated last, no root raw object is overwritten, and no deletion occurs.",
+      "goal_id": "OUL-G080",
+      "open": true,
+      "owning_tasks": [
+        "OUL-044"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "The public 40-hex dataset revision, Viewer configs, bucket content root, exact-51 coverage, model receipt, every descriptor, sparse query mode, fetch trace, attribution notice, and legacy raw preservation are independently verified.",
+      "goal_id": "OUL-G080",
+      "open": true,
+      "owning_tasks": [
+        "OUL-045"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "Cold and warm public queries meet declared relevance, latency, bytes, shard-count, and graph-budget thresholds while proving that no query downloads the complete BM25, vector, graph, or corpus family.",
+      "goal_id": "OUL-G080",
+      "open": true,
+      "owning_tasks": [
+        "OUL-046"
+      ],
+      "status": "open"
+    }
+  ],
+  "task_id": "OUL-058",
+  "track": "foundation",
+  "validation_commands": [
+    "test -f docs/reports/open_us_law_reindex/retry/oul-058-g010-review.json"
+  ],
+  "verified_complete": false
+}
