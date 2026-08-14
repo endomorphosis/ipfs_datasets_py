@@ -1177,3 +1177,15 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Preconditions: OUL-047 completed with valid evidence.
 - Effects: Seal final exact-51 Open US Law sparse GraphRAG evidence; emits content-addressed, secret-free evidence for downstream validation.
 - Acceptance: The root evidence proves exact-51 official completeness, source rights, real GTE embeddings, bounded sorted indexes, BM25-backed graph, sparse direct-HF retrieval, immutable public pins, successful publication, health history, zero blocked work, and closed refills.
+
+## OUL-049 Resolve validation retry-budget failure for OUL-011
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: ops
+- Depends on: OUL-002, OUL-003, OUL-006
+- Outputs: docs/reports/open_us_law_reindex/cohort_C.json, workspace/agent-supervisor/open-us-law-reindex/state/discovery
+- Validation: test -f /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-049-oul-011-retry-budget.md
+
+- Acceptance: Retry-budget guardrail filed this from repeated validation failures in OUL-011. Use evidence in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-049-oul-011-retry-budget.md to fix the validation blocker, then mark this repair task completed so the supervisor can release OUL-011 from strategy blocked_tasks.
