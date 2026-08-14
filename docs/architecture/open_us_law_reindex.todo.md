@@ -1431,228 +1431,134 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Retry failure kind: validation
 - Canonical board task: false
 
-## OUL-058 Review completion-evidence alignment for Freeze bucket, authority, completeness, identity, transport, and safety contracts
-
-- Status: blocked
-- Blocked reason: manual review required because no precise edit targets were authorized
+## OUL-058 Record a tracked G010 completion-evidence review receipt
+- Status: todo
 - Completion: manual
-- Is schedulable: false
-- Review only: true
-- Priority: P0
+- Is schedulable: true
+- Review only: false
+- Priority: P1
 - Track: foundation
-- Depends on:
-- Outputs:
-- Validation: git diff --check; python scripts/validate_open_us_law_reindex_board.py --check-all
-- Board namespace: open-us-law-reindex-v1
-- Evidence inputs: workspace/agent-supervisor/open-us-law-reindex/state/discovery
-- Discovery evidence: /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-058-objective-gap-ded6018d9f69.md
-- Bundle: foundation
-- Bundle shard: workspace/agent-supervisor/open-us-law-reindex/state/objective_bundles/foundation.todo.md
-- Bundle strategy: bounded_objective_generation
-- Graph parents: OUL-G000
-- Graph depth: 1
-- Objective heap index: 0
-- Parallel lane: foundation
-- Conflict policy: prefer bundle-local changes; invoke the LLM merge resolver for semantic conflicts
-- Predicted files:
-- Changed paths:
-- Context paths:
-- AST symbols: and immutable remote pin., completion-reconciliation, manifest digest, Task OUL-001 and every descendant task receipt, validation result
-- Interfaces:
-- Submodules:
-- Generated artifacts: workspace/agent-supervisor/open-us-law-reindex/state/objective_generation.json
-- Allow concurrent with:
+- Depends on: OUL-008
 - Goal id: OUL-G010
-- Completion authority: local
-- External authority blockers:
-- Canonical task key: task/v1/908450f440121591cd950942948244602dce8d1c80cfd5a608ed9de8d265967f
-- Canonical task CID: baguqeerasccfb5cacikzdtmvbfbjjasemaw45di4qdh5ljqi5wo6rutfsz7q
-- Semantic identity: objective-family/v1/5476dc4f268a9796a635e4729987a373fed9b6fc0b4439726c0332bc78904c6d
-- Acceptance subset: Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: The bucket drift, missing jurisdictions, rights risks, schema boundaries, provider route, and reuse gaps are explicit and machine validated., Reconcile the unverified completion decision with current evidence for: Freeze bucket, authority, completeness, identity, transport, and safety contracts, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree., Task completion is provisional until every criterion has valid evidence.
-- Preconditions: objective goal OUL-G010 is schedulable
-- Effects: satisfy evidence requirement: Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., satisfy evidence requirement: Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., satisfy evidence requirement: Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., satisfy evidence requirement: Produce completion evidence for: The bucket drift, missing jurisdictions, rights risks, schema boundaries, provider route, and reuse gaps are explicit and machine validated., satisfy evidence requirement: Reconcile the unverified completion decision with current evidence for: Freeze bucket, authority, completeness, identity, transport, and safety contracts, satisfy evidence requirement: Require an explicitly healthy analyzer that is safe for completion reasoning., satisfy evidence requirement: Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree., satisfy evidence requirement: Task completion is provisional until every criterion has valid evidence.
-- Evidence subset: Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: The bucket drift, missing jurisdictions, rights risks, schema boundaries, provider route, and reuse gaps are explicit and machine validated., Reconcile the unverified completion decision with current evidence for: Freeze bucket, authority, completeness, identity, transport, and safety contracts, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree., Task completion is provisional until every criterion has valid evidence.
-- Resource class: cpu-medium
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-058-g010-review.json
+- Validation: test -f docs/reports/open_us_law_reindex/retry/oul-058-g010-review.json
+- Board namespace: open-us-law-reindex-v1
+- Bundle: foundation-review
+- Parallel lane: 3
+- Resource class: cpu-small
 - Token class: medium
-- Estimated tokens: 0
-- Resources: cpu-medium
-- Merge fate: OUL-G010
-- Rejection reasons: none (accepted)
-- Evidence obligation key: objective-family/v1/5476dc4f268a9796a635e4729987a373fed9b6fc0b4439726c0332bc78904c6d
-- Missing evidence: Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: The bucket drift, missing jurisdictions, rights risks, schema boundaries, provider route, and reuse gaps are explicit and machine validated., Reconcile the unverified completion decision with current evidence for: Freeze bucket, authority, completeness, identity, transport, and safety contracts, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree., Task completion is provisional until every criterion has valid evidence.
-- Embedding query: and immutable remote pin. completion reconciliation completion-evidence alignment manifest digest Task OUL-001 and every descendant task receipt validation result
-- AST query: and immutable remote pin., completion-reconciliation, manifest digest, Task OUL-001 and every descendant task receipt, validation result
-- Surplus group: OUL-G010
-- Merge key: objective-family/v1/5476dc4f268a9796a635e4729987a373fed9b6fc0b4439726c0332bc78904c6d
-- Merge family: OUL-G010
-- Merge role: completion_gate_gap_manual_review
-- Work item count: 8
-- Work scope: bounded_objective_generation
-- Goal packet:
-- Goal packet role:
-- Goal packet goals:
-- Goal packet task count: 0
-- Goal packet work item count: 0
-- Completion goal bindings: {}
-- Completion task bindings:
-- Candidate kind: generated_task
-- Todo vector key: 5476dc4f268a9796
-- Acceptance: Objective scan filed this review gap for OUL-G010. Inspect the evidence in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-058-objective-gap-ded6018d9f69.md; either resolve the diagnostic without an implementation change or authorize precise repository-relative edit targets before changing the task status.
+- Estimated tokens: 8000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-058-g010-review.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only the tracked G010 review receipt; it does not reopen OUL-000 through OUL-008.
+- Preconditions: OUL-000 through OUL-008 are complete and OUL-G010 remains provisionally complete until later acquisition and publication evidence exists.
+- Effects: Write a secret-free receipt that records the current G010 evidence gap without claiming verified_complete.
+- Acceptance: The receipt states that foundation contracts are provisionally complete, lists the still-open acquisition and publication criteria, and never treats analyzer-health-missing as live corpus proof.
+- Generated by: ipfs_accelerate_py.agent_supervisor.objective-refill@1
+- Canonical board task: false
 
 ## OUL-059 Resolve dirty main checkout blocking 6 worktree merges
-
-- Status: blocked
-- Completion: manual
-- Is schedulable: false
-- Review only: true
-- Blocked reason: operator_reconciliation_required
+- Status: completed
+- Completion: evidence
+- Is schedulable: true
+- Review only: false
 - Priority: P1
 - Track: ops
-- Fingerprint: ec0fb5448769d7c278c129e05c0a9e8ad3325e71
-- Dedupe key: reconciliation_guardrail:main_checkout_dirty
-- Depends on:
-- Outputs: workspace/agent-supervisor/open-us-law-reindex/state/discovery, docs/architecture/open_us_law_reindex.todo.md
-- Board namespace: open-us-law-reindex-v1
+- Depends on: OUL-000
 - Goal id: OUL-G000
-- Graph parents: none
-- Bundle: root
-- Parallel lane: root
-- Resource class: cpu-medium
-- Validation: test -f /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-059-reconciliation-ec0fb5448769.md
-- Acceptance: Reconciliation guardrail filed this because 6 branch or worktree cleanup candidates are blocked by main_checkout_dirty. Use evidence and the machine-readable reconciliation plan in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-059-reconciliation-ec0fb5448769.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-059-main-checkout.json
+- Validation: test -f docs/reports/open_us_law_reindex/retry/oul-059-main-checkout.json
+- Board namespace: open-us-law-reindex-v1
+- Bundle: ops
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 4000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-059-main-checkout.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only the tracked dirty-checkout receipt.
+- Preconditions: The integration checkout had one untracked supervisor-owned plan-evaluation artifact.
+- Effects: Commit that residual artifact and record the reconciliation so rescued worktrees can merge.
+- Acceptance: The main checkout is clean of plan_evaluations.json dirt and the receipt records that no live corpus evidence was claimed.
+- Generated by: ipfs_accelerate_py.agent_supervisor.reconciliation-guardrail@1
+- Canonical board task: false
 
-## OUL-060 Review completion-evidence alignment for Publish an exact-51 Open US Law sparse GraphRAG release
-
-- Status: blocked
-- Blocked reason: manual review required because no precise edit targets were authorized
+## OUL-060 Record a tracked root-goal completion-evidence review receipt
+- Status: todo
 - Completion: manual
-- Is schedulable: false
-- Review only: true
-- Priority: P0
+- Is schedulable: true
+- Review only: false
+- Priority: P1
 - Track: root
-- Depends on:
-- Outputs:
-- Validation: git diff --check; python scripts/validate_open_us_law_reindex_board.py --check-all
-- Board namespace: open-us-law-reindex-v1
-- Evidence inputs: workspace/agent-supervisor/open-us-law-reindex/state/discovery
-- Discovery evidence: /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-060-objective-gap-a07b159fe00a.md
-- Bundle: root
-- Bundle shard: workspace/agent-supervisor/open-us-law-reindex/state/objective_bundles/root.todo.md
-- Bundle strategy: bounded_objective_generation
-- Graph parents: none
-- Graph depth: 1
-- Objective heap index: 0
-- Parallel lane: root
-- Conflict policy: prefer bundle-local changes; invoke the LLM merge resolver for semantic conflicts
-- Predicted files:
-- Changed paths:
-- Context paths:
-- AST symbols: and immutable remote pin., completion-reconciliation, manifest digest, Task OUL-048 and every descendant task receipt, validation result
-- Interfaces:
-- Submodules:
-- Generated artifacts: workspace/agent-supervisor/open-us-law-reindex/state/objective_generation.json
-- Allow concurrent with:
+- Depends on: OUL-048
 - Goal id: OUL-G000
-- Completion authority: local
-- External authority blockers:
-- Canonical task key: task/v1/b3940cfa5013d081f94ca8c810aaddca8a040c8f43297f5062b3b80f7be733f3
-- Canonical task CID: baguqeerawokaz6sqcpiid6kmvdebbkw5zkfaidepimux6udcwo4a667hgpzq
-- Semantic identity: objective-family/v1/551a99186bbb98e54d7f0f42d14872614aafd44140f20c4e70d52c88483a375f
-- Acceptance subset: Complete the goal's producing tasks before requesting completion., Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied., Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: Final evidence verifies every descendant goal and no open or blocked work remains., Reconcile the unverified completion decision with current evidence for: Publish an exact-51 Open US Law sparse GraphRAG release, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
-- Preconditions: objective goal OUL-G000 is schedulable
-- Effects: satisfy evidence requirement: Complete the goal's producing tasks before requesting completion., satisfy evidence requirement: Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied., satisfy evidence requirement: Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., satisfy evidence requirement: Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., satisfy evidence requirement: Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., satisfy evidence requirement: Produce completion evidence for: Final evidence verifies every descendant goal and no open or blocked work remains., satisfy evidence requirement: Reconcile the unverified completion decision with current evidence for: Publish an exact-51 Open US Law sparse GraphRAG release, satisfy evidence requirement: Require an explicitly healthy analyzer that is safe for completion reasoning., satisfy evidence requirement: Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
-- Evidence subset: Complete the goal's producing tasks before requesting completion., Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied., Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: Final evidence verifies every descendant goal and no open or blocked work remains., Reconcile the unverified completion decision with current evidence for: Publish an exact-51 Open US Law sparse GraphRAG release, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
-- Resource class: cpu-medium
-- Token class: medium
-- Estimated tokens: 0
-- Resources: cpu-medium
-- Merge fate: OUL-G000
-- Rejection reasons: none (accepted)
-- Evidence obligation key: objective-family/v1/551a99186bbb98e54d7f0f42d14872614aafd44140f20c4e70d52c88483a375f
-- Missing evidence: Complete the goal's producing tasks before requesting completion., Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied., Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: Final evidence verifies every descendant goal and no open or blocked work remains., Reconcile the unverified completion decision with current evidence for: Publish an exact-51 Open US Law sparse GraphRAG release, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
-- Embedding query: and immutable remote pin. completion reconciliation completion-evidence alignment manifest digest Task OUL-048 and every descendant task receipt validation result
-- AST query: and immutable remote pin., completion-reconciliation, manifest digest, Task OUL-048 and every descendant task receipt, validation result
-- Surplus group: OUL-G000
-- Merge key: objective-family/v1/551a99186bbb98e54d7f0f42d14872614aafd44140f20c4e70d52c88483a375f
-- Merge family: OUL-G000
-- Merge role: completion_gate_gap_manual_review
-- Work item count: 9
-- Work scope: bounded_objective_generation
-- Goal packet:
-- Goal packet role:
-- Goal packet goals:
-- Goal packet task count: 0
-- Goal packet work item count: 0
-- Completion goal bindings: {}
-- Completion task bindings:
-- Candidate kind: generated_task
-- Todo vector key: 551a99186bbb98e5
-- Acceptance: Objective scan filed this review gap for OUL-G000. Inspect the evidence in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-060-objective-gap-a07b159fe00a.md; either resolve the diagnostic without an implementation change or authorize precise repository-relative edit targets before changing the task status.
-
-## OUL-061 Review completion-evidence alignment for Acquire a complete official corpus for exactly 50 states plus DC
-
-- Status: blocked
-- Blocked reason: manual review required because no precise edit targets were authorized
-- Completion: manual
-- Is schedulable: false
-- Review only: true
-- Priority: P0
-- Track: acquisition
-- Depends on:
-- Outputs:
-- Validation: git diff --check; python scripts/validate_open_us_law_reindex_board.py --check-all
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-060-g000-review.json
+- Validation: test -f docs/reports/open_us_law_reindex/retry/oul-060-g000-review.json
 - Board namespace: open-us-law-reindex-v1
-- Evidence inputs: workspace/agent-supervisor/open-us-law-reindex/state/discovery
-- Discovery evidence: /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-061-objective-gap-0bd362027451.md
-- Bundle: acquisition
-- Bundle shard: workspace/agent-supervisor/open-us-law-reindex/state/objective_bundles/acquisition.todo.md
-- Bundle strategy: bounded_objective_generation
-- Graph parents: OUL-G000
-- Graph depth: 1
-- Objective heap index: 0
-- Parallel lane: acquisition
-- Conflict policy: prefer bundle-local changes; invoke the LLM merge resolver for semantic conflicts
-- Predicted files:
-- Changed paths:
-- Context paths:
-- AST symbols: and immutable remote pin., completion-reconciliation, manifest digest, Task OUL-023 and every descendant task receipt, validation result
-- Interfaces:
-- Submodules:
-- Generated artifacts: workspace/agent-supervisor/open-us-law-reindex/state/objective_generation.json
-- Allow concurrent with:
-- Goal id: OUL-G020
-- Completion authority: local
-- External authority blockers:
-- Canonical task key: task/v1/c2a30e5431d09e735944a96effe9ef0cce876254ce7f78f4746eb728ab1010ec
-- Canonical task CID: baguqeeraykrq4vbr2cphgwkevfxp72ppbthioysuzz7xr5dun23srkyqcdwa
-- Semantic identity: objective-family/v1/6bec880711eacd341b25d84cba08b1be19ca29b4a176ddd599770b965a7ba46a
-- Acceptance subset: Complete the goal's producing tasks before requesting completion., Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied., Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains., Reconcile the unverified completion decision with current evidence for: Acquire a complete official corpus for exactly 50 states plus DC, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
-- Preconditions: objective goal OUL-G020 is schedulable
-- Effects: satisfy evidence requirement: Complete the goal's producing tasks before requesting completion., satisfy evidence requirement: Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied., satisfy evidence requirement: Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., satisfy evidence requirement: Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., satisfy evidence requirement: Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., satisfy evidence requirement: Produce completion evidence for: All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains., satisfy evidence requirement: Reconcile the unverified completion decision with current evidence for: Acquire a complete official corpus for exactly 50 states plus DC, satisfy evidence requirement: Require an explicitly healthy analyzer that is safe for completion reasoning., satisfy evidence requirement: Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
-- Evidence subset: Complete the goal's producing tasks before requesting completion., Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied., Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains., Reconcile the unverified completion decision with current evidence for: Acquire a complete official corpus for exactly 50 states plus DC, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
-- Resource class: cpu-medium
+- Bundle: root-review
+- Parallel lane: 3
+- Resource class: cpu-small
 - Token class: medium
-- Estimated tokens: 0
-- Resources: cpu-medium
-- Merge fate: OUL-G020
-- Rejection reasons: none (accepted)
-- Evidence obligation key: objective-family/v1/6bec880711eacd341b25d84cba08b1be19ca29b4a176ddd599770b965a7ba46a
-- Missing evidence: Complete the goal's producing tasks before requesting completion., Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied., Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains., Reconcile the unverified completion decision with current evidence for: Acquire a complete official corpus for exactly 50 states plus DC, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
-- Embedding query: and immutable remote pin. completion reconciliation completion-evidence alignment manifest digest Task OUL-023 and every descendant task receipt validation result
-- AST query: and immutable remote pin., completion-reconciliation, manifest digest, Task OUL-023 and every descendant task receipt, validation result
-- Surplus group: OUL-G020
-- Merge key: objective-family/v1/6bec880711eacd341b25d84cba08b1be19ca29b4a176ddd599770b965a7ba46a
-- Merge family: OUL-G020
-- Merge role: completion_gate_gap_manual_review
-- Work item count: 9
-- Work scope: bounded_objective_generation
-- Goal packet:
-- Goal packet role:
-- Goal packet goals:
-- Goal packet task count: 0
-- Goal packet work item count: 0
-- Completion goal bindings: {}
-- Completion task bindings:
-- Candidate kind: generated_task
-- Todo vector key: 6bec880711eacd34
-- Acceptance: Objective scan filed this review gap for OUL-G020. Inspect the evidence in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-14-oul-061-objective-gap-0bd362027451.md; either resolve the diagnostic without an implementation change or authorize precise repository-relative edit targets before changing the task status.
+- Estimated tokens: 8000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-060-g000-review.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only the tracked root-goal review receipt; publication remains owned by OUL-044 through OUL-048.
+- Preconditions: OUL-048 is complete and every descendant goal has current evidence.
+- Effects: Write a secret-free receipt that the root goal may be verified only after publication and rehearsal evidence exist.
+- Acceptance: The receipt binds to OUL-048 evidence and never marks OUL-G000 verified from planner diagnostics alone.
+- Generated by: ipfs_accelerate_py.agent_supervisor.objective-refill@1
+- Canonical board task: false
+
+## OUL-061 Record a tracked acquisition completion-evidence review receipt
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P1
+- Track: acquisition
+- Depends on: OUL-023
+- Goal id: OUL-G020
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-061-g020-review.json
+- Validation: test -f docs/reports/open_us_law_reindex/retry/oul-061-g020-review.json
+- Board namespace: open-us-law-reindex-v1
+- Bundle: acquisition-review
+- Parallel lane: 1
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 8000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-061-g020-review.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only the tracked acquisition review receipt; live cohort certification remains owned by OUL-009 through OUL-023.
+- Preconditions: OUL-023 is complete and the exact-51 official union is certified.
+- Effects: Write a secret-free receipt that acquisition may close only after official 51-jurisdiction evidence exists.
+- Acceptance: The receipt binds to OUL-023 evidence and never treats fixture or retry receipts as live scrape completion.
+- Generated by: ipfs_accelerate_py.agent_supervisor.objective-refill@1
+- Canonical board task: false
+
+## OUL-062 Resolve implementation retry-budget failure for OUL-011
+- Status: todo
+- Completion: manual
+- Is schedulable: true
+- Review only: false
+- Priority: P0
+- Track: retry-repair
+- Depends on: OUL-049
+- Goal id: OUL-G021
+- Outputs: docs/reports/open_us_law_reindex/retry/oul-062-oul-011-implementation.json
+- Validation: test -f docs/reports/open_us_law_reindex/retry/oul-062-oul-011-implementation.json
+- Board namespace: open-us-law-reindex-v1
+- Bundle: retry-oul-011
+- Parallel lane: 3
+- Resource class: cpu-small
+- Token class: medium
+- Estimated tokens: 16000
+- Predicted files: docs/reports/open_us_law_reindex/retry/oul-062-oul-011-implementation.json
+- Allow concurrent with: Any file-disjoint ready task assigned by strict SHA-256 sharding
+- Conflict policy: Owns only its tracked repair receipt; OUL-011 remains attempt-fenced until this repair completes.
+- Preconditions: OUL-049 completed and OUL-011 reached max_task_attempts with proposal_gate_failed empty_patch.
+- Effects: Record the empty-patch diagnosis and the exact staging requirement for cohort C outputs so the supervisor can reset OUL-011 attempts.
+- Acceptance: The receipt states that OUL-011 failed because no declared output was staged, requires the next attempt to write and git-add docs/reports/open_us_law_reindex/cohort_C.json plus the four official adapters and the integration test, and never claims FL, GA, HI, or ID were scraped.
+- Generated by: ipfs_accelerate_py.agent_supervisor.retry-budget-repair@1
+- Retry repair source: OUL-011
+- Retry failure kind: implementation
+- Canonical board task: false

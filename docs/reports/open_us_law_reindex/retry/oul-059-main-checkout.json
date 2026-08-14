@@ -1,0 +1,12 @@
+{
+  "schema": "ipfs_datasets_py/open-us-law-reindex-retry-repair@1",
+  "task_id": "OUL-059",
+  "kind": "main_checkout_dirty",
+  "fingerprint": "ec0fb5448769d7c278c129e05c0a9e8ad3325e71",
+  "resolved": true,
+  "dirty_paths_before": [
+    "data/agent_supervisor/plan_evaluations.json"
+  ],
+  "resolution": "The supervisor-owned plan-evaluation artifact is no longer present on the integration checkout. Record this so rescued worktrees can merge. The file was residual objective-scan output, not live corpus evidence.",
+  "claims_live_acquisition": false
+}
