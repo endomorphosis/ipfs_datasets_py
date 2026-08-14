@@ -195,7 +195,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Only justicedao/open-us-law-sparse-graphrag dataset creation or additive commits and justicedao/open-us-law-bucket releases/<manifest_sha256>/ writes are authorized; root overwrite, delete, force push, history rewrite, visibility change, mutable query pins, and pre-seal writes fail before any callback.
 
 ## OUL-008 Audit and harden the reused USCode sparse GraphRAG substrate for corpus scale
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
