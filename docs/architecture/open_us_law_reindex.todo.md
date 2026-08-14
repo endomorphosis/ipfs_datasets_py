@@ -171,7 +171,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Receipts from the separate state-laws supervisor are accepted only after byte and frontier verification; live jurisdiction leases prevent duplicate scraping, and missing or invalid jurisdictions are scheduled exactly once without trusting synthetic two-row reports.
 
 ## OUL-007 Bind additive Dataset and Bucket publication authority
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
