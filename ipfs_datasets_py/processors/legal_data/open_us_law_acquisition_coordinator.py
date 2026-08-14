@@ -108,6 +108,29 @@ REJECTION_MISSING_RECEIPT: Final = "missing_receipt"
 REJECTION_FORBIDDEN_JURISDICTION: Final = "forbidden_default_jurisdiction"
 REJECTION_FIXTURE: Final = "fixture_or_synthetic_transport"
 REJECTION_STALE: Final = "stale_or_conflicting_evidence"
+REJECTION_RAW_BYTES_UNCHECKED: Final = "raw_bytes_unchecked"
+REJECTION_ZERO_ROW_SUCCESS: Final = "zero_row_success"
+REJECTION_PLACEHOLDER: Final = "placeholder_digest"
+REJECTION_SAMPLE: Final = "sample_or_cap"
+REJECTION_SELF_ASSERTED: Final = "self_asserted_digest"
+
+DEFAULT_COHORT_REPORT_RELATIVE_DIR: Final = Path("docs/reports/open_us_law_reindex")
+COHORT_EVIDENCE_SCHEMA_VERSION: Final = "open-us-law-cohort-evidence-v1"
+_PLACEHOLDER_DIGEST_TOKENS: Final = (
+    "placeholder",
+    "sample",
+    "dummy",
+    "todo",
+)
+_KNOWN_PLACEHOLDER_DIGESTS: Final = frozenset(
+    {
+        "0" * 64,
+        "f" * 64,
+        "a" * 64,
+        "deadbeef" * 8,
+        "cafebabe" * 8,
+    }
+)
 
 COHORT_JURISDICTIONS: Final = {
     "A": ("AL", "AK", "AZ", "AR"),
@@ -389,6 +412,24 @@ def default_lease_report_path(repo_root: Optional[PathLike] = None) -> Path:
     return (root / DEFAULT_LEASE_REPORT_RELATIVE_PATH).resolve()
 
 
+def default_cohort_report_path(
+    cohort: str,
+    repo_root: Optional[PathLike] = None,
+) -> Path:
+    """Return the declared Open US Law cohort evidence path (not legal_corpora)."""
+
+    root = Path(repo_root) if repo_root is not None else repository_root()
+    letter = str(cohort or "").strip().upper()
+    return (root / DEFAULT_COHORT_REPORT_RELATIVE_DIR / f"cohort_{letter}.json").resolve()
+
+
+def is_cohort_evidence_payload(payload: Any) -> bool:
+    return (
+        isinstance(payload, Mapping)
+        and payload.get("schema_version") == COHORT_EVIDENCE_SCHEMA_VERSION
+    )
+
+
 def sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
@@ -582,6 +623,95 @@ def is_completion_ledger_claim(payload: Mapping[str, Any]) -> bool:
     if status and count is not None and not has_frontier and not has_hashes and not has_replay:
         return True
     return False
+
+
+def is_placeholder_digest(value: Any) -> bool:
+    """Return True for empty, non-hex, repeated, or token placeholder digests."""
+
+    if value is None:
+        return True
+    text = str(value).strip().lower()
+    if text.startswith("sha256:"):
+        text = text[7:]
+    if not text or not _SHA256_RE.fullmatch(text):
+        return True
+    if len(set(text)) == 1:
+        return True
+    if text in _KNOWN_PLACEHOLDER_DIGESTS:
+        return True
+    return any(token in text for token in _PLACEHOLDER_DIGEST_TOKENS)
+
+
+def is_placeholder_cid(value: Any) -> bool:
+    text = str(value or "").strip().lower()
+    if not text or not text.startswith("b") or len(text) < 21:
+        return True
+    return any(token in text for token in _PLACEHOLDER_DIGEST_TOKENS)
+
+
+def _has_sample_or_cap(receipt: Mapping[str, Any]) -> bool:
+    if receipt.get("sample_cap") not in {None, 0, False}:
+        return True
+    if receipt.get("runtime_caps") not in {None, 0, False} and receipt.get("runtime_caps") != {}:
+        return True
+    mode = str(receipt.get("mode") or "full").strip().lower()
+    return mode not in {"", "full", "uncapped"}
+
+
+def _is_zero_row_success(receipt: Mapping[str, Any]) -> bool:
+    status = str(receipt.get("status") or "").strip().lower()
+    if status not in {"success", "complete", "ok", "passed"}:
+        return False
+    counts: list[int] = []
+    for key in ("row_count", "statutes_count", "fetched"):
+        counted = _as_int(receipt.get(key))
+        if counted is not None:
+            counts.append(counted)
+    disposition = receipt.get("disposition")
+    if isinstance(disposition, Mapping):
+        counted = _as_int(disposition.get("fetched"))
+        if counted is not None:
+            counts.append(counted)
+    return bool(counts) and min(counts) <= 0
+
+
+def _has_placeholder_identity(receipt: Mapping[str, Any]) -> bool:
+    hashes = receipt.get("hashes") if isinstance(receipt.get("hashes"), Mapping) else receipt
+    for key in ("request_sha256", "response_sha256", "admitted_body_sha256"):
+        value = hashes.get(key) if isinstance(hashes, Mapping) else None
+        if value and is_placeholder_digest(value):
+            return True
+    cids = receipt.get("cids")
+    if isinstance(cids, Mapping):
+        for value in cids.values():
+            if is_placeholder_cid(value):
+                return True
+    return False
+
+
+def _strict_live_admission_gates(
+    receipt: Mapping[str, Any],
+    byte_verdict: ByteVerification,
+) -> tuple[list[str], list[str]]:
+    """Extra fail-closed gates applied only to otherwise-accepted receipts."""
+
+    kinds: list[str] = []
+    details: list[str] = []
+    if not byte_verdict.raw_bytes_checked:
+        kinds.append(REJECTION_RAW_BYTES_UNCHECKED)
+        details.append("raw_bytes_checked=false is not reusable evidence")
+        kinds.append(REJECTION_SELF_ASSERTED)
+        details.append("declared hashes are self-asserted without retained bytes")
+    if _is_zero_row_success(receipt):
+        kinds.append(REJECTION_ZERO_ROW_SUCCESS)
+        details.append("zero-row success is not reusable evidence")
+    if _has_sample_or_cap(receipt):
+        kinds.append(REJECTION_SAMPLE)
+        details.append("sample or runtime cap cannot be reused")
+    if _has_placeholder_identity(receipt):
+        kinds.append(REJECTION_PLACEHOLDER)
+        details.append("placeholder hashes or CIDs cannot be reused")
+    return kinds, details
 
 
 def _transport_is_fixture(receipt: Mapping[str, Any]) -> bool:
@@ -985,6 +1115,34 @@ def evaluate_prior_receipt(
     if projection:
         kinds.append(REJECTION_SOURCE_PROJECTION)
         details.append(projection)
+    if _is_zero_row_success(receipt):
+        kinds.append(REJECTION_ZERO_ROW_SUCCESS)
+        details.append("zero-row success is not reusable evidence")
+    if _has_sample_or_cap(receipt):
+        kinds.append(REJECTION_SAMPLE)
+        details.append("sample or runtime cap cannot be reused")
+    if _has_placeholder_identity(receipt):
+        kinds.append(REJECTION_PLACEHOLDER)
+        details.append("placeholder hashes or CIDs cannot be reused")
+    if (
+        not kinds
+        and byte_verdict.ok
+        and not byte_verdict.raw_bytes_checked
+    ):
+        extra_kinds, extra_details = _strict_live_admission_gates(receipt, byte_verdict)
+        extra_kinds = [
+            kind
+            for kind in extra_kinds
+            if kind
+            in {REJECTION_RAW_BYTES_UNCHECKED, REJECTION_SELF_ASSERTED}
+        ]
+        extra_details = [
+            detail
+            for detail in extra_details
+            if "raw_bytes_checked" in detail or "self-asserted" in detail
+        ]
+        kinds.extend(extra_kinds)
+        details.extend(extra_details)
 
     completeness: CompletenessVerdict | None = None
     completeness_kinds: tuple[str, ...] = ()
@@ -1705,6 +1863,10 @@ def validate_acquisition_leases(payload: Mapping[str, Any]) -> dict[str, Any]:
             )
         if _as_int(row.get("row_count")) == TWO_ROW_COUNT:
             raise LeaseReportError("synthetic two-row reports cannot be accepted")
+        if _as_int(row.get("row_count")) == 0:
+            raise LeaseReportError("zero-row success cannot be accepted")
+        if row.get("raw_bytes_checked") is False:
+            raise LeaseReportError("accepted receipts cannot set raw_bytes_checked=false")
 
     for row in payload.get("rejected_prior_evidence") or []:
         if not isinstance(row, Mapping):
@@ -1781,15 +1943,65 @@ def require_live_verified_receipts(
         )
 
 
+def check_declared_cohort_report(
+    path: PathLike,
+    *,
+    cohort: Optional[str] = None,
+    require_live: bool = False,
+    repo_root: Optional[PathLike] = None,
+) -> dict[str, Any]:
+    """Validate the declared Open US Law cohort report (not legal_corpora)."""
+
+    from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+        check_declared_cohort_report as _check_cohort,
+    )
+
+    return _check_cohort(
+        path,
+        cohort=cohort,
+        require_live=require_live,
+        repo_root=repo_root,
+    )
+
+
 def check_committed_leases(
     *,
     repo_root: Optional[PathLike] = None,
     require_live: bool = False,
     cohort: Optional[str] = None,
+    report_path: Optional[PathLike] = None,
 ) -> dict[str, Any]:
-    """Rebuild the sealed report and require the committed bytes to match."""
+    """Rebuild the sealed report and require the committed bytes to match.
+
+    When ``report_path`` points at a declared Open US Law cohort evidence
+    report, cohort-scoped checks consume that file instead of the older
+    ``legal_corpora_reindex`` receipt directory.
+    """
 
     root = Path(repo_root) if repo_root is not None else repository_root()
+    if report_path is not None:
+        declared = Path(report_path)
+        if declared.is_file():
+            try:
+                payload = json.loads(declared.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise LeaseReportError(
+                    f"declared report is not valid JSON: {declared}"
+                ) from exc
+            if is_cohort_evidence_payload(payload):
+                return check_declared_cohort_report(
+                    declared,
+                    cohort=cohort,
+                    require_live=require_live,
+                    repo_root=root,
+                )
+        elif require_live or (
+            cohort and "cohort_" in declared.name.lower()
+        ):
+            scope = f"cohort {cohort}" if cohort else "declared cohort report"
+            raise LiveEvidenceRequiredError(
+                f"--require-live has no declared cohort report for {scope}: {declared}"
+            )
     path = default_lease_report_path(root)
     if not path.is_file():
         raise LeaseReportError(f"committed acquisition lease report missing: {path}")
@@ -1865,6 +2077,7 @@ __all__ = [
     "ACTION_WAIT",
     "AcquisitionCoordinationError",
     "ByteVerification",
+    "COHORT_EVIDENCE_SCHEMA_VERSION",
     "COHORT_JURISDICTIONS",
     "CoordinationPlan",
     "DuplicateLeaseError",
@@ -1886,12 +2099,17 @@ __all__ = [
     "TASK_ID",
     "build_acquisition_leases_payload",
     "check_committed_leases",
+    "check_declared_cohort_report",
     "cohort_codes",
     "cohort_letter",
     "cohort_task_id",
     "coordinate_default_prior_evidence",
     "coordinate_jurisdictions",
+    "default_cohort_report_path",
     "default_lease_report_path",
+    "is_cohort_evidence_payload",
+    "is_placeholder_cid",
+    "is_placeholder_digest",
     "discover_completion_ledger_claims",
     "discover_live_foreign_leases",
     "discover_state_laws_cohort_receipts",

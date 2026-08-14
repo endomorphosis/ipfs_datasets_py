@@ -11,7 +11,11 @@ Validation gate (no network, no mutation)::
 
     python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py --no-mutate --check
 
-Later cohort certifiers may add ``--cohort A --require-live --check``.
+Later cohort certifiers consume the declared Open US Law cohort report::
+
+    python scripts/ops/legal_data/coordinate_open_us_law_scrapes.py \\
+        --cohort C --report docs/reports/open_us_law_reindex/cohort_C.json \\
+        --require-live --check
 """
 
 from __future__ import annotations
@@ -40,10 +44,16 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_acquisition_coordinator 
     build_acquisition_leases_payload,
     check_committed_leases,
     cohort_codes,
+    default_cohort_report_path,
     default_lease_report_path,
     encode_acquisition_leases,
     validate_acquisition_leases,
     write_acquisition_leases,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+    FixtureCompletionForbiddenError,
+    LiveEvidenceError,
+    RawBytesUncheckedError,
 )
 
 CODE_VERSION = "1"
@@ -96,7 +106,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--report",
         default="",
-        help="Optional lease-report path. Defaults to the sealed OUL path.",
+        help=(
+            "Declared cohort evidence path for --cohort checks, or the sealed "
+            "lease report for --write. Cohort-scoped --require-live consumes "
+            "docs/reports/open_us_law_reindex/cohort_<letter>.json, not the "
+            "older legal_corpora_reindex receipt directory."
+        ),
     )
     return parser
 
@@ -127,21 +142,31 @@ def run_check(
     *,
     require_live: bool,
     cohort: Optional[str],
+    report_path: Optional[Path] = None,
 ) -> dict[str, Any]:
     try:
         if cohort:
             cohort_codes(cohort)
+        declared = report_path
+        if declared is None and cohort:
+            candidate = default_cohort_report_path(cohort, REPOSITORY_ROOT)
+            if candidate.is_file() or require_live:
+                declared = candidate
         return check_committed_leases(
             repo_root=REPOSITORY_ROOT,
             require_live=require_live,
             cohort=cohort,
+            report_path=declared,
         )
     except (
         AcquisitionCoordinationError,
         DuplicateLeaseError,
         DuplicateScheduleError,
+        FixtureCompletionForbiddenError,
         LeaseReportError,
+        LiveEvidenceError,
         LiveEvidenceRequiredError,
+        RawBytesUncheckedError,
     ) as exc:
         raise CoordinateError(str(exc)) from exc
 
@@ -213,7 +238,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     try:
-        report = run_check(require_live=bool(args.require_live), cohort=cohort)
+        explicit_report = Path(args.report).expanduser().resolve() if str(args.report or "").strip() else None
+        report = run_check(
+            require_live=bool(args.require_live),
+            cohort=cohort,
+            report_path=explicit_report,
+        )
     except CoordinateError as exc:
         if args.json:
             _print_json(_failed_payload(exc))
