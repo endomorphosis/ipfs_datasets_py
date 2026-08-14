@@ -1,0 +1,130 @@
+{
+  "acceptance": "The receipt states that OUL-011 failed because no declared output was staged, requires the next attempt to write and git-add docs/reports/open_us_law_reindex/cohort_C.json plus the four official adapters and the integration test, and never claims FL, GA, HI, or ID were scraped.",
+  "assigned_cohort_c_jurisdictions": [
+    "FL",
+    "GA",
+    "HI",
+    "ID"
+  ],
+  "authorizing_for_publication": false,
+  "bridge_task_id": "OUL-049",
+  "bridge_task_completed": true,
+  "checks": {
+    "cohort_complete": false,
+    "empty_patch_diagnosed": true,
+    "fixture_proves_cohort_completion": false,
+    "fl_scraped": false,
+    "ga_scraped": false,
+    "hi_scraped": false,
+    "id_scraped": false,
+    "live_acquisition_claimed": false,
+    "next_attempt_must_git_add_declared_outputs": true,
+    "no_declared_output_was_staged": true,
+    "placeholders_rejected": true,
+    "samples_rejected": true,
+    "self_asserted_digests_rejected": true
+  },
+  "claims_live_acquisition": false,
+  "code_version": "1",
+  "cohort": "C",
+  "cohort_complete": false,
+  "depends_on": [
+    "OUL-049"
+  ],
+  "diagnosis": {
+    "detail": "OUL-011 reached max_task_attempts with proposal_gate_failed empty_patch. The proposal contained no staged declared output, so the implementation gate rejected the candidate. OUL-049 already completed the acquisition-contract validation repair; this receipt records only the empty-patch staging failure. Legacy adapter modules already present in the tree do not satisfy OUL-011 unless they are written as official adapters and git-added with the declared cohort report and integration test.",
+    "failure_kind": "implementation",
+    "max_task_attempts_reached": true,
+    "proposal_gate": "proposal_gate_failed",
+    "proposal_gate_reason": "empty_patch",
+    "reason": "OUL-011 failed because no declared output was staged",
+    "source_task_id": "OUL-011",
+    "source_task_status": "attempt-fenced"
+  },
+  "effects": "Record the empty-patch diagnosis and the exact staging requirement for cohort C outputs so the supervisor can reset OUL-011 attempts.",
+  "failure_kind": "implementation",
+  "fixture_execution_proves_cohort_completion": false,
+  "four_official_adapters": [
+    "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/florida.py",
+    "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/georgia.py",
+    "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/hawaii.py",
+    "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/idaho.py"
+  ],
+  "goal_id": "OUL-G021",
+  "integration_test": "tests/integration/legal_data/test_open_us_law_cohort_c.py",
+  "jurisdictions_scraped": [],
+  "kind": "implementation_retry_repair",
+  "live_scrape_completed": false,
+  "next_attempt": {
+    "action": "write and git-add",
+    "instruction": "The next attempt must write and git-add docs/reports/open_us_law_reindex/cohort_C.json plus the four official adapters and the integration test.",
+    "must_git_add": true,
+    "must_write": true,
+    "required_paths": [
+      "docs/reports/open_us_law_reindex/cohort_C.json",
+      "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/florida.py",
+      "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/georgia.py",
+      "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/hawaii.py",
+      "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/idaho.py",
+      "tests/integration/legal_data/test_open_us_law_cohort_c.py"
+    ]
+  },
+  "notes": "This OUL-062 receipt is a staging diagnosis only. It does not certify cohort C, does not authorize publication, and never claims FL, GA, HI, or ID were scraped. File existence of a retry receipt or a fixture never repairs live evidence.",
+  "observed_declared_outputs": {
+    "docs/reports/open_us_law_reindex/cohort_C.json": {
+      "present_in_tree": false,
+      "staged_by_oul_011": false
+    },
+    "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/florida.py": {
+      "present_in_tree": true,
+      "staged_by_oul_011": false
+    },
+    "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/georgia.py": {
+      "present_in_tree": true,
+      "staged_by_oul_011": false
+    },
+    "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/hawaii.py": {
+      "present_in_tree": true,
+      "staged_by_oul_011": false
+    },
+    "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/idaho.py": {
+      "present_in_tree": true,
+      "staged_by_oul_011": false
+    },
+    "tests/integration/legal_data/test_open_us_law_cohort_c.py": {
+      "present_in_tree": false,
+      "staged_by_oul_011": false
+    }
+  },
+  "preconditions": "OUL-049 completed and OUL-011 reached max_task_attempts with proposal_gate_failed empty_patch.",
+  "producer": "oul-062-implementation-retry-repair",
+  "program_id": "open-us-law-reindex-v1",
+  "repair_completed": true,
+  "repairs": [
+    {
+      "detail": "OUL-011 failed because no declared output was staged. The proposal gate recorded empty_patch after max_task_attempts.",
+      "id": "diagnose-empty-patch"
+    },
+    {
+      "detail": "The next attempt must write and git-add docs/reports/open_us_law_reindex/cohort_C.json plus the four official adapters (florida.py, georgia.py, hawaii.py, idaho.py) and the integration test tests/integration/legal_data/test_open_us_law_cohort_c.py.",
+      "id": "require-write-and-git-add-declared-outputs"
+    },
+    {
+      "detail": "This receipt never claims FL, GA, HI, or ID were scraped and does not set cohort_complete or authorize publication.",
+      "id": "forbid-scrape-completion-claim"
+    }
+  ],
+  "report_schema": "ipfs_datasets_py/open-us-law-implementation-retry-repair@1",
+  "schema_version": "open-us-law-implementation-retry-repair-v1",
+  "scraped_jurisdictions": [],
+  "source_task_id": "OUL-011",
+  "source_task_released_for": "OUL-011",
+  "statement": "OUL-011 failed because no declared output was staged. The next attempt must write and git-add docs/reports/open_us_law_reindex/cohort_C.json plus the four official adapters and the integration test. This receipt never claims FL, GA, HI, or ID were scraped.",
+  "status": "passed",
+  "supervisor_action": "reset OUL-011 attempts after this repair receipt is admitted",
+  "task_id": "OUL-062",
+  "track": "retry-repair",
+  "validation_commands": [
+    "test -f docs/reports/open_us_law_reindex/retry/oul-062-oul-011-implementation.json"
+  ]
+}
