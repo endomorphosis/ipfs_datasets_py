@@ -1208,7 +1208,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Discovery evidence: archived stopped-runtime lane-0 retry-budget receipt and proposal/validation events
 
 ## OUL-050 Resolve validation retry-budget failure for OUL-009
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
