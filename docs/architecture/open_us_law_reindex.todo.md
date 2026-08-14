@@ -1320,7 +1320,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Canonical board task: false
 
 ## OUL-054 Resolve validation retry-budget failure for OUL-014
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
