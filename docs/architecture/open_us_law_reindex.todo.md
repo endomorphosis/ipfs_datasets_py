@@ -651,7 +651,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Routing indexes can page beyond 4096 descriptors, builders stream bounded partitions, route pages are integrity-bound, and legacy USCode, patent, CVE, and SkillCenter layouts remain readable.
 
 ## OUL-027 Build scalable field-weighted term-range BM25
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
