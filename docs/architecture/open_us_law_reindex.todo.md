@@ -315,7 +315,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: IL, IN, IA, and KS each have exhaustive official-source receipts, stable logical keys, closed frontiers, and zero unexplained failed-final units.
 
 ## OUL-013 Certify official scrape cohort E (KY, LA, ME, MD)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
