@@ -30,6 +30,57 @@ shared-formal-verification-bindings = [
 optional-formal-verification-bindings = ["symbolicai"]
 external-native-tools-policy = "explicit-transactional-lazy-installer-only"
 
+[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight]
+schema = "ipfs_accelerate_py/agent-supervisor/scoped-project-dependency-preflight@2"
+requires-python = ">=3.12"
+authority = { file = "setup.py", sha256 = "540c38ef5c5009043ca84ab7f9500790d9cfdfb89be6709ec239375e1cb4de36", extra = "test", extra-requirements-sha256 = "bde93396701c9668161a22e73a9e2808682f22f8c2a4343b10b4dfdcd8e0de67" }
+
+# Each entry binds one exact board task and validation command to a reviewed
+# subset of setup.py's test extra.  A present baseline is content-sealed.
+# A declared-output-absent baseline authorizes dependency probing only; the
+# task must still create the exact declared output and pass normal validation.
+[[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
+target = "tests/unit/logic/gui_optimizer/test_models.py"
+validation-command-sha256 = "a9ccd05c1e29f8e676248b06b303671e04ba6134d75a935e5c0fb523726f80ab"
+requirements = ["pytest>=9.0.3,<10.0.0"]
+task = { board-namespace = "verified-gui-optimizer-v1", canonical-task-cid = "baguqeeraldxfnc3xz23jqkibkzvni5oqjlnvxne6mcyfcappp3ankxgh4xna", declared-output = "external/ipfs_datasets/tests/unit/logic/gui_optimizer/test_models.py" }
+baseline = { state = "present", sha256 = "cbcbc9c30e82ce722a89f30360a973b6e25ce3e6dfd99feaf77a14d9ababb923" }
+
+[[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
+target = "tests/unit/logic/gui_optimizer/test_identity.py"
+validation-command-sha256 = "8bf6e01e3d9385c8ba085f0743603f04b91bdcfe9ecd4fe6157517afc5d012e5"
+requirements = ["pytest>=9.0.3,<10.0.0"]
+task = { board-namespace = "verified-gui-optimizer-v1", canonical-task-cid = "baguqeera6eevydfnkuv6uaqvkgvxyt2hhw7wjt2qywk422ifqi4r4wgas7oa", declared-output = "external/ipfs_datasets/tests/unit/logic/gui_optimizer/test_identity.py" }
+baseline = { state = "declared-output-absent" }
+
+[[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
+target = "tests/unit/logic/gui_optimizer/test_formal_adapter.py"
+validation-command-sha256 = "0bac90b90df8b80c23fec6bb0b9113bcebf4056b2230bd4710eb0016bf714628"
+requirements = ["pytest>=9.0.3,<10.0.0"]
+task = { board-namespace = "verified-gui-optimizer-v1", canonical-task-cid = "baguqeera42pzuy6xhjg72xhs3zqzaanxpsio76d7ula3svtd5yvggkcsujvq", declared-output = "external/ipfs_datasets/tests/unit/logic/gui_optimizer/test_formal_adapter.py" }
+baseline = { state = "declared-output-absent" }
+
+[[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
+target = "tests/unit/logic/gui_optimizer/test_invariants.py"
+validation-command-sha256 = "ad42c45fc74ea132afa5a5a802a476054aa7c7eb9142f42f9bc1236904fca2ab"
+requirements = ["pytest>=9.0.3,<10.0.0"]
+task = { board-namespace = "verified-gui-optimizer-v1", canonical-task-cid = "baguqeerascaj2hy5byhsutgth5h5unwwxm5kmqfsf3ap64km4vvvalg4zsbq", declared-output = "external/ipfs_datasets/tests/unit/logic/gui_optimizer/test_invariants.py" }
+baseline = { state = "declared-output-absent" }
+
+[[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
+target = "tests/unit/logic/gui_optimizer/test_receipts.py"
+validation-command-sha256 = "beb496a3c7b999ebefd3298ba6db985dae47ce38bce0e2b3ede5342cbcdf1576"
+requirements = ["pytest>=9.0.3,<10.0.0"]
+task = { board-namespace = "verified-gui-optimizer-v1", canonical-task-cid = "baguqeera3dycj3rf4fkbzcwzhngfpv7l6xy6lwrym7bpdf4pyaou5wsl2psa", declared-output = "external/ipfs_datasets/tests/unit/logic/gui_optimizer/test_receipts.py" }
+baseline = { state = "declared-output-absent" }
+
+[[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
+target = "tests/unit/logic/gui_optimizer/test_identity_vectors.py"
+validation-command-sha256 = "53a6eb45c97e52be5095fd01bdfd5492cb314ed0b6515d5cfcca93df70daf73c"
+requirements = ["pytest>=9.0.3,<10.0.0"]
+task = { board-namespace = "verified-gui-optimizer-v1", canonical-task-cid = "baguqeerasxrw46uw2ocr76pxl4hyrkj4lau62fdvdw5uew3nhqydmwkky75q", declared-output = "external/ipfs_datasets/tests/unit/logic/gui_optimizer/test_identity_vectors.py" }
+baseline = { state = "declared-output-absent" }
+
 [project.optional-dependencies]
 # IPLD / CAR format extras
 ipld = [
