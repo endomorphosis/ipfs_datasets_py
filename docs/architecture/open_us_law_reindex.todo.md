@@ -1510,7 +1510,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Canonical board task: false
 
 ## OUL-061 Record a tracked acquisition completion-evidence review receipt
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
