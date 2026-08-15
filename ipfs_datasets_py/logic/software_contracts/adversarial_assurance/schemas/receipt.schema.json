@@ -1,0 +1,360 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/adversarial-assurance.receipt.schema.json",
+  "title": "Adversarial-assurance signed campaign and promotion receipts v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned AssuranceCampaignReceipt, AssurancePolicyPromotionReceipt, ReceiptSignatureBinding, and AdversarialAssuranceArtifacts catalog (AAE-012). Signed evidence reuses the existing EdDSA/did:key receipt signature authority; no new envelope or cryptography is defined. Unknown fields and unsupported schemas are rejected.",
+  "oneOf": [
+    { "$ref": "#/$defs/assuranceCampaignReceipt" },
+    { "$ref": "#/$defs/assurancePolicyPromotionReceipt" },
+    { "$ref": "#/$defs/receiptSignatureBinding" },
+    { "$ref": "#/$defs/adversarialAssuranceArtifacts" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nfcStringOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nfcString" }]
+    },
+    "token": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:/+-]{0,127}$"
+    },
+    "versionToken": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"
+    },
+    "didKey": {
+      "type": "string",
+      "pattern": "^did:key:z[1-9A-HJ-NP-Za-km-z]{10,200}$"
+    },
+    "keyIdentity": {
+      "oneOf": [
+        { "$ref": "#/$defs/didKey" },
+        { "$ref": "#/$defs/cid" }
+      ]
+    },
+    "audienceOrAction": {
+      "oneOf": [
+        { "$ref": "#/$defs/token" },
+        { "$ref": "#/$defs/didKey" }
+      ]
+    },
+    "signatureBytes": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{0,512}$",
+      "maxLength": 512
+    },
+    "cidList": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/cid" },
+      "uniqueItems": true,
+      "maxItems": 4096
+    },
+    "strictObject": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "null" },
+          { "type": "boolean" },
+          { "type": "integer" },
+          { "type": "string" },
+          { "type": "array" },
+          { "type": "object" }
+        ]
+      }
+    },
+    "signatureVerificationStatus": {
+      "type": "string",
+      "enum": [
+        "verified",
+        "unverified",
+        "invalid",
+        "unavailable",
+        "rejected"
+      ]
+    },
+    "heldOutResult": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed",
+        "inconclusive",
+        "not_applicable",
+        "unavailable"
+      ]
+    },
+    "sealAvailabilityStatus": {
+      "type": "string",
+      "enum": [
+        "bound",
+        "released",
+        "unavailable",
+        "not_requested",
+        "rejected"
+      ]
+    },
+    "sealScopeItem": {
+      "type": "string",
+      "enum": [
+        "operator_versions",
+        "campaign_policy",
+        "admitted_set",
+        "expected_detection_sets",
+        "outcomes",
+        "survivor_reports",
+        "vacuity_findings",
+        "held_out_evaluations",
+        "final_policy_revision",
+        "campaign_artifacts",
+        "declared_result_completeness",
+        "evaluation_to_promotion_binding",
+        "status_policy_satisfaction",
+        "campaign_receipt",
+        "promotion_receipt"
+      ]
+    },
+    "sealScope": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sealScopeItem" },
+      "uniqueItems": true,
+      "minItems": 1,
+      "maxItems": 64
+    },
+    "receiptSignatureBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "signer_identity",
+        "key_identity",
+        "audience",
+        "action",
+        "signature_algorithm",
+        "signature_authority",
+        "signature",
+        "signature_verification_status",
+        "binding_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.adversarial-assurance-receipt-signature-binding@1"
+        },
+        "signer_identity": { "$ref": "#/$defs/didKey" },
+        "key_identity": { "$ref": "#/$defs/keyIdentity" },
+        "audience": { "$ref": "#/$defs/audienceOrAction" },
+        "action": { "$ref": "#/$defs/audienceOrAction" },
+        "signature_algorithm": { "const": "EdDSA" },
+        "signature_authority": {
+          "const": "ipfs-datasets.profile-g.ed25519-did-key@1"
+        },
+        "signature": { "$ref": "#/$defs/signatureBytes" },
+        "signature_verification_status": {
+          "$ref": "#/$defs/signatureVerificationStatus"
+        },
+        "binding_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "assuranceArtifactHeader": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "schema",
+        "interface_id",
+        "artifact_kind",
+        "header_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.adversarial-assurance-artifact-header@1"
+        },
+        "interface_id": { "const": "AssuranceArtifactHeader@1" },
+        "artifact_kind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,63}$"
+        },
+        "header_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "assuranceCampaignReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "receipt_id",
+        "campaign_plan_cid",
+        "campaign_policy_cid",
+        "campaign_policy_version",
+        "admitted_set_cid",
+        "expected_detection_sets_cid",
+        "outcomes_cid",
+        "survivor_reports_cid",
+        "vacuity_findings_cid",
+        "held_out_evaluation_cid",
+        "held_out_result",
+        "authorization_cid",
+        "expected_old_revision",
+        "seal_scope",
+        "seal_status",
+        "seal_evidence_cid",
+        "gap_reports_cid",
+        "input_artifact_cids",
+        "signature",
+        "notes",
+        "metadata",
+        "receipt_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.adversarial-assurance-campaign-receipt@1"
+        },
+        "interface_id": { "const": "AssuranceCampaignReceipt@1" },
+        "header": { "$ref": "#/$defs/assuranceArtifactHeader" },
+        "receipt_id": { "$ref": "#/$defs/token" },
+        "campaign_plan_cid": { "$ref": "#/$defs/cid" },
+        "campaign_policy_cid": { "$ref": "#/$defs/cid" },
+        "campaign_policy_version": { "$ref": "#/$defs/versionToken" },
+        "admitted_set_cid": { "$ref": "#/$defs/cid" },
+        "expected_detection_sets_cid": { "$ref": "#/$defs/cid" },
+        "outcomes_cid": { "$ref": "#/$defs/cid" },
+        "survivor_reports_cid": { "$ref": "#/$defs/cid" },
+        "vacuity_findings_cid": { "$ref": "#/$defs/cid" },
+        "held_out_evaluation_cid": { "$ref": "#/$defs/cid" },
+        "held_out_result": { "$ref": "#/$defs/heldOutResult" },
+        "authorization_cid": { "$ref": "#/$defs/cid" },
+        "expected_old_revision": { "$ref": "#/$defs/versionToken" },
+        "seal_scope": { "$ref": "#/$defs/sealScope" },
+        "seal_status": { "$ref": "#/$defs/sealAvailabilityStatus" },
+        "seal_evidence_cid": { "$ref": "#/$defs/cidOrNull" },
+        "gap_reports_cid": { "$ref": "#/$defs/cidOrNull" },
+        "input_artifact_cids": { "$ref": "#/$defs/cidList" },
+        "signature": { "$ref": "#/$defs/receiptSignatureBinding" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "receipt_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "assurancePolicyPromotionReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "header",
+        "receipt_id",
+        "campaign_receipt_cid",
+        "candidate_cid",
+        "evaluation_report_cid",
+        "held_out_evaluation_cid",
+        "held_out_result",
+        "authorization_cid",
+        "expected_old_policy_cid",
+        "expected_old_policy_version",
+        "previous_policy_cid",
+        "previous_policy_version",
+        "promoted_policy_cid",
+        "promoted_policy_version",
+        "rollback_policy_cid",
+        "cas_expected_version",
+        "seal_scope",
+        "seal_status",
+        "seal_evidence_cid",
+        "signature",
+        "notes",
+        "metadata",
+        "receipt_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.adversarial-assurance-policy-promotion-receipt@1"
+        },
+        "interface_id": { "const": "AssurancePolicyPromotionReceipt@1" },
+        "header": { "$ref": "#/$defs/assuranceArtifactHeader" },
+        "receipt_id": { "$ref": "#/$defs/token" },
+        "campaign_receipt_cid": { "$ref": "#/$defs/cid" },
+        "candidate_cid": { "$ref": "#/$defs/cid" },
+        "evaluation_report_cid": { "$ref": "#/$defs/cid" },
+        "held_out_evaluation_cid": { "$ref": "#/$defs/cidOrNull" },
+        "held_out_result": { "$ref": "#/$defs/heldOutResult" },
+        "authorization_cid": { "$ref": "#/$defs/cid" },
+        "expected_old_policy_cid": { "$ref": "#/$defs/cid" },
+        "expected_old_policy_version": { "$ref": "#/$defs/versionToken" },
+        "previous_policy_cid": { "$ref": "#/$defs/cid" },
+        "previous_policy_version": { "$ref": "#/$defs/versionToken" },
+        "promoted_policy_cid": { "$ref": "#/$defs/cid" },
+        "promoted_policy_version": { "$ref": "#/$defs/versionToken" },
+        "rollback_policy_cid": { "$ref": "#/$defs/cid" },
+        "cas_expected_version": { "$ref": "#/$defs/versionToken" },
+        "seal_scope": { "$ref": "#/$defs/sealScope" },
+        "seal_status": { "$ref": "#/$defs/sealAvailabilityStatus" },
+        "seal_evidence_cid": { "$ref": "#/$defs/cidOrNull" },
+        "signature": { "$ref": "#/$defs/receiptSignatureBinding" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "receipt_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "artifactCatalogEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "interface_id", "schema", "module"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nfcString" },
+        "interface_id": { "$ref": "#/$defs/nfcString" },
+        "schema": { "$ref": "#/$defs/nfcString" },
+        "module": { "$ref": "#/$defs/token" },
+        "artifact_kind": { "$ref": "#/$defs/token" }
+      }
+    },
+    "adversarialAssuranceArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "package",
+        "catalog_version",
+        "signature_authority",
+        "signature_algorithm",
+        "content_authority",
+        "schema_directory",
+        "artifacts",
+        "catalog_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.adversarial-assurance-artifacts@1"
+        },
+        "interface_id": { "const": "AdversarialAssuranceArtifacts@1" },
+        "package": { "$ref": "#/$defs/nfcString" },
+        "catalog_version": { "$ref": "#/$defs/versionToken" },
+        "signature_authority": {
+          "const": "ipfs-datasets.profile-g.ed25519-did-key@1"
+        },
+        "signature_algorithm": { "const": "EdDSA" },
+        "content_authority": { "$ref": "#/$defs/nfcString" },
+        "schema_directory": { "$ref": "#/$defs/nfcString" },
+        "artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifactCatalogEntry" },
+          "minItems": 1,
+          "maxItems": 256
+        },
+        "catalog_cid": { "$ref": "#/$defs/cid" }
+      }
+    }
+  }
+}
