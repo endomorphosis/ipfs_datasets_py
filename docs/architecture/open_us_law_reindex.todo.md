@@ -435,7 +435,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: NC, ND, OH, and OK each have exhaustive official-source receipts; the absent contaminated NC bucket object is replaced from official clean text.
 
 ## OUL-018 Certify official scrape cohort J (OR, PA, RI, SC)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
