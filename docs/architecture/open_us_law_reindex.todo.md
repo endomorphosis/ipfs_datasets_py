@@ -555,7 +555,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The deduplicated union is exactly all 50 states plus DC, includes clean official GA and NC, excludes PR and federal from the default set, reconciles all bucket deltas, and has zero unknown or failed-final dispositions.
 
 ## OUL-023 Refill and close every acquisition, rights, and frontier gap
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
