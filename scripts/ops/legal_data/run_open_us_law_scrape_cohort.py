@@ -46,6 +46,7 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
     check_declared_cohort_report,
     prove_fixture_behavior,
     validate_cohort_evidence_schema_file,
+    write_live_cohort_report,
 )
 
 
@@ -70,6 +71,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--check",
         action="store_true",
         help="Validate the software path or the declared live cohort report.",
+    )
+    parser.add_argument(
+        "--write",
+        action="store_true",
+        help=(
+            "Acquire the cohort through registered fetch_official hooks and "
+            "write the declared live report. Never used with --fixture-only."
+        ),
     )
     parser.add_argument(
         "--fixture-only",
@@ -176,10 +185,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             "incompatible with --require-live\n"
         )
         return 2
-    if not args.check:
+    if args.write and args.fixture_only:
         sys.stderr.write(
-            "run_open_us_law_scrape_cohort: FAILED: --check is required "
-            "(live acquisition is owned by the cohort task, not this gate)\n"
+            "run_open_us_law_scrape_cohort: FAILED: --write cannot use "
+            "--fixture-only; fixture bytes never become live evidence\n"
+        )
+        return 2
+    if args.write and args.no_mutate:
+        sys.stderr.write(
+            "run_open_us_law_scrape_cohort: FAILED: --write is incompatible "
+            "with --no-mutate\n"
+        )
+        return 2
+    if not args.check and not args.write:
+        sys.stderr.write(
+            "run_open_us_law_scrape_cohort: FAILED: --check or --write is required\n"
         )
         return 2
     if not args.fixture_only and not args.require_live:
@@ -192,7 +212,26 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         cohort_codes(cohort)
-        if args.fixture_only:
+        report_path = (
+            Path(args.report).expanduser().resolve()
+            if str(args.report or "").strip()
+            else default_cohort_report_path(cohort, REPOSITORY_ROOT)
+        )
+        if args.write:
+            evidence_root = (
+                Path(args.evidence_root).expanduser().resolve()
+                if str(args.evidence_root or "").strip()
+                else Path(tempfile.mkdtemp(prefix=f"oul-cohort-{cohort.lower()}-live-"))
+            )
+            report = write_live_cohort_report(
+                report_path,
+                cohort,
+                evidence_root,
+                repo_root=REPOSITORY_ROOT,
+            )
+            if args.check:
+                report = run_live_check(cohort, report_path)
+        elif args.fixture_only:
             evidence_root = (
                 Path(args.evidence_root).expanduser().resolve()
                 if str(args.evidence_root or "").strip()
@@ -200,11 +239,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             report = run_fixture_check(cohort, evidence_root)
         else:
-            report_path = (
-                Path(args.report).expanduser().resolve()
-                if str(args.report or "").strip()
-                else default_cohort_report_path(cohort, REPOSITORY_ROOT)
-            )
             report = run_live_check(cohort, report_path)
     except (
         AcquisitionCoordinationError,

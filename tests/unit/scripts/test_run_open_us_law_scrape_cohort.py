@@ -80,3 +80,31 @@ def test_unknown_cohort_fails() -> None:
 
 def test_live_and_fixture_flags_required() -> None:
     assert main(["--cohort", "C", "--check"]) == 2
+
+
+def test_write_rejects_fixture_only() -> None:
+    assert main(["--write", "--fixture-only", "--cohort", "C", "--require-live"]) == 2
+
+
+def test_write_without_registered_fetch_official_fails(
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    report = tmp_path / "cohort_C.json"
+    evidence = tmp_path / "evidence"
+    rc = main(
+        [
+            "--write",
+            "--require-live",
+            "--cohort",
+            "C",
+            "--report",
+            str(report),
+            "--evidence-root",
+            str(evidence),
+        ]
+    )
+    assert rc == 1
+    text = capsys.readouterr().err
+    assert "FAILED" in text
+    assert not report.exists()

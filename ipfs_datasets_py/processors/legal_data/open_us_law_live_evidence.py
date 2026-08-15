@@ -1359,6 +1359,107 @@ def build_cohort_evidence_payload(
     return payload
 
 
+class RegistryOfficialTransport:
+    """Call a registered state scraper's ``fetch_official`` hook.
+
+    This transport never invents bytes. A missing scraper or missing
+    ``fetch_official`` method fails closed so workers implement the hook
+    instead of writing an empty cohort report.
+    """
+
+    def fetch_official(self, code: str) -> OfficialFetch:
+        from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.registry import (
+            StateScraperRegistry,
+        )
+
+        normalized = str(code).strip().upper()
+        scraper_cls = StateScraperRegistry.get_scraper(normalized)
+        if scraper_cls is None:
+            raise LiveEvidenceError(
+                f"no registered official scraper for {normalized}"
+            )
+        scraper = scraper_cls(normalized, normalized)
+        fetch_official = getattr(scraper, "fetch_official", None)
+        if not callable(fetch_official):
+            raise LiveEvidenceError(
+                f"{normalized} scraper does not implement fetch_official"
+            )
+        fetch = fetch_official(normalized)
+        if not isinstance(fetch, OfficialFetch):
+            raise LiveEvidenceError(
+                f"{normalized} fetch_official must return OfficialFetch"
+            )
+        if fetch.fixture:
+            raise FixtureCompletionForbiddenError(
+                f"{normalized} fixture fetch cannot satisfy live acquisition"
+            )
+        return fetch
+
+
+def write_live_cohort_report(
+    path: PathLike,
+    cohort: str,
+    evidence_root: PathLike,
+    *,
+    transport: Optional[AcquisitionTransport] = None,
+    repo_root: Optional[PathLike] = None,
+) -> dict[str, Any]:
+    """Acquire one cohort through ``transport`` and write the declared report."""
+
+    letter = str(cohort).strip().upper()
+    active = transport or RegistryOfficialTransport()
+    acquire_cohort(letter, evidence_root, transport=active, resume=True)
+    root = Path(repo_root) if repo_root is not None else repository_root()
+    report = certify_cohort_offline(
+        evidence_root,
+        letter,
+        require_live=True,
+        allow_fixture_software_proof=False,
+        repo_root=root,
+    )
+    receipts = {
+        code: build_receipt_from_artifacts(
+            evidence_root,
+            code,
+            task_id=cohort_task_id(code),
+        )
+        for code in cohort_codes(letter)
+    }
+    verdicts = [
+        certify_jurisdiction_offline(
+            evidence_root,
+            code,
+            allow_fixture_software_proof=False,
+            task_id=cohort_task_id(code),
+        )
+        for code in cohort_codes(letter)
+    ]
+    payload = build_cohort_evidence_payload(
+        cohort=letter,
+        verdicts=verdicts,
+        fixture_execution=False,
+        require_live=True,
+        receipts=receipts,
+    )
+    if payload.get("cohort_complete") is not True:
+        raise LiveEvidenceRequiredError(
+            f"live write did not certify cohort {letter}: "
+            + ",".join(
+                item.jurisdiction_code
+                for item in verdicts
+                if not item.ok or item.fixture
+            )
+        )
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    encoded = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    _atomic_write_bytes(target, encoded.encode("utf-8"))
+    payload["path"] = target.as_posix()
+    payload["bytes_written"] = len(encoded.encode("utf-8"))
+    payload["status"] = report.get("status") or payload.get("status")
+    return payload
+
+
 __all__ = [
     "BRIDGE_TASK_ID",
     "COHORT_EVIDENCE_SCHEMA_VERSION",
@@ -1380,6 +1481,7 @@ __all__ = [
     "REJECTION_SELF_ASSERTED",
     "REJECTION_ZERO_ROW_SUCCESS",
     "RawBytesUncheckedError",
+    "RegistryOfficialTransport",
     "SCHEMA_VERSION",
     "SampleCapError",
     "SelfAssertedDigestError",
@@ -1405,5 +1507,6 @@ __all__ = [
     "prove_fixture_behavior",
     "validate_cohort_evidence",
     "validate_cohort_evidence_schema_file",
+    "write_live_cohort_report",
     "write_retained_artifacts",
 ]
