@@ -267,7 +267,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: CA, CO, CT, and DE each have exhaustive official-source receipts, with CA missing-link rows repaired or typed and no fixture evidence admitted.
 
 ## OUL-011 Certify official scrape cohort C (FL, GA, HI, ID)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
