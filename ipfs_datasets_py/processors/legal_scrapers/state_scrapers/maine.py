@@ -477,6 +477,169 @@ class MaineScraper(BaseStateScraper):
             )
         return out
 
+    def _official_ssl_context(self, *, unverified: bool = False):
+        import ssl
+
+        if unverified:
+            return ssl._create_unverified_context()
+        return ssl.create_default_context()
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> tuple[bytes, bytes, bytes]:
+        """Fetch one official Maine URL and retain request/response/body bytes."""
+        import ssl
+        import urllib.error
+        import urllib.request
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        request_bytes = (
+            f"GET {path} HTTP/1.1\n"
+            f"host: {host}\n"
+            "accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.8\n"
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-maine/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            method="GET",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        header_block = ""
+        for unverified in (False, True):
+            try:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                    header_block = "".join(
+                        f"{key}: {value}\n" for key, value in resp.headers.items()
+                    )
+                last_exc = None
+                break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Maine GET failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Maine GET returned HTTP {status} for {url}")
+        response_bytes = f"HTTP/1.1 {status} OK\n{header_block}\n".encode("utf-8") + body
+        return request_bytes, response_bytes, body
+
+    def _parse_official_title_index(self, html: str, index_url: str) -> List[Dict[str, str]]:
+        """Parse every official MRS title unit from the live statutes index."""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError("BeautifulSoup is required for official Maine discovery") from exc
+
+        soup = BeautifulSoup(html, "html.parser")
+        units: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not re.search(
+                r"statutes/[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+ch0sec0\.html|"
+                r"title[0-9A-Za-z\-]+ch0sec0\.html",
+                href,
+                re.IGNORECASE,
+            ):
+                continue
+            full_url = urljoin(index_url, href)
+            if full_url in seen:
+                continue
+            seen.add(full_url)
+            title_match = re.search(
+                r"/statutes/([0-9A-Za-z\-]+)/title", full_url, flags=re.IGNORECASE
+            ) or re.search(r"title([0-9A-Za-z\-]+)ch0sec0", full_url, flags=re.IGNORECASE)
+            title_number = title_match.group(1) if title_match else ""
+            if not title_number:
+                continue
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not label:
+                label = f"Title {title_number}"
+            units.append(
+                {
+                    "canonical_key": f"me:title-{title_number.lower()}",
+                    "source_url": full_url,
+                    "label": label,
+                    "text": (
+                        f"Maine Revised Statutes Title {title_number} {label} "
+                        f"official title index entry retained from {full_url}"
+                    ),
+                }
+            )
+        return units
+
+    def fetch_official(self, code: str = "ME"):
+        """Acquire the uncapped official Maine title frontier."""
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or self.state_code or "ME").strip().upper()
+        if normalized != "ME":
+            raise ValueError(f"MaineScraper cannot acquire {normalized}")
+        index_url = "https://legislature.maine.gov/statutes/"
+        request_bytes, response_bytes, index_body = self._official_http_get(index_url)
+        html = index_body.decode("utf-8", errors="replace")
+        units = self._parse_official_title_index(html, index_url)
+        if len(units) < 3:
+            raise RuntimeError(
+                f"official Maine title index is incomplete: {len(units)} units"
+            )
+        rows = tuple(
+            {
+                "canonical_key": unit["canonical_key"],
+                "source_url": unit["source_url"],
+                "text": unit["text"],
+            }
+            for unit in units
+        )
+        catalog = "\n".join(
+            f"{unit['canonical_key']}\t{unit['source_url']}\t{unit['label']}"
+            for unit in units
+        ).encode("utf-8")
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code="ME",
+            request_bytes=request_bytes,
+            response_bytes=response_bytes,
+            body_bytes=catalog,
+            source_domain="legislature.maine.gov",
+            source_path="/statutes/",
+            frontier=frontier,
+            rows=rows,
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=rows[0]["canonical_key"],
+            last_hierarchy_unit=rows[-1]["canonical_key"],
+        )
+
 
 # Register this scraper with the registry
 StateScraperRegistry.register("ME", MaineScraper)

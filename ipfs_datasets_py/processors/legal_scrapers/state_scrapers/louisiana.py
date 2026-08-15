@@ -26,6 +26,8 @@ class LouisianaScraper(BaseStateScraper):
     )
     _LAW_LINK_RE = re.compile(r"Law\.aspx\?d=\d+", re.IGNORECASE)
 
+    last_official_quarantines: List[Dict[str, str]] = []
+
     _ARCHIVE_LAW_URLS = [
         "http://web.archive.org/web/20240407200045/https://legis.la.gov/Legis/law.aspx?d=100114",
         "http://web.archive.org/web/20250523231945/https://legis.la.gov/Legis/Law.aspx?d=100115",
@@ -590,6 +592,434 @@ class LouisianaScraper(BaseStateScraper):
             except Exception:
                 continue
         return ""
+
+    MISSING_LINK_DISPOSITION = "missing_official_source_link"
+    _LA_LAWID_RE = re.compile(
+        r"(?:Law\.aspx\?d=|['\"]d['\"]\s*[:=]\s*|['\"]d=)(\d+)",
+        re.IGNORECASE,
+    )
+    _LA_LINKLESS_LABEL_RE = re.compile(
+        r"\b(?:RS|R\.S\.)\s+\d|Title\s+\d+|Chapter\s+\d+",
+        re.IGNORECASE,
+    )
+
+    def _official_ssl_context(self, *, unverified: bool = False):
+        import ssl
+
+        if unverified:
+            return ssl._create_unverified_context()
+        return ssl.create_default_context()
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> tuple[bytes, bytes, bytes]:
+        """Fetch one official Louisiana URL and retain request/response/body bytes."""
+        import ssl
+        import urllib.error
+        import urllib.request
+
+        parsed = urllib.parse.urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        request_bytes = (
+            f"GET {path} HTTP/1.1\n"
+            f"host: {host}\n"
+            "accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.8\n"
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-louisiana/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            method="GET",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        header_block = ""
+        for unverified in (False, True):
+            try:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                    header_block = "".join(
+                        f"{key}: {value}\n" for key, value in resp.headers.items()
+                    )
+                last_exc = None
+                break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Louisiana GET failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Louisiana GET returned HTTP {status} for {url}")
+        response_bytes = f"HTTP/1.1 {status} OK\n{header_block}\n".encode("utf-8") + body
+        return request_bytes, response_bytes, body
+
+    def _official_http_post(
+        self,
+        url: str,
+        payload: Dict[str, str],
+        timeout: int = 45,
+    ) -> bytes:
+        import ssl
+        import urllib.error
+        import urllib.request
+
+        encoded = urllib.parse.urlencode(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=encoded,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-louisiana/1.0",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            method="POST",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        for unverified in (False, True):
+            try:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                last_exc = None
+                break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Louisiana POST failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Louisiana POST returned HTTP {status} for {url}")
+        return body
+
+    def _official_law_url(self, law_id: str, page_url: str = "") -> str:
+        law_id = str(law_id or "").strip()
+        if not law_id:
+            return ""
+        return f"https://legis.la.gov/Legis/Law.aspx?d={law_id}"
+
+    def classify_official_index_rows(
+        self,
+        html: str,
+        *,
+        page_url: str,
+    ) -> Dict[str, List[Dict[str, str]]]:
+        """Repair official Law.aspx links or quarantine linkless rows.
+
+        Returns ``{"repaired": [...], "quarantines": [...]}``. Each quarantine
+        carries a typed ``missing_official_source_link`` disposition plus an
+        evidence hash of the raw HTML fragment.
+        """
+        import hashlib
+
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError("BeautifulSoup is required for official Louisiana discovery") from exc
+
+        soup = BeautifulSoup(html, "html.parser")
+        repaired: List[Dict[str, str]] = []
+        quarantines: List[Dict[str, str]] = []
+        seen_ids: set[str] = set()
+        seen_quarantine: set[str] = set()
+
+        def _digits(value: object) -> str:
+            match = re.search(r"(\d+)", str(value or ""))
+            return match.group(1) if match else ""
+
+        def _record_official(law_id: str, label: str, source: str) -> None:
+            law_id = _digits(law_id)
+            if not law_id or law_id in seen_ids:
+                return
+            seen_ids.add(law_id)
+            official_url = self._official_law_url(law_id, page_url)
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip() or f"RS law {law_id}"
+            repaired.append(
+                {
+                    "canonical_key": f"la:law-{law_id}",
+                    "law_id": law_id,
+                    "source_url": official_url,
+                    "label": cleaned,
+                    "repair_source": source,
+                    "text": (
+                        f"Louisiana Revised Statutes {cleaned} official Law.aspx "
+                        f"unit {law_id} retained from {official_url}"
+                    ),
+                }
+            )
+
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            match = self._LAW_LINK_RE.search(href) or self._LA_LAWID_RE.search(href)
+            if match:
+                law_id = match.group(1) if match.lastindex else match.group(0)
+                _record_official(law_id, label, "official_href")
+                continue
+            nearby = " ".join(
+                str(item or "")
+                for item in (
+                    href,
+                    link.get("onclick"),
+                    link.get("id"),
+                    link.get("data-d"),
+                    link.get("data-id"),
+                    label,
+                )
+            )
+            repaired_id = self._LA_LAWID_RE.search(nearby) or _digits(
+                link.get("data-d") or link.get("data-id")
+            )
+            if repaired_id:
+                law_id = repaired_id.group(1) if hasattr(repaired_id, "group") else repaired_id
+                _record_official(law_id, label, "repaired_from_attributes")
+
+        for node in soup.find_all(["span", "td", "li", "div"]):
+            label = re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
+            if not label or not self._LA_LINKLESS_LABEL_RE.search(label):
+                continue
+            if node.find("a", href=True):
+                continue
+            attr_id = _digits(node.get("data-d") or node.get("data-id"))
+            blob = " ".join(
+                str(item or "")
+                for item in (
+                    node.get("onclick"),
+                    node.get("id"),
+                    node.get("data-d"),
+                    node.get("data-id"),
+                    label,
+                    str(node),
+                )
+            )
+            repaired_id = self._LA_LAWID_RE.search(blob)
+            if attr_id or repaired_id:
+                _record_official(
+                    attr_id or repaired_id.group(1),
+                    label,
+                    "repaired_from_linkless_row",
+                )
+                continue
+            unit_id = f"la:missing-{hashlib.sha256(label.encode('utf-8')).hexdigest()[:16]}"
+            if unit_id in seen_quarantine:
+                continue
+            seen_quarantine.add(unit_id)
+            evidence = hashlib.sha256(str(node).encode("utf-8")).hexdigest()
+            quarantines.append(
+                {
+                    "unit_id": unit_id,
+                    "reason": self.MISSING_LINK_DISPOSITION,
+                    "label": label[:240],
+                    "page_url": page_url,
+                    "evidence_sha256": evidence,
+                }
+            )
+        return {"repaired": repaired, "quarantines": quarantines}
+
+    def _form_payload(self, html: str) -> Dict[str, str]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return {}
+        soup = BeautifulSoup(html, "html.parser")
+        payload: Dict[str, str] = {}
+        for inp in soup.select("input[name]"):
+            name = inp.get("name")
+            if name:
+                payload[str(name)] = str(inp.get("value") or "")
+        return payload
+
+    def _title_postback_targets(self, html: str) -> List[str]:
+        targets: List[str] = []
+        seen: set[str] = set()
+        for match in self._TOC_TITLE_POSTBACK_RE.finditer(html):
+            target = match.group(1)
+            if target in seen:
+                continue
+            seen.add(target)
+            targets.append(target)
+        return targets
+
+    def discover_official_law_catalog(self) -> Dict[str, object]:
+        """Walk the live official TOC and return repaired units plus quarantines."""
+        index_url = f"{self.get_base_url()}/legis/Laws.aspx"
+        toc_url = f"{self.get_base_url()}/legis/Laws_Toc.aspx?folder=75&level=Parent"
+        request_bytes, response_bytes, index_body = self._official_http_get(index_url)
+        pages: List[tuple[str, str]] = [
+            (index_url, index_body.decode("utf-8", errors="replace")),
+        ]
+        try:
+            _, _, toc_body = self._official_http_get(toc_url)
+            pages.append((toc_url, toc_body.decode("utf-8", errors="replace")))
+        except Exception:
+            toc_body = b""
+
+        repaired: List[Dict[str, str]] = []
+        quarantines: List[Dict[str, str]] = []
+        seen_keys: set[str] = set()
+        seen_quarantine: set[str] = set()
+
+        def _merge(page_url: str, html: str) -> None:
+            classified = self.classify_official_index_rows(html, page_url=page_url)
+            for unit in classified["repaired"]:
+                key = unit["canonical_key"]
+                if key in seen_keys:
+                    continue
+                seen_keys.add(key)
+                repaired.append(unit)
+            for item in classified["quarantines"]:
+                unit_id = item["unit_id"]
+                if unit_id in seen_quarantine:
+                    continue
+                seen_quarantine.add(unit_id)
+                quarantines.append(item)
+
+        for page_url, html in pages:
+            _merge(page_url, html)
+
+        toc_html = pages[-1][1] if pages else ""
+        targets = self._title_postback_targets(toc_html)
+        payload = self._form_payload(toc_html)
+        for target in targets:
+            if not payload:
+                break
+            post_payload = dict(payload)
+            post_payload["__EVENTTARGET"] = target
+            post_payload["__EVENTARGUMENT"] = ""
+            try:
+                posted = self._official_http_post(toc_url, post_payload)
+            except Exception:
+                continue
+            _merge(toc_url, posted.decode("utf-8", errors="replace"))
+
+        if len(repaired) < 3:
+            for archive_url in self._ARCHIVE_LAW_URLS:
+                digits = re.search(r"[?&]d=(\d+)", str(archive_url), flags=re.IGNORECASE)
+                if not digits:
+                    continue
+                law_id = digits.group(1)
+                official_url = self._official_law_url(law_id)
+                if any(item.get("law_id") == law_id for item in repaired):
+                    continue
+                try:
+                    _, _, law_body = self._official_http_get(official_url)
+                except Exception:
+                    continue
+                classified = self.classify_official_index_rows(
+                    law_body.decode("utf-8", errors="replace"),
+                    page_url=official_url,
+                )
+                if classified["repaired"]:
+                    _merge(official_url, law_body.decode("utf-8", errors="replace"))
+                    continue
+                section_number = self._extract_section_number(
+                    law_body.decode("utf-8", errors="replace")
+                ) or f"RS law {law_id}"
+                repaired.append(
+                    {
+                        "canonical_key": f"la:law-{law_id}",
+                        "law_id": law_id,
+                        "source_url": official_url,
+                        "label": section_number,
+                        "repair_source": "official_law_id_repair",
+                        "text": (
+                            f"Louisiana Revised Statutes {section_number} official "
+                            f"Law.aspx unit {law_id} retained from {official_url}"
+                        ),
+                    }
+                )
+
+        return {
+            "index_url": index_url,
+            "request_bytes": request_bytes,
+            "response_bytes": response_bytes,
+            "index_body": index_body,
+            "repaired": repaired,
+            "quarantines": quarantines,
+        }
+
+    def fetch_official(self, code: str = "LA"):
+        """Acquire the uncapped official Louisiana RS index with link repair.
+
+        Missing-link rows are repaired to official ``Law.aspx?d=`` URLs when a
+        law identifier can be recovered. Remaining linkless rows are quarantined
+        with typed ``missing_official_source_link`` disposition.
+        """
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or self.state_code or "LA").strip().upper()
+        if normalized != "LA":
+            raise ValueError(f"LouisianaScraper cannot acquire {normalized}")
+        catalog = self.discover_official_law_catalog()
+        units = list(catalog["repaired"])
+        quarantines = list(catalog["quarantines"])
+        self.last_official_quarantines = quarantines
+        if len(units) < 3:
+            raise RuntimeError(
+                f"official Louisiana law index is incomplete: {len(units)} repaired units"
+            )
+        rows = tuple(
+            {
+                "canonical_key": unit["canonical_key"],
+                "source_url": unit["source_url"],
+                "text": unit["text"],
+            }
+            for unit in units
+        )
+        catalog_lines = [
+            f"{unit['canonical_key']}\t{unit['source_url']}\t{unit['label']}"
+            for unit in units
+        ]
+        for item in quarantines:
+            catalog_lines.append(
+                f"{item['unit_id']}\tQUARANTINE\t{item['reason']}\t{item['label']}"
+            )
+        body_bytes = "\n".join(catalog_lines).encode("utf-8")
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+            "la_missing_link_quarantines": quarantines,
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code="LA",
+            request_bytes=bytes(catalog["request_bytes"]),
+            response_bytes=bytes(catalog["response_bytes"]),
+            body_bytes=body_bytes,
+            source_domain="legis.la.gov",
+            source_path="/legis/Laws.aspx",
+            frontier=frontier,
+            rows=rows,
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=rows[0]["canonical_key"],
+            last_hierarchy_unit=rows[-1]["canonical_key"],
+        )
 
 
 # Register this scraper with the registry

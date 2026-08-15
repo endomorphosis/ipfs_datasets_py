@@ -462,6 +462,159 @@ class MarylandScraper(BaseStateScraper):
                 out.append(statute)
         return out
 
+    def _official_ssl_context(self, *, unverified: bool = False):
+        import ssl
+
+        if unverified:
+            return ssl._create_unverified_context()
+        return ssl.create_default_context()
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> tuple[bytes, bytes, bytes]:
+        """Fetch one official Maryland URL and retain request/response/body bytes."""
+        import ssl
+        import urllib.error
+        import urllib.request
+
+        parsed = urllib.parse.urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        request_bytes = (
+            f"GET {path} HTTP/1.1\n"
+            f"host: {host}\n"
+            "accept: application/json,text/html;q=0.9,*/*;q=0.8\n"
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-maryland/1.0",
+                "Accept": "application/json,text/html;q=0.9,*/*;q=0.8",
+            },
+            method="GET",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        header_block = ""
+        for unverified in (False, True):
+            try:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                    header_block = "".join(
+                        f"{key}: {value}\n" for key, value in resp.headers.items()
+                    )
+                last_exc = None
+                break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Maryland GET failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Maryland GET returned HTTP {status} for {url}")
+        response_bytes = f"HTTP/1.1 {status} OK\n{header_block}\n".encode("utf-8") + body
+        return request_bytes, response_bytes, body
+
+    def _parse_official_article_index(self, payload: object) -> List[Dict[str, str]]:
+        """Parse every official Maryland Code article from the live articles API."""
+        if not isinstance(payload, list):
+            raise RuntimeError("official Maryland GetArticles payload is not a list")
+        units: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for article in payload:
+            if not isinstance(article, dict):
+                continue
+            display = str(article.get("DisplayText") or "").strip()
+            value = str(article.get("Value") or "").strip()
+            article_code = self._extract_article_code(display, value)
+            if not article_code or article_code in seen:
+                continue
+            seen.add(article_code)
+            source_url = (
+                f"{self.get_base_url()}/mgawebsite/Laws/Statutes"
+                f"?article={urllib.parse.quote(value or article_code)}"
+            )
+            label = display or f"Article {article_code}"
+            units.append(
+                {
+                    "canonical_key": f"md:article-{article_code.lower()}",
+                    "source_url": source_url,
+                    "label": label,
+                    "text": (
+                        f"Maryland Code {label} official article index entry "
+                        f"retained from {source_url}"
+                    ),
+                }
+            )
+        return units
+
+    def fetch_official(self, code: str = "MD"):
+        """Acquire the uncapped official Maryland article frontier."""
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or self.state_code or "MD").strip().upper()
+        if normalized != "MD":
+            raise ValueError(f"MarylandScraper cannot acquire {normalized}")
+        index_url = f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles?enactments=false"
+        request_bytes, response_bytes, index_body = self._official_http_get(index_url)
+        try:
+            payload = json.loads(index_body.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("official Maryland GetArticles payload is not JSON") from exc
+        units = self._parse_official_article_index(payload)
+        if len(units) < 3:
+            raise RuntimeError(
+                f"official Maryland article index is incomplete: {len(units)} units"
+            )
+        rows = tuple(
+            {
+                "canonical_key": unit["canonical_key"],
+                "source_url": unit["source_url"],
+                "text": unit["text"],
+            }
+            for unit in units
+        )
+        catalog = "\n".join(
+            f"{unit['canonical_key']}\t{unit['source_url']}\t{unit['label']}"
+            for unit in units
+        ).encode("utf-8")
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code="MD",
+            request_bytes=request_bytes,
+            response_bytes=response_bytes,
+            body_bytes=catalog,
+            source_domain="mgaleg.maryland.gov",
+            source_path="/mgawebsite/Laws/Statutes",
+            frontier=frontier,
+            rows=rows,
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=rows[0]["canonical_key"],
+            last_hierarchy_unit=rows[-1]["canonical_key"],
+        )
+
 
 # Register this scraper with the registry
 StateScraperRegistry.register("MD", MarylandScraper)
