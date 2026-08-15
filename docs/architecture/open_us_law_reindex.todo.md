@@ -243,7 +243,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: AL, AK, AZ, and AR each have exhaustive official-source receipts and admitted canonical rows; AR bucket seed rows remain quarantined until official replacement is proven.
 
 ## OUL-010 Certify official scrape cohort B (CA, CO, CT, DE)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
