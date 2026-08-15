@@ -162,6 +162,14 @@ def _render_open_us_law_retry(
         "commands, current task identity, changed paths, and passing validation "
         "evidence; file existence or a fixture alone never repairs live evidence."
     ).strip()
+    release_clause = (
+        f"then mark this repair task completed so the supervisor can release "
+        f"{source_task_id} from strategy blocked_tasks"
+    )
+    if release_clause.lower() not in acceptance.lower():
+        if acceptance and acceptance[-1] not in ".;!":
+            acceptance = f"{acceptance}."
+        acceptance = f"{acceptance} {release_clause}.".strip()
     discovery_field = discovery_relative or _one_line(discovery_path)
 
     lines = [

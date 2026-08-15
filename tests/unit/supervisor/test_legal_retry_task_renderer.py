@@ -102,10 +102,40 @@ def test_open_us_law_retry_renderer_preserves_real_validation_and_rich_contract(
         "audit_open_us_law_retry_repair.py --task OUL-049 --source OUL-011 --cohort C --check"
         in rendered
     )
+    assert (
+        "release OUL-011 from strategy blocked_tasks"
+        in rendered
+    )
     outputs = next(line for line in rendered.splitlines() if line.startswith("- Outputs:"))
     assert outputs == (
         "- Outputs: docs/reports/open_us_law_reindex/retry/oul-049-oul-011-validation.json"
     )
+
+
+def test_renderer_injects_release_phrase_when_generic_acceptance_omits_it(
+    tmp_path: Path,
+) -> None:
+    module = _module()
+    source = _Task()
+    rendered = module._render_open_us_law_retry(
+        f"""## OUL-068 Resolve validation retry-budget failure for {source.task_id}
+
+- Status: todo
+- Priority: P0
+- Depends on: OUL-049
+- Outputs: docs/reports/open_us_law_reindex/retry/dummy.json
+- Validation: python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py --cohort C --require-live --check
+- Acceptance: Write the tracked receipt and never claim official jurisdictions were acquired.
+""",
+        task_id="OUL-068",
+        source_task=source,
+        failure_kind="validation",
+        discovery_path=tmp_path / "finding.md",
+        repo_root=tmp_path,
+    )
+    assert "release OUL-011 from strategy blocked_tasks" in rendered
+    assert "--fixture-only --cohort C --check" in rendered
+    assert "--require-live" not in rendered
 
 
 def test_non_open_us_law_retry_block_is_unchanged(tmp_path: Path) -> None:
