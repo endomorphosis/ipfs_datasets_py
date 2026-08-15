@@ -507,7 +507,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: VT, VA, WA, and WV each have exhaustive official-source receipts with every continuation exhausted and no partial checkpoint promoted.
 
 ## OUL-021 Certify official scrape cohort M (WI, WY, DC)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
