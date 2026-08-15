@@ -459,7 +459,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: OR, PA, RI, and SC each have exhaustive official-source receipts; nonofficial Oregon seed text is replaced or quarantined.
 
 ## OUL-019 Certify official scrape cohort K (SD, TN, TX, UT)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
