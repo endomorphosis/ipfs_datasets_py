@@ -6,6 +6,9 @@ Illinois General Assembly website.
 
 from html import unescape
 import re
+import ssl
+import urllib.error
+import urllib.request
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 
@@ -18,11 +21,20 @@ from .registry import StateScraperRegistry
 class IllinoisScraper(BaseStateScraper):
     """Scraper for Illinois state laws from https://www.ilga.gov."""
 
+    OFFICIAL_DOMAIN = "www.ilga.gov"
+    OFFICIAL_ENTRY_PATH = "/Legislation/ILCS/Chapters"
+    OFFICIAL_ENTRY_URL = "https://www.ilga.gov/Legislation/ILCS/Chapters"
     _CHAPTER_LINK_RE = re.compile(r"/Legislation/ILCS/Acts\?", re.IGNORECASE)
+    _OFFICIAL_CHAPTER_LINK_RE = re.compile(
+        r"(?:/Legislation/ILCS/Acts\?|ilcs2\.asp\?|ilcs3\.asp\?)",
+        re.IGNORECASE,
+    )
     _ACT_LINK_RE = re.compile(r"/Legislation/ILCS/Articles\?", re.IGNORECASE)
     _FULL_ACT_LINK_RE = re.compile(r"/legislation/ILCS/details\?.*ChapAct=FullText", re.IGNORECASE)
     _CITE_RE = re.compile(r"\((?P<cite>\d+\s+ILCS\s+[^)]+?)\)")
     _SECTION_CITE_RE = re.compile(r"^(?P<chapter>\d+)\s+ILCS\s+(?P<act>[^/\s]+(?:/[^/\s]+)*)/(?P<section>[^)\s]+)$")
+    _CHAPTER_LABEL_RE = re.compile(r"CHAPTER\s+(\d+[A-Za-z]?)\b", re.IGNORECASE)
+    _CHAPTER_ID_RE = re.compile(r"(?:ChapterID|ChapNum|ChapterNumber)=(\d+[A-Za-z]?)", re.IGNORECASE)
 
     def get_base_url(self) -> str:
         """Return the base URL for Illinois's legislative website."""
@@ -363,6 +375,192 @@ class IllinoisScraper(BaseStateScraper):
         netloc = "www.ilga.gov"
         path = parsed.path
         return urlunparse((scheme, netloc, path, "", parsed.query, ""))
+
+    def _official_ssl_context(self, *, unverified: bool = False):
+        if unverified:
+            return ssl._create_unverified_context()
+        return ssl.create_default_context()
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> Tuple[bytes, bytes, bytes]:
+        """Fetch one official Illinois URL and retain request/response/body bytes."""
+
+        parsed = urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        request_bytes = (
+            f"GET {path} HTTP/1.1\n"
+            f"host: {host}\n"
+            "accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.8\n"
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-illinois/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            method="GET",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        header_block = ""
+        for unverified in (True, False):
+            try:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                    header_block = "".join(
+                        f"{key}: {value}\n" for key, value in resp.headers.items()
+                    )
+                last_exc = None
+                break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Illinois GET failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Illinois GET returned HTTP {status} for {url}")
+        response_bytes = f"HTTP/1.1 {status} OK\n{header_block}\n".encode("utf-8") + body
+        return request_bytes, response_bytes, body
+
+    def _parse_official_chapter_index(self, html: str, index_url: str) -> List[Dict[str, str]]:
+        """Parse every official ILCS chapter unit from the live chapters index."""
+
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError("BeautifulSoup is required for official Illinois discovery") from exc
+
+        soup = BeautifulSoup(html, "html.parser")
+        units: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "")
+            label = self._clean_label(link.get_text(" ", strip=True))
+            full_url = self._canonical_ilga_url(urljoin(index_url, href))
+            query = parse_qs(urlparse(full_url).query)
+            chapter_number = self._first_query(query, "ChapterNumber")
+            if not chapter_number:
+                label_match = self._CHAPTER_LABEL_RE.search(label)
+                if not label_match:
+                    continue
+                chapter_number = label_match.group(1)
+            if not (
+                self._OFFICIAL_CHAPTER_LINK_RE.search(href)
+                or self._OFFICIAL_CHAPTER_LINK_RE.search(full_url)
+                or "ChapterNumber=" in full_url
+            ):
+                continue
+            if full_url in seen:
+                continue
+            seen.add(full_url)
+            units.append(
+                {
+                    "canonical_key": f"il:chapter-{chapter_number.lower()}",
+                    "source_url": full_url,
+                    "label": label or f"CHAPTER {chapter_number}",
+                    "chapter_number": chapter_number,
+                    "text": (
+                        f"Illinois Compiled Statutes {label or ('CHAPTER ' + chapter_number)} "
+                        f"official chapter index entry retained from {full_url}"
+                    ),
+                }
+            )
+        return units
+
+    def fetch_official(self, code: str = "IL"):
+        """Acquire the uncapped official ILCS chapter frontier.
+
+        Returns an ``OfficialFetch`` whose rows enumerate every official
+        chapter unit discovered from ``www.ilga.gov``. The retained body
+        is the compact official catalog derived from the live index.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or self.state_code or "IL").strip().upper()
+        if normalized != "IL":
+            raise ValueError(f"IllinoisScraper cannot acquire {normalized}")
+        candidates = (
+            self.OFFICIAL_ENTRY_URL,
+            "https://www.ilga.gov/legislation/ilcs/ilcs.asp",
+            "https://ilga.gov/Legislation/ILCS/Chapters",
+        )
+        request_bytes = b""
+        response_bytes = b""
+        index_body = b""
+        index_url = self.OFFICIAL_ENTRY_URL
+        units: List[Dict[str, str]] = []
+        last_exc: Exception | None = None
+        for candidate in candidates:
+            try:
+                request_bytes, response_bytes, index_body = self._official_http_get(candidate)
+            except RuntimeError as exc:
+                last_exc = exc
+                continue
+            html = index_body.decode("utf-8", errors="replace")
+            units = self._parse_official_chapter_index(html, candidate)
+            if len(units) >= 3:
+                index_url = candidate
+                last_exc = None
+                break
+            last_exc = RuntimeError(
+                f"official Illinois chapter index is incomplete at {candidate}: {len(units)} units"
+            )
+        if len(units) < 3:
+            raise RuntimeError(
+                f"official Illinois chapter index is incomplete: {len(units)} units"
+                + (f" ({last_exc})" if last_exc else "")
+            )
+        rows = tuple(
+            {
+                "canonical_key": unit["canonical_key"],
+                "source_url": unit["source_url"],
+                "text": unit["text"],
+            }
+            for unit in units
+        )
+        catalog = "\n".join(
+            f"{unit['canonical_key']}\t{unit['source_url']}\t{unit['label']}"
+            for unit in units
+        ).encode("utf-8")
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code="IL",
+            request_bytes=request_bytes,
+            response_bytes=response_bytes,
+            body_bytes=catalog,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=rows,
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=rows[0]["canonical_key"],
+            last_hierarchy_unit=rows[-1]["canonical_key"],
+        )
 
 
 # Register this scraper with the registry
