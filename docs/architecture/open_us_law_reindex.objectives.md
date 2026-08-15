@@ -85,7 +85,7 @@
 - Reopen reasons: []
 
 ## OUL-G021 Complete official acquisition cohorts A through D
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G020
 - Depends on: OUL-G010
 - Fib priority: 8
@@ -110,6 +110,9 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-15T22:29:24.670558+00:00
+- State transition reason: Produce completion evidence for: Every jurisdiction in AL through KS assigned to these cohorts has replayable exhaustive evidence.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-15T22:29:24.670558+00:00
 
 ## OUL-G022 Complete official acquisition cohorts E through H
 - Status: active
