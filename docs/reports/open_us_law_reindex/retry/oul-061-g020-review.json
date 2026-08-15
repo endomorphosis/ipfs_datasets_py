@@ -1,0 +1,390 @@
+{
+  "acceptance": "The receipt binds to OUL-023 evidence and never treats fixture or retry receipts as live scrape completion.",
+  "acquisition": {
+    "exact_51_official_union_certified_by_oul_023": true,
+    "goal_id": "OUL-G020",
+    "goal_title": "Acquire a complete official corpus for exactly 50 states plus DC",
+    "live_cohort_certification_owners": [
+      "OUL-009",
+      "OUL-010",
+      "OUL-011",
+      "OUL-012",
+      "OUL-013",
+      "OUL-014",
+      "OUL-015",
+      "OUL-016",
+      "OUL-017",
+      "OUL-018",
+      "OUL-019",
+      "OUL-020",
+      "OUL-021",
+      "OUL-022",
+      "OUL-023"
+    ],
+    "may_close_only_after_official_51_jurisdiction_evidence": true,
+    "member_tasks": [
+      {
+        "id": "OUL-009",
+        "role": "cohort-A",
+        "status": "completed",
+        "title": "Certify official scrape cohort A (AL, AK, AZ, AR)"
+      },
+      {
+        "id": "OUL-010",
+        "role": "cohort-B",
+        "status": "completed",
+        "title": "Certify official scrape cohort B (CA, CO, CT, DE)"
+      },
+      {
+        "id": "OUL-011",
+        "role": "cohort-C",
+        "status": "completed",
+        "title": "Certify official scrape cohort C (FL, GA, HI, ID)"
+      },
+      {
+        "id": "OUL-012",
+        "role": "cohort-D",
+        "status": "completed",
+        "title": "Certify official scrape cohort D (IL, IN, IA, KS)"
+      },
+      {
+        "id": "OUL-013",
+        "role": "cohort-E",
+        "status": "completed",
+        "title": "Certify official scrape cohort E (KY, LA, ME, MD)"
+      },
+      {
+        "id": "OUL-014",
+        "role": "cohort-F",
+        "status": "completed",
+        "title": "Certify official scrape cohort F (MA, MI, MN, MS)"
+      },
+      {
+        "id": "OUL-015",
+        "role": "cohort-G",
+        "status": "completed",
+        "title": "Certify official scrape cohort G (MO, MT, NE, NV)"
+      },
+      {
+        "id": "OUL-016",
+        "role": "cohort-H",
+        "status": "completed",
+        "title": "Certify official scrape cohort H (NH, NJ, NM, NY)"
+      },
+      {
+        "id": "OUL-017",
+        "role": "cohort-I",
+        "status": "completed",
+        "title": "Certify official scrape cohort I (NC, ND, OH, OK)"
+      },
+      {
+        "id": "OUL-018",
+        "role": "cohort-J",
+        "status": "completed",
+        "title": "Certify official scrape cohort J (OR, PA, RI, SC)"
+      },
+      {
+        "id": "OUL-019",
+        "role": "cohort-K",
+        "status": "completed",
+        "title": "Certify official scrape cohort K (SD, TN, TX, UT)"
+      },
+      {
+        "id": "OUL-020",
+        "role": "cohort-L",
+        "status": "completed",
+        "title": "Certify official scrape cohort L (VT, VA, WA, WV)"
+      },
+      {
+        "id": "OUL-021",
+        "role": "cohort-M",
+        "status": "completed",
+        "title": "Certify official scrape cohort M (WI, WY, DC)"
+      },
+      {
+        "id": "OUL-022",
+        "role": "exact-51-coverage",
+        "status": "completed",
+        "title": "Reconcile exact-51 jurisdiction coverage and bucket deltas"
+      },
+      {
+        "id": "OUL-023",
+        "role": "acquisition-refill-closure",
+        "status": "completed",
+        "title": "Refill and close every acquisition, rights, and frontier gap"
+      }
+    ],
+    "outputs_are_live_scrape_completion": false,
+    "provisionally_complete": false,
+    "verified_complete": false
+  },
+  "analyzer_health": {
+    "evidence": {},
+    "is_live_corpus_proof": false,
+    "is_live_scrape_completion": false,
+    "live_corpus_proof": false,
+    "passed": false,
+    "reason_code": "analyzer_health_missing",
+    "status": "missing",
+    "treatment": "Planner diagnostic only. analyzer-health-missing is not live corpus proof, not official 51-jurisdiction evidence, not live scrape completion, and not publication authority."
+  },
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "bound_evidence": {
+    "OUL-023": {
+      "checks": {
+        "clean_official_ga": true,
+        "clean_official_nc": true,
+        "coverage_open_gap_count_zero": true,
+        "dc_counted_once": true,
+        "every_finding_terminal": true,
+        "exact_51": true,
+        "failed_final_zero": true,
+        "fixture_never_completes_acquisition": true,
+        "publication_not_authorized": true
+      },
+      "is_fixture_receipt": false,
+      "is_live_scrape_completion": false,
+      "is_retry_receipt": false,
+      "kind": "acquisition_refill_closure",
+      "nested_coverage": {
+        "digest_sha256": "6ca4b2b67e4c9ad16d7c939942dcf191a1113d3550920ac3f9144a70cbaa3133",
+        "exact_51": true,
+        "jurisdiction_count": 51,
+        "open_gap_count": 0,
+        "path": "docs/reports/open_us_law_reindex/exact_51_coverage.json",
+        "schema_version": "open-us-law-exact-51-coverage-v1",
+        "task_id": "OUL-022"
+      },
+      "path": "docs/reports/open_us_law_reindex/acquisition_refill_closure.json",
+      "repair_summary": {
+        "completed_repair_count": 255,
+        "typed_terminal_quarantine_count": 5,
+        "unresolved_count": 0
+      },
+      "report_digest_sha256": "dadc5fb5c20842085c54463918a577a8b13ff106e41a36bf1a173df77bbfdce5",
+      "schema_version": "open-us-law-acquisition-refill-closure-v1",
+      "sealed_at": "2026-08-15T00:00:00Z",
+      "status": "success",
+      "task_id": "OUL-023",
+      "treatment": "Authoritative OUL-023 refill-closure evidence for this review. It certifies that every acquisition, rights, and frontier finding has a completed official-cohort repair or a typed terminal quarantine and that the exact-51 official union is sealed with zero open gaps. It is not a fixture receipt, not a retry receipt, and not itself live scrape completion. Live cohort certification remains owned by OUL-009 through OUL-023."
+    }
+  },
+  "bundle": "acquisition-review",
+  "canonical_board_task": false,
+  "checks": {
+    "acquisition_may_close_from_fixture_receipts": false,
+    "acquisition_may_close_from_retry_receipts": false,
+    "acquisition_may_close_only_after_official_51_jurisdiction_evidence": true,
+    "analyzer_health_missing_is_live_corpus_proof": false,
+    "analyzer_health_missing_is_live_scrape_completion": false,
+    "binds_to_oul_023_evidence": true,
+    "claims_live_acquisition": false,
+    "claims_live_corpus": false,
+    "claims_live_scrape_completion": false,
+    "claims_verified_complete": false,
+    "exhaustion_quorum_is_live_corpus_proof": false,
+    "exhaustion_quorum_is_live_scrape_completion": false,
+    "fixture_or_retry_receipt_is_live_scrape": false,
+    "fixture_or_retry_receipt_is_live_scrape_completion": false,
+    "fixture_receipt_is_live_scrape_completion": false,
+    "g020_verified_complete": false,
+    "live_corpus_claimed": false,
+    "planner_diagnostics_are_live_corpus_proof": false,
+    "publication_authorized": false,
+    "reopens_live_cohort_certification": false,
+    "retry_receipt_is_live_scrape_completion": false,
+    "this_review_receipt_is_live_scrape_completion": false
+  },
+  "claims_live_acquisition": false,
+  "claims_live_corpus": false,
+  "claims_live_scrape_completion": false,
+  "claims_verified_complete": false,
+  "code_version": "1",
+  "depends_on": [
+    "OUL-023"
+  ],
+  "does_not_own_live_cohort_certification": [
+    "OUL-009",
+    "OUL-010",
+    "OUL-011",
+    "OUL-012",
+    "OUL-013",
+    "OUL-014",
+    "OUL-015",
+    "OUL-016",
+    "OUL-017",
+    "OUL-018",
+    "OUL-019",
+    "OUL-020",
+    "OUL-021",
+    "OUL-022",
+    "OUL-023"
+  ],
+  "effects": "Write a secret-free receipt that acquisition may close only after official 51-jurisdiction evidence exists.",
+  "evidence_gap": {
+    "detail": "OUL-023 is complete and the exact-51 official union is certified at the refill-closure layer. OUL-G020 remains active and is not verified_complete. Acquisition may close only after official 51-jurisdiction evidence exists. Fixture receipts, --fixture-only software-path proofs, and retry receipts in docs/reports/open_us_law_reindex/retry/ prove repaired software or planner diagnostics only. They are not live scrape completion and cannot close OUL-G020. This OUL-061 review receipt binds to OUL-023 evidence and is itself not live scrape completion.",
+    "g020_acceptance_still_uncovered": [
+      "All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains."
+    ],
+    "required_before_verified_complete": [
+      "official 51-jurisdiction evidence owned by OUL-009 through OUL-023",
+      "live exhaustive official-source evidence for every jurisdiction in the exact-51 union",
+      "an explicitly healthy analyzer that is safe for completion reasoning",
+      "the configured independent fresh healthy exhaustive receipts bound to the current tree"
+    ]
+  },
+  "exhaustion_quorum": {
+    "evidence": {},
+    "is_live_corpus_proof": false,
+    "is_live_scrape_completion": false,
+    "member_count": null,
+    "reason_code": "exhaustion_quorum_missing",
+    "required_members": null,
+    "satisfied": false,
+    "stale_members": [],
+    "treatment": "Planner diagnostic only. A missing exhaustion quorum is not live corpus proof and is not live scrape completion."
+  },
+  "fixture_and_retry_treatment": {
+    "fixture_never_completes_acquisition": true,
+    "fixture_receipt_is_live_scrape_completion": false,
+    "retry_receipt_is_live_scrape_completion": false,
+    "retry_receipts_reviewed_as_not_live_scrape": [
+      "docs/reports/open_us_law_reindex/retry/oul-049-oul-011-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-050-oul-009-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-051-oul-010-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-052-oul-012-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-053-oul-013-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-054-oul-014-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-055-oul-015-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-056-oul-020-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-057-oul-021-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-058-g010-review.json",
+      "docs/reports/open_us_law_reindex/retry/oul-059-main-checkout.json",
+      "docs/reports/open_us_law_reindex/retry/oul-061-g020-review.json",
+      "docs/reports/open_us_law_reindex/retry/oul-062-oul-011-implementation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-063-oul-016-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-064-oul-017-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-065-oul-018-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-066-oul-019-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-067-oul-010-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-068-oul-011-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-069-oul-012-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-070-oul-015-validation.json",
+      "docs/reports/open_us_law_reindex/retry/oul-071-oul-021-validation.json"
+    ],
+    "rule": "A fixture transport, --fixture-only command, fixture-proven software-path receipt, or retry-repair receipt never counts as live scrape completion and cannot close OUL-G020.",
+    "this_review_receipt_is_live_scrape_completion": false
+  },
+  "generated_by": "ipfs_accelerate_py.agent_supervisor.objective-refill@1",
+  "goal_id": "OUL-G020",
+  "goal_status": "active",
+  "kind": "g020_completion_evidence_review",
+  "live_acquisition_complete": false,
+  "live_corpus_proven": false,
+  "live_scrape_complete": false,
+  "notes": "This OUL-061 receipt binds to OUL-023 evidence at docs/reports/open_us_law_reindex/acquisition_refill_closure.json (report_digest_sha256 dadc5fb5c20842085c54463918a577a8b13ff106e41a36bf1a173df77bbfdce5). OUL-023 certified the exact-51 official union with zero open gaps. Acquisition may close only after official 51-jurisdiction evidence exists. Fixture receipts and retry receipts are not live scrape completion. This review receipt is not live scrape completion, does not reopen OUL-009 through OUL-023, and does not authorize publication.",
+  "preconditions": "OUL-023 is complete and the exact-51 official union is certified.",
+  "producer": "oul-061-g020-completion-evidence-review",
+  "program_id": "open-us-law-reindex-v1",
+  "publication_authorized": false,
+  "report_schema": "ipfs_datasets_py/open-us-law-completion-evidence-review@1",
+  "reviewed_goal": "OUL-G020",
+  "schema_version": "open-us-law-completion-evidence-review-v1",
+  "sealed_at": "2026-08-15T00:00:00Z",
+  "secret_free": true,
+  "statement": "The receipt binds to OUL-023 evidence. OUL-023 sealed acquisition-refill closure and certified the exact-51 official union with zero open gaps. Acquisition may close only after official 51-jurisdiction evidence exists. Fixture receipts and retry receipts are never live scrape completion. This OUL-061 review receipt is not live scrape completion and does not mark OUL-G020 verified_complete.",
+  "status": "passed",
+  "still_open_acquisition_criteria": [
+    {
+      "criterion": "All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains.",
+      "goal_id": "OUL-G020",
+      "open": true,
+      "owning_tasks": [
+        "OUL-009",
+        "OUL-010",
+        "OUL-011",
+        "OUL-012",
+        "OUL-013",
+        "OUL-014",
+        "OUL-015",
+        "OUL-016",
+        "OUL-017",
+        "OUL-018",
+        "OUL-019",
+        "OUL-020",
+        "OUL-021",
+        "OUL-022",
+        "OUL-023"
+      ],
+      "status": "open",
+      "verified_complete": false
+    },
+    {
+      "criterion": "Every jurisdiction in KY through NY assigned to these cohorts has replayable exhaustive evidence.",
+      "goal_id": "OUL-G022",
+      "open": true,
+      "owning_tasks": [
+        "OUL-013",
+        "OUL-014",
+        "OUL-015",
+        "OUL-016"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "Every jurisdiction in NC through DC assigned to these cohorts has replayable exhaustive evidence.",
+      "goal_id": "OUL-G023",
+      "open": true,
+      "owning_tasks": [
+        "OUL-017",
+        "OUL-018",
+        "OUL-019",
+        "OUL-020",
+        "OUL-021"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "The deduplicated exact-51 union matches admitted artifacts and all discovered gaps have terminal evidence.",
+      "goal_id": "OUL-G024",
+      "open": true,
+      "owning_tasks": [
+        "OUL-022",
+        "OUL-023"
+      ],
+      "status": "open"
+    },
+    {
+      "criterion": "Completeness requires exact jurisdiction set equality, closed bundle or pagination frontiers, zero failed-final units, replayable response hashes, no caps or fixture transports, and aggregate-to-jurisdiction key and digest equality.",
+      "goal_id": "OUL-G020",
+      "open": true,
+      "owning_tasks": [
+        "OUL-003",
+        "OUL-009",
+        "OUL-010",
+        "OUL-011",
+        "OUL-012",
+        "OUL-013",
+        "OUL-014",
+        "OUL-015",
+        "OUL-016",
+        "OUL-017",
+        "OUL-018",
+        "OUL-019",
+        "OUL-020",
+        "OUL-021",
+        "OUL-022",
+        "OUL-023"
+      ],
+      "source": "OUL-003 completeness oracle applied to live acquisition",
+      "status": "open"
+    }
+  ],
+  "task_id": "OUL-061",
+  "track": "acquisition",
+  "validation_commands": [
+    "test -f docs/reports/open_us_law_reindex/retry/oul-061-g020-review.json"
+  ],
+  "verified_complete": false
+}
