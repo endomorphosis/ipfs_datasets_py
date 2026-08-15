@@ -1,0 +1,7 @@
+{
+  "pilot_id": "meta-glasses-v1",
+  "required_capabilities": ["gaze", "hand_gesture", "voice_output"],
+  "unsupported_capabilities": ["raw_emg", "fabricated_cursor", "fabricated_touch"],
+  "fallback": {"target": "mobile", "modality": "audio_voice"},
+  "duplicate_gesture_policy": "dedupe_correlation"
+}

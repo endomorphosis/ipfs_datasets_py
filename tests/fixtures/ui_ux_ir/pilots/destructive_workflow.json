@@ -1,0 +1,8 @@
+{
+  "pilot_id": "destructive-workflow-v1",
+  "action_id": "action:delete_dataset",
+  "binding_id": "binding:delete_dataset",
+  "confirmation_class": "confirm",
+  "risk_class": "destructive",
+  "states": ["idle", "confirming", "pending", "result_success", "result_failure", "recovery"]
+}

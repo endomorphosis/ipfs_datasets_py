@@ -201,6 +201,34 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
         required_submodules=("zkp",),
         ast_scope="zkp",
     ),
+    LogicBridgeSpec(
+        name="ui_ux_ir_formalization",
+        target_component="ui_ux_ir.formalize",
+        adapter_module="ipfs_datasets_py.logic.ui_ux_ir.formalize.compiler",
+        adapter_class="UIFormalizationCompiler",
+        description=(
+            "UI/UX IR declaration -> multi-view formalization artifacts "
+            "(F-logic, event calculus, TDFOL, DCEC) with explicit loss and "
+            "advisory/proof authority separation (UIR-070 bridge registration)."
+        ),
+        roles=("ui_ux_ir", "formalization", "ui", "projection", "mediation"),
+        source_view="ui_ux_ir_document",
+        target_views=(
+            "ui_formalization",
+            "flogic_facts",
+            "event_calculus",
+            "tdfol_obligations",
+            "dcec",
+        ),
+        loss_names=(
+            "ui_projection_loss",
+            "ui_roundtrip_loss",
+            "ui_accessibility_gap",
+        ),
+        required_submodules=("ui_ux_ir",),
+        ast_scope="ui_ux_ir",
+        implemented=True,
+    ),
 )
 
 _SPECS_BY_NAME: Mapping[str, LogicBridgeSpec] = {spec.name: spec for spec in _SPECS}
