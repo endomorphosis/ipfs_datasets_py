@@ -432,6 +432,173 @@ class KentuckyScraper(BaseStateScraper):
 
         return best_statutes[:fallback_limit]
 
+    def _official_ssl_context(self, *, unverified: bool = False):
+        import ssl
+
+        if unverified:
+            return ssl._create_unverified_context()
+        return ssl.create_default_context()
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> Tuple[bytes, bytes, bytes]:
+        """Fetch one official Kentucky URL and retain request/response/body bytes."""
+        import ssl
+        import urllib.error
+        import urllib.request
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        request_bytes = (
+            f"GET {path} HTTP/1.1\n"
+            f"host: {host}\n"
+            "accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.8\n"
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-kentucky/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            method="GET",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        header_block = ""
+        for unverified in (False, True):
+            try:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                    header_block = "".join(
+                        f"{key}: {value}\n" for key, value in resp.headers.items()
+                    )
+                last_exc = None
+                break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Kentucky GET failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Kentucky GET returned HTTP {status} for {url}")
+        response_bytes = f"HTTP/1.1 {status} OK\n{header_block}\n".encode("utf-8") + body
+        return request_bytes, response_bytes, body
+
+    def _parse_official_chapter_index(self, html: str, index_url: str) -> List[Dict[str, str]]:
+        """Parse every official KRS chapter unit from the live statutes index."""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError("BeautifulSoup is required for official Kentucky discovery") from exc
+
+        soup = BeautifulSoup(html, "html.parser")
+        units: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for link in soup.find_all("a", href=True):
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            href = urljoin(index_url, str(link.get("href") or ""))
+            if not self._KY_CHAPTER_URL_RE.search(href):
+                continue
+            if href in seen:
+                continue
+            chapter_number = self._extract_chapter_number(label)
+            if not chapter_number:
+                id_match = re.search(r"[?&]id=(\d+)", href, flags=re.IGNORECASE)
+                if not id_match or not re.match(r"^\d+[A-Za-z]?$", label):
+                    continue
+                chapter_number = label
+            if not label.upper().startswith("CHAPTER ") and not re.match(
+                r"^\d+[A-Za-z]?$", label
+            ):
+                if "CHAPTER" not in label.upper():
+                    continue
+            seen.add(href)
+            units.append(
+                {
+                    "canonical_key": f"ky:chapter-{chapter_number.lower()}",
+                    "source_url": href,
+                    "label": label,
+                    "chapter_number": chapter_number,
+                    "text": (
+                        f"Kentucky Revised Statutes {label} official chapter index "
+                        f"entry retained from {href}"
+                    ),
+                }
+            )
+        return units
+
+    def fetch_official(self, code: str = "KY"):
+        """Acquire the uncapped official KRS chapter frontier.
+
+        Returns an ``OfficialFetch`` whose rows enumerate every official
+        chapter unit discovered from ``apps.legislature.ky.gov``. The
+        retained body is the compact official catalog derived from the
+        live index response.
+        """
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or self.state_code or "KY").strip().upper()
+        if normalized != "KY":
+            raise ValueError(f"KentuckyScraper cannot acquire {normalized}")
+        index_url = self._KY_STATUTES_BASE
+        request_bytes, response_bytes, index_body = self._official_http_get(index_url)
+        html = index_body.decode("utf-8", errors="replace")
+        units = self._parse_official_chapter_index(html, index_url)
+        if len(units) < 3:
+            raise RuntimeError(
+                f"official Kentucky chapter index is incomplete: {len(units)} units"
+            )
+        rows = tuple(
+            {
+                "canonical_key": unit["canonical_key"],
+                "source_url": unit["source_url"],
+                "text": unit["text"],
+            }
+            for unit in units
+        )
+        catalog = "\n".join(
+            f"{unit['canonical_key']}\t{unit['source_url']}\t{unit['label']}"
+            for unit in units
+        ).encode("utf-8")
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code="KY",
+            request_bytes=request_bytes,
+            response_bytes=response_bytes,
+            body_bytes=catalog,
+            source_domain="apps.legislature.ky.gov",
+            source_path="/law/statutes/",
+            frontier=frontier,
+            rows=rows,
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=rows[0]["canonical_key"],
+            last_hierarchy_unit=rows[-1]["canonical_key"],
+        )
+
 
 # Register this scraper with the registry
 StateScraperRegistry.register("KY", KentuckyScraper)
