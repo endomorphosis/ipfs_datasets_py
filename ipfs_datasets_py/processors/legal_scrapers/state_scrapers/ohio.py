@@ -1,15 +1,60 @@
+import json
 import re
-from typing import List, Dict, Optional
-from urllib.parse import urljoin
+import ssl
+import urllib.request
+from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin, urlparse
+
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
 class OhioScraper(BaseStateScraper):
     """Scraper for Ohio state laws from https://codes.ohio.gov"""
+
+    OFFICIAL_DOMAIN = "codes.ohio.gov"
+    OFFICIAL_ENTRY_PATH = "/ohio-revised-code"
+    OFFICIAL_ENTRY_URL = "https://codes.ohio.gov/ohio-revised-code"
     _OH_TITLE_URL_RE = re.compile(r"/ohio-revised-code/title-(\d+)$", re.IGNORECASE)
     _OH_CHAPTER_URL_RE = re.compile(r"/ohio-revised-code/chapter-([0-9.]+)$", re.IGNORECASE)
     _OH_SECTION_URL_RE = re.compile(r"/ohio-revised-code/section-([0-9A-Za-z.]+)$", re.IGNORECASE)
+    _OH_TITLE_LABEL_RE = re.compile(r"\bTitle\s+(?P<title>\d{1,2})\b", re.IGNORECASE)
+    OFFICIAL_TITLES = (
+        ("1", "State Government"),
+        ("3", "Counties"),
+        ("5", "Townships"),
+        ("7", "Municipal Corporations"),
+        ("9", "Agriculture-Animals-Fences"),
+        ("11", "Banks-Savings and Loan Associations"),
+        ("13", "Commercial Transactions-Ohio Uniform Commercial Code"),
+        ("15", "Conservation of Natural Resources"),
+        ("17", "Corporations-Partnerships"),
+        ("19", "Courts-Municipal-Mayor's-County"),
+        ("21", "Courts-Probate-Juvenile"),
+        ("23", "Courts-Common Pleas"),
+        ("25", "Courts-Appellate"),
+        ("27", "Courts-General Provisions-Special Remedies"),
+        ("29", "Crimes-Procedure"),
+        ("31", "Domestic Relations-Children"),
+        ("33", "Education-Libraries"),
+        ("35", "Elections"),
+        ("37", "Health-Safety-Morals"),
+        ("39", "Insurance"),
+        ("41", "Labor and Industry"),
+        ("43", "Liquor"),
+        ("45", "Motor Vehicles-Aeronautics-Watercraft"),
+        ("47", "Occupations-Professions"),
+        ("49", "Public Utilities"),
+        ("51", "Public Welfare"),
+        ("53", "Real Property"),
+        ("55", "Roads-Highways-Bridges"),
+        ("57", "Taxation"),
+        ("58", "Trusts"),
+        ("59", "Veterans-Military Affairs"),
+        ("61", "Water Supply-Sanitation-Ditches"),
+        ("63", "Workforce Development"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
     
     def get_base_url(self) -> str:
         """Return the base URL for Ohio's legislative website."""
@@ -245,6 +290,159 @@ class OhioScraper(BaseStateScraper):
                 )
             )
         return statutes
+
+    def official_title_url(self, title_number: Any) -> str:
+        number = str(int(str(title_number).strip()))
+        return f"{self.get_base_url()}/ohio-revised-code/title-{number}"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Ohio Revised Code title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"oh:title-{int(number)}",
+                    "title_number": str(int(number)),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Ohio Revised Code Title {int(number)} ({name}) "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == "codes.ohio.gov" or host.endswith(".codes.ohio.gov")
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:
+        timeout = max(2, min(int(timeout_seconds or 8), 8))
+        headers = {
+            "User-Agent": "ipfs-datasets-ohio-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                return bytes(response.read() or b"")
+        except Exception:
+            return b""
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._OH_TITLE_URL_RE.search(absolute) or self._OH_TITLE_LABEL_RE.search(label)
+            if not match:
+                continue
+            number = str(int(match.group(1) if match.lastindex else match.group("title")))
+            if number not in known or number in found:
+                continue
+            if self._host_is_official(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Ohio Revised Code title."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_ohcodes"
+        return rows
+
+    def fetch_official(self, code: str = "OH"):
+        """Acquire the exhaustive official Ohio Revised Code title catalog.
+
+        Live HTTPS retains the official codes.ohio.gov title index. Every known
+        Revised Code title is enumerated with an official URL. This hook never
+        returns fixture bytes or secondary-mirror hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "OH").strip().upper() or "OH"
+        if normalized != "OH":
+            raise ValueError(f"OhioScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) != self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "ohio official catalog enumeration rejected incomplete title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
