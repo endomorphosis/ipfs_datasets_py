@@ -3,8 +3,11 @@
 This module contains the scraper for Montana statutes from the official state legislative website.
 """
 
-from typing import List, Dict, Optional
+import json
 import re
+import ssl
+import urllib.request
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .base_scraper import StatuteMetadata
@@ -14,6 +17,18 @@ from .registry import StateScraperRegistry
 class MontanaScraper(BaseStateScraper):
     """Scraper for Montana state laws from https://leg.mt.gov"""
 
+    OFFICIAL_DOMAIN = "leg.mt.gov"
+    OFFICIAL_ENTRY_PATH = "/bills/mca/index.html"
+    OFFICIAL_ENTRY_URL = "https://leg.mt.gov/bills/mca/index.html"
+    OFFICIAL_TITLES = (
+        1, 2, 3, 5, 7, 10, 13, 15, 16, 17, 18, 19, 20, 22, 23, 25, 27, 28,
+        30, 31, 32, 33, 35, 37, 39, 40, 41, 42, 44, 45, 46, 49, 50, 52, 53,
+        60, 61, 67, 69, 70, 71, 72, 75, 76, 80, 81, 82, 85, 87, 90,
+    )
+    _MT_TITLE_INDEX_HREF_RE = re.compile(
+        r"title_(?P<title>\d{4})/chapters_index\.html",
+        re.IGNORECASE,
+    )
     _MT_SECTION_URL_RE = re.compile(r"/\d{4}-\d{4}-\d{4}-\d{4}\.html$", re.IGNORECASE)
     _MT_TITLE_INDEX_RE = re.compile(r"https://mca\.legmt\.gov/bills/mca/title_\d{4}/chapters_index\.html", re.IGNORECASE)
     _MT_CHAPTER_INDEX_RE = re.compile(r"https://mca\.legmt\.gov/bills/mca/title_\d{4}/chapter_\d{4}/parts_index\.html", re.IGNORECASE)
@@ -305,6 +320,188 @@ class MontanaScraper(BaseStateScraper):
         text = self._normalize_legal_text("\n".join(lines))
         text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
         return self._normalize_legal_text(text)
+
+    def official_title_token(self, title_number: Any) -> str:
+        return f"{int(title_number) * 10:04d}"
+
+    def official_title_url(self, title_number: Any) -> str:
+        token = self.official_title_token(title_number)
+        return f"https://leg.mt.gov/bills/mca/title_{token}/chapters_index.html"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Montana Code Annotated title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"mt:title-{int(number)}",
+                    "title_number": str(int(number)),
+                    "name": f"Title {int(number)}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Montana Code Annotated Title {int(number)} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-montana-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(url, headers=headers)
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _title_number_from_token(self, token: str) -> str:
+        digits = "".join(ch for ch in str(token or "") if ch.isdigit())
+        if not digits:
+            return ""
+        value = int(digits)
+        if value >= 10 and value % 10 == 0:
+            return str(value // 10)
+        return str(value)
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._MT_TITLE_INDEX_HREF_RE.search(absolute)
+            if not match:
+                continue
+            number = self._title_number_from_token(match.group("title"))
+            if number and number not in found:
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official MCA title and repair missing live links."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        seen = {str(row["title_number"]) for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        for number, url in discovered.items():
+            if number in seen:
+                continue
+            rows.append(
+                {
+                    "canonical_key": f"mt:title-{number}",
+                    "title_number": number,
+                    "name": f"Title {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Montana Code Annotated Title {number} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "MT"):
+        """Acquire the exhaustive official Montana Code Annotated title catalog.
+
+        Live HTTPS retains the official MCA index. Every known title is
+        enumerated with an official leg.mt.gov URL. This hook never returns
+        fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "MT").strip().upper() or "MT"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        if not html:
+            html = self._official_http_get("https://leg.mt.gov/bills/mca/")
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("montana official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

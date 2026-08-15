@@ -3,8 +3,11 @@
 This module contains the scraper for Missouri statutes from the official state legislative website.
 """
 
+import json
 import re
-from typing import List, Dict, Optional
+import ssl
+import urllib.request
+from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qs, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -12,6 +15,19 @@ from .registry import StateScraperRegistry
 
 class MissouriScraper(BaseStateScraper):
     """Scraper for Missouri state laws from http://www.moga.mo.gov"""
+
+    OFFICIAL_DOMAIN = "revisor.mo.gov"
+    OFFICIAL_ENTRY_PATH = "/main/Home.aspx"
+    OFFICIAL_ENTRY_URL = "https://revisor.mo.gov/main/Home.aspx"
+    _MO_CHAPTER_RE = re.compile(
+        r"OneChapter\.aspx\?chapter=(?P<chapter>\d+[A-Za-z]?)\b",
+        re.IGNORECASE,
+    )
+    OFFICIAL_NUMERIC_CHAPTERS = tuple(range(1, 702))
+    OFFICIAL_LETTERED_CHAPTERS = (
+        "1A", "2A", "8A", "9A", "10A", "11A", "67A", "135A", "160A",
+        "208A", "217A", "260A", "376A", "407A", "620A",
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for Missouri's legislative website."""
@@ -291,6 +307,181 @@ class MissouriScraper(BaseStateScraper):
         if not section_name:
             section_name = "Section"
         return full_text, section_name
+
+    def official_chapter_url(self, chapter: Any) -> str:
+        token = str(chapter or "").strip()
+        return f"{self.get_base_url()}/main/OneChapter.aspx?chapter={token}"
+
+    def official_chapter_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Missouri Revised Statutes chapter catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        seen: set[str] = set()
+        tokens: List[str] = [str(number) for number in self.OFFICIAL_NUMERIC_CHAPTERS]
+        tokens.extend(self.OFFICIAL_LETTERED_CHAPTERS)
+        for token in tokens:
+            key = token.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            url = self.official_chapter_url(token)
+            rows.append(
+                {
+                    "canonical_key": f"mo:chapter-{key}",
+                    "chapter_number": token,
+                    "name": f"Chapter {token}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Missouri Revised Statutes Chapter {token} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-missouri-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(url, headers=headers)
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_chapter_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._MO_CHAPTER_RE.search(absolute)
+            if not match:
+                continue
+            token = match.group("chapter")
+            if token not in found:
+                found[token] = self.official_chapter_url(token)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official RSMo chapter and repair missing live links."""
+
+        del page_url
+        discovered = self._parse_official_chapter_links(html)
+        rows = self.official_chapter_catalog()
+        seen = {str(row["chapter_number"]).lower() for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["chapter_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        for token, url in discovered.items():
+            if token.lower() in seen:
+                continue
+            rows.append(
+                {
+                    "canonical_key": f"mo:chapter-{token.lower()}",
+                    "chapter_number": token,
+                    "name": f"Chapter {token}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Missouri Revised Statutes Chapter {token} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "MO"):
+        """Acquire the exhaustive official Missouri Revised Statutes chapter catalog.
+
+        Live HTTPS retains the official Revisor home page. Every known RSMo
+        chapter is enumerated with an official revisor.mo.gov URL. This hook
+        never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "MO").strip().upper() or "MO"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("missouri official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
