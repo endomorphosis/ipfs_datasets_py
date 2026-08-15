@@ -291,7 +291,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: FL, GA, HI, and ID each have exhaustive official-source receipts; the absent contaminated GA bucket object is replaced from official clean text.
 
 ## OUL-012 Certify official scrape cohort D (IL, IN, IA, KS)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
