@@ -531,7 +531,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: WI, WY, and DC each have exhaustive official-source receipts; WY linkless seed material is reacquired or quarantined and DC is counted exactly once in the required 51.
 
 ## OUL-022 Reconcile exact-51 jurisdiction coverage and bucket deltas
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
