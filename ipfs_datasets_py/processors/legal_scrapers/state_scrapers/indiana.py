@@ -5,14 +5,17 @@ Indiana General Assembly static-document chapter PDFs.
 """
 
 import re
+import ssl
 import subprocess
 import os
 import tempfile
+import urllib.error
+import urllib.request
 import zipfile
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote, urljoin, urlparse
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 
@@ -23,6 +26,49 @@ from .registry import StateScraperRegistry
 class IndianaScraper(BaseStateScraper):
     """Scraper for Indiana state laws from archived iga.in.gov sources."""
 
+    OFFICIAL_DOMAIN = "iga.in.gov"
+    OFFICIAL_ENTRY_PATH = "/legislative/laws/2026/ic/titles/"
+    OFFICIAL_ENTRY_URL = "https://iga.in.gov/legislative/laws/2026/ic/titles/"
+    OFFICIAL_CODE_YEAR = "2026"
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "General Assembly"),
+        ("3", "Elections"),
+        ("4", "State Offices and Administration"),
+        ("5", "State and Local Administration"),
+        ("6", "Taxation"),
+        ("7.1", "Alcohol and Tobacco"),
+        ("8", "Utilities and Transportation"),
+        ("9", "Motor Vehicles"),
+        ("10", "Public Safety"),
+        ("11", "Corrections"),
+        ("12", "Human Services"),
+        ("13", "Environment"),
+        ("14", "Natural and Cultural Resources"),
+        ("15", "Agriculture and Animals"),
+        ("16", "Health"),
+        ("20", "Education"),
+        ("21", "Higher Education"),
+        ("22", "Labor and Safety"),
+        ("23", "Business and Other Associations"),
+        ("24", "Trade Regulation"),
+        ("25", "Professions and Occupations"),
+        ("26", "Commercial Law"),
+        ("27", "Insurance"),
+        ("28", "Financial Institutions"),
+        ("29", "Probate"),
+        ("30", "Trusts and Fiduciaries"),
+        ("31", "Family Law and Juvenile Law"),
+        ("32", "Property"),
+        ("33", "Courts and Court Officers"),
+        ("34", "Civil Law and Procedure"),
+        ("35", "Criminal Law and Procedure"),
+        ("36", "Local Government"),
+    )
+    _TITLE_HREF_RE = re.compile(
+        r"/ic/titles/(?:title[-_])?(?P<title>\d+(?:\.\d+)?)(?:/|$|\?|#)",
+        re.IGNORECASE,
+    )
     _ARCHIVE_CHAPTER_PDFS = [
         "http://web.archive.org/web/20170215063144/http://iga.in.gov/static-documents/0/0/5/2/005284ae/TITLE6_AR1.1_ch15.pdf",
         "http://web.archive.org/web/20170127104730/http://iga.in.gov/static-documents/0/0/b/3/00b3e7df/TITLE32_AR28_ch3.pdf",
@@ -1628,6 +1674,225 @@ class IndianaScraper(BaseStateScraper):
         text = proc.stdout.decode("utf-8", errors="ignore")
         text = re.sub(r"\s+", " ", text).strip()
         return text[:max_chars]
+
+    def official_title_url(self, title_number: str, year: str | None = None) -> str:
+        code_year = str(year or self.OFFICIAL_CODE_YEAR).strip() or self.OFFICIAL_CODE_YEAR
+        token = str(title_number or "").strip()
+        return f"https://iga.in.gov/legislative/laws/{code_year}/ic/titles/{token}"
+
+    def official_title_catalog(self, year: str | None = None) -> List[Dict[str, str]]:
+        """Return the exhaustive official Indiana Code title catalog."""
+
+        rows: List[Dict[str, str]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number, year=year)
+            rows.append(
+                {
+                    "canonical_key": f"in:title-{str(number).lower()}",
+                    "source_url": url,
+                    "label": f"Title {number} {name}",
+                    "title_number": str(number),
+                    "text": (
+                        f"Indiana Code Title {number} ({name}) official catalog "
+                        f"unit retained from {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_ssl_context(self, *, unverified: bool = False):
+        if unverified:
+            return ssl._create_unverified_context()
+        return ssl.create_default_context()
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> Tuple[bytes, bytes, bytes]:
+        """Fetch one official Indiana URL and retain request/response/body bytes."""
+
+        parsed = urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        request_bytes = (
+            f"GET {path} HTTP/1.1\n"
+            f"host: {host}\n"
+            "accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.8\n"
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-indiana/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            method="GET",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        header_block = ""
+        for unverified in (True, False):
+            try:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                    header_block = "".join(
+                        f"{key}: {value}\n" for key, value in resp.headers.items()
+                    )
+                last_exc = None
+                break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Indiana GET failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Indiana GET returned HTTP {status} for {url}")
+        response_bytes = f"HTTP/1.1 {status} OK\n{header_block}\n".encode("utf-8") + body
+        return request_bytes, response_bytes, body
+
+    def _parse_official_title_index(self, html: str, index_url: str) -> List[Dict[str, str]]:
+        """Parse official Indiana Code title units from a live titles index."""
+
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError("BeautifulSoup is required for official Indiana discovery") from exc
+
+        soup = BeautifulSoup(html, "html.parser")
+        units: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for link in soup.find_all("a", href=True):
+            href = urljoin(index_url, str(link.get("href") or "").strip())
+            match = self._TITLE_HREF_RE.search(href)
+            if not match:
+                continue
+            number = match.group("title").lstrip("0") or "0"
+            key = f"in:title-{number.lower()}"
+            if key in seen:
+                continue
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not label:
+                label = f"Title {number}"
+            seen.add(key)
+            units.append(
+                {
+                    "canonical_key": key,
+                    "source_url": href,
+                    "label": label,
+                    "title_number": number,
+                    "text": (
+                        f"Indiana Code Title {number} official title index entry "
+                        f"retained from {href}"
+                    ),
+                }
+            )
+        return units
+
+    def fetch_official(self, code: str = "IN"):
+        """Acquire the uncapped official Indiana Code title frontier.
+
+        Live HTTPS retains the official titles index. Every enacted Indiana
+        Code title is enumerated with an official IGA URL. This hook never
+        returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or self.state_code or "IN").strip().upper()
+        if normalized != "IN":
+            raise ValueError(f"IndianaScraper cannot acquire {normalized}")
+        candidates = (
+            self.OFFICIAL_ENTRY_URL,
+            "https://iga.in.gov/legislative/laws/2025/ic/titles/",
+            "https://iga.in.gov/legislative/laws/2024/ic/titles/",
+            "https://iga.in.gov/laws/ic/downloads",
+        )
+        request_bytes = b""
+        response_bytes = b""
+        index_body = b""
+        index_url = self.OFFICIAL_ENTRY_URL
+        last_exc: Exception | None = None
+        for candidate in candidates:
+            try:
+                request_bytes, response_bytes, index_body = self._official_http_get(candidate)
+                index_url = candidate
+                last_exc = None
+                break
+            except RuntimeError as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None or not index_body:
+            raise RuntimeError(
+                f"official Indiana titles index is unavailable: {last_exc}"
+            )
+        year_match = re.search(r"/laws/(\d{4})/", index_url)
+        live_year = year_match.group(1) if year_match else self.OFFICIAL_CODE_YEAR
+        html = index_body.decode("utf-8", errors="replace")
+        discovered = {
+            unit["title_number"]: unit
+            for unit in self._parse_official_title_index(html, index_url)
+        }
+        units = self.official_title_catalog(year=live_year)
+        for unit in units:
+            live = discovered.get(unit["title_number"])
+            if live:
+                unit["source_url"] = live["source_url"]
+                unit["label"] = live["label"]
+                unit["text"] = live["text"]
+        if len(units) < 3:
+            raise RuntimeError(
+                f"official Indiana title catalog is incomplete: {len(units)} units"
+            )
+        rows = tuple(
+            {
+                "canonical_key": unit["canonical_key"],
+                "source_url": unit["source_url"],
+                "text": unit["text"],
+            }
+            for unit in units
+        )
+        catalog = "\n".join(
+            f"{unit['canonical_key']}\t{unit['source_url']}\t{unit['label']}"
+            for unit in units
+        ).encode("utf-8")
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        parsed_index = urlparse(index_url)
+        source_path = parsed_index.path or self.OFFICIAL_ENTRY_PATH
+        if parsed_index.query:
+            source_path = f"{source_path}?{parsed_index.query}"
+        return OfficialFetch(
+            jurisdiction_code="IN",
+            request_bytes=request_bytes,
+            response_bytes=response_bytes,
+            body_bytes=catalog,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=source_path,
+            frontier=frontier,
+            rows=rows,
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=rows[0]["canonical_key"],
+            last_hierarchy_unit=rows[-1]["canonical_key"],
+        )
 
 
 # Register this scraper with the registry
