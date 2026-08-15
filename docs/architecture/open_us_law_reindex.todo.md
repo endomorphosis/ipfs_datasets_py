@@ -579,7 +579,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Every finding has either a completed evidence-bound repair task or a typed terminal quarantine; no unresolved acquisition, attribution, freshness, contamination, or frontier gap reaches corpus construction.
 
 ## OUL-024 Materialize the canonical exact-51 corpus and quarantine
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
