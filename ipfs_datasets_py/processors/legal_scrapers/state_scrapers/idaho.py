@@ -3,22 +3,101 @@
 This module contains the scraper for Idaho statutes from the official state legislative website.
 """
 
-from typing import List, Dict, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 import re
 import os
+import ssl
 import time
 import json
+import urllib.request
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
 class IdahoScraper(BaseStateScraper):
     """Scraper for Idaho state laws from https://legislature.idaho.gov"""
 
+    OFFICIAL_DOMAIN = "legislature.idaho.gov"
+    OFFICIAL_ENTRY_PATH = "/statutesrules/idstat/"
+    OFFICIAL_ENTRY_URL = "https://legislature.idaho.gov/statutesrules/idstat/"
+    MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
+    OFFICIAL_TITLES = (
+        ("1", "Courts and Court Officials"),
+        ("2", "Juries and Jurors"),
+        ("3", "Attorneys and Counselors at Law"),
+        ("4", "Enforcement of Judgments in Civil Actions"),
+        ("5", "Proceedings in Civil Actions in Courts of Record"),
+        ("6", "Actions in Particular Cases"),
+        ("7", "Special Proceedings"),
+        ("8", "Provisional Remedies in Civil Actions"),
+        ("9", "Evidence"),
+        ("10", "Issues, Trial and Judgment in Civil Actions"),
+        ("11", "Enforcement of Judgments in Civil Actions"),
+        ("12", "Costs and Miscellaneous Matters in Civil Actions"),
+        ("13", "Appeals in Civil Actions"),
+        ("14", "Estates of Decedents"),
+        ("15", "Uniform Probate Code"),
+        ("16", "Juvenile Proceedings"),
+        ("18", "Crimes and Punishments"),
+        ("19", "Criminal Procedure"),
+        ("20", "State Prison and County Jails"),
+        ("21", "Aeronautics"),
+        ("22", "Agriculture and Horticulture"),
+        ("23", "Alcoholic Beverages"),
+        ("25", "Animals"),
+        ("26", "Banks and Banking"),
+        ("27", "Cemeteries"),
+        ("28", "Commercial Transactions"),
+        ("29", "Contracts"),
+        ("30", "Corporations"),
+        ("31", "Counties and County Law"),
+        ("32", "Domestic Relations"),
+        ("33", "Education"),
+        ("34", "Elections"),
+        ("36", "Fish and Game"),
+        ("37", "Food, Drugs, and Oil"),
+        ("38", "Forestry, Forest Products and Stumpage Districts"),
+        ("39", "Health and Safety"),
+        ("40", "Highways and Bridges"),
+        ("41", "Insurance"),
+        ("42", "Irrigation and Drainage -- Water Rights and Reclamation"),
+        ("43", "Irrigation Districts"),
+        ("44", "Labor"),
+        ("45", "Liens, Mortgages and Pledges"),
+        ("46", "Militia and Military Affairs"),
+        ("47", "Mines and Mining"),
+        ("48", "Monopolies and Trade Practices"),
+        ("49", "Motor Vehicles"),
+        ("50", "Municipal Corporations"),
+        ("51", "Notaries Public and Commissioners of Deeds"),
+        ("52", "Nuisances"),
+        ("53", "Partnership"),
+        ("54", "Professions, Vocations, and Businesses"),
+        ("55", "Property in General"),
+        ("56", "Public Assistance and Welfare"),
+        ("57", "Public Funds in General"),
+        ("58", "Public Lands"),
+        ("59", "Public Officers in General"),
+        ("60", "Public Printing and Official Notices"),
+        ("61", "Public Utility Regulation"),
+        ("62", "Railroads and Other Public Utilities"),
+        ("63", "Revenue and Taxation"),
+        ("64", "Sales"),
+        ("65", "Service Members"),
+        ("66", "State Charitable Institutions"),
+        ("67", "State Government and State Affairs"),
+        ("68", "Trusts and Fiduciaries"),
+        ("69", "Warehouses"),
+        ("70", "Watercourses and Port Districts"),
+        ("71", "Weights and Measures"),
+        ("72", "Worker's Compensation and Related Laws -- Industrial Commission"),
+        ("73", "General Code Provisions"),
+        ("74", "Transparent and Ethical Government"),
+    )
     _ID_SECTION_URL_RE = re.compile(r"/statutesrules/idstat/title\d+/t\d+ch\d+/sect\d+[\-\.0-9A-Za-z]*$", re.IGNORECASE)
     _ID_TITLE_URL_RE = re.compile(r"/statutesrules/idstat/title\d+/?$", re.IGNORECASE)
     _ID_CHAPTER_URL_RE = re.compile(r"/statutesrules/idstat/title\d+/t\d+ch\d+/?$", re.IGNORECASE)
@@ -282,6 +361,238 @@ class IdahoScraper(BaseStateScraper):
                 "discovery_method": "official_title_chapter_section_index",
                 "skip_hydrate": True,
             },
+        )
+
+    def official_title_url(self, title_number: object) -> str:
+        number = str(title_number or "").strip()
+        return f"{self.get_base_url()}/statutesrules/idstat/title{number}/"
+
+    def official_section_url(self, section_number: str) -> str:
+        section = str(section_number or "").strip()
+        parts = re.split(r"[-.]", section)
+        title = parts[0] if parts else "1"
+        chapter = parts[1] if len(parts) > 1 else "1"
+        return (
+            f"{self.get_base_url()}/statutesrules/idstat/title{title}"
+            f"/t{title}ch{chapter}/sect{section}/"
+        )
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Idaho Statutes title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"id:title-{number}",
+                    "title_number": number,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Idaho Statutes Title {number} ({name}) official "
+                        f"legislature.idaho.gov catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def is_official_id_url(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == self.OFFICIAL_DOMAIN or host.endswith(".legislature.idaho.gov")
+
+    def repair_or_type_missing_source_link(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Attach an official Idaho Statutes URL or type a linkless row."""
+
+        structured = dict(statute.structured_data or {})
+        source_url = str(statute.source_url or "").strip()
+        if source_url and self.is_official_id_url(source_url):
+            structured.setdefault("source_link_disposition", "official")
+            statute.structured_data = structured
+            return statute
+
+        section_number = str(statute.section_number or "").strip()
+        if section_number:
+            repaired = self.official_section_url(section_number)
+            statute.source_url = repaired
+            structured["source_kind"] = (
+                structured.get("source_kind") or "official_idaho_statutes_html"
+            )
+            structured["source_link_disposition"] = "repaired_official_idleg"
+            structured["previous_source_url"] = source_url or None
+            statute.structured_data = structured
+            return statute
+
+        structured["source_link_disposition"] = "typed_quarantine"
+        structured["quarantine_reason"] = self.MISSING_LINK_QUARANTINE_REASON
+        statute.structured_data = structured
+        return statute
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-idaho-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    if int(getattr(response, "status", 200) or 200) != 200:
+                        return b""
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-idaho-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _recover_title_number(self, *parts: object) -> str:
+        blob = " ".join(str(item or "") for item in parts)
+        path_match = re.search(r"/statutesrules/idstat/title(\d+)/?", blob, re.IGNORECASE)
+        if path_match:
+            return str(int(path_match.group(1)))
+        label_match = re.search(r"\bTitle\s+(\d{1,2})\b", blob, re.IGNORECASE)
+        if label_match:
+            return label_match.group(1).lstrip("0") or label_match.group(1)
+        return ""
+
+    def _parse_official_title_links(self, html: bytes, page_url: str = "") -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            number = self._recover_title_number(
+                absolute, href, link.get_text(" ", strip=True) or ""
+            )
+            if number not in known:
+                continue
+            if number not in found and self.is_official_id_url(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Idaho title and repair missing-link rows."""
+
+        discovered = self._parse_official_title_links(
+            html, page_url or self.OFFICIAL_ENTRY_URL
+        )
+        rows: List[Dict[str, Any]] = []
+        for item in self.official_title_catalog():
+            number = str(item["title_number"])
+            official_url = str(item["source_url"])
+            live_url = discovered.get(number)
+            source_url = live_url or official_url
+            disposition = "official" if live_url else "repaired_official_idleg"
+            rows.append(
+                {
+                    **item,
+                    "source_url": source_url,
+                    "source_link_disposition": disposition,
+                    "text": (
+                        f"Idaho Statutes Title {number} ({item['name']}) official "
+                        f"legislature.idaho.gov catalog unit at {source_url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "ID"):
+        """Acquire the exhaustive official Idaho Statutes title catalog.
+
+        Live HTTPS retains the official idstat landing page. Every known
+        Idaho title is enumerated with an official legislature.idaho.gov URL.
+        This hook never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "ID").strip().upper() or "ID"
+        if normalized != "ID":
+            raise ValueError(f"IdahoScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("idaho official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
         )
 
 

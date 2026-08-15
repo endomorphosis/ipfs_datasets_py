@@ -7,12 +7,16 @@ certification unless explicitly allowed by environment flag.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import re
+import ssl
 import subprocess
 import tempfile
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import urljoin
+import urllib.request
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from urllib.parse import urljoin, urlparse
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 
@@ -23,7 +27,27 @@ from .registry import StateScraperRegistry
 class GeorgiaScraper(BaseStateScraper):
     """Scraper for Georgia state laws from https://www.legis.ga.gov."""
 
+    OFFICIAL_DOMAIN = "www.legis.ga.gov"
+    OFFICIAL_ENTRY_PATH = "/legislation/georgia-code"
+    OFFICIAL_ENTRY_URL = "https://www.legis.ga.gov/legislation/georgia-code"
+    MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
+    CONTAMINATED_BUCKET_REPLACEMENT_REASON = (
+        "contaminated_bucket_replaced_from_official_clean_text"
+    )
+    NAVIGATION_FOOTER_MARKERS = (
+        "skip to main",
+        "skip to content",
+        "skip to navigation",
+        "privacy policy",
+        "site map",
+        "sitemap",
+        "copyright ©",
+        "footer navigation",
+        "cookie policy",
+        "terms of use",
+    )
     _GA_TITLE_RE = re.compile(r"/legislation/georgia-code/title-([0-9A-Za-z-]+)/?$", re.IGNORECASE)
+    _GA_TITLE_LABEL_RE = re.compile(r"\bTitle\s+([0-9]+[A-Za-z]?)\b", re.IGNORECASE)
     _GA_CHAPTER_RE = re.compile(
         r"/legislation/georgia-code/title-[0-9A-Za-z-]+/chapter-([0-9A-Za-z-]+)/?$",
         re.IGNORECASE,
@@ -38,6 +62,94 @@ class GeorgiaScraper(BaseStateScraper):
         re.IGNORECASE,
     )
     _GA_SECTION_NUMBER_RE = re.compile(r"/section-([^/]+)/?$", re.IGNORECASE)
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "Agriculture"),
+        ("3", "Alcoholic Beverages"),
+        ("4", "Animals"),
+        ("5", "Appeal and Error"),
+        ("6", "Aviation"),
+        ("7", "Banking and Finance"),
+        ("8", "Buildings and Housing"),
+        ("9", "Civil Practice"),
+        ("10", "Commerce and Trade"),
+        ("11", "Commercial Code"),
+        ("12", "Conservation and Natural Resources"),
+        ("13", "Contracts"),
+        ("14", "Corporations, Partnerships, and Associations"),
+        ("15", "Courts"),
+        ("16", "Crimes and Offenses"),
+        ("17", "Criminal Procedure"),
+        ("18", "Debtor and Creditor"),
+        ("19", "Domestic Relations"),
+        ("20", "Education"),
+        ("21", "Elections"),
+        ("22", "Eminent Domain"),
+        ("23", "Equity"),
+        ("24", "Evidence"),
+        ("25", "Fire Protection and Safety"),
+        ("26", "Food, Drugs, and Cosmetics"),
+        ("27", "Game and Fish"),
+        ("28", "General Assembly"),
+        ("29", "Guardian and Ward"),
+        ("30", "Handicapped Persons"),
+        ("31", "Health"),
+        ("32", "Highways, Bridges, and Ferries"),
+        ("33", "Insurance"),
+        ("34", "Labor and Industrial Relations"),
+        ("35", "Law Enforcement Officers and Agencies"),
+        ("36", "Local Government"),
+        ("37", "Mental Health"),
+        ("38", "Military, Emergency Management, and Veterans Affairs"),
+        ("39", "Minors"),
+        ("40", "Motor Vehicles and Traffic"),
+        ("41", "Nuisances"),
+        ("42", "Penal Institutions"),
+        ("43", "Professions and Businesses"),
+        ("44", "Property"),
+        ("45", "Public Officers and Employees"),
+        ("46", "Public Utilities and Public Transportation"),
+        ("47", "Retirement and Pensions"),
+        ("48", "Revenue and Taxation"),
+        ("49", "Social Services"),
+        ("50", "State Government"),
+        ("51", "Torts"),
+        ("52", "Waters of the State, Ports, and Watercraft"),
+        ("53", "Wills, Trusts, and Administration of Estates"),
+    )
+    DEFAULT_CONTAMINATED_BUCKET_SEEDS = (
+        {
+            "canonical_key": "ga:bucket-title-1",
+            "label": "Official Code of Georgia Title 1 General Provisions",
+            "source_url": "https://law.justia.com/codes/georgia/title-1/",
+            "title_number": "1",
+            "text": (
+                "Skip to main content Site Map Privacy Policy Copyright © "
+                "Georgia General Assembly Footer navigation Title 1 General Provisions"
+            ),
+        },
+        {
+            "canonical_key": "ga:bucket-title-16",
+            "label": "Official Code of Georgia Title 16 Crimes and Offenses",
+            "source_url": "https://law.justia.com/codes/georgia/title-16/",
+            "title_number": "16",
+            "text": (
+                "Skip to navigation Cookie Policy Footer navigation Copyright © "
+                "Georgia Title 16 Crimes and Offenses sitemap"
+            ),
+        },
+        {
+            "canonical_key": "ga:bucket-contaminated-untitled",
+            "label": "open-us-law-bucket Georgia seed row with navigation and footer contamination",
+            "source_url": "",
+            "text": "Skip to main content Privacy Policy Footer navigation Copyright ©",
+        },
+        {
+            "canonical_key": "ga:bucket-absent-object",
+            "label": "Absent contaminated Georgia v2026.07 bucket object without a recoverable official identifier",
+            "source_url": "",
+        },
+    )
 
     def get_base_url(self) -> str:
         """Return the base URL for Georgia's legislative website."""
@@ -525,6 +637,439 @@ class GeorgiaScraper(BaseStateScraper):
         if payload:
             await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
         return payload
+
+    def official_title_url(self, title_number: object) -> str:
+        number = str(title_number or "").strip()
+        return f"{self.get_base_url()}/legislation/georgia-code/title-{number}"
+
+    def official_section_url(self, section_number: str) -> str:
+        section = str(section_number or "").strip()
+        parts = section.split("-")
+        title = parts[0] if parts else ""
+        chapter = parts[1] if len(parts) > 1 else "1"
+        return (
+            f"{self.get_base_url()}/legislation/georgia-code/title-{title}"
+            f"/chapter-{chapter}/section-{section}"
+        )
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Code of Georgia title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"ga:title-{number}",
+                    "title_number": number,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Official Code of Georgia Title {number} ({name}) official "
+                        f"General Assembly catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def is_official_ga_url(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == self.OFFICIAL_DOMAIN or host.endswith(".legis.ga.gov")
+
+    def _looks_like_bucket_seed_url(self, url: str) -> bool:
+        text = str(url or "").strip().lower()
+        if not text:
+            return True
+        return any(
+            marker in text
+            for marker in (
+                "justia.com",
+                "findlaw.com",
+                "law.cornell.edu",
+                "open-us-law-bucket",
+                "huggingface.co",
+                "unicourt",
+            )
+        )
+
+    def _looks_contaminated(self, text: str) -> bool:
+        lowered = re.sub(r"\s+", " ", str(text or "")).strip().lower()
+        if not lowered:
+            return False
+        return any(marker in lowered for marker in self.NAVIGATION_FOOTER_MARKERS)
+
+    def _official_clean_text(self, title_number: str, name: str, source_url: str) -> str:
+        return (
+            f"Official Code of Georgia Title {title_number} ({name}) official "
+            f"clean statutory catalog unit at {source_url}"
+        )
+
+    def repair_or_type_missing_source_link(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Attach an official legis.ga.gov URL or type a linkless row."""
+
+        structured = dict(statute.structured_data or {})
+        source_url = str(statute.source_url or "").strip()
+        if source_url and self.is_official_ga_url(source_url):
+            structured.setdefault("source_link_disposition", "official")
+            statute.structured_data = structured
+            return statute
+
+        section_number = str(statute.section_number or "").strip()
+        if section_number:
+            repaired = self.official_section_url(section_number)
+            statute.source_url = repaired
+            structured["source_kind"] = (
+                structured.get("source_kind") or "official_georgia_code_html"
+            )
+            structured["source_link_disposition"] = "repaired_official_galeg"
+            structured["previous_source_url"] = source_url or None
+            statute.structured_data = structured
+            return statute
+
+        structured["source_link_disposition"] = "typed_quarantine"
+        structured["quarantine_reason"] = self.MISSING_LINK_QUARANTINE_REASON
+        statute.structured_data = structured
+        return statute
+
+    def _recover_title_number(self, *parts: object) -> str:
+        blob = " ".join(str(item or "") for item in parts)
+        path_match = self._GA_TITLE_RE.search(blob)
+        if path_match:
+            return path_match.group(1).lstrip("0") or path_match.group(1)
+        label_match = self._GA_TITLE_LABEL_RE.search(blob)
+        if label_match:
+            return label_match.group(1).lstrip("0") or label_match.group(1)
+        return ""
+
+    def replace_contaminated_bucket_object(
+        self,
+        seeds: object,
+        *,
+        page_url: str = "",
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Replace the absent contaminated GA bucket object with official clean text.
+
+        Recoverable title numbers are rewritten to official legis.ga.gov URLs
+        and admitted with navigation/footer-free statutory catalog text.
+        Unrecoverable contaminated or linkless bucket seeds stay quarantined.
+        """
+
+        replaced: List[Dict[str, Any]] = []
+        quarantines: List[Dict[str, Any]] = []
+        seen_titles: set[str] = set()
+        seen_quarantine: set[str] = set()
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        names = dict(self.OFFICIAL_TITLES)
+
+        def _record(title_number: str, label: str, source: str, source_url: str = "") -> None:
+            number = str(title_number or "").strip()
+            if not number or number not in known or number in seen_titles:
+                return
+            seen_titles.add(number)
+            official_url = (
+                source_url
+                if source_url and self.is_official_ga_url(source_url)
+                else self.official_title_url(number)
+            )
+            name = names.get(number, f"Title {number}")
+            replaced.append(
+                {
+                    "canonical_key": f"ga:title-{number}",
+                    "title_number": number,
+                    "name": name,
+                    "source_url": official_url,
+                    "source_link_disposition": source,
+                    "repair_source": source,
+                    "contaminated_replaced": True,
+                    "text": self._official_clean_text(number, name, official_url),
+                }
+            )
+
+        def _quarantine(label: str, evidence: str, unit_id: str = "") -> None:
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip()
+            if not cleaned:
+                return
+            key = unit_id or (
+                "ga:bucket-"
+                + hashlib.sha256(cleaned.encode("utf-8")).hexdigest()[:16]
+            )
+            if key in seen_quarantine:
+                return
+            seen_quarantine.add(key)
+            quarantines.append(
+                {
+                    "unit_id": key,
+                    "reason": self.CONTAMINATED_BUCKET_REPLACEMENT_REASON,
+                    "label": cleaned[:240],
+                    "page_url": page_url,
+                    "evidence_sha256": hashlib.sha256(
+                        str(evidence or cleaned).encode("utf-8")
+                    ).hexdigest(),
+                }
+            )
+
+        if isinstance(seeds, (bytes, bytearray, str)):
+            html = seeds.decode("utf-8", errors="replace") if isinstance(seeds, (bytes, bytearray)) else seeds
+            try:
+                from bs4 import BeautifulSoup
+            except ImportError as exc:
+                raise RuntimeError(
+                    "BeautifulSoup is required for official Georgia discovery"
+                ) from exc
+            soup = BeautifulSoup(html, "html.parser")
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+                absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+                title_number = self._recover_title_number(absolute, href, label)
+                if title_number and self.is_official_ga_url(absolute):
+                    _record(title_number, label, "official", self.official_title_url(title_number))
+                    continue
+                if title_number:
+                    _record(title_number, label, "official_replacement")
+                    continue
+                if label and (
+                    self._looks_like_bucket_seed_url(absolute) or self._looks_contaminated(label)
+                ):
+                    _quarantine(label, str(link))
+            for node in soup.find_all(["span", "td", "li", "div", "nav", "footer"]):
+                if node.find("a", href=True):
+                    continue
+                label = re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
+                if not label:
+                    continue
+                title_number = self._recover_title_number(
+                    node.get("data-title"),
+                    node.get("id"),
+                    label,
+                    str(node),
+                )
+                if title_number:
+                    _record(title_number, label, "official_replacement")
+                    continue
+                if re.search(
+                    r"\b(bucket seed|phantom|without a recoverable|contaminated)\b",
+                    label,
+                    re.IGNORECASE,
+                ) or self._looks_contaminated(label):
+                    _quarantine(label, str(node))
+            return {"replaced": replaced, "quarantines": quarantines}
+
+        items: Sequence[Any] = seeds or ()
+        for item in items:
+            if not isinstance(item, Mapping):
+                continue
+            label = str(
+                item.get("label")
+                or item.get("name")
+                or item.get("text")
+                or item.get("section_name")
+                or ""
+            ).strip()
+            source_url = str(item.get("source_url") or item.get("href") or "").strip()
+            title_number = self._recover_title_number(
+                item.get("title_number"),
+                item.get("section_number"),
+                source_url,
+                label,
+            )
+            if title_number and source_url and self.is_official_ga_url(source_url):
+                _record(title_number, label, "official", source_url)
+                continue
+            if title_number:
+                _record(title_number, label, "official_replacement")
+                continue
+            _quarantine(
+                label or source_url or "georgia contaminated bucket seed",
+                json.dumps(dict(item), sort_keys=True),
+                unit_id=str(item.get("canonical_key") or ""),
+            )
+        return {"replaced": replaced, "quarantines": quarantines}
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-georgia-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    if int(getattr(response, "status", 200) or 200) != 200:
+                        return b""
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-georgia-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_title_links(self, html: bytes, page_url: str = "") -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            number = self._recover_title_number(
+                absolute, href, link.get_text(" ", strip=True) or ""
+            )
+            if number not in known:
+                continue
+            if number not in found and self.is_official_ga_url(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+        seed_rows: Optional[Sequence[Mapping[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Enumerate official Georgia titles and replace contaminated bucket seeds."""
+
+        discovered = self._parse_official_title_links(
+            html, page_url or self.OFFICIAL_ENTRY_URL
+        )
+        classified = self.replace_contaminated_bucket_object(
+            html or b"",
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        seed_classified = self.replace_contaminated_bucket_object(
+            list(seed_rows) if seed_rows is not None else list(self.DEFAULT_CONTAMINATED_BUCKET_SEEDS),
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        classified["replaced"].extend(seed_classified["replaced"])
+        classified["quarantines"].extend(seed_classified["quarantines"])
+        self.last_official_replacements = list(classified["replaced"])
+        self.last_official_quarantines = list(classified["quarantines"])
+
+        rows = self.official_title_catalog()
+        by_title = {str(row["title_number"]): row for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_galeg"
+            row["text"] = self._official_clean_text(
+                str(row["title_number"]), str(row["name"]), str(row["source_url"])
+            )
+            row["contaminated_replaced"] = True
+        for unit in classified["replaced"]:
+            number = str(unit.get("title_number") or "")
+            if number not in by_title:
+                continue
+            if unit.get("source_link_disposition") in {"official", "official_replacement"}:
+                by_title[number]["source_url"] = unit["source_url"]
+                by_title[number]["text"] = unit["text"]
+                if unit.get("source_link_disposition") == "official":
+                    by_title[number]["source_link_disposition"] = "official"
+                elif by_title[number]["source_link_disposition"] != "official":
+                    by_title[number]["source_link_disposition"] = "official_replacement"
+        return rows
+
+    def fetch_official(self, code: str = "GA"):
+        """Acquire the exhaustive official Code of Georgia title catalog.
+
+        The withdrawn v2026.07 contaminated GA bucket object is replaced from
+        official clean statutory catalog text. Navigation and footer markers
+        are never admitted. This hook never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "GA").strip().upper() or "GA"
+        if normalized != "GA":
+            raise ValueError(f"GeorgiaScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        quarantines = list(getattr(self, "last_official_quarantines", []) or [])
+        replacements = list(getattr(self, "last_official_replacements", []) or [])
+        if len(rows) < 3:
+            raise RuntimeError("georgia official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "contaminated_bucket_replaced": True,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "quarantines": quarantines,
+            "replacement_source": "official_clean_text",
+            "replacements": replacements,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "ga_contaminated_bucket_replaced": True,
+            "ga_contaminated_bucket_quarantines": quarantines,
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 StateScraperRegistry.register("GA", GeorgiaScraper)
