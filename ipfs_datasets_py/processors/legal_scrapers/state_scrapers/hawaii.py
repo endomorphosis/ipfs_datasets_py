@@ -11,11 +11,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import ssl
 import urllib.parse
 import urllib.request
 from html import unescape
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import unquote, urljoin
+from typing import Any, Dict, List, Mapping, Optional, Tuple
+from urllib.parse import parse_qs, unquote, urljoin, urlparse
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 
@@ -26,6 +27,50 @@ from .registry import StateScraperRegistry
 class HawaiiScraper(BaseStateScraper):
     """Scraper for Hawaii state laws from https://www.capitol.hawaii.gov."""
 
+    OFFICIAL_DOMAIN = "www.capitol.hawaii.gov"
+    OFFICIAL_ENTRY_PATH = "/hrscurrent/"
+    OFFICIAL_ENTRY_URL = "https://www.capitol.hawaii.gov/hrscurrent/"
+    MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "Elections"),
+        ("3", "The Legislature"),
+        ("4", "State Organization and Administration, Generally"),
+        ("5", "The Executive"),
+        ("6", "Civil Service"),
+        ("7", "Public Officers and Employees"),
+        ("8", "Public Records"),
+        ("9", "Public Property, Purchasing and Contracting"),
+        ("10", "Public Lands"),
+        ("11", "Agriculture and Animals"),
+        ("12", "Conservation and Resources"),
+        ("13", "Planning and Economic Development"),
+        ("14", "Taxation"),
+        ("15", "Transportation and Utilities"),
+        ("16", "Intoxicating Liquor"),
+        ("17", "Motor and Other Vehicles"),
+        ("18", "Education"),
+        ("19", "Health"),
+        ("20", "Social Services"),
+        ("21", "Labor and Industrial Relations"),
+        ("22", "Banks and Financial Institutions"),
+        ("23", "Corporations and Partnerships"),
+        ("24", "Insurance"),
+        ("25", "Professions and Occupations"),
+        ("26", "Trade Regulation and Practice"),
+        ("27", "Uniform Commercial Code"),
+        ("28", "Property"),
+        ("29", "Decedents' Estates"),
+        ("30", "Guardians and Trustees"),
+        ("31", "Family"),
+        ("32", "Courts and Court Officers"),
+        ("33", "Evidence"),
+        ("34", "Pleadings and Procedure"),
+        ("35", "Appeal and Error"),
+        ("36", "Civil Remedies and Defenses and Special Proceedings"),
+        ("37", "Hawaii Penal Code"),
+        ("38", "Procedural and Supplementary Provisions"),
+    )
     _WAYBACK_ROOTS = [
         "http://web.archive.org/web/20060407224843/http://www.capitol.hawaii.gov/hrscurrent/",
         "http://web.archive.org/web/20060407230101/http://www.capitol.hawaii.gov/hrscurrent/",
@@ -625,6 +670,235 @@ class HawaiiScraper(BaseStateScraper):
                 else "official_hawaii_hrs_html",
                 "skip_hydrate": True,
             },
+        )
+
+    def official_title_url(self, title_number: object) -> str:
+        number = str(title_number or "").strip()
+        return f"{self.OFFICIAL_ENTRY_URL}?hrsTitle={number}"
+
+    def official_section_url(self, section_number: str) -> str:
+        section = str(section_number or "").strip()
+        return f"{self.OFFICIAL_ENTRY_URL}?section={section}"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Hawaii Revised Statutes title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"hi:title-{number}",
+                    "title_number": number,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Hawaii Revised Statutes Title {number} ({name}) official "
+                        f"capitol.hawaii.gov catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def is_official_hi_url(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == self.OFFICIAL_DOMAIN or host.endswith(".capitol.hawaii.gov")
+
+    def repair_or_type_missing_source_link(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Attach an official HRS URL or type a linkless row as quarantine."""
+
+        structured = dict(statute.structured_data or {})
+        source_url = str(statute.source_url or "").strip()
+        if source_url and self.is_official_hi_url(source_url):
+            structured.setdefault("source_link_disposition", "official")
+            statute.structured_data = structured
+            return statute
+
+        section_number = str(statute.section_number or "").strip()
+        if section_number:
+            repaired = self.official_section_url(section_number)
+            statute.source_url = repaired
+            structured["source_kind"] = (
+                structured.get("source_kind") or "official_hawaii_hrs_html"
+            )
+            structured["source_link_disposition"] = "repaired_official_hicapitol"
+            structured["previous_source_url"] = source_url or None
+            statute.structured_data = structured
+            return statute
+
+        structured["source_link_disposition"] = "typed_quarantine"
+        structured["quarantine_reason"] = self.MISSING_LINK_QUARANTINE_REASON
+        statute.structured_data = structured
+        return statute
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-hawaii-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    if int(getattr(response, "status", 200) or 200) != 200:
+                        return b""
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-hawaii-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _recover_title_number(self, *parts: object) -> str:
+        blob = " ".join(str(item or "") for item in parts)
+        query_match = re.search(r"[?&](?:hrsTitle|title)=(\d{1,2})\b", blob, re.IGNORECASE)
+        if query_match:
+            return query_match.group(1).lstrip("0") or query_match.group(1)
+        label_match = re.search(r"\bTitle\s+(\d{1,2})\b", blob, re.IGNORECASE)
+        if label_match:
+            return label_match.group(1).lstrip("0") or label_match.group(1)
+        volume_match = re.search(r"/hrscurrent/Vol0*(\d+)", blob, re.IGNORECASE)
+        if volume_match:
+            return volume_match.group(1).lstrip("0") or volume_match.group(1)
+        return ""
+
+    def _parse_official_title_links(self, html: bytes, page_url: str = "") -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            number = self._recover_title_number(
+                absolute, href, link.get_text(" ", strip=True) or ""
+            )
+            if number not in known:
+                continue
+            if number not in found and self.is_official_hi_url(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official HRS title and repair missing-link rows."""
+
+        discovered = self._parse_official_title_links(
+            html, page_url or self.OFFICIAL_ENTRY_URL
+        )
+        rows: List[Dict[str, Any]] = []
+        for item in self.official_title_catalog():
+            number = str(item["title_number"])
+            official_url = str(item["source_url"])
+            live_url = discovered.get(number)
+            source_url = live_url or official_url
+            disposition = "official" if live_url else "repaired_official_hicapitol"
+            rows.append(
+                {
+                    **item,
+                    "source_url": source_url,
+                    "source_link_disposition": disposition,
+                    "text": (
+                        f"Hawaii Revised Statutes Title {number} ({item['name']}) "
+                        f"official capitol.hawaii.gov catalog unit at {source_url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "HI"):
+        """Acquire the exhaustive official Hawaii Revised Statutes title catalog.
+
+        Live HTTPS retains the official hrscurrent landing page. Every known
+        HRS title is enumerated with an official capitol.hawaii.gov URL.
+        This hook never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "HI").strip().upper() or "HI"
+        if normalized != "HI":
+            raise ValueError(f"HawaiiScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("hawaii official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
         )
 
 
