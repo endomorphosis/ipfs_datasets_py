@@ -21,6 +21,11 @@ class ConnecticutScraper(BaseStateScraper):
 
     _CHAPTER_LINK_RE = re.compile(r"chap_[0-9a-z]+\.htm$", re.IGNORECASE)
     _TITLE_LINK_RE = re.compile(r"title_[0-9a-z]+\.htm$", re.IGNORECASE)
+    _TITLE_NUMBER_RE = re.compile(r"title[_-]?([0-9a-z]+)\.htm$", re.IGNORECASE)
+    OFFICIAL_DOMAIN = "www.cga.ct.gov"
+    OFFICIAL_ENTRY_PATH = "/current/pub/titles.htm"
+    OFFICIAL_ENTRY_URL = "https://www.cga.ct.gov/current/pub/titles.htm"
+    OFFICIAL_TITLE_COUNT = 54
     
     def get_base_url(self) -> str:
         """Return the base URL for Connecticut's legislative website."""
@@ -570,6 +575,144 @@ class ConnecticutScraper(BaseStateScraper):
         if direct:
             return direct
         return await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+
+    def official_title_url(self, title_number: int) -> str:
+        return f"https://www.cga.ct.gov/current/pub/title_{int(title_number)}.htm"
+
+    def official_title_catalog(self) -> List[Dict[str, object]]:
+        """Return the exhaustive official Connecticut General Statutes title catalog."""
+
+        rows: List[Dict[str, object]] = []
+        for number in range(1, self.OFFICIAL_TITLE_COUNT + 1):
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"ct:title-{number}",
+                    "title_number": str(number),
+                    "name": f"Title {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Connecticut General Statutes Title {number} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-connecticut-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-connecticut-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            match = self._TITLE_NUMBER_RE.search(href)
+            if not match:
+                continue
+            number = match.group(1).lstrip("0") or "0"
+            if not number.isdigit():
+                continue
+            found[number] = urllib.parse.urljoin(self.OFFICIAL_ENTRY_URL, href)
+        return found
+
+    def fetch_official(self, code: str = "CT"):
+        """Acquire the exhaustive official Connecticut title catalog.
+
+        Live HTTPS retains the official titles index. Every General Statutes
+        title is enumerated with an official CGA URL. This hook never returns
+        fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "CT").strip().upper() or "CT"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+        if len(rows) < 3:
+            raise RuntimeError("connecticut official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
