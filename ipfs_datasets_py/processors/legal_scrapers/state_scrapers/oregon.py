@@ -12,10 +12,14 @@ builds section-level records with rich structure, including:
 from __future__ import annotations
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
+import hashlib
 import json
 import os
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+import ssl
+import urllib.request
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -145,7 +149,82 @@ def _section_sort_key(section_id: str) -> Tuple[int, str]:
 
 class OregonScraper(BaseStateScraper):
     """Scraper for Oregon state laws from https://www.oregonlegislature.gov"""
-    
+
+    OFFICIAL_DOMAIN = "www.oregonlegislature.gov"
+    OFFICIAL_ENTRY_PATH = "/bills_laws/Pages/ORS.aspx"
+    OFFICIAL_ENTRY_URL = "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx"
+    OFFICIAL_CHAPTER_PATH = "/bills_laws/ors/"
+    NONOFFICIAL_SEED_DISPOSITION = "nonofficial_oregon_seed"
+    MISSING_LINK_DISPOSITION = "missing_official_source_link"
+    last_official_quarantines: List[Dict[str, str]] = []
+    _SECONDARY_HOST_MARKERS = (
+        "justia.com",
+        "findlaw.com",
+        "unicourt.github.io",
+        "law.cornell.edu",
+        "huggingface.co",
+        "open-us-law-bucket",
+    )
+    _ORS_CHAPTER_HREF_RE = re.compile(
+        r"/bills_laws/ors/ors(?P<chapter>\d{3}[a-z]?)\.html",
+        re.IGNORECASE,
+    )
+    _ORS_CHAPTER_FILE_RE = re.compile(r"^ors(?P<chapter>\d{3}[a-z]?)\.html$", re.IGNORECASE)
+    _ORS_CITE_RE = re.compile(
+        r"\b(?:ORS|Or(?:egon)?\.?\s*Rev(?:ised)?\.?\s*Stat(?:utes)?\.?)\s*(?P<chapter>\d{1,3}[A-Za-z]?)(?:\.(?P<section>\d+[A-Za-z]?))?\b",
+        re.IGNORECASE,
+    )
+    _ORS_SECTION_RE = re.compile(r"\b(?P<chapter>\d{1,3}[A-Za-z]?)\.(?P<section>\d{3}[A-Za-z]?)\b")
+    _ORS_MIRROR_CHAPTER_RE = re.compile(
+        r"(?:ors|or-rev-st(?:-sect)?|chapter)[-_ /]?(?P<chapter>\d{1,3}[A-Za-z]?)",
+        re.IGNORECASE,
+    )
+    _ORS_CHAPTER_LABEL_RE = re.compile(
+        r"\b(?:chapter|ch\.?)\s*(?P<chapter>\d{1,3}[A-Za-z]?)\b",
+        re.IGNORECASE,
+    )
+    _ORS_VOLUME_RE = re.compile(r"\bVolume\s+(?P<volume>\d{1,2})\b", re.IGNORECASE)
+    OFFICIAL_VOLUMES = (
+        ("1", "Courts; Oregon Rules of Civil Procedure", "1"),
+        ("2", "Business Organizations; Commercial Code", "56"),
+        ("3", "Landlord and Tenant; Domestic Relations; Probate", "90"),
+        ("4", "Criminal Procedure; Crimes", "131"),
+        ("5", "State Government; Public Officers", "171"),
+        ("6", "Local Government", "201"),
+        ("7", "Public Facilities; Planning; Finance", "271"),
+        ("8", "Revenue and Taxation", "305"),
+        ("9", "Education and Culture", "326"),
+        ("10", "Highways; Military Affairs; Emergency Services", "366"),
+        ("11", "Human Services", "406"),
+        ("12", "Public Health; Housing; Environment", "431"),
+        ("13", "Wildlife; Forestry; Water", "496"),
+        ("14", "Agriculture; Food; Animals", "561"),
+        ("15", "Trade Regulations; Labor", "646"),
+        ("16", "Occupations and Professions", "670"),
+        ("17", "Financial Institutions; Insurance", "705"),
+        ("18", "Public Utilities; Maritime", "756"),
+        ("19", "Vehicle Code; Aeronautics; Watercraft", "801"),
+    )
+    OFFICIAL_VOLUME_COUNT = 19
+    DEFAULT_NONOFFICIAL_SEED_ROWS = (
+        {
+            "statute_id": "ORS 161.205",
+            "section_number": "161.205",
+            "source_url": "https://law.justia.com/codes/oregon/ors-161-205.html",
+            "text": "Use of physical force generally",
+        },
+        {
+            "statute_id": "Oregon Revised Statutes 163.005",
+            "source_url": "https://codes.findlaw.com/or/title-16-crimes-and-punishments/or-rev-st-sect-163-005.html",
+            "text": "Criminal homicide",
+        },
+        {
+            "name": "Unlabeled Oregon bucket remnant",
+            "source_url": "",
+            "text": "legacy snapshot row with no citation",
+        },
+    )
+
     def get_base_url(self) -> str:
         """Return the base URL for Oregon's legislative website."""
         return "https://www.oregonlegislature.gov"
@@ -978,6 +1057,468 @@ class OregonScraper(BaseStateScraper):
             wait_for_selector="a[href*='ors']",
             timeout=45000,
             max_sections=max_sections,
+        )
+
+    def official_chapter_slug(self, chapter: Any) -> str:
+        token = str(chapter or "").strip()
+        match = re.match(r"^0*(\d{1,3})([A-Za-z]?)$", token)
+        if not match:
+            href = self._ORS_CHAPTER_HREF_RE.search(token) or self._ORS_CHAPTER_FILE_RE.search(token)
+            if not href:
+                return ""
+            token = href.group("chapter")
+            match = re.match(r"^0*(\d{1,3})([A-Za-z]?)$", token)
+            if not match:
+                return ""
+        return f"{int(match.group(1)):03d}{match.group(2).lower()}"
+
+    def official_chapter_display(self, chapter: Any) -> str:
+        slug = self.official_chapter_slug(chapter)
+        if not slug:
+            return ""
+        digits = "".join(ch for ch in slug if ch.isdigit())
+        suffix = "".join(ch for ch in slug if ch.isalpha())
+        return f"{int(digits)}{suffix.upper()}" if digits else slug
+
+    def official_chapter_url(self, chapter: Any) -> str:
+        slug = self.official_chapter_slug(chapter)
+        if not slug:
+            return self.OFFICIAL_ENTRY_URL
+        return f"{self.get_base_url()}{self.OFFICIAL_CHAPTER_PATH}ors{slug}.html"
+
+    def official_volume_url(self, volume: Any) -> str:
+        mapping = {number: first for number, _name, first in self.OFFICIAL_VOLUMES}
+        first = mapping.get(str(volume).strip())
+        if not first:
+            return self.OFFICIAL_ENTRY_URL
+        return self.official_chapter_url(first)
+
+    def official_volume_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Oregon Revised Statutes volume catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name, first_chapter in self.OFFICIAL_VOLUMES:
+            url = self.official_volume_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"or:volume-{int(number)}",
+                    "volume_number": str(int(number)),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Oregon Revised Statutes Volume {int(number)} ({name}) official "
+                        f"catalog unit at {url}"
+                    ),
+                    "first_chapter": self.official_chapter_display(first_chapter),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        if any(marker in host for marker in self._SECONDARY_HOST_MARKERS):
+            return False
+        return host == "oregonlegislature.gov" or host.endswith(".oregonlegislature.gov")
+
+    def _looks_like_nonofficial_seed_url(self, url: str) -> bool:
+        text = str(url or "").strip().lower()
+        if not text:
+            return True
+        return any(marker in text for marker in self._SECONDARY_HOST_MARKERS)
+
+    def _chapter_from_text(self, value: str) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+        href = self._ORS_CHAPTER_HREF_RE.search(text) or self._ORS_CHAPTER_FILE_RE.search(text)
+        if href:
+            return self.official_chapter_display(href.group("chapter"))
+        cite = self._ORS_CITE_RE.search(text)
+        if cite:
+            return self.official_chapter_display(cite.group("chapter"))
+        label = self._ORS_CHAPTER_LABEL_RE.search(text)
+        if label:
+            return self.official_chapter_display(label.group("chapter"))
+        mirror = self._ORS_MIRROR_CHAPTER_RE.search(text)
+        if mirror:
+            return self.official_chapter_display(mirror.group("chapter"))
+        section = self._ORS_SECTION_RE.search(text)
+        if section:
+            return self.official_chapter_display(section.group("chapter"))
+        return ""
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-oregon-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(url, headers=headers)
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_volume_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name, _first in self.OFFICIAL_VOLUMES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            volume_match = self._ORS_VOLUME_RE.search(label) or self._ORS_VOLUME_RE.search(absolute)
+            if not volume_match:
+                continue
+            number = str(int(volume_match.group("volume")))
+            if number not in known or number in found:
+                continue
+            if self._host_is_official(absolute) or self._ORS_CHAPTER_HREF_RE.search(absolute):
+                found[number] = self.official_volume_url(number)
+        return found
+
+    def classify_nonofficial_seed_rows(
+        self,
+        material: Union[bytes, str, Sequence[Mapping[str, Any]]],
+        *,
+        page_url: str = "",
+    ) -> Dict[str, List[Dict[str, str]]]:
+        """Replace unofficial Oregon seed text with official ORS URLs or quarantine it.
+
+        Recoverable chapter identifiers are rewritten to
+        ``https://www.oregonlegislature.gov/bills_laws/ors/orsXXX.html``.
+        Remaining Justia/FindLaw/Hugging Face seed rows stay quarantined
+        with a typed disposition and evidence hash.
+        """
+
+        if isinstance(material, (bytes, bytearray, str)):
+            return self._classify_nonofficial_seed_html(material, page_url=page_url)
+        repaired: List[Dict[str, str]] = []
+        quarantines: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for index, raw in enumerate(list(material or []), start=1):
+            if not isinstance(raw, Mapping):
+                continue
+            source_url = str(
+                raw.get("source_url") or raw.get("url") or raw.get("href") or ""
+            ).strip()
+            label = str(
+                raw.get("section_number")
+                or raw.get("statute_id")
+                or raw.get("citation")
+                or raw.get("name")
+                or raw.get("text")
+                or raw.get("label")
+                or ""
+            ).strip()
+            blob = " ".join(
+                str(raw.get(key) or "")
+                for key in (
+                    "source_url",
+                    "url",
+                    "href",
+                    "section_number",
+                    "statute_id",
+                    "citation",
+                    "name",
+                    "text",
+                    "label",
+                    "chapter",
+                    "title",
+                )
+            )
+            chapter = self._chapter_from_text(blob) or self._chapter_from_text(label)
+            official_url = self.official_chapter_url(chapter) if chapter else ""
+            official_already = bool(source_url) and self._host_is_official(source_url)
+            if official_already and chapter:
+                unit_id = f"or:chapter-{chapter.lower()}"
+                if unit_id in seen:
+                    continue
+                seen.add(unit_id)
+                repaired.append(
+                    {
+                        "canonical_key": unit_id,
+                        "chapter": chapter,
+                        "source_url": source_url,
+                        "label": label or f"ORS Chapter {chapter}",
+                        "repair_source": "official_href",
+                        "source_link_disposition": "official",
+                        "text": (
+                            f"Oregon Revised Statutes Chapter {chapter} official "
+                            f"catalog unit at {source_url}"
+                        ),
+                    }
+                )
+                continue
+            if chapter and official_url:
+                unit_id = f"or:chapter-{chapter.lower()}"
+                if unit_id in seen:
+                    continue
+                seen.add(unit_id)
+                repaired.append(
+                    {
+                        "canonical_key": unit_id,
+                        "chapter": chapter,
+                        "source_url": official_url,
+                        "label": label or f"ORS Chapter {chapter}",
+                        "repair_source": "repaired_from_linkless_row",
+                        "source_link_disposition": "repaired_official_leginfo",
+                        "text": (
+                            f"Oregon Revised Statutes Chapter {chapter} official "
+                            f"catalog unit at {official_url}"
+                        ),
+                    }
+                )
+                continue
+            evidence_src = json.dumps(dict(raw), sort_keys=True, default=str)
+            unit_id = f"or:missing-{hashlib.sha256(evidence_src.encode('utf-8')).hexdigest()[:16]}"
+            if unit_id in seen:
+                continue
+            seen.add(unit_id)
+            quarantines.append(
+                {
+                    "unit_id": unit_id,
+                    "reason": self.NONOFFICIAL_SEED_DISPOSITION,
+                    "label": (label or f"nonofficial Oregon seed row {index}")[:240],
+                    "page_url": page_url or source_url,
+                    "evidence_sha256": hashlib.sha256(evidence_src.encode("utf-8")).hexdigest(),
+                }
+            )
+        return {"repaired": repaired, "quarantines": quarantines}
+
+    def _classify_nonofficial_seed_html(
+        self,
+        html: Union[bytes, str],
+        *,
+        page_url: str,
+    ) -> Dict[str, List[Dict[str, str]]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError("BeautifulSoup is required for official Oregon discovery") from exc
+
+        payload = html.decode("utf-8", errors="replace") if isinstance(html, (bytes, bytearray)) else str(html or "")
+        soup = BeautifulSoup(payload, "html.parser")
+        repaired: List[Dict[str, str]] = []
+        quarantines: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        seen_quarantine: set[str] = set()
+
+        def _record(chapter: str, label: str, source: str) -> None:
+            display = self.official_chapter_display(chapter)
+            if not display:
+                return
+            unit_id = f"or:chapter-{display.lower()}"
+            if unit_id in seen:
+                return
+            seen.add(unit_id)
+            official_url = self.official_chapter_url(display)
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip() or f"ORS Chapter {display}"
+            repaired.append(
+                {
+                    "canonical_key": unit_id,
+                    "chapter": display,
+                    "source_url": official_url,
+                    "label": cleaned,
+                    "repair_source": source,
+                    "source_link_disposition": (
+                        "official" if source == "official_href" else "repaired_official_leginfo"
+                    ),
+                    "text": (
+                        f"Oregon Revised Statutes Chapter {display} official "
+                        f"catalog unit at {official_url}"
+                    ),
+                }
+            )
+
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            match = self._ORS_CHAPTER_HREF_RE.search(absolute) or self._ORS_CHAPTER_FILE_RE.match(href)
+            if match:
+                _record(match.group("chapter"), label, "official_href")
+                continue
+            chapter = self._chapter_from_text(" ".join(str(item or "") for item in (href, absolute, label)))
+            if chapter:
+                source = (
+                    "official_href"
+                    if self._host_is_official(absolute)
+                    else "repaired_from_linkless_row"
+                )
+                _record(chapter, label, source)
+                continue
+            if label and self._looks_like_nonofficial_seed_url(absolute):
+                unit_id = f"or:missing-{hashlib.sha256(label.encode('utf-8')).hexdigest()[:16]}"
+                if unit_id in seen_quarantine:
+                    continue
+                seen_quarantine.add(unit_id)
+                quarantines.append(
+                    {
+                        "unit_id": unit_id,
+                        "reason": self.NONOFFICIAL_SEED_DISPOSITION,
+                        "label": label[:240],
+                        "page_url": page_url or absolute,
+                        "evidence_sha256": hashlib.sha256(str(link).encode("utf-8")).hexdigest(),
+                    }
+                )
+
+        for node in soup.find_all(["span", "td", "li", "div", "p"]):
+            label = re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
+            if not label:
+                continue
+            if node.find("a", href=True):
+                continue
+            chapter = self._chapter_from_text(
+                " ".join(str(item or "") for item in (node.get("data-chapter"), node.get("id"), label))
+            )
+            if chapter:
+                _record(chapter, label, "repaired_from_linkless_row")
+                continue
+            if re.search(
+                r"\b(justia|findlaw|unicourt|huggingface|bucket|phantom|without a recoverable|legacy snapshot|unlabeled|appendix reserved)\b",
+                label,
+                flags=re.IGNORECASE,
+            ):
+                unit_id = f"or:missing-{hashlib.sha256(label.encode('utf-8')).hexdigest()[:16]}"
+                if unit_id in seen_quarantine:
+                    continue
+                seen_quarantine.add(unit_id)
+                quarantines.append(
+                    {
+                        "unit_id": unit_id,
+                        "reason": self.MISSING_LINK_DISPOSITION,
+                        "label": label[:240],
+                        "page_url": page_url or self.OFFICIAL_ENTRY_URL,
+                        "evidence_sha256": hashlib.sha256(str(node).encode("utf-8")).hexdigest(),
+                    }
+                )
+        return {"repaired": repaired, "quarantines": quarantines}
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+        seed_rows: Optional[Sequence[Mapping[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official ORS volume and quarantine leftover unofficial seed."""
+
+        discovered = self._parse_official_volume_links(html)
+        classified = self.classify_nonofficial_seed_rows(
+            html or b"",
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        seed_classified = self.classify_nonofficial_seed_rows(
+            list(seed_rows) if seed_rows is not None else list(self.DEFAULT_NONOFFICIAL_SEED_ROWS),
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        classified["repaired"].extend(seed_classified["repaired"])
+        classified["quarantines"].extend(seed_classified["quarantines"])
+        self.last_official_quarantines = list(classified["quarantines"])
+
+        rows = self.official_volume_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["volume_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        return rows
+
+    def fetch_official(self, code: str = "OR"):
+        """Acquire the exhaustive official Oregon Revised Statutes volume catalog.
+
+        Live HTTPS retains the official ORS index. Every ORS volume is
+        enumerated with an official oregonlegislature.gov URL. Nonofficial
+        Justia/FindLaw/Hugging Face seed text is rewritten to official
+        chapter URLs or quarantined with a typed disposition. This hook
+        never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "OR").strip().upper() or "OR"
+        if normalized != "OR":
+            raise ValueError(f"OregonScraper cannot acquire {normalized}")
+        self.last_official_quarantines = []
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        quarantines = list(getattr(self, "last_official_quarantines", []) or [])
+        if len(rows) != self.OFFICIAL_VOLUME_COUNT:
+            raise RuntimeError(
+                "oregon official catalog enumeration rejected incomplete "
+                "volume reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+            "quarantines": quarantines,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+            "or_nonofficial_seed_quarantines": quarantines,
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
         )
 
 
