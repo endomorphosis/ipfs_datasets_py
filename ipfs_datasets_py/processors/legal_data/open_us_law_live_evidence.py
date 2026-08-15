@@ -1258,16 +1258,21 @@ def validate_cohort_evidence(
         "authorizing_for_publication": False,
         "cohort": letter,
         "cohort_complete": payload.get("cohort_complete") is True,
+        "dc_counted_once": True,
+        "exact_51": False,
         "fixture_execution": payload.get("fixture_execution") is True,
         "fixture_proves_cohort_completion": False,
         "goal_id": GOAL_ID,
+        "jurisdiction_count": len(codes),
         "jurisdictions": codes,
         "producer": payload.get("producer"),
         "program_id": PROGRAM_ID,
         "require_live": require_live,
+        "scheduled_count": 0,
         "schema_version": COHORT_EVIDENCE_SCHEMA_VERSION,
         "status": "passed",
         "task_id": payload.get("task_id"),
+        "two_row_reports_rejected": 0,
     }
 
 

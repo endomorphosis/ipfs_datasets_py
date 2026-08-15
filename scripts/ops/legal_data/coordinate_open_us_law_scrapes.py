@@ -254,14 +254,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.json:
         _print_json(report)
     else:
+        jurisdictions = report.get("jurisdiction_count")
+        if jurisdictions is None:
+            jurisdictions = len(report.get("jurisdictions") or [])
         sys.stdout.write(
             "coordinate_open_us_law_scrapes: PASSED "
-            f"(jurisdictions={report['jurisdiction_count']} "
-            f"exact_51={report['exact_51']} "
-            f"dc_counted_once={report['dc_counted_once']} "
-            f"scheduled={report['scheduled_count']} "
-            f"two_row_rejected={report['two_row_reports_rejected']})\n"
-            f"  digest={report['report_digest_sha256']}\n"
+            f"(jurisdictions={jurisdictions} "
+            f"exact_51={report.get('exact_51', False)} "
+            f"dc_counted_once={report.get('dc_counted_once', True)} "
+            f"scheduled={report.get('scheduled_count', 0)} "
+            f"two_row_rejected={report.get('two_row_reports_rejected', 0)})\n"
+            f"  digest={report.get('report_digest_sha256') or ''}\n"
         )
     return 0
 

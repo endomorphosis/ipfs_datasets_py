@@ -530,6 +530,42 @@ def test_cli_require_live_fails_without_verified_receipts(
     assert "require-live" in text.lower() or "FAILED" in text
 
 
+def test_cli_cohort_evidence_check_does_not_require_lease_jurisdiction_count(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+        CertificationVerdict,
+        build_cohort_evidence_payload,
+    )
+
+    payload = build_cohort_evidence_payload(
+        cohort="C",
+        verdicts=[
+            CertificationVerdict(
+                jurisdiction_code=code,
+                ok=False,
+                raw_bytes_checked=False,
+                row_count=0,
+                fixture=True,
+                rejection_kinds=("fixture",),
+                detail="fixture",
+            )
+            for code in ("FL", "GA", "HI", "ID")
+        ],
+        fixture_execution=True,
+        require_live=False,
+    )
+    report = tmp_path / "cohort_C.json"
+    report.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    assert main(["--no-mutate", "--check", "--cohort", "C", "--report", str(report)]) == 0
+    out = capsys.readouterr().out
+    assert "PASSED" in out
+    assert "jurisdictions=4" in out
+    assert "Traceback" not in out
+    assert "KeyError" not in out
+
+
 def test_cli_check_json_is_secret_free(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--no-mutate", "--check", "--json"]) == 0
     payload = json.loads(capsys.readouterr().out)
