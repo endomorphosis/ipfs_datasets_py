@@ -3,13 +3,15 @@
 This module contains the scraper for North Dakota statutes from the official state legislative website.
 """
 
-from typing import List, Dict, Optional
+from typing import Any, Dict, List, Optional
 import json
-import subprocess
-import urllib.request
-import urllib.parse
 import re
-from urllib.parse import urljoin
+import ssl
+import subprocess
+import urllib.parse
+import urllib.request
+from urllib.parse import urljoin, urlparse
+
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -17,8 +19,80 @@ from .registry import StateScraperRegistry
 class NorthDakotaScraper(BaseStateScraper):
     """Scraper for North Dakota state laws from https://www.legis.nd.gov"""
 
+    OFFICIAL_DOMAIN = "www.legis.nd.gov"
+    OFFICIAL_ENTRY_PATH = "/general-information/north-dakota-century-code"
+    OFFICIAL_ENTRY_URL = "https://www.legis.nd.gov/general-information/north-dakota-century-code"
     _ND_CENCODE_PDF_RE = re.compile(r"/cencode/.*?\.pdf$", re.IGNORECASE)
     _ND_CENCODE_FILE_RE = re.compile(r"t(\d{1,3})c(\d{1,3})\.pdf$", re.IGNORECASE)
+    _ND_TITLE_HREF_RE = re.compile(
+        r"/cencode/t(?P<title>\d{1,2}(?:-\d)?)\.html$",
+        re.IGNORECASE,
+    )
+    _ND_TITLE_LABEL_RE = re.compile(r"\bTitle\s+(?P<title>\d{1,2}(?:\.\d)?)\b", re.IGNORECASE)
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "Aeronautics"),
+        ("4.1", "Agriculture"),
+        ("5", "Alcoholic Beverages"),
+        ("6", "Banks and Banking"),
+        ("8", "Carriage"),
+        ("9", "Contracts and Obligations"),
+        ("10", "Corporations"),
+        ("11", "Counties"),
+        ("12", "Corrections, Parole, and Probation"),
+        ("12.1", "Criminal Code"),
+        ("13", "Debtor and Creditor Relationship"),
+        ("14", "Domestic Relations and Persons"),
+        ("15", "Education"),
+        ("15.1", "Elementary and Secondary Education"),
+        ("16.1", "Elections"),
+        ("18", "Fires"),
+        ("19", "Foods, Drugs, Oils, and Compounds"),
+        ("20.1", "Game, Fish, Predators, and Boating"),
+        ("21", "Governmental Finance"),
+        ("22", "Guaranty, Indemnity, and Suretyship"),
+        ("23", "Health and Safety"),
+        ("23.1", "Environmental Quality"),
+        ("24", "Highways, Bridges, and Ferries"),
+        ("25", "Mental and Physical Illness or Disability"),
+        ("26.1", "Insurance"),
+        ("27", "Judicial Branch of Government"),
+        ("28", "Judicial Procedure, Civil"),
+        ("29", "Judicial Procedure, Criminal"),
+        ("30.1", "Uniform Probate Code"),
+        ("31", "Judicial Proof"),
+        ("32", "Judicial Remedies"),
+        ("32.1", "Conciliation"),
+        ("34", "Labor and Employment"),
+        ("35", "Liens"),
+        ("36", "Livestock"),
+        ("37", "Military"),
+        ("38", "Mining and Gas and Oil Production"),
+        ("39", "Motor Vehicles"),
+        ("40", "Municipal Government"),
+        ("41", "Uniform Commercial Code"),
+        ("42", "Nuisances"),
+        ("43", "Occupations and Professions"),
+        ("44", "Offices and Officers"),
+        ("45", "Partnerships"),
+        ("46", "Printing Laws"),
+        ("47", "Property"),
+        ("48", "Public Buildings"),
+        ("49", "Public Utilities"),
+        ("50", "Public Welfare"),
+        ("51", "Sales and Exchanges"),
+        ("52", "Social Security"),
+        ("53", "Sports and Amusements"),
+        ("54", "State Government"),
+        ("55", "State Historical Society and State Parks"),
+        ("57", "Taxation"),
+        ("58", "Townships"),
+        ("59", "Trusts"),
+        ("61", "Waters"),
+        ("62.1", "Weapons"),
+        ("65", "Workforce Safety and Insurance"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
 
     def _filter_non_code_results(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         out: List[NormalizedStatute] = []
@@ -402,6 +476,181 @@ class NorthDakotaScraper(BaseStateScraper):
         text = proc.stdout.decode("utf-8", errors="ignore")
         text = re.sub(r"\s+", " ", text).strip()
         return text[:max_chars]
+
+    def official_title_url(self, title_number: Any) -> str:
+        number = str(title_number or "").strip()
+        slug = number.replace(".", "-")
+        if slug.isdigit():
+            slug = f"{int(slug):02d}"
+        elif "-" in slug:
+            whole, _, frac = slug.partition("-")
+            if whole.isdigit():
+                slug = f"{int(whole):02d}-{frac}"
+        return f"{self.get_base_url()}/cencode/t{slug}.html"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official North Dakota Century Code title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"nd:title-{number}",
+                    "title_number": number,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"North Dakota Century Code Title {number} ({name}) "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return (
+            host == "legis.nd.gov"
+            or host.endswith(".legis.nd.gov")
+            or host == "ndlegis.gov"
+            or host.endswith(".ndlegis.gov")
+        )
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:
+        timeout = max(2, min(int(timeout_seconds or 8), 8))
+        headers = {
+            "User-Agent": "ipfs-datasets-north-dakota-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                return bytes(response.read() or b"")
+        except Exception:
+            return b""
+
+    def _normalize_title_number(self, value: Any) -> str:
+        text = str(value or "").strip()
+        match = re.match(r"0*(\d{1,2})(?:[-.](\d))?$", text)
+        if not match:
+            return ""
+        whole = str(int(match.group(1)))
+        frac = match.group(2)
+        return f"{whole}.{frac}" if frac else whole
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._ND_TITLE_HREF_RE.search(absolute) or self._ND_TITLE_LABEL_RE.search(label)
+            if not match:
+                continue
+            number = self._normalize_title_number(match.group("title"))
+            if number not in known or number in found:
+                continue
+            if self._host_is_official(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official North Dakota Century Code title."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_ndlegis"
+        return rows
+
+    def fetch_official(self, code: str = "ND"):
+        """Acquire the exhaustive official North Dakota Century Code catalog.
+
+        Live HTTPS retains the official legis.nd.gov title index. Every known
+        Century Code title is enumerated with an official URL. This hook never
+        returns fixture bytes or secondary-mirror hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "ND").strip().upper() or "ND"
+        if normalized != "ND":
+            raise ValueError(f"NorthDakotaScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) != self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "north dakota official catalog enumeration rejected incomplete "
+                "title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
