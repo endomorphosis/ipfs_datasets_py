@@ -339,7 +339,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: KY, LA, ME, and MD each have exhaustive official-source receipts; LA missing-link rows are repaired or quarantined with typed disposition.
 
 ## OUL-014 Certify official scrape cohort F (MA, MI, MN, MS)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
