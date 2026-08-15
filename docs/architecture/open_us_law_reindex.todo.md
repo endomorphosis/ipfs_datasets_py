@@ -1847,7 +1847,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 
 ## OUL-073 Resolve 4 preflight-conflicting backlogged worktree merges
 
-- Status: blocked
+- Status: completed
 - Completion: manual
 - Is schedulable: false
 - Review only: true
