@@ -411,7 +411,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: NH, NJ, NM, and NY each have exhaustive official-source receipts; NJ link gaps and NM linkless seed material receive explicit repair or quarantine dispositions.
 
 ## OUL-017 Certify official scrape cohort I (NC, ND, OH, OK)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
