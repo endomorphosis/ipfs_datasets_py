@@ -483,7 +483,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: SD, TN, TX, and UT each have exhaustive official-source receipts; TN linkless material is independently reacquired or quarantined and TX mixed acquisition is fully reconciled.
 
 ## OUL-020 Certify official scrape cohort L (VT, VA, WA, WV)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
