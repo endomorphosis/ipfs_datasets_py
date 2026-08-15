@@ -1,11 +1,15 @@
 """Scraper for Tennessee state laws."""
 
 import asyncio
+import hashlib
+import json
 import os
 import re
+import ssl
 import time
+import urllib.request
 import warnings
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Set
 from urllib.parse import urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -48,6 +52,114 @@ class TennesseeScraper(BaseStateScraper):
     _TN_SECTION_LABEL_RE = re.compile(
         r"(?:§|Section)\s*([0-9]+(?:-[0-9A-Za-z.]+)+)",
         re.IGNORECASE,
+    )
+    OFFICIAL_DOMAIN = "www.tn.gov"
+    OFFICIAL_ENTRY_PATH = "/tga/statutes.html"
+    OFFICIAL_ENTRY_URL = "https://www.tn.gov/tga/statutes.html"
+    LINKLESS_QUARANTINE_REASON = "missing_official_source_link"
+    last_official_quarantines: List[Dict[str, str]] = []
+    _TN_TITLE_HREF_RE = re.compile(
+        r"/title-?(?P<title>\d{1,2})(?:/|$)",
+        re.IGNORECASE,
+    )
+    _TN_TITLE_LABEL_RE = re.compile(
+        r"\b(?:title|tca|tenn\.?\s*code(?:\s*ann\.?)?)\s+(?P<title>\d{1,2})\b",
+        re.IGNORECASE,
+    )
+    _TN_SECTION_CITE_RE = re.compile(
+        r"\b(?P<title>\d{1,2})-\d{1,2}-\d{1,4}(?:\.[0-9A-Za-z]+)?\b"
+    )
+    OFFICIAL_TITLES = (
+        ("1", "Code and Statutes"),
+        ("2", "Elections"),
+        ("3", "Legislature"),
+        ("4", "State Government"),
+        ("5", "Counties"),
+        ("6", "Cities and Towns"),
+        ("7", "Consolidated Governments and Local Governmental Functions and Entities"),
+        ("8", "Public Officers and Employees"),
+        ("9", "Public Finances"),
+        ("10", "Public Libraries, Archives and Records"),
+        ("11", "Natural Areas and Recreation"),
+        ("12", "Public Property, Printing and Contracts"),
+        ("13", "Public Planning and Housing"),
+        ("14", "Reserved"),
+        ("15", "Reserved"),
+        ("16", "Courts"),
+        ("17", "Judges and Chancellors"),
+        ("18", "Clerks of Courts"),
+        ("19", "Contempts of Court"),
+        ("20", "Civil Procedure"),
+        ("21", "Proceedings in Chancery"),
+        ("22", "Juries and Jurors"),
+        ("23", "Attorneys-at-law"),
+        ("24", "Evidence and Witnesses"),
+        ("25", "Judgments"),
+        ("26", "Execution"),
+        ("27", "Appeal and Review"),
+        ("28", "Limitation of Actions"),
+        ("29", "Remedies and Special Proceedings"),
+        ("30", "Administration of Estates"),
+        ("31", "Descent and Distribution"),
+        ("32", "Wills"),
+        ("33", "Mental Health, Substance Abuse and Intellectual and Developmental Disabilities"),
+        ("34", "Guardianship"),
+        ("35", "Fiduciaries and Trust Estates"),
+        ("36", "Domestic Relations"),
+        ("37", "Juveniles"),
+        ("38", "Prevention and Detection of Crime"),
+        ("39", "Criminal Offenses"),
+        ("40", "Criminal Procedure"),
+        ("41", "Correctional Institutions and Inmates"),
+        ("42", "Aeronautics"),
+        ("43", "Agriculture and Horticulture"),
+        ("44", "Animals and Animal Husbandry"),
+        ("45", "Banks and Financial Institutions"),
+        ("46", "Cemeteries"),
+        ("47", "Commercial Instruments and Transactions"),
+        ("48", "Corporations and Associations"),
+        ("49", "Education"),
+        ("50", "Employer and Employee"),
+        ("51", "Environment"),
+        ("52", "Reserved"),
+        ("53", "Food, Drugs and Cosmetics"),
+        ("54", "Highways, Bridges and Ferries"),
+        ("55", "Motor and Other Vehicles"),
+        ("56", "Insurance"),
+        ("57", "Intoxicating Liquors"),
+        ("58", "Military Affairs, Emergencies and Civil Defense"),
+        ("59", "Mines and Mining"),
+        ("60", "Oil and Gas"),
+        ("61", "Partnerships"),
+        ("62", "Professions, Businesses and Trades"),
+        ("63", "Professions of the Healing Arts"),
+        ("64", "Regional Authorities and Special Purpose Governmental Entities"),
+        ("65", "Public Utilities and Carriers"),
+        ("66", "Property"),
+        ("67", "Taxes and Licenses"),
+        ("68", "Health, Safety and Environmental Protection"),
+        ("69", "Waters, Waterways, Drains and Levees"),
+        ("70", "Wildlife Resources"),
+        ("71", "Welfare"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
+    DEFAULT_LINKLESS_SEED_ROWS = (
+        {
+            "statute_id": "Tenn. Code Ann. § 39-17-402",
+            "section_number": "39-17-402",
+            "source_url": "",
+            "text": "Definitions",
+        },
+        {
+            "statute_id": "TCA 40-35-104",
+            "source_url": "https://law.justia.com/codes/tennessee/title-40/chapter-35/section-40-35-104/",
+            "text": "Sentencing alternatives",
+        },
+        {
+            "name": "Unlabeled Tennessee bucket remnant",
+            "source_url": "",
+            "text": "legacy snapshot row with no citation",
+        },
     )
 
     def get_base_url(self) -> str:
@@ -848,6 +960,377 @@ class TennesseeScraper(BaseStateScraper):
         body = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", body)
         body = re.sub(r"\*\*([^*]+)\*\*", r"\1", body)
         return self._normalize_legal_text(body)
+
+    def official_title_url(self, title_number: Any) -> str:
+        number = str(int(str(title_number).strip()))
+        return f"https://www.tn.gov/tga/statutes/title-{number}/"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Tennessee Code Annotated title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"tn:title-{int(number)}",
+                    "title_number": str(int(number)),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Tennessee Code Annotated Title {int(number)} ({name}) "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-tennessee-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(url, headers=headers)
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def normalize_title_number(self, value: Any) -> str:
+        text = str(value or "").strip()
+        match = re.search(r"0*(\d{1,2})", text)
+        if not match:
+            return ""
+        number = str(int(match.group(1)))
+        known = {str(int(item)) for item, _name in self.OFFICIAL_TITLES}
+        return number if number in known else ""
+
+    def _recover_title_number(self, *parts: Any) -> str:
+        for part in parts:
+            text = str(part or "").strip()
+            if not text:
+                continue
+            href_match = self._TN_TITLE_HREF_RE.search(text)
+            if href_match:
+                number = self.normalize_title_number(href_match.group("title"))
+                if number:
+                    return number
+            label_match = self._TN_TITLE_LABEL_RE.search(text)
+            if label_match:
+                number = self.normalize_title_number(label_match.group("title"))
+                if number:
+                    return number
+            cite_match = self._TN_SECTION_CITE_RE.search(text)
+            if cite_match:
+                number = self.normalize_title_number(cite_match.group("title"))
+                if number:
+                    return number
+        return ""
+
+    def _title_row(
+        self,
+        title_number: str,
+        label: str,
+        source: str,
+        source_url: str = "",
+    ) -> Dict[str, str]:
+        official_url = source_url or self.official_title_url(title_number)
+        cleaned = re.sub(r"\s+", " ", str(label or "")).strip() or f"Title {title_number}"
+        return {
+            "canonical_key": f"tn:title-{int(title_number)}",
+            "title_number": str(int(title_number)),
+            "name": cleaned,
+            "source_url": official_url,
+            "source_link_disposition": source,
+            "repair_source": source,
+            "text": (
+                f"Tennessee Code Annotated {cleaned} official title catalog unit "
+                f"at {official_url}"
+            ),
+        }
+
+    def classify_linkless_seed_rows(
+        self,
+        seeds: object,
+        *,
+        page_url: str = "",
+    ) -> Dict[str, List[Dict[str, str]]]:
+        """Reacquire official TCA titles or quarantine remaining linkless seeds.
+
+        Recoverable title numbers are rewritten to official tn.gov URLs.
+        Remaining linkless material is quarantined with
+        ``missing_official_source_link``.
+        """
+
+        repaired: List[Dict[str, str]] = []
+        quarantines: List[Dict[str, str]] = []
+        seen_titles: set[str] = set()
+        seen_quarantine: set[str] = set()
+
+        def _record(title_number: str, label: str, source: str, source_url: str = "") -> None:
+            number = self.normalize_title_number(title_number)
+            if not number or number in seen_titles:
+                return
+            seen_titles.add(number)
+            repaired.append(self._title_row(number, label, source, source_url=source_url))
+
+        def _quarantine(label: str, evidence: str) -> None:
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip()
+            if not cleaned:
+                return
+            unit_id = (
+                "tn:missing-"
+                + hashlib.sha256(cleaned.encode("utf-8")).hexdigest()[:16]
+            )
+            if unit_id in seen_quarantine:
+                return
+            seen_quarantine.add(unit_id)
+            quarantines.append(
+                {
+                    "unit_id": unit_id,
+                    "reason": self.LINKLESS_QUARANTINE_REASON,
+                    "label": cleaned[:240],
+                    "page_url": page_url or self.OFFICIAL_ENTRY_URL,
+                    "evidence_sha256": hashlib.sha256(
+                        str(evidence or cleaned).encode("utf-8")
+                    ).hexdigest(),
+                }
+            )
+
+        if isinstance(seeds, (bytes, bytearray, str)):
+            html = (
+                seeds.decode("utf-8", errors="replace")
+                if isinstance(seeds, (bytes, bytearray))
+                else seeds
+            )
+            if not str(html or "").strip():
+                return {"repaired": repaired, "quarantines": quarantines}
+            try:
+                from bs4 import BeautifulSoup
+            except ImportError:
+                return {"repaired": repaired, "quarantines": quarantines}
+            soup = BeautifulSoup(html, "html.parser")
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+                absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+                title_number = self._recover_title_number(absolute, href, label)
+                if title_number and self._is_official_host(absolute):
+                    _record(title_number, label, "official", self.official_title_url(title_number))
+                    continue
+                if title_number:
+                    _record(title_number, label, "repaired_from_linkless_row")
+                    continue
+                if label:
+                    _quarantine(label, str(link))
+            for node in soup.find_all(["span", "td", "li", "div", "p"]):
+                if node.find("a", href=True):
+                    continue
+                label = re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
+                if not label:
+                    continue
+                title_number = self._recover_title_number(
+                    node.get("href"),
+                    node.get("data-title"),
+                    node.get("id"),
+                    label,
+                    str(node),
+                )
+                if title_number:
+                    _record(title_number, label, "repaired_from_linkless_row")
+                elif re.search(
+                    r"title|statute|chapter|section|tennessee|tca|phantom|appendix|bucket|legacy",
+                    label,
+                    re.IGNORECASE,
+                ):
+                    _quarantine(label, str(node))
+            return {"repaired": repaired, "quarantines": quarantines}
+
+        for item in seeds or ():
+            if not isinstance(item, Mapping):
+                continue
+            label = str(
+                item.get("label")
+                or item.get("name")
+                or item.get("text")
+                or item.get("statute_id")
+                or item.get("section_name")
+                or ""
+            ).strip()
+            source_url = str(item.get("source_url") or item.get("href") or "").strip()
+            title_number = self._recover_title_number(
+                item.get("title_number"),
+                item.get("section_number"),
+                item.get("statute_id"),
+                source_url,
+                label,
+            )
+            if title_number and source_url and self._is_official_host(source_url):
+                _record(title_number, label, "official", self.official_title_url(title_number))
+                continue
+            if title_number:
+                _record(title_number, label, "repaired_from_linkless_row")
+                continue
+            _quarantine(
+                label or source_url or "linkless tennessee seed",
+                json.dumps(dict(item), sort_keys=True),
+            )
+        return {"repaired": repaired, "quarantines": quarantines}
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+        seed_rows: Optional[Sequence[Mapping[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Enumerate official TCA titles and reacquire or quarantine linkless seeds."""
+
+        discovered = self._parse_official_title_links(html)
+        classified = self.classify_linkless_seed_rows(
+            html or b"",
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        seed_classified = self.classify_linkless_seed_rows(
+            list(seed_rows) if seed_rows is not None else list(self.DEFAULT_LINKLESS_SEED_ROWS),
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        classified["repaired"].extend(seed_classified["repaired"])
+        classified["quarantines"].extend(seed_classified["quarantines"])
+        self.last_official_quarantines = list(classified["quarantines"])
+
+        rows = self.official_title_catalog()
+        by_title = {str(row["title_number"]): row for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        for unit in classified["repaired"]:
+            number = str(unit.get("title_number") or "")
+            if number in by_title:
+                if unit.get("source_link_disposition") == "official":
+                    by_title[number]["source_url"] = unit["source_url"]
+                    by_title[number]["source_link_disposition"] = "official"
+                elif by_title[number].get("source_link_disposition") != "official":
+                    by_title[number]["source_link_disposition"] = str(
+                        unit.get("source_link_disposition") or "repaired_from_linkless_row"
+                    )
+                continue
+            rows.append(unit)
+            by_title[number] = unit
+        rows.sort(key=lambda item: int(str(item.get("title_number") or "0") or 0))
+        return rows
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {str(int(number)) for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            number = self._recover_title_number(absolute, href, label)
+            if not number or number not in known or number in found:
+                continue
+            if self._is_official_host(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def fetch_official(self, code: str = "TN"):
+        """Acquire the exhaustive official Tennessee Code Annotated catalog.
+
+        Linkless bucket seed material is independently reacquired onto
+        official tn.gov title URLs when a title number can be recovered.
+        Remaining linkless rows are quarantined with typed
+        ``missing_official_source_link`` disposition. This hook never
+        returns fixture bytes or secondary-mirror hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "TN").strip().upper() or "TN"
+        if normalized != "TN":
+            raise ValueError(f"TennesseeScraper cannot acquire {normalized}")
+        self.last_official_quarantines = []
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        quarantines = list(getattr(self, "last_official_quarantines", []) or [])
+        if len(rows) != self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "tennessee official catalog enumeration rejected incomplete "
+                "title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+            "quarantines": quarantines,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+            "tn_linkless_seed_quarantines": quarantines,
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 StateScraperRegistry.register("TN", TennesseeScraper)

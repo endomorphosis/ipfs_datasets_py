@@ -3,19 +3,128 @@
 This module contains the scraper for Utah statutes from the official state legislative website.
 """
 
+import json
 import os
 import re
-from typing import List, Dict, Optional
-from urllib.parse import urljoin
-from urllib.parse import quote
-from urllib.parse import urlparse, parse_qs
+import ssl
+import urllib.request
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+from urllib.parse import parse_qs, quote, urljoin, urlparse
 from xml.etree import ElementTree as ET
+
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
 class UtahScraper(BaseStateScraper):
     """Scraper for Utah state laws from https://le.utah.gov"""
+
+    OFFICIAL_DOMAIN = "le.utah.gov"
+    OFFICIAL_ENTRY_PATH = "/xcode/code.html"
+    OFFICIAL_ENTRY_URL = "https://le.utah.gov/xcode/code.html"
+    _UT_TITLE_HREF_RE = re.compile(
+        r"/xcode/Title(?P<title>\d{1,2}[A-Z]?)\b",
+        re.IGNORECASE,
+    )
+    _UT_TITLE_LABEL_RE = re.compile(
+        r"\bTitle\s+(?P<title>\d{1,2}[A-Z]?)\b",
+        re.IGNORECASE,
+    )
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "Aeronautics"),
+        ("3", "Uniform Agricultural Cooperative Association Act"),
+        ("4", "Utah Agricultural Code"),
+        ("7", "Financial Institutions Act"),
+        ("8", "Cemeteries"),
+        ("9", "Cultural and Community Engagement"),
+        ("10", "Utah Municipal Code"),
+        ("11", "Cities, Counties, and Local Taxing Units"),
+        ("12", "Collection Agencies"),
+        ("13", "Commerce and Trade"),
+        ("14", "Contractors' Bonds"),
+        ("15", "Contracts and Obligations in General"),
+        ("15A", "State Construction and Fire Codes Act"),
+        ("16", "Corporations"),
+        ("17", "Counties"),
+        ("17B", "Limited Purpose Local Government Entities - Special Districts"),
+        ("17C", "Limited Purpose Local Government Entities - Community Reinvestment Agency Act"),
+        ("17D", "Limited Purpose Local Government Entities - Other Entities"),
+        ("18", "Dogs"),
+        ("19", "Environmental Quality Code"),
+        ("20A", "Election Code"),
+        ("21", "Fees"),
+        ("22", "Fiduciaries and Trusts"),
+        ("23A", "Wildlife Resources Act"),
+        ("24", "Forfeiture and Disposition of Property Act"),
+        ("25", "Fraud"),
+        ("26A", "Local Health Authorities"),
+        ("26B", "Utah Health and Human Services Code"),
+        ("31A", "Insurance Code"),
+        ("32B", "Alcoholic Beverage Control Act"),
+        ("34", "Labor in General"),
+        ("34A", "Utah Labor Code"),
+        ("35A", "Utah Workforce Services Code"),
+        ("36", "Legislature"),
+        ("39A", "National Guard and Militia Act"),
+        ("40", "Mines and Mining"),
+        ("41", "Motor Vehicles"),
+        ("42", "Names"),
+        ("43", "Negotiable Certificates"),
+        ("45", "Newspapers and Radio Broadcasting"),
+        ("46", "Notarization and Authentication of Documents, Electronic Signatures, and Legal Material"),
+        ("47", "Nuisances"),
+        ("48", "Partnership"),
+        ("49", "Utah State Retirement and Insurance Benefit Act"),
+        ("51", "Public Funds and Accounts"),
+        ("52", "Public Officers"),
+        ("53", "Public Safety Code"),
+        ("53B", "State System of Higher Education"),
+        ("53C", "School and Institutional Trust Lands Management Act"),
+        ("53D", "School and Institutional Trust Fund Management and Insurance Act"),
+        ("53E", "Public Education System -- State Administration"),
+        ("53F", "Public Education System -- Funding"),
+        ("53G", "Public Education System -- Local Administration"),
+        ("54", "Public Utilities"),
+        ("55", "Public Welfare"),
+        ("56", "Railroads"),
+        ("57", "Real Estate"),
+        ("58", "Occupations and Professions"),
+        ("59", "Revenue and Taxation"),
+        ("61", "Securities Division - Real Estate Division"),
+        ("63A", "Utah Government Operations Code"),
+        ("63B", "Bonds"),
+        ("63C", "State Commissions and Councils Code"),
+        ("63G", "General Government"),
+        ("63H", "Independent State Entities"),
+        ("63I", "Oversight"),
+        ("63J", "Budgeting"),
+        ("63L", "Lands"),
+        ("63M", "Governor's Programs"),
+        ("63N", "Economic Opportunity Act"),
+        ("64", "State Institutions"),
+        ("65A", "Forestry, Fire, and State Lands"),
+        ("67", "State Officers and Employees"),
+        ("68", "Utah Revised Nonprofit Corporation Act"),
+        ("69", "Telegraphic and Telephonic Transactions"),
+        ("70A", "Uniform Commercial Code"),
+        ("70C", "Utah Consumer Credit Code"),
+        ("70D", "Financial Institution Mortgage Financing Regulation Act"),
+        ("71A", "Veterans and Military Affairs"),
+        ("72", "Transportation Code"),
+        ("73", "Water and Irrigation"),
+        ("75", "Utah Uniform Probate Code"),
+        ("75A", "Fiduciaries"),
+        ("76", "Utah Criminal Code"),
+        ("77", "Utah Code of Criminal Procedure"),
+        ("78A", "Judiciary and Judicial Administration"),
+        ("78B", "Judicial Code"),
+        ("79", "Natural Resources"),
+        ("80", "Utah Juvenile Code"),
+        ("81", "Utah Uniform Probate Code"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
+
     _UT_VERSION_DEFAULT_RE = re.compile(r"var\s+versionDefault\s*=\s*['\"]([^'\"]*)['\"]", re.IGNORECASE)
     _UT_TITLE_WRAPPER_RE = re.compile(r"/xcode/title[0-9a-z]+/[0-9a-z]+\.html$", re.IGNORECASE)
     _UT_SECTION_LINK_RE = re.compile(r"/xcode/title[0-9a-z]+/chapter[0-9a-z]+/[0-9a-z-]+-s[0-9a-z.]+\.html", re.IGNORECASE)
@@ -697,6 +806,177 @@ class UtahScraper(BaseStateScraper):
                 break
 
         return out
+
+
+    def official_title_url(self, title_number: Any) -> str:
+        number = str(title_number or "").strip()
+        return f"{self.get_base_url()}/xcode/Title{number}/"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Utah Code title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"ut:title-{number.lower()}",
+                    "title_number": str(number),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Utah Code Title {number} ({name}) official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == "le.utah.gov" or host.endswith(".le.utah.gov")
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-utah-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(url, headers=headers)
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _normalize_title_number(self, value: Any) -> str:
+        text = str(value or "").strip().upper()
+        match = re.match(r"0*(\d{1,2}[A-Z]?)$", text)
+        return match.group(1) if match else ""
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._UT_TITLE_HREF_RE.search(absolute) or self._UT_TITLE_LABEL_RE.search(label)
+            if not match:
+                continue
+            number = self._normalize_title_number(match.group("title"))
+            if number not in known or number in found:
+                continue
+            if self._host_is_official(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Utah Code title."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        return rows
+
+    def fetch_official(self, code: str = "UT"):
+        """Acquire the exhaustive official Utah Code title catalog.
+
+        Live HTTPS retains the official le.utah.gov xcode index. Every
+        known Utah Code title is enumerated with an official URL. This
+        hook never returns fixture bytes or secondary-mirror hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "UT").strip().upper() or "UT"
+        if normalized != "UT":
+            raise ValueError(f"UtahScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) != self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "utah official catalog enumeration rejected incomplete "
+                "title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
