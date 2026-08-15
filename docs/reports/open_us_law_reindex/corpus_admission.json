@@ -1,0 +1,473 @@
+{
+  "acceptance": {
+    "canonical_chunks_have_deterministic_ids": true,
+    "canonical_sections_have_deterministic_ids": true,
+    "criteria": "Canonical sections and structure-aware text chunks have deterministic IDs and provenance; duplicate, contaminated, historical, PR, federal, constitution, recovery, and unsupported rows are isolated in explicit configurations or quarantine.",
+    "duplicate_contaminated_historical_pr_federal_constitution_recovery_unsupported_isolated": true,
+    "non_default_cannot_satisfy_exact_51_gate": true,
+    "provenance_bound": true
+  },
+  "adr_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "bundle": "canonical-corpus",
+  "checks": {
+    "admitted_chunk_count": 51,
+    "admitted_section_count": 51,
+    "all_required_isolation_reasons_present": true,
+    "authorizing_for_publication": false,
+    "authorizing_for_release": false,
+    "chunk_ids_use_parent_legal_id_suffix": true,
+    "configuration_boundary_default": "state_statutes_exact_51",
+    "dc_counted_once": true,
+    "default_jurisdiction_count": 51,
+    "deterministic_ids_across_replay": true,
+    "exact_51_gate_closed": true,
+    "federal_excluded_from_default": true,
+    "model_token_ceiling": 512,
+    "physical_shard_bound_not_used_as_token_ceiling": true,
+    "pr_excluded_from_default": true,
+    "publication_not_authorized": true,
+    "recovery_excluded_from_canonical_counts": true,
+    "required_identity_fields_present": true,
+    "structure_aware_chunks_emitted": true
+  },
+  "code_version": "1",
+  "configuration": "state_statutes_exact_51",
+  "configuration_boundary": {
+    "all_configurations": [
+      "state_statutes_exact_51",
+      "federal_uscode",
+      "puerto_rico",
+      "constitutions",
+      "historical",
+      "recovery",
+      "quarantine"
+    ],
+    "default": {
+      "allowed_document_kinds": [
+        "statute"
+      ],
+      "allowed_statuses": [
+        "current",
+        "reserved"
+      ],
+      "default": true,
+      "forbidden_jurisdictions": [
+        "PR",
+        "US"
+      ],
+      "name": "state_statutes_exact_51",
+      "required_identity_fields": [
+        "jurisdiction_code",
+        "hierarchy",
+        "edition",
+        "source_cid",
+        "entry_cid",
+        "text_hash"
+      ],
+      "required_jurisdiction_codes": [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY",
+        "DC"
+      ],
+      "required_jurisdiction_count": 51,
+      "satisfies_exact_51_gate": true,
+      "viewer_default_split": true,
+      "viewer_visible": true
+    },
+    "default_configuration": "state_statutes_exact_51",
+    "non_default_configurations": [
+      "federal_uscode",
+      "puerto_rico",
+      "constitutions",
+      "historical",
+      "recovery",
+      "quarantine"
+    ],
+    "separate": {
+      "constitutions": {
+        "default": false,
+        "description": "Federal, state, DC, and territorial constitution rows.",
+        "name": "constitutions",
+        "satisfies_exact_51_gate": false,
+        "viewer_default_split": false,
+        "viewer_visible": true
+      },
+      "federal_uscode": {
+        "default": false,
+        "description": "Federal United States Code rows. Useful corpus; never default exact-51.",
+        "name": "federal_uscode",
+        "satisfies_exact_51_gate": false,
+        "viewer_default_split": false,
+        "viewer_visible": true
+      },
+      "historical": {
+        "default": false,
+        "description": "Superseded, repealed, or otherwise non-current statute versions.",
+        "name": "historical",
+        "satisfies_exact_51_gate": false,
+        "viewer_default_split": false,
+        "viewer_visible": true
+      },
+      "puerto_rico": {
+        "default": false,
+        "description": "Puerto Rico statutory rows. Explicit non-default configuration.",
+        "name": "puerto_rico",
+        "satisfies_exact_51_gate": false,
+        "viewer_default_split": false,
+        "viewer_visible": true
+      },
+      "quarantine": {
+        "default": false,
+        "description": "Quarantined or rejected rows excluded from the Viewer default split.",
+        "name": "quarantine",
+        "satisfies_exact_51_gate": false,
+        "viewer_default_split": false,
+        "viewer_visible": false
+      },
+      "recovery": {
+        "default": false,
+        "description": "Recovery records that cannot enter canonical default counts.",
+        "name": "recovery",
+        "satisfies_exact_51_gate": false,
+        "viewer_default_split": false,
+        "viewer_visible": false
+      }
+    },
+    "viewer_excludes_from_default": [
+      "federal_uscode",
+      "puerto_rico",
+      "constitutions",
+      "historical",
+      "recovery",
+      "quarantine"
+    ],
+    "viewer_hidden": [
+      "recovery",
+      "quarantine"
+    ]
+  },
+  "configuration_counts": {
+    "constitutions": 1,
+    "federal_uscode": 1,
+    "historical": 1,
+    "puerto_rico": 1,
+    "quarantine": 4,
+    "recovery": 1,
+    "state_statutes_exact_51": 51
+  },
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "dataset_repo_id": "justicedao/open-us-law-sparse-graphrag",
+  "demo": {
+    "admitted_chunk_ids": [
+      "oul:statute:OR:ors:1:1:1;edition=2024-official#chunk=0000"
+    ],
+    "admitted_jurisdictions": [
+      "AL",
+      "AK",
+      "AZ",
+      "AR",
+      "CA",
+      "CO",
+      "CT",
+      "DE",
+      "FL",
+      "GA",
+      "HI",
+      "ID",
+      "IL",
+      "IN",
+      "IA",
+      "KS",
+      "KY",
+      "LA",
+      "ME",
+      "MD",
+      "MA",
+      "MI",
+      "MN",
+      "MS",
+      "MO",
+      "MT",
+      "NE",
+      "NV",
+      "NH",
+      "NJ",
+      "NM",
+      "NY",
+      "NC",
+      "ND",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VT",
+      "VA",
+      "WA",
+      "WV",
+      "WI",
+      "WY",
+      "DC"
+    ],
+    "authorizing_for_release": false,
+    "default_section_sample": {
+      "configuration": "state_statutes_exact_51",
+      "document_index": 36,
+      "entry_cid": "e34cdc4fe92bf7b1b856ffe65b7f6cb82a551bb2620288d9691622b59e4d60b5",
+      "jurisdiction_code": "OR",
+      "legal_id": "oul:statute:OR:ors:1:1:1;edition=2024-official",
+      "source_cid": "54b64e0cdb632b7e2554d9ef00772be6e12de5928b77de193770f1c246f14bff",
+      "text_hash": "305328e47ac47e36e1b3e2770a5084f7b948092e5a3b3ef5879be4417847cf0e"
+    },
+    "isolation_examples": [
+      {
+        "configuration": "constitutions",
+        "disposition": "isolated",
+        "entry_cid": "f3fd5303ece42326c8437e8dec312915fd0ee9aa5bd7fca9dda213d7d9605e69",
+        "isolation_reason": "constitution",
+        "jurisdiction_code": "OR",
+        "legal_id": "oul:constitution:OR:or-constitution:1:8;edition=2024-official",
+        "row_id": "isolated-constitution-or-art1-s8",
+        "satisfies_exact_51_gate": false
+      },
+      {
+        "configuration": "quarantine",
+        "disposition": "quarantined",
+        "entry_cid": null,
+        "isolation_reason": "contaminated",
+        "jurisdiction_code": "CA",
+        "legal_id": null,
+        "row_id": "quarantine-contaminated-nav",
+        "satisfies_exact_51_gate": false
+      },
+      {
+        "configuration": "quarantine",
+        "disposition": "quarantined",
+        "entry_cid": "e34cdc4fe92bf7b1b856ffe65b7f6cb82a551bb2620288d9691622b59e4d60b5",
+        "isolation_reason": "duplicate",
+        "jurisdiction_code": "OR",
+        "legal_id": "oul:statute:OR:ors:1:1:1;edition=2024-official",
+        "row_id": "quarantine-duplicate-or",
+        "satisfies_exact_51_gate": false
+      },
+      {
+        "configuration": "quarantine",
+        "disposition": "quarantined",
+        "entry_cid": "185dae3690940a0a2c6b94d09262c59fcd24838f82b3c31f75ef4f876b963993",
+        "isolation_reason": "explicit_quarantine",
+        "jurisdiction_code": "GA",
+        "legal_id": "oul:statute:GA:official-code-of-georgia:1:1;edition=2026-withdrawn",
+        "row_id": "quarantine-explicit-ga",
+        "satisfies_exact_51_gate": false
+      },
+      {
+        "configuration": "federal_uscode",
+        "disposition": "isolated",
+        "entry_cid": "45b90200af3f48977d704d55f863567afba32afb9ae0087fe866f22e5e6c1ed5",
+        "isolation_reason": "federal",
+        "jurisdiction_code": "US",
+        "legal_id": "oul:federal:US:usc:18:1001;edition=2024-usc",
+        "row_id": "isolated-federal-18-1001",
+        "satisfies_exact_51_gate": false
+      },
+      {
+        "configuration": "historical",
+        "disposition": "isolated",
+        "entry_cid": "9451c2585f7af03f3adf98d4cabb4ab223f74f9411d6bfb965134022694947de",
+        "isolation_reason": "historical",
+        "jurisdiction_code": "OR",
+        "legal_id": "oul:statute:OR:statutes:10:1;edition=1999-official;status=historical",
+        "row_id": "isolated-historical-or-10-1",
+        "satisfies_exact_51_gate": false
+      },
+      {
+        "configuration": "puerto_rico",
+        "disposition": "isolated",
+        "entry_cid": "87a3c4defa920034245f07be96cc462195b400d6ade79df32c50ac15fa1ccb88",
+        "isolation_reason": "puerto_rico",
+        "jurisdiction_code": "PR",
+        "legal_id": "oul:puerto_rico:PR:laws-of-puerto-rico:1:1;edition=2024-official",
+        "row_id": "isolated-pr-1-1",
+        "satisfies_exact_51_gate": false
+      },
+      {
+        "configuration": "recovery",
+        "disposition": "recovery",
+        "entry_cid": "156ba541bcbd8cc3db4333d87f787fa0fb4191a0d4e317bd46ec4efc3e151e7f",
+        "isolation_reason": "recovery",
+        "jurisdiction_code": "OR",
+        "legal_id": "oul:statute:OR:ors:1:1;edition=legacy-seed",
+        "row_id": "recovery-legacy-or",
+        "satisfies_exact_51_gate": false
+      },
+      {
+        "configuration": "quarantine",
+        "disposition": "quarantined",
+        "entry_cid": null,
+        "isolation_reason": "unsupported",
+        "jurisdiction_code": "XX",
+        "legal_id": null,
+        "row_id": "quarantine-unsupported-xx",
+        "satisfies_exact_51_gate": false
+      }
+    ],
+    "structured_chunks": [
+      {
+        "chunk_cid": "058e0a7b1af7337bdf07439e8a355ceeb1ca4cae58233a085fc596762f89962d",
+        "chunk_id": "oul:statute:OR:ors:1:1:1;edition=2024-official#chunk=0000",
+        "chunk_index": 0,
+        "configuration": "state_statutes_exact_51",
+        "entry_cid": "e34cdc4fe92bf7b1b856ffe65b7f6cb82a551bb2620288d9691622b59e4d60b5",
+        "parent_legal_id": "oul:statute:OR:ors:1:1:1;edition=2024-official",
+        "parent_path": [
+          "jurisdiction:OR",
+          "title:1",
+          "section:1"
+        ],
+        "source_cid": "54b64e0cdb632b7e2554d9ef00772be6e12de5928b77de193770f1c246f14bff",
+        "split_mode": "whole",
+        "text_hash": "305328e47ac47e36e1b3e2770a5084f7b948092e5a3b3ef5879be4417847cf0e",
+        "token_count": 46
+      }
+    ]
+  },
+  "depends_on": [
+    "OUL-001",
+    "OUL-005",
+    "OUL-023"
+  ],
+  "description": "OUL-024 canonical exact-51 corpus admission. Deterministic section and chunk identities are bound to official provenance. Duplicate, contaminated, historical, Puerto Rico, federal, constitution, recovery, and unsupported rows are isolated in explicit configurations or quarantine. This receipt does not authorize publication.",
+  "disposition_counts": {
+    "admitted": 51,
+    "isolated": 4,
+    "quarantined": 4,
+    "recovery": 1
+  },
+  "evidence": {
+    "OUL-001": {
+      "byte_count": 87173,
+      "digest_sha256": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+      "path": "docs/reports/open_us_law_reindex/bucket_snapshot.json",
+      "schema_version": "open-us-law-bucket-snapshot-v1",
+      "task_id": "OUL-001"
+    },
+    "OUL-005": {
+      "byte_count": 15453,
+      "digest_sha256": "8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+      "path": "data/legal/open_us_law/release.schema.json",
+      "schema_version": "open-us-law-identity-schema-v1",
+      "task_id": "OUL-005"
+    },
+    "OUL-023": {
+      "byte_count": 384333,
+      "digest_sha256": "f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+      "path": "docs/reports/open_us_law_reindex/acquisition_refill_closure.json",
+      "schema_version": "open-us-law-acquisition-refill-v1",
+      "task_id": "OUL-023"
+    }
+  },
+  "family_counts": {
+    "bm25": 51,
+    "chunks": 51,
+    "corpus": 51,
+    "graph": 51,
+    "quarantine": 4,
+    "recovery": 1,
+    "vector": 51
+  },
+  "goal_id": "OUL-G030",
+  "identity": {
+    "chunk_id_pattern": "{parent_legal_id}#chunk=NNNN",
+    "legal_id_prefix": "oul",
+    "model_token_ceiling": 512,
+    "physical_rows_per_shard": 4096,
+    "required_section_fields": [
+      "jurisdiction_code",
+      "hierarchy",
+      "edition",
+      "source_cid",
+      "entry_cid",
+      "text_hash",
+      "legal_id"
+    ],
+    "tokenizer_id": "open-us-law-whitespace-v1",
+    "transformation_version": "open-us-law-corpus-transform-v1"
+  },
+  "isolation_counts": {
+    "constitution": 1,
+    "contaminated": 1,
+    "duplicate": 1,
+    "explicit_quarantine": 1,
+    "federal": 1,
+    "historical": 1,
+    "none": 51,
+    "puerto_rico": 1,
+    "recovery": 1,
+    "unsupported": 1
+  },
+  "notes": "Canonical exact-51 corpus projection with explicit non-default configurations and quarantine. Acquisition timestamps are not legal-currentness claims. Fixture materialization does not authorize publication.",
+  "producer": "open_us_law_corpus.py",
+  "program_id": "open-us-law-reindex-v1",
+  "release_point": "f52052f8b83bc8e121c0700a9881fe4e92ee0752146708f81530810add28959b",
+  "release_profile": "open-us-law-sparse-graphrag/v1",
+  "report_digest_sha256": "251d22bad5471eb64e77e916d7ef352e651b4e65fe9a8e32fd4c1e90b2fe9816",
+  "schema_version": "open-us-law-corpus-admission-v1",
+  "source_bucket": "justicedao/open-us-law-bucket",
+  "task_id": "OUL-024"
+}
