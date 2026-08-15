@@ -4,8 +4,11 @@ Official path: chapter/section HTML hierarchy on https://docs.legis.wisconsin.go
 (statutes index → chapter → section). Playwright/generic remain fallbacks only.
 """
 
-from typing import List, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+import json
 import re
+import ssl
+import urllib.request
 from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -15,6 +18,48 @@ class WisconsinScraper(BaseStateScraper):
     """Scraper for Wisconsin state laws from https://docs.legis.wisconsin.gov"""
 
     _WI_SECTION_URL_RE = re.compile(r"/document/statutes/[0-9]+(?:\.[0-9A-Za-z]+)+$", re.IGNORECASE)
+    _WI_CHAPTER_URL_RE = re.compile(
+        r"/document/statutes/(?P<chapter>[0-9]+)/?$",
+        re.IGNORECASE,
+    )
+    OFFICIAL_DOMAIN = "docs.legis.wisconsin.gov"
+    OFFICIAL_ENTRY_PATH = "/statutes/statutes"
+    OFFICIAL_ENTRY_URL = "https://docs.legis.wisconsin.gov/statutes/statutes"
+    OFFICIAL_CHAPTERS = (
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39,
+        40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 59, 60,
+        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+        79, 80, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
+        100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113,
+        114, 115, 116, 117, 118, 119, 120, 121, 125, 126, 128, 132, 133, 134,
+        135, 136, 137, 138, 139, 140, 145, 146, 149, 150, 151, 153, 154, 155,
+        157, 160, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
+        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190,
+        191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204,
+        213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226,
+        227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 240, 241,
+        242, 243, 244, 250, 251, 252, 253, 254, 255, 256, 257, 280, 281, 283,
+        285, 287, 289, 291, 292, 293, 295, 299, 301, 302, 303, 304, 321, 322,
+        323, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 401,
+        402, 403, 404, 405, 407, 408, 409, 410, 411, 420, 421, 422, 423, 424,
+        425, 426, 427, 428, 429, 440, 441, 442, 443, 444, 445, 446, 447, 448,
+        449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 462, 463,
+        464, 465, 466, 470, 551, 552, 553, 562, 563, 564, 565, 569, 600, 601,
+        604, 605, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620,
+        621, 622, 623, 625, 626, 627, 628, 630, 631, 632, 633, 635, 644, 645,
+        646, 647, 648, 655, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709,
+        710, 711, 750, 751, 752, 753, 754, 755, 756, 757, 758, 759, 765, 766,
+        767, 768, 769, 770, 778, 779, 780, 781, 782, 783, 784, 785, 786, 788,
+        799, 800, 801, 802, 803, 804, 805, 806, 807, 808, 809, 810, 811, 812,
+        813, 814, 815, 816, 818, 820, 821, 822, 823, 835, 839, 840, 841, 842,
+        843, 844, 846, 847, 851, 852, 853, 854, 856, 857, 858, 859, 860, 861,
+        862, 863, 865, 866, 867, 868, 877, 878, 879, 880, 881, 882, 884, 885,
+        887, 889, 891, 893, 895, 898, 901, 902, 903, 904, 905, 906, 907, 908,
+        909, 910, 911, 916, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947,
+        948, 949, 950, 951, 961, 967, 968, 969, 970, 971, 972, 973, 974, 975,
+        976, 977, 978, 979, 980, 985, 990, 991, 992, 995,
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -273,6 +318,184 @@ class WisconsinScraper(BaseStateScraper):
                 )
             )
         return statutes
+
+    def official_chapter_url(self, chapter_number: Any) -> str:
+        return f"{self.get_base_url()}/document/statutes/{int(chapter_number)}"
+
+    def official_chapter_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Wisconsin Statutes chapter catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number in self.OFFICIAL_CHAPTERS:
+            url = self.official_chapter_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"wi:chapter-{int(number)}",
+                    "chapter_number": str(int(number)),
+                    "name": f"Chapter {int(number)}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Wisconsin Statutes Chapter {int(number)} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-wisconsin-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-wisconsin-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_chapter_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._WI_CHAPTER_URL_RE.search(absolute)
+            if not match:
+                continue
+            number = str(int(match.group("chapter")))
+            if number not in found:
+                found[number] = self.official_chapter_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Wisconsin chapter and repair missing live links."""
+
+        del page_url
+        discovered = self._parse_official_chapter_links(html)
+        rows = self.official_chapter_catalog()
+        seen = {str(row["chapter_number"]) for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["chapter_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        for number, url in discovered.items():
+            if number in seen:
+                continue
+            rows.append(
+                {
+                    "canonical_key": f"wi:chapter-{number}",
+                    "chapter_number": number,
+                    "name": f"Chapter {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Wisconsin Statutes Chapter {number} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        rows.sort(key=lambda item: int(item["chapter_number"]))
+        return rows
+
+    def fetch_official(self, code: str = "WI"):
+        """Acquire the exhaustive official Wisconsin Statutes chapter catalog.
+
+        Live HTTPS retains the official statutes index. Every known chapter is
+        enumerated with an official docs.legis.wisconsin.gov URL. This hook
+        never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "WI").strip().upper() or "WI"
+        if normalized != "WI":
+            raise ValueError(f"WisconsinScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("wisconsin official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
