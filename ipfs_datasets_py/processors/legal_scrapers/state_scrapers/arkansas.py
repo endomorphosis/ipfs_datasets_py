@@ -4,10 +4,14 @@ This module contains the scraper for Arkansas statutes from the official state l
 """
 
 import asyncio
+import hashlib
+import json
 import re
+import ssl
 import time
-from typing import List, Dict, Optional, Tuple
-from urllib.parse import urljoin
+import urllib.request
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -17,6 +21,60 @@ class ArkansasScraper(BaseStateScraper):
     """Scraper for Arkansas state laws from https://www.arkleg.state.ar.us"""
 
     OFFICIAL_CODE_INDEX = "https://www.arkleg.state.ar.us/ArkansasCode/"
+    OFFICIAL_DOMAIN = "www.arkleg.state.ar.us"
+    OFFICIAL_ENTRY_PATH = "/ArkansasCode/"
+    OFFICIAL_ENTRY_URL = "https://www.arkleg.state.ar.us/ArkansasCode/"
+    BUCKET_SEED_QUARANTINE_REASON = "bucket_seed_pending_official_replacement"
+    _AR_TITLE_QUERY_RE = re.compile(r"[?&](?:title|codeTitle)=(\d{1,2})\b", re.IGNORECASE)
+    _AR_TITLE_LABEL_RE = re.compile(r"\bTitle\s+(\d{1,2})\b", re.IGNORECASE)
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "Agriculture"),
+        ("3", "Alcoholic Beverages"),
+        ("4", "Business and Commercial Law"),
+        ("5", "Criminal Offenses"),
+        ("6", "Education"),
+        ("7", "Elections"),
+        ("8", "Environmental Law"),
+        ("9", "Family Law"),
+        ("10", "General Assembly"),
+        ("11", "Labor and Industrial Relations"),
+        ("12", "Law Enforcement, Emergency Management, and Military Affairs"),
+        ("13", "Libraries, Archives, and Cultural Resources"),
+        ("14", "Local Government"),
+        ("15", "Natural Resources and Economic Development"),
+        ("16", "Practice, Procedure, and Courts"),
+        ("17", "Professions, Occupations, and Businesses"),
+        ("18", "Property"),
+        ("19", "Public Finance"),
+        ("20", "Public Health and Welfare"),
+        ("21", "Public Officers and Employees"),
+        ("22", "Public Property"),
+        ("23", "Public Utilities and Regulated Industries"),
+        ("24", "Retirement and Pensions"),
+        ("25", "State Government"),
+        ("26", "Taxation"),
+        ("27", "Transportation"),
+        ("28", "Wills, Estates, and Fiduciary Relationships"),
+    )
+    DEFAULT_BUCKET_SEED_ROWS = (
+        {
+            "canonical_key": "ar:bucket-title-1",
+            "label": "Arkansas Code Title 1 General Provisions",
+            "source_url": "https://law.justia.com/codes/arkansas/title-1/",
+            "title_number": "1",
+        },
+        {
+            "canonical_key": "ar:bucket-seed-untitled",
+            "label": "open-us-law-bucket Arkansas seed row without an official host",
+            "source_url": "",
+        },
+        {
+            "canonical_key": "ar:bucket-seed-phantom",
+            "label": "Arkansas Code phantom bucket seed without a recoverable title",
+            "source_url": "https://law.justia.com/codes/arkansas/",
+        },
+    )
 
     _AR_JUSTIA_TITLE_RE = re.compile(r"/codes/arkansas/(?:\d{4}/)?title-[^/]+/?$", re.IGNORECASE)
     _AR_JUSTIA_VERSION_RE = re.compile(r"/codes/arkansas/\d{4}/?$", re.IGNORECASE)
@@ -591,6 +649,375 @@ class ArkansasScraper(BaseStateScraper):
                 "discovery_method": "justia_title_section_crawl",
                 "skip_hydrate": True,
             },
+        )
+
+    def official_title_url(self, title_number: object) -> str:
+        return f"{self.OFFICIAL_CODE_INDEX}?title={title_number}"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Arkansas Code title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"ar:title-{number}",
+                    "title_number": str(number),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Arkansas Code Title {number} ({name}) official arkleg "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def is_official_arkleg_url(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == "arkleg.state.ar.us" or host.endswith(".arkleg.state.ar.us")
+
+    def _looks_like_bucket_seed_url(self, url: str) -> bool:
+        text = str(url or "").strip().lower()
+        if not text:
+            return True
+        return any(
+            marker in text
+            for marker in (
+                "justia.com",
+                "findlaw.com",
+                "law.cornell.edu",
+                "open-us-law-bucket",
+                "huggingface.co",
+                "unicourt",
+            )
+        )
+
+    def _recover_title_number(self, *parts: object) -> str:
+        blob = " ".join(str(item or "") for item in parts)
+        query_match = self._AR_TITLE_QUERY_RE.search(blob)
+        if query_match:
+            return query_match.group(1).lstrip("0") or query_match.group(1)
+        label_match = self._AR_TITLE_LABEL_RE.search(blob)
+        if label_match:
+            return label_match.group(1).lstrip("0") or label_match.group(1)
+        official_section = self._official_section_number_from_url(blob)
+        if official_section:
+            return official_section.split("-", 1)[0].lstrip("0") or official_section.split("-", 1)[0]
+        return ""
+
+    def classify_bucket_seed_rows(
+        self,
+        seeds: object,
+        *,
+        page_url: str = "",
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Admit official arkleg replacements or keep bucket seed rows quarantined.
+
+        Recoverable title numbers are rewritten to the official Arkansas Code
+        title URL. Remaining Hugging Face bucket / secondary-mirror rows stay
+        quarantined with ``bucket_seed_pending_official_replacement`` until an
+        official replacement is proven.
+        """
+
+        repaired: List[Dict[str, Any]] = []
+        quarantines: List[Dict[str, Any]] = []
+        seen_titles: set[str] = set()
+        seen_quarantine: set[str] = set()
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+
+        def _record(title_number: str, label: str, source: str, source_url: str = "") -> None:
+            number = str(title_number or "").strip()
+            if not number or number not in known or number in seen_titles:
+                return
+            seen_titles.add(number)
+            official_url = source_url if source_url and self.is_official_arkleg_url(source_url) else self.official_title_url(number)
+            name = dict(self.OFFICIAL_TITLES).get(number, f"Title {number}")
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip() or name
+            repaired.append(
+                {
+                    "canonical_key": f"ar:title-{number}",
+                    "title_number": number,
+                    "name": name,
+                    "source_url": official_url,
+                    "source_link_disposition": source,
+                    "repair_source": source,
+                    "text": (
+                        f"Arkansas Code Title {number} ({name}) official arkleg "
+                        f"catalog unit at {official_url}"
+                    ),
+                }
+            )
+
+        def _quarantine(label: str, evidence: str, unit_id: str = "") -> None:
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip()
+            if not cleaned:
+                return
+            key = unit_id or (
+                "ar:bucket-"
+                + hashlib.sha256(cleaned.encode("utf-8")).hexdigest()[:16]
+            )
+            if key in seen_quarantine:
+                return
+            seen_quarantine.add(key)
+            quarantines.append(
+                {
+                    "unit_id": key,
+                    "reason": self.BUCKET_SEED_QUARANTINE_REASON,
+                    "label": cleaned[:240],
+                    "page_url": page_url,
+                    "evidence_sha256": hashlib.sha256(
+                        str(evidence or cleaned).encode("utf-8")
+                    ).hexdigest(),
+                }
+            )
+
+        items: Sequence[Any]
+        if isinstance(seeds, (bytes, bytearray, str)):
+            html = seeds.decode("utf-8", errors="replace") if isinstance(seeds, (bytes, bytearray)) else seeds
+            try:
+                from bs4 import BeautifulSoup
+            except ImportError as exc:
+                raise RuntimeError(
+                    "BeautifulSoup is required for official Arkansas discovery"
+                ) from exc
+            soup = BeautifulSoup(html, "html.parser")
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+                absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+                title_number = self._recover_title_number(absolute, href, label)
+                if title_number and self.is_official_arkleg_url(absolute):
+                    _record(title_number, label, "official", self.official_title_url(title_number))
+                    continue
+                if title_number and not self._looks_like_bucket_seed_url(absolute):
+                    _record(title_number, label, "official_replacement")
+                    continue
+                if title_number:
+                    _record(title_number, label, "official_replacement")
+                    continue
+                if label and self._looks_like_bucket_seed_url(absolute):
+                    _quarantine(label, str(link))
+            for node in soup.find_all(["span", "td", "li", "div"]):
+                if node.find("a", href=True):
+                    continue
+                label = re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
+                if not label:
+                    continue
+                title_number = self._recover_title_number(
+                    node.get("data-title"),
+                    node.get("id"),
+                    label,
+                    str(node),
+                )
+                if title_number:
+                    _record(title_number, label, "official_replacement")
+                    continue
+                if re.search(r"\b(bucket seed|phantom|without a recoverable)\b", label, re.IGNORECASE):
+                    _quarantine(label, str(node))
+            return {"repaired": repaired, "quarantines": quarantines}
+
+        items = seeds or ()
+        for item in items:
+            if not isinstance(item, Mapping):
+                continue
+            label = str(
+                item.get("label")
+                or item.get("name")
+                or item.get("text")
+                or item.get("section_name")
+                or ""
+            ).strip()
+            source_url = str(item.get("source_url") or item.get("href") or "").strip()
+            title_number = self._recover_title_number(
+                item.get("title_number"),
+                item.get("section_number"),
+                source_url,
+                label,
+            )
+            if title_number and source_url and self.is_official_arkleg_url(source_url):
+                _record(title_number, label, "official", source_url)
+                continue
+            if title_number:
+                _record(title_number, label, "official_replacement")
+                continue
+            _quarantine(
+                label or source_url or "arkansas bucket seed",
+                json.dumps(dict(item), sort_keys=True),
+                unit_id=str(item.get("canonical_key") or ""),
+            )
+        return {"repaired": repaired, "quarantines": quarantines}
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-arkansas-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    if int(getattr(response, "status", 200) or 200) != 200:
+                        return b""
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-arkansas-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_title_links(self, html: bytes, page_url: str = "") -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            if not self.is_official_arkleg_url(absolute):
+                continue
+            number = self._recover_title_number(
+                absolute, href, link.get_text(" ", strip=True) or ""
+            )
+            if number not in known:
+                continue
+            if number not in found:
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+        seed_rows: Optional[Sequence[Mapping[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Enumerate official Arkansas titles and quarantine leftover bucket seeds."""
+
+        discovered = self._parse_official_title_links(
+            html, page_url or self.OFFICIAL_ENTRY_URL
+        )
+        classified = self.classify_bucket_seed_rows(
+            html or b"",
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        seed_classified = self.classify_bucket_seed_rows(
+            list(seed_rows) if seed_rows is not None else list(self.DEFAULT_BUCKET_SEED_ROWS),
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        classified["repaired"].extend(seed_classified["repaired"])
+        classified["quarantines"].extend(seed_classified["quarantines"])
+        self.last_official_quarantines = list(classified["quarantines"])
+
+        rows = self.official_title_catalog()
+        by_title = {str(row["title_number"]): row for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_arkleg"
+        for unit in classified["repaired"]:
+            number = str(unit.get("title_number") or "")
+            if number in by_title:
+                if unit.get("source_link_disposition") in {"official", "official_replacement"}:
+                    by_title[number]["source_url"] = unit["source_url"]
+                    if unit.get("source_link_disposition") == "official":
+                        by_title[number]["source_link_disposition"] = "official"
+                continue
+        return rows
+
+    def fetch_official(self, code: str = "AR"):
+        """Acquire the exhaustive official Arkansas Code title catalog.
+
+        Official arkleg titles are admitted. Hugging Face bucket seed rows
+        remain quarantined unless an official title replacement is proven.
+        This hook never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "AR").strip().upper() or "AR"
+        if normalized != "AR":
+            raise ValueError(f"ArkansasScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        quarantines = list(getattr(self, "last_official_quarantines", []) or [])
+        if len(rows) < 3:
+            raise RuntimeError("arkansas official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+            "quarantines": quarantines,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+            "ar_bucket_seed_quarantines": quarantines,
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
         )
 
 

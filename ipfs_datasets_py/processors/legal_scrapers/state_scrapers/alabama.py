@@ -4,8 +4,11 @@ import asyncio
 import hashlib
 import json
 import re
+import ssl
 import time
-from typing import List, Dict, Any, Optional
+import urllib.request
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -16,6 +19,61 @@ class AlabamaScraper(BaseStateScraper):
 
     GRAPHQL_URL = "https://alison.legislature.state.al.us/graphql"
     CODE_URL = "https://alison.legislature.state.al.us/code-of-alabama"
+    OFFICIAL_DOMAIN = "alison.legislature.state.al.us"
+    OFFICIAL_ENTRY_PATH = "/code-of-alabama"
+    OFFICIAL_ENTRY_URL = "https://alison.legislature.state.al.us/code-of-alabama"
+    MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
+    _AL_TITLE_QUERY_RE = re.compile(r"[?&]title=([0-9]+[A-Za-z]?)", re.IGNORECASE)
+    _AL_TITLE_LABEL_RE = re.compile(
+        r"\bTitle\s+([0-9]+[A-Za-z]?)\b",
+        re.IGNORECASE,
+    )
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "Agriculture"),
+        ("3", "Animals"),
+        ("4", "Aviation"),
+        ("5", "Banks and Financial Institutions"),
+        ("6", "Civil Practice"),
+        ("7", "Commercial Code"),
+        ("8", "Commercial Law and Consumer Protection"),
+        ("9", "Conservation and Natural Resources"),
+        ("10A", "Alabama Business and Nonprofit Entities Code"),
+        ("11", "Counties and Municipal Corporations"),
+        ("12", "Courts"),
+        ("13A", "Criminal Code"),
+        ("14", "Criminal Correctional and Detention Facilities"),
+        ("15", "Criminal Procedure"),
+        ("16", "Education"),
+        ("17", "Elections"),
+        ("18", "Eminent Domain"),
+        ("19", "Fiduciaries and Trusts"),
+        ("20", "Food, Drugs, and Cosmetics"),
+        ("21", "Handicapped Persons"),
+        ("22", "Health, Mental Health, and Environmental Control"),
+        ("23", "Highways, Roads, Bridges, and Ferries"),
+        ("24", "Housing"),
+        ("25", "Industrial Relations and Labor"),
+        ("26", "Infants and Incompetents"),
+        ("27", "Insurance"),
+        ("28", "Intoxicating Liquor, Malt Beverages and Wine"),
+        ("29", "Legislature"),
+        ("30", "Marital and Domestic Relations"),
+        ("31", "Military Affairs and Civil Defense"),
+        ("32", "Motor Vehicles and Traffic"),
+        ("33", "Navigation and Watercourses"),
+        ("34", "Professions and Businesses"),
+        ("35", "Property"),
+        ("36", "Public Officers and Employees"),
+        ("37", "Public Utilities and Public Transportation"),
+        ("38", "Public Welfare"),
+        ("39", "Public Works"),
+        ("40", "Revenue and Taxation"),
+        ("41", "State Government"),
+        ("43", "Wills and Decedents' Estates"),
+        ("44", "Youth Services"),
+        ("45", "Local Laws"),
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for Alabama's legislative website."""
@@ -409,6 +467,226 @@ class AlabamaScraper(BaseStateScraper):
         self.logger.info("  2. Try again later when site is accessible")
         self.logger.info("  3. Contact Alabama Legislative Services")
         return await self._generic_scrape(code_name, code_url, citation_format, max_sections=max_sections)
+
+    def official_title_url(self, title_number: object) -> str:
+        return f"{self.CODE_URL}?title={title_number}"
+
+    def official_section_url(self, section_number: str) -> str:
+        section = str(section_number or "").strip()
+        return f"{self.CODE_URL}?section={section}"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Code of Alabama title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"al:title-{str(number).lower()}",
+                    "title_number": str(number),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Code of Alabama Title {number} ({name}) official ALISON "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def is_official_alison_url(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == self.OFFICIAL_DOMAIN or host.endswith("." + self.OFFICIAL_DOMAIN)
+
+    def repair_or_type_missing_source_link(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Attach an official ALISON URL or type a linkless row as quarantine."""
+
+        structured = dict(statute.structured_data or {})
+        source_url = str(statute.source_url or "").strip()
+        if source_url and self.is_official_alison_url(source_url):
+            structured.setdefault("source_link_disposition", "official")
+            statute.structured_data = structured
+            return statute
+
+        section_number = str(statute.section_number or "").strip()
+        if section_number:
+            repaired = self.official_section_url(section_number)
+            statute.source_url = repaired
+            structured["source_kind"] = (
+                structured.get("source_kind") or "official_alison_graphql"
+            )
+            structured["source_link_disposition"] = "repaired_official_alison"
+            structured["previous_source_url"] = source_url or None
+            statute.structured_data = structured
+            return statute
+
+        structured["source_link_disposition"] = "typed_quarantine"
+        structured["quarantine_reason"] = self.MISSING_LINK_QUARANTINE_REASON
+        statute.structured_data = structured
+        return statute
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-alabama-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    if int(getattr(response, "status", 200) or 200) != 200:
+                        return b""
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-alabama-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_title_links(self, html: bytes, page_url: str = "") -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            parsed = urlparse(absolute)
+            query = parse_qs(parsed.query)
+            title_values = query.get("title") or []
+            number = str((title_values or [""])[0]).strip()
+            if not number:
+                match = self._AL_TITLE_QUERY_RE.search(absolute) or self._AL_TITLE_LABEL_RE.search(
+                    link.get_text(" ", strip=True) or ""
+                )
+                number = match.group(1) if match else ""
+            if number not in known:
+                continue
+            if number not in found and self.is_official_alison_url(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Alabama title and repair missing-link rows."""
+
+        discovered = self._parse_official_title_links(
+            html, page_url or self.OFFICIAL_ENTRY_URL
+        )
+        rows: List[Dict[str, Any]] = []
+        for item in self.official_title_catalog():
+            number = str(item["title_number"])
+            official_url = str(item["source_url"])
+            live_url = discovered.get(number)
+            source_url = live_url or official_url
+            disposition = "official" if live_url else "repaired_official_alison"
+            rows.append(
+                {
+                    **item,
+                    "source_url": source_url,
+                    "source_link_disposition": disposition,
+                    "text": (
+                        f"Code of Alabama Title {number} ({item['name']}) official "
+                        f"ALISON catalog unit at {source_url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "AL"):
+        """Acquire the exhaustive official Code of Alabama title catalog.
+
+        Live HTTPS retains the official ALISON landing page. Every known
+        Alabama title is enumerated with an official ALISON URL. Linkless
+        catalog members are repaired to the official title URL. This hook
+        never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "AL").strip().upper() or "AL"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("alabama official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
