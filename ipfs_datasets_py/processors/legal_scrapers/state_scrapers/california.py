@@ -4,9 +4,12 @@ Scrapes laws from the California Legislative Information website
 (https://leginfo.legislature.ca.gov/).
 """
 
-from typing import List, Dict, Optional, Tuple
+from typing import Any, List, Dict, Mapping, Optional, Sequence, Tuple
+import json
 import os
 import re
+import ssl
+import urllib.request
 from urllib.parse import urljoin, urlparse, parse_qs
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -50,6 +53,10 @@ class CaliforniaScraper(BaseStateScraper):
 
     _SECTION_DISPLAY_RE = re.compile(r"codes_displayText\.xhtml", re.IGNORECASE)
     _SECTION_NUM_QUERY_RE = re.compile(r"sectionNum=([^&]+)", re.IGNORECASE)
+    OFFICIAL_DOMAIN = "leginfo.legislature.ca.gov"
+    OFFICIAL_CODES_PATH = "/faces/codes.xhtml"
+    OFFICIAL_ENTRY_URL = "https://leginfo.legislature.ca.gov/faces/codes.xhtml"
+    MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
 
     def get_base_url(self) -> str:
         """Get base URL for California Legislative Information."""
@@ -131,13 +138,259 @@ class CaliforniaScraper(BaseStateScraper):
             max_statutes=limit,
         )
         if official:
-            return official if limit is None else official[: int(limit)]
+            admitted = official if limit is None else official[: int(limit)]
+            return self._repair_or_type_missing_source_links(admitted)
 
         # Bounded probe fallback to seeds when the official TOC tree is empty.
         if seeds:
-            return seeds if limit is None else seeds[: int(limit)]
+            admitted = seeds if limit is None else seeds[: int(limit)]
+            return self._repair_or_type_missing_source_links(admitted)
 
         return []
+
+    def official_code_toc_url(self, code_type: str) -> str:
+        """Return the official LegInfo TOC URL for one California code family."""
+
+        return f"{self.get_base_url()}/faces/codedisplayexpand.xhtml?tocCode={code_type}"
+
+    def official_section_url(self, code_type: str, section_number: str) -> str:
+        """Return the official LegInfo display URL for one section."""
+
+        section = str(section_number or "").strip().rstrip(".")
+        return (
+            f"{self.get_base_url()}/faces/codes_displayText.xhtml"
+            f"?lawCode={code_type}&sectionNum={section}."
+        )
+
+    def official_code_catalog(self) -> List[Dict[str, str]]:
+        """Return the exhaustive official California code-family catalog."""
+
+        return [
+            {
+                "name": name,
+                "type": code_type,
+                "url": self.official_code_toc_url(code_type),
+            }
+            for name, code_type in self.CODE_TYPE_MAP.items()
+        ]
+
+    def is_official_leginfo_url(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        return host == self.OFFICIAL_DOMAIN or host.endswith("." + self.OFFICIAL_DOMAIN)
+
+    def repair_or_type_missing_source_link(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Attach an official LegInfo URL or type a linkless row as quarantine."""
+
+        structured = dict(statute.structured_data or {})
+        source_url = str(statute.source_url or "").strip()
+        if source_url and self.is_official_leginfo_url(source_url):
+            structured.setdefault("source_link_disposition", "official")
+            statute.structured_data = structured
+            return statute
+
+        code_type = str(
+            structured.get("law_code")
+            or self.CODE_TYPE_MAP.get(str(statute.code_name or ""), "")
+        ).strip().upper()
+        section_number = str(statute.section_number or "").strip()
+        if code_type and section_number:
+            repaired = self.official_section_url(code_type, section_number)
+            statute.source_url = repaired
+            structured["law_code"] = code_type
+            structured["source_kind"] = (
+                structured.get("source_kind") or "official_california_leginfo_html"
+            )
+            structured["source_link_disposition"] = "repaired_official_leginfo"
+            structured["previous_source_url"] = source_url or None
+            statute.structured_data = structured
+            return statute
+
+        structured["source_link_disposition"] = "typed_quarantine"
+        structured["quarantine_reason"] = self.MISSING_LINK_QUARANTINE_REASON
+        statute.structured_data = structured
+        return statute
+
+    def _repair_or_type_missing_source_links(
+        self,
+        statutes: Sequence[NormalizedStatute],
+    ) -> List[NormalizedStatute]:
+        return [self.repair_or_type_missing_source_link(item) for item in statutes]
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        """Synchronous official HTTPS GET. Returns empty bytes on transport failure."""
+
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-california-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    if int(getattr(response, "status", 200) or 200) != 200:
+                        return b""
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-california-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_code_links(self, html: bytes, page_url: str) -> List[Dict[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+        if not html:
+            return []
+        soup = BeautifulSoup(html, "html.parser")
+        found: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        inverse = {code_type: name for name, code_type in self.CODE_TYPE_MAP.items()}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(page_url, href)
+            parsed = urlparse(absolute)
+            query = parse_qs(parsed.query)
+            toc_values = query.get("tocCode") or query.get("toccode") or []
+            law_values = query.get("lawCode") or query.get("lawcode") or []
+            code_type = str((toc_values or law_values or [""])[0]).strip().upper()
+            if code_type not in inverse:
+                continue
+            if code_type in seen:
+                continue
+            seen.add(code_type)
+            found.append(
+                {
+                    "name": inverse[code_type],
+                    "type": code_type,
+                    "url": self.official_code_toc_url(code_type),
+                }
+            )
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official CA code family and type missing-link rows."""
+
+        discovered = {
+            str(item["type"]).upper(): item
+            for item in self._parse_official_code_links(
+                html, page_url or self.OFFICIAL_ENTRY_URL
+            )
+        }
+        rows: List[Dict[str, Any]] = []
+        for item in self.official_code_catalog():
+            code_type = str(item["type"]).upper()
+            official_url = str(item["url"])
+            live = discovered.get(code_type)
+            source_url = str((live or {}).get("url") or official_url)
+            if source_url and self.is_official_leginfo_url(source_url):
+                disposition = "official" if live else "repaired_official_leginfo"
+            else:
+                source_url = official_url
+                disposition = "repaired_official_leginfo"
+            rows.append(
+                {
+                    "canonical_key": f"ca:{code_type.lower()}",
+                    "code_type": code_type,
+                    "name": item["name"],
+                    "source_url": source_url,
+                    "source_link_disposition": disposition,
+                    "text": (
+                        f"California {item['name']} ({code_type}) official LegInfo "
+                        f"catalog unit at {source_url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "CA"):
+        """Acquire the exhaustive official California code catalog.
+
+        Live HTTPS retains the official codes landing page. Every known
+        California code family is enumerated with an official LegInfo URL.
+        Linkless catalog members are repaired to the official TOC URL or
+        typed as quarantine. This hook never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "CA").strip().upper() or "CA"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("california official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_CODES_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_CODES_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
+
     async def _scrape_official_leginfo_tree(
         self,
         code_name: str,

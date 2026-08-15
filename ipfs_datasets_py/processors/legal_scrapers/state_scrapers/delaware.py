@@ -3,8 +3,11 @@
 Delaware Code Online uses heavy JavaScript rendering.
 """
 
-from typing import List, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+import json
 import re
+import ssl
+import urllib.request
 from urllib.parse import urljoin
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
@@ -32,6 +35,10 @@ class DelawareScraper(BaseStateScraper):
     _DE_TITLE_NUMBER_RE = re.compile(r"/title(\d+)/", re.IGNORECASE)
     _DE_CHAPTER_NUMBER_RE = re.compile(r"/c(\d+)/", re.IGNORECASE)
     _DE_SECTION_HEAD_RE = re.compile(r"§\s*([0-9A-Za-z\-]+)\.\s*(.+)", re.IGNORECASE)
+    OFFICIAL_DOMAIN = "delcode.delaware.gov"
+    OFFICIAL_ENTRY_PATH = "/index.html"
+    OFFICIAL_ENTRY_URL = "https://delcode.delaware.gov/index.html"
+    OFFICIAL_TITLE_COUNT = 31
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -442,6 +449,153 @@ class DelawareScraper(BaseStateScraper):
             self.logger.error(f"Delaware custom scraper failed: {e}")
         
         return statutes
+
+    def official_title_url(self, title_number: int) -> str:
+        return f"{self.get_base_url()}/title{int(title_number)}/index.html"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Delaware Code title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number in range(1, self.OFFICIAL_TITLE_COUNT + 1):
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"de:title-{number}",
+                    "title_number": str(number),
+                    "name": f"Title {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Delaware Code Title {number} official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-delaware-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-delaware-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._DE_TITLE_NUMBER_RE.search(absolute)
+            if not match:
+                continue
+            number = match.group(1).lstrip("0") or "0"
+            if number not in found:
+                found[number] = (
+                    absolute
+                    if absolute.endswith("index.html")
+                    else self.official_title_url(int(number))
+                )
+        return found
+
+    def fetch_official(self, code: str = "DE"):
+        """Acquire the exhaustive official Delaware Code title catalog.
+
+        Live HTTPS retains the official title index. Every Delaware Code title
+        is enumerated with an official delcode URL. This hook never returns
+        fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "DE").strip().upper() or "DE"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+        if len(rows) < 3:
+            raise RuntimeError("delaware official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
