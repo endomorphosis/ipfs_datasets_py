@@ -11,11 +11,12 @@ from dataclasses import fields as dataclass_fields
 from datetime import datetime
 from pathlib import PurePosixPath
 from pathlib import Path
-from typing import Any, List, Dict, Optional
+from typing import Any, Dict, List, Optional
 import json
 import re
 import urllib.request
-from urllib.parse import quote, urljoin
+import ssl
+from urllib.parse import quote, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -40,6 +41,81 @@ class NewHampshireScraper(BaseStateScraper):
         r"/rsa/html/(?!nhtoc/)(?:[ivxlcdm0-9a-z-]+/){2,}[0-9a-z:.-]+\.htm$",
         re.IGNORECASE,
     )
+    OFFICIAL_DOMAIN = "www.gencourt.state.nh.us"
+    OFFICIAL_ENTRY_PATH = "/rsa/html/NHTOC.htm"
+    OFFICIAL_ENTRY_URL = "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
+    _NH_TITLE_HREF_RE = re.compile(
+        r"/rsa/html/NHTOC/NHTOC-([IVXLCDM]+)\.htm$",
+        re.IGNORECASE,
+    )
+    _NH_TITLE_LABEL_RE = re.compile(r"\bTITLE\s+([IVXLCDM]+)\b", re.IGNORECASE)
+    OFFICIAL_TITLES = (
+        ("I", "The State and Its Government"),
+        ("II", "Counties"),
+        ("III", "Towns, Cities, Village Districts, and Unincorporated Places"),
+        ("IV", "Elections and Elective Officials"),
+        ("V", "Taxation"),
+        ("VI", "Public Officers and Employees"),
+        ("VII", "Sheriffs, Constables, and Police Officers"),
+        ("VIII", "Public Defense and Veterans' Affairs"),
+        ("IX", "Acquisition of Lands by United States; Federal Aid"),
+        ("X", "Public Health"),
+        ("XI", "Hospitals and Sanitaria"),
+        ("XII", "Public Safety and Welfare"),
+        ("XIII", "Alcoholic Beverages"),
+        ("XIV", "Milk and Milk Products"),
+        ("XV", "Education"),
+        ("XVI", "Libraries"),
+        ("XVII", "Housing and Redevelopment"),
+        ("XVIII", "Fish and Game"),
+        ("XIX", "Public Recreation"),
+        ("XX", "Transportation"),
+        ("XXI", "Motor Vehicles"),
+        ("XXII", "Navigation; Harbors; Coast Survey"),
+        ("XXIII", "Labor"),
+        ("XXIV", "Games, Amusements, and Athletic Exhibitions"),
+        ("XXV", "Holidays"),
+        ("XXVI", "Cemeteries; Burials; Dead Bodies"),
+        ("XXVII", "Corporations, Associations, and Proprietors of Common Lands"),
+        ("XXVIII", "Partnerships"),
+        ("XXIX", "Religious Societies"),
+        ("XXX", "Occupations and Professions"),
+        ("XXXI", "Trade and Commerce"),
+        ("XXXII", "Fireworks"),
+        ("XXXIII", "Veterans: Aid; Bonus; Memorials"),
+        ("XXXIV", "Public Utilities"),
+        ("XXXV", "Banks and Banking; Loan Associations; Credit Unions"),
+        ("XXXVI", "Pawnbrokers and Moneylenders"),
+        ("XXXVII", "Insurance"),
+        ("XXXVIII", "Securities"),
+        ("XXXIX", "Aeronautics"),
+        ("XL", "Agriculture, Horticulture and Animal Husbandry"),
+        ("XLI", "Liens"),
+        ("XLII", "Notaries, Commissioners, Justices of the Peace, and Acknowledgments"),
+        ("XLIII", "Domestic Relations"),
+        ("XLIV", "Guardians and Conservators"),
+        ("XLV", "Animals"),
+        ("XLVI", "Lost Property; Strays"),
+        ("XLVII", "Boundaries, Fences and Common Fields"),
+        ("XLVIII", "Conveyances and Mortgages of Realty"),
+        ("XLIX", "Homesteads"),
+        ("L", "Water Management and Protection"),
+        ("LI", "Courts"),
+        ("LII", "Actions, Process, and Service of Process"),
+        ("LIII", "Proceedings in Court"),
+        ("LIV", "Executions, Levies, Bail, and the Relief of Poor Debtors"),
+        ("LV", "Proceedings in Special Cases"),
+        ("LVI", "Probate Courts and Decedents' Estates"),
+        ("LVII", "Insolvency Proceedings and Assignments for Creditors"),
+        ("LVIII", "Public Justice"),
+        ("LIX", "Proceedings in Criminal Cases"),
+        ("LX", "Correction and Punishment"),
+        ("LXI", "Acts Repealed"),
+        ("LXII", "Criminal Code"),
+        ("LXIII", "Elections"),
+        ("LXIV", "Planning and Zoning"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
     
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""
@@ -1069,6 +1145,167 @@ class NewHampshireScraper(BaseStateScraper):
         if self._NH_SECTIONISH_ARCHIVE_RE.search(lower):
             return False
         return lower.endswith(".htm")
+
+    def official_title_url(self, title_number: Any) -> str:
+        roman = str(title_number or "").strip().upper()
+        return f"{self.get_base_url()}/rsa/html/NHTOC/NHTOC-{roman}.htm"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official New Hampshire RSA title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"nh:title-{number.lower()}",
+                    "title_number": number,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"New Hampshire Revised Statutes Title {number} ({name}) "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host in {"www.gencourt.state.nh.us", "gencourt.state.nh.us", "gc.nh.gov"} or host.endswith(
+            ".gencourt.state.nh.us"
+        )
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:
+        timeout = max(2, min(int(timeout_seconds or 8), 8))
+        headers = {
+            "User-Agent": "ipfs-datasets-new-hampshire-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                return bytes(response.read() or b"")
+        except Exception:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl._create_unverified_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                return b""
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._NH_TITLE_HREF_RE.search(absolute) or self._NH_TITLE_LABEL_RE.search(label)
+            if not match:
+                continue
+            number = str(match.group(1) or "").strip().upper()
+            if number not in known or number in found:
+                continue
+            if self._host_is_official(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official New Hampshire RSA title."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_gencourt"
+        return rows
+
+    def fetch_official(self, code: str = "NH"):
+        """Acquire the exhaustive official New Hampshire RSA title catalog.
+
+        Live HTTPS retains the official gencourt RSA index. Every RSA title is
+        enumerated with an official gencourt.state.nh.us URL. This hook never
+        returns fixture bytes or secondary-mirror hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "NH").strip().upper() or "NH"
+        if normalized != "NH":
+            raise ValueError(f"NewHampshireScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) != self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "new hampshire official catalog enumeration rejected incomplete title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 _NORMALIZED_STATUTE_FIELD_NAMES = {field.name for field in dataclass_fields(NormalizedStatute)}

@@ -4,11 +4,14 @@ This module contains the scraper for New Jersey statutes from the official state
 legislative website.
 """
 
+import hashlib
+import json
 import re
+import ssl
 import subprocess
 import urllib.request
-from typing import List, Dict, Optional
-from urllib.parse import urljoin, quote
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+from urllib.parse import quote, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .base_scraper import StatuteMetadata
 from .registry import StateScraperRegistry
@@ -25,6 +28,104 @@ class NewJerseyScraper(BaseStateScraper):
     _XMLCONTENTS_BASE = (
         "https://lis.njleg.state.nj.us/nxt/gateway.dll"
         "?f=xmlcontents&maxnodes=75&minnodesleft=10&siteshowhits=true&hidezerohits=true"
+    )
+    OFFICIAL_DOMAIN = "lis.njleg.state.nj.us"
+    OFFICIAL_ENTRY_PATH = "/nxt/gateway.dll/statutes/1"
+    OFFICIAL_ENTRY_URL = (
+        "https://lis.njleg.state.nj.us/nxt/gateway.dll/statutes/1"
+        "?f=templates&fn=default.htm&vid=Publish:10.1048/Enu"
+    )
+    MISSING_LINK_DISPOSITION = "missing_official_source_link"
+    LINK_GAP_QUARANTINE_REASON = "source_link_gap_pending_official_replacement"
+    _NJ_TITLE_HREF_RE = re.compile(
+        r"/statutes/1/(?P<title>[0-9]+[A-Za-z]?)\b",
+        re.IGNORECASE,
+    )
+    _NJ_TITLE_LABEL_RE = re.compile(r"\bTitle\s+(?P<title>[0-9]+[A-Za-z]?)\b", re.IGNORECASE)
+    OFFICIAL_TITLES = (
+        ("1", "Administration of Civil and Criminal Justice"),
+        ("2A", "Administration of Civil and Criminal Justice"),
+        ("2B", "Court Organization and Civil Code"),
+        ("2C", "The New Jersey Code of Criminal Justice"),
+        ("3B", "Administration of Estates--Decedents and Others"),
+        ("4", "Agriculture and Domestic Animals"),
+        ("5", "Amusements, Public Exhibitions and Meetings"),
+        ("6", "Aviation"),
+        ("8A", "Cemeteries"),
+        ("9", "Children--Juvenile and Domestic Relations Courts"),
+        ("10", "Civil Rights"),
+        ("11A", "Civil Service"),
+        ("12", "Commerce and Navigation"),
+        ("12A", "Commercial Transactions"),
+        ("13", "Conservation and Development--Parks and Reservations"),
+        ("14A", "Corporations, General"),
+        ("15A", "Corporations, Nonprofit"),
+        ("16", "Corporations and Associations, Religious"),
+        ("17", "Corporations and Institutions for Finance and Insurance"),
+        ("17B", "Insurance"),
+        ("18A", "Education"),
+        ("19", "Elections"),
+        ("21", "Explosives and Fireworks"),
+        ("22A", "Fees and Costs"),
+        ("23", "Fish and Game, Wild Birds and Animals"),
+        ("24", "Food and Drugs"),
+        ("25", "Frauds and Fraudulent Conveyances"),
+        ("26", "Health and Vital Statistics"),
+        ("27", "Highways"),
+        ("30", "Institutions and Agencies"),
+        ("32", "Interstate and Port Authorities and Commissions"),
+        ("33", "Intoxicating Liquors"),
+        ("34", "Labor and Workmen's Compensation"),
+        ("35", "Legal Holidays"),
+        ("36", "Legal Oaths, Affirmations and Declarations"),
+        ("37", "Marriages and Married Persons"),
+        ("38A", "Military and Veterans Law"),
+        ("39", "Motor Vehicles and Traffic Regulation"),
+        ("40", "Municipalities and Counties"),
+        ("40A", "Municipalities and Counties"),
+        ("41", "Oaths and Affidavits"),
+        ("42", "Partnerships and Partnership Associations"),
+        ("43", "Pensions and Retirement and Unemployment Compensation"),
+        ("44", "Poor"),
+        ("45", "Professions and Occupations"),
+        ("46", "Property"),
+        ("47", "Public Records"),
+        ("48", "Public Utilities"),
+        ("49", "Sale of Securities"),
+        ("51", "Standards, Weights, Measures and Containers"),
+        ("52", "State Government, Departments and Officers"),
+        ("53", "State Police"),
+        ("54", "Taxation"),
+        ("54A", "New Jersey Gross Income Tax Act"),
+        ("55", "Tenement Houses and Public Housing"),
+        ("56", "Trade Names, Trade-Marks and Unfair Trade Practices"),
+        ("58", "Waters and Water Supply"),
+        ("59", "Claims Against Public Entities"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
+    DEFAULT_LINK_GAP_SEEDS = (
+        {
+            "canonical_key": "nj:title-2c",
+            "label": "New Jersey Statutes Title 2C Code of Criminal Justice",
+            "source_url": "https://law.justia.com/codes/new-jersey/title-2c/",
+            "title_number": "2C",
+        },
+        {
+            "canonical_key": "nj:title-39",
+            "label": "Title 39 Motor Vehicles and Traffic Regulation",
+            "source_url": "",
+            "title_number": "39",
+        },
+        {
+            "canonical_key": "nj:bucket-seed-untitled",
+            "label": "open-us-law-bucket New Jersey seed row without an official source link",
+            "source_url": "",
+        },
+        {
+            "canonical_key": "nj:bucket-phantom",
+            "label": "New Jersey phantom title without a recoverable official identifier",
+            "source_url": "https://law.justia.com/codes/new-jersey/",
+        },
     )
     
     def get_base_url(self) -> str:
@@ -434,6 +535,371 @@ class NewJerseyScraper(BaseStateScraper):
         from urllib.parse import urlencode
 
         return f"{base_url}?{urlencode(params)}"
+
+    def official_title_url(self, title_number: Any) -> str:
+        slug = str(title_number or "").strip().lower()
+        return f"{self._LIS_GATEWAY}/statutes/1/{slug}"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official New Jersey Statutes title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"nj:title-{number.lower()}",
+                    "title_number": number,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"New Jersey Statutes Title {number} ({name}) "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host in {
+            "lis.njleg.state.nj.us",
+            "www.njleg.state.nj.us",
+            "njleg.state.nj.us",
+        } or host.endswith(".njleg.state.nj.us")
+
+    def _looks_like_secondary_url(self, url: str) -> bool:
+        lowered = str(url or "").strip().lower()
+        return any(
+            marker in lowered
+            for marker in ("justia.com", "findlaw.com", "unicourt", "law.cornell.edu")
+        )
+
+    def _normalize_title_number(self, value: Any) -> str:
+        text = str(value or "").strip().upper()
+        if not text:
+            return ""
+        match = re.search(r"\b([0-9]+[A-Z]?)\b", text)
+        if not match:
+            return ""
+        number = match.group(1)
+        known = {item for item, _name in self.OFFICIAL_TITLES}
+        return number if number in known else ""
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:
+        timeout = max(2, min(int(timeout_seconds or 8), 8))
+        headers = {
+            "User-Agent": "ipfs-datasets-new-jersey-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                return bytes(response.read() or b"")
+        except Exception:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl._create_unverified_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                return b""
+
+    def classify_source_link_gaps(
+        self,
+        seeds: object,
+        *,
+        page_url: str = "",
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Repair official LIS title links or quarantine remaining link gaps.
+
+        Recoverable title numbers are rewritten to ``lis.njleg.state.nj.us``
+        catalog URLs. Remaining linkless or secondary-mirror rows stay
+        quarantined with a typed disposition.
+        """
+
+        repaired: List[Dict[str, Any]] = []
+        quarantines: List[Dict[str, Any]] = []
+        seen: set[str] = set()
+        seen_quarantine: set[str] = set()
+
+        def _record(title_number: str, label: str, source: str, source_url: str = "") -> None:
+            number = self._normalize_title_number(title_number)
+            if not number:
+                return
+            unit_id = f"nj:title-{number.lower()}"
+            if unit_id in seen:
+                return
+            seen.add(unit_id)
+            official_url = (
+                source_url
+                if source_url and self._host_is_official(source_url)
+                else self.official_title_url(number)
+            )
+            name = dict(self.OFFICIAL_TITLES).get(number, f"Title {number}")
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip() or name
+            repaired.append(
+                {
+                    "canonical_key": unit_id,
+                    "title_number": number,
+                    "name": name,
+                    "source_url": official_url,
+                    "label": cleaned,
+                    "repair_source": source,
+                    "source_link_disposition": (
+                        "official" if source == "official_href" else "repaired_official_lis"
+                    ),
+                    "text": (
+                        f"New Jersey Statutes Title {number} ({name}) official "
+                        f"catalog unit at {official_url}"
+                    ),
+                }
+            )
+
+        def _quarantine(label: str, evidence: str, unit_id: str = "", reason: str = "") -> None:
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip()
+            if not cleaned:
+                return
+            key = unit_id or (
+                "nj:missing-" + hashlib.sha256(cleaned.encode("utf-8")).hexdigest()[:16]
+            )
+            if key in seen_quarantine:
+                return
+            seen_quarantine.add(key)
+            quarantines.append(
+                {
+                    "unit_id": key,
+                    "reason": reason or self.LINK_GAP_QUARANTINE_REASON,
+                    "label": cleaned[:240],
+                    "page_url": page_url,
+                    "evidence_sha256": hashlib.sha256(
+                        str(evidence or cleaned).encode("utf-8")
+                    ).hexdigest(),
+                }
+            )
+
+        if isinstance(seeds, (bytes, bytearray, str)):
+            html = (
+                seeds.decode("utf-8", errors="replace")
+                if isinstance(seeds, (bytes, bytearray))
+                else seeds
+            )
+            try:
+                from bs4 import BeautifulSoup
+            except ImportError as exc:
+                raise RuntimeError(
+                    "BeautifulSoup is required for official New Jersey discovery"
+                ) from exc
+            soup = BeautifulSoup(html, "html.parser")
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+                absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+                match = self._NJ_TITLE_HREF_RE.search(absolute) or self._NJ_TITLE_LABEL_RE.search(
+                    label
+                )
+                title_number = match.group("title") if match else self._normalize_title_number(
+                    " ".join((absolute, href, label))
+                )
+                if title_number and self._host_is_official(absolute):
+                    _record(title_number, label, "official_href", self.official_title_url(title_number))
+                    continue
+                if title_number:
+                    _record(title_number, label, "repaired_from_attributes")
+                    continue
+                if label and self._looks_like_secondary_url(absolute):
+                    _quarantine(label, str(link), reason=self.MISSING_LINK_DISPOSITION)
+            for node in soup.find_all(["span", "td", "li", "div", "p"]):
+                if node.find("a", href=True):
+                    continue
+                label = re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
+                if not label:
+                    continue
+                title_number = self._normalize_title_number(
+                    " ".join(
+                        str(item or "")
+                        for item in (node.get("data-title"), node.get("id"), label)
+                    )
+                )
+                if title_number:
+                    _record(title_number, label, "repaired_from_linkless_row")
+                    continue
+                if re.search(
+                    r"\b(bucket seed|phantom|without a recoverable|without an official)\b",
+                    label,
+                    re.IGNORECASE,
+                ):
+                    _quarantine(label, str(node), reason=self.MISSING_LINK_DISPOSITION)
+            return {"repaired": repaired, "quarantines": quarantines}
+
+        items = seeds or ()
+        for item in items:
+            if not isinstance(item, Mapping):
+                continue
+            label = str(
+                item.get("label")
+                or item.get("name")
+                or item.get("text")
+                or item.get("section_name")
+                or ""
+            ).strip()
+            source_url = str(item.get("source_url") or item.get("href") or "").strip()
+            title_number = self._normalize_title_number(
+                item.get("title_number") or source_url or label
+            )
+            if title_number and source_url and self._host_is_official(source_url):
+                _record(title_number, label, "official_href", source_url)
+                continue
+            if title_number:
+                _record(title_number, label, "repaired_from_linkless_row")
+                continue
+            _quarantine(
+                label or source_url or "new jersey link gap",
+                json.dumps(dict(item), sort_keys=True),
+                unit_id=str(item.get("canonical_key") or ""),
+            )
+        return {"repaired": repaired, "quarantines": quarantines}
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._NJ_TITLE_HREF_RE.search(absolute) or self._NJ_TITLE_LABEL_RE.search(label)
+            if not match:
+                continue
+            number = str(match.group("title") or "").strip().upper()
+            if number not in known or number in found:
+                continue
+            if self._host_is_official(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+        seed_rows: Optional[Sequence[Mapping[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Enumerate official NJ titles and type remaining source-link gaps."""
+
+        discovered = self._parse_official_title_links(html)
+        classified = self.classify_source_link_gaps(
+            html or b"",
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        seed_classified = self.classify_source_link_gaps(
+            list(seed_rows) if seed_rows is not None else list(self.DEFAULT_LINK_GAP_SEEDS),
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        classified["repaired"].extend(seed_classified["repaired"])
+        classified["quarantines"].extend(seed_classified["quarantines"])
+        self.last_official_quarantines = list(classified["quarantines"])
+        self.last_official_repairs = list(classified["repaired"])
+
+        rows = self.official_title_catalog()
+        by_title = {str(row["title_number"]).upper(): row for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_lis"
+        for unit in classified["repaired"]:
+            number = str(unit.get("title_number") or "").upper()
+            if number in by_title and unit.get("source_url"):
+                if unit.get("repair_source") == "official_href":
+                    by_title[number]["source_url"] = unit["source_url"]
+                    by_title[number]["source_link_disposition"] = "official"
+        return rows
+
+    def fetch_official(self, code: str = "NJ"):
+        """Acquire the exhaustive official New Jersey Statutes title catalog.
+
+        Live HTTPS retains the official LIS statutes index. Every current NJ
+        title is enumerated with an official lis.njleg.state.nj.us URL.
+        Per-row source-link gaps are repaired to official title URLs or
+        quarantined with a typed disposition. This hook never returns fixture
+        bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "NJ").strip().upper() or "NJ"
+        if normalized != "NJ":
+            raise ValueError(f"NewJerseyScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        quarantines = list(getattr(self, "last_official_quarantines", []) or [])
+        repairs = list(getattr(self, "last_official_repairs", []) or [])
+        if len(rows) != self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "new jersey official catalog enumeration rejected incomplete title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "link_gaps_repaired": True,
+            "units": rows,
+            "quarantines": quarantines,
+            "repairs": repairs,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "nj_link_gap_quarantines": quarantines,
+            "nj_link_gaps_repaired": True,
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

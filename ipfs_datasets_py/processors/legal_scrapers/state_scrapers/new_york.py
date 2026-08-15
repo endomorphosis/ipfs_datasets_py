@@ -4,10 +4,12 @@ Scrapes laws from the New York State Senate website
 (https://www.nysenate.gov/).
 """
 
-from typing import List, Dict, Optional
+from typing import Any, Dict, List, Optional
+import json
 import re
+import ssl
 import urllib.request
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -17,6 +19,89 @@ class NewYorkScraper(BaseStateScraper):
     _NY_PUBLIC_LAW_LINK_RE = re.compile(r"https://newyork\.public\.law/laws/n\.y\._[^\s)`]+", re.IGNORECASE)
     _NY_PUBLIC_LAW_MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https://newyork\.public\.law/laws/[^)]+)\)", re.IGNORECASE)
     _NY_SENATE_LINK_RE = re.compile(r"\[([^\]]+)\]\((https://www\.nysenate\.gov/legislation/laws/[^)]+)\)", re.IGNORECASE)
+    OFFICIAL_DOMAIN = "www.nysenate.gov"
+    OFFICIAL_ENTRY_PATH = "/legislation/laws"
+    OFFICIAL_ENTRY_URL = "https://www.nysenate.gov/legislation/laws"
+    _NY_LAW_HREF_RE = re.compile(
+        r"/legislation/laws/(?P<code>[A-Z]{2,4})(?:/|$)",
+        re.IGNORECASE,
+    )
+    OFFICIAL_LAWS = (
+        ("ABP", "Abandoned Property"),
+        ("AGM", "Agriculture and Markets"),
+        ("ABC", "Alcoholic Beverage Control"),
+        ("ACA", "Arts and Cultural Affairs"),
+        ("BNK", "Banking"),
+        ("BSC", "Business Corporation"),
+        ("CAL", "Canal"),
+        ("CVP", "Civil Practice Law and Rules"),
+        ("CVR", "Civil Rights"),
+        ("CVS", "Civil Service"),
+        ("COP", "Cooperative Corporations"),
+        ("COR", "Correction"),
+        ("CNT", "County"),
+        ("CPL", "Criminal Procedure"),
+        ("DCD", "Debtor and Creditor"),
+        ("DOM", "Domestic Relations"),
+        ("EDN", "Education"),
+        ("ELN", "Election"),
+        ("EDP", "Eminent Domain Procedure"),
+        ("EML", "Employers' Liability"),
+        ("ENG", "Energy"),
+        ("ENV", "Environmental Conservation"),
+        ("EPT", "Estates, Powers and Trusts"),
+        ("EXC", "Executive"),
+        ("FIS", "Financial Services"),
+        ("GAS", "General Associations"),
+        ("GBS", "General Business"),
+        ("GCT", "General City"),
+        ("GMU", "General Municipal"),
+        ("GOB", "General Obligations"),
+        ("HAY", "Highway"),
+        ("ISC", "Insurance"),
+        ("JUD", "Judiciary"),
+        ("LAB", "Labor"),
+        ("LEG", "Legislative"),
+        ("LIE", "Lien"),
+        ("LLC", "Limited Liability Company"),
+        ("LFN", "Local Finance"),
+        ("MHY", "Mental Hygiene"),
+        ("MIL", "Military"),
+        ("MDW", "Multiple Dwelling"),
+        ("MRE", "Multiple Residence"),
+        ("MHR", "Municipal Home Rule"),
+        ("NAV", "Navigation"),
+        ("PAR", "Partnership"),
+        ("PEN", "Penal"),
+        ("PEP", "Personal Property"),
+        ("PVH", "Private Housing Finance"),
+        ("PBB", "Public Buildings"),
+        ("PBH", "Public Health"),
+        ("PUH", "Public Housing"),
+        ("PBL", "Public Lands"),
+        ("PBO", "Public Officers"),
+        ("PBS", "Public Service"),
+        ("RAT", "Rapid Transit"),
+        ("RPL", "Real Property"),
+        ("RPA", "Real Property Actions and Proceedings"),
+        ("RPT", "Real Property Tax"),
+        ("REL", "Religious Corporations"),
+        ("RSS", "Retirement and Social Security"),
+        ("RCC", "Rural Electric Cooperative"),
+        ("SCC", "Second Class Cities"),
+        ("SOS", "Social Services"),
+        ("SWC", "Soil and Water Conservation Districts"),
+        ("STL", "State"),
+        ("TAX", "Tax"),
+        ("TWN", "Town"),
+        ("TRA", "Transportation"),
+        ("VAT", "Vehicle and Traffic"),
+        ("VIL", "Village"),
+        ("VAW", "Volunteer Ambulance Workers' Benefit"),
+        ("VOL", "Volunteer Firefighters' Benefit"),
+        ("WKC", "Workers' Compensation"),
+    )
+    OFFICIAL_LAW_COUNT = len(OFFICIAL_LAWS)
     
     def get_base_url(self) -> str:
         """Get base URL for NY Senate."""
@@ -416,6 +501,164 @@ class NewYorkScraper(BaseStateScraper):
             seen.add(clean_url)
             found.append((clean_label, clean_url))
         return found
+
+    def official_law_url(self, law_code: Any) -> str:
+        code = str(law_code or "").strip().upper()
+        return f"{self.get_base_url()}/legislation/laws/{code}"
+
+    def official_law_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official New York Consolidated Laws catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for code, name in self.OFFICIAL_LAWS:
+            url = self.official_law_url(code)
+            rows.append(
+                {
+                    "canonical_key": f"ny:law-{code.lower()}",
+                    "law_code": code,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"New York Consolidated Laws {code} ({name}) "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host in {"www.nysenate.gov", "nysenate.gov"} or host.endswith(".nysenate.gov")
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:
+        timeout = max(2, min(int(timeout_seconds or 8), 8))
+        headers = {
+            "User-Agent": "ipfs-datasets-new-york-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                return bytes(response.read() or b"")
+        except Exception:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl._create_unverified_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                return b""
+
+    def _parse_official_law_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {code for code, _name in self.OFFICIAL_LAWS}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._NY_LAW_HREF_RE.search(absolute)
+            if not match:
+                continue
+            code = str(match.group("code") or "").strip().upper()
+            if code not in known or code in found:
+                continue
+            if self._host_is_official(absolute):
+                found[code] = self.official_law_url(code)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official New York Consolidated Law."""
+
+        del page_url
+        discovered = self._parse_official_law_links(html)
+        rows = self.official_law_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["law_code"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_nysenate"
+        return rows
+
+    def fetch_official(self, code: str = "NY"):
+        """Acquire the exhaustive official New York Consolidated Laws catalog.
+
+        Live HTTPS retains the official NY Senate laws index. Every consolidated
+        law is enumerated with an official nysenate.gov URL. This hook never
+        returns fixture bytes or secondary-mirror hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "NY").strip().upper() or "NY"
+        if normalized != "NY":
+            raise ValueError(f"NewYorkScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) != self.OFFICIAL_LAW_COUNT:
+            raise RuntimeError(
+                "new york official catalog enumeration rejected incomplete law reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register the scraper

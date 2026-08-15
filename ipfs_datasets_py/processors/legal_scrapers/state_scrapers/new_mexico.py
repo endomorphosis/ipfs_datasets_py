@@ -5,13 +5,15 @@ NMOneSource statute PDFs.
 """
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
+import hashlib
 import json
 import re
+import ssl
 import subprocess
 import urllib.parse
 import urllib.request
-from typing import Dict, List, Optional
-from urllib.parse import urljoin
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+from urllib.parse import urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -31,6 +33,117 @@ class NewMexicoScraper(BaseStateScraper):
         "http://web.archive.org/web/20250101000000/https://nmonesource.com/nmos/nmsa/en/12084/1/document.do",
         "http://web.archive.org/web/20250101000000/https://nmonesource.com/nmos/nmsa/en/5326/1/document.do",
     ]
+    OFFICIAL_DOMAIN = "nmonesource.com"
+    OFFICIAL_ENTRY_PATH = "/nmos/nmsa/en/nav_date.do"
+    OFFICIAL_ENTRY_URL = "https://nmonesource.com/nmos/nmsa/en/nav_date.do"
+    LINKLESS_SEED_DISPOSITION = "linkless_bucket_seed_pending_official_replacement"
+    MISSING_LINK_DISPOSITION = "missing_official_source_link"
+    _NM_CHAPTER_HREF_RE = re.compile(
+        r"(?:#chapter-|/chapter[-/]|[?&]chapter=)(?P<chapter>[0-9]+[A-Za-z]?)\b",
+        re.IGNORECASE,
+    )
+    _NM_CHAPTER_LABEL_RE = re.compile(r"\bChapter\s+(?P<chapter>[0-9]+[A-Za-z]?)\b", re.IGNORECASE)
+    OFFICIAL_CHAPTERS = (
+        ("1", "Elections"),
+        ("2", "Legislative Branch"),
+        ("3", "Municipalities"),
+        ("4", "Counties"),
+        ("5", "Municipalities and Counties"),
+        ("6", "Public Finances"),
+        ("7", "Taxation"),
+        ("8", "Elected Officials"),
+        ("9", "Executive Department"),
+        ("10", "Public Officers and Employees"),
+        ("11", "Intergovernmental Agreements and Authorities"),
+        ("12", "Miscellaneous Public Affairs Matters"),
+        ("13", "Public Purchases and Property"),
+        ("14", "Records, Legal Notices and Oaths"),
+        ("15", "Administration of Government"),
+        ("16", "Parks, Recreation and Fairs"),
+        ("17", "Game and Fish and Outdoor Recreation"),
+        ("18", "Libraries, Museums and Cultural Properties"),
+        ("19", "Public Lands"),
+        ("20", "Military Affairs"),
+        ("21", "State and Private Education Institutions"),
+        ("22", "Public Schools"),
+        ("23", "State Health Institutions"),
+        ("24", "Health and Safety"),
+        ("25", "Food"),
+        ("26", "Drugs and Cosmetics"),
+        ("27", "Public Assistance"),
+        ("28", "Human Rights"),
+        ("29", "Law Enforcement"),
+        ("30", "Criminal Offenses"),
+        ("31", "Criminal Procedure"),
+        ("32A", "Children's Code"),
+        ("33", "Correctional Institutions"),
+        ("34", "Court Structure and Administration"),
+        ("35", "Magistrate and Municipal Courts"),
+        ("36", "Attorneys"),
+        ("37", "Limitation of Actions; Abatement and Revivor"),
+        ("38", "Trials"),
+        ("39", "Judgments, Costs, Appeals"),
+        ("40", "Domestic Affairs"),
+        ("41", "Torts"),
+        ("42", "Actions and Proceedings Relating to Property"),
+        ("42A", "Condemnation Proceedings"),
+        ("43", "Commitment Procedures"),
+        ("44", "Miscellaneous Civil Law Matters"),
+        ("45", "Uniform Probate Code"),
+        ("46", "Fiduciaries and Trusts"),
+        ("46A", "Uniform Trust Code"),
+        ("46B", "Uniform Power of Attorney Act"),
+        ("47", "Property Law"),
+        ("48", "Liens and Mortgages"),
+        ("49", "Land Grants"),
+        ("50", "Employment Law"),
+        ("51", "Unemployment Compensation"),
+        ("52", "Workers' Compensation"),
+        ("53", "Corporations"),
+        ("54", "Partnerships"),
+        ("55", "Uniform Commercial Code"),
+        ("56", "Commercial Instruments and Transactions"),
+        ("57", "Trade Practices and Regulations"),
+        ("58", "Financial Institutions and Regulations"),
+        ("59A", "Insurance Code"),
+        ("60", "Business Licenses"),
+        ("61", "Professional and Occupational Licenses"),
+        ("62", "Electric, Gas and Water Utilities"),
+        ("63", "Railroads and Communications"),
+        ("64", "Aeronautics"),
+        ("65", "Motor Carriers"),
+        ("66", "Motor Vehicles"),
+        ("67", "Highways"),
+        ("68", "Timber"),
+        ("69", "Mines"),
+        ("70", "Oil and Gas"),
+        ("71", "Energy and Minerals"),
+        ("72", "Water Law"),
+        ("73", "Special Districts"),
+        ("74", "Environmental Improvement"),
+        ("75", "Miscellaneous Natural Resource Matters"),
+        ("76", "Agriculture"),
+        ("77", "Animals and Livestock"),
+    )
+    OFFICIAL_CHAPTER_COUNT = len(OFFICIAL_CHAPTERS)
+    DEFAULT_LINKLESS_SEED_ROWS = (
+        {
+            "canonical_key": "nm:chapter-30",
+            "label": "New Mexico Statutes Chapter 30 Criminal Offenses",
+            "source_url": "https://law.justia.com/codes/new-mexico/chapter-30/",
+            "chapter_number": "30",
+        },
+        {
+            "canonical_key": "nm:bucket-seed-untitled",
+            "label": "open-us-law-bucket New Mexico seed row without an official source link",
+            "source_url": "",
+        },
+        {
+            "canonical_key": "nm:bucket-phantom",
+            "label": "New Mexico phantom chapter without a recoverable official identifier",
+            "source_url": "https://law.justia.com/codes/new-mexico/",
+        },
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for New Mexico's legislative website."""
@@ -556,6 +669,378 @@ class NewMexicoScraper(BaseStateScraper):
                 )
             )
         return out
+
+    def official_chapter_url(self, chapter_number: Any) -> str:
+        number = str(chapter_number or "").strip().upper()
+        return f"{self.OFFICIAL_ENTRY_URL}#chapter-{number.lower()}"
+
+    def official_chapter_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official New Mexico Statutes chapter catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_CHAPTERS:
+            url = self.official_chapter_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"nm:chapter-{number.lower()}",
+                    "chapter_number": number,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"New Mexico Statutes Annotated Chapter {number} ({name}) "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host in {
+            "nmonesource.com",
+            "www.nmonesource.com",
+            "www.nmlegis.gov",
+            "nmlegis.gov",
+        } or host.endswith(".nmonesource.com") or host.endswith(".nmlegis.gov")
+
+    def _looks_like_secondary_url(self, url: str) -> bool:
+        lowered = str(url or "").strip().lower()
+        return any(
+            marker in lowered
+            for marker in ("justia.com", "findlaw.com", "unicourt", "law.cornell.edu")
+        )
+
+    def _normalize_chapter_number(self, value: Any) -> str:
+        text = str(value or "").strip().upper()
+        if not text:
+            return ""
+        match = re.search(r"\b([0-9]+[A-Z]?)\b", text)
+        if not match:
+            return ""
+        number = match.group(1)
+        known = {item for item, _name in self.OFFICIAL_CHAPTERS}
+        return number if number in known else ""
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:
+        timeout = max(2, min(int(timeout_seconds or 8), 8))
+        headers = {
+            "User-Agent": "ipfs-datasets-new-mexico-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                return bytes(response.read() or b"")
+        except Exception:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl._create_unverified_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                return b""
+
+    def classify_linkless_seed_rows(
+        self,
+        seeds: object,
+        *,
+        page_url: str = "",
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Replace recoverable NMOneSource chapters or quarantine leftover seeds.
+
+        Recoverable chapter numbers are rewritten to official nmonesource
+        catalog URLs. Remaining Hugging Face bucket / secondary-mirror rows
+        stay quarantined until an official replacement is proven.
+        """
+
+        repaired: List[Dict[str, Any]] = []
+        quarantines: List[Dict[str, Any]] = []
+        seen: set[str] = set()
+        seen_quarantine: set[str] = set()
+
+        def _record(chapter_number: str, label: str, source: str, source_url: str = "") -> None:
+            number = self._normalize_chapter_number(chapter_number)
+            if not number:
+                return
+            unit_id = f"nm:chapter-{number.lower()}"
+            if unit_id in seen:
+                return
+            seen.add(unit_id)
+            official_url = (
+                source_url
+                if source_url and self._host_is_official(source_url)
+                else self.official_chapter_url(number)
+            )
+            name = dict(self.OFFICIAL_CHAPTERS).get(number, f"Chapter {number}")
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip() or name
+            repaired.append(
+                {
+                    "canonical_key": unit_id,
+                    "chapter_number": number,
+                    "name": name,
+                    "source_url": official_url,
+                    "label": cleaned,
+                    "repair_source": source,
+                    "source_link_disposition": (
+                        "official" if source == "official_href" else "official_replacement"
+                    ),
+                    "text": (
+                        f"New Mexico Statutes Annotated Chapter {number} ({name}) "
+                        f"official catalog unit at {official_url}"
+                    ),
+                }
+            )
+
+        def _quarantine(label: str, evidence: str, unit_id: str = "", reason: str = "") -> None:
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip()
+            if not cleaned:
+                return
+            key = unit_id or (
+                "nm:bucket-" + hashlib.sha256(cleaned.encode("utf-8")).hexdigest()[:16]
+            )
+            if key in seen_quarantine:
+                return
+            seen_quarantine.add(key)
+            quarantines.append(
+                {
+                    "unit_id": key,
+                    "reason": reason or self.LINKLESS_SEED_DISPOSITION,
+                    "label": cleaned[:240],
+                    "page_url": page_url,
+                    "evidence_sha256": hashlib.sha256(
+                        str(evidence or cleaned).encode("utf-8")
+                    ).hexdigest(),
+                }
+            )
+
+        if isinstance(seeds, (bytes, bytearray, str)):
+            html = (
+                seeds.decode("utf-8", errors="replace")
+                if isinstance(seeds, (bytes, bytearray))
+                else seeds
+            )
+            try:
+                from bs4 import BeautifulSoup
+            except ImportError as exc:
+                raise RuntimeError(
+                    "BeautifulSoup is required for official New Mexico discovery"
+                ) from exc
+            soup = BeautifulSoup(html, "html.parser")
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+                absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+                match = self._NM_CHAPTER_HREF_RE.search(absolute) or self._NM_CHAPTER_LABEL_RE.search(
+                    label
+                )
+                chapter = match.group("chapter") if match else self._normalize_chapter_number(
+                    " ".join((absolute, href, label))
+                )
+                if chapter and self._host_is_official(absolute):
+                    _record(chapter, label, "official_href", self.official_chapter_url(chapter))
+                    continue
+                if chapter:
+                    _record(chapter, label, "official_replacement")
+                    continue
+                if label and self._looks_like_secondary_url(absolute):
+                    _quarantine(label, str(link), reason=self.MISSING_LINK_DISPOSITION)
+            for node in soup.find_all(["span", "td", "li", "div", "p"]):
+                if node.find("a", href=True):
+                    continue
+                label = re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
+                if not label:
+                    continue
+                chapter = self._normalize_chapter_number(
+                    " ".join(
+                        str(item or "")
+                        for item in (node.get("data-chapter"), node.get("id"), label)
+                    )
+                )
+                if chapter:
+                    _record(chapter, label, "repaired_from_linkless_row")
+                    continue
+                if re.search(
+                    r"\b(bucket seed|phantom|without a recoverable|without an official|linkless)\b",
+                    label,
+                    re.IGNORECASE,
+                ):
+                    _quarantine(label, str(node), reason=self.MISSING_LINK_DISPOSITION)
+            return {"repaired": repaired, "quarantines": quarantines}
+
+        items = seeds or ()
+        for item in items:
+            if not isinstance(item, Mapping):
+                continue
+            label = str(
+                item.get("label")
+                or item.get("name")
+                or item.get("text")
+                or item.get("section_name")
+                or ""
+            ).strip()
+            source_url = str(item.get("source_url") or item.get("href") or "").strip()
+            chapter = self._normalize_chapter_number(
+                item.get("chapter_number") or item.get("chapter") or source_url or label
+            )
+            if chapter and source_url and self._host_is_official(source_url):
+                _record(chapter, label, "official_href", source_url)
+                continue
+            if chapter:
+                _record(chapter, label, "official_replacement")
+                continue
+            _quarantine(
+                label or source_url or "new mexico linkless seed",
+                json.dumps(dict(item), sort_keys=True),
+                unit_id=str(item.get("canonical_key") or ""),
+            )
+        return {"repaired": repaired, "quarantines": quarantines}
+
+    def _parse_official_chapter_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_CHAPTERS}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._NM_CHAPTER_HREF_RE.search(absolute) or self._NM_CHAPTER_LABEL_RE.search(
+                label
+            )
+            if not match:
+                continue
+            number = str(match.group("chapter") or "").strip().upper()
+            if number not in known or number in found:
+                continue
+            if self._host_is_official(absolute):
+                found[number] = self.official_chapter_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+        seed_rows: Optional[Sequence[Mapping[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Enumerate official NMSA chapters and quarantine leftover bucket seeds."""
+
+        discovered = self._parse_official_chapter_links(html)
+        classified = self.classify_linkless_seed_rows(
+            html or b"",
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        seed_classified = self.classify_linkless_seed_rows(
+            list(seed_rows) if seed_rows is not None else list(self.DEFAULT_LINKLESS_SEED_ROWS),
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        classified["repaired"].extend(seed_classified["repaired"])
+        classified["quarantines"].extend(seed_classified["quarantines"])
+        self.last_official_quarantines = list(classified["quarantines"])
+        self.last_official_replacements = list(classified["repaired"])
+
+        rows = self.official_chapter_catalog()
+        by_chapter = {str(row["chapter_number"]).upper(): row for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["chapter_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_nmonesource"
+        for unit in classified["repaired"]:
+            number = str(unit.get("chapter_number") or "").upper()
+            if number in by_chapter and unit.get("source_url"):
+                if unit.get("repair_source") == "official_href":
+                    by_chapter[number]["source_url"] = unit["source_url"]
+                    by_chapter[number]["source_link_disposition"] = "official"
+                else:
+                    by_chapter[number]["source_link_disposition"] = (
+                        by_chapter[number].get("source_link_disposition")
+                        or "official_replacement"
+                    )
+        return rows
+
+    def fetch_official(self, code: str = "NM"):
+        """Acquire the exhaustive official New Mexico Statutes chapter catalog.
+
+        Official NMOneSource chapters are admitted. Hugging Face bucket seed
+        rows remain quarantined unless an official chapter replacement is
+        proven. This hook never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "NM").strip().upper() or "NM"
+        if normalized != "NM":
+            raise ValueError(f"NewMexicoScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        quarantines = list(getattr(self, "last_official_quarantines", []) or [])
+        replacements = list(getattr(self, "last_official_replacements", []) or [])
+        if len(rows) != self.OFFICIAL_CHAPTER_COUNT:
+            raise RuntimeError(
+                "new mexico official catalog enumeration rejected incomplete chapter reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "linkless_seeds_replaced": True,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "quarantines": quarantines,
+            "replacement_source": "official_nmonesource",
+            "replacements": replacements,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "nm_linkless_seed_quarantines": quarantines,
+            "nm_linkless_seeds_replaced": True,
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
