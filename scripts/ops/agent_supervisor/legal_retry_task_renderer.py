@@ -129,33 +129,29 @@ def _render_open_us_law_retry(
         return rendered
 
     report_path = _repair_report_path(task_id, source_task_id, failure_kind)
-    outputs: list[str] = []
+    outputs = [report_path]
+    cohort = ""
     for value in [
-        *(getattr(source_task, "outputs", []) or []),
-        *_csv(fields.get("validation failure paths", "")),
-        report_path,
+        fields.get("validation", ""),
+        *(_one_line(item) for item in (getattr(source_task, "validation", []) or [])),
     ]:
-        normalized = _one_line(value)
-        if _safe_relative_path(normalized) and normalized not in outputs:
-            outputs.append(normalized)
-
-    source_validation = [
-        _one_line(value)
-        for value in (getattr(source_task, "validation", []) or [])
-        if _one_line(value)
-    ]
-    validation = fields.get("validation", "")
+        match = re.search(r"--cohort\s+([A-M])\b", value, flags=re.IGNORECASE)
+        if match:
+            cohort = match.group(1).upper()
+            break
+    if cohort:
+        validation = (
+            f"python scripts/ops/legal_data/run_open_us_law_scrape_cohort.py "
+            f"--fixture-only --cohort {cohort} --check; "
+            f"python scripts/ops/legal_data/audit_open_us_law_retry_repair.py "
+            f"--task {task_id} --source {source_task_id} --cohort {cohort} --check"
+        )
+    else:
+        validation = (
+            f"python scripts/ops/legal_data/audit_open_us_law_retry_repair.py "
+            f"--task {task_id} --source {source_task_id} --check"
+        )
     discovery_relative = _discovery_relative(discovery_path, repo_root)
-    if (
-        not validation
-        or "validation_pre_dispatch:" in validation
-        or "workspace/agent-supervisor/" in validation
-        or (discovery_relative and discovery_relative in validation)
-        or str(discovery_path or "") in validation
-    ) and source_validation:
-        validation = "; ".join(source_validation)
-    report_gate = f"test -f {shlex.quote(report_path)}"
-    validation = f"{validation}; {report_gate}" if validation else report_gate
 
     depends_on = fields.get("depends on") or ", ".join(
         getattr(source_task, "depends_on", []) or []
