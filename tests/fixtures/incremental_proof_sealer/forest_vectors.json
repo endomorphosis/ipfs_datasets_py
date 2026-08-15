@@ -1,0 +1,101 @@
+{
+  "schema": "ipfs_datasets_py/logic/zkp/incremental_sealing/forest_codec/known-vectors@1",
+  "forest_codec_subset": "ips/forest-codec@1",
+  "forest_codec_vectors_subset": "ips/forest-codec-vectors@1",
+  "canonicalization_version": "ips/canonicalization@1",
+  "proof_schema_version": "1",
+  "genesis_parent_seal": "ips.forest.genesis@1",
+  "generator": "ipfs_datasets_py.logic.zkp.incremental_sealing.forest_codec.known_vectors",
+  "domains": {
+    "empty": "ips.forest.empty.v1",
+    "leaf": "ips.forest.leaf.v1",
+    "unary": "ips.forest.unary.v1",
+    "binary": "ips.forest.binary.v1",
+    "category": "ips.forest.category.v1",
+    "repository": "ips.forest.repository.v1"
+  },
+  "categories": [
+    "source_integrity",
+    "static_analysis",
+    "type_check",
+    "unit_test",
+    "integration_test",
+    "property_test",
+    "formal_obligation",
+    "direct_zk",
+    "receipt_aggregation",
+    "release_invariant"
+  ],
+  "recipes": {
+    "empty_categories": "all_closed_categories",
+    "node_shapes": {
+      "empty": {
+        "category": "property_test",
+        "leaf_ids": []
+      },
+      "unary": {
+        "category": "unit_test",
+        "leaf_ids": ["unit/a"]
+      },
+      "binary": {
+        "category": "unit_test",
+        "leaf_ids": ["unit/a", "unit/b"]
+      },
+      "binary_plus_unary": {
+        "category": "unit_test",
+        "leaf_ids": ["unit/a", "unit/b", "unit/c"]
+      }
+    },
+    "base_repository": {
+      "repository_id": "repo/datasets",
+      "revision": "rev-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "proof_schema_version": "1",
+      "canonicalization_version": "ips/canonicalization@1",
+      "dependency_graph_schema_version": "graph@1",
+      "parent_seal_cid": "ips.forest.genesis@1",
+      "parent_revision_ids": [],
+      "category_leaves": {
+        "unit_test": ["unit/a", "unit/b"],
+        "static_analysis": ["unit/static-a"]
+      }
+    },
+    "one_bit_leaf_mutation": {
+      "category": "unit_test",
+      "flipped_unit_id": "unit/b",
+      "flipped_proof_label": "proof:unit/b-flipped"
+    },
+    "context_mutation_fields": [
+      "parent_seal_cid",
+      "revision",
+      "environment_cid",
+      "proof_schema_version",
+      "canonicalization_version",
+      "dependency_graph_schema_version",
+      "policy_cid",
+      "source_root_cid",
+      "manifest_root_cid",
+      "repository_id",
+      "parent_revision_ids"
+    ]
+  },
+  "fail_closed": {
+    "duplicate_unit_ids": ["unit/a", "unit/a"],
+    "reordered_leaves": ["unit/b", "unit/a"],
+    "duplicate_positions": true,
+    "unknown_category": "mystery_category"
+  },
+  "repository_root_fields": [
+    "repository_id",
+    "revision",
+    "source_root_cid",
+    "manifest_root_cid",
+    "environment_cid",
+    "policy_cid",
+    "proof_schema_version",
+    "canonicalization_version",
+    "dependency_graph_schema_version",
+    "parent_seal_cid",
+    "parent_revision_ids",
+    "category_roots"
+  ]
+}
