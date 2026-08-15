@@ -387,7 +387,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: MO, MT, NE, and NV each have exhaustive official-source receipts; NV linkless bucket material is replaced or quarantined.
 
 ## OUL-016 Certify official scrape cohort H (NH, NJ, NM, NY)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
