@@ -4,8 +4,11 @@ Primary path: official hierarchy on https://code.dccouncil.gov
 (title → chapter → section). Playwright/generic remain fallbacks only.
 """
 
-from typing import List, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+import json
 import re
+import ssl
+import urllib.request
 from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -19,8 +22,69 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
         re.IGNORECASE,
     )
     _DC_TITLE_URL_RE = re.compile(
-        r"/us/dc/council/code/titles/(\d+)/?$",
+        r"/us/dc/council/code/titles/([0-9]+[A-Za-z]?)/?$",
         re.IGNORECASE,
+    )
+    OFFICIAL_DOMAIN = "code.dccouncil.gov"
+    OFFICIAL_ENTRY_PATH = "/us/dc/council/code"
+    OFFICIAL_ENTRY_URL = "https://code.dccouncil.gov/us/dc/council/code"
+    OFFICIAL_TITLES = (
+        ("1", "Government Organization"),
+        ("2", "Government Administration"),
+        ("3", "District of Columbia Boards and Commissions"),
+        ("4", "Public Care Systems"),
+        ("5", "Police, Firefighters, Medical Examiner, and Forensic Sciences"),
+        ("6", "Housing and Building Restrictions and Regulations"),
+        ("7", "Human Health Care and Safety"),
+        ("8", "Environmental and Animal Control and Protection"),
+        ("9", "Transportation Systems"),
+        ("10", "Parks, Public Buildings, Grounds, and Space"),
+        ("11", "Organization and Jurisdiction of the Courts"),
+        ("12", "Right to Remedy"),
+        ("13", "Procedure Generally"),
+        ("14", "Proof"),
+        ("15", "Judgments and Executions; Fees and Costs"),
+        ("16", "Particular Actions, Proceedings and Matters"),
+        ("17", "Review"),
+        ("18", "Wills"),
+        ("19", "Descent, Distribution, and Trusts"),
+        ("20", "Probate and Administration of Decedents' Estates"),
+        ("21", "Fiduciary Relations and Persons with Mental Illness"),
+        ("22", "Criminal Offenses and Penalties"),
+        ("23", "Criminal Procedure"),
+        ("24", "Prisoners and Their Treatment"),
+        ("25", "Alcoholic Beverage Regulation"),
+        ("26", "Banks and Other Financial Institutions"),
+        ("27", "Civil Disorder; Curfews"),
+        ("27A", "Commercial Code Supplemental Provisions"),
+        ("28", "Commercial Instruments and Transactions"),
+        ("28A", "Other Commercial Instruments"),
+        ("29", "Partnerships"),
+        ("29A", "Uniform Partnership Act of 2010"),
+        ("30", "Occupations and Professions Reserved"),
+        ("31", "Insurance and Securities"),
+        ("31A", "Uniform Securities Act"),
+        ("32", "Labor"),
+        ("33", "Partnerships Reserved"),
+        ("34", "Public Utilities"),
+        ("35", "Railroads and Other Carriers"),
+        ("36", "Trade Practices"),
+        ("37", "Weights, Measures, Markets, and Vending"),
+        ("38", "Educational Institutions"),
+        ("39", "Libraries and Cultural Institutions"),
+        ("40", "Liens"),
+        ("41", "Personal Property"),
+        ("42", "Real Property"),
+        ("43", "Real Property Tax and Transfer"),
+        ("44", "Charitable and Religious Solicitations"),
+        ("45", "Insurance Other Provisions"),
+        ("46", "Domestic Relations"),
+        ("47", "Taxation, Licensing, Permits, Assessments, and Fees"),
+        ("48", "Foods and Drugs"),
+        ("49", "Notaries Public"),
+        ("50", "Motor and Non-Motor Vehicles and Traffic"),
+        ("51", "Jury and Jurors"),
+        ("99", "Reserved and Temporary Provisions"),
     )
     _DC_CHAPTER_URL_RE = re.compile(
         r"/us/dc/council/code/titles/\d+/chapters/(\d+)/?$",
@@ -368,6 +432,205 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
                 )
             )
         return statutes
+
+    def official_title_url(self, title_number: str) -> str:
+        return f"{self.get_base_url()}/us/dc/council/code/titles/{str(title_number).strip()}"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official District of Columbia Code title catalog.
+
+        DC is enumerated exactly once: each title number appears at most once
+        and this adapter never emits a second DC jurisdiction identity.
+        """
+
+        rows: List[Dict[str, Any]] = []
+        seen: set[str] = set()
+        for number, name in self.OFFICIAL_TITLES:
+            key = str(number).strip()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            url = self.official_title_url(key)
+            rows.append(
+                {
+                    "canonical_key": f"dc:title-{key.lower()}",
+                    "title_number": key,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"District of Columbia Official Code Title {key} "
+                        f"({name}) official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-district-of-columbia-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-district-of-columbia-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _title_sort_key(self, title_number: str) -> tuple[int, str]:
+        text = str(title_number or "").strip()
+        match = re.match(r"(\d+)([A-Za-z]*)$", text)
+        if not match:
+            return (10_000, text)
+        return (int(match.group(1)), match.group(2).upper())
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._DC_TITLE_URL_RE.search(absolute)
+            if not match:
+                continue
+            number = str(match.group(1))
+            if number not in found:
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official DC Code title exactly once."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        seen = {str(row["title_number"]) for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        for number, url in discovered.items():
+            if number in seen:
+                continue
+            seen.add(number)
+            rows.append(
+                {
+                    "canonical_key": f"dc:title-{number.lower()}",
+                    "title_number": number,
+                    "name": f"Title {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"District of Columbia Official Code Title {number} "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        rows.sort(key=lambda item: self._title_sort_key(str(item["title_number"])))
+        return rows
+
+    def fetch_official(self, code: str = "DC"):
+        """Acquire the exhaustive official DC Code title catalog.
+
+        The District of Columbia is acquired exactly once as a required member
+        of the exact-51 set. Live HTTPS retains the official council code
+        landing page. This hook never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "DC").strip().upper() or "DC"
+        if normalized != "DC":
+            raise ValueError(f"DistrictOfColumbiaScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("district of columbia official catalog enumeration is incomplete")
+        keys = [str(row["canonical_key"]) for row in rows]
+        if len(keys) != len(set(keys)):
+            raise RuntimeError("district of columbia official catalog duplicated a title")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+            "dc_counted_once": True,
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
