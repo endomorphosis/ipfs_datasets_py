@@ -55,15 +55,15 @@ def test_ui_ux_adapter_note_declares_required_contract_fields() -> None:
         assert field in text, field
 
 
-def test_ui_ux_package_is_absent_and_gate_is_declaration_only() -> None:
+def test_ui_ux_package_is_present_on_campaign_pin() -> None:
     assert UIUX_DOMAIN_ID == "ui_ux_ir"
     assert UIUX_LOGIC_SLICE_V2_INTERFACE == "UIUXLogicSlice@2"
     connector = UIUXLogicSliceConnector()
     assert connector.to_dict()["domain"] == UIUX_DOMAIN_ID
     package = ui_ux_package_path()
-    assert package_is_present(package) is False
+    assert package_is_present(package) is True
     receipt = scan_ui_ux_source_gate_v2()
-    assert "declaration" in str(receipt.disposition).lower()
+    assert "missing" not in str(receipt.disposition).lower()
 
 
 def test_ui_ux_gate_forbids_inventing_the_package() -> None:

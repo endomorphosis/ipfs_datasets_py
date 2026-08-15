@@ -1,0 +1,10 @@
+{
+  "policy_id": "ui-ux-ir-performance/v1",
+  "max_nodes": 10000,
+  "soft_nodes": 1000,
+  "max_payload_bytes": 10485760,
+  "max_mediation_ms": 50,
+  "max_canonicalize_ms": 200,
+  "external_solver_calls_allowed": false,
+  "notes": "Provisional offline bounds for UIR-080; external solver/model/browser/device calls remain lazy."
+}

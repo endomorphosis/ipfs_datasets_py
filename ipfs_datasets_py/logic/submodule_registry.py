@@ -795,6 +795,43 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         import_check=False,
         optional_dependencies=("ErgoAI/ErgoEngine",),
     ),
+    LogicSubmoduleSpec(
+        name="ui_ux_ir",
+        module="ipfs_datasets_py.logic.ui_ux_ir",
+        description=(
+            "UI/UX IR v1: schema, codecs, formalization, projection, runtime "
+            "mediation/receipts, assurance validators, and cross-language conformance."
+        ),
+        roles=(
+            "ui_ux_ir",
+            "schema",
+            "formalization",
+            "projection",
+            "runtime",
+            "mediation",
+            "assurance",
+            "conformance",
+        ),
+        optimizer_components=("ui_ux_ir.public_api",),
+        target_files=(
+            "ipfs_datasets_py/logic/ui_ux_ir/__init__.py",
+            "ipfs_datasets_py/logic/ui_ux_ir/schema.py",
+            "ipfs_datasets_py/logic/ui_ux_ir/runtime/mediator.py",
+        ),
+        ast_scope="ui_ux_ir",
+        required=False,
+        import_check=True,
+        public_symbols=(
+            "UIUXIR_PUBLIC_API_INTERFACE",
+            "UI_UX_IR_SCHEMA_ID",
+            "decode_ui_ir",
+            "canonicalize_ui_ir",
+            "ui_ir_identity",
+            "evaluate_ui_interaction",
+            "public_api_manifest",
+        ),
+        notes="Pinned from origin/agent/ui-ux-ir @ 9d558ad70. Cold import is side-effect free.",
+    ),
 )
 
 
