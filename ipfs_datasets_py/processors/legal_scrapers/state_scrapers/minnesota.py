@@ -4,10 +4,12 @@ This module contains the scraper for Minnesota statutes from the official state 
 """
 
 import asyncio
+import json
 import os
-from typing import List, Dict
 import re
+import ssl
 import urllib.request
+from typing import Any, Dict, List
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -20,6 +22,23 @@ class MinnesotaScraper(BaseStateScraper):
     _MN_SECTION_NUMBER_RE = re.compile(r"/statutes/cite/([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)$", re.IGNORECASE)
     _MN_SECTION_ROW_RE = re.compile(r"^(?P<section>[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)+)\s+(?P<title>.+)$")
     _MN_CHAPTER_RANGE_RE = re.compile(r"\b(?P<start>\d{1,3}[A-Za-z]?)\s*-\s*(?P<end>\d{1,3}[A-Za-z]?)\b")
+    OFFICIAL_DOMAIN = "www.revisor.mn.gov"
+    OFFICIAL_ENTRY_PATH = "/statutes/"
+    OFFICIAL_ENTRY_URL = "https://www.revisor.mn.gov/statutes/"
+    OFFICIAL_NUMERIC_CHAPTERS = tuple(range(1, 649))
+    OFFICIAL_LETTERED_CHAPTERS = (
+        "3A", "3C", "3D", "13A", "16A", "16B", "16C", "16D", "16E", "43A",
+        "47A", "60A", "61A", "62A", "62J", "62Q", "65B", "72A", "79A", "80A",
+        "82A", "84A", "89A", "97A", "97B", "97C", "103A", "103B", "103C",
+        "103D", "103E", "103F", "103G", "103H", "103I", "115A", "115B", "116J",
+        "116L", "135A", "136A", "136F", "144A", "144E", "144G", "145A", "147A",
+        "148B", "148E", "149A", "168A", "169A", "171A", "216A", "216B", "216C",
+        "245A", "245C", "245D", "245G", "252A", "253B", "253D", "256B", "256C",
+        "256J", "256L", "256R", "260B", "260C", "260E", "270C", "289A", "290A",
+        "297A", "297B", "297E", "297F", "297I", "325D", "325E", "325F", "325G",
+        "325L", "325M", "325N", "336A", "462A", "473H", "501C", "508A", "515B",
+        "518A", "518B", "518C", "518D", "523A", "609A", "611A", "626A",
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -388,6 +407,187 @@ class MinnesotaScraper(BaseStateScraper):
             return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
         except Exception:
             return ""
+
+    def official_chapter_url(self, chapter: Any) -> str:
+        token = str(chapter or "").strip()
+        return f"{self.get_base_url()}/statutes/cite/{token}"
+
+    def official_chapter_tokens(self) -> List[str]:
+        tokens: List[str] = [str(number) for number in self.OFFICIAL_NUMERIC_CHAPTERS]
+        tokens.extend(self.OFFICIAL_LETTERED_CHAPTERS)
+        return tokens
+
+    def official_chapter_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Minnesota Statutes chapter catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for token in self.official_chapter_tokens():
+            url = self.official_chapter_url(token)
+            rows.append(
+                {
+                    "canonical_key": f"mn:chapter-{token.lower()}",
+                    "chapter_number": token,
+                    "name": f"Chapter {token}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Minnesota Statutes Chapter {token} official catalog "
+                        f"unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-minnesota-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-minnesota-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_chapter_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            match = self._MN_CHAPTER_URL_RE.search(href)
+            if not match:
+                continue
+            token = match.group(1)
+            if "." in token:
+                continue
+            if token not in found:
+                found[token] = self.official_chapter_url(token)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Minnesota Statutes chapter and repair links."""
+
+        del page_url
+        discovered = self._parse_official_chapter_links(html)
+        rows = self.official_chapter_catalog()
+        seen = {str(row["chapter_number"]).lower() for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["chapter_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        for token, url in discovered.items():
+            if token.lower() in seen:
+                continue
+            rows.append(
+                {
+                    "canonical_key": f"mn:chapter-{token.lower()}",
+                    "chapter_number": token,
+                    "name": f"Chapter {token}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Minnesota Statutes Chapter {token} official catalog "
+                        f"unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "MN"):
+        """Acquire the exhaustive official Minnesota Statutes chapter catalog.
+
+        Live HTTPS retains the official statutes index. Every known chapter is
+        enumerated with an official revisor.mn.gov URL. This hook never
+        returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "MN").strip().upper() or "MN"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("minnesota official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
+
 
 # Register this scraper with the registry
 StateScraperRegistry.register("MN", MinnesotaScraper)

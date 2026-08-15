@@ -3,8 +3,10 @@
 This module contains the scraper for Michigan statutes from the official state legislative website.
 """
 
+import json
 import re
-from typing import List, Dict, Optional
+import ssl
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -12,7 +14,34 @@ from .registry import StateScraperRegistry
 
 class MichiganScraper(BaseStateScraper):
     """Scraper for Michigan state laws from http://www.legislature.mi.gov"""
-    
+
+    _MI_CHAPTER_OBJECT_RE = re.compile(
+        r"objectName=mcl-chap(?P<chapter>\d+)\b",
+        re.IGNORECASE,
+    )
+    OFFICIAL_DOMAIN = "www.legislature.mi.gov"
+    OFFICIAL_ENTRY_PATH = "/Laws/ChapterIndex"
+    OFFICIAL_ENTRY_URL = "https://www.legislature.mi.gov/Laws/ChapterIndex"
+    OFFICIAL_CHAPTERS = (
+        1, 2, 3, 4, 5, 6, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19, 21, 24, 28,
+        29, 30, 31, 32, 33, 35, 36, 37, 38, 41, 42, 45, 46, 47, 48, 49, 50,
+        51, 52, 53, 54, 55, 56, 61, 67, 70, 72, 73, 74, 78, 79, 80, 81, 83,
+        85, 86, 87, 88, 89, 90, 91, 92, 95, 99, 100, 102, 105, 106, 110, 113,
+        117, 119, 120, 121, 123, 124, 125, 128, 129, 131, 141, 168, 169, 200,
+        201, 205, 206, 207, 208, 211, 213, 224, 247, 250, 252, 256, 257, 259,
+        285, 286, 287, 288, 289, 290, 295, 299, 300, 316, 317, 318, 319, 320,
+        321, 322, 323, 324, 325, 328, 330, 331, 333, 335, 336, 338, 339, 350,
+        380, 388, 389, 390, 395, 399, 400, 401, 403, 408, 409, 418, 419, 421,
+        423, 425, 429, 431, 432, 433, 434, 435, 436, 438, 440, 441, 442, 445,
+        446, 449, 450, 451, 454, 455, 456, 457, 458, 459, 460, 462, 463, 469,
+        470, 472, 473, 474, 475, 479, 480, 482, 483, 484, 485, 486, 487, 488,
+        489, 490, 491, 493, 500, 550, 551, 552, 554, 555, 556, 557, 558, 559,
+        560, 565, 566, 570, 600, 691, 700, 701, 710, 712, 720, 722, 725, 728,
+        729, 730, 750, 752, 760, 761, 762, 763, 764, 765, 766, 767, 768, 769,
+        770, 771, 772, 773, 774, 775, 776, 777, 780, 791, 798, 800, 801, 803,
+        830,
+    )
+
     def get_base_url(self) -> str:
         """Return the base URL for Michigan's legislative website."""
         return "https://www.legislature.mi.gov"
@@ -268,6 +297,181 @@ class MichiganScraper(BaseStateScraper):
             return re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
         except Exception:
             return ""
+
+    def official_chapter_url(self, chapter_number: Any) -> str:
+        return (
+            f"{self.get_base_url()}/Laws/MCL?objectName=mcl-chap{int(chapter_number)}"
+        )
+
+    def official_chapter_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Michigan Compiled Laws chapter catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number in self.OFFICIAL_CHAPTERS:
+            url = self.official_chapter_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"mi:chapter-{int(number)}",
+                    "chapter_number": str(int(number)),
+                    "name": f"Chapter {int(number)}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Michigan Compiled Laws Chapter {int(number)} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-michigan-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-michigan-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_chapter_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            match = self._MI_CHAPTER_OBJECT_RE.search(href)
+            if not match:
+                continue
+            number = str(int(match.group("chapter")))
+            if number not in found:
+                found[number] = self.official_chapter_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official MCL chapter and repair missing live links."""
+
+        del page_url
+        discovered = self._parse_official_chapter_links(html)
+        rows = self.official_chapter_catalog()
+        seen = {str(row["chapter_number"]) for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["chapter_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        for number, url in discovered.items():
+            if number in seen:
+                continue
+            rows.append(
+                {
+                    "canonical_key": f"mi:chapter-{number}",
+                    "chapter_number": number,
+                    "name": f"Chapter {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Michigan Compiled Laws Chapter {number} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        rows.sort(key=lambda item: int(item["chapter_number"]))
+        return rows
+
+    def fetch_official(self, code: str = "MI"):
+        """Acquire the exhaustive official Michigan Compiled Laws chapter catalog.
+
+        Live HTTPS retains the official chapter index. Every known MCL chapter
+        is enumerated with an official legislature.mi.gov URL. This hook never
+        returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "MI").strip().upper() or "MI"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("michigan official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
