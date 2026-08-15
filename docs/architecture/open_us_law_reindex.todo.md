@@ -363,7 +363,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: MA, MI, MN, and MS each have exhaustive official-source receipts; MS is reacquired from official sources and synthetic two-row success is rejected.
 
 ## OUL-015 Certify official scrape cohort G (MO, MT, NE, NV)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
