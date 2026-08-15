@@ -1564,7 +1564,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Canonical board task: false
 
 ## OUL-063 Resolve validation retry-budget failure for OUL-016
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -1676,7 +1676,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Canonical board task: false
 
 ## OUL-067 Resolve validation retry-budget failure for OUL-010
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -1760,7 +1760,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Canonical board task: false
 
 ## OUL-070 Resolve validation retry-budget failure for OUL-015
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -1788,7 +1788,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Canonical board task: false
 
 ## OUL-071 Resolve validation retry-budget failure for OUL-021
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
