@@ -219,7 +219,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The audit proves reusable contracts and records required repairs for real GTE inference, external sorting, BM25 scale, hierarchical routes, vector entry locators, tokenizer parity, postings-driven neighbors, and neutral LCR provenance.
 
 ## OUL-009 Certify official scrape cohort A (AL, AK, AZ, AR)
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
