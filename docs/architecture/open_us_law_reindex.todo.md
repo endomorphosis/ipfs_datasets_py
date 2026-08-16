@@ -2498,3 +2498,71 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Candidate kind: generated_task
 - Todo vector key: 0d33d48cedc16715
 - Acceptance: Objective scan filed this review gap for OUL-G021. Inspect the evidence in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-16-oul-083-objective-gap-b31fc09cb9ab.md; either resolve the diagnostic without an implementation change or authorize precise repository-relative edit targets before changing the task status.
+
+## OUL-084 Review completion-evidence alignment for Publish and verify the authorized public Hugging Face release
+
+- Status: blocked
+- Blocked reason: manual review required because no precise edit targets were authorized
+- Completion: manual
+- Is schedulable: false
+- Review only: true
+- Priority: P0
+- Track: publication
+- Depends on:
+- Outputs:
+- Validation: git diff --check; python scripts/validate_open_us_law_reindex_board.py --check-all
+- Board namespace: open-us-law-reindex-v1
+- Evidence inputs: workspace/agent-supervisor/open-us-law-reindex/state/discovery
+- Discovery evidence: /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-16-oul-084-objective-gap-d5435de20559.md
+- Bundle: publication
+- Bundle shard: workspace/agent-supervisor/open-us-law-reindex/state/objective_bundles/publication.todo.md
+- Bundle strategy: bounded_objective_generation
+- Graph parents: OUL-G000
+- Graph depth: 1
+- Objective heap index: 0
+- Parallel lane: publication
+- Conflict policy: prefer bundle-local changes; invoke the LLM merge resolver for semantic conflicts
+- Predicted files:
+- Changed paths:
+- Context paths:
+- AST symbols: and immutable remote pin., completion-reconciliation, manifest digest, Task OUL-043 and every descendant task receipt, validation result
+- Interfaces:
+- Submodules:
+- Generated artifacts: workspace/agent-supervisor/open-us-law-reindex/state/objective_generation.json
+- Allow concurrent with:
+- Goal id: OUL-G080
+- Completion authority: local
+- External authority blockers:
+- Canonical task key: task/v1/319b51c8462e62338efff0a79a3543c43ebe14a0236abf44849b316703ced605
+- Canonical task CID: baguqeeraggnvdscgfzrdhdx76ctzunkdyq7l4ffaenvl6reetmywoa6o2ycq
+- Semantic identity: objective-family/v1/7221bf216f1a06b2683331cced09b3733df91b797e6d08dcee254c1c5b1addb9
+- Acceptance subset: Complete the goal's producing tasks before requesting completion., Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: The public revision and bucket content root are immutable, verified, Viewer-compatible, sparse-queryable, and preserve all raw bucket objects., Reconcile the unverified completion decision with current evidence for: Publish and verify the authorized public Hugging Face release, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
+- Preconditions: objective goal OUL-G080 is schedulable
+- Effects: satisfy evidence requirement: Complete the goal's producing tasks before requesting completion., satisfy evidence requirement: Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., satisfy evidence requirement: Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., satisfy evidence requirement: Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., satisfy evidence requirement: Produce completion evidence for: The public revision and bucket content root are immutable, verified, Viewer-compatible, sparse-queryable, and preserve all raw bucket objects., satisfy evidence requirement: Reconcile the unverified completion decision with current evidence for: Publish and verify the authorized public Hugging Face release, satisfy evidence requirement: Require an explicitly healthy analyzer that is safe for completion reasoning., satisfy evidence requirement: Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
+- Evidence subset: Complete the goal's producing tasks before requesting completion., Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: The public revision and bucket content root are immutable, verified, Viewer-compatible, sparse-queryable, and preserve all raw bucket objects., Reconcile the unverified completion decision with current evidence for: Publish and verify the authorized public Hugging Face release, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
+- Resource class: cpu-medium
+- Token class: medium
+- Estimated tokens: 0
+- Resources: cpu-medium
+- Merge fate: OUL-G080
+- Rejection reasons: none (accepted)
+- Evidence obligation key: objective-family/v1/7221bf216f1a06b2683331cced09b3733df91b797e6d08dcee254c1c5b1addb9
+- Missing evidence: Complete the goal's producing tasks before requesting completion., Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one., Manual review required: no precise implementation, affected-document, or validator-source file was authorized as an edit target., Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree., Produce completion evidence for: The public revision and bucket content root are immutable, verified, Viewer-compatible, sparse-queryable, and preserve all raw bucket objects., Reconcile the unverified completion decision with current evidence for: Publish and verify the authorized public Hugging Face release, Require an explicitly healthy analyzer that is safe for completion reasoning., Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.
+- Embedding query: and immutable remote pin. completion reconciliation completion-evidence alignment manifest digest Task OUL-043 and every descendant task receipt validation result
+- AST query: and immutable remote pin., completion-reconciliation, manifest digest, Task OUL-043 and every descendant task receipt, validation result
+- Surplus group: OUL-G080
+- Merge key: objective-family/v1/7221bf216f1a06b2683331cced09b3733df91b797e6d08dcee254c1c5b1addb9
+- Merge family: OUL-G080
+- Merge role: completion_gate_gap_manual_review
+- Work item count: 8
+- Work scope: bounded_objective_generation
+- Goal packet:
+- Goal packet role:
+- Goal packet goals:
+- Goal packet task count: 0
+- Goal packet work item count: 0
+- Completion goal bindings: {}
+- Completion task bindings:
+- Candidate kind: generated_task
+- Todo vector key: 7221bf216f1a06b2
+- Acceptance: Objective scan filed this review gap for OUL-G080. Inspect the evidence in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-16-oul-084-objective-gap-d5435de20559.md; either resolve the diagnostic without an implementation change or authorize precise repository-relative edit targets before changing the task status.
