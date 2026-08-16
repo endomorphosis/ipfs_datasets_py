@@ -1845,16 +1845,16 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Canonical board task: false
 - Discovery evidence: workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-15-oul-072-oul-064-retry-budget.md
 
-## OUL-073 Resolve 4 preflight-conflicting backlogged worktree merges
+## OUL-073 Resolve 2 preflight-conflicting backlogged worktree merges
 
-- Status: completed
+- Status: blocked
 - Completion: manual
 - Is schedulable: false
 - Review only: true
 - Blocked reason: operator_reconciliation_required
 - Priority: P1
 - Track: ops
-- Fingerprint: e3f78158c1903d0eef4f3b72506a885e99165203
+- Fingerprint: f04943d04ba6fd91baad37ddc7294ea76bd7988a
 - Dedupe key: reconciliation_guardrail:preflight_merge_conflict
 - Depends on:
 - Outputs: workspace/agent-supervisor/open-us-law-reindex/state/discovery, docs/architecture/open_us_law_reindex.todo.md
@@ -1864,4 +1864,4 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Parallel lane: 1
 - Resource class: cpu-small
 - Validation: test -f /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-15-oul-073-reconciliation-e3f78158c190.md
-- Acceptance: Reconciliation guardrail filed this because 4 branch or worktree cleanup candidates are blocked by preflight_merge_conflict. This task is intentionally operator-gated because unknown dirty checkout content must not be committed, stashed, or discarded automatically. Use evidence and the machine-readable reconciliation plan in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-15-oul-073-reconciliation-e3f78158c190.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
+- Acceptance: Reconciliation guardrail filed this because 2 branch or worktree cleanup candidates are blocked by preflight_merge_conflict. Use evidence and the machine-readable reconciliation plan in /home/barberb/portland-laws.github.io/workspace/codex-work/legal-corpora-reindex/ipfs_datasets_py/workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-15-oul-073-reconciliation-e3f78158c190.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
